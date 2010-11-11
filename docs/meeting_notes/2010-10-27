@@ -1,0 +1,26 @@
+Huascar
+
+    responsability assignation for packages
+
+        foundation classes
+            edu.ucsc.dbtune
+            edu.ucsc.dbtune.core
+
+        satuning
+            edu.ucsc.dbtune.sat
+
+        console
+            edu.ucsc.dbtune.cli
+        
+    edu.ucsc.satuning.util
+        - rename each class to avoid name clashes
+        - replace TODOException by UnsupportedMethodException
+        - add a Caliper entry to GForge's Wiki
+        - for of the classes that may be replaced by standard ones, create an entry in the tracker
+          item 
+
+Ivo
+    - create an initial design for the simplified (or high-level) DBTune API
+    - 
+    - pick a JVM-based scripting language
+    -

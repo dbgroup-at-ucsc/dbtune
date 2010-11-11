@@ -1,0 +1,24 @@
+Work summary for 2010-11-01
+- attended weekly work-summary meeting (last week was a virtual meeting)
+- created new package structure: edu.ucsc.dbtune, edu.ucsc.dbtune.sat, edu.ucsc.dbtune.core.
+- wrote on the wiki how to use Caliper (Google's Microbenchmarking framework).
+- Fixed Stack & Queue's memory leak.
+- continue working on db-package.
+  - checked-in db-package updated/cleaned up code(Trunk)
+  - wrote many unit tests targeting that package's functionality.
+  - fixed bugs discovered after unit writing/executing new unit tests.
+- worked on the Index Benefit Graph (ibg) package.
+  - wrote unit tests that exercise some of the existing use cases
+  - cleaned up code.
+  - checked-in ibg-package updated/cleaned up code(Trunk)
+- move db-package & ibg-package(including tests) changes to the new package structure.
+  - commit these changes to Trunk.
+- read SATuning 2011 SIGMOD paper.
+- Notes:
+  - even though the updated/cleaned code has been checked-in, we need more unit tests. Therefore,
+    I will try to spend 1/2 hr, probably every 2 days, to include more tests.
+  - There are classes under the engine package that are only used by the classes under the ibg 
+    package. Therefore, they should be cleaned up and then moved to edu.ucsc.dbtune.sat package.
+    This is not a major change. Therefore it will affect any functionality under the ibg-package. 
+    Having written that, I can start cleaning up and then moving these classes to dbtune.sat 
+    little by little.

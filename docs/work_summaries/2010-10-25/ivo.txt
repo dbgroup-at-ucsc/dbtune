@@ -1,0 +1,13 @@
+Project    Due      Description
+phd.dbtune 10/18/10 add CLI tasks as GForge's tracker items +0.25
+phd.dbtune 10/18/10 add minutes to-dos to To-Do tracker +0.25
+phd.dbtune 10/20/10 read CORADD paper +3.50
+phd.dbtune 10/21/10 write an overview for CORADD on GForge (section 1) +1.50
+phd.dbtune 10/22/10 define CLI language
+           10/23/10     review Bruno/Chauduri demo again to extract commands and functionality +1.25
+           10/23/10     created section for IPDT functionality description in notes +0.75
+           10/23/10     searched for existing shells that implement object pipelining +1.00
+           10/23/10     wrote 'What about us' section of 'Alternatives for DBTune CLI interface' document, except Scala and PL/SQL sections +1.50
+           10/24/10     wrote PL/SQL and Scala sections +1.50
+           10/24/10     refined bash sample and uploaded to svn +0.75
+phd.dbtune 10/24/10 modified tests/automatic/ workload so that it only uses tpch to see if it runs with Karl's version +1.00

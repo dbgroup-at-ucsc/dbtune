@@ -1,73 +1,0 @@
-10
-
-dir
-49
-http://gforge.soe.ucsc.edu/svn/dbtune/trunk/pgtests/workload_mix
-http://gforge.soe.ucsc.edu/svn/dbtune
-
-
-
-2010-09-24T17:21:54.373514Z
-10
-hsanchez
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-aa23a523-b258-4256-9f8c-01b3797eb6e3
-
-normal_complex
-dir
-
-colt_moderate
-dir
-
-wfit_simple
-dir
-
-opt_moderate
-dir
-
-colt_complex
-dir
-
-wfit_moderate
-dir
-
-opt_complex
-dir
-
-bc_simple
-dir
-
-wfit_complex
-dir
-
-normal_simple
-dir
-
-bc_moderate
-dir
-
-normal_moderate
-dir
-
-colt_simple
-dir
-
-opt_simple
-dir
-
-bc_complex
-dir
-

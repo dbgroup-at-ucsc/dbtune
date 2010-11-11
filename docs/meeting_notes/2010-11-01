@@ -1,0 +1,49 @@
+Minutes for 2010-11-01
+
+Side Notes:
+- Before starting with everybody's work summaries, Alkis explained to Jeff how the DB2 Advisor could be run.
+- The team agreed on how the Gforge's docs section was going to be used. i.e., this section will contain documents that will be referenced in Wiki pages.
+
+Jeff's work summary was skipped.
+Ivo's work summary
+- Ivo was abled to run PG++ and reproduce some of Karl's experiments (e.g., TPCH part).
+  - He executed some part of Karl's experiments against dbtune.01.
+  - He was able to obtain "index recommendations" after running some workloads.
+- We went over Ivo's idea for creating connections and returning, from the created connections, the databases pointed by this connection. e.g., con = new Connection(...) then con.databases()
+- Alkis mentioned that we should separate dependencies between the classes part of the Command Line Interface(CLI) and the core classes. This will avoid any conflicting changes between CLI and Core classes. 
+- Ivo went over the main differences, when it comes to the elements that were to manage data, between PostgreSQL(PG) and other dbms, such as MySQL. e.g., the idea of Catalog: in PG is a container of schema_types and in other dbms is something else; the idea of Schemas(a container of databases): PG supports it, while MySQL does not.
+- Alkis and the team started brainstorming about the possible domain classes that should be present in the CLI implementation:
+  1. Index(name:String, columns:List, pages:#, sec:#, types:List, table:String). Note: sec = the number of entry keys in the index.
+  2. Schema(tables:List, base_configuration:List). Note: base_configuration = set of indexes.
+  3. Column(unique_entry_count:#, type:String, name:String, schema:Schema)
+  4. Table(columns:List, indexes:List, pages:#, cardinality:#, name:String). Note: columns = attributes.
+  5. Configuration(indexes:List, size:#)
+  6. Statement(text:String)
+  7. Workload(statements:List, optimize(Configuration):double)
+
+  We won't implement:
+  - Catalog
+
+- Ivo, when asked for whether the logs of his experiments were committed to Gforge, indicated that he would need to investigate where these logs are.
+
+Final thoughts on the domain classes and CLI:
+- CLI will mirror the core classes but will simpler syntax.
+- Online algorithms should maintain some state that can be accessed by the DBA. The normal usage cycle will be:
+ - start <algorithm name>
+ - configure it
+ - execute it
+- MySQL should be included in the list of dbms that will be supported by our toolkit. 
+
+Huascar's work summary:
+- The team talked about the current packaging structure and then suggested some changes:
+  - ibg classes should be placed in their ibg package, which is at the same level of the core package.
+  - a new package, called advisor, will be created. This package will contain sat algorithms.
+  - reorganize spi classes as follow
+    - dbtune.spi.core, dbtune.spi.ibg, dbtune.spi.advisor
+- Alkis reminded Huascar of a task where Huascar needed to provide an example of the What-if optimizer. e.g.,
+     given Relation(i, j, k), run the whatif optimizer for i(used index), and (j,k) configuration for query = "SELECT * FROM R WHERE <some predicate>"
+
+Action items
+- Ivo will investigate where the logs of experiments are. Then he will need to upload them to GForge.
+- Huascar will need to prepare the What-If optimizer example, then update the Wiki page.
+- Everybody should try to run PG instance installed on the server that Ivo is using.

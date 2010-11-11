@@ -1,0 +1,10 @@
+Huacar A. Sanchez's work summary for 2010-10-25
+- continue refactoring the db's classes/interfaces. I've included several unit tests and mock objects that helped me exercised some of the following use cases:
+    - DatabaseConnectionManager's creation
+    - Assignment of a dbms-specific WhatIfOptimizer and IndexExtractor to an active DatabaseConnection.
+    - Disable both IndexExtractor and WhatIfOptimizer once their owner (DatabaseConnection) has been closed. This means that once a connection is closed, you will get an exception if you try to use that connection's assigned IndexExtractor or the WhatIfOptimizer.
+    - etc.
+- created a branch for my db package changes. I sent an email to everybody asking them to review the code. Once the code is reviewed I will either commit those changes into the trunk or continue making changes given everybody's comments.
+- continue reviewing the IBG package by writing unit tests which will try to exercise any existing use case.
+- started reading Chapter 4 of Karl's thesis. Especially the section related to the Index Benefit Graph.
+

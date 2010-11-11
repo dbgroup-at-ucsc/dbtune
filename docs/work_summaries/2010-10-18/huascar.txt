@@ -1,0 +1,23 @@
+Work summary for 2010-10-13
+- worked on changing the Satuning's DB type hierarchy (I've made good progress). I am expenting to check
+  these changes in the next 2 or 3 days (after adding the appropriate unit tests).
+  - summary of changes:
+    1. moved dbms-connection-specific functionality (e.g., DBConnection#open(.....) away from
+       the DBConnection type. Now there is a new type called DatabaseConnectionManager that handles
+       that responsibility.
+    2. moved optimization-specific functionality (e.g., DBConnection#whatIfOptimize(...),
+       DBConnection#recommendIndexes(...), and many more) away from DBConnection type. Now there
+       is a new type called DatabaseIndexExtractor (one per dbms-specific connection) which will
+       handle that responsibility.
+    3. Implemented a set of commands (an a new hierarchy of commands) as first-class functions, which
+       will be called by dbms-specific DatabaseIndexExtractor implementations.
+       Before, these commands were developed at ad-hoc and were very difficult to read or extend.
+       Now, there is a straightforward way for implementing new ones.
+    4. Cleaned up several classes under the db package.
+    5. started writing unit tests.
+- started reviewing (in more detail) the Satuning's IBG package, so that I could start thinking of
+  a good way to clean up the code under the package (what needs to be modified without breaking the
+  existing functionality).
+- met with Prof. Alkis to talk about what to read in order to catch up with terminology used in the
+  automatic index tunning research and/or physical db tuning.
+- started reading chapter 3 of Karl's thesis (Related Work section). 

@@ -1,0 +1,52 @@
+Meeting 20101108
+Alkis, Huascar, Ivo, Jeff
+
+1.  We agreed to submit weekly work summaries by Mon 9.30a
+2.  Git hub discussion -
+  Huascar spoke to github representative.  Huascar set up an organizational
+  account for dbgroup@ucsc.  This will have multiple private repositories.
+  There is a copyright agreement for opening a github repository that we
+  need to carefully review.  Then anyone within the dbgroup who would like
+  to set up a repository under our organizational account would need to
+  agree to the same copyright agreement.
+
+3.  Wiki- gforge wiki markup is not really wiki markup, it is html markup.
+  we would prefer to use a real wiki markup language if available.
+  Googledocs is very easy to publish individual links and make them publicly
+  viewable, but there is no "wiki" either.
+
+  TODO:  (we will do a mini survey of our options, gforge+wiki+svn,
+  github+projectwiki, googledocs, etc.  A centralized hub is preferable,
+  and we also need the ability to make some links public, and keep others
+  private.)
+
+ 4.  STATUS updates - 
+  Ivo - status ok, continuing work.  Get more sleep!
+
+  Huascar - continuing testing the advisor package with WFA.
+
+  Alkis - obtained the fast "whatif optimizer Postgres code".  We need to see
+  if this is in Java or C, and decide how to interface with it from our code.
+  This fast version of the what-if optimizer essentially builds a set of data
+  structures related to a given query and stores them as cache.  These DS allow
+   faster re-execution of the same query with "what-if" function.  This is done
+  by declaring a "prepare DS" before sending a query to the optimizer, which preps
+  the initialization and creation of the DS.  We need to interface this with
+  Karl's code for calling the what-if optimizer.  Also, if something has
+  changed in the DB we need to be able to issue a "clear DS" command.
+  Since we need this control, we have a choice of implementing (1) prepare
+  command, or (2) clear command.  We have decided to implement the "clear"
+  command.
+
+  Jeff - working on db2 with the db2advis command.  Instead of writing an
+  independent wrapper script to call the what-if optimizer and db2advisor,
+  he can try to write Java methods within our project to call our
+  db_connection_manager and connect to db2.  Then he can utilize our existing
+  methods to call the index advisor and optimizer.  This will extend our code
+  for running experiments, and we can learn from this, so that we can possibly
+  implement some CLI functionality to make it easier to run experiments later.
+  For now, Jeff should write the experiments in Java and not depend on a CLI.
+  Jeff will also get together with Huascar to use the new connection_mgr.
+
+  Social Event - we should get together for food/drinks one evening.  We
+  have tentatively chosen next Wed Nov 17 evening.

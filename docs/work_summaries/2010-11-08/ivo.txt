@@ -1,0 +1,10 @@
+Project    Due        Description
+phd.dbtune  11/1/2010 search for notes on 'how to run karl's code'                                                                                                           
+phd.dbtune  11/2/2010 extend 'how to run karl's code' readme file                                                                                                            
+phd.dbtune  11/2/2010 configure pg++ so that it accepts connections from other than localhost                                                                                
+phd.dbtune  11/2/2010 find out why postgres isn't accepting connections                                                                                                      
+                      11/02/10 seems that the firewall is blocking, will need to open an itrequest ticket                                                                    
+phd.dbtune  11/2/2010 send itrequest to ask them to open up postgres port                                                                                                    
+phd.dbtune  11/2/2010 install oracle client to see if the issue of not being able to connect to postgres is due to its configuration                                         
+phd.dbtune  11/3/2010 test if itrequest actions solved our issue                                                                                                             
+phd.dbtune  11/3/2010 find out how to disable GForge Wiki's FCKEditor and what implicates if we do 

@@ -1,0 +1,399 @@
+Alternatives for DBTune CLI interface
+Ivo Jimenez
+2010-10-23
+
+Bruno and Chauduri's approach
+
+    Before discussing their approach, we need to understand what PowerShell does
+
+        PowerShell
+
+        " Windows PowerShell is Microsoft's task automation framework, consisting of a command-line 
+        shell and associated scripting language built on top of, and integrated with, the .NET 
+        Framework. PowerShell provides full access to COM and WMI, enabling administrators to 
+        perform administrative tasks on both local and remote Windows systems
+
+        In PowerShell, administrative tasks are generally performed by cmdlets (pronounced 
+        command-lets), specialized .NET classes implementing a particular operation. Sets of cmdlets 
+        may be combined together in scripts, executables (which are standalone applications), or by 
+        instantiating regular .NET classes (or WMI/COM Objects).[2][3] These work by accessing data 
+        in different data stores, like the filesystem or registry, which are made available to the 
+        PowerShell runtime via Windows PowerShell providers" [1]
+        
+            object pipilining
+                This feature combined with cmdlets is what really gives PowerShell its 'power':
+
+                    "Another concept used by PowerShell is that of a pipeline. Like Unix pipelines, 
+                    PowerShell pipelines are used to compose complex commands, allowing the output of 
+                    one command to be passed as input to another. A pipeline is set up by piping the 
+                    output of one command (or pipeline) to another command, using the | operator. But, 
+                    unlike its Unix counterpart, the PowerShell pipeline is an object pipeline; that is, 
+                    the data passed between cmdlets are fully typed objects, rather than character 
+                    streams. When data is piped as objects, the elements they encapsulate retain their 
+                    structure and types across cmdlets, without the need for any serialization or 
+                    explicit parsing of the stream, as would be the need if only character streams were 
+                    shared. An object can also encapsulate certain functions that work on the contained 
+                    data. These also become available to the recipient command for use. For the last 
+                    cmdlet in a pipeline, PowerShell automatically pipes its output object to the 
+                    Out-Default cmdlet, which transforms the objects into a stream of format objects and 
+                    then renders those to the screen." [1]
+
+            cmdlets
+                this is the central piece of code that allows PowerShell to be flexible
+
+                    Cmdlets are specialized commands in the PowerShell environment that implement 
+                    specific functions. These are the native commands in the PowerShell stack.  
+                    Cmdlets follow a <verb>-<noun> naming pattern, such as Get-ChildItem, helping to 
+                    make them self-descriptive.[18] Cmdlets output their results as objects, or 
+                    collections thereof (including arrays), and can optionally receive input in that 
+                    form, making them suitable for use as recipients in a pipeline. But, whereas 
+                    PowerShell allows arrays and other collections of objects to be written to the 
+                    pipeline, cmdlets always process objects individually. For collections of 
+                    objects, PowerShell invokes the cmdlet on each object in the collection, in 
+                    sequence.
+
+                    Cmdlets are specialized .NET classes, which the PowerShell runtime instantiates 
+                    and invokes when they are run. Cmdlets derive either from Cmdlet or from 
+                    PSCmdlet, the latter being used when the cmdlet needs to interact with the 
+                    PowerShell runtime.[18] These base classes specify certain methods 
+                    - BeginProcessing(), ProcessRecord() and EndProcessing() - one of which the 
+                    cmdlet's implementation overrides to provide the functionality. Whenever a 
+                    cmdlet is run, these methods are invoked by PowerShell in sequence, with 
+                    ProcessRecord() being called if it receives pipeline input.[19] If a collection 
+                    of objects is piped, the method is invoked for each object in the collection. 
+                    The class implementing the Cmdlet must have one .NET attribute - CmdletAttribute 
+                    - which specifies the verb and the noun that make up the name of the cmdlet. 
+                      Common verbs are provided as an enum
+
+                the IPDT project uses the SQLServer provider, which "[makes] data stores addressable 
+                using unique paths" [1] and that is used to give the 'feel' of a filesystem when the 
+                user is exploring database metadata information.
+                
+            executables
+                if a command is an executable program, PowerShell launches it in a separate process
+
+
+    In terms of the user-interface, what 'new' things does IPDT implement?
+
+        It actually doesn't implement nothing new, it relies heavily in PowerShell instead. So they 
+        didn't have to bother with parsing, implementing the pipelining of objects or creating a 
+        runtime suitable for executing scripts.
+
+    What they do have implemented is the following (incomplete) list of cmdlets [2]:
+
+        Sort-Object (sort)
+            
+        Select-Object (select)
+            does a projection over the properties of an object
+
+        Where (where)
+            implements the selection operation on a set of objects based on their fields
+
+        New-Query
+            defines a query through by reading the SQL text inserted by the user
+
+        Get-Query
+            loads one or more queries
+
+        Eval-Query 
+            evaluates a query on a given configuration
+
+        Optimize-Query
+            evaluates a query on a given configuration
+
+        New-Index
+            create an index; it is not materialized
+
+        New-Configuration
+            creates a new configuration
+
+        Refine-Configuration
+            reduces the amount of space that a configuration needs without compromising performance
+
+        Contrast-Configuration
+            contrast lower and upper bounds of queries for best configuration
+
+    They also extended the SQLServer provider so that it is db-tuning-aware:
+
+        Connection
+        
+
+        Table
+            Name
+            Connection
+            Tables
+            Queries
+           /Configurations
+           \Requests
+
+
+What about us?
+
+    The approach we take will be highly influenced by basically two factors:
+    
+        - if the shell is based on a JVM language/library
+
+        - whether or not we choose to implement the object-pipelining, closure and scripting  
+          features that PowerShell has
+
+    JVM vs other
+
+        JVM
+
+            The DBTune Foundation Library is implemented in Java so it's easier if we implement the 
+            shell in a JVM-based language/library.
+            
+        Non-JVM
+            If we do it by using other non-JVM language, we're left with (pretty much) two options:
+
+                - using commons-cli (or alike), implement a CLI program that handles the 
+                  communication between the external program and the DBTune library.  In this                   
+                  scenario we'd need to instantiate a JVM each time that we call the DBTune engine 
+                  and we'd need to have a way of maintaining the engine's state between each run. In 
+                  my experience this is a terrible, painful, time-consuming approach that results in 
+                  having a lot of overhead (this is the way we implemented the Neoview Design 
+                  Advisor Tool at HPLabs; engine is in JVM, front-end in C#)
+
+                - implement a service (web? or define our own protocol?) to communicate between the 
+                  external program and the DBTune engine.
+
+        Since the non-JVM is a no-go, I won't consider it further.
+              
+    Pipelining
+
+        Existing
+
+            One alternative would be to use Pash
+
+                Open source (very incomplete) implementation of PowerShell
+
+                Uses Mono and thus not compatible with JVM-based solutions (see above)
+
+            Other than Pash, there are no other open source shell that implement the same concept of 
+            'object pipelining'
+
+        In-house
+
+            If we want to support object pipelining we're left with only one option: implement our 
+            own shell.
+
+            We'll need to define a grammar and use a parser generator (ANTLR is a nice alternative).  
+            Optionally, we can implement the scripting environment (control structures) and closure 
+            support (lambdas)
+
+    Without pipelining
+
+        Existing
+
+            with shell
+                JRuby
+                Groovy
+                Jython
+                Clojure
+                Scala
+                Rhino
+
+            without shell
+                Commons-CLI
+                Fantom
+
+
+            the main advantage is that we don't need to define a language, that is, no need to 
+            define a grammar, implement its semantics, etc.
+
+            this option is also appealing if we want to support scripting (conditionals, loops, etc) 
+            and closures
+
+        In-house
+
+            See above (Pipelining -> InHouse)
+
+    Language
+
+        Regardless of what we base the implementation on, we'll have two main categories for the 
+        functionality we're providing:
+        
+
+            metadata
+
+                handling of connectivity: connection creation
+
+                metadata retrieval: what databases are available? how many tables does a given database 
+                has? UEC of columns? etc...
+
+                this also needs to take care of handling the definition of new indexes
+
+            workload definition
+
+                load one or more queries
+
+            what-if optimization
+                
+                give a query and obtain its cost
+
+            index extraction
+                
+                give a query, obtain the set of indexes that make sense to create for it in terms of the
+                objects that is using (columns, predicates, etc)
+
+            tuning
+                obtain a configuration for a set of workloads
+                
+
+        Syntax alternatives
+
+            In-house
+            
+                bash-like (similar to IPDT)
+
+                    $> connect -d pg -h host -u user -p pwd -s sch
+
+                    $> ls
+
+                    $> cd db
+
+                    $> ls
+
+                    $> ls tables | sort -desc pages | select -first 5
+
+                    $> CBASE = $(get-configuration -n base)
+
+                    $> Q = $(load-query "select l_tax, l_extendedprice from lineitem where l_suppkey < 5000") 
+
+                    $> eval-query -q $Q -c $CBASE
+
+                    $> echo $Q
+
+                    $> echo $Q.requests
+
+                    $> $I1 = create-index -t lineitem -k l_suppkey -i "l_tax, l_extendedprice"
+
+                    $> $I2 = $I1.reduce(1)
+
+                    $> echo $I1
+
+                    $> echo $I2
+
+                    $> SIMPLEC = $(create-configuration -n simpleC $I1 $I2)
+
+                    $> eval-query -q $Q -c $SIMPLEC
+
+                    $> ls configurations
+
+                    $> compare-configurations -w $Q $CBASE $SIMPLEC
+
+                    $> OQ = $(optimize-query -q $Q -c $SIMPLEC)
+
+                    $> echo $OQ
+
+                    $> W = $(load-query -f /path/to/workload.sql)
+
+                    $> echo $W
+
+                    $> $W | optimize-query -c $CBASE
+
+                    $> MY_CONF = create-configuration $( $W | optimize-query -c $CBASE | sort cost -desc | select -first 3 | { $_.BestIndex } )
+
+                    $> echo $MY_CONF
+
+                    $> refine-configuration $MY_CONF
+
+                    $> echo $MY_CONF
+
+
+                PL/SQL-like
+
+                    $> con CONNECTION := CONNECTION( 'pg', 'host', 'user', 'pwd', 'schema' );
+
+                    $> SELECT databases FROM con;
+
+                    $> db DATABASE := SELECT database FROM con WHERE database = 'db';
+
+                    $> SELECT * FROM ( SELECT tables FROM db ) ORDER BY DESC pages LIMIT 5;
+
+                    $> cBase CONFIGURATION := CONFIGURATION( 'base' );
+
+                    $> q QUERY := QUERY("select l_tax, l_extendedprice from lineitem where l_suppkey < 5000");
+
+                    $> OPTIMIZE_QUERY( q );
+
+                    $> SELECT * FROM q;
+
+                    $> ...
+
+                    $> ...
+
+
+            Existing alternatives
+
+                Scala
+
+                    db metadata
+
+                        $> con = new Connection("pg", "host", "user", "pwd", "schema")
+
+                        $> print(con)
+
+                        $> print(con.databases)
+
+                        $> db = con.databases.filter{"tpch"==} 
+
+                        $> print( db.tables )
+
+                        $> print( db.tables.sortBy( _.pages ) )
+
+                        $> tbl = db.tables.filter{"customer"==}
+
+                        $> idx = new Index( tbl.columns(1), tbl.columns(4) )
+
+                            or
+
+                        $> idx = new Index( tbl, "c_name", "c_phone" )
+
+                    self-tuning
+
+                        $> cbase = new Configuration( db.baseConfiguration )
+
+                        $> q = new Query("select l_tax, l_extendedprice from lineitem where l_suppkey < 5000") 
+
+                        $> Platform.evaluateQuery(q)
+
+                        $> print(q)
+
+                        $> print(q.requests)
+
+                        $> print(q.plan)
+
+                        $> i1 = new Index( db, "lineitem", "l_suppkey", "l_tax,l_extendedprice" )
+
+                        $> i2 = i1.reduce(1)
+
+                        $> print(i1)
+
+                        $> print(i2)
+
+                        $> simpleC = new Configuration( db, new List(i1, i2) )
+
+                        $> Platform.optimizeQuery(q, simpleC)
+
+                        $> print(db.configurations)
+
+                        $> w = new Workload( "/path/to/workload.sql" )
+
+                        $> print(w)
+
+                        $> Platform.OptimizeQuery(w, cBase)
+
+                    
+
+1. Wikipedia contributors, “Windows_PowerShell” in Wikipedia, The Free Encyclopedia. 02 Oct. 2010.  
+   Web. 24 Oct. 2010. http://en.wikipedia.org/wiki/Windows_PowerShell
+
+2. N. Bruno and S. Chaudhuri, “Interactive physical design tuning,” in Data Engineering (ICDE), 
+   2010 IEEE 26th International Conference on, 2010, 1161-1164, 10.1109/ICDE.2010.5447800.
+
+3. Wikipedia contributors. "List of JVM languages." Wikipedia, The Free Encyclopedia. Wikipedia, The 
+   Free Encyclopedia, 16 Oct. 2010. Web. 24 Oct. 2010.   
+   http://en.wikipedia.org/wiki/List_of_JVM_languages
+
+

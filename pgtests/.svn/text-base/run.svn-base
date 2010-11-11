@@ -1,8 +1,0 @@
-#!/bin/bash
-for x in $(cat runlist) ; do
-	if [ "$x" == "EOF" ]; then
-		break
-	else
-		./runone "$x"
-	fi ;
-done
