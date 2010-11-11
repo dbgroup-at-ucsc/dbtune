@@ -1,0 +1,107 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/core/metadata
+END
+DB2Index.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/DB2Index.java
+END
+DB2IndexMetadata.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/core/metadata/DB2IndexMetadata.java
+END
+PGExplainInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/PGExplainInfo.java
+END
+DB2ExplainInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/DB2ExplainInfo.java
+END
+PGIndexColumn.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/PGIndexColumn.java
+END
+DB2IndexColumn.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/DB2IndexColumn.java
+END
+PGTable.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/PGTable.java
+END
+PGIndexSchema.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/PGIndexSchema.java
+END
+AbstractDatabaseIndex.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/AbstractDatabaseIndex.java
+END
+DB2IndexSchema.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/DB2IndexSchema.java
+END
+PGReifiedTypes.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/PGReifiedTypes.java
+END
+package-info.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/package-info.java
+END
+DB2ReifiedTypes.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/DB2ReifiedTypes.java
+END
+PGCommands.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/core/metadata/PGCommands.java
+END
+DB2Commands.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/core/metadata/DB2Commands.java
+END
+DB2QualifiedName.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/DB2QualifiedName.java
+END
+PGIndex.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/dbtune/core/metadata/PGIndex.java
+END

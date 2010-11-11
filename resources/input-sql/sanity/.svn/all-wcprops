@@ -1,0 +1,11 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/dbtune/!svn/ver/14/trunk/resources/input-sql/sanity
+END
+workload.sql
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/dbtune/!svn/ver/14/trunk/resources/input-sql/sanity/workload.sql
+END

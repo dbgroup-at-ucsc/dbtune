@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/dbtune/!svn/ver/6/trunk/pgtests/convergence/wfit_updates
+END
+logfile_automatic_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/dbtune/!svn/ver/6/trunk/pgtests/convergence/wfit_updates/logfile_automatic_40_2000.txt
+END
+candidatePool-online
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/6/trunk/pgtests/convergence/wfit_updates/candidatePool-online
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/6/trunk/pgtests/convergence/wfit_updates/config.sh
+END
+profiledQueries-online
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/dbtune/!svn/ver/6/trunk/pgtests/convergence/wfit_updates/profiledQueries-online
+END
+logfile_automatic_40_2000_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/dbtune/!svn/ver/6/trunk/pgtests/convergence/wfit_updates/logfile_automatic_40_2000_history.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/dbtune/!svn/ver/6/trunk/pgtests/convergence/wfit_updates/postgresql.conf
+END
+logfile_automatic_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/dbtune/!svn/ver/6/trunk/pgtests/convergence/wfit_updates/logfile_automatic_40_2000
+END

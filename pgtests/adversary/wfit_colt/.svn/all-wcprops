@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/wfit_colt
+END
+logfile_automatic_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/wfit_colt/logfile_automatic_40_2000.txt
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/wfit_colt/config.sh
+END
+logfile_automatic_40_2000_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/wfit_colt/logfile_automatic_40_2000_history.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/wfit_colt/postgresql.conf
+END
+logfile_automatic_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/wfit_colt/logfile_automatic_40_2000
+END

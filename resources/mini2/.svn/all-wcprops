@@ -1,0 +1,137 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2
+END
+logfile_bad_40_12345_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_bad_40_12345_history.txt
+END
+profiledQueries-offline
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/profiledQueries-offline
+END
+candidatePool-online
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/candidatePool-online
+END
+logfile_automatic_40_12345
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_automatic_40_12345
+END
+advisor-workload.sql
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/advisor-workload.sql
+END
+logfile_bad_40_12345
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_bad_40_12345
+END
+logfile_good_40_12345_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_good_40_12345_history.txt
+END
+logfile_bad_40_12345.txt
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_bad_40_12345.txt
+END
+minWfValues_40_12345
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/minWfValues_40_12345
+END
+feedback_results.xls
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/feedback_results.xls
+END
+logfile_wfit_40_12345_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_wfit_40_12345_history.txt
+END
+minWfValues_40_12345.txt
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/minWfValues_40_12345.txt
+END
+logfile_opt_40_12345_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_opt_40_12345_history.txt
+END
+logfile_good_40_12345
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_good_40_12345
+END
+profiledQueries-online
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/profiledQueries-online
+END
+candidatePool-offline
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/candidatePool-offline
+END
+logfile_good_40_12345.txt
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_good_40_12345.txt
+END
+logfile_wfit_40_12345
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_wfit_40_12345
+END
+workload.sql
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/workload.sql
+END
+logfile_wfit_40_12345.txt
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_wfit_40_12345.txt
+END
+logfile_opt_40_12345
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_opt_40_12345
+END
+logfile_opt_40_12345.txt
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/dbtune/!svn/ver/14/trunk/resources/mini2/logfile_opt_40_12345.txt
+END

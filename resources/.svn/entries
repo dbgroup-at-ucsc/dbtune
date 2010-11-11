@@ -1,0 +1,98 @@
+10
+
+dir
+49
+http://gforge.soe.ucsc.edu/svn/dbtune/trunk/resources
+http://gforge.soe.ucsc.edu/svn/dbtune
+
+
+
+2010-09-24T17:25:03.397250Z
+14
+hsanchez
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+aa23a523-b258-4256-9f8c-01b3797eb6e3
+
+interactions-select
+dir
+
+select
+dir
+
+.DS_Store
+file
+
+
+
+
+2010-09-24T17:30:41.000000Z
+7041ef6f9b31e23600e475ac70b1709a
+2010-09-24T17:25:03.397250Z
+14
+hsanchez
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6148
+
+basic
+dir
+
+interactions
+dir
+
+update
+dir
+
+update2
+dir
+
+interactions-updates
+dir
+
+automatic
+dir
+
+interactions-simple
+dir
+
+input-sql
+dir
+
+mini
+dir
+
+mini2
+dir
+

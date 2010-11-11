@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/dbtune/!svn/ver/49/trunk/src/edu/ucsc/dbtune/spi/core
+END
+Parameter.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/spi/core/Parameter.java
+END
+Commands.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/49/trunk/src/edu/ucsc/dbtune/spi/core/Commands.java
+END
+Supplier.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/spi/core/Supplier.java
+END
+Parameters.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/dbtune/!svn/ver/49/trunk/src/edu/ucsc/dbtune/spi/core/Parameters.java
+END
+Command.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/spi/core/Command.java
+END

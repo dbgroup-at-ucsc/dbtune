@@ -1,0 +1,88 @@
+10
+
+dir
+49
+http://gforge.soe.ucsc.edu/svn/dbtune/trunk/pgtests/phase_length
+http://gforge.soe.ucsc.edu/svn/dbtune
+
+
+
+2010-09-24T17:21:08.400140Z
+7
+hsanchez
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+aa23a523-b258-4256-9f8c-01b3797eb6e3
+
+colt_100
+dir
+
+opt_100
+dir
+
+colt_200
+dir
+
+opt_200
+dir
+
+colt_400
+dir
+
+opt_400
+dir
+
+bc_50
+dir
+
+wfit_100
+dir
+
+wfit_200
+dir
+
+normal_50
+dir
+
+wfit_400
+dir
+
+bc_100
+dir
+
+colt_50
+dir
+
+bc_200
+dir
+
+opt_50
+dir
+
+bc_400
+dir
+
+normal_100
+dir
+
+normal_200
+dir
+
+normal_400
+dir
+
+wfit_50
+dir
+

@@ -1,0 +1,58 @@
+10
+
+dir
+49
+http://gforge.soe.ucsc.edu/svn/dbtune/trunk/pgtests/convergence
+http://gforge.soe.ucsc.edu/svn/dbtune
+
+
+
+2010-09-24T17:20:53.093817Z
+6
+hsanchez
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+aa23a523-b258-4256-9f8c-01b3797eb6e3
+
+opt_queries
+dir
+
+bc_queries
+dir
+
+normal_queries
+dir
+
+colt_updates
+dir
+
+wfit_queries
+dir
+
+opt_updates
+dir
+
+bc_updates
+dir
+
+normal_updates
+dir
+
+colt_queries
+dir
+
+wfit_updates
+dir
+

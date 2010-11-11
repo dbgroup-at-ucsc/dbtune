@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/bc_4
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/bc_4/config.sh
+END
+totwork.txt
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/bc_4/totwork.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/bc_4/postgresql.conf
+END

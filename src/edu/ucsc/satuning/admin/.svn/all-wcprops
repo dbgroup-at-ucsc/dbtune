@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/admin
+END
+Overheads.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/admin/Overheads.java
+END
+InstantAdmin.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/admin/InstantAdmin.java
+END
+SlowAdmin.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/admin/SlowAdmin.java
+END
+BadAdmin.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/admin/BadAdmin.java
+END
+WorkloadRunner.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/admin/WorkloadRunner.java
+END
+GoodAdmin.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/admin/GoodAdmin.java
+END

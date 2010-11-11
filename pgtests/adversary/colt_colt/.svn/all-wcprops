@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/colt_colt
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/colt_colt/config.sh
+END
+totwork.txt
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/colt_colt/totwork.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/colt_colt/postgresql.conf
+END

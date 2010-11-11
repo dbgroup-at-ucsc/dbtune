@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/dbtune/!svn/ver/8/trunk/pgtests/update_mix/normal_simple
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/8/trunk/pgtests/update_mix/normal_simple/config.sh
+END
+totwork.txt
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/dbtune/!svn/ver/8/trunk/pgtests/update_mix/normal_simple/totwork.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/dbtune/!svn/ver/8/trunk/pgtests/update_mix/normal_simple/postgresql.conf
+END

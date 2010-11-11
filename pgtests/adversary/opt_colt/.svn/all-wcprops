@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/config.sh
+END
+logfile_wfit_40_2000_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/logfile_wfit_40_2000_history.txt
+END
+minWfValues_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/minWfValues_40_2000
+END
+logfile_opt_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/logfile_opt_40_2000
+END
+minWfValues_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/minWfValues_40_2000.txt
+END
+logfile_opt_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/logfile_opt_40_2000.txt
+END
+logfile_wfit_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/logfile_wfit_40_2000
+END
+logfile_opt_40_2000_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/logfile_opt_40_2000_history.txt
+END
+logfile_wfit_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/logfile_wfit_40_2000.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/5/trunk/pgtests/adversary/opt_colt/postgresql.conf
+END

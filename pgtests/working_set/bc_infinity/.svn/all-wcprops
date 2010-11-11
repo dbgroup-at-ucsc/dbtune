@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/bc_infinity
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/bc_infinity/config.sh
+END
+totwork.txt
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/bc_infinity/totwork.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/bc_infinity/postgresql.conf
+END

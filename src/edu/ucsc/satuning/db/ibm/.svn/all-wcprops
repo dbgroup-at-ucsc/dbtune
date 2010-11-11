@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm
+END
+DB2Portal.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/DB2Portal.java
+END
+Advisor.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/Advisor.java
+END
+DB2IndexSchema.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/DB2IndexSchema.java
+END
+AdvisorException.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/AdvisorException.java
+END
+DB2Index.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/DB2Index.java
+END
+DB2IndexMetadata.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/DB2IndexMetadata.java
+END
+DB2Commands.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/DB2Commands.java
+END
+QualifiedName.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/QualifiedName.java
+END
+DB2ReifiedTypes.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/DB2ReifiedTypes.java
+END
+DB2IndexColumn.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/DB2IndexColumn.java
+END
+DB2Connection.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/DB2Connection.java
+END
+DB2ExplainInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ibm/DB2ExplainInfo.java
+END

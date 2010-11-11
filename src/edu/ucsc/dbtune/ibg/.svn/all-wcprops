@@ -1,0 +1,113 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg
+END
+InteractionBank.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/InteractionBank.java
+END
+IBGMonotonicEnforcer.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IBGMonotonicEnforcer.java
+END
+IBGPrinter.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IBGPrinter.java
+END
+IBGBestBenefitFinder.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IBGBestBenefitFinder.java
+END
+IndexBenefitGraph.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IndexBenefitGraph.java
+END
+InteractionLogger.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/InteractionLogger.java
+END
+IBGAnalyzerWorkspace.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IBGAnalyzerWorkspace.java
+END
+IBGCoveringNodeFinder.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IBGCoveringNodeFinder.java
+END
+IBGNodeQueue.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IBGNodeQueue.java
+END
+ThreadIBGAnalysis.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/ThreadIBGAnalysis.java
+END
+CandidatePool.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/CandidatePool.java
+END
+IBGNodeStack.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IBGNodeStack.java
+END
+IBGNodeFinder.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IBGNodeFinder.java
+END
+ThreadIBGConstruction.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/ThreadIBGConstruction.java
+END
+package-info.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/package-info.java
+END
+IBGAnalyzer.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IBGAnalyzer.java
+END
+RunnableState.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/RunnableState.java
+END
+IndexBenefitGraphConstructor.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/ibg/IndexBenefitGraphConstructor.java
+END

@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/core/optimizers
+END
+WhatIfOptimizationCostBuilder.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/core/optimizers/WhatIfOptimizationCostBuilder.java
+END
+WhatIfOptimizationBuilder.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/core/optimizers/WhatIfOptimizationBuilder.java
+END
+package-inf.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/48/trunk/src/edu/ucsc/dbtune/core/optimizers/package-inf.java
+END

@@ -1,0 +1,89 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg
+END
+IBGNodeFinder.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg/IBGNodeFinder.java
+END
+IBGBestBenefitFinder.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg/IBGBestBenefitFinder.java
+END
+ThreadIBGConstruction.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg/ThreadIBGConstruction.java
+END
+IBGPrinter.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg/IBGPrinter.java
+END
+IndexBenefitGraph.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/dbtune/!svn/ver/2/trunk/src/edu/ucsc/satuning/ibg/IndexBenefitGraph.java
+END
+IBGAnalyzerWorkspace.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg/IBGAnalyzerWorkspace.java
+END
+IBGAnalyzer.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg/IBGAnalyzer.java
+END
+RunnableState.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg/RunnableState.java
+END
+IBGMonotonicEnforcer.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/dbtune/!svn/ver/2/trunk/src/edu/ucsc/satuning/ibg/IBGMonotonicEnforcer.java
+END
+IBGCoveringNodeFinder.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg/IBGCoveringNodeFinder.java
+END
+IBGNodeQueue.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/2/trunk/src/edu/ucsc/satuning/ibg/IBGNodeQueue.java
+END
+IndexBenefitGraphConstructor.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/ibg/IndexBenefitGraphConstructor.java
+END
+ThreadIBGAnalysis.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/dbtune/!svn/ver/39/trunk/src/edu/ucsc/satuning/ibg/ThreadIBGAnalysis.java
+END
+IBGNodeStack.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/2/trunk/src/edu/ucsc/satuning/ibg/IBGNodeStack.java
+END

@@ -1,0 +1,185 @@
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db
+END
+AbstractDatabaseIndexExtractor.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/AbstractDatabaseIndexExtractor.java
+END
+DBIndexSet.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DBIndexSet.java
+END
+DatabaseIndexColumn.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseIndexColumn.java
+END
+DatabaseIndexExtractor.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseIndexExtractor.java
+END
+WhatIfOptimizationBuilder.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/WhatIfOptimizationBuilder.java
+END
+WhatIfOptimizationBuilderImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/WhatIfOptimizationBuilderImpl.java
+END
+DBPortal.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DBPortal.java
+END
+ExplainInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/ExplainInfo.java
+END
+AbstractExplainInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/AbstractExplainInfo.java
+END
+CostOfLevel.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/CostOfLevel.java
+END
+WhatIfOptimizationCostBuilder.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/WhatIfOptimizationCostBuilder.java
+END
+DatabaseIndexExtractorFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseIndexExtractorFactory.java
+END
+AbstractDatabaseConnection.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/AbstractDatabaseConnection.java
+END
+DatabaseSession.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseSession.java
+END
+DefaultDatabaseConnection.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DefaultDatabaseConnection.java
+END
+AbstractDatabaseSession.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/AbstractDatabaseSession.java
+END
+DatabaseConnection.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseConnection.java
+END
+DatabaseWhatIfOptimizer.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseWhatIfOptimizer.java
+END
+JdbcDatabaseConnectionManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/JdbcDatabaseConnectionManager.java
+END
+DatabaseIndexSchema.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseIndexSchema.java
+END
+AbstractDatabaseWhatIfOptimizer.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/AbstractDatabaseWhatIfOptimizer.java
+END
+AbstractDatabaseIndex.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/AbstractDatabaseIndex.java
+END
+DBIndex.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DBIndex.java
+END
+DatabaseConnectionManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseConnectionManager.java
+END
+DatabaseTable.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseTable.java
+END
+Platform.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/Platform.java
+END
+AbstractDatabaseConnectionManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/AbstractDatabaseConnectionManager.java
+END
+DatabaseWhatIfOptimizerFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/DatabaseWhatIfOptimizerFactory.java
+END
+JdbcConnectionFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/JdbcConnectionFactory.java
+END
+JdbcConnectionFactoryImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/dbtune/!svn/ver/36/trunk/src/edu/ucsc/satuning/db/JdbcConnectionFactoryImpl.java
+END

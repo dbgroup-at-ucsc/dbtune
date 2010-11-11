@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/dbtune/!svn/ver/14/trunk/resources/mini
+END
+advisor-workload.sql
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/dbtune/!svn/ver/14/trunk/resources/mini/advisor-workload.sql
+END
+workload.sql
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/dbtune/!svn/ver/14/trunk/resources/mini/workload.sql
+END

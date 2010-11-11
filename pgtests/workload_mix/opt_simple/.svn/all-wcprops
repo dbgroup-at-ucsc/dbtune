@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/config.sh
+END
+logfile_wfit_40_2000_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/logfile_wfit_40_2000_history.txt
+END
+minWfValues_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/minWfValues_40_2000
+END
+logfile_opt_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/logfile_opt_40_2000
+END
+minWfValues_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/minWfValues_40_2000.txt
+END
+logfile_opt_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/logfile_opt_40_2000.txt
+END
+logfile_wfit_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/logfile_wfit_40_2000
+END
+logfile_opt_40_2000_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/logfile_opt_40_2000_history.txt
+END
+logfile_wfit_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/logfile_wfit_40_2000.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/opt_simple/postgresql.conf
+END

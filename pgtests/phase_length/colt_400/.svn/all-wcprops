@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/dbtune/!svn/ver/7/trunk/pgtests/phase_length/colt_400
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/dbtune/!svn/ver/7/trunk/pgtests/phase_length/colt_400/config.sh
+END
+totwork.txt
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/dbtune/!svn/ver/7/trunk/pgtests/phase_length/colt_400/totwork.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/dbtune/!svn/ver/7/trunk/pgtests/phase_length/colt_400/postgresql.conf
+END

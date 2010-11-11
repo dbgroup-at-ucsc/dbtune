@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/wfit_moderate
+END
+logfile_automatic_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/wfit_moderate/logfile_automatic_40_2000.txt
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/wfit_moderate/config.sh
+END
+logfile_automatic_40_2000_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/wfit_moderate/logfile_automatic_40_2000_history.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/wfit_moderate/postgresql.conf
+END
+logfile_automatic_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/dbtune/!svn/ver/10/trunk/pgtests/workload_mix/wfit_moderate/logfile_automatic_40_2000
+END

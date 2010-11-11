@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/dbtune/!svn/ver/2/trunk/extensions/Console
+END
+Console.iml
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/dbtune/!svn/ver/2/trunk/extensions/Console/Console.iml
+END
+build.properties
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/dbtune/!svn/ver/2/trunk/extensions/Console/build.properties
+END
+build.xml
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/dbtune/!svn/ver/2/trunk/extensions/Console/build.xml
+END

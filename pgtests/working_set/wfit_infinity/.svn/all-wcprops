@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/wfit_infinity
+END
+logfile_automatic_40_2000.txt
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/wfit_infinity/logfile_automatic_40_2000.txt
+END
+config.sh
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/wfit_infinity/config.sh
+END
+logfile_automatic_40_2000_history.txt
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/wfit_infinity/logfile_automatic_40_2000_history.txt
+END
+postgresql.conf
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/wfit_infinity/postgresql.conf
+END
+logfile_automatic_40_2000
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/dbtune/!svn/ver/9/trunk/pgtests/working_set/wfit_infinity/logfile_automatic_40_2000
+END
