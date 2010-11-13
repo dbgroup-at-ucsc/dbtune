@@ -1,76 +1,63 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-	<title>dbgroup-at-ucsc/dbtune @ GitHub</title>
-	
-	<style type="text/css">
-		body {
-  		margin-top: 1.0em;
-  		background-color: #f1f6cf;
-		  font-family: "Helvetica,Arial,FreeSans";
-  		color: #000000;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-		h1 { font-size: 3.8em; color: #0e0930; margin-bottom: 3px; }
-		h1 .small { font-size: 0.4em; }
-		h1 a { text-decoration: none }
-		h2 { font-size: 1.5em; color: #0e0930; }
-    h3 { text-align: center; color: #0e0930; }
-    a { color: #0e0930; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-		pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-	</style>
-	
-</head>
-
-<body>
-  <a href="http://github.com/dbgroup-at-ucsc/dbtune"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
-
-  <div id="container">
-
-    <div class="download">
-      <a href="http://github.com/dbgroup-at-ucsc/dbtune/zipball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/dbgroup-at-ucsc/dbtune/tarball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
-    </div>
-
-    <h1><a href="http://github.com/dbgroup-at-ucsc/dbtune">Automatic Index Tuning</a>
-      <span class="small">by <a href="http://github.com/dbgroup-at-ucsc">dbgroup-at-ucsc</a></span></h1>
-
-    <div class="description">
-      This research project aims to develop tools in order to make index tuning easier and more effective.
-    </div>
-
-    
-
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="http://github.com/dbgroup-at-ucsc/dbtune/zipball/master">zip</a> or
-      <a href="http://github.com/dbgroup-at-ucsc/dbtune/tarball/master">tar</a> formats.
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/dbgroup-at-ucsc/dbtune</pre>
-    </p>
-
-    <div class="footer">
-      get the source code on GitHub : <a href="http://github.com/dbgroup-at-ucsc/dbtune">dbgroup-at-ucsc/dbtune</a>
-    </div>
-
-  </div>
-
+<html> 
+<title>Automated Index Tuning</title> 
+<body id="index_tuning" onload=""> 
+  <h1 id="automated_index_tuning">Automated Index Tuning</h1> 
   
-</body>
+<p> 
+  A database management system provides an excellent means to organize a 
+  large amount of data and access it quickly. In some cases, it is only 
+  possible to maintain acceptable performance if an expert system 
+  administrator spends time <em>tuning</em> the system, i.e., 
+  selecting features and configuring parameters in a way that improves
+  the overall system performance. A crucial step in the tuning process is
+  the selection of <em>indexes</em> that allow important portions of the 
+  data to be found quickly. Index selection is often a hard problem,
+  requiring extensive knowledge of the database system's internals
+  and the applications that access the database. 
+  
+<p> 
+  This research project aims to develop tools in order to make index tuning easier and more effective. Our work has focused on <em>online</em> techniques that monitor the actual queries submitted to the system and automatically choose indexes that are expected to improve the performance of the current workload. The techniques that we have developed have been integrated in the PostgreSQL database management system. 
+  
+<p> 
+  The project is funded by a grant from the Los Alamos National Laboratories, by NSF award <a href="http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=1018914">IIS-1018914</a> and in part by an IBM Faculty Development award. 
+  
+  <h2>People</h2> 
+  <ul> 
+    <li><a href="http://www.soe.ucsc.edu/people/ivo">Ivo Jimenez</a></li> 
+    <li><a href="http://users.soe.ucsc.edu/~jlefevre/">Jeff Lefevre</a> </li> 
+    <li><a href="http://www.cs.ucsc.edu/~alkis">Neoklis Polyzotis</a> (PI)</li> 
+    <li><a href="http://www.hsanchez.net/">Huascar Sanchez</a>  </li> 
+  </ul> 
+  <h2>External Collaborators</h2> 
+  <ul> 
+    <li><a href="http://www.cs.toronto.edu/~consens/">Mariano Consens</a> -- Univ. of Toronto</li> 
+  </ul> 
+  <h2>Past Collaborators</h2> 
+  <ul> 
+    <li><a href="http://www-rocq.inria.fr/~abitebou/">Serge Abiteboul</a> -- INRIA, France (External Collaborator)</li> 
+    <li><a href="http://www.cs.umd.edu/~getoor/">Lise Getoor</a> -- Univ. of Maryland, USA (External Collaborator)</li> 
+    <li><a href="http://www.math.tau.ac.il/~milo/">Tova Milo</a> -- Univ. of Tel Aviv, Israel (External Collaborator)</li> 
+    <li><a href="http://www.cs.ucsc.edu/~karlsch">Karl Schnaitter</a> -- Aster Data Systems</li> 
+  </ul> 
+  
+  <h2>Papers</h2> 
+  <ol> 
+    <li> 
+      Ioannis Alagiannis, Debabrata Dash, Karl Schnaitter, Anastasia Ailamaki, Neoklis Polyzotis, <a href="">"<em>An automated, yet interactive and portable DB designer</em></a>", In SIGMOD (Demonstration Track), pp. 1183-1186, 2010.
+    </li> 
+    <li>Karl Schnaitter, Neoklis Polyzotis, <a href="http://arxiv.org/abs/1004.1249">"<em>Semi-Automatic Index Tuning: Keeping DBAs in the Loop</em>"</a>, CoRR abs/1004.1249, 2010.
+   	<li> 
+                K. Schnaitter, N. Polyzotis, and L. Getoor, "<i><a href="../papers/PAPER582.pdf">Index Interactions in Physical Design Tuning: Modeling, Analysis, and Applications</a></i>", In Proceedings of the VLDB Endowment, 2(1), 2009, pp. 1234-1245.
+    </li> 
+   	<li> 
+                K. Schnaitter and N. Polyzotis, "<i><a href="../papers/benchmark.pdf">A Benchmark for Online Index Selection</a></i>", In ICDE 2009, pp. 1701-1708.
+    </li> 
+    <li>Karl Schnaitter, Serge Abiteboul, Tova Milo, Neoklis Polyzotis, <a href="../papers/colt-smdb07.pdf">"<em>On-Line Index Selection for Shifting Workloads</em>"</a>, In ICDE Workshops, pp. 459-468, 2007 
+      (<a href="colt.ppt">Slides</a>)
+    </li> 
+    <li> 
+      Karl Schnaitter, Serge Abiteboul, Tova Milo, Neoklis Polyzotis, <a href="../papers/colt-demo.pdf">"<em>COLT: continuous on-line tuning</em>"</a>, in ACM SIGMOD (Demonstration Track), pp. 793-795, 2006. (<a href="colt_demo.ppt">Slides</a>)
+    </li> 
+  </ol> 
+</body> 
 </html>
