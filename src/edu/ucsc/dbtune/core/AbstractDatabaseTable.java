@@ -16,11 +16,63 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.GenericDatabaseTable;
-import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
-public class PGTable extends GenericDatabaseTable {
+/**
+ * Represents metadata for table contained in a DBMS.
+ */
+public abstract class AbstractDatabaseTable implements DatabaseTable
+{
+    private static final long serialVersionUID = 1L;
+    private final int oid;
+
+    private String name;
+    // private List<DatabaseColumn> columns;
+
+    public AbstractDatabaseTable( String name )
+    {
+	this.name = name;
+	this.oid  = 0;
+    }
+
+    /**
+     *
+     * @param o
+     */
+    AbstractDatabaseTable(int o) 
+    {
+	oid = o;
+    }
+
+    @Override
+    public boolean equals(Object other)
+    {
+	return other instanceof AbstractDatabaseTable
+	    && ((AbstractDatabaseTable) other).getOid() == getOid();
+    }
+
+    /**
+     *
+     * @return
+     */
+    public int getOid()
+    {
+	return oid;
+    }
+
+    @Override
+    public int hashCode()
+    {
+	return 34 * getOid();
+    }
+
+    @Override
+    public String toString() 
+    {
+	return new ToStringBuilder<AbstractDatabaseTable>(this)
+	    .add("oid", getOid())
+	    .toString();
+    }
 }

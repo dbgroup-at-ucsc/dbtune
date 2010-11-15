@@ -26,7 +26,7 @@ import java.io.Serializable;
  * {@link Object#toString()} methods.
  */
 public interface DatabaseTable extends Serializable {
-	@Override
+    @Override
     boolean equals(Object other);
 
     @Override
