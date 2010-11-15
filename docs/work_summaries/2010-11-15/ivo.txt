@@ -7,8 +7,9 @@
     phd.dbtune 11/04/2010  create sample usage case for the 'generics aren't needed' argument
 
 next week:
-    - write tests for Schema class
-    - implement Column, Configuration
+    - write tests for Schema class (to test JDBC DatabaseMetaData stuff)
+    - try Schema class on scala shell
+    - implement Column, Index and Configuration 
     - add issue and corresponding tasks for implementing UI functionality in CLI package
     - move pg++ out of my /home/ivo/ folder at aigaion (put it in /opt/)
     - make pg++ start automatically when aigaion boots
