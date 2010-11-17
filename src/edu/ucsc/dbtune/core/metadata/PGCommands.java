@@ -26,6 +26,7 @@ import edu.ucsc.dbtune.spi.core.Commands;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
 import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.PreConditions;
 
@@ -246,11 +247,18 @@ public class PGCommands {
                     }
                 }
 
-                final double[] castCost = new double[maintCost.length];
-                for(int i = 0; i < maintCost.length; i++){
-                    castCost[i] = maintCost[i];
+                // todo(huascar) try to come up with a better way to handle this 
+                final List<Double> allNonZeroCost = Instances.newList();
+                for (final Double eachCost : maintCost) {
+                    if (eachCost != null) {
+                        allNonZeroCost.add(eachCost);
+                    }
                 }
 
+                final double[] castCost = new double[allNonZeroCost.size()];
+                for(int i = 0; i < allNonZeroCost.size(); i++){
+                    castCost[i] = allNonZeroCost.get(i);
+                }
                 return new PGExplainInfo(
                         category,
                         castCost

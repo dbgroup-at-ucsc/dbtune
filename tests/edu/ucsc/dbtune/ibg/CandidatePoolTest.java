@@ -17,7 +17,7 @@
  */
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.core.TestMocks;
+import edu.ucsc.dbtune.core.DBTuneInstances;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.Test;
@@ -50,8 +50,8 @@ public class CandidatePoolTest {
 
     private static Iterable<PGIndex> populate() throws Exception {
         final List<PGIndex> indexes = Instances.newList();
-        indexes.add(TestMocks.makePGIndex(true, 1238765, 987));
-        indexes.add(TestMocks.makePGIndex(false, 12765, 97));
+        indexes.add(DBTuneInstances.newPGIndex(true, 1238765, 987));
+        indexes.add(DBTuneInstances.newPGIndex(false, 12765, 97));
         return indexes;
     }
 
@@ -59,8 +59,8 @@ public class CandidatePoolTest {
     public void testIndexInSnapshot() throws Exception {
         final CandidatePool<PGIndex> pool = new CandidatePool<PGIndex>();
         pool.addIndexes(populate());
-        final PGIndex indexToBeFound1 = TestMocks.makePGIndex(false, 12765, 97);
-        final PGIndex indexToBeFound2 = TestMocks.makePGIndex(true, 1238765, 987);
+        final PGIndex indexToBeFound1 = DBTuneInstances.newPGIndex(false, 12765, 97);
+        final PGIndex indexToBeFound2 = DBTuneInstances.newPGIndex(true, 1238765, 987);
         assertTrue("index is in pool", pool.contains(indexToBeFound1));
         assertTrue("index is in pool", pool.contains(indexToBeFound2));
     }

@@ -219,7 +219,7 @@ public class Platform {
                     configuration,
                     sql,
                     configuration.cardinality(),
-                    new Double[]{0.0}
+                    new Double[indexSet.size()]
             );
         }
 
