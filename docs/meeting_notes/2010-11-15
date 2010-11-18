@@ -1,0 +1,33 @@
+Agenda:
+ *   GitHub
+ *   Java Generics for Foundation classes
+
+
+GitHub
+ *   from now on, we're using GitHub entirely
+ *   a quick Git guide for SVN users should be added to the Wiki
+ *   the ownership of the dbgroup-at-ucsc account (organization in github's lingo) should be assigned to DBGroup's Faculty
+ *   the 'fork' feature of GitHub is useful for code-reviews but for not for documentation (papers,thesis,etc). For now, we'll use branches until Huascar investigates more about the fork
+ *   for build automation, Huascar suggested TeamCity as a good alternative. If we can set it up easily on aigaion's, we should use it
+ *   the doc folder will be replaced by the Wiki. The dbtune project hierarchy looks like:
+
+        (organization)        dbgroup-at-ucsc 
+                                    |
+                                    |
+                                    |
+          (project)               dbtune
+                                 /  |   \
+                                /   |    \
+                               /    |     \
+        (git-repository)    src    wiki   pages
+
+
+ *   *   the wiki repository will contain all the documentation for the project, this means that meeting minutes, reading club overview's, etc. will have to be moved there as well as the content of GForge's wiki.
+ *   *   source code resides in the master branch
+ *   *   pages are a repository by itself. By the use of some git tricks, GitHub allows to have the pages repository as a branch of the primary repository (the branch is called gh-pages)
+
+Java generics for DBTune foundation classes
+ *   From the point of view of the API implementation, the use of 'recursively bounded types' is a nice thing since it forces typing errors to show up at compilation time instead of at runtime.
+ *   From the point of view of an API user, the above limits the usage of the API in generic scenarios (like the CLI or Jeff's divergent indexes)
+ *   We all agreed on having a mirroring of recursively-bounded types' of foundation classes to non-generic classes. Huascar will investigate how this scenario affects in the future, if having this mirroring means that for each new class in the API another one needs to be created, then we won't go with this option.
+
