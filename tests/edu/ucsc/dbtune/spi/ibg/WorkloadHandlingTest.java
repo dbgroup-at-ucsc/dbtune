@@ -17,12 +17,13 @@
  */
 package edu.ucsc.dbtune.spi.ibg;
 
+import edu.ucsc.dbtune.core.DBTuneInstances;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.DatabaseConnectionManager;
 import edu.ucsc.dbtune.core.JdbcConnectionFactory;
 import edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager;
-import edu.ucsc.dbtune.core.TestMocks;
+import edu.ucsc.dbtune.core.JdbcMocks;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
@@ -36,8 +37,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static edu.ucsc.dbtune.core.TestMocks.makeMockPreparedStatement;
-import static edu.ucsc.dbtune.core.TestMocks.makeMockStatement;
+import static edu.ucsc.dbtune.core.JdbcMocks.makeMockPreparedStatement;
+import static edu.ucsc.dbtune.core.JdbcMocks.makeMockStatement;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -69,7 +70,7 @@ public class WorkloadHandlingTest {
         final AtomicBoolean               doneWithConstruction  = new AtomicBoolean(false);
         final DatabaseConnection<PGIndex> connection            = connectionManager.connect();
         final CandidatePool<PGIndex>      pool                  = new CandidatePool<PGIndex>(){{
-            addIndex(TestMocks.makePGIndex(1234567890));
+            addIndex(DBTuneInstances.newPGIndex(1234567890));
         }};
         final ThreadIBGAnalysis analysisPhase         = new ThreadIBGAnalysis(){
             @Override
@@ -101,7 +102,7 @@ public class WorkloadHandlingTest {
     public void testProcessQuery() throws Exception {
         final DatabaseConnection<PGIndex> connection            = connectionManager.connect();
         final CandidatePool<PGIndex>      pool                  = new CandidatePool<PGIndex>(){{
-            addIndex(TestMocks.makePGIndex(1234567890));
+            addIndex(DBTuneInstances.newPGIndex(1234567890));
         }};
         final WorkloadProfiler<PGIndex>   profiler              = makeWorkloadProfiler(
                 connection,
@@ -120,7 +121,7 @@ public class WorkloadHandlingTest {
     public void testAddCandidateFunctionality() throws Exception {
         final DatabaseConnection<PGIndex> connection            = connectionManager.connect();
         final CandidatePool<PGIndex>      pool                  = new CandidatePool<PGIndex>(){{
-            addIndex(TestMocks.makePGIndex(1234567890));
+            addIndex(DBTuneInstances.newPGIndex(1234567890));
         }};
         final WorkloadProfiler<PGIndex>   profiler              = makeWorkloadProfiler(
                 connection,
@@ -129,7 +130,7 @@ public class WorkloadHandlingTest {
                 new ThreadIBGConstruction(){public void run(){} public void waitUntilDone(){}}
         );
 
-        final CandidatePool.Snapshot<PGIndex> s = profiler.addCandidate(TestMocks.makePGIndex(9876543, 653434));
+        final CandidatePool.Snapshot<PGIndex> s = profiler.addCandidate(DBTuneInstances.newPGIndex(9876543, 653434));
         assertNotNull(s);
         //todo(Huascar) confirm this later.
         assertNotNull(s.findIndexId(1));
@@ -139,7 +140,7 @@ public class WorkloadHandlingTest {
     public void testCastingVotes() throws Exception {
         final DatabaseConnection<PGIndex> connection            = connectionManager.connect();
         final CandidatePool<PGIndex>      pool                  = new CandidatePool<PGIndex>(){{
-            addIndex(TestMocks.makePGIndex(1234567890));
+            addIndex(DBTuneInstances.newPGIndex(1234567890));
         }};
         final WorkloadProfiler<PGIndex>   profiler              = makeWorkloadProfiler(
                 connection,
@@ -148,7 +149,7 @@ public class WorkloadHandlingTest {
                 new ThreadIBGConstruction(){public void run(){} public void waitUntilDone(){}}
         );
 
-        final CandidatePool.Snapshot<PGIndex> s = profiler.processVote(TestMocks.makePGIndex(1234567890), true);
+        final CandidatePool.Snapshot<PGIndex> s = profiler.processVote(DBTuneInstances.newPGIndex(1234567890), true);
         assertNotNull(s);
         System.out.println(s);
         //todo(Huascar) confirm if this is the right result.
@@ -179,7 +180,7 @@ public class WorkloadHandlingTest {
         return new JdbcConnectionFactory(){
             @Override
             public Connection makeConnection(String url, String driverClass, String username, String password, boolean autoCommit) throws SQLException {
-                final TestMocks.MockConnection conn = new TestMocks.MockConnection();
+                final JdbcMocks.MockConnection conn = new JdbcMocks.MockConnection();
                 conn.register(
                         makeMockStatement(true, true, conn),
                         makeMockPreparedStatement(true, true, conn)

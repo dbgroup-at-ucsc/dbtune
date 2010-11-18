@@ -17,8 +17,8 @@
  */
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.core.DBTuneInstances;
 import edu.ucsc.dbtune.core.SQLStatement;
-import edu.ucsc.dbtune.core.TestMocks;
 import edu.ucsc.dbtune.core.metadata.PGExplainInfo;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
@@ -94,8 +94,8 @@ public class StatisticsFunctionTest {
 
     private static InteractionBank makeInteractionBank() throws Exception {
         final CandidatePool<PGIndex> candidatePool = new CandidatePool<PGIndex>();
-        candidatePool.addIndex(TestMocks.makePGIndex(4567, 987123456));
-        candidatePool.addIndex(TestMocks.makePGIndex(7654, 4567932));
+        candidatePool.addIndex(DBTuneInstances.newPGIndex(4567, 987123456));
+        candidatePool.addIndex(DBTuneInstances.newPGIndex(7654, 4567932));
         final InteractionBank bank = new InteractionBank(candidatePool.getSnapshot());
         bank.assignInteraction(0, 1, 11.0);
         return bank;
@@ -104,7 +104,7 @@ public class StatisticsFunctionTest {
     private static DynamicIndexSet<PGIndex> makeDynamicIndexSet(final List<PGIndex> callback, final int... ids) throws Exception {
         return new DynamicIndexSet<PGIndex>(){{
             for(int id : ids){
-                final PGIndex local = TestMocks.makePGIndex(id+id, id);
+                final PGIndex local = DBTuneInstances.newPGIndex(id+id, id);
                 callback.add(local);
                 add(local);
             }

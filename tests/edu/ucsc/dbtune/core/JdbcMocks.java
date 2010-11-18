@@ -17,16 +17,8 @@
  */
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.DB2Index;
-import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
-import edu.ucsc.dbtune.core.metadata.DB2IndexSchema;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.metadata.PGIndexSchema;
-import edu.ucsc.dbtune.util.Instances;
-
 import java.io.InputStream;
 import java.io.Reader;
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
@@ -52,26 +44,18 @@ import java.sql.Statement;
 import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class TestMocks {
-    private static final String DB_NAME = "superDB";
-    private static final String SCHEMA_NAME = "superSchema";
-    private static final String TABLE_NAME = "lalalalalalala";
-    private static final String TABLE_CREATOR = "123";
-
-
-    private TestMocks(){}
+public class JdbcMocks {
+    private JdbcMocks(){}
+      
 
     public static Statement makeMockStatement(boolean next, boolean withCounterForGetInt, Connection connection){
         final MockStatement statement = new MockStatement(new MockResultSet(next, false, withCounterForGetInt));
@@ -101,92 +85,6 @@ public class TestMocks {
         return statement;
     }
 
-    public static DB2Index makeDB2Index(){
-        try {
-            return new DB2Index(makeDb2IndexMetadata(makeDB2IndexSchema()), 1.0);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static PGIndex makePGIndex(final int id){
-        class PI extends PGIndex {
-            PI() {
-                super(makePGIndexSchema(), id, 0.0, 0.0, "");
-            }
-        }
-        return new PI();
-    }
-
-    public static PGIndex makePGIndex(final int schemaId, final int id){
-        class PI extends PGIndex {
-            PI() {
-                super(makePGIndexSchema(schemaId), id, 0.0, 0.0, "");
-            }
-        }
-        return new PI();
-    }
-
-    public static PGIndex makePGIndex(final boolean flag, final int schemaId, final int id){
-        class PI extends PGIndex {
-            PI() {
-                super(makePGIndexSchema(flag, schemaId), id, 0.0, 0.0, "");
-            }
-        }
-        return new PI();
-    }
-
-    public static PGIndex makePGIndex(){
-        return makePGIndex(1);
-    }
-
-    public static PGIndexSchema makePGIndexSchema(int id){
-        return makePGIndexSchema(new Random().nextBoolean(), id);
-    }
-
-    public static PGIndexSchema makePGIndexSchema(boolean flag, int id){
-        try {
-            final Constructor<PGIndexSchema> c = PGIndexSchema.class.getDeclaredConstructor(int.class, boolean.class, List.class, List.class);
-            c.setAccessible(true);
-            final List<DatabaseIndexColumn> columns      = Instances.newList();
-            final List<Boolean>             isDescending = Instances.newList();
-            return c.newInstance(id, flag, columns, isDescending);
-        } catch (Exception e){
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static PGIndexSchema makePGIndexSchema(){
-        return makePGIndexSchema(123456);
-    }
-
-    private static DB2IndexMetadata makeDb2IndexMetadata(DB2IndexSchema schema){
-        try {
-            final Constructor<DB2IndexMetadata> c = DB2IndexMetadata.class.getDeclaredConstructor(
-                    DB2IndexSchema.class, int.class, String.class,
-                    String.class, String.class, int.class, double.class);
-            c.setAccessible(true);
-            return c.newInstance(schema, 1, "no idea", "no idea", "N", 2, 5.0);
-        } catch (Exception e) {
-           throw new RuntimeException(e);
-        }
-
-    }
-
-    private static DB2IndexSchema makeDB2IndexSchema(){
-        try {
-            final Constructor<DB2IndexSchema> c = DB2IndexSchema.class.getDeclaredConstructor(
-                    String.class, String.class, String.class,
-                    List.class, List.class, String.class, String.class,
-                    String.class
-            );
-            c.setAccessible(true);
-            return c.newInstance(DB_NAME, TABLE_NAME, TABLE_CREATOR, new ArrayList<String>(), new ArrayList<Boolean>(), "U", "N", "REG");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     static class MockStatement implements Statement {
         protected final ResultSet resultSet;
         private Connection connection;
@@ -200,7 +98,7 @@ public class TestMocks {
         }
 
         private static void print(String sql){
-            System.out.println(sql + " got executed...lalalalalalala");
+            System.out.println(sql + "");
         }
 
         private static UnsupportedOperationException notSupportedLalalala() throws UnsupportedOperationException {
@@ -1017,7 +915,7 @@ public class TestMocks {
                 }
                 return "+A-B+C";
             }
-            return 1 == columnIndex ? SCHEMA_NAME : TABLE_NAME;
+            return 1 == columnIndex ? DBTuneInstances.SCHEMA_NAME : DBTuneInstances.TABLE_NAME;
         }
 
         @Override
@@ -1109,10 +1007,10 @@ public class TestMocks {
             if(columnLabel.equalsIgnoreCase("sync")) return "Y";
             if(columnLabel.equalsIgnoreCase("atts")) return "1 2 3 4 5 6";
             if(columnLabel.equalsIgnoreCase("qcost")) return Double.valueOf(1.0).toString();
-            if(columnLabel.equalsIgnoreCase("indexes")) return Integer.valueOf(1).toString();
+            if(columnLabel.equalsIgnoreCase("indexes")) return Integer.valueOf(31).toString();
             if(columnLabel.equalsIgnoreCase("create_cost")) return Double.valueOf(1.0).toString();
             if(columnLabel.equalsIgnoreCase("megabytes")) return Double.valueOf(1.0).toString();
-            return SCHEMA_NAME;
+            return DBTuneInstances.SCHEMA_NAME;
         }
 
         @Override

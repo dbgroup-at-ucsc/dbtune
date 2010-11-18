@@ -33,19 +33,13 @@ import org.junit.Test;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Properties;
 
-import static edu.ucsc.dbtune.core.TestMocks.makeDB2Index;
-import static edu.ucsc.dbtune.core.TestMocks.makeMockPreparedStatement;
-import static edu.ucsc.dbtune.core.TestMocks.makeMockPreparedStatementSwitchOffOne;
-import static edu.ucsc.dbtune.core.TestMocks.makeMockStatement;
-import static edu.ucsc.dbtune.core.TestMocks.makeMockStatementSwitchOffOne;
-import static edu.ucsc.dbtune.core.TestMocks.makePGIndex;
-import static edu.ucsc.dbtune.core.TestMocks.makeResultSet;
+import static edu.ucsc.dbtune.core.DBTuneInstances.newDB2Index;
+import static edu.ucsc.dbtune.core.DBTuneInstances.newPGIndex;
+import static edu.ucsc.dbtune.core.JdbcMocks.makeResultSet;
 import static edu.ucsc.dbtune.util.Instances.str;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -63,24 +57,8 @@ public class DatabasePackageTest {
 
     @Before
     public void setUp() throws Exception {
-        connectionManager  = makeDBConnectionManager(new Properties(){
-            {
-                setProperty(JdbcDatabaseConnectionManager.URL, "");
-                setProperty(JdbcDatabaseConnectionManager.USERNAME, "newo");
-                setProperty(JdbcDatabaseConnectionManager.PASSWORD, "hahaha");
-                setProperty(JdbcDatabaseConnectionManager.DATABASE, "matrix");
-                setProperty(JdbcDatabaseConnectionManager.DRIVER, "com.ibm.db2.jcc.DB2Driver");
-            }
-        });
-        connectionManager2 = makeDBConnectionManager(new Properties(){
-            {
-                setProperty(JdbcDatabaseConnectionManager.URL, "");
-                setProperty(JdbcDatabaseConnectionManager.USERNAME, "newo");
-                setProperty(JdbcDatabaseConnectionManager.PASSWORD, "hahaha");
-                setProperty(JdbcDatabaseConnectionManager.DATABASE, "matrix");
-                setProperty(JdbcDatabaseConnectionManager.DRIVER, "org.postgresql.Driver");
-            }
-        });
+        connectionManager  = DBTuneInstances.newDB2DatabaseConnectionManager();
+        connectionManager2 = DBTuneInstances.newPGDatabaseConnectionManager();
     }
 
 
@@ -185,12 +163,12 @@ public class DatabasePackageTest {
 
     @Test
     public void testBasicUsageScenario_WhatIfOptimizationCostWithProfiledIndex() throws Exception {
-        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new BitSet(), new BitSet(), makeDB2Index(), connectionManager.connect());
+        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new BitSet(), new BitSet(), newDB2Index(), connectionManager.connect());
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testBasicUsageScenario_WhatIfOptimizationCostWithProfiledPGIndex() throws Exception {
-        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new BitSet(), new BitSet(), makePGIndex(), connectionManager2.connect());
+        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new BitSet(), new BitSet(), newPGIndex(), connectionManager2.connect());
     }
 
     private static <T extends DBIndex<T>> void checkWhatIfOptimizerCostCalculationWithProfiledIndex(
@@ -283,9 +261,9 @@ public class DatabasePackageTest {
     @Test
     public void testFixCandidatesScenario() throws Exception {
         final List<DB2Index> db2CandidateSet = Instances.newList();
-        db2CandidateSet.add(makeDB2Index());
+        db2CandidateSet.add(newDB2Index());
         final List<PGIndex>  pgCandidateSet  = Instances.newList();
-        pgCandidateSet.add(makePGIndex());
+        pgCandidateSet.add(newPGIndex());
         checkFixCandidatesScenario(db2CandidateSet, connectionManager.connect());
         checkFixCandidatesScenario(pgCandidateSet, connectionManager2.connect());
     }
@@ -298,27 +276,27 @@ public class DatabasePackageTest {
 
     @Test
     public void testExplainInfoScenario() throws Exception {
-        final DatabaseConnectionManager<DB2Index> c1 = makeDBConnectionManager(
-                new Properties(){
-                    {
-                        setProperty(JdbcDatabaseConnectionManager.URL, "");
-                        setProperty(JdbcDatabaseConnectionManager.USERNAME, "newo");
-                        setProperty(JdbcDatabaseConnectionManager.PASSWORD, "hahaha");
-                        setProperty(JdbcDatabaseConnectionManager.DATABASE, "matrix");
-                        setProperty(JdbcDatabaseConnectionManager.DRIVER, "com.ibm.db2.jcc.DB2Driver");
-                    }
-                },
-                makeJdbcConnectionFactoryWithSwitchOffOn()
+        final DatabaseConnectionManager<PGIndex> c1 = DBTuneInstances.newDatabaseConnectionManagerWithSwitchOffOnce(
+                DBTuneInstances.newPGSQLProperties()
         );
         checkExplainInfoScenario(c1.connect());
         //todo(Huascar) write the test for ExplainInfo<PGIndex>
         c1.close();
     }
 
+    @SuppressWarnings({"RedundantTypeArguments"})
     private static <T extends DBIndex<T>> void checkExplainInfoScenario(DatabaseConnection<T> connection) throws Exception {
-        final ExplainInfo<T> info = connection.getIndexExtractor().explainInfo("SELECT * FROM R");
+        final DatabaseIndexExtractor<T> ie   = connection.getIndexExtractor();
+        final List<T>  pgCandidateSet  = Instances.newList();
+        final T index1 = Objects.<T>as(newPGIndex(12));
+        final T index2 = Objects.<T>as(newPGIndex(21));
+        pgCandidateSet.add(index1);
+        pgCandidateSet.add(index2);
+        ie.fixCandidates(pgCandidateSet);        
+        final ExplainInfo<T> info = ie.explainInfo("SELECT * FROM R");
         assertNotNull(info);
         assertFalse(info.isDML());
+        assertTrue(Double.compare(info.maintenanceCost(index1), 0) == 0);  // since is DML
     }
 
 
@@ -331,42 +309,4 @@ public class DatabasePackageTest {
         connectionManager2 = null;
     }
 
-    private static <I extends DBIndex<I>> DatabaseConnectionManager<I> makeDBConnectionManager(Properties props, JdbcConnectionFactory factory) throws Exception {
-        return JdbcDatabaseConnectionManager.makeDatabaseConnectionManager(props, factory);
-    }
-
-    private static <I extends DBIndex<I>> DatabaseConnectionManager<I> makeDBConnectionManager(Properties props) throws Exception {
-         return makeDBConnectionManager(props, makeJdbcConnectionFactory());
-    }
-
-    private static JdbcConnectionFactory makeJdbcConnectionFactoryWithSwitchOffOn(){
-        return new JdbcConnectionFactory(){
-            @Override
-            public Connection makeConnection(String url, String driverClass, String username, String password, boolean autoCommit) throws SQLException {
-                final TestMocks.MockConnection conn = new TestMocks.MockConnection();
-                conn.register(
-                        makeMockStatementSwitchOffOne(true, true, conn),
-                        makeMockPreparedStatementSwitchOffOne(true, true, conn)
-                );
-                return conn;
-            }
-        };
-    }
-
-    private static JdbcConnectionFactory makeJdbcConnectionFactory(){
-        return new JdbcConnectionFactory(){
-            @Override
-            public Connection makeConnection(String url,
-                                             String driverClass, String username,
-                                             String password, boolean autoCommit
-            ) throws SQLException {
-                final TestMocks.MockConnection conn = new TestMocks.MockConnection();
-                conn.register(
-                        makeMockStatement(true, true, conn),
-                        makeMockPreparedStatement(true, true, conn)
-                );
-                return conn;
-            }
-        };
-    }    
 }
