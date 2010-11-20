@@ -1,8 +1,0 @@
-
-Work summary for 2010-11-08
-- continue working on the advisor package. I ran into some problems after cleaning up the HotSetSelector, WorkFunctionAlgorithm, and WFATrace. My tests are throwing some unexpected exceptions when trying to exercise these objects. I am currently trying to see if my changes have something to do with these exceptions or my tests are just incorrect.
-- got us some private Github account with private repositories. 
-- added some documentation for the What-if optimizer.
-  - received Alkis's feedback - I will update the wiki based on that feedback. BTW, I will wait for today's meeting before updating the wiki. This is because I will get more feedback.
-- Tried to run the PG++. I was getting connection problems. Ivo reported that there was a problem with some Ips. I will try to run it today or tomorrow.
-
