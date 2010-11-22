@@ -43,8 +43,8 @@ import static edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager.makeDatabaseCon
 class Schema
 {
     public  List<DatabaseTable>   tables;
-
     private DatabaseConnection<?> connection;
+    private String                driver;
 
     /**
      * Construct a schema database connection object.
@@ -55,11 +55,12 @@ class Schema
      *     if something wrong goes during the establishment of a connection with the underlaying 
      *     DBMS
      */
-    public Schema( DatabaseConnection<?> con)
+    public Schema( DatabaseConnection<?> connection, String driver)
         throws SQLException
     {
-        connection = con;
-        tables     = extractTables( con );
+        this.connection = connection;
+        this.driver     = driver;
+        this.tables     = extractTables( con );
     }
 
     /**
@@ -147,6 +148,6 @@ class Schema
             throw new Exception("Unknown driver class");
         }
 
-        return new Schema(connection);
+        return new Schema(connection, url_split[1]);
     }
 }
