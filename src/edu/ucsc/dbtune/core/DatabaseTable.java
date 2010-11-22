@@ -25,7 +25,8 @@ import java.io.Serializable;
  * {@link Object#equals(Object)} {@link Object#hashCode()}} and
  * {@link Object#toString()} methods.
  */
-public interface DatabaseTable extends Serializable {
+public interface DatabaseTable extends Serializable
+{
     @Override
     boolean equals(Object other);
 

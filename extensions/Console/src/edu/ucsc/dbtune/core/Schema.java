@@ -20,8 +20,9 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.DatabaseTable;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.metadata.DB2Index;
+import edu.ucsc.dbtune.core.GenericDatabaseTable;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ class Schema
      *     if something wrong goes during the establishment of a connection with the underlaying 
      *     DBMS
      */
-    public Schema( DatabaseConnection<?> con )
+    public Schema( DatabaseConnection<?> con)
         throws SQLException
     {
         connection = con;
@@ -71,9 +72,6 @@ class Schema
     private List<DatabaseTable> extractTables( DatabaseConnection<?> con )
         throws SQLException
     {
-        // TODO this method should be part of the JdbcDatabaseConnection class
-        
-        Connection       jdbcConnection;
         DatabaseMetaData jdbcMetaData;
         ResultSet        rs;
 
@@ -92,8 +90,10 @@ class Schema
 
         while ( rs.next() )
         {
-            tables.add( new GenericDatabaseTable( rs.getString(3) ) );
+            tables.add( new GenericDatabaseTable(rs.getString(3)) );
         }
+
+        return tables;
     }
 
     /**

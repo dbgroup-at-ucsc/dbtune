@@ -27,5 +27,10 @@ public class GenericDatabaseTable extends AbstractDatabaseTable
     {
 	super( name );
     }
+
+    public GenericDatabaseTable( int objectId )
+    {
+	super( objectId );
+    }
 }
 
