@@ -5,7 +5,7 @@
 
     <target name="compile" description="Compile Java source.">
         <mkdir dir="${build.dir}/classes"/>
-        <javac srcdir="${src.dir}" debug="on" destdir="${build.dir}/classes">
+        <javac srcdir="${src.dir}" debug="on" destdir="${build.dir}/classes" includeantruntime="no">
             <classpath refid="compile.classpath"/>
         </javac>
         <copy toDir="${build.dir}/classes">
@@ -16,7 +16,7 @@
 
     <target name="test.compile" depends="compile" description="Compile test source.">
         <mkdir dir="${build.dir}/tests"/>
-        <javac srcdir="${test.dir}" debug="on" destdir="${build.dir}/tests">
+        <javac srcdir="${test.dir}" debug="on" destdir="${build.dir}/tests" includeantruntime="no">
             <classpath path="${build.dir}/classes"/>
             <classpath refid="compile.classpath"/>
         </javac>
