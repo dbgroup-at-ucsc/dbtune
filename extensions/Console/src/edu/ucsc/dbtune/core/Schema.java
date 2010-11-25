@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -40,11 +39,12 @@ import static edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager.makeDatabaseCon
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-class Schema
+public class Schema
 {
-    public  List<DatabaseTable>   tables;
-    private DatabaseConnection<?> connection;
-    private String                driver;
+    public List<DatabaseTable> tables;
+    public String name;
+
+    DatabaseConnection<?> connection;
 
     /**
      * Construct a schema database connection object.
@@ -55,24 +55,28 @@ class Schema
      *     if something wrong goes during the establishment of a connection with the underlaying 
      *     DBMS
      */
-    public Schema( DatabaseConnection<?> connection, String driver)
+    public Schema( DatabaseConnection<?> connection )
         throws SQLException
     {
         this.connection = connection;
-        this.driver     = driver;
-        this.tables     = extractTables( con );
+        extractMetadata( connection );
     }
 
     /**
-     * Given a DatabaseConnection object, it extracts the set of tables contained in the 
-     * corresponding schema.
+     * Given a DatabaseConnection object, it extracts the metadata(tables and base configuration) 
+     * contained in the corresponding schema.
      *
      * @throws SQLException
-     *     if a JDBC error is thrown during the extraction of tables
+     *     if a JDBC error is thrown during the extraction of metadata
      */
-    private List<DatabaseTable> extractTables( DatabaseConnection<?> con )
+    private void extractMetadata( DatabaseConnection<?> con )
         throws SQLException
     {
+        // DatabaseMetadataExtractor extractor;
+        //
+        // tables = extractor.getTables( connection );
+        // config = extractor.getIndexes( connnection );
+        
         DatabaseMetaData jdbcMetaData;
         ResultSet        rs;
 
@@ -80,21 +84,21 @@ class Schema
 
         jdbcMetaData = con.getJdbcConnection().getMetaData();
 
-        if ( jdbcMetaData == null )
+        if (jdbcMetaData == null)
         {
-            throw new SQLException("JDBC connection " + con + " doesn't handle metadata" );
+            throw new SQLException("Connection " + con + " doesn't handle JDBC metadata" );
         }
 
         String[] tableTypes = {"TABLE"};
 
-        rs = jdbcMetaData.getTables(null,null,"",tableTypes);
+        rs = jdbcMetaData.getTables(null,null,"%",tableTypes);
 
-        while ( rs.next() )
+        while (rs.next())
         {
-            tables.add( new GenericDatabaseTable(rs.getString(3)) );
+            tables.add(new GenericDatabaseTable(rs.getString(3)));
         }
 
-        return tables;
+        rs.close();
     }
 
     /**
@@ -116,6 +120,15 @@ class Schema
     public static Schema connect( String url, String usr, String pwd )
         throws Exception
     {
+        // DatabaseConnectionManager connectionManager;
+        // Properties props;
+        //
+        // props.setProperty(JdbcDatabaseConnectionManager.URL, url);
+        // props.setProperty(JdbcDatabaseConnectionManager.USERNAME, usr);
+        // props.setProperty(JdbcDatabaseConnectionManager.PASSWORD, pwd);
+        //
+        // return makeDatabaseConnectionManager(props).connect();
+        
         DatabaseConnectionManager<DB2Index> connectionManagerDB2;
         DatabaseConnectionManager<PGIndex>  connectionManagerPG;
         DatabaseConnection<?>               connection;
@@ -148,6 +161,6 @@ class Schema
             throw new Exception("Unknown driver class");
         }
 
-        return new Schema(connection, url_split[1]);
+        return new Schema(connection);
     }
 }
