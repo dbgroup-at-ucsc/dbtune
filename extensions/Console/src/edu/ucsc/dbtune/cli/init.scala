@@ -1,3 +1,2 @@
 import edu.ucsc.dbtune.core._
-import static
-
+import edu.ucsc.dbtune.core.Schema._
