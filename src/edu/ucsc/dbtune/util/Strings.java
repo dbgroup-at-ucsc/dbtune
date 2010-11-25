@@ -23,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,9 +91,52 @@ public class Strings {
         return objectsToStrings(objects.toArray());
     }
 
+    /**
+     * <p>Checks if String contains a search String irrespective of case,
+     * handling <code>null</code>. Case-insensitivity is defined as by
+     * {@link String#equalsIgnoreCase(String)}.
+     *
+     * @param str  the String to check, may be null
+     * @param searchStr  the String to find, may be null
+     * @return true if the String contains the search String irrespective of
+     * case or false if not or <code>null</code> string input
+     */
+    public static boolean contains(String str, String searchStr) {
+        if (str == null || searchStr == null) {
+            return false;
+        }
+        int len = searchStr.length();
+        int max = str.length() - len;
+        for (int i = 0; i <= max; i++) {
+            if (str.regionMatches(true, i, searchStr, 0, len)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * <p>Checks if String contains many search String irrespective of case,
+     * handling <code>null</code>. Case-insensitivity is defined as by
+     * {@link String#equalsIgnoreCase(String)}.
+     *
+     * @param str  the String to check, may be null
+     * @param searchStrs  the many String to find, may be null
+     * @return true if the String contains the many search String irrespective of
+     * case or false if not or <code>null</code> string input
+     */
+    public static boolean containsAny(String str, String... searchStrs){
+        boolean result = false;
+        for(String each : searchStrs){
+            result |= contains(str, each);
+        }
+        return result;
+    }
+
 
     /**
      * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+     * @see <p>http://www.gotobject.com</p>
      */
     public static class IterableFileReader implements Iterable<String> {
         private BufferedReader reader;

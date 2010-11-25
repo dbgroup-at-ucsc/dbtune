@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static edu.ucsc.dbtune.util.Instances.newAtomicReference;
 import static edu.ucsc.dbtune.util.Instances.newTrueBoolean;
+import static edu.ucsc.dbtune.util.Objects.as;
 
 /**
  * This class provides a skeletal implementation of the {@link DatabaseWhatIfOptimizer}
@@ -35,7 +36,7 @@ import static edu.ucsc.dbtune.util.Instances.newTrueBoolean;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> implements DatabaseWhatIfOptimizer<I> {
+public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> implements DatabaseWhatIfOptimizer<I> {
     private final AtomicReference<WhatIfOptimizationBuilderImpl<I>> optimizer;
     private final AtomicBoolean                                     enabled;
 
@@ -51,18 +52,15 @@ abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> implements 
 
     /**
      * runs n what-if optimizations and return n results (i.e., optimization cost)
-     * @return
-     *      an {@code Iterable} object containing the calculated cost per what-if
-     *      optimization.
      * @throws java.sql.SQLException
      *      unable to calculate costs b/c a database error.
      */
-    void calculateOptimizationCost() throws SQLException {
+    public void calculateOptimizationCost() throws SQLException {
         PreConditions.checkSQLRelatedState(
                 getWhatIfOptimizationBuilder() != null,
                 "We cannot calculate optimization without an active(built) optimizer's configuration."
         );
-        final WhatIfOptimizationBuilderImpl<I> each = getWhatIfOptimizationBuilder();
+        final WhatIfOptimizationBuilderImpl<I> each = as(getWhatIfOptimizationBuilder());
         each.addCost(runWhatIfTrial(each));
     }
 
@@ -74,7 +72,7 @@ abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> implements 
     /**
      * @return the recently created {@code WhatIfOptimizationBuilder} (scenarios).
      */
-    protected WhatIfOptimizationBuilderImpl<I> getWhatIfOptimizationBuilder(){
+    public WhatIfOptimizationBuilder<I> getWhatIfOptimizationBuilder(){
         return optimizer.get();
     }
 
