@@ -38,6 +38,7 @@ import static edu.ucsc.dbtune.util.Instances.newAtomicReference;
 import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
 import static edu.ucsc.dbtune.util.Objects.as;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -74,6 +75,13 @@ public class TypeReferenceTest {
         // and not <DBTune<PGIndex>>
         PGIndex c = DBTuneInstances.newPGIndex();
         a.estimateCost("SELECT * FROM S;", new BitSet(), c, new BitSet());
+    }
+    
+    @Test
+    public void testGenericWhatIfOptimizer() throws Exception {
+        final AbbreviatedWhatIfOptimizer<DB2Index> a = db2WhatIfOptimizer();
+        final Double cost = a.estimateCost("Select * FROM R;", new BitSet(), DBTuneInstances.newDB2Index(), new BitSet());
+        assertTrue(Double.compare(cost, 10.34) == 0);
     }
 
     static AbbreviatedWhatIfOptimizer db2WhatIfOptimizer(){
