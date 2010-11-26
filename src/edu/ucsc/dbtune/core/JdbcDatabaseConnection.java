@@ -25,7 +25,7 @@ import java.sql.Statement;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-class JdbcDatabaseConnection<I extends DBIndex<I>> extends AbstractDatabaseConnection<I>
+class JdbcDatabaseConnection<I extends DBSystem<I>> extends AbstractDatabaseConnection<I>
 implements DatabaseConnection<I> {
 
     /**

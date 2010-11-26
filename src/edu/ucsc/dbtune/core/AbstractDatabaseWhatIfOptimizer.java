@@ -36,7 +36,7 @@ import static edu.ucsc.dbtune.util.Objects.as;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> implements DatabaseWhatIfOptimizer<I> {
+public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBSystem<I>> implements DatabaseWhatIfOptimizer<I> {
     private final AtomicReference<WhatIfOptimizationBuilderImpl<I>> optimizer;
     private final AtomicBoolean                                     enabled;
 

@@ -27,7 +27,7 @@ package edu.ucsc.dbtune.core;
  * @see DatabaseConnectionManager
  * @param <I> the type of {@link edu.ucsc.dbtune.core.DBIndex}.
  */
-public interface DatabaseConnection<I extends DBIndex<I>> extends DatabaseSession {
+public interface DatabaseConnection<I extends DBSystem<I>> extends DatabaseSession {
 	/**
 	 * gets the instance of the connection manager that created this connection.
 	 * @return

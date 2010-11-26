@@ -31,7 +31,7 @@ import java.sql.SQLException;
  * @see edu.ucsc.dbtune.core.ExplainInfo
  * @see edu.ucsc.dbtune.core.DBIndex
  */
-public interface DatabaseIndexExtractor<I extends DBIndex<I>> {
+public interface DatabaseIndexExtractor<I extends DBSystem<I>> {
     /**
      * preps up the database before calculating any optimization cost.
      * @param connection
@@ -69,7 +69,7 @@ public interface DatabaseIndexExtractor<I extends DBIndex<I>> {
      *      an error has occurred when interacting with a database during
      *      the fixing of candidates.
      */
-    void fixCandidates(Iterable<I> candidateSet) throws SQLException;
+    void fixCandidates(Iterable<DBIndex<I>> candidateSet) throws SQLException;
 
     /**
      * recommends a {@link Iterable list} of indexes that could help improve performance, given a
@@ -82,7 +82,7 @@ public interface DatabaseIndexExtractor<I extends DBIndex<I>> {
      *      an error has occurred when interacting with a database during
      *      the recommendation process.
      */
-	Iterable<I> recommendIndexes(String sql) throws SQLException;
+	Iterable<DBIndex<I>> recommendIndexes(String sql) throws SQLException;
 
     /**
      * recommends a {@link Iterable list} of indexes that could help improve performance, given a
@@ -97,5 +97,5 @@ public interface DatabaseIndexExtractor<I extends DBIndex<I>> {
      * @throws java.io.IOException
      *      an error has occurred when trying to open the workload file.
      */
-    Iterable<I> recommendIndexes(File workloadFile) throws SQLException, IOException;
+    Iterable<DBIndex<I>> recommendIndexes(File workloadFile) throws SQLException, IOException;
 }

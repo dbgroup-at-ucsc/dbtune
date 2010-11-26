@@ -31,7 +31,7 @@ import static edu.ucsc.dbtune.util.Instances.newTrueBoolean;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseIndexExtractor <I extends DBIndex<I>> implements DatabaseIndexExtractor<I> {
+abstract class AbstractDatabaseIndexExtractor <I extends DBSystem<I>> implements DatabaseIndexExtractor<I> {
     private final AtomicBoolean  enabled;
     protected AbstractDatabaseIndexExtractor(){
         enabled = newTrueBoolean();
@@ -45,7 +45,7 @@ abstract class AbstractDatabaseIndexExtractor <I extends DBIndex<I>> implements 
     /**
      * @return a current candidate set after calling {@link #fixCandidates(Iterable)} method.
      */
-    public abstract Iterable<I> getCandidateSet();
+    public abstract Iterable<DBIndex<I>> getCandidateSet();
 
     /**
      * @return the current cached bit set.

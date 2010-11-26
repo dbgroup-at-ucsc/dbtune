@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.DatabaseIndexColumn;
 import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
@@ -65,20 +66,20 @@ public class PGCommands {
      * @return
      *      a {@code Command<Void>} object.
      */
-    public static Command<List<PGIndex>, SQLException> recommendIndexes(){
+    public static Command<List<DBIndex<PGSystem>>, SQLException> recommendIndexes(){
         return RecommendIndexes.INSTANCE;
     }
 
     // enum singleton pattern
-    private enum RecommendIndexes implements Command<List<PGIndex>, SQLException>{
+    private enum RecommendIndexes implements Command<List<DBIndex<PGSystem>>, SQLException>{
         INSTANCE;
 
         private Statement statement;
         @Override
-        public List<PGIndex> apply(Parameter input) throws SQLException {
+        public List<DBIndex<PGSystem>> apply(Parameter input) throws SQLException {
             final Connection         connection     = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
             final String             sql            = input.getParameterValue(String.class);
-            final List<PGIndex>      candidateSet   = newList();
+            final List<DBIndex<PGSystem>>      candidateSet   = newList();
 
             if(statement == null){
                 statement = connection.createStatement();
@@ -98,7 +99,7 @@ public class PGCommands {
             return candidateSet;
         }
 
-        private static void touchIndexSchema(List<PGIndex> candidateSet,
+        private static void touchIndexSchema(List<DBIndex<PGSystem>> candidateSet,
         ResultSet rs, int id
         ) throws SQLException {
             final int       reloid = Integer.valueOf(rs.getString("reloid"));
@@ -307,10 +308,11 @@ public class PGCommands {
     }
 
 
-    private static String indexListString(Iterable<PGIndex> indexes, BitSet config) {
+    private static String indexListString(Iterable<DBIndex<PGSystem>> indexes, BitSet config) {
         final StringBuilder sb = new StringBuilder();
         sb.append("( ");
-        for (PGIndex idx : indexes) {
+        for (DBIndex<PGSystem> gidx : indexes) {
+        	PGIndex idx = Objects.as(gidx);
             if (config.get(idx.internalId())) {
                 sb.append(idx.internalId()).append("(");
                 if (idx.getSchema().isSync()) {

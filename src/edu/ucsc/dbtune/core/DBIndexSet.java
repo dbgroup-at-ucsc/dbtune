@@ -31,11 +31,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializable {
+public class DBIndexSet<I extends DBSystem<I>> implements Iterable<DBIndex<I>>, Serializable {
 	
 	private BitSet bs;
-	private Set<I> set;
-	private List<I> list;
+	private Set<DBIndex<I>> set;
+	private List<DBIndex<I>> list;
 	private int maxInternalId;
 
 	/* serialization support */
@@ -47,7 +47,7 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 
 	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
 		out.writeInt(list.size());
-		for (I idx : list)
+		for (DBIndex<I> idx : list)
 			out.writeObject(idx);
 	}
 	
@@ -55,19 +55,19 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
     	clear();
     	int n = in.readInt();
     	for (int i = 0; i < n; i++) {
-    		I readObject = DBUtilities.<I>readObject(in);
+    		DBIndex<I> readObject = DBUtilities.<I>readObject(in);
 			add(readObject);
     	}
     }
 	
 	public void clear() {
-		set = new HashSet<I>();
-		list = new ArrayList<I>();
+		set = new HashSet<DBIndex<I>>();
+		list = new ArrayList<DBIndex<I>>();
 		bs = new BitSet();
 		maxInternalId = -1;
 	}
 	
-	public void add(I idx) {
+	public void add(DBIndex<I> idx) {
 		if (set.add(idx)) {
 			list.add(idx);
 			bs.set(idx.internalId());
@@ -76,7 +76,7 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 		}
 	}
 	
-	public java.util.Iterator<I> iterator() {
+	public java.util.Iterator<DBIndex<I>> iterator() {
 		return list.iterator();
 	}
 	
@@ -92,7 +92,7 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 		StringBuilder sb = new StringBuilder();
 		sb.append(size() + " indexes\n");
 		
-		for (I idx : this) {
+		for (DBIndex<I> idx : this) {
 			sb.append(idx + "\n");
 		}
 		
@@ -109,7 +109,7 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 		// start from scratch to be safe
 		clear();
 		for (int i = 0; i < array.length; i++) {
-			I idx = (I) array[i].consDuplicate(i);
+			DBIndex<I> idx = (DBIndex<I>) array[i].consDuplicate(i);
 			add(idx);
 		}
 	}

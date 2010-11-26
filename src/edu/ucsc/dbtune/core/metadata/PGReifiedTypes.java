@@ -20,6 +20,8 @@ package edu.ucsc.dbtune.core.metadata;
 
 import java.util.ArrayList;
 
+import edu.ucsc.dbtune.core.DBIndex;
+
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
@@ -30,7 +32,7 @@ public class PGReifiedTypes {
      * A trick to bypass the whole reifying process done by Java and the return
      * a reified list.
      */
-    public static class ReifiedPGIndexList extends ArrayList<PGIndex> {
+    public static class ReifiedPGIndexList extends ArrayList<DBIndex<PGSystem>> {
     }
 
 }

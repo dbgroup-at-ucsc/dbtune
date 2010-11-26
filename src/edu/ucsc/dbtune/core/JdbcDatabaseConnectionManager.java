@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public final class JdbcDatabaseConnectionManager<I extends DBIndex<I>> extends AbstractDatabaseConnectionManager<I>
+public final class JdbcDatabaseConnectionManager<I extends DBSystem<I>> extends AbstractDatabaseConnectionManager<I>
 implements DatabaseConnectionManager<I> {
 
     public static final String USERNAME         = "username";
@@ -100,11 +100,11 @@ implements DatabaseConnectionManager<I> {
      * @throws IllegalArgumentException
      *      if not valid file path has been included for a given Password File property.
      */
-    public static <I extends DBIndex<I>> DatabaseConnectionManager<I> makeDatabaseConnectionManager(Properties props){
+    public static <I extends DBSystem<I>> DatabaseConnectionManager<I> makeDatabaseConnectionManager(Properties props){
         return makeDatabaseConnectionManager(props, new JdbcConnectionFactoryImpl());
     }
 
-    public static <I extends DBIndex<I>> DatabaseConnectionManager<I> makeDatabaseConnectionManager(Properties props, JdbcConnectionFactory jdbcConnectionFactory){
+    public static <I extends DBSystem<I>> DatabaseConnectionManager<I> makeDatabaseConnectionManager(Properties props, JdbcConnectionFactory jdbcConnectionFactory){
         final String password    = getPassword(props);
         final String driverClass = props.getProperty(DRIVER);
         return new JdbcDatabaseConnectionManager<I>(

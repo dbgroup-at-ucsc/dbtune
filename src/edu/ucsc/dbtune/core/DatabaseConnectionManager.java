@@ -27,7 +27,7 @@ import java.sql.SQLException;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DatabaseConnectionManager<I extends DBIndex<I>> {
+public interface DatabaseConnectionManager<I extends DBSystem<I>> {
     /**
      * @return
      */

@@ -19,14 +19,14 @@
 package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.DBIndex;
-
+import edu.ucsc.dbtune.core.DBSystem;
 /**
  * This class provides a skeletal implementation of the {@link edu.ucsc.dbtune.core.DBIndex}
  * interface to minimize the effort required to implement this interface.
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseIndex<I extends DBIndex<I>> implements DBIndex<I> {
+abstract class AbstractDatabaseIndex<I extends DBSystem<I>> implements DBIndex<I> {
     protected final int       internalId;
     protected final String    creationText;
     protected final double    creationCost;

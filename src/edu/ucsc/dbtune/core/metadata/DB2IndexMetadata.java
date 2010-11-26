@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.DatabaseIndexColumn;
 import edu.ucsc.dbtune.core.DatabaseIndexExtractor;
@@ -142,7 +143,7 @@ public class DB2IndexMetadata implements Serializable {
 		sbuf.append(')');
 	}
 
-    public double creationCost(DatabaseIndexExtractor<DB2Index> indexExtractor, DatabaseWhatIfOptimizer<DB2Index> whatIfOptimizer) throws SQLException{
+    public double creationCost(DatabaseIndexExtractor<DB2System> indexExtractor, DatabaseWhatIfOptimizer<DB2System> whatIfOptimizer) throws SQLException{
         int idx             = 0;
         int nSortedColumns;
         final StringBuilder sql = new StringBuilder(16 * (nSortedColumns = schema.descending.size()));
@@ -177,13 +178,13 @@ public class DB2IndexMetadata implements Serializable {
 			idx++;
 		}
 
-        indexExtractor.fixCandidates(Instances.<DB2Index>newLinkedList());
+        indexExtractor.fixCandidates(Instances.<DBIndex<DB2System>>newLinkedList());
         return whatIfOptimizer.whatIfOptimize(sql.toString())
                             .using(new BitSet(), new BitSet())
                             .toGetCost();
     }
 	
-	public double creationCost(DatabaseConnection<DB2Index> conn) throws SQLException {
+	public double creationCost(DatabaseConnection<DB2System> conn) throws SQLException {
 		int i, n;
 		
 		StringBuilder sqlbuf = new StringBuilder();
@@ -215,7 +216,7 @@ public class DB2IndexMetadata implements Serializable {
 			i++;
 		}
 
-		conn.getIndexExtractor().fixCandidates(new java.util.LinkedList<DB2Index>());
+		conn.getIndexExtractor().fixCandidates(new java.util.LinkedList<DBIndex<DB2System>>());
 		double queryCost = conn.getWhatIfOptimizer().whatIfOptimize(
                 sqlbuf.toString()
         ).using(new BitSet(), new BitSet()).toGetCost();

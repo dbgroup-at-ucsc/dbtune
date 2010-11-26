@@ -21,14 +21,16 @@ package edu.ucsc.dbtune.core.metadata;
 import edu.ucsc.dbtune.core.AbstractExplainInfo;
 import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
 import edu.ucsc.dbtune.util.Debug;
+import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
+import edu.ucsc.dbtune.core.DBIndex;
 
 import java.io.Serializable;
 
 /**
  *  implements a DB2-specific {@link edu.ucsc.satuning.db.ExplainInfo}.
  */
-public class DB2ExplainInfo extends AbstractExplainInfo<DB2Index> implements Serializable{
+public class DB2ExplainInfo extends AbstractExplainInfo<DB2System> implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private final DB2QualifiedName updatedTable;
 	private final double updateCost;
@@ -53,10 +55,12 @@ public class DB2ExplainInfo extends AbstractExplainInfo<DB2Index> implements Ser
 	}
 
     @Override
-	public double maintenanceCost(DB2Index index) {
+	public double maintenanceCost(DBIndex<DB2System> index) {
+    	DB2Index db2Index = Objects.as(index);
+    	
 		if (getSQLCategory() != SQLCategory.DML)
 			return 0;
-		if (!index.isOn(updatedTable))
+		if (db2Index.isOn(updatedTable))
 			return 0;
 		return updateCost;
 	}

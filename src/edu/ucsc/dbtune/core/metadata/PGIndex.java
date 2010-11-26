@@ -26,7 +26,7 @@ import java.sql.SQLException;
 /**
  * todo
  */
-public class PGIndex extends AbstractDatabaseIndex<PGIndex> implements Serializable {
+public class PGIndex extends AbstractDatabaseIndex<PGSystem> implements Serializable {
 	private PGIndexSchema schema;
 
 	// serialization support

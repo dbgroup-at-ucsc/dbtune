@@ -16,6 +16,7 @@
  *  ****************************************************************************
  */
 
+
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.util.PreConditions;
@@ -29,7 +30,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
  * @param <I>
  *      a {@link edu.ucsc.dbtune.core.DBIndex} bound.
  */
-abstract class AbstractDatabaseConnectionManager <I extends DBIndex<I>>
+abstract class AbstractDatabaseConnectionManager <I extends DBSystem<I>>
 implements DatabaseConnectionManager<I> {
 
 	private final String username;

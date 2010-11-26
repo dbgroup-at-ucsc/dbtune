@@ -25,7 +25,7 @@ import java.sql.SQLException;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DatabaseWhatIfOptimizer<I extends DBIndex<I>> {
+public interface DatabaseWhatIfOptimizer<I extends DBSystem<I>> {
     /**
      * disable {@code WhatIfOptimizer} once <em>its</em> {@code DatabaseConnection} has been closed.
      */

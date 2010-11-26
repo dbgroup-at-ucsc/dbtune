@@ -19,14 +19,15 @@
 package edu.ucsc.dbtune.util;
 
 import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.DBSystem;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
 public class DBUtilities {
 	@SuppressWarnings("unchecked")
-	public static <I extends DBIndex<I>> I readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		return (I) in.readObject();
+	public static <I extends DBSystem<I>> DBIndex<I> readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+		return (DBIndex<I>) in.readObject();
 	}
 	
 	/**

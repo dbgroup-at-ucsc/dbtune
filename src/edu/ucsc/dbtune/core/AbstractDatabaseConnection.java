@@ -32,7 +32,7 @@ import static edu.ucsc.satuning.util.Util.newAtomicReference;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseConnection <I extends DBIndex<I>> extends AbstractDatabaseSession
+abstract class AbstractDatabaseConnection <I extends DBSystem<I>> extends AbstractDatabaseSession
 implements DatabaseConnection<I> {
     private final AtomicReference<DatabaseConnectionManager<I>> connectionManager;
     private final AtomicReference<DatabaseIndexExtractor<I>>    indexExtractor;

@@ -19,10 +19,12 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2ExplainInfo;
-import edu.ucsc.dbtune.core.metadata.DB2Index;
+import edu.ucsc.dbtune.core.metadata.DB2System;
 import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
 import edu.ucsc.dbtune.core.metadata.DB2QualifiedName;
+import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.PGCommands;
+import edu.ucsc.dbtune.core.metadata.PGSystem;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.core.metadata.PGReifiedTypes.ReifiedPGIndexList;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
@@ -84,8 +86,8 @@ public class Platform {
         Map<String, DatabaseIndexExtractorFactory<?>> driverToExtractor =
                 new HashMap<String, DatabaseIndexExtractorFactory<?>>(){
                     {
-                        put("com.ibm.db2.jcc.DB2Driver", new DB2IndexExtractorFactory());
-                        put("org.postgresql.Driver", new PGIndexExtractorFactory());
+                        put("com.ibm.db2.jcc.DB2Driver", new DB2SystemExtractorFactory());
+                        put("org.postgresql.Driver", new PGSystemExtractorFactory());
                     }
                 };
         Map<String, DatabaseWhatIfOptimizerFactory<?>> driverToOptimizer =
@@ -119,7 +121,7 @@ public class Platform {
      * @throws NullPointerException
      *      if strategy is not found.
      */
-    public static <I extends DBIndex<I>> DatabaseIndexExtractorFactory<I> findIndexExtractorFactory(String driver){
+    public static <I extends DBSystem<I>> DatabaseIndexExtractorFactory<I> findIndexExtractorFactory(String driver){
         return  Objects.as(PreConditions.checkNotNull(AVAILABLE_EXTRACTORS.get(driver)));
     }
 
@@ -137,46 +139,46 @@ public class Platform {
      * @throws NullPointerException
      *      if strategy is not found.
      */
-    public static <I extends DBIndex<I>> DatabaseWhatIfOptimizerFactory<I> findWhatIfOptimizerFactory(String driver){
+    public static <I extends DBSystem<I>> DatabaseWhatIfOptimizerFactory<I> findWhatIfOptimizerFactory(String driver){
         return Objects.as(PreConditions.checkNotNull(AVAILABLE_OPTIMIZERS.get(driver)));
     }
 
-    private static class DB2IndexExtractorFactory implements DatabaseIndexExtractorFactory<DB2Index> {
+    private static class DB2SystemExtractorFactory implements DatabaseIndexExtractorFactory<DB2System> {
         @Override
-        public DatabaseIndexExtractor<DB2Index> makeIndexExtractor(DatabaseConnection<DB2Index> connection) {
+        public DatabaseIndexExtractor<DB2System> makeIndexExtractor(DatabaseConnection<DB2System> connection) {
             return new DB2DatabaseIndexExtractor("/home/karlsch/sqllib/bin/db2advis", PreConditions.checkNotNull(connection));
         }
     }
 
-    private static class PGIndexExtractorFactory implements DatabaseIndexExtractorFactory<PGIndex> {
+    private static class PGSystemExtractorFactory implements DatabaseIndexExtractorFactory<PGSystem> {
         @Override
-        public DatabaseIndexExtractor<PGIndex> makeIndexExtractor(DatabaseConnection<PGIndex> connection) {
+        public DatabaseIndexExtractor<PGSystem> makeIndexExtractor(DatabaseConnection<PGSystem> connection) {
             return new PGDatabaseIndexExtractor(PreConditions.checkNotNull(connection));
         }
     }
 
-    private static class DB2WhatIfOptimizerFactory implements DatabaseWhatIfOptimizerFactory<DB2Index> {
+    private static class DB2WhatIfOptimizerFactory implements DatabaseWhatIfOptimizerFactory<DB2System> {
         @Override
-        public DatabaseWhatIfOptimizer<DB2Index> makeWhatIfOptimizer(DatabaseConnection<DB2Index> connection) {
+        public DatabaseWhatIfOptimizer<DB2System> makeWhatIfOptimizer(DatabaseConnection<DB2System> connection) {
             return new DB2DatabaseWhatIfOptimizer(PreConditions.checkNotNull(connection));
         }
     }
 
-    private static class PGWhatIfOptimizerFactory implements DatabaseWhatIfOptimizerFactory<PGIndex> {
+    private static class PGWhatIfOptimizerFactory implements DatabaseWhatIfOptimizerFactory<PGSystem> {
         @Override
-        public DatabaseWhatIfOptimizer<PGIndex> makeWhatIfOptimizer(DatabaseConnection<PGIndex> connection) {
+        public DatabaseWhatIfOptimizer<PGSystem> makeWhatIfOptimizer(DatabaseConnection<PGSystem> connection) {
             return new PGDatabaseWhatIfOptimizer(PreConditions.checkNotNull(connection));
         }
     }
 
-    static class PGDatabaseWhatIfOptimizer extends AbstractDatabaseWhatIfOptimizer<PGIndex> {
-        private final DatabaseConnection<PGIndex> connection;
+    static class PGDatabaseWhatIfOptimizer extends AbstractDatabaseWhatIfOptimizer<PGSystem> {
+        private final DatabaseConnection<PGSystem> connection;
 
-        private final AtomicReference<DatabaseIndexExtractor<PGIndex>>  extractor;
+        private final AtomicReference<DatabaseIndexExtractor<PGSystem>>  extractor;
         private final AtomicInteger                                     whatifCount;
 
 
-        PGDatabaseWhatIfOptimizer(DatabaseConnection<PGIndex> connection){
+        PGDatabaseWhatIfOptimizer(DatabaseConnection<PGSystem> connection){
             super();
             this.connection = connection;
             whatifCount     = newAtomicInteger();
@@ -190,14 +192,14 @@ public class Platform {
         }
 
         @Override
-        protected Double runWhatIfTrial(WhatIfOptimizationBuilder<PGIndex> pgIndexWhatIfOptimizationBuilder) throws SQLException {
+        protected Double runWhatIfTrial(WhatIfOptimizationBuilder<PGSystem> pgIndexWhatIfOptimizationBuilder) throws SQLException {
             incrementWhatIfCount();
             Debug.print(".");
             if (whatifCount.get() % 75 == 0) {
                 Debug.println();
             }
 
-            final WhatIfOptimizationBuilderImpl<DB2Index> whatIfImpl = Objects.as(
+            final WhatIfOptimizationBuilderImpl<DB2System> whatIfImpl = Objects.as(
                     pgIndexWhatIfOptimizationBuilder
             );
 
@@ -228,10 +230,10 @@ public class Platform {
                 extractor.set(PreConditions.checkNotNull(connection.getIndexExtractor()));
             }
 
-            final AbstractDatabaseIndexExtractor<PGIndex> aExtractor = Objects.as(extractor.get());
-            final Iterable<PGIndex> candidateSet = aExtractor.getCandidateSet();
+            final AbstractDatabaseIndexExtractor<PGSystem> aExtractor = Objects.as(extractor.get());
+            final Iterable<DBIndex<PGSystem>> candidateSet = aExtractor.getCandidateSet();
             final ReifiedPGIndexList indexSet = new ReifiedPGIndexList();
-            for(PGIndex each : candidateSet){
+            for(DBIndex<PGSystem> each : candidateSet){
                 indexSet.add(each);
             }
 
@@ -249,12 +251,12 @@ public class Platform {
     /**
      * A DB2-specific optimizer.
      */
-    static class DB2DatabaseWhatIfOptimizer extends AbstractDatabaseWhatIfOptimizer<DB2Index> {
-        private final DatabaseConnection<DB2Index> connection;
-        private final AtomicReference<DatabaseIndexExtractor<DB2Index>>  extractor;
+    static class DB2DatabaseWhatIfOptimizer extends AbstractDatabaseWhatIfOptimizer<DB2System> {
+        private final DatabaseConnection<DB2System> connection;
+        private final AtomicReference<DatabaseIndexExtractor<DB2System>>  extractor;
         private final AtomicInteger                                      whatifCount;
 
-        DB2DatabaseWhatIfOptimizer(DatabaseConnection<DB2Index> connection){
+        DB2DatabaseWhatIfOptimizer(DatabaseConnection<DB2System> connection){
             super();
             this.connection = connection;
             whatifCount     = newAtomicInteger();
@@ -268,7 +270,7 @@ public class Platform {
 
         @Override
         protected Double runWhatIfTrial(
-                WhatIfOptimizationBuilder<DB2Index> db2IndexWhatIfOptimizationBuilder
+                WhatIfOptimizationBuilder<DB2System> DB2SystemWhatIfOptimizationBuilder
         ) throws SQLException {
 
             if (whatifCount.incrementAndGet() % 80 == 0) {
@@ -276,11 +278,11 @@ public class Platform {
                 System.err.println();
             }
 
-            final WhatIfOptimizationBuilderImpl<DB2Index> whatIfImpl = Objects.as(
-                    db2IndexWhatIfOptimizationBuilder
+            final WhatIfOptimizationBuilderImpl<DB2System> whatIfImpl = Objects.as(
+                    DB2SystemWhatIfOptimizationBuilder
             );
 
-            final JdbcDatabaseConnection<DB2Index> c =  Objects.as(connection);
+            final JdbcDatabaseConnection<DB2System> c =  Objects.as(connection);
 
             if(!whatIfImpl.withProfiledIndex()){
                return runWhatIfOptimizationWithoutProfiledIndex(whatIfImpl, c);
@@ -294,21 +296,21 @@ public class Platform {
             if(extractor.get() == null){
                 extractor.set(connection.getIndexExtractor());
             }
-            final DatabaseIndexExtractor<DB2Index> e = extractor.get();
-            final Iterable<DB2Index> candidateSet = Objects.<AbstractDatabaseIndexExtractor<DB2Index>>as(e).getCandidateSet();
+            final DatabaseIndexExtractor<DB2System> e = extractor.get();
+            final Iterable<DBIndex<DB2System>> candidateSet = Objects.<AbstractDatabaseIndexExtractor<DB2System>>as(e).getCandidateSet();
             e.fixCandidates(candidateSet);
         }
 
         @SuppressWarnings({"UnusedAssignment"})
         private static Double runWhatIfOptimizationWithProfiledIndex(
-                WhatIfOptimizationBuilderImpl<DB2Index> whatIfImpl,
-                JdbcDatabaseConnection<DB2Index> activeConnection
+                WhatIfOptimizationBuilderImpl<DB2System> whatIfImpl,
+                JdbcDatabaseConnection<DB2System> activeConnection
         ) throws SQLException {
             int explainCount; // should be equal to 1
             double totalCost;
 
             final String        sql             = whatIfImpl.getSQL();
-            final DB2Index      profiledIndex   = whatIfImpl.getProfiledIndex();
+            final DBIndex<DB2System>      profiledIndex   = whatIfImpl.getProfiledIndex();
             final BitSet        usedColumns     = whatIfImpl.getUsedColumns();
             final BitSet        configuration   = whatIfImpl.getConfiguration();
             submitAll(
@@ -352,8 +354,9 @@ public class Platform {
 
             if(profiledIndex != null){
                 final String preds = supplyValue(fetchExplainPredicateString(), activeConnection);
+                DB2Index aprofiledIndex = Objects.as(profiledIndex);
                 for (int i = 0; i < profiledIndex.columnCount(); i++) {
-                    if (preds.contains(profiledIndex.getColumn(i).getName())){
+                    if (preds.contains((aprofiledIndex.getColumn(i).getName()))) {
                         usedColumns.set(i);
                     }
                 }
@@ -366,8 +369,8 @@ public class Platform {
 
         @SuppressWarnings({"UnusedAssignment"})
         private static Double runWhatIfOptimizationWithoutProfiledIndex(
-                WhatIfOptimizationBuilderImpl<DB2Index> whatIfImpl,
-                JdbcDatabaseConnection<DB2Index> activeConnection
+                WhatIfOptimizationBuilderImpl<DB2System> whatIfImpl,
+                JdbcDatabaseConnection<DB2System> activeConnection
         ) throws SQLException {
 
             int explainCount; // should be equal to 1
@@ -438,12 +441,12 @@ public class Platform {
     /**
      *  A DB2-specific Database Index Extractor.
      */
-    static class DB2DatabaseIndexExtractor extends AbstractDatabaseIndexExtractor<DB2Index> {
-        private       Iterable<DB2Index>            cachedCandidateSet = new LinkedList<DB2Index>();
+    static class DB2DatabaseIndexExtractor extends AbstractDatabaseIndexExtractor<DB2System> {
+        private       Iterable<DBIndex<DB2System>>            cachedCandidateSet = new LinkedList<DBIndex<DB2System>>();
         private final String                        db2AdvisorPath;
-        private final DatabaseConnection<DB2Index> connection;
+        private final DatabaseConnection<DB2System> connection;
 
-        DB2DatabaseIndexExtractor(String db2AdvisorPath, DatabaseConnection<DB2Index> connection){
+        DB2DatabaseIndexExtractor(String db2AdvisorPath, DatabaseConnection<DB2System> connection){
             super();
             this.db2AdvisorPath = db2AdvisorPath;
             this.connection     = connection;
@@ -452,8 +455,8 @@ public class Platform {
 
         @SuppressWarnings({"RedundantTypeArguments"})
         @Override
-        public void adjust(DatabaseConnection<DB2Index> connection) {
-            final JdbcDatabaseConnection<DB2Index> c = Objects.as(connection);
+        public void adjust(DatabaseConnection<DB2System> connection) {
+            final JdbcDatabaseConnection<DB2System> c = Objects.as(connection);
             submit(
                     isolationLevelReadCommitted(),
                     c
@@ -461,7 +464,7 @@ public class Platform {
         }
 
         @Override
-        public ExplainInfo<DB2Index> explainInfo(String sql) throws SQLException {
+        public ExplainInfo<DB2System> explainInfo(String sql) throws SQLException {
             PreConditions.checkSQLRelatedState(
                     isEnabled(),
                     "We cannot use this extractor; its owner connection has been closed."
@@ -469,7 +472,7 @@ public class Platform {
             SQLStatement.SQLCategory category     = null;
             DB2QualifiedName updatedTable = null;
             double                   updateCost   = 0.0;
-            final JdbcDatabaseConnection<DB2Index> c = Objects.as(connection);
+            final JdbcDatabaseConnection<DB2System> c = Objects.as(connection);
 
             try {
                 // a batch supplying of commands with no returned value.
@@ -503,12 +506,12 @@ public class Platform {
         }
 
         @Override
-        public void fixCandidates(Iterable<DB2Index> candidateSet) throws SQLException {
+        public void fixCandidates(Iterable<DBIndex<DB2System>> candidateSet) throws SQLException {
             PreConditions.checkSQLRelatedState(
                     isEnabled(),
                     "We cannot use this extractor; its owner connection has been closed."
             );
-            final JdbcDatabaseConnection<DB2Index> c = Objects.as(connection);
+            final JdbcDatabaseConnection<DB2System> c = Objects.as(connection);
             cachedCandidateSet = candidateSet;
 
             submitAll(
@@ -518,12 +521,12 @@ public class Platform {
         }
 
         @Override
-        public Iterable<DB2Index> recommendIndexes(String sql) throws SQLException {
+        public Iterable<DBIndex<DB2System>> recommendIndexes(String sql) throws SQLException {
             PreConditions.checkSQLRelatedState(
                     isEnabled(),
                     "We cannot use this extractor; its owner connection has been closed."
             );
-            final JdbcDatabaseConnection<DB2Index> c = Objects.as(connection);
+            final JdbcDatabaseConnection<DB2System> c = Objects.as(connection);
             List<DB2IndexMetadata> suppliedMetaList;
 
             try {
@@ -550,22 +553,22 @@ public class Platform {
                 throw new SQLException(e);
             }
 
-            final List<DB2Index> indexList = newList();
+            final List<DBIndex<DB2System>> indexList = newList();
             for(DB2IndexMetadata each : suppliedMetaList){
                 final double creationCost = each.creationCost(this, connection.getWhatIfOptimizer());
-                final DB2Index index = new DB2Index(each, creationCost);
+                final DBIndex<DB2System> index = new DB2Index(each, creationCost);
                 indexList.add(index);
             }
             return indexList;
         }
 
         @Override
-        public Iterable<DB2Index> recommendIndexes(File workloadFile) throws SQLException, IOException {
+        public Iterable<DBIndex<DB2System>> recommendIndexes(File workloadFile) throws SQLException, IOException {
             PreConditions.checkSQLRelatedState(
                     isEnabled(),
                     "We cannot use this extractor; its owner connection has been closed."
             );
-            final JdbcDatabaseConnection<DB2Index> c = Objects.as(connection);
+            final JdbcDatabaseConnection<DB2System> c = Objects.as(connection);
             try {
                 final Advisor.FileInfo advisorFile = Advisor.createAdvisorFile(
                         c,
@@ -581,7 +584,7 @@ public class Platform {
         }
 
         @Override
-        public Iterable<DB2Index> getCandidateSet() {
+        public Iterable<DBIndex<DB2System>> getCandidateSet() {
             return cachedCandidateSet;
         }
 
@@ -594,28 +597,28 @@ public class Platform {
     /**
      *  A PG-specific Database Index Extractor.
      */
-    static class PGDatabaseIndexExtractor extends AbstractDatabaseIndexExtractor<PGIndex> {
-        private final DatabaseConnection<PGIndex> connection;
+    static class PGDatabaseIndexExtractor extends AbstractDatabaseIndexExtractor<PGSystem> {
+        private final DatabaseConnection<PGSystem> connection;
         private BitSet cachedBitSet = new BitSet();
-        private List<PGIndex>            cachedCandidateSet = new ArrayList<PGIndex>();
+        private List<DBIndex<PGSystem>>            cachedCandidateSet = new ArrayList<DBIndex<PGSystem>>();
 
-        PGDatabaseIndexExtractor(DatabaseConnection<PGIndex> connection){
+        PGDatabaseIndexExtractor(DatabaseConnection<PGSystem> connection){
             super();
             this.connection = connection;
         }
 
 
         @Override
-        public void adjust(DatabaseConnection<PGIndex> pgIndexDatabaseConnection) {
+        public void adjust(DatabaseConnection<PGSystem> pgIndexDatabaseConnection) {
             //does nothing
         }
 
         @Override
-        public ExplainInfo<PGIndex> explainInfo(String sql) throws SQLException {
+        public ExplainInfo<PGSystem> explainInfo(String sql) throws SQLException {
             if(!isEnabled()) throw new SQLException("IndexExtractor is Disabled.");
             incrementWhatIfCounter();
             final ReifiedPGIndexList indexSet = new ReifiedPGIndexList();
-            for(PGIndex each : cachedCandidateSet){
+            for(DBIndex<PGSystem > each : cachedCandidateSet){
                 indexSet.add(each);
             }                        
             final Double[] maintCost = new Double[cachedBitSet.length()];
@@ -631,41 +634,41 @@ public class Platform {
         }
 
         private void incrementWhatIfCounter(){
-            Objects.<AbstractDatabaseWhatIfOptimizer<PGIndex>>as(
+            Objects.<AbstractDatabaseWhatIfOptimizer<PGSystem>>as(
                     connection.getWhatIfOptimizer()
             ).incrementWhatIfCount();
         }
 
         @Override
-        public void fixCandidates(Iterable<PGIndex> candidateSet) throws SQLException {
+        public void fixCandidates(Iterable<DBIndex<PGSystem>> candidateSet) throws SQLException {
             if(!isEnabled()) throw new SQLException("IndexExtractor is Disabled.");
             cachedCandidateSet.clear();
             getCachedBitSet().clear();
-            for (PGIndex idx : candidateSet) {
+            for (DBIndex<PGSystem> idx : candidateSet) {
                 cachedCandidateSet.add(idx);
                 getCachedBitSet().set(idx.internalId());
             }
         }
 
         @Override
-        public Iterable<PGIndex> recommendIndexes(String sql) throws SQLException {
+        public Iterable<DBIndex<PGSystem>> recommendIndexes(String sql) throws SQLException {
             if(!isEnabled()) throw new SQLException("IndexExtractor is Disabled.");
             return supplyValue(PGCommands.recommendIndexes(), connection, sql);
         }
 
         @Override
-        public Iterable<PGIndex> recommendIndexes(File workloadFile) throws SQLException, IOException {
+        public Iterable<DBIndex<PGSystem>> recommendIndexes(File workloadFile) throws SQLException, IOException {
             if(!isEnabled()) throw new SQLException("IndexExtractor is Disabled.");
-            final List<PGIndex> candidateSet = new ArrayList<PGIndex>();
+            final List<DBIndex<PGSystem>> candidateSet = new ArrayList<DBIndex<PGSystem>>();
             for (String line : Files.getLines(workloadFile)) {
                 final String sql = trimSqlStatement(line);
-                candidateSet.addAll((Collection<? extends PGIndex>) recommendIndexes(sql));
+                candidateSet.addAll((Collection<? extends DBIndex<PGSystem>>) recommendIndexes(sql));
             }
             return candidateSet;
         }
 
         @Override
-        public Iterable<PGIndex> getCandidateSet() {
+        public Iterable<DBIndex<PGSystem>> getCandidateSet() {
             return cachedCandidateSet;
         }
 
