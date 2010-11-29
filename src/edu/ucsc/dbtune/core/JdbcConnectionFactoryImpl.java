@@ -46,6 +46,19 @@ class JdbcConnectionFactoryImpl implements JdbcConnectionFactory {
     private static void registeringDriver(String driverClass) throws SQLException {
         try {
             // registering driver.
+            if ( driverClass.equals("postgresql") )
+            {
+                driverClass = "org.postgresql.Driver";
+            }
+            else if ( driverClass.equals("db2") )
+            {
+                driverClass = "com.ibm.db2.jcc.DB2Driver";
+            }
+            else 
+            {
+                throw new SQLException("unkown DBMS " + driverClass);
+            }
+
             Class.forName(driverClass);
         } catch (ClassNotFoundException e) {
             throw new SQLException("Fatal Error: JDBC Driver <" + driverClass + "> not found!!!!!");

@@ -106,7 +106,8 @@ implements DatabaseConnectionManager<I> {
 
     public static <I extends DBIndex<I>> DatabaseConnectionManager<I> makeDatabaseConnectionManager(Properties props, JdbcConnectionFactory jdbcConnectionFactory){
         final String password    = getPassword(props);
-        final String driverClass = props.getProperty(DRIVER);
+        final String driverClass = props.getProperty(URL).split(":")[1];
+
         return new JdbcDatabaseConnectionManager<I>(
                 props.getProperty(URL),
                 props.getProperty(USERNAME),
