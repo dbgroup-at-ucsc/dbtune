@@ -71,8 +71,6 @@ public abstract class AbstractDatabaseTable implements DatabaseTable
     @Override
     public String toString() 
     {
-	return new ToStringBuilder<AbstractDatabaseTable>(this)
-	    .add("oid", getOid())
-	    .toString();
+        return name;
     }
 }
