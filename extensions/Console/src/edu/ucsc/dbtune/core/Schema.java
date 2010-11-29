@@ -32,8 +32,6 @@ import java.sql.SQLException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 
-import static edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager.makeDatabaseConnectionManager;
-
 /**
  * This class represents a Schema, a container of tables.
  *
@@ -120,47 +118,6 @@ public class Schema
     public static Schema connect( String url, String usr, String pwd )
         throws Exception
     {
-        // DatabaseConnectionManager connectionManager;
-        // Properties props;
-        //
-        // props.setProperty(JdbcDatabaseConnectionManager.URL, url);
-        // props.setProperty(JdbcDatabaseConnectionManager.USERNAME, usr);
-        // props.setProperty(JdbcDatabaseConnectionManager.PASSWORD, pwd);
-        //
-        // return makeDatabaseConnectionManager(props).connect();
-        
-        DatabaseConnectionManager<DB2Index> connectionManagerDB2;
-        DatabaseConnectionManager<PGIndex>  connectionManagerPG;
-        DatabaseConnection<?>               connection;
-
-        Properties props;
-        String[]   url_split;
-
-        url_split = url.split(":");
-
-        props = new Properties();
-
-        props.setProperty(JdbcDatabaseConnectionManager.URL, url);
-        props.setProperty(JdbcDatabaseConnectionManager.USERNAME, usr);
-        props.setProperty(JdbcDatabaseConnectionManager.PASSWORD, pwd);
-
-        if ( url_split[1].equals("db2") )
-        {
-            props.setProperty(JdbcDatabaseConnectionManager.DRIVER, "com.ibm.db2.jcc.DB2Driver");
-            connectionManagerDB2 = makeDatabaseConnectionManager(props);
-            connection = connectionManagerDB2.connect();
-        }
-        else if ( url_split[1].equals("postgresql") )
-        {
-            props.setProperty(JdbcDatabaseConnectionManager.DRIVER, "org.postgresql.Driver");
-            connectionManagerPG = makeDatabaseConnectionManager( props );
-            connection = connectionManagerPG.connect();
-        }
-        else
-        {
-            throw new Exception("Unknown driver class");
-        }
-
-        return new Schema(connection);
+        return new Schema(SSchema.connect(url,usr,pwd));
     }
 }
