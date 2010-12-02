@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.core;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DatabaseIndexExtractorFactory<I extends DBSystem<I>> {
+public interface DatabaseIndexExtractorFactory<I extends DBIndex<I>> {
     /**
      * makes a new {@link DatabaseIndexExtractor} object.
      * @param connection

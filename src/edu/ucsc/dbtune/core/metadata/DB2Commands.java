@@ -635,7 +635,7 @@ public class DB2Commands {
 
         @Override
         public DB2IndexMetadata apply(Parameter input) throws SQLException {
-            final DatabaseConnection<DB2System> defaultDatabaseConnection = Objects.as(
+            final DatabaseConnection<DB2Index> defaultDatabaseConnection = Objects.as(
                     input.getParameterValue(DatabaseConnection.class)
             );
             final String dbName = defaultDatabaseConnection.getConnectionManager().getDatabaseName();

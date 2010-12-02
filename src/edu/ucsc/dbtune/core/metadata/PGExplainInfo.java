@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.AbstractExplainInfo;
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
 
@@ -29,7 +28,7 @@ import java.util.Arrays;
 /**
  *  implements a PG-specific {@link edu.ucsc.satuning.db.ExplainInfo}.
  */
-public class PGExplainInfo extends AbstractExplainInfo<PGSystem> implements Serializable {
+public class PGExplainInfo extends AbstractExplainInfo<PGIndex> implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final double[] updateCost;
@@ -47,7 +46,7 @@ public class PGExplainInfo extends AbstractExplainInfo<PGSystem> implements Seri
 	}
 
     @Override
-	public double maintenanceCost(DBIndex<PGSystem> index) {
+	public double maintenanceCost(PGIndex index) {
 		if (getSQLCategory() != SQLCategory.DML)
 			return 0;
 		return updateCost[index.internalId()];

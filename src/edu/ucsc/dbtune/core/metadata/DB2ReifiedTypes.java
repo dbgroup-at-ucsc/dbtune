@@ -30,7 +30,7 @@ public class DB2ReifiedTypes {
      * A trick to bypass the whole reifying process done by Java and the return
      * a reified DB2IndexSet.
      */
-    public static class DB2IndexSet extends DBIndexSet<DB2System> {
+    public static class DB2IndexSet extends DBIndexSet<DB2Index> {
         private static final long serialVersionUID = DBIndexSet.serialVersionUID;
     }
 

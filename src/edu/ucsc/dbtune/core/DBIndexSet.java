@@ -31,11 +31,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DBIndexSet<I extends DBSystem<I>> implements Iterable<DBIndex<I>>, Serializable {
+public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializable {
 	
 	private BitSet bs;
-	private Set<DBIndex<I>> set;
-	private List<DBIndex<I>> list;
+	private Set<I> set;
+	private List<I> list;
 	private int maxInternalId;
 
 	/* serialization support */
@@ -47,7 +47,7 @@ public class DBIndexSet<I extends DBSystem<I>> implements Iterable<DBIndex<I>>, 
 
 	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
 		out.writeInt(list.size());
-		for (DBIndex<I> idx : list)
+		for (I idx : list)
 			out.writeObject(idx);
 	}
 	
@@ -55,19 +55,19 @@ public class DBIndexSet<I extends DBSystem<I>> implements Iterable<DBIndex<I>>, 
     	clear();
     	int n = in.readInt();
     	for (int i = 0; i < n; i++) {
-    		DBIndex<I> readObject = DBUtilities.<I>readObject(in);
+    		I readObject = DBUtilities.<I>readObject(in);
 			add(readObject);
     	}
     }
 	
 	public void clear() {
-		set = new HashSet<DBIndex<I>>();
-		list = new ArrayList<DBIndex<I>>();
+		set = new HashSet<I>();
+		list = new ArrayList<I>();
 		bs = new BitSet();
 		maxInternalId = -1;
 	}
 	
-	public void add(DBIndex<I> idx) {
+	public void add(I idx) {
 		if (set.add(idx)) {
 			list.add(idx);
 			bs.set(idx.internalId());
@@ -76,7 +76,7 @@ public class DBIndexSet<I extends DBSystem<I>> implements Iterable<DBIndex<I>>, 
 		}
 	}
 	
-	public java.util.Iterator<DBIndex<I>> iterator() {
+	public java.util.Iterator<I> iterator() {
 		return list.iterator();
 	}
 	
@@ -92,7 +92,7 @@ public class DBIndexSet<I extends DBSystem<I>> implements Iterable<DBIndex<I>>, 
 		StringBuilder sb = new StringBuilder();
 		sb.append(size() + " indexes\n");
 		
-		for (DBIndex<I> idx : this) {
+		for (I idx : this) {
 			sb.append(idx + "\n");
 		}
 		
@@ -109,7 +109,7 @@ public class DBIndexSet<I extends DBSystem<I>> implements Iterable<DBIndex<I>>, 
 		// start from scratch to be safe
 		clear();
 		for (int i = 0; i < array.length; i++) {
-			DBIndex<I> idx = (DBIndex<I>) array[i].consDuplicate(i);
+			I idx = (I) array[i].consDuplicate(i);
 			add(idx);
 		}
 	}

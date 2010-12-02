@@ -20,7 +20,6 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
-import edu.ucsc.dbtune.core.metadata.DB2System;
 import edu.ucsc.dbtune.spi.core.Commands;
 import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.Files;
@@ -68,7 +67,7 @@ public class Advisor {
 	private static final Pattern START_INDEXES_PATTERN      = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
 	private static final Pattern END_INDEXES_PATTERN        = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
 
-	public static FileInfo createAdvisorFile(DatabaseConnection<DB2System> conn, String advisorPath, int budget, File workloadFile) throws IOException, AdvisorException, SQLException {
+	public static FileInfo createAdvisorFile(DatabaseConnection<DB2Index> conn, String advisorPath, int budget, File workloadFile) throws IOException, AdvisorException, SQLException {
 		Commands.submit(
                 // executes "DELETE FROM advise_index"
                 clearAdviseIndex(), conn
@@ -110,8 +109,8 @@ public class Advisor {
 		return info;
 	}
 
-	private static String getCmd(DatabaseConnection<DB2System> conn, String advisorPath, int budget, File inFile, boolean clean) {
-        final JdbcDatabaseConnectionManager<DB2System> manager = Objects.as(conn.getConnectionManager());
+	private static String getCmd(DatabaseConnection<DB2Index> conn, String advisorPath, int budget, File inFile, boolean clean) {
+        final JdbcDatabaseConnectionManager<DB2Index> manager = Objects.as(conn.getConnectionManager());
 		final String db   = manager.getDatabaseName();
 		final String pw   = manager.getPassword();
 		final String user = manager.getUsername();
@@ -136,7 +135,7 @@ public class Advisor {
 			output    = processFile(stream, indexList);
 		}
 		
-		public DB2IndexSet getCandidates(DatabaseConnection<DB2System> conn) throws SQLException {
+		public DB2IndexSet getCandidates(DatabaseConnection<DB2Index> conn) throws SQLException {
 			final List<DB2IndexMetadata> metaList = new ArrayList<DB2IndexMetadata>();
 			int id = 1;
 			for (IndexInfo info : indexList) {
@@ -162,7 +161,7 @@ public class Advisor {
 			// normalize the index candidates
 			candidateSet.normalize();
 			
-			for (DBIndex<DB2System> index : candidateSet) {
+			for (DB2Index index : candidateSet) {
 				System.out.println("Candidate Index " + index.internalId() + ": " + index.megabytes());
 				System.out.println(index.creationText());
 			}

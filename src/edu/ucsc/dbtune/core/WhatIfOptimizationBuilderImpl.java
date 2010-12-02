@@ -35,7 +35,7 @@ import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
  * @param <I>
  *      the type of {@link DBIndex} class.
  */
-class WhatIfOptimizationBuilderImpl<I extends DBSystem<I>>
+class WhatIfOptimizationBuilderImpl<I extends DBIndex<I>>
 implements WhatIfOptimizationBuilder<I> {
 
     private final String sql;
@@ -44,7 +44,7 @@ implements WhatIfOptimizationBuilder<I> {
     // optional variables
     private BitSet configuration;
     private BitSet usedSet;
-    private DBIndex<I>      profiledIndex;
+    private I      profiledIndex;
     private BitSet usedColumns;
     private final AbstractDatabaseWhatIfOptimizer<I> whatIfOptimizer;
     private final AtomicBoolean withProfiledIndex;
@@ -80,7 +80,7 @@ implements WhatIfOptimizationBuilder<I> {
      * @return
      *      a profiled index.
      */
-    public DBIndex<I> getProfiledIndex(){
+    public I getProfiledIndex(){
         return profiledIndex;
     }
 
@@ -122,7 +122,7 @@ implements WhatIfOptimizationBuilder<I> {
 
     @Override
     public WhatIfOptimizationCostBuilder using(BitSet config,
-           DBIndex<I> profiledIndex, BitSet usedColumns
+           I profiledIndex, BitSet usedColumns
     ) {
         this.withProfiledIndex.set(true);
         this.configuration = config;

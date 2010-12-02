@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.core;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DatabaseWhatIfOptimizerFactory<I extends DBSystem<I>> {
+public interface DatabaseWhatIfOptimizerFactory<I extends DBIndex<I>> {
     /**
      * makes a new {@link edu.ucsc.dbtune.core.DatabaseWhatIfOptimizer} object.
      * @param connection

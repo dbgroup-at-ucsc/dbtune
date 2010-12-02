@@ -19,13 +19,12 @@
 package edu.ucsc.dbtune.core.optimizers;
 
 import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.DBSystem;
 import edu.ucsc.dbtune.util.BitSet;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface WhatIfOptimizationBuilder <I extends DBSystem<I>> extends WhatIfOptimizationCostBuilder {
+public interface WhatIfOptimizationBuilder <I extends DBIndex<I>> extends WhatIfOptimizationCostBuilder {
     /**
      * use a pair of {@code bit sets} for performing a what-if optimization.
      * @param config
@@ -49,5 +48,5 @@ public interface WhatIfOptimizationBuilder <I extends DBSystem<I>> extends WhatI
      * @return
      *      {@link WhatIfOptimizationCostBuilder this}
      */
-    WhatIfOptimizationCostBuilder using(BitSet config, DBIndex<I> profiledIndex, BitSet usedColumns);
+    WhatIfOptimizationCostBuilder using(BitSet config, I profiledIndex, BitSet usedColumns);
 }

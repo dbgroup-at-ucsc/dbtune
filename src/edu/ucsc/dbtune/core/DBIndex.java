@@ -24,7 +24,7 @@ import java.sql.SQLException;
  * 
  * @param <I>
  */
-public interface DBIndex<I extends DBSystem<I>> {
+public interface DBIndex<I extends DBIndex<I>> {
     /**
      * 
      * @return
@@ -55,7 +55,7 @@ public interface DBIndex<I extends DBSystem<I>> {
      * @return
      * @throws java.sql.SQLException
      */
-	DBIndex<I> consDuplicate(int id) throws SQLException;
+	I consDuplicate(int id) throws SQLException;
 
     @Override
     boolean equals(Object obj);

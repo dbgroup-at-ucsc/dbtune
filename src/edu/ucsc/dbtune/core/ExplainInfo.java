@@ -23,7 +23,7 @@ package edu.ucsc.dbtune.core;
  * represents an explained index.
  * @param <I> the type of index.
  */
-public interface ExplainInfo<I extends DBSystem<I>> {
+public interface ExplainInfo<I extends DBIndex<I>> {
     /**
      * gets the maintenance cost of an index.
      * @param index
@@ -31,7 +31,7 @@ public interface ExplainInfo<I extends DBSystem<I>> {
      * @return
      *      maintenance cost.
      */
-	double maintenanceCost(DBIndex<I> index);
+	double maintenanceCost(I index);
 
     /**
      * @return {@code true} if it's
