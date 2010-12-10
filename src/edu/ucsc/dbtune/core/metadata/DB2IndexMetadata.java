@@ -18,9 +18,8 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DatabaseIndexColumn;
-import edu.ucsc.dbtune.core.DatabaseIndexExtractor;
 import edu.ucsc.dbtune.core.DatabaseWhatIfOptimizer;
 import edu.ucsc.dbtune.util.BitSet;
 import edu.ucsc.dbtune.util.DBUtilities;
@@ -147,14 +146,14 @@ public class DB2IndexMetadata implements Serializable {
         int nSortedColumns;
         final StringBuilder sql = new StringBuilder(16 * (nSortedColumns = schema.descending.size()));
         sql.append("SELECT ");
-        for(DatabaseIndexColumn each : schema.getColumns()){
+        for(DatabaseColumn each : schema.getColumns()){
             if(idx >= nSortedColumns) break;
             if(idx > 0) {
                 sql.append(',');
             }
 
-            final DB2IndexColumn db2IndexColumn = Objects.as(each);
-            DBUtilities.formatIdentifier(db2IndexColumn.getName(), sql);
+            final DB2Column db2Column = Objects.as(each);
+            DBUtilities.formatIdentifier(db2Column.getName(), sql);
             idx++;
         }
 
@@ -167,13 +166,13 @@ public class DB2IndexMetadata implements Serializable {
 
 		sql.append(" ORDER BY ");
 		idx = 0;
-		for (DatabaseIndexColumn c : schema.getColumns()) {
+		for (DatabaseColumn c : schema.getColumns()) {
 			if (idx > 0) {
                 sql.append(',');
             }
 
-            final DB2IndexColumn db2IndexColumn = Objects.as(c);
-            DBUtilities.formatIdentifier(db2IndexColumn.getName(), sql);
+            final DB2Column db2Column = Objects.as(c);
+            DBUtilities.formatIdentifier(db2Column.getName(), sql);
 			idx++;
 		}
 
@@ -191,11 +190,11 @@ public class DB2IndexMetadata implements Serializable {
 
 		i = 0; 
 		n = schema.descending.size(); // n is number of *sorted* columns
-		for (DatabaseIndexColumn c : schema.getColumns()) {
+		for (DatabaseColumn c : schema.getColumns()) {
 			if (i >= n) break;
 			if (i > 0) sqlbuf.append(',');
-            final DB2IndexColumn db2IndexColumn = Objects.as(c);
-			DBUtilities.formatIdentifier(db2IndexColumn.getName(), sqlbuf);
+            final DB2Column db2Column = Objects.as(c);
+			DBUtilities.formatIdentifier(db2Column.getName(), sqlbuf);
 			i++;
 		}
 		
@@ -208,10 +207,10 @@ public class DB2IndexMetadata implements Serializable {
 		
 		sqlbuf.append(" ORDER BY ");
 		i = 0;
-		for (DatabaseIndexColumn c : schema.getColumns()) {
+		for (DatabaseColumn c : schema.getColumns()) {
 			if (i > 0) sqlbuf.append(',');
-            final DB2IndexColumn db2IndexColumn = Objects.as(c);
-			DBUtilities.formatIdentifier(db2IndexColumn.getName(), sqlbuf);
+            final DB2Column db2Column = Objects.as(c);
+			DBUtilities.formatIdentifier(db2Column.getName(), sqlbuf);
 			i++;
 		}
 
@@ -296,7 +295,7 @@ public class DB2IndexMetadata implements Serializable {
                && ((DB2IndexMetadata) o1).schema.equals(schema);
     }
 
-	private String formatColNames(List<DatabaseIndexColumn> columns, List<Boolean> descending) {
+	private String formatColNames(List<DatabaseColumn> columns, List<Boolean> descending) {
 		int colCount = columns.size();
 		if (descending.size() != colCount)
 			throw new UnsupportedOperationException("do not handle INCLUDE columns yet");
@@ -304,7 +303,7 @@ public class DB2IndexMetadata implements Serializable {
 		StringBuilder sbuf = new StringBuilder();
 		for (int i = 0; i < colCount; i++) {
 			sbuf.append(descending.get(i) ? '-' : '+');
-            final DB2IndexColumn each = Objects.as(columns.get(i));
+            final DB2Column each = Objects.as(columns.get(i));
 			sbuf.append(each.getName());
 		}
 		

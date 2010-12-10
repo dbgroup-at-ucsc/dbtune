@@ -18,37 +18,37 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.core.DatabaseIndexColumn;
+import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.util.Objects;
 
 import java.io.Serializable;
 
-public class DB2IndexColumn implements DatabaseIndexColumn, Serializable {
-	private static final long serialVersionUID = 1L;
-	private String name;
-	
-	DB2IndexColumn(String n) {
-		this.name = n;
+public class PGColumn implements DatabaseColumn, Serializable {
+    private static final long serialVersionUID = 1L;
+
+	private final int attnum;
+    PGColumn(int a) {
+		this.attnum = a;
 	}
 	
 	@Override
 	public boolean equals(Object other) {
-        return other instanceof DB2IndexColumn
-               && getName().equals(((DB2IndexColumn) other).getName());
+        return other instanceof PGColumn
+               && getAttnum() == ((PGColumn) other).getAttnum();
     }
 
-    public String getName() {
-        return name;
+    public int getAttnum() {
+        return attnum;
     }
 
     @Override
     public int hashCode() {
-        return 34 * Objects.hashCode(getName());
+        return (31 * Objects.hashCode(attnum));
     }
 
     @Override
 	public String toString() {
-		return getName();
+		return Integer.toString(getAttnum());
 	}
 
 }

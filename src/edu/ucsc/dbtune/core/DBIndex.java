@@ -21,39 +21,37 @@ package edu.ucsc.dbtune.core;
 import java.sql.SQLException;
 
 /**
- * 
+ * an immutable type which represents the Index concept, which is defined as
+ * data structure that improves the speed of data retrieval operations on a database table.
  * @param <I>
  */
 public interface DBIndex<I extends DBIndex<I>> {
     /**
-     * 
-     * @return
+     * @return the cost required to create this index.
      */
     double creationCost();
 
     /**
-     * 
-     * @return
+     * @return todo
      */
 	String creationText();
 
     /**
-     * 
-     * @return
+     * @return the base table where this index will be used.
      */
 	DatabaseTable baseTable();
 
     /**
-     *
-     * @return
+     * @return the number of columns of the schema where this is index is part of.
      */
 	int columnCount();
 
     /**
-     *
-     * @param id
-     * @return
+     * duplicate an index in a type-safe fashion.
+     * @param id id of the duplicate
+     * @return the duplicate of {@code this} index.
      * @throws java.sql.SQLException
+     *      unable to duplicate an index for the stated reasons.
      */
 	I consDuplicate(int id) throws SQLException;
 
@@ -61,31 +59,25 @@ public interface DBIndex<I extends DBIndex<I>> {
     boolean equals(Object obj);
 
     /**
-     * 
-     * @param i
-     * @return
+     * @param i position of col
+     * @return a database column at position {@code i}.
      */
 	// we only need to use the equals() method of a column
-    DatabaseIndexColumn getColumn(int i);
+    DatabaseColumn getColumn(int i);
     
     @Override
 	int hashCode();
 
     /**
-     * 
-     * @return
+     * @return the internal Id of this index.
      */
 	int internalId();
 
     /**
-     * 
-     * @return
+     * @return the size of the index.
      */
 	double megabytes();
 
-    /**
-     * 
-     * @return
-     */
+    @Override   // this encourages developer to provide a human-readable string.
 	String toString();
 }

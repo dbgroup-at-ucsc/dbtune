@@ -23,7 +23,7 @@ package edu.ucsc.dbtune.core;
  * {@link Object#equals(Object)} {@link Object#hashCode()}} and
  * {@link Object#toString()} methods.
  */
-public interface DatabaseIndexColumn {
+public interface DatabaseColumn {
     @Override
 	boolean equals(Object other);
 

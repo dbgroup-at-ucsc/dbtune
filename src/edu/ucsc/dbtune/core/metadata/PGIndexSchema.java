@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.core.DatabaseIndexColumn;
+import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseIndexSchema;
 import edu.ucsc.dbtune.core.DatabaseTable;
 import edu.ucsc.dbtune.util.Objects;
@@ -36,7 +36,7 @@ public class PGIndexSchema implements DatabaseIndexSchema, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private PGTable baseTable;
-	private List<DatabaseIndexColumn> columns;
+	private List<DatabaseColumn> columns;
 	private boolean isSync;
 	private List<Boolean> isDescending;
 	private String signature;
@@ -53,7 +53,7 @@ public class PGIndexSchema implements DatabaseIndexSchema, Serializable {
      *      indicate whether is in descending order.
      */
     PGIndexSchema(int reloid, boolean isSync,
-                  List<DatabaseIndexColumn> columns,
+                  List<DatabaseColumn> columns,
                   List<Boolean> isDescending
     ) {
 		this.baseTable = new PGTable(reloid);
@@ -66,8 +66,8 @@ public class PGIndexSchema implements DatabaseIndexSchema, Serializable {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(reloid);
 		sb.append(isSync() ? 'Y' : 'N');
-		for (DatabaseIndexColumn col : columns) {
-            final PGIndexColumn each = Objects.as(col);
+		for (DatabaseColumn col : columns) {
+            final PGColumn each = Objects.as(col);
             sb.append(each.getAttnum()).append(" ");
         }
 
@@ -100,7 +100,7 @@ public class PGIndexSchema implements DatabaseIndexSchema, Serializable {
     }
 
     @Override
-    public List<DatabaseIndexColumn> getColumns() {
+    public List<DatabaseColumn> getColumns() {
         return columns;
     }
 

@@ -23,9 +23,6 @@ import edu.ucsc.dbtune.util.Objects;
 import java.io.Serializable;
 import java.sql.SQLException;
 
-/**
- * todo
- */
 public class PGIndex extends AbstractDatabaseIndex<PGIndex> implements Serializable {
 	private PGIndexSchema schema;
 
@@ -86,7 +83,7 @@ public class PGIndex extends AbstractDatabaseIndex<PGIndex> implements Serializa
 	}
 
     @Override
-	public PGIndexColumn getColumn(int i) {
+	public PGColumn getColumn(int i) {
 		return Objects.as(getSchema().getColumns().get(i));
 	}
 

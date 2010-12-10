@@ -186,7 +186,7 @@ public class DBTuneInstances {
         try {
             final Constructor<PGIndexSchema> c = PGIndexSchema.class.getDeclaredConstructor(int.class, boolean.class, List.class, List.class);
             c.setAccessible(true);
-            final List<DatabaseIndexColumn> columns      = Instances.newList();
+            final List<DatabaseColumn> columns      = Instances.newList();
             final List<Boolean>             isDescending = Instances.newList();
             return c.newInstance(id, flag, columns, isDescending);
         } catch (Exception e){

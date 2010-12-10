@@ -96,7 +96,7 @@ public class DB2Index extends AbstractDatabaseIndex<DB2Index> implements Seriali
     }
 
     @Override
-	public DB2IndexColumn getColumn(int i) {
+	public DB2Column getColumn(int i) {
 		return Objects.as(meta.schema.getColumns().get(i));
 	}
 	

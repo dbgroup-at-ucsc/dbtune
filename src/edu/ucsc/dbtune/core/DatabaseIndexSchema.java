@@ -25,9 +25,9 @@ import java.util.List;
  */
 public interface DatabaseIndexSchema {    
     /**
-     * @return a list of {@link edu.ucsc.dbtune.core.DatabaseIndexColumn} objects.
+     * @return a list of {@link DatabaseColumn} objects.
      */
-    List<DatabaseIndexColumn> getColumns();
+    List<DatabaseColumn> getColumns();
 
     /**
      * @return the schema's {@link DatabaseTable base table}.

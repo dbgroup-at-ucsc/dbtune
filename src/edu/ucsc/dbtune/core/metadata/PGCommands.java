@@ -18,8 +18,8 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DatabaseIndexColumn;
 import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
 import edu.ucsc.dbtune.spi.core.Command;
 import edu.ucsc.dbtune.spi.core.Commands;
@@ -103,11 +103,11 @@ public class PGCommands {
         ) throws SQLException {
             final int       reloid = Integer.valueOf(rs.getString("reloid"));
             final boolean   isSync = rs.getString("sync").charAt(0) == 'Y';
-            final List<DatabaseIndexColumn> columns = newList();
+            final List<DatabaseColumn> columns = newList();
             final String columnsString = rs.getString("atts");
             if(columnsString.length() > 0){
                 for (String attnum  : columnsString.split(" ")){
-                    columns.add(new PGIndexColumn(Integer.valueOf(attnum)));
+                    columns.add(new PGColumn(Integer.valueOf(attnum)));
                 }
             }
 
@@ -322,8 +322,8 @@ public class PGCommands {
                 for (int i = 0; i < idx.columnCount(); i++) {
                     sb.append(idx.getSchema().getDescending().get(i) ? " desc" : " asc");
                     final PGIndexSchema schema = idx.getSchema();
-                    final List<DatabaseIndexColumn>   cols   = schema.getColumns();
-                    final PGIndexColumn each    = Objects.as(cols.get(i));
+                    final List<DatabaseColumn>   cols   = schema.getColumns();
+                    final PGColumn each    = Objects.as(cols.get(i));
                     sb.append(" ").append(each.getAttnum());
                 }
                 sb.append(") ");

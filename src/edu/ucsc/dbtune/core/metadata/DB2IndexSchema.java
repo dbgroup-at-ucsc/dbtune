@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.core.DatabaseIndexColumn;
+import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseIndexSchema;
 import edu.ucsc.dbtune.util.DBUtilities;
 import edu.ucsc.dbtune.util.HashFunction;
@@ -40,7 +40,7 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 	protected String dbName;
 	protected String tableName;
 	public String tableCreatorName;
-	private List<DatabaseIndexColumn> columns;
+	private List<DatabaseColumn> columns;
     // if shorter than colNames, the rest are INCLUDE columns
     // if longer than colNames, other elements are ignored
 	protected List<Boolean> descending;
@@ -85,9 +85,9 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 		this.dbName = dbName;
 		this.tableName = tableName;
 		this.tableCreatorName = tableCreatorName;
-		this.columns = new java.util.ArrayList<DatabaseIndexColumn>(colNames.size());
+		this.columns = new java.util.ArrayList<DatabaseColumn>(colNames.size());
 		for (String name : colNames) 
-			getColumns().add(new DB2IndexColumn(name));
+			getColumns().add(new DB2Column(name));
 		this.descending = descending;
 		this.uniqueRule = uniqueRule;
 		this.reverseScan = reverseScan;
@@ -122,8 +122,8 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 		for (int i = 0; i < descending.size() && i < getColumns().size(); i++) {
 			if (i > 0)
 				sqlbuf.append(", ");
-            final DB2IndexColumn db2IndexColumn = Objects.as(getColumns().get(i));
-			DBUtilities.formatIdentifier(db2IndexColumn.getName(), sqlbuf);
+            final DB2Column db2Column = Objects.as(getColumns().get(i));
+			DBUtilities.formatIdentifier(db2Column.getName(), sqlbuf);
 			sqlbuf.append(descending.get(i) ? " DESC" : " ASC");
 		}
 		sqlbuf.append(')');
@@ -135,8 +135,8 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 			for (int i = descending.size(); i < getColumns().size(); i++) {
 				if (i > descending.size())
 					sqlbuf.append(", ");
-                final DB2IndexColumn includeDb2IndexColumn = Objects.as(getColumns().get(i));
-				DBUtilities.formatIdentifier(includeDb2IndexColumn.getName(), sqlbuf);
+                final DB2Column includeDb2Column = Objects.as(getColumns().get(i));
+				DBUtilities.formatIdentifier(includeDb2Column.getName(), sqlbuf);
 			}
 			sqlbuf.append(')');
 		}
@@ -190,7 +190,7 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 		return true;
 	}
 
-    public List<DatabaseIndexColumn> getColumns() {
+    public List<DatabaseColumn> getColumns() {
         return columns;
     }
 
@@ -214,8 +214,8 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 			sbuf.append('.');
 			sbuf.append(getColumns().size());
 			sbuf.append('.');
-			for (DatabaseIndexColumn c : getColumns()) {
-                final DB2IndexColumn each = Objects.as(c);
+			for (DatabaseColumn c : getColumns()) {
+                final DB2Column each = Objects.as(c);
 				DBUtilities.formatIdentifier(each.getName(), sbuf);
 				sbuf.append('.');
 			}
