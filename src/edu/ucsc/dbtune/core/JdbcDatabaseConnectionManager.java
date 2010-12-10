@@ -73,9 +73,9 @@ implements DatabaseConnectionManager<I> {
     }
 
     /**
-     * construct a new {@link edu.ucsc.dbtune.core.DatabaseConnectionManager} given a property object.
+     * construct a new {@link DatabaseConnectionManager} given a property object.
      * the following snippet shows you the use of the JdbcConnectionManager for creating
-     * {@link edu.ucsc.dbtune.core.DatabaseConnectionManager}s.
+     * {@link DatabaseConnectionManager}s.
      *
      * <pre>
      * final Properties p = new Properties();

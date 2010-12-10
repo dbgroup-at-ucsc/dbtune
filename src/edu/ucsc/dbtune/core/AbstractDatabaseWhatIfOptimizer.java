@@ -51,6 +51,11 @@ public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> impl
     }
 
     /**
+     * @return a current candidate set after calling {@link #fixCandidates(Iterable)} method.
+     */
+    public abstract Iterable<I> getCandidateSet();
+
+    /**
      * runs n what-if optimizations and return n results (i.e., optimization cost)
      * @throws java.sql.SQLException
      *      unable to calculate costs b/c a database error.
@@ -109,6 +114,7 @@ public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> impl
     public String toString() {
         return new ToStringBuilder<AbstractDatabaseWhatIfOptimizer<?>>(this)
                .add("optimizations", getWhatIfOptimizationBuilder())
+               .add("candidateSet", getCandidateSet())
                .toString();
     }
 }

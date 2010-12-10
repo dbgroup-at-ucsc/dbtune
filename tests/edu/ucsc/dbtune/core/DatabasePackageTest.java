@@ -269,9 +269,9 @@ public class DatabasePackageTest {
     }
 
     private static <T extends DBIndex<T>> void checkFixCandidatesScenario(List<T> candidateSet, DatabaseConnection<T> connection) throws Exception {
-        final DatabaseIndexExtractor<T> ie = connection.getIndexExtractor();
-        ie.fixCandidates(candidateSet);
-        assertEquals("same candidate set", Objects.<Iterable<T>>as(candidateSet), Objects.<AbstractDatabaseIndexExtractor<T>>as(ie).getCandidateSet());
+        final DatabaseWhatIfOptimizer<T> optimizer = connection.getWhatIfOptimizer();
+        optimizer.fixCandidates(candidateSet);
+        assertEquals("same candidate set", Objects.<Iterable<T>>as(candidateSet), Objects.<AbstractDatabaseWhatIfOptimizer<T>>as(optimizer).getCandidateSet());
     }
 
     @Test
@@ -286,7 +286,7 @@ public class DatabasePackageTest {
 
     @SuppressWarnings({"RedundantTypeArguments"})
     private static <T extends DBIndex<T>> void checkExplainInfoScenario(DatabaseConnection<T> connection) throws Exception {
-        final DatabaseIndexExtractor<T> ie   = connection.getIndexExtractor();
+        final DatabaseWhatIfOptimizer<T> ie   = connection.getWhatIfOptimizer();
         final List<T>  pgCandidateSet  = Instances.newList();
         final T index1 = Objects.<T>as(newPGIndex(12));
         final T index2 = Objects.<T>as(newPGIndex(21));

@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.util.BitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,16 +42,6 @@ abstract class AbstractDatabaseIndexExtractor <I extends DBIndex<I>> implements 
     }
 
     /**
-     * @return a current candidate set after calling {@link #fixCandidates(Iterable)} method.
-     */
-    public abstract Iterable<I> getCandidateSet();
-
-    /**
-     * @return the current cached bit set.
-     */
-    public abstract BitSet getCachedBitSet();
-
-    /**
      * @return {@code true} if we can use this extractor, {@code false} otherwise.
      */
     protected boolean isEnabled(){
@@ -61,7 +50,7 @@ abstract class AbstractDatabaseIndexExtractor <I extends DBIndex<I>> implements 
 
     @Override
     public String toString() {
-        return new ToStringBuilder<AbstractDatabaseIndexExtractor<?>>(this)
+        return new ToStringBuilder<AbstractDatabaseIndexExtractor<I>>(this)
                .add("enabled?", isEnabled())
                .toString();
     }

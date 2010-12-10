@@ -79,7 +79,7 @@ public class BcBenefitInfo<I extends DBIndex<I>> {
 		int[] reqLevels = new int[snapshot.maxInternalId()+1];
 		double[] overheads = new double[snapshot.maxInternalId()+1];
 		
-		conn.getIndexExtractor().fixCandidates(snapshot);
+		conn.getWhatIfOptimizer().fixCandidates(snapshot);
 		BitSet tempBitSet = new BitSet();
 		BitSet usedColumns = new BitSet();
 		for (I idx : hotSet) {

@@ -153,7 +153,7 @@ public class Advisor {
 			// post-process to get creation costs
 			DB2IndexSet candidateSet = new DB2IndexSet();
 			for (DB2IndexMetadata meta : metaList) {
-				final double    creationCost = meta.creationCost(conn.getIndexExtractor(), conn.getWhatIfOptimizer());
+				final double    creationCost = meta.creationCost(conn.getWhatIfOptimizer());
 				final DB2Index index        = new DB2Index(meta, creationCost);
 				candidateSet.add(index);
 			}

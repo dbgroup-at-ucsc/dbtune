@@ -19,15 +19,14 @@
 package edu.ucsc.dbtune.core;
 
 /**
- * todo(Huascar) check the real purpose of this type.
- * represents an explained index.
+ * It represents the output of a what-if optimization call.
  * @param <I> the type of index.
  */
 public interface ExplainInfo<I extends DBIndex<I>> {
     /**
      * gets the maintenance cost of an index.
      * @param index
-     *      a {@link edu.ucsc.dbtune.core.DBIndex} object.
+     *      a {@link DBIndex} object.
      * @return
      *      maintenance cost.
      */
@@ -35,7 +34,7 @@ public interface ExplainInfo<I extends DBIndex<I>> {
 
     /**
      * @return {@code true} if it's
-     *      {@link edu.ucsc.satuning.workload.SQLStatement.SQLCategory#DML},
+     *      {@link SQLStatement.SQLCategory#DML},
      *      {@code false} otherwise.
      */
     boolean isDML();

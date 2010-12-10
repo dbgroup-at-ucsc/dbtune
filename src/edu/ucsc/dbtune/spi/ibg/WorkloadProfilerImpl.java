@@ -101,8 +101,8 @@ public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfi
             acknowledgeOnlineCandidates(sql, extractor);
         }
 
-        Snapshot<I>     indexes     = fixCandidatesInPool(extractor);
-        ExplainInfo<I>  explainInfo = obtainBasicQueryInformation(sql, extractor);
+        Snapshot<I>     indexes     = fixCandidatesInPool();
+        ExplainInfo<I>  explainInfo = obtainBasicQueryInformation(sql);
         return buildIndexBenefitGraph(sql, indexes, explainInfo);
     }
 
@@ -144,10 +144,11 @@ public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfi
         return qinfo;
     }
 
-    ExplainInfo<I> obtainBasicQueryInformation(String sql, DatabaseIndexExtractor<I> extractor) {
+    ExplainInfo<I> obtainBasicQueryInformation(String sql) {
+        final DatabaseWhatIfOptimizer<I> optimizer = connection.getWhatIfOptimizer();
         ExplainInfo<I> explainInfo;
         try {
-            explainInfo = extractor.explainInfo(sql);
+            explainInfo = optimizer.explainInfo(sql);
         } catch (SQLException e) {
             Debug.logError("SQLException caught while explaining command", e);
             throw new Error(e);
@@ -155,11 +156,12 @@ public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfi
         return explainInfo;
     }
 
-    Snapshot<I> fixCandidatesInPool(DatabaseIndexExtractor<I> extractor) {
+    Snapshot<I> fixCandidatesInPool() {
+        final DatabaseWhatIfOptimizer<I> optimizer = connection.getWhatIfOptimizer();
         // get the current set of candidates
         Snapshot<I> indexes = candidatePool.getSnapshot();
         try {
-            extractor.fixCandidates(indexes);
+            optimizer.fixCandidates(indexes);
         } catch (SQLException e) {
             Debug.logError("SQLException caught while setting candidates", e);
             throw new Error(e);

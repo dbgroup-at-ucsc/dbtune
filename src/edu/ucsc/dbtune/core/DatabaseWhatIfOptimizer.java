@@ -32,6 +32,33 @@ public interface DatabaseWhatIfOptimizer<I extends DBIndex<I>> {
     void disable();
 
     /**
+     * provides information dealing with the {@link edu.ucsc.dbtune.core.ExplainInfo#maintenanceCost(edu.ucsc.dbtune.core.DBIndex) maintenance
+     * cost} associated with the use of a given index.
+     *
+     * @param sql
+     *      sql query.
+     * @return
+     *      a new {@link edu.ucsc.dbtune.core.ExplainInfo} instance.
+     * @throws java.sql.SQLException
+     *      an error has occurred when interacting with a database during
+     *      the explanation process.
+     */
+	ExplainInfo<I> explainInfo(String sql) throws SQLException;
+
+    /**
+	 * This function prepares the database for what-if optimizations with the
+	 * given set of candidates (i.e., indexes). Each call to whatifOptimize is based on the
+	 * candidates indicated by this function.
+     *
+     * @param candidateSet
+     *      a set of candidate indexes.
+     * @throws java.sql.SQLException
+     *      an error has occurred when interacting with a database during
+     *      the fixing of candidates.
+     */
+    void fixCandidates(Iterable<I> candidateSet) throws SQLException;
+
+    /**
      * gets the total count of what-if optimizations were handled/performed
      * by the {@link DatabaseIndexExtractor}
      * @return

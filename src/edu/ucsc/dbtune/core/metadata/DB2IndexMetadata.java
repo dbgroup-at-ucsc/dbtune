@@ -142,7 +142,7 @@ public class DB2IndexMetadata implements Serializable {
 		sbuf.append(')');
 	}
 
-    public double creationCost(DatabaseIndexExtractor<DB2Index> indexExtractor, DatabaseWhatIfOptimizer<DB2Index> whatIfOptimizer) throws SQLException{
+    public double creationCost(DatabaseWhatIfOptimizer<DB2Index> whatIfOptimizer) throws SQLException{
         int idx             = 0;
         int nSortedColumns;
         final StringBuilder sql = new StringBuilder(16 * (nSortedColumns = schema.descending.size()));
@@ -177,7 +177,7 @@ public class DB2IndexMetadata implements Serializable {
 			idx++;
 		}
 
-        indexExtractor.fixCandidates(Instances.<DB2Index>newLinkedList());
+        whatIfOptimizer.fixCandidates(Instances.<DB2Index>newLinkedList());
         return whatIfOptimizer.whatIfOptimize(sql.toString())
                             .using(new BitSet(), new BitSet())
                             .toGetCost();
@@ -215,11 +215,8 @@ public class DB2IndexMetadata implements Serializable {
 			i++;
 		}
 
-		conn.getIndexExtractor().fixCandidates(new java.util.LinkedList<DB2Index>());
-		double queryCost = conn.getWhatIfOptimizer().whatIfOptimize(
-                sqlbuf.toString()
-        ).using(new BitSet(), new BitSet()).toGetCost();
-		return queryCost;
+		conn.getWhatIfOptimizer().fixCandidates(new java.util.LinkedList<DB2Index>());
+        return conn.getWhatIfOptimizer().whatIfOptimize(sqlbuf.toString()).using(new BitSet(), new BitSet()).toGetCost();
 	}
 	
 	public static DB2IndexMetadata consDuplicate(DB2IndexMetadata original, int id) throws SQLException {
