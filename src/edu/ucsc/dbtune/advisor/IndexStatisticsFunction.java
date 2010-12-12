@@ -21,7 +21,7 @@ import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -157,7 +157,7 @@ public class IndexStatisticsFunction<I extends DBIndex<I>> implements Statistics
     }
 
     @Override
-    public double benefit(I a, BitSet m) {
+    public double benefit(I a, DefaultBitSet m) {
         return benefit.apply(a, m);
     }
 
@@ -271,7 +271,7 @@ public class IndexStatisticsFunction<I extends DBIndex<I>> implements Statistics
         }
 
         @Override
-        public double apply(I arg, BitSet m) {
+        public double apply(I arg, DefaultBitSet m) {
             if (statistics.currentTimeStamp == 0)
                 return 0;
             final MeasurementWindow window = statistics.benefitWindows.get(arg);

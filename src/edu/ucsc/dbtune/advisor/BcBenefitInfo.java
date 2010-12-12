@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
@@ -70,7 +70,7 @@ public class BcBenefitInfo<I extends DBIndex<I>> {
 	static <I extends DBIndex<I>> BcBenefitInfo<I> genBcBenefitInfo(DatabaseConnection<I> conn,
                                                                     Snapshot<I> snapshot,
                                                                     StaticIndexSet<I> hotSet,
-                                                                    BitSet config,
+                                                                    DefaultBitSet config,
                                                                     ProfiledQuery<I> profiledQuery
     ) throws SQLException {
 		String sql = profiledQuery.getSQL();
@@ -80,8 +80,8 @@ public class BcBenefitInfo<I extends DBIndex<I>> {
 		double[] overheads = new double[snapshot.maxInternalId()+1];
 		
 		conn.getWhatIfOptimizer().fixCandidates(snapshot);
-		BitSet tempBitSet = new BitSet();
-		BitSet usedColumns = new BitSet();
+		DefaultBitSet tempBitSet = new DefaultBitSet();
+		DefaultBitSet usedColumns = new DefaultBitSet();
 		for (I idx : hotSet) {
 			int id = idx.internalId();
 			

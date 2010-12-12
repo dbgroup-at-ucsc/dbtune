@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.spi.core.Command;
 import edu.ucsc.dbtune.spi.core.Commands;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
 import org.junit.After;
@@ -148,12 +148,12 @@ public class DatabasePackageTest {
         // create connections
         // used empty configuration and usedSet bitsets
         checkWhatIfOptimizerCostCalculation(
-                new BitSet(), new BitSet(),
+                new DefaultBitSet(), new DefaultBitSet(),
                 connectionManager.connect(), connectionManager2.connect()
         );
     }
 
-    private static void checkWhatIfOptimizerCostCalculation(BitSet configuration, BitSet usedSet, DatabaseConnection<?>... connections) throws SQLException {
+    private static void checkWhatIfOptimizerCostCalculation(DefaultBitSet configuration, DefaultBitSet usedSet, DatabaseConnection<?>... connections) throws SQLException {
         for(DatabaseConnection<?> each : connections){
             final DatabaseWhatIfOptimizer<?> wo = each.getWhatIfOptimizer();
             final Double cost = wo.whatIfOptimize("SELECT * FROM R;").using(configuration, usedSet).toGetCost();
@@ -163,16 +163,16 @@ public class DatabasePackageTest {
 
     @Test
     public void testBasicUsageScenario_WhatIfOptimizationCostWithProfiledIndex() throws Exception {
-        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new BitSet(), new BitSet(), newDB2Index(), connectionManager.connect());
+        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new DefaultBitSet(), new DefaultBitSet(), newDB2Index(), connectionManager.connect());
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testBasicUsageScenario_WhatIfOptimizationCostWithProfiledPGIndex() throws Exception {
-        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new BitSet(), new BitSet(), newPGIndex(), connectionManager2.connect());
+        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new DefaultBitSet(), new DefaultBitSet(), newPGIndex(), connectionManager2.connect());
     }
 
     private static <T extends DBIndex<T>> void checkWhatIfOptimizerCostCalculationWithProfiledIndex(
-            BitSet configuration, BitSet usedSet, T pi, DatabaseConnection<T> connection
+            DefaultBitSet configuration, DefaultBitSet usedSet, T pi, DatabaseConnection<T> connection
     ) throws SQLException {
         final DatabaseWhatIfOptimizer<T> wo = connection.getWhatIfOptimizer();
         final Double cost = wo.whatIfOptimize("SELECT * FROM R;").using(configuration, pi, usedSet).toGetCost();

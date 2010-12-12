@@ -25,7 +25,7 @@ import edu.ucsc.dbtune.spi.core.Command;
 import edu.ucsc.dbtune.spi.core.Commands;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.PreConditions;
@@ -163,7 +163,7 @@ public class PGCommands {
      * @return
      *      a new {@code Command<Double>} object.
      */
-    public static Command<Double, SQLException> explainIndexesCost(BitSet usedSet){
+    public static Command<Double, SQLException> explainIndexesCost(DefaultBitSet usedSet){
         final Command<Parameter, SQLException>       rs;
         final Command<Double, SQLException>          ec;
         rs   = shareResultSetCommand();
@@ -179,7 +179,7 @@ public class PGCommands {
      * @return
      *      a new {@code Command<Double>} object.
      */
-    private static Command<Double, SQLException> explainCost(final BitSet usedSet){
+    private static Command<Double, SQLException> explainCost(final DefaultBitSet usedSet){
         return new Command<Double, SQLException>(){
             @Override
             public Double apply(Parameter input) throws SQLException {
@@ -284,7 +284,7 @@ public class PGCommands {
             public Parameter apply(Parameter input) throws SQLException {
                 final Connection            connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
                 final ReifiedPGIndexList    indexes     = input.getParameterValue(ReifiedPGIndexList.class);
-                final BitSet                config      = input.getParameterValue(BitSet.class);
+                final DefaultBitSet config      = input.getParameterValue(DefaultBitSet.class);
                 final String                sql         = input.getParameterValue(String.class);
                 final Integer               cardinality = input.getParameterValue(Integer.class);
                 final Double[]              maintCost   = input.getParameterValue(Double[].class);
@@ -307,7 +307,7 @@ public class PGCommands {
     }
 
 
-    private static String indexListString(Iterable<PGIndex> indexes, BitSet config) {
+    private static String indexListString(Iterable<PGIndex> indexes, DefaultBitSet config) {
         final StringBuilder sb = new StringBuilder();
         sb.append("( ");
         for (PGIndex idx : indexes) {

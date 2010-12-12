@@ -23,11 +23,8 @@ import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.SQLStatement;
 import edu.ucsc.dbtune.spi.core.Command;
 import edu.ucsc.dbtune.spi.core.Parameter;
-import edu.ucsc.dbtune.util.BitSet;
-import edu.ucsc.dbtune.util.DBUtilities;
-import edu.ucsc.dbtune.util.Debug;
-import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.Instances;
+import edu.ucsc.dbtune.util.*;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -179,7 +176,7 @@ public class DB2Commands {
         @Override
         public Integer apply(Parameter input) throws SQLException {
             final Connection connection     = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-            final BitSet     configuration  = input.getParameterValue(BitSet.class);
+            final DefaultBitSet configuration  = input.getParameterValue(DefaultBitSet.class);
 
             final Statement statement = connection.createStatement();
 
@@ -191,7 +188,7 @@ public class DB2Commands {
             return count;
         }
 
-        private String makeAlternateSQL(BitSet config){
+        private String makeAlternateSQL(DefaultBitSet config){
             final StringBuilder builder = new StringBuilder();
             builder.append("UPDATE advise_index SET use_index = CASE WHEN iid IN (");
             boolean first = true;
@@ -435,7 +432,7 @@ public class DB2Commands {
         @Override
         public Void apply(Parameter input) throws SQLException {
             final Connection c  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-            final BitSet     b  = input.getParameterValue(BitSet.class);
+            final DefaultBitSet b  = input.getParameterValue(DefaultBitSet.class);
             if(ps == null){
                 ps = c.prepareStatement(QUERY.toString());
             }

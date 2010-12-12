@@ -20,16 +20,16 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 
 public class IBGPrinter {
-	private final BitSet        visited;
+	private final DefaultBitSet visited;
 	private final IBGNodeQueue  pending;
     public IBGPrinter(){
-        this(new BitSet(), new IBGNodeQueue());
+        this(new DefaultBitSet(), new IBGNodeQueue());
     }
 
-    IBGPrinter(BitSet visited, IBGNodeQueue pending){
+    IBGPrinter(DefaultBitSet visited, IBGNodeQueue pending){
         this.visited = visited;
         this.pending = pending;
     }

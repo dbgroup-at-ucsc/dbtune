@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.DBUtilities;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ import java.util.Set;
 
 public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializable {
 	
-	private BitSet bs;
+	private DefaultBitSet bs;
 	private Set<I> set;
 	private List<I> list;
 	private int maxInternalId;
@@ -63,7 +63,7 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 	public void clear() {
 		set = new HashSet<I>();
 		list = new ArrayList<I>();
-		bs = new BitSet();
+		bs = new DefaultBitSet();
 		maxInternalId = -1;
 	}
 	
@@ -114,7 +114,7 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 		}
 	}
 
-	public BitSet bitSet() {
+	public DefaultBitSet bitSet() {
 		return bs.clone();
 	}
 	

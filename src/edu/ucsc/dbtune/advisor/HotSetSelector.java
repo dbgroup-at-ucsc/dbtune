@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.MinQueue;
 
 public class HotSetSelector {
@@ -77,7 +77,7 @@ public class HotSetSelector {
                                                                  int maxSize,
                                                                  boolean debugOutput
     ) {
-		BitSet emptyConfig = new BitSet();
+		DefaultBitSet emptyConfig = new DefaultBitSet();
 		
 		int numToChoose = maxSize - requiredIndexSet.size();
 		if (numToChoose <= 0) {
@@ -129,7 +129,7 @@ public class HotSetSelector {
 		}
 		else {
 			java.util.ArrayList<I> list = new java.util.ArrayList<I>();
-			BitSet M = new BitSet();
+			DefaultBitSet M = new DefaultBitSet();
 			
 			// add required indexes
 			for (I index : requiredIndexSet) {

@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.core.metadata;
 import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.DatabaseWhatIfOptimizer;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.DBUtilities;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
@@ -178,7 +178,7 @@ public class DB2IndexMetadata implements Serializable {
 
         whatIfOptimizer.fixCandidates(Instances.<DB2Index>newLinkedList());
         return whatIfOptimizer.whatIfOptimize(sql.toString())
-                            .using(new BitSet(), new BitSet())
+                            .using(new DefaultBitSet(), new DefaultBitSet())
                             .toGetCost();
     }
 	
@@ -215,7 +215,7 @@ public class DB2IndexMetadata implements Serializable {
 		}
 
 		conn.getWhatIfOptimizer().fixCandidates(new java.util.LinkedList<DB2Index>());
-        return conn.getWhatIfOptimizer().whatIfOptimize(sqlbuf.toString()).using(new BitSet(), new BitSet()).toGetCost();
+        return conn.getWhatIfOptimizer().whatIfOptimize(sqlbuf.toString()).using(new DefaultBitSet(), new DefaultBitSet()).toGetCost();
 	}
 	
 	public static DB2IndexMetadata consDuplicate(DB2IndexMetadata original, int id) throws SQLException {

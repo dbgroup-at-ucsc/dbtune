@@ -23,6 +23,7 @@ import com.google.caliper.SimpleBenchmark;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -33,7 +34,7 @@ public class OurVsTheirsBenchmark extends SimpleBenchmark {
 
   public void timeOurStack(int reps) {
       for (int i = 0; i < reps; ++i) {
-          Stack<String> our = new Stack<String>();
+          DefaultStack<String> our = new DefaultStack<String>();
           for (int j = 0; j < length; ++j) {
               our.push("B");
               our.pop();
@@ -53,7 +54,7 @@ public class OurVsTheirsBenchmark extends SimpleBenchmark {
 
   public void timeOurQueue(int reps) {
       for (int i = 0; i < reps; ++i) {
-          Queue<String> our = new Queue<String>();
+          DefaultQueue<String> our = new DefaultQueue<String>();
           for (int j = 0; j < length; ++j) {
               our.add("B");
               our.remove();
@@ -68,6 +69,46 @@ public class OurVsTheirsBenchmark extends SimpleBenchmark {
           for (int j = 0; j < length; ++j) {
               theirs.add("B");
               theirs.remove();
+          }
+      }
+  }
+
+  public void timeOurConcurrentQuery(int reps){
+      for(int i = 0; i <  reps; ++i){
+          DefaultConcurrentQueue<String> our = new DefaultConcurrentQueue<String>(length);
+          for(int j = 0; j < length; ++j){
+              our.put("B", DefaultConcurrentQueue.PutOption.POP);
+              our.get(DefaultConcurrentQueue.GetOption.THROW);
+          }
+      }
+  }
+
+  public void timeJdkConcurrentLinkedQueue(int reps){
+      for(int i = 0; i <  reps; ++i){
+          java.util.Queue<String> theirs = new ConcurrentLinkedQueue<String>();
+          for(int j = 0; j < length; ++j){
+              theirs.offer("B");
+              theirs.poll();
+          }
+      }
+  }
+
+  public void timeJdkBlockingConcurrentQueue(int reps) {
+      for(int i = 0; i <  reps; ++i){
+          java.util.concurrent.BlockingQueue<String> theirs = new java.util.concurrent.ArrayBlockingQueue<String>(length);
+          for(int j = 0; j < length; ++j){
+              theirs.offer("B");
+              theirs.poll();
+          }
+      }
+  }
+
+  public void timeOurBlockingConcurrentQueue(int reps) {
+      for(int i = 0; i <  reps; ++i){
+          DefaultBlockingQueue<String> theirs = new DefaultBlockingQueue<String>(length);
+          for(int j = 0; j < length; ++j){
+              theirs.put("B");
+              theirs.get();
           }
       }
   }

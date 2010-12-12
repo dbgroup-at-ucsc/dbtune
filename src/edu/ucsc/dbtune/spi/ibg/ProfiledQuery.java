@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.satuning.spi.Supplier;
 
@@ -65,7 +65,7 @@ public class ProfiledQuery <I extends DBIndex<I>> implements Serializable {
      *      the plan cost for a given indexes configuration based on
      *      an index benefit graph.
      */
-    static double findIGBCost(IndexBenefitGraph graph, BitSet configuration){
+    static double findIGBCost(IndexBenefitGraph graph, DefaultBitSet configuration){
         return NODE_FINDER.findCost(graph, configuration);
     }
 
@@ -127,7 +127,7 @@ public class ProfiledQuery <I extends DBIndex<I>> implements Serializable {
      * @return
      *      the maintenance cost of this {@code query}.
      */
-    public double maintenanceCost(BitSet configuration){
+    public double maintenanceCost(DefaultBitSet configuration){
         if(!explainInfo.isDML()){
             return 0;
         }
@@ -149,7 +149,7 @@ public class ProfiledQuery <I extends DBIndex<I>> implements Serializable {
      * @return
      *      the plan cost of this {@code query}.
      */
-    public double planCost(BitSet configuration){
+    public double planCost(DefaultBitSet configuration){
         return findIGBCost(ibg, configuration);
     }
 
@@ -162,7 +162,7 @@ public class ProfiledQuery <I extends DBIndex<I>> implements Serializable {
      * @return
      *      the total cost of this query.
      */
-    public double totalCost(BitSet configuration){
+    public double totalCost(DefaultBitSet configuration){
         double plan  = planCost(configuration);
         double maint = maintenanceCost(configuration);
         return plan + maint;

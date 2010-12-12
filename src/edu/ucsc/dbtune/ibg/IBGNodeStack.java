@@ -20,16 +20,16 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.Stack;
+import edu.ucsc.dbtune.util.DefaultStack;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGNodeStack {
-	private final Stack<Object> stack;
+	private final DefaultStack<Object> stack;
     public IBGNodeStack(){
-        this(new Stack<Object>());
+        this(new DefaultStack<Object>());
     }
 
-    IBGNodeStack(Stack<Object> stack){
+    IBGNodeStack(DefaultStack<Object> stack){
         this.stack = stack;
     }
 

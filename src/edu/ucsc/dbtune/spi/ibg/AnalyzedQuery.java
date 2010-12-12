@@ -19,12 +19,12 @@
 package edu.ucsc.dbtune.spi.ibg;
 
 import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.util.BitSet;
 
 public class AnalyzedQuery<I extends DBIndex<I>> {
 	private final ProfiledQuery<I> profileInfo;
-	private final BitSet[]         partition;
+	private final DefaultBitSet[]         partition;
 
     /**
      * construct a query which has been analyzed by some {@code tuning interface}.
@@ -33,7 +33,7 @@ public class AnalyzedQuery<I extends DBIndex<I>> {
      * @param partition
      *      an array of index partitions.
      */
-	public AnalyzedQuery(ProfiledQuery<I> orig, BitSet[] partition) {
+	public AnalyzedQuery(ProfiledQuery<I> orig, DefaultBitSet[] partition) {
 		this.profileInfo    = orig;
 		this.partition      = partition;
 	}
@@ -48,7 +48,7 @@ public class AnalyzedQuery<I extends DBIndex<I>> {
     /**
      * @return an array of index partitions.
      */
-    public BitSet[] getPartition() {
+    public DefaultBitSet[] getPartition() {
         return partition;
     }
 

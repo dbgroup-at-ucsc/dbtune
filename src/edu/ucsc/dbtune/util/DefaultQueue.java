@@ -2,13 +2,13 @@ package edu.ucsc.dbtune.util;
 
 import java.util.Arrays;
 
-public class Queue<E> {
+public class DefaultQueue<E> {
 	private Object[] arr;
 	private int count;
 	private int first;
     private static final int DEFAULT_INITIAL_CAPACITY = 100;
 	
-	public Queue() {
+	public DefaultQueue() {
 		arr = new Object[DEFAULT_INITIAL_CAPACITY];
 		count = 0;
 	}

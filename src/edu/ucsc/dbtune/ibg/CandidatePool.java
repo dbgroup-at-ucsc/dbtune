@@ -19,7 +19,7 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DBIndexSet;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
@@ -146,7 +146,7 @@ public class CandidatePool<I extends DBIndex<I>> implements Serializable {
 		/* serializable fields */
 		int maxId;
 		Node<I> first;
-		BitSet bs;
+		DefaultBitSet bs;
 
 		/* serialization support */
 		private static final long serialVersionUID = CandidatePool.serialVersionUID;
@@ -155,7 +155,7 @@ public class CandidatePool<I extends DBIndex<I>> implements Serializable {
 		private Snapshot(Node<I> first) {
 			maxId = (first == null) ? -1 : first.index.internalId();
 			this.first = first;
-			bs = new BitSet();
+			bs = new DefaultBitSet();
 			bs.set(0, maxId+1);
 		}
 
@@ -167,7 +167,7 @@ public class CandidatePool<I extends DBIndex<I>> implements Serializable {
 			return maxId;
 		}
 
-		public BitSet bitSet() {
+		public DefaultBitSet bitSet() {
 			return bs; // no need to clone -- this set is immutable
 		}
 

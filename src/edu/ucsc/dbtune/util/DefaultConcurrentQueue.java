@@ -1,7 +1,9 @@
 package edu.ucsc.dbtune.util;
 
 
-public class ConcurrentQueue<E> {
+import java.util.NoSuchElementException;
+
+public class DefaultConcurrentQueue<E> {
 	private int cap;
 	private Object[] arr;
 	private int count;
@@ -10,46 +12,46 @@ public class ConcurrentQueue<E> {
 	public enum PutOption {
 		// expand the capacity if it's full
 		EXPAND {
-			void handle(ConcurrentQueue<?> queue) {
+			void handle(DefaultConcurrentQueue<?> queue) {
 				queue.expandInternal();
 			}
 		},
 		// drop the oldest element if it's full
 		POP { 
-			void handle(ConcurrentQueue<?> queue) {
+			void handle(DefaultConcurrentQueue<?> queue) {
 				queue.popInternal();
 			}
 		},
 		// wait until it's empty if it's full
 		BLOCK {
-			void handle(ConcurrentQueue<?> queue) {
+			void handle(DefaultConcurrentQueue<?> queue) {
 				queue.waitUntilFull();
 			}
 		};
 		
-		abstract void handle(ConcurrentQueue<?> queue);
+		abstract void handle(DefaultConcurrentQueue<?> queue);
 	}
 	
 	public enum GetOption {
 		// throw NoSuchElementException if it's empty
 		THROW {
-			void handle(ConcurrentQueue<?> queue) {
+			void handle(DefaultConcurrentQueue<?> queue) {
 				throw new java.util.NoSuchElementException();
 			}
 		},
 		// wait if it's empty
 		BLOCK {
-			void handle(ConcurrentQueue<?> queue) {
+			void handle(DefaultConcurrentQueue<?> queue) {
 				queue.waitUntilNonempty();
 			}
 		};
 		
-		abstract void handle(ConcurrentQueue<?> queue);
+		abstract void handle(DefaultConcurrentQueue<?> queue);
 	}
 	
-	public ConcurrentQueue(int cap0) {
-		arr = new Object[cap0];
-		cap = cap0;
+	public DefaultConcurrentQueue(int capacity) {
+		arr = new Object[capacity];
+		cap = capacity;
 		count = 0;
 	}
 
@@ -72,7 +74,7 @@ public class ConcurrentQueue<E> {
 
 		if (count <= 0) {
 			Debug.logError("no elements in queue");
-			throw new java.util.NoSuchElementException();
+			throw new NoSuchElementException();
 		}	
 		
 		E elt = peekInternal();
@@ -82,26 +84,26 @@ public class ConcurrentQueue<E> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private final E peekInternal() { 
+	private E peekInternal() {
 		return (E) arr[first]; 
 	}
 	
 	@SuppressWarnings("unchecked")
-	private final E peekInternal(int i) { 
+	private E peekInternal(int i) {
 		return (E) arr[(first+i) % cap]; 
 	}
 
-	private final void pushInternal(E elt) {
+	private void pushInternal(E elt) {
 		arr[(first+count) % cap] = elt;
 		++count;
 	}
 	
-	private final void popInternal() {
+	private void popInternal() {
 		first = (first+1) % cap;
 		--count;
 	}
 	
-	private final void expandInternal() {
+	private void expandInternal() {
 		int cap2 = cap*2;
 		Object[] arr2 = new Object[cap2];
 		for (int i = 0; i < count; i++)
@@ -111,15 +113,19 @@ public class ConcurrentQueue<E> {
 		arr = arr2;
 	}
 	
-	private final void waitUntilFull() {
+	private void waitUntilFull() {
 		while (count >= cap) 
 			try { wait(); } 
-			catch (InterruptedException e) { }
+			catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
 	}
 	
-	private final void waitUntilNonempty() {
+	private void waitUntilNonempty() {
 		while (count <= 0) 
 			try { wait(); } 
-			catch (InterruptedException e) { }
+			catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
 	}
 }

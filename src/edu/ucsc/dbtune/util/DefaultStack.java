@@ -2,12 +2,12 @@ package edu.ucsc.dbtune.util;
 
 import java.util.Arrays;
 
-public class Stack<E> {
+public class DefaultStack<E> {
 	Object[] arr;
 	int top;
     private static final int DEFAULT_INITIAL_CAPACITY = 100;
 
-	public Stack() {
+	public DefaultStack() {
 		arr = new Object[DEFAULT_INITIAL_CAPACITY];
 		top = -1;
 	}

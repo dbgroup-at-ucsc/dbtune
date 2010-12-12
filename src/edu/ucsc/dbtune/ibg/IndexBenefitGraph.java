@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
@@ -36,7 +36,7 @@ public class IndexBenefitGraph implements Serializable {
 	private double emptyCost;
 	
 	/* true if the index is used somewhere in the graph */
-	private final BitSet isUsed;
+	private final DefaultBitSet isUsed;
 	
 	/**
 	 * Creates an IBG which is in a state ready for building.
@@ -54,7 +54,7 @@ public class IndexBenefitGraph implements Serializable {
      * @param isUsed
      *      a flag that indicates if the index is used somewhere in the graph.
      */
-	public IndexBenefitGraph(IBGNode rootNode, double emptyCost, BitSet isUsed) {
+	public IndexBenefitGraph(IBGNode rootNode, double emptyCost, DefaultBitSet isUsed) {
 		this.rootNode   = rootNode;
 		this.emptyCost  = emptyCost;
 		this.isUsed     = isUsed;
@@ -106,7 +106,7 @@ public class IndexBenefitGraph implements Serializable {
 		private static final long serialVersionUID = 1L;
 
 		/* Configuration that this node is about */
-		public final BitSet config;
+		public final DefaultBitSet config;
 		
 		/* id for the node that is unique within the enclosing IBG */
 		public final int id;
@@ -126,7 +126,7 @@ public class IndexBenefitGraph implements Serializable {
 		 */
 		private volatile IBGChild firstChild;
 		
-		IBGNode(BitSet config, int id) {
+		IBGNode(DefaultBitSet config, int id) {
 			this.config = config;
 			this.id = id;
 			this.cost = -1.0;
@@ -176,7 +176,7 @@ public class IndexBenefitGraph implements Serializable {
          * @param bs
          *      nex used indexes set.
          */
-		public final void addUsedIndexes(BitSet bs) {
+		public final void addUsedIndexes(DefaultBitSet bs) {
 			assert(isExpanded());
 			for (IBGChild ch = firstChild; ch != null; ch = ch.next){
                 bs.set(ch.usedIndex);
@@ -188,7 +188,7 @@ public class IndexBenefitGraph implements Serializable {
          * @param bs
          *     nodes to be removed in the used indexes set.
          */
-		public void clearUsedIndexes(BitSet bs) {
+		public void clearUsedIndexes(DefaultBitSet bs) {
 			assert(isExpanded());
 			for (IBGChild ch = firstChild; ch != null; ch = ch.next){
                 bs.clear(ch.usedIndex);
@@ -202,7 +202,7 @@ public class IndexBenefitGraph implements Serializable {
          *      the used set of indexes.
          * @return {@code true} if each of the used indexes are in the given BitSet
 		 */
-		public boolean usedSetIsSubsetOf(BitSet other) {
+		public boolean usedSetIsSubsetOf(DefaultBitSet other) {
 			assert(isExpanded());
 			for (IBGChild ch = firstChild; ch != null; ch = ch.next) {
                 if (!other.get(ch.usedIndex)){

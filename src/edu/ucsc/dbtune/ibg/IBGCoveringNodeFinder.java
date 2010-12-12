@@ -20,20 +20,20 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGCoveringNodeFinder {
-	private final BitSet        visited;
+	private final DefaultBitSet visited;
 	private final IBGNodeStack  pending;
 
     private static final double ZERO_COST = 0.0;
 
     public IBGCoveringNodeFinder(){
-        this(new BitSet(), new IBGNodeStack());
+        this(new DefaultBitSet(), new IBGNodeStack());
     }
 
-    IBGCoveringNodeFinder(BitSet visited, IBGNodeStack pending){
+    IBGCoveringNodeFinder(DefaultBitSet visited, IBGNodeStack pending){
         this.visited = visited;
         this.pending = pending;
     }
@@ -47,7 +47,7 @@ public class IBGCoveringNodeFinder {
      * @return
      *      the cost of a particular indexes configuration.
      */
-	public final double findCost(IndexBenefitGraph ibg, BitSet config) {
+	public final double findCost(IndexBenefitGraph ibg, DefaultBitSet config) {
 		if (config.isEmpty()) {
 			return ibg.emptyCost();
         } else {
@@ -65,7 +65,7 @@ public class IBGCoveringNodeFinder {
      * @return
      *      the cost of a particular indexes configuration.
      */
-	public final double findCost(IndexBenefitGraph[] ibgs, BitSet config) {
+	public final double findCost(IndexBenefitGraph[] ibgs, DefaultBitSet config) {
 		double cost = 0;
 		for (IndexBenefitGraph ibg : ibgs){
 			cost += findCost(ibg, config);
@@ -87,7 +87,7 @@ public class IBGCoveringNodeFinder {
      *     an found {@link IBGNode node}. <strong>IMPORTANT</strong>: this method may return
      *     {@code null}.
      */
-	public IBGNode findFast(IBGNode rootNode, BitSet config, IBGNode guess) {
+	public IBGNode findFast(IBGNode rootNode, DefaultBitSet config, IBGNode guess) {
 		visited.clear(); // not using it, but clear it anyway?
 		
 		IBGNode currentNode = (guess != null && config.subsetOf(guess.config)) ? guess : rootNode;
@@ -121,7 +121,7 @@ public class IBGCoveringNodeFinder {
      * @return
      *      found node in the graph.
      */
-	public IBGNode find(IBGNode rootNode, BitSet config) {
+	public IBGNode find(IBGNode rootNode, DefaultBitSet config) {
 		visited.clear();
 		pending.reset();
 		
@@ -157,7 +157,7 @@ public class IBGCoveringNodeFinder {
 	}
 
     // todo(Huascar) what's the purpose of this method?
-	public void find(IBGNode rootNode, BitSet[] configs, int configCount, IBGNode[] outNodes) {
+	public void find(IBGNode rootNode, DefaultBitSet[] configs, int configCount, IBGNode[] outNodes) {
 		for (int i = 0; i < configCount; i++) {
 			assert(configs[i] != null);
 			outNodes[i] = null;

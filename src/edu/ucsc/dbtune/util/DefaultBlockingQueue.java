@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.util;
 
-public class BlockingQueue<E> extends ConcurrentQueue<E> {
-	public BlockingQueue(int capacity) {
+public class DefaultBlockingQueue<E> extends DefaultConcurrentQueue<E> {
+	public DefaultBlockingQueue(int capacity) {
 		super(capacity);
 	}
 

@@ -16,13 +16,9 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.util.BitSet;
-import edu.ucsc.dbtune.util.Instances;
-import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
 
 import static edu.ucsc.dbtune.core.DBTuneInstances.newPGIndex;
 import static org.junit.Assert.assertTrue;
@@ -50,16 +46,16 @@ public class IndexBenefitGraphWhatIfOptimizerTest {
         assertTrue(Double.compare(cost, 1.0) == 0);
     }
 
-    private static BitSet firstIndexesConfiguration(){
-        return new BitSet(){{
+    private static DefaultBitSet firstIndexesConfiguration(){
+        return new DefaultBitSet(){{
             set(12);
             set(21);
             set(31);
         }};
     }
 
-    private static BitSet usedSet(){
-        return new BitSet(){{set(21);}};
+    private static DefaultBitSet usedSet(){
+        return new DefaultBitSet(){{set(21);}};
     }
 
 

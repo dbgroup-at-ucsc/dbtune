@@ -52,17 +52,17 @@ public class TypeReferenceTest {
         DB2Index d = DBTuneInstances.newDB2Index();
         final AbbreviatedWhatIfOptimizer a = db2WhatIfOptimizer();
         // this should work as expected
-        a.estimateCost("SELECT * FROM R;", new BitSet(), d, new BitSet());
+        a.estimateCost("SELECT * FROM R;", new DefaultBitSet(), d, new DefaultBitSet());
         // this one should fail since TypeReference knows we are dealing with <DBTune<DB2Index>>
         // and not <DBTune<PGIndex>>
         PGIndex c = DBTuneInstances.newPGIndex();
-        a.estimateCost("SELECT * FROM S;", new BitSet(), c, new BitSet());
+        a.estimateCost("SELECT * FROM S;", new DefaultBitSet(), c, new DefaultBitSet());
     }
     
     @Test
     public void testGenericWhatIfOptimizer() throws Exception {
         final AbbreviatedWhatIfOptimizer<DB2Index> a = db2WhatIfOptimizer();
-        final Double cost = a.estimateCost("Select * FROM R;", new BitSet(), DBTuneInstances.newDB2Index(), new BitSet());
+        final Double cost = a.estimateCost("Select * FROM R;", new DefaultBitSet(), DBTuneInstances.newDB2Index(), new DefaultBitSet());
         assertTrue(Double.compare(cost, 10.34) == 0);
     }
 
@@ -75,8 +75,8 @@ public class TypeReferenceTest {
     }
 
     interface AbbreviatedWhatIfOptimizer <I extends DBIndex<I>> extends DatabaseWhatIfOptimizer<I>{
-        double estimateCost(String sql, BitSet a, BitSet b) throws SQLException;
-        double estimateCost(String sql, BitSet a, I idx, BitSet b) throws SQLException;
+        double estimateCost(String sql, DefaultBitSet a, DefaultBitSet b) throws SQLException;
+        double estimateCost(String sql, DefaultBitSet a, I idx, DefaultBitSet b) throws SQLException;
     }
 
     static class MockWhatIfOptimizerImpl<I extends DBIndex<I>> extends AbstractDatabaseWhatIfOptimizer<I> implements AbbreviatedWhatIfOptimizer <I> {
@@ -138,13 +138,13 @@ public class TypeReferenceTest {
         }
 
         @Override
-        public double estimateCost(String sql, BitSet a, BitSet b) throws SQLException {
-            return whatIfOptimize(sql).using(new BitSet(), new BitSet()).toGetCost();
+        public double estimateCost(String sql, DefaultBitSet a, DefaultBitSet b) throws SQLException {
+            return whatIfOptimize(sql).using(new DefaultBitSet(), new DefaultBitSet()).toGetCost();
         }
 
         @Override
-        public double estimateCost(String sql, BitSet a, I idx, BitSet b) throws SQLException {
-            return whatIfOptimize(sql).using(new BitSet(), idx, new BitSet()).toGetCost();
+        public double estimateCost(String sql, DefaultBitSet a, I idx, DefaultBitSet b) throws SQLException {
+            return whatIfOptimize(sql).using(new DefaultBitSet(), idx, new DefaultBitSet()).toGetCost();
         }
     }
 
@@ -155,10 +155,10 @@ public class TypeReferenceTest {
     private final AtomicReference<Double> cost;
 
     // optional variables
-    private BitSet configuration;
-    private BitSet usedSet;
+    private DefaultBitSet configuration;
+    private DefaultBitSet usedSet;
     private I      profiledIndex;
-    private BitSet usedColumns;
+    private DefaultBitSet usedColumns;
     private final AbstractDatabaseWhatIfOptimizer<I> whatIfOptimizer;
     private final TypeReference<I> ref;
     private final AtomicBoolean withProfiledIndex;
@@ -188,7 +188,7 @@ public class TypeReferenceTest {
      * @return
      *      the configuration to be used.
      */
-    public BitSet getConfiguration(){
+    public DefaultBitSet getConfiguration(){
         return configuration == null ? null : configuration.clone();
     }
 
@@ -216,7 +216,7 @@ public class TypeReferenceTest {
         return sql;
     }
 
-    public BitSet getUsedSet(){
+    public DefaultBitSet getUsedSet(){
         return usedSet == null ? null : usedSet.clone();
     }
 
@@ -224,12 +224,12 @@ public class TypeReferenceTest {
      * @return
      *      the db columns used in the optimization.
      */
-    public BitSet getUsedColumns(){
+    public DefaultBitSet getUsedColumns(){
         return usedColumns == null ? null : usedColumns.clone();
     }
 
     @Override
-    public WhatIfOptimizationCostBuilder using(BitSet config, BitSet usedSet) {
+    public WhatIfOptimizationCostBuilder using(DefaultBitSet config, DefaultBitSet usedSet) {
         this.withProfiledIndex.set(false);
         this.configuration = config;
         this.usedSet       = usedSet;
@@ -237,8 +237,8 @@ public class TypeReferenceTest {
     }
 
     @Override
-    public WhatIfOptimizationCostBuilder using(BitSet config,
-           I profiledIndex, BitSet usedColumns
+    public WhatIfOptimizationCostBuilder using(DefaultBitSet config,
+           I profiledIndex, DefaultBitSet usedColumns
     ) {
         if(!ref.getGenericClass().isInstance(profiledIndex)) throw new IllegalArgumentException("ERROR, lalalala");
         this.withProfiledIndex.set(true);

@@ -23,9 +23,9 @@ import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.DefaultQueue;
 import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.Queue;
 
 import java.sql.SQLException;
 
@@ -47,7 +47,7 @@ public class IndexBenefitGraphConstructor<I extends DBIndex<I>> {
 	private double emptyCost;
 	
 	/* The queue of pending nodes to expand */
-	Queue<IBGNode> queue = new Queue<IBGNode>();
+	DefaultQueue<IBGNode> queue = new DefaultQueue<IBGNode>();
 	
 	/* A monitor for waiting on a node expansion */
 	private final Object nodeExpansionMonitor = new Object();
@@ -56,14 +56,14 @@ public class IndexBenefitGraphConstructor<I extends DBIndex<I>> {
 	private final IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
 	
 	/* true if the index is used somewhere in the graph */
-	private final BitSet isUsed = new BitSet();
+	private final DefaultBitSet isUsed = new DefaultBitSet();
 	
 	/* Counter for assigning unique node IDs */
 	private int nodeCount = 0;
 
 	/* Temporary bit sets allocated once to allow reuse... only used in BuildNode */ 
-	private final BitSet usedBitSet = new BitSet();
-	private final BitSet childBitSet = new BitSet();
+	private final DefaultBitSet usedBitSet = new DefaultBitSet();
+	private final DefaultBitSet childBitSet = new DefaultBitSet();
 	
 	/**
 	 * Creates an IBG which is in a state ready for building.
@@ -90,12 +90,12 @@ public class IndexBenefitGraphConstructor<I extends DBIndex<I>> {
 		this.candidateSet = candidateSet;
 
 		// set up the root node, and initialize the queue
-		BitSet rootConfig = this.candidateSet.bitSet();
+		DefaultBitSet rootConfig = this.candidateSet.bitSet();
 		rootNode = new IBGNode(rootConfig, nodeCount++);
 		
 		emptyCost = this.conn.getWhatIfOptimizer()
                         .whatIfOptimize(this.sql)
-                        .using(new BitSet(), new BitSet())
+                        .using(new DefaultBitSet(), new DefaultBitSet())
                     .toGetCost();
 		
 		// initialize the queue
@@ -198,7 +198,7 @@ public class IndexBenefitGraphConstructor<I extends DBIndex<I>> {
 			IBGNode childNode = find(queue, childBitSet);
 			if (childNode == null) {
 				isUsed.set(u);
-                final BitSet castBitset = Objects.as(childBitSet.clone());
+                final DefaultBitSet castBitset = Objects.as(childBitSet.clone());
 				childNode = new IBGNode(castBitset, nodeCount++);
 				queue.add(childNode);
 			}
@@ -232,7 +232,7 @@ public class IndexBenefitGraphConstructor<I extends DBIndex<I>> {
      * @return built node or return null
      *      if not found.
 	 */
-	private static IBGNode find(Queue<IBGNode> queue, BitSet config) {
+	private static IBGNode find(DefaultQueue<IBGNode> queue, DefaultBitSet config) {
 		for (int i = 0; i < queue.count(); i++) {
 			IBGNode node = queue.fetch(i);
 			if (node.config.equals(config))

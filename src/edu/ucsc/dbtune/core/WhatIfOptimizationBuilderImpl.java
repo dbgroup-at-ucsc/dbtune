@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationCostBuilder;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
@@ -42,10 +42,10 @@ implements WhatIfOptimizationBuilder<I> {
     private final AtomicReference<Double> cost;
 
     // optional variables
-    private BitSet configuration;
-    private BitSet usedSet;
+    private DefaultBitSet configuration;
+    private DefaultBitSet usedSet;
     private I      profiledIndex;
-    private BitSet usedColumns;
+    private DefaultBitSet usedColumns;
     private final AbstractDatabaseWhatIfOptimizer<I> whatIfOptimizer;
     private final AtomicBoolean withProfiledIndex;
 
@@ -72,7 +72,7 @@ implements WhatIfOptimizationBuilder<I> {
      * @return
      *      the configuration to be used.
      */
-    public BitSet getConfiguration(){
+    public DefaultBitSet getConfiguration(){
         return configuration == null ? null : configuration.clone();
     }
 
@@ -100,7 +100,7 @@ implements WhatIfOptimizationBuilder<I> {
         return sql;
     }
     
-    public BitSet getUsedSet(){
+    public DefaultBitSet getUsedSet(){
         return usedSet == null ? null : usedSet.clone();
     }
 
@@ -108,12 +108,12 @@ implements WhatIfOptimizationBuilder<I> {
      * @return
      *      the db columns used in the optimization.
      */
-    public BitSet getUsedColumns(){
+    public DefaultBitSet getUsedColumns(){
         return usedColumns == null ? null : usedColumns.clone();
     }
 
     @Override
-    public WhatIfOptimizationCostBuilder using(BitSet config, BitSet usedSet) {
+    public WhatIfOptimizationCostBuilder using(DefaultBitSet config, DefaultBitSet usedSet) {
         this.withProfiledIndex.set(false);
         this.configuration = config;
         this.usedSet       = usedSet;
@@ -121,8 +121,8 @@ implements WhatIfOptimizationBuilder<I> {
     }
 
     @Override
-    public WhatIfOptimizationCostBuilder using(BitSet config,
-           I profiledIndex, BitSet usedColumns
+    public WhatIfOptimizationCostBuilder using(DefaultBitSet config,
+           I profiledIndex, DefaultBitSet usedColumns
     ) {
         this.withProfiledIndex.set(true);
         this.configuration = config;

@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.core.optimizers;
 
 import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -34,7 +34,7 @@ public interface WhatIfOptimizationBuilder <I extends DBIndex<I>> extends WhatIf
      * @return
      *     {@link WhatIfOptimizationCostBuilder this}
      */
-    WhatIfOptimizationCostBuilder using(BitSet config, BitSet usedSet);
+    WhatIfOptimizationCostBuilder using(DefaultBitSet config, DefaultBitSet usedSet);
 
     /**
      * use a triple of values (i.e., {@link edu.ucsc.satuning.util.BitSet configuration}, a {@link edu.ucsc.dbtune.core.DBIndex profiledIndex},
@@ -48,5 +48,5 @@ public interface WhatIfOptimizationBuilder <I extends DBIndex<I>> extends WhatIf
      * @return
      *      {@link WhatIfOptimizationCostBuilder this}
      */
-    WhatIfOptimizationCostBuilder using(BitSet config, I profiledIndex, BitSet usedColumns);
+    WhatIfOptimizationCostBuilder using(DefaultBitSet config, I profiledIndex, DefaultBitSet usedColumns);
 }

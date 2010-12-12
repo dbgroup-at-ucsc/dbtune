@@ -19,13 +19,13 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 
 /**
  * IBGNodeFinder -- does a search for a particular node in the graph
  */
 class IBGNodeFinder {
-	private final BitSet        visited = new BitSet();
+	private final DefaultBitSet visited = new DefaultBitSet();
 	private final IBGNodeStack  pending = new IBGNodeStack();
 
     /**
@@ -38,7 +38,7 @@ class IBGNodeFinder {
      *      found node in the graph. <strong>IMPORTANT</strong>: this method
      *      may return {@code null}.
      */
-	public IBGNode find(IBGNode rootNode, BitSet config) {
+	public IBGNode find(IBGNode rootNode, DefaultBitSet config) {
 		visited.clear();
 		pending.reset();
 		

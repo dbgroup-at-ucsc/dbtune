@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.util.UnionFind;
 
@@ -108,7 +108,7 @@ public class InteractionBank implements Serializable {
      *      partition threshold 
      * @return an array of bit sets.
      */
-	public final BitSet[] stablePartitioning(double threshold) {
+	public final DefaultBitSet[] stablePartitioning(double threshold) {
 		UnionFind uf = new UnionFind(indexCount);
 		for (int a = 0; a < indexCount; a++) { 
 			for (int b = 0; b < a; b++) { 

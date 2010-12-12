@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.util.Instances;
 
@@ -33,25 +33,25 @@ import java.util.Set;
  */
 public class DynamicIndexSet<I extends DBIndex<I>> implements Iterable<I> {
     private final Set<I> delegate;
-    private final BitSet ownedBitSet;
+    private final DefaultBitSet ownedBitSet;
 
     /**
      * construct a {@code DynamicIndexSet} object.
      */
     public DynamicIndexSet(){
-       this(Instances.<I>newHashSet(), new BitSet());
+       this(Instances.<I>newHashSet(), new DefaultBitSet());
     }
 
     /**
      * construct a {@code DynamicIndexSet} object. This object takes, as a delegate,
-     * a specific {@code set implementation} and an owned {@link BitSet} object.
+     * a specific {@code set implementation} and an owned {@link edu.ucsc.dbtune.util.DefaultBitSet} object.
      * @param delegate
      *      delegate implementation of a {@code set}.
      * @param ownedBitSet
      *      ownedBitSet which will be used for further index processing given the
      *      indexes's {@code internalId}.
      */
-    DynamicIndexSet(Set<I> delegate, BitSet ownedBitSet){
+    DynamicIndexSet(Set<I> delegate, DefaultBitSet ownedBitSet){
         this.delegate = delegate;
         this.ownedBitSet = ownedBitSet;
     }
@@ -72,7 +72,7 @@ public class DynamicIndexSet<I extends DBIndex<I>> implements Iterable<I> {
      * @return a cloned version of the {@code bitset} managed by this
      *      {@code dynamic set}.
      */
-    public BitSet bitSet(){
+    public DefaultBitSet bitSet(){
         // need to clone since we modify it in place
         return ownedBitSet.clone();
     }

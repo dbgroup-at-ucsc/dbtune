@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.core;
 import edu.ucsc.dbtune.core.metadata.*;
 import edu.ucsc.dbtune.core.metadata.PGReifiedTypes.ReifiedPGIndexList;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.*;
 
 import java.io.File;
@@ -136,7 +136,7 @@ public class Platform {
     static class PGDatabaseWhatIfOptimizer extends AbstractDatabaseWhatIfOptimizer<PGIndex> {
         private final DatabaseConnection<PGIndex> connection;
         private final AtomicInteger                                     whatifCount;
-        private BitSet cachedBitSet = new BitSet();
+        private DefaultBitSet cachedBitSet = new DefaultBitSet();
         private List<PGIndex>            cachedCandidateSet = new ArrayList<PGIndex>();
 
 
@@ -213,8 +213,8 @@ public class Platform {
             }
 
             final String             sql             = whatIfImpl.getSQL();
-            final BitSet             usedSet         = whatIfImpl.getUsedSet();
-            final BitSet             configuration   = whatIfImpl.getConfiguration();
+            final DefaultBitSet usedSet         = whatIfImpl.getUsedSet();
+            final DefaultBitSet configuration   = whatIfImpl.getConfiguration();
             final ReifiedPGIndexList indexSet        = getCandidateIndexSet();
 
             return supplyValue(
@@ -365,8 +365,8 @@ public class Platform {
 
             final String        sql             = whatIfImpl.getSQL();
             final DB2Index      profiledIndex   = whatIfImpl.getProfiledIndex();
-            final BitSet        usedColumns     = whatIfImpl.getUsedColumns();
-            final BitSet        configuration   = whatIfImpl.getConfiguration();
+            final DefaultBitSet usedColumns     = whatIfImpl.getUsedColumns();
+            final DefaultBitSet configuration   = whatIfImpl.getConfiguration();
             submitAll(
                     // clear explain tables that we will end up reading
                     submit(clearExplainObject(), activeConnection),
@@ -429,8 +429,8 @@ public class Platform {
             int explainCount; // should be equal to 1
             double totalCost;
             final String sql     = whatIfImpl.getSQL();
-            final BitSet config  = whatIfImpl.getConfiguration();
-            final BitSet usedSet = whatIfImpl.getUsedSet();
+            final DefaultBitSet config  = whatIfImpl.getConfiguration();
+            final DefaultBitSet usedSet = whatIfImpl.getUsedSet();
 
             // silently supply a command and an input parameter so that it could
             // get executed in the background (since no return to the caller is needed)

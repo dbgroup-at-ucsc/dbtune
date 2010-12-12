@@ -20,16 +20,16 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.Queue;
+import edu.ucsc.dbtune.util.DefaultQueue;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGNodeQueue {
-	private final Queue<Object> queue;
+	private final DefaultQueue<Object> queue;
     public IBGNodeQueue(){
-        this(new Queue<Object>());
+        this(new DefaultQueue<Object>());
     }
 
-    IBGNodeQueue(Queue<Object> queue){
+    IBGNodeQueue(DefaultQueue<Object> queue){
         this.queue = queue;
     }
 

@@ -22,7 +22,7 @@ import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.PreConditions;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -33,7 +33,7 @@ public class BenefitInfoInput <I extends DBIndex<I>> {
     private final DatabaseConnection<I>   connection;
     private final Snapshot<I>             snapshot;
     private final StaticIndexSet<I>       hotSet;
-    private final BitSet                  config;
+    private final DefaultBitSet config;
     private final ProfiledQuery<I>        profiledQ;
 
     private BenefitInfoInput(StrictBuilder<I> builder){
@@ -56,7 +56,7 @@ public class BenefitInfoInput <I extends DBIndex<I>> {
         return hotSet;
     }
 
-    public BitSet getRecommendedIndexes() {
+    public DefaultBitSet getRecommendedIndexes() {
         return config;
     }
 
@@ -79,7 +79,7 @@ public class BenefitInfoInput <I extends DBIndex<I>> {
         private DatabaseConnection<I>   conn;
         private Snapshot<I>             snapshot;
         private StaticIndexSet<I>       hotSet;
-        private BitSet                  config;
+        private DefaultBitSet config;
         private ProfiledQuery<I>        profiledQuery;
         public StrictBuilder(DatabaseConnection<I> connection){
             this.conn = connection;
@@ -95,7 +95,7 @@ public class BenefitInfoInput <I extends DBIndex<I>> {
             return this;
         }
 
-        public StrictBuilder<I> recommendedIndexes(BitSet value){
+        public StrictBuilder<I> recommendedIndexes(DefaultBitSet value){
             config = PreConditions.checkNotNull(value);
             return this;
         }

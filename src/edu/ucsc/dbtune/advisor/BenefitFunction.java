@@ -17,7 +17,7 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -32,5 +32,5 @@ public interface BenefitFunction<I> {
      * @param m the index configuration.
      * @return the benefit value of the index object given an index configuration.
      */
-    double apply(I arg, BitSet m);
+    double apply(I arg, DefaultBitSet m);
 }

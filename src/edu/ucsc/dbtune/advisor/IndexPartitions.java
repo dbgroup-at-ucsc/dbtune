@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.BitSet;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.PreConditions;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -66,12 +66,12 @@ public class IndexPartitions<I extends DBIndex<I>> {
      * @param partitionBitSets
      *     an array of partitions of indexes represented as bitsets.
      */
-	public IndexPartitions(Snapshot<I> snapshot, BitSet[] partitionBitSets) {
+	public IndexPartitions(Snapshot<I> snapshot, DefaultBitSet[] partitionBitSets) {
 		// create subsets
 		int indexCount0 = 0;
 		int stateCount0 = 0;
 		subsets = new SubsetList<I>();
-		for (BitSet eachBitSet : partitionBitSets) {
+		for (DefaultBitSet eachBitSet : partitionBitSets) {
 			Subset<I> subset = null;
 			for (int i = eachBitSet.nextSetBit(0); i >= 0; i = eachBitSet.nextSetBit(i+1)) {
 				I idx = snapshot.findIndexId(i);
@@ -99,11 +99,11 @@ public class IndexPartitions<I extends DBIndex<I>> {
 
     /**
      *
-     * @return an array of {@link BitSet bitsets}. Each {@code bitset} contains a set of
+     * @return an array of {@link edu.ucsc.dbtune.util.DefaultBitSet bitsets}. Each {@code bitset} contains a set of
      *      indexes of interest.
      */
-	public BitSet[] bitSetArray() {
-		BitSet[] arr = new BitSet[subsets.size()];
+	public DefaultBitSet[] bitSetArray() {
+		DefaultBitSet[] arr = new DefaultBitSet[subsets.size()];
 		for (int i = 0; i < subsets.size(); i++) {
 			arr[i] = subsets.get(i).bitSet();
 		}
@@ -207,7 +207,7 @@ public class IndexPartitions<I extends DBIndex<I>> {
      * @return
      *      the <em>theoretical</em> plan cost
      */
-	public <J extends DBIndex<J>> double theoreticalCost(ProfiledQuery<J> qinfo, BitSet state, BitSet scratch) {
+	public <J extends DBIndex<J>> double theoreticalCost(ProfiledQuery<J> qinfo, DefaultBitSet state, DefaultBitSet scratch) {
 		// Let's override the nonsense for now
 		return qinfo.planCost(state);
 	}
@@ -356,10 +356,10 @@ public class IndexPartitions<I extends DBIndex<I>> {
         }
 
         /**         
-         * @return a {@link BitSet} of indexes' internal ids.
+         * @return a {@link edu.ucsc.dbtune.util.DefaultBitSet} of indexes' internal ids.
          */
-		public BitSet bitSet() {
-			BitSet bs = new BitSet();
+		public DefaultBitSet bitSet() {
+			DefaultBitSet bs = new DefaultBitSet();
 			for (I x : this) bs.set(x.internalId());
 			return bs;
 		}
