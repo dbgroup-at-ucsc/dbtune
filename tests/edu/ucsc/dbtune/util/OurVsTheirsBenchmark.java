@@ -20,23 +20,35 @@ package edu.ucsc.dbtune.util;
 import com.google.caliper.Param;
 import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static edu.ucsc.dbtune.core.DBTuneInstances.makeIBGNode;
+import static edu.ucsc.dbtune.core.DBTuneInstances.makeRandomIBGNode;
+
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({"UnusedDeclaration", "MismatchedQueryAndUpdateOfCollection"})
 public class OurVsTheirsBenchmark extends SimpleBenchmark {
+  // created in advance so that the time of its construction (reflection is  is not taken into
+  // consideration when updating the object containers in the below
+  // benchmarks.
+  private static final IndexBenefitGraph.IBGNode NODE;
+  static {
+     NODE = makeRandomIBGNode();
+  }
+
   @Param({"1", "10", "100"}) private int length;
 
   public void timeOurStack(int reps) {
       for (int i = 0; i < reps; ++i) {
-          DefaultStack<String> our = new DefaultStack<String>();
+          DefaultStack<IndexBenefitGraph.IBGNode> our = new DefaultStack<IndexBenefitGraph.IBGNode>();
           for (int j = 0; j < length; ++j) {
-              our.push("B");
+              our.push(NODE);
               our.pop();
           }
       }
@@ -44,9 +56,9 @@ public class OurVsTheirsBenchmark extends SimpleBenchmark {
 
   public void timeJdkStack(int reps) {
       for (int i = 0; i < reps; ++i) {
-          Deque<String> theirs = new ArrayDeque<String>();
+          Deque<IndexBenefitGraph.IBGNode> theirs = new ArrayDeque<IndexBenefitGraph.IBGNode>();
           for (int j = 0; j < length; ++j) {
-              theirs.push("B");
+              theirs.push(NODE);
               theirs.pop();
           }
       }
@@ -54,9 +66,9 @@ public class OurVsTheirsBenchmark extends SimpleBenchmark {
 
   public void timeOurQueue(int reps) {
       for (int i = 0; i < reps; ++i) {
-          DefaultQueue<String> our = new DefaultQueue<String>();
+          DefaultQueue<IndexBenefitGraph.IBGNode> our = new DefaultQueue<IndexBenefitGraph.IBGNode>();
           for (int j = 0; j < length; ++j) {
-              our.add("B");
+              our.add(NODE);
               our.remove();
           }
       }
@@ -64,10 +76,9 @@ public class OurVsTheirsBenchmark extends SimpleBenchmark {
 
   public void timeJdkQueue(int reps) {
       for (int i = 0; i < reps; ++i) {
-          @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-          Deque<String> theirs = new ArrayDeque<String>();
+          Deque<IndexBenefitGraph.IBGNode> theirs = new ArrayDeque<IndexBenefitGraph.IBGNode>();
           for (int j = 0; j < length; ++j) {
-              theirs.add("B");
+              theirs.add(NODE);
               theirs.remove();
           }
       }
@@ -75,9 +86,9 @@ public class OurVsTheirsBenchmark extends SimpleBenchmark {
 
   public void timeOurConcurrentQuery(int reps){
       for(int i = 0; i <  reps; ++i){
-          DefaultConcurrentQueue<String> our = new DefaultConcurrentQueue<String>(length);
+          DefaultConcurrentQueue<IndexBenefitGraph.IBGNode> our = new DefaultConcurrentQueue<IndexBenefitGraph.IBGNode>(length);
           for(int j = 0; j < length; ++j){
-              our.put("B", DefaultConcurrentQueue.PutOption.POP);
+              our.put(NODE, DefaultConcurrentQueue.PutOption.POP);
               our.get(DefaultConcurrentQueue.GetOption.THROW);
           }
       }
@@ -85,9 +96,9 @@ public class OurVsTheirsBenchmark extends SimpleBenchmark {
 
   public void timeJdkConcurrentLinkedQueue(int reps){
       for(int i = 0; i <  reps; ++i){
-          java.util.Queue<String> theirs = new ConcurrentLinkedQueue<String>();
+          java.util.Queue<IndexBenefitGraph.IBGNode> theirs = new ConcurrentLinkedQueue<IndexBenefitGraph.IBGNode>();
           for(int j = 0; j < length; ++j){
-              theirs.offer("B");
+              theirs.offer(NODE);
               theirs.poll();
           }
       }
@@ -95,20 +106,20 @@ public class OurVsTheirsBenchmark extends SimpleBenchmark {
 
   public void timeJdkBlockingConcurrentQueue(int reps) {
       for(int i = 0; i <  reps; ++i){
-          java.util.concurrent.BlockingQueue<String> theirs = new java.util.concurrent.ArrayBlockingQueue<String>(length);
+          java.util.concurrent.BlockingQueue<IndexBenefitGraph.IBGNode> our = new java.util.concurrent.ArrayBlockingQueue<IndexBenefitGraph.IBGNode>(length);
           for(int j = 0; j < length; ++j){
-              theirs.offer("B");
-              theirs.poll();
+              our.offer(NODE);
+              our.poll();
           }
       }
   }
 
   public void timeOurBlockingConcurrentQueue(int reps) {
       for(int i = 0; i <  reps; ++i){
-          DefaultBlockingQueue<String> theirs = new DefaultBlockingQueue<String>(length);
+          DefaultBlockingQueue<IndexBenefitGraph.IBGNode> our = new DefaultBlockingQueue<IndexBenefitGraph.IBGNode>(length);
           for(int j = 0; j < length; ++j){
-              theirs.put("B");
-              theirs.get();
+              our.put(makeIBGNode(j));
+              our.get();
           }
       }
   }

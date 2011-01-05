@@ -1,18 +1,3 @@
-/****************************************************************************
- * Copyright 2010 Huascar A. Sanchez                                        *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *     http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- ****************************************************************************/
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
@@ -20,6 +5,8 @@ import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
 import edu.ucsc.dbtune.core.metadata.DB2IndexSchema;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.core.metadata.PGIndexSchema;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
+import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.Instances;
 
 import java.lang.reflect.Constructor;
@@ -45,6 +32,20 @@ public class DBTuneInstances {
     public static final String TABLE_CREATOR   = "123";
 
     private DBTuneInstances(){}
+
+    public static IndexBenefitGraph.IBGNode makeRandomIBGNode(){
+        return makeIBGNode(new Random().nextInt());
+    }
+
+    public static IndexBenefitGraph.IBGNode makeIBGNode(int id){
+        try {
+            final Constructor<IndexBenefitGraph.IBGNode> c = IndexBenefitGraph.IBGNode.class.getDeclaredConstructor(DefaultBitSet.class, int.class);
+            c.setAccessible(true);
+            return c.newInstance(new DefaultBitSet(), id);
+        } catch (Exception e) {
+            throw new IllegalStateException("ERROR: unable to construct an IBGNode");
+        }
+    }
 
     public static JdbcConnectionFactory newJdbcConnectionFactory(){
         return new JdbcConnectionFactory(){
