@@ -35,6 +35,14 @@ public class Schema extends DatabaseObject
     static final long serialVersionUID = 0;
 
     /**
+     * default constructor
+     */
+    public Schema( )
+    {
+        this.tables = new ArrayList<Table>();
+    }
+
+    /**
      * constructs a new schema whose name is given
      *
      * @param name

@@ -177,7 +177,8 @@ public class Index extends DatabaseObject
 
         hash = hash * 31 + table.hashCode();
 
-        for( Column col : columns ) {
+        for( Column col : columns )
+	{
             hash = hash * 31 + col.hashCode();
         }
 
@@ -273,9 +274,12 @@ public class Index extends DatabaseObject
      */
     public Column get( int i )
     {
-        if( i < columns.size() ) {
+        if( i < columns.size() )
+	{
             return columns.get( i );
-        } else {
+        }
+	else
+	{
             return null;
         }
     }

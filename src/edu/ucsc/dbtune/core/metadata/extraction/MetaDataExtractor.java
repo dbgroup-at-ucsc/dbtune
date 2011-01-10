@@ -16,64 +16,26 @@
  * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.core.metadata.extraction;
 
-import edu.ucsc.dbtune.core.AbstractDatabaseTable;
+import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.core.metadata.Catalog;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.sql.SQLException;
 
 /**
- * Metadata for a table
+ * Interface for the main class of the metadata extraction package
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public class Table extends AbstractDatabaseTable
+public interface MetaDataExtractor
 {
-    private static final long serialVersionUID = 1L;
-
-    protected Schema schema;
-
-    protected List<Column> columns;
-
-    // how do we represent a PK? Index or List<Column>
-
     /**
-     * Constructor
-     *
-     * @param name
-     *     name of the table
+     * Given a database connection, it extracts metadata information. The information is comprised 
+     * of all the database objects defined in the database that is associated with the connection.
+     * 
+     * @param connection
+     *     object used to obtain metadata for its associated database
      */
-    public Table( String name )
-    {
-	super( name );
-
-	columns = new ArrayList<Column>();
-    }
-
-    /**
-     * Assigns the schema that contains this table.
-     *
-     * @param schema
-     *     object that contains the table.
-     */
-    public void setSchema( Schema schema )
-    {
-        this.schema = schema;
-    }
-
-    /**
-     * Adds a column to the table. The position of the column in the table with respect to other 
-     * columns is as if the table had. That is, if the table has n columns, the new column will be 
-     * placed in the (n+1)th position.
-     *
-     * @param column
-     *     new column being added to the table.
-     */
-    public void add( Column column )
-    {
-	columns.add( column );
-
-	column.setTable( this );
-    }
+    public Catalog extract( DatabaseConnection<?> connection ) throws SQLException;
 }
