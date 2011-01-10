@@ -16,60 +16,64 @@
  * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.metadata;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
- * Represents metadata for table contained in a DBMS.
+ * Abstraction of the dictionary used to save metadata. A catalog can be viewed
+ * as a container of Schema objects.
+ *
+ * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public abstract class AbstractDatabaseTable implements DatabaseTable
+public class Catalog extends DatabaseObject
 {
-    private static final long serialVersionUID = 1L;
-    private final int oid;
+    private List<Schema> schemas;
 
-    private String name;
-    // private List<DatabaseColumn> columns;
-
-    public AbstractDatabaseTable( String name )
-    {
-	this.name = name;
-	this.oid  = 0;
-    }
+    static final long serialVersionUID = 0;
 
     /**
-     *
-     * @param o
+     * default constructor
      */
-    AbstractDatabaseTable(int o) 
+    public Catalog()
     {
-	oid = o;
-    }
-
-    @Override
-    public boolean equals(Object other)
-    {
-	return other instanceof AbstractDatabaseTable
-	    && ((AbstractDatabaseTable) other).getOid() == getOid();
+        schemas = new ArrayList<Schema>();
     }
 
     /**
+     * Creates a new catalog with the given name
+     *
+     * @param name
+     *     name of the catalog
+     */
+    public Catalog( String name )
+    {
+        this.name = name;
+        schemas = new ArrayList<Schema>();
+    }
+
+    /**
+     * adds a schema to a catalog
+     *
+     * @param table
+     *     new table to add
+     */
+    public void add( Schema schema )
+    {
+        schemas.add(schema);
+        schema.setCatalog( this );
+    }
+
+    /**
+     * returns the list of schemas that the schema contains
      *
      * @return
+     *     List of Schema objects
      */
-    public int getOid()
+    public List<Schema> getSchemas()
     {
-	return oid;
+        return new ArrayList<Schema>(schemas);
     }
-
-    @Override
-    public int hashCode()
-    {
-	return 34 * getOid();
-    }
-
-    @Override
-    public String toString() 
-    {
-        return name;
-    }
-
 }
+

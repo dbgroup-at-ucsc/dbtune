@@ -13,11 +13,12 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- *  ****************************************************************************
+ * ****************************************************************************
  */
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Schema;
 import java.io.Serializable;
 
 /**
@@ -35,4 +36,6 @@ public interface DatabaseTable extends Serializable
 
     @Override
     String toString();
+
+    public void setSchema( Schema schema );
 }
