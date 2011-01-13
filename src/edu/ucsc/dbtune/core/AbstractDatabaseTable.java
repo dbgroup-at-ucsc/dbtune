@@ -18,10 +18,14 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.DatabaseObject;
+
 /**
  * Represents metadata for table contained in a DBMS.
  */
-public abstract class AbstractDatabaseTable implements DatabaseTable
+public abstract class AbstractDatabaseTable
+    extends DatabaseObject
+    implements DatabaseTable
 {
     private static final long serialVersionUID = 1L;
     private final int oid;

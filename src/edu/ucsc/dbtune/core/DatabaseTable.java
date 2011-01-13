@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.Schema;
 import java.io.Serializable;
 
 /**
@@ -36,6 +35,4 @@ public interface DatabaseTable extends Serializable
 
     @Override
     String toString();
-
-    public void setSchema( Schema schema );
 }
