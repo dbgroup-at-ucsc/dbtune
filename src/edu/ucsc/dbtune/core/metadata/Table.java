@@ -76,4 +76,14 @@ public class Table extends AbstractDatabaseTable
 
 	column.setTable( this );
     }
+
+    /**
+     * Returns the list of columns that are inside the table.
+     *
+     * @return columns from table
+     */
+    public List<Column> getColumns()
+    {
+        return new ArrayList<Column>(columns);
+    }
 }

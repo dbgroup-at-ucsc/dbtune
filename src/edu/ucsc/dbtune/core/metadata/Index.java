@@ -26,17 +26,18 @@ import java.util.ArrayList;
  */
 public class Index extends DatabaseObject
 {
-    public static final int NONE      = 0;
-    public static final int PRIMARY   = 1;
-    public static final int CLUSTERED = 2;
-    public static final int SECONDARY = 3;
+    public static final int     NONE       = 0;
+    public static final int     PRIMARY    = 1;
+    public static final int     CLUSTERED  = 2;
+    public static final int     SECONDARY  = 3;
+    public static final boolean UNIQUE     = true;
+    public static final boolean NON_UNIQUE = false;
 
-    protected Table table;
-
-    protected int     type;
-    protected boolean unique;
-
+    protected Table        table;
     protected List<Column> columns;
+    protected int          type;
+    protected boolean      unique;
+
 
     static final long serialVersionUID = 0;
 
@@ -52,9 +53,11 @@ public class Index extends DatabaseObject
      */
     public Index( Table table, int type, boolean unique )
     {
-        this.type   = type;
-        this.unique = unique;
-        this.name   = "";
+        this.table   = table;
+        this.type    = type;
+        this.unique  = unique;
+        this.columns = new ArrayList<Column>();
+        this.name    = "";
     }
 
     /**
@@ -102,6 +105,7 @@ public class Index extends DatabaseObject
      */
     public void setType( int type )
     {
+        // TODO check that is valid
         this.type = type;
     }
 
@@ -173,6 +177,11 @@ public class Index extends DatabaseObject
     {
         int hash;
 
+        if( id != 0 )
+        {
+            return 1 * 31 + (new Long(id)).hashCode();
+        }
+
         hash = 1;
 
         hash = hash * 31 + table.hashCode();
@@ -211,6 +220,11 @@ public class Index extends DatabaseObject
         }
 
         Index idx = (Index) other;
+
+        if( id != 0 && idx.getId() != 0 )
+        {
+            return id == idx.getId();
+        }
 
         if( table != idx.getTable() )
 	{

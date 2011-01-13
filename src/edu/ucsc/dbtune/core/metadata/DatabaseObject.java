@@ -41,14 +41,16 @@ public abstract class DatabaseObject implements java.io.Serializable
 
     protected long cardinality;
 
+    protected long pages;
+
     /**
-     * Returns the id of the object.
+     * Returns the name of the object.
      *
-     * @return long value representing the object's id
+     * @return string value representing the object's name
      */
-    public long getId()
+    public String getName()
     {
-        return id;
+        return name;
     }
 
     /**
@@ -62,13 +64,13 @@ public abstract class DatabaseObject implements java.io.Serializable
     }
 
     /**
-     * returns the string representation of the object
+     * Returns the id of the object.
      *
-     * @return String value of the database object
+     * @return long value representing the object's id
      */
-    public String toString()
+    public long getId()
     {
-        return name;
+        return id;
     }
 
     /**
@@ -77,7 +79,7 @@ public abstract class DatabaseObject implements java.io.Serializable
      *
      * @param cardinality
      */
-    protected void setCardinality( long cardinality )
+    public void setCardinality( long cardinality )
     {
         this.cardinality = cardinality;
     }
@@ -90,5 +92,35 @@ public abstract class DatabaseObject implements java.io.Serializable
     public long getCardinality()
     {
         return cardinality;
+    }
+
+    /**
+     * Assigns the number of pages that the object occupies in disk. 
+     *
+     * @param pages
+     */
+    public void setPages( long pages )
+    {
+        this.pages = pages;
+    }
+
+    /**
+     * Returns the number of pages that the object occupies in disk
+     *
+     * @return number of pages
+     */
+    public long getPages()
+    {
+        return pages;
+    }
+
+    /**
+     * returns the string representation of the object
+     *
+     * @return String value of the database object
+     */
+    public String toString()
+    {
+        return name;
     }
 }
