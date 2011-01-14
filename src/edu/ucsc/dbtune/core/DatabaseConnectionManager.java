@@ -27,9 +27,9 @@ import java.sql.SQLException;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DatabaseConnectionManager<I extends DBIndex<I>> {
+public interface DatabaseConnectionManager {
     /**
-     * @return
+     * @return the name of the used database.
      */
     String getDatabaseName();
 
@@ -42,7 +42,7 @@ public interface DatabaseConnectionManager<I extends DBIndex<I>> {
      * @throws java.sql.SQLException
      *      thrown if we were unable to connect to a database system.
      */
-    DatabaseConnection<I> connect() throws SQLException;
+    DatabaseConnection connect() throws SQLException;
 
     /**
 	 * closes all the database connections managed by this {@code DatabaseConnectionManager} and
@@ -59,7 +59,7 @@ public interface DatabaseConnectionManager<I extends DBIndex<I>> {
      * @param connection
      *      single connection to be closed.
      */
-    void close(DatabaseConnection<I> connection);
+    void close(DatabaseConnection connection);
 
 	/**
 	 * Indicates if this {@code DatabaseConnectionManager} is closed.

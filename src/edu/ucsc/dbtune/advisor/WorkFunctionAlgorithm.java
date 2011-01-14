@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-public class WorkFunctionAlgorithm<I extends DBIndex<I>> {
+public class WorkFunctionAlgorithm<I extends DBIndex> {
     public static final int MAX_NUM_STATES = 12345;
     public static final int MAX_HOTSET_SIZE = 40;
 
@@ -295,7 +295,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex<I>> {
 		return false;
 	}
 	
-	public static <J extends DBIndex<J>> double transitionCost(Snapshot<J> candidateSet, DefaultBitSet x, DefaultBitSet y) {
+	public static <J extends DBIndex> double transitionCost(Snapshot<J> candidateSet, DefaultBitSet x, DefaultBitSet y) {
 		double transition = 0;
 		for (J index : candidateSet) {
 			int id = index.internalId();
@@ -305,7 +305,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex<I>> {
 		return transition;
 	}
 
-	private static <J extends DBIndex<J>> double transitionCost(IndexPartitions.Subset<J> subset, int x, int y) {
+	private static <J extends DBIndex> double transitionCost(IndexPartitions.Subset<J> subset, int x, int y) {
 		double transition = 0;
 		int i = 0;
 		for (J index : subset) {
@@ -335,7 +335,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex<I>> {
      * @return
      *      a schedule cost over a set of candidate and queries.
      */
-	public <J extends DBIndex<J>> double getScheduleCost(Snapshot<J> candidateSet,
+	public <J extends DBIndex> double getScheduleCost(Snapshot<J> candidateSet,
                                                          int queryCount, List<ProfiledQuery<J>> qinfos,
                                                          IndexPartitions<J> parts, DefaultBitSet[] schedule
     ) {
@@ -399,7 +399,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex<I>> {
     }
 	
 	
-	private static class SubMachineArray<J extends DBIndex<J>> implements Iterable<SubMachine<J>> {
+	private static class SubMachineArray<J extends DBIndex> implements Iterable<SubMachine<J>> {
 		public final int length;
 		private final List<SubMachine<J>> arr;
 		
@@ -432,7 +432,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex<I>> {
         }
     }
 	
-	private static class SubMachine<J extends DBIndex<J>> implements Iterable<J> {
+	private static class SubMachine<J extends DBIndex> implements Iterable<J> {
 		private IndexPartitions.Subset<J> subset;
 		private int subsetNum;
 		private int numIndexes;

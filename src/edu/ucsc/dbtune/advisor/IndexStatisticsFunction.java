@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class IndexStatisticsFunction<I extends DBIndex<I>> implements StatisticsFunction<I> {
+public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFunction<I> {
     private static final int INDEX_STATISTICS_WINDOW = 100;
 
                   double             currentTimeStamp;
@@ -87,7 +87,7 @@ public class IndexStatisticsFunction<I extends DBIndex<I>> implements Statistics
 		Iterable<I> candSet = queryInfo.getCandidateSnapshot();
 		for (I index : candSet) {
             final InteractionBank bank          = queryInfo.getInteractionBank();
-            final ExplainInfo<I>  explainInfo   = queryInfo.getExplainInfo();
+            final ExplainInfo explainInfo   = queryInfo.getExplainInfo();
 
 			double bestBenefit = bank.bestBenefit(index.internalId())
 								 - explainInfo.maintenanceCost(index);
@@ -240,7 +240,7 @@ public class IndexStatisticsFunction<I extends DBIndex<I>> implements Statistics
     }
 
 
-    private static class DoiFunctionImpl<I extends DBIndex<I>> implements DoiFunction<I> {
+    private static class DoiFunctionImpl<I extends DBIndex> implements DoiFunction<I> {
         private final IndexStatisticsFunction<I> statistics;
 
         DoiFunctionImpl(IndexStatisticsFunction<I> statistics){
@@ -263,7 +263,7 @@ public class IndexStatisticsFunction<I extends DBIndex<I>> implements Statistics
         }
     }
 
-    private static class BenefitFunctionImpl <I extends DBIndex<I>> implements BenefitFunction<I> {
+    private static class BenefitFunctionImpl <I extends DBIndex> implements BenefitFunction<I> {
         private final IndexStatisticsFunction<I> statistics;
 
         BenefitFunctionImpl(IndexStatisticsFunction<I> statistics){
@@ -283,7 +283,7 @@ public class IndexStatisticsFunction<I extends DBIndex<I>> implements Statistics
         }
     }
 
-	static class DBIndexPair<I extends DBIndex<I>> {
+	static class DBIndexPair<I extends DBIndex> {
 		I a;
         I b;
 
@@ -292,11 +292,11 @@ public class IndexStatisticsFunction<I extends DBIndex<I>> implements Statistics
 			this.b = b;
 		}
 
-        static <I extends DBIndex<I>> DBIndexPair<I> emptyPair(){
+        static <I extends DBIndex> DBIndexPair<I> emptyPair(){
             return of(null, null);
         }
 
-        static <I extends DBIndex<I>> DBIndexPair<I> of(I a, I b){
+        static <I extends DBIndex> DBIndexPair<I> of(I a, I b){
             return new DBIndexPair<I>(a, b);
         }
 

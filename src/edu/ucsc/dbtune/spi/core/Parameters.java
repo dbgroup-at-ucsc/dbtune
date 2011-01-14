@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static edu.ucsc.dbtune.util.Objects.discoverClass;
-import static edu.ucsc.dbtune.util.PreConditions.checkNotNull;
+import static edu.ucsc.dbtune.util.Checks.checkNotNull;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)

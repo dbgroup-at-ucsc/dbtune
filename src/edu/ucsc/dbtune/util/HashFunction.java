@@ -1,9 +1,11 @@
 package edu.ucsc.dbtune.util;
 
+import java.util.Arrays;
+
 public class HashFunction {
 	public static synchronized int hashCode(byte[] key) {
 		setDigest(key);
-		return java.util.Arrays.hashCode(digest);
+		return Arrays.hashCode(digest);
 	}
 	
 	/* 

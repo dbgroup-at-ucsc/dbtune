@@ -22,9 +22,9 @@ import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
-public class AnalyzedQuery<I extends DBIndex<I>> {
+public class AnalyzedQuery<I extends DBIndex> {
 	private final ProfiledQuery<I> profileInfo;
-	private final DefaultBitSet[]         partition;
+	private final DefaultBitSet[]  partition;
 
     /**
      * construct a query which has been analyzed by some {@code tuning interface}.

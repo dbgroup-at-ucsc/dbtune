@@ -38,7 +38,7 @@ public class InteractionSelector {
      *      {@code #choosePartitions(InteractionSelection)} is called, hotSet and
      *      hotPartitions are out of sync!
      */
-    public static <I extends DBIndex<I>> IndexPartitions<I> choosePartitions(InteractionSelection<I> arg){
+    public static <I extends DBIndex> IndexPartitions<I> choosePartitions(InteractionSelection<I> arg){
         return choosePartitions(
                 arg.getNewHotSet(),
                 arg.getOldPartitions(),
@@ -47,7 +47,7 @@ public class InteractionSelector {
         );
     }
 
-	static <I extends DBIndex<I>> IndexPartitions<I> choosePartitions(StaticIndexSet<I> newHotSet,
+	static <I extends DBIndex> IndexPartitions<I> choosePartitions(StaticIndexSet<I> newHotSet,
                                                                       IndexPartitions<I> oldPartitions,
                                                                       StatisticsFunction<I> doiFunc,
                                                                       int maxNumStates
@@ -126,7 +126,7 @@ public class InteractionSelector {
 		return bestPartitions;
 	}
 
-    private static <I extends DBIndex<I>> IndexPartitions<I> constructInitialGuess(StaticIndexSet<I> newHotSet, IndexPartitions<I> oldPartitions) {
+    private static <I extends DBIndex> IndexPartitions<I> constructInitialGuess(StaticIndexSet<I> newHotSet, IndexPartitions<I> oldPartitions) {
         IndexPartitions<I> bestPartitions;
 
         // construct initial guess, which put indexes together that were previously together
@@ -146,7 +146,7 @@ public class InteractionSelector {
         return bestPartitions;
     }
 
-    private static <I extends DBIndex<I>> double partitionCost(IndexPartitions<I> partitions,
+    private static <I extends DBIndex> double partitionCost(IndexPartitions<I> partitions,
                                                                StatisticsFunction<I> doiFunc
     ) {
 		double cost = 0;
@@ -160,7 +160,7 @@ public class InteractionSelector {
 		return cost;
 	}
 
-	private static <I extends DBIndex<I>> double interactionWeight(IndexPartitions.Subset<I> s1,
+	private static <I extends DBIndex> double interactionWeight(IndexPartitions.Subset<I> s1,
                                                                    IndexPartitions.Subset<I> s2,
                                                                    StatisticsFunction<I> doiFunc
     ) {
@@ -171,7 +171,7 @@ public class InteractionSelector {
 		return weight;
 	}
 
-    private static class InteractionWeightSupplier<I extends DBIndex<I>>
+    private static class InteractionWeightSupplier<I extends DBIndex>
     implements Supplier<InteractionWeightSupplier<I>> {
         private StatisticsFunction<I> doiFunc;
         private int maxNumStates;
@@ -251,7 +251,7 @@ public class InteractionSelector {
         }
     }
 
-    private static class InteractionWeightAccumulator<I extends DBIndex<I>>
+    private static class InteractionWeightAccumulator<I extends DBIndex>
     implements Supplier<InteractionWeightAccumulator<I>> {
         private StatisticsFunction<I>     doiFunc;
         private int                       maxNumStates;

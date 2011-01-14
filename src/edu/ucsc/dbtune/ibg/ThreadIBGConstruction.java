@@ -45,7 +45,8 @@ public class ThreadIBGConstruction implements Runnable {
      * @param ibgCons
      *     an {@link IndexBenefitGraphConstructor} object.
      * @param state
-     *     either {@link RunnableState#IDLE}, {@link RunnableState#PENDING}, or {@link RunnableState#DONE}.
+     *     either {@link RunnableState#IDLE}, {@link RunnableState#PENDING},
+     *     or {@link RunnableState#DONE}.
      */
     ThreadIBGConstruction(String processName, IndexBenefitGraphConstructor<?> ibgCons, RunnableState state){
         this.processName    = processName;
@@ -55,16 +56,16 @@ public class ThreadIBGConstruction implements Runnable {
 
     @Override
 	public void run() {
-        System.out.printf("%s is running.\n",processName);   
+        System.out.printf("%s is running.\n",processName);
 		while (true) {
 			synchronized (taskMonitor) {
-				while (state != RunnableState.PENDING) {
+				while (!RunnableState.PENDING.isSame(state)) {
 					try {
 						taskMonitor.wait();
 					} catch (InterruptedException e) {
-						Debug.logError("InterruptedException", e);
                         Thread.currentThread().interrupt();
-                        return; /// hmmm....
+                        Debug.logNotice("InterruptedException", e);
+                        return;
                     }
 				}
 			}
@@ -101,7 +102,10 @@ public class ThreadIBGConstruction implements Runnable {
 			taskMonitor.notify();
 		}
 	}
-	
+
+    /**
+     * wait until the thread has finalized doing its job.
+     */
 	public void waitUntilDone() {
 		synchronized (taskMonitor) {
 			while (RunnableState.PENDING.isSame(state)) {

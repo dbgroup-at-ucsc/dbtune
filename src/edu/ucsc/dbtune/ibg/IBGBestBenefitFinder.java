@@ -23,15 +23,25 @@ import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGBestBenefitFinder {
-	private final DefaultBitSet visited;
-	private final DefaultBitSet bitset_Ya;
+	private final DefaultBitSet         visited;
+	private final DefaultBitSet         bitset_Ya;
 	private final IBGNodeQueue          pending;
 	private final IBGCoveringNodeFinder finder;
 
+    /**
+     * construct a new {@link IBGBestBenefitFinder} object; assumming default values for its private members.
+     */
     public IBGBestBenefitFinder(){
         this(new DefaultBitSet(), new DefaultBitSet(), new IBGNodeQueue(), new IBGCoveringNodeFinder());
     }
 
+    /**
+     * convenient constructor that will help us test this class.
+     * @param visited visited indexes
+     * @param bitset_Ya new indexes to be processed.
+     * @param pendingQueue pending node queue.
+     * @param finder  covering node finder.
+     */
     IBGBestBenefitFinder(DefaultBitSet visited, DefaultBitSet bitset_Ya, IBGNodeQueue pendingQueue, IBGCoveringNodeFinder finder){
         this.visited = visited;
         this.bitset_Ya = bitset_Ya;

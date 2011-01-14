@@ -49,6 +49,7 @@ public class DB2IndexMetadata implements Serializable {
 	// serialization support
 	private static final long serialVersionUID = 1L;
 
+    //todo(Huascar) consider making this constructor public.
     private DB2IndexMetadata(
 			DB2IndexSchema schema,
 			int internalId,
@@ -141,7 +142,7 @@ public class DB2IndexMetadata implements Serializable {
 		sbuf.append(')');
 	}
 
-    public double creationCost(DatabaseWhatIfOptimizer<DB2Index> whatIfOptimizer) throws SQLException{
+    public double creationCost(DatabaseWhatIfOptimizer whatIfOptimizer) throws SQLException{
         int idx             = 0;
         int nSortedColumns;
         final StringBuilder sql = new StringBuilder(16 * (nSortedColumns = schema.descending.size()));
@@ -182,7 +183,7 @@ public class DB2IndexMetadata implements Serializable {
                             .toGetCost();
     }
 	
-	public double creationCost(DatabaseConnection<DB2Index> conn) throws SQLException {
+	public double creationCost(DatabaseConnection conn) throws SQLException {
 		int i, n;
 		
 		StringBuilder sqlbuf = new StringBuilder();

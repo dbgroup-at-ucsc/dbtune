@@ -19,6 +19,8 @@
 package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.AbstractExplainInfo;
+import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.DatabaseTable;
 import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
 import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -26,9 +28,9 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.io.Serializable;
 
 /**
- *  implements a DB2-specific {@link edu.ucsc.satuning.db.ExplainInfo}.
+ *  implements a DB2-specific {@link edu.ucsc.dbtune.core.ExplainInfo}.
  */
-public class DB2ExplainInfo extends AbstractExplainInfo<DB2Index> implements Serializable{
+public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private final DB2QualifiedName updatedTable;
 	private final double updateCost;
@@ -40,21 +42,21 @@ public class DB2ExplainInfo extends AbstractExplainInfo<DB2Index> implements Ser
      * @param updTable
      *      updated table
      * @param updCost
-     *      update cost.
+     *      the updating cost.
      */
-	public DB2ExplainInfo(SQLCategory cat, DB2QualifiedName updTable, double updCost) {
+	public DB2ExplainInfo(SQLCategory cat, DatabaseTable updTable, double updCost) {
         super(cat);
-		if (cat == SQLCategory.DML) {
+		if (SQLCategory.DML.isSame(cat)) {
 			Debug.assertion(updTable != null, "need updated table for DML");
 			Debug.assertion(updCost >= 0, "invalid update cost");
 		}
-		updatedTable = updTable;
+		updatedTable = (DB2QualifiedName) updTable;
 		updateCost = updCost;
 	}
 
     @Override
-	public double maintenanceCost(DB2Index index) {
-		if (getSQLCategory() != SQLCategory.DML)
+	public double maintenanceCost(DBIndex index) {
+		if (!SQLCategory.DML.isSame(getSQLCategory()))
 			return 0;
 		if (!index.isOn(updatedTable))
 			return 0;

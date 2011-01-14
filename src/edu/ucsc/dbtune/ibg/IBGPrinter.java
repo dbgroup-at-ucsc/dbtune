@@ -21,19 +21,35 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGPrinter {
 	private final DefaultBitSet visited;
 	private final IBGNodeQueue  pending;
+    private static final int INITIAL_MSG_SIZE = 10000;
+
+    /**
+     * construct a new {@link IBGPrinter} object.
+     */
     public IBGPrinter(){
         this(new DefaultBitSet(), new IBGNodeQueue());
     }
 
+    /**
+     * construct a new {@link IBGPrinter} object given a set of visited nodes and
+     * a queue of pending nodes (i.e., nodes to be visited)
+     * @param visited set of visited nodes.
+     * @param pending a queue of pending nodes (i.e., nodes to be visited).
+     */
     IBGPrinter(DefaultBitSet visited, IBGNodeQueue pending){
         this.visited = visited;
         this.pending = pending;
     }
-	
+
+    /**
+     * prints an {@link IndexBenefitGraph} object.
+     * @param ibg an {@link IndexBenefitGraph} object to be printed.
+     */
 	public void print(IndexBenefitGraph ibg) {
 		visited.clear();
 		pending.reset();
@@ -57,28 +73,35 @@ public class IBGPrinter {
 	}
 	
 	private void printExpanded(IndexBenefitGraph ibg, IBGNode node) {
+        final StringBuilder screenOutput = new StringBuilder(INITIAL_MSG_SIZE);
 		boolean first;
-		System.out.print("NODE:\t{");
+        screenOutput.append("NODE:\t{");
 		first = true;
 		for (int i = node.config.nextSetBit(0); i >= 0; i = node.config.nextSetBit(i+1)) {
 			if (ibg.isUsed(i)) {
-				if (!first) System.out.print(", ");
-				System.out.print(i);
+				if (!first) screenOutput.append(", ");
+                screenOutput.append(i);
 				first = false;
 			}
 		}
-		System.out.println("}");
-		System.out.print("\tused {");
+        screenOutput.append("}\n").append("\tused {");
 		first = true;
 		for (IBGChild c = node.firstChild(); c != null; c = c.next) {
 			if (!first) {
-				System.out.print(", ");
+                screenOutput.append(", ");
 			}
-		    System.out.print(c.usedIndex);
+            screenOutput.append(c.usedIndex);
 		    first = false;
 		}
-		System.out.println("}");
-		System.out.println("\tcost " + node.cost());
-		System.out.println();
+        screenOutput.append("}\n").append("\tcost ").append(node.cost()).append("\n\n");
+		System.out.print(screenOutput.toString());
 	}
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder<IBGPrinter>(this)
+               .add("visited nodes", visited)
+               .add("pending queue", pending)
+              .toString();
+    }
 }

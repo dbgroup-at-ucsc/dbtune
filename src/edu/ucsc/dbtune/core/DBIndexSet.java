@@ -22,16 +22,13 @@ import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.DBUtilities;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializable {
+public class DBIndexSet<I extends DBIndex> implements Iterable<I>, Serializable {
 	
 	private DefaultBitSet bs;
 	private Set<I> set;
@@ -45,13 +42,14 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 		clear();
 	}
 
-	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.writeInt(list.size());
 		for (I idx : list)
 			out.writeObject(idx);
 	}
 	
-	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+	@SuppressWarnings({"RedundantTypeArguments"})
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     	clear();
     	int n = in.readInt();
     	for (int i = 0; i < n; i++) {
@@ -60,7 +58,7 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
     	}
     }
 	
-	public void clear() {
+	public final void clear() {
 		set = new HashSet<I>();
 		list = new ArrayList<I>();
 		bs = new DefaultBitSet();
@@ -71,12 +69,13 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 		if (set.add(idx)) {
 			list.add(idx);
 			bs.set(idx.internalId());
-			if (idx.internalId() > maxInternalId)
-				maxInternalId = idx.internalId();
+			if (idx.internalId() > maxInternalId){
+                maxInternalId = idx.internalId();
+            }
 		}
 	}
 	
-	public java.util.Iterator<I> iterator() {
+	public Iterator<I> iterator() {
 		return list.iterator();
 	}
 	
@@ -90,20 +89,20 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(size() + " indexes\n");
+        sb.append(size()).append(" indexes\n");
 		
 		for (I idx : this) {
-			sb.append(idx + "\n");
+            sb.append(idx).append("\n");
 		}
 		
 		return sb.toString();
 	}
 
 	// Renumber the indexes so they are sorted by their creation text 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "RedundantTypeArguments"})
 	public void normalize() throws SQLException {
-		DBIndex<?>[] array = new DBIndex<?>[list.size()];
-		array = list.<DBIndex<?>>toArray(array);
+		DBIndex[] array = new DBIndex[list.size()];
+		array = list.<DBIndex>toArray(array);
 		Arrays.sort(array, schemaComparator);
 		
 		// start from scratch to be safe
@@ -121,8 +120,8 @@ public class DBIndexSet<I extends DBIndex<I>> implements Iterable<I>, Serializab
 	/*
 	 * java.util.Comparator for displaying indexes in an easy to read format
 	 */
-	private static Comparator<DBIndex<?>> schemaComparator = new Comparator<DBIndex<?>>() {
-		public int compare(DBIndex<?> o1, DBIndex<?> o2) {
+	private static Comparator<DBIndex> schemaComparator = new Comparator<DBIndex>() {
+		public int compare(DBIndex o1, DBIndex o2) {
 			return o1.creationText().compareTo(o2.creationText());
 		}
 	};

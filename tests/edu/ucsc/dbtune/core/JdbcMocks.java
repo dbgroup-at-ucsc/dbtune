@@ -55,7 +55,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class JdbcMocks {
     private JdbcMocks(){}
-      
 
     public static Statement makeMockStatement(boolean next, boolean withCounterForGetInt, Connection connection){
         final MockStatement statement = new MockStatement(new MockResultSet(next, false, withCounterForGetInt));
@@ -875,7 +874,7 @@ public class JdbcMocks {
 
         @Override
         public boolean next() throws SQLException {
-            if(oneNoOneYes.get()){;
+            if(oneNoOneYes.get()){
                 if(oneNoOneYesCounter.get() == 1) return false;
                 oneNoOneYesCounter.incrementAndGet();
                 return oneNoOneYes.get();

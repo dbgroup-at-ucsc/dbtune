@@ -90,7 +90,10 @@ public class InteractionBank implements Serializable {
 	}
 	
 	/**
-	 * @return an interaction value given the ids of two indexes.
+     * calculates the interaction level between two indexes.
+	 * @param id1 id of first index
+     * @param id2 id of second index
+     * @return an interaction value given the ids of two indexes.
 	 */
 	public final double interactionLevel(int id1, int id2) {
 		assert (id1 != id2);        

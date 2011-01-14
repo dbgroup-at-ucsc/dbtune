@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.util.Files;
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public final class JdbcDatabaseConnectionManager<I extends DBIndex<I>> extends AbstractDatabaseConnectionManager<I>
-implements DatabaseConnectionManager<I> {
+public final class JdbcDatabaseConnectionManager extends AbstractDatabaseConnectionManager
+        implements DatabaseConnectionManager {
 
     public static final String USERNAME         = "username";
     public static final String PASSWORD         = "password";
@@ -45,11 +45,11 @@ implements DatabaseConnectionManager<I> {
 
 
     private final String                            jdbcUrl;
-    private final Set<DatabaseConnection<I>>        connections     = new HashSet<DatabaseConnection<I>>();
-    private final DatabaseIndexExtractorFactory<I> indexExtractorFactory;
-    private final DatabaseWhatIfOptimizerFactory<I> whatIfOptimizerFactory;
+    private final Set<DatabaseConnection>           connections             = new HashSet<DatabaseConnection>();
+    private final DatabaseIndexExtractorFactory     indexExtractorFactory;
+    private final DatabaseWhatIfOptimizerFactory    whatIfOptimizerFactory;
     private final String                            driverClass;
-    private final JdbcConnectionFactory jdbcConnectionFactory;
+    private final JdbcConnectionFactory             jdbcConnectionFactory;
     private final AtomicBoolean                     closed;
 
     private JdbcDatabaseConnectionManager(
@@ -58,16 +58,16 @@ implements DatabaseConnectionManager<I> {
             String password,
             String database,
             String driverClass,
-            DatabaseIndexExtractorFactory<I> indexExtractorFactory,
-            DatabaseWhatIfOptimizerFactory<I> databaseWhatIfOptimizer,
+            DatabaseIndexExtractorFactory indexExtractorFactory,
+            DatabaseWhatIfOptimizerFactory databaseWhatIfOptimizer,
             JdbcConnectionFactory jdbcConnectionFactory
     ) {
         super(username, password, database);
-        this.jdbcConnectionFactory  = PreConditions.checkNotNull(jdbcConnectionFactory);
-        this.driverClass            = PreConditions.checkNotNull(driverClass);
-        this.jdbcUrl                = PreConditions.checkNotNull(url);
-        this.indexExtractorFactory  = PreConditions.checkNotNull(indexExtractorFactory);
-        this.whatIfOptimizerFactory = PreConditions.checkNotNull(databaseWhatIfOptimizer);
+        this.jdbcConnectionFactory  = Checks.checkNotNull(jdbcConnectionFactory);
+        this.driverClass            = Checks.checkNotNull(driverClass);
+        this.jdbcUrl                = Checks.checkNotNull(url);
+        this.indexExtractorFactory  = Checks.checkNotNull(indexExtractorFactory);
+        this.whatIfOptimizerFactory = Checks.checkNotNull(databaseWhatIfOptimizer);
 
         closed = new AtomicBoolean(false);
     }
@@ -93,28 +93,26 @@ implements DatabaseConnectionManager<I> {
      * </pre>
      * @param props
      *      connection's properties.
-     * @param <I>
-     *      the type of {@code DBIndex}.
      * @return
      *      a new {@link edu.ucsc.dbtune.core.DatabaseConnectionManager} instance.
      * @throws IllegalArgumentException
      *      if not valid file path has been included for a given Password File property.
      */
-    public static <I extends DBIndex<I>> DatabaseConnectionManager<I> makeDatabaseConnectionManager(Properties props){
+    public static DatabaseConnectionManager makeDatabaseConnectionManager(Properties props){
         return makeDatabaseConnectionManager(props, new JdbcConnectionFactoryImpl());
     }
 
-    public static <I extends DBIndex<I>> DatabaseConnectionManager<I> makeDatabaseConnectionManager(Properties props, JdbcConnectionFactory jdbcConnectionFactory){
+    public static DatabaseConnectionManager makeDatabaseConnectionManager(Properties props, JdbcConnectionFactory jdbcConnectionFactory){
         final String password    = getPassword(props);
         final String driverClass = props.getProperty(DRIVER);
-        return new JdbcDatabaseConnectionManager<I>(
+        return new JdbcDatabaseConnectionManager(
                 props.getProperty(URL),
                 props.getProperty(USERNAME),
                 password,
                 props.getProperty(DATABASE),
                 driverClass,
-                Platform.<I>findIndexExtractorFactory(driverClass),
-                Platform.<I>findWhatIfOptimizerFactory(driverClass),
+                Platform.findIndexExtractorFactory(driverClass),
+                Platform.findWhatIfOptimizerFactory(driverClass),
                 jdbcConnectionFactory
         );
     }
@@ -134,7 +132,7 @@ implements DatabaseConnectionManager<I> {
 
 
     @Override
-    public DatabaseConnection<I> connect() throws SQLException {
+    public DatabaseConnection connect() throws SQLException {
         final Connection  jdbcConnection  = jdbcConnectionFactory.makeConnection(
                 jdbcUrl,
                 driverClass,
@@ -142,13 +140,14 @@ implements DatabaseConnectionManager<I> {
                 getPassword(),
                 false
         );
-        final JdbcDatabaseConnection<I> nConn  = new JdbcDatabaseConnection<I>(
+        final JdbcDatabaseConnection nConn  = new JdbcDatabaseConnection(
                 this,
                 jdbcConnection
         );
 
-        final DatabaseIndexExtractor<I> indexExtractor  = indexExtractorFactory.makeIndexExtractor(nConn);
-        final DatabaseWhatIfOptimizer<I> whatIfOptimezer = whatIfOptimizerFactory.makeWhatIfOptimizer(nConn);
+        //todo(Huascar) please provide the advisor folder path
+        final DatabaseIndexExtractor indexExtractor   = indexExtractorFactory.makeIndexExtractor("", nConn);
+        final DatabaseWhatIfOptimizer whatIfOptimezer = whatIfOptimizerFactory.makeWhatIfOptimizer(nConn);
 
         nConn.install(
                 indexExtractor,
@@ -168,7 +167,7 @@ implements DatabaseConnectionManager<I> {
     }
 
     @Override
-    public void close(DatabaseConnection<I> connection) {
+    public void close(DatabaseConnection connection) {
         if(!connections.contains(connection)) return;
         connections.remove(connection);
         try {
@@ -176,15 +175,15 @@ implements DatabaseConnectionManager<I> {
                 connection.close();
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
     @Override
     public void close() throws SQLException {
-        for(DatabaseConnection<?> each :
+        for(DatabaseConnection each :
                 // this is needed, otherwise we will get a ConcurrentAccess Exception
-                new HashSet<DatabaseConnection<?>>(connections)){
+                new HashSet<DatabaseConnection>(connections)){
             if(isOpened()){
                 each.close();
             }

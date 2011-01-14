@@ -25,10 +25,10 @@ import edu.ucsc.dbtune.spi.core.Command;
 import edu.ucsc.dbtune.spi.core.Commands;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.PreConditions;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -38,7 +38,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static edu.ucsc.dbtune.core.metadata.PGReifiedTypes.ReifiedPGIndexList;
-import static edu.ucsc.dbtune.util.PreConditions.checkSQLRelatedState;
+import static edu.ucsc.dbtune.util.Checks.checkSQLRelatedState;
 import static edu.ucsc.dbtune.util.Instances.newList;
 
 /**
@@ -235,7 +235,7 @@ public class PGCommands {
                     final List<String> indexesAsStrings = Arrays.asList(ohArray);
                     for(String eachIndex : indexesAsStrings){
                         final String[] splitVals = eachIndex.split("=");
-                        PreConditions.checkAssertion(splitVals.length == 2, "We got an unexpected result in index_overhead.");
+                        Checks.checkAssertion(splitVals.length == 2, "We got an unexpected result in index_overhead.");
                         final int    id         = Integer.valueOf(splitVals[0]);
                         final double overhead   = Double.valueOf(splitVals[1]);
                         maintCost[id]           = overhead;
@@ -339,15 +339,15 @@ public class PGCommands {
             // we expect ohArray to have one elt that is the empty string
             // but don't complain if it's empty
             if(ohArray.length != 0){
-                PreConditions.checkAssertion(
+                Checks.checkAssertion(
                         ohArray.length == 1, "Too many elements in ohArray."
                 );
-                PreConditions.checkAssertion(
+                Checks.checkAssertion(
                         ohArray[0].length() == 0, "There is an unexpected element in ohArray."
                 );
             }
         } else {
-            PreConditions.checkAssertion(cardinality == ohArray.length, "Wrong length of ohArray.");
+            Checks.checkAssertion(cardinality == ohArray.length, "Wrong length of ohArray.");
         }
     }
 

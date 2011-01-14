@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
@@ -36,8 +36,8 @@ import static edu.ucsc.dbtune.util.Objects.as;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> implements DatabaseWhatIfOptimizer<I> {
-    private final AtomicReference<WhatIfOptimizationBuilderImpl<I>> optimizer;
+public abstract class AbstractDatabaseWhatIfOptimizer implements DatabaseWhatIfOptimizer {
+    private final AtomicReference<WhatIfOptimizationBuilderImpl>    optimizer;
     private final AtomicBoolean                                     enabled;
 
     protected AbstractDatabaseWhatIfOptimizer(){
@@ -53,7 +53,7 @@ public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> impl
     /**
      * @return a current candidate set after calling {@link #fixCandidates(Iterable)} method.
      */
-    public abstract Iterable<I> getCandidateSet();
+    public abstract Iterable<DBIndex> getCandidateSet();
 
     /**
      * runs n what-if optimizations and return n results (i.e., optimization cost)
@@ -61,11 +61,11 @@ public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> impl
      *      unable to calculate costs b/c a database error.
      */
     public void calculateOptimizationCost() throws SQLException {
-        PreConditions.checkSQLRelatedState(
+        Checks.checkSQLRelatedState(
                 getWhatIfOptimizationBuilder() != null,
                 "We cannot calculate optimization without an active(built) optimizer's configuration."
         );
-        final WhatIfOptimizationBuilderImpl<I> each = as(getWhatIfOptimizationBuilder());
+        final WhatIfOptimizationBuilderImpl each = as(getWhatIfOptimizationBuilder());
         each.addCost(runWhatIfTrial(each));
     }
 
@@ -77,7 +77,7 @@ public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> impl
     /**
      * @return the recently created {@code WhatIfOptimizationBuilder} (scenarios).
      */
-    public WhatIfOptimizationBuilder<I> getWhatIfOptimizationBuilder(){
+    public WhatIfOptimizationBuilder getWhatIfOptimizationBuilder(){
         return optimizer.get();
     }
 
@@ -97,22 +97,22 @@ public abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> impl
      * @throws java.sql.SQLException
      *      unable to run trial b/c a database error.
      */
-    protected abstract Double runWhatIfTrial(WhatIfOptimizationBuilder<I> builder) throws SQLException;
+    protected abstract Double runWhatIfTrial(WhatIfOptimizationBuilder builder) throws SQLException;
 
     @Override
-    public WhatIfOptimizationBuilder<I> whatIfOptimize(String sql) throws SQLException {
-        PreConditions.checkSQLRelatedState(
+    public WhatIfOptimizationBuilder whatIfOptimize(String sql) throws SQLException {
+        Checks.checkSQLRelatedState(
                 isEnabled(),
                 "We cannot use this extractor; either its owner connection has been closed or we did not retrieve a valid extractor."
         );
-        final WhatIfOptimizationBuilderImpl<I> o = new WhatIfOptimizationBuilderImpl<I>(this, sql);
+        final WhatIfOptimizationBuilderImpl o = new WhatIfOptimizationBuilderImpl(this, sql);
         optimizer.compareAndSet(optimizer.get(), o);
         return o;
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder<AbstractDatabaseWhatIfOptimizer<?>>(this)
+        return new ToStringBuilder<AbstractDatabaseWhatIfOptimizer>(this)
                .add("optimizations", getWhatIfOptimizationBuilder())
                .add("candidateSet", getCandidateSet())
                .toString();

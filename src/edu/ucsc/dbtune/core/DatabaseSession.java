@@ -22,7 +22,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * todo move all its methods to connection
+ * An immutable type that represents instances of database sessions.
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public interface DatabaseSession {    

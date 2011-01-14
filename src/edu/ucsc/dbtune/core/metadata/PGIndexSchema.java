@@ -21,15 +21,15 @@ package edu.ucsc.dbtune.core.metadata;
 import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseIndexSchema;
 import edu.ucsc.dbtune.core.DatabaseTable;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.PreConditions;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
 import java.util.List;
 
 /**
- * a concreate implementation of {@link edu.ucsc.satuning.db.DatabaseIndexSchema} type for the PG dbms.
+ * A PG-specific implementation of {@link DatabaseIndexSchema}.
  */
 public class PGIndexSchema implements DatabaseIndexSchema, Serializable {
 	// serialization support
@@ -48,20 +48,20 @@ public class PGIndexSchema implements DatabaseIndexSchema, Serializable {
      * @param isSync
      *    indicate whether is sync or not.
      * @param columns
-     *      a list of {@link edu.ucsc.satuning.db.DatabaseIndexColumn columns}.
+     *      a list of {@link DatabaseColumn columns}.
      * @param isDescending
      *      indicate whether is in descending order.
      */
-    PGIndexSchema(int reloid, boolean isSync,
-                  List<DatabaseColumn> columns,
-                  List<Boolean> isDescending
+    public PGIndexSchema(int reloid, boolean isSync,
+                         List<DatabaseColumn> columns,
+                         List<Boolean> isDescending
     ) {
 		this.baseTable = new PGTable(reloid);
 		this.isSync = isSync;
 		this.columns = columns;
 		this.isDescending = isDescending;
 
-        PreConditions.checkArgument(columns.size() == isDescending.size());
+        Checks.checkArgument(columns.size() == isDescending.size());
 
 		final StringBuilder sb = new StringBuilder();
 		sb.append(reloid);

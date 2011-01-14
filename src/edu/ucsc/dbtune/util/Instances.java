@@ -18,15 +18,11 @@
 
 package edu.ucsc.dbtune.util;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
+import edu.ucsc.dbtune.core.DBIndex;
+
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,6 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Instances {
     private Instances(){}
+
     /**
      * Convenience method that creates a {@code Map} object. One
      * use of this function is for saving on typing, and also to ensure
@@ -112,14 +109,27 @@ public class Instances {
 
     public static int count(final Iterable<?> itr){
         int counter = 0;
-        //noinspection UnusedDeclaration
         for(Object each : itr){
+            if(each == null) continue;
             ++counter;
         }
         return counter;
     }
 
-    public static <T> String str(T value){
-        return value.toString();
+    public static Collection<DBIndex> copyOfIndexes(Iterable<? extends DBIndex> target){
+        List< DBIndex> result = newList();
+        for (DBIndex obj : target){
+            result.add(obj);
+        }
+        return result;
     }
+
+    public static <I> Iterable<I> asIterable(Iterable<? extends I> target){
+        final List<I> result = newList();
+        for(I each : target){
+           result.add(each);
+        }
+        return result;
+    }
+
 }

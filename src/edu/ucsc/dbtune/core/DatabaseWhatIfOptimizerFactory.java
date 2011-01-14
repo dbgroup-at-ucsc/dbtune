@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.core;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DatabaseWhatIfOptimizerFactory<I extends DBIndex<I>> {
+public interface DatabaseWhatIfOptimizerFactory {
     /**
      * makes a new {@link edu.ucsc.dbtune.core.DatabaseWhatIfOptimizer} object.
      * @param connection
@@ -29,5 +29,5 @@ public interface DatabaseWhatIfOptimizerFactory<I extends DBIndex<I>> {
      * @return
      *      a dbms-specific what-if optimizer.
      */
-    DatabaseWhatIfOptimizer<I> makeWhatIfOptimizer(DatabaseConnection<I> connection);
+    DatabaseWhatIfOptimizer makeWhatIfOptimizer(DatabaseConnection connection);
 }

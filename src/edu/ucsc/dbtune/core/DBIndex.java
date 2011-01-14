@@ -23,16 +23,15 @@ import java.sql.SQLException;
 /**
  * an immutable type which represents the Index concept, which is defined as
  * data structure that improves the speed of data retrieval operations on a database table.
- * @param <I>
  */
-public interface DBIndex<I extends DBIndex<I>> {
+public interface DBIndex {
     /**
      * @return the cost required to create this index.
      */
     double creationCost();
 
     /**
-     * @return todo
+     * @return create index statement.
      */
 	String creationText();
 
@@ -48,12 +47,13 @@ public interface DBIndex<I extends DBIndex<I>> {
 
     /**
      * duplicate an index in a type-safe fashion.
+     *
      * @param id id of the duplicate
      * @return the duplicate of {@code this} index.
      * @throws java.sql.SQLException
      *      unable to duplicate an index for the stated reasons.
      */
-	I consDuplicate(int id) throws SQLException;
+	DBIndex consDuplicate(int id) throws SQLException;
 
     @Override
     boolean equals(Object obj);
@@ -67,6 +67,16 @@ public interface DBIndex<I extends DBIndex<I>> {
     
     @Override
 	int hashCode();
+
+    /**
+     * compares qualified names.
+     * @param name
+     *    qualied name to be used in the comparison.
+     * @return
+     *      {@code true} if both qualified names are the same, false
+     *      otherwise.
+     */
+    boolean isOn(DatabaseTable name);
 
     /**
      * @return the internal Id of this index.

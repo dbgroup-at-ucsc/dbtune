@@ -24,7 +24,7 @@ import edu.ucsc.dbtune.core.DBIndex;
 
 import java.util.Map;
 
-public class BcIndexPool<I extends DBIndex<I>> {
+public class BcIndexPool<I extends DBIndex> {
 	Map<Integer, BcIndexInfo<I>> map;
 
     /**

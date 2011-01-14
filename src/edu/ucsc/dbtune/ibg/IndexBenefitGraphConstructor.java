@@ -29,13 +29,13 @@ import edu.ucsc.dbtune.util.Objects;
 
 import java.sql.SQLException;
 
-public class IndexBenefitGraphConstructor<I extends DBIndex<I>> {
+public class IndexBenefitGraphConstructor<I extends DBIndex> {
 	/* 
 	 * Parameters of the construction.
 	 */
-	protected final DatabaseConnection<I> conn;
-	protected final String sql;
-	protected final Snapshot<I> candidateSet;
+	protected final DatabaseConnection  conn;
+	protected final String              sql;
+	protected final Snapshot<I>         candidateSet;
 	
 	/*
 	 * The primary information stored by the graph
@@ -62,7 +62,7 @@ public class IndexBenefitGraphConstructor<I extends DBIndex<I>> {
 	private int nodeCount = 0;
 
 	/* Temporary bit sets allocated once to allow reuse... only used in BuildNode */ 
-	private final DefaultBitSet usedBitSet = new DefaultBitSet();
+	private final DefaultBitSet usedBitSet  = new DefaultBitSet();
 	private final DefaultBitSet childBitSet = new DefaultBitSet();
 	
 	/**
@@ -83,7 +83,7 @@ public class IndexBenefitGraphConstructor<I extends DBIndex<I>> {
      * @throws java.sql.SQLException
      *      an unexpected error has occurred.
      */
-	public IndexBenefitGraphConstructor(DatabaseConnection<I> conn, String sql, Snapshot<I> candidateSet)
+	public IndexBenefitGraphConstructor(DatabaseConnection conn, String sql, Snapshot<I> candidateSet)
 	throws SQLException {
 		this.conn = conn;
 		this.sql = sql;

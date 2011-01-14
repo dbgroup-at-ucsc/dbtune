@@ -31,7 +31,7 @@ import java.util.Set;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class DynamicIndexSet<I extends DBIndex<I>> implements Iterable<I> {
+public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
     private final Set<I> delegate;
     private final DefaultBitSet ownedBitSet;
 
@@ -118,8 +118,8 @@ public class DynamicIndexSet<I extends DBIndex<I>> implements Iterable<I> {
     /**
      * @return an array-version of the elements contained in this {@code dynamic set}.
      */
-    public DBIndex<?>[] toArray(){
-        return delegate.toArray(new DBIndex<?>[delegate.size()]);
+    public DBIndex[] toArray(){
+        return delegate.toArray(new DBIndex[delegate.size()]);
     }
 
     @Override

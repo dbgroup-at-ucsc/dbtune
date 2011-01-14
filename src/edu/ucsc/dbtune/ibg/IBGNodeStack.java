@@ -25,10 +25,20 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGNodeStack {
 	private final DefaultStack<Object> stack;
+
+    /**
+     * construct a new {@link IBGNodeStack} object.
+     */
     public IBGNodeStack(){
         this(new DefaultStack<Object>());
     }
 
+    /**
+     * construct a new {@link IBGNodeStack} object given an initial {@link DefaultStack Stack}
+     * of values.
+     * @param stack
+     *      a stack of values that will populate the {@link IBGNodeStack} object.
+     */
     IBGNodeStack(DefaultStack<Object> stack){
         this.stack = stack;
     }

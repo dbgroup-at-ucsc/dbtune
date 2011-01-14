@@ -33,11 +33,11 @@ import java.io.Serializable;
  * @author Karl Schnaitter
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class ProfiledQuery <I extends DBIndex<I>> implements Serializable {
+public class ProfiledQuery <I extends DBIndex> implements Serializable {
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
     private final  String                       sql;
-	private final  ExplainInfo<I>               explainInfo;
+	private final  ExplainInfo explainInfo;
 	private final  CandidatePool.Snapshot<I>    candidateSet;
 	private final  IndexBenefitGraph            ibg;
 	private final  InteractionBank              bank;
@@ -79,7 +79,7 @@ public class ProfiledQuery <I extends DBIndex<I>> implements Serializable {
     /**
      * @return an {@link ExplainInfo} instance.
      */
-    public ExplainInfo<I> getExplainInfo(){
+    public ExplainInfo getExplainInfo(){
         return explainInfo;
     }
 
@@ -186,9 +186,9 @@ public class ProfiledQuery <I extends DBIndex<I>> implements Serializable {
      * @param <I>
      *      index type.
      */
-    public static class Builder<I extends DBIndex<I>> implements Supplier<ProfiledQuery<I>> {
+    public static class Builder<I extends DBIndex> implements Supplier<ProfiledQuery<I>> {
         private final String                sql;
-        private ExplainInfo<I>              explainInfo;
+        private ExplainInfo explainInfo;
         private CandidatePool.Snapshot<I>   candidateSet;
         private IndexBenefitGraph           ibg;
         private InteractionBank             bank;
@@ -199,7 +199,7 @@ public class ProfiledQuery <I extends DBIndex<I>> implements Serializable {
             this.sql = sql;
         }
 
-        public Builder<I> explainInfo(ExplainInfo<I> value){
+        public Builder<I> explainInfo(ExplainInfo value){
             explainInfo = value;
             return this;
         }

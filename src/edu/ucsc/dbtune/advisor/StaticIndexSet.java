@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class StaticIndexSet<I extends DBIndex<I>> implements Iterable<I>, Iterator<I> {
+public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<I> {
     private int i = 0;
 	private Object[] arr;
 

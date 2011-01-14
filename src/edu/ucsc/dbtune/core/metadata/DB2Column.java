@@ -26,9 +26,13 @@ import java.io.Serializable;
 public class DB2Column implements DatabaseColumn, Serializable {
 	private static final long serialVersionUID = 1L;
 	private String name;
-	
-	DB2Column(String n) {
-		this.name = n;
+
+    /**
+     * construct a {@link DB2Column} object given its name.
+     * @param name name of {@link DB2Column} object.
+     */
+	DB2Column(String name) {
+		this.name = name;
 	}
 	
 	@Override
@@ -37,6 +41,9 @@ public class DB2Column implements DatabaseColumn, Serializable {
                && getName().equals(((DB2Column) other).getName());
     }
 
+    /**
+     * @return name of {@link DB2Column} object.
+     */
     public String getName() {
         return name;
     }

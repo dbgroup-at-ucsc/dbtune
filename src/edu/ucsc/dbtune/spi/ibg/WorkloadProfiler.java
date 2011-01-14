@@ -25,7 +25,7 @@ import java.sql.SQLException;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface WorkloadProfiler<I extends DBIndex<I>> {
+public interface WorkloadProfiler<I extends DBIndex> {
     /**
      * Adds new candidate indexes to the current pool of candidates.
      * @param index

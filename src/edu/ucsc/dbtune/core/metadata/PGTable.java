@@ -27,11 +27,11 @@ public class PGTable implements DatabaseTable {
 	private final int oid;
 
     /**
-     *
-     * @param o
+     * construct a new {@link PGTable} object.
+     * @param oid object id.
      */
-    PGTable(int o) {
-		oid = o;
+    public PGTable(int oid) {
+		this.oid = oid;
 	}
 
     @Override
@@ -41,8 +41,7 @@ public class PGTable implements DatabaseTable {
     }
 
     /**
-     *
-     * @return
+     * @return the object id.
      */
     public int getOid() {
         return oid;

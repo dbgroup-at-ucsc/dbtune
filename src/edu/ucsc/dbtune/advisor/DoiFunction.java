@@ -22,7 +22,7 @@ import edu.ucsc.dbtune.core.DBIndex;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DoiFunction <I extends DBIndex<I>> {
+public interface DoiFunction <I extends DBIndex> {
     /**
      * Applies the function to two index objects of type {@code I}, resulting in an object
      * of type {@code double}, which the {@code doi value} of those two index objects.

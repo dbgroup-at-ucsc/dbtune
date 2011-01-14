@@ -25,7 +25,7 @@ import java.io.ObjectInputStream;
 
 public class DBUtilities {
 	@SuppressWarnings("unchecked")
-	public static <I extends DBIndex<I>> I readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+	public static <I extends DBIndex> I readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		return (I) in.readObject();
 	}
 	

@@ -45,7 +45,7 @@ public class DB2QualifiedName implements DatabaseTable {
 
     /**
      *
-     * @return
+     * @return name of db2 database
      */
     public String getDbName() {
         return dbName;
@@ -53,15 +53,14 @@ public class DB2QualifiedName implements DatabaseTable {
 
     /**
      *
-     * @return
+     * @return name of db2 table (i.e., name of db2 qualified name)
      */
     public String getName() {
         return name;
     }
 
     /**
-     * 
-     * @return
+     * @return db2 schema name
      */
     public String getSchemaName() {
         return schemaName;

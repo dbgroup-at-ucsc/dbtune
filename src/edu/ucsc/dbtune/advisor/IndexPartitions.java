@@ -21,9 +21,9 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.PreConditions;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.Iterator;
@@ -32,7 +32,7 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
-public class IndexPartitions<I extends DBIndex<I>> {
+public class IndexPartitions<I extends DBIndex> {
 	private static final int MAXIMUM_INDEX_COUNT = Integer.MAX_VALUE / 2;
 
 	private final int               indexCount;
@@ -45,7 +45,7 @@ public class IndexPartitions<I extends DBIndex<I>> {
      *      a {@link StaticIndexSet set of static indexes}.
      */
 	public IndexPartitions(StaticIndexSet<I> indexes) {
-        PreConditions.checkArgument(
+        Checks.checkArgument(
                 indexes.size() <= MAXIMUM_INDEX_COUNT,
                 "Cannot create partitions for " + indexes.size() + "indexes"
         );
@@ -207,7 +207,7 @@ public class IndexPartitions<I extends DBIndex<I>> {
      * @return
      *      the <em>theoretical</em> plan cost
      */
-	public <J extends DBIndex<J>> double theoreticalCost(ProfiledQuery<J> qinfo, DefaultBitSet state, DefaultBitSet scratch) {
+	public <J extends DBIndex> double theoreticalCost(ProfiledQuery<J> qinfo, DefaultBitSet state, DefaultBitSet scratch) {
 		// Let's override the nonsense for now
 		return qinfo.planCost(state);
 	}
@@ -234,7 +234,7 @@ public class IndexPartitions<I extends DBIndex<I>> {
      * A subset of indexes.
      * @param <I> the {@link DBIndex} type.
      */
-	public static class Subset<I extends DBIndex<I>> implements Iterable<I> {
+	public static class Subset<I extends DBIndex> implements Iterable<I> {
 		private final int sumIndexIds;
 		private final int minIndexIds;
 
@@ -401,7 +401,7 @@ public class IndexPartitions<I extends DBIndex<I>> {
      * @param <I>
      *      the {@link DBIndex} type.
      */
-	private static class SubsetList <I extends DBIndex<I>> {
+	private static class SubsetList <I extends DBIndex> {
 		LinkedList<Subset<I>> list;
 
 		SubsetList() {

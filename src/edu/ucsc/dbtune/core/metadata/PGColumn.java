@@ -27,8 +27,14 @@ public class PGColumn implements DatabaseColumn, Serializable {
     private static final long serialVersionUID = 1L;
 
 	private final int attnum;
-    PGColumn(int a) {
-		this.attnum = a;
+
+    /**
+     * construct a new {@link PGColumn} object given its
+     * attribute number.
+     * @param attNum attribute number.
+     */
+    public PGColumn(int attNum) {
+		this.attnum = attNum;
 	}
 	
 	@Override
@@ -37,6 +43,9 @@ public class PGColumn implements DatabaseColumn, Serializable {
                && getAttnum() == ((PGColumn) other).getAttnum();
     }
 
+    /**
+     * @return attribute number.
+     */
     public int getAttnum() {
         return attnum;
     }

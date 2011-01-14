@@ -20,13 +20,13 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.spi.core.Supplier;
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class InteractionSelection<I extends DBIndex<I>> {
+public class InteractionSelection<I extends DBIndex> {
     private final IndexPartitions<I>    oldPartitions;
     private final StatisticsFunction<I> doiFunc;
     private final int                   maxNumStates;
@@ -46,17 +46,17 @@ public class InteractionSelection<I extends DBIndex<I>> {
 
 
     public StaticIndexSet<I> getNewHotSet(){
-        return PreConditions.checkNotNull(newHotSet);
+        return Checks.checkNotNull(newHotSet);
     }
 
 
     public IndexPartitions<I> getOldPartitions(){
-        return PreConditions.checkNotNull(oldPartitions);
+        return Checks.checkNotNull(oldPartitions);
     }
 
 
     public StatisticsFunction<I> getDoiFunction(){
-        return PreConditions.checkNotNull(doiFunc);
+        return Checks.checkNotNull(doiFunc);
     }
 
     public int getMaxNumStates(){
@@ -80,7 +80,7 @@ public class InteractionSelection<I extends DBIndex<I>> {
      * @param <I>
      *      the {@link edu.ucsc.dbtune.core.DBIndex index type}.
      */
-    public static class StrictBuilder<I extends DBIndex<I>> implements Supplier<InteractionSelection<I>> {
+    public static class StrictBuilder<I extends DBIndex> implements Supplier<InteractionSelection<I>> {
         private IndexPartitions<I>    oldPartitions;
         private StatisticsFunction<I> doiFunc;
         private int                   maxNumStates;
@@ -94,17 +94,17 @@ public class InteractionSelection<I extends DBIndex<I>> {
         }
 
         public StrictBuilder<I> oldPartitions(IndexPartitions<I> value){
-            this.oldPartitions = PreConditions.checkNotNull(value);
+            this.oldPartitions = Checks.checkNotNull(value);
             return this;
         }
 
         public StrictBuilder<I> doiFunction(StatisticsFunction<I> value){
-            this.doiFunc = PreConditions.checkNotNull(value);
+            this.doiFunc = Checks.checkNotNull(value);
             return this;
         }
 
         public StrictBuilder<I> maxNumStates(int value){
-            this.maxNumStates = PreConditions.checkNotNull(value);
+            this.maxNumStates = Checks.checkNotNull(value);
             return this;
         }
 

@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.Connection;
@@ -84,13 +84,13 @@ abstract class AbstractDatabaseSession implements DatabaseSession {
      *      throw an error if we are trying to use a closed session.
      */
     protected void ensureSessionIsOpened() throws SQLException {
-        PreConditions.checkSQLRelatedState(isOpened(), "cannot execute: no database connection");
+        Checks.checkSQLRelatedState(isOpened(), "cannot execute: no database connection");
     }
 
     @Override
     public void execute(String sql) throws SQLException {
-        PreConditions.checkArgument(sql != null);
-        PreConditions.checkSQLRelatedState(sql != null && !sql.isEmpty());
+        Checks.checkArgument(sql != null);
+        Checks.checkSQLRelatedState(sql != null && !sql.isEmpty());
         ensureSessionIsOpened();
         try {
            init();
@@ -113,13 +113,13 @@ abstract class AbstractDatabaseSession implements DatabaseSession {
      */
     // package private to help testing.
     boolean executeQuery(String sql) throws SQLException {
-        final Statement statement = PreConditions.checkNotNull(sqlStatement.get(), "error: failed to initialize session.");
+        final Statement statement = Checks.checkNotNull(sqlStatement.get(), "error: failed to initialize session.");
         return statement.execute(sql);
     }
 
     @Override
     public Connection getJdbcConnection(){
-        return PreConditions.checkNotNull(sqlConnection.get());
+        return Checks.checkNotNull(sqlConnection.get());
     }
 
 

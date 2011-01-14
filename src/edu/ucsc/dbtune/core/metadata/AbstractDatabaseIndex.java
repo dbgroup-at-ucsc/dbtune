@@ -19,6 +19,7 @@
 package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.DatabaseTable;
 
 /**
  * This class provides a skeletal implementation of the {@link edu.ucsc.dbtune.core.DBIndex}
@@ -26,7 +27,7 @@ import edu.ucsc.dbtune.core.DBIndex;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseIndex<I extends DBIndex<I>> implements DBIndex<I> {
+abstract class AbstractDatabaseIndex implements DBIndex {
     protected final int       internalId;
     protected final String    creationText;
     protected final double    creationCost;
@@ -69,6 +70,11 @@ abstract class AbstractDatabaseIndex<I extends DBIndex<I>> implements DBIndex<I>
     @Override
     public int internalId() {
         return internalId;
+    }
+
+    @Override
+    public boolean isOn(DatabaseTable name) {
+        return false;
     }
 
     @Override

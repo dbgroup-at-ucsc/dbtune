@@ -30,8 +30,8 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
 
-public class BcTuner<I extends DBIndex<I>> {
-	private final DatabaseConnection<I> connection;
+public class BcTuner<I extends DBIndex> {
+	private final DatabaseConnection connection;
 	private final StaticIndexSet<I>     hotSet;
 	private final BcIndexPool<I>        pool;
 	private final Snapshot<I>           snapshot;
@@ -47,7 +47,7 @@ public class BcTuner<I extends DBIndex<I>> {
      * @param hotSet
      *      a {@code hotSet} of indexes.
      */
-	public BcTuner(DatabaseConnection<I> databaseConnection, Snapshot<I> snapshot, StaticIndexSet<I> hotSet) {
+	public BcTuner(DatabaseConnection databaseConnection, Snapshot<I> snapshot, StaticIndexSet<I> hotSet) {
 		this.connection             = databaseConnection;
 		this.snapshot               = snapshot;
 		this.hotSet                 = hotSet;
@@ -276,7 +276,7 @@ public class BcTuner<I extends DBIndex<I>> {
      * set isPrefix to false if it finds one of I2's columns in a different 
      * position within I1
      */    
-    private static class ColumnChecker<I extends DBIndex<I>> implements Supplier<ColumnChecker<I>> {
+    private static class ColumnChecker<I extends DBIndex> implements Supplier<ColumnChecker<I>> {
         private I       i1;
         private I       i2;
         private int     n1;

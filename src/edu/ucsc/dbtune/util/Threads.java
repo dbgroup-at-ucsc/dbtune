@@ -29,23 +29,72 @@ import java.util.concurrent.TimeUnit;
 public class Threads {
     private Threads(){}
 
+    /**
+     * creates a {@link ThreadFactory daemon thread factory} object.
+     * @param name thread name
+     * @return a daemon thread factory.
+     */
     public static ThreadFactory daemonThreadFactory(final String name) {
+        return threadFactory(name, true);
+    }
+
+    /**
+     * creates a {@link ThreadFactory daemon thread factory} object.
+     * @param name thread name
+     * @param daemon flag that signals whether the produced threads are daemon threads.
+     * @return a thread factory.
+     */
+    public static ThreadFactory threadFactory(final String name, final boolean daemon) {
         return new ThreadFactory() {
             private int nextId = 0;
-            public synchronized Thread newThread(Runnable r) {
+            @Override
+            public Thread newThread(Runnable r) {
                 Thread thread = new Thread(r, name + "-" + (nextId++));
-                thread.setDaemon(true);
+                thread.setDaemon(daemon);
                 return thread;
             }
         };
     }
 
-    public static ExecutorService threadPerCpuExecutor(String name) {
-        return fixedThreadsExecutor(name, Runtime.getRuntime().availableProcessors());
+    /**
+     * Creates an executor service that produces daemon threads.
+     * @param name name of process.
+     * @return {@link ExecutorService daemon thread executor service}.
+     */
+    public  static ExecutorService daemonThreadPerCpuExecutor(String name){
+        return threadPerCpuExecutor(name, true);
     }
 
-    public static ExecutorService fixedThreadsExecutor(String name, int count) {
-        ThreadFactory threadFactory = daemonThreadFactory(name);
+    /**
+     * Creates an executor service that produces threads.
+     * @param name name of process.
+     * @return {@link ExecutorService thread executor service}.
+     */
+    public static ExecutorService explicitThreadPerCpuExecutor(String name){
+        return threadPerCpuExecutor(name, false);
+    }
+
+    /**
+     * Creates an executor service that produces threads, which are either daemon or normal
+     * threads.
+     * @param name name of process.
+     * @param daemon flag that signals whether the produced threads a daemon threads.
+     * @return {@link ExecutorService thread executor service}.
+     */
+    public static ExecutorService threadPerCpuExecutor(String name, boolean daemon) {
+        return fixedThreadsExecutor(name, Runtime.getRuntime().availableProcessors(), daemon);
+    }
+
+
+    /**
+     * Creates an executor service that produces a fixed number of threads.
+     * @param name name of process.
+     * @param count the number of threads to be created.
+     * @param daemon flag that signals whether the produced threads are daemon threads.
+     * @return {@link ExecutorService thread executor service}.
+     */
+    public static ExecutorService fixedThreadsExecutor(String name, int count, boolean daemon) {
+        ThreadFactory threadFactory = daemon ? daemonThreadFactory(name) : threadFactory(name, daemon);
 
         return new ThreadPoolExecutor(count, count, 10, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(Integer.MAX_VALUE), threadFactory) {

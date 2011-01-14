@@ -125,7 +125,13 @@ public class IndexBenefitGraph implements Serializable {
 		 * don't access until isExpanded() returns true
 		 */
 		private volatile IBGChild firstChild;
-		
+
+        /**
+         * construct a new {@link IBGNode} object given an index configuration and
+         * a unique number identifying this node.
+         * @param config index configuration.
+         * @param id node's id.
+         */
 		IBGNode(DefaultBitSet config, int id) {
 			this.config = config;
 			this.id = id;
@@ -214,7 +220,9 @@ public class IndexBenefitGraph implements Serializable {
 		}
 		
 		/**
-		 * @return {@code true} if the i is in the used set
+         * checks if a given index is part of the used set of indexes.
+		 * @param id id of the node to be found.
+         * @return {@code true} if the i is in the used set
 		 */
 		public boolean usedSetContains(int id) {
 			assert(isExpanded());
@@ -255,7 +263,12 @@ public class IndexBenefitGraph implements Serializable {
 		final int usedIndex; // the internalID of the used index on this edge
 		final IBGNode node;  // the actual child node
 		IBGChild next = null;
-		
+
+        /**
+         * construct a child node in the Index Benefit Graph.
+         * @param node ibg node
+         * @param usedIndex the id of the used index.
+         */
 		// next pointer is initially null
 		IBGChild(IBGNode node, int usedIndex) {
 			this.node       = node;

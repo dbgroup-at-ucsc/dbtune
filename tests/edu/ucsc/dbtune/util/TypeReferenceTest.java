@@ -61,30 +61,30 @@ public class TypeReferenceTest {
     
     @Test
     public void testGenericWhatIfOptimizer() throws Exception {
-        final AbbreviatedWhatIfOptimizer<DB2Index> a = db2WhatIfOptimizer();
+        final AbbreviatedWhatIfOptimizer a = db2WhatIfOptimizer();
         final Double cost = a.estimateCost("Select * FROM R;", new DefaultBitSet(), DBTuneInstances.newDB2Index(), new DefaultBitSet());
         assertTrue(Double.compare(cost, 10.34) == 0);
     }
 
     static AbbreviatedWhatIfOptimizer db2WhatIfOptimizer(){
-        return new MockWhatIfOptimizerImpl<DB2Index>(new TypeReference<DB2Index>(){});
+        return new MockWhatIfOptimizerImpl(new TypeReference<DB2Index>(){});
     }
 
     static AbbreviatedWhatIfOptimizer pgWhatIfOptimizer(){
-        return new MockWhatIfOptimizerImpl<PGIndex>(new TypeReference<PGIndex>(){});
+        return new MockWhatIfOptimizerImpl(new TypeReference<PGIndex>(){});
     }
 
-    interface AbbreviatedWhatIfOptimizer <I extends DBIndex<I>> extends DatabaseWhatIfOptimizer<I>{
+    interface AbbreviatedWhatIfOptimizer extends DatabaseWhatIfOptimizer {
         double estimateCost(String sql, DefaultBitSet a, DefaultBitSet b) throws SQLException;
-        double estimateCost(String sql, DefaultBitSet a, I idx, DefaultBitSet b) throws SQLException;
+        double estimateCost(String sql, DefaultBitSet a, DBIndex idx, DefaultBitSet b) throws SQLException;
     }
 
-    static class MockWhatIfOptimizerImpl<I extends DBIndex<I>> extends AbstractDatabaseWhatIfOptimizer<I> implements AbbreviatedWhatIfOptimizer <I> {
-        private final TypeReference<I> ref;
+    static class MockWhatIfOptimizerImpl extends AbstractDatabaseWhatIfOptimizer implements AbbreviatedWhatIfOptimizer {
+        private final TypeReference<? extends DBIndex> ref;
         private final AtomicInteger    count;
-        private WhatIfOptimizationBuilder<I> o;
+        private WhatIfOptimizationBuilder o;
 
-        MockWhatIfOptimizerImpl(TypeReference<I> ref){
+        MockWhatIfOptimizerImpl(TypeReference<? extends DBIndex> ref){
             this.ref = ref;
             count = Instances.newAtomicInteger(0);
         }
@@ -95,40 +95,40 @@ public class TypeReferenceTest {
         }
 
         @Override
-        public WhatIfOptimizationBuilder<I> whatIfOptimize(String sql) throws SQLException {
-            final SafeWhatIfOptimizationBuilder<I> o = new SafeWhatIfOptimizationBuilder<I>(this, sql, ref);
+        public WhatIfOptimizationBuilder whatIfOptimize(String sql) throws SQLException {
+            final SafeWhatIfOptimizationBuilder o = new SafeWhatIfOptimizationBuilder(this, sql, ref);
             this.o = o;
             return o;
         }
 
         @Override
-        public Iterable<I> getCandidateSet() {
+        public Iterable<DBIndex> getCandidateSet() {
             return null;
         }
 
         @Override
         public void calculateOptimizationCost() throws SQLException {
-            final SafeWhatIfOptimizationBuilder<I> each = as(getWhatIfOptimizationBuilder());
+            final SafeWhatIfOptimizationBuilder each = as(getWhatIfOptimizationBuilder());
             each.addCost(runWhatIfTrial(each));
         }
 
         @Override
-        public WhatIfOptimizationBuilder<I> getWhatIfOptimizationBuilder() {
+        public WhatIfOptimizationBuilder getWhatIfOptimizationBuilder() {
             return o;
         }
 
         @Override
-        protected Double runWhatIfTrial(WhatIfOptimizationBuilder<I> builder) throws SQLException {
+        protected Double runWhatIfTrial(WhatIfOptimizationBuilder builder) throws SQLException {
             return 10.34;
         }
 
         @Override
-        public ExplainInfo<I> explainInfo(String sql) throws SQLException {
+        public ExplainInfo explainInfo(String sql) throws SQLException {
             return null;  //tocode
         }
 
         @Override
-        public void fixCandidates(Iterable<I> candidateSet) throws SQLException {
+        public void fixCandidates(Iterable<? extends DBIndex> candidateSet) throws SQLException {
             //tocode
         }
 
@@ -143,120 +143,119 @@ public class TypeReferenceTest {
         }
 
         @Override
-        public double estimateCost(String sql, DefaultBitSet a, I idx, DefaultBitSet b) throws SQLException {
+        public double estimateCost(String sql, DefaultBitSet a, DBIndex idx, DefaultBitSet b) throws SQLException {
             return whatIfOptimize(sql).using(new DefaultBitSet(), idx, new DefaultBitSet()).toGetCost();
         }
     }
 
-    static class SafeWhatIfOptimizationBuilder<I extends DBIndex<I>>
-    implements WhatIfOptimizationBuilder<I> {
+    static class SafeWhatIfOptimizationBuilder implements WhatIfOptimizationBuilder {
 
-    private final String sql;
-    private final AtomicReference<Double> cost;
+        private final String sql;
+        private final AtomicReference<Double> cost;
 
-    // optional variables
-    private DefaultBitSet configuration;
-    private DefaultBitSet usedSet;
-    private I      profiledIndex;
-    private DefaultBitSet usedColumns;
-    private final AbstractDatabaseWhatIfOptimizer<I> whatIfOptimizer;
-    private final TypeReference<I> ref;
-    private final AtomicBoolean withProfiledIndex;
+        // optional variables
+        private DefaultBitSet configuration;
+        private DefaultBitSet usedSet;
+        private DBIndex       profiledIndex;
+        private DefaultBitSet usedColumns;
+        private final AbstractDatabaseWhatIfOptimizer whatIfOptimizer;
+        private final TypeReference<? extends DBIndex> ref;
+        private final AtomicBoolean withProfiledIndex;
 
-    public SafeWhatIfOptimizationBuilder(
-            AbstractDatabaseWhatIfOptimizer<I> whatIfOptimizer,
-            String sql,
-            TypeReference<I> ref
-    ){
-        this.whatIfOptimizer    = whatIfOptimizer;
-        this.ref = ref;
-        this.cost               = newAtomicReference(0.0);
-        this.sql                = sql;
-        this.withProfiledIndex  = newFalseBoolean();
-    }
-
-    /**
-     * updates the optimization cost's value.
-     * @param value
-     *      new cost value.
-     */
-    void addCost(double value){
-        cost.compareAndSet(cost.get(), value);
-    }
-
-    /**
-     * @return
-     *      the configuration to be used.
-     */
-    public DefaultBitSet getConfiguration(){
-        return configuration == null ? null : configuration.clone();
-    }
-
-    /**
-     * @return
-     *      a profiled index.
-     */
-    public I getProfiledIndex(){
-        return profiledIndex;
-    }
-
-    /**
-     * @return {@code true} if we are dealing with profiled indexes, {@code false}
-     *      otherwise.
-     */
-    public boolean withProfiledIndex(){
-        return withProfiledIndex.get();
-    }
-
-    /**
-     * @return
-     *      the sql to be used as workload.
-     */
-    public String getSQL(){
-        return sql;
-    }
-
-    public DefaultBitSet getUsedSet(){
-        return usedSet == null ? null : usedSet.clone();
-    }
-
-    /**
-     * @return
-     *      the db columns used in the optimization.
-     */
-    public DefaultBitSet getUsedColumns(){
-        return usedColumns == null ? null : usedColumns.clone();
-    }
-
-    @Override
-    public WhatIfOptimizationCostBuilder using(DefaultBitSet config, DefaultBitSet usedSet) {
-        this.withProfiledIndex.set(false);
-        this.configuration = config;
-        this.usedSet       = usedSet;
-        return this;
-    }
-
-    @Override
-    public WhatIfOptimizationCostBuilder using(DefaultBitSet config,
-           I profiledIndex, DefaultBitSet usedColumns
-    ) {
-        if(!ref.getGenericClass().isInstance(profiledIndex)) throw new IllegalArgumentException("ERROR, lalalala");
-        this.withProfiledIndex.set(true);
-        this.configuration = config;
-        this.profiledIndex = profiledIndex;
-        this.usedColumns   = usedColumns;
-        return this;
-    }
-
-
-    @Override
-    public Double toGetCost() throws SQLException{
-        if(Double.compare(0.0, cost.get()) == 0){
-            whatIfOptimizer.calculateOptimizationCost();
+        public SafeWhatIfOptimizationBuilder(
+                AbstractDatabaseWhatIfOptimizer whatIfOptimizer,
+                String sql,
+                TypeReference<? extends DBIndex> ref
+        ){
+            this.whatIfOptimizer    = whatIfOptimizer;
+            this.ref = ref;
+            this.cost               = newAtomicReference(0.0);
+            this.sql                = sql;
+            this.withProfiledIndex  = newFalseBoolean();
         }
-        return cost.get();
+
+        /**
+         * updates the optimization cost's value.
+         * @param value
+         *      new cost value.
+         */
+        void addCost(double value){
+            cost.compareAndSet(cost.get(), value);
+        }
+
+        /**
+         * @return
+         *      the configuration to be used.
+         */
+        public DefaultBitSet getConfiguration(){
+            return configuration == null ? null : configuration.clone();
+        }
+
+        /**
+         * @return
+         *      a profiled index.
+         */
+        public DBIndex getProfiledIndex(){
+            return profiledIndex;
+        }
+
+        /**
+         * @return {@code true} if we are dealing with profiled indexes, {@code false}
+         *      otherwise.
+         */
+        public boolean withProfiledIndex(){
+            return withProfiledIndex.get();
+        }
+
+        /**
+         * @return
+         *      the sql to be used as workload.
+         */
+        public String getSQL(){
+            return sql;
+        }
+
+        public DefaultBitSet getUsedSet(){
+            return usedSet == null ? null : usedSet.clone();
+        }
+
+        /**
+         * @return
+         *      the db columns used in the optimization.
+         */
+        public DefaultBitSet getUsedColumns(){
+            return usedColumns == null ? null : usedColumns.clone();
+        }
+
+        @Override
+        public WhatIfOptimizationCostBuilder using(DefaultBitSet config, DefaultBitSet usedSet) {
+            this.withProfiledIndex.set(false);
+            this.configuration = config;
+            this.usedSet       = usedSet;
+            return this;
+        }
+
+        @Override
+        public WhatIfOptimizationCostBuilder using(DefaultBitSet config,
+               DBIndex profiledIndex, DefaultBitSet usedColumns
+        ) {
+            Checks.checkArgument(ref.getGenericClass().isInstance(profiledIndex), "ERROR, lalalala");
+            this.withProfiledIndex.set(true);
+            this.configuration = config;
+            this.profiledIndex = profiledIndex;
+            this.usedColumns   = usedColumns;
+            return this;
+        }
+
+
+        @Override
+        public Double toGetCost() throws SQLException{
+            if(Double.compare(0.0, cost.get()) == 0){
+                whatIfOptimizer.calculateOptimizationCost();
+            }
+            return cost.get();
+        }
     }
-}
 
 
     static Dancing salsaDancingToRaw(){

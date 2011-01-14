@@ -30,7 +30,7 @@ public class ThreadIBGAnalysis implements Runnable {
 
     /**
      * construct a {@code runnable} which will analyze an
-     * {@link edu.ucsc.satuning.ibg.IndexBenefitGraph index benefit graph}.
+     * {@link IndexBenefitGraph index benefit graph}.
      */
     public ThreadIBGAnalysis() {
         this("IBG Analysis", null, null, RunnableState.IDLE);
@@ -56,16 +56,17 @@ public class ThreadIBGAnalysis implements Runnable {
         this.state       = state;
     }
 
+    @Override
 	public void run() {
         System.out.printf("%s is running.\n",processName);        
 		while (true) {
 			synchronized (taskMonitor) {
-				while (state != RunnableState.PENDING) {
+				while (!RunnableState.PENDING.isSame(state)) {
 					try {
 						taskMonitor.wait();
 					} catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-						Debug.logError("InterruptedException", e);
+						Debug.logNotice("InterruptedException", e);
 					}
 				}
 			}
@@ -106,30 +107,34 @@ public class ThreadIBGAnalysis implements Runnable {
      */
 	public void startAnalysis(IBGAnalyzer analyzer, InteractionLogger logger) {
 		synchronized (taskMonitor) {
-			if (state == RunnableState.PENDING) {
-				Debug.logError("unexpected state in IBG startAnalysis");
+			if (RunnableState.PENDING.isSame(state)) {
+                final String msg = "unexpected state in IBG startAnalysis";
+				Debug.logError(msg);
+                // todo(Huascar) ask whether we want to fail fast (by throwing an illegal state excep. when
+                // finding this violation or just leave it the way it is.
 			}
 			
-			this.analyzer = analyzer;
-			this.logger = logger;
-			this.state = RunnableState.PENDING;
+			this.analyzer   = analyzer;
+			this.logger     = logger;
+			this.state      = RunnableState.PENDING;
 			taskMonitor.notify();
 		}
 	}
 	
 	public void waitUntilDone() {
 		synchronized (taskMonitor) {
-			while (state == RunnableState.PENDING) {
+			while (RunnableState.PENDING.isSame(state)) {
 				try {
 					taskMonitor.wait();
 				} catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    Debug.logNotice("interrupted thread", e);
                 }
 			}
 	
 			analyzer = null;
-			logger = null;
-			state = RunnableState.IDLE;
+			logger   = null;
+			state    = RunnableState.IDLE;
 		}
 	}
 }

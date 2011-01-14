@@ -20,17 +20,17 @@ package edu.ucsc.dbtune.core;
 
 /**
  * It represents the output of a what-if optimization call.
- * @param <I> the type of index.
  */
-public interface ExplainInfo<I extends DBIndex<I>> {
+public interface ExplainInfo {
     /**
      * gets the maintenance cost of an index.
+     *
      * @param index
-     *      a {@link DBIndex} object.
+     *      a {@link edu.ucsc.dbtune.core.DBIndex} object.
      * @return
      *      maintenance cost.
      */
-	double maintenanceCost(I index);
+	double maintenanceCost(DBIndex index);
 
     /**
      * @return {@code true} if it's

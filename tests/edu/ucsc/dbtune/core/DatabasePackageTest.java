@@ -40,7 +40,7 @@ import java.util.List;
 import static edu.ucsc.dbtune.core.DBTuneInstances.newDB2Index;
 import static edu.ucsc.dbtune.core.DBTuneInstances.newPGIndex;
 import static edu.ucsc.dbtune.core.JdbcMocks.makeResultSet;
-import static edu.ucsc.dbtune.util.Instances.str;
+import static edu.ucsc.dbtune.util.Strings.str;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -52,8 +52,8 @@ import static org.junit.Assert.fail;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class DatabasePackageTest {
-    private DatabaseConnectionManager<DB2Index> connectionManager;
-    private DatabaseConnectionManager<PGIndex>  connectionManager2;
+    private DatabaseConnectionManager connectionManager;
+    private DatabaseConnectionManager connectionManager2;
 
     @Before
     public void setUp() throws Exception {
@@ -85,23 +85,23 @@ public class DatabasePackageTest {
         checkWhatIfOptimizers(connectionManager.connect(), connectionManager2.connect());
     }
 
-    private static void checkIndexExtractors(DatabaseConnection<?>... connections){
-        for(DatabaseConnection<?> each : connections){
+    private static void checkIndexExtractors(DatabaseConnection... connections){
+        for(DatabaseConnection each : connections){
             assertNotNull(each.getIndexExtractor());
         }
     }
 
-    private static void checkWhatIfOptimizers(DatabaseConnection<?>... connections){
-        for(DatabaseConnection<?> each : connections){
+    private static void checkWhatIfOptimizers(DatabaseConnection... connections){
+        for(DatabaseConnection each : connections){
             assertNotNull("what-if optimizer is not null", each.getWhatIfOptimizer());
             assertTrue("what-if optimizer has an initial whatIfCount of 0", each.getWhatIfOptimizer().getWhatIfCount() == 0);
         }
     }
 
-    private static void checkConnections(DatabaseConnectionManager<?>... connectionManagers) throws Exception {
-        for(DatabaseConnectionManager<?> each : connectionManagers){
-            final DatabaseConnection<?> c1 = each.connect();
-            final DatabaseConnection<?> c2 = each.connect();
+    private static void checkConnections(DatabaseConnectionManager... connectionManagers) throws Exception {
+        for(DatabaseConnectionManager each : connectionManagers){
+            final DatabaseConnection c1 = each.connect();
+            final DatabaseConnection c2 = each.connect();
             assertNotNull("connection 1 is not null", c1);
             assertNotNull("connection 2 is not null", c1);
             assertNotSame("both connections are different", c1, c2);
@@ -119,7 +119,7 @@ public class DatabasePackageTest {
         fail("failed if it got here.");
     }
 
-    private static void checkIndexExtractorViolation(DatabaseConnection<?> connection) throws Exception {
+    private static void checkIndexExtractorViolation(DatabaseConnection connection) throws Exception {
         final DatabaseIndexExtractor ie = connection.getIndexExtractor();
         connection.close();
         ie.recommendIndexes("SELECT * FROM R;");
@@ -137,8 +137,8 @@ public class DatabasePackageTest {
         fail("failed if it got here.");
     }
 
-    private static void checkWhatIfOptimizerViolation(DatabaseConnection<?> connection) throws Exception {
-        final DatabaseWhatIfOptimizer<?> ie = connection.getWhatIfOptimizer();
+    private static void checkWhatIfOptimizerViolation(DatabaseConnection connection) throws Exception {
+        final DatabaseWhatIfOptimizer ie = connection.getWhatIfOptimizer();
         connection.close();
         ie.whatIfOptimize("SELECT * FROM R;");
     }
@@ -153,9 +153,9 @@ public class DatabasePackageTest {
         );
     }
 
-    private static void checkWhatIfOptimizerCostCalculation(DefaultBitSet configuration, DefaultBitSet usedSet, DatabaseConnection<?>... connections) throws SQLException {
-        for(DatabaseConnection<?> each : connections){
-            final DatabaseWhatIfOptimizer<?> wo = each.getWhatIfOptimizer();
+    private static void checkWhatIfOptimizerCostCalculation(DefaultBitSet configuration, DefaultBitSet usedSet, DatabaseConnection... connections) throws SQLException {
+        for(DatabaseConnection each : connections){
+            final DatabaseWhatIfOptimizer wo = each.getWhatIfOptimizer();
             final Double cost = wo.whatIfOptimize("SELECT * FROM R;").using(configuration, usedSet).toGetCost();
             assertTrue("1.0 cost?", Double.compare(cost, 1.0) == 0);
         }
@@ -171,10 +171,10 @@ public class DatabasePackageTest {
         checkWhatIfOptimizerCostCalculationWithProfiledIndex(new DefaultBitSet(), new DefaultBitSet(), newPGIndex(), connectionManager2.connect());
     }
 
-    private static <T extends DBIndex<T>> void checkWhatIfOptimizerCostCalculationWithProfiledIndex(
-            DefaultBitSet configuration, DefaultBitSet usedSet, T pi, DatabaseConnection<T> connection
+    private static <T extends DBIndex> void checkWhatIfOptimizerCostCalculationWithProfiledIndex(
+            DefaultBitSet configuration, DefaultBitSet usedSet, T pi, DatabaseConnection connection
     ) throws SQLException {
-        final DatabaseWhatIfOptimizer<T> wo = connection.getWhatIfOptimizer();
+        final DatabaseWhatIfOptimizer wo = connection.getWhatIfOptimizer();
         final Double cost = wo.whatIfOptimize("SELECT * FROM R;").using(configuration, pi, usedSet).toGetCost();
         assertTrue("2.0 cost?", Double.compare(cost, 2.0) == 0);
         connection.close();
@@ -225,9 +225,9 @@ public class DatabasePackageTest {
         checkRecommendIndexesFromSQL(connectionManager.connect(), connectionManager2.connect());
     }
 
-    private static void checkRecommendIndexesFromSQL(DatabaseConnection<?>... connections) throws Exception {
-        for(DatabaseConnection<?> each : connections){
-            final Iterable<DBIndex<?>> found = Objects.as(each.getIndexExtractor().recommendIndexes("SELECT * FROM R;"));
+    private static void checkRecommendIndexesFromSQL(DatabaseConnection... connections) throws Exception {
+        for(DatabaseConnection each : connections){
+            final Iterable<DBIndex> found = Objects.as(each.getIndexExtractor().recommendIndexes("SELECT * FROM R;"));
             assertTrue("3 indexes", Instances.count(found) == 3);
         }
     }
@@ -245,9 +245,9 @@ public class DatabasePackageTest {
         }
     }
 
-    private static void checkRecommendIndexesFromWorkloadFile(File workload, DatabaseConnection<?>... connections) throws Exception {
-        for(DatabaseConnection<?> each : connections){
-            final Iterable<DBIndex<?>> found = Objects.as(each.getIndexExtractor().recommendIndexes(workload));
+    private static void checkRecommendIndexesFromWorkloadFile(File workload, DatabaseConnection... connections) throws Exception {
+        for(DatabaseConnection each : connections){
+            final Iterable<DBIndex> found = Objects.as(each.getIndexExtractor().recommendIndexes(workload));
             assertTrue("3 indexes", Instances.count(found) == 3);
         }
     }
@@ -268,15 +268,15 @@ public class DatabasePackageTest {
         checkFixCandidatesScenario(pgCandidateSet, connectionManager2.connect());
     }
 
-    private static <T extends DBIndex<T>> void checkFixCandidatesScenario(List<T> candidateSet, DatabaseConnection<T> connection) throws Exception {
-        final DatabaseWhatIfOptimizer<T> optimizer = connection.getWhatIfOptimizer();
+    private static <T extends DBIndex> void checkFixCandidatesScenario(List<T> candidateSet, DatabaseConnection connection) throws Exception {
+        final DatabaseWhatIfOptimizer optimizer = connection.getWhatIfOptimizer();
         optimizer.fixCandidates(candidateSet);
-        assertEquals("same candidate set", Objects.<Iterable<T>>as(candidateSet), Objects.<AbstractDatabaseWhatIfOptimizer<T>>as(optimizer).getCandidateSet());
+        assertEquals("same candidate set", Objects.<Iterable<T>>as(candidateSet), Objects.<AbstractDatabaseWhatIfOptimizer>as(optimizer).getCandidateSet());
     }
 
     @Test
     public void testExplainInfoScenario() throws Exception {
-        final DatabaseConnectionManager<PGIndex> c1 = DBTuneInstances.newDatabaseConnectionManagerWithSwitchOffOnce(
+        final DatabaseConnectionManager c1 = DBTuneInstances.newDatabaseConnectionManagerWithSwitchOffOnce(
                 DBTuneInstances.newPGSQLProperties()
         );
         checkExplainInfoScenario(c1.connect());
@@ -285,15 +285,15 @@ public class DatabasePackageTest {
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})
-    private static <T extends DBIndex<T>> void checkExplainInfoScenario(DatabaseConnection<T> connection) throws Exception {
-        final DatabaseWhatIfOptimizer<T> ie   = connection.getWhatIfOptimizer();
+    private static <T extends DBIndex> void checkExplainInfoScenario(DatabaseConnection connection) throws Exception {
+        final DatabaseWhatIfOptimizer ie   = connection.getWhatIfOptimizer();
         final List<T>  pgCandidateSet  = Instances.newList();
         final T index1 = Objects.<T>as(newPGIndex(12));
         final T index2 = Objects.<T>as(newPGIndex(21));
         pgCandidateSet.add(index1);
         pgCandidateSet.add(index2);
         ie.fixCandidates(pgCandidateSet);        
-        final ExplainInfo<T> info = ie.explainInfo("SELECT * FROM R");
+        final ExplainInfo info = ie.explainInfo("SELECT * FROM R");
         assertNotNull(info);
         assertFalse(info.isDML());
         assertTrue(Double.compare(info.maintenanceCost(index1), 0) == 0);  // since is DML

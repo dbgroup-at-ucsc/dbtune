@@ -30,7 +30,7 @@ import static edu.ucsc.dbtune.util.Instances.newTrueBoolean;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseIndexExtractor <I extends DBIndex<I>> implements DatabaseIndexExtractor<I> {
+abstract class AbstractDatabaseIndexExtractor implements DatabaseIndexExtractor {
     private final AtomicBoolean  enabled;
     protected AbstractDatabaseIndexExtractor(){
         enabled = newTrueBoolean();
@@ -50,7 +50,7 @@ abstract class AbstractDatabaseIndexExtractor <I extends DBIndex<I>> implements 
 
     @Override
     public String toString() {
-        return new ToStringBuilder<AbstractDatabaseIndexExtractor<I>>(this)
+        return new ToStringBuilder<AbstractDatabaseIndexExtractor>(this)
                .add("enabled?", isEnabled())
                .toString();
     }

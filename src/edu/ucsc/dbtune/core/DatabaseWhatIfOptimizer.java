@@ -25,14 +25,15 @@ import java.sql.SQLException;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DatabaseWhatIfOptimizer<I extends DBIndex<I>> {
+public interface DatabaseWhatIfOptimizer {
     /**
      * disable {@code WhatIfOptimizer} once <em>its</em> {@code DatabaseConnection} has been closed.
      */
     void disable();
 
     /**
-     * provides information dealing with the {@link edu.ucsc.dbtune.core.ExplainInfo#maintenanceCost(edu.ucsc.dbtune.core.DBIndex) maintenance
+     * provides information dealing with the
+     * {@link edu.ucsc.dbtune.core.ExplainInfo#maintenanceCost(edu.ucsc.dbtune.core.DBIndex) maintenance
      * cost} associated with the use of a given index.
      *
      * @param sql
@@ -43,12 +44,14 @@ public interface DatabaseWhatIfOptimizer<I extends DBIndex<I>> {
      *      an error has occurred when interacting with a database during
      *      the explanation process.
      */
-	ExplainInfo<I> explainInfo(String sql) throws SQLException;
+	ExplainInfo explainInfo(String sql) throws SQLException;
 
     /**
 	 * This function prepares the database for what-if optimizations with the
 	 * given set of candidates (i.e., indexes). Each call to whatifOptimize is based on the
 	 * candidates indicated by this function.
+     *
+     *
      *
      * @param candidateSet
      *      a set of candidate indexes.
@@ -56,7 +59,7 @@ public interface DatabaseWhatIfOptimizer<I extends DBIndex<I>> {
      *      an error has occurred when interacting with a database during
      *      the fixing of candidates.
      */
-    void fixCandidates(Iterable<I> candidateSet) throws SQLException;
+    void fixCandidates(Iterable<? extends DBIndex> candidateSet) throws SQLException;
 
     /**
      * gets the total count of what-if optimizations were handled/performed
@@ -75,5 +78,5 @@ public interface DatabaseWhatIfOptimizer<I extends DBIndex<I>> {
      * @throws java.sql.SQLException
      *      an error has occurred when building/running a what-if optimization scenario.
      */
-    WhatIfOptimizationBuilder<I> whatIfOptimize(String sql) throws SQLException;
+    WhatIfOptimizationBuilder whatIfOptimize(String sql) throws SQLException;
 }

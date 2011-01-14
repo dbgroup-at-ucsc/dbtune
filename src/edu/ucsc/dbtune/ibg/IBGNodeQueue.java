@@ -25,10 +25,20 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGNodeQueue {
 	private final DefaultQueue<Object> queue;
+
+    /**
+     * construct a new {@link IBGNodeQueue} object.
+     */
     public IBGNodeQueue(){
         this(new DefaultQueue<Object>());
     }
 
+    /**
+     * construct a new {@link IBGNodeQueue} object given an initial {@link DefaultQueue queue}
+     * of values.
+     * @param queue
+     *      a queue of values that will populate the {@link IBGNodeQueue} object.
+     */
     IBGNodeQueue(DefaultQueue<Object> queue){
         this.queue = queue;
     }

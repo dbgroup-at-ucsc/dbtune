@@ -34,7 +34,7 @@ public class SQLStatement {
      * construct a {@code SQLStatement} using a {@code SQLCategory} and the
      * actual {@code query statement}.
      * @param category
-     *      a {@link edu.ucsc.dbtune.core.SQLStatement.SQLCategory} type.
+     *      a {@link SQLCategory} type.
      * @param query
      *      a sql query.
      */
@@ -70,6 +70,10 @@ public class SQLStatement {
         private final List<String> code;
         SQLCategory(String... code){
             this.code = Arrays.asList(code);
+        }
+
+        public boolean isSame(SQLCategory that){
+            return this == that;
         }
 
         boolean contains(String code){

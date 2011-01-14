@@ -37,7 +37,7 @@ public class HotSetSelector {
      * @return
      *      a hot set (i.e., a {@link StaticIndexSet}) 
      */
-    public static <I extends DBIndex<I>> StaticIndexSet<I> chooseHotSet(HotsetSelection<I> arg){
+    public static <I extends DBIndex> StaticIndexSet<I> chooseHotSet(HotsetSelection<I> arg){
         return chooseHotSet(
                 arg.getCandidateSet(),
                 arg.getOldHotSet(),
@@ -59,7 +59,7 @@ public class HotSetSelector {
      * @return
      *      a hot set (i.e., a {@link StaticIndexSet})
      */
-    public static <I extends DBIndex<I>> StaticIndexSet<I> chooseHotSetGreedy(HotsetSelection<I> arg){
+    public static <I extends DBIndex> StaticIndexSet<I> chooseHotSetGreedy(HotsetSelection<I> arg){
         return chooseHotSetGreedy(
                 arg.getCandidateSet(),
                 arg.getOldHotSet(),
@@ -70,7 +70,7 @@ public class HotSetSelector {
         );
     }
 
-	static <I extends DBIndex<I>> StaticIndexSet<I> chooseHotSet(CandidatePool.Snapshot<I> candSet,
+	static <I extends DBIndex> StaticIndexSet<I> chooseHotSet(CandidatePool.Snapshot<I> candSet,
                                                                  StaticIndexSet<I> oldHotSet,
                                                                  DynamicIndexSet<I> requiredIndexSet,
                                                                  StatisticsFunction<I> benefitFunc,
@@ -115,7 +115,7 @@ public class HotSetSelector {
 		}
 	}
 	
-	static <I extends DBIndex<I>> StaticIndexSet<I> chooseHotSetGreedy(CandidatePool.Snapshot<I> candSet,
+	static <I extends DBIndex> StaticIndexSet<I> chooseHotSetGreedy(CandidatePool.Snapshot<I> candSet,
                                                                        StaticIndexSet<I> oldHotSet,
                                                                        DynamicIndexSet<I> requiredIndexSet,
                                                                        StatisticsFunction<I> benefitFunc,

@@ -38,7 +38,7 @@ public class Strings {
 
     public static String readStream(IterableFileReader reader) throws IOException {
         StringBuilder result = new StringBuilder();
-        final IterableFileReader linesInFile = PreConditions.checkNotNull(reader);
+        final IterableFileReader linesInFile = Checks.checkNotNull(reader);
         for(String each : linesInFile){
             result.append(each);
             result.append('\n');
@@ -133,6 +133,18 @@ public class Strings {
         return result;
     }
 
+    /**
+     * Obtain the string representation of an object.
+     * @param value
+     *      object of interest.
+     * @param <T>
+     *      type of the object of interest.
+     * @return a string representation of the object of interest.
+     */
+    public static <T> String str(T value){
+        return value.toString();
+    }
+
 
     /**
      * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -175,7 +187,7 @@ public class Strings {
                 }
 
                 public void remove() {
-                    throw new UnsupportedOperationException("remove is not supported. sorry dude!");
+                    throw new UnsupportedOperationException("remove operation is not supported");
                 }
             };
         }

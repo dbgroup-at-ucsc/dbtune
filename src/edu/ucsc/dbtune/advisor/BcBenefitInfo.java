@@ -29,14 +29,17 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-public class BcBenefitInfo<I extends DBIndex<I>> {
+public class BcBenefitInfo<I extends DBIndex> {
 	private final double[]          origCosts;
 	private final double[]          newCosts;
 	private final int[]             reqLevels;
 	private final double[]          overheads;
     private final ProfiledQuery<I>  profiledQuery;
 
-    private BcBenefitInfo(double[] origCosts, double[] newCosts, int[] reqLevels, double[] overheads, ProfiledQuery<I> profiledQuery) {
+    private BcBenefitInfo(double[] origCosts, double[] newCosts,
+                          int[] reqLevels, double[] overheads,
+                          ProfiledQuery<I> profiledQuery
+    ) {
 		this.origCosts      = origCosts;
 		this.newCosts       = newCosts;
 		this.reqLevels      = reqLevels;
@@ -57,7 +60,7 @@ public class BcBenefitInfo<I extends DBIndex<I>> {
      * @throws SQLException
      *      unexpected error has occurred.
      */
-    public static <I extends DBIndex<I>> BcBenefitInfo<I> makeBcBenefitInfo(BenefitInfoInput<I> arg) throws SQLException {
+    public static <I extends DBIndex> BcBenefitInfo<I> makeBcBenefitInfo(BenefitInfoInput<I> arg) throws SQLException {
         return genBcBenefitInfo(
                 arg.getDatabaseConnection(),
                 arg.getSnapshot(),
@@ -67,7 +70,7 @@ public class BcBenefitInfo<I extends DBIndex<I>> {
         );
     }
 	
-	static <I extends DBIndex<I>> BcBenefitInfo<I> genBcBenefitInfo(DatabaseConnection<I> conn,
+	static <I extends DBIndex> BcBenefitInfo<I> genBcBenefitInfo(DatabaseConnection conn,
                                                                     Snapshot<I> snapshot,
                                                                     StaticIndexSet<I> hotSet,
                                                                     DefaultBitSet config,
@@ -103,7 +106,7 @@ public class BcBenefitInfo<I extends DBIndex<I>> {
 			              : 0;
 			             
 			// get maintenance
-			ExplainInfo<I> explainInfo = profiledQuery.getExplainInfo();
+			ExplainInfo explainInfo = profiledQuery.getExplainInfo();
 			overheads[id] = explainInfo.isDML() ? explainInfo.maintenanceCost(idx) : 0;
 		}
 		

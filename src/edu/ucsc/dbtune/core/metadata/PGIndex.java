@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.util.Objects;
 import java.io.Serializable;
 import java.sql.SQLException;
 
-public class PGIndex extends AbstractDatabaseIndex<PGIndex> implements Serializable {
+public class PGIndex extends AbstractDatabaseIndex implements Serializable {
 	private PGIndexSchema schema;
 
 	// serialization support
@@ -34,13 +34,13 @@ public class PGIndex extends AbstractDatabaseIndex<PGIndex> implements Serializa
      * @param schema
      *      a {@link PGIndexSchema} object.
      * @param internalId
-     *     {@link edu.ucsc.satuning.db.DBIndex}'s internalId.
+     *     {@link edu.ucsc.dbtune.core.DBIndex}'s internalId.
      * @param creationCost
-     *     {@link edu.ucsc.satuning.db.DBIndex}'s creation cost.
+     *     {@link edu.ucsc.dbtune.core.DBIndex}'s creation cost.
      * @param megabytes
-     *     {@link edu.ucsc.satuning.db.DBIndex}'s size (in megabytes).
+     *     {@link edu.ucsc.dbtune.core.DBIndex}'s size (in megabytes).
      * @param creationText
-     *     {@link edu.ucsc.satuning.db.DBIndex}'s creation text.
+     *     {@link edu.ucsc.dbtune.core.DBIndex}'s creation text.
      */
     public PGIndex(
             PGIndexSchema schema,
@@ -87,6 +87,9 @@ public class PGIndex extends AbstractDatabaseIndex<PGIndex> implements Serializa
 		return Objects.as(getSchema().getColumns().get(i));
 	}
 
+    /**
+     * @return a {@link PGIndexSchema} object related in some sort to this index.
+     */
     public PGIndexSchema getSchema() {
         return schema;
     }

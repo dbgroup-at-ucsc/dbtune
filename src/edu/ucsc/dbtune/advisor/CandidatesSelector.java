@@ -28,7 +28,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.List;
 
-public class CandidatesSelector<I extends DBIndex<I>> {
+public class CandidatesSelector<I extends DBIndex> {
 	// configurable options
 	public static final int MAX_HOTSET_SIZE = 40;
 	public static final int MAX_NUM_STATES  = 12345;

@@ -56,12 +56,12 @@ public class IBGAnalyzer {
      */
     public IBGAnalyzer(IndexBenefitGraphConstructor<?> ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue revisitQueue){
 		// initialize fields
-		this.ibgCons = ibgCons;
-		this.nodeQueue = nodeQueue;
-		this.revisitQueue = revisitQueue;
-		allUsedIndexes = new DefaultBitSet();
-		rootBitSet = ibgCons.rootNode().config.clone();
-		visitedNodes = new DefaultBitSet();
+		this.ibgCons        = ibgCons;
+		this.nodeQueue      = nodeQueue;
+		this.revisitQueue   = revisitQueue;
+		allUsedIndexes      = new DefaultBitSet();
+		rootBitSet          = ibgCons.rootNode().config.clone();
+		visitedNodes        = new DefaultBitSet();
 
 		// seed the queue with the root node
 		nodeQueue.addNode(ibgCons.rootNode());

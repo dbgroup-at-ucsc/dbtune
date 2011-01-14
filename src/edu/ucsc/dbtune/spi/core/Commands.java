@@ -18,11 +18,11 @@
 
 package edu.ucsc.dbtune.spi.core;
 
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 
 import java.io.Serializable;
 
-import static edu.ucsc.dbtune.util.PreConditions.checkNotNull;
+import static edu.ucsc.dbtune.util.Checks.checkNotNull;
 
 /**
  * a list of useful result suppliers and {@code submitting methods} that deal with commands.
@@ -204,7 +204,7 @@ public class Commands {
      *      a synchronized supplier.
     */
    public static <T> Supplier<T> synchronizedSupplier(Supplier<T> delegate) {
-        return new ThreadSafeSupplier<T>(PreConditions.checkNotNull(delegate));
+        return new ThreadSafeSupplier<T>(Checks.checkNotNull(delegate));
    }
 
   private static class ThreadSafeSupplier<T> implements Supplier<T>, Serializable {

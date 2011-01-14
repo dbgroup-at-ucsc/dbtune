@@ -24,7 +24,7 @@ import edu.ucsc.dbtune.util.DefaultBitSet;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface StatisticsFunction<I extends DBIndex<I>> {
+public interface StatisticsFunction<I extends DBIndex> {
     /**
      * adds a {@link ProfiledQuery} given a {@link DynamicIndexSet set} of
      * materialized {@link DBIndex indexes}.

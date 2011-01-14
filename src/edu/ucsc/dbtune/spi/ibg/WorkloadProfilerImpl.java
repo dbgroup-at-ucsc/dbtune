@@ -32,6 +32,7 @@ import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
 import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.util.Debug;
+import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
@@ -41,15 +42,15 @@ import java.util.concurrent.Executors;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfiler<I> {
-	private final DatabaseConnection<I> connection;
+public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler<I> {
+	private final DatabaseConnection    connection;
 	private final CandidatePool<I>      candidatePool;
-	private final ThreadIBGAnalysis ibgAnalysis;
+	private final ThreadIBGAnalysis     ibgAnalysis;
 	private final ThreadIBGConstruction ibgConstruction;
 	private final boolean               onlineCandidates;
 
     public WorkloadProfilerImpl(
-            DatabaseConnection<I> connection,
+            DatabaseConnection connection,
             CandidatePool<I> candidatePool,
             boolean onlineCandidates
     ){
@@ -63,7 +64,7 @@ public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfi
     }
 
     WorkloadProfilerImpl(
-            DatabaseConnection<I> connection,
+            DatabaseConnection connection,
             CandidatePool<I> candidatePool,
             ThreadIBGAnalysis ibgAnalysis,
             ThreadIBGConstruction ibgConstruction,
@@ -95,18 +96,18 @@ public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfi
     public ProfiledQuery<I> processQuery(String sql) {
         Debug.println("Profiling query: " + sql);
 
-        final DatabaseIndexExtractor<I> extractor = connection.getIndexExtractor();        
+        final DatabaseIndexExtractor extractor = connection.getIndexExtractor();
 		// generate new index candidates
 		if (onlineCandidates) {
             acknowledgeOnlineCandidates(sql, extractor);
         }
 
         Snapshot<I>     indexes     = fixCandidatesInPool();
-        ExplainInfo<I>  explainInfo = obtainBasicQueryInformation(sql);
+        ExplainInfo     explainInfo = obtainBasicQueryInformation(sql);
         return buildIndexBenefitGraph(sql, indexes, explainInfo);
     }
 
-    ProfiledQuery<I> buildIndexBenefitGraph(String sql, Snapshot<I> indexes, ExplainInfo<I> explainInfo) {
+    ProfiledQuery<I> buildIndexBenefitGraph(String sql, Snapshot<I> indexes, ExplainInfo explainInfo) {
         // build the IBG
         final ProfiledQuery<I> qinfo;
         try {
@@ -124,7 +125,7 @@ public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfi
             System.out.println("Analysis: " + ((nStop - nStart) / 1000000000.0));
 
             System.out.println("IBG has " + ibgCons.nodeCount() + " nodes");
-            final DatabaseWhatIfOptimizer<I> whatIfOptimizer = connection.getWhatIfOptimizer();
+            final DatabaseWhatIfOptimizer whatIfOptimizer = connection.getWhatIfOptimizer();
             final int                        whatIfCount     = whatIfOptimizer.getWhatIfCount();
             final InteractionBank intBank         = logger.getInteractionBank();
             final IndexBenefitGraph graph           = ibgCons.getIBG();
@@ -144,9 +145,9 @@ public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfi
         return qinfo;
     }
 
-    ExplainInfo<I> obtainBasicQueryInformation(String sql) {
-        final DatabaseWhatIfOptimizer<I> optimizer = connection.getWhatIfOptimizer();
-        ExplainInfo<I> explainInfo;
+    ExplainInfo obtainBasicQueryInformation(String sql) {
+        final DatabaseWhatIfOptimizer optimizer = connection.getWhatIfOptimizer();
+        ExplainInfo explainInfo;
         try {
             explainInfo = optimizer.explainInfo(sql);
         } catch (SQLException e) {
@@ -157,7 +158,7 @@ public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfi
     }
 
     Snapshot<I> fixCandidatesInPool() {
-        final DatabaseWhatIfOptimizer<I> optimizer = connection.getWhatIfOptimizer();
+        final DatabaseWhatIfOptimizer optimizer = connection.getWhatIfOptimizer();
         // get the current set of candidates
         Snapshot<I> indexes = candidatePool.getSnapshot();
         try {
@@ -169,12 +170,17 @@ public class WorkloadProfilerImpl<I extends DBIndex<I>> implements WorkloadProfi
         return indexes;
     }
 
-    void acknowledgeOnlineCandidates(String sql, DatabaseIndexExtractor<I> extractor) {
+    @SuppressWarnings({"RedundantTypeArguments"})
+    void acknowledgeOnlineCandidates(String sql, DatabaseIndexExtractor extractor) {
         try {
-            Iterable<I> newIndexes = extractor.recommendIndexes(sql);
-            candidatePool.addIndexes(newIndexes);
+            final Iterable<DBIndex> recommendation = extractor.recommendIndexes(sql);
+            if(recommendation != null){
+                Iterable<I> newIndexes = Objects.<Iterable<I>>as(extractor.recommendIndexes(sql));
+                candidatePool.addIndexes(newIndexes);
+            }
         } catch (SQLException e) {
             Debug.logError("SQLException caught while recommending indexes", e);
+            throw new IllegalStateException(e);
         }
     }
 

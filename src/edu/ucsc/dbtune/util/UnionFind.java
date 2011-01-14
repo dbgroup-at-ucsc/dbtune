@@ -111,16 +111,6 @@ public class UnionFind {
 		
 		return rep;
 	}
-//	
-//	private final void growElts(int e) {
-//		int newSize = e + elts.length + 1;
-//		Elt[] newElts = new Elt[newSize];
-//		for (int i = 0; i < elts.length; i++)
-//			newElts[i] = elts[i];
-//		for (int i = elts.length; i < newSize; i++)
-//			newElts[i] = new Elt(i);
-//		elts = newElts;
-//	}
 
 	// return the partitioning of elements 
 	public DefaultBitSet[] sets() {

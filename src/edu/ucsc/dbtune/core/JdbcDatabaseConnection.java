@@ -25,8 +25,8 @@ import java.sql.Statement;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-class JdbcDatabaseConnection<I extends DBIndex<I>> extends AbstractDatabaseConnection<I>
-implements DatabaseConnection<I> {
+class JdbcDatabaseConnection extends AbstractDatabaseConnection
+        implements DatabaseConnection {
 
     /**
      * construct a new {@code DefaultDatabaseConnection} object.
@@ -36,7 +36,7 @@ implements DatabaseConnection<I> {
      *      a {@link java.sql.Connection} instance.
      */
     public JdbcDatabaseConnection(
-            DatabaseConnectionManager<I> connectionManager,
+            DatabaseConnectionManager connectionManager,
             Connection sqlConnection
     ){
         super(connectionManager);

@@ -26,7 +26,7 @@ import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public abstract class AbstractExplainInfo<I extends DBIndex<I>> implements ExplainInfo<I> {
+public abstract class AbstractExplainInfo implements ExplainInfo {
     protected final SQLCategory category;
 
     /**
@@ -40,7 +40,7 @@ public abstract class AbstractExplainInfo<I extends DBIndex<I>> implements Expla
 
     /**
      * @return
-     *      a {@link edu.ucsc.satuning.workload.SQLStatement.SQLCategory} object.
+     *      a {@link SQLCategory} object.
      */
     public SQLCategory getSQLCategory(){
         return category;

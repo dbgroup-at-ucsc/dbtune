@@ -47,7 +47,7 @@ import static org.junit.Assert.assertTrue;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class WorkloadHandlingTest {
-    DatabaseConnectionManager<PGIndex> connectionManager;
+    DatabaseConnectionManager connectionManager;
     @Before
     public void setUp() throws Exception {
         connectionManager = makeDBConnectionManager(
@@ -68,7 +68,7 @@ public class WorkloadHandlingTest {
     public void testBasicInitializationOfWorkloadProfiler() throws Exception {
         final AtomicBoolean               doneWithAnalysis      = new AtomicBoolean(false);
         final AtomicBoolean               doneWithConstruction  = new AtomicBoolean(false);
-        final DatabaseConnection<PGIndex> connection            = connectionManager.connect();
+        final DatabaseConnection connection            = connectionManager.connect();
         final CandidatePool<PGIndex>      pool                  = new CandidatePool<PGIndex>(){{
             addIndex(DBTuneInstances.newPGIndex(1234567890));
         }};
@@ -100,7 +100,7 @@ public class WorkloadHandlingTest {
 
     @Test
     public void testProcessQuery() throws Exception {
-        final DatabaseConnection<PGIndex> connection            = connectionManager.connect();
+        final DatabaseConnection connection            = connectionManager.connect();
         final CandidatePool<PGIndex>      pool                  = new CandidatePool<PGIndex>(){{
             addIndex(DBTuneInstances.newPGIndex(1234567890));
         }};
@@ -119,7 +119,7 @@ public class WorkloadHandlingTest {
 
     @Test
     public void testAddCandidateFunctionality() throws Exception {
-        final DatabaseConnection<PGIndex> connection            = connectionManager.connect();
+        final DatabaseConnection connection            = connectionManager.connect();
         final CandidatePool<PGIndex>      pool                  = new CandidatePool<PGIndex>(){{
             addIndex(DBTuneInstances.newPGIndex(1234567890));
         }};
@@ -138,7 +138,7 @@ public class WorkloadHandlingTest {
 
     @Test
     public void testCastingVotes() throws Exception {
-        final DatabaseConnection<PGIndex> connection            = connectionManager.connect();
+        final DatabaseConnection connection            = connectionManager.connect();
         final CandidatePool<PGIndex>      pool                  = new CandidatePool<PGIndex>(){{
             addIndex(DBTuneInstances.newPGIndex(1234567890));
         }};
@@ -158,7 +158,7 @@ public class WorkloadHandlingTest {
     }
 
     private static WorkloadProfiler<PGIndex> makeWorkloadProfiler(
-            DatabaseConnection<PGIndex> connection,
+            DatabaseConnection connection,
             CandidatePool<PGIndex> pool,
             ThreadIBGAnalysis analysisPhase,
             ThreadIBGConstruction consPhase
@@ -172,7 +172,7 @@ public class WorkloadHandlingTest {
         connectionManager = null;
     }
 
-    private static <I extends DBIndex<I>> DatabaseConnectionManager<I> makeDBConnectionManager(Properties props, JdbcConnectionFactory factory) throws Exception {
+    private static <I extends DBIndex> DatabaseConnectionManager makeDBConnectionManager(Properties props, JdbcConnectionFactory factory) throws Exception {
         return JdbcDatabaseConnectionManager.makeDatabaseConnectionManager(props, factory);
     }
 

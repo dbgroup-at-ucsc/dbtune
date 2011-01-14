@@ -28,7 +28,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.List;
 
-public class WfaTrace<I extends DBIndex<I>> {
+public class WfaTrace<I extends DBIndex> {
 	private List<TotalWorkValues>   wfValues    = Instances.newList();
 	private List<Double>            sumNullCost = Instances.newList();
 

@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 
-public class BcIndexInfo<I extends DBIndex<I>> {
+public class BcIndexInfo<I extends DBIndex> {
 	/*
 	 * State of the index, materialized or not
 	 */

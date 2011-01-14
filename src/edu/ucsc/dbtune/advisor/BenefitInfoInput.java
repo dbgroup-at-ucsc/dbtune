@@ -22,15 +22,15 @@ import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.DefaultBitSet;
-import edu.ucsc.dbtune.util.PreConditions;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class BenefitInfoInput <I extends DBIndex<I>> {
-    private final DatabaseConnection<I>   connection;
+public class BenefitInfoInput <I extends DBIndex> {
+    private final DatabaseConnection connection;
     private final Snapshot<I>             snapshot;
     private final StaticIndexSet<I>       hotSet;
     private final DefaultBitSet config;
@@ -44,7 +44,7 @@ public class BenefitInfoInput <I extends DBIndex<I>> {
         profiledQ  = builder.profiledQuery;
     }
 
-    public DatabaseConnection<I> getDatabaseConnection() {
+    public DatabaseConnection getDatabaseConnection() {
         return connection;
     }
 
@@ -75,33 +75,33 @@ public class BenefitInfoInput <I extends DBIndex<I>> {
              .toString();
     }
 
-    public static class StrictBuilder <I extends DBIndex<I>> implements Supplier<BenefitInfoInput<I>> {
-        private DatabaseConnection<I>   conn;
+    public static class StrictBuilder <I extends DBIndex> implements Supplier<BenefitInfoInput<I>> {
+        private DatabaseConnection conn;
         private Snapshot<I>             snapshot;
         private StaticIndexSet<I>       hotSet;
         private DefaultBitSet config;
         private ProfiledQuery<I>        profiledQuery;
-        public StrictBuilder(DatabaseConnection<I> connection){
+        public StrictBuilder(DatabaseConnection connection){
             this.conn = connection;
         }
 
         public StrictBuilder<I> snapshot(Snapshot<I> value){
-            snapshot = PreConditions.checkNotNull(value);
+            snapshot = Checks.checkNotNull(value);
             return this;
         }
 
         public StrictBuilder<I> hotSet(StaticIndexSet<I> value){
-            hotSet = PreConditions.checkNotNull(value);
+            hotSet = Checks.checkNotNull(value);
             return this;
         }
 
         public StrictBuilder<I> recommendedIndexes(DefaultBitSet value){
-            config = PreConditions.checkNotNull(value);
+            config = Checks.checkNotNull(value);
             return this;
         }
 
         public StrictBuilder<I> profiledQuery(ProfiledQuery<I> value){
-            profiledQuery =  PreConditions.checkNotNull(value);
+            profiledQuery =  Checks.checkNotNull(value);
             return this;
         }
 

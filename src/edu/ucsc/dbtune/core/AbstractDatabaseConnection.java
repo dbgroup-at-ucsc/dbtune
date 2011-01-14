@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
@@ -32,11 +32,11 @@ import static edu.ucsc.satuning.util.Util.newAtomicReference;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseConnection <I extends DBIndex<I>> extends AbstractDatabaseSession
-implements DatabaseConnection<I> {
-    private final AtomicReference<DatabaseConnectionManager<I>> connectionManager;
-    private final AtomicReference<DatabaseIndexExtractor<I>>    indexExtractor;
-    private final AtomicReference<DatabaseWhatIfOptimizer<I>>   whatIfOptimizer;
+abstract class AbstractDatabaseConnection extends AbstractDatabaseSession
+implements DatabaseConnection {
+    private final AtomicReference<DatabaseConnectionManager> connectionManager;
+    private final AtomicReference<DatabaseIndexExtractor>    indexExtractor;
+    private final AtomicReference<DatabaseWhatIfOptimizer>   whatIfOptimizer;
 
     /**
      * construct an abstract database connection object.
@@ -44,7 +44,7 @@ implements DatabaseConnection<I> {
      *      connection manager instance.
      */
     protected AbstractDatabaseConnection(
-            DatabaseConnectionManager<I> connectionManager
+            DatabaseConnectionManager connectionManager
     ){
         super();
         this.connectionManager  = newAtomicReference(connectionManager);
@@ -64,30 +64,30 @@ implements DatabaseConnection<I> {
     }
 
     @Override
-    public void install(DatabaseIndexExtractor<I> newIndexExtractor, DatabaseWhatIfOptimizer<I> newWhatIfOptimizer) {
+    public void install(DatabaseIndexExtractor newIndexExtractor, DatabaseWhatIfOptimizer newWhatIfOptimizer) {
         indexExtractor.compareAndSet(indexExtractor.get(), newIndexExtractor);
         whatIfOptimizer.compareAndSet(whatIfOptimizer.get(), newWhatIfOptimizer);
     }
 
     @Override
-    public DatabaseConnectionManager<I> getConnectionManager() {
-        return PreConditions.checkNotNull(connectionManager.get());
+    public DatabaseConnectionManager getConnectionManager() {
+        return Checks.checkNotNull(connectionManager.get());
     }
 
     @Override
-    public DatabaseIndexExtractor<I> getIndexExtractor() {
-        return PreConditions.checkNotNull(indexExtractor.get());
+    public DatabaseIndexExtractor getIndexExtractor() {
+        return Checks.checkNotNull(indexExtractor.get());
     }
 
     @Override
-    public DatabaseWhatIfOptimizer<I> getWhatIfOptimizer() {
-        return PreConditions.checkNotNull(whatIfOptimizer.get());
+    public DatabaseWhatIfOptimizer getWhatIfOptimizer() {
+        return Checks.checkNotNull(whatIfOptimizer.get());
     }
 
 
     @Override
     public String toString() {
-        return new ToStringBuilder<AbstractDatabaseConnection<?>>(this)
+        return new ToStringBuilder<AbstractDatabaseConnection>(this)
                 .add("connectionManager", getConnectionManager())
                 .add("indexExtractor", getIndexExtractor())
                 .add("whatIfOptimizer", getWhatIfOptimizer())

@@ -1,10 +1,6 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.DB2Index;
-import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
-import edu.ucsc.dbtune.core.metadata.DB2IndexSchema;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.metadata.PGIndexSchema;
+import edu.ucsc.dbtune.core.metadata.*;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.util.Instances;
@@ -17,10 +13,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
-import static edu.ucsc.dbtune.core.JdbcMocks.makeMockPreparedStatement;
-import static edu.ucsc.dbtune.core.JdbcMocks.makeMockPreparedStatementSwitchOffOne;
-import static edu.ucsc.dbtune.core.JdbcMocks.makeMockStatement;
-import static edu.ucsc.dbtune.core.JdbcMocks.makeMockStatementSwitchOffOne;
+import static edu.ucsc.dbtune.core.JdbcMocks.*;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -65,9 +58,9 @@ public class DBTuneInstances {
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})
-    public static DatabaseConnectionManager<DB2Index> newDB2DatabaseConnectionManager(){
+    public static DatabaseConnectionManager newDB2DatabaseConnectionManager(){
         try {
-            return DBTuneInstances.<DB2Index>newDatabaseConnectionManager(newDB2Properties()
+            return DBTuneInstances.newDatabaseConnectionManager(newDB2Properties()
             );
         } catch (Exception e) {
             throw new AssertionError("unable to create ConnectionManager");
@@ -86,7 +79,7 @@ public class DBTuneInstances {
         };
     }
 
-    public static DatabaseConnectionManager<PGIndex> newPGDatabaseConnectionManager(){
+    public static DatabaseConnectionManager newPGDatabaseConnectionManager(){
         try {
             return DBTuneInstances.newDatabaseConnectionManager(newPGSQLProperties()
             );
@@ -106,21 +99,21 @@ public class DBTuneInstances {
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})
-    public static <I extends DBIndex<I>> DatabaseConnectionManager<I> newDatabaseConnectionManager(
+    public static DatabaseConnectionManager newDatabaseConnectionManager(
             Properties props,
             JdbcConnectionFactory factory
     ) throws Exception {
-        return JdbcDatabaseConnectionManager.<I>makeDatabaseConnectionManager(props, factory);
+        return JdbcDatabaseConnectionManager.makeDatabaseConnectionManager(props, factory);
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})
-    public static <I extends DBIndex<I>> DatabaseConnectionManager<I> newDatabaseConnectionManager(
+    public static DatabaseConnectionManager newDatabaseConnectionManager(
             Properties props
     ) throws Exception {
-         return DBTuneInstances.<I>newDatabaseConnectionManager(props, newJdbcConnectionFactory());
+         return DBTuneInstances.newDatabaseConnectionManager(props, newJdbcConnectionFactory());
     }
 
-    public static <I extends DBIndex<I>> DatabaseConnectionManager<I> newDatabaseConnectionManagerWithSwitchOffOnce(
+    public static DatabaseConnectionManager newDatabaseConnectionManagerWithSwitchOffOnce(
             Properties props
     ) throws Exception {
         return DBTuneInstances.newDatabaseConnectionManager(props, makeJdbcConnectionFactoryWithSwitchOffOnce());
@@ -188,7 +181,7 @@ public class DBTuneInstances {
             final Constructor<PGIndexSchema> c = PGIndexSchema.class.getDeclaredConstructor(int.class, boolean.class, List.class, List.class);
             c.setAccessible(true);
             final List<DatabaseColumn> columns      = Instances.newList();
-            final List<Boolean>             isDescending = Instances.newList();
+            final List<Boolean>        isDescending = Instances.newList();
             return c.newInstance(id, flag, columns, isDescending);
         } catch (Exception e){
             throw new RuntimeException(e);

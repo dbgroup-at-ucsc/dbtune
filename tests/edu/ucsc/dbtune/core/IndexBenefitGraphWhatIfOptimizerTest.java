@@ -15,19 +15,17 @@
  ****************************************************************************/
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.util.DefaultBitSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.core.DBTuneInstances.newPGIndex;
 import static org.junit.Assert.assertTrue;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class IndexBenefitGraphWhatIfOptimizerTest {
-    private DatabaseConnectionManager<PGIndex>  connectionManager;
+    private DatabaseConnectionManager connectionManager;
     @Before
     public void setUp() throws Exception {
          connectionManager = DBTuneInstances.newPGDatabaseConnectionManager();
@@ -35,8 +33,8 @@ public class IndexBenefitGraphWhatIfOptimizerTest {
 
     @Test
     public void testWhatIfOptimizerForRandQuery() throws Exception {
-        final DatabaseConnection<PGIndex>      connect = connectionManager.connect();
-        final DatabaseWhatIfOptimizer<PGIndex> whatIf  = whatIfOptimizer(connect);
+        final DatabaseConnection connect = connectionManager.connect();
+        final DatabaseWhatIfOptimizer whatIf  = whatIfOptimizer(connect);
         final double cost  = whatIf.whatIfOptimize(basicQuery())
                                    .using(
                                            firstIndexesConfiguration(),
@@ -64,7 +62,7 @@ public class IndexBenefitGraphWhatIfOptimizerTest {
         return "SELECT R.salary, R.timeOffCount FROM R WHERE R.fullname = 'Bruce Wayne';";
     }
 
-    private static DatabaseWhatIfOptimizer<PGIndex> whatIfOptimizer(DatabaseConnection<PGIndex> connection){
+    private static DatabaseWhatIfOptimizer whatIfOptimizer(DatabaseConnection connection){
         return connection.getWhatIfOptimizer();
     }
        

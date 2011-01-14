@@ -18,15 +18,16 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import edu.ucsc.dbtune.core.DatabaseTable;
 import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 
 import java.io.Serializable;
 import java.sql.SQLException;
 
-import static edu.ucsc.dbtune.util.PreConditions.checkNotNull;
+import static edu.ucsc.dbtune.util.Checks.checkNotNull;
 
-public class DB2Index extends AbstractDatabaseIndex<DB2Index> implements Serializable {
+public class DB2Index extends AbstractDatabaseIndex implements Serializable {
 	// serialized fields
 	protected DB2IndexMetadata meta;
 	private int hashCodeCache;
@@ -97,7 +98,8 @@ public class DB2Index extends AbstractDatabaseIndex<DB2Index> implements Seriali
 
     @Override
 	public DB2Column getColumn(int i) {
-		return Objects.as(meta.schema.getColumns().get(i));
+        //noinspection RedundantTypeArguments
+        return Objects.<DB2Column>as(meta.schema.getColumns().get(i));
 	}
 	
 	// crucial override
@@ -114,8 +116,9 @@ public class DB2Index extends AbstractDatabaseIndex<DB2Index> implements Seriali
      *      {@code true} if both qualified names are the same, false
      *      otherwise.
      */
-	public boolean isOn(DB2QualifiedName name) {
-		return name.equals(meta.schema.getBaseTable());
+	public boolean isOn(DatabaseTable name) {
+        final DB2QualifiedName table = (DB2QualifiedName) name;
+		return table.equals(meta.schema.getBaseTable());
 	}
 
     @Override
@@ -123,7 +126,7 @@ public class DB2Index extends AbstractDatabaseIndex<DB2Index> implements Seriali
         // check Effective Java if you want to know why Double#compare(...)
         // is used when comparing double values.
         final boolean isPositive = Double.compare(super.megabytes(), 0.0) >= 0; 
-        PreConditions.checkArgument(isPositive, "Index size is not known");
+        Checks.checkArgument(isPositive, "Index size is not known");
 		return super.megabytes();
 	}
 	

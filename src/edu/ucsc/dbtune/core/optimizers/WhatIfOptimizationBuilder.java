@@ -24,29 +24,31 @@ import edu.ucsc.dbtune.util.DefaultBitSet;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface WhatIfOptimizationBuilder <I extends DBIndex<I>> extends WhatIfOptimizationCostBuilder {
+public interface WhatIfOptimizationBuilder extends WhatIfOptimizationCostBuilder {
     /**
      * use a pair of {@code bit sets} for performing a what-if optimization.
      * @param config
-     *      a new {@link edu.ucsc.satuning.util.BitSet configuration} instance.
+     *      a new {@link DefaultBitSet configuration} instance.
      * @param usedSet
-     *      a {@link edu.ucsc.satuning.util.BitSet set} of used indexes.
+     *      a {@link DefaultBitSet set} of used indexes.
      * @return
      *     {@link WhatIfOptimizationCostBuilder this}
      */
     WhatIfOptimizationCostBuilder using(DefaultBitSet config, DefaultBitSet usedSet);
 
     /**
-     * use a triple of values (i.e., {@link edu.ucsc.satuning.util.BitSet configuration}, a {@link edu.ucsc.dbtune.core.DBIndex profiledIndex},
-     * and a {@link edu.ucsc.satuning.util.BitSet bitset} containing used columns.)
+     * use a triple of values (i.e., {@link DefaultBitSet configuration},
+     * a {@link edu.ucsc.dbtune.core.DBIndex profiledIndex}, and a {@link DefaultBitSet bitset} containing
+     * used columns.)
+     *
      * @param config
-     *     a new {@link edu.ucsc.satuning.util.BitSet configuration} instance.
+     *     a new {@link edu.ucsc.dbtune.util.DefaultBitSet configuration} instance.
      * @param profiledIndex
      *      a profiled {@link edu.ucsc.dbtune.core.DBIndex} instance.
      * @param usedColumns
-     *      a {@link edu.ucsc.satuning.util.BitSet set} of used columns.
+     *      a {@link edu.ucsc.dbtune.util.DefaultBitSet set} of used columns.
      * @return
      *      {@link WhatIfOptimizationCostBuilder this}
      */
-    WhatIfOptimizationCostBuilder using(DefaultBitSet config, I profiledIndex, DefaultBitSet usedColumns);
+    WhatIfOptimizationCostBuilder using(DefaultBitSet config, DBIndex profiledIndex, DefaultBitSet usedColumns);
 }

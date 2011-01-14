@@ -32,25 +32,23 @@ import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
 
 /**
  * default implementation of {@link edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder} type.
- * @param <I>
- *      the type of {@link DBIndex} class.
  */
-class WhatIfOptimizationBuilderImpl<I extends DBIndex<I>>
-implements WhatIfOptimizationBuilder<I> {
+class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
 
     private final String sql;
     private final AtomicReference<Double> cost;
 
     // optional variables
-    private DefaultBitSet configuration;
-    private DefaultBitSet usedSet;
-    private I      profiledIndex;
-    private DefaultBitSet usedColumns;
-    private final AbstractDatabaseWhatIfOptimizer<I> whatIfOptimizer;
-    private final AtomicBoolean withProfiledIndex;
+    private DefaultBitSet   configuration;
+    private DefaultBitSet   usedSet;
+    private DBIndex         profiledIndex;
+    private DefaultBitSet   usedColumns;
+
+    private final AbstractDatabaseWhatIfOptimizer   whatIfOptimizer;
+    private final AtomicBoolean                     withProfiledIndex;
 
     public WhatIfOptimizationBuilderImpl(
-            AbstractDatabaseWhatIfOptimizer<I> whatIfOptimizer,
+            AbstractDatabaseWhatIfOptimizer whatIfOptimizer,
             String sql
     ){
         this.whatIfOptimizer    = whatIfOptimizer;
@@ -80,7 +78,7 @@ implements WhatIfOptimizationBuilder<I> {
      * @return
      *      a profiled index.
      */
-    public I getProfiledIndex(){
+    public DBIndex getProfiledIndex(){
         return profiledIndex;
     }
 
@@ -122,7 +120,7 @@ implements WhatIfOptimizationBuilder<I> {
 
     @Override
     public WhatIfOptimizationCostBuilder using(DefaultBitSet config,
-           I profiledIndex, DefaultBitSet usedColumns
+           DBIndex profiledIndex, DefaultBitSet usedColumns
     ) {
         this.withProfiledIndex.set(true);
         this.configuration = config;
@@ -142,7 +140,7 @@ implements WhatIfOptimizationBuilder<I> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<WhatIfOptimizationBuilderImpl<?>>(this)
+        return new ToStringBuilder<WhatIfOptimizationBuilderImpl>(this)
                 .add("sql", getSQL())
                 .add("configuration", getConfiguration())
                 .add("usedSet", getUsedSet())

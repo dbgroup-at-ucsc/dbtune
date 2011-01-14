@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 /**
@@ -26,11 +26,9 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
  * interface to minimize the effort required to implement this interface.
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
- * @param <I>
- *      a {@link edu.ucsc.dbtune.core.DBIndex} bound.
  */
-abstract class AbstractDatabaseConnectionManager <I extends DBIndex<I>>
-implements DatabaseConnectionManager<I> {
+abstract class AbstractDatabaseConnectionManager
+        implements DatabaseConnectionManager {
 
 	private final String username;
 	private final String password;
@@ -41,9 +39,9 @@ implements DatabaseConnectionManager<I> {
             String password,
             String database
     ) {
-		this.username = PreConditions.checkNotNull(username);
-		this.password = PreConditions.checkNotNull(password);
-		this.database = PreConditions.checkNotNull(database);
+		this.username = Checks.checkNotNull(username);
+		this.password = Checks.checkNotNull(password);
+		this.database = Checks.checkNotNull(database);
 	}
 
 	public String getUsername() {
@@ -62,7 +60,7 @@ implements DatabaseConnectionManager<I> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<AbstractDatabaseConnectionManager<?>>(this)
+        return new ToStringBuilder<AbstractDatabaseConnectionManager>(this)
                 .add("username", getUsername())
                 .add("password", "......hidden.........")
                 .add("database", getDatabaseName())

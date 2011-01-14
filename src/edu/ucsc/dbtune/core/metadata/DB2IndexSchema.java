@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.core.DatabaseIndexSchema;
 import edu.ucsc.dbtune.util.DBUtilities;
 import edu.ucsc.dbtune.util.HashFunction;
 import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 
 import java.io.Serializable;
 import java.sql.SQLException;
@@ -58,11 +58,22 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 	private static final long serialVersionUID = 1L;
 
     /**
-     * added for testing purposes.
+     * construct a new {@link DB2IndexSchema} object.
+     *
+     * @param dbName  database name
+     * @param tableName table name
+     * @param tableCreatorName  the user who created the table
+     * @param colNames  column names
+     * @param descending  a list of flags that signals whether the ordering of each index is descending
+     * @param uniqueRule db2 unique rule
+     * @param reverseScanOpt  db2 reverse scan option
+     * @param indexType type of index
+     * @throws SQLException
+     *      unable to construct a new db2 index schema for the stated reasons.
      */
-    DB2IndexSchema(String dbName, String tableName, String tableCreatorName, 
-                   List<String> colNames, List<Boolean> descending, String uniqueRule,
-                   String reverseScanOpt, String indexType
+    public DB2IndexSchema(String dbName, String tableName, String tableCreatorName,
+                          List<String> colNames, List<Boolean> descending, String uniqueRule,
+                          String reverseScanOpt, String indexType
     ) throws SQLException {
         this(dbName, tableName, tableCreatorName,
              colNames, descending, UniqueRule.parse(uniqueRule),
@@ -71,16 +82,28 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
         );
     }
 
-    DB2IndexSchema(
-			String dbName,
-			String tableName,
-			String tableCreatorName,
-			List<String> colNames,
-			List<Boolean> descending, 
-			UniqueRule uniqueRule,
-			ReverseScanOption reverseScan,
-			TypeOption indexType
-			
+    /**
+     * construct a new {@link DB2IndexSchema} object.
+     *
+     * @param dbName  database name
+     * @param tableName table name
+     * @param tableCreatorName  the user who created the table
+     * @param colNames  column names
+     * @param descending  a list of flags that signals whether the ordering of each index is descending
+     * @param uniqueRule db2 unique rule
+     * @param reverseScan  db2 reverse scan option
+     * @param indexType type of index
+     */
+    public DB2IndexSchema(
+            String dbName,
+            String tableName,
+            String tableCreatorName,
+            List<String> colNames,
+            List<Boolean> descending,
+            UniqueRule uniqueRule,
+            ReverseScanOption reverseScan,
+            TypeOption indexType
+
     ) {
 		this.dbName = dbName;
 		this.tableName = tableName;
@@ -94,9 +117,13 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 		this.indexType = indexType;
 		this.tableQualifiedName = new DB2QualifiedName(this.dbName, this.tableCreatorName, this.tableName);
 	}
-	
-	
-	
+
+
+    /**
+     * returns the "Create Index ..." text for a given index name.
+     * @param indexName name of index
+     * @return the creation text.
+     */
 	public String creationText(String indexName) {
 		StringBuilder sqlbuf = new StringBuilder();
 		
@@ -160,6 +187,7 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 		return sqlbuf.toString();
 	}
 
+    @Override
 	public int compareTo(DB2IndexSchema other) {
 		byte[] sig1 = signature();
 		byte[] sig2 = other.signature();
@@ -175,7 +203,8 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 		else
 			return (sig1.length < sig2.length) ? -1 : 0;
 	}
-	
+
+    @Override
 	public boolean equals(Object o1) {
 		if (!(o1 instanceof DB2IndexSchema))
 			return false;
@@ -190,14 +219,17 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 		return true;
 	}
 
+    @Override
     public List<DatabaseColumn> getColumns() {
         return columns;
     }
 
+    @Override
     public DB2QualifiedName getBaseTable() {
         return tableQualifiedName;
     }
-	
+
+    @Override
 	public int hashCode() {
 		return HashFunction.hashCode(signature());
 	}
@@ -259,7 +291,7 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 	    
 	    public static UniqueRule parse(String code) throws SQLException {
 	    	UniqueRule type = codeMap.get(code);
-            PreConditions.checkSQLRelatedState(type != null, "cannot parse db2 reverse scan option: " + code);
+            Checks.checkSQLRelatedState(type != null, "cannot parse db2 reverse scan option: " + code);
 	    	if (type == null) 
 	    		throw new SQLException("cannot parse db2 unique rule: " + code);
 	    	return type;
@@ -305,7 +337,7 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 	    
 	    public static TypeOption parse(String code) throws SQLException {
 	    	TypeOption type = codeMap.get(code);
-            PreConditions.checkSQLRelatedState(type != null, "cannot parse db2 reverse scan option: " + code);
+            Checks.checkSQLRelatedState(type != null, "cannot parse db2 reverse scan option: " + code);
 	    	return type;
 	    }
 
@@ -347,7 +379,7 @@ public class DB2IndexSchema implements DatabaseIndexSchema, Serializable, Compar
 	    
 	    public static ReverseScanOption parse(String code) throws SQLException {
 	    	final ReverseScanOption type = codeMap.get(code);
-            PreConditions.checkSQLRelatedState(type != null, "cannot parse db2 reverse scan option: " + code);
+            Checks.checkSQLRelatedState(type != null, "cannot parse db2 reverse scan option: " + code);
 	    	return type;
 	    }
 

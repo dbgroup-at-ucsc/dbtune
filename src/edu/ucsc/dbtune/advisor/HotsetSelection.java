@@ -20,13 +20,13 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.spi.core.Supplier;
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class HotsetSelection<I extends DBIndex<I>> {
+public class HotsetSelection<I extends DBIndex> {
     private final CandidatePool.Snapshot<I>   candSet;
     private final StaticIndexSet<I>           oldHotSet;
     private final DynamicIndexSet<I>          requiredIndexSet;
@@ -49,19 +49,19 @@ public class HotsetSelection<I extends DBIndex<I>> {
     }
 
     public CandidatePool.Snapshot<I> getCandidateSet(){
-        return PreConditions.checkNotNull(candSet);
+        return Checks.checkNotNull(candSet);
     }
 
     public StaticIndexSet<I> getOldHotSet(){
-        return PreConditions.checkNotNull(oldHotSet);
+        return Checks.checkNotNull(oldHotSet);
     }
 
     public DynamicIndexSet<I> getRequiredIndexSet(){
-        return PreConditions.checkNotNull(requiredIndexSet);
+        return Checks.checkNotNull(requiredIndexSet);
     }
 
     public StatisticsFunction<I> getBenefitFunction(){
-        return PreConditions.checkNotNull(benefitFunc);
+        return Checks.checkNotNull(benefitFunc);
     }
 
     public int getMaxSize(){
@@ -90,7 +90,7 @@ public class HotsetSelection<I extends DBIndex<I>> {
      * @param <I>
      *      the {@link DBIndex index type}.
      */
-    public static class StrictBuilder<I extends DBIndex<I>> implements Supplier<HotsetSelection<I>> {
+    public static class StrictBuilder<I extends DBIndex> implements Supplier<HotsetSelection<I>> {
         private CandidatePool.Snapshot<I>   candSet;
 	    private StaticIndexSet<I>           oldHotSet;
 	    private DynamicIndexSet<I>          requiredIndexSet;
@@ -103,27 +103,27 @@ public class HotsetSelection<I extends DBIndex<I>> {
         }
 
         public StrictBuilder<I> candidateSet(CandidatePool.Snapshot<I> snapshot){
-            candSet = PreConditions.checkNotNull(snapshot);
+            candSet = Checks.checkNotNull(snapshot);
             return this;
         }
 
         public StrictBuilder<I> oldHotSet(StaticIndexSet<I> value){
-            this.oldHotSet = PreConditions.checkNotNull(value);
+            this.oldHotSet = Checks.checkNotNull(value);
             return this;
         }
 
         public StrictBuilder<I> requiredIndexSet(DynamicIndexSet<I> value){
-            this.requiredIndexSet = PreConditions.checkNotNull(value);
+            this.requiredIndexSet = Checks.checkNotNull(value);
             return this;
         }
 
         public StrictBuilder<I> benefitFunction(StatisticsFunction<I> value){
-            this.benefitFunc = PreConditions.checkNotNull(value);
+            this.benefitFunc = Checks.checkNotNull(value);
             return this;
         }
 
         public StrictBuilder<I> maxSize(int value){
-            this.maxSize = PreConditions.checkNotNull(value);
+            this.maxSize = Checks.checkNotNull(value);
             return this;
         }
 

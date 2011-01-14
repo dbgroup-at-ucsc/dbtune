@@ -29,10 +29,21 @@ public class IBGCoveringNodeFinder {
 
     private static final double ZERO_COST = 0.0;
 
+    /**
+     * construct a new {@link IBGCoveringNodeFinder} object; assuming some default values for
+     * its private members.
+     */
     public IBGCoveringNodeFinder(){
         this(new DefaultBitSet(), new IBGNodeStack());
     }
 
+    /**
+     * construct a new {@link IBGCoveringNodeFinder} object given some
+     * {@link DefaultBitSet visited nodes} and a {@link IBGNodeStack pending stack} of
+     * nodes.
+     * @param visited visited nodes
+     * @param pending pending stack of nodes.
+     */
     IBGCoveringNodeFinder(DefaultBitSet visited, IBGNodeStack pending){
         this.visited = visited;
         this.pending = pending;

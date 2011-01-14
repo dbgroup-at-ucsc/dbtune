@@ -19,7 +19,9 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DBIndexSet;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
@@ -29,7 +31,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class CandidatePool<I extends DBIndex<I>> implements Serializable {
+public class CandidatePool<I extends DBIndex> implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/* serializable fields */
@@ -64,8 +66,10 @@ public class CandidatePool<I extends DBIndex<I>> implements Serializable {
 	public final void addIndex(I index) throws SQLException {
 		if (!indexSet.contains(index)) {
 			++maxInternalId;
-
-			I indexCopy = index.consDuplicate(maxInternalId);
+            // todo(Huascar) test this.
+            final DBIndex duplicate = index.consDuplicate(maxInternalId);
+			@SuppressWarnings({"RedundantTypeArguments"}) // unchecked warning - redundant type arg is necessary
+            I indexCopy = Objects.<I>as(duplicate);
 			firstNode = new Node<I>(indexCopy, firstNode);
 			indexSet.add(index);
 		}
@@ -87,7 +91,7 @@ public class CandidatePool<I extends DBIndex<I>> implements Serializable {
      *      the type of {@link DBIndex}.
      * @return an empty snapshot.
      */
-	public static <I extends DBIndex<I>> Snapshot<I> emptySnapshot() {
+	public static <I extends DBIndex> Snapshot<I> emptySnapshot() {
 		return new Snapshot<I>(null);
 	}
 
@@ -118,7 +122,7 @@ public class CandidatePool<I extends DBIndex<I>> implements Serializable {
      * A node in the candidate pool, which wraps a given index.
      * @param <I> the type of {@link DBIndex}.
      */
-	private static class Node<I extends DBIndex<I>> implements Serializable {
+	private static class Node<I extends DBIndex> implements Serializable {
 		/* serializable fields */
 		I       index;
 		Node<I> next;
@@ -142,7 +146,7 @@ public class CandidatePool<I extends DBIndex<I>> implements Serializable {
 	/**
 	 * A snapshot of the candidate set (immutable set of indexes)
 	 */
-	public static class Snapshot<I extends DBIndex<I>> implements Iterable<I>, Serializable {
+	public static class Snapshot<I extends DBIndex> implements Iterable<I>, Serializable {
 		/* serializable fields */
 		int maxId;
 		Node<I> first;
@@ -193,7 +197,7 @@ public class CandidatePool<I extends DBIndex<I>> implements Serializable {
 	/*
 	 * Iterator for a snapshot of the candidate set
 	 */
-	private static class SnapshotIterator<I extends DBIndex<I>> implements Iterator<I> {
+	private static class SnapshotIterator<I extends DBIndex> implements Iterator<I> {
 		Node<I> next;
 
 		SnapshotIterator(Node<I> start) {

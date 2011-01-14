@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.util.DefaultBitSet;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.PreConditions;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 /**
@@ -30,26 +30,26 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class IBGAnalyzerWorkspace {
-	private final DefaultBitSet candidatesBitSet;
-	private final DefaultBitSet usedBitSet;
-	private final DefaultBitSet bitset_YaSimple;
-	private final DefaultBitSet bitset_Ya;
-	private final DefaultBitSet bitset_YbMinus;
-	private final DefaultBitSet bitset_YbPlus;
-	private final DefaultBitSet bitset_Yab;
+	private final DefaultBitSet     candidatesBitSet;
+	private final DefaultBitSet     usedBitSet;
+	private final DefaultBitSet     bitset_YaSimple;
+	private final DefaultBitSet     bitset_Ya;
+	private final DefaultBitSet     bitset_YbMinus;
+	private final DefaultBitSet     bitset_YbPlus;
+	private final DefaultBitSet     bitset_Yab;
     private final IBGNode           startingNode;
     private final InteractionLogger logger;
-    private final DefaultBitSet allUsedIndexes;
-    private final DefaultBitSet rootBitSet;
+    private final DefaultBitSet     allUsedIndexes;
+    private final DefaultBitSet     rootBitSet;
 
     public IBGAnalyzerWorkspace(
             IBGNode startingNode, InteractionLogger logger, 
             DefaultBitSet rootBitSet, DefaultBitSet allUsedIndexes
     ){
-        this.rootBitSet         = PreConditions.checkNotNull(rootBitSet);
-        this.allUsedIndexes     = PreConditions.checkNotNull(allUsedIndexes);
-        this.startingNode       = PreConditions.checkNotNull(startingNode);
-        this.logger             = PreConditions.checkNotNull(logger);
+        this.rootBitSet         = Checks.checkNotNull(rootBitSet);
+        this.allUsedIndexes     = Checks.checkNotNull(allUsedIndexes);
+        this.startingNode       = Checks.checkNotNull(startingNode);
+        this.logger             = Checks.checkNotNull(logger);
         candidatesBitSet        = new DefaultBitSet();
         usedBitSet              = new DefaultBitSet();
         bitset_YaSimple         = new DefaultBitSet();
