@@ -43,7 +43,7 @@ implements DatabaseConnectionManager<I> {
     ) {
 		this.username = PreConditions.checkNotNull(username);
 		this.password = PreConditions.checkNotNull(password);
-		this.database = database;
+		this.database = PreConditions.checkNotNull(database);
 	}
 
 	public String getUsername() {

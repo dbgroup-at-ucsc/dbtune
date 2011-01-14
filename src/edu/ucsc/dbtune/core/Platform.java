@@ -48,15 +48,15 @@ public class Platform {
         Map<String, DatabaseIndexExtractorFactory<?>> driverToExtractor =
                 new HashMap<String, DatabaseIndexExtractorFactory<?>>(){
                     {
-                        put("db2", new DB2IndexExtractorFactory());
-                        put("postgresql", new PGIndexExtractorFactory());
+                        put("com.ibm.db2.jcc.DB2Driver", new DB2IndexExtractorFactory());
+                        put("org.postgresql.Driver", new PGIndexExtractorFactory());
                     }
                 };
         Map<String, DatabaseWhatIfOptimizerFactory<?>> driverToOptimizer =
                 new HashMap<String, DatabaseWhatIfOptimizerFactory<?>>(){
                     {
-                        put("db2", new DB2WhatIfOptimizerFactory());
-                        put("postgresql", new PGWhatIfOptimizerFactory());
+                        put("com.ibm.db2.jcc.DB2Driver", new DB2WhatIfOptimizerFactory());
+                        put("org.postgresql.Driver", new PGWhatIfOptimizerFactory());
                     }
                 };
 
