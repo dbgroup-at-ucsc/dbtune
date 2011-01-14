@@ -16,22 +16,62 @@
  * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.metadata;
 
-import java.io.Serializable;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
- * a marker interface which recommends you to implement
- * {@link Object#equals(Object)} {@link Object#hashCode()}} and
- * {@link Object#toString()} methods.
+ * Abstraction of the dictionary used to save metadata. A catalog can be viewed
+ * as a container of Schema objects.
+ *
+ * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public interface DatabaseTable extends Serializable {
-	@Override
-    boolean equals(Object other);
+public class Catalog extends DatabaseObject{
+    private List<Schema> schemas;
 
-    @Override
-    int hashCode();
+    static final long serialVersionUID = 0;
 
-    @Override
-    String toString();
+    /**
+     * default constructor
+     */
+    public Catalog(){
+        schemas = new ArrayList<Schema>();
+    }
+
+    /**
+     * Creates a new catalog with the given name
+     *
+     * @param name
+     *     name of the catalog
+     */
+    public Catalog( String name )
+    {
+        this.name = name;
+        schemas = new ArrayList<Schema>();
+    }
+
+    /**
+     * adds a schema to a catalog
+     *
+     * @param schema
+     *     new table to add
+     */
+    public void add(Schema schema )
+    {
+        schemas.add(schema);
+        schema.setCatalog( this );
+    }
+
+    /**
+     * returns the list of schemas that the schema contains
+     *
+     * @return
+     *     List of Schema objects
+     */
+    public List<Schema> getSchemas()
+    {
+        return new ArrayList<Schema>(schemas);
+    }
 }
+

@@ -53,6 +53,14 @@ public class PGIndex extends AbstractDatabaseIndex implements Serializable {
         this.schema = schema;
 	}
 
+    public PGIndex(
+            int internalId,
+            double creationCost,
+            double megabytes,
+            String creationText
+    ) {
+		super(internalId, creationText, creationCost, megabytes);
+	}
     @Override
 	public PGTable baseTable() {
 		return Objects.as(getSchema().getBaseTable());

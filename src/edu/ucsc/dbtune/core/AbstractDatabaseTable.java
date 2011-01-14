@@ -13,17 +13,67 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- *  ****************************************************************************
+ * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.GenericDatabaseTable;
+import edu.ucsc.dbtune.core.metadata.DatabaseObject;
 
-public class PGTable extends GenericDatabaseTable
+/**
+ * Represents metadata for table contained in a DBMS.
+ */
+public abstract class AbstractDatabaseTable
+    extends DatabaseObject
+    implements DatabaseTable
 {
-    public PGTable( int objectId )
+    private static final long serialVersionUID = 1L;
+    private final int oid;
+
+    private String name;
+    // private List<DatabaseColumn> columns;
+
+    public AbstractDatabaseTable( String name )
     {
-        super(objectId);
+	this.name = name;
+	this.oid  = 0;
     }
+
+    /**
+     *
+     * @param o
+     */
+    AbstractDatabaseTable(int o) 
+    {
+	oid = o;
+    }
+
+    @Override
+    public boolean equals(Object other)
+    {
+	return other instanceof AbstractDatabaseTable
+	    && ((AbstractDatabaseTable) other).getOid() == getOid();
+    }
+
+    /**
+     *
+     * @return
+     */
+    public int getOid()
+    {
+	return oid;
+    }
+
+    @Override
+    public int hashCode()
+    {
+	return 34 * getOid();
+    }
+
+    @Override
+    public String toString() 
+    {
+        return name;
+    }
+
 }

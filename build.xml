@@ -11,6 +11,11 @@
         <jar destfile="${build.dir}/dist/dbtune-${version}.jar" basedir="${build.dir}/classes"/>
     </target>
 
+    <target name="jar.all" depends="compile.all">
+        <mkdir dir="${build.dir}/dist"/>
+        <jar destfile="${build.dir}/dist/dbtune-${version}.jar" basedir="${build.dir}/classes"/>
+    </target>
+
     <target name="dist" depends="jar, javadoc">
         <copy toDir="${build.dir}/dist">
             <fileset dir="${lib.dir}" includes="*.jar"/>

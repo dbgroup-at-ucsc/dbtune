@@ -16,14 +16,18 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.GenericDatabaseTable;
+/**
+ * Represents metadata for table contained in a DBMS.
+ */
+public class GenericDatabaseTable extends AbstractDatabaseTable {
+    public GenericDatabaseTable( String name ){
+	    super( name );
+    }
 
-public class PGTable extends GenericDatabaseTable
-{
-    public PGTable( int objectId )
-    {
-        super(objectId);
+    public GenericDatabaseTable(int objectId){
+	    super( objectId );
     }
 }
+

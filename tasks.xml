@@ -5,7 +5,7 @@
 
     <target name="compile" description="Compile Java source.">
         <mkdir dir="${build.dir}/classes"/>
-        <javac srcdir="${src.dir}" debug="on" destdir="${build.dir}/classes">
+        <javac srcdir="${src.dir}" debug="on" destdir="${build.dir}/classes" includeantruntime="no">
             <classpath refid="compile.classpath"/>
         </javac>
         <copy toDir="${build.dir}/classes">
@@ -16,7 +16,7 @@
 
     <target name="test.compile" depends="compile" description="Compile test source.">
         <mkdir dir="${build.dir}/tests"/>
-        <javac srcdir="${test.dir}" debug="on" destdir="${build.dir}/tests">
+        <javac srcdir="${test.dir}" debug="on" destdir="${build.dir}/tests" includeantruntime="no">
             <classpath path="${build.dir}/classes"/>
             <classpath refid="compile.classpath"/>
         </javac>
@@ -28,19 +28,26 @@
 
     <target name="tests" depends="test.compile" description="Execute tests.">
         <echo message="running tests"/>
-        <junit printsummary="yes" haltonerror="yes" haltonfailure="yes" fork="yes">
-            <classpath>
-                    <path refid="compile.classpath"/>
-                    <pathelement location="${build.dir}/classes"/>
-                    <pathelement location="${build.dir}/tests"/>
-            </classpath>
-			<batchtest fork="yes" todir="${build.dir}/${junit.report.dir}">
-			  <fileset dir="${test.dir}">
-				<include name="${test.includes}"/>
-				<exclude name="**/AllTests.java"/>
-			  </fileset>
-			</batchtest>
+	<junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">
+	    <classpath>
+		<path refid="compile.classpath"/>
+		<pathelement location="${build.dir}/classes"/>
+		<pathelement location="${build.dir}/tests"/>
+	    </classpath>
+	    <batchtest fork="yes" todir="${build.dir}/${junit.report.dir}">
+		<fileset dir="${test.dir}">
+		    <include name="${test.includes}"/>
+		    <exclude name="**/AllTests.java"/>
+		</fileset>
+	    </batchtest>
+	    <formatter type="xml" />
         </junit>
+	<junitreport todir="${build.dir}/${junit.report.dir}">
+            <fileset dir="${build.dir}/${junit.report.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+	    <report format="frames" todir="${build.dir}/${junit.report.dir}"/>
+        </junitreport>
     </target>
 
     <target name="clean"
