@@ -27,10 +27,8 @@ public abstract class AbstractDatabaseTable
     extends DatabaseObject
     implements DatabaseTable
 {
-    private static final long serialVersionUID = 1L;
     private final int oid;
 
-    private String name;
     // private List<DatabaseColumn> columns;
 
     public AbstractDatabaseTable( String name )
@@ -43,7 +41,7 @@ public abstract class AbstractDatabaseTable
      *
      * @param o
      */
-    AbstractDatabaseTable(int o) 
+    public AbstractDatabaseTable(int o) 
     {
 	oid = o;
     }

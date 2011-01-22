@@ -27,10 +27,10 @@ import java.util.ArrayList;
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public class Catalog extends DatabaseObject{
-    private List<Schema> schemas;
+public class Catalog extends DatabaseObject
+{
 
-    static final long serialVersionUID = 0;
+    private List<Schema> schemas;
 
     /**
      * default constructor

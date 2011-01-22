@@ -32,8 +32,6 @@ public class Schema extends DatabaseObject
 
     protected List<Table> tables;
 
-    static final long serialVersionUID = 0;
-
     /**
      * default constructor
      */

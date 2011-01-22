@@ -31,17 +31,13 @@ package edu.ucsc.dbtune.core.metadata;
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public abstract class DatabaseObject implements java.io.Serializable 
+public abstract class DatabaseObject
 {
     protected String name;
-    
-    protected long id;
-
-    static final long serialVersionUID = 0;
-
-    protected long cardinality;
-
-    protected long pages;
+    protected long   id;
+    protected long   cardinality;
+    protected long   pages;
+    protected long   size;
 
     /**
      * Returns the name of the object.
