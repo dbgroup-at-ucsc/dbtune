@@ -29,12 +29,10 @@ public abstract class AbstractDatabaseTable
 {
     private final int oid;
 
-    // private List<DatabaseColumn> columns;
-
     public AbstractDatabaseTable( String name )
     {
-	this.name = name;
-	this.oid  = 0;
+        this.name = name;
+        this.oid  = 0;
     }
 
     /**
@@ -43,14 +41,14 @@ public abstract class AbstractDatabaseTable
      */
     public AbstractDatabaseTable(int o) 
     {
-	oid = o;
+        oid = o;
     }
 
     @Override
     public boolean equals(Object other)
     {
-	return other instanceof AbstractDatabaseTable
-	    && ((AbstractDatabaseTable) other).getOid() == getOid();
+        return other instanceof AbstractDatabaseTable
+            && ((AbstractDatabaseTable) other).getOid() == getOid();
     }
 
     /**
@@ -59,13 +57,13 @@ public abstract class AbstractDatabaseTable
      */
     public int getOid()
     {
-	return oid;
+        return oid;
     }
 
     @Override
     public int hashCode()
     {
-	return 34 * getOid();
+        return 34 * getOid();
     }
 
     @Override
@@ -73,5 +71,4 @@ public abstract class AbstractDatabaseTable
     {
         return name;
     }
-
 }

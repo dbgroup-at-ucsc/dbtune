@@ -18,9 +18,9 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.core.GenericDatabaseTable;
+import edu.ucsc.dbtune.core.AbstractDatabaseTable;
 
-public class PGTable extends GenericDatabaseTable
+public class PGTable extends AbstractDatabaseTable
 {
     public PGTable( int objectId )
     {

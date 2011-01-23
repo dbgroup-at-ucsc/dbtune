@@ -35,7 +35,7 @@ public class Schema extends DatabaseObject
     /**
      * default constructor
      */
-    public Schema( )
+    public Schema()
     {
         this.tables = new ArrayList<Table>();
     }
@@ -46,7 +46,7 @@ public class Schema extends DatabaseObject
      * @param name
      *     name of the schema
      */
-    public Schema( String name )
+    public Schema(String name)
     {
         this.name = name;
         this.tables = new ArrayList<Table>();
@@ -69,10 +69,10 @@ public class Schema extends DatabaseObject
      * @param table
      *     new table to add
      */
-    public void add( Table table )
+    public void add(Table table)
     {
         tables.add(table);
-        table.setSchema( this );
+        table.setSchema(this);
     }
 
     /**
@@ -92,7 +92,7 @@ public class Schema extends DatabaseObject
      * @param catalog
      *     catalog that contains the schema
      */
-    public void setCatalog( Catalog catalog )
+    public void setCatalog(Catalog catalog)
     {
         this.catalog = catalog;
     }

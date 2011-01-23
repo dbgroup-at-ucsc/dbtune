@@ -23,20 +23,19 @@ package edu.ucsc.dbtune.core.metadata;
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public class Column extends DatabaseObject{
-    protected Table table;
+public class Column extends DatabaseObject
+{
+    protected Table   table;
     protected int     type;
     protected boolean isNull;
     protected boolean isDefault;
     protected String  defaultValue;
     protected int     size;
 
-    static final long serialVersionUID = 0;
-
     /**
      * constructor
      */
-    public Column( String name )
+    public Column(String name)
     {
         this(name, -1);
     }
@@ -50,7 +49,7 @@ public class Column extends DatabaseObject{
      * @param type
      *     data type
      */
-    public Column( String name, int type )
+    public Column(String name, int type)
     {
         this.name         = name;
         this.type         = type;
@@ -68,7 +67,7 @@ public class Column extends DatabaseObject{
      * @param table
      *     object that contains the column.
      */
-    public void setTable( Table table )
+    public void setTable(Table table)
     {
         this.table = table;
     }
@@ -79,7 +78,7 @@ public class Column extends DatabaseObject{
      * @param isNull
      *     indicates if column can have null values
      */
-    public void setSize( int size )
+    public void setSize(int size)
     {
         this.size = size;
     }
@@ -90,7 +89,7 @@ public class Column extends DatabaseObject{
      * @param int
      *     type of the column
      */
-    protected void setDataType( int type )
+    protected void setDataType(int type)
     {
         // TODO check that is one of the types defined in SQLTypes
         this.type = type;
@@ -126,17 +125,17 @@ public class Column extends DatabaseObject{
      */
     public int getSize()
     {
-        if( type == SQLTypes.VARCHAR ||
-                type == SQLTypes.CHARACTER ||
-                type == SQLTypes.NCHAR ||
-                type == SQLTypes.NUMERIC ||
-                type == SQLTypes.DECIMAL ||
-                type == SQLTypes.FLOAT )
+        if (type == SQLTypes.VARCHAR ||
+            type == SQLTypes.CHARACTER ||
+            type == SQLTypes.NCHAR ||
+            type == SQLTypes.NUMERIC ||
+            type == SQLTypes.DECIMAL ||
+            type == SQLTypes.FLOAT)
         {
             return size;
         }
 
-        return SQLTypes.getSize( type );
+        return SQLTypes.getSize(type);
     }
 
     /**
