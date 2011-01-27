@@ -20,28 +20,19 @@ package edu.ucsc.dbtune.core.metadata.extraction;
 
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Catalog;
-import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
-
-import java.util.Properties;
-import java.util.List;
-
-import org.junit.Test;
-import org.junit.BeforeClass;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import static edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager.DATABASE;
-import static edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager.DRIVER;
-import static edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager.URL;
-import static edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager.USERNAME;
-import static edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager.PASSWORD;
-import static edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager.makeDatabaseConnectionManager;
+import java.util.List;
+import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static edu.ucsc.dbtune.core.JdbcConnectionManager.*;
+import static org.junit.Assert.*;
 
 /**
  * Test for the metadata extraction package.
