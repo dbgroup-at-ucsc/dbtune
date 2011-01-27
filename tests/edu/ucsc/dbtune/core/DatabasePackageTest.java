@@ -19,12 +19,13 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.spi.core.Command;
+import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Commands;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
+import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.Objects;
 import org.junit.After;
 import org.junit.Before;
@@ -41,19 +42,15 @@ import static edu.ucsc.dbtune.core.DBTuneInstances.newDB2Index;
 import static edu.ucsc.dbtune.core.DBTuneInstances.newPGIndex;
 import static edu.ucsc.dbtune.core.JdbcMocks.makeResultSet;
 import static edu.ucsc.dbtune.util.Strings.str;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class DatabasePackageTest {
-    private DatabaseConnectionManager connectionManager;
-    private DatabaseConnectionManager connectionManager2;
+    private ConnectionManager connectionManager;
+    private ConnectionManager connectionManager2;
 
     @Before
     public void setUp() throws Exception {
@@ -87,24 +84,27 @@ public class DatabasePackageTest {
 
     private static void checkIndexExtractors(DatabaseConnection... connections){
         for(DatabaseConnection each : connections){
-            assertNotNull(each.getIndexExtractor());
+            assertThat(each.getIndexExtractor(), notNullValue());
         }
     }
 
     private static void checkWhatIfOptimizers(DatabaseConnection... connections){
         for(DatabaseConnection each : connections){
-            assertNotNull("what-if optimizer is not null", each.getWhatIfOptimizer());
-            assertTrue("what-if optimizer has an initial whatIfCount of 0", each.getWhatIfOptimizer().getWhatIfCount() == 0);
+            final WhatIfOptimizer       wio     = each.getWhatIfOptimizer();
+            final IBGWhatIfOptimizer    ibgWio  = each.getIBGWhatIfOptimizer();
+            assertThat(wio, notNullValue());
+            assertThat(ibgWio, notNullValue());
+            assertThat(ibgWio.getWhatIfCount(), is(0));
         }
     }
 
-    private static void checkConnections(DatabaseConnectionManager... connectionManagers) throws Exception {
-        for(DatabaseConnectionManager each : connectionManagers){
+    private static void checkConnections(ConnectionManager... connectionManagers) throws Exception {
+        for(ConnectionManager each : connectionManagers){
             final DatabaseConnection c1 = each.connect();
             final DatabaseConnection c2 = each.connect();
-            assertNotNull("connection 1 is not null", c1);
-            assertNotNull("connection 2 is not null", c1);
-            assertNotSame("both connections are different", c1, c2);
+            assertThat(c1, notNullValue());
+            assertThat(c2, notNullValue());
+            assertThat(c1, not(equalTo(c2)));
         }
     }
 
@@ -120,7 +120,7 @@ public class DatabasePackageTest {
     }
 
     private static void checkIndexExtractorViolation(DatabaseConnection connection) throws Exception {
-        final DatabaseIndexExtractor ie = connection.getIndexExtractor();
+        final IndexExtractor ie = connection.getIndexExtractor();
         connection.close();
         ie.recommendIndexes("SELECT * FROM R;");
     }
@@ -138,45 +138,61 @@ public class DatabasePackageTest {
     }
 
     private static void checkWhatIfOptimizerViolation(DatabaseConnection connection) throws Exception {
-        final DatabaseWhatIfOptimizer ie = connection.getWhatIfOptimizer();
+        final IBGWhatIfOptimizer ie = connection.getIBGWhatIfOptimizer();
         connection.close();
-        ie.whatIfOptimize("SELECT * FROM R;");
+        ie.explain("SELECT * FROM R;");
     }
 
     @Test
-    public void testBasicUsageScenario_WhatIfOptimizationCost() throws Exception {
+    public void testBasicUsageScenario_IBGSpecific_EstimatedCost() throws Exception {
         // create connections
         // used empty configuration and usedSet bitsets
-        checkWhatIfOptimizerCostCalculation(
-                new DefaultBitSet(), new DefaultBitSet(),
+        checkIBGWhatIfOptimizerCost(
+                new IndexBitSet(), new IndexBitSet(),
                 connectionManager.connect(), connectionManager2.connect()
         );
     }
 
-    private static void checkWhatIfOptimizerCostCalculation(DefaultBitSet configuration, DefaultBitSet usedSet, DatabaseConnection... connections) throws SQLException {
+    private static void checkIBGWhatIfOptimizerCost(IndexBitSet configuration,
+                                                    IndexBitSet usedSet,
+                                                    DatabaseConnection... connections) throws SQLException
+    {
         for(DatabaseConnection each : connections){
-            final DatabaseWhatIfOptimizer wo = each.getWhatIfOptimizer();
-            final Double cost = wo.whatIfOptimize("SELECT * FROM R;").using(configuration, usedSet).toGetCost();
-            assertTrue("1.0 cost?", Double.compare(cost, 1.0) == 0);
+            final IBGWhatIfOptimizer ibgWhatIfOptimizer = each.getIBGWhatIfOptimizer();
+            final double cost = ibgWhatIfOptimizer.estimateCost("SELECT * FROM R;", configuration, usedSet);
+            assertThat(Double.compare(cost, 1.0) == 0, is(true));
         }
     }
 
     @Test
-    public void testBasicUsageScenario_WhatIfOptimizationCostWithProfiledIndex() throws Exception {
-        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new DefaultBitSet(), new DefaultBitSet(), newDB2Index(), connectionManager.connect());
+    public void testBasicUsageScenario_IBGSpecific_WhatIfOptimizationCostWithProfiledIndex() throws Exception {
+        checkIBGWhatIfOptimizerCostWithProfiledIndex(
+                new IndexBitSet(),              // index configuration
+                new IndexBitSet(),              // used set
+                newDB2Index(),                  // profiled index
+                connectionManager.connect()     // database connection
+        );
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testBasicUsageScenario_WhatIfOptimizationCostWithProfiledPGIndex() throws Exception {
-        checkWhatIfOptimizerCostCalculationWithProfiledIndex(new DefaultBitSet(), new DefaultBitSet(), newPGIndex(), connectionManager2.connect());
+    public void testBasicUsageScenario_IBGSpecific_WhatIfOptimizationCostWithProfiledPGIndex() throws Exception {
+        checkIBGWhatIfOptimizerCostWithProfiledIndex(
+                new IndexBitSet(),                  // index configuration
+                new IndexBitSet(),                  // used set
+                newPGIndex(),                       // profiled index
+                connectionManager2.connect()        // database connection
+        );
     }
 
-    private static <T extends DBIndex> void checkWhatIfOptimizerCostCalculationWithProfiledIndex(
-            DefaultBitSet configuration, DefaultBitSet usedSet, T pi, DatabaseConnection connection
+    private static <T extends DBIndex> void checkIBGWhatIfOptimizerCostWithProfiledIndex(IndexBitSet configuration,
+                                                                                         IndexBitSet usedSet,
+                                                                                         T pi,
+                                                                                         DatabaseConnection connection
     ) throws SQLException {
-        final DatabaseWhatIfOptimizer wo = connection.getWhatIfOptimizer();
-        final Double cost = wo.whatIfOptimize("SELECT * FROM R;").using(configuration, pi, usedSet).toGetCost();
-        assertTrue("2.0 cost?", Double.compare(cost, 2.0) == 0);
+        final IBGWhatIfOptimizer wo = connection.getIBGWhatIfOptimizer();
+        final double cost = wo.estimateCost("SELECT * FROM R;", configuration, usedSet, pi);
+        System.out.println(cost);
+        assertThat(Double.compare(cost, 2.0) == 0 || Double.compare(cost, 1.0) == 0, is(true));
         connection.close();
     }
 
@@ -196,27 +212,27 @@ public class DatabasePackageTest {
         assertNotNull("result set should not be null", rs);
         final String name = rs.getClass().getSimpleName();
 
-        final Command<Parameter, RuntimeException> a = new Command<Parameter, RuntimeException>(){
+        final Function<Parameter, RuntimeException> a = new Function<Parameter, RuntimeException>(){
             @Override
             public Parameter apply(Parameter input) throws RuntimeException {
                 final ResultSet rs = input.getParameterValue(ResultSet.class);
-                assertNotNull(rs);
+                assertThat(rs, notNullValue());
                 return Parameters.makeAnonymousParameter(rs);
             }
         };
 
-        final Command<String, RuntimeException> s = new Command<String, RuntimeException>(){
+        final Function<String, RuntimeException> s = new Function<String, RuntimeException>(){
             @Override
             public String apply(Parameter input) throws RuntimeException {
                 final ResultSet rs = input.getParameterValue(ResultSet.class);
-                assertNotNull(rs);
+                assertThat(rs, notNullValue());
                 return str(rs.getClass().getSimpleName());
             }
         };
 
-        final Command<String, RuntimeException> f = Commands.compose(a, s);
+        final Function<String, RuntimeException> f = Commands.compose(a, s);
         final String answer = Commands.supplyValue(f, rs);
-        assertEquals("we should have the same answer <MockResultSet>", answer, name);
+        assertThat(answer, equalTo(name));
     }
 
 
@@ -228,7 +244,7 @@ public class DatabasePackageTest {
     private static void checkRecommendIndexesFromSQL(DatabaseConnection... connections) throws Exception {
         for(DatabaseConnection each : connections){
             final Iterable<DBIndex> found = Objects.as(each.getIndexExtractor().recommendIndexes("SELECT * FROM R;"));
-            assertTrue("3 indexes", Instances.count(found) == 3);
+            assertThat(Iterables.count(found) == 3, is(true));
         }
     }
 
@@ -248,7 +264,7 @@ public class DatabasePackageTest {
     private static void checkRecommendIndexesFromWorkloadFile(File workload, DatabaseConnection... connections) throws Exception {
         for(DatabaseConnection each : connections){
             final Iterable<DBIndex> found = Objects.as(each.getIndexExtractor().recommendIndexes(workload));
-            assertTrue("3 indexes", Instances.count(found) == 3);
+            assertThat(Iterables.count(found) == 3, is(true));
         }
     }
 
@@ -268,15 +284,15 @@ public class DatabasePackageTest {
         checkFixCandidatesScenario(pgCandidateSet, connectionManager2.connect());
     }
 
-    private static <T extends DBIndex> void checkFixCandidatesScenario(List<T> candidateSet, DatabaseConnection connection) throws Exception {
-        final DatabaseWhatIfOptimizer optimizer = connection.getWhatIfOptimizer();
+    private static void checkFixCandidatesScenario(List<? extends DBIndex> candidateSet, DatabaseConnection connection) throws Exception {
+        final IBGWhatIfOptimizer optimizer = connection.getIBGWhatIfOptimizer();
         optimizer.fixCandidates(candidateSet);
-        assertEquals("same candidate set", Objects.<Iterable<T>>as(candidateSet), Objects.<AbstractDatabaseWhatIfOptimizer>as(optimizer).getCandidateSet());
+        assertThat(Objects.<Iterable<DBIndex>>as(candidateSet), equalTo(Objects.<AbstractIBGWhatIfOptimizer>as(optimizer).getCandidateSet()));
     }
 
     @Test
     public void testExplainInfoScenario() throws Exception {
-        final DatabaseConnectionManager c1 = DBTuneInstances.newDatabaseConnectionManagerWithSwitchOffOnce(
+        final ConnectionManager c1 = DBTuneInstances.newDatabaseConnectionManagerWithSwitchOffOnce(
                 DBTuneInstances.newPGSQLProperties()
         );
         checkExplainInfoScenario(c1.connect());
@@ -286,20 +302,17 @@ public class DatabasePackageTest {
 
     @SuppressWarnings({"RedundantTypeArguments"})
     private static <T extends DBIndex> void checkExplainInfoScenario(DatabaseConnection connection) throws Exception {
-        final DatabaseWhatIfOptimizer ie   = connection.getWhatIfOptimizer();
+        final WhatIfOptimizer whatIfOptimizer   = connection.getWhatIfOptimizer();
         final List<T>  pgCandidateSet  = Instances.newList();
         final T index1 = Objects.<T>as(newPGIndex(12));
         final T index2 = Objects.<T>as(newPGIndex(21));
         pgCandidateSet.add(index1);
         pgCandidateSet.add(index2);
-        ie.fixCandidates(pgCandidateSet);        
-        final ExplainInfo info = ie.explainInfo("SELECT * FROM R");
-        assertNotNull(info);
-        assertFalse(info.isDML());
-        assertTrue(Double.compare(info.maintenanceCost(index1), 0) == 0);  // since is DML
+        final ExplainInfo info = whatIfOptimizer.explain("SELECT * FROM R", pgCandidateSet);
+        assertThat(info, notNullValue());
+        assertThat(info.isDML(), is(false));
+        assertThat(Double.compare(info.getIndexMaintenanceCost(index1), 0) == 0, is(true));
     }
-
-
 
     @After
     public void tearDown() throws Exception {

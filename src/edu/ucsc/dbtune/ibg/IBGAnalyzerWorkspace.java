@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -30,33 +30,33 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class IBGAnalyzerWorkspace {
-	private final DefaultBitSet     candidatesBitSet;
-	private final DefaultBitSet     usedBitSet;
-	private final DefaultBitSet     bitset_YaSimple;
-	private final DefaultBitSet     bitset_Ya;
-	private final DefaultBitSet     bitset_YbMinus;
-	private final DefaultBitSet     bitset_YbPlus;
-	private final DefaultBitSet     bitset_Yab;
+	private final IndexBitSet candidatesBitSet;
+	private final IndexBitSet usedBitSet;
+	private final IndexBitSet bitset_YaSimple;
+	private final IndexBitSet bitset_Ya;
+	private final IndexBitSet bitset_YbMinus;
+	private final IndexBitSet bitset_YbPlus;
+	private final IndexBitSet bitset_Yab;
     private final IBGNode           startingNode;
     private final InteractionLogger logger;
-    private final DefaultBitSet     allUsedIndexes;
-    private final DefaultBitSet     rootBitSet;
+    private final IndexBitSet allUsedIndexes;
+    private final IndexBitSet rootBitSet;
 
     public IBGAnalyzerWorkspace(
             IBGNode startingNode, InteractionLogger logger, 
-            DefaultBitSet rootBitSet, DefaultBitSet allUsedIndexes
+            IndexBitSet rootBitSet, IndexBitSet allUsedIndexes
     ){
         this.rootBitSet         = Checks.checkNotNull(rootBitSet);
         this.allUsedIndexes     = Checks.checkNotNull(allUsedIndexes);
         this.startingNode       = Checks.checkNotNull(startingNode);
         this.logger             = Checks.checkNotNull(logger);
-        candidatesBitSet        = new DefaultBitSet();
-        usedBitSet              = new DefaultBitSet();
-        bitset_YaSimple         = new DefaultBitSet();
-        bitset_Ya               = new DefaultBitSet();
-        bitset_YbMinus          = new DefaultBitSet();
-        bitset_YbPlus           = new DefaultBitSet();
-        bitset_Yab              = new DefaultBitSet();
+        candidatesBitSet        = new IndexBitSet();
+        usedBitSet              = new IndexBitSet();
+        bitset_YaSimple         = new IndexBitSet();
+        bitset_Ya               = new IndexBitSet();
+        bitset_YbMinus          = new IndexBitSet();
+        bitset_YbPlus           = new IndexBitSet();
+        bitset_Yab              = new IndexBitSet();
     }
     
 	/**
@@ -71,14 +71,14 @@ public class IBGAnalyzerWorkspace {
 
 
     public boolean runAnalysis(IBGCoveringNodeFinder coveringNodeFinder, IndexBenefitGraphConstructor<?> ibgCons){
-        DefaultBitSet bitset_Y = startingNode.config;
+        IndexBitSet bitset_Y = startingNode.config;
         updateUsedSet();
         storeUsedSet(allUsedIndexes);
         setUpCandidates();
         return traverseCandidatePool(coveringNodeFinder, ibgCons, bitset_Y);
     }
 
-    public void storeUsedSet(DefaultBitSet allUsedIndexes){
+    public void storeUsedSet(IndexBitSet allUsedIndexes){
 		// store the used set
 		allUsedIndexes.or(usedBitSet);
     }
@@ -90,7 +90,7 @@ public class IBGAnalyzerWorkspace {
 		candidatesBitSet.and(allUsedIndexes);
     }
 
-    private boolean traverseCandidatePool(IBGCoveringNodeFinder coveringNodeFinder, IndexBenefitGraphConstructor<?> ibgCons, DefaultBitSet bitset_Y) {
+    private boolean traverseCandidatePool(IBGCoveringNodeFinder coveringNodeFinder, IndexBenefitGraphConstructor<?> ibgCons, IndexBitSet bitset_Y) {
 		boolean retval = true; // set false on first failure
 		for (int a = candidatesBitSet.nextSetBit(0); a >= 0; a = candidatesBitSet.nextSetBit(a+1)) {
 			IBGNode Y;

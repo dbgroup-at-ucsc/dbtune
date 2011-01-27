@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 
 public class IBGAnalyzer {
 	// the IBG we are currently exploring
@@ -34,16 +34,16 @@ public class IBGAnalyzer {
 	// the set of all used indexes seen so far in the IBG
 	// this is different from the bank, because that may have
 	// used indexes from other IBG traversals
-	private final DefaultBitSet allUsedIndexes;
+	private final IndexBitSet allUsedIndexes;
 
 	// graph traversal objects
 	private IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
 
 	// copy of the root bit set for convenience
-	private final DefaultBitSet rootBitSet;
+	private final IndexBitSet rootBitSet;
 
 	// keeps track of visited nodes
-	private final DefaultBitSet visitedNodes;
+	private final IndexBitSet visitedNodes;
 
     /**
      * construct an {@code IBGAnalyzer}.
@@ -59,9 +59,9 @@ public class IBGAnalyzer {
 		this.ibgCons        = ibgCons;
 		this.nodeQueue      = nodeQueue;
 		this.revisitQueue   = revisitQueue;
-		allUsedIndexes      = new DefaultBitSet();
+		allUsedIndexes      = new IndexBitSet();
 		rootBitSet          = ibgCons.rootNode().config.clone();
-		visitedNodes        = new DefaultBitSet();
+		visitedNodes        = new IndexBitSet();
 
 		// seed the queue with the root node
 		nodeQueue.addNode(ibgCons.rootNode());

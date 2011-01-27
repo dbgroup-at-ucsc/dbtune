@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 /**
- * Interfaces which make up {@link edu.ucsc.dbtune.core.DatabaseWhatIfOptimizer}'s
+ * Interfaces which make up {@link edu.ucsc.dbtune.core.IBGWhatIfOptimizer}'s
  * whatIfOptmize expression.
  */
 package edu.ucsc.dbtune.core.optimizers;

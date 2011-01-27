@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm.TotalWorkValues;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -80,11 +80,11 @@ public class WfaTrace<I extends DBIndex> {
      *      the optimal schedule (i.e., an array of bitsets refering indexes' internalIds) of a
      *      number of profiled queries.
      */
-	public DefaultBitSet[] optimalSchedule(IndexPartitions<I> parts, int queryCount, Iterable<ProfiledQuery<I>> qinfos) {
+	public IndexBitSet[] optimalSchedule(IndexPartitions<I> parts, int queryCount, Iterable<ProfiledQuery<I>> qinfos) {
 		
 		// We will fill each BitSet with the optimal indexes for the corresponding query
-		DefaultBitSet[] bss = new DefaultBitSet[queryCount];
-		for (int i = 0; i < queryCount; i++) bss[i] = new DefaultBitSet();
+		IndexBitSet[] bss = new IndexBitSet[queryCount];
+		for (int i = 0; i < queryCount; i++) bss[i] = new IndexBitSet();
 		
 		// this array holds the optimal schedule for a single partition
 		// it has the state that each query should be processed in, plus the 
@@ -92,8 +92,8 @@ public class WfaTrace<I extends DBIndex> {
 		// query (which we expect to be the same as the state for the last
 		// query, but that's not required). Each schedule, excluding the last
 		// state, will be pushed into bss after it's computed
-		DefaultBitSet[] partSchedule = new DefaultBitSet[queryCount+1];
-		for (int q = 0; q <= queryCount; q++) partSchedule[q] = new DefaultBitSet();
+		IndexBitSet[] partSchedule = new IndexBitSet[queryCount+1];
+		for (int q = 0; q <= queryCount; q++) partSchedule[q] = new IndexBitSet();
 		
 		for (int subsetNum = 0; subsetNum < parts.subsetCount(); subsetNum++) {
 			IndexPartitions.Subset<I> subset = parts.get(subsetNum);

@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationCostBuilder;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
@@ -39,16 +39,16 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
     private final AtomicReference<Double> cost;
 
     // optional variables
-    private DefaultBitSet   configuration;
-    private DefaultBitSet   usedSet;
+    private IndexBitSet configuration;
+    private IndexBitSet usedSet;
     private DBIndex         profiledIndex;
-    private DefaultBitSet   usedColumns;
+    private IndexBitSet usedColumns;
 
-    private final AbstractDatabaseWhatIfOptimizer   whatIfOptimizer;
-    private final AtomicBoolean                     withProfiledIndex;
+    private final AbstractIBGWhatIfOptimizer whatIfOptimizer;
+    private final AtomicBoolean              withProfiledIndex;
 
     public WhatIfOptimizationBuilderImpl(
-            AbstractDatabaseWhatIfOptimizer whatIfOptimizer,
+            AbstractIBGWhatIfOptimizer whatIfOptimizer,
             String sql
     ){
         this.whatIfOptimizer    = whatIfOptimizer;
@@ -70,7 +70,7 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
      * @return
      *      the configuration to be used.
      */
-    public DefaultBitSet getConfiguration(){
+    public IndexBitSet getConfiguration(){
         return configuration == null ? null : configuration.clone();
     }
 
@@ -98,7 +98,7 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
         return sql;
     }
     
-    public DefaultBitSet getUsedSet(){
+    public IndexBitSet getUsedSet(){
         return usedSet == null ? null : usedSet.clone();
     }
 
@@ -106,12 +106,12 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
      * @return
      *      the db columns used in the optimization.
      */
-    public DefaultBitSet getUsedColumns(){
+    public IndexBitSet getUsedColumns(){
         return usedColumns == null ? null : usedColumns.clone();
     }
 
     @Override
-    public WhatIfOptimizationCostBuilder using(DefaultBitSet config, DefaultBitSet usedSet) {
+    public WhatIfOptimizationCostBuilder using(IndexBitSet config, IndexBitSet usedSet) {
         this.withProfiledIndex.set(false);
         this.configuration = config;
         this.usedSet       = usedSet;
@@ -119,8 +119,8 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
     }
 
     @Override
-    public WhatIfOptimizationCostBuilder using(DefaultBitSet config,
-           DBIndex profiledIndex, DefaultBitSet usedColumns
+    public WhatIfOptimizationCostBuilder using(IndexBitSet config,
+           DBIndex profiledIndex, IndexBitSet usedColumns
     ) {
         this.withProfiledIndex.set(true);
         this.configuration = config;

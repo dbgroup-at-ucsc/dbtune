@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.util.Objects;
 import java.io.Serializable;
 import java.sql.SQLException;
 
-public class PGIndex extends AbstractDatabaseIndex implements Serializable {
+public class PGIndex extends AbstractIndex implements Serializable {
 	private PGIndexSchema schema;
 
 	// serialization support

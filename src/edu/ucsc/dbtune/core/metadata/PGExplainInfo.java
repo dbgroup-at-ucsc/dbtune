@@ -33,6 +33,7 @@ public class PGExplainInfo extends AbstractExplainInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final double[] updateCost;
+    private final double   totalCost;
 
     /**
      * construct a new {@code PGExplainInfo} object.
@@ -44,10 +45,25 @@ public class PGExplainInfo extends AbstractExplainInfo implements Serializable {
 	public PGExplainInfo(SQLCategory cat, double[] overhead) {
         super(cat);
 		updateCost = overhead;
+        totalCost  = calculateTtalCost(updateCost);
 	}
 
+    private static double calculateTtalCost(double[] updateCost){
+        double cost = 0.0;
+        if(updateCost.length == 0) return cost;
+        for(double each : updateCost){
+           cost += each;
+        }
+        return cost;
+    }
+
     @Override
-	public double maintenanceCost(DBIndex index) {
+    public double getTotalCost() {
+        return totalCost;
+    }
+
+    @Override
+	public double getIndexMaintenanceCost(DBIndex index) {
 		if (getSQLCategory() != SQLCategory.DML)
 			return 0;
 		return updateCost[index.internalId()];
@@ -59,6 +75,7 @@ public class PGExplainInfo extends AbstractExplainInfo implements Serializable {
                .add("sql category", getSQLCategory())
                .add("update cost", Arrays.toString(updateCost))
                .add("isDML", isDML())
+               .add("isQuery", isQuery())
                .toString();
     }
 }

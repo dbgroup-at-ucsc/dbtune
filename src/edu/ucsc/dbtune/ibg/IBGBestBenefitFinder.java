@@ -19,12 +19,12 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGBestBenefitFinder {
-	private final DefaultBitSet         visited;
-	private final DefaultBitSet         bitset_Ya;
+	private final IndexBitSet visited;
+	private final IndexBitSet bitset_Ya;
 	private final IBGNodeQueue          pending;
 	private final IBGCoveringNodeFinder finder;
 
@@ -32,7 +32,7 @@ public class IBGBestBenefitFinder {
      * construct a new {@link IBGBestBenefitFinder} object; assumming default values for its private members.
      */
     public IBGBestBenefitFinder(){
-        this(new DefaultBitSet(), new DefaultBitSet(), new IBGNodeQueue(), new IBGCoveringNodeFinder());
+        this(new IndexBitSet(), new IndexBitSet(), new IBGNodeQueue(), new IBGCoveringNodeFinder());
     }
 
     /**
@@ -42,7 +42,7 @@ public class IBGBestBenefitFinder {
      * @param pendingQueue pending node queue.
      * @param finder  covering node finder.
      */
-    IBGBestBenefitFinder(DefaultBitSet visited, DefaultBitSet bitset_Ya, IBGNodeQueue pendingQueue, IBGCoveringNodeFinder finder){
+    IBGBestBenefitFinder(IndexBitSet visited, IndexBitSet bitset_Ya, IBGNodeQueue pendingQueue, IBGCoveringNodeFinder finder){
         this.visited = visited;
         this.bitset_Ya = bitset_Ya;
         this.pending   = pendingQueue;
@@ -60,7 +60,7 @@ public class IBGBestBenefitFinder {
      * @return
      *     the best benefit for a given index in the index benefit graph.
      */
-	public double bestBenefit(IndexBenefitGraph ibg, int indexId, DefaultBitSet M) {
+	public double bestBenefit(IndexBenefitGraph ibg, int indexId, IndexBitSet M) {
 		visited.clear();
 		pending.reset();
 		

@@ -27,7 +27,7 @@ package edu.ucsc.dbtune.spi.core;
  * 
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface Command<R, E extends Exception> {
+public interface Function<R, E extends Exception> {
     /**
      * Applies the function to an object of type {@code Parameter}, resulting in an object
      * of type {@code R}.  Note that types {@code Parameter} and {@code R} may or may not

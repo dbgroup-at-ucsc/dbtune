@@ -18,7 +18,11 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import edu.ucsc.dbtune.core.DBIndex;
+
 import java.util.ArrayList;
+
+import static edu.ucsc.dbtune.util.Objects.cast;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -31,6 +35,12 @@ public class PGReifiedTypes {
      * a reified list.
      */
     public static class ReifiedPGIndexList extends ArrayList<PGIndex> {
+        public ReifiedPGIndexList(Iterable<? extends DBIndex> indexes){
+            super();
+            for(DBIndex each : indexes){
+                add(cast(each, PGIndex.class));
+            }
+        }
     }
 
 }

@@ -21,12 +21,12 @@ package edu.ucsc.dbtune.core.metadata;
 import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
-import edu.ucsc.dbtune.spi.core.Command;
+import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Commands;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
 import edu.ucsc.dbtune.util.Checks;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
 
@@ -52,9 +52,9 @@ public class PGCommands {
      * @return
      *      a {@code Command<PGExplainInfo>} object.
      */
-    public static Command<PGExplainInfo, SQLException> explainIndexes(){
-        final Command<Parameter, SQLException>       rs;
-        final Command<PGExplainInfo, SQLException>   eidx;
+    public static Function<PGExplainInfo, SQLException> explainIndexes(){
+        final Function<Parameter, SQLException> rs;
+        final Function<PGExplainInfo, SQLException> eidx;
         rs     = shareResultSetCommand();
         eidx   = explainInfo();
         return Commands.compose(rs, eidx);
@@ -65,12 +65,12 @@ public class PGCommands {
      * @return
      *      a {@code Command<Void>} object.
      */
-    public static Command<List<PGIndex>, SQLException> recommendIndexes(){
+    public static Function<List<PGIndex>, SQLException> recommendIndexes(){
         return RecommendIndexes.INSTANCE;
     }
 
     // enum singleton pattern
-    private enum RecommendIndexes implements Command<List<PGIndex>, SQLException>{
+    private enum RecommendIndexes implements Function<List<PGIndex>, SQLException> {
         INSTANCE;
 
         private Statement statement;
@@ -163,9 +163,9 @@ public class PGCommands {
      * @return
      *      a new {@code Command<Double>} object.
      */
-    public static Command<Double, SQLException> explainIndexesCost(DefaultBitSet usedSet){
-        final Command<Parameter, SQLException>       rs;
-        final Command<Double, SQLException>          ec;
+    public static Function<Double, SQLException> explainIndexesCost(IndexBitSet usedSet){
+        final Function<Parameter, SQLException> rs;
+        final Function<Double, SQLException> ec;
         rs   = shareResultSetCommand();
         ec   = explainCost(usedSet);
         return Commands.compose(rs, ec);
@@ -179,8 +179,8 @@ public class PGCommands {
      * @return
      *      a new {@code Command<Double>} object.
      */
-    private static Command<Double, SQLException> explainCost(final DefaultBitSet usedSet){
-        return new Command<Double, SQLException>(){
+    private static Function<Double, SQLException> explainCost(final IndexBitSet usedSet){
+        return new Function<Double, SQLException>(){
             @Override
             public Double apply(Parameter input) throws SQLException {
                 final ResultSet  resultSet  = input.getParameterValue(ResultSet.class);
@@ -214,8 +214,8 @@ public class PGCommands {
      * @return
      *      a new {@code Command<PGExplainInfo>} object.
      */
-    private static Command<PGExplainInfo, SQLException> explainInfo(){
-        return new Command<PGExplainInfo, SQLException>(){
+    private static Function<PGExplainInfo, SQLException> explainInfo(){
+        return new Function<PGExplainInfo, SQLException>(){
 
             @Override
             public PGExplainInfo apply(Parameter input) throws SQLException {
@@ -277,14 +277,14 @@ public class PGCommands {
      *      of closing the {@link java.sql.ResultSet} and commiting to the db by calling
      *      {@link java.sql.Connection#commit()}.
      */
-    private static Command<Parameter, SQLException> shareResultSetCommand(){
-        return new Command<Parameter, SQLException>(){
+    private static Function<Parameter, SQLException> shareResultSetCommand(){
+        return new Function<Parameter, SQLException>(){
             private Statement statement;
             @Override
             public Parameter apply(Parameter input) throws SQLException {
                 final Connection            connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
                 final ReifiedPGIndexList    indexes     = input.getParameterValue(ReifiedPGIndexList.class);
-                final DefaultBitSet config      = input.getParameterValue(DefaultBitSet.class);
+                final IndexBitSet config      = input.getParameterValue(IndexBitSet.class);
                 final String                sql         = input.getParameterValue(String.class);
                 final Integer               cardinality = input.getParameterValue(Integer.class);
                 final Double[]              maintCost   = input.getParameterValue(Double[].class);
@@ -307,7 +307,7 @@ public class PGCommands {
     }
 
 
-    private static String indexListString(Iterable<PGIndex> indexes, DefaultBitSet config) {
+    private static String indexListString(Iterable<PGIndex> indexes, IndexBitSet config) {
         final StringBuilder sb = new StringBuilder();
         sb.append("( ");
         for (PGIndex idx : indexes) {

@@ -20,27 +20,27 @@ package edu.ucsc.dbtune.util;
 
 import java.util.BitSet;
 
-public class DefaultBitSet extends BitSet {
+public class IndexBitSet extends BitSet {
 	private static final long serialVersionUID = 1L;
 	
 	private static final BitSet t = new BitSet();
 	
-	public DefaultBitSet() {
+	public IndexBitSet() {
 		super();
 	}
 
     @Override
-	public DefaultBitSet clone() {
-		return (DefaultBitSet) super.clone();
+	public IndexBitSet clone() {
+		return (IndexBitSet) super.clone();
 	}
 	
-	public final void set(DefaultBitSet other) {
+	public final void set(IndexBitSet other) {
 		clear();
 		or(other);
 	}
 	
 	// probably better in average case
-	public final boolean subsetOf(DefaultBitSet b) {
+	public final boolean subsetOf(IndexBitSet b) {
 		synchronized (t) {
 			t.clear();
 			t.or(this);

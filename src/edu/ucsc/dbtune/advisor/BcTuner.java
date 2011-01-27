@@ -24,7 +24,7 @@ import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -35,7 +35,7 @@ public class BcTuner<I extends DBIndex> {
 	private final StaticIndexSet<I>     hotSet;
 	private final BcIndexPool<I>        pool;
 	private final Snapshot<I>           snapshot;
-	private final DefaultBitSet currentRecommendation;
+	private final IndexBitSet currentRecommendation;
 
     /**
      * Construct a {@code BcTuner} object.
@@ -52,7 +52,7 @@ public class BcTuner<I extends DBIndex> {
 		this.snapshot               = snapshot;
 		this.hotSet                 = hotSet;
 		this.pool                   = new BcIndexPool<I>(this.hotSet);
-		this.currentRecommendation  = new DefaultBitSet();
+		this.currentRecommendation  = new IndexBitSet();
 	}
 
     /**
@@ -114,8 +114,8 @@ public class BcTuner<I extends DBIndex> {
     /**
      * @return the recommended indexes configuration.
      */
-	public DefaultBitSet getRecommendation() {
-		DefaultBitSet bs = new DefaultBitSet();
+	public IndexBitSet getRecommendation() {
+		IndexBitSet bs = new IndexBitSet();
 		for (I index : hotSet) {
 			if (pool.get(index.internalId()).state == BcIndexInfo.State.MATERIALIZED){
                 bs.set(index.internalId());

@@ -18,52 +18,25 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.util.Checks;
-import edu.ucsc.dbtune.util.ToStringBuilder;
-
 /**
- * This class provides a skeletal implementation of the {@link DatabaseConnectionManager}
- * interface to minimize the effort required to implement this interface.
- *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseConnectionManager
-        implements DatabaseConnectionManager {
+public interface WhatIfOptimizerFactory extends ResourceFactory {
+    /**
+     * makes a new {@link WhatIfOptimizer} object.
+     * @param connection
+     *      the {@link DatabaseConnection} that gets this {@code optimizer} assigned to.
+     * @return
+     *      a generic what-if optimizer
+     */
+    WhatIfOptimizer newWhatIfOptimizer(DatabaseConnection connection);
 
-	private final String username;
-	private final String password;
-	private final String database;
-
-	protected AbstractDatabaseConnectionManager(
-            String username,
-            String password,
-            String database
-    ) {
-		this.username = Checks.checkNotNull(username);
-		this.password = Checks.checkNotNull(password);
-		this.database = Checks.checkNotNull(database);
-	}
-
-	public String getUsername() {
-		return username;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-    @Override
-    public String getDatabaseName() {
-        return database;
-    }
-
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder<AbstractDatabaseConnectionManager>(this)
-                .add("username", getUsername())
-                .add("password", "......hidden.........")
-                .add("database", getDatabaseName())
-                .toString();
-    }
+    /**
+     * makes a new {@link IBGWhatIfOptimizer} object.
+     * @param connection
+     *      the {@link edu.ucsc.dbtune.core.DatabaseConnection} that gets this {@code optimizer} assigned to.
+     * @return
+     *      a IBG-specific what-if optimizer.
+     */
+    IBGWhatIfOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection);
 }

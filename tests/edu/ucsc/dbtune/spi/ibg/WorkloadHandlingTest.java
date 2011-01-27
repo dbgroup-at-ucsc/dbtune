@@ -17,13 +17,8 @@
  */
 package edu.ucsc.dbtune.spi.ibg;
 
-import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DatabaseConnectionManager;
-import edu.ucsc.dbtune.core.JdbcConnectionFactory;
-import edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager;
-import edu.ucsc.dbtune.core.JdbcMocks;
+import edu.ucsc.dbtune.core.*;
+import edu.ucsc.dbtune.core.ConnectionManager;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
@@ -47,17 +42,17 @@ import static org.junit.Assert.assertTrue;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class WorkloadHandlingTest {
-    DatabaseConnectionManager connectionManager;
+    ConnectionManager connectionManager;
     @Before
     public void setUp() throws Exception {
         connectionManager = makeDBConnectionManager(
                 new Properties(){
                     {
-                        setProperty(JdbcDatabaseConnectionManager.URL, "");
-                        setProperty(JdbcDatabaseConnectionManager.USERNAME, "newo");
-                        setProperty(JdbcDatabaseConnectionManager.PASSWORD, "hahaha");
-                        setProperty(JdbcDatabaseConnectionManager.DATABASE, "matrix");
-                        setProperty(JdbcDatabaseConnectionManager.DRIVER, "org.postgresql.Driver");
+                        setProperty(JdbcConnectionManager.URL, "");
+                        setProperty(JdbcConnectionManager.USERNAME, "newo");
+                        setProperty(JdbcConnectionManager.PASSWORD, "hahaha");
+                        setProperty(JdbcConnectionManager.DATABASE, "matrix");
+                        setProperty(JdbcConnectionManager.DRIVER, "org.postgresql.Driver");
                     }
                 },
                 makeJdbcConnectionFactoryWithSwitchOffOn()
@@ -172,8 +167,8 @@ public class WorkloadHandlingTest {
         connectionManager = null;
     }
 
-    private static <I extends DBIndex> DatabaseConnectionManager makeDBConnectionManager(Properties props, JdbcConnectionFactory factory) throws Exception {
-        return JdbcDatabaseConnectionManager.makeDatabaseConnectionManager(props, factory);
+    private static <I extends DBIndex> ConnectionManager makeDBConnectionManager(Properties props, JdbcConnectionFactory factory) throws Exception {
+        return JdbcConnectionManager.makeDatabaseConnectionManager(props, factory);
     }
 
     private static JdbcConnectionFactory makeJdbcConnectionFactoryWithSwitchOffOn(){

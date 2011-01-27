@@ -20,56 +20,62 @@ package edu.ucsc.dbtune.core;
 
 /**
  * A connection to a specific database.  {@code DatbaseConnection} objects are obtained by using
- * {@link DatabaseConnectionManager#connect()}.
+ * {@link ConnectionManager#connect()}.
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  * @see edu.ucsc.dbtune.core.DatabaseSession
- * @see DatabaseConnectionManager
+ * @see ConnectionManager
  */
 public interface DatabaseConnection extends DatabaseSession {
 	/**
 	 * gets the instance of the connection manager that created this connection.
 	 * @return
-     *      the {@link DatabaseConnectionManager connection manager} instance that created
+     *      the {@link ConnectionManager connection manager} instance that created
      *      this connection.
      * @throws NullPointerException
      *      it will throw a null pointer exception if the connection mananger is null.
      *      this is a normal side effect when the connection has been closed.
 	 */
-    DatabaseConnectionManager getConnectionManager();
+    ConnectionManager getConnectionManager();
 
     /**
      * gets the instance of a database index extractor created for this connection.
      * @return
-     *      the {@link edu.ucsc.dbtune.core.DatabaseIndexExtractor index extractor} instance created
+     *      the {@link IndexExtractor index extractor} instance created
      *      for this connection.
      * @throws NullPointerException
      *      it will throw a null pointer exception if the index extractor is null.
      *      this is a normal side effect when the connection was already closed.
      */
-    DatabaseIndexExtractor getIndexExtractor();
+    IndexExtractor getIndexExtractor();
 
     /**
      * gets the instance of what-if optmizer created for this connection.
      * @return
-     *     the {@link DatabaseWhatIfOptimizer what-if optimizer} instance created for
+     *     the {@link WhatIfOptimizer what-if optimizer} instance created for
      *     this connection.
      * @throws NullPointerException
      *      it will throw a null pointer exception if the optimizer is null.
      *      this is a normal side effect when the connection was already closed.
      */
-    DatabaseWhatIfOptimizer getWhatIfOptimizer();
+    WhatIfOptimizer getWhatIfOptimizer();
 
     /**
-     * install both a new {@link edu.ucsc.dbtune.core.DatabaseIndexExtractor} strategy, and a new
-     * {@link DatabaseWhatIfOptimizer} strategy after a {@code connection} object
-     * was fully created.
-     *
-     * @param indexExtractor
-     *      a new {@link DatabaseIndexExtractor} instance.
-     * @param whatIfOptimizer
-     *      a new {@link edu.ucsc.dbtune.core.DatabaseWhatIfOptimizer} instance.
+     * gets the instance of the IBG-specific what-if optmizer created for this connection.
+     * @return
+     *     the {@link IBGWhatIfOptimizer what-if optimizer} instance created for
+     *     this connection.
+     * @throws NullPointerException
+     *      it will throw a null pointer exception if the optimizer is null.
+     *      this is a normal side effect when the connection was already closed.
      */
-    void install(DatabaseIndexExtractor indexExtractor, DatabaseWhatIfOptimizer whatIfOptimizer);
+    IBGWhatIfOptimizer getIBGWhatIfOptimizer();
 
+    /**
+     * loads a set of index tuning resources, such as new {@link IndexExtractor} strategy, a new
+     * {@link WhatIfOptimizer}, or a new {@link IBGWhatIfOptimizer} strategy after construction this {@code connection}
+     * object. Multiple calls of this method won't result in extra loading effort since these resources could be only
+     * loaded the first time this connection was created.
+     */
+    void loadResources();
 }

@@ -2,7 +2,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.*;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 
 import java.lang.reflect.Constructor;
@@ -32,9 +32,9 @@ public class DBTuneInstances {
 
     public static IndexBenefitGraph.IBGNode makeIBGNode(int id){
         try {
-            final Constructor<IndexBenefitGraph.IBGNode> c = IndexBenefitGraph.IBGNode.class.getDeclaredConstructor(DefaultBitSet.class, int.class);
+            final Constructor<IndexBenefitGraph.IBGNode> c = IndexBenefitGraph.IBGNode.class.getDeclaredConstructor(IndexBitSet.class, int.class);
             c.setAccessible(true);
-            return c.newInstance(new DefaultBitSet(), id);
+            return c.newInstance(new IndexBitSet(), id);
         } catch (Exception e) {
             throw new IllegalStateException("ERROR: unable to construct an IBGNode");
         }
@@ -58,7 +58,7 @@ public class DBTuneInstances {
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})
-    public static DatabaseConnectionManager newDB2DatabaseConnectionManager(){
+    public static ConnectionManager newDB2DatabaseConnectionManager(){
         try {
             return DBTuneInstances.newDatabaseConnectionManager(newDB2Properties()
             );
@@ -70,16 +70,16 @@ public class DBTuneInstances {
     public static Properties newDB2Properties() {
         return new Properties(){
             {
-                setProperty(JdbcDatabaseConnectionManager.URL, "");
-                setProperty(JdbcDatabaseConnectionManager.USERNAME, "newo");
-                setProperty(JdbcDatabaseConnectionManager.PASSWORD, "hahaha");
-                setProperty(JdbcDatabaseConnectionManager.DATABASE, "matrix");
-                setProperty(JdbcDatabaseConnectionManager.DRIVER, "com.ibm.db2.jcc.DB2Driver");
+                setProperty(JdbcConnectionManager.URL, "");
+                setProperty(JdbcConnectionManager.USERNAME, "newo");
+                setProperty(JdbcConnectionManager.PASSWORD, "hahaha");
+                setProperty(JdbcConnectionManager.DATABASE, "matrix");
+                setProperty(JdbcConnectionManager.DRIVER, "com.ibm.db2.jcc.DB2Driver");
             }
         };
     }
 
-    public static DatabaseConnectionManager newPGDatabaseConnectionManager(){
+    public static ConnectionManager newPGDatabaseConnectionManager(){
         try {
             return DBTuneInstances.newDatabaseConnectionManager(newPGSQLProperties()
             );
@@ -90,30 +90,30 @@ public class DBTuneInstances {
 
     public static Properties newPGSQLProperties() {
         return new Properties(){{
-            setProperty(JdbcDatabaseConnectionManager.URL, "");
-            setProperty(JdbcDatabaseConnectionManager.USERNAME, "newo");
-            setProperty(JdbcDatabaseConnectionManager.PASSWORD, "hahaha");
-            setProperty(JdbcDatabaseConnectionManager.DATABASE, "matrix");
-            setProperty(JdbcDatabaseConnectionManager.DRIVER, "org.postgresql.Driver");
+            setProperty(JdbcConnectionManager.URL, "");
+            setProperty(JdbcConnectionManager.USERNAME, "newo");
+            setProperty(JdbcConnectionManager.PASSWORD, "hahaha");
+            setProperty(JdbcConnectionManager.DATABASE, "matrix");
+            setProperty(JdbcConnectionManager.DRIVER, "org.postgresql.Driver");
         }};
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})
-    public static DatabaseConnectionManager newDatabaseConnectionManager(
+    public static ConnectionManager newDatabaseConnectionManager(
             Properties props,
             JdbcConnectionFactory factory
     ) throws Exception {
-        return JdbcDatabaseConnectionManager.makeDatabaseConnectionManager(props, factory);
+        return JdbcConnectionManager.makeDatabaseConnectionManager(props, factory);
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})
-    public static DatabaseConnectionManager newDatabaseConnectionManager(
+    public static ConnectionManager newDatabaseConnectionManager(
             Properties props
     ) throws Exception {
          return DBTuneInstances.newDatabaseConnectionManager(props, newJdbcConnectionFactory());
     }
 
-    public static DatabaseConnectionManager newDatabaseConnectionManagerWithSwitchOffOnce(
+    public static ConnectionManager newDatabaseConnectionManagerWithSwitchOffOnce(
             Properties props
     ) throws Exception {
         return DBTuneInstances.newDatabaseConnectionManager(props, makeJdbcConnectionFactoryWithSwitchOffOnce());

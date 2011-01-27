@@ -145,6 +145,54 @@ public class Strings {
         return value.toString();
     }
 
+    // does not accept nulls
+    public static String[] splits(String text, char separator){
+        final String string     = Checks.checkNotNull(text);
+        final char   separ      = Checks.checkNotNull(separator);
+        if(isEmpty(string)) return new String[0];
+        final List<String> words = Instances.newLinkedList();
+        int     idx         = 0;
+        int     start       = 0;
+        boolean foundMatch  = false;
+        while(idx < string.length()){
+            if(string.charAt(idx) == separ){
+              if(foundMatch){
+                  // once the word is added, reset the value of foundMatch
+                  foundMatch = !(words.add(string.substring(start, idx)));
+              }
+
+              start = ++idx;
+              continue;
+            }
+
+            foundMatch = true;
+            idx++;
+        }
+
+        if(foundMatch) words.add(string.substring(start, idx));
+        return words.toArray(new String[words.size()]);
+    }
+
+    /**
+     * checks if a String is empty ("") or null.
+     * @param str
+     *      string to be checked.
+     * @return true if the string is empty; false otherwise.
+     */
+    public static boolean isEmpty(String str) {
+      return (null == str || str.length() == 0);
+    }
+
+    /**
+     * check if two strings are the same.
+     * @param left string
+     * @param right string
+     * @return {@code true} if they are the same. {@code false} otherwise.
+     */
+    public static boolean same(String left, String right){
+        return left.equals(right) || left.equalsIgnoreCase(right);
+    }
+
 
     /**
      * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)

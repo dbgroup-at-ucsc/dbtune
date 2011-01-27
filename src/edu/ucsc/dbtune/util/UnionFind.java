@@ -24,7 +24,7 @@ public class UnionFind {
 	 * It will not print sets that are disjoint from the filter.
 	 * Other sets might be printed.
 	 */
-	public void print(DefaultBitSet filter) {
+	public void print(IndexBitSet filter) {
 		Elt[] tempElts = flip();
 		
 		for (int e = 0; e < eltCount; e++) {
@@ -113,11 +113,11 @@ public class UnionFind {
 	}
 
 	// return the partitioning of elements 
-	public DefaultBitSet[] sets() {
+	public IndexBitSet[] sets() {
 		int setCount = numSets();
-		DefaultBitSet[] sets = new DefaultBitSet[setCount];
+		IndexBitSet[] sets = new IndexBitSet[setCount];
 		for (int i = 0; i < setCount; i++)
-			sets[i] = new DefaultBitSet();
+			sets[i] = new IndexBitSet();
 		
 		// get the flipped representation	
 		Elt[] tempElts = flip();

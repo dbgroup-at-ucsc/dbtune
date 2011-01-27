@@ -22,7 +22,7 @@
  * <p>The principal public APIs in this package are:
  *
  * <dl>
- * <dt>{@link edu.ucsc.dbtune.core.DatabaseConnectionManager}
+ * <dt>{@link ConnectionManager}
  * <dd>The interface that you will use in your implementation classes to tell DBTune
  *     to create connections to a specific dbms.
  *
@@ -31,10 +31,10 @@
  *     Additionally, this is the interface that you will use to retrieve dbms-specific index
  *     extraction and what-if optimizer strategies.
  *
- * <dt>{@link edu.ucsc.dbtune.core.DatabaseIndexExtractor}
+ * <dt>{@link IndexExtractor}
  * <dd>The object that DBTune uses to perform operations dealing with index extraction.
  *
- * <dt>{@link edu.ucsc.dbtune.core.DatabaseWhatIfOptimizer}
+ * <dt>{@link IBGWhatIfOptimizer}
  * <dd>The object that DBTune uses to perform operations dealing with what-if optimizations.
  *
  * </dl>

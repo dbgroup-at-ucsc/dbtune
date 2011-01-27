@@ -38,6 +38,16 @@ public abstract class AbstractExplainInfo implements ExplainInfo {
         this.category = category;
     }
 
+    @Override
+    public boolean isQuery() {
+        return getSQLCategory().isSame(SQLCategory.QUERY);
+    }
+
+    @Override
+    public double getTotalCost() {
+        return 0;
+    }
+
     /**
      * @return
      *      a {@link SQLCategory} object.
@@ -48,6 +58,6 @@ public abstract class AbstractExplainInfo implements ExplainInfo {
 
     @Override
     public boolean isDML() {
-        return getSQLCategory() == SQLCategory.DML;
+        return getSQLCategory().isSame(SQLCategory.DML);
     }
 }

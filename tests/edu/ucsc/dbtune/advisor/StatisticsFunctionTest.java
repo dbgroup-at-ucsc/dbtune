@@ -25,7 +25,7 @@ import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.After;
 import org.junit.Before;
@@ -61,7 +61,7 @@ public class StatisticsFunctionTest {
         final List<PGIndex> callback = Instances.newList();
         final DynamicIndexSet<PGIndex> dynamicSet = makeDynamicIndexSet(callback, 1, 2, 3, 4);
         pgStatistics.addQuery(makeProfiledQuery(callback), dynamicSet);
-        final double b = pgStatistics.benefit(callback.get(0), new DefaultBitSet());
+        final double b = pgStatistics.benefit(callback.get(0), new IndexBitSet());
         assertTrue(Double.compare(-1.6666666666666667, b) == 0);
     }
 
@@ -78,7 +78,7 @@ public class StatisticsFunctionTest {
 
         return new ProfiledQuery.Builder<PGIndex>("SELECT * FROM R;")
                .snapshotOfCandidateSet(candidatePool.getSnapshot())
-               .indexBenefitGraph(new IndexBenefitGraph(makeIBGNode(), 5.0, new DefaultBitSet()))
+               .indexBenefitGraph(new IndexBenefitGraph(makeIBGNode(), 5.0, new IndexBitSet()))
                .explainInfo(new PGExplainInfo(SQLStatement.SQLCategory.DML, new double[]{5.0, 3.0, 7.0, 6.0}))
                .interactionBank(makeInteractionBank())
                .indexBenefitGraphAnalysisTime(40000).get();
@@ -86,9 +86,9 @@ public class StatisticsFunctionTest {
 
     private static IndexBenefitGraph.IBGNode makeIBGNode() throws Exception {
         //IBGNode(BitSet config, int id) {
-        final Constructor<IndexBenefitGraph.IBGNode> c = IndexBenefitGraph.IBGNode.class.getDeclaredConstructor(DefaultBitSet.class, int.class);
+        final Constructor<IndexBenefitGraph.IBGNode> c = IndexBenefitGraph.IBGNode.class.getDeclaredConstructor(IndexBitSet.class, int.class);
         c.setAccessible(true);
-        return c.newInstance(new DefaultBitSet(), 555555555);
+        return c.newInstance(new IndexBitSet(), 555555555);
     }
 
 

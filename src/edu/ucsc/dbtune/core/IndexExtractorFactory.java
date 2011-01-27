@@ -21,9 +21,9 @@ package edu.ucsc.dbtune.core;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DatabaseIndexExtractorFactory {
+public interface IndexExtractorFactory extends ResourceFactory {
     /**
-     * makes a new {@link DatabaseIndexExtractor} object.
+     * makes a new {@link IndexExtractor} object.
      *
      * @param advisorFolder
      *      a folder where the output of the advisor's execution will be placed.
@@ -32,5 +32,5 @@ public interface DatabaseIndexExtractorFactory {
      * @return
      *      a dbms-specific index extractor.
      */
-    DatabaseIndexExtractor makeIndexExtractor(String advisorFolder, DatabaseConnection connection);
+    IndexExtractor newIndexExtractor(String advisorFolder, DatabaseConnection connection);
 }

@@ -44,7 +44,7 @@ public class PGIndexSchema implements DatabaseIndexSchema, Serializable {
     /**
      * construct a {@code PGIndexSchema} object.
      * @param reloid
-     *     relation object id? todo(Huascar) ask for the def of this...
+     *     relation object id
      * @param isSync
      *    indicate whether is sync or not.
      * @param columns

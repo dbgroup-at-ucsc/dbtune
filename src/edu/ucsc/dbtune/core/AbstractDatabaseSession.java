@@ -24,7 +24,6 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -36,16 +35,17 @@ import java.util.concurrent.atomic.AtomicReference;
 abstract class AbstractDatabaseSession implements DatabaseSession {
     protected final AtomicReference<Statement>  sqlStatement;
     protected final AtomicReference<Connection> sqlConnection;
-    private   final AtomicBoolean               closed;
+
 
     /**
      * construct an {@code AbstractDatabaseSession} instance. This constructor is
      * intended to be called by this class's subclasses.
+     * @param connection
+     *      a java.sql.Connection.
      */
-    protected AbstractDatabaseSession(){
+    protected AbstractDatabaseSession(Connection connection){
         sqlStatement  = new AtomicReference<Statement>();
-        sqlConnection = new AtomicReference<Connection>();
-        closed        = new AtomicBoolean(false);
+        sqlConnection = new AtomicReference<Connection>(connection);
     }
 
     /**
@@ -65,14 +65,13 @@ abstract class AbstractDatabaseSession implements DatabaseSession {
     public void commit() throws SQLException {
         ensureSessionIsOpened();
         sqlConnection.get().commit();
-    }    
+    }
 
     @Override
     public void close() throws SQLException {
-        ensureSessionIsOpened();
+        if(isClosed()) return;
         try {
             sqlConnection.get().close();
-            closed.set(true);
         } finally {
             cleanup();
         }
@@ -134,7 +133,16 @@ abstract class AbstractDatabaseSession implements DatabaseSession {
 
     @Override
     public boolean isClosed() {
-        return sqlConnection.get() == null;
+        if (sqlConnection.get() == null){
+          return true;
+        } else {
+            try {
+                return sqlConnection.get().isClosed();
+            } catch (SQLException e) {
+                return false;
+            }
+        }
+
     }
 
     @Override

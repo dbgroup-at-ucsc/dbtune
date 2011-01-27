@@ -25,20 +25,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static edu.ucsc.dbtune.util.Instances.newTrueBoolean;
 
 /**
- * This class provides a skeletal implementation of the {@link DatabaseIndexExtractor}
+ * This class provides a skeletal implementation of the {@link IndexExtractor}
  * interface to minimize the effort required to implement this interface.
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseIndexExtractor implements DatabaseIndexExtractor {
+abstract class AbstractIndexExtractor implements IndexExtractor {
     private final AtomicBoolean  enabled;
-    protected AbstractDatabaseIndexExtractor(){
+    protected AbstractIndexExtractor(){
         enabled = newTrueBoolean();
-    }
-
-    @Override
-    public void disable(){
-        enabled.set(false);
     }
 
     /**
@@ -50,7 +45,7 @@ abstract class AbstractDatabaseIndexExtractor implements DatabaseIndexExtractor 
 
     @Override
     public String toString() {
-        return new ToStringBuilder<AbstractDatabaseIndexExtractor>(this)
+        return new ToStringBuilder<AbstractIndexExtractor>(this)
                .add("enabled?", isEnabled())
                .toString();
     }

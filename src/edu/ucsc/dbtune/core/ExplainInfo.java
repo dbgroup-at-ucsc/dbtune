@@ -19,9 +19,17 @@
 package edu.ucsc.dbtune.core;
 
 /**
- * It represents the output of a what-if optimization call.
+ * An immutable type, which describes the output of a what-if optimization
+ * call.
+ * @see {@link WhatIfOptimizer} for more details.
  */
 public interface ExplainInfo {
+    /**
+     * @return the total estimated cost of indexes in they were to be
+     *      materialized.
+     */
+    double getTotalCost();
+
     /**
      * gets the maintenance cost of an index.
      *
@@ -30,7 +38,7 @@ public interface ExplainInfo {
      * @return
      *      maintenance cost.
      */
-	double maintenanceCost(DBIndex index);
+	double getIndexMaintenanceCost(DBIndex index);
 
     /**
      * @return {@code true} if it's
@@ -38,4 +46,11 @@ public interface ExplainInfo {
      *      {@code false} otherwise.
      */
     boolean isDML();
+
+    /**
+     * @return {@code true} if it's
+     *      {@link SQLStatement.SQLCategory#QUERY},
+     *      {@code false} otherwise.
+     */
+    boolean isQuery();
 }

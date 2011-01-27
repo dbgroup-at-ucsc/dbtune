@@ -31,18 +31,13 @@ import java.sql.SQLException;
  * @see edu.ucsc.dbtune.core.ExplainInfo
  * @see edu.ucsc.dbtune.core.DBIndex
  */
-public interface DatabaseIndexExtractor {
+public interface IndexExtractor {
     /**
-     * preps up the database before calculating any optimization cost.
+     * preps up the database before recommending indexes.
      * @param connection
      *      a database connection to be adjusted.
      */
     void adjust(DatabaseConnection connection);
-
-    /**
-     * disable extractor once <em>its</em> {@code DatabaseConnection} has been closed.
-     */
-    void disable();
 
     /**
      * recommends a {@link Iterable list} of indexes that could help improve performance, given a

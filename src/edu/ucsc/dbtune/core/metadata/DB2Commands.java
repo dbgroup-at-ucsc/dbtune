@@ -21,10 +21,10 @@ package edu.ucsc.dbtune.core.metadata;
 import edu.ucsc.dbtune.core.CostLevel;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.SQLStatement;
-import edu.ucsc.dbtune.spi.core.Command;
+import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.util.*;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -45,103 +45,103 @@ import static edu.ucsc.dbtune.util.Instances.newTreeSet;
 public class DB2Commands {
     private DB2Commands(){}
 
-    public static Command<Integer, SQLException> clearExplainObject(){
+    public static Function<Integer, SQLException> clearExplainObject(){
         return makeIntegerCallback(
                 "clearExplainObject", 
                 "DELETE FROM explain_object"
         );
     }
 
-    public static Command<Integer, SQLException> clearExplainStatement(){
+    public static Function<Integer, SQLException> clearExplainStatement(){
         return makeIntegerCallback(
                 "clearExplainStatement", 
                 "DELETE FROM explain_statement"
         );
     }
 
-    public static Command<Integer, SQLException> clearExplainPredicate(){
+    public static Function<Integer, SQLException> clearExplainPredicate(){
         return makeIntegerCallback(
                 "clearExplainPredicate", 
                 "DELETE FROM explain_predicate"
         );
     }
 
-    public static Command<Integer, SQLException> clearExplainOperator(){
+    public static Function<Integer, SQLException> clearExplainOperator(){
         return makeIntegerCallback(
                 "clearExplainOperator", 
                 "DELETE FROM explain_operator"
         );
     }
 
-    public static Command<Integer, SQLException> clearAdviseIndex(){
+    public static Function<Integer, SQLException> clearAdviseIndex(){
         return makeIntegerCallback(
                 "clearAdviseIndex", 
                 "DELETE FROM advise_index"
         );
     }
     
-    public static Command<Integer, SQLException> enableAdviseIndexRows(){
+    public static Function<Integer, SQLException> enableAdviseIndexRows(){
         return EnableAdviseIndexRows.INSTANCE;
     }
 
-    public static Command<Void, SQLException> explainModeRecommendIndexes(){
+    public static Function<Void, SQLException> explainModeRecommendIndexes(){
         return makeCommand(
                 "explainModeRecommendIndexes", 
                 "SET CURRENT EXPLAIN MODE = RECOMMEND INDEXES"
         );
     }
 
-    public static Command<Void, SQLException> explainModeEvaluateIndexes(){
+    public static Function<Void, SQLException> explainModeEvaluateIndexes(){
         return makeCommand(
                 "explainModeEvaluateIndexes", 
                 "SET CURRENT EXPLAIN MODE = EVALUATE INDEXES"
         );
     }
 
-    public static Command<Void, SQLException> explainModeNo(){
+    public static Function<Void, SQLException> explainModeNo(){
         return makeCommand(
                 "explainModeNo", 
                 "SET CURRENT EXPLAIN MODE = NO"
         );
     }
 
-    public static Command<Void, SQLException> explainModeExplain(){
+    public static Function<Void, SQLException> explainModeExplain(){
         return makeCommand(
                 "explainModeExplain", 
                 "SET CURRENT EXPLAIN MODE = EXPLAIN"
         );
     }
 
-    public static Command<CostLevel, SQLException> fetchExplainStatementTotals(){
+    public static Function<CostLevel, SQLException> fetchExplainStatementTotals(){
         return FetchExplainStatementTotals.INSTANCE;
     }
 
-    public static Command<SQLStatement.SQLCategory, SQLException> fetchExplainStatementType(){
+    public static Function<SQLStatement.SQLCategory, SQLException> fetchExplainStatementType(){
         return FetchExplainStatementTypeStatement.INSTANCE;
     }
 
-    public static Command<Void, SQLException> fetchExplainObjectCandidates(){
+    public static Function<Void, SQLException> fetchExplainObjectCandidates(){
         return FetchExplainObjectCandidates.INSTANCE;
     }
 
 
-    public static Command<Double, SQLException> fetchExplainOpUpdateCost(){
+    public static Function<Double, SQLException> fetchExplainOpUpdateCost(){
         return FetchExplainOpUpdateCost.INSTANCE;
     }
     
 
-    public static Command<String, SQLException> fetchExplainPredicateString(){
+    public static Function<String, SQLException> fetchExplainPredicateString(){
         return FetchExplainPredicateString.INSTANCE;
     }
     
-    public static Command<DB2QualifiedName, SQLException>  fetchExplainObjectUpdatedTable(){
+    public static Function<DB2QualifiedName, SQLException> fetchExplainObjectUpdatedTable(){
         return FetchExplainObjectUpdatedTable.INSTANCE;
     }
 
     /**
      * @return a function that handles isolationLevelReadCommitted query.
      */
-    public static Command<Void, SQLException> isolationLevelReadCommitted(){
+    public static Function<Void, SQLException> isolationLevelReadCommitted(){
         return makeCommand(
                 "isolationLevelReadCommitted", 
                 "SET ISOLATION READ COMMITTED"
@@ -149,34 +149,34 @@ public class DB2Commands {
     }
 
 
-    public static Command<Integer, SQLException> loadAdviseIndex(){
+    public static Function<Integer, SQLException> loadAdviseIndex(){
         return LoadAdviseIndex.INSTANCE;
     }
 
-    private static Command<Void, SQLException> makeCommand(final String type, final String value){
+    private static Function<Void, SQLException> makeCommand(final String type, final String value){
         return DefaultCommand.makeNewCommand(type, value);
     }
 
 
-    private static Command<Integer, SQLException> makeIntegerCallback(String type, String value){
+    private static Function<Integer, SQLException> makeIntegerCallback(String type, String value){
         return IntegerCallback.makeIntegerCallback(type, value);
     }
 
-    public static Command<List<DB2IndexMetadata>, SQLException> readAdviseOnAllIndexes(){
+    public static Function<List<DB2IndexMetadata>, SQLException> readAdviseOnAllIndexes(){
         return ReadAdviseOnAllIndexes.INSTANCE;
     }
 
-    public static Command<DB2IndexMetadata, SQLException> readAdviseOnOneIndex(){
+    public static Function<DB2IndexMetadata, SQLException> readAdviseOnOneIndex(){
         return ReadAdviseOnOneIndex.INSTANCE;
     }
     
     // enum singleton pattern
-    private enum EnableAdviseIndexRows implements Command<Integer, SQLException> {
+    private enum EnableAdviseIndexRows implements Function<Integer, SQLException> {
         INSTANCE;
         @Override
         public Integer apply(Parameter input) throws SQLException {
             final Connection connection     = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-            final DefaultBitSet configuration  = input.getParameterValue(DefaultBitSet.class);
+            final IndexBitSet configuration  = input.getParameterValue(IndexBitSet.class);
 
             final Statement statement = connection.createStatement();
 
@@ -188,7 +188,7 @@ public class DB2Commands {
             return count;
         }
 
-        private String makeAlternateSQL(DefaultBitSet config){
+        private String makeAlternateSQL(IndexBitSet config){
             final StringBuilder builder = new StringBuilder();
             builder.append("UPDATE advise_index SET use_index = CASE WHEN iid IN (");
             boolean first = true;
@@ -209,7 +209,7 @@ public class DB2Commands {
         }
     }
     
-     private enum FetchExplainOpUpdateCost implements Command<Double, SQLException> {
+     private enum FetchExplainOpUpdateCost implements Function<Double, SQLException> {
          INSTANCE;
 
          private static final StringBuilder QUERY = new StringBuilder();
@@ -254,7 +254,7 @@ public class DB2Commands {
          }
      }
     
-    private enum FetchExplainPredicateString implements Command<String, SQLException> {
+    private enum FetchExplainPredicateString implements Function<String, SQLException> {
         INSTANCE;
         private static final StringBuilder QUERY = new StringBuilder();
         static {
@@ -304,7 +304,7 @@ public class DB2Commands {
     }
 
     // enum singleton pattern.
-    private enum FetchExplainObjectUpdatedTable implements Command<DB2QualifiedName, SQLException> {
+    private enum FetchExplainObjectUpdatedTable implements Function<DB2QualifiedName, SQLException> {
         INSTANCE;
         private static final StringBuilder QUERY = new StringBuilder();
         static {
@@ -345,7 +345,7 @@ public class DB2Commands {
 
 
     // enum singleton pattern
-    private static class DefaultCommand implements Command<Void, SQLException> {
+    private static class DefaultCommand implements Function<Void, SQLException> {
         private String type;
         private String value;
         DefaultCommand(String type, String value){
@@ -375,7 +375,7 @@ public class DB2Commands {
     }
 
     // enum singleton pattern
-    private enum FetchExplainStatementTotals implements Command<CostLevel, SQLException> {
+    private enum FetchExplainStatementTotals implements Function<CostLevel, SQLException> {
         INSTANCE;
         private static final StringBuilder QUERY = new StringBuilder();
         static {
@@ -414,7 +414,7 @@ public class DB2Commands {
         }
     }
 
-    private enum FetchExplainObjectCandidates implements Command<Void, SQLException> {
+    private enum FetchExplainObjectCandidates implements Function<Void, SQLException> {
         INSTANCE;
         private static final StringBuilder QUERY = new StringBuilder();
         static{
@@ -432,7 +432,7 @@ public class DB2Commands {
         @Override
         public Void apply(Parameter input) throws SQLException {
             final Connection c  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-            final DefaultBitSet b  = input.getParameterValue(DefaultBitSet.class);
+            final IndexBitSet b  = input.getParameterValue(IndexBitSet.class);
             if(ps == null){
                 ps = c.prepareStatement(QUERY.toString());
             }
@@ -452,7 +452,7 @@ public class DB2Commands {
     }
 
     // enum singleton pattern
-    private enum FetchExplainStatementTypeStatement implements Command<SQLStatement.SQLCategory, SQLException> {
+    private enum FetchExplainStatementTypeStatement implements Function<SQLStatement.SQLCategory, SQLException> {
         INSTANCE;
 
         @Override
@@ -499,7 +499,7 @@ public class DB2Commands {
         }
     }
 
-    private static class IntegerCallback implements Command<Integer, SQLException> {
+    private static class IntegerCallback implements Function<Integer, SQLException> {
         private String type;
         private String value;
         IntegerCallback(String type, String value){
@@ -526,7 +526,7 @@ public class DB2Commands {
         }
     }
 
-    private enum LoadAdviseIndex implements Command<Integer, SQLException>{
+    private enum LoadAdviseIndex implements Function<Integer, SQLException> {
         INSTANCE;
 
         private Statement statement;
@@ -573,7 +573,7 @@ public class DB2Commands {
 
 
     // enum singleton pattern
-    private enum ReadAdviseOnAllIndexes implements Command<List<DB2IndexMetadata>, SQLException> {
+    private enum ReadAdviseOnAllIndexes implements Function<List<DB2IndexMetadata>, SQLException> {
         INSTANCE;
 
         private static final StringBuilder QUERY_ALL = new StringBuilder();
@@ -617,7 +617,7 @@ public class DB2Commands {
     }
 
     // enum singleton pattern
-    private enum ReadAdviseOnOneIndex implements Command<DB2IndexMetadata, SQLException> {
+    private enum ReadAdviseOnOneIndex implements Function<DB2IndexMetadata, SQLException> {
         INSTANCE;
 
         private static final StringBuilder QUERY_ONE = new StringBuilder();

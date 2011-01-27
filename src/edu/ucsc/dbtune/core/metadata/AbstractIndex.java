@@ -27,11 +27,25 @@ import edu.ucsc.dbtune.core.DatabaseTable;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractDatabaseIndex implements DBIndex {
+abstract class AbstractIndex implements DBIndex {
     protected final int       internalId;
     protected final String    creationText;
     protected final double    creationCost;
     protected final double    size;
+
+    /**
+     * construct an index give certain metadata.
+     * @param descriptor
+     *      descriptor of an index.
+     */
+    protected AbstractIndex(IndexDescriptor descriptor){
+        this(
+                descriptor.getInternalId(),
+                descriptor.getCreationStatement(),
+                descriptor.getSize(),
+                descriptor.getCreationCost()
+        );
+    }
 
     /**
      * construct {@code AbstractDBIndex} given an internalId, creationText,
@@ -45,7 +59,7 @@ abstract class AbstractDatabaseIndex implements DBIndex {
      * @param creationCost
      *      {@link edu.ucsc.dbtune.core.DBIndex}'s creation cost.
      */
-    protected AbstractDatabaseIndex(
+    protected AbstractIndex(
             int internalId,
             String creationText,
             double size,
@@ -81,5 +95,4 @@ abstract class AbstractDatabaseIndex implements DBIndex {
     public double megabytes() {
         return size;
     }
-
 }

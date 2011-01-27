@@ -23,24 +23,16 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-class JdbcDatabaseConnection extends AbstractDatabaseConnection
-        implements DatabaseConnection {
-
+class JdbcConnection extends AbstractDatabaseConnection implements DatabaseConnection {
     /**
      * construct a new {@code DefaultDatabaseConnection} object.
-     * @param connectionManager
-     *      a {@link edu.ucsc.dbtune.core.DatabaseConnectionManager} instance.
      * @param sqlConnection
      *      a {@link java.sql.Connection} instance.
      */
-    public JdbcDatabaseConnection(
-            DatabaseConnectionManager connectionManager,
-            Connection sqlConnection
-    ){
-        super(connectionManager);
-        this.sqlConnection.compareAndSet(null, sqlConnection);
+    public JdbcConnection(Connection sqlConnection){
+        super(sqlConnection);
         setStatement(makeStatement(sqlConnection));
     }
 

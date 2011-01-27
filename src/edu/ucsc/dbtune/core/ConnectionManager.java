@@ -21,17 +21,24 @@ package edu.ucsc.dbtune.core;
 import java.sql.SQLException;
 
 /**
- * manages a set of {@link edu.ucsc.dbtune.core.DatabaseConnection} instances.  A database connection is established by
- * invoking {@link DatabaseConnectionManager#connect()}. All the connections managed by this connection manager can be
+ * manages a set of {@link DatabaseConnection} instances.  A database connection is established by
+ * invoking {@link ConnectionManager#connect()}. All the connections managed by this connection manager can be
  * closed using {@link #close()}.
  *
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface DatabaseConnectionManager {
+public interface ConnectionManager {
     /**
      * @return the name of the used database.
      */
     String getDatabaseName();
+
+    /**
+     * @return either {@link DatabaseSystem#POSTGRES} or
+     *      {@link DatabaseSystem#DB2}, which are the currently
+     *      supported {@link DatabaseSystem}s.
+     */
+    DatabaseSystem getDatabaseSystem();
 
     /**
 	 * sets the connection manager's state to <em>open</em> by establishing a new database connection

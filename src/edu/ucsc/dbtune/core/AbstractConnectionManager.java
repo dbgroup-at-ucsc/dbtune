@@ -18,16 +18,52 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.util.ToStringBuilder;
+
 /**
+ * This class provides a skeletal implementation of the {@link ConnectionManager}
+ * interface to minimize the effort required to implement this interface.
+ *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface DatabaseWhatIfOptimizerFactory {
-    /**
-     * makes a new {@link edu.ucsc.dbtune.core.DatabaseWhatIfOptimizer} object.
-     * @param connection
-     *      the {@link edu.ucsc.dbtune.core.DatabaseConnection} that gets this {@code optimizer} assigned to.
-     * @return
-     *      a dbms-specific what-if optimizer.
-     */
-    DatabaseWhatIfOptimizer makeWhatIfOptimizer(DatabaseConnection connection);
+abstract class AbstractConnectionManager
+        implements ConnectionManager {
+
+	private final String username;
+	private final String password;
+	private final String database;
+
+	protected AbstractConnectionManager(
+            String username,
+            String password,
+            String database
+    ) {
+		this.username = Checks.checkNotNull(username);
+		this.password = Checks.checkNotNull(password);
+		this.database = Checks.checkNotNull(database);
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+    @Override
+    public String getDatabaseName() {
+        return database;
+    }
+
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder<AbstractConnectionManager>(this)
+                .add("username", getUsername())
+                .add("password", "......hidden.........")
+                .add("database", getDatabaseName())
+                .toString();
+    }
 }

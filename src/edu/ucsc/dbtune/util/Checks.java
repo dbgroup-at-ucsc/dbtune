@@ -60,6 +60,24 @@ public class Checks {
     }
 
     /**
+     * checks if a precondition is satisfied. If the result of the check is false, then throw a
+     * {@link IllegalArgumentException illegal argument exception}. Do nothing otherwise.
+     * @param reference
+     *      an object to be checked.
+     * @param expression
+     *      expression being asserted.
+     * @param errorMessage
+     *      user-specified error message.
+     * @param <T>
+     *      type of object being checked.
+     * @return  well-behaved reference.
+     */
+    public static <T> T checkArgument(T reference, boolean expression, Object errorMessage) {
+       if(!expression) throw new IllegalArgumentException(String.valueOf(errorMessage));
+       return reference;
+    }
+
+    /**
      * asserts a given expressions. If the assertion is false, then throw a
      * {@link AssertionError assertion error}. Do nothing otherwise.
      * @param expression

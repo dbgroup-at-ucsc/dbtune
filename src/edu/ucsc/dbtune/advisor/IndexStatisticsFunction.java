@@ -21,7 +21,7 @@ import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -90,7 +90,7 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
             final ExplainInfo explainInfo   = queryInfo.getExplainInfo();
 
 			double bestBenefit = bank.bestBenefit(index.internalId())
-								 - explainInfo.maintenanceCost(index);
+								 - explainInfo.getIndexMaintenanceCost(index);
 			if (bestBenefit != 0) {
 				// add measurement, creating new window if necessary
 				MeasurementWindow benwin = benefitWindows.get(index);
@@ -157,7 +157,7 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
     }
 
     @Override
-    public double benefit(I a, DefaultBitSet m) {
+    public double benefit(I a, IndexBitSet m) {
         return benefit.apply(a, m);
     }
 
@@ -271,7 +271,7 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
         }
 
         @Override
-        public double apply(I arg, DefaultBitSet m) {
+        public double apply(I arg, IndexBitSet m) {
             if (statistics.currentTimeStamp == 0)
                 return 0;
             final MeasurementWindow window = statistics.benefitWindows.get(arg);

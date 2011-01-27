@@ -27,7 +27,7 @@ import java.sql.SQLException;
 
 import static edu.ucsc.dbtune.util.Checks.checkNotNull;
 
-public class DB2Index extends AbstractDatabaseIndex implements Serializable {
+public class DB2Index extends AbstractIndex implements Serializable {
 	// serialized fields
 	protected DB2IndexMetadata meta;
 	private int hashCodeCache;

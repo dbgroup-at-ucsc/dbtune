@@ -21,9 +21,11 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.ExplainInfo;
+import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
@@ -73,7 +75,7 @@ public class BcBenefitInfo<I extends DBIndex> {
 	static <I extends DBIndex> BcBenefitInfo<I> genBcBenefitInfo(DatabaseConnection conn,
                                                                     Snapshot<I> snapshot,
                                                                     StaticIndexSet<I> hotSet,
-                                                                    DefaultBitSet config,
+                                                                    IndexBitSet config,
                                                                     ProfiledQuery<I> profiledQuery
     ) throws SQLException {
 		String sql = profiledQuery.getSQL();
@@ -82,9 +84,9 @@ public class BcBenefitInfo<I extends DBIndex> {
 		int[] reqLevels = new int[snapshot.maxInternalId()+1];
 		double[] overheads = new double[snapshot.maxInternalId()+1];
 		
-		conn.getWhatIfOptimizer().fixCandidates(snapshot);
-		DefaultBitSet tempBitSet = new DefaultBitSet();
-		DefaultBitSet usedColumns = new DefaultBitSet();
+		conn.getIBGWhatIfOptimizer().fixCandidates(snapshot);
+		IndexBitSet tempBitSet = new IndexBitSet();
+		IndexBitSet usedColumns = new IndexBitSet();
 		for (I idx : hotSet) {
 			int id = idx.internalId();
 			
@@ -93,12 +95,13 @@ public class BcBenefitInfo<I extends DBIndex> {
 			
 			// get original cost
 			tempBitSet.clear(id);
-			origCosts[id] = conn.getWhatIfOptimizer().whatIfOptimize(sql).using(tempBitSet, null, null).toGetCost();
+            final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
+			origCosts[id] = optimizer.estimateCost(sql, tempBitSet, Instances.newBitSet(), null);
 			
 			// get new cost
 			tempBitSet.set(id);
 			usedColumns.clear();
-			newCosts[id] = conn.getWhatIfOptimizer().whatIfOptimize(sql).using(tempBitSet, idx, usedColumns).toGetCost();
+			newCosts[id] = optimizer.estimateCost(sql, tempBitSet, usedColumns, idx);
 			
 			// get request level
 			reqLevels[id] = usedColumns.get(0)
@@ -107,7 +110,7 @@ public class BcBenefitInfo<I extends DBIndex> {
 			             
 			// get maintenance
 			ExplainInfo explainInfo = profiledQuery.getExplainInfo();
-			overheads[id] = explainInfo.isDML() ? explainInfo.maintenanceCost(idx) : 0;
+			overheads[id] = explainInfo.isDML() ? explainInfo.getIndexMaintenanceCost(idx) : 0;
 		}
 		
 		return new BcBenefitInfo<I>(origCosts, newCosts, reqLevels, overheads, profiledQuery);

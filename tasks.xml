@@ -26,6 +26,10 @@
         <mkdir dir="${build.dir}/${junit.report.dir}"/>
     </target>
 
+    <!--Huascar: Why are we setting the halting modes to "no"? This type of change should have been
+        consulted with the team. In opinion, this is a bad practice. You want the build to tell you that
+        there is an error. Now, it is going to some file and is unreadable. This is reducing productivity.
+     -->
     <target name="tests" depends="test.compile" description="Execute tests.">
         <echo message="running tests"/>
 	<junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">

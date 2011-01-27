@@ -18,65 +18,67 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
+import edu.ucsc.dbtune.util.IndexBitSet;
 
 import java.sql.SQLException;
 
 /**
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * An immutable type representing a variant of What-if optimizer concept in
+ * the dbtune api. This variant is suitable for the IBG-related use cases.
+ *
+ * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface DatabaseWhatIfOptimizer {
-    /**
-     * disable {@code WhatIfOptimizer} once <em>its</em> {@code DatabaseConnection} has been closed.
-     */
-    void disable();
-
-    /**
-     * provides information dealing with the
-     * {@link edu.ucsc.dbtune.core.ExplainInfo#maintenanceCost(edu.ucsc.dbtune.core.DBIndex) maintenance
-     * cost} associated with the use of a given index.
-     *
-     * @param sql
-     *      sql query.
-     * @return
-     *      a new {@link edu.ucsc.dbtune.core.ExplainInfo} instance.
-     * @throws java.sql.SQLException
-     *      an error has occurred when interacting with a database during
-     *      the explanation process.
-     */
-	ExplainInfo explainInfo(String sql) throws SQLException;
-
+public interface IBGWhatIfOptimizer extends WhatIfOptimizer {
     /**
 	 * This function prepares the database for what-if optimizations with the
-	 * given set of candidates (i.e., indexes). Each call to whatifOptimize is based on the
-	 * candidates indicated by this function.
-     *
-     *
-     *
+	 * given set of candidates (i.e., indexes). Each call to this function requires a
+     * a set of candidate indexes.
      * @param candidateSet
      *      a set of candidate indexes.
      * @throws java.sql.SQLException
      *      an error has occurred when interacting with a database during
      *      the fixing of candidates.
      */
-    void fixCandidates(Iterable<? extends DBIndex> candidateSet) throws SQLException;
+    void fixCandidates(Iterable<? extends DBIndex> candidateSet) throws
+         SQLException;
 
     /**
      * gets the total count of what-if optimizations were handled/performed
-     * by the {@link DatabaseIndexExtractor}
+     * by the {@link IBGWhatIfOptimizer}.
      * @return
      *     the total count of performed what-if optimizations.
      */
     int getWhatIfCount();
 
     /**
-     * calculates the cost of what-if optimization given a workload (sql query).
+     * estimate what-if optimization cost given a single sql statement.
      * @param sql
-     *      experiment's query needed for calculating the cost of what-if optimization.
-     * @return
-     *      the total cost of the optimization.
-     * @throws java.sql.SQLException
-     *      an error has occurred when building/running a what-if optimization scenario.
+     *      sql statement
+     * @param configuration
+     *      an index configuration
+     * @param used
+     *      the used indexes in the index configuration.
+     * @return the estimated optimization cost.
+     * @throws SQLException
+     *      unable to estimate cost due to the stated reasons.
      */
-    WhatIfOptimizationBuilder whatIfOptimize(String sql) throws SQLException;
+    double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used) throws
+           SQLException;
+
+    /**
+     * estimate what-if optimization cost given a single sql statement.
+     * @param sql
+     *      sql statement
+     * @param configuration
+     *      an index configuration
+     * @param used
+     *      the used indexes in the index configuration.
+     * @param profiledIndex
+     *      an already profiled {@link DBIndex} instance.
+     * @return the estimated optimization cost.
+     * @throws java.sql.SQLException
+     *      unable to estimate cost due to the stated reasons.
+     */
+    double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used, DBIndex profiledIndex) throws
+           SQLException;
 }

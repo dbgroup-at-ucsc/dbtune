@@ -21,76 +21,100 @@ package edu.ucsc.dbtune.core;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
 import static edu.ucsc.satuning.util.Util.newAtomicReference;
 
 /**
  * This class provides a skeletal implementation of the {@link DatabaseConnection}
  * interface to minimize the effort required to implement this interface.
  *
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 abstract class AbstractDatabaseConnection extends AbstractDatabaseSession
 implements DatabaseConnection {
-    private final AtomicReference<DatabaseConnectionManager> connectionManager;
-    private final AtomicReference<DatabaseIndexExtractor>    indexExtractor;
-    private final AtomicReference<DatabaseWhatIfOptimizer>   whatIfOptimizer;
+    private final AtomicReference<ConnectionManager>            connectionManager;
+    private final AtomicReference<IndexExtractor>               indexExtractor;
+    private final AtomicReference<IBGWhatIfOptimizer>           ibgWhatIfOptimizer;
+    private final AtomicReference<WhatIfOptimizer>              optimizer;
+
+    private final AtomicBoolean                                 once;
 
     /**
      * construct an abstract database connection object.
-     * @param connectionManager
-     *      connection manager instance.
+     * @param connection
+     *      a java.sql.Connection
      */
     protected AbstractDatabaseConnection(
-            DatabaseConnectionManager connectionManager
-    ){
-        super();
-        this.connectionManager  = newAtomicReference(connectionManager);
+            Connection connection){
+        super(connection);
+        this.connectionManager  = newAtomicReference();
         this.indexExtractor     = newAtomicReference();
-        this.whatIfOptimizer    = newAtomicReference();
+        this.ibgWhatIfOptimizer = newAtomicReference();
+        this.optimizer          = newAtomicReference();
+        this.once               = newFalseBoolean();
     }
 
     @Override
     void cleanup() throws SQLException {
         super.cleanup();
         getConnectionManager().close(this);
-        getIndexExtractor().disable();
-        getWhatIfOptimizer().disable();
         indexExtractor.set(null);
-        whatIfOptimizer.set(null);
+        optimizer.set(null);
+        ibgWhatIfOptimizer.set(null);
         connectionManager.set(null);
     }
 
-    @Override
-    public void install(DatabaseIndexExtractor newIndexExtractor, DatabaseWhatIfOptimizer newWhatIfOptimizer) {
-        indexExtractor.compareAndSet(indexExtractor.get(), newIndexExtractor);
-        whatIfOptimizer.compareAndSet(whatIfOptimizer.get(), newWhatIfOptimizer);
+    protected void createdBy(ConnectionManager connectionManager){
+        this.connectionManager.set(connectionManager);
+    }
+
+    protected DatabaseSystem getDatabaseSystem() {
+        return getConnectionManager().getDatabaseSystem();
     }
 
     @Override
-    public DatabaseConnectionManager getConnectionManager() {
+    public final void loadResources() {
+        if(once.get()) return;
+        final DatabaseSystem trait = getDatabaseSystem();
+        indexExtractor.set(trait.getIndexExtractor(this));
+        optimizer.set(trait.getSimplifiedWhatIfOptimizer(this));
+        ibgWhatIfOptimizer.set(trait.getIBGWhatIfOptimizer(this));
+        once.set(true);
+    }
+
+    @Override
+    public ConnectionManager getConnectionManager() {
         return Checks.checkNotNull(connectionManager.get());
     }
 
     @Override
-    public DatabaseIndexExtractor getIndexExtractor() {
+    public IndexExtractor getIndexExtractor() {
         return Checks.checkNotNull(indexExtractor.get());
     }
 
     @Override
-    public DatabaseWhatIfOptimizer getWhatIfOptimizer() {
-        return Checks.checkNotNull(whatIfOptimizer.get());
+    public WhatIfOptimizer getWhatIfOptimizer() {
+        return Checks.checkNotNull(optimizer.get());
+    }
+
+    @Override
+    public IBGWhatIfOptimizer getIBGWhatIfOptimizer() {
+        return Checks.checkNotNull(ibgWhatIfOptimizer.get());
     }
 
 
     @Override
     public String toString() {
         return new ToStringBuilder<AbstractDatabaseConnection>(this)
-                .add("connectionManager", getConnectionManager())
-                .add("indexExtractor", getIndexExtractor())
-                .add("whatIfOptimizer", getWhatIfOptimizer())
+                .add("connectionManager", connectionManager.get())
+                .add("indexExtractor", indexExtractor.get())
+                .add("ibgWhatIfOptimizer", ibgWhatIfOptimizer.get())
+                .add("simplifiedWhatIfOptimizer", optimizer.get())
                 .add("open", isOpened())
                 .toString();
     }

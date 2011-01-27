@@ -25,6 +25,7 @@ import java.sql.Types;
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
+//todo(Huascar) talk to Ivo about this: This class should an Enum.
 public class SQLTypes
 {
     /** standard */

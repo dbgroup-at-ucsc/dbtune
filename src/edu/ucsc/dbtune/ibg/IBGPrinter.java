@@ -20,11 +20,11 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGPrinter {
-	private final DefaultBitSet visited;
+	private final IndexBitSet visited;
 	private final IBGNodeQueue  pending;
     private static final int INITIAL_MSG_SIZE = 10000;
 
@@ -32,7 +32,7 @@ public class IBGPrinter {
      * construct a new {@link IBGPrinter} object.
      */
     public IBGPrinter(){
-        this(new DefaultBitSet(), new IBGNodeQueue());
+        this(new IndexBitSet(), new IBGNodeQueue());
     }
 
     /**
@@ -41,7 +41,7 @@ public class IBGPrinter {
      * @param visited set of visited nodes.
      * @param pending a queue of pending nodes (i.e., nodes to be visited).
      */
-    IBGPrinter(DefaultBitSet visited, IBGNodeQueue pending){
+    IBGPrinter(IndexBitSet visited, IBGNodeQueue pending){
         this.visited = visited;
         this.pending = pending;
     }

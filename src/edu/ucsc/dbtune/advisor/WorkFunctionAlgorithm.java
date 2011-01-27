@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -187,10 +187,10 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 		int newSubsetCount = newPartitions.subsetCount();
 		int oldSubsetCount = submachines.length;
 		SubMachineArray<I> submachines2 = new SubMachineArray<I>(newSubsetCount);
-		DefaultBitSet overlappingSubsets = new DefaultBitSet();
+		IndexBitSet overlappingSubsets = new IndexBitSet();
 		
 		// get the set of previously hot indexes
-		DefaultBitSet oldHotSet = new DefaultBitSet();
+		IndexBitSet oldHotSet = new IndexBitSet();
 		for (SubMachine<I> oldSubmachine : submachines) {
 			for (int oldIndexId : oldSubmachine.indexIds) {
 				oldHotSet.set(oldIndexId);
@@ -204,7 +204,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 			IndexPartitions.Subset<I> newSubset = newPartitions.get(newSubsetNum);
 			
 			// translate old recommendation into a new one.
-			DefaultBitSet recBitSet = new DefaultBitSet();
+			IndexBitSet recBitSet = new IndexBitSet();
 			int recStateNum = 0;
 			int i = 0;
 			for (I index : newSubset) {
@@ -276,12 +276,12 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      * @param bitSet
      *      an index configuration.
      */
-	static void setStateBits(int[] ids, int stateNum, DefaultBitSet bitSet) {
+	static void setStateBits(int[] ids, int stateNum, IndexBitSet bitSet) {
 		for (int i = 0; i < ids.length; i++)
 			bitSet.set(ids[i], 0 != (stateNum & (1 << i)));
 	}
 
-	private static void clearStateBits(int[] ids, DefaultBitSet bitSet) {
+	private static void clearStateBits(int[] ids, IndexBitSet bitSet) {
         for (int id : ids) bitSet.clear(id);
 	}
 	
@@ -295,7 +295,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 		return false;
 	}
 	
-	public static <J extends DBIndex> double transitionCost(Snapshot<J> candidateSet, DefaultBitSet x, DefaultBitSet y) {
+	public static <J extends DBIndex> double transitionCost(Snapshot<J> candidateSet, IndexBitSet x, IndexBitSet y) {
 		double transition = 0;
 		for (J index : candidateSet) {
 			int id = index.internalId();
@@ -337,13 +337,13 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      */
 	public <J extends DBIndex> double getScheduleCost(Snapshot<J> candidateSet,
                                                          int queryCount, List<ProfiledQuery<J>> qinfos,
-                                                         IndexPartitions<J> parts, DefaultBitSet[] schedule
+                                                         IndexPartitions<J> parts, IndexBitSet[] schedule
     ) {
 		double cost = 0;
-		DefaultBitSet prevState = new DefaultBitSet();
-		DefaultBitSet subset = new DefaultBitSet();
+		IndexBitSet prevState = new IndexBitSet();
+		IndexBitSet subset = new IndexBitSet();
 		for (int q = 0; q < queryCount; q++) {
-			DefaultBitSet state = schedule[q];
+			IndexBitSet state = schedule[q];
 			if (parts != null)
 				cost += parts.theoreticalCost(qinfos.get(q), state, subset);
 			else
@@ -438,10 +438,10 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 		private int numIndexes;
 		private int numStates;
 		private int currentState;
-		private DefaultBitSet currentBitSet;
+		private IndexBitSet currentBitSet;
 		private int[] indexIds;
 		
-		SubMachine(IndexPartitions.Subset<J> subset, int subsetNum, int state, DefaultBitSet bitSet) {
+		SubMachine(IndexPartitions.Subset<J> subset, int subsetNum, int state, IndexBitSet bitSet) {
 			this.subset         = subset;
 			this.subsetNum      = subsetNum;
 			this.numIndexes     = subset.size();
@@ -724,6 +724,6 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
     private static class Workspace {
         TotalWorkValues wf2             = new TotalWorkValues();
         CostVector      tempCostVector  = new CostVector();
-        DefaultBitSet tempBitSet      = new DefaultBitSet();
+        IndexBitSet tempBitSet      = new IndexBitSet();
     }
 }

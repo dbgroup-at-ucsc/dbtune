@@ -20,11 +20,11 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGCoveringNodeFinder {
-	private final DefaultBitSet visited;
+	private final IndexBitSet visited;
 	private final IBGNodeStack  pending;
 
     private static final double ZERO_COST = 0.0;
@@ -34,17 +34,17 @@ public class IBGCoveringNodeFinder {
      * its private members.
      */
     public IBGCoveringNodeFinder(){
-        this(new DefaultBitSet(), new IBGNodeStack());
+        this(new IndexBitSet(), new IBGNodeStack());
     }
 
     /**
      * construct a new {@link IBGCoveringNodeFinder} object given some
-     * {@link DefaultBitSet visited nodes} and a {@link IBGNodeStack pending stack} of
+     * {@link edu.ucsc.dbtune.util.IndexBitSet visited nodes} and a {@link IBGNodeStack pending stack} of
      * nodes.
      * @param visited visited nodes
      * @param pending pending stack of nodes.
      */
-    IBGCoveringNodeFinder(DefaultBitSet visited, IBGNodeStack pending){
+    IBGCoveringNodeFinder(IndexBitSet visited, IBGNodeStack pending){
         this.visited = visited;
         this.pending = pending;
     }
@@ -58,7 +58,7 @@ public class IBGCoveringNodeFinder {
      * @return
      *      the cost of a particular indexes configuration.
      */
-	public final double findCost(IndexBenefitGraph ibg, DefaultBitSet config) {
+	public final double findCost(IndexBenefitGraph ibg, IndexBitSet config) {
 		if (config.isEmpty()) {
 			return ibg.emptyCost();
         } else {
@@ -76,7 +76,7 @@ public class IBGCoveringNodeFinder {
      * @return
      *      the cost of a particular indexes configuration.
      */
-	public final double findCost(IndexBenefitGraph[] ibgs, DefaultBitSet config) {
+	public final double findCost(IndexBenefitGraph[] ibgs, IndexBitSet config) {
 		double cost = 0;
 		for (IndexBenefitGraph ibg : ibgs){
 			cost += findCost(ibg, config);
@@ -98,7 +98,7 @@ public class IBGCoveringNodeFinder {
      *     an found {@link IBGNode node}. <strong>IMPORTANT</strong>: this method may return
      *     {@code null}.
      */
-	public IBGNode findFast(IBGNode rootNode, DefaultBitSet config, IBGNode guess) {
+	public IBGNode findFast(IBGNode rootNode, IndexBitSet config, IBGNode guess) {
 		visited.clear(); // not using it, but clear it anyway?
 		
 		IBGNode currentNode = (guess != null && config.subsetOf(guess.config)) ? guess : rootNode;
@@ -132,7 +132,7 @@ public class IBGCoveringNodeFinder {
      * @return
      *      found node in the graph.
      */
-	public IBGNode find(IBGNode rootNode, DefaultBitSet config) {
+	public IBGNode find(IBGNode rootNode, IndexBitSet config) {
 		visited.clear();
 		pending.reset();
 		
@@ -168,7 +168,7 @@ public class IBGCoveringNodeFinder {
 	}
 
     // todo(Huascar) what's the purpose of this method?
-	public void find(IBGNode rootNode, DefaultBitSet[] configs, int configCount, IBGNode[] outNodes) {
+	public void find(IBGNode rootNode, IndexBitSet[] configs, int configCount, IBGNode[] outNodes) {
 		for (int i = 0; i < configCount; i++) {
 			assert(configs[i] != null);
 			outNodes[i] = null;

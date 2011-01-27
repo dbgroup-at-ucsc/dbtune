@@ -110,7 +110,7 @@ public class Advisor {
 	}
 
 	private static String getCmd(DatabaseConnection conn, String advisorPath, int budget, File inFile, boolean clean) {
-        final JdbcDatabaseConnectionManager manager = Objects.as(conn.getConnectionManager());
+        final JdbcConnectionManager manager = Objects.as(conn.getConnectionManager());
 		final String db   = manager.getDatabaseName();
 		final String pw   = manager.getPassword();
 		final String user = manager.getUsername();
@@ -153,7 +153,7 @@ public class Advisor {
 			// post-process to get creation costs
 			DB2IndexSet candidateSet = new DB2IndexSet();
 			for (DB2IndexMetadata meta : metaList) {
-				final double    creationCost = meta.creationCost(conn.getWhatIfOptimizer());
+				final double    creationCost = meta.creationCost(conn.getIBGWhatIfOptimizer());
 				final DB2Index index        = new DB2Index(meta, creationCost);
 				candidateSet.add(index);
 			}

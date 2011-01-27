@@ -52,7 +52,7 @@ public class CommandsTest {
         // all or none...either all commands got executed (true return) or none of them (false return)
         final AtomicBoolean executionHistoryYesOrNot = new AtomicBoolean(false);
         final AtomicInteger commandCounter           = new AtomicInteger(0);
-        final Command<Boolean, RuntimeException> openCommand = new Command<Boolean, RuntimeException>(){
+        final Function<Boolean, RuntimeException> openCommand = new Function<Boolean, RuntimeException>(){
             @Override
             public Boolean apply(Parameter input) throws RuntimeException {
                 final String message = input.getParameterValue(String.class);
@@ -82,7 +82,7 @@ public class CommandsTest {
         assertTrue("only three applications", threeTimes.compareTo(3) == 0);
     }
 
-    public static class ArgumentApplicationCounter implements Command<Integer, RuntimeException> {
+    public static class ArgumentApplicationCounter implements Function<Integer, RuntimeException> {
         private int counter;
         ArgumentApplicationCounter(){
             counter = 0;
@@ -95,7 +95,7 @@ public class CommandsTest {
     }
 
 
-    private static class Speaker implements Command<Parameter, RuntimeException> {
+    private static class Speaker implements Function<Parameter, RuntimeException> {
         @Override
         public Parameter apply(Parameter input) throws RuntimeException {
             try {
@@ -107,7 +107,7 @@ public class CommandsTest {
         }
     }
 
-    private static class Listener implements Command<Boolean, RuntimeException>{
+    private static class Listener implements Function<Boolean, RuntimeException> {
         @Override
         public Boolean apply(Parameter input) throws RuntimeException {
             final ResultSetResource resource = input.getParameterValue(ResultSetResource.class);

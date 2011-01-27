@@ -19,11 +19,11 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGMonotonicEnforcer {
-	private final DefaultBitSet visited;
+	private final IndexBitSet visited;
 	private final IBGNodeQueue  pending;
 	private final SubSearch     sub;
 
@@ -31,7 +31,7 @@ public class IBGMonotonicEnforcer {
      * construct an {@link IBGMonotonicEnforcer} object.
      */
     public IBGMonotonicEnforcer(){
-        this(new DefaultBitSet(), new IBGNodeQueue(), new SubSearch());
+        this(new IndexBitSet(), new IBGNodeQueue(), new SubSearch());
     }
 
     /**
@@ -43,7 +43,7 @@ public class IBGMonotonicEnforcer {
      * @param sub
      *      a {@link SubSearch} space.
      */
-    IBGMonotonicEnforcer(DefaultBitSet visited, IBGNodeQueue pending, SubSearch sub){
+    IBGMonotonicEnforcer(IndexBitSet visited, IBGNodeQueue pending, SubSearch sub){
         this.visited = visited;
         this.pending = pending;
         this.sub = sub;
@@ -99,10 +99,10 @@ public class IBGMonotonicEnforcer {
      * a Subsearch space in the {@link IndexBenefitGraph}.
      */
 	private static class SubSearch {
-		private final DefaultBitSet visited = new DefaultBitSet();
+		private final IndexBitSet visited = new IndexBitSet();
 		private final IBGNodeStack pending = new IBGNodeStack();
 		
-		private void fixSubsets(IndexBenefitGraph ibg, DefaultBitSet config, double cost) {
+		private void fixSubsets(IndexBenefitGraph ibg, IndexBitSet config, double cost) {
 			visited.clear();
 			pending.reset();
 			

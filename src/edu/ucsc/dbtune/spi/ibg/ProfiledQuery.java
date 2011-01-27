@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.satuning.spi.Supplier;
 
@@ -65,7 +65,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
      *      the plan cost for a given indexes configuration based on
      *      an index benefit graph.
      */
-    static double findIGBCost(IndexBenefitGraph graph, DefaultBitSet configuration){
+    static double findIGBCost(IndexBenefitGraph graph, IndexBitSet configuration){
         return NODE_FINDER.findCost(graph, configuration);
     }
 
@@ -127,7 +127,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
      * @return
      *      the maintenance cost of this {@code query}.
      */
-    public double maintenanceCost(DefaultBitSet configuration){
+    public double maintenanceCost(IndexBitSet configuration){
         if(!explainInfo.isDML()){
             return 0;
         }
@@ -135,7 +135,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
 		double maintenanceCost = 0;
 		for (I eachIndex : candidateSet) {
 			if (configuration.get(eachIndex.internalId())) {
-				maintenanceCost += explainInfo.maintenanceCost(eachIndex);
+				maintenanceCost += explainInfo.getIndexMaintenanceCost(eachIndex);
 			}
 		}
 
@@ -149,7 +149,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
      * @return
      *      the plan cost of this {@code query}.
      */
-    public double planCost(DefaultBitSet configuration){
+    public double planCost(IndexBitSet configuration){
         return findIGBCost(ibg, configuration);
     }
 
@@ -162,7 +162,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
      * @return
      *      the total cost of this query.
      */
-    public double totalCost(DefaultBitSet configuration){
+    public double totalCost(IndexBitSet configuration){
         double plan  = planCost(configuration);
         double maint = maintenanceCost(configuration);
         return plan + maint;

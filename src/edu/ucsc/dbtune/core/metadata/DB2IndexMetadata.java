@@ -18,10 +18,8 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.core.DatabaseColumn;
-import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DatabaseWhatIfOptimizer;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.core.*;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DBUtilities;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
@@ -142,7 +140,7 @@ public class DB2IndexMetadata implements Serializable {
 		sbuf.append(')');
 	}
 
-    public double creationCost(DatabaseWhatIfOptimizer whatIfOptimizer) throws SQLException{
+    public double creationCost(IBGWhatIfOptimizer whatIfOptimizer) throws SQLException{
         int idx             = 0;
         int nSortedColumns;
         final StringBuilder sql = new StringBuilder(16 * (nSortedColumns = schema.descending.size()));
@@ -178,9 +176,7 @@ public class DB2IndexMetadata implements Serializable {
 		}
 
         whatIfOptimizer.fixCandidates(Instances.<DB2Index>newLinkedList());
-        return whatIfOptimizer.whatIfOptimize(sql.toString())
-                            .using(new DefaultBitSet(), new DefaultBitSet())
-                            .toGetCost();
+        return whatIfOptimizer.estimateCost(sql.toString(), Instances.newBitSet(), Instances.newBitSet());
     }
 	
 	public double creationCost(DatabaseConnection conn) throws SQLException {
@@ -215,9 +211,13 @@ public class DB2IndexMetadata implements Serializable {
 			i++;
 		}
 
-		conn.getWhatIfOptimizer().fixCandidates(new java.util.LinkedList<DB2Index>());
-        return conn.getWhatIfOptimizer().whatIfOptimize(sqlbuf.toString()).using(new DefaultBitSet(), new DefaultBitSet()).toGetCost();
+        return calculateTotalCost(conn, sqlbuf.toString());
 	}
+
+    private static double calculateTotalCost(DatabaseConnection connection, String sql) throws SQLException {
+        connection.getIBGWhatIfOptimizer().fixCandidates(Instances.<DBIndex>newLinkedList());
+        return connection.getIBGWhatIfOptimizer().estimateCost(sql, Instances.newBitSet(), Instances.newBitSet());
+    }
 	
 	public static DB2IndexMetadata consDuplicate(DB2IndexMetadata original, int id) throws SQLException {
 		// construct the object

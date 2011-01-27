@@ -20,10 +20,8 @@ package edu.ucsc.dbtune.util;
 
 import edu.ucsc.dbtune.core.DBIndex;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -91,6 +89,18 @@ public class Instances {
         return new HashSet<T>();
     }
 
+    public static IndexBitSet newBitSet(){
+        return new IndexBitSet();
+    }
+
+    public static IndexBitSet newBitSet(Iterable<? extends DBIndex> indexes){
+        final IndexBitSet idxset = newBitSet();
+        for(DBIndex each : indexes){
+            idxset.set(each.internalId());
+        }
+        return idxset;
+    }
+
     /**
      * Convenience method that creates a {@code List} object. One
      * use of this function is for saving on typing, and also to ensure
@@ -105,31 +115,6 @@ public class Instances {
 
     public static <T> List<T> newList(int size){
         return new ArrayList<T>(size);
-    }
-
-    public static int count(final Iterable<?> itr){
-        int counter = 0;
-        for(Object each : itr){
-            if(each == null) continue;
-            ++counter;
-        }
-        return counter;
-    }
-
-    public static Collection<DBIndex> copyOfIndexes(Iterable<? extends DBIndex> target){
-        List< DBIndex> result = newList();
-        for (DBIndex obj : target){
-            result.add(obj);
-        }
-        return result;
-    }
-
-    public static <I> Iterable<I> asIterable(Iterable<? extends I> target){
-        final List<I> result = newList();
-        for(I each : target){
-           result.add(each);
-        }
-        return result;
     }
 
 }

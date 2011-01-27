@@ -32,8 +32,8 @@ import java.io.Serializable;
  */
 public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private final DB2QualifiedName updatedTable;
-	private final double updateCost;
+	private final DB2QualifiedName  updatedTable;
+	private final double            updateCost;
 
     /**
      * construct a {@code DB2ExplainInfo} object.
@@ -55,7 +55,7 @@ public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable 
 	}
 
     @Override
-	public double maintenanceCost(DBIndex index) {
+	public double getIndexMaintenanceCost(DBIndex index) {
 		if (!SQLCategory.DML.isSame(getSQLCategory()))
 			return 0;
 		if (!index.isOn(updatedTable))
@@ -70,6 +70,7 @@ public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable 
                .add("sql category", getSQLCategory())
                .add("update cost", updateCost)
                .add("isDML", isDML())
+               .add("isQuery", isQuery())
                .toString();
     }
 }

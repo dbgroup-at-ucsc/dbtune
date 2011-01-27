@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.core.optimizers;
 
 import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.util.DefaultBitSet;
+import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -28,27 +28,27 @@ public interface WhatIfOptimizationBuilder extends WhatIfOptimizationCostBuilder
     /**
      * use a pair of {@code bit sets} for performing a what-if optimization.
      * @param config
-     *      a new {@link DefaultBitSet configuration} instance.
+     *      a new {@link edu.ucsc.dbtune.util.IndexBitSet configuration} instance.
      * @param usedSet
-     *      a {@link DefaultBitSet set} of used indexes.
+     *      a {@link edu.ucsc.dbtune.util.IndexBitSet set} of used indexes.
      * @return
      *     {@link WhatIfOptimizationCostBuilder this}
      */
-    WhatIfOptimizationCostBuilder using(DefaultBitSet config, DefaultBitSet usedSet);
+    WhatIfOptimizationCostBuilder using(IndexBitSet config, IndexBitSet usedSet);
 
     /**
-     * use a triple of values (i.e., {@link DefaultBitSet configuration},
-     * a {@link edu.ucsc.dbtune.core.DBIndex profiledIndex}, and a {@link DefaultBitSet bitset} containing
+     * use a triple of values (i.e., {@link edu.ucsc.dbtune.util.IndexBitSet configuration},
+     * a {@link edu.ucsc.dbtune.core.DBIndex profiledIndex}, and a {@link edu.ucsc.dbtune.util.IndexBitSet bitset} containing
      * used columns.)
      *
      * @param config
-     *     a new {@link edu.ucsc.dbtune.util.DefaultBitSet configuration} instance.
+     *     a new {@link edu.ucsc.dbtune.util.IndexBitSet configuration} instance.
      * @param profiledIndex
-     *      a profiled {@link edu.ucsc.dbtune.core.DBIndex} instance.
+     *      a profiled {@link DBIndex} instance.
      * @param usedColumns
-     *      a {@link edu.ucsc.dbtune.util.DefaultBitSet set} of used columns.
+     *      a {@link edu.ucsc.dbtune.util.IndexBitSet set} of used columns.
      * @return
      *      {@link WhatIfOptimizationCostBuilder this}
      */
-    WhatIfOptimizationCostBuilder using(DefaultBitSet config, DBIndex profiledIndex, DefaultBitSet usedColumns);
+    WhatIfOptimizationCostBuilder using(IndexBitSet config, DBIndex profiledIndex, IndexBitSet usedColumns);
 }
