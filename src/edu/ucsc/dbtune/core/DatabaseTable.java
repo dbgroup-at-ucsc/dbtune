@@ -18,14 +18,13 @@
 
 package edu.ucsc.dbtune.core;
 
-import java.io.Serializable;
-
 /**
  * a marker interface which recommends you to implement
  * {@link Object#equals(Object)} {@link Object#hashCode()}} and
  * {@link Object#toString()} methods.
  */
-public interface DatabaseTable extends Serializable {
+public interface DatabaseTable
+{
 	@Override
     boolean equals(Object other);
 

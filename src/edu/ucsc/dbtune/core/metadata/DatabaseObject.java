@@ -18,6 +18,8 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import java.util.List;
+
 /**
  * The abstraction of a database object. A database object is any data structure that stores 
  * information about objects contained in a database such as Tables, Views, Columns, etc.
@@ -31,17 +33,23 @@ package edu.ucsc.dbtune.core.metadata;
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public abstract class DatabaseObject implements java.io.Serializable 
+public abstract class DatabaseObject
 {
     protected String name;
-    
-    protected long id;
+    protected long   id;
+    protected long   cardinality;
+    protected long   pages;
+    protected long   size;
 
-    static final long serialVersionUID = 0;
-
-    protected long cardinality;
-
-    protected long pages;
+    /**
+     * Assigns the name of the database object.
+     *
+     * @param string value representing the object's name
+     */
+    public void setName(String name)
+    {
+        this.name = name;
+    }
 
     /**
      * Returns the name of the object.
@@ -122,5 +130,27 @@ public abstract class DatabaseObject implements java.io.Serializable
     public String toString()
     {
         return name;
+    }
+
+    /**
+     * Finds a database object that is contained in the given list whose name matches the given 
+     * method argument.
+     *
+     * @param name
+     *     name of the object that is searched for in <code>this</code>
+     * @return
+     *     the reference to the object; null if not found
+     */
+    protected static DatabaseObject findByName( List<DatabaseObject> objects, String name )
+    {
+        for (DatabaseObject containee : objects)
+        {
+            if (containee.getName().equals(name))
+            {
+                return containee;
+            }
+        }
+
+        return null;
     }
 }

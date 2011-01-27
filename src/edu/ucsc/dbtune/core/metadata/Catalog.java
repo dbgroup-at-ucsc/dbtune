@@ -27,10 +27,10 @@ import java.util.ArrayList;
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public class Catalog extends DatabaseObject{
-    private List<Schema> schemas;
+public class Catalog extends DatabaseObject
+{
 
-    static final long serialVersionUID = 0;
+    private List<Schema> schemas;
 
     /**
      * default constructor
@@ -45,7 +45,7 @@ public class Catalog extends DatabaseObject{
      * @param name
      *     name of the catalog
      */
-    public Catalog( String name )
+    public Catalog(String name)
     {
         this.name = name;
         schemas = new ArrayList<Schema>();
@@ -57,10 +57,10 @@ public class Catalog extends DatabaseObject{
      * @param schema
      *     new table to add
      */
-    public void add(Schema schema )
+    public void add(Schema schema)
     {
         schemas.add(schema);
-        schema.setCatalog( this );
+        schema.setCatalog(this);
     }
 
     /**
@@ -74,4 +74,3 @@ public class Catalog extends DatabaseObject{
         return new ArrayList<Schema>(schemas);
     }
 }
-

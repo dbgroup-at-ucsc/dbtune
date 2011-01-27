@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import org.junit.Test;
 import org.junit.Before;
 
-import static edu.ucsc.dbtune.core.metadata.Index.SECONDARY;
+import static edu.ucsc.dbtune.core.metadata.Index.PRIMARY;
 import static edu.ucsc.dbtune.core.metadata.Index.CLUSTERED;
 import static edu.ucsc.dbtune.core.metadata.Index.UNIQUE;
 import static edu.ucsc.dbtune.core.metadata.SQLTypes.INTEGER;
@@ -63,11 +63,11 @@ public class IndexTest
     {
         Index index;
 
-        index = new Index( table, SECONDARY, true );
+        index = new Index( table, PRIMARY, CLUSTERED, UNIQUE );
 
         assertEquals( table, index.getTable() );
 
-        index = new Index( columns, SECONDARY, true );
+        index = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
 
         assertEquals( table, index.getTable() );
         assertEquals( table.getColumns().size(), index.size() );
@@ -80,9 +80,9 @@ public class IndexTest
         Index index2;
         Index index3;
 
-        index1 = new Index( columns, SECONDARY, UNIQUE );
-        index2 = new Index( columns, SECONDARY, UNIQUE );
-        index3 = new Index( table, SECONDARY, UNIQUE );
+        index1 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
+        index2 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
+        index3 = new Index( table, PRIMARY, CLUSTERED, UNIQUE );
 
         for( int i = 0; i < table.getColumns().size(); i++ )
         {
@@ -105,9 +105,9 @@ public class IndexTest
         Index index2;
         Index index3;
 
-        index1 = new Index( columns, SECONDARY, UNIQUE );
-        index2 = new Index( columns, SECONDARY, UNIQUE );
-        index3 = new Index( table, SECONDARY, UNIQUE );
+        index1 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
+        index2 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
+        index3 = new Index( table, PRIMARY, CLUSTERED, UNIQUE );
 
         for( int i = 0; i < table.getColumns().size(); i++ )
         {
@@ -117,15 +117,14 @@ public class IndexTest
             }
         }
 
-
         assertFalse( index1.hashCode() == index3.hashCode() );
         assertEquals( index1.hashCode(), index2.hashCode() );
 
-        index1.setType( CLUSTERED );
+        index1.setClustered( false );
 
         assertFalse( index1.hashCode() == index2.hashCode() );
 
-        index2.setType( CLUSTERED );
+        index2.setClustered( false );
 
         assertEquals( index1.hashCode(), index2.hashCode() );
 
