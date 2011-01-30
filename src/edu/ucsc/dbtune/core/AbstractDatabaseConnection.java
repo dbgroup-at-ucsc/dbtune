@@ -18,6 +18,8 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.spi.core.Functions;
+import edu.ucsc.dbtune.spi.core.Suppliers;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -26,6 +28,7 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static edu.ucsc.dbtune.core.metadata.DB2Commands.isolationLevelReadCommitted;
 import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
 import static edu.ucsc.satuning.util.Util.newAtomicReference;
 
@@ -71,6 +74,9 @@ implements DatabaseConnection {
 
     protected void createdBy(ConnectionManager connectionManager){
         this.connectionManager.set(connectionManager);
+        if(getDatabaseSystem().isSame(DatabaseSystem.DB2)) {
+            Functions.submitAll(Functions.submit(isolationLevelReadCommitted(), this));
+        }
     }
 
     protected DatabaseSystem getDatabaseSystem() {
@@ -85,6 +91,7 @@ implements DatabaseConnection {
         optimizer.set(trait.getSimplifiedWhatIfOptimizer(this));
         ibgWhatIfOptimizer.set(trait.getIBGWhatIfOptimizer(this));
         once.set(true);
+        getIndexExtractor().adjust(this);  // todo(Huascar)...
     }
 
     @Override

@@ -8,9 +8,9 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static edu.ucsc.dbtune.core.metadata.DB2Commands.*;
-import static edu.ucsc.dbtune.spi.core.Commands.submit;
-import static edu.ucsc.dbtune.spi.core.Commands.submitAll;
-import static edu.ucsc.dbtune.spi.core.Commands.supplyValue;
+import static edu.ucsc.dbtune.spi.core.Functions.submit;
+import static edu.ucsc.dbtune.spi.core.Functions.submitAll;
+import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 
 /**
 * A DB2-specific implementation of {@link WhatIfOptimizer} type.
@@ -89,6 +89,7 @@ class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
             Debug.logError("Could not rollback transaction", s);
             throw s;
         }
+
         return new DB2ExplainInfo(category, updatedTable, updateCost);
     }
 

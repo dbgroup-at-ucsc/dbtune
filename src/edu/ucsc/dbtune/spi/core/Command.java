@@ -13,59 +13,42 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ****************************************************************************/
-package edu.ucsc.satuning.console.commands;
+package edu.ucsc.dbtune.spi.core;
 
-import edu.ucsc.satuning.console.Console;
-import edu.ucsc.satuning.util.StringsUtil;
-import edu.ucsc.satuning.util.ThreadsUtil;
+import edu.ucsc.dbtune.util.Strings;
+import edu.ucsc.dbtune.util.Threads;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * An out of process executable.
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class Command {
-    private final List<String>          args;
-    private final Map<String, String>   env;
-    private final File                  workingDirectory;
-    private final boolean               permitNonZeroExitStatus;
-    private final PrintStream           tee;
-    private final boolean               nativeOutput;
-    private volatile Process            process;
+public final class Command {
+    private final Printer log;
+    private final List<String> args;
+    private final Map<String, String> env;
+    private final File workingDirectory;
+    private final boolean permitNonZeroExitStatus;
+    private final PrintStream tee;
+    private volatile Process process;
 
-    public Command(String... args) {
-        this(Arrays.asList(args));
+    public Command(Printer log, String... args) {
+        this(log, Arrays.asList(args));
     }
 
-    public Command(List<String> args) {
-        this.args                       = new ArrayList<String>(args);
-        this.env                        = Collections.emptyMap();
-        this.workingDirectory           = null;
-        this.permitNonZeroExitStatus    = false;
-        this.tee                        = null;
-        this.nativeOutput               = false;
+    public Command(Printer log, List<String> args) {
+        this.log = log;
+        this.args = new ArrayList<String>(args);
+        this.env = Collections.emptyMap();
+        this.workingDirectory = null;
+        this.permitNonZeroExitStatus = false;
+        this.tee = null;
     }
 
     private Command(Builder builder) {
+        this.log = builder.log;
         this.args = new ArrayList<String>(builder.args);
         this.env = builder.env;
         this.workingDirectory = builder.workingDirectory;
@@ -78,7 +61,6 @@ public class Command {
                                                 + " exceeded by: " + string);
             }
         }
-        this.nativeOutput = builder.nativeOutput;
     }
 
     public void start() throws IOException {
@@ -86,7 +68,7 @@ public class Command {
             throw new IllegalStateException("Already started!");
         }
 
-        Console.getInstance().verbose("executing " + this);
+        log.verbose("executing " + this);
 
         ProcessBuilder processBuilder = new ProcessBuilder()
                 .command(args)
@@ -104,21 +86,27 @@ public class Command {
         return process != null;
     }
 
-    public List<String> gatherOutput() throws IOException, InterruptedException {
+    public InputStream getInputStream() {
+        if (!isStarted()) {
+            throw new IllegalStateException("Not started!");
+        }
+
+        return process.getInputStream();
+    }
+
+    public List<String> gatherOutput()
+            throws IOException, InterruptedException {
         if (!isStarted()) {
             throw new IllegalStateException("Not started!");
         }
 
         BufferedReader in = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
+                new InputStreamReader(getInputStream(), "UTF-8"));
         List<String> outputLines = new ArrayList<String>();
         String outputLine;
         while ((outputLine = in.readLine()) != null) {
             if (tee != null) {
                 tee.println(outputLine);
-            }
-            if (nativeOutput) {
-                Console.getInstance().nativeOutput(outputLine);
             }
             outputLines.add(outputLine);
         }
@@ -151,6 +139,8 @@ public class Command {
      *
      * @param timeoutSeconds how long to wait, or 0 to wait indefinitely
      * @return the command's output, or null if the command timed out
+     * @throws java.util.concurrent.TimeoutException
+     *      unable to execute with timeout due to the stated reasons.
      */
     public List<String> executeWithTimeout(int timeoutSeconds)
             throws TimeoutException {
@@ -176,7 +166,7 @@ public class Command {
      * @return a future to retrieve the command's output.
      */
     public Future<List<String>> executeLater() {
-        ExecutorService executor = ThreadsUtil.fixedThreadsExecutor("command", 1);
+        ExecutorService executor = Threads.fixedThreadsExecutor("command", 1, true, log);
         Future<List<String>> result = executor.submit(new Callable<List<String>>() {
             public List<String> call() throws Exception {
                 start();
@@ -199,46 +189,40 @@ public class Command {
         try {
             process.waitFor();
             int exitValue = process.exitValue();
-            Console.getInstance().verbose("received exit value " + exitValue + " from destroyed command " + this);
+            log.verbose("received exit value " + exitValue + " from destroyed command " + this);
         } catch (IllegalThreadStateException destroyUnsuccessful) {
-            Console.getInstance().warn("couldn't destroy " + this);
+            log.warn("couldn't destroy " + this);
         } catch (InterruptedException e) {
-            Console.getInstance().warn("couldn't destroy " + this);
+            log.warn("couldn't destroy " + this);
         }
     }
 
     @Override public String toString() {
-        String envString = !env.isEmpty() ? (StringsUtil.join(env.entrySet(), " ") + " ") : "";
-        return envString + StringsUtil.join(args, " ");
+        String envString = !env.isEmpty() ? (Strings.join(env.entrySet(), " ") + " ") : "";
+        return envString + Strings.join(args, " ");
     }
 
     public static class Builder {
+        private final Printer log;
         private final List<String> args = new ArrayList<String>();
         private final Map<String, String> env = new LinkedHashMap<String, String>();
         private File workingDirectory;
         private boolean permitNonZeroExitStatus = false;
         private PrintStream tee = null;
-        private boolean nativeOutput;
         private int maxLength = -1;
 
-        public Builder args(Object... objects) {
-            for (Object object : objects) {
-                args(object.toString());
-            }
-            return this;
+        public Builder(Printer log) {
+            this.log = log;
         }
 
-        public Builder setNativeOutput(boolean nativeOutput) {
-            this.nativeOutput = nativeOutput;
-            return this;
-        }
-
-        public Builder args(String... args) {
+        public Builder args(Object... args) {
             return args(Arrays.asList(args));
         }
 
-        public Builder args(Collection<String> args) {
-            this.args.addAll(args);
+        public Builder args(Collection<?> args) {
+            for (Object object : args) {
+                this.args.add(object.toString());
+            }
             return this;
         }
 
@@ -252,6 +236,8 @@ public class Command {
          * This must be a <strong>local</strong> directory; Commands run on
          * remote devices (ie. via {@code adb shell}) require a local working
          * directory.
+         * @param workingDirectory new working directory
+         * @return  builder
          */
         public Builder workingDirectory(File workingDirectory) {
             this.workingDirectory = workingDirectory;
@@ -276,5 +262,4 @@ public class Command {
             return build().execute();
         }
     }
-
 }

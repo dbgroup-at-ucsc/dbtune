@@ -27,8 +27,8 @@ import static edu.ucsc.dbtune.util.Checks.checkNotNull;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 //todo(Huascar) rename to Functions
-public class Commands {
-    private Commands(){}
+public class Functions {
+    private Functions(){}
 
     /**
      * Returns the composition of two commands (functions). For {@code f: A->B} and
@@ -51,7 +51,7 @@ public class Commands {
     }
 
     public static <R, E extends Exception> R supplyValue(Function<R, E> command, Parameter first){
-        return Commands.<R, E>submit(command, first).get();
+        return Functions.<R, E>submit(command, first).get();
     }
 
     public static <R, E extends Exception> Supplier<R> submit(Function<R, E> command, Object... o){
@@ -61,7 +61,7 @@ public class Commands {
     @SuppressWarnings({"RedundantTypeArguments"})
     public static <R, E extends Exception> Supplier<R> submit(Function<R, E> command, Parameter first){
         final Supplier<Parameter> param = Suppliers.ofInstance(first);
-        return Commands.<R, E>submit(command, param);
+        return Functions.<R, E>submit(command, param);
     }
 
     public static <R, E extends Exception> Supplier<R> submit(Function<R, E> function, Supplier<Parameter> first){

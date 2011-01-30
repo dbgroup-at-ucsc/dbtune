@@ -43,18 +43,22 @@ public class PGExplainInfo extends AbstractExplainInfo implements Serializable {
      *      an array of incurred overheads.
      */
 	public PGExplainInfo(SQLCategory cat, double[] overhead) {
-        super(cat);
-		updateCost = overhead;
-        totalCost  = calculateTtalCost(updateCost);
+        this(cat, overhead, 0.0);
 	}
 
-    private static double calculateTtalCost(double[] updateCost){
-        double cost = 0.0;
-        if(updateCost.length == 0) return cost;
-        for(double each : updateCost){
-           cost += each;
-        }
-        return cost;
+    /**
+     * construct a new {@code PGExplainInfo} object.
+     * @param category
+     *      sql category.
+     * @param overhead
+     *      an array of incurred overheads.
+     * @param totalCost
+     *      total creation cost.
+     */
+    public PGExplainInfo(SQLCategory category, double[] overhead, double totalCost){
+        super(category);
+		updateCost      = overhead;
+        this.totalCost  = totalCost;
     }
 
     @Override

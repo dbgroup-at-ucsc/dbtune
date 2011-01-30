@@ -22,14 +22,14 @@ import org.junit.Test;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static edu.ucsc.dbtune.spi.core.Commands.compose;
+import static edu.ucsc.dbtune.spi.core.Functions.compose;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class CommandsTest {
+public class FunctionsTest {
     @Test
     public void testShareResourceViaCommandComposition() throws Exception {
         // the scenario goes like this:
@@ -41,9 +41,9 @@ public class CommandsTest {
         // and return of a ResultSet and compose it with other commands that needed that
         // same ResultSet. This is the rationale of command composition (sharing a resource
         // among other commands that need it).
-        final Supplier<Boolean> answer = Commands.submit(compose(new Speaker(), new Listener()), "Hello World!");
+        final Supplier<Boolean> answer = Functions.submit(compose(new Speaker(), new Listener()), "Hello World!");
         assertTrue("it should be true; i.e., message was told.", answer.get());
-        final Supplier<Boolean> noAnswer = Commands.submit(compose(new Speaker(), new Listener()));
+        final Supplier<Boolean> noAnswer = Functions.submit(compose(new Speaker(), new Listener()));
         assertFalse("it should be true; i.e., message was told.", noAnswer.get());
     }
 
@@ -62,10 +62,10 @@ public class CommandsTest {
             }
         };
 
-        Commands.submitAll(
-                Commands.submit(openCommand, "got executed...."),
-                Commands.submit(openCommand, "got executed...."),
-                Commands.submit(openCommand, "got executed....")
+        Functions.submitAll(
+                Functions.submit(openCommand, "got executed...."),
+                Functions.submit(openCommand, "got executed...."),
+                Functions.submit(openCommand, "got executed....")
         );
 
         assertTrue("all commands got executed.", executionHistoryYesOrNot.get());
@@ -76,8 +76,8 @@ public class CommandsTest {
     @Test
     public void testSuppliedResultByCommand() throws Exception {
         final ArgumentApplicationCounter counter = new ArgumentApplicationCounter();
-        final Supplier<Integer> value = Commands.submit(counter);
-        Commands.submitAll(value, value);
+        final Supplier<Integer> value = Functions.submit(counter);
+        Functions.submitAll(value, value);
         final Integer threeTimes = value.get(); // this is an extra call, so the counter == 3
         assertTrue("only three applications", threeTimes.compareTo(3) == 0);
     }

@@ -30,7 +30,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import static edu.ucsc.dbtune.core.metadata.DB2Commands.*;
-import static edu.ucsc.dbtune.spi.core.Commands.*;
+import static edu.ucsc.dbtune.spi.core.Functions.*;
 import static edu.ucsc.dbtune.util.DBUtilities.trimSqlStatement;
 import static edu.ucsc.dbtune.util.Instances.newList;
 
@@ -153,10 +153,9 @@ public class Platform {
         @SuppressWarnings({"RedundantTypeArguments"})
         @Override
         public void adjust(DatabaseConnection connection) {
-            final JdbcConnection c = Objects.as(connection);
             submit(
                     isolationLevelReadCommitted(),
-                    c
+                    connection
             );
         }
 

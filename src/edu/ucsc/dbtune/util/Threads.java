@@ -17,6 +17,8 @@
  */
 package edu.ucsc.dbtune.util;
 
+import edu.ucsc.dbtune.spi.core.Printer;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -58,49 +60,57 @@ public class Threads {
 
     /**
      * Creates an executor service that produces daemon threads.
+     *
      * @param name name of process.
+     * @param echo
      * @return {@link ExecutorService daemon thread executor service}.
      */
-    public  static ExecutorService daemonThreadPerCpuExecutor(String name){
-        return threadPerCpuExecutor(name, true);
+    public  static ExecutorService daemonThreadPerCpuExecutor(String name, Printer echo){
+        return threadPerCpuExecutor(name, true, echo);
     }
 
     /**
      * Creates an executor service that produces threads.
+     *
      * @param name name of process.
+     * @param echo
      * @return {@link ExecutorService thread executor service}.
      */
-    public static ExecutorService explicitThreadPerCpuExecutor(String name){
-        return threadPerCpuExecutor(name, false);
+    public static ExecutorService explicitThreadPerCpuExecutor(String name, Printer echo){
+        return threadPerCpuExecutor(name, false, echo);
     }
 
     /**
      * Creates an executor service that produces threads, which are either daemon or normal
      * threads.
+     *
      * @param name name of process.
      * @param daemon flag that signals whether the produced threads a daemon threads.
+     * @param echo
      * @return {@link ExecutorService thread executor service}.
      */
-    public static ExecutorService threadPerCpuExecutor(String name, boolean daemon) {
-        return fixedThreadsExecutor(name, Runtime.getRuntime().availableProcessors(), daemon);
+    public static ExecutorService threadPerCpuExecutor(String name, boolean daemon, Printer echo) {
+        return fixedThreadsExecutor(name, Runtime.getRuntime().availableProcessors(), daemon, echo);
     }
 
 
     /**
      * Creates an executor service that produces a fixed number of threads.
+     *
      * @param name name of process.
      * @param count the number of threads to be created.
      * @param daemon flag that signals whether the produced threads are daemon threads.
+     * @param echo results printer (on screen)
      * @return {@link ExecutorService thread executor service}.
      */
-    public static ExecutorService fixedThreadsExecutor(String name, int count, boolean daemon) {
+    public static ExecutorService fixedThreadsExecutor(String name, int count, boolean daemon, final Printer echo) {
         ThreadFactory threadFactory = daemon ? daemonThreadFactory(name) : threadFactory(name, daemon);
 
         return new ThreadPoolExecutor(count, count, 10, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(Integer.MAX_VALUE), threadFactory) {
             @Override protected void afterExecute(Runnable runnable, Throwable throwable) {
                 if (throwable != null) {
-                    Debug.logNotice("Unexpected failure from " + runnable, throwable);
+                    echo.info("Unexpected failure from " + runnable, throwable);
                 }
             }
         };

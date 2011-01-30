@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static edu.ucsc.dbtune.core.metadata.DB2Commands.*;
-import static edu.ucsc.dbtune.spi.core.Commands.*;
+import static edu.ucsc.dbtune.spi.core.Functions.*;
 import static edu.ucsc.dbtune.util.Instances.newAtomicInteger;
 import static edu.ucsc.dbtune.util.Instances.newLinkedList;
 import static edu.ucsc.dbtune.util.Objects.cast;

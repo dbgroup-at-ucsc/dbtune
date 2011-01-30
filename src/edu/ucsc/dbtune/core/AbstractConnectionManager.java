@@ -44,6 +44,8 @@ abstract class AbstractConnectionManager
 		this.database = Checks.checkNotNull(database);
 	}
 
+    abstract void addConnection(DatabaseConnection connection);
+
 	public String getUsername() {
 		return username;
 	}

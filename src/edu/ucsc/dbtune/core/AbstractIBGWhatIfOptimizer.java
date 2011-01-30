@@ -19,13 +19,14 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
-import edu.ucsc.dbtune.util.*;
+import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static edu.ucsc.dbtune.spi.core.Commands.supplyValue;
-import static edu.ucsc.dbtune.util.Instances.newAtomicInteger;
 import static edu.ucsc.dbtune.util.Instances.newAtomicReference;
 import static edu.ucsc.dbtune.util.Objects.as;
 import static edu.ucsc.dbtune.util.Objects.cast;

@@ -2,7 +2,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.PGCommands;
 import edu.ucsc.dbtune.core.metadata.PGReifiedTypes;
-import edu.ucsc.dbtune.spi.core.Commands;
+import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.util.*;
 
 import java.sql.SQLException;
@@ -47,7 +47,7 @@ class PostgresWhatIfOptimizer extends AbstractWhatIfOptimizer {
         if(getCachedIndexBitSet().isEmpty()) updateCachedIndexBitSet(Instances.newBitSet(indexes));
         final IndexBitSet   cachedIndexBitSet   = getCachedIndexBitSet();
         final Double[]      maintCost           = new Double[indexSet.size()];
-        return Commands.supplyValue(
+        return Functions.supplyValue(
                 PGCommands.explainIndexes(),             // postgres's explain index command
                 connection,                              // live connection
                 indexSet,                                // index set

@@ -1,4 +1,4 @@
-package edu.ucsc.satuning.console.commands;
+package edu.ucsc.dbtune.spi.core;
 
 import java.util.List;
 

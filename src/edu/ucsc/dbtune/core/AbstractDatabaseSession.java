@@ -92,7 +92,7 @@ abstract class AbstractDatabaseSession implements DatabaseSession {
         Checks.checkSQLRelatedState(sql != null && !sql.isEmpty());
         ensureSessionIsOpened();
         try {
-           init();
+           init();  //todo(Huascar) if we are setting the isolation read committed in JDBC connection
            executeQuery(sql);
         } catch(Exception cause){
             throw new SQLException(cause);

@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.core;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.spi.core.Function;
-import edu.ucsc.dbtune.spi.core.Commands;
+import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -230,8 +230,8 @@ public class DatabasePackageTest {
             }
         };
 
-        final Function<String, RuntimeException> f = Commands.compose(a, s);
-        final String answer = Commands.supplyValue(f, rs);
+        final Function<String, RuntimeException> f = Functions.compose(a, s);
+        final String answer = Functions.supplyValue(f, rs);
         assertThat(answer, equalTo(name));
     }
 
@@ -298,6 +298,16 @@ public class DatabasePackageTest {
         checkExplainInfoScenario(c1.connect());
         //todo(Huascar) write the test for ExplainInfo<PGIndex>
         c1.close();
+    }
+
+    @Test
+    public void testDB2ConnectionAdjustment() throws Exception {
+        final ConnectionManager c2 = DBTuneInstances.newDatabaseConnectionManagerWithSwitchOffOnce(
+                DBTuneInstances.newDB2Properties()
+        );
+
+        final DatabaseConnection d = c2.connect();
+        System.out.println(d);
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})

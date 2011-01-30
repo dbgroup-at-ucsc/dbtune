@@ -77,13 +77,9 @@ public final class JdbcConnectionManager extends AbstractConnectionManager
                 getPassword(),
                 false
         );
-        
-        final JdbcConnection nConn  = new JdbcConnection(jdbcConnection);
 
-        // the database index extractor will be closed if it does not have any opened connections.
-        connections.add(nConn);
-        nConn.createdBy(this);
-        nConn.loadResources();
+        final JdbcConnection nConn  = new JdbcConnection(jdbcConnection);
+        addConnection(nConn);
         return nConn;
     }
 
@@ -208,6 +204,14 @@ public final class JdbcConnectionManager extends AbstractConnectionManager
                 DatabaseSystem.fromQualifiedName(driverClass),
                 jdbcConnectionFactory
         );
+    }
+
+    @Override
+    synchronized void addConnection(DatabaseConnection connection) {
+        // the database index extractor will be closed if it does not have any opened connections.
+        connections.add(connection);
+        ((JdbcConnection)connection).createdBy(this);
+        connection.loadResources();
     }
 
     @Override

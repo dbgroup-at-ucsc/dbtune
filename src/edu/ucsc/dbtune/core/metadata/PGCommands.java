@@ -22,7 +22,7 @@ import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
 import edu.ucsc.dbtune.spi.core.Function;
-import edu.ucsc.dbtune.spi.core.Commands;
+import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
 import edu.ucsc.dbtune.util.Checks;
@@ -57,7 +57,7 @@ public class PGCommands {
         final Function<PGExplainInfo, SQLException> eidx;
         rs     = shareResultSetCommand();
         eidx   = explainInfo();
-        return Commands.compose(rs, eidx);
+        return Functions.compose(rs, eidx);
     }
 
     /**
@@ -168,7 +168,7 @@ public class PGCommands {
         final Function<Double, SQLException> ec;
         rs   = shareResultSetCommand();
         ec   = explainCost(usedSet);
-        return Commands.compose(rs, ec);
+        return Functions.compose(rs, ec);
     }
 
 
@@ -224,13 +224,13 @@ public class PGCommands {
                 final Double[]              maintCost   = input.getParameterValue(Double[].class);
 
                 SQLCategory category    = null;
+                double      totalCost   = 0.0;
                 try {
                     category = SQLCategory.from(resultSet.getString("category"));
                     // overhead = oh
                     final String    indexOverhead   = resultSet.getString("index_overhead");
                     final String[]  ohArray         = indexOverhead.split(" ");
                     verifyOverheadArray(cardinality, ohArray);
-
 
                     final List<String> indexesAsStrings = Arrays.asList(ohArray);
                     for(String eachIndex : indexesAsStrings){
@@ -241,6 +241,7 @@ public class PGCommands {
                         maintCost[id]           = overhead;
                     }
 
+                    totalCost = Double.valueOf(resultSet.getString("qcost"));
                 } finally {
                     if(resultSet != null){
                         resultSet.close();
@@ -259,9 +260,11 @@ public class PGCommands {
                 for(int i = 0; i < allNonZeroCost.size(); i++){
                     castCost[i] = allNonZeroCost.get(i);
                 }
+
                 return new PGExplainInfo(
                         category,
-                        castCost
+                        castCost,
+                        totalCost
                 );
             }
 
@@ -284,7 +287,7 @@ public class PGCommands {
             public Parameter apply(Parameter input) throws SQLException {
                 final Connection            connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
                 final ReifiedPGIndexList    indexes     = input.getParameterValue(ReifiedPGIndexList.class);
-                final IndexBitSet config      = input.getParameterValue(IndexBitSet.class);
+                final IndexBitSet           config      = input.getParameterValue(IndexBitSet.class);
                 final String                sql         = input.getParameterValue(String.class);
                 final Integer               cardinality = input.getParameterValue(Integer.class);
                 final Double[]              maintCost   = input.getParameterValue(Double[].class);
@@ -308,7 +311,8 @@ public class PGCommands {
 
 
     private static String indexListString(Iterable<PGIndex> indexes, IndexBitSet config) {
-        final StringBuilder sb = new StringBuilder();
+        final StringBuilder sb                   = new StringBuilder();
+
         sb.append("( ");
         for (PGIndex idx : indexes) {
             if (config.get(idx.internalId())) {

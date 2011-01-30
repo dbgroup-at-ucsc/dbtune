@@ -17,6 +17,9 @@
  */
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.util.Instances;
+import edu.ucsc.satuning.util.Objects;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -49,6 +52,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -313,8 +317,13 @@ public class JdbcMocks {
     }
 
     static class MockPreparedStatement extends MockStatement implements PreparedStatement {
+        final AtomicReference<String> sql = Instances.newAtomicReference();
         MockPreparedStatement(ResultSet resultSet){
             super(resultSet);
+        }
+
+        void setSQL(String sql){
+            this.sql.set(sql);
         }
 
         @Override
@@ -429,6 +438,7 @@ public class JdbcMocks {
 
         @Override
         public boolean execute() throws SQLException {
+            System.out.println(sql.get());
             return false;
         }
 
@@ -614,7 +624,9 @@ public class JdbcMocks {
 
         @Override
         public PreparedStatement prepareStatement(String sql) throws SQLException {
-            return preparedStatement;
+            final MockPreparedStatement ps = Objects.as(preparedStatement);
+            ps.setSQL(sql);
+            return ps;
         }
 
         @Override

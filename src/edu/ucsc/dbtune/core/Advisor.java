@@ -20,7 +20,6 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
-import edu.ucsc.dbtune.spi.core.Commands;
 import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Objects;
@@ -39,6 +38,8 @@ import java.util.regex.Pattern;
 import static edu.ucsc.dbtune.core.metadata.DB2Commands.clearAdviseIndex;
 import static edu.ucsc.dbtune.core.metadata.DB2Commands.readAdviseOnOneIndex;
 import static edu.ucsc.dbtune.core.metadata.DB2ReifiedTypes.DB2IndexSet;
+import static edu.ucsc.dbtune.spi.core.Functions.submit;
+import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 
 /**
  * Generates a recommendation according to the db2advis program
@@ -68,7 +69,7 @@ public class Advisor {
 	private static final Pattern END_INDEXES_PATTERN        = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
 
 	public static FileInfo createAdvisorFile(DatabaseConnection conn, String advisorPath, int budget, File workloadFile) throws IOException, AdvisorException, SQLException {
-		Commands.submit(
+		submit(
                 // executes "DELETE FROM advise_index"
                 clearAdviseIndex(), conn
         );
@@ -139,7 +140,7 @@ public class Advisor {
 			final List<DB2IndexMetadata> metaList = new ArrayList<DB2IndexMetadata>();
 			int id = 1;
 			for (IndexInfo info : indexList) {
-                final DB2IndexMetadata meta = Commands.supplyValue(
+                final DB2IndexMetadata meta = supplyValue(
                         readAdviseOnOneIndex(),
                         conn,
                         info.name,

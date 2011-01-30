@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ****************************************************************************/
-package edu.ucsc.satuning.console;
+package edu.ucsc.dbtune.spi.core;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public enum ResultValue {
-    OK,
-    IGNORE,
-    FAIL    
+public enum Result {
+    /**
+     * An action that cannot be run by this harness, such as a shell script.
+     */
+    UNSUPPORTED,
+    COMPILE_FAILED,
+    EXEC_FAILED,
+    EXEC_TIMEOUT,
+    ERROR,
+    SUCCESS
 }

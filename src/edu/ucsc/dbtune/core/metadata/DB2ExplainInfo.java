@@ -34,6 +34,7 @@ public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable 
 	private static final long serialVersionUID = 1L;
 	private final DB2QualifiedName  updatedTable;
 	private final double            updateCost;
+    private final double            totalCost;
 
     /**
      * construct a {@code DB2ExplainInfo} object.
@@ -45,14 +46,24 @@ public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable 
      *      the updating cost.
      */
 	public DB2ExplainInfo(SQLCategory cat, DatabaseTable updTable, double updCost) {
-        super(cat);
-		if (SQLCategory.DML.isSame(cat)) {
-			Debug.assertion(updTable != null, "need updated table for DML");
-			Debug.assertion(updCost >= 0, "invalid update cost");
-		}
-		updatedTable = (DB2QualifiedName) updTable;
-		updateCost = updCost;
+        this(cat, updTable, updCost, 0.0);
 	}
+
+    public DB2ExplainInfo(SQLCategory category, DatabaseTable updatedTable, double updatingCost, double totalCost){
+        super(category);
+        if (SQLCategory.DML.isSame(category)) {
+            Debug.assertion(updatedTable != null, "need updated table for DML");
+            Debug.assertion(updatingCost >= 0, "invalid update cost");
+        }
+        this.updatedTable   = (DB2QualifiedName) updatedTable;
+        this.updateCost     = updatingCost;
+        this.totalCost      = totalCost;
+    }
+
+    @Override
+    public double getTotalCost() {
+        return totalCost;
+    }
 
     @Override
 	public double getIndexMaintenanceCost(DBIndex index) {

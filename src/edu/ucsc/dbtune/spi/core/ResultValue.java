@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ****************************************************************************/
-package edu.ucsc.satuning.console;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package edu.ucsc.dbtune.spi.core;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Describe {
-    /**
-     * Attribute that describes an option.
-     * @return the description of an option.
-     */
-    String value();
+public enum ResultValue {
+    OK,
+    IGNORE,
+    FAIL    
 }

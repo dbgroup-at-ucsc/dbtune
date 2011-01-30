@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static edu.ucsc.dbtune.core.metadata.PGCommands.explainIndexesCost;
-import static edu.ucsc.dbtune.spi.core.Commands.supplyValue;
+import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 import static edu.ucsc.dbtune.util.Instances.*;
 
 /**
