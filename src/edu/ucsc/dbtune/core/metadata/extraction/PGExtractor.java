@@ -155,8 +155,6 @@ public class PGExtractor extends GenericJDBCExtractor
                         column.setCardinality(rsset.getLong(1));
                     }
 
-                    System.out.println("card for col " + column + ": " + column.getCardinality());
-
                     stmnt.close();
                 }
             }

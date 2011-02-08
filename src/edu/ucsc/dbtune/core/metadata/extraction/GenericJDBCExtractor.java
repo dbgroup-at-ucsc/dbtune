@@ -24,7 +24,9 @@ import edu.ucsc.dbtune.core.metadata.Schema;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -72,6 +74,7 @@ public class GenericJDBCExtractor implements MetaDataExtractor
     {
         Map<Integer,Column> indexToColumns;
         List<Table>         tables;
+        List<Index>         allIndexes;
 
         DatabaseMetaData jdbcMetaData;
         ResultSet        rsset;
@@ -79,7 +82,6 @@ public class GenericJDBCExtractor implements MetaDataExtractor
         Schema           schema;
         Column           column;
         Index            index;
-        String           tableName;
         String           columnName;
         String           indexName;
         int              type;
@@ -89,11 +91,6 @@ public class GenericJDBCExtractor implements MetaDataExtractor
 
         try
         {
-            catalog = new Catalog();
-            schema  = new Schema();
-
-            catalog.add( schema );
-
             jdbcMetaData = connection.getJdbcConnection().getMetaData();
 
             if (jdbcMetaData == null)
@@ -105,11 +102,17 @@ public class GenericJDBCExtractor implements MetaDataExtractor
 
             rsset = jdbcMetaData.getTables( null, null, "%", tableTypes );
 
+            catalog    = new Catalog();
+            schema     = new Schema();
+            allIndexes = new ArrayList<Index>();
+
+            catalog.add( schema );
+
             while (rsset.next())
             {
-                tableName = rsset.getString("TABLE_NAME");
-
-                schema.add( new Table( tableName ) );
+                schema.add(new Table(rsset.getString("TABLE_NAME")));
+                catalog.setName(rsset.getString("TABLE_CAT"));
+                schema.setName(rsset.getString("TABLE_SCHEM"));
             }
 
             rsset.close();
@@ -174,6 +177,7 @@ public class GenericJDBCExtractor implements MetaDataExtractor
 
                             index.setName(indexName);
                             table.add(index);
+                            allIndexes.add(index);
                         }
 
                         columnName = rsset.getString("COLUMN_NAME");
@@ -190,6 +194,8 @@ public class GenericJDBCExtractor implements MetaDataExtractor
 
                 rsset.close();
             }
+
+            schema.setBaseConfiguration(new Configuration(allIndexes));
         }
         catch (Exception e)
         {
