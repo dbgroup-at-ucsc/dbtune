@@ -18,6 +18,8 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import static edu.ucsc.dbtune.core.metadata.SQLTypes.isValidType;
+
 /**
  * POJO for storing column metadata
  *
@@ -25,12 +27,12 @@ package edu.ucsc.dbtune.core.metadata;
  */
 public class Column extends DatabaseObject
 {
-    protected Table   table;
-    protected int     type;
-    protected boolean isNull;
-    protected boolean isDefault;
-    protected String  defaultValue;
-    protected int     size;
+    Table   table;
+    int     type;
+    boolean isNull;
+    boolean isDefault;
+    String  defaultValue;
+    int     size;
 
     /**
      * constructor
@@ -38,6 +40,22 @@ public class Column extends DatabaseObject
     public Column(String name)
     {
         this(name, -1);
+    }
+
+    /**
+     * copy constructor
+     *
+     * @param other
+     *     column object being copied
+     */
+    public Column(Column other)
+    {
+        this(other.name, other.type);
+
+        this.table        = other.table;
+        this.isNull       = other.isNull;
+        this.isDefault    = other.isDefault;
+        this.defaultValue = other.defaultValue;
     }
 
     /**
@@ -51,14 +69,14 @@ public class Column extends DatabaseObject
      */
     public Column(String name, int type)
     {
-        this.name         = name;
-        this.type         = type;
+        super(name);
+
         this.table        = null;
         this.isNull       = true;
         this.isDefault    = true;
         this.defaultValue = "";
 
-        // TODO check that type is valid (a value from SQLTypes)
+        setDataType(type);
     }
 
     /**
@@ -91,7 +109,11 @@ public class Column extends DatabaseObject
      */
     protected void setDataType(int type)
     {
-        // TODO check that is one of the types defined in SQLTypes
+        if (!isValidType(type))
+        {
+            throw new RuntimeException("Invalid data type " + type);
+        }
+
         this.type = type;
     }
 
@@ -146,6 +168,6 @@ public class Column extends DatabaseObject
      */
     public int getOrdinalPosition()
     {
-        return table.columns.indexOf(this) + 1;
+        return table._columns.indexOf(this) + 1;
     }
 }

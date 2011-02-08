@@ -63,82 +63,82 @@ public class SQLTypes
      */
     public static String codeToName( int type )
     {
-	if( type == SQLTypes.BIGINT )
-	{
-	    return "BIGINT";
-	}
-	else if( type == SQLTypes.CHAR )
+    if( type == SQLTypes.BIGINT )
+    {
+        return "BIGINT";
+    }
+    else if( type == SQLTypes.CHAR )
         {
-	    return "CHAR";
-	}
+        return "CHAR";
+    }
         else if( type == SQLTypes.VARCHAR )
         {
-	    return "VARCHAR";
-	}
+        return "VARCHAR";
+    }
         else if( type == SQLTypes.DATE )
         {
-	    return "DATE";
-	}
+        return "DATE";
+    }
         else if( type == SQLTypes.DECIMAL )
         {
-	    return "DECIMAL";
-	}
+        return "DECIMAL";
+    }
         else if( type == SQLTypes.DOUBLE ){
-	    return "DOUBLE";
-	}
+        return "DOUBLE";
+    }
         else if( type == SQLTypes.FLOAT )
         {
-	    return "FLOAT";
-	}
+        return "FLOAT";
+    }
         else if( type == SQLTypes.INTEGER )
         {
-	    return "INTEGER";
-	}
+        return "INTEGER";
+    }
         else if( type == SQLTypes.NUMERIC )
         {
-	    return "NUMERIC";
-	}
+        return "NUMERIC";
+    }
         else if( type == SQLTypes.REAL )
         {
-	    return "REAL";
-	}
+        return "REAL";
+    }
         else if( type == SQLTypes.SMALLINT )
         {
-	    return "SMALLINT";
-	}
+        return "SMALLINT";
+    }
         else if( type == SQLTypes.TIME )
         {
-	    return "TIME";
-	}
+        return "TIME";
+    }
         else if( type == SQLTypes.TIMESTAMP )
         {
-	    return "TIMESTAMP";
-	}
+        return "TIMESTAMP";
+    }
         else if( type == SQLTypes.TINYINT )
         {
-	    return "TINYINT";
-	}
+        return "TINYINT";
+    }
         else if( type == SQLTypes.PICTURE )
         {
-	    return "PICTURE";
-	}
+        return "PICTURE";
+    }
         else if( type == SQLTypes.NCHAR )
         {
-	    return "NCHAR";
-	}
+        return "NCHAR";
+    }
         else if( type == SQLTypes.LARGEINT )
         {
-	    return "LARGEINT";
-	}
+        return "LARGEINT";
+    }
         else if( type == SQLTypes.INTERVAL )
         {
-	    return "INTERVAL";
-	}
+        return "INTERVAL";
+    }
         else if( type == SQLTypes.DATETIME )
         {
-	    return "DATETIME";
-	}
-	return "NO TYPE";
+        return "DATETIME";
+    }
+    return "NO TYPE";
     }
 
     /**
@@ -150,37 +150,37 @@ public class SQLTypes
      */
     public static int getSize( int type )
     {
-	if( type == SQLTypes.TINYINT )
+    if( type == SQLTypes.TINYINT )
         {
-	    return 1;
-	}
+        return 1;
+    }
         else if( type == SQLTypes.CHAR )
         {
-	    return 1;
-	}
+        return 1;
+    }
         else if( type == SQLTypes.SMALLINT )
         {
-	    return 2;
-	}
+        return 2;
+    }
         else if( type == SQLTypes.INTEGER
-		|| type == SQLTypes.TIME
-		|| type == SQLTypes.DATE
-		|| type == SQLTypes.DATETIME
-		|| type == SQLTypes.REAL )
-	{
-	    return 4;
-	}
+        || type == SQLTypes.TIME
+        || type == SQLTypes.DATE
+        || type == SQLTypes.DATETIME
+        || type == SQLTypes.REAL )
+    {
+        return 4;
+    }
         else if( type == SQLTypes.TIMESTAMP
-		|| type == SQLTypes.BIGINT
-		|| type == SQLTypes.DOUBLE
-		|| type == SQLTypes.LARGEINT )
-	{
-	    return 8;
-	}
+        || type == SQLTypes.BIGINT
+        || type == SQLTypes.DOUBLE
+        || type == SQLTypes.LARGEINT )
+    {
+        return 8;
+    }
 
-	// NUMERIC, DECIMAL, FLOAT, CHARACTER, NCHAR, PICTURE, INTERVAL and VARCHAR
-	// are set manually, so we can't have a way of knowing its size
-	return -1;
+    // NUMERIC, DECIMAL, FLOAT, CHARACTER, NCHAR, PICTURE, INTERVAL and VARCHAR
+    // are set manually, so we can't have a way of knowing its size
+    return -1;
     }
 
 
@@ -193,120 +193,99 @@ public class SQLTypes
      */
     public static int nameToCode( String type )
     {
-	if( type.equals( "BIGINT" ) )
+    if( type.equals( "BIGINT" ) )
         {
-	    return SQLTypes.BIGINT;
-	}
+        return SQLTypes.BIGINT;
+    }
         else if( type.equals( "CHAR" ) || type.equals( "CHARACTER" ) )
         {
-	    return SQLTypes.CHAR;
-	}
+        return SQLTypes.CHAR;
+    }
         else if( type.equals( "DATETIME" ) )
         {
-	    return SQLTypes.DATETIME;
-	}
+        return SQLTypes.DATETIME;
+    }
         else if( type.equals( "DATE" ) )
         {
-	    return SQLTypes.DATE;
-	}
+        return SQLTypes.DATE;
+    }
         else if( type.equals( "DECIMAL" ) )
         {
-	    return SQLTypes.DECIMAL;
-	}
+        return SQLTypes.DECIMAL;
+    }
         else if( type.equals( "DOUBLE" ) )
         {
-	    return SQLTypes.DOUBLE;
-	}
+        return SQLTypes.DOUBLE;
+    }
         else if( type.equals( "FLOAT" ) )
         {
-	    return SQLTypes.FLOAT;
-	}
+        return SQLTypes.FLOAT;
+    }
         else if( type.equals( "INT" ) ||
-		 type.equals( "SIGNED INT" ) ||
-		 type.equals( "UNSIGNED INT" ) ||
-		 type.equals( "INTEGER" ) )
-	{
-	    return SQLTypes.INTEGER;
-	}
+         type.equals( "SIGNED INT" ) ||
+         type.equals( "UNSIGNED INT" ) ||
+         type.equals( "INTEGER" ) )
+    {
+        return SQLTypes.INTEGER;
+    }
         else if( type.equals( "NUMERIC" ) ||
-		 type.equals( "SIGNED NUMERIC" ) ||
-		 type.equals( "UNSIGNED NUMERIC" ) )
-	{
-	    return SQLTypes.NUMERIC;
-	}
+         type.equals( "SIGNED NUMERIC" ) ||
+         type.equals( "UNSIGNED NUMERIC" ) )
+    {
+        return SQLTypes.NUMERIC;
+    }
         else if( type.equals( "REAL" ) )
         {
-	    return SQLTypes.REAL;
-	}
+        return SQLTypes.REAL;
+    }
         else if( type.equals( "SMALLINT" ) ||
-		 type.equals( "SIGNED SMALLINT" ) ||
-		 type.equals( "UNSIGNED SMALLINT" ) )
-	{
-	    return SQLTypes.SMALLINT;
-	}
+         type.equals( "SIGNED SMALLINT" ) ||
+         type.equals( "UNSIGNED SMALLINT" ) )
+    {
+        return SQLTypes.SMALLINT;
+    }
         else if( type.equals( "TIME" ) )
         {
-	    return SQLTypes.TIME;
-	}
+        return SQLTypes.TIME;
+    }
         else if( type.equals( "TIMESTAMP" ) )
         {
-	    return SQLTypes.TIMESTAMP;
-	}
+        return SQLTypes.TIMESTAMP;
+    }
         else if( type.equals( "TINYINT" ) ||
-		 type.equals( "SIGNED TINYINT" ) ||
-		 type.equals( "UNSIGNED TINYINT" ) )
-	{
-	    return SQLTypes.TINYINT;
-	}
+         type.equals( "SIGNED TINYINT" ) ||
+         type.equals( "UNSIGNED TINYINT" ) )
+    {
+        return SQLTypes.TINYINT;
+    }
         else if( type.equals( "VARCHAR" ) )
         {
-	    return SQLTypes.VARCHAR;
-	}
+        return SQLTypes.VARCHAR;
+    }
         else if( type.equals( "TIME" ) )
         {
-	    return SQLTypes.TIME;
-	}
+        return SQLTypes.TIME;
+    }
         else if( type.equals( "PICTURE" ) )
         {
-	    return SQLTypes.PICTURE;
-	}
+        return SQLTypes.PICTURE;
+    }
         else if( type.equals( "NCHAR" ) )
         {
-	    return SQLTypes.NCHAR;
-	}
+        return SQLTypes.NCHAR;
+    }
         else if( type.equals( "LARGEINT" ) ||
-		 type.equals( "SIGNED LARGEINT" ) ||
-		 type.equals( "UNSIGNED LARGEINT" ) )
-	{
-	    return SQLTypes.LARGEINT;
-	}
+         type.equals( "SIGNED LARGEINT" ) ||
+         type.equals( "UNSIGNED LARGEINT" ) )
+    {
+        return SQLTypes.LARGEINT;
+    }
         else if( type.equals( "INTERVAL" ) )
         {
-	    return SQLTypes.NCHAR;
-	}
-
-	return -1;
+        return SQLTypes.NCHAR;
     }
 
-    public static void main(String[] args)
-    {
-	System.out.println( "BIGINT: " + SQLTypes.BIGINT );
-	System.out.println( "CHAR: " + SQLTypes.CHAR );
-	System.out.println( "VARCHAR: " + SQLTypes.VARCHAR );
-	System.out.println( "DATE: " + SQLTypes.DATE );
-	System.out.println( "DECIMAL: " + SQLTypes.DECIMAL );
-	System.out.println( "DOUBLE: " + SQLTypes.DOUBLE );
-	System.out.println( "FLOAT: " + SQLTypes.FLOAT );
-	System.out.println( "INTEGER: " + SQLTypes.INTEGER );
-	System.out.println( "NUMERIC: " + SQLTypes.NUMERIC );
-	System.out.println( "SMALLINT: " + SQLTypes.SMALLINT );
-	System.out.println( "TIME: " + SQLTypes.TIME );
-	System.out.println( "TIMESTAMP: " + SQLTypes.TIMESTAMP );
-	System.out.println( "TINYINT: " + SQLTypes.TINYINT );
-	System.out.println( "PICTURE: " + SQLTypes.PICTURE );
-	System.out.println( "NCHAR: " + SQLTypes.NCHAR );
-	System.out.println( "LARGEINT: " + SQLTypes.LARGEINT );
-	System.out.println( "INTERVAL: " + SQLTypes.INTERVAL );
+    return -1;
     }
 
     /**
@@ -317,33 +296,33 @@ public class SQLTypes
      * @return true if numeric; false otherwise
      */
     public static boolean isNumeric( int type )
-	throws Exception
+    throws Exception
     {
-	switch( type )
+    switch( type )
         {
-	    case SQLTypes.TIME:
-	    case SQLTypes.TIMESTAMP:
-	    case SQLTypes.DATE:
-	    case SQLTypes.PICTURE:
-	    case SQLTypes.INTERVAL:
-	    case SQLTypes.VARCHAR:
-	    case SQLTypes.CHAR:
-	    case SQLTypes.NCHAR:
-		return false;
-	    case SQLTypes.INTEGER:
-	    case SQLTypes.BIGINT:
-	    case SQLTypes.DECIMAL:
-	    case SQLTypes.DOUBLE:
-	    case SQLTypes.FLOAT:
-	    case SQLTypes.NUMERIC:
-	    case SQLTypes.REAL:
-	    case SQLTypes.SMALLINT:
-	    case SQLTypes.TINYINT:
-	    case SQLTypes.LARGEINT:
-		return true;
-	    default:
-		return false;
-	}
+        case SQLTypes.TIME:
+        case SQLTypes.TIMESTAMP:
+        case SQLTypes.DATE:
+        case SQLTypes.PICTURE:
+        case SQLTypes.INTERVAL:
+        case SQLTypes.VARCHAR:
+        case SQLTypes.CHAR:
+        case SQLTypes.NCHAR:
+        return false;
+        case SQLTypes.INTEGER:
+        case SQLTypes.BIGINT:
+        case SQLTypes.DECIMAL:
+        case SQLTypes.DOUBLE:
+        case SQLTypes.FLOAT:
+        case SQLTypes.NUMERIC:
+        case SQLTypes.REAL:
+        case SQLTypes.SMALLINT:
+        case SQLTypes.TINYINT:
+        case SQLTypes.LARGEINT:
+        return true;
+        default:
+        return false;
+    }
     }
 
     /**
@@ -355,31 +334,31 @@ public class SQLTypes
      */
     public static boolean isDateTimeLiteral( int type )
     {
-	switch( type )
+    switch( type )
         {
-	    case SQLTypes.TIME:
-	    case SQLTypes.TIMESTAMP:
-	    case SQLTypes.DATE:
-	    case SQLTypes.DATETIME:
-		return true;
-	    case SQLTypes.PICTURE:
-	    case SQLTypes.VARCHAR:
-	    case SQLTypes.CHAR:
-	    case SQLTypes.NCHAR:
-	    case SQLTypes.INTERVAL:
-	    case SQLTypes.INTEGER:
-	    case SQLTypes.BIGINT:
-	    case SQLTypes.DECIMAL:
-	    case SQLTypes.DOUBLE:
-	    case SQLTypes.FLOAT:
-	    case SQLTypes.NUMERIC:
-	    case SQLTypes.REAL:
-	    case SQLTypes.SMALLINT:
-	    case SQLTypes.TINYINT:
-	    case SQLTypes.LARGEINT:
-	    default:
-		return false;
-	}
+        case SQLTypes.TIME:
+        case SQLTypes.TIMESTAMP:
+        case SQLTypes.DATE:
+        case SQLTypes.DATETIME:
+        return true;
+        case SQLTypes.PICTURE:
+        case SQLTypes.VARCHAR:
+        case SQLTypes.CHAR:
+        case SQLTypes.NCHAR:
+        case SQLTypes.INTERVAL:
+        case SQLTypes.INTEGER:
+        case SQLTypes.BIGINT:
+        case SQLTypes.DECIMAL:
+        case SQLTypes.DOUBLE:
+        case SQLTypes.FLOAT:
+        case SQLTypes.NUMERIC:
+        case SQLTypes.REAL:
+        case SQLTypes.SMALLINT:
+        case SQLTypes.TINYINT:
+        case SQLTypes.LARGEINT:
+        default:
+        return false;
+    }
     }
 
     /**
@@ -391,30 +370,70 @@ public class SQLTypes
      */
     public static boolean isString( int type )
     {
-	switch( type )
+    switch( type )
         {
-	    case SQLTypes.VARCHAR:
-	    case SQLTypes.CHAR:
-	    case SQLTypes.NCHAR:
-	    case SQLTypes.PICTURE:
-		return true;
-	    case SQLTypes.TIME:
-	    case SQLTypes.TIMESTAMP:
-	    case SQLTypes.DATE:
-	    case SQLTypes.DATETIME:
-	    case SQLTypes.INTERVAL:
-	    case SQLTypes.INTEGER:
-	    case SQLTypes.BIGINT:
-	    case SQLTypes.DECIMAL:
-	    case SQLTypes.DOUBLE:
-	    case SQLTypes.FLOAT:
-	    case SQLTypes.NUMERIC:
-	    case SQLTypes.REAL:
-	    case SQLTypes.SMALLINT:
-	    case SQLTypes.TINYINT:
-	    case SQLTypes.LARGEINT:
-	    default:
-		return false;
-	}
+        case SQLTypes.VARCHAR:
+        case SQLTypes.CHAR:
+        case SQLTypes.NCHAR:
+        case SQLTypes.PICTURE:
+        return true;
+        case SQLTypes.TIME:
+        case SQLTypes.TIMESTAMP:
+        case SQLTypes.DATE:
+        case SQLTypes.DATETIME:
+        case SQLTypes.INTERVAL:
+        case SQLTypes.INTEGER:
+        case SQLTypes.BIGINT:
+        case SQLTypes.DECIMAL:
+        case SQLTypes.DOUBLE:
+        case SQLTypes.FLOAT:
+        case SQLTypes.NUMERIC:
+        case SQLTypes.REAL:
+        case SQLTypes.SMALLINT:
+        case SQLTypes.TINYINT:
+        case SQLTypes.LARGEINT:
+        default:
+        return false;
+    }
+    }
+
+
+    /**
+     * Checks if the given type is defined in this class
+     * 
+     * @param type
+     *     type being checked
+     * @return
+     *     <code>true</code> if the value passed as argument is defined as a type; 
+     *     <code>false</code> otherwise
+     */
+    public static boolean isValidType(int type)
+    {
+        switch( type )
+        {
+            case SQLTypes.VARCHAR:
+            case SQLTypes.CHAR:
+            case SQLTypes.NCHAR:
+            case SQLTypes.WCHAR:
+            case SQLTypes.PICTURE:
+            case SQLTypes.TIME:
+            case SQLTypes.TIMESTAMP:
+            case SQLTypes.DATE:
+            case SQLTypes.DATETIME:
+            case SQLTypes.INTERVAL:
+            case SQLTypes.INTEGER:
+            case SQLTypes.BIGINT:
+            case SQLTypes.DECIMAL:
+            case SQLTypes.DOUBLE:
+            case SQLTypes.FLOAT:
+            case SQLTypes.NUMERIC:
+            case SQLTypes.REAL:
+            case SQLTypes.SMALLINT:
+            case SQLTypes.TINYINT:
+            case SQLTypes.LARGEINT:
+                return true;
+            default:
+                return false;
+        }
     }
 }

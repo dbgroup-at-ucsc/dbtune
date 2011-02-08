@@ -42,6 +42,44 @@ public abstract class DatabaseObject
     protected long   size;
 
     /**
+     * default constructor
+     */
+    public DatabaseObject()
+    {
+        name        = null;
+        id          = 0;
+        cardinality = 0;
+        pages       = 0;
+        size        = 0;
+    }
+
+    /**
+     * creates a dbobject with the given name constructor
+     *
+     * @param name
+     *    name of the db object
+     */
+    public DatabaseObject( String name )
+    {
+        this.name = name;
+    }
+
+    /**
+     * copy constructor
+     *
+     * @param dbo
+     *    other database object to be copied in the new one
+     */
+    public DatabaseObject( DatabaseObject dbo )
+    {
+        name        = dbo.name;
+        id          = dbo.id;
+        cardinality = dbo.cardinality;
+        pages       = dbo.pages;
+        size        = dbo.size;
+    }
+
+    /**
      * Assigns the name of the database object.
      *
      * @param string value representing the object's name
@@ -129,7 +167,11 @@ public abstract class DatabaseObject
      */
     public String toString()
     {
-        return name;
+        if (name == null) {
+            return new String("");
+        } else {
+            return new String(name);
+        }
     }
 
     /**

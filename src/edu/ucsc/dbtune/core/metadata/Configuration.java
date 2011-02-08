@@ -1,5 +1,5 @@
 /*
- * ****************************************************************************
+ ******************************************************************************
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -13,76 +13,77 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- * ****************************************************************************
- */
-
+ ******************************************************************************/
 package edu.ucsc.dbtune.core.metadata;
 
 import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Abstraction of the dictionary used to save metadata. A catalog can be viewed
- * as a container of Schema objects.
+ * A configuration represents a set of physical structures over tables (and columns) that are used 
+ * to improve the performance of DML statements in a database. A configuration is typically composed 
+ * of a set of indexes, but can also contain materialized views (MV), partitions, denormalizations 
+ * and many others.
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public class Catalog extends DatabaseObject
+public class Configuration extends DatabaseObject
 {
-    protected List<Schema> _schemas;
+    protected List<Index> _indexes;
 
     /**
      * default constructor
      */
-    public Catalog()
+    public Configuration(List<Index> indexes)
     {
-        _schemas = new ArrayList<Schema>();
+        super();
+        this._indexes  = new ArrayList<Index>(indexes);
     }
 
     /**
      * copy constructor
      *
-     * @param other catalog
+     * @param other
+     *     other configuration being copied
      */
-    public Catalog( Catalog catalog )
+    public Configuration(Configuration other)
     {
-        super(catalog);
+        super(other);
 
-        _schemas = catalog._schemas;
+        _indexes = other._indexes;
     }
 
     /**
-     * Creates a new catalog with the given name
+     * constructs a new configuration with given name
      *
      * @param name
-     *     name of the catalog
+     *     name of the configuration
      */
-    public Catalog(String name)
+    public Configuration(String name)
     {
-        this.name = name;
-        _schemas = new ArrayList<Schema>();
+        super(name);
+        this._indexes = new ArrayList<Index>();
     }
 
     /**
-     * adds a schema to a catalog
+     * adds an index to the schema
      *
-     * @param schema
-     *     new table to add
+     * @param index
+     *     new index to add
      */
-    public void add(Schema schema)
+    public void add(Index index)
     {
-        _schemas.add(schema);
-        schema.setCatalog(this);
+        _indexes.add(index);
     }
 
     /**
-     * returns the list of _schemas that the schema contains
+     * returns the list of indexes that the schema contains
      *
      * @return
-     *     List of Schema objects
+     *     List of Index objects
      */
-    public List<Schema> getSchemas()
+    public List<Index> getIndexes()
     {
-        return new ArrayList<Schema>(_schemas);
+        return new ArrayList<Index>(_indexes);
     }
 }

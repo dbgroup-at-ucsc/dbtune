@@ -1,5 +1,5 @@
 /*
- * ****************************************************************************
+ ******************************************************************************
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -13,29 +13,23 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- * ****************************************************************************
- */
-
+ ******************************************************************************/
 package edu.ucsc.dbtune.core.metadata;
-
-import edu.ucsc.dbtune.core.AbstractDatabaseTable;
 
 import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Metadata for a table
+ * Metadata for a table.
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public class Table extends AbstractDatabaseTable
+public class Table extends DatabaseObject
 {
     protected Schema schema;
 
-    protected List<Column> columns;
-    protected List<Index>  indexes;
-
-    // how do we represent a PK? Index or List<Column>
+    protected List<Column> _columns;
+    protected List<Index>  _indexes;
 
     /**
      * Constructor
@@ -47,8 +41,22 @@ public class Table extends AbstractDatabaseTable
     {
         super( name );
 
-        columns = new ArrayList<Column>();
-        indexes = new ArrayList<Index>();
+        _columns = new ArrayList<Column>();
+        _indexes = new ArrayList<Index>();
+    }
+
+    /**
+     * Copy Constructor
+     *
+     * @param other
+     *     object being copied
+     */
+    public Table( Table other )
+    {
+        super( other );
+
+        _columns = other._columns;
+        _indexes = other._indexes;
     }
 
     /**
@@ -72,22 +80,22 @@ public class Table extends AbstractDatabaseTable
      */
     public void add( Column column )
     {
-        columns.add( column );
+        _columns.add( column );
 
         column.setTable( this );
     }
 
     /**
-     * Adds a column to the table. The position of the column in the table with respect to other 
-     * columns is as if the table had. That is, if the table has n columns, the new column will be 
+     * Adds a index to the table. The position of the index in the table with respect to other 
+     * indexes is as if the table had. That is, if the table has n indexes, the new index will be 
      * placed in the (n+1)th position.
      *
-     * @param column
-     *     new column being added to the table.
+     * @param index
+     *     new index being added to the table.
      */
     public void add( Index index )
     {
-        indexes.add( index );
+        _indexes.add( index );
 
         index.setTable( this );
     }
@@ -95,11 +103,11 @@ public class Table extends AbstractDatabaseTable
     /**
      * Returns the list of columns that are inside the table.
      *
-     * @return columns from table
+     * @return _columns from table
      */
     public List<Column> getColumns()
     {
-        return new ArrayList<Column>(columns);
+        return new ArrayList<Column>(_columns);
     }
 
     /**
@@ -109,7 +117,7 @@ public class Table extends AbstractDatabaseTable
      */
     public List<Index> getIndexes()
     {
-        return new ArrayList<Index>(indexes);
+        return new ArrayList<Index>(_indexes);
     }
 
     /**
@@ -122,7 +130,7 @@ public class Table extends AbstractDatabaseTable
      */
     public Column findColumn(String name)
     {
-        return (Column) DatabaseObject.findByName(new ArrayList<DatabaseObject>(columns),name);
+        return (Column) DatabaseObject.findByName(new ArrayList<DatabaseObject>(_columns),name);
     }
 
     /**
@@ -135,7 +143,7 @@ public class Table extends AbstractDatabaseTable
      */
     public Index findIndex(String name)
     {
-        return (Index) DatabaseObject.findByName(new ArrayList<DatabaseObject>(indexes),name);
+        return (Index) DatabaseObject.findByName(new ArrayList<DatabaseObject>(_indexes),name);
     }
 
     /**
@@ -148,7 +156,7 @@ public class Table extends AbstractDatabaseTable
      */
     public boolean contains( Column column )
     {
-        return columns.contains(column);
+        return _columns.contains(column);
     }
 
     /**
@@ -161,6 +169,6 @@ public class Table extends AbstractDatabaseTable
      */
     public boolean contains( Index index )
     {
-        return indexes.contains(index);
+        return _indexes.contains(index);
     }
 }

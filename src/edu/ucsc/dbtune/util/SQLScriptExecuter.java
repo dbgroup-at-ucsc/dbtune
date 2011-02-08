@@ -108,9 +108,5 @@ public class SQLScriptExecuter
             e.fillInStackTrace();
             throw e;
         }
-        finally
-        {
-            conn.rollback();
-        }
     }
 }

@@ -29,6 +29,7 @@ public class Index extends DatabaseObject
     public static final int     UNKNOWN   = 0;
     public static final int     B_TREE    = 1;
     public static final int     BITMAP    = 2;
+    public static final int     HASH      = 3;
     public static final boolean PRIMARY   = true;
     public static final boolean CLUSTERED = true;
     public static final boolean UNIQUE    = true;
@@ -55,6 +56,8 @@ public class Index extends DatabaseObject
      */
     public Index(Table table, boolean primary, boolean unique, boolean clustered)
     {
+        super();
+
         this.table     = table;
         this.type      = UNKNOWN;
         this.primary   = primary;
@@ -62,6 +65,25 @@ public class Index extends DatabaseObject
         this.columns   = new ArrayList<Column>();
         this.name      = "";
         this.clustered = clustered;
+    }
+
+    /**
+     * Copy constructor
+     *
+     * @param other
+     *     other index being copied into the new one
+     */
+    public Index(Index other)
+    {
+        super(other);
+
+        this.table        = other.table;
+        this.columns      = other.columns;
+        this.type         = other.type;
+        this.unique       = other.unique;
+        this.primary      = other.primary;
+        this.clustered    = other.clustered;
+        this.materialized = other.materialized;
     }
 
     /**
@@ -79,6 +101,8 @@ public class Index extends DatabaseObject
     public Index(List<Column> columns, boolean primary, boolean unique, boolean clustered)
         throws Exception
     {
+        super();
+
         this.columns = new ArrayList<Column>();
 
         if (columns.size() > 0)
@@ -123,7 +147,16 @@ public class Index extends DatabaseObject
      */
     public void setType(int type)
     {
-        // TODO check that is valid
+        switch( type )
+        {
+            case UNKNOWN:
+            case B_TREE:
+            case BITMAP:
+                break;
+            default:
+                throw new RuntimeException("Invalid type " + type);
+        }
+
         this.type = type;
     }
 

@@ -22,22 +22,39 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * A schema is a container of database objects of type tables, indexes, views, etcetera.
+ * A schema is a container of database objects, regularly tables, indexes, views, etcetera.
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
 public class Schema extends DatabaseObject
 {
-    protected Catalog catalog;
+    protected List<Table> _tables;
 
-    protected List<Table> tables;
+    protected Catalog       _catalog;
+    protected Configuration _baseConfiguration;
 
     /**
      * default constructor
      */
     public Schema()
     {
-        this.tables = new ArrayList<Table>();
+        super();
+
+        _tables  = new ArrayList<Table>();
+    }
+
+    /**
+     * copy constructor
+     *
+     * @param other
+     *     other schema being copied
+     */
+    public Schema( Schema other)
+    {
+        super(other);
+
+        _tables = other._tables;
+        _baseConfiguration = other._baseConfiguration;
     }
 
     /**
@@ -48,19 +65,20 @@ public class Schema extends DatabaseObject
      */
     public Schema(String name)
     {
-        this.name = name;
-        this.tables = new ArrayList<Table>();
+        super(name);
+
+        _tables = new ArrayList<Table>();
     }
 
     /**
-     * returns the list of tables that the schema contains
+     * returns the list of _tables that the schema contains
      *
      * @return
      *     List of Table objects
      */
     public List<Table> getTables()
     {
-        return new ArrayList<Table>(tables);
+        return new ArrayList<Table>(_tables);
     }
 
     /**
@@ -71,7 +89,7 @@ public class Schema extends DatabaseObject
      */
     public void add(Table table)
     {
-        tables.add(table);
+        _tables.add(table);
         table.setSchema(this);
     }
 
@@ -83,7 +101,7 @@ public class Schema extends DatabaseObject
      */
     public Catalog getCatalog()
     {
-        return catalog;
+        return _catalog;
     }
 
     /**
@@ -94,6 +112,28 @@ public class Schema extends DatabaseObject
      */
     public void setCatalog(Catalog catalog)
     {
-        this.catalog = catalog;
+        _catalog = catalog;
+    }
+
+    /**
+     * Assigns the schema's base configuration
+     *
+     * @param configuration
+     *     configuration corresponding to the schema
+     */
+    public void setBaseConfiguration( Configuration baseConfiguration )
+    {
+        _baseConfiguration = baseConfiguration;
+    }
+
+    /**
+     * Returns the schema's base configuration
+     *
+     * @return
+     *     configuration corresponding to the schema
+     */
+    public Configuration getBaseConfiguration()
+    {
+        return _baseConfiguration;
     }
 }
