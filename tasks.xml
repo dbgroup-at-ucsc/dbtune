@@ -32,31 +32,31 @@
      -->
     <target name="tests" depends="test.compile" description="Execute tests.">
         <echo message="running tests"/>
-	<junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">
+        <junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">
             <jvmarg value="-Dtest.dbms.url=${test.dbms.url}" />
             <jvmarg value="-Dtest.dbms.username=${test.dbms.username}" />
             <jvmarg value="-Dtest.dbms.password=${test.dbms.password}" />
             <jvmarg value="-Dtest.dbms.script.dir=${test.dbms.script.dir}" />
             <jvmarg value="-Dtest.dbms.database=${test.dbms.database}" />
             <jvmarg value="-Dtest.dbms.driver=${test.dbms.driver}" />
-	    <classpath>
-		<path refid="compile.classpath"/>
-		<pathelement location="${build.dir}/classes"/>
-		<pathelement location="${build.dir}/tests"/>
-	    </classpath>
-	    <batchtest fork="yes" todir="${build.dir}/${junit.report.dir}">
-		<fileset dir="${test.dir}">
-		    <include name="${test.includes}"/>
-		    <exclude name="**/AllTests.java"/>
-		</fileset>
-	    </batchtest>
-	    <formatter type="xml" />
+            <classpath>
+                <path refid="compile.classpath"/>
+                <pathelement location="${build.dir}/classes"/>
+                <pathelement location="${build.dir}/tests"/>
+            </classpath>
+            <batchtest fork="yes" todir="${build.dir}/${junit.report.dir}">
+                <fileset dir="${test.dir}">
+                    <include name="${test.includes}"/>
+                    <exclude name="**/AllTests.java"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml" />
         </junit>
-	<junitreport todir="${build.dir}/${junit.report.dir}">
+        <junitreport todir="${build.dir}/${junit.report.dir}">
             <fileset dir="${build.dir}/${junit.report.dir}">
                 <include name="TEST-*.xml"/>
             </fileset>
-	    <report format="frames" todir="${build.dir}/${junit.report.dir}"/>
+            <report format="frames" todir="${build.dir}/${junit.report.dir}"/>
         </junitreport>
     </target>
 
@@ -64,5 +64,4 @@
             description="Remove generated files.">
         <delete dir="${build.dir}"/>
     </target>
-
 </project>

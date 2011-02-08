@@ -60,7 +60,7 @@
   <target name="compile.all"
       depends="compile"
       description="compile all generated files.">
-      <ant antfile="extensions/Console/build.xml" target="compile" inheritAll="false"/>
+			<ant antfile="extensions/Console/build.xml" target="console.compile" inheritAll="false"/>
   </target>
 
   <target name="test.compile.all"

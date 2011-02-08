@@ -3,6 +3,23 @@
   <import file="../../tasks.xml"/>
 
   <path id="compile.classpath">
-    <fileset dir="${lib.dir}" includes="*.jar"/>
+    <pathelement location="${scala.home}/scala-compiler.jar" />
+    <pathelement location="${scala.home}/scala-library.jar" />
+    <fileset dir="${lib.dir}" includes="*.jar" />
+    <pathelement location="${build.dir}/classes/" />
   </path>
+
+  <target name="init">
+    <taskdef resource="scala/tools/ant/antlib.xml">
+      <classpath refid="compile.classpath"/>
+    </taskdef>
+  </target>
+
+  <target name="console.compile" depends="init" description="Compile Scala source.">
+    <scalac srcdir="${src.dir}" destdir="${build.dir}/classes">
+        <classpath refid="compile.classpath" />
+        <include name="**/*.scala" />
+        <exclude name="edu/ucsc/dbtune/cli/init.scala" />
+    </scalac>
+  </target>
 </project>
