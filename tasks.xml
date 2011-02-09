@@ -32,7 +32,7 @@
      -->
     <target name="tests" depends="test.compile" description="Execute tests.">
         <echo message="running tests"/>
-        <junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">
+        <junit printsummary="yes" haltonerror="yes" haltonfailure="yes" fork="yes">
             <jvmarg value="-Dtest.dbms.url=${test.dbms.url}" />
             <jvmarg value="-Dtest.dbms.username=${test.dbms.username}" />
             <jvmarg value="-Dtest.dbms.password=${test.dbms.password}" />

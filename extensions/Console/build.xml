@@ -2,6 +2,10 @@
 <project name="dbtune-console" basedir="." default="compile">
   <import file="../../tasks.xml"/>
 
+  <target name="check-antlib">
+    <available file="scala/tools/ant/antlib.xml" property="antlib.present"/>
+  </target>
+
   <path id="compile.classpath">
     <pathelement location="${scala.home}/scala-compiler.jar" />
     <pathelement location="${scala.home}/scala-library.jar" />
@@ -9,13 +13,13 @@
     <pathelement location="${build.dir}/classes/" />
   </path>
 
-  <target name="init">
+  <target name="init" depends="check-antlib" if="antlib.present">
     <taskdef resource="scala/tools/ant/antlib.xml">
       <classpath refid="compile.classpath"/>
     </taskdef>
   </target>
 
-  <target name="console.compile" depends="init" description="Compile Scala source.">
+  <target name="console.compile" depends="init, check-antlib" description="Compile Scala source." if="antlib.present">
     <scalac srcdir="${src.dir}" destdir="${build.dir}/classes">
         <classpath refid="compile.classpath" />
         <include name="**/*.scala" />

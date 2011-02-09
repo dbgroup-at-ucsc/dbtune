@@ -24,8 +24,13 @@ import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+import org.hamcrest.CoreMatchers;
+import static org.hamcrest.CoreMatchers.is;
 import org.junit.AfterClass;
+import static org.junit.Assume.assumeThat;
 import org.junit.BeforeClass;
+import org.junit.Condition;
+import org.junit.If;
 import org.junit.Test;
 
 import java.util.List;
@@ -56,6 +61,7 @@ public class MetaDataExtractorTest
     private static DatabaseConnection   con;
     private static GenericJDBCExtractor extractor;
     private static Catalog              catalog;
+    private static boolean              isIgnored;
 
     /**
      * Executes the SQL script that should contain the 'movies' database, then extracts the metadata 
@@ -69,6 +75,8 @@ public class MetaDataExtractorTest
 
         props = new Properties();
 
+        confirmAssumptions();
+        if(isIgnored()) return;
         props.setProperty(URL,      System.getProperty("test.dbms.url"));
         props.setProperty(USERNAME, System.getProperty("test.dbms.username"));
         props.setProperty(PASSWORD, System.getProperty("test.dbms.password"));
@@ -92,16 +100,35 @@ public class MetaDataExtractorTest
         catalog = extractor.extract(con);
     }
 
+    private static void confirmAssumptions(){
+      try {
+        assumeThat(System.getProperty("test.dbms.url"), CoreMatchers.<Object>notNullValue());
+        assumeThat(System.getProperty("test.dbms.username"), CoreMatchers.<Object>notNullValue());
+        assumeThat(System.getProperty("test.dbms.password"), CoreMatchers.<Object>notNullValue());
+        assumeThat(System.getProperty("test.dbms.database"), CoreMatchers.<Object>notNullValue());
+        assumeThat(System.getProperty("test.dbms.driver"), CoreMatchers.<Object>notNullValue());
+        assumeThat(con, CoreMatchers.<Object>notNullValue());
+        assumeThat(con.isOpened(), is(true));
+        isIgnored = false;
+      } catch (Throwable e){
+        isIgnored = true;
+      }
+    }
+
+    @Condition public static boolean isIgnored(){
+      return isIgnored;
+    }
+
     @AfterClass
     public static void tearDown() throws Exception
     {
-        con.close();
+        if(con != null) con.close();
     }
 
     /**
      * Tests the size of database object containers
      */
-    @Test
+    @Test @If(condition = "isIgnored", is = false)
     public void testContainment() throws Exception
     {
         List<Column> columns;
@@ -168,7 +195,7 @@ public class MetaDataExtractorTest
      * <code>columns</code>), when iterated using the <code>List.iterator()</code>  
      * method, are in the correct order.
      */
-    @Test
+    @Test @If(condition = "isIgnored", is = false)
     public void testColumnOrdering() throws Exception
     {
         List<Column> columns;
@@ -232,7 +259,7 @@ public class MetaDataExtractorTest
      * Checks that all the indexes that are defined on the <code>movies</code> database are 
      * extracted correctly. This tests looks only at the name of the indexes.
      */
-    @Test
+    @Test @If(condition = "isIgnored", is = false)
     public void testIndexes() throws Exception
     {
         for (Table table : catalog.getSchemas().get(0).getTables())
@@ -286,7 +313,7 @@ public class MetaDataExtractorTest
      * cardinality. For columns, this corresponds to the count of unique entries; for tables, the 
      * number of rows contained in it.
      */
-    @Test
+    @Test @If(condition = "isIgnored", is = false)
     public void testCardinality() throws Exception
     {
         for (Table table : catalog.getSchemas().get(0).getTables())
@@ -349,7 +376,7 @@ public class MetaDataExtractorTest
      * in bytes is just the sum of all the columns contained in it (which is sometimes referred to 
      * as row size).
      */
-    @Test
+    @Test @If(condition = "isIgnored", is = false)
     public void testSize() throws Exception
     {
     }
