@@ -1,78 +1,83 @@
 <?xml version="1.0"?>
 <project name="dbtune" default="compile">
-    <import file="tasks.xml"/>
+  <import file="tasks.xml" />
 
-    <path id="compile.classpath">
-        <fileset dir="${lib.dir}" includes="*.jar"/>
-    </path>
+  <path id="compile.classpath">
+    <fileset dir="${lib.dir}" includes="*.jar" />
+  </path>
 
-    <target name="jar" depends="compile">
-        <mkdir dir="${build.dir}/dist"/>
-        <jar destfile="${build.dir}/dist/dbtune-${version}.jar" basedir="${build.dir}/classes"/>
-    </target>
+  <target name="jar" depends="compile">
+    <mkdir dir="${build.dir}/dist" />
+    <jar   destfile="${build.dir}/dist/dbtune-${version}.jar" basedir="${build.dir}/classes" />
+  </target>
 
-    <target name="jar.all" depends="compile.all">
-        <mkdir dir="${build.dir}/dist"/>
-        <jar destfile="${build.dir}/dist/dbtune-${version}.jar" basedir="${build.dir}/classes"/>
-    </target>
+  <target name="jar.all" depends="compile.all">
+    <mkdir dir="${build.dir}/dist"/>
+    <jar   destfile="${build.dir}/dist/dbtune-${version}.jar" basedir="${build.dir}/classes" />
+  </target>
 
-    <target name="dist" depends="jar, javadoc">
-        <copy toDir="${build.dir}/dist">
-            <fileset dir="${lib.dir}" includes="*.jar"/>
-        </copy>
-        <copy toDir="${build.dir}/dist">
-            <fileset dir="${build.dir}" includes="manual/**/*"/>
-            <fileset dir="${build.dir}" includes="javadoc/**/*"/>
-        </copy>
+  <target name="dist" depends="jar, javadoc">
+    <copy toDir="${build.dir}/dist">
+      <fileset dir="${lib.dir}" includes="*.jar" />
+    </copy>
+    <copy toDir="${build.dir}/dist">
+      <fileset dir="${build.dir}" includes="manual/**/*" />
+      <fileset dir="${build.dir}" includes="javadoc/**/*" />
+    </copy>
 
-        <zip destfile="${build.dir}/dbtune-${version}.zip" basedir="${build.dir}/dist"/>
-        <zip destfile="${build.dir}/dbtune-${version}-src.zip"
-            basedir="." excludes="www/**/*,www,build/**/*, javadoc/**/*, build,SVN, SVN/**/*,**/SVN,CVS,CVS/**/*,**/CVS"/>
-    </target>
+    <zip destfile="${build.dir}/dbtune-${version}.zip" basedir="${build.dir}/dist" />
+    <zip
+         destfile="${build.dir}/dbtune-${version}-src.zip"
+         basedir="."
+         excludes="www/**/*,www,build/**/*, javadoc/**/*, build,SVN, SVN/**/*,**/SVN,CVS,CVS/**/*,**/CVS"
+    />
+  </target>
 
-    <target name="javadoc"
-            description="Generate Javadocs.">
-        <mkdir dir="${build.dir}/javadoc"/>
-        <javadoc sourcepath="${src.dir}"
-                 packagenames="*"
-                 excludepackagenames="tests"
-                 destdir="${build.dir}/javadoc"
-                 author="true"
-                 protected="true" windowtitle="DbTune 0.1 API">
-            <sourcepath>
-                <pathelement location="${console.src.dir}"/>                
-                <pathelement location="${src.dir}"/>
-                <!-- todo(Huascar) remove this after Monday's meeting (Sep 20, 2010) why? this was added for showing
-                     how to add extensions to dbtune project.
-                -->
-            </sourcepath>
-            <classpath refid="compile.classpath"/>
-        </javadoc>
-    </target>
-
+  <target name="javadoc"
+          description="Generate Javadocs.">
+    <mkdir dir="${build.dir}/javadoc" />
+    <javadoc sourcepath="${src.dir}"
+             packagenames="*"
+             excludepackagenames="tests"
+             destdir="${build.dir}/javadoc"
+             author="true"
+             protected="true" windowtitle="DbTune 0.1 API">
+      <sourcepath>
+        <pathelement location="${cli.src.dir}" />        
+        <pathelement location="${src.dir}" />
+      </sourcepath>
+      <classpath refid="compile.classpath" />
+    </javadoc>
+  </target>
 
   <target name="clean.all"
-      depends="clean"
-      description="Remove generated files.">
-    <ant antfile="extensions/Console/build.xml" target="clean" inheritall="false"/>
+          depends="clean"
+          description="Remove generated files.">
+    <ant antfile="extensions/cli/build.xml" target="clean" inheritall="false" />
   </target>
 
   <target name="compile.all"
-      depends="compile"
-      description="compile all generated files.">
-			<ant antfile="extensions/Console/build.xml" target="console.compile" inheritAll="false"/>
+          depends="compile"
+          description="compile all generated files.">
+    <ant antfile="extensions/cli/build.xml" target="compile" inheritAll="false" />
   </target>
 
-  <target name="test.compile.all"
-      depends="test.compile"
-      description="compile all generated test files.">
-      <ant antfile="extensions/Console/build.xml" target="test.compile" inheritAll="false"/>
+  <target name="compile.all.tests"
+          depends="compile.tests"
+          description="compile all generated test files.">
+    <ant antfile="extensions/cli/build.xml" target="compile.tests" inheritAll="false" />
   </target>
 
-  <target name="test.all"
-      depends="test.compile.all, tests"
+  <target name="test.all.units"
+      depends="compile.tests"
       description="test all generated test files.">
-      <ant antfile="extensions/Console/build.xml" target="tests" inheritAll="false"/>
+    <ant antfile="extensions/cli/build.xml" target="test.units" inheritAll="false" />
+  </target>
+
+  <target name="test.all.units.and.functional"
+          depends="compile.tests"
+          description="test all generated test files.">
+    <ant antfile="extensions/cli/build.xml" target="test.units.and.functional" inheritAll="false" />
   </target>
 
 </project>

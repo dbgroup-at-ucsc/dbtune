@@ -116,7 +116,7 @@ public class MetaDataExtractorTest
     }
 
     @Condition public static boolean isIgnored(){
-      return isIgnored;
+      return !isIgnored;
     }
 
     @AfterClass

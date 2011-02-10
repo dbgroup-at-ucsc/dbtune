@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project name="dbtune-console" basedir="." default="compile">
+<project name="dbtune-cli" basedir="." default="compile">
   <import file="../../tasks.xml"/>
 
   <target name="check-antlib">
@@ -7,8 +7,8 @@
   </target>
 
   <path id="compile.classpath">
-    <pathelement location="${scala.home}/scala-compiler.jar" />
-    <pathelement location="${scala.home}/scala-library.jar" />
+    <pathelement location="${scala.home}/scala-compiler-2.8.1.jar" />
+    <pathelement location="${scala.home}/scala-library-2.8.1.jar" />
     <fileset dir="${lib.dir}" includes="*.jar" />
     <pathelement location="${build.dir}/classes/" />
   </path>
@@ -19,7 +19,11 @@
     </taskdef>
   </target>
 
-  <target name="console.compile" depends="init, check-antlib" description="Compile Scala source." if="antlib.present">
+  <target name="compile"
+          depends="init, check-antlib"
+          description="Compile Scala source."
+          if="antlib.present" >
+
     <scalac srcdir="${src.dir}" destdir="${build.dir}/classes">
         <classpath refid="compile.classpath" />
         <include name="**/*.scala" />
