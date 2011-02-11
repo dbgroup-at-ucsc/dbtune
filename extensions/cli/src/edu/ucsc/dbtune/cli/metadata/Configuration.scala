@@ -21,7 +21,7 @@ import edu.ucsc.dbtune.core.metadata.extraction.MetaDataExtractor
 import edu.ucsc.dbtune.core.metadata.extraction.GenericJDBCExtractor
 import edu.ucsc.dbtune.core.metadata.extraction.PGExtractor
 
-import edu.ucsc.dbtune.core.JdbcDatabaseConnectionManager._
+import edu.ucsc.dbtune.core.JdbcConnectionManager._
 
 import java.util.Properties
 

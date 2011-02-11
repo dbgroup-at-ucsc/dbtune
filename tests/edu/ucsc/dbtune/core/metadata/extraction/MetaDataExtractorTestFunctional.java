@@ -51,7 +51,7 @@ import static org.junit.Assert.*;
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public class MetaDataExtractorTest
+public class MetaDataExtractorTestFunctional
 {
     private static DatabaseConnection   con;
     private static GenericJDBCExtractor extractor;

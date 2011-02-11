@@ -19,4 +19,7 @@
  * Interfaces which make up {@link edu.ucsc.dbtune.core.IBGWhatIfOptimizer}'s
  * whatIfOptmize expression.
  */
+@Generated(value={})
 package edu.ucsc.dbtune.core.optimizers;
+
+import javax.annotation.Generated;

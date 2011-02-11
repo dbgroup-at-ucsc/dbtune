@@ -39,4 +39,7 @@
  *
  * </dl>
  */
+@Generated(value={})
 package edu.ucsc.dbtune.core;
+
+import javax.annotation.Generated;

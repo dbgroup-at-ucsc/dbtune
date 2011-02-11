@@ -1,10 +1,7 @@
 <?xml version="1.0"?>
 <project name="dbtune" default="compile">
-  <import file="tasks.xml" />
 
-  <path id="compile.classpath">
-    <fileset dir="${lib.dir}" includes="*.jar" />
-  </path>
+  <import file="tasks.xml" />
 
   <target name="jar" depends="compile">
     <mkdir dir="${build.dir}/dist" />
@@ -24,18 +21,15 @@
       <fileset dir="${build.dir}" includes="manual/**/*" />
       <fileset dir="${build.dir}" includes="javadoc/**/*" />
     </copy>
-
     <zip destfile="${build.dir}/dbtune-${version}.zip" basedir="${build.dir}/dist" />
-    <zip
-         destfile="${build.dir}/dbtune-${version}-src.zip"
+    <zip destfile="${build.dir}/dbtune-${version}-src.zip"
          basedir="."
-         excludes="www/**/*,www,build/**/*, javadoc/**/*, build,SVN, SVN/**/*,**/SVN,CVS,CVS/**/*,**/CVS"
-    />
+         excludes="www/**/*,www,build/**/*, javadoc/**/*, build,SVN,
+                   SVN/**/*,**/SVN,CVS,CVS/**/*,**/CVS" />
   </target>
 
-  <target name="javadoc"
-          description="Generate Javadocs.">
-    <mkdir dir="${build.dir}/javadoc" />
+  <target name="javadoc" description="Generate Javadoc">
+    <mkdir   dir="${build.dir}/javadoc" />
     <javadoc sourcepath="${src.dir}"
              packagenames="*"
              excludepackagenames="tests"
@@ -50,34 +44,29 @@
     </javadoc>
   </target>
 
-  <target name="clean.all"
-          depends="clean"
-          description="Remove generated files.">
+  <target name="clean.all" depends="clean" description="Remove generated files">
     <ant antfile="extensions/cli/build.xml" target="clean" inheritall="false" />
   </target>
 
-  <target name="compile.all"
-          depends="compile"
-          description="compile all generated files.">
+  <target name="compile.all" depends="compile" description="compile all source">
     <ant antfile="extensions/cli/build.xml" target="compile" inheritAll="false" />
   </target>
 
-  <target name="compile.all.tests"
-          depends="compile.tests"
-          description="compile all generated test files.">
+  <target name="compile.all.tests" depends="compile.tests">
     <ant antfile="extensions/cli/build.xml" target="compile.tests" inheritAll="false" />
   </target>
 
-  <target name="test.all.units"
-      depends="compile.tests"
-      description="test all generated test files.">
-    <ant antfile="extensions/cli/build.xml" target="test.units" inheritAll="false" />
+  <target name="test.all.unit" depends="test.unit">
+    <ant antfile="extensions/cli/build.xml" target="test.unit" inheritAll="false" />
   </target>
 
-  <target name="test.all.units.and.functional"
-          depends="compile.tests"
-          description="test all generated test files.">
-    <ant antfile="extensions/cli/build.xml" target="test.units.and.functional" inheritAll="false" />
+  <target name="test.all.functional" depends="test.functional">
+    <ant antfile="extensions/cli/build.xml" target="test.functional" inheritAll="false" />
   </target>
 
+  <target name="test.unit.and.functional" depends="test.unit,test.functional" />
+
+  <target name="test.all.unit.and.functional" depends="test.unit,test.functional">
+    <ant antfile="extensions/cli/build.xml" target="test.unit,test.functional" inheritAll="false" />
+  </target>
 </project>

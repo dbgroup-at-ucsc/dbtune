@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
+<project name="dbtune-tasks">
 
-<project name="tasks">
     <property file="build.properties"/>
+
+    <path id="compile.classpath">
+      <fileset dir="${lib.dir}" includes="*.jar" />
+    </path>
 
     <target name="compile" description="Compile Java source.">
         <mkdir dir="${build.dir}/classes"/>
         <javac srcdir="${src.dir}" debug="on" destdir="${build.dir}/classes" includeantruntime="no">
             <classpath refid="compile.classpath"/>
         </javac>
-        <copy toDir="${build.dir}/classes">
-	    <fileset dir="${src.dir}" excludes="**/*.java"/>
-        </copy>
     </target>
 
     <target name="compile.tests" depends="compile" description="Compile test source.">
@@ -19,33 +20,31 @@
             <classpath path="${build.dir}/classes"/>
             <classpath refid="compile.classpath"/>
         </javac>
-        <copy toDir="${build.dir}/tests">
-            <fileset dir="${test.dir}" excludes="**/*.java"/>
-        </copy>
-        <mkdir dir="${build.dir}/${junit.report.dir}"/>
     </target>
 
-    <target name="test.units" depends="compile.tests" description="Execute tests.">
-        <echo message="running tests"/>
-	<junit printsummary="yes" haltonerror="yes" haltonfailure="yes" fork="yes" showoutput="yes">
-	    <classpath>
-                <path refid="compile.classpath"/>
-                <pathelement location="${build.dir}/classes"/>
-                <pathelement location="${build.dir}/tests"/>
-            </classpath>
-            <batchtest fork="yes" todir="${build.dir}/${junit.report.dir}">
-                <fileset dir="${test.dir}">
-                    <include name="${test.includes}"/>
-                    <exclude name="**/AllTests.java"/>
-                </fileset>
-            </batchtest>
-	    <formatter type="xml" />
-	</junit>
+    <target name="test.unit" depends="compile.tests" description="Execute tests.">
+      <echo message="running unit tests"/>
+      <mkdir dir="${build.dir}/${junit.out.dir}"/>
+      <junit printsummary="yes" haltonerror="yes" haltonfailure="yes" fork="yes">
+        <classpath>
+          <path refid="compile.classpath"/>
+          <pathelement location="${build.dir}/classes"/>
+          <pathelement location="${build.dir}/tests"/>
+        </classpath>
+        <batchtest fork="yes" todir="${build.dir}/${junit.out.dir}">
+            <fileset dir="${test.dir}">
+                <include name="${unit}"/>
+                <exclude name="**/AllTests.java"/>
+            </fileset>
+        </batchtest>
+        <formatter type="xml" />
+      </junit>
     </target>
 
-    <target name="test.units.and.functional" depends="compile.tests" description="Execute tests.">
-        <echo message="running tests"/>
-        <junit printsummary="yes" haltonerror="yes" haltonfailure="yes" fork="yes">
+    <target name="test.functional" depends="compile.tests" description="Execute tests.">
+        <echo message="running functional tests"/>
+        <mkdir dir="${build.dir}/${junit.out.dir}"/>
+        <junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">
             <jvmarg value="-Dtest.dbms.url=${test.dbms.url}" />
             <jvmarg value="-Dtest.dbms.username=${test.dbms.username}" />
             <jvmarg value="-Dtest.dbms.password=${test.dbms.password}" />
@@ -57,67 +56,19 @@
                 <pathelement location="${build.dir}/classes"/>
                 <pathelement location="${build.dir}/tests"/>
             </classpath>
-            <batchtest fork="yes" todir="${build.dir}/${junit.report.dir}">
+            <batchtest fork="yes" todir="${build.dir}/${junit.out.dir}">
                 <fileset dir="${test.dir}">
-                    <include name="${test.includes}"/>
+                    <include name="${functional}"/>
                     <exclude name="**/AllTests.java"/>
                 </fileset>
             </batchtest>
             <formatter type="xml" />
         </junit>
-    </target>
-
-    <target name="htest.units" depends="compile.tests" description="Execute tests.">
-        <echo message="running tests"/>
-	<junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes" showoutput="yes">
-	    <classpath>
-                <path refid="compile.classpath"/>
-                <pathelement location="${build.dir}/classes"/>
-                <pathelement location="${build.dir}/tests"/>
-            </classpath>
-            <batchtest fork="yes" todir="${build.dir}/${junit.report.dir}">
-                <fileset dir="${test.dir}">
-                    <include name="${test.includes}"/>
-                    <exclude name="**/AllTests.java"/>
-                </fileset>
-            </batchtest>
-	    <formatter type="xml" />
-	</junit>
-        <junitreport todir="${build.dir}/${junit.report.dir}">
-            <fileset dir="${build.dir}/${junit.report.dir}">
-                <include name="TEST-*.xml"/>
-            </fileset>
-            <report format="frames" todir="${build.dir}/${junit.report.dir}"/>
-        </junitreport>
-    </target>
-
-    <target name="htest.units.and.functional" depends="compile.tests" description="Execute tests.">
-        <echo message="running tests"/>
-	<junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">
-            <jvmarg value="-Dtest.dbms.url=${test.dbms.url}" />
-            <jvmarg value="-Dtest.dbms.username=${test.dbms.username}" />
-            <jvmarg value="-Dtest.dbms.password=${test.dbms.password}" />
-            <jvmarg value="-Dtest.dbms.script.dir=${test.dbms.script.dir}" />
-            <jvmarg value="-Dtest.dbms.database=${test.dbms.database}" />
-            <jvmarg value="-Dtest.dbms.driver=${test.dbms.driver}" />
-            <classpath>
-                <path refid="compile.classpath"/>
-                <pathelement location="${build.dir}/classes"/>
-                <pathelement location="${build.dir}/tests"/>
-            </classpath>
-            <batchtest fork="yes" todir="${build.dir}/${junit.report.dir}">
-                <fileset dir="${test.dir}">
-                    <include name="${test.includes}"/>
-                    <exclude name="**/AllTests.java"/>
-                </fileset>
-            </batchtest>
-            <formatter type="xml" />
-        </junit>
-        <junitreport todir="${build.dir}/${junit.report.dir}">
-            <fileset dir="${build.dir}/${junit.report.dir}">
-                <include name="TEST-*.xml"/>
-            </fileset>
-            <report format="frames" todir="${build.dir}/${junit.report.dir}"/>
+        <junitreport todir="${build.dir}/${junit.out.dir}">
+          <fileset dir="${build.dir}/${junit.out.dir}">
+            <include name="TEST-*.xml" />
+          </fileset>
+          <report format="frames" todir="${build.dir}/${junit.out.dir}" />
         </junitreport>
     </target>
 
@@ -125,5 +76,4 @@
             description="Remove generated files.">
         <delete dir="${build.dir}"/>
     </target>
-
 </project>

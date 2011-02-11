@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<project name="dbtune-cli-tasks" basedir="." default="compile">
+
+  <import file="../../tasks.xml"/>
+
+  <path id="compile.cli.classpath">
+    <path        refid="compile.classpath" />
+    <pathelement location="${lib.dir}/scala-compiler-2.8.1.jar" />
+    <pathelement location="${build.dir}/classes/" />
+  </path>
+
+  <target name="init">
+    <taskdef resource="scala/tools/ant/antlib.xml">
+      <classpath refid="compile.cli.classpath"/>
+    </taskdef>
+  </target>
+
+  <target name="compile" depends="init" description="Compile Scala source">
+    <scalac srcdir="${src.dir}"
+         destdir="${build.dir}/classes"
+         classpathref="compile.cli.classpath"
+         addParams="-make:changed" >
+      <include name="**/*.scala" />
+      <exclude name="edu/ucsc/dbtune/cli/init.scala" />
+    </scalac>
+  </target>
+
+</project>
