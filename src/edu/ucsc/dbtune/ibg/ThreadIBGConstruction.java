@@ -64,7 +64,6 @@ public class ThreadIBGConstruction implements Runnable {
 						taskMonitor.wait();
 					} catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        Debug.logNotice("InterruptedException", e);
                         return;
                     }
 				}

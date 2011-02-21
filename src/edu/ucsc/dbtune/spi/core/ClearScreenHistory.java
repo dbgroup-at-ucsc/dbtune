@@ -5,12 +5,12 @@ import java.io.PrintStream;
 /**
  * Clear screen, on console, upto some line.
  */
-public class PeriodicClearScreen {
+public class ClearScreenHistory {
     private final PrintStream    out;
     private final Trail          trail          = new Trail();
     private final StringBuilder  trailContent   = new StringBuilder();
 
-    public PeriodicClearScreen(PrintStream out) {
+    public ClearScreenHistory(PrintStream out) {
         this.out = out;
     }
 

@@ -15,7 +15,7 @@
  *   limitations under the License.                                           *
  *  ****************************************************************************
  */
-package edu.ucsc.dbtune.spi.ibg;
+package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;

@@ -64,7 +64,9 @@ public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
     public void add(I index){
         if(!delegate.contains(index)){
             delegate.add(index);
-            ownedBitSet.set(index.internalId());
+            synchronized (delegate){
+                ownedBitSet.set(index.internalId());
+            }
         }
     }
 
@@ -89,6 +91,13 @@ public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
         // before it was bs.get(index.internalId()); => (Huascar) I think this is
         // broken.
         return ownedBitSet.get(index.internalId()) && delegate.contains(index);
+    }
+
+    /**
+     * @return {@code true} if the set is empty. {@code false} otherwise.
+     */
+    public boolean isEmpty(){
+        return size() == 0;
     }
 
     @Override

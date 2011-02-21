@@ -15,11 +15,11 @@
  *   limitations under the License.                                           *
  *  ****************************************************************************
  */
-package edu.ucsc.dbtune.spi.ibg;
+package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.ExplainInfo;
-import edu.ucsc.dbtune.ibg.CandidatePool;
+import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
@@ -38,9 +38,9 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
 
     private final  String                       sql;
 	private final  ExplainInfo explainInfo;
-	private final  CandidatePool.Snapshot<I>    candidateSet;
-	private final  IndexBenefitGraph            ibg;
-	private final  InteractionBank              bank;
+	private final Snapshot<I> candidateSet;
+	private final IndexBenefitGraph ibg;
+	private final InteractionBank bank;
     private final  int                          whatIfCount;
     private final  double                       ibgAnalysisTime;
 
@@ -84,10 +84,10 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
     }
 
     /**
-     * @return a {@link CandidatePool.Snapshot snapshot} of
+     * @return a {@link Snapshot snapshot} of
      *      the candidate indexes. 
      */
-    public CandidatePool.Snapshot<I> getCandidateSnapshot(){
+    public Snapshot<I> getCandidateSnapshot(){
         return candidateSet;
     }
 
@@ -189,7 +189,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
     public static class Builder<I extends DBIndex> implements Supplier<ProfiledQuery<I>> {
         private final String                sql;
         private ExplainInfo explainInfo;
-        private CandidatePool.Snapshot<I>   candidateSet;
+        private Snapshot<I> candidateSet;
         private IndexBenefitGraph           ibg;
         private InteractionBank             bank;
         private int                         whatifCount;     // value from DatabaseConnection after profiling
@@ -204,7 +204,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
             return this;
         }
 
-        public Builder<I> snapshotOfCandidateSet(CandidatePool.Snapshot<I> value){
+        public Builder<I> snapshotOfCandidateSet(Snapshot<I> value){
             candidateSet = value;
             return this;
         }

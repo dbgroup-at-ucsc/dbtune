@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.ibg;
 /**
 * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
 */
-enum RunnableState {
+public enum RunnableState {
     /**
      * runnable is iddle.
      */

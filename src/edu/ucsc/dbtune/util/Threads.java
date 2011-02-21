@@ -17,6 +17,7 @@
  */
 package edu.ucsc.dbtune.util;
 
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Printer;
 
 import java.util.concurrent.ExecutorService;
@@ -62,7 +63,7 @@ public class Threads {
      * Creates an executor service that produces daemon threads.
      *
      * @param name name of process.
-     * @param echo
+     * @param echo printer to screen.
      * @return {@link ExecutorService daemon thread executor service}.
      */
     public  static ExecutorService daemonThreadPerCpuExecutor(String name, Printer echo){
@@ -73,11 +74,15 @@ public class Threads {
      * Creates an executor service that produces threads.
      *
      * @param name name of process.
-     * @param echo
+     * @param echo printer to screen
      * @return {@link ExecutorService thread executor service}.
      */
     public static ExecutorService explicitThreadPerCpuExecutor(String name, Printer echo){
         return threadPerCpuExecutor(name, false, echo);
+    }
+
+    public static ExecutorService explicitThreadPerCpuExecutor(String name){
+        return explicitThreadPerCpuExecutor(name, Console.streaming());
     }
 
     /**
@@ -86,7 +91,7 @@ public class Threads {
      *
      * @param name name of process.
      * @param daemon flag that signals whether the produced threads a daemon threads.
-     * @param echo
+     * @param echo prints things to screen.
      * @return {@link ExecutorService thread executor service}.
      */
     public static ExecutorService threadPerCpuExecutor(String name, boolean daemon, Printer echo) {

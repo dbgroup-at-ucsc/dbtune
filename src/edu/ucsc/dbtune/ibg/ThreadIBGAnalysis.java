@@ -128,7 +128,6 @@ public class ThreadIBGAnalysis implements Runnable {
 					taskMonitor.wait();
 				} catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    Debug.logNotice("interrupted thread", e);
                 }
 			}
 	

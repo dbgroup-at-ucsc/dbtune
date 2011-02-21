@@ -24,11 +24,11 @@ import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
-import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -47,7 +47,7 @@ public class StatisticsFunctionTest {
     }
 
 
-    @Test
+    @Test @Ignore
     public void testBasicDoiScenario() throws Exception {
         final List<PGIndex> callback = Instances.newList();
         final DynamicIndexSet<PGIndex> dynamicSet = makeDynamicIndexSet(callback, 1, 2, 3, 4);
@@ -56,7 +56,7 @@ public class StatisticsFunctionTest {
         assertTrue(Double.compare(3.6666666666666665, a) == 0);
     }
 
-    @Test
+    @Test @Ignore
     public void testBasicBenefitScenario() throws Exception {
         final List<PGIndex> callback = Instances.newList();
         final DynamicIndexSet<PGIndex> dynamicSet = makeDynamicIndexSet(callback, 1, 2, 3, 4);

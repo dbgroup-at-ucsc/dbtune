@@ -23,7 +23,6 @@ import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
-import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;

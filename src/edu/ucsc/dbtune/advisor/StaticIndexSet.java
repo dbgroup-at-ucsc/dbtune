@@ -30,30 +30,32 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
 	private Object[] arr;
 
     /**
-     * construct a {@code static index set} from some iterable input (e.g., list, collection, set)
+     * construct a {@code static and immutable index set} from some iterable input (e.g., list, collection, set)
      * of indexes.
      * @param input
      *      iterable input of indexes.
      */
-	public StaticIndexSet(Iterable<I> input) {
-		int count = 0;
-		for (I idx : input) {
-			if (idx == null) throw new IllegalArgumentException();
-			++count;
-		}
-		arr = new Object[count];
-		int i = 0;
-		for (I idx : input){
-            arr[i++] = idx;
-        }
-	}
+    public StaticIndexSet(Iterable<I> input) {
+      int count = 0;
+      for (I idx : input) {
+        if (idx == null) throw new IllegalArgumentException();
+        ++count;
+      }
+
+      arr = new Object[count];
+
+      int i = 0;
+      for (I idx : input){
+        arr[i++] = idx;
+      }
+    }
 
     /**
      * construct an empty {@code static index set} (i.e., set's size == 0).
      */
-	public StaticIndexSet() {
-        this(Collections.<I>emptyList());
-	}
+    public StaticIndexSet() {
+      this(Collections.<I>emptyList());
+    }
 
     /**
      * checks whether a given index is contained in this {@code static set}.
@@ -62,16 +64,16 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
      * @return
      *      {@code true} if the index is in the set; {@code false} otherwise.
      */
-	public boolean contains(I index) {
-		if (arr == null)
-			return false;
-		
-		for (Object other : arr) {
-			if (index.equals(other)) return true;
-		}
-		
-		return false;
-	}
+    public boolean contains(I index) {
+      if (arr == null)
+        return false;
+
+      for (Object other : arr) {
+        if (index.equals(other)) return true;
+      }
+
+      return false;
+    }
 
     @Override
     public boolean hasNext() {
@@ -86,9 +88,9 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
     }
 
     @Override
-	public Iterator<I> iterator() {
-		return this;
-	}
+    public Iterator<I> iterator() {
+      return this;
+    }
 
     @Override
     public I next() {
@@ -103,9 +105,9 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
         throw new UnsupportedOperationException();
     }
 
-	public int size() {
-		return arr.length;
-	}
+    public int size() {
+      return arr.length;
+    }
 
     @Override
     public String toString() {

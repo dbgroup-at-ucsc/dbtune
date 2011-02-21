@@ -20,7 +20,6 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
-import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -169,6 +168,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 		for (SubMachine<I> subm : submachines) {
 			for (I index : subm.subset) {
 				if (subm.currentBitSet.get(index.internalId())){
+                    System.out.println(index);
                     rec.add(index);
                 }                        
             }

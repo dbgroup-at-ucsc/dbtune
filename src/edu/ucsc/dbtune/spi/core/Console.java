@@ -14,15 +14,14 @@ public abstract class Console implements Printer {
     static final long WARNING_HOURS = 12;
     static final long FAILURE_HOURS = 48;
 
-    private static Console NULL_CONSOLE = new InvalidConsole();
     private boolean useColor;
     private boolean ansi;
     private boolean verbose;
     protected String indent;
     protected CurrentLine currentLine = CurrentLine.NEW;
-    protected final PeriodicClearScreen out = new PeriodicClearScreen(System.out);
-    protected PeriodicClearScreen.Mark currentVerboseMark;
-    protected PeriodicClearScreen.Mark currentStreamMark;
+    protected final ClearScreenHistory out = new ClearScreenHistory(System.out);
+    protected ClearScreenHistory.Mark currentVerboseMark;
+    protected ClearScreenHistory.Mark currentStreamMark;
 
     private Console() {}
 
@@ -30,8 +29,12 @@ public abstract class Console implements Printer {
         this.indent = indent;
     }
 
-    public static Console screen(){
-        return new StreamingConsole();
+    public static Console streaming(){
+        return Installer.STREAMING;
+    }
+
+    public static Console multiplexing(){
+        return Installer.MULTIPLEXING;
     }
 
     public void setUseColor(boolean useColor, int passColor, int warnColor, int failColor) {
@@ -63,7 +66,7 @@ public abstract class Console implements Printer {
          * the streamed mark location. That way we can remove the verbose output
          * later without losing our position mid-line in the streamed output.
          */
-        PeriodicClearScreen.Mark savedStreamMark = currentLine == CurrentLine.STREAMED_OUTPUT
+        ClearScreenHistory.Mark savedStreamMark = currentLine == CurrentLine.STREAMED_OUTPUT
                 ? out.mark()
                 : currentStreamMark;
         newLine();
@@ -326,5 +329,11 @@ public abstract class Console implements Printer {
                 streamOutput(buffer);
             }
         }
+    }
+
+    /** Lazy constructed Singleton */
+    static class Installer {
+        static final Console STREAMING      = new StreamingConsole();
+        static final Console MULTIPLEXING   = new MultiplexingConsole();
     }
 }

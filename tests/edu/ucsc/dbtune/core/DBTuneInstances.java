@@ -52,6 +52,10 @@ public class DBTuneInstances {
                         makeMockStatement(true, true, conn),
                         makeMockPreparedStatement(true, true, conn)
                 );
+
+
+
+
                 return conn;
             }
         };
@@ -96,6 +100,26 @@ public class DBTuneInstances {
             setProperty(JdbcConnectionManager.DATABASE, "matrix");
             setProperty(JdbcConnectionManager.DRIVER, "org.postgresql.Driver");
         }};
+    }
+
+    public static PGIndex newPGIndex(int indexId, int schemaId, List<DatabaseColumn> cols, List<Boolean> desc){
+        return new PGIndex(new PGIndexSchema(schemaId, true, cols, desc), indexId, 3.0, 4.5, "Create");
+    }
+
+    public static List<DatabaseColumn> generateColumns(int howmany){
+        final List<DatabaseColumn> cols = Instances.newList();
+        for(int idx = 0; idx < howmany; idx++){
+            cols.add(new PGColumn(idx));
+        }
+        return cols;
+    }
+
+    public static List<Boolean> generateDescVals(int howmany){
+        final List<Boolean> cols = Instances.newList();
+        for(int idx = 0; idx < howmany; idx++){
+            cols.add(true);
+        }
+        return cols;
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})

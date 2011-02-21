@@ -20,7 +20,6 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
-import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Objects;
@@ -112,8 +111,9 @@ public class IndexPartitions<I extends DBIndex> {
 
 	@Override
 	public boolean equals(Object o1) {
-		if (!(o1 instanceof IndexPartitions))
-			return false;
+		if (!(o1 instanceof IndexPartitions)){
+            return false;
+        }
 
 		IndexPartitions<?> other = (IndexPartitions<?>) o1;
         return !(indexCount != other.indexCount || stateCount != other.stateCount) && subsets.equals(other.subsets);

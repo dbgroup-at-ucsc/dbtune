@@ -21,7 +21,7 @@
  * <p>The principal public APIs in this package are:
  *
  * <dl>
- * <dt>{@link edu.ucsc.dbtune.spi.ibg.WorkloadProfiler}
+ * <dt>{@link WorkloadProfiler}
  * <dd>The interface that you will use in your implementation classes to tell DBTune
  *     to either process queries,cast votes of indexes, and add new indexes to the candidate pool.
  *
@@ -33,3 +33,5 @@
  *
  */
 package edu.ucsc.dbtune.ibg;
+
+import edu.ucsc.dbtune.advisor.WorkloadProfiler;

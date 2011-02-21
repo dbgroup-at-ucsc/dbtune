@@ -18,7 +18,9 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
+import edu.ucsc.dbtune.core.metadata.PGColumn;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.metadata.PGIndexSchema;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
@@ -36,10 +38,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static edu.ucsc.dbtune.core.DBTuneInstances.newDB2Index;
 import static edu.ucsc.dbtune.core.DBTuneInstances.newPGIndex;
+import static edu.ucsc.dbtune.core.JdbcMocks.makeMockStatement;
 import static edu.ucsc.dbtune.core.JdbcMocks.makeResultSet;
 import static edu.ucsc.dbtune.util.Strings.str;
 import static org.hamcrest.CoreMatchers.*;
@@ -291,16 +296,6 @@ public class DatabasePackageTest {
     }
 
     @Test
-    public void testExplainInfoScenario() throws Exception {
-        final ConnectionManager c1 = DBTuneInstances.newDatabaseConnectionManagerWithSwitchOffOnce(
-                DBTuneInstances.newPGSQLProperties()
-        );
-        checkExplainInfoScenario(c1.connect());
-        //todo(Huascar) write the test for ExplainInfo<PGIndex>
-        c1.close();
-    }
-
-    @Test
     public void testDB2ConnectionAdjustment() throws Exception {
         final ConnectionManager c2 = DBTuneInstances.newDatabaseConnectionManagerWithSwitchOffOnce(
                 DBTuneInstances.newDB2Properties()
@@ -316,12 +311,23 @@ public class DatabasePackageTest {
         final List<T>  pgCandidateSet  = Instances.newList();
         final T index1 = Objects.<T>as(newPGIndex(12));
         final T index2 = Objects.<T>as(newPGIndex(21));
+
         pgCandidateSet.add(index1);
         pgCandidateSet.add(index2);
+
         final ExplainInfo info = whatIfOptimizer.explain("SELECT * FROM R", pgCandidateSet);
+
         assertThat(info, notNullValue());
         assertThat(info.isDML(), is(false));
         assertThat(Double.compare(info.getIndexMaintenanceCost(index1), 0) == 0, is(true));
+
+        final DatabaseColumn        col     = new PGColumn(12345);
+        final DatabaseIndexSchema   schema  = new PGIndexSchema(56789, true, Arrays.asList(col), Arrays.asList(true));
+
+        final DBIndex idx  = new PGIndex(121112, 3.0, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_121112");
+        final DBIndex idx2 = new PGIndex((PGIndexSchema) schema, 132111, 3.5, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_132111");
+
+        connection.getWhatIfOptimizer().explain("SELECT * FROM R", Arrays.asList(idx, idx2));
     }
 
     @After

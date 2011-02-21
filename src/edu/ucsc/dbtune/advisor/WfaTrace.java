@@ -20,7 +20,6 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm.TotalWorkValues;
 import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.Instances;

@@ -1012,7 +1012,7 @@ public class JdbcMocks {
 
         @Override
         public String getString(String columnLabel) throws SQLException {
-            if(columnLabel.equalsIgnoreCase("index_overhead")) return "0=1.1 1=2.0";
+            if(columnLabel.equalsIgnoreCase("index_overhead")) return "0=1.1 1=2.0 2=3.0";
             if(columnLabel.equalsIgnoreCase("desc")) return "Y N Y N N Y";
             if(columnLabel.equalsIgnoreCase("reloid")) return Integer.valueOf(123456).toString();
             if(columnLabel.equalsIgnoreCase("sync")) return "Y";

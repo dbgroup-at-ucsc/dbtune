@@ -59,7 +59,7 @@ public class Profiler<I extends DBIndex<I>> {
 		}	
 		
 		// get basic query info
-		ExplainInfo<I> explainInfo = null;
+		ExplainInfo<I> explainInfo;
 		try {
 			explainInfo = conn.getIndexExtractor().explainInfo(sql);
 		} catch (SQLException e) {

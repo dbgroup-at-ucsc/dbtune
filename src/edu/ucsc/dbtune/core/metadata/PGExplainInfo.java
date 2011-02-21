@@ -63,13 +63,15 @@ public class PGExplainInfo extends AbstractExplainInfo implements Serializable {
 
     @Override
     public double getTotalCost() {
-        return totalCost;
+        throw new UnsupportedOperationException("not yet implemented");
     }
 
     @Override
 	public double getIndexMaintenanceCost(DBIndex index) {
-		if (getSQLCategory() != SQLCategory.DML)
-			return 0;
+        if(!SQLCategory.DML.isSame(getSQLCategory())){
+            return 0;
+        }
+
 		return updateCost[index.internalId()];
 	}
 

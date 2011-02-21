@@ -84,10 +84,14 @@ public class PGIndex extends AbstractIndex implements Serializable {
 
     @Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof PGIndex))
-			return false;
+		if (!(obj instanceof PGIndex)){
+            return false;
+        }
+
 		PGIndex other = (PGIndex) obj;
-		return getSchema().equals(other.getSchema());
+        final boolean isSchemaNull = getSchema() == null;
+		return isSchemaNull ? internalId() == other.internalId()
+               : getSchema().equals(other.getSchema()) && internalId() == other.internalId();
 	}
 
     @Override
@@ -104,7 +108,7 @@ public class PGIndex extends AbstractIndex implements Serializable {
 
     @Override
 	public int hashCode() {
-		return getSchema().hashCode();
+		return (Objects.hashCode(getSchema(), internalId()));
 	}
 
     @Override

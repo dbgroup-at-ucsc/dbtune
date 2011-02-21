@@ -249,11 +249,10 @@ public class Platform {
             final List<DBIndex> candidateSet = new ArrayList<DBIndex>();
             for (String line : Files.getLines(workloadFile)) {
                 final String sql = trimSqlStatement(line);
-                final Iterable<DBIndex> recommended = recommendIndexes(sql);
+                final Iterable<? extends DBIndex> recommended = recommendIndexes(sql);
                 candidateSet.addAll(Iterables.asCollection(recommended));
             }
-            //noinspection RedundantTypeArguments
-            return Iterables.<DBIndex>asIterable(candidateSet);
+            return candidateSet;
         }
     }
 }

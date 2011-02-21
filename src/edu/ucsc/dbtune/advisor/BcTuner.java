@@ -23,7 +23,6 @@ import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Supplier;
-import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -31,11 +30,11 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.sql.SQLException;
 
 public class BcTuner<I extends DBIndex> {
-	private final DatabaseConnection connection;
+	private final DatabaseConnection    connection;
 	private final StaticIndexSet<I>     hotSet;
 	private final BcIndexPool<I>        pool;
 	private final Snapshot<I>           snapshot;
-	private final IndexBitSet currentRecommendation;
+	private final IndexBitSet           currentRecommendation;
 
     /**
      * Construct a {@code BcTuner} object.

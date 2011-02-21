@@ -20,7 +20,6 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.ibg.InteractionBank;
-import edu.ucsc.dbtune.spi.ibg.ProfiledQuery;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -50,6 +49,7 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
                 DBIndexPair.<I>emptyPair(),
                 Instances.<DBIndexPair<I>, MeasurementWindow>newHashMap(),
                 Instances.<I, MeasurementWindow>newHashMap()
+
         );
     }
 
@@ -325,5 +325,5 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
                    .toString();
         }
     }
-    
+
 }

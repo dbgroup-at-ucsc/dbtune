@@ -43,6 +43,9 @@ public interface IndexExtractor {
      * recommends a {@link Iterable list} of indexes that could help improve performance, given a
      * SQL query.
      *
+     *
+     *
+     *
      * @param sql
      *      SQL query.
      * @return

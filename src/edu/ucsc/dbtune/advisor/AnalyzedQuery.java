@@ -15,16 +15,48 @@
  *   limitations under the License.                                           *
  *  ****************************************************************************
  */
+
 package edu.ucsc.dbtune.advisor;
 
-import org.junit.Test;
+import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.ToStringBuilder;
 
-/**
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
- */
-public class WorkFunctionAlgorithmTest {
-    @Test
-    public void testNothing() throws Exception {
+public class AnalyzedQuery<I extends DBIndex> {
+	private final ProfiledQuery<I> profileInfo;
+	private final IndexBitSet[]  partition;
 
-    }    
+    /**
+     * construct a query which has been analyzed by some {@code tuning interface}.
+     * @param orig
+     *      original query before it got analyzed.
+     * @param partition
+     *      an array of index partitions.
+     */
+	public AnalyzedQuery(ProfiledQuery<I> orig, IndexBitSet[] partition) {
+		this.profileInfo    = orig;
+		this.partition      = partition;
+	}
+
+    /**
+     * @return original query before it got analyzed.
+     */
+    public ProfiledQuery<I> getProfileInfo() {
+        return profileInfo;
+    }
+
+    /**
+     * @return an array of index partitions.
+     */
+    public IndexBitSet[] getPartition() {
+        return partition;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder<AnalyzedQuery<I>>(this)
+               .add("original", profileInfo)
+               .add("partition", partition)
+               .toString();
+    }
 }
