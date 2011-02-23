@@ -36,11 +36,11 @@ public class StaticIndexSetTest {
     @Test
     public void testBasicScenarioOfQueue() throws Exception {
         final StaticIndexSet<PGIndex> sidx1 = new StaticIndexSet<PGIndex>(StaticIndexSetTest.<PGIndex>populateIndexSet(1000, true));
-        final StaticIndexSet<DB2Index> sidx2 = new StaticIndexSet<DB2Index>(StaticIndexSetTest.<DB2Index>populateIndexSet(1000, false));
+        final StaticIndexSet<DB2Index> sidx2 = new StaticIndexSet<DB2Index>(StaticIndexSetTest.<DB2Index>populateIndexSet(1, false));
 
         assertThat(sidx1.isEmpty() && sidx2.isEmpty(), is(false));
         assertThat(sidx1.size(), equalTo(1000));
-        assertThat(sidx2.size(), equalTo(1000));
+        assertThat(sidx2.size(), equalTo(1));
     }
 
     @Test
@@ -49,6 +49,18 @@ public class StaticIndexSetTest {
         System.out.println(indexSet);
         assertThat(indexSet.contains(DBTuneInstances.newPGIndex(3, 123, DBTuneInstances.generateColumns(3), DBTuneInstances.generateDescVals(3))), is(true));
         assertThat(indexSet.size(), equalTo(10));
+    }
+
+    @Test
+    public void testWeirdSideEffect() throws Exception {
+        final StaticIndexSet<PGIndex> indexSet = new StaticIndexSet<PGIndex>(StaticIndexSetTest.<PGIndex>populateIndexSet(10, true));
+        for(PGIndex each : indexSet){}
+        boolean again = false;
+        for(PGIndex each : indexSet){
+            again |= true;
+        }
+
+        assertThat(again, is(true));
     }
 
 

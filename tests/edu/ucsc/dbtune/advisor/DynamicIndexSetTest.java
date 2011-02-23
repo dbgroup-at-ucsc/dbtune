@@ -36,6 +36,19 @@ public class DynamicIndexSetTest {
         assertThat(idxset.isEmpty(), is(true));
     }
 
+    @Test
+    public void testWeirdSideEffect() throws Exception {
+        final DynamicIndexSet<PGIndex> idxset = new DynamicIndexSet<PGIndex>();
+        populateIndexSet(idxset, 1000, true);
+        for(PGIndex each : idxset){}
+        boolean again = false;
+        for(PGIndex each : idxset){
+            again |= true;
+        }
+
+        assertThat(again, is(true));
+    }
+
     private static PGIndex postgresIndex(){
         final List<DatabaseColumn> cols = Instances.newList();
         final List<Boolean>        desc = Instances.newList();

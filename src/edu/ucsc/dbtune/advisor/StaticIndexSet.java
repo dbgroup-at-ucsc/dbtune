@@ -18,16 +18,19 @@
 
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.core.DBIndex;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<I> {
-    private int i = 0;
-	private Object[] arr;
+    private final Set<I> delegate;
 
     /**
      * construct a {@code static and immutable index set} from some iterable input (e.g., list, collection, set)
@@ -36,18 +39,10 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
      *      iterable input of indexes.
      */
     public StaticIndexSet(Iterable<I> input) {
-      int count = 0;
-      for (I idx : input) {
-        if (idx == null) throw new IllegalArgumentException();
-        ++count;
-      }
-
-      arr = new Object[count];
-
-      int i = 0;
-      for (I idx : input){
-        arr[i++] = idx;
-      }
+        delegate = new HashSet<I>();
+        for(I each : input){
+            delegate.add(Checks.checkNotNull(each));
+        }
     }
 
     /**
@@ -65,39 +60,29 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
      *      {@code true} if the index is in the set; {@code false} otherwise.
      */
     public boolean contains(I index) {
-      if (arr == null)
-        return false;
-
-      for (Object other : arr) {
-        if (index.equals(other)) return true;
-      }
-
-      return false;
+        return delegate.contains(index);
     }
 
     @Override
     public boolean hasNext() {
-        return i < arr.length;    
+        return delegate.iterator().hasNext();
     }
 
     /**
      * @return {@code true} if the set is empty, {@code false} otherwise.
      */
     public boolean isEmpty(){
-        return size() == 0;
+        return delegate.isEmpty();
     }
 
     @Override
     public Iterator<I> iterator() {
-      return this;
+      return delegate.iterator();
     }
 
     @Override
     public I next() {
-        if (i >= arr.length)
-            throw new java.util.NoSuchElementException();
-        //noinspection unchecked
-        return (I) arr[i++]; // unchecked warning here...
+        return delegate.iterator().next();
     }
 
     @Override
@@ -106,13 +91,13 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
     }
 
     public int size() {
-      return arr.length;
+      return delegate.size();
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder<StaticIndexSet<I>>(this)
-               .add("indexes array", Arrays.toString(arr))
+               .add("indexes", delegate)
                .add("size", size())
                .toString();
     }
