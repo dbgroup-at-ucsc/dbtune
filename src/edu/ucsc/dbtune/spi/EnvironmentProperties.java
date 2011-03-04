@@ -1,44 +1,49 @@
 package edu.ucsc.dbtune.spi;
 
+import edu.ucsc.dbtune.core.JdbcConnectionManager;
+
 /**
+ * Set of properties used to write functional tests. They are used to introspect the system where 
+ * the tests are running. The {@code FILE} field indicates where the settings are supposed to be 
+ * read from.
+ *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class EnvironmentProperties {
     /**
-     * The name of the configuration properties file.
+     * Name of the configuration properties file.
      */
     public static final String FILE = "dbtune.cfg";
 
     /**
-     * Name of the property giving the developer's user-name.
+     * Developer's DBMS username.
      */
-    public static final String USER_NAME = "test.dbms.username";
+    public static final String USERNAME = JdbcConnectionManager.USERNAME;
 
     /**
-     * Name of the property giving the developer's password..
+     * Developer's DBMS password
      */
-    public static final String PASSWORD = "test.dbms.password";
+    public static final String PASSWORD = JdbcConnectionManager.PASSWORD;
 
     /**
-     * Name of the property used by functional tests to load postgres's prepared
-     * workloads.
+     * Name of the target database
      */
-    public static final String SCRIPT_DIRECTORY = "test.dbms.script.dir";
+    public static final String DATABASE = JdbcConnectionManager.DATABASE;
 
     /**
-     * Name of the property given the name of the database..
+     * Fully qualified path to JDBC's {@code Driver} class
      */
-    public static final String DATABASE = "test.dbms.database";
+    public static final String JDBC_DRIVER = JdbcConnectionManager.DRIVER;
 
     /**
-     * Name of the property use by functional tests to create a JDBC driver.
+     * JDBC connection url.
      */
-    public static final String JDBC_DRIVER = "test.dbms.driver";
+    public static final String URL = JdbcConnectionManager.URL;
 
     /**
-     * Name of property given connection url.
+     * Folder for previously defined workloads.
      */
-    public static final String URL = "test.dbms.url";
+    public static final String WORKLOAD_FOLDER = "workload.dir";
 
     private EnvironmentProperties(){}
 }

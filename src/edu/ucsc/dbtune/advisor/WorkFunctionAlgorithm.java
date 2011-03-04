@@ -29,6 +29,16 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * The foundation for WFIT. The general Work Function Algorithm is described in subsection 3.3 of 
+ * Karl Schnaitter's Doctoral Thesis "On-line Index Selection for Physical Database Tuning". The 
+ * adapted version of the function (which is implemented in this class) is covered in section 6, 
+ * specifically in subsection 6.1.
+ *
+ * @see <a 
+ * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
+ *     "On-line Index Selection for Physical Database Tuning"</a>
+ */
 public class WorkFunctionAlgorithm<I extends DBIndex> {
     public static final int MAX_NUM_STATES = 12345;
     public static final int MAX_HOTSET_SIZE = 40;
@@ -253,7 +263,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 					value += wf.get(oldSubsetNum, oldStateNum);
 				}
 
-                // XXX: we don't recompute the predecessor during repartitioning, but it is feasible
+                // we don't recompute the predecessor during repartitioning, but it is feasible
 				workspace.wf2.set(newSubsetNum, stateNum, value, 0);
 			}
 		}
