@@ -72,7 +72,7 @@ public class IBGPrinter {
 		}
 	}
 	
-	private void printExpanded(IndexBenefitGraph ibg, IBGNode node) {
+	void printExpanded(IndexBenefitGraph ibg, IBGNode node) {
         final StringBuilder screenOutput = new StringBuilder(INITIAL_MSG_SIZE);
 		boolean first;
         screenOutput.append("NODE:\t{");

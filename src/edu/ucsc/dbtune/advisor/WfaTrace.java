@@ -20,8 +20,8 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm.TotalWorkValues;
 import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -114,7 +114,7 @@ public class WfaTrace<I extends DBIndex> {
 				}
 			}
 
-			Debug.assertion(bestSuccessor >= 0, "could not determine best final state");
+			Checks.checkAssertion(bestSuccessor >= 0, "could not determine best final state");
 			partSchedule[queryCount].clear();
 			WorkFunctionAlgorithm.setStateBits(indexIds, bestSuccessor, partSchedule[queryCount]);
 			

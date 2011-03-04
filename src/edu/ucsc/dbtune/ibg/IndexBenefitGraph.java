@@ -51,13 +51,13 @@ public class IndexBenefitGraph implements Serializable {
      *      the root of this graph.
      * @param emptyCost
      *      initial cost of the workload under the empty configuration.
-     * @param isUsed
-     *      a flag that indicates if the index is used somewhere in the graph.
+     * @param usedSet
+     *      the set of used indexes.
      */
-	public IndexBenefitGraph(IBGNode rootNode, double emptyCost, IndexBitSet isUsed) {
+	public IndexBenefitGraph(IBGNode rootNode, double emptyCost, IndexBitSet usedSet) {
 		this.rootNode   = rootNode;
 		this.emptyCost  = emptyCost;
-		this.isUsed     = isUsed;
+		this.isUsed     = usedSet;
 	}
 
     /**

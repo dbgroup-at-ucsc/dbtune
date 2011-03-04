@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.spi.core;
 
+import edu.ucsc.dbtune.util.Instances;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ public abstract class Console implements Printer {
     protected final ClearScreenHistory out = new ClearScreenHistory(System.out);
     protected ClearScreenHistory.Mark currentVerboseMark;
     protected ClearScreenHistory.Mark currentStreamMark;
+    protected List<String> cachedErrors;
 
     private Console() {}
 
@@ -99,6 +102,18 @@ public abstract class Console implements Printer {
     public synchronized void info(String s) {
         newLine();
         out.println(s);
+    }
+
+    public void catchError(Throwable literal){
+        if(cachedErrors == null) {
+            cachedErrors = Instances.newList();
+        }
+
+        cachedErrors.add(literal.getLocalizedMessage());
+    }
+
+    public synchronized void warnAll(String message){
+        warn(message, cachedErrors);
     }
 
     public synchronized void info(String message, Throwable throwable) {
@@ -253,17 +268,6 @@ public abstract class Console implements Printer {
     }
 
     /**
-     * Console has not been initialized.
-     */
-    static class InvalidConsole extends Console {
-
-        @Override
-        public void streamOutput(String outcomeName, String output) {
-            throw new IllegalStateException("Call Console.init() first");
-        }
-    }
-
-    /**
      * This console prints output as it's emitted. It supports at most one
      * action at a time.
      */
@@ -331,7 +335,7 @@ public abstract class Console implements Printer {
         }
     }
 
-    /** Lazy constructed Singleton */
+    /** Lazy constructed Singleton (thread-safe) */
     static class Installer {
         static final Console STREAMING      = new StreamingConsole();
         static final Console MULTIPLEXING   = new MultiplexingConsole();
