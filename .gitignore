@@ -1,0 +1,8 @@
+.*.sw*
+build/*
+bin/*
+doc
+doc/*
+.project
+.classpath
+.scala_dependencies

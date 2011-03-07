@@ -35,7 +35,8 @@
              excludepackagenames="tests"
              destdir="${build.dir}/javadoc"
              author="true"
-             protected="true" windowtitle="DbTune 0.1 API">
+             private="true"
+             windowtitle="DbTune 0.1 API">
       <sourcepath>
         <pathelement location="${cli.src.dir}" />        
         <pathelement location="${src.dir}" />
