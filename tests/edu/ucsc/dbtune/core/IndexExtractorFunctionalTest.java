@@ -18,7 +18,6 @@ import static edu.ucsc.dbtune.core.JdbcConnectionManager.PASSWORD;
 import static edu.ucsc.dbtune.core.JdbcConnectionManager.URL;
 import static edu.ucsc.dbtune.core.JdbcConnectionManager.USERNAME;
 import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
 import static org.junit.Assert.assertThat;
 
 /**
