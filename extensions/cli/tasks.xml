@@ -25,4 +25,19 @@
     </scalac>
   </target>
 
+  <target name="compile.tests" depends="compile" description="Compile test source">
+    <scalac srcdir="${src.dir}"
+         destdir="${build.dir}/classes"
+         classpathref="compile.cli.classpath"
+         addParams="-make:changed" >
+      <include name="**/*Test.scala" />
+      <exclude name="edu/ucsc/dbtune/cli/init.scala" />
+    </scalac>
+  </target>
+
+  <target name="test.functional" depends="compile.tests" description="Execute functional tests">
+  </target>
+
+  <target name="test.unit" depends="compile.tests" description="Execute tests">
+  </target>
 </project>

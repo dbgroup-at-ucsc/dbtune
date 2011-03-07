@@ -27,15 +27,16 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class HotsetSelection<I extends DBIndex> {
-    private final CandidatePool.Snapshot<I>   candSet;
-    private final StaticIndexSet<I>           oldHotSet;
-    private final DynamicIndexSet<I>          requiredIndexSet;
-    private final StatisticsFunction<I>       benefitFunc;
-    private final int                         maxSize;
-    private final boolean                     debugOutput;
+    private final CandidatePool.Snapshot<I> candSet;
+    private final StaticIndexSet<I>         oldHotSet;
+    private final DynamicIndexSet<I>        requiredIndexSet;
+    private final StatisticsFunction<I>     benefitFunc;
+    private final int                       maxSize;
+    private final boolean                   debugOutput;
 
     /**
-     * Construct a {code selection variable} which will be utilized by {@link HotSetSelector}.
+     * Construct a {@code selection variable} which will be utilized by {@link HotSetSelector}.
+     *
      * @param builder
      *      a {@link HotsetSelection}'s builder.
      */
@@ -85,18 +86,19 @@ public class HotsetSelection<I extends DBIndex> {
     }
 
     /**
-     * A builder of {@link HotsetSelection}s. This builder is strict in the sense of it does
+     * A builder of {@link HotsetSelection}s. This builder is strict in the sense that it does
      * not take optional values. In other words, all arguments values should not be null.
+     *
      * @param <I>
      *      the {@link DBIndex index type}.
      */
     public static class StrictBuilder<I extends DBIndex> implements Supplier<HotsetSelection<I>> {
-        private CandidatePool.Snapshot<I>   candSet;
-	    private StaticIndexSet<I>           oldHotSet;
-	    private DynamicIndexSet<I>          requiredIndexSet;
-	    private StatisticsFunction<I>       benefitFunc;
-	    private int                         maxSize;
-	    private boolean                     debugOutput;
+        private CandidatePool.Snapshot<I> candSet;
+	    private StaticIndexSet<I>         oldHotSet;
+	    private DynamicIndexSet<I>        requiredIndexSet;
+	    private StatisticsFunction<I>     benefitFunc;
+	    private int                       maxSize;
+	    private boolean                   debugOutput;
 
         public StrictBuilder(boolean debugOutput){
             this.debugOutput = debugOutput;
@@ -127,7 +129,6 @@ public class HotsetSelection<I extends DBIndex> {
             return this;
         }
 
-        
         @Override
         public HotsetSelection<I> get() {
             return new HotsetSelection<I>(this);

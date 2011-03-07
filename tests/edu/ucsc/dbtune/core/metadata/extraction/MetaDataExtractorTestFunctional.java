@@ -24,6 +24,8 @@ import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+import edu.ucsc.dbtune.spi.Environment;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,9 +55,10 @@ import static org.junit.Assert.*;
  */
 public class MetaDataExtractorTestFunctional
 {
-    private static DatabaseConnection   con;
+    private static DatabaseConnection   connection;
     private static GenericJDBCExtractor extractor;
     private static Catalog              catalog;
+    private static Environment          environment;
 
     /**
      * Executes the SQL script that should contain the 'movies' database, then extracts the metadata 
@@ -64,23 +67,15 @@ public class MetaDataExtractorTestFunctional
     @BeforeClass
     public static void setUp() throws Exception
     {
-        Properties props;
-        String     file;
+		String ddlfilename;
 
-        props = new Properties();
+		environment = Environment.getInstance();
+		connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
+		ddlfilename = environment.getWorkloadFolder() + "/movies/create.sql";
 
-        props.setProperty(URL,      System.getProperty("test.dbms.url"));
-        props.setProperty(USERNAME, System.getProperty("test.dbms.username"));
-        props.setProperty(PASSWORD, System.getProperty("test.dbms.password"));
-        props.setProperty(DATABASE, System.getProperty("test.dbms.database"));
-        props.setProperty(DRIVER,   System.getProperty("test.dbms.driver"));
+        SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
 
-        con  = makeDatabaseConnectionManager(props).connect();
-        file = System.getProperty("test.dbms.script.dir") + "/movies.sql";
-
-        SQLScriptExecuter.execute(con.getJdbcConnection(), file);
-
-        if (props.getProperty(DRIVER).contains("postgresql"))
+        if (environment.getJDBCDriver().contains("postgresql"))
         {
             extractor = new PGExtractor();
         }
@@ -89,13 +84,13 @@ public class MetaDataExtractorTestFunctional
             extractor = new GenericJDBCExtractor();
         }
 
-        catalog = extractor.extract(con);
+        catalog = extractor.extract(connection);
     }
 
     @AfterClass
     public static void tearDown() throws Exception
     {
-        if(con != null) con.close();
+        if(connection != null) connection.close();
     }
 
     /**

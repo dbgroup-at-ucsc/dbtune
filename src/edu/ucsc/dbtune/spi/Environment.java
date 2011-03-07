@@ -16,9 +16,9 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.DATABASE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCRIPT_DIRECTORY;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOAD_FOLDER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.URL;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.USER_NAME;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
 import static edu.ucsc.dbtune.util.Objects.as;
 
 /**
@@ -26,6 +26,7 @@ import static edu.ucsc.dbtune.util.Objects.as;
  */
 public class Environment {
     private final Configuration configuration;
+
     public Environment() throws IOException {
         this(new PropertiesConfiguration(getDefaultProperties(), System.getProperty("user.dir") + "/config/" + FILE));
     }
@@ -46,31 +47,40 @@ public class Environment {
         return as(configuration.getProperty(JDBC_DRIVER));
     }
 
-    public String getScriptsDirectory(){
-        return as(configuration.getProperty(SCRIPT_DIRECTORY));
+    public String getWorkloadFolder(){
+        return as(configuration.getProperty(WORKLOAD_FOLDER));
     }
 
     public String getUsername(){
-        return as(configuration.getProperty(USER_NAME));
+        return as(configuration.getProperty(USERNAME));
     }
 
     public String getPassword(){
         return as(configuration.getProperty(PASSWORD));
     }
 
+    public Properties getAll(){
+        Properties properties = new Properties();
+
+        for ( Entry<String, Object> property : configuration.getAllProperties() ) {
+            properties.setProperty( property.getKey(), property.getValue().toString() );
+        }
+
+        return properties;
+    }
+
     private static Properties getDefaultProperties(){
         return new Properties(){
             {
-                setProperty(URL, "jdbc:postgresql://aigaion.cse.ucsc.edu/test");
-                setProperty(USER_NAME, "dbtune");
-                setProperty(PASSWORD, "dbtuneadmin");
-                setProperty(SCRIPT_DIRECTORY, "resources/test/postgres");
-                setProperty(DATABASE, "test");
-                setProperty(JDBC_DRIVER, "org.postgresql.Driver");
+                setProperty(URL,             "jdbc:postgresql://aigaion.cse.ucsc.edu/test");
+                setProperty(USERNAME,        "dbtune");
+                setProperty(PASSWORD,        "dbtuneadmin");
+                setProperty(WORKLOAD_FOLDER, "resources/test/postgres");
+                setProperty(DATABASE,        "test");
+                setProperty(JDBC_DRIVER,     "org.postgresql.Driver");
             }
         };
     }
-
 
     static interface Configuration {
        Object getProperty(String propertyName);
@@ -83,12 +93,11 @@ public class Environment {
         AbstractConfiguration(){}
 
         /**
-        * This method should be overridden to check whether the
-        * properties could maybe have changed, and if yes, to reload
-        * them.
-        */
+         * This method should be overridden to check whether the
+         * properties could maybe have changed, and if yes, to reload
+         * them.
+         */
         protected abstract void checkForPropertyChanges();
-        
         
         protected abstract Properties getDefaults();
         
@@ -111,6 +120,7 @@ public class Environment {
 
       /**
        * setting a property.
+       *
        * @param propertyName
        *     name of property
        * @param value

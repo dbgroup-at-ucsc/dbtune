@@ -66,7 +66,5 @@
 
   <target name="test.unit.and.functional" depends="test.unit,test.functional" />
 
-  <target name="test.all.unit.and.functional" depends="test.unit,test.functional">
-    <ant antfile="extensions/cli/build.xml" target="test.unit,test.functional" inheritAll="false" />
-  </target>
+  <target name="test.all.unit.and.functional" depends="test.all.unit,test.all.functional" />
 </project>
