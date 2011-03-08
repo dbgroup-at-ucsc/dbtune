@@ -18,6 +18,8 @@
 
 package edu.ucsc.dbtune.util;
 
+import edu.ucsc.dbtune.core.DatabaseConnection;
+
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.BufferedReader;
@@ -26,24 +28,31 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class SQLScriptExecuter
-{
+public class SQLScriptExecuter {
+    private SQLScriptExecuter(){
+        // this is a utility class.
+    }
+
     /**
      * Runs a SQL script (read in using the Reader parameter) using the
-     * connection passed in
-     * 
-     * @param conn
+     * connection passed in.
+     *
+     * @param connection
      *     the connection to use for the script
      * @param filename
      *     the path to the SQL script
+     * @param before
+     *      set autocommit(before) executing the query.
+     * @param after
+     *      set autocommit(after)  executing the query.
      * @throws SQLException
      *     if any SQL errors occur
      * @throws IOException
      *     if there is an error reading from the file
      */
-    public static void execute(Connection conn, String filename)
-        throws IOException, SQLException
-    {
+    private static void execute(Connection connection, String filename, boolean before, boolean after) throws
+            IOException, SQLException {
+
         Statement        statement;
         BufferedReader   reader;
         LineNumberReader lineReader;
@@ -52,7 +61,7 @@ public class SQLScriptExecuter
         String           trimmedLine;
         boolean          isInvalidLine;
 
-        conn.setAutoCommit(true);
+        connection.setAutoCommit(before);
 
         reader  = new BufferedReader(new FileReader(filename));
         command = null;
@@ -73,21 +82,22 @@ public class SQLScriptExecuter
                 isInvalidLine = trimmedLine.startsWith("--") ||
                                 trimmedLine.length() < 1     ||
                                 trimmedLine.startsWith("//") ;
-                
+
                 if (isInvalidLine)
                 {
                     // Do nothing
                 }
                 else if ( trimmedLine.endsWith( ";" ) )
                 {
-                    statement = conn.createStatement();
+                    statement = connection.createStatement();
 
-                    command.append(line.substring( 0, line.lastIndexOf(";") ) + " ");
+                    command.append(line.substring(0, line.lastIndexOf(";"))).append(" ");
                     statement.execute(command.toString());
 
                     command = new StringBuffer();
 
                     statement.close();
+                    if(before != after) connection.setAutoCommit(after);
                 }
                 else
                 {
@@ -108,5 +118,17 @@ public class SQLScriptExecuter
             e.fillInStackTrace();
             throw e;
         }
+    }
+
+    /* executes a workload file */
+    public static void execute(Connection conn, String filename) throws
+           IOException, SQLException {
+        execute(conn, filename, true, true);
+    }
+
+    /* executes a workload file */
+    public static void execute(DatabaseConnection connection, String filename) throws
+           IOException, SQLException {
+        execute(connection.getJdbcConnection(), filename,  true, false);
     }
 }

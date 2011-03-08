@@ -26,12 +26,12 @@ import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
 import edu.ucsc.dbtune.spi.Environment;
 
+import edu.ucsc.dbtune.util.Strings;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Properties;
 
 import static edu.ucsc.dbtune.core.JdbcConnectionManager.*;
 import static org.junit.Assert.*;
@@ -58,7 +58,15 @@ public class MetaDataExtractorTestFunctional
     private static DatabaseConnection   connection;
     private static GenericJDBCExtractor extractor;
     private static Catalog              catalog;
-    private static Environment          environment;
+
+    private static final String RATINGS     = "ratings";
+    private static final String QUEUE       = "queue";
+    private static final String CASTS       = "casts";
+    private static final String ACTORS      = "actors";
+    private static final String GENRES      = "genres";
+    private static final String MOVIES      = "movies";
+    private static final String CREDITCARDS = "creditcards";
+    private static final String USERS       = "users";
 
     /**
      * Executes the SQL script that should contain the 'movies' database, then extracts the metadata 
@@ -69,22 +77,17 @@ public class MetaDataExtractorTestFunctional
     {
 		String ddlfilename;
 
-		environment = Environment.getInstance();
+		final Environment environment = Environment.getInstance();
 		connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
-		ddlfilename = environment.getWorkloadFolder() + "/movies/create.sql";
+		ddlfilename = environment.getScriptAtWorkloadFolder("/movies/create.sql");
 
         SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
 
-        if (environment.getJDBCDriver().contains("postgresql"))
-        {
-            extractor = new PGExtractor();
-        }
-        else
-        {
-            extractor = new GenericJDBCExtractor();
-        }
+        extractor = Strings.contains(environment.getJDBCDriver(), "postgresql")
+                ? new PGExtractor()
+                : new GenericJDBCExtractor();
 
-        catalog = extractor.extract(connection);
+        catalog   = extractor.extract(connection);
     }
 
     @AfterClass
@@ -110,42 +113,42 @@ public class MetaDataExtractorTestFunctional
             columns = table.getColumns();
             indexes = table.getIndexes();
 
-            if (table.getName().equals("users"))
+            if (Strings.same(table.getName(), USERS))
             {
                 assertEquals("columns in 'users'", 5, columns.size());
                 assertEquals("indexes in 'users'", 2, indexes.size());
             }
-            else if (table.getName().equals("creditcards"))
+            else if (Strings.same(table.getName(), CREDITCARDS))
             {
                 assertEquals("columns in 'creditcards'", 4, columns.size());
                 assertEquals("indexes in 'creditcards'", 2, indexes.size());
             }
-            else if (table.getName().equals("movies"))
+            else if (Strings.same(table.getName(), MOVIES))
             {
                 assertEquals("columns in 'movies'", 5, columns.size());
                 assertEquals("indexes in 'movies'", 2, indexes.size());
             }
-            else if (table.getName().equals("genres"))
+            else if (Strings.same(table.getName(), GENRES))
             {
                 assertEquals("columns in 'genres'", 2, columns.size());
                 assertEquals("indexes in 'genres'", 1, indexes.size());
             }
-            else if (table.getName().equals("actors"))
+            else if (Strings.same(table.getName(), ACTORS))
             {
                 assertEquals("columns in 'actors'", 4, columns.size());
                 assertEquals("indexes in 'actors'", 2, indexes.size());
             }
-            else if (table.getName().equals("casts"))
+            else if (Strings.same(table.getName(), CASTS))
             {
                 assertEquals("columns in 'casts'", 2, columns.size());
                 assertEquals("indexes in 'casts'", 1, indexes.size());
             }
-            else if (table.getName().equals("queue"))
+            else if (Strings.same(table.getName(), QUEUE))
             {
                 assertEquals("columns in 'queue'", 4, columns.size());
                 assertEquals("indexes in 'queue'", 2, indexes.size());
             }
-            else if (table.getName().equals("ratings"))
+            else if (Strings.same(table.getName(), RATINGS))
             {
                 assertEquals("columns in 'ratings'", 4, columns.size());
                 assertEquals("indexes in 'ratings'", 1, indexes.size());
@@ -172,7 +175,7 @@ public class MetaDataExtractorTestFunctional
         {
             columns = table.getColumns();
 
-            if (table.getName().equals("movies"))
+            if (Strings.same(table.getName(), MOVIES))
             {
                 for (int i = 0; i < columns.size(); i++)
                 {
@@ -198,7 +201,7 @@ public class MetaDataExtractorTestFunctional
                     }
                 }
             }
-            else if (table.getName().equals("actors"))
+            else if (Strings.same(table.getName(), ACTORS))
             {
                 for (int i = 0; i < columns.size(); i++)
                 {
@@ -232,40 +235,40 @@ public class MetaDataExtractorTestFunctional
     {
         for (Table table : catalog.getSchemas().get(0).getTables())
         {
-            if (table.getName().equals("users"))
+            if (Strings.same(table.getName(), USERS))
             {
                 assertTrue(table.findIndex("users_pkey") != null);
                 assertTrue(table.findIndex("users_userid_key") != null);
             }
-            else if (table.getName().equals("creditcards"))
+            else if (Strings.same(table.getName(), CREDITCARDS))
             {
                 assertTrue(table.findIndex("creditcards_pkey") != null);
                 assertTrue(table.findIndex("creditcards_creditnum_key") != null);
             }
-            else if (table.getName().equals("movies"))
+            else if (Strings.same(table.getName(), MOVIES))
             {
                 assertTrue(table.findIndex("movies_pkey") != null);
                 assertTrue(table.findIndex("movies_movieid_key") != null);
             }
-            else if (table.getName().equals("genres"))
+            else if (Strings.same(table.getName(), GENRES))
             {
                 assertTrue(table.findIndex("genres_pkey") != null);
             }
-            else if (table.getName().equals("actors"))
+            else if (Strings.same(table.getName(), ACTORS))
             {
                 assertTrue(table.findIndex("actors_pkey") != null);
                 assertTrue(table.findIndex("actors_afirstname_key") != null);
             }
-            else if (table.getName().equals("casts"))
+            else if (Strings.same(table.getName(), CASTS))
             {
                 assertTrue(table.findIndex("casts_pkey") != null);
             }
-            else if (table.getName().equals("queue"))
+            else if (Strings.same(table.getName(), QUEUE))
             {
                 assertTrue(table.findIndex("queue_pkey") != null);
                 assertTrue(table.findIndex("queue_times_key") != null);
             }
-            else if (table.getName().equals("ratings"))
+            else if (Strings.same(table.getName(), RATINGS))
             {
                 assertTrue(table.findIndex("ratings_pkey") != null);
             }
@@ -286,46 +289,46 @@ public class MetaDataExtractorTestFunctional
     {
         for (Table table : catalog.getSchemas().get(0).getTables())
         {
-            if (table.getName().equals("users"))
+            if (Strings.same(table.getName(), USERS))
             {
                 assertEquals("rows in 'users'", 6, table.getCardinality());
                 assertEquals(6,table.findColumn("email").getCardinality());
                 assertEquals(5,table.findColumn("ulastname").getCardinality());
             }
-            else if (table.getName().equals("creditcards"))
+            else if (Strings.same(table.getName(), CREDITCARDS))
             {
                 assertEquals("rows in 'creditcards'", 6, table.getCardinality());
                 assertEquals(6,table.findColumn("creditnum").getCardinality());
                 assertEquals(3,table.findColumn("credittype").getCardinality());
             }
-            else if (table.getName().equals("movies"))
+            else if (Strings.same(table.getName(), MOVIES))
             {
                 assertEquals("rows in 'movies'", 3, table.getCardinality());
                 assertEquals(3,table.findColumn("movieid").getCardinality());
                 assertEquals(1,table.findColumn("url").getCardinality());
             }
-            else if (table.getName().equals("genres"))
+            else if (Strings.same(table.getName(), GENRES))
             {
                 assertEquals("rows in 'genres'", 5, table.getCardinality());
                 assertEquals(2,table.findColumn("mgenre").getCardinality());
             }
-            else if (table.getName().equals("actors"))
+            else if (Strings.same(table.getName(), ACTORS))
             {
                 assertEquals("rows in 'actors'", 8, table.getCardinality());
                 assertEquals(8,table.findColumn("aid").getCardinality());
                 assertEquals(8,table.findColumn("dateofb").getCardinality());
             }
-            else if (table.getName().equals("casts"))
+            else if (Strings.same(table.getName(), CASTS))
             {
                 assertEquals("rows in 'casts'", 10, table.getCardinality());
             }
-            else if (table.getName().equals("queue"))
+            else if (Strings.same(table.getName(), QUEUE))
             {
                 assertEquals("rows in 'queue'", 5, table.getCardinality());
                 assertEquals(2,table.findColumn("position").getCardinality());
                 assertEquals(5,table.findColumn("times").getCardinality());
             }
-            else if (table.getName().equals("ratings"))
+            else if (Strings.same(table.getName(), RATINGS))
             {
                 assertEquals("rows in 'ratings'", 7, table.getCardinality());
                 assertEquals(4,table.findColumn("rate").getCardinality());

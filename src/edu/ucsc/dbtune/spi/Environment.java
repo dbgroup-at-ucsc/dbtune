@@ -28,11 +28,20 @@ public class Environment {
     private final Configuration configuration;
 
     public Environment() throws IOException {
-        this(new PropertiesConfiguration(getDefaultProperties(), System.getProperty("user.dir") + "/config/" + FILE));
+        this(
+                new PropertiesConfiguration(
+                        getDefaultProperties(),
+                        System.getProperty("user.dir") + "/config/" + FILE
+                )
+        );
     }
 
     Environment(Configuration configuration){
         this.configuration = configuration;
+    }
+
+    public String getScriptAtWorkloadFolder(String scriptPath){
+        return getWorkloadFolder() + scriptPath;
     }
 
     public String getDatabaseUrl(){
@@ -59,6 +68,7 @@ public class Environment {
         return as(configuration.getProperty(PASSWORD));
     }
 
+    //todo(Huascar): Ivo, this is not thread safe. Synchronization may be needed.
     public Properties getAll(){
         Properties properties = new Properties();
 
@@ -118,7 +128,7 @@ public class Environment {
             }
         }
 
-      /**
+        /**
        * setting a property.
        *
        * @param propertyName

@@ -22,15 +22,28 @@ import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
 import edu.ucsc.dbtune.core.metadata.PGCommands;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.util.*;
+import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.util.Debug;
+import edu.ucsc.dbtune.util.Files;
+import edu.ucsc.dbtune.util.Iterables;
+import edu.ucsc.dbtune.util.Objects;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.*;
-import static edu.ucsc.dbtune.spi.core.Functions.*;
+import static edu.ucsc.dbtune.core.metadata.DB2Commands.clearAdviseIndex;
+import static edu.ucsc.dbtune.core.metadata.DB2Commands.explainModeRecommendIndexes;
+import static edu.ucsc.dbtune.core.metadata.DB2Commands.isolationLevelReadCommitted;
+import static edu.ucsc.dbtune.core.metadata.DB2Commands.readAdviseOnAllIndexes;
+import static edu.ucsc.dbtune.spi.core.Functions.submit;
+import static edu.ucsc.dbtune.spi.core.Functions.submitAll;
+import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 import static edu.ucsc.dbtune.util.DBUtilities.trimSqlStatement;
 import static edu.ucsc.dbtune.util.Instances.newList;
 
