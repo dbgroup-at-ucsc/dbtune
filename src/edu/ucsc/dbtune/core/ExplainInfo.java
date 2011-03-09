@@ -21,7 +21,8 @@ package edu.ucsc.dbtune.core;
 /**
  * An immutable type, which describes the output of a what-if optimization
  * call.
- * @see {@link WhatIfOptimizer} for more details.
+ *
+ * @see WhatIfOptimizer for more details.
  */
 public interface ExplainInfo {
     /**

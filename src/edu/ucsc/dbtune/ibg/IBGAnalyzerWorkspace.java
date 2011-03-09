@@ -24,8 +24,9 @@ import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 /**
- * We have a bunch of structures that we keep around to avoid excessive garbage collection. 
- * These structures are only used in {@link IBGAnalyzer#analyzeNode(IBGNode, InteractionLogger)}.
+ * We have a bunch of structures that we keep around to avoid excessive garbage collection. These 
+ * structures are only used in private method {@code 
+ * edu.ucsc.dbtune.ibg.IBGAnalyzer#analyzeNode(IBGNode, InteractionLogger)}.
  *  
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */

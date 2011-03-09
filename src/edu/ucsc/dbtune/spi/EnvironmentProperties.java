@@ -45,7 +45,7 @@ public class EnvironmentProperties {
      */
     public static final String WORKLOAD_FOLDER = "workload.dir";
 
-	/**
+    /**
 	 * Name of a previously defined workload.
      */
     public static final String WORKLOAD_NAME = "workload.name";

@@ -52,8 +52,8 @@ public abstract class AbstractDatabaseTable
     }
 
     /**
-     *
      * @return
+     *     object id
      */
     public int getOid()
     {

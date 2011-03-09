@@ -63,7 +63,7 @@ public class IBGAnalyzer {
      *
      * @param logger
      * @param wait
-     * @return
+     * @return step status
      */
 	public final StepStatus analysisStep(InteractionLogger logger, boolean wait) {
 		// we might need to go through several nodes to find one that we haven't visited yet

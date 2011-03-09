@@ -42,8 +42,9 @@ public class PGExtractor extends GenericJDBCExtractor
 {
     /**
      * The PostgreSQL's JDBC driver doesn't implement the {@link 
-     * DatabaseMetaData#tableIndexStatistic} type for the {@link DatabaseMetaData#getIndexInfo} 
-     * method. This method extracts metadata information about indexes and table/column statistics.
+     * java.sql.DatabaseMetaData#tableIndexStatistic} type for the {@link 
+     * java.sql.DatabaseMetaData#getIndexInfo} method. This method extracts metadata information 
+     * about indexes and table/column statistics.
      * <p>
      * The way that metadata is extracted is through the querying of PostgreSQL's system tables, in 
      * particular, tables <code>pg_index</code>, <code>pg_class</code> and 
@@ -57,6 +58,7 @@ public class PGExtractor extends GenericJDBCExtractor
      *     if a connection error occurs when reading PostgreSQL's system tables.
      * @see GenericJDBCExtractor
      */
+    @Override
     public Catalog extract( DatabaseConnection connection )
         throws SQLException
     {

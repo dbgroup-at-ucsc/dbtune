@@ -19,10 +19,10 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.ExplainInfo;
-import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
+import edu.ucsc.dbtune.ibg.InteractionBank;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -33,7 +33,7 @@ import java.util.Map;
 public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFunction<I> {
     private static final int INDEX_STATISTICS_WINDOW = 100;
 
-                  double             currentTimeStamp;
+    double        currentTimeStamp;
     private       DoiFunction<I>     doi;
     private       BenefitFunction<I> benefit;
     private       DBIndexPair<I>     tempPair;
@@ -84,23 +84,23 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
 
     @Override
     public void addQuery(ProfiledQuery<I> queryInfo, DynamicIndexSet<?> matSet) {
-		Iterable<I> candSet = queryInfo.getCandidateSnapshot();
-		for (I index : candSet) {
+        Iterable<I> candSet = queryInfo.getCandidateSnapshot();
+        for (I index : candSet) {
             final InteractionBank bank          = queryInfo.getInteractionBank();
             final ExplainInfo explainInfo   = queryInfo.getExplainInfo();
 
-			double bestBenefit = bank.bestBenefit(index.internalId())
-								 - explainInfo.getIndexMaintenanceCost(index);
-			if (bestBenefit != 0) {
-				// add measurement, creating new window if necessary
-				MeasurementWindow benwin = benefitWindows.get(index);
-				if (benwin == null) {
-					benwin = new MeasurementWindow();
-					benefitWindows.put(index, benwin);
-				}
-				benwin.put(bestBenefit, currentTimeStamp);
-			}
-		}
+            double bestBenefit = bank.bestBenefit(index.internalId())
+                                 - explainInfo.getIndexMaintenanceCost(index);
+            if (bestBenefit != 0) {
+                // add measurement, creating new window if necessary
+                MeasurementWindow benwin = benefitWindows.get(index);
+                if (benwin == null) {
+                    benwin = new MeasurementWindow();
+                    benefitWindows.put(index, benwin);
+                }
+                benwin.put(bestBenefit, currentTimeStamp);
+            }
+        }
 
         calculateInteractionLevel(queryInfo, matSet, candSet);
     }
@@ -161,23 +161,23 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
         return benefit.apply(a, m);
     }
 
-	/**
-	 * Maintains a sliding window of measurements
-	 * This class is agnostic about what the measurements indicate, and just treats them as numbers
-	 *
-	 * The most recent measurement is stored in measurements[lastPos] and has
-	 * timestamp stored in timestamps[lastPos]. The older measurements are
-	 * stored in (lastPos+1)%size, (lastPos+2)%size etc, until a position i is
-	 * encountered such that timestamps[i] == -1. The number of measurements is
-	 * indicated by the field numMeasurements.
-	 */
+    /**
+     * Maintains a sliding window of measurements
+     * This class is agnostic about what the measurements indicate, and just treats them as numbers
+     *
+     * The most recent measurement is stored in measurements[lastPos] and has
+     * timestamp stored in timestamps[lastPos]. The older measurements are
+     * stored in (lastPos+1)%size, (lastPos+2)%size etc, until a position i is
+     * encountered such that timestamps[i] == -1. The number of measurements is
+     * indicated by the field numMeasurements.
+     */
     static class MeasurementWindow {
-		private final int size = INDEX_STATISTICS_WINDOW;
+        private final int size = INDEX_STATISTICS_WINDOW;
 
-		double[] measurements = new double[size];
-		double[] timestamps   = new double[size];
-		int lastPos = -1;
-		int numMeasurements = 0;
+        double[] measurements = new double[size];
+        double[] timestamps   = new double[size];
+        int lastPos = -1;
+        int numMeasurements = 0;
 
         /**
          * records a measurement in time.
@@ -186,47 +186,47 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
          * @param time
          *      the timestamp.
          */
-		void put(double meas, double time) {
-			if (numMeasurements < size) {
-				++numMeasurements;
-				lastPos = size-numMeasurements;
-			}
-			else if (lastPos == 0) {
-				lastPos = size - 1;
-			}
-			else {
-				--lastPos;
-			}
+        void put(double meas, double time) {
+            if (numMeasurements < size) {
+                ++numMeasurements;
+                lastPos = size-numMeasurements;
+            }
+            else if (lastPos == 0) {
+                lastPos = size - 1;
+            }
+            else {
+                --lastPos;
+            }
 
-			measurements[lastPos] = meas;
-			timestamps[lastPos] = time;
-		}
+            measurements[lastPos] = meas;
+            timestamps[lastPos] = time;
+        }
 
-		/**
-		 * Main computation supported by this data structure:
-		 * Find the maximum of
-		 *   sum(measurements) / sum(time)
-		 * over all suffixes of the window.
-		 * @param time
+        /**
+         * Main computation supported by this data structure:
+         * Find the maximum of
+         *   sum(measurements) / sum(time)
+         * over all suffixes of the window.
+         * @param time
          *      time window.
          * @return zero if no measurements have been made.
-		 */
-		double maxRate(double time) {
-			if (numMeasurements == 0)
-				return 0;
+         */
+        double maxRate(double time) {
+            if (numMeasurements == 0)
+                return 0;
 
-			double sumMeasurements = measurements[lastPos];
-			double maxRate = sumMeasurements / (time - timestamps[lastPos]);
-			for (int measNum = 1; measNum < numMeasurements; measNum++) {
-				int i = measNum % size;
-				sumMeasurements += measurements[i];
-				double rate = sumMeasurements / (time - timestamps[i]);
-				maxRate = Math.max(rate, maxRate);
-			}
+            double sumMeasurements = measurements[lastPos];
+            double maxRate = sumMeasurements / (time - timestamps[lastPos]);
+            for (int measNum = 1; measNum < numMeasurements; measNum++) {
+                int i = measNum % size;
+                sumMeasurements += measurements[i];
+                double rate = sumMeasurements / (time - timestamps[i]);
+                maxRate = Math.max(rate, maxRate);
+            }
 
-			return maxRate;
+            return maxRate;
 
-		}
+        }
 
         @Override
         public String toString() {
@@ -283,14 +283,14 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
         }
     }
 
-	static class DBIndexPair<I extends DBIndex> {
-		I a;
+    static class DBIndexPair<I extends DBIndex> {
+        I a;
         I b;
 
-		DBIndexPair(I a, I b) {
-			this.a = a;
-			this.b = b;
-		}
+        DBIndexPair(I a, I b) {
+            this.a = a;
+            this.b = b;
+        }
 
         static <I extends DBIndex> DBIndexPair<I> emptyPair(){
             return of(null, null);
@@ -300,22 +300,22 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
             return new DBIndexPair<I>(a, b);
         }
 
-		@Override
-		public int hashCode() {
-			return a.hashCode() + b.hashCode();
-		}
+        @Override
+        public int hashCode() {
+            return a.hashCode() + b.hashCode();
+        }
 
 
-		@Override
-		public boolean equals(Object other) {
-			if (!(other instanceof DBIndexPair)){
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof DBIndexPair)){
                 return false;
             }
 
-			final DBIndexPair<?> pair = (DBIndexPair<?>) other;
-			return (a.equals(pair.a) && b.equals(pair.b))
-			    || (a.equals(pair.b) && b.equals(pair.a));
-		}
+            final DBIndexPair<?> pair = (DBIndexPair<?>) other;
+            return (a.equals(pair.a) && b.equals(pair.b))
+                || (a.equals(pair.b) && b.equals(pair.a));
+        }
 
         @Override
         public String toString() {

@@ -91,10 +91,10 @@ public class Column extends DatabaseObject
     }
 
     /**
-     * Assigns the size of the column. This is relevant for character data-types.
+     * Assigns the size of the column. This is relevant for character-valued datatypes.
      *
-     * @param isNull
-     *     indicates if column can have null values
+     * @param size
+     *     size of the column
      */
     public void setSize(int size)
     {
@@ -104,7 +104,7 @@ public class Column extends DatabaseObject
     /**
      * Assigns the type of the column. The type should be one of the values defined in SQLTypes.
      *
-     * @param int
+     * @param type
      *     type of the column
      */
     protected void setDataType(int type)

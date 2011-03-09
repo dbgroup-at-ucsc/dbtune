@@ -28,6 +28,7 @@ public class QualifiedName implements DatabaseTable {
     /**
      *
      * @return
+     *     database name
      */
     public String getDbName() {
         return dbName;
@@ -36,6 +37,7 @@ public class QualifiedName implements DatabaseTable {
     /**
      *
      * @return
+     *     database name
      */
     public String getName() {
         return name;
@@ -44,6 +46,7 @@ public class QualifiedName implements DatabaseTable {
     /**
      * 
      * @return
+     *     schema name
      */
     public String getSchemaName() {
         return schemaName;

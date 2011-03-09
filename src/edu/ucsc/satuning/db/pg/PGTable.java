@@ -24,7 +24,7 @@ public class PGTable implements DatabaseTable {
 
     /**
      *
-     * @return
+     * @return object id
      */
     public int getOid() {
         return oid;

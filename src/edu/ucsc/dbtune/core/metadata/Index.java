@@ -219,8 +219,8 @@ public class Index extends DatabaseObject
     /**
      * Sets the value of the <code>clustered</code> property of this index.
      *
-     * @param unique
-     *     value to be assigned
+     * @param clustered
+     *     whether or not the index is clustered
      */
     public void setClustered(boolean clustered)
     {
@@ -317,6 +317,7 @@ public class Index extends DatabaseObject
      * @return
      *     integer representing the hashCode for the Index
      */
+    @Override
     public int hashCode()
     {
         int hash;
@@ -344,16 +345,17 @@ public class Index extends DatabaseObject
     }
 
     /**
-     * a Index object is equal to other if:
+     * an Index object is equal to other if:
      *   - both refer to the same Table
      *   - both contain the same set of columns in the same order
      *   - both are of the same type
      *
-     * @param index
-     *     object that is compared to
+     * @param other
+     *     object that is compared to this one
      * @return
      *     true if equal, false if not
      */
+    @Override
     public boolean equals(Object other)
     {
         if (this == other)

@@ -28,7 +28,7 @@ public class Objects {
     /**
      *
      * @param o
-     * @return
+     * @return hash code
      */
     public static int hashCode(Object... o){
         return Arrays.hashCode(o);

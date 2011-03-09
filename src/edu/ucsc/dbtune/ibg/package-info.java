@@ -21,17 +21,15 @@
  * <p>The principal public APIs in this package are:
  *
  * <dl>
- * <dt>{@link WorkloadProfiler}
+ * <dt>{@link edu.ucsc.dbtune.advisor.WorkloadProfiler}
  * <dd>The interface that you will use in your implementation classes to tell DBTune
  *     to either process queries,cast votes of indexes, and add new indexes to the candidate pool.
  *
- * <dt>{@link IndexBenefitGraph}
+ * <dt>{@link edu.ucsc.dbtune.ibg.IndexBenefitGraph}
  * <dd>The object that DBTune uses to represent an index benefit graph..
  *
- * <dt>{@link IndexBenefitGraphConstructor}
+ * <dt>{@link edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor}
  * <dd>The object that DBTune uses to construct the index benefit graph.
  *
  */
 package edu.ucsc.dbtune.ibg;
-
-import edu.ucsc.dbtune.advisor.WorkloadProfiler;

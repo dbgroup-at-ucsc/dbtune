@@ -42,7 +42,8 @@ public class Catalog extends DatabaseObject
     /**
      * copy constructor
      *
-     * @param other catalog
+     * @param catalog
+     *     other catalog copied into a new one
      */
     public Catalog( Catalog catalog )
     {

@@ -49,9 +49,7 @@ abstract class AbstractDatabaseWhatIfOptimizer<I extends DBIndex<I>> implements 
 
     /**
      * runs n what-if optimizations and return n results (i.e., optimization cost)
-     * @return
-     *      an {@code Iterable} object containing the calculated cost per what-if
-     *      optimization.
+     *
      * @throws java.sql.SQLException
      *      unable to calculate costs b/c a database error.
      */

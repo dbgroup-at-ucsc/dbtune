@@ -82,7 +82,7 @@ public abstract class DatabaseObject
     /**
      * Assigns the name of the database object.
      *
-     * @param string value representing the object's name
+     * @param name value representing the object's name
      */
     public void setName(String name)
     {
@@ -165,6 +165,7 @@ public abstract class DatabaseObject
      *
      * @return String value of the database object
      */
+    @Override
     public String toString()
     {
         if (name == null) {

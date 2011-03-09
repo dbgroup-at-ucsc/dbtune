@@ -118,7 +118,7 @@ public class Schema extends DatabaseObject
     /**
      * Assigns the schema's base configuration
      *
-     * @param configuration
+     * @param baseConfiguration
      *     configuration corresponding to the schema
      */
     public void setBaseConfiguration( Configuration baseConfiguration )

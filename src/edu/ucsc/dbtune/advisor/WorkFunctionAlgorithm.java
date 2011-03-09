@@ -40,24 +40,23 @@ import java.util.List;
  *     "On-line Index Selection for Physical Database Tuning"</a>
  */
 public class WorkFunctionAlgorithm<I extends DBIndex> {
-	// TODO remove these two fields, they should be passed from the user of the class.
+    // TODO remove these two fields, they should be passed from the user of the class.
     public static final int MAX_NUM_STATES = 12345;
     public static final int MAX_HOTSET_SIZE = 40;
 
-	TotalWorkValues wf = new TotalWorkValues();
 	SubMachineArray<I> submachines = new SubMachineArray<I>(0);
+	TotalWorkValues     wf         = new TotalWorkValues();
 	
-	// for tracking history
-	private boolean keepHistory;
+	private boolean     keepHistory;
 	private WfaTrace<I> trace;
-    // temporary workspace
+
     private final Workspace workspace = new Workspace();
 
     /**
      * construct a {@link WorkFunctionAlgorithm} object from a list of partitions. This object
-	 * will either keep some history or not. This choice will be determined by the {@code 
-	 * keepHistory} flag.
-	 *
+     * will either keep some history or not. This choice will be determined by the
+     * {@code keepHistory} flag.
+     *
      * @param parts
      *      a list of index partitions.
      * @param keepHistory
@@ -67,9 +66,11 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 	public WorkFunctionAlgorithm(IndexPartitions<I> parts, boolean keepHistory) {
 		if (parts != null) {
 			repartition(parts);
+
 			if (keepHistory) {
 				trace = new WfaTrace<I>(wf);
 			}
+
 			this.keepHistory = keepHistory;
 		}
 		else {
@@ -77,12 +78,12 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 			this.keepHistory = false;
 		}
 		
-		
 		dump("INITIAL");
 	}
 
     /**
      * construct a {@link WorkFunctionAlgorithm} object from a list of partitions.
+     *
      * @param parts
      *    a list of index partitions.
      */
@@ -161,7 +162,8 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
     }
 
     /**
-     * process a positive or negative vote for the index found in some {@link SubMachine}.
+     * process a positive or negative vote for the index found in some {@code SubMachine}.
+     *
      * @param index
      *      a {@link DBIndex index} object.
      * @param isPositive
@@ -340,10 +342,10 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 		}
 		return transition;
 	}
-	
 
     /**
      * given a schedule over a set of candidates and queries, get the total work
+     *
      * @param candidateSet
      *      a snapshot of candidate set.
      * @param queryCount
@@ -443,6 +445,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 			arr.set(i, subm);
 		}
 
+        @Override
 		public Iterator<SubMachine<J>> iterator() {
 			return arr.iterator();
 		}
@@ -511,6 +514,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
         /**
          * process a positive or negative vote for the index and do the necessary bookkeeping in
          * the input workfunction, and update the current state.
+         * 
          * @param wf
          *      the {@link WorkFunctionAlgorithm}'s total work values.
          * @param index
@@ -746,8 +750,8 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      * WorkFunctionAlgorithm's workspace.
      */
     private static class Workspace {
-        TotalWorkValues wf2             = new TotalWorkValues();
-        CostVector      tempCostVector  = new CostVector();
-        IndexBitSet tempBitSet      = new IndexBitSet();
+        TotalWorkValues wf2            = new TotalWorkValues();
+        CostVector      tempCostVector = new CostVector();
+        IndexBitSet     tempBitSet     = new IndexBitSet();
     }
 }
