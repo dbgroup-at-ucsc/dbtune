@@ -17,12 +17,13 @@
 $@
 
 # Command Line History (newest to oldest):
+:q
+:T 
 :qa
 :w
 :T src/edu/ucsc/dbtune/spi/Environment.java
 :T src/edu/ucsc/dbtune/spi/EnvironmentProperties.java
 :T src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
-:T 
 :T src/edu/ucsc/dbtune/ibg/IBGAnalyzerWorkspace.java
 :T src/edu/ucsc/satuning/Configuration.java
 :T src/edu/ucsc/satuning/MainTemplate.java
@@ -65,7 +66,6 @@ $@
 :wq
 ::
 :T tests/edu/ucsc/dbtune/advisor/StaticIndexSetTest.java
-:q
 :T
 :T extensions/cli/tasks.xml
 :T tests/edu/ucsc/dbtune/spi/EnvironmentTest.java
@@ -423,6 +423,19 @@ $@
 '9  198  1  ~/projects/dbtune/doc/work-summaries/ivo-summary.md
 
 # Jumplist (newest first):
+-'  740  8  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  659  8  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  743  4  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  742  0  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  697  2  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  45  0  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  43  4  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  44  0  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  46  22  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  48  0  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+-'  1  0  ~/.vim/empty_lines
+-'  1  0  ~/projects/dbtune/src/edu/ucsc/satuning/MainTemplate.java
+-'  71  0  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/WFITTestFunctional.java
 -'  740  8  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
 -'  659  8  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
 -'  743  4  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java

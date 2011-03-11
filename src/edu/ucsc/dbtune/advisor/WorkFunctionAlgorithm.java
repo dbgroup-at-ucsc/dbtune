@@ -40,6 +40,7 @@ import java.util.List;
  *     "On-line Index Selection for Physical Database Tuning"</a>
  */
 public class WorkFunctionAlgorithm<I extends DBIndex> {
+	// TODO remove these two fields, they should be passed from the user of the class.
     public static final int MAX_NUM_STATES = 12345;
     public static final int MAX_HOTSET_SIZE = 40;
 
@@ -54,8 +55,9 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 
     /**
      * construct a {@link WorkFunctionAlgorithm} object from a list of partitions. This object
-     * will either keep some history or not. This choice will be determined by the
-     * {@code keepHistory} flag.
+	 * will either keep some history or not. This choice will be determined by the {@code 
+	 * keepHistory} flag.
+	 *
      * @param parts
      *      a list of index partitions.
      * @param keepHistory
@@ -113,8 +115,13 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
     /**
      * run a new task for a {@link ProfiledQuery query} through a {@link WorkFunctionAlgorithm}'s
      * submachine.
-     * @param qinfo
+	 * <p>
+	 * This method corresponds to algorithm {@code analyzeQuery} from Schnaitter's thesis, which is 
+	 * described in page in page 162 (Figure 6.3)
+	 *
+	 * @param qinfo
      *    a {@link ProfiledQuery query}.
+	 * @see getRecommendation
      */
 	public void newTask(ProfiledQuery<I> qinfo) {
 		workspace.tempBitSet.clear(); // just to be safe
@@ -171,6 +178,9 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 	}
 
     /**
+	 * This method along with method {@link newTask} correspond to algorithm {@code chooseCands} 
+	 * from Schnaitter's thesis, which is described in page in page 169 (Figure 6.5).
+	 *
      * @return a list of recommended {@link DBIndex indexes}.
      */
 	public List<I> getRecommendation() {
@@ -187,8 +197,12 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 	}
 
     /**
-     * perform a repartition of indexes in the {@link WorkFunctionAlgorithm} given a brand new
+	 * Perform a repartition of indexes in the {@link WorkFunctionAlgorithm} given a brand new
      * {@link IndexPartitions} object.
+	 * <p>
+	 * This method corresponds to algorithms {@code repartition} and {@code choosePartition} of 
+	 * Schnaitter's thesis (Figure 6.4 and 6.6 (pages 166 and 175), respectively).
+	 *
      * @param newPartitions
      *      a {@link IndexPartitions} object.
      */
