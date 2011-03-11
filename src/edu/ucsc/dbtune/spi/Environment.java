@@ -223,7 +223,7 @@ public class Environment {
                 setProperty(URL,         "jdbc:postgresql://aigaion.cse.ucsc.edu/test");
                 setProperty(USERNAME,    "dbtune");
                 setProperty(PASSWORD,    "dbtuneadmin");
-                setProperty(WORKLOADS_FOLDERNAME, "resources/test/postgres");
+                setProperty(WORKLOADS_FOLDERNAME, "resources/workloads/postgres");
                 setProperty(DATABASE,    "test");
                 setProperty(JDBC_DRIVER, "org.postgresql.Driver");
             }

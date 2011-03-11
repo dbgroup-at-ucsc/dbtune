@@ -22,9 +22,9 @@ public class EnvironmentTest {
         assertThat(environment.getDatabaseName(), equalTo("test"));
         assertThat(environment.getUsername(),     equalTo("dbtune"));
         assertThat(environment.getPassword(),     equalTo("dbtuneadmin"));
-        assertThat(environment.getDatabaseUrl(),  equalTo("jdbc:postgresql://aigaion.cse.ucsc.edu/test"));
+        assertThat(environment.getDatabaseUrl(),  equalTo("jdbc:postgresql://aigaion.cse.ucsc.edu:5433/test"));
         assertThat(environment.getJDBCDriver(),   equalTo("org.postgresql.Driver"));
-        assertThat(environment.getWorkloadsFoldername(), equalTo("resources/workloads/postgres"));
+        assertThat(environment.getWorkloadsFoldername(), equalTo("resources/workloads/postgres/"));
     }
 
     @After
