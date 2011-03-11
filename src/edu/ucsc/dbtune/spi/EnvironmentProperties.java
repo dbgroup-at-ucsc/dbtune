@@ -41,12 +41,22 @@ public class EnvironmentProperties {
     public static final String URL = JdbcConnectionManager.URL;
 
     /**
-     * Folder for previously defined workloads.
+     * Folder for previously defined workloads. By convention, this folder contains many sub-folders 
+     * where each one corresponds to one workload. Each workload folder contains at least two files:
+     *
+     *  * create.sql
+     *  * workload.sql
+     * 
+     * where the {@code ddl.sql} file contains the schema of the database and {@code workload.sql} 
+     * contains SQL statements.
      */
-    public static final String WORKLOAD_FOLDER = "workload.dir";
+    public static final String WORKLOADS_FOLDERNAME = "workloads.dir";
 
     /**
-	 * Name of a previously defined workload.
+     * Name of a previously defined workload. This is used to uniquely identify a workload inside 
+     * the {@link WORKLOADS_FOLDERNAME}.
+     *
+     * @see WORKLOADS_FOLDERNAME
      */
     public static final String WORKLOAD_NAME = "workload.name";
 
@@ -76,19 +86,39 @@ public class EnvironmentProperties {
      */
     public static final String WFA_KEEP_HISTORY = "wfa.keep.history";
 
-	/**
-	 * Name of file that contains the set of initial candidates that are loaded into WFIT prior to 
-	 * its execution
-	 */
-    public static final String CANDIDATE_POOL_FILENAME = "candidate.pool.filename";
-
-	/**
+    /**
 	 * Factor used to obtain the overhead of a query based on the start and end time. The overhead 
 	 * is obtained by
 	 *
 	 *   overhead[q] = (startTime - endTime) / OVERHEAD_FACTOR
 	 */
     public static final String OVERHEAD_FACTOR = "overhead.factor";
+
+    /**
+	 * Name of file that contains the set of initial candidates that are loaded into WFIT prior to 
+	 * its execution
+	 */
+    public static final String CANDIDATE_POOL_FILENAME = "candidate.pool.filename";
+
+    /**
+     * TODO document it
+	 */
+    public static final String QUERY_PROFILE_FILENAME = "query.profile.filename";
+
+    /**
+     * TODO document it
+	 */
+    public static final String WFIT_LOG_FILENAME = "wfit.log.filename";
+
+    /**
+     * TODO document it
+	 */
+    public static final String OPT_LOG_FILENAME = "opt.log.filename";
+
+    /**
+     * TODO document it
+	 */
+    public static final String MIN_WF_FILENAME = "min.wf.filename";
 
     private EnvironmentProperties(){}
 }

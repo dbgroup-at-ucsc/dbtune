@@ -177,7 +177,7 @@ public class OfflineAnalysis {
 			bbSumCache[id] = ben;
 		}
 		
-		public double benefit(I a, BitSet M) {
+		@Override public double benefit(I a, BitSet M) {
 			int id = a.internalId();
 			if (!M.equals(prevM)) {
 				diffM.set(M);
@@ -212,7 +212,7 @@ public class OfflineAnalysis {
 			}
 		}
 		
-		public double doi(I a, I b) {
+		@Override public double doi(I a, I b) {
 			return bank.interactionLevel(a.internalId(), b.internalId());
 		}
 	}

@@ -19,12 +19,12 @@ public class EnvironmentTest {
 
     @Test
     public void testDefaultProperties() throws Exception{
-        assertThat(environment.getDatabaseName(),   equalTo("test"));
-        assertThat(environment.getUsername(),       equalTo("dbtune"));
-        assertThat(environment.getPassword(),       equalTo("dbtuneadmin"));
-        assertThat(environment.getDatabaseUrl(),    equalTo("jdbc:postgresql://aigaion.cse.ucsc.edu/test"));
-        assertThat(environment.getJDBCDriver(),     equalTo("org.postgresql.Driver"));
-        assertThat(environment.getWorkloadFolder(), equalTo("resources/workloads/postgres"));
+        assertThat(environment.getDatabaseName(), equalTo("test"));
+        assertThat(environment.getUsername(),     equalTo("dbtune"));
+        assertThat(environment.getPassword(),     equalTo("dbtuneadmin"));
+        assertThat(environment.getDatabaseUrl(),  equalTo("jdbc:postgresql://aigaion.cse.ucsc.edu/test"));
+        assertThat(environment.getJDBCDriver(),   equalTo("org.postgresql.Driver"));
+        assertThat(environment.getWorkloadsFoldername(), equalTo("resources/workloads/postgres"));
     }
 
     @After

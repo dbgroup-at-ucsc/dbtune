@@ -35,7 +35,7 @@ public class IndexExtractorTestFunctional {
         final ConnectionManager manager     = makeDatabaseConnectionManager(connProps);
         connection = manager.connect();
 
-        final String     setupScript    = environment.getScriptAtWorkloadFolder("/movies/create.sql");
+        final String     setupScript    = environment.getScriptAtWorkloadsFolder("/movies/create.sql");
         SQLScriptExecuter.execute(connection, setupScript);
         if(connection.getJdbcConnection().getAutoCommit()) {
             // dbtune expects this value to be set to false.
@@ -65,7 +65,7 @@ public class IndexExtractorTestFunctional {
     public void testRecommendIndexes() throws Exception {
         final IndexExtractor    extractor   = connection.getIndexExtractor();
         final File              workload    = new File(
-                environment.getScriptAtWorkloadFolder("/movies/workload.sql")
+                environment.getScriptAtWorkloadsFolder("/movies/workload.sql")
         );
         final Iterable<DBIndex> candidates  = extractor.recommendIndexes(workload);
 

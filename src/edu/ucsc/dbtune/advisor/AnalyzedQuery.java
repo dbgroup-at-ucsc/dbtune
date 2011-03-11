@@ -24,7 +24,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class AnalyzedQuery<I extends DBIndex> {
 	private final ProfiledQuery<I> profileInfo;
-	private final IndexBitSet[]  partition;
+	private final IndexBitSet[]    partition;
 
     /**
      * construct a query which has been analyzed by some {@code tuning interface}.

@@ -44,6 +44,18 @@ public class InteractionSelection<I extends DBIndex> {
         this.newHotSet          = builder.newHotSet;
     }
 
+    public InteractionSelection(
+		IndexPartitions<I>    oldPartitions,
+		StatisticsFunction<I> doiFunc,
+		int                   maxNumStates,
+		StaticIndexSet<I>     newHotSet ) {
+
+        this.oldPartitions = oldPartitions;
+        this.doiFunc       = doiFunc;
+        this.maxNumStates  = maxNumStates;
+        this.newHotSet     = newHotSet;
+    }
+
 
     public StaticIndexSet<I> getNewHotSet(){
         return Checks.checkNotNull(newHotSet);

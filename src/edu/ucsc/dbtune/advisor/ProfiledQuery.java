@@ -36,13 +36,13 @@ import java.io.Serializable;
 public class ProfiledQuery <I extends DBIndex> implements Serializable {
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
-    private final  String                       sql;
-	private final  ExplainInfo explainInfo;
-	private final Snapshot<I> candidateSet;
-	private final IndexBenefitGraph ibg;
-	private final InteractionBank bank;
-    private final  int                          whatIfCount;
-    private final  double                       ibgAnalysisTime;
+    private final String            sql;
+    private final ExplainInfo       explainInfo;
+    private final Snapshot<I>       candidateSet;
+    private final IndexBenefitGraph ibg;
+    private final InteractionBank   bank;
+    private final int               whatIfCount;
+    private final double            ibgAnalysisTime;
 
     private ProfiledQuery(Builder<I> builder){
         sql             = builder.sql;
@@ -52,6 +52,10 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
         bank            = builder.bank;
         whatIfCount     = builder.whatifCount;
         ibgAnalysisTime = builder.ibgAnalysisTime;
+    }
+
+    public InteractionBank getBank() {
+        return bank;
     }
 
     /**

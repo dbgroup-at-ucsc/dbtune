@@ -41,23 +41,24 @@
       </junit>
     </target>
 
-    <target name="test.one" depends="compile.tests" description="Execute tests.">
-      <echo message="running unit tests"/>
+    <target name="test.one" depends="argument-checking,compile.tests" description="Execute tests.">
+      <echo message="running test ${class}"/>
       <mkdir dir="${build.dir}/${junit.out.dir}"/>
-      <junit printsummary="yes" haltonerror="yes" haltonfailure="yes" fork="yes">
+      <junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">
         <classpath>
           <path refid="compile.classpath"/>
           <pathelement location="${build.dir}/classes"/>
           <pathelement location="${build.dir}/tests"/>
         </classpath>
-        <batchtest fork="yes" todir="${build.dir}/${junit.out.dir}">
-            <fileset dir="${test.dir}">
-                <include name="${class}"/>
-                <exclude name="**/AllTests.java"/>
-            </fileset>
-        </batchtest>
         <formatter type="xml" />
+        <test todir="${build.dir}/${junit.out.dir}" name="${class}"/>
       </junit>
+      <junitreport todir="${build.dir}/${junit.out.dir}">
+        <fileset dir="${build.dir}/${junit.out.dir}">
+          <include name="TEST-*.xml" />
+        </fileset>
+        <report format="frames" todir="${build.dir}/${junit.out.dir}" />
+      </junitreport>
     </target>
 
     <target name="test.functional" depends="compile.tests" description="Execute tests.">
@@ -89,4 +90,15 @@
             description="Remove generated files.">
         <delete dir="${build.dir}"/>
     </target>
+
+    <target name="argument-checking" depends="compile.tests" >
+        <fail message="No class variable defined" unless="class" />
+        <available
+            classname="${class}"
+            classpath="${build.dir}/tests/"
+            property="class.present" />
+
+        <fail message="Class ${class} doesn't exist" unless="class.present" />
+    </target>
+
 </project>

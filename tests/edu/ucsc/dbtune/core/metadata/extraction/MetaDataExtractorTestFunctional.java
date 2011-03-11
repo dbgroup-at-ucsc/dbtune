@@ -58,6 +58,7 @@ public class MetaDataExtractorTestFunctional
     private static DatabaseConnection   connection;
     private static GenericJDBCExtractor extractor;
     private static Catalog              catalog;
+    private static Environment          environment;
 
     private static final String RATINGS     = "ratings";
     private static final String QUEUE       = "queue";
@@ -77,9 +78,9 @@ public class MetaDataExtractorTestFunctional
     {
 		String ddlfilename;
 
-		final Environment environment = Environment.getInstance();
+		environment = Environment.getInstance();
 		connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
-		ddlfilename = environment.getScriptAtWorkloadFolder("/movies/create.sql");
+		ddlfilename = environment.getFilenameAtWorkloadFolder("create.sql");
 
         SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
 

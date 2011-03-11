@@ -49,6 +49,26 @@ public class HotsetSelection<I extends DBIndex> {
         this.debugOutput        = builder.debugOutput;
     }
 
+	/**
+     * Construct a {@code selection variable} which will be utilized by {@link HotSetSelector}.
+     */
+    public HotsetSelection(
+		CandidatePool.Snapshot<I> candSet,
+		StaticIndexSet<I>         oldHotSet,
+		DynamicIndexSet<I>        requiredIndexSet,
+		StatisticsFunction<I>     benefitFunc,
+		int                       maxSize,
+		boolean                   debugOutput )
+	{
+        this.candSet            = candSet;
+        this.oldHotSet          = oldHotSet;
+        this.requiredIndexSet   = requiredIndexSet;
+        this.benefitFunc        = benefitFunc;
+        this.maxSize            = maxSize;
+        this.debugOutput        = debugOutput;
+    }
+
+
     public CandidatePool.Snapshot<I> getCandidateSet(){
         return Checks.checkNotNull(candSet);
     }
