@@ -150,6 +150,7 @@ public class WFITTestFunctional
             writeLog(logFile, log, snapshot);
             processLog(logFile);
 
+            //todo(Huascar) Ivo, try to use Console for printing on the screen....
             Debug.println();
             Debug.println("wrote log to " + logFile);
 

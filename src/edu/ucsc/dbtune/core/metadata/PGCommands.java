@@ -188,6 +188,7 @@ public class PGCommands {
                     try{
                         final Double qCost =  Double.valueOf(resultSet.getString("qcost"));
                         usedSet.clear();
+                        // todo(Huascar) I am getting actual costs, but no indexes? this is weird.
                         final String indexesString  = resultSet.getString("indexes");
                         if (indexesString.length() == 0){
                             return null; // this avoids a NumberFormatException on empty string

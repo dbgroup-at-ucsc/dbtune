@@ -83,15 +83,17 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
         final IndexBitSet                       usedSet         = whatIfImpl.getUsedSet();
         final IndexBitSet                       configuration   = whatIfImpl.getConfiguration();
         final PGReifiedTypes.ReifiedPGIndexList indexSet        = makeIndexList();
-        return supplyValue(
-                explainIndexesCost(usedSet),
-                getConnection(),
-                indexSet,
-                configuration,
-                sql,
-                configuration.cardinality(),
-                new Double[indexSet.size()]
+        Double returnVal = supplyValue(
+                    explainIndexesCost(usedSet),
+                    getConnection(),
+                    indexSet,
+                    configuration,
+                    sql,
+                    configuration.cardinality(),
+                    new Double[indexSet.size()]
         );
+
+        return returnVal == null ? 0.0 : returnVal;
     }
 
     private PGReifiedTypes.ReifiedPGIndexList makeIndexList(){

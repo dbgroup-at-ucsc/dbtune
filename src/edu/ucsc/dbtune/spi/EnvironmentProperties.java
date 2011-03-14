@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.spi;
 
+import edu.ucsc.dbtune.advisor.WfaTrace;
+import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm;
 import edu.ucsc.dbtune.core.JdbcConnectionManager;
 
 /**
@@ -54,16 +56,16 @@ public class EnvironmentProperties {
 
     /**
      * Name of a previously defined workload. This is used to uniquely identify a workload inside 
-     * the {@link WORKLOADS_FOLDERNAME}.
+     * the {@link #WORKLOADS_FOLDERNAME}.
      *
-     * @see WORKLOADS_FOLDERNAME
+     * @see {@link #WORKLOADS_FOLDERNAME}
      */
     public static final String WORKLOAD_NAME = "workload.name";
 
     /**
 	 * Specifies an upper bound on the number of indexes that are monitored by an instance of WFA 
 	 * and is used within function {@code chooseCands} (as referenced in page 169 (Figure 6.5) of 
-	 * Schnaitter's thesis), and implemented in {@link WorkFunctionAlgorithm#getRecommendation}.
+	 * Schnaitter's thesis), and implemented in {@link WorkFunctionAlgorithm#getRecommendation()}.
 	 *
 	 * @see WorkFunctionAlgorithm#getRecommendation
      */
@@ -82,7 +84,7 @@ public class EnvironmentProperties {
 	 * Whether or not we want to keep the history of the Workload Function Algorithm.
 	 *
 	 * @see WorkFunctionAlgorithm#WorkFunctionAlgorithm
-	 * @see WfaTrace
+	 * @see {@link WfaTrace}
      */
     public static final String WFA_KEEP_HISTORY = "wfa.keep.history";
 

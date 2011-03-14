@@ -52,64 +52,64 @@ public class Environment {
     }
 
     /**
-     * @see EnvironmentProperties#URL
+     * @return {@link EnvironmentProperties#URL}
      */
     public String getDatabaseUrl(){
         return as(configuration.getProperty(URL));
     }
 
     /**
-     * @see EnvironmentProperties#JDBC_DRIVER
+     * @return {@link EnvironmentProperties#JDBC_DRIVER}
      */
     public String getJDBCDriver(){
         return as(configuration.getProperty(JDBC_DRIVER));
     }
 
     /**
-     * @see EnvironmentProperties#DATABASE
+     * @return {@link EnvironmentProperties#DATABASE}
      */
     public String getDatabaseName(){
         return as(configuration.getProperty(DATABASE));
     }
 
     /**
-     * @see EnvironmentProperties#USERNAME
+     * @return {@link EnvironmentProperties#USERNAME}
      */
     public String getUsername(){
         return as(configuration.getProperty(USERNAME));
     }
 
     /**
-     * @see EnvironmentProperties#PASSWORD
+     * @return {}EnvironmentProperties#PASSWORD
      */
     public String getPassword(){
         return as(configuration.getProperty(PASSWORD));
     }
 
     /**
-     * @see EnvironmentProperties#WORKLOADS_FOLDERNAME
+     * @return {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}
      */
     public String getWorkloadsFoldername(){
         return as(configuration.getProperty(WORKLOADS_FOLDERNAME));
     }
 
     /**
-     * @see EnvironmentProperties#WORKLOAD_NAME
+     * @return {@link EnvironmentProperties#WORKLOAD_NAME}
      */
     public String getWorkloadName(){
         return as(configuration.getProperty(WORKLOAD_NAME));
     }
 
     /**
-     * @see EnvironmentProperties#MAX_NUM_INDEXES
+     * @return {@link EnvironmentProperties#MAX_NUM_INDEXES}
      */
     public int getMaxNumIndexes(){
-        String maxSize = (String) as(configuration.getProperty(MAX_NUM_INDEXES));
+        String maxSize = as(configuration.getProperty(MAX_NUM_INDEXES));
         return Integer.valueOf(maxSize);
     }
 
     /**
-     * @see EnvironmentProperties#WFA_KEEP_HISTORY
+     * @return {@link EnvironmentProperties#WFA_KEEP_HISTORY }
      */
     public boolean getWFAKeepHistory(){
         String keepHistory = (String) as(configuration.getProperty(WFA_KEEP_HISTORY));
@@ -117,7 +117,9 @@ public class Environment {
     }
 
     /**
-     * @see EnvironmentProperties#MAX_NUM_STATES
+     * @return {@link EnvironmentProperties#MAX_NUM_STATES}
+     * @throws NumberFormatException
+     *      unable to return the max num of states due to the stated reason.
      */
     public int getMaxNumStates() throws NumberFormatException {
         String numOfStates = (String) as(configuration.getProperty(MAX_NUM_STATES));
@@ -125,7 +127,9 @@ public class Environment {
     }
 
     /**
-     * @see EnvironmentProperties#OVERHEAD_FACTOR
+     * @return {@link EnvironmentProperties#OVERHEAD_FACTOR}
+     * @throws NumberFormatException
+     *      unable to return the overhead factor due to the stated reason.
      */
     public float getOverheadFactor() throws NumberFormatException {
         String overheadFactor = (String) as(configuration.getProperty(OVERHEAD_FACTOR));
@@ -133,35 +137,35 @@ public class Environment {
     }
 
     /**
-     * @see EnvironmentProperties#CANDIDATE_POOL_FILENAME
+     * @return {@link EnvironmentProperties#CANDIDATE_POOL_FILENAME }
      */
     public String getCandidatePoolFilename(){
         return as(configuration.getProperty(CANDIDATE_POOL_FILENAME));
     }
 
     /**
-     * @see EnvironmentProperties#QUERY_PROFILE_FILENAME
+     * @return {@link EnvironmentProperties#QUERY_PROFILE_FILENAME}
      */
     public String getQueryProfileFilename(){
         return as(configuration.getProperty(QUERY_PROFILE_FILENAME));
     }
 
     /**
-     * @see EnvironmentProperties#WFIT_LOG_FILENAME
+     * @return {@link EnvironmentProperties#WFIT_LOG_FILENAME }
      */
     public String getWFITLogFilename(){
         return as(configuration.getProperty(WFIT_LOG_FILENAME));
     }
 
     /**
-     * @see EnvironmentProperties#OPT_LOG_FILENAME
+     * @return {@link EnvironmentProperties#OPT_LOG_FILENAME}
      */
     public String getOPTLogFilename(){
         return as(configuration.getProperty(OPT_LOG_FILENAME));
     }
 
     /**
-     * @see EnvironmentProperties#MIN_WF_FILENAME
+     * @return {@link EnvironmentProperties#MIN_WF_FILENAME}
      */
     public String getMinWFFilename(){
         return as(configuration.getProperty(MIN_WF_FILENAME));
@@ -169,10 +173,10 @@ public class Environment {
 
     /**
      * Returns the path to a given workload file. The path is qualified against the value of {@link 
-     * EnvironmentProperties#WORKLOAD_FOLDERNAME}.
+     * EnvironmentProperties#WORKLOADS_FOLDERNAME}.
      *
      * @param scriptPath
-     *    relative path to the file contained in {@link EnvironmentProperties#WORKLOAD_FOLDERNAME}.
+     *    relative path to the file contained in {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}.
      * @return
      *    {@code String} containing the path to the given script filename
      */
@@ -182,17 +186,18 @@ public class Environment {
 
     /**
      * Returns the path to a file inside the workload folder. The path is qualified against the 
-     * concatenation of {@link WORKLOADS_FOLDERNAME} and {@link WORKLOAD_NAME}. The contents of the 
+     * concatenation of {@link EnvironmentProperties#WORKLOADS_FOLDERNAME} and
+     * {@link EnvironmentProperties#WORKLOAD_NAME}. The contents of the
      * returned string look like:
      * <p>
-     * {@link getWorkloadsFoldername()} + "/" + {@linkgetWorkloadName() + {@code filename} }
+     * {@link #getWorkloadsFoldername()} + "/" + {@link #getWorkloadName() + {@code filename} }
      *
      * @param filename
-     *    name of file contained inside {@link EnvironmentProperties#WORKLOAD_FOLDERNAME}.
+     *    name of file contained inside {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}.
      * @return
      *    {@code String} containing the path to the given script filename
-     * @see getWorkloadsFoldername
-     * @see getWorkloadName
+     * @see {@link #getWorkloadsFoldername()}
+     * @see {@link #getWorkloadName()}
      */
     public String getFilenameAtWorkloadFolder(String filename){
         return getWorkloadsFoldername() + "/" + getWorkloadName() + "/" + filename;
