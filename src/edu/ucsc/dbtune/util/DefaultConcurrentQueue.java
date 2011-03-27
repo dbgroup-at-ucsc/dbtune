@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.util;
 
 
+import edu.ucsc.dbtune.spi.core.Console;
+
 import java.util.NoSuchElementException;
 
 public class DefaultConcurrentQueue<E> {
@@ -60,7 +62,7 @@ public class DefaultConcurrentQueue<E> {
 			option.handle(this);
 
 		if (count >= cap) {
-			Debug.logError("too many elements in queue");
+			Console.streaming().error("too many elements in queue");
 			return;
 		}
 		
@@ -73,7 +75,7 @@ public class DefaultConcurrentQueue<E> {
 			option.handle(this);
 
 		if (count <= 0) {
-			Debug.logError("no elements in queue");
+			Console.streaming().error("no elements in queue");
 			throw new NoSuchElementException();
 		}	
 		

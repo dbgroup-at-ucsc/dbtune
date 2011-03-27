@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.util.Debug;
+import edu.ucsc.dbtune.spi.core.Console;
 
 import java.sql.SQLException;
 
@@ -75,7 +75,7 @@ public class ThreadIBGConstruction implements Runnable {
 					success = ibgCons.buildNode();
 				} while (success);
 			} catch (SQLException e) {
-				Debug.logError(" *** IBG construction failed ***", e);
+				Console.streaming().error(" *** IBG construction failed ***", e);
 			}
 
 			synchronized (taskMonitor) {
@@ -93,7 +93,7 @@ public class ThreadIBGConstruction implements Runnable {
 	public void startConstruction(IndexBenefitGraphConstructor<?> ibgCons) {
 		synchronized (taskMonitor) {
 			if (RunnableState.PENDING.isSame(state)) {
-				Debug.logError("unexpected state in IBG startConstruction");
+				Console.streaming().error("unexpected state in IBG startConstruction");
 			}
 			
 			this.ibgCons    = ibgCons;

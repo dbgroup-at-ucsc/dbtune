@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.util.Debug;
+import edu.ucsc.dbtune.spi.core.Console;
 
 public class ThreadIBGAnalysis implements Runnable {
     private final Object taskMonitor = new Object();
@@ -66,7 +66,7 @@ public class ThreadIBGAnalysis implements Runnable {
 						taskMonitor.wait();
 					} catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-						Debug.logNotice("InterruptedException", e);
+                        Console.streaming().error("InterruptedException" + " Cause: " + e.toString());
 					}
 				}
 			}
@@ -77,16 +77,16 @@ public class ThreadIBGAnalysis implements Runnable {
 			while (!done) {
 				switch (analyzer.analysisStep(logger, true)) {
 					case SUCCESS:
-						if (++analyzedCount % 1000 == 0) Debug.println("a" + analyzedCount);
+						if (++analyzedCount % 1000 == 0) Console.streaming().log("a" + analyzedCount);
 						break;
 					case DONE:
 						done = true;
 						break;
 					case BLOCKED:
-						Debug.logError("unexpected BLOCKED result from analysisStep");
+						Console.streaming().error("unexpected BLOCKED result from analysisStep");
 						return;
 					default:
-						Debug.logError("unexpected result from analysisStep");
+						Console.streaming().error("unexpected result from analysisStep");
 						return;
 				}
 			}
@@ -109,7 +109,7 @@ public class ThreadIBGAnalysis implements Runnable {
 		synchronized (taskMonitor) {
 			if (RunnableState.PENDING.isSame(state)) {
                 final String msg = "unexpected state in IBG startAnalysis";
-				Debug.logError(msg);
+				Console.streaming().error(msg);
                 // todo(Huascar) ask whether we want to fail fast (by throwing an illegal state excep. when
                 // finding this violation or just leave it the way it is.
 			}
