@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.util;
 
+@Deprecated // use Console instead.
 public class Debug {
 	public static void println() {
 		System.out.println();

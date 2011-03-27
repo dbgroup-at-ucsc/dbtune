@@ -2,7 +2,11 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.PGReifiedTypes;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
-import edu.ucsc.dbtune.util.*;
+import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -10,7 +14,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static edu.ucsc.dbtune.core.metadata.PGCommands.explainIndexesCost;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
-import static edu.ucsc.dbtune.util.Instances.*;
+import static edu.ucsc.dbtune.util.Instances.newAtomicInteger;
+import static edu.ucsc.dbtune.util.Instances.newBitSet;
+import static edu.ucsc.dbtune.util.Instances.newList;
 
 /**
  * A Postgres-specific What-if optimizer.
@@ -73,8 +79,8 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     @Override
     protected double estimateCost(WhatIfOptimizationBuilder builder) throws SQLException {
         incrementWhatIfCount();
-        Debug.print(".");
-        if (whatifCount.get() % 75 == 0) Debug.println();
+        Console.streaming().dot();
+        if (whatifCount.get() % 75 == 0) Console.streaming().skip();
 
         final WhatIfOptimizationBuilderImpl whatIfImpl = Objects.cast(builder, WhatIfOptimizationBuilderImpl.class);
         if(whatIfImpl.withProfiledIndex()) throw new UnsupportedOperationException("Error: Used Columns in Database Connection not supported.");

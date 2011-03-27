@@ -312,7 +312,7 @@ public class Environment {
                 lastModified = file.lastModified();
                 loadProperties();
               } catch (IOException e) {
-                Console.streaming().info("Error: unable to load properties", e);
+                Console.streaming().error("unable to load properties" + e);
               }
             }
         }

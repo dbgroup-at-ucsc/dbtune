@@ -22,9 +22,9 @@ import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
@@ -35,6 +35,7 @@ public class BcTuner<I extends DBIndex> {
 	private final BcIndexPool<I>        pool;
 	private final Snapshot<I>           snapshot;
 	private final IndexBitSet           currentRecommendation;
+    private final Console console = Console.streaming();
 
     /**
      * Construct a {@code BcTuner} object.
@@ -104,9 +105,9 @@ public class BcTuner<I extends DBIndex> {
 			int id = idx.internalId();
 			BcIndexInfo<I> stats = pool.get(id);
 			
-			Debug.println(idx.creationText());
-			Debug.println(stats.toString(idx));
-			Debug.println();
+			console.log(idx.creationText());
+			console.log(stats.toString(idx));
+			console.skip();
 		}
 	}
 
@@ -163,7 +164,7 @@ public class BcTuner<I extends DBIndex> {
 			stats.updateDeltaMinMax();
 		}
 		
-		Debug.println("*** UPDATED STATS");
+		console.log("*** UPDATED STATS");
 		dumpIndexPool();
 		
 		// iteratively drop indices 

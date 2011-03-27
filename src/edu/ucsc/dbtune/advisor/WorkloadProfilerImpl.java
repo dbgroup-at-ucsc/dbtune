@@ -109,7 +109,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
                     candidatePool.addIndex(Objects.<I>as(each));
                 }
 			} catch (SQLException e) {
-                console.info("SQLException caught while recommending indexes", e);
+                console.error("SQLException caught while recommending indexes", e);
 			}
 		}
 
@@ -119,7 +119,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 		try {
 			ibgWhatIfOptimizer.fixCandidates(snapshot);
 		} catch (SQLException e) {
-			console.info("SQLException caught while setting candidates", e);
+			console.error("SQLException caught while setting candidates", e);
 			throw new Error(e);
 		}
 
@@ -127,7 +127,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 		try {
 			info = ibgWhatIfOptimizer.explain(sql);
 		} catch (SQLException e) {
-			console.info("SQLException caught while explaining command", e);
+			console.error("SQLException caught while explaining command", e);
 			throw new Error(e);
 		}
 
@@ -159,7 +159,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
                     .get();
 		} catch (SQLException e) {
             final String msg = "SQLException caught while building ibg";
-			console.info(msg, e);
+			console.error(msg, e);
 			throw new IBGConstructionException(msg, e);
 		}
     }

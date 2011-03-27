@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2ExplainInfo;
 import edu.ucsc.dbtune.core.metadata.DB2QualifiedName;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.*;
 
 import java.sql.SQLException;
@@ -19,6 +20,8 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
     private final DatabaseConnection        connection;
     private final AtomicReference<String>   cachedSQL;
+
+    private final static Console SCREEN = Console.streaming();
 
     DB2WhatIfOptimizer(DatabaseConnection connection){
         super();
@@ -86,11 +89,15 @@ class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
         try {
             connection.rollback();
         } catch (SQLException s){
-            Debug.logError("Could not rollback transaction", s);
+            error("Could not rollback transaction", s);
             throw s;
         }
 
         return new DB2ExplainInfo(category, updatedTable, updateCost);
+    }
+
+    private static void error(String message, Throwable cause){
+        SCREEN.error(message, cause);
     }
 
     @Override

@@ -18,46 +18,45 @@
 
 package edu.ucsc.dbtune.core;
 
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintStream;
-
-import edu.ucsc.dbtune.advisor.BenefitFunction;
 import edu.ucsc.dbtune.advisor.DynamicIndexSet;
-import edu.ucsc.dbtune.advisor.HotsetSelection;
 import edu.ucsc.dbtune.advisor.HotSetSelector;
+import edu.ucsc.dbtune.advisor.HotsetSelection;
+import edu.ucsc.dbtune.advisor.IndexPartitions;
 import edu.ucsc.dbtune.advisor.IndexStatisticsFunction;
 import edu.ucsc.dbtune.advisor.InteractionSelection;
 import edu.ucsc.dbtune.advisor.InteractionSelector;
 import edu.ucsc.dbtune.advisor.ProfiledQuery;
-import edu.ucsc.dbtune.advisor.IndexPartitions;
-import edu.ucsc.dbtune.advisor.StatisticsFunction;
-import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm;
-import edu.ucsc.dbtune.advisor.WfaTrace;
-import edu.ucsc.dbtune.advisor.DoiFunction;
 import edu.ucsc.dbtune.advisor.StaticIndexSet;
+import edu.ucsc.dbtune.advisor.StatisticsFunction;
 import edu.ucsc.dbtune.advisor.WFALog;
+import edu.ucsc.dbtune.advisor.WfaTrace;
+import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.util.Debug;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.IndexBitSet;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
-import java.io.IOException;
-import java.util.List;
-
+import edu.ucsc.dbtune.util.StopWatch;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-import static org.hamcrest.CoreMatchers.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintStream;
+import java.util.List;
+
+import static edu.ucsc.dbtune.util.StopWatch.normalize;
+import static edu.ucsc.dbtune.util.Strings.str;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * Functional test for the WFIT use case.
@@ -65,8 +64,6 @@ import static org.hamcrest.CoreMatchers.*;
  * Some of the documentation contained in this class refers to sections of Karl Schnaitter's 
  * Doctoral Thesis "On-line Index Selection for Physical Database Tuning". Specifically to chapter 
  * 6.
- *
- * 
  *
  * @see <a href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
  *     "On-line Index Selection for Physical Database Tuning"</a>
@@ -139,7 +136,7 @@ public class WFITTestFunctional
         wfa           = new WorkFunctionAlgorithm<DBIndex>(parts, keepHistory);
         exportWfit    = true;
             
-        Debug.println("read " + queryCount + " queries");
+        log("read " + queryCount + " queries");
     
         getRecommendations(qinfos, wfa, wfitSchedule, overheads);
         
@@ -150,9 +147,8 @@ public class WFITTestFunctional
             writeLog(logFile, log, snapshot);
             processLog(logFile);
 
-            //todo(Huascar) Ivo, try to use Console for printing on the screen....
-            Debug.println();
-            Debug.println("wrote log to " + logFile);
+            newLine(); // linebreak on screen
+            log("wrote log to " + logFile);
 
             log.dump();
 
@@ -172,8 +168,8 @@ public class WFITTestFunctional
             writeLog(logFile, log, snapshot);
             processLog(logFile);
 
-            Debug.println();
-            Debug.println("wrote log to " + logFile);
+            newLine(); // linebreak on screen
+            log("wrote log to " + logFile);
 
             log.dump();
             
@@ -184,12 +180,12 @@ public class WFITTestFunctional
                 minSched       = trace.optimalSchedule(parts, q, qinfos);
                 minWfValues[q] = wfa.getScheduleCost(snapshot, q, qinfos, parts, minSched);
 
-                Debug.println("Optimal cost " + q + " = " + minWfValues[q]);
+                log("Optimal cost " + q + " = " + minWfValues[q]);
 
               for (int i = 0; i < q; i++) {
-                  Debug.println(minSched[i]);
+                  log(str(minSched[i]));
               }
-              Debug.println();
+              newLine(); // linebreak on screen
             }
 
             wfFile = new File(env.getFilenameAtWorkloadFolder(env.getMinWFFilename()));
@@ -211,6 +207,7 @@ public class WFITTestFunctional
         in   = new ObjectInputStream(new FileInputStream(file));
 
         try {
+            // todo fix this since
             return (CandidatePool<DBIndex>) in.readObject();
         } finally {
             in.close(); // closes underlying stream
@@ -226,15 +223,14 @@ public class WFITTestFunctional
 
             ProfiledQuery<DBIndex> query = qinfos.get(q);
 
-            Debug.println("issuing query: " + query.getSQL());
+            log("issuing query: " + query.getSQL());
                 
             // analyze the query and get the recommendation
-            long uStart = System.nanoTime();
-
+            final StopWatch watch = new StopWatch(); // start chronometer
             wfa.newTask(query);
             Iterable<DBIndex> rec = wfa.getRecommendation();
 
-            long uEnd = System.nanoTime();
+            final long elapsedTime = watch.elapsedtime();  // peek at how much time has elapsed (in nanoseconds).
             
             recs[q] = new IndexBitSet();
 
@@ -242,7 +238,7 @@ public class WFITTestFunctional
                 recs[q].set(idx.internalId());
             }
 
-            overheads[q] = (uEnd - uStart) / env.getOverheadFactor();
+            overheads[q] = normalize(elapsedTime, env.getOverheadFactor());
         }
     }
 
@@ -251,7 +247,7 @@ public class WFITTestFunctional
     {
         File file = new File(env.getQueryProfileFilename());
         ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-        Debug.println("Reading profiled queries from " + file);
+        log("Reading profiled queries from " + file);
         try {
             return (List<ProfiledQuery<DBIndex>>) in.readObject();
         } finally {
@@ -453,7 +449,7 @@ public class WFITTestFunctional
     }
     
     private static WFALog readLog(File logFile) throws Exception {
-        Debug.println("reading from " + logFile);
+        log("reading from " + logFile);
         ObjectInputStream in = new ObjectInputStream(new FileInputStream(logFile));
         try {
             WFALog log = (WFALog) in.readObject();
@@ -477,5 +473,14 @@ public class WFITTestFunctional
         } finally {
             in.close(); // closes underlying stream
         }       
+    }
+
+
+    private static void log(String message){
+        Console.streaming().log(message);
+    }
+
+    private static void newLine(){
+        Console.streaming().skip();
     }
 }

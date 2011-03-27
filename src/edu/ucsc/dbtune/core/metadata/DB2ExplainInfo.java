@@ -22,7 +22,7 @@ import edu.ucsc.dbtune.core.AbstractExplainInfo;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseTable;
 import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
-import edu.ucsc.dbtune.util.Debug;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
@@ -52,8 +52,8 @@ public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable 
     public DB2ExplainInfo(SQLCategory category, DatabaseTable updatedTable, double updatingCost, double totalCost){
         super(category);
         if (SQLCategory.DML.isSame(category)) {
-            Debug.assertion(updatedTable != null, "need updated table for DML");
-            Debug.assertion(updatingCost >= 0, "invalid update cost");
+            Checks.checkAssertion(updatedTable != null, "need updated table for DML");
+            Checks.checkAssertion(updatingCost >= 0, "invalid update cost");
         }
         this.updatedTable   = (DB2QualifiedName) updatedTable;
         this.updateCost     = updatingCost;

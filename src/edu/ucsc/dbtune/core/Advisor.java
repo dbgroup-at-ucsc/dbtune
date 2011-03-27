@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
-import edu.ucsc.dbtune.util.Debug;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Objects;
 
@@ -61,12 +61,13 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
  * The workload file must be an SQL file with semicolon-delimited queries 
  * We don't create an output xml file ... just read the db2advis output directly 
  */
-//todo(Huascar) make it an stateful object rather than leaving it like a util class.
+//todo(Huascar) make it a stateful object rather than leaving it like a util class.
 public class Advisor {
 	private static final Pattern INDEX_HEADER_PATTERN       = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
 	private static final Pattern INDEX_STATEMENT_PATTERN    = Pattern.compile("^\\s*CREATE.+(IDX\\d*)\\\"");
 	private static final Pattern START_INDEXES_PATTERN      = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
 	private static final Pattern END_INDEXES_PATTERN        = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
+    private static final Console SCREEN                     = Console.streaming();
 
 	public static FileInfo createAdvisorFile(DatabaseConnection conn, String advisorPath, int budget, File workloadFile) throws IOException, AdvisorException, SQLException {
 		submit(
@@ -77,8 +78,8 @@ public class Advisor {
 		final String cmd = getCmd(conn, advisorPath, budget, workloadFile, false);
 		final String cleanCmd = getCmd(conn, advisorPath, budget, workloadFile, true);
 
-        Debug.println("Running db2advis on " + workloadFile);
-		Debug.println("command = " + cleanCmd);
+        log("Running db2advis on " + workloadFile);
+		log("command = " + cleanCmd);
 
         Process prcs = Runtime.getRuntime().exec(cmd);
 		
@@ -99,7 +100,7 @@ public class Advisor {
 				prcs.waitFor();
 				break;
 			} catch (InterruptedException e) {
-                Debug.println(e);
+                log("InterruptedException"+ " Cause: " + e.toString());
             }
 		}
 		int rc = prcs.exitValue();
@@ -226,4 +227,8 @@ public class Advisor {
 			megabytes = m;
 		}
 	}
+
+    private static void log(String message){
+        SCREEN.log(message);
+    }
 }

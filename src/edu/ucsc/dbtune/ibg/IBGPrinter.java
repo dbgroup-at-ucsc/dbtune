@@ -20,6 +20,7 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -94,7 +95,7 @@ public class IBGPrinter {
 		    first = false;
 		}
         screenOutput.append("}\n").append("\tcost ").append(node.cost()).append("\n\n");
-		System.out.print(screenOutput.toString());
+        Console.streaming().log(screenOutput.toString());
 	}
 
     @Override

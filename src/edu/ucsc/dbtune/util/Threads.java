@@ -115,7 +115,7 @@ public class Threads {
                 new LinkedBlockingQueue<Runnable>(Integer.MAX_VALUE), threadFactory) {
             @Override protected void afterExecute(Runnable runnable, Throwable throwable) {
                 if (throwable != null) {
-                    echo.info("Unexpected failure from " + runnable, throwable);
+                    echo.error("Unexpected failure from " + runnable, throwable);
                 }
             }
         };

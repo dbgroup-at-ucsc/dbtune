@@ -22,8 +22,8 @@ import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
 import edu.ucsc.dbtune.core.metadata.PGCommands;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
-import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.Objects;
@@ -196,15 +196,16 @@ public class Platform {
                 try{
                     c.rollback();
                 } catch(SQLException debugged) {
-                    Debug.logError("Could not rollback transaction", debugged);
+                    Console.streaming().error("Could not rollback transaction", debugged);
                 }
 
-                Debug.logError("Could not recommend indexes for statement " + sql,  e);
+                Console.streaming().error("Could not recommend indexes for statement " + sql, e);
                 throw new SQLException(e);
             }
 
             final List<DBIndex> indexList = newList();
             for(DB2IndexMetadata each : suppliedMetaList){
+                assert connection != null;
                 final double creationCost = each.creationCost(connection.getIBGWhatIfOptimizer());
                 final DBIndex index = new DB2Index(each, creationCost);
                 indexList.add(index);

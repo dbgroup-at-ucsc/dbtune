@@ -20,8 +20,9 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Debug;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 	private WfaTrace<I> trace;
 
     private final Workspace workspace = new Workspace();
+    private final Console   console   = Console.streaming();
 
     /**
      * construct a {@link WorkFunctionAlgorithm} object from a list of partitions. This object
@@ -74,7 +76,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 			this.keepHistory = keepHistory;
 		}
 		else {
-			Debug.assertion(!keepHistory, "may only keep history if given the initial partition");
+            Checks.checkAssertion(!keepHistory, "may only keep history if given the initial partition");
 			this.keepHistory = false;
 		}
 		
@@ -104,13 +106,13 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      *      a debug message.
      */
 	public void dump(String msg) {
-		Debug.println(msg);
+        console.log(msg);
 		for (int i = 0; i < submachines.length; i++) {
-			Debug.println("SUBMACHINE " + i);
+            console.log("SUBMACHINE " + i);
 			submachines.get(i).dump();
-			Debug.println();
+            console.skip();
 		}
-		Debug.println("----");
+        console.log("----");
 	}
 
     /**
@@ -122,7 +124,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 	 *
 	 * @param qinfo
      *    a {@link ProfiledQuery query}.
-	 * @see getRecommendation
+	 * @see {@link #getRecommendation()}
      */
 	public void newTask(ProfiledQuery<I> qinfo) {
 		workspace.tempBitSet.clear(); // just to be safe
@@ -170,7 +172,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      *      value of vote given to an index object.
      */
 	public void vote(I index, boolean isPositive) {
-		Debug.assertion(!keepHistory, "tracing WFA is not supported with user feedback");
+        Checks.checkAssertion(!keepHistory, "tracing WFA is not supported with user feedback");
 		for (SubMachine<I> subm : submachines) {
 			if (subm.subset.contains(index)){
                 subm.vote(wf, index, isPositive);
@@ -180,7 +182,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 	}
 
     /**
-	 * This method along with method {@link newTask} correspond to algorithm {@code chooseCands} 
+	 * This method along with method {@link #newTask(ProfiledQuery)} correspond to algorithm {@code chooseCands}
 	 * from Schnaitter's thesis, which is described in page in page 169 (Figure 6.5).
 	 *
      * @return a list of recommended {@link DBIndex indexes}.
@@ -209,7 +211,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      *      a {@link IndexPartitions} object.
      */
 	public void repartition(IndexPartitions<I> newPartitions) {
-		Debug.assertion(!keepHistory, "tracing WFA is not supported with repartitioning");
+		Checks.checkAssertion(!keepHistory, "tracing WFA is not supported with repartitioning");
 		int newSubsetCount = newPartitions.subsetCount();
 		int oldSubsetCount = submachines.length;
 		SubMachineArray<I> submachines2 = new SubMachineArray<I>(newSubsetCount);
@@ -467,6 +469,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 		private int currentState;
 		private IndexBitSet currentBitSet;
 		private int[] indexIds;
+        private final Console console = Console.streaming();
 		
 		SubMachine(IndexPartitions.Subset<J> subset, int subsetNum, int state, IndexBitSet bitSet) {
 			this.subset         = subset;
@@ -502,13 +505,14 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
          * internalIds.
          */
 		public void dump() {
-			Debug.print("Index IDs : [ ");
-			for (int id : indexIds) Debug.print(id + " ");
-			Debug.print("]   ");
+            final StringBuilder message = new StringBuilder();
+			message.append("Index IDs : [ ");
+			for (int id : indexIds) message.append(id).append(" ");
+			message.append("]   ").append("REC : [ ");
 
-			Debug.print("REC : [ ");
-			for (int id : indexIds) if (currentBitSet.get(id)) Debug.print(id + " ");
-			Debug.println("]");
+			for (int id : indexIds) if (currentBitSet.get(id)) message.append(id).append(" ");
+            message.append("]");
+            console.log(message.toString());
 		}
 
         /**
@@ -530,7 +534,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 				if (indexIds[indexIdsPos] == index.internalId())
 					break;
 			if (indexIdsPos >= numIndexes) {
-				Debug.logError("could not process vote: index not found in subset");
+                console.error("could not process vote: index not found in subset");
 				return;
 			}
 			
@@ -592,7 +596,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
 					}
 				}
 				if (Double.isInfinite(wfValueBest))
-					Debug.logError("failed to compute work function");
+                    console.error("failed to compute work function");
 				wfNew.set(subsetNum, newStateNum, wfValueBest, bestPredecessor);
 			}
 			

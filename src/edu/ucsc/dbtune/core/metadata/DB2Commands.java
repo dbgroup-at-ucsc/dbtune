@@ -21,6 +21,7 @@ package edu.ucsc.dbtune.core.metadata;
 import edu.ucsc.dbtune.core.CostLevel;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.SQLStatement;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.util.*;
@@ -245,7 +246,7 @@ public class DB2Commands {
                     throw new SQLException("Could not get update cost: too many rows");
                 }
                  
-                Debug.println("updateCost = " + (updateOpCost - childOpCost));
+                Console.streaming().log("updateCost = " + (updateOpCost - childOpCost));
                 return updateOpCost - childOpCost;                 
              } finally {
                  rs.close();
@@ -268,7 +269,7 @@ public class DB2Commands {
         
         @Override
         public String apply(Parameter input) throws SQLException {
-            Debug.assertion(tempPredicateSet.size() == 0, "tempPredicateSet was not cleared");
+            Checks.checkAssertion(tempPredicateSet.size() == 0, "tempPredicateSet was not cleared");
             final Connection connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
             if(ps == null){
                 ps = connection.prepareStatement(QUERY.toString());
@@ -650,7 +651,7 @@ public class DB2Commands {
 
             try {
                 final boolean haveResult = rs.next();
-                Debug.assertion(haveResult, "did not find index " + indexName + " in ADVISE_INDEX");
+                Checks.checkAssertion(haveResult, "did not find index " + indexName + " in ADVISE_INDEX");
                 return DB2IndexMetadata.consFromAdviseIndex(rs, dbName, id, megabytes);
             } finally {
                 rs.close();

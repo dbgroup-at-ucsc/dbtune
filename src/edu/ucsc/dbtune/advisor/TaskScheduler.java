@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.advisor.TaskScheduler.SchedulerTask;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool;
@@ -8,6 +7,7 @@ import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Instances;
+import edu.ucsc.dbtune.util.StopWatch;
 import edu.ucsc.dbtune.util.Threads;
 
 import java.sql.SQLException;
@@ -530,7 +530,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
                 candidateSet = scheduler.getProfiler().processVote(index, isPositive);
                 placeOnSelection(this);
             } catch (SQLException sqlCause){
-                console.info("Could not process vote", sqlCause);
+                console.error("Could not process vote", sqlCause);
             } catch (InterruptedException interrupt){
                 Thread.currentThread().interrupt();
             }
@@ -599,7 +599,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
                 candidateSet = scheduler.getProfiler().addCandidate(index);
                 placeOnSelection(this);
             } catch (SQLException sqlCause){
-                console.info("Could not add candidate", sqlCause);
+                console.error("Could not add candidate", sqlCause);
             } catch (InterruptedException interrupt){
                 Thread.currentThread().interrupt();
             }
@@ -617,33 +617,4 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }
 
 
-
-    /**
-     * monitor execution time.
-     */
-    static class StopWatch {
-        private long start = System.currentTimeMillis();
-        private final Console console = Console.streaming();
-        /**
-         *
-         * @return
-         *      resets and returns elapsed time in milliseconds.
-         */
-        public long reset() {
-            long now = System.currentTimeMillis();
-            try {
-              return now - start;
-            } finally {
-              start = now;
-            }
-        }
-
-        /**
-         * @param label
-         *      Resets and logs elapsed time in milliseconds.
-         */
-        public void resetAndLog(String label) {
-            console.info(label + ": " + reset() + "ms");
-        }
-    }
 }

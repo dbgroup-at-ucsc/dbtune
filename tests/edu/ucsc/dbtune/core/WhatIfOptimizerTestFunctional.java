@@ -21,7 +21,19 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
 
 /**
+ * Functional test for what-if optimizer implementations
+ *
+ * The test should check basically two properties:
+ *   * monotonicity
+ *   * sanity
+ *
+ * For more information on what these properties mean, refer to page 57 (Chapter 4, Section 2.1,
+ * Property 4.1 and 4.2 respectively).
+ *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @see {@code thesis} <a
+ * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
+ *     "On-line Index Selection for Physical Database Tuning"</a>
  */
 public class WhatIfOptimizerTestFunctional {
     private static DatabaseConnection connection;
@@ -31,9 +43,11 @@ public class WhatIfOptimizerTestFunctional {
     public static void setUp() throws Exception {
         environment = Environment.getInstance();
 
-        final Properties connProps   = environment.getAll();
+        final Properties        connProps   = environment.getAll();
         final ConnectionManager manager     = makeDatabaseConnectionManager(connProps);
-        connection = manager.connect();
+
+        try {connection = manager.connect();} catch (Exception e) {connection = null;}
+        if(connection == null) return;
 
         final String     setupScript    = environment.getScriptAtWorkloadsFolder("/movies/create.sql");
         SQLScriptExecuter.execute(connection, setupScript);

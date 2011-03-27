@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
-import edu.ucsc.dbtune.util.Debug;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.List;
@@ -39,6 +39,7 @@ public class CandidatesSelector<I extends DBIndex> {
 	private         IndexPartitions<I>          hotPartitions;
 	private         int                         maxHotSetSize   = MAX_HOTSET_SIZE;
 	private         int                         maxNumStates    = MAX_NUM_STATES;
+    private final Console console = Console.streaming();
 
     /**
      * Construct a {@code CandidatesSelector} object.
@@ -227,9 +228,9 @@ public class CandidatesSelector<I extends DBIndex> {
 		hotSet = newHotSet;
 		if (hotSet.size() > maxHotSetSize) {
 			maxHotSetSize = hotSet.size();
-			Debug.logNotice(
+			console.info(
                     "Maximum number of monitored indexes has been automatically increased to "
-                    + maxHotSetSize
+                            + maxHotSetSize
             );
 		}
 		

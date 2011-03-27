@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.*;
 
 import java.sql.SQLException;
@@ -110,10 +111,12 @@ class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
 
         try {
             activeConnection.execute(sql);
-            System.err.print('.');
+            Console.streaming().dot();
         } catch (SQLException e){
-            System.err.print('.');
-            Debug.logError(e.getLocalizedMessage());
+            final StringBuilder errorMessage = new StringBuilder();
+            errorMessage.append('.');
+            errorMessage.append(e.getLocalizedMessage());
+            Console.streaming().error(errorMessage.toString());
             throw e;
         }
 
@@ -179,9 +182,9 @@ class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
         try {
             activeConnection.execute(sql);
             //throw new Error("returned from execute() in what-if mode");
-            System.err.print('.');
+            Console.streaming().dot();
         } catch (SQLException e) {
-            System.err.print('.');
+            Console.streaming().dot();
             throw e;
             // expected in explain mode
         }

@@ -33,7 +33,8 @@ public class IndexExtractorTestFunctional {
 
         final Properties        connProps   = environment.getAll();
         final ConnectionManager manager     = makeDatabaseConnectionManager(connProps);
-        connection = manager.connect();
+        try {connection = manager.connect();} catch (Exception e) {connection = null;}
+        if(connection == null) return;
 
         final String     setupScript    = environment.getScriptAtWorkloadsFolder("/movies/create.sql");
         SQLScriptExecuter.execute(connection, setupScript);
