@@ -31,6 +31,8 @@ import edu.ucsc.dbtune.advisor.StatisticsFunction;
 import edu.ucsc.dbtune.advisor.WFALog;
 import edu.ucsc.dbtune.advisor.WfaTrace;
 import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm;
+import edu.ucsc.dbtune.advisor.WorkloadProfiler;
+import edu.ucsc.dbtune.advisor.WorkloadProfilerImpl;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
@@ -40,6 +42,8 @@ import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.StopWatch;
+import edu.ucsc.dbtune.util.DBUtilities;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -51,8 +55,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintStream;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.ArrayList;
 
+import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
 import static edu.ucsc.dbtune.util.StopWatch.normalize;
 import static edu.ucsc.dbtune.util.Strings.str;
 import static org.hamcrest.CoreMatchers.is;
@@ -78,6 +85,11 @@ public class WFITTestFunctional
     @BeforeClass
     public static void setUp() throws Exception
     {
+        File outputdir;
+
+        outputdir = new File(env.getOutputFoldername() + "/" + env.getWorkloadName());
+
+        outputdir.mkdirs();
     }
 
     /**
@@ -109,25 +121,29 @@ public class WFITTestFunctional
         WorkFunctionAlgorithm<DBIndex> wfa;
         WfaTrace<DBIndex>              trace;
 
-        WFALog        log;
-        File          logFile;
-        File          wfFile;
-        IndexBitSet[] wfitSchedule;
-        IndexBitSet[] optSchedule;
-        IndexBitSet[] minSched;
-        double[]      overheads;
-        double[]      minWfValues;
-        int           maxNumIndexes;
-        int           maxNumStates;
-        int           queryCount;
-        boolean       keepHistory;
-        boolean       exportWfit;
+        DatabaseConnection connection;
+        WFALog             log;
+        File               logFile;
+        File               wfFile;
+        IndexBitSet[]      wfitSchedule;
+        IndexBitSet[]      optSchedule;
+        IndexBitSet[]      minSched;
+        String             workloadFile;
+        double[]           overheads;
+        double[]           minWfValues;
+        int                maxNumIndexes;
+        int                maxNumStates;
+        int                queryCount;
+        boolean            keepHistory;
+        boolean            exportWfit;
 
         maxNumIndexes = env.getMaxNumIndexes();
         maxNumStates  = env.getMaxNumStates();
         keepHistory   = env.getWFAKeepHistory();
-        pool          = readCandidatePool();
-        qinfos        = readProfiledQueries();
+        workloadFile  = env.getFilenameAtWorkloadFolder("workload.sql");
+        connection    = makeDatabaseConnectionManager(env.getAll()).connect();
+        pool          = getCandidates(connection, workloadFile);
+        qinfos        = getOfflineProfiledQueries(connection, pool, workloadFile);
         queryCount    = qinfos.size();
         overheads     = new double[queryCount];
         wfitSchedule  = new IndexBitSet[queryCount];
@@ -142,7 +158,7 @@ public class WFITTestFunctional
         
         if (exportWfit) {
             log     = WFALog.generateFixed(qinfos, wfitSchedule, snapshot, parts, overheads);
-            logFile = new File(env.getFilenameAtWorkloadFolder(env.getWFITLogFilename()));
+            logFile = new File(env.getFilenameAtOutputFolder(env.getWFITLogFilename()));
 
             writeLog(logFile, log, snapshot);
             processLog(logFile);
@@ -161,9 +177,15 @@ public class WFITTestFunctional
             trace = wfa.getTrace();
 
             optSchedule = trace.optimalSchedule(parts, qinfos.size(), qinfos);
-            log         = WFALog.generateFixed(qinfos, optSchedule, snapshot, // say zero overhead
-                                               parts, new double[queryCount]);
-            logFile = new File(env.getFilenameAtWorkloadFolder(env.getOPTLogFilename()));
+            logFile     = new File(env.getFilenameAtOutputFolder(env.getOPTLogFilename()));
+
+            log =
+                WFALog.generateFixed(
+                    qinfos,
+                    optSchedule,
+                    snapshot, // say zero overhead
+                    parts,
+                    new double[queryCount]);
 
             writeLog(logFile, log, snapshot);
             processLog(logFile);
@@ -188,7 +210,7 @@ public class WFITTestFunctional
               newLine(); // linebreak on screen
             }
 
-            wfFile = new File(env.getFilenameAtWorkloadFolder(env.getMinWFFilename()));
+            wfFile = new File(env.getFilenameAtOutputFolder(env.getMinWFFilename()));
 
             Files.writeObjectToFile(wfFile, (Object) minWfValues);
             processWfFile(wfFile);
@@ -197,27 +219,11 @@ public class WFITTestFunctional
         assertThat(true, is(true));
     }
 
-    private CandidatePool<DBIndex> readCandidatePool()
-        throws IOException, ClassNotFoundException
-    {
-        File              file;
-        ObjectInputStream in;
-
-        file = new File(env.getFilenameAtWorkloadFolder(env.getCandidatePoolFilename()));
-        in   = new ObjectInputStream(new FileInputStream(file));
-
-        try {
-            // todo fix this since
-            return (CandidatePool<DBIndex>) in.readObject();
-        } finally {
-            in.close(); // closes underlying stream
-        }
-    }
-
-    private void getRecommendations(List<ProfiledQuery<DBIndex>>   qinfos,
-                         WorkFunctionAlgorithm<DBIndex> wfa,
-                         IndexBitSet[]                  recs,
-                         double[]                       overheads)
+    private void getRecommendations(
+        List<ProfiledQuery<DBIndex>>   qinfos,
+        WorkFunctionAlgorithm<DBIndex> wfa,
+        IndexBitSet[]                  recs,
+        double[]                       overheads)
     {
         for (int q = 0; q < recs.length; q++) {
 
@@ -239,19 +245,6 @@ public class WFITTestFunctional
             }
 
             overheads[q] = normalize(elapsedTime, env.getOverheadFactor());
-        }
-    }
-
-    private List<ProfiledQuery<DBIndex>> readProfiledQueries()
-        throws IOException, ClassNotFoundException
-    {
-        File file = new File(env.getQueryProfileFilename());
-        ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-        log("Reading profiled queries from " + file);
-        try {
-            return (List<ProfiledQuery<DBIndex>>) in.readObject();
-        } finally {
-            in.close(); // closes underlying stream
         }
     }
 
@@ -475,12 +468,54 @@ public class WFITTestFunctional
         }       
     }
 
-
     private static void log(String message){
         Console.streaming().log(message);
     }
 
     private static void newLine(){
         Console.streaming().skip();
+    }
+
+    private CandidatePool<DBIndex> getCandidates(DatabaseConnection con, String workloadFilename)
+        throws SQLException, IOException {
+
+        File workloadFile = new File(workloadFilename);
+
+        // run the advisor to get the initial candidates
+        // Give a budget of -1 to mean "no budget"
+
+        Iterable<DBIndex> candidateSet = null;
+
+        candidateSet = con.getIndexExtractor().recommendIndexes(workloadFile);
+
+        // add each candidate
+        CandidatePool<DBIndex> pool = new CandidatePool<DBIndex>();
+
+        for (DBIndex index : candidateSet) {
+            pool.addIndex(index);
+        }
+
+        return pool;
+    }
+
+    private List<ProfiledQuery<DBIndex>> getOfflineProfiledQueries(
+            DatabaseConnection con, CandidatePool<DBIndex> pool, String workloadFilename)
+        throws IOException
+    {
+        WorkloadProfiler<DBIndex> profiler = new WorkloadProfilerImpl<DBIndex>(con, pool, false);
+        
+        // get an IBG etc for each statement
+        List<ProfiledQuery<DBIndex>> qinfos = null;
+        List<String>                 lines  = null;
+
+        lines = Files.getLines(new File(workloadFilename));
+        
+        qinfos = new ArrayList<ProfiledQuery<DBIndex>>();
+
+        for (String sql : lines) {
+            qinfos.add(profiler.processQuery(DBUtilities.trimSqlStatement(sql)));
+        }
+
+        return qinfos;
     }
 }

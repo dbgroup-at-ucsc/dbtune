@@ -19,14 +19,13 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.DATABASE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.OUTPUT_FOLDERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOAD_NAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFA_KEEP_HISTORY;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OVERHEAD_FACTOR;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.CANDIDATE_POOL_FILENAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.QUERY_PROFILE_FILENAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFIT_LOG_FILENAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPT_LOG_FILENAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MIN_WF_FILENAME;
@@ -87,6 +86,13 @@ public class Environment {
     }
 
     /**
+     * @return {@link EnvironmentProperties#OUTPUT_FOLDERNAME}
+     */
+    public String getOutputFoldername(){
+        return as(configuration.getProperty(OUTPUT_FOLDERNAME));
+    }
+
+    /**
      * @return {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}
      */
     public String getWorkloadsFoldername(){
@@ -134,20 +140,6 @@ public class Environment {
     public float getOverheadFactor() throws NumberFormatException {
         String overheadFactor = (String) as(configuration.getProperty(OVERHEAD_FACTOR));
         return Float.valueOf(overheadFactor);
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#CANDIDATE_POOL_FILENAME }
-     */
-    public String getCandidatePoolFilename(){
-        return as(configuration.getProperty(CANDIDATE_POOL_FILENAME));
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#QUERY_PROFILE_FILENAME}
-     */
-    public String getQueryProfileFilename(){
-        return as(configuration.getProperty(QUERY_PROFILE_FILENAME));
     }
 
     /**
@@ -201,6 +193,25 @@ public class Environment {
      */
     public String getFilenameAtWorkloadFolder(String filename){
         return getWorkloadsFoldername() + "/" + getWorkloadName() + "/" + filename;
+    }
+
+    /**
+     * Returns the path to a file inside the output folder. The path is qualified against the 
+     * concatenation of {@link EnvironmentProperties#OUTPUT_FOLDERNAME} and
+     * {@link EnvironmentProperties#WORKLOAD_NAME}. The contents of the
+     * returned string look like:
+     * <p>
+     * {@link #getOutputFoldername()} + "/" + {@link #getWorkloadName() + {@code filename} }
+     *
+     * @param filename
+     *    name of file contained inside {@link EnvironmentProperties#OUTPUT_FOLDERNAME}.
+     * @return
+     *    {@code String} containing the path to the given script filename
+     * @see {@link #getOuptutFoldername()}
+     * @see {@link #getWorkloadName()}
+     */
+    public String getFilenameAtOutputFolder(String filename){
+        return getOutputFoldername() + "/" + getWorkloadName() + "/" + filename;
     }
 
     /**
