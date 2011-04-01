@@ -18,14 +18,14 @@ import static org.junit.Assert.assertThat;
 public class CandidateSelectorTest {
     @Test
     public void testCreationCostOfNewIndex() throws Exception {
-        final CandidatesSelector<PGIndex> candidatesSelector = new CandidatesSelector<PGIndex>();
+        final CandidatesSelector<PGIndex> candidatesSelector = new CandidatesSelector<PGIndex>(40,12345,10,100);
         final double creationCost = candidatesSelector.create(postgresIndex(234, 4321));
         assertThat(Double.compare(4.5, creationCost), equalTo(0));
     }
 
     @Test
     public void testDropIndex() throws Exception {
-        final CandidatesSelector<PGIndex> candidatesSelector = new CandidatesSelector<PGIndex>();
+        final CandidatesSelector<PGIndex> candidatesSelector = new CandidatesSelector<PGIndex>(40,12345,10,100);
         final double creationCost = candidatesSelector.create(postgresIndex(234, 4321));
         assertThat(Double.compare(4.5, creationCost), equalTo(0));
         final double dropCost = candidatesSelector.drop(postgresIndex(234, 4321));
@@ -36,11 +36,11 @@ public class CandidateSelectorTest {
     public void testBasicUsageCase() throws Exception {
         final DynamicIndexSet<PGIndex> userHotSet = new DynamicIndexSet<PGIndex>(){{postgresIndex(2345, 43521);}};
         final CandidatesSelector<PGIndex> candidatesSelector = new CandidatesSelector<PGIndex>(
-                new IndexStatisticsFunction<PGIndex>(),
-                new WorkFunctionAlgorithm<PGIndex>(new IndexPartitions<PGIndex>(new StaticIndexSet<PGIndex>(Arrays.asList(postgresIndex(234, 4321)))), false),
+                new IndexStatisticsFunction<PGIndex>(100),
+                new WorkFunctionAlgorithm<PGIndex>(new IndexPartitions<PGIndex>(new StaticIndexSet<PGIndex>(Arrays.asList(postgresIndex(234, 4321)))), 40,12345,false),
                 new StaticIndexSet<PGIndex>(Arrays.asList(postgresIndex(234, 4321))),
                 new DynamicIndexSet<PGIndex>(){{add(postgresIndex(234, 4321));}},
-                userHotSet
+                userHotSet,40,12345,100
         );
         candidatesSelector.create(postgresIndex(134, 4321));
         candidatesSelector.negativeVote(postgresIndex(234, 4321));

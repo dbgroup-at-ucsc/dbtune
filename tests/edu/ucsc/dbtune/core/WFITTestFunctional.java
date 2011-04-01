@@ -149,7 +149,7 @@ public class WFITTestFunctional
         wfitSchedule  = new IndexBitSet[queryCount];
         snapshot      = pool.getSnapshot();
         parts         = getPartition(snapshot, qinfos, maxNumIndexes, maxNumStates);
-        wfa           = new WorkFunctionAlgorithm<DBIndex>(parts, keepHistory);
+        wfa           = new WorkFunctionAlgorithm<DBIndex>(parts,maxNumStates,maxNumIndexes,keepHistory);
         exportWfit    = true;
             
         log("read " + queryCount + " queries");
@@ -259,15 +259,18 @@ public class WFITTestFunctional
 
         InteractionSelection<DBIndex> is;
 
-        StatisticsFunction<DBIndex> doiFunc = new TempDoiFunction(qinfos, candidateSet);
+        StatisticsFunction<DBIndex> doiFunc =
+            new TempDoiFunction(qinfos, candidateSet, env.getIndexStatisticsWindow());
 
-        is = new InteractionSelection<DBIndex>(
+        is = 
+            new InteractionSelection<DBIndex>(
                 new IndexPartitions<DBIndex>(hotSet),
                 doiFunc,
                 maxNumStates,
                 hotSet);
         
-        IndexPartitions<DBIndex> parts = InteractionSelector.choosePartitions(is);
+        IndexPartitions<DBIndex> parts = 
+            InteractionSelector.choosePartitions(is, env.getNumPartitionIterations());
         
         return parts;
     }
@@ -280,10 +283,20 @@ public class WFITTestFunctional
         StatisticsFunction<DBIndex> benefitFunc;
         HotsetSelection<DBIndex> hs;
         
-        benefitFunc = new TempBenefitFunction(qinfos, candidateSet.maxInternalId());
-        hs          = new HotsetSelection<DBIndex>(candidateSet, new StaticIndexSet<DBIndex>(),
-                                                   new DynamicIndexSet<DBIndex>(), benefitFunc,
-                                                   maxNumIndexes,                 false);
+        benefitFunc =
+            new TempBenefitFunction(
+                    qinfos,
+                    candidateSet.maxInternalId(),
+                    env.getIndexStatisticsWindow());
+
+        hs =
+            new HotsetSelection<DBIndex>(
+                    candidateSet,
+                    new StaticIndexSet<DBIndex>(),
+                    new DynamicIndexSet<DBIndex>(),
+                    benefitFunc,
+                    maxNumIndexes,
+                    false);
 
         StaticIndexSet<DBIndex> hotSet = HotSetSelector.chooseHotSetGreedy(hs);
 
@@ -294,7 +307,13 @@ public class WFITTestFunctional
     {
         private InteractionBank bank;
 
-        TempDoiFunction(List<ProfiledQuery<DBIndex>> qinfos, Snapshot<DBIndex> candidateSet ) {
+        TempDoiFunction(
+                List<ProfiledQuery<DBIndex>> qinfos,
+                Snapshot<DBIndex> candidateSet,
+                int indexStatisticsWindow )
+        {
+            super(indexStatisticsWindow);
+
             bank = new InteractionBank(candidateSet);
 
             for (DBIndex a : candidateSet) {
@@ -327,7 +346,12 @@ public class WFITTestFunctional
         IndexBitSet[]   prevM;
         IndexBitSet     diffM;
         
-        TempBenefitFunction(List<ProfiledQuery<DBIndex>> qinfos0, int maxInternalId) {
+        TempBenefitFunction(
+                List<ProfiledQuery<DBIndex>> qinfos0,
+                int maxInternalId,
+                int indexStatisticsWindow)
+        {
+            super(indexStatisticsWindow);
             qinfos = qinfos0;
             
             componentId = componentIds(qinfos0, maxInternalId);

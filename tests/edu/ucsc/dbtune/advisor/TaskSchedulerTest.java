@@ -41,7 +41,6 @@ public class TaskSchedulerTest {
         final WorkloadProfilerImpl<PGIndex> profiler;
 
         final ThreadIBGAnalysis     analysis     = new ThreadIBGAnalysis(){
-            RunnableState state;
             @Override
             public void run() {
                 info("Running IBG Analysis Task.");
@@ -91,7 +90,7 @@ public class TaskSchedulerTest {
         scheduler  = new TaskScheduler<PGIndex>(
                  connection,
                  new CandidatePool<PGIndex>(),
-                 new CandidatesSelector<PGIndex>(),
+                 new CandidatesSelector<PGIndex>(40,12345,10,100),
                  new LinkedBlockingDeque<SchedulerTask<PGIndex>>(),
                  new LinkedBlockingDeque<SchedulerTask<PGIndex>>(),
                  new LinkedBlockingDeque<SchedulerTask<PGIndex>>()

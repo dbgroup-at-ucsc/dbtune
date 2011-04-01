@@ -24,7 +24,6 @@ import edu.ucsc.dbtune.spi.core.Supplier;
 import java.util.Random;
 
 public class InteractionSelector {
-	private static final int PARTITION_ITERATIONS = 10;
     private InteractionSelector(){}
 
     /**
@@ -38,93 +37,100 @@ public class InteractionSelector {
      *      {@code #choosePartitions(InteractionSelection)} is called, hotSet and
      *      hotPartitions are out of sync!
      */
-    public static <I extends DBIndex> IndexPartitions<I> choosePartitions(InteractionSelection<I> arg){
+    public static <I extends DBIndex> IndexPartitions<I> choosePartitions(
+            InteractionSelection<I> arg,
+            int partitionIterations)
+    {
         return choosePartitions(
                 arg.getNewHotSet(),
                 arg.getOldPartitions(),
                 arg.getDoiFunction(),
-                arg.getMaxNumStates()
-        );
+                arg.getMaxNumStates(),
+                partitionIterations );
     }
 
-	static <I extends DBIndex> IndexPartitions<I> choosePartitions(StaticIndexSet<I> newHotSet,
-                                                                      IndexPartitions<I> oldPartitions,
-                                                                      StatisticsFunction<I> doiFunc,
-                                                                      int maxNumStates
-    ) {
-		Random rand = new Random(50);
+    static <I extends DBIndex> IndexPartitions<I> choosePartitions(
+            StaticIndexSet<I>     newHotSet,
+            IndexPartitions<I>    oldPartitions,
+            StatisticsFunction<I> doiFunc,
+            int                   maxNumStates,
+            int                   partitionIterations)
+    {
+        Random rand = new Random(50);
         IndexPartitions<I> bestPartitions = constructInitialGuess(newHotSet, oldPartitions);
-		double bestCost = partitionCost(bestPartitions, doiFunc);
-		
-		for (int attempts = 0; attempts < PARTITION_ITERATIONS; attempts++) {
-			IndexPartitions<I> currentPartitions = new IndexPartitions<I>(newHotSet);
-			while (true) {
-				double currentSubsetCount = currentPartitions.subsetCount();
-				double currentStateCount = currentPartitions.wfaStateCount();
-				double totalWeightSingletons = 0;
-				double totalWeightOthers = 0;
-				boolean foundSingletonPair = false;
-				for (int s1 = 0; s1 < currentSubsetCount; s1++) {
-					IndexPartitions.Subset<I> subset1 = currentPartitions.get(s1);
-					double size1 = subset1.size();
-					for (int s2 = s1+1; s2 < currentSubsetCount; s2++) { 
-						IndexPartitions.Subset<I> subset2 = currentPartitions.get(s2);
-                        InteractionWeightSupplier interactionWeight = new InteractionWeightSupplier<I>(
+        double bestCost = partitionCost(bestPartitions, doiFunc);
+
+        for (int attempts = 0; attempts < partitionIterations; attempts++) {
+            IndexPartitions<I> currentPartitions = new IndexPartitions<I>(newHotSet);
+            while (true) {
+                double currentSubsetCount = currentPartitions.subsetCount();
+                double currentStateCount = currentPartitions.wfaStateCount();
+                double totalWeightSingletons = 0;
+                double totalWeightOthers = 0;
+                boolean foundSingletonPair = false;
+                for (int s1 = 0; s1 < currentSubsetCount; s1++) {
+                    IndexPartitions.Subset<I> subset1 = currentPartitions.get(s1);
+                    double size1 = subset1.size();
+                    for (int s2 = s1+1; s2 < currentSubsetCount; s2++) { 
+                        IndexPartitions.Subset<I> subset2 = currentPartitions.get(s2);
+                        InteractionWeightSupplier<I> interactionWeight = new 
+                            InteractionWeightSupplier<I>(
                                 doiFunc,
                                 maxNumStates
-                        ).currentStateCount(currentStateCount)
-                         .totalWeightSingletons(totalWeightSingletons)
-                         .totalWeightOthers(totalWeightOthers)
-                         .foundSingletonPair(foundSingletonPair)
-                         .availableSubsetsAndSizeOfFirstOne(subset1, size1, subset2)
-                       .get();
+                                ).currentStateCount(currentStateCount)
+                            .totalWeightSingletons(totalWeightSingletons)
+                            .totalWeightOthers(totalWeightOthers)
+                            .foundSingletonPair(foundSingletonPair)
+                            .availableSubsetsAndSizeOfFirstOne(subset1, size1, subset2)
+                            .get();
                         foundSingletonPair      = interactionWeight.isFoundSingletonPair();
                         totalWeightSingletons   = interactionWeight.getTotalWeightSingletons();
                         totalWeightOthers       = interactionWeight.getTotalWeightOthers();
-					}
-				}
-				
-				double weightThreshold;
-				if (foundSingletonPair)
-					weightThreshold = rand.nextDouble() * totalWeightSingletons;
-				else if (totalWeightOthers > 0)
-					weightThreshold = rand.nextDouble() * totalWeightOthers;
-				else
-					break;
-				
-				double accumWeight = 0;
-				for (int s1 = 0; s1 < currentSubsetCount && accumWeight <= weightThreshold; s1++) {
-					IndexPartitions.Subset<I> subset1 = currentPartitions.get(s1);
-					double size1 = subset1.size();
-					for (int s2 = s1+1; s2 < currentSubsetCount && accumWeight <= weightThreshold; s2++) { 
-						IndexPartitions.Subset<I> subset2 = currentPartitions.get(s2);
-                        InteractionWeightAccumulator interactionWeightAccumulator = new InteractionWeightAccumulator<I>(
+                    }
+                }
+
+                double weightThreshold;
+                if (foundSingletonPair)
+                    weightThreshold = rand.nextDouble() * totalWeightSingletons;
+                else if (totalWeightOthers > 0)
+                    weightThreshold = rand.nextDouble() * totalWeightOthers;
+                else
+                    break;
+
+                double accumWeight = 0;
+                for (int s1 = 0; s1 < currentSubsetCount && accumWeight <= weightThreshold; s1++) {
+                    IndexPartitions.Subset<I> subset1 = currentPartitions.get(s1);
+                    double size1 = subset1.size();
+                    for (int s2 = s1+1; s2 < currentSubsetCount && accumWeight <= weightThreshold; s2++) { 
+                        IndexPartitions.Subset<I> subset2 = currentPartitions.get(s2);
+                        InteractionWeightAccumulator<I> interactionWeightAccumulator = new 
+                            InteractionWeightAccumulator<I>(
                                 doiFunc,
                                 maxNumStates
-                        ).currentStateCount(currentStateCount)
-                         .foundSingletonPair(foundSingletonPair)
-                         .accumWeight(accumWeight)
-                         .availableSubsetsAndSizeOfFirstOne(subset1, size1, subset2)
-                        .get();
+                                ).currentStateCount(currentStateCount)
+                            .foundSingletonPair(foundSingletonPair)
+                            .accumWeight(accumWeight)
+                            .availableSubsetsAndSizeOfFirstOne(subset1, size1, subset2)
+                            .get();
                         accumWeight = interactionWeightAccumulator.getAccumWeight();
-						
-						if (accumWeight > weightThreshold){
+
+                        if (accumWeight > weightThreshold){
                             currentPartitions.merge(s1, s2); // for loops will exit due to threshold
                         }
-					}
-				}
-			} // end of while(true)
-			
-			// currentPartitions is our new candidate, now compare it
-			double currentCost = partitionCost(currentPartitions, doiFunc);
-			if (currentCost < bestCost) { 
-				bestCost = currentCost;
-				bestPartitions = currentPartitions;
-			}
-		}
-		
-		return bestPartitions;
-	}
+                    }
+                }
+            } // end of while(true)
+
+            // currentPartitions is our new candidate, now compare it
+            double currentCost = partitionCost(currentPartitions, doiFunc);
+            if (currentCost < bestCost) { 
+                bestCost = currentCost;
+                bestPartitions = currentPartitions;
+            }
+        }
+
+        return bestPartitions;
+    }
 
     private static <I extends DBIndex> IndexPartitions<I> constructInitialGuess(StaticIndexSet<I> newHotSet, IndexPartitions<I> oldPartitions) {
         IndexPartitions<I> bestPartitions;
@@ -149,27 +155,27 @@ public class InteractionSelector {
     private static <I extends DBIndex> double partitionCost(IndexPartitions<I> partitions,
                                                                StatisticsFunction<I> doiFunc
     ) {
-		double cost = 0;
-		for (int s1 = 0; s1 < partitions.subsetCount(); s1++) {
-			IndexPartitions.Subset<I> subset1 = partitions.get(s1);
-			for (int s2 = s1+1; s2 < partitions.subsetCount(); s2++) { 
-				IndexPartitions.Subset<I> subset2 = partitions.get(s2);
-				cost += interactionWeight(subset1, subset2, doiFunc);
-			}
-		}
-		return cost;
-	}
+        double cost = 0;
+        for (int s1 = 0; s1 < partitions.subsetCount(); s1++) {
+            IndexPartitions.Subset<I> subset1 = partitions.get(s1);
+            for (int s2 = s1+1; s2 < partitions.subsetCount(); s2++) { 
+                IndexPartitions.Subset<I> subset2 = partitions.get(s2);
+                cost += interactionWeight(subset1, subset2, doiFunc);
+            }
+        }
+        return cost;
+    }
 
-	private static <I extends DBIndex> double interactionWeight(IndexPartitions.Subset<I> s1,
+    private static <I extends DBIndex> double interactionWeight(IndexPartitions.Subset<I> s1,
                                                                    IndexPartitions.Subset<I> s2,
                                                                    StatisticsFunction<I> doiFunc
     ) {
-		double weight = 0;
-		for (I i1 : s1)
-			for (I i2 : s2) 
-				weight += doiFunc.doi(i1, i2);
-		return weight;
-	}
+        double weight = 0;
+        for (I i1 : s1)
+            for (I i2 : s2) 
+                weight += doiFunc.doi(i1, i2);
+        return weight;
+    }
 
     private static class InteractionWeightSupplier<I extends DBIndex>
     implements Supplier<InteractionWeightSupplier<I>> {

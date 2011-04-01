@@ -24,8 +24,6 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     static final int UNSCHEDULED = 0;
     static final int SCHEDULED   = 1;
     static final int CANCELLED   = 2;
-    static final int CAPACITY    = 100;
-    static final int SINGLE      = 1;
 
     private final BlockingQueue<SchedulerTask<I>> profilingQueue;
     private final BlockingQueue<SchedulerTask<I>> selectionQueue;
@@ -40,14 +38,23 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      * @param connection
      *      a live {@link DatabaseConnection connection}.
      */
-    public TaskScheduler(DatabaseConnection connection){
+    public TaskScheduler(
+            DatabaseConnection connection,
+            int profilingQueueCapacity,
+            int selectionQueueCapacity,
+            int completionQueueCapacity,
+            int maxNumStates,
+            int maxHotSetSize,
+            int partitionIterations,
+            int indexStatisticsWindow)
+    {
         this(
                 connection,
                 new CandidatePool<I>(),
-                new CandidatesSelector<I>(),
-                new LinkedBlockingQueue<SchedulerTask<I>>(CAPACITY),
-                new LinkedBlockingQueue<SchedulerTask<I>>(CAPACITY),
-                new LinkedBlockingQueue<SchedulerTask<I>>(SINGLE)
+                new CandidatesSelector<I>(maxNumStates,maxHotSetSize,partitionIterations,indexStatisticsWindow),
+                new LinkedBlockingQueue<SchedulerTask<I>>(profilingQueueCapacity),
+                new LinkedBlockingQueue<SchedulerTask<I>>(selectionQueueCapacity),
+                new LinkedBlockingQueue<SchedulerTask<I>>(completionQueueCapacity)
         );
     }
 
@@ -73,16 +80,17 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
                   BlockingQueue<SchedulerTask<I>> selectionQueue,
                   BlockingQueue<SchedulerTask<I>> completionQueue
     ){
-        this.profilingQueue     = profilingQueue;
-        this.selectionQueue     = selectionQueue;
-        this.completionQueue    = completionQueue;
-        this.profiler           = new WorkloadProfilerImpl<I>(connection, candidatePool, true);
-        this.selector           = selector;
+        this.profilingQueue  = profilingQueue;
+        this.selectionQueue  = selectionQueue;
+        this.completionQueue = completionQueue;
+        this.profiler        = new WorkloadProfilerImpl<I>(connection, candidatePool, true);
+        this.selector        = selector;
     }
     
     
-	public Snapshot<I> addColdCandidate(I index) {
-		final CandidateTask<I> task = new CandidateTask<I>(index, this);
+    @Override
+    public Snapshot<I> addColdCandidate(I index) {
+        final CandidateTask<I> task = new CandidateTask<I>(index, this);
         Snapshot<I> result = null;
         try {
             getProfilingQueue().put(task);
@@ -91,9 +99,10 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-		return result;
-	}
+        return result;
+    }
     
+    @Override
     public AnalyzedQuery<I> analyzeQuery(String sql){
         final AnalyzeTask<I> task   = new AnalyzeTask<I>(sql, this);
         AnalyzedQuery<I>     result = null;
@@ -109,6 +118,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }
 
 
+    @Override
     public double create(I index){
         return configChange(index, true);
     }
@@ -127,6 +137,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
         return cost;   
     }
     
+    @Override
     public double drop(I index){
         return configChange(index, false);
     }
@@ -138,6 +149,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      * @return 
      *      cost of query.
      */
+    @Override
     public double executeProfiledQuery(ProfiledQuery<I> qinfo){
         final ExecuteTask<I> task = new ExecuteTask<I>(qinfo, this);
         double result = 0.0;
@@ -173,6 +185,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      * @return 
      *      a list of recommended indexes.
      */
+    @Override
     public List<I> getRecommendation(){
         final RecommendationTask<I> task = new RecommendationTask<I>(this);
         List<I> result = Instances.newList();
@@ -193,6 +206,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      * @param index
      *      index of interest.
      */
+    @Override
     public void negativeVote(I index){
         try {
             getProfilingQueue().put(new VoteTask<I>(index, false, this));
@@ -206,6 +220,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      * @param index
      *      index of interest.
      */
+    @Override
     public void positiveVote(I index){
         try {
             getProfilingQueue().put(new VoteTask<I>(index, true, this));
@@ -214,6 +229,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
         }
     }
     
+    @Override
     public ProfiledQuery<I> profileQuery(String sql){
         final AnalyzeTask<I> task   = new AnalyzeTask<I>(sql, true, this);
         ProfiledQuery<I>     result = null;
@@ -233,16 +249,17 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     /**
      * shutdown the task scheduler and terminates any ongoing task.
      */
+    @Override
     public void shutdown(){
-        for(SchedulerTask each : profilingQueue){
+        for(SchedulerTask<I> each : profilingQueue){
             each.cancel();
         }
 
-        for(SchedulerTask each : selectionQueue){
+        for(SchedulerTask<I> each : selectionQueue){
             each.cancel();
         }
 
-        for(SchedulerTask each : completionQueue){
+        for(SchedulerTask<I> each : completionQueue){
             each.cancel();
         }
 
@@ -267,6 +284,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
         executorService.execute(profilingThread);
     }
     
+    @Override
     public void start() {
         start(new SelectionThread<I>(this), new ProfilingThread<I>(this));
     }

@@ -49,17 +49,17 @@ public class HotsetSelection<I extends DBIndex> {
         this.debugOutput        = builder.debugOutput;
     }
 
-	/**
+    /**
      * Construct a {@code selection variable} which will be utilized by {@link HotSetSelector}.
      */
     public HotsetSelection(
-		CandidatePool.Snapshot<I> candSet,
-		StaticIndexSet<I>         oldHotSet,
-		DynamicIndexSet<I>        requiredIndexSet,
-		StatisticsFunction<I>     benefitFunc,
-		int                       maxSize,
-		boolean                   debugOutput )
-	{
+        CandidatePool.Snapshot<I> candSet,
+        StaticIndexSet<I>         oldHotSet,
+        DynamicIndexSet<I>        requiredIndexSet,
+        StatisticsFunction<I>     benefitFunc,
+        int                       maxSize,
+        boolean                   debugOutput )
+    {
         this.candSet            = candSet;
         this.oldHotSet          = oldHotSet;
         this.requiredIndexSet   = requiredIndexSet;
@@ -114,11 +114,11 @@ public class HotsetSelection<I extends DBIndex> {
      */
     public static class StrictBuilder<I extends DBIndex> implements Supplier<HotsetSelection<I>> {
         private CandidatePool.Snapshot<I> candSet;
-	    private StaticIndexSet<I>         oldHotSet;
-	    private DynamicIndexSet<I>        requiredIndexSet;
-	    private StatisticsFunction<I>     benefitFunc;
-	    private int                       maxSize;
-	    private boolean                   debugOutput;
+        private StaticIndexSet<I>         oldHotSet;
+        private DynamicIndexSet<I>        requiredIndexSet;
+        private StatisticsFunction<I>     benefitFunc;
+        private int                       maxSize;
+        private boolean                   debugOutput;
 
         public StrictBuilder(boolean debugOutput){
             this.debugOutput = debugOutput;

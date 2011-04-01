@@ -31,7 +31,7 @@ import java.util.Map;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFunction<I> {
-    private static final int INDEX_STATISTICS_WINDOW = 100;
+    private int indexStatisticsWindow;
 
     double        currentTimeStamp;
     private       DoiFunction<I>     doi;
@@ -44,13 +44,12 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
     /**
      * Construct an {@code IndexStatistics} object.
      */
-    public IndexStatisticsFunction(){
+    public IndexStatisticsFunction(int indexStatisticsWindow){
         this(
-                DBIndexPair.<I>emptyPair(),
-                Instances.<DBIndexPair<I>, MeasurementWindow>newHashMap(),
-                Instances.<I, MeasurementWindow>newHashMap()
-
-        );
+            DBIndexPair.<I>                              emptyPair(),
+            Instances.<DBIndexPair<I>,MeasurementWindow> newHashMap(),
+            Instances.<I,MeasurementWindow>              newHashMap(),
+            indexStatisticsWindow);
     }
 
     /**
@@ -67,12 +66,14 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
     public IndexStatisticsFunction(
             DBIndexPair<I> indexPair,
             Map<DBIndexPair<I>, MeasurementWindow> doiWindows,
-            Map<I, MeasurementWindow> benefitWindows
+            Map<I, MeasurementWindow> benefitWindows,
+            int indexStatisticsWindow
     ){
-        this.tempPair           = indexPair;
-        this.doiWindows         = doiWindows;
-        this.benefitWindows     = benefitWindows;
-        this.currentTimeStamp   = 0;
+        this.tempPair              = indexPair;
+        this.doiWindows            = doiWindows;
+        this.benefitWindows        = benefitWindows;
+        this.currentTimeStamp      = 0;
+        this.indexStatisticsWindow = indexStatisticsWindow;
 
         bindIndexStatisticsWithDoiAndBenefit();
     }
@@ -95,7 +96,7 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
                 // add measurement, creating new window if necessary
                 MeasurementWindow benwin = benefitWindows.get(index);
                 if (benwin == null) {
-                    benwin = new MeasurementWindow();
+                    benwin = new MeasurementWindow(indexStatisticsWindow);
                     benefitWindows.put(index, benwin);
                 }
                 benwin.put(bestBenefit, currentTimeStamp);
@@ -144,7 +145,7 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
         updateIndexPairs(a, b);
         MeasurementWindow doiwin = doiWindows.get(tempPair);
         if (doiwin == null) {
-            doiwin = new MeasurementWindow();
+            doiwin = new MeasurementWindow(indexStatisticsWindow);
             doiWindows.put(tempPair, doiwin);
         }
         doiwin.put(doi, currentTimeStamp);
@@ -172,12 +173,17 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
      * indicated by the field numMeasurements.
      */
     static class MeasurementWindow {
-        private final int size = INDEX_STATISTICS_WINDOW;
+        private int size;
 
         double[] measurements = new double[size];
         double[] timestamps   = new double[size];
         int lastPos = -1;
         int numMeasurements = 0;
+
+        MeasurementWindow(int indexStatisticsWindow)
+        {
+            size = indexStatisticsWindow;
+        }
 
         /**
          * records a measurement in time.

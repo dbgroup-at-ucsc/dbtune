@@ -23,8 +23,8 @@ import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class AnalyzedQuery<I extends DBIndex> {
-	private final ProfiledQuery<I> profileInfo;
-	private final IndexBitSet[]    partition;
+    private final ProfiledQuery<I> profileInfo;
+    private final IndexBitSet[]    partition;
 
     /**
      * construct a query which has been analyzed by some {@code tuning interface}.
@@ -33,10 +33,10 @@ public class AnalyzedQuery<I extends DBIndex> {
      * @param partition
      *      an array of index partitions.
      */
-	public AnalyzedQuery(ProfiledQuery<I> orig, IndexBitSet[] partition) {
-		this.profileInfo    = orig;
-		this.partition      = partition;
-	}
+    public AnalyzedQuery(ProfiledQuery<I> orig, IndexBitSet[] partition) {
+        this.profileInfo    = orig;
+        this.partition      = partition;
+    }
 
     /**
      * @return original query before it got analyzed.

@@ -43,7 +43,7 @@ public class StatisticsFunctionTest {
     StatisticsFunction<PGIndex> pgStatistics;
     @Before
     public void setUp() throws Exception {
-        pgStatistics = new IndexStatisticsFunction<PGIndex>();
+        pgStatistics = new IndexStatisticsFunction<PGIndex>(100);
     }
 
 

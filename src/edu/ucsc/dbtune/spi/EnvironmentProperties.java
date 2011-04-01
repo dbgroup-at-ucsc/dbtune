@@ -104,17 +104,27 @@ public class EnvironmentProperties {
     public static final String OVERHEAD_FACTOR = "overhead.factor";
 
     /**
-     * TODO document it
+     * XXX document
+     */
+    public static final String NUM_PARTITION_ITERATIONS = "num.partition.iterations";
+
+    /**
+     * XXX document
+     */
+    public static final String INDEX_STATISTICS_WINDOW = "index.statistics.window";
+
+    /**
+     * XXX document it
      */
     public static final String WFIT_LOG_FILENAME = "wfit.log.filename";
 
     /**
-     * TODO document it
+     * XXX document it
      */
     public static final String OPT_LOG_FILENAME = "opt.log.filename";
 
     /**
-     * TODO document it
+     * XXX document it
      */
     public static final String MIN_WF_FILENAME = "min.wf.filename";
 

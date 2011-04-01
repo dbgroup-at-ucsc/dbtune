@@ -26,6 +26,8 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFA_KEEP_HISTORY;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OVERHEAD_FACTOR;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFIT_LOG_FILENAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPT_LOG_FILENAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MIN_WF_FILENAME;
@@ -140,6 +142,26 @@ public class Environment {
     public float getOverheadFactor() throws NumberFormatException {
         String overheadFactor = (String) as(configuration.getProperty(OVERHEAD_FACTOR));
         return Float.valueOf(overheadFactor);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#NUM_PARTITION_ITERATIONS}
+     * @throws NumberFormatException
+     *      unable to return the overhead factor due to the stated reason.
+     */
+    public int getNumPartitionIterations() throws NumberFormatException {
+        String numPartitionIterations = (String) as(configuration.getProperty(NUM_PARTITION_ITERATIONS));
+        return Integer.valueOf(numPartitionIterations);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#INDEX_STATISTICS_WINDOW}
+     * @throws NumberFormatException
+     *      unable to return the overhead factor due to the stated reason.
+     */
+    public int getIndexStatisticsWindow() throws NumberFormatException {
+        String indexStatisticsWindow = (String) as(configuration.getProperty(INDEX_STATISTICS_WINDOW));
+        return Integer.valueOf(indexStatisticsWindow);
     }
 
     /**

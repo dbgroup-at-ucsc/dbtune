@@ -8,7 +8,7 @@
 # hlsearch on (H) or off (h):
 ~h
 # Last Search Pattern:
-~MSle0~/default
+~MSle0~/	
 
 # Last Substitute Search Pattern:
 ~MSle0&^[*]
@@ -18,60 +18,76 @@ $@
 
 # Command Line History (newest to oldest):
 :qa
+:T src/edu/ucsc/dbtune/advisor/HotSetSelector.java
 :w
+:ShutdownEclim
+:source ~/.vimrc
+:T src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+:T tests/edu/ucsc/dbtune/core/
+:T tests/edu/ucsc/dbtune/core/WFITTestFunctional.java
 :T src/edu/ucsc/dbtune/spi/Environment.java
+:T src/edu/ucsc/dbtune/spi/EnvironmentProperties.java
+:T tests/edu/ucsc/dbtune/advisor/CandidateSelectorTest.java
+:T 
+:T tests/edu/ucsc/dbtune/advisor/TaskSchedulerTest.java
+:retab
+:set nolist
+:set list
+:T src/edu/ucsc/dbtune/util/Files.java
+:T src/edu/ucsc/dbtune/advisor/HotsetSelection.java
+:T src/edu/ucsc/dbtune/advisor/AnalyzedQuery.java
+:T src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+:T src/edu/ucsc/dbtune/util/DefaultBlockingQueue.java
+:T src/edu/ucsc/dbtune/advisor/InteractionSelection.java
+:T src/edu/ucsc/dbtune/advisor/TuningInterface.java
+:T src/edu/ucsc/dbtune/advisor/TaskScheduler.java
+:T src/edu/ucsc/dbtune/advisor/CandidatesSelector.java
+:q
+:T src/edu/ucsc/dbtune/advisor/InteractionSelector.java
+:T src/edu/ucsc/satuning/Mode.java
+:T src/edu/ucsc/satuning/MainTemplate.java
+:T src/edu/ucsc/satuning/engine/selection/Wo
+:T src/edu/ucsc/satuning/engine/selection/WorkFunctionAlgorithm.java
+:T tests/edu/ucsc/dbtune/advisor/TaskS
+:T src/edu/ucsc/satuning/engine/selection/Selector.java
+:T src/edu/ucsc/dbtune/
+:T src/edu/ucsc/satuning/db/ibm/DB2Connection.javaWork*.java
+:T src/edu/ucsc/satuning/engine/
+:ret
+:T src/edu/ucsc/satuning/Configuration.java
+:T src/edu/ucsc/satuning/WFALog.java
+:T src/edu/ucsc/dbtune/advisor/
+:ProjectTree
 :T tests/edu/ucsc/dbtune/spi/EnvironmentTest.java
 :T src/edu/ucsc/dbtune/spi/
 :T tests/edu/ucsc/dbtune/spi/EnvironmentTest.java=
 :T resources/workloads/postgres/mini2/candidatePool-offline
-:T tests/edu/ucsc/dbtune/core/WFITTestFunctional.java
 :T config/dbtune.cfg
-:T src/edu/ucsc/satuning/Configuration.java
 :T doc/research/work-summaries/ivo-summary.md
 :T doc/work-summaries/jeff-summary.md
 :T build.properties
-:retab
-:source ~/.vimrc
 :set 
 :T tasks.xml
 :T tests/edu/ucsc/dbtune/core/metadata/extraction/MetaDataExtractorTestFunctional.java
 :T tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
-:q
 :set nopaste
 :set paste
-:T src/edu/ucsc/dbtune/
-:T src/edu/ucsc/dbtune/spi/EnvironmentProperties.java
-:T src/edu/ucsc/dbtune/advisor/InteractionSelection.java
 :JavaImportMissing
 :T tests/edu/ucsc/dbtune/advisor/
 :T tests/edu/ucsc/dbtune/
-:T tests/edu/ucsc/dbtune/advisor/CandidateSelectorTest.java
-:T src/edu/ucsc/dbtune/advisor/HotsetSelection.java
-:T src/edu/ucsc/dbtune/advisor/HotSetSelector.java
 :T src/edu/ucsc/sa
-:T src/edu/ucsc/satuning/MainTemplate.java
-:T src/edu/ucsc/satuning/Mode.java
 :T src/edu/ucsc/dbtune/advisor/ProfiledQuery.java
 :T src/edu/ucsc/dbtune/ibg/IBGBestBenefitFinder.java
 :%s/BitSet/IndexBitSet/g
 :%s/BitSet/IndexBitSet
-:T src/edu/ucsc/dbtune/advisor/AnalyzedQuery.java
 :T src/edu/ucsc/dbtune/advisor/WFALog.java
-:T src/edu/ucsc/satuning/WFALog.java
 :T src/edu/ucsc/satuning/offline/OfflineAnalysis.java
 :JavaImport
-:T src/edu/ucsc/dbtune/util/Files.java
-:T 
 :w\
 :T src/edu/ucsc/dbtune/advisor/DoiFunction.java
-:T src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
-:T src/edu/ucsc/dbtune/advisor/
 :T src/edu/ucsc/satuning/db/
-:T src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
 :T .viminfo
 :t 
-:ShutdownEclim
-:ProjectTree
 :ProjectOpen dbtune
 :ProjectList
 :PingEclim
@@ -135,7 +151,6 @@ $@
 :T tests/edu/ucsc/dbtune/util/
 :T tests/edu/ucsc/dbtune/core/DatabasePackageTest.java
 :set pate
-:T tests/edu/ucsc/dbtune/core/
 :T tests/edu/ucsc/dbtune/core
 :T doc/paper-summaries/2010-09_VLDB_CORADD.md
 :set pa
@@ -147,8 +162,6 @@ $@
 :T doc
 :T doc/meeting-notes/minutes-2011-01-05.md
 :T .tim
-:set nolist
-:set list
 :T doc/literature-summaries/coradd.md
 :T tests/edu/ucsc/dbtune/core/metadata/extraction/GenericJDBCExtractorTest.java
 :T src/edu/ucsc/dbtune/core/metadata/AbstractDatabaseIndex.java
@@ -288,11 +301,51 @@ $@
 :T extensions/Console/src/edu/ucsc/dbtune/cli/init.scala
 
 # Search String History (newest to oldest):
-?/default
+? 	
 ? 
+?/IND
+?/num_
+?/NUM_
+?/12345
+?/CAPACITY
+?/PARTITION_I
+?/tasksch
+?/SINGLE
+?/CANCEL
+?/single
+?/capacity
+?/scheduler
+?/schedu
+?/tasks
+?/profilingqu
+?/blockingq
+?/blocking
+?/ca
+?/max
+?/maxnumstates
+?/maxnumindexes
+?/console
+?/workspace
+?/totalworkvalues(
+?/totalworkvalues
+?/costvector()
+?/CostVector()
+?/CostVector
+?/max_num
+?/MAX_H
+?/schedul
+?/tasksche
+?/maxhotsets
+?/selector
+?/maxhotsetsi
+?/wfa
+?/hot
+?/ma
+?/maxhot
+?/max_ho
+?/default
 ?/satun
 ?/candidatepool
-? 	
 ?/VI
 ?/compile.test
 ?/build
@@ -421,11 +474,9 @@ $@
 ?/halt
 ?/confi
 ?/getin
-?/maxhot
 ?/notnullv
 ?/assertt
 ?/wfit
-?/wfa
 ?/coradd
 ?/gamm
 ?/<?
@@ -517,53 +568,79 @@ $@
 # Input Line History (newest to oldest):
 
 # Registers:
-"0	LINE	0
-	   * one query, two indexes, one partition
-"1	LINE	0
-	 
+"0	CHAR	0
+	getNumPartitionIterations()
+""1	LINE	0
+	
 "2	LINE	0
 	
 "3	LINE	0
-	 * in general, the creation of the candidate pool as well as the processing of queries may be 
-	   straightforward.
-	 * the tricky part will be where the IBG (and WIO) is used since those are the components that have 
-	   gone through large modifications. In theory, since the interfaces were only extended, this should 
-	   work but I expect this not to be the case.
 	
 "4	LINE	0
 	
 "5	LINE	0
-	 * Read remaining of chapter 6 of Karl's thesis to finish documenting
-	
+	     * Factor used to obtain the overhead of a query based on the start and end time. The overhead 
+	     * is obtained by
+	     *
+	     *   overhead[q] = (startTime - endTime) / OVERHEAD_FACTOR
 "6	LINE	0
-	   way of opening through a UI and update the 
-"7	CHAR	0
-	 Also, 
-	   there may be a way of opening through a UI and update the
+	    static final int CAPACITY    = 100;
+	    static final int SINGLE      = 1;
+"7	LINE	0
+	
 "8	LINE	0
-	 * Read chapter 5 of Karl's thesis (again)
-	 
+	
 "9	LINE	0
-	   * wrote and documented parameters in config/dbtune.cfg
-""-	CHAR	0
-	test
+	
+"-	CHAR	0
+	                
 
 # File marks:
-'0  25  101  ~/projects/dbtune/tests/edu/ucsc/dbtune/spi/EnvironmentTest.java
-'1  1  0  ~/projects/dbtune/ProjectTree_1
-'2  119  4  ~/projects/dbtune/src/edu/ucsc/dbtune/spi/Environment.java
-'3  7  0  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
-'4  730  8  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
-'5  2  0  ~/projects/dbtune/.gitignore
-'6  2  0  ~/projects/dbtune/a
-'7  1  0  ~/.vim/empty_lines
-'8  179  21  ~/projects/dbtune/doc/bibliography.md
-'9  301  63  ~/projects/dbtune/doc/paper-summaries/2010-09_VLDB_CORADD.md
+'0  286  19  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+'1  25  101  ~/projects/dbtune/tests/edu/ucsc/dbtune/spi/EnvironmentTest.java
+'2  1  0  ~/projects/dbtune/ProjectTree_1
+'3  120  4  ~/projects/dbtune/src/edu/ucsc/dbtune/spi/Environment.java
+'4  7  0  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
+'5  739  8  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+'6  2  0  ~/projects/dbtune/.gitignore
+'7  2  0  ~/projects/dbtune/a
+'8  1  0  ~/.vim/empty_lines
+'9  179  21  ~/projects/dbtune/doc/bibliography.md
 
 # Jumplist (newest first):
+-'  286  19  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  148  62  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  99  71  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  77  0  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  72  8  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  76  0  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  51  57  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  49  28  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  50  47  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  13  46  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  205  0  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  176  30  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  183  51  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  181  31  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  34  33  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  187  51  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  173  14  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  116  31  ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+-'  1  0  ~/.vim/empty_lines
+-'  40  4  ~/projects/dbtune/src/edu/ucsc/satuning/Configuration.java
+-'  41  4  ~/projects/dbtune/src/edu/ucsc/satuning/Configuration.java
+-'  105  4  ~/projects/dbtune/src/edu/ucsc/satuning/Configuration.java
+-'  102  0  ~/projects/dbtune/src/edu/ucsc/satuning/Configuration.java
+-'  162  0  ~/projects/dbtune/src/edu/ucsc/satuning/Configuration.java
+-'  20  18  ~/projects/dbtune/ProjectTree_1
+-'  17  14  ~/projects/dbtune/ProjectTree_1
+-'  11  14  ~/projects/dbtune/ProjectTree_1
+-'  10  10  ~/projects/dbtune/ProjectTree_1
+-'  9  6  ~/projects/dbtune/ProjectTree_1
+-'  8  2  ~/projects/dbtune/ProjectTree_1
+-'  1  0  ~/projects/dbtune/ProjectTree_1
 -'  25  101  ~/projects/dbtune/tests/edu/ucsc/dbtune/spi/EnvironmentTest.java
 -'  27  85  ~/projects/dbtune/tests/edu/ucsc/dbtune/spi/EnvironmentTest.java
--'  1  0  ~/.vim/empty_lines
 -'  383  20  ~/projects/dbtune/doc/research/work-summaries/ivo-summary.md
 -'  350  89  ~/projects/dbtune/doc/research/work-summaries/ivo-summary.md
 -'  334  66  ~/projects/dbtune/doc/research/work-summaries/ivo-summary.md
@@ -578,208 +655,405 @@ $@
 -'  377  1  ~/projects/dbtune/doc/research/work-summaries/ivo-summary.md
 -'  326  4  ~/projects/dbtune/doc/research/work-summaries/ivo-summary.md
 -'  31  0  ~/projects/dbtune/doc/research/work-summaries/ivo-summary.md
--'  1  0  ~/projects/dbtune/ProjectTree_1
--'  13  14  ~/projects/dbtune/ProjectTree_1
--'  12  10  ~/projects/dbtune/ProjectTree_1
--'  11  6  ~/projects/dbtune/ProjectTree_1
--'  10  2  ~/projects/dbtune/ProjectTree_1
--'  140  4  ~/projects/dbtune/src/edu/ucsc/dbtune/spi/Environment.java
--'  250  0  ~/projects/dbtune/src/edu/ucsc/dbtune/spi/Environment.java
--'  7  0  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
--'  3  18  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
--'  42  48  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
--'  40  42  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
--'  41  42  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
--'  1  8  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
--'  72  0  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
--'  9  23  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  67  13  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  47  51  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  33  8  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  28  19  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  3  27  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  32  22  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  18  32  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  34  4  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  9  23  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  67  13  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  47  51  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  33  8  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  28  19  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  3  27  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  32  22  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  18  32  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  34  4  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  9  23  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  67  13  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  47  51  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  33  8  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  28  19  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  3  27  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  32  22  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  18  32  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  34  4  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
--'  9  23  ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorFunctionalTest.java
 
 # History of marks within files (newest to oldest):
+
+> ~/projects/dbtune/ProjectTree_1
+	"	20	18
+	.	41	0
+	+	168	0
+	+	168	0
+	+	138	0
+	+	141	0
+	+	141	0
+	+	143	0
+	+	143	0
+	+	168	0
+	+	139	0
+	+	139	0
+	+	140	0
+	+	140	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	158	0
+	+	144	0
+	+	152	0
+	+	152	0
+	+	151	0
+	+	151	0
+	+	150	0
+	+	150	0
+	+	149	0
+	+	149	0
+	+	148	0
+	+	148	0
+	+	147	0
+	+	147	0
+	+	146	0
+	+	146	0
+	+	147	0
+	+	147	0
+	+	147	0
+	+	143	0
+	+	143	0
+	+	168	0
+	+	143	0
+	+	143	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	168	0
+	+	167	0
+	+	125	0
+	+	80	0
+	+	81	0
+	+	82	0
+	+	83	0
+	+	84	0
+	+	125	0
+	+	85	0
+	+	85	0
+	+	84	0
+	+	91	0
+	+	91	0
+	+	91	0
+	+	91	0
+	+	92	0
+	+	125	0
+	+	87	0
+	+	88	0
+	+	88	0
+	+	125	0
+	+	125	0
+	+	124	0
+	+	69	0
+	+	52	0
+	+	53	0
+	+	54	0
+	+	55	0
+	+	42	0
+	+	9	0
+	+	10	0
+	+	11	0
+	+	12	0
+	+	18	0
+	+	42	0
+	+	42	0
+	+	42	0
+	+	41	0
 
 > ~/.vim/empty_lines
 	"	1	0
 
-> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
-	"	216	1
-	^	494	11
-	.	60	0
-	+	149	7
-	+	91	0
-	+	149	76
-	+	91	43
-	+	54	5
-	+	59	0
-	+	62	0
+> ~/projects/dbtune/src/edu/ucsc/satuning/Configuration.java
+	"	40	4
+	.	41	0
+	+	66	2
+	+	67	3
 	+	69	0
-	+	75	5
-	+	91	43
-	+	45	0
-	+	48	0
-	+	47	0
-	+	45	20
-	+	45	0
-	+	45	0
-	+	45	0
-	+	44	0
-	+	150	5
-	+	322	0
-	+	325	5
-	+	425	16
-	+	494	11
-	+	733	0
-	+	43	0
-	+	45	0
-	+	57	0
-	+	60	0
-	a	730	0
+	+	66	0
+	+	34	0
+	+	35	0
+	+	38	0
+	+	39	0
+	+	13	0
+	+	40	0
+	+	41	0
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/CandidatesSelector.java
+	"	1	1
+	^	229	83
+	.	30	0
+	+	30	0
+	+	30	0
+	+	36	0
+	+	37	0
+	+	73	55
+	+	73	55
+	+	73	55
+	+	73	48
+	+	83	28
+	+	84	24
+	+	83	42
+	+	84	40
+	+	86	0
+	+	36	4
+	+	37	4
+	+	36	61
+	+	37	60
+	+	30	0
+	+	30	0
+	+	51	17
+	+	30	0
+	+	73	54
+	+	39	19
+	+	70	46
+	+	71	47
+	+	72	47
+	+	73	47
+	+	73	47
+	+	69	49
+	+	70	49
+	+	71	49
+	+	72	49
+	+	73	49
+	+	73	49
+	+	44	61
+	+	51	0
+	+	49	37
+	+	46	0
+	+	46	0
+	+	50	39
+	+	73	0
+	+	74	0
+	+	73	62
+	+	74	63
+	+	38	66
+	+	44	86
+	+	50	60
+	+	75	68
+	+	85	54
+	+	86	0
+	+	229	82
+	+	30	0
+	a	77	0
+
+> ~/projects/dbtune/tests/edu/ucsc/dbtune/core/WFITTestFunctional.java
+	"	1	0
+	^	271	83
+	.	271	0
+	+	270	39
+	+	275	35
+	+	270	25
+	+	275	38
+	+	282	0
+	+	276	16
+	+	276	22
+	+	277	53
+	+	277	25
+	+	278	18
+	+	277	0
+	+	276	22
+	+	277	52
+	+	277	23
+	+	281	81
+	+	21	0
+	+	275	45
+	+	269	0
+	+	281	0
+	+	273	0
+	+	276	0
+	+	274	0
+	+	277	0
+	+	273	25
+	+	331	0
+	+	304	47
+	+	326	34
+	+	277	0
+	+	280	0
+	+	278	28
+	+	280	0
+	+	276	0
+	+	279	0
+	+	278	28
+	+	279	23
+	+	251	58
+	+	206	34
+	+	210	0
+	+	209	0
+	+	209	74
+	+	206	34
+	+	206	30
+	+	206	37
+	+	207	28
+	+	209	75
+	+	209	11
+	+	210	9
+	+	212	0
+	+	211	0
+	+	209	83
+	+	121	0
+	+	118	38
+	+	119	38
+	+	120	38
+	+	114	0
+	+	121	0
+	+	128	0
+	+	115	21
+	+	121	21
+	+	122	21
+	+	123	21
+	+	124	21
+	+	125	21
+	+	126	21
+	+	127	21
+	+	144	24
+	+	219	33
+	+	228	59
+	+	209	22
+	+	209	21
+	+	210	21
+	+	206	39
+	+	209	47
+	+	209	0
+	+	209	0
+	+	206	0
+	+	211	0
+	+	209	87
+	+	148	55
+	+	188	0
+	+	189	0
+	+	190	0
+	+	191	0
+	+	148	88
+	+	169	72
+	+	194	0
+	+	291	0
+	+	294	0
+	+	291	47
+	+	294	8
+	+	295	0
+	+	296	82
+	+	296	82
+	+	296	95
+	+	295	0
+	+	300	0
+	+	330	0
+	+	200	34
+	+	152	0
+	+	271	0
+	a	294	0
 
 > ~/projects/dbtune/src/edu/ucsc/dbtune/spi/Environment.java
-	"	226	70
-	^	226	71
-	.	226	71
-	+	97	0
-	+	119	0
-	+	122	0
-	+	133	0
-	+	119	0
-	+	135	0
-	+	142	0
-	+	143	55
-	+	145	40
+	"	151	15
+	^	151	14
+	.	151	13
+	+	156	40
 	+	27	0
 	+	28	0
-	+	29	77
-	+	146	58
-	+	146	0
-	+	54	37
-	+	54	26
-	+	92	29
-	+	90	42
-	+	93	52
-	+	149	0
-	+	149	0
-	+	150	50
-	+	153	60
-	+	149	0
-	+	152	28
-	+	30	0
+	+	30	77
+	+	157	58
+	+	157	0
+	+	55	37
+	+	55	26
+	+	93	29
+	+	91	42
+	+	94	52
+	+	160	0
+	+	160	0
+	+	161	50
+	+	164	60
+	+	160	0
+	+	163	28
+	+	31	0
 	+	22	64
-	+	30	63
-	+	31	58
-	+	32	66
-	+	156	0
-	+	157	36
-	+	159	23
-	+	160	46
-	+	156	0
-	+	163	0
-	+	164	40
-	+	167	50
-	+	166	26
-	+	201	0
-	+	92	39
-	+	54	0
-	+	170	0
-	+	180	36
-	+	183	0
-	+	185	23
-	+	185	7
-	+	185	16
-	+	185	7
-	+	185	7
-	+	185	7
-	+	185	7
-	+	185	65
-	+	185	65
-	+	185	65
-	+	185	7
-	+	185	65
-	+	226	46
+	+	31	63
+	+	32	58
+	+	33	66
+	+	167	0
+	+	168	36
+	+	170	23
+	+	171	46
+	+	167	0
+	+	174	0
+	+	175	40
+	+	178	50
+	+	177	26
+	+	212	0
+	+	93	39
+	+	55	0
+	+	181	0
+	+	191	36
+	+	194	0
+	+	196	23
+	+	196	7
+	+	196	16
+	+	196	7
+	+	196	7
+	+	196	7
+	+	196	7
+	+	196	65
+	+	196	65
+	+	196	65
+	+	196	7
+	+	196	65
+	+	237	46
 	+	22	75
-	+	90	53
-	+	93	63
-	+	172	7
-	+	92	0
-	+	197	28
-	+	175	48
-	+	176	60
-	+	176	56
-	+	176	6
-	+	175	70
-	+	175	70
-	+	177	9
-	+	175	56
-	+	190	21
-	+	191	38
-	+	185	65
-	+	185	65
-	+	185	65
-	+	185	7
-	+	188	39
-	+	187	9
-	+	194	10
-	+	193	9
-	+	194	33
-	+	195	26
-	+	188	7
-	+	197	60
-	+	198	64
-	+	223	47
-	+	224	47
-	+	225	48
-	+	224	48
-	+	223	48
-	+	227	48
-	+	228	48
-	+	226	36
-	+	227	40
-	+	228	40
-	+	227	40
-	+	223	41
-	+	226	71
-	a	79	0
+	+	91	53
+	+	94	63
+	+	183	7
+	+	93	0
+	+	208	28
+	+	186	48
+	+	187	60
+	+	187	56
+	+	187	6
+	+	186	70
+	+	186	70
+	+	188	9
+	+	186	56
+	+	201	21
+	+	202	38
+	+	196	65
+	+	196	65
+	+	196	65
+	+	196	7
+	+	199	39
+	+	198	9
+	+	205	10
+	+	204	9
+	+	205	33
+	+	206	26
+	+	199	7
+	+	208	60
+	+	209	64
+	+	234	47
+	+	235	47
+	+	236	48
+	+	235	48
+	+	234	48
+	+	238	48
+	+	239	48
+	+	237	36
+	+	238	40
+	+	239	40
+	+	238	40
+	+	234	41
+	+	237	71
+	+	29	79
+	+	146	0
+	+	147	67
+	+	152	17
+	+	151	41
+	+	152	15
+	+	153	21
+	+	151	13
+	a	80	0
 
 > ~/projects/dbtune/src/edu/ucsc/dbtune/spi/EnvironmentProperties.java
-	"	54	0
-	^	57	40
-	.	57	7
-	+	6	52
-	+	9	1
-	+	6	52
-	+	26	43
-	+	31	43
-	+	36	0
-	+	21	44
-	+	36	46
-	+	41	38
-	+	28	45
+	"	109	24
+	^	109	27
+	.	109	0
 	+	39	12
 	+	34	36
 	+	29	7
@@ -836,7 +1110,7 @@ $@
 	+	66	0
 	+	65	0
 	+	55	0
-	+	123	0
+	+	128	0
 	+	103	0
 	+	105	7
 	+	104	27
@@ -844,15 +1118,15 @@ $@
 	+	104	25
 	+	89	0
 	+	97	0
-	+	106	78
+	+	111	78
 	+	104	7
 	+	53	59
-	+	108	0
-	+	111	38
 	+	113	0
-	+	116	53
+	+	116	38
 	+	118	0
-	+	121	38
+	+	121	53
+	+	123	0
+	+	126	38
 	+	53	50
 	+	53	0
 	+	45	7
@@ -870,112 +1144,415 @@ $@
 	+	57	7
 	+	57	7
 	+	57	7
+	+	106	0
+	+	110	0
+	+	109	83
+	+	108	0
+	+	109	0
+	+	107	18
+	+	112	9
+	+	117	9
+	+	122	9
+	+	109	0
 
-> ~/projects/dbtune/tests/edu/ucsc/dbtune/core/WFITTestFunctional.java
-	"	307	25
-	^	200	35
-	.	200	34
-	+	270	64
-	+	279	0
-	+	270	39
-	+	274	35
-	+	270	25
-	+	274	38
-	+	281	0
-	+	275	16
-	+	275	22
-	+	276	53
-	+	276	25
-	+	277	18
-	+	276	0
-	+	275	22
-	+	276	52
-	+	276	23
-	+	280	81
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/TaskScheduler.java
+	"	139	3
+	^	48	26
+	.	42	0
+	+	41	54
+	+	53	67
+	+	90	9
+	+	106	0
+	+	104	9
+	+	120	0
+	+	139	0
+	+	151	0
+	+	187	0
+	+	208	0
+	+	222	0
+	+	231	0
+	+	251	0
+	+	286	0
+	+	253	27
+	+	257	27
+	+	261	27
+	+	46	0
+	+	42	0
+	+	46	20
+	+	46	21
+	+	46	39
+	+	49	0
+	+	46	20
+	+	43	20
+	+	44	0
+	+	82	28
+	+	43	17
+	+	44	16
+	+	45	17
+	+	54	79
+	+	55	79
+	+	56	80
+	+	27	0
+	+	53	87
+	+	48	25
+	+	42	0
+
+> ~/projects/dbtune/tests/edu/ucsc/dbtune/advisor/CandidateSelectorTest.java
+	"	43	38
+	^	43	39
+	.	43	38
+	+	21	102
+	+	28	102
+	+	43	34
+	+	40	159
+	+	29	0
+	+	21	106
+	+	28	106
+	+	43	38
+
+> ~/projects/dbtune/tests/edu/ucsc/dbtune/advisor/TaskSchedulerTest.java
+	"	93	38
+	^	93	61
+	.	93	60
+	+	93	57
+	+	44	0
+	+	93	60
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/TuningInterface.java
+	"	102	22
+	^	42	4
+	.	20	0
+	+	24	79
+	+	33	84
+	+	25	34
+	+	29	21
+	+	26	0
+	+	33	24
+	+	35	0
+	+	34	0
+	+	32	0
+	+	37	0
+	+	36	0
+	+	37	27
+	+	40	17
+	+	39	27
+	+	54	27
+	+	47	2
+	+	20	2
+	+	31	25
+	+	42	4
+	+	20	0
+	a	25	0
+
+> ~/projects/dbtune/src/edu/ucsc/satuning/engine/selection/Selector.java
+	"	22	14
+
+> ~/projects/dbtune/src/edu/ucsc/satuning/MainTemplate.java
+	"	55	20
+	^	304	5
+	.	40	0
+	+	254	4
+	+	304	0
+	+	85	3
+	+	254	0
+	+	40	0
+
+> ~/projects/dbtune/src/edu/ucsc/satuning/engine/TaskScheduler.java
+	"	27	16
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/WorkFunctionAlgorithm.java
+	"	1	0
+	^	53	34
+	.	53	34
+	+	45	0
+	+	55	0
+	+	58	0
+	+	45	0
+	+	43	0
+	+	50	0
+	+	49	0
+	+	50	11
+	+	50	11
+	+	50	21
+	+	50	0
+	+	50	0
+	+	50	10
+	+	50	0
+	+	93	0
+	+	70	0
+	+	67	0
+	+	71	0
+	+	68	34
+	+	69	0
+	+	70	21
+	+	69	31
+	+	93	7
+	+	45	0
+	+	93	13
+	+	50	0
+	+	47	0
+	+	50	0
+	+	47	0
+	+	47	28
+	+	48	26
+	+	93	0
+	+	77	0
+	+	72	41
+	+	73	38
+	+	200	53
+	+	681	43
+	+	682	45
+	+	408	29
+	+	680	43
+	+	680	0
+	+	680	0
+	+	682	0
+	+	682	0
+	+	683	0
+	+	680	0
+	+	682	0
+	+	683	0
+	+	46	25
+	+	101	90
+	+	102	45
+	+	108	64
+	+	109	42
+	+	776	0
+	+	770	18
+	+	772	0
+	+	772	11
+	+	773	11
+	+	774	11
+	+	773	12
+	+	774	12
+	+	770	49
+	+	772	49
+	+	407	34
+	+	679	55
+	+	766	27
+	+	767	38
+	+	768	34
+	+	772	71
+	+	773	56
+	+	72	0
+	+	72	0
+	+	72	0
+	+	72	12
+	+	72	12
+	+	72	0
+	+	77	0
+	+	72	71
+	+	45	34
+	+	46	25
+	+	72	7
+	+	53	31
+	+	72	0
+	+	74	74
+	+	76	71
+	+	53	0
+	+	49	0
+	+	47	0
+	+	51	0
+	+	46	22
+	+	47	22
+	+	48	22
+	+	49	22
+	+	50	22
+	+	49	22
+	+	48	22
+	+	47	22
+	+	46	22
+	+	45	22
+	+	53	34
+	a	46	0
+
+> ~/projects/dbtune/src/edu/ucsc/satuning/engine/selection/WorkFunctionAlgorithm.java
+	"	590	130
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/Scheduler.java
+	"	11	17
+
+> ~/projects/dbtune/src/edu/ucsc/satuning/engine/TuningInterface.java
+	"	15	8
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/util/DefaultBlockingQueue.java
+	"	9	1
+	.	4	0
+	+	4	0
+
+> ~/projects/dbtune/src/edu/ucsc/satuning/Mode.java
+	"	23	0
+	^	12	23
+	.	36	0
+	+	24	0
 	+	21	0
-	+	274	45
-	+	269	0
-	+	280	0
-	+	272	0
-	+	275	0
-	+	273	0
-	+	276	0
-	+	272	25
-	+	330	0
-	+	303	47
-	+	325	34
-	+	276	0
-	+	279	0
-	+	277	28
-	+	279	0
-	+	275	0
-	+	278	0
-	+	277	28
-	+	278	23
-	+	251	58
-	+	206	34
-	+	210	0
-	+	209	0
-	+	209	74
-	+	206	34
-	+	206	30
-	+	206	37
-	+	207	28
-	+	209	75
-	+	209	11
-	+	210	9
-	+	212	0
-	+	211	0
-	+	209	83
-	+	121	0
-	+	118	38
-	+	119	38
-	+	120	38
+	+	219	3
+	+	13	1
+	+	213	2
+	+	214	77
+	+	12	22
+	+	214	17
+	+	12	0
+	+	219	0
+	+	39	0
+	+	54	0
+	+	66	0
+	+	81	0
+	+	93	0
 	+	114	0
-	+	121	0
-	+	128	0
-	+	115	21
-	+	121	21
-	+	122	21
-	+	123	21
-	+	124	21
-	+	125	21
-	+	126	21
-	+	127	21
-	+	144	24
-	+	219	33
-	+	228	59
-	+	209	22
-	+	209	21
-	+	210	21
-	+	206	39
-	+	209	47
-	+	209	0
-	+	209	0
-	+	206	0
-	+	211	0
-	+	209	87
-	+	148	55
-	+	188	0
-	+	189	0
-	+	190	0
-	+	191	0
-	+	148	88
-	+	169	72
-	+	194	0
-	+	290	0
-	+	293	0
-	+	290	47
-	+	293	8
-	+	294	0
-	+	295	82
-	+	295	82
-	+	295	95
-	+	294	0
-	+	299	0
-	+	329	0
-	+	200	34
-	a	293	0
+	+	130	0
+	+	146	0
+	+	162	0
+	+	177	0
+	+	192	0
+	+	36	0
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/InteractionSelector.java
+	"	226	8
+	^	63	61
+	.	63	60
+	+	27	23
+	+	40	94
+	+	48	37
+	+	40	15
+	+	40	0
+	+	27	0
+	+	56	33
+	+	60	0
+	+	43	0
+	+	53	40
+	+	54	12
+	+	53	30
+	+	55	42
+	+	56	28
+	+	56	28
+	+	53	33
+	+	54	33
+	+	56	28
+	+	77	0
+	+	106	62
+	+	107	0
+	+	57	52
+	+	40	86
+	+	41	24
+	+	43	0
+	+	42	35
+	+	48	38
+	+	42	16
+	+	49	36
+	+	49	36
+	+	63	60
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/InteractionSelection.java
+	"	52	0
+	^	51	38
+	.	51	0
+	+	47	9
+	+	52	0
+	+	48	0
+	+	47	31
+	+	48	37
+	+	50	36
+	+	52	0
+	+	53	34
+	+	54	34
+	+	55	34
+	+	56	34
+	+	48	37
+	+	49	31
+	+	50	36
+	+	51	36
+	+	53	26
+	+	41	27
+	+	51	0
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/AnalyzedQuery.java
+	"	37	3
+	^	27	32
+	.	26	0
+	+	27	0
+	+	26	0
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/HotsetSelection.java
+	"	59	5
+	^	58	44
+	.	52	0
+	+	55	0
+	+	51	0
+	+	55	0
+	+	52	0
+	+	54	0
+	+	55	0
+	+	56	0
+	+	63	0
+	+	56	0
+	+	57	0
+	+	58	0
+	+	59	0
+	+	60	0
+	+	61	0
+	+	63	0
+	+	63	6
+	+	56	35
+	+	57	37
+	+	58	40
+	+	59	40
+	+	60	35
+	+	61	40
+	+	55	27
+	+	59	2
+	+	55	9
+	+	63	0
+	+	62	1
+	+	63	34
+	+	64	34
+	+	65	34
+	+	66	34
+	+	67	34
+	+	68	34
+	+	58	43
+	+	52	0
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/util/Files.java
+	"	16	4
+	.	96	0
+	+	96	0
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/HotSetSelector.java
+	"	74	3
+	.	74	0
+	+	74	0
+
+> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
+	"	286	19
+	^	148	64
+	.	148	63
+	+	88	0
+	+	36	18
+	+	22	0
+	+	26	0
+	+	58	0
+	+	25	0
+	+	34	31
+	+	187	51
+	+	187	40
+	+	176	0
+	+	176	0
+	+	34	37
+	+	47	59
+	+	49	0
+	+	51	57
+	+	51	25
+	+	50	56
+	+	49	56
+	+	51	70
+	+	51	0
+	+	70	36
+	+	76	58
+	+	77	0
+	+	99	71
+	+	148	63
+	a	72	0
 
 > ~/projects/dbtune/src/edu/ucsc/satuning/offline/OfflineAnalysis.java
 	"	78	0
@@ -1003,32 +1580,6 @@ $@
 	+	57	36
 	+	58	0
 	a	39	0
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/IndexStatisticsFunction.java
-	"	33	33
-	^	59	13
-	.	25	0
-	+	87	0
-	+	36	18
-	+	22	0
-	+	26	0
-	+	59	0
-	+	25	0
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/InteractionSelector.java
-	"	41	13
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/util/Files.java
-	"	6	0
-
-> ~/projects/dbtune/src/edu/ucsc/satuning/MainTemplate.java
-	"	392	3
-	^	304	5
-	.	254	0
-	+	254	4
-	+	304	0
-	+	85	3
-	+	254	0
 
 > ~/projects/dbtune/src/edu/ucsc/satuning/WFALog.java
 	"	1	0
@@ -1093,41 +1644,8 @@ $@
 	+	130	32
 	a	129	0
 
-> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/AnalyzedQuery.java
-	"	27	30
-	^	27	32
-	.	27	0
-	+	27	0
-
 > ~/projects/dbtune/src/edu/ucsc/dbtune/ibg/IBGBestBenefitFinder.java
 	"	63	15
-
-> ~/projects/dbtune/src/edu/ucsc/satuning/Mode.java
-	"	29	0
-	^	12	23
-	.	36	0
-	+	24	0
-	+	21	0
-	+	219	3
-	+	13	1
-	+	213	2
-	+	214	77
-	+	12	22
-	+	214	17
-	+	12	0
-	+	219	0
-	+	39	0
-	+	54	0
-	+	66	0
-	+	81	0
-	+	93	0
-	+	114	0
-	+	130	0
-	+	146	0
-	+	162	0
-	+	177	0
-	+	192	0
-	+	36	0
 
 > ~/projects/dbtune/config/dbtune.cfg
 	"	12	0
@@ -1190,82 +1708,8 @@ $@
 > /tmp/ObjectInputStream.java
 	"	93	16
 
-> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/HotSetSelector.java
-	"	63	19
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/HotsetSelection.java
-	"	59	12
-	^	58	44
-	.	58	43
-	+	55	0
-	+	51	0
-	+	55	0
-	+	52	0
-	+	54	0
-	+	55	0
-	+	56	0
-	+	63	0
-	+	56	0
-	+	57	0
-	+	58	0
-	+	59	0
-	+	60	0
-	+	61	0
-	+	63	0
-	+	63	6
-	+	56	35
-	+	57	37
-	+	58	40
-	+	59	40
-	+	60	35
-	+	61	40
-	+	55	27
-	+	59	2
-	+	55	9
-	+	63	0
-	+	62	1
-	+	63	34
-	+	64	34
-	+	65	34
-	+	66	34
-	+	67	34
-	+	68	34
-	+	58	43
-
-> ~/projects/dbtune/tests/edu/ucsc/dbtune/advisor/CandidateSelectorTest.java
-	"	22	29
-
 > ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/StatisticsFunction.java
 	"	26	19
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/advisor/InteractionSelection.java
-	"	49	16
-	^	51	38
-	.	53	26
-	+	47	9
-	+	52	0
-	+	48	0
-	+	47	31
-	+	48	37
-	+	50	36
-	+	52	0
-	+	53	34
-	+	54	34
-	+	55	34
-	+	56	34
-	+	48	37
-	+	49	31
-	+	50	36
-	+	51	36
-	+	53	26
-
-> ~/projects/dbtune/src/edu/ucsc/satuning/Configuration.java
-	"	46	0
-	.	66	0
-	+	66	2
-	+	67	3
-	+	69	0
-	+	66	0
 
 > ~/projects/dbtune/tests/edu/ucsc/dbtune/core/IndexExtractorTestFunctional.java
 	"	70	47
@@ -1602,110 +2046,6 @@ $@
 	+	475	0
 	+	591	0
 	+	557	0
-
-> ~/projects/dbtune/ProjectTree_1
-	"	1	0
-	.	14	0
-	+	150	0
-	+	150	0
-	+	151	0
-	+	151	0
-	+	170	0
-	+	131	0
-	+	127	0
-	+	94	0
-	+	95	0
-	+	96	0
-	+	127	0
-	+	127	0
-	+	97	0
-	+	100	0
-	+	100	0
-	+	102	0
-	+	102	0
-	+	127	0
-	+	98	0
-	+	98	0
-	+	99	0
-	+	99	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	117	0
-	+	103	0
-	+	111	0
-	+	111	0
-	+	110	0
-	+	110	0
-	+	109	0
-	+	109	0
-	+	108	0
-	+	108	0
-	+	107	0
-	+	107	0
-	+	106	0
-	+	106	0
-	+	105	0
-	+	105	0
-	+	106	0
-	+	106	0
-	+	106	0
-	+	102	0
-	+	102	0
-	+	127	0
-	+	102	0
-	+	102	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	127	0
-	+	126	0
-	+	84	0
-	+	39	0
-	+	40	0
-	+	41	0
-	+	42	0
-	+	43	0
-	+	84	0
-	+	44	0
-	+	44	0
-	+	43	0
-	+	50	0
-	+	50	0
-	+	50	0
-	+	50	0
-	+	51	0
-	+	84	0
-	+	46	0
-	+	47	0
-	+	47	0
-	+	84	0
-	+	84	0
-	+	83	0
-	+	28	0
-	+	11	0
-	+	12	0
-	+	13	0
-	+	14	0
 
 > ~/projects/dbtune/a
 	"	1	0
@@ -2892,126 +3232,3 @@ $@
 
 > ~/projects/dbtune/src/edu/ucsc/dbtune/core/DatabaseWhatIfOptimizer.java
 	"	57	17
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/core/metadata/AbstractDatabaseIndex.java
-	"	17	0
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/core/DatabaseColumn.java
-	"	33	0
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/core/DatabaseConnection.java
-	"	1	0
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/core/DatabaseTable.java
-	"	13	0
-	.	21	0
-	+	38	10
-	+	21	43
-	+	38	40
-	+	16	2
-	+	21	0
-	+	38	0
-	+	21	0
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/core/metadata/PGColumn.java
-	"	63	0
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/core/metadata/PGIndex.java
-	"	51	0
-
-> /tmp/java/sql/DatabaseMetaData.java
-	"	1	0
-
-> ~/projects/dbtune/src/edu/ucsc/dbtune/core/metadata/Table.java
-	"	77	9
-	^	87	38
-	.	87	44
-	+	1	0
-	+	31	22
-	+	35	0
-	+	19	36
-	+	26	0
-	+	31	0
-	+	31	0
-	+	21	0
-	+	22	0
-	+	21	49
-	+	47	0
-	+	21	43
-	+	31	43
-	+	90	0
-	+	60	0
-	+	60	0
-	+	47	0
-	+	47	0
-	+	34	0
-	+	52	0
-	+	49	14
-	+	52	0
-	+	47	0
-	+	73	34
-	+	78	0
-	+	41	0
-	+	36	0
-	+	41	0
-	+	23	0
-	+	25	0
-	+	37	25
-	+	51	34
-	+	27	22
-	+	46	6
-	+	44	35
-	+	78	0
-	+	75	22
-	+	77	24
-	+	72	6
-	+	66	75
-	+	41	0
-	+	41	0
-	+	67	33
-	+	68	7
-	+	68	7
-	+	68	7
-	+	68	7
-	+	67	0
-	+	68	7
-	+	70	56
-	+	59	6
-	+	57	51
-	+	39	6
-	+	29	0
-	+	28	1
-	+	39	53
-	+	45	10
-	+	58	10
-	+	71	10
-	+	31	6
-	+	89	0
-	+	89	6
-	+	89	7
-	+	89	21
-	+	89	0
-	+	89	0
-	+	89	0
-	+	80	0
-	+	85	36
-	+	87	22
-	+	85	22
-	+	83	32
-	+	87	44
-
-> tests/edu/ucsc/dbtune/core/metadata/PGExtractor.java
-	"	1	0
-
-> ~/projects/dbtune/tests/edu/ucsc/dbtune/core/metadata/extraction/PGExtractor.java
-	"	38	27
-	^	32	0
-	.	32	0
-	+	1	2
-	+	2	0
-	+	1	0
-	+	22	0
-	+	34	45
-	+	38	28
-	+	26	0
-	+	32	0

@@ -38,17 +38,17 @@ public class InteractionSelection<I extends DBIndex> {
      *      a {@link InteractionSelection}'s builder.
      */
     private InteractionSelection(StrictBuilder<I> builder){
-        this.oldPartitions      = builder.oldPartitions;
-        this.doiFunc            = builder.doiFunc;
-        this.maxNumStates       = builder.maxNumStates;
-        this.newHotSet          = builder.newHotSet;
+        this.oldPartitions = builder.oldPartitions;
+        this.doiFunc       = builder.doiFunc;
+        this.maxNumStates  = builder.maxNumStates;
+        this.newHotSet     = builder.newHotSet;
     }
 
     public InteractionSelection(
-		IndexPartitions<I>    oldPartitions,
-		StatisticsFunction<I> doiFunc,
-		int                   maxNumStates,
-		StaticIndexSet<I>     newHotSet ) {
+        IndexPartitions<I>    oldPartitions,
+        StatisticsFunction<I> doiFunc,
+        int                   maxNumStates,
+        StaticIndexSet<I>     newHotSet ) {
 
         this.oldPartitions = oldPartitions;
         this.doiFunc       = doiFunc;

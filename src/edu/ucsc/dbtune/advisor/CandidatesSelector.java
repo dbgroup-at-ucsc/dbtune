@@ -27,31 +27,33 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.util.List;
 
 public class CandidatesSelector<I extends DBIndex> {
-	// configurable options
-	public static final int MAX_HOTSET_SIZE = 40;
-	public static final int MAX_NUM_STATES  = 12345;
-
-	private final   IndexStatisticsFunction<I>  idxStats;
-	private final   WorkFunctionAlgorithm<I>    wfa;
-	private final   DynamicIndexSet<I>          matSet;
-	private         StaticIndexSet<I>           hotSet;
-	private final   DynamicIndexSet<I>          userHotSet;
-	private         IndexPartitions<I>          hotPartitions;
-	private         int                         maxHotSetSize   = MAX_HOTSET_SIZE;
-	private         int                         maxNumStates    = MAX_NUM_STATES;
-    private final Console console = Console.streaming();
+    private final   IndexStatisticsFunction<I>  idxStats;
+    private final   WorkFunctionAlgorithm<I>    wfa;
+    private final   DynamicIndexSet<I>          matSet;
+    private         StaticIndexSet<I>           hotSet;
+    private final   DynamicIndexSet<I>          userHotSet;
+    private         IndexPartitions<I>          hotPartitions;
+    private         int                         maxHotSetSize;
+    private         int                         maxNumStates;
+    private         int                         partitionIterations;
+    private final   Console console = Console.streaming();
 
     /**
      * Construct a {@code CandidatesSelector} object.
      */
-	public CandidatesSelector() {
-        this(new IndexStatisticsFunction<I>(),
-             new WorkFunctionAlgorithm<I>(),
+    public CandidatesSelector(
+            int maxNumStates,
+            int maxHotSetSize,
+            int partitionIterations,
+            int indexStatisticsWindow)
+    {
+        this(new IndexStatisticsFunction<I>(indexStatisticsWindow),
+             new WorkFunctionAlgorithm<I>(maxNumStates, maxHotSetSize),
              new StaticIndexSet<I>(),
              new DynamicIndexSet<I>(),
-             new DynamicIndexSet<I>()
-        );
-	}
+             new DynamicIndexSet<I>(),
+             maxNumStates, maxHotSetSize, partitionIterations );
+    }
 
     /**
      * Construct a {@code CandidatesSelector} object.
@@ -68,44 +70,50 @@ public class CandidatesSelector<I extends DBIndex> {
      *      the set of materialized indexes.
      */
     CandidatesSelector(IndexStatisticsFunction<I> indexesStats,
-                       WorkFunctionAlgorithm<I> wfa,
-                       StaticIndexSet<I> hotSet,
-                       DynamicIndexSet<I> userHotSet,
-                       DynamicIndexSet<I> matSet
+                       WorkFunctionAlgorithm<I>   wfa,
+                       StaticIndexSet<I>          hotSet,
+                       DynamicIndexSet<I>         userHotSet,
+                       DynamicIndexSet<I>         matSet,
+                       int                        maxNumStates,
+                       int                        maxNumIndexes,
+                       int                        partitionIterations
     ){
-        idxStats            = indexesStats;
-        this.wfa            = wfa;
-        this.hotSet         = hotSet;
-        this.userHotSet     = userHotSet;
-        this.matSet         = matSet;
-        this.hotPartitions  = new IndexPartitions<I>(hotSet);
+        idxStats                 = indexesStats;
+        this.wfa                 = wfa;
+        this.hotSet              = hotSet;
+        this.userHotSet          = userHotSet;
+        this.matSet              = matSet;
+        this.hotPartitions       = new IndexPartitions<I>(hotSet);
+        this.maxHotSetSize       = maxNumIndexes;
+        this.maxNumStates        = maxNumStates;
+        this.partitionIterations = partitionIterations;
     }
 
 
-	/**
-	 * Perform the per-query tasks that are done after profiling
+    /**
+     * Perform the per-query tasks that are done after profiling
      * @param qinfo
      *      a {@link ProfiledQuery} object.
      * @return an {@link AnalyzedQuery} object.
      */
-	public AnalyzedQuery<I> analyzeQuery(ProfiledQuery<I> qinfo) {
-		// add the query to the statistics repository
-		idxStats.addQuery(qinfo, matSet);
-		
-		reorganizeCandidates(qinfo.getCandidateSnapshot());
-		
-		wfa.newTask(qinfo);
-		
-		return new AnalyzedQuery<I>(qinfo, hotPartitions.bitSetArray());
-	}
-	
-	/**
-	 * Called by main thread to get a recommendation.
+    public AnalyzedQuery<I> analyzeQuery(ProfiledQuery<I> qinfo) {
+        // add the query to the statistics repository
+        idxStats.addQuery(qinfo, matSet);
+        
+        reorganizeCandidates(qinfo.getCandidateSnapshot());
+        
+        wfa.newTask(qinfo);
+        
+        return new AnalyzedQuery<I>(qinfo, hotPartitions.bitSetArray());
+    }
+    
+    /**
+     * Called by main thread to get a recommendation.
      * @return a list of indexes recommendations.
-	 */
-	public List<I> getRecommendation() {
-		return wfa.getRecommendation();
-	}
+     */
+    public List<I> getRecommendation() {
+        return wfa.getRecommendation();
+    }
 
     /**
      * Bias the statistics of an index, in a candidate pool of indexes, in its favor.
@@ -114,43 +122,43 @@ public class CandidatesSelector<I extends DBIndex> {
      * @param candSet
      *      a {@code snapshot} of a {@code candidate pool} of indexes.
      */
-	public void positiveVote(I index, CandidatePool.Snapshot<I> candSet) {
-		// get it in the hot set
-		if (!userHotSet.contains(index)) {
-			userHotSet.add(index);
-			
-			// ensure that userHotSet is a subset of HotSet
-			if (!hotSet.contains(index)) {
-				reorganizeCandidates(candSet);
-			}
-		}
-		
-		// Now the index is being monitored by WFA
-		// Just need to bias the statistics in its favor
-		wfa.vote(index, true);
-	}
+    public void positiveVote(I index, CandidatePool.Snapshot<I> candSet) {
+        // get it in the hot set
+        if (!userHotSet.contains(index)) {
+            userHotSet.add(index);
+            
+            // ensure that userHotSet is a subset of HotSet
+            if (!hotSet.contains(index)) {
+                reorganizeCandidates(candSet);
+            }
+        }
+        
+        // Now the index is being monitored by WFA
+        // Just need to bias the statistics in its favor
+        wfa.vote(index, true);
+    }
 
     /**
      * Bias the statistics against the index. 
      * @param index
      *      a {@link DBIndex index} object.
      */
-	public void negativeVote(I index) {		
-		// Check if the index is hot before doing anything.
-		//
-		// If the index is not being tracked by WFA, we have nothing to do.
-		// Note that this check skips indexes that are not in 
-		// the overall candidate pool.
-		if (hotSet.contains(index)) {
-			// ensure that the index is no longer forced in the hot set
-			userHotSet.remove(index);
-			
-			// don't remove from the hot set necessarily
-			
-			// bias the statistics against the index
-			wfa.vote(index, false);
-		}
-	}
+    public void negativeVote(I index) {     
+        // Check if the index is hot before doing anything.
+        //
+        // If the index is not being tracked by WFA, we have nothing to do.
+        // Note that this check skips indexes that are not in 
+        // the overall candidate pool.
+        if (hotSet.contains(index)) {
+            // ensure that the index is no longer forced in the hot set
+            userHotSet.remove(index);
+            
+            // don't remove from the hot set necessarily
+            
+            // bias the statistics against the index
+            wfa.vote(index, false);
+        }
+    }
 
     /**
      * Returns the current cost of a {@code profiled query} given a set
@@ -160,9 +168,9 @@ public class CandidatesSelector<I extends DBIndex> {
      * @return
      *      the total cost of a {@code profiled query}.
      */
-	public double currentCost(ProfiledQuery<I> qinfo) {
-		return qinfo.totalCost(matSet.bitSet());
-	}
+    public double currentCost(ProfiledQuery<I> qinfo) {
+        return qinfo.totalCost(matSet.bitSet());
+    }
 
     /**
      * Drop an index (i.e., remove it from the materialized index set) and return a {@code 0} cost
@@ -172,10 +180,10 @@ public class CandidatesSelector<I extends DBIndex> {
      * @return
      *      zero since there is no cost to drop.
      */
-	public double drop(I index) {
-		matSet.remove(index);
-		return 0; // XXX: assuming no cost to drop
-	}
+    public double drop(I index) {
+        matSet.remove(index);
+        return 0; // XXX: assuming no cost to drop
+    }
 
     /**
      * adds an index to the materialized index set and returns its creation cost.
@@ -184,25 +192,25 @@ public class CandidatesSelector<I extends DBIndex> {
      * @return either the index's {@code creationCost} or (if the index is already in the
      *      materialized index set) 0.
      */
-	public double create(I index) {
-		if (!matSet.contains(index)) {
-			matSet.add(index);
-			return index.creationCost();
-		}
-		return 0;
-	}
-	
-	/**
-	 * common code between positiveVote and processQuery
+    public double create(I index) {
+        if (!matSet.contains(index)) {
+            matSet.add(index);
+            return index.creationCost();
+        }
+        return 0;
+    }
+    
+    /**
+     * common code between positiveVote and processQuery
      * @param candSet
      *      a {@code snapshot} of {@code candidate pool of indexes}.
      */
-	@SuppressWarnings({"RedundantTypeArguments"})
+    @SuppressWarnings({"RedundantTypeArguments"})
     private void reorganizeCandidates(CandidatePool.Snapshot<I> candSet) {
-		// determine the hot set
-		DynamicIndexSet<I> reqIndexes = new DynamicIndexSet<I>();
-		for (I index : userHotSet) reqIndexes.add(index);
-		for (I index : matSet) reqIndexes.add(index);
+        // determine the hot set
+        DynamicIndexSet<I> reqIndexes = new DynamicIndexSet<I>();
+        for (I index : userHotSet) reqIndexes.add(index);
+        for (I index : matSet) reqIndexes.add(index);
         final HotsetSelection<I> hotSelection = new HotsetSelection.StrictBuilder<I>(false)
                 .candidateSet(candSet)
                 .oldHotSet(hotSet)
@@ -210,36 +218,36 @@ public class CandidatesSelector<I extends DBIndex> {
                 .benefitFunction(idxStats)
                 .maxSize(maxHotSetSize)
             .get();
-		StaticIndexSet<I> newHotSet = 
-			HotSetSelector.<I>chooseHotSet(hotSelection);
-		
-		// determine new partitioning
-		// store into local variable, since we might reject it
+        StaticIndexSet<I> newHotSet = 
+            HotSetSelector.<I>chooseHotSet(hotSelection);
+        
+        // determine new partitioning
+        // store into local variable, since we might reject it
         final InteractionSelection<I> interactionSelection = new InteractionSelection.StrictBuilder<I>()
                 .newHotSet(newHotSet)
                 .oldPartitions(hotPartitions)
                 .doiFunction(idxStats)
                 .maxNumStates(maxNumStates)
             .get();
-		IndexPartitions<I> newHotPartitions = 
-			InteractionSelector.<I>choosePartitions(interactionSelection);
-		
-		// commit hot set
-		hotSet = newHotSet;
-		if (hotSet.size() > maxHotSetSize) {
-			maxHotSetSize = hotSet.size();
-			console.info(
+        IndexPartitions<I> newHotPartitions = 
+            InteractionSelector.<I>choosePartitions(interactionSelection,partitionIterations);
+        
+        // commit hot set
+        hotSet = newHotSet;
+        if (hotSet.size() > maxHotSetSize) {
+            maxHotSetSize = hotSet.size();
+            console.info(
                     "Maximum number of monitored indexes has been automatically increased to "
                             + maxHotSetSize
             );
-		}
-		
-		// commit new partitioning
-		if (!newHotPartitions.equals(hotPartitions)) {
-			hotPartitions = newHotPartitions;
-			wfa.repartition(hotPartitions);
-		}
-	}
+        }
+        
+        // commit new partitioning
+        if (!newHotPartitions.equals(hotPartitions)) {
+            hotPartitions = newHotPartitions;
+            wfa.repartition(hotPartitions);
+        }
+    }
 
     @Override
     public String toString() {
