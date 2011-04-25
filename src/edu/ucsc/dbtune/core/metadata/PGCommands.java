@@ -222,10 +222,9 @@ public class PGCommands {
             public PGExplainInfo apply(Parameter input) throws SQLException {
                 final ResultSet             resultSet   = input.getParameterValue(ResultSet.class);
                 final Integer               cardinality = input.getParameterValue(Integer.class);
-                final Double[]              maintCost   = input.getParameterValue(Double[].class);
-
                 SQLCategory category    = null;
                 double      totalCost   = 0.0;
+                final List<Double> costCollector = Instances.newList();
                 try {
                     category = SQLCategory.from(resultSet.getString("category"));
                     // overhead = oh
@@ -237,9 +236,8 @@ public class PGCommands {
                     for(String eachIndex : indexesAsStrings){
                         final String[] splitVals = eachIndex.split("=");
                         Checks.checkAssertion(splitVals.length == 2, "We got an unexpected result in index_overhead.");
-                        final int    id         = Integer.valueOf(splitVals[0]);
                         final double overhead   = Double.valueOf(splitVals[1]);
-                        maintCost[id]           = overhead;
+                        costCollector.add(overhead);
                     }
 
                     totalCost = Double.valueOf(resultSet.getString("qcost"));
@@ -249,18 +247,11 @@ public class PGCommands {
                     }
                 }
 
-                // todo(huascar) try to come up with a better way to handle this 
-                final List<Double> allNonZeroCost = Instances.newList();
-                for (final Double eachCost : maintCost) {
-                    if (eachCost != null) {
-                        allNonZeroCost.add(eachCost);
-                    }
+                final double[] castCost = new double[costCollector.size()];
+                for(int i = 0; i < costCollector.size(); i++){
+                    castCost[i] = costCollector.get(i);
                 }
 
-                final double[] castCost = new double[allNonZeroCost.size()];
-                for(int i = 0; i < allNonZeroCost.size(); i++){
-                    castCost[i] = allNonZeroCost.get(i);
-                }
 
                 return new PGExplainInfo(
                         category,

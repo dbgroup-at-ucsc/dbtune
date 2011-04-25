@@ -34,14 +34,6 @@ public class IndexExtractorTestFunctional {
         final Properties        connProps   = environment.getAll();
         final ConnectionManager manager     = makeDatabaseConnectionManager(connProps);
         try {connection = manager.connect();} catch (Exception e) {connection = null;}
-        if(connection == null) return;
-
-        final String     setupScript    = environment.getScriptAtWorkloadsFolder("/movies/create.sql");
-        SQLScriptExecuter.execute(connection, setupScript);
-        if(connection.getJdbcConnection().getAutoCommit()) {
-            // dbtune expects this value to be set to false.
-            connection.getJdbcConnection().setAutoCommit(false);
-        }
     }
 
 
@@ -80,7 +72,7 @@ public class IndexExtractorTestFunctional {
     public void testSingleSQLRecommendIndexes() throws Exception {
         final IndexExtractor    extractor   = connection.getIndexExtractor();
         final Iterable<DBIndex> candidates  = extractor.recommendIndexes(
-                "select count(*) from actors where actors.afirstname like '%an%';"
+                "select rate from ratings where rate = 5;"
         );
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
