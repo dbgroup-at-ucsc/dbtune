@@ -86,8 +86,8 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 
 
     private void execute(ThreadIBGAnalysis analysis, ThreadIBGConstruction construction){
-        executor.execute(analysis);
-        executor.execute(construction);
+       executor.execute(analysis);
+       executor.execute(construction);
     }
 
     public void shutdown(){
@@ -138,11 +138,9 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 			IBGAnalyzer                     ibgAnalyzer = new IBGAnalyzer(ibgCons);
 
 			ibgConstruction.startConstruction(ibgCons);
-			ibgConstruction.waitUntilDone();
-			ibgAnalysis.startAnalysis(ibgAnalyzer, logger);
-
+			
             long nStart = System.nanoTime();
-			ibgAnalysis.waitUntilDone();
+			ibgAnalysis.startAnalysis(ibgAnalyzer, logger);
 			long nStop = System.nanoTime();
 
             console.info("Analysis: " + ((nStop - nStart) / 1000000000.0));
@@ -177,6 +175,4 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
     public void runProfiler(){
         execute(ibgAnalysis, ibgConstruction);
     }
-
-
 }

@@ -21,8 +21,6 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.spi.core.Console;
 
 public class ThreadIBGAnalysis implements Runnable {
-    private final Object taskMonitor = new Object();
-
     private final String        processName;
     private IBGAnalyzer         analyzer;
     private InteractionLogger   logger;
@@ -34,7 +32,7 @@ public class ThreadIBGAnalysis implements Runnable {
      */
     public ThreadIBGAnalysis() {
         this("IBG Analysis", null, null, RunnableState.IDLE);
-	}
+    }
 
     /**
      * a package-private constructor which will construct an instance of
@@ -56,84 +54,44 @@ public class ThreadIBGAnalysis implements Runnable {
         this.state       = state;
     }
 
-    @Override
-	public void run() {
-        System.out.printf("%s is running.\n",processName);        
-		while (true) {
-			synchronized (taskMonitor) {
-				while (!RunnableState.PENDING.isSame(state)) {
-					try {
-						taskMonitor.wait();
-					} catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        Console.streaming().error("InterruptedException" + " Cause: " + e.toString());
-					}
-				}
-			}
-
-			int analyzedCount = 0;
-
-			boolean done = false;
-			while (!done) {
-				switch (analyzer.analysisStep(logger, true)) {
-					case SUCCESS:
-						if (++analyzedCount % 1000 == 0) Console.streaming().log("a" + analyzedCount);
-						break;
-					case DONE:
-						done = true;
-						break;
-					case BLOCKED:
-						Console.streaming().error("unexpected BLOCKED result from analysisStep");
-						return;
-					default:
-						Console.streaming().error("unexpected result from analysisStep");
-						return;
-				}
-			}
-
-			synchronized (taskMonitor) {
-				state = RunnableState.DONE;
-				taskMonitor.notify();
-			}
-		}
-	}
-
-	/**
-	 * tell the analysis thread to start analyzing, and return immediately
+    /**
+     * tell the analysis thread to start analyzing, and return immediately
      * @param analyzer
      *      and {@link IBGAnalyzer} instance.
      * @param logger
      *      and {@link InteractionLogger} instance.
      */
-	public void startAnalysis(IBGAnalyzer analyzer, InteractionLogger logger) {
-		synchronized (taskMonitor) {
-			if (RunnableState.PENDING.isSame(state)) {
-                final String msg = "unexpected state in IBG startAnalysis";
-				Console.streaming().error(msg);
-                // todo(Huascar) ask whether we want to fail fast (by throwing an illegal state excep. when
-                // finding this violation or just leave it the way it is.
-			}
-			
-			this.analyzer   = analyzer;
-			this.logger     = logger;
-			this.state      = RunnableState.PENDING;
-			taskMonitor.notify();
-		}
-	}
-	
-	public void waitUntilDone() {
-		synchronized (taskMonitor) {
-			while (RunnableState.PENDING.isSame(state)) {
-				try {
-					taskMonitor.wait();
-				} catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-			}
-	
-			analyzer = null;
-			logger   = null;
-			state    = RunnableState.IDLE;
-		}
-	}
+    public void startAnalysis(IBGAnalyzer analyzer, InteractionLogger logger) {
+        int analyzedCount = 0;
+
+        boolean done = false;
+        while (!done) {
+            switch (analyzer.analysisStep(logger, true)) {
+                case SUCCESS:
+                    if (++analyzedCount % 1000 == 0) Console.streaming().log("a" + analyzedCount);
+                    break;
+                case DONE:
+                    done = true;
+                    break;
+                case BLOCKED:
+                    Console.streaming().error("unexpected BLOCKED result from analysisStep");
+                    return;
+                default:
+                    Console.streaming().error("unexpected result from analysisStep");
+                    return;
+            }
+        }
+    }
+
+    @Override
+    public void run() throws RuntimeException {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    /**
+     * wait until the thread has finalized doing its job.
+     */
+    public void waitUntilDone() throws RuntimeException {
+        throw new RuntimeException("Not implemented yet");
+    }
 }

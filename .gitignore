@@ -7,3 +7,5 @@ doc/*
 .project
 .classpath
 .scala_dependencies
+.viminfo
+.ctags
