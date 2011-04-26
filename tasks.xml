@@ -44,21 +44,15 @@
     <target name="test.one" depends="argument-checking,compile.tests" description="Execute tests.">
       <echo message="running test ${class}"/>
       <mkdir dir="${build.dir}/${junit.out.dir}"/>
-      <junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">
+      <junit printsummary="withOutAndErr" haltonerror="yes" haltonfailure="yes" showoutput="yes" fork="no">
         <classpath>
           <path refid="compile.classpath"/>
           <pathelement location="${build.dir}/classes"/>
           <pathelement location="${build.dir}/tests"/>
         </classpath>
-        <formatter type="xml" />
         <test todir="${build.dir}/${junit.out.dir}" name="${class}"/>
+        <formatter usefile="false" type="plain"/>
       </junit>
-      <junitreport todir="${build.dir}/${junit.out.dir}">
-        <fileset dir="${build.dir}/${junit.out.dir}">
-          <include name="TEST-*.xml" />
-        </fileset>
-        <report format="frames" todir="${build.dir}/${junit.out.dir}" />
-      </junitreport>
     </target>
 
     <target name="test.functional" depends="compile.tests" description="Execute tests.">
