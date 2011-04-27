@@ -41,10 +41,10 @@
       </junit>
     </target>
 
-    <target name="test.one" depends="argument-checking,compile.tests" description="Execute tests.">
+	<target name="test.one" depends="compile.tests,argument-checking" description="Execute tests.">
       <echo message="running test ${class}"/>
       <mkdir dir="${build.dir}/${junit.out.dir}"/>
-      <junit printsummary="withOutAndErr" haltonerror="yes" haltonfailure="yes" showoutput="yes" fork="no">
+      <junit printsummary="withOutAndErr" haltonerror="yes" haltonfailure="yes" showoutput="yes" fork="yes">
         <classpath>
           <path refid="compile.classpath"/>
           <pathelement location="${build.dir}/classes"/>

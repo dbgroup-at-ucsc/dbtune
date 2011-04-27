@@ -152,7 +152,7 @@ public class MetaDataExtractorTestFunctional
             else if (Strings.same(table.getName(), RATINGS))
             {
                 assertEquals("columns in 'ratings'", 4, columns.size());
-                assertEquals("indexes in 'ratings'", 1, indexes.size());
+                assertEquals("indexes in 'ratings'", 0, indexes.size());
             }
             else
             {
@@ -271,7 +271,7 @@ public class MetaDataExtractorTestFunctional
             }
             else if (Strings.same(table.getName(), RATINGS))
             {
-                assertTrue(table.findIndex("ratings_pkey") != null);
+				// none
             }
             else
             {
@@ -331,9 +331,9 @@ public class MetaDataExtractorTestFunctional
             }
             else if (Strings.same(table.getName(), RATINGS))
             {
-                assertEquals("rows in 'ratings'", 7, table.getCardinality());
+                assertEquals("rows in 'ratings'", 1000, table.getCardinality());
                 assertEquals(4,table.findColumn("rate").getCardinality());
-                assertEquals(7,table.findColumn("review").getCardinality());
+                assertEquals(8,table.findColumn("review").getCardinality());
             }
             else
             {
