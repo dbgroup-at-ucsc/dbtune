@@ -48,7 +48,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -123,8 +125,6 @@ public class WFITTestFunctional
 
         DatabaseConnection connection;
         WFALog             log;
-        File               logFile;
-        File               wfFile;
         IndexBitSet[]      wfitSchedule;
         IndexBitSet[]      optSchedule;
         IndexBitSet[]      minSched;
@@ -157,14 +157,7 @@ public class WFITTestFunctional
         getRecommendations(qinfos, wfa, wfitSchedule, overheads);
         
         if (exportWfit) {
-            log     = WFALog.generateFixed(qinfos, wfitSchedule, snapshot, parts, overheads);
-            logFile = new File(env.getFilenameAtOutputFolder(env.getWFITLogFilename()));
-
-            writeLog(logFile, log, snapshot);
-            processLog(logFile);
-
-            newLine(); // linebreak on screen
-            log("wrote log to " + logFile);
+            log = WFALog.generateFixed(qinfos, wfitSchedule, snapshot, parts, overheads);
 
             log.dump();
 
@@ -174,24 +167,9 @@ public class WFITTestFunctional
         }
         
         if (keepHistory) {
-            trace = wfa.getTrace();
-
+            trace       = wfa.getTrace();
             optSchedule = trace.optimalSchedule(parts, qinfos.size(), qinfos);
-            logFile     = new File(env.getFilenameAtOutputFolder(env.getOPTLogFilename()));
-
-            log =
-                WFALog.generateFixed(
-                    qinfos,
-                    optSchedule,
-                    snapshot, // say zero overhead
-                    parts,
-                    new double[queryCount]);
-
-            writeLog(logFile, log, snapshot);
-            processLog(logFile);
-
-            newLine(); // linebreak on screen
-            log("wrote log to " + logFile);
+            log         = WFALog.generateFixed(qinfos, optSchedule, snapshot, parts, new double[queryCount]);
 
             log.dump();
             
@@ -207,13 +185,7 @@ public class WFITTestFunctional
               for (int i = 0; i < q; i++) {
                   log(str(minSched[i]));
               }
-              newLine(); // linebreak on screen
             }
-
-            wfFile = new File(env.getFilenameAtOutputFolder(env.getMinWFFilename()));
-
-            Files.writeObjectToFile(wfFile, (Object) minWfValues);
-            processWfFile(wfFile);
         }
 
         assertThat(true, is(true));
@@ -439,65 +411,8 @@ public class WFITTestFunctional
         }
     }
 
-    private void processLog(File logFile) throws Exception {
-        WFALog log = readLog(logFile);
-
-        File logTxtFile = new File(logFile.getAbsolutePath()+".txt");
-        PrintStream out = new PrintStream(new FileOutputStream(logTxtFile));
-        try { log.dumpPerformance(out); } 
-        finally { out.close(); }
-        
-        File historyTxtFile = new File(logFile.getAbsolutePath()+"_history.txt");
-        out = new PrintStream(new FileOutputStream(historyTxtFile));
-        try { log.dumpHistory(out); } 
-        finally { out.close(); }
-        
-        System.out.println(log.countRepartitions());
-    }
-
-    private void writeLog(File file, WFALog log, Snapshot<DBIndex> snapshot) throws IOException {
-        ObjectOutputStream out = new ObjectOutputStream(Files.initOutputFile(file));
-        try {
-            out.writeObject(log);
-            out.writeObject(snapshot);
-        } finally {
-            out.close();
-        }
-    }
-    
-    private static WFALog readLog(File logFile) throws Exception {
-        log("reading from " + logFile);
-        ObjectInputStream in = new ObjectInputStream(new FileInputStream(logFile));
-        try {
-            WFALog log = (WFALog) in.readObject();
-            return log;
-        } finally {
-            in.close(); // closes underlying stream
-        }
-    }
-    
-    private void processWfFile(File wfFile) throws Exception {
-        ObjectInputStream in = new ObjectInputStream(new FileInputStream(wfFile));
-        try {
-            double[] minWfValues = (double[]) in.readObject();
-            
-            File wfTxtFile = new File(wfFile.getAbsolutePath()+".txt");
-            PrintStream out = new PrintStream(new FileOutputStream(wfTxtFile));
-            try {
-                for (double val : minWfValues)
-                    out.println(val);
-            } finally { out.close(); }
-        } finally {
-            in.close(); // closes underlying stream
-        }       
-    }
-
     private static void log(String message){
         Console.streaming().log(message);
-    }
-
-    private static void newLine(){
-        Console.streaming().skip();
     }
 
     private CandidatePool<DBIndex> getCandidates(DatabaseConnection con, String workloadFilename)
