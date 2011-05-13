@@ -15,7 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers;
 
-import edu.ucsc.dbtune.core.plan.StatementPlan;
+import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan;
 
 /**
  * Represents an operator of a SQL statement plan for postgres systems

@@ -15,27 +15,20 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers;
 
-import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 
 /**
- * {@inheritDoc}
+ * Creates optimizers
  */
-public class PGOptimizer extends Optimizer
+public interface OptimizerFactory
 {
-    private DatabaseConnection connection;
-
     /**
-     * Creates a new optimizer for postgres systems
+     * creates a new {@link Optimizer} object.
+     *
+     * @param connection
+     *      the {@link DatabaseConnection} that gets this {@code optimizer} assigned to.
+     * @return
+     *      a generic optimizer
      */
-    public PGOptimizer(DatabaseConnection connection) {
-        this.connection = connection;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public StatementPlan explain(String sql) {
-    }
+    Optimizer newOptimizer(DatabaseConnection connection);
 }

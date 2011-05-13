@@ -22,6 +22,9 @@ import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
 import edu.ucsc.dbtune.core.metadata.PGCommands;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.optimizers.OptimizerFactory;
+import edu.ucsc.dbtune.core.optimizers.Optimizer;
+import edu.ucsc.dbtune.core.optimizers.PGOptimizer;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Files;
@@ -52,7 +55,8 @@ import static edu.ucsc.dbtune.util.Instances.newList;
  */
 public class Platform {
     private static final Map<String, IndexExtractorFactory>  AVAILABLE_EXTRACTORS;
-    private static final Map<String, WhatIfOptimizerFactory> AVAILABLE_OPTIMIZERS;
+    private static final Map<String, WhatIfOptimizerFactory> AVAILABLE_WHATIF_OPTIMIZERS;
+    private static final Map<String, OptimizerFactory>       AVAILABLE_OPTIMIZERS;
     static {
         Map<String, IndexExtractorFactory> driverToExtractor =
                 new HashMap<String, IndexExtractorFactory>(){
@@ -61,7 +65,7 @@ public class Platform {
                         put("org.postgresql.Driver", new PGIndexExtractorFactory());
                     }
                 };
-        Map<String, WhatIfOptimizerFactory> driverToOptimizer =
+        Map<String, WhatIfOptimizerFactory> driverToWhatIfOptimizer =
                 new HashMap<String, WhatIfOptimizerFactory>(){
                     {
                         put("com.ibm.db2.jcc.DB2Driver", new DB2WhatIfOptimizerFactory());
@@ -69,8 +73,17 @@ public class Platform {
                     }
                 };
 
-        AVAILABLE_EXTRACTORS = Collections.unmodifiableMap(driverToExtractor);
-        AVAILABLE_OPTIMIZERS = Collections.unmodifiableMap(driverToOptimizer);
+        Map<String, OptimizerFactory> driverToOptimizer =
+                new HashMap<String, OptimizerFactory>(){
+                    {
+                        put("org.postgresql.Driver", new PGOptimizerFactory());
+                    }
+                };
+
+
+        AVAILABLE_EXTRACTORS        = Collections.unmodifiableMap(driverToExtractor);
+        AVAILABLE_WHATIF_OPTIMIZERS = Collections.unmodifiableMap(driverToWhatIfOptimizer);
+        AVAILABLE_OPTIMIZERS        = Collections.unmodifiableMap(driverToOptimizer);
     }
 
     /**
@@ -107,6 +120,22 @@ public class Platform {
      *      if strategy is not found.
      */
     public static WhatIfOptimizerFactory findWhatIfOptimizerFactory(String driver){
+        return Objects.as(Checks.checkNotNull(AVAILABLE_WHATIF_OPTIMIZERS.get(driver)));
+    }
+
+    /**
+     * finds the appropriate {@link OptimizerFactory} strategy for a given driver. This method
+     * will throw a {@link NullPointerException} if strategy is not found. We rather deal with problem
+     * right away (i.e., throwing a NullPointerException) rather than waiting for some side affect along the execution line.
+     *
+     * @param driver
+     *      dbms-driver's fully qualified name.
+     * @return
+     *      a found {@link OptimizerFactory} pre-instantiated instance.
+     * @throws NullPointerException
+     *      if strategy is not found.
+     */
+    public static OptimizerFactory findOptimizerFactory(String driver){
         return Objects.as(Checks.checkNotNull(AVAILABLE_OPTIMIZERS.get(driver)));
     }
 
@@ -147,6 +176,14 @@ public class Platform {
             return new PostgresIBGWhatIfOptimizer(Checks.checkNotNull(connection));
         }
     }
+
+    private static class PGOptimizerFactory implements OptimizerFactory {
+        @Override
+        public Optimizer newOptimizer(DatabaseConnection connection) {
+            return new PGOptimizer(connection);
+        }
+    }
+
 
 
     /**

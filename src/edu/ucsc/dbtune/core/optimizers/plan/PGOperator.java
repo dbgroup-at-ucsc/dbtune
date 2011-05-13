@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core.plan;
+package edu.ucsc.dbtune.core.optimizers.plan;
 
 /**
  * Represents an operator of a SQL statement plan for postgres systems

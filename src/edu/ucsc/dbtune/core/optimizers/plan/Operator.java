@@ -13,7 +13,9 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core.plan;
+package edu.ucsc.dbtune.core.optimizers.plan;
+
+import java.lang.UnsupportedOperationException;
 
 /**
  * Represents an operator of a SQL statement plan
@@ -102,6 +104,7 @@ public class Operator implements Comparable<Operator>
     /**
      * {@inheritDoc}
      */
+	@Override
     public int compareTo(Operator operator)
     {
         return new Integer(this.id).compareTo(operator.id);
@@ -110,7 +113,8 @@ public class Operator implements Comparable<Operator>
     /**
      * {@inheritDoc}
      */
+	@Override
     public String toString() {
-        return "";
+        throw new UnsupportedOperationException("unsupported");
     }
 }
