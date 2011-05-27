@@ -69,6 +69,39 @@ public class PGCommands {
         return RecommendIndexes.INSTANCE;
     }
 
+    /**
+     * returns the version of the PostgreSQL instance that the given {@code connection} is 
+     * communicating to.
+     *
+     * @param connection
+     *     connection object from which the version will be retrieved from
+     * @return
+     *     a string containing the version number, e.g. "9.0.4"; "0.0.0" if not known
+     * @throws SQLException
+     *     if the underlying system is old enough such that it doesn't implement the {@code 
+     *     version()} function; if another SQL error occurs while retrieving the system version.
+     */
+    public static String getVersion(Connection connection) throws SQLException {
+        Statement st;
+        ResultSet rs;
+        String    version;
+
+        st = connection.createStatement();
+        rs = st.executeQuery("SELECT version()");
+
+        version = "0.0.0";
+
+        while(rs.next()) {
+            version = rs.getString("version");
+            version = version.substring(11,version.indexOf(" on "));
+        }
+
+        rs.close();
+        st.close();
+
+        return version;
+    }
+
     // enum singleton pattern
     private enum RecommendIndexes implements Function<List<PGIndex>, SQLException> {
         INSTANCE;

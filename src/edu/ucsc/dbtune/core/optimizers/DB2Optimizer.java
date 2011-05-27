@@ -13,14 +13,21 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core.optimizers.plan;
+package edu.ucsc.dbtune.core.optimizers;
+
+import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan;
+import java.sql.Connection;
 
 /**
- * Represents an operator of a SQL statement plan for postgres systems
+ * {@inheritDoc}
  */
-public class PGOperator extends Operator
+public class DB2Optimizer extends Optimizer
 {
-    public PGOperator(String type, double cost, double cardinality) {
-		super(type,cost,cardinality);
+    public DB2Optimizer(Connection connection) throws UnsupportedOperationException {
+		throw new UnsupportedOperationException("Not implemented yet");
+    }
+	public StatementPlan explain(String sql)
+	{
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 }

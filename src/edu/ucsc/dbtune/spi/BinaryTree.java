@@ -15,8 +15,10 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.spi;
 
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -70,6 +72,35 @@ public class BinaryTree<T extends Comparable<? super T>>
      */
     public T getRootElement() {
         return root.element;
+    }
+
+	/**
+	 * returns the children of an element.
+     *
+	 * @return
+	 *     a list containing the children elements of the given value. Empty if the given element is 
+	 *     a leaf of the tree.
+	 * @throws NoSuchElementException
+	 *     if {@code value} isn't a member of the tree
+     */
+    public List<T> getChildren(T value) throws NoSuchElementException {
+		Entry<T> entry = find(value, root);
+
+		if(entry == null) {
+			throw new NoSuchElementException( value + " is not a member");
+		}
+
+		List<T> children = new ArrayList<T>();
+
+		if(entry.left != null) {
+			children.add(valueOf(entry.left));
+		}
+
+		if(entry.right != null) {
+			children.add(valueOf(entry.right));
+		}
+
+		return children;
     }
 
     /**
@@ -178,14 +209,14 @@ public class BinaryTree<T extends Comparable<? super T>>
      */
     private Entry<T> find(T value, Entry<T> entry) {
         while (entry != null) {
-            if (value.compareTo(entry.element) < 0)
+            if (value.compareTo(entry.element) < 0) {
                 entry = entry.left;
-            else if (value.compareTo(entry.element) > 0)
+			} else if (value.compareTo(entry.element) > 0) {
                 entry = entry.right;
-            else
+			} else {
                 return entry;
+			}
         }
-
         return null;
     }
 

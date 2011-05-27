@@ -16,6 +16,7 @@
 package edu.ucsc.dbtune.core.optimizers;
 
 import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan;
+import java.sql.SQLException;
 
 /**
  * Represents an operator of a SQL statement plan for postgres systems
@@ -32,5 +33,5 @@ public abstract class Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public abstract StatementPlan explain(String sql);
+    public abstract StatementPlan explain(String sql) throws SQLException;
 }

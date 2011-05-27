@@ -13,15 +13,15 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core.plan;
+package edu.ucsc.dbtune.core.optimizers.plan;
 
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import static edu.ucsc.dbtune.core.plan.StatementPlan.RIGHT;
-import static edu.ucsc.dbtune.core.plan.StatementPlan.LEFT;
+import static edu.ucsc.dbtune.core.optimizers.plan.StatementPlan.RIGHT;
+import static edu.ucsc.dbtune.core.optimizers.plan.StatementPlan.LEFT;
 
 /**
  * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)

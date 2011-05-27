@@ -20,6 +20,7 @@ package edu.ucsc.dbtune.core.metadata.extraction;
 
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Catalog;
+import edu.ucsc.dbtune.core.metadata.Schema;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Table;
@@ -58,6 +59,7 @@ public class MetaDataExtractorTestFunctional
     private static DatabaseConnection   connection;
     private static GenericJDBCExtractor extractor;
     private static Catalog              catalog;
+    private static Schema               schema;
     private static Environment          environment;
 
     private static final String RATINGS     = "ratings";
@@ -80,15 +82,15 @@ public class MetaDataExtractorTestFunctional
 
 		environment = Environment.getInstance();
 		connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
-		ddlfilename = environment.getFilenameAtWorkloadFolder("create.sql");
+		ddlfilename = environment.getScriptAtWorkloadsFolder("movies/create.sql");
 
-        SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+		SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
 
         extractor = Strings.contains(environment.getJDBCDriver(), "postgresql")
                 ? new PGExtractor()
                 : new GenericJDBCExtractor();
 
-        catalog   = extractor.extract(connection);
+        catalog = extractor.extract(connection);
     }
 
     @AfterClass
@@ -97,6 +99,26 @@ public class MetaDataExtractorTestFunctional
         if(connection != null) connection.close();
     }
 
+	/**
+	 * Tests that the schema we created exists.
+     */
+    @Test
+    public void testSchemaExists() throws Exception
+    {
+		Schema moviesSchema = null;
+
+        for (Schema schema : catalog.getSchemas())
+        {
+			if(schema.getName().equals("movies")) {
+				moviesSchema = schema;
+			}
+		}
+
+		assertTrue(moviesSchema != null);
+
+		schema = moviesSchema;
+	}
+
     /**
      * Tests the size of database object containers
      */
@@ -104,12 +126,12 @@ public class MetaDataExtractorTestFunctional
     public void testContainment() throws Exception
     {
         List<Column> columns;
-        List<Index> indexes;
+        List<Index>  indexes;
 
-        assertEquals("'movies' is the only schema",  1, catalog.getSchemas().size());
-        assertEquals("'movies' schema has 8 tables", 8, catalog.getSchemas().get(0).getTables().size());
+        assertTrue("catalog should have at leas 'movies' schema", catalog.getSchemas().size() >= 1);
+        assertEquals("'movies' schema has 8 tables", 8, schema.getTables().size());
 
-        for (Table table : catalog.getSchemas().get(0).getTables())
+        for (Table table : schema.getTables())
         {
             columns = table.getColumns();
             indexes = table.getIndexes();
@@ -172,7 +194,7 @@ public class MetaDataExtractorTestFunctional
     {
         List<Column> columns;
 
-        for (Table table : catalog.getSchemas().get(0).getTables())
+        for (Table table : schema.getTables())
         {
             columns = table.getColumns();
 
@@ -234,7 +256,7 @@ public class MetaDataExtractorTestFunctional
     @Test
     public void testIndexes() throws Exception
     {
-        for (Table table : catalog.getSchemas().get(0).getTables())
+        for (Table table : schema.getTables())
         {
             if (Strings.same(table.getName(), USERS))
             {
@@ -288,7 +310,7 @@ public class MetaDataExtractorTestFunctional
     @Test
     public void testCardinality() throws Exception
     {
-        for (Table table : catalog.getSchemas().get(0).getTables())
+        for (Table table : schema.getTables())
         {
             if (Strings.same(table.getName(), USERS))
             {

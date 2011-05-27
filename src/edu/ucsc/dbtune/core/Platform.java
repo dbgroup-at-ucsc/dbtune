@@ -25,6 +25,7 @@ import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.core.optimizers.OptimizerFactory;
 import edu.ucsc.dbtune.core.optimizers.Optimizer;
 import edu.ucsc.dbtune.core.optimizers.PGOptimizer;
+import edu.ucsc.dbtune.core.optimizers.DB2Optimizer;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Files;
@@ -76,10 +77,10 @@ public class Platform {
         Map<String, OptimizerFactory> driverToOptimizer =
                 new HashMap<String, OptimizerFactory>(){
                     {
+                        put("com.ibm.db2.jcc.DB2Driver", new DB2OptimizerFactory());
                         put("org.postgresql.Driver", new PGOptimizerFactory());
                     }
                 };
-
 
         AVAILABLE_EXTRACTORS        = Collections.unmodifiableMap(driverToExtractor);
         AVAILABLE_WHATIF_OPTIMIZERS = Collections.unmodifiableMap(driverToWhatIfOptimizer);
@@ -180,13 +181,26 @@ public class Platform {
     private static class PGOptimizerFactory implements OptimizerFactory {
         @Override
         public Optimizer newOptimizer(DatabaseConnection connection) {
-            return new PGOptimizer(connection);
+			try {
+				return new PGOptimizer(connection.getJdbcConnection());
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
         }
     }
 
+    private static class DB2OptimizerFactory implements OptimizerFactory {
+        @Override
+        public Optimizer newOptimizer(DatabaseConnection connection) {
+			try {
+				return new DB2Optimizer(connection.getJdbcConnection());
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+        }
+    }
 
-
-    /**
+	/**
      *  A DB2-specific Database Index Extractor.
      */
     static class DB2DatabaseIndexExtractor extends AbstractIndexExtractor {

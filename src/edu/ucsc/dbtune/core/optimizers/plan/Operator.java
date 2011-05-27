@@ -25,40 +25,52 @@ public class Operator implements Comparable<Operator>
     /** ID used to identify an operator within a plan */
     protected int id;
 
+    /** Name of operator */
+    protected String operatorName;
+
     /** Cost of the operator (not the accumulated cost) */
     protected double cost;
 
     /** Number of tuples that the operator produces */
-    protected double cardinality;
-
-    /** Type of operator */
-    protected String operatorType;
+    protected long cardinality;
 
     /** When the operator is applied to a base table */
     protected String tableName;
 
+    /** When the operator is filtering tuples */
+    protected String condition;
+
     /**
-     * creates an operator of the given type
+     * creates an empty operator, its name is "EMPTY". This can be used to represent empty plans.
+     */
+    public Operator() {
+        this("EMPTY", 0.0, 0);
+    }
+
+    /**
+     * creates an operator of the given name
      *
-     * @param type
-     *     type of the operator
+     * @param name
+     *     name of the operator
      * @param cost
      *     cost of the operator
      * @param cardinality
      *     number of rows produced by the operator
      */
-    public Operator(String type, double cost, double cardinality) {
+    public Operator(String name, double cost, long cardinality) {
         this.id           = 0;
-        this.operatorType = type;
+        this.operatorName = name;
         this.cost         = cost;
         this.cardinality  = cardinality;
         this.tableName    = null;
+        this.condition    = null;
     }
 
     /**
      * returns the operator id
      *
-     * @return operator id
+     * @return
+     *     operator id
      */
     public int getId() {
         return id;
@@ -77,7 +89,8 @@ public class Operator implements Comparable<Operator>
     /**
      * returns the cost of the operator
      *
-     * @return the value corresponding to the cost of the operator
+     * @return
+     *     the value corresponding to the cost of the operator
      */
     public double getCost() {
         return cost;
@@ -86,19 +99,31 @@ public class Operator implements Comparable<Operator>
     /**
      * returns the number of rows produced by the operator
      *
-     * @return cardinality of the operator
+     * @return
+     *     cardinality of the operator
      */
-    public double getCardinality() {
+    public long getCardinality() {
         return cardinality;
     }
 
     /**
      * returns the name of the table that the operator reads from
      *
-     * @return name of table the operator is applied to
+     * @return
+     *     name of table the operator is applied to
      */
     public String getTableName() {
         return tableName;
+    }
+
+    /**
+     * returns the operator name
+     *
+     * @return
+     *     name of operator
+     */
+    public String getOperatorName() {
+        return operatorName;
     }
 
     /**

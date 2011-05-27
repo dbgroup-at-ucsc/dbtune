@@ -20,6 +20,7 @@ package edu.ucsc.dbtune.core.metadata.extraction;
 
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Catalog;
+import edu.ucsc.dbtune.core.metadata.Schema;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.Index;
@@ -62,7 +63,6 @@ public class PGExtractor extends GenericJDBCExtractor
     public Catalog extract( DatabaseConnection connection )
         throws SQLException
     {
-        List<Table>         tables;
         Catalog             catalog;
         Index               index;
         java.sql.Connection con;
@@ -75,91 +75,97 @@ public class PGExtractor extends GenericJDBCExtractor
         {
             catalog = super.extract(connection);
             con     = connection.getJdbcConnection();
-            tables  = catalog.getSchemas().get(0).getTables();
 
-            for (Table table : tables )
-            {
-                stmnt = con.createStatement();
-                cmmnd = 
-                    " SELECT" +
-                    "    t.relname," +
-                    "    t.relpages," +
-                    "    t.reltuples" +
-                    " FROM" +
-                    "    pg_class t" +
-                    " WHERE" +
-                    "    t.relname  = '" + table.getName() + "'";
+			for (Schema schema : catalog.getSchemas()) {
+				for (Table table : schema.getTables() ) {
 
-                rsset = stmnt.executeQuery(cmmnd);
-                index = null;
+					stmnt = con.createStatement();
+					cmmnd = 
+						" SELECT" +
+						"    t.relname," +
+						"    t.relpages," +
+						"    t.reltuples" +
+						" FROM" +
+						"    pg_class t," +
+						"    pg_namespace s" +
+						" WHERE" +
+						"     t.relname = '" + table.getName() + "'" +
+						" AND s.nspname = '" + schema.getName() + "'" +
+						" AND t.relnamespace = s.oid";
 
-                while (rsset.next())
-                {
-                    table.setCardinality(rsset.getInt("reltuples"));
-                    table.setPages(rsset.getInt("relpages"));
-                }
+					rsset = stmnt.executeQuery(cmmnd);
 
-                stmnt.close();
+					while (rsset.next())
+					{
+						table.setCardinality(rsset.getInt("reltuples"));
+						table.setPages(rsset.getInt("relpages"));
+					}
 
-                stmnt = con.createStatement();
-                cmmnd = 
-                    " SELECT" +
-                    "   t.relname as tname," +
-                    "   i.relname as iname," +
-                    "   i.reltuples," +
-                    "   i.relpages," +
-                    "   i.relname" +
-                    " FROM" +
-                    "    pg_class     t," +
-                    "    pg_class     i," +
-                    "    pg_index     ix" +
-                    " WHERE" +
-                    "    t.oid      = ix.indrelid    AND" +
-                    "    i.oid      = ix.indexrelid  AND" +
-                    "    t.relkind  = 'r'            AND" +
-                    "    t.relname  = '" + table.getName() + "'" +
-                    " ORDER BY" +
-                    "    t.relname," +
-                    "    i.relname";
+					stmnt.close();
 
-                rsset = stmnt.executeQuery(cmmnd);
-                index = null;
+					stmnt = con.createStatement();
+					cmmnd = 
+						" SELECT" +
+						"   t.relname as tname," +
+						"   i.relname as iname," +
+						"   i.reltuples," +
+						"   i.relpages," +
+						"   i.relname" +
+						" FROM" +
+						"    pg_class     t," +
+						"    pg_class     i," +
+						"    pg_index     ix," +
+						"    pg_namespace s" +
+						" WHERE" +
+						"      t.oid      = ix.indrelid" +
+						"  AND i.oid      = ix.indexrelid" +
+						"  AND t.relkind  = 'r'" +
+						"  AND t.relname  = '" + table.getName() + "'" +
+						"  AND s.nspname = '" + schema.getName() + "'" +
+						"  AND t.relnamespace = s.oid" +
+						" ORDER BY" +
+						"    t.relname," +
+						"    i.relname";
 
-                while (rsset.next())
-                {
-                    name  = rsset.getString("iname");
-                    index = table.findIndex(name);
+					rsset = stmnt.executeQuery(cmmnd);
+					index = null;
 
-                    if (index == null)
-                    {
-                        throw new SQLException("Index " + name + " not in " + table);
-                    }
+					while (rsset.next())
+					{
+						name  = rsset.getString("iname");
+						index = table.findIndex(name);
 
-                    index.setPages(rsset.getInt("relpages"));
-                    index.setCardinality(rsset.getInt("reltuples"));
-                }
+						if (index == null)
+						{
+							throw new SQLException("Index " + name + " not in " + table);
+						}
 
-                stmnt.close();
+						index.setPages(rsset.getInt("relpages"));
+						index.setCardinality(rsset.getInt("reltuples"));
+					}
 
-                for( Column column : table.getColumns() )
-                {
-                    stmnt = con.createStatement();
-                    cmmnd =
-                        " SELECT " +
-                        "   count(DISTINCT " + column.getName() + ") " +
-                        " FROM " +
-                            table.getName();
+					stmnt.close();
 
-                    rsset = stmnt.executeQuery(cmmnd);
+					for( Column column : table.getColumns() )
+					{
+						stmnt = con.createStatement();
+						cmmnd =
+							" SELECT " +
+							"   count(DISTINCT " + column.getName() + ") " +
+							" FROM " +
+								schema + "." + table;
 
-                    while (rsset.next())
-                    {
-                        column.setCardinality(rsset.getLong(1));
-                    }
+						rsset = stmnt.executeQuery(cmmnd);
 
-                    stmnt.close();
-                }
-            }
+						while (rsset.next())
+						{
+							column.setCardinality(rsset.getLong(1));
+						}
+
+						stmnt.close();
+					}
+				}
+			}
 
             return catalog;
         }
