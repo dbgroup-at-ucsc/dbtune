@@ -341,6 +341,7 @@ public class PGCommands {
                 final String explainSql = "EXPLAIN INDEXES " + indexListString(indexes, config) + sql;
                 final ResultSet rs = statement.executeQuery(explainSql);
                 checkSQLRelatedState(rs.next(), "no row returned from EXPLAIN INDEXES");
+
                 return Parameters.makeAnonymousParameter(
                         rs,
                         cardinality, 

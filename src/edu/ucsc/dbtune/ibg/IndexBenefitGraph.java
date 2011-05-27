@@ -55,9 +55,9 @@ public class IndexBenefitGraph implements Serializable {
      *      the set of used indexes.
      */
 	public IndexBenefitGraph(IBGNode rootNode, double emptyCost, IndexBitSet usedSet) {
-		this.rootNode   = rootNode;
-		this.emptyCost  = emptyCost;
-		this.isUsed     = usedSet;
+		this.rootNode  = rootNode;
+		this.emptyCost = emptyCost;
+		this.isUsed    = usedSet;
 	}
 
     /**

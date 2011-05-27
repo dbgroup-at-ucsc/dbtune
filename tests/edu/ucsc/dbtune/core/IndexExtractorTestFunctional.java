@@ -21,19 +21,24 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
 
 /**
+ * Depends on the 'one_table' workload.
+ *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
 public class IndexExtractorTestFunctional {
     private static DatabaseConnection connection;
-    private static Environment        environment;
+    private static Environment        environment = Environment.getInstance();;
 
     @BeforeClass
     public static void setUp() throws Exception {
-        environment = Environment.getInstance();
+		String ddlfilename;
 
-        final Properties        connProps   = environment.getAll();
-        final ConnectionManager manager     = makeDatabaseConnectionManager(connProps);
-        try {connection = manager.connect();} catch (Exception e) {connection = null;}
+        connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
+        ddlfilename = environment.getFilenameAtWorkloadFolder("/one_table/workload.sql");
+		
+        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        connection.getJdbcConnection().setAutoCommit(false);
     }
 
 
@@ -57,27 +62,21 @@ public class IndexExtractorTestFunctional {
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testRecommendIndexes() throws Exception {
         final IndexExtractor    extractor   = connection.getIndexExtractor();
-        final File              workload    = new File(
-                environment.getScriptAtWorkloadsFolder("/movies/workload.sql")
-        );
+        final File              workload    = new File( environment.getScriptAtWorkloadsFolder("/one_table/workload.sql") );
         final Iterable<DBIndex> candidates  = extractor.recommendIndexes(workload);
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
-        //todo(Huascar) investigate why we are not getting any index.
-        assumeThat(Iterables.asCollection(candidates).isEmpty(), is(false));
+        assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
     }
 
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLRecommendIndexes() throws Exception {
         final IndexExtractor    extractor   = connection.getIndexExtractor();
-        final Iterable<DBIndex> candidates  = extractor.recommendIndexes(
-                "select rate from ratings where rate = 5;"
-        );
+        final Iterable<DBIndex> candidates  = extractor.recommendIndexes("select a from tbl where a = 5;");
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
-        //todo(Huascar) investigate why we are not getting any index.
-        assumeThat(Iterables.asCollection(candidates).isEmpty(), is(false));
+        assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
     }
 
     @AfterClass

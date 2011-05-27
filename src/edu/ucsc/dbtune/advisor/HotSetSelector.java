@@ -87,16 +87,12 @@ public class HotSetSelector {
         else {
             MinQueue<I> topSet = new MinQueue<I>(numToChoose);
 
-            if (debugOutput)
-                System.out.println("choosing hot set:");
             for (I index : candSet) {
                 if (requiredIndexSet.contains(index))
                     continue;
 
                 double penalty = oldHotSet.contains(index) ? 0 : index.creationCost();
                 double score = benefitFunc.benefit(index, emptyConfig) - penalty;
-                if (debugOutput)
-                    System.out.println(index.internalId() + " score = " + score);
                 if (topSet.size() < numToChoose) {
                     topSet.insertKey(index, score);
                 }
@@ -152,10 +148,6 @@ public class HotSetSelector {
                     if (score > bestScore) {
                         bestIndex = index;
                         bestScore = score;
-                    }
-                    
-                    if (debugOutput) {
-                        System.out.println("index " + index.internalId() + " score = " + score);
                     }
                 }
                 if (bestIndex == null)

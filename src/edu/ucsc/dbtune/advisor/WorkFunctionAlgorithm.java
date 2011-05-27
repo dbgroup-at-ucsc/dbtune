@@ -89,7 +89,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
             this.keepHistory = false;
         }
         
-        dump("INITIAL");
+        //dump("INITIAL");
     }
 
     /**
@@ -153,7 +153,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
             trace.addValues(wf, nullCost);
         }
         
-        dump("NEW TASK");
+        //dump("NEW TASK");
     }
 
     private void preprocessCostIntoVector(ProfiledQuery<I> qinfo, SubMachine<I> subm) {
@@ -188,12 +188,12 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
                 subm.vote(wf, index, isPositive);
             }
         }
-        dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + index.internalId());
+        //dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + index.internalId());
     }
 
     /**
-     * This method along with method {@link #newTask(ProfiledQuery)} correspond to algorithm {@code chooseCands}
-     * from Schnaitter's thesis, which is described in page in page 169 (Figure 6.5).
+     * This method along with method {@link #newTask(ProfiledQuery)} corresponds to algorithm {@code 
+     * chooseCands} from Schnaitter's thesis, which is described in page in page 169 (Figure 6.5).
      *
      * @return a list of recommended {@link DBIndex indexes}.
      */
@@ -202,7 +202,6 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
         for (SubMachine<I> subm : submachines) {
             for (I index : subm.subset) {
                 if (subm.currentBitSet.get(index.internalId())){
-                    System.out.println(index);
                     rec.add(index);
                 }                        
             }
@@ -301,7 +300,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
         
         submachines = submachines2; // start using new subsets
         wf.reallocate(workspace.wf2); // copy wf2 into wf (also changes the implicit partitioning within wf)
-        dump("REPARTITION");
+        //dump("REPARTITION");
     }
 
 

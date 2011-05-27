@@ -97,7 +97,6 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 
     @Override
     public ProfiledQuery<I> processQuery(String sql){
-        console.info("Profiling query: " + sql);
 
 		// generate new index candidates
 		if (onlineCandidates) {
@@ -144,10 +143,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 			ibgAnalysis.startAnalysis(ibgAnalyzer, logger);
 			long nStop = System.nanoTime();
 
-            console.info("Analysis: " + ((nStop - nStart) / 1000000000.0));
-			console.info("IBG has " + ibgCons.nodeCount() + " nodes");
-
-			// pass the result to the tuner
+            // pass the result to the tuner
             return new ProfiledQuery.Builder<I>(sql)
                     .explainInfo(info)
                     .snapshotOfCandidateSet(snapshot)
@@ -162,7 +158,6 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 			throw new IBGConstructionException(msg, e);
 		}
     }
-
 
     @Override
 	public Snapshot<I> processVote(I index, boolean isPositive) throws SQLException {
