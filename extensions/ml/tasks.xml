@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<project name="dbtune-ml-tasks" basedir="." default="compile">
+
+  <import file="../../tasks.xml"/>
+
+  <path id="compile.ml.classpath">
+    <path        refid="compile.classpath" />
+    <fileset     dir="${lib.dir}" includes="*.jar" />
+    <pathelement location="${build.dir}/classes/" />
+  </path>
+
+  <target name="init">
+    <taskdef resource="scala/tools/ant/antlib.xml">
+      <classpath refid="compile.ml.classpath"/>
+    </taskdef>
+  </target>
+
+  <!-- this depends on running 'ant compile' from dbtune root manually -->
+  <target name="compile" depends="init" description="Compile Scala source">
+    <echo message="Libraries: ${compile.ml.classpath}"/>
+    <scalac srcdir="${src.dir}"
+         destdir="${build.dir}/classes"
+         classpathref="compile.ml.classpath"
+         addParams="-make:changed" >
+      <include name="**/*.scala" />
+      <exclude name="edu/ucsc/dbtune/ml/init.scala" />
+    </scalac>
+  </target>
+
+  <target name="compile.tests" depends="compile" description="Compile test source">
+    <scalac srcdir="${src.dir}"
+         destdir="${build.dir}/classes"
+         classpathref="compile.ml.classpath"
+         addParams="-make:changed" >
+      <include name="**/*Test.scala" />
+      <exclude name="edu/ucsc/dbtune/ml/init.scala" />
+    </scalac>
+  </target>
+
+  <target name="test.functional" depends="compile.tests" description="Execute functional tests">
+  </target>
+
+  <target name="test.unit" depends="compile.tests" description="Execute tests">
+  </target>
+</project>
