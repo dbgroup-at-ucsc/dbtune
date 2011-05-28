@@ -5,7 +5,7 @@
 
   <path id="compile.cli.classpath">
     <path        refid="compile.classpath" />
-    <pathelement location="${lib.dir}/scala-compiler-2.8.1.jar" />
+    <fileset     dir="${lib.dir}" includes="*.jar" />
     <pathelement location="${build.dir}/classes/" />
   </path>
 
@@ -15,6 +15,7 @@
     </taskdef>
   </target>
 
+  <!-- this depends on running 'ant compile' from dbtune root manually -->
   <target name="compile" depends="init" description="Compile Scala source">
     <scalac srcdir="${src.dir}"
          destdir="${build.dir}/classes"
