@@ -20,6 +20,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationCostBuilder;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -63,7 +64,10 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
      *      new cost value.
      */
     void addCost(double value){
+        Console.streaming().info("actual cost=" + cost.get() + ", new cost=" + value);
         cost.compareAndSet(cost.get(), value);
+        Console.streaming().info("updated cost=" + cost.get() + ", passed cost=" + value);
+
     }
 
     /**

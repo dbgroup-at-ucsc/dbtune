@@ -18,8 +18,6 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.spi.core.Console;
-
 import java.sql.SQLException;
 
 public class ThreadIBGConstruction implements Runnable {
@@ -74,6 +72,6 @@ public class ThreadIBGConstruction implements Runnable {
      * wait until the thread has finalized doing its job.
      */
     public void waitUntilDone() throws RuntimeException {
-        throw new RuntimeException("Not implemented yet");
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

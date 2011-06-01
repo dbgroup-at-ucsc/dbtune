@@ -74,7 +74,11 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 		}
 	}
 
-	public void addIndexes(Iterable<I> newIndexes) throws SQLException {
+    Node<I> getFirstNode() {
+        return firstNode;
+    }
+
+    public void addIndexes(Iterable<I> newIndexes) throws SQLException {
 		for (I index : newIndexes){
             addIndex(index);
         }
@@ -95,7 +99,7 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 	}
 
 	public Snapshot<I> getSnapshot() {
-		return new Snapshot<I>(firstNode);
+		return new Snapshot<I>(getFirstNode());
 	}
 
     /**
@@ -121,7 +125,7 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
      * A node in the candidate pool, which wraps a given index.
      * @param <I> the type of {@link DBIndex}.
      */
-	private static class Node<I extends DBIndex> implements Serializable {
+	static class Node<I extends DBIndex> implements Serializable {
 		/* serializable fields */
 		I       index;
 		Node<I> next;

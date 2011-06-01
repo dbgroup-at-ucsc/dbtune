@@ -21,6 +21,7 @@ package edu.ucsc.dbtune.core.metadata;
 import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
@@ -29,6 +30,7 @@ import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.util.Strings;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -166,6 +168,7 @@ public class PGCommands {
     public static Function<Double, SQLException> explainIndexesCost(IndexBitSet usedSet){
         final Function<Parameter, SQLException> rs;
         final Function<Double, SQLException> ec;
+        Console.streaming().info("used set=" + (usedSet == null ? "null" : usedSet));
         rs   = shareResultSetCommand();
         ec   = explainCost(usedSet);
         return Functions.compose(rs, ec);
@@ -186,7 +189,9 @@ public class PGCommands {
                 final ResultSet  resultSet  = input.getParameterValue(ResultSet.class);
                 if(resultSet != null) {
                     try{
-                        final Double qCost =  Double.valueOf(resultSet.getString("qcost"));
+
+                        final double qCost =  resultSet.getDouble("qcost");
+                        Console.streaming().info("the workload cost is " + qCost);
                         usedSet.clear();
                         // todo(Huascar) I am getting actual costs, but no indexes? this is weird.
                         final String indexesString  = resultSet.getString("indexes");
