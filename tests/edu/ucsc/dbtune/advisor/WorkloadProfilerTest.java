@@ -101,11 +101,11 @@ public class WorkloadProfilerTest {
 
         assertThat(info.isQuery(), is(true));
         assertThat(info.isDML(), is(false));
-        // since we are dealing with a query, then the costs are all 0.0
+        // since we are dealing with a query, then costs shouldn't be 0.0
         assertThat(Double.compare(maintenanceCostOfIndex0, 1.1) == 0.0, is(false));
         assertThat(Double.compare(maintenanceCostOfIndex1, 2.0) == 0.0, is(false));
         assertThat(Double.compare(maintenanceCostOfIndex2, 3.0) == 0.0, is(false));
-        assertThat(pq.getWhatIfCount(), equalTo(2));
+        assertThat(pq.getWhatIfCount(), equalTo(3));
 
         final Snapshot<PGIndex> snapshot = pq.getCandidateSnapshot();
         assertThat(snapshot.maxInternalId(), equalTo(2));

@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.optimizers.OptimizerFactory;
+import edu.ucsc.dbtune.core.optimizers.Optimizer;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Strings;
 
@@ -7,6 +9,7 @@ import java.util.NoSuchElementException;
 
 import static edu.ucsc.dbtune.core.Platform.findIndexExtractorFactory;
 import static edu.ucsc.dbtune.core.Platform.findWhatIfOptimizerFactory;
+import static edu.ucsc.dbtune.core.Platform.findOptimizerFactory;
 
 /**
  * Enumerates the supported DBMS systems.
@@ -26,13 +29,14 @@ public enum DatabaseSystem {
     private final String                 driver;
     private final WhatIfOptimizerFactory wiof;
     private final IndexExtractorFactory  ief;
+    private final OptimizerFactory       of;
 
     DatabaseSystem(String driver){
         this.driver = driver;
         wiof        = findWhatIfOptimizerFactory(driver);
         ief         = findIndexExtractorFactory(driver);
+        of          = findOptimizerFactory(driver);
     }
-
 
     /**
      * @param connection
@@ -46,7 +50,18 @@ public enum DatabaseSystem {
     /**
      * @param connection
      *      database connection
-     * @return an IBG-specific what-if optimizer.
+     * @return
+     *      an optimizer.
+     */
+    public Optimizer geOptimizer(DatabaseConnection connection){
+        return of.newOptimizer(connection);
+    }
+
+    /**
+     * @param connection
+     *      database connection
+     * @return
+     *      an IBG-specific what-if optimizer.
      */
     public IBGWhatIfOptimizer getIBGWhatIfOptimizer(DatabaseConnection connection){
         return wiof.newIBGWhatIfOptimizer(Checks.checkNotNull(connection));

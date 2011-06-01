@@ -18,8 +18,10 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.optimizers.Optimizer;
+
 /**
- * A connection to a specific database.  {@code DatbaseConnection} objects are obtained by using
+ * A connection to a specific database. {@code DatbaseConnection} objects are obtained by using
  * {@link ConnectionManager#connect()}.
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -27,19 +29,22 @@ package edu.ucsc.dbtune.core;
  * @see ConnectionManager
  */
 public interface DatabaseConnection extends DatabaseSession {
-	/**
-	 * gets the instance of the connection manager that created this connection.
-	 * @return
+
+    /**
+     * gets the instance of the connection manager that created this connection.
+     *
+     * @return
      *      the {@link ConnectionManager connection manager} instance that created
      *      this connection.
      * @throws NullPointerException
      *      it will throw a null pointer exception if the connection mananger is null.
      *      this is a normal side effect when the connection has been closed.
-	 */
+     */
     ConnectionManager getConnectionManager();
 
     /**
      * gets the instance of a database index extractor created for this connection.
+     *
      * @return
      *      the {@link IndexExtractor index extractor} instance created
      *      for this connection.
@@ -50,7 +55,17 @@ public interface DatabaseConnection extends DatabaseSession {
     IndexExtractor getIndexExtractor();
 
     /**
+     * returns the instance of the object representing the optmizer of the DBMS the connection is 
+     * associated with.
+     *
+     * @return
+     *     the {@link Optimizer} instance created for this connection.
+     */
+    Optimizer getOptimizer();
+
+    /**
      * gets the instance of what-if optmizer created for this connection.
+     *
      * @return
      *     the {@link WhatIfOptimizer what-if optimizer} instance created for
      *     this connection.
@@ -62,6 +77,7 @@ public interface DatabaseConnection extends DatabaseSession {
 
     /**
      * gets the instance of the IBG-specific what-if optmizer created for this connection.
+     *
      * @return
      *     the {@link IBGWhatIfOptimizer what-if optimizer} instance created for
      *     this connection.

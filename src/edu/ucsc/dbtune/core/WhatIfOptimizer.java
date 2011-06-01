@@ -9,6 +9,7 @@ import java.sql.SQLException;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public interface WhatIfOptimizer {
+
     /**
      * perform a what-if optimization call over a single sql statement.
      * @param sql

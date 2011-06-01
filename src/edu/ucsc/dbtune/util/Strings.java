@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -239,5 +240,48 @@ public class Strings {
                 }
             };
         }
+
     }
+
+    /**
+     * Compares two strings representing software versions.
+     *
+     * @param v1
+     *     string representing a version
+     * @param v2
+     *     string representing a version
+     * @return
+     *     0 if equal; negative if {@code v1} less than {@code v2}; positive otherwise.
+     */
+    public static int compareVersion(String v1, String v2) {
+        String s1 = normalizeVersion(v1,".",6);
+        String s2 = normalizeVersion(v2,".",6);
+
+        return s1.compareTo(s2);
+    }
+
+    /**
+     * Normalizes a string representing the version of a software in such a way that the {link 
+     * String#compareTo} method can be applied to two normalized strings.
+     *
+     * @param version
+     *     string representing the version of a software, e.g. 7.74.23b or 0.1a
+     * @param separator
+     *     string used to separate revision numbers, usually "-" or ".".
+     * @param maxWidth
+     *     the maximum width of the string
+     * @return
+     *     the normalized version of
+     */
+    public static String normalizeVersion(String version, String separator, int maxWidth) {
+        StringBuilder sb    = new StringBuilder();
+        String[]      split = Pattern.compile(separator, Pattern.LITERAL).split(version);
+
+        for (String s : split) {
+            sb.append(String.format("%" + maxWidth + 's', s));
+        }
+
+        return sb.toString();
+    }
+
 }
