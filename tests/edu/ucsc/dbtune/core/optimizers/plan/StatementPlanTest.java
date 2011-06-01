@@ -20,9 +20,6 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import static edu.ucsc.dbtune.core.optimizers.plan.StatementPlan.RIGHT;
-import static edu.ucsc.dbtune.core.optimizers.plan.StatementPlan.LEFT;
-
 /**
  * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)
  */
@@ -38,8 +35,8 @@ public class StatementPlanTest {
         Operator left = new Operator("SeqScan",19.50,2202);
         Operator right = new Operator("SeqScan",1.50,88);
 
-        plan.setChild(root, left, LEFT);
-        plan.setChild(root, right, RIGHT);
+        plan.setChild(root, left);
+        plan.setChild(root, right);
 
         assertThat(plan.size(), is(3));
 

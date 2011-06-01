@@ -15,15 +15,12 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers.plan;
 
-import edu.ucsc.dbtune.spi.BinaryTree;
+import edu.ucsc.dbtune.spi.Tree;
 
 /**
  * Represents a plan for SQL statements of a RDBMS.
  */
-public class StatementPlan extends BinaryTree<Operator> {
-
-    public static final int LEFT = BinaryTree.LEFT;
-    public static final int RIGHT = BinaryTree.RIGHT;
+public class StatementPlan extends Tree<Operator> {
 
     /**
      * Creates a SQL statement plan with one (given root) node.
@@ -50,16 +47,12 @@ public class StatementPlan extends BinaryTree<Operator> {
      * {@inheritDoc}
      */
 	@Override
-    public Entry<Operator> setChild(Operator parentValue, Operator childValue, int leftOrRight) {
+    public Entry<Operator> setChild(Operator parentValue, Operator childValue) {
         Entry<Operator> e;
         
-        e = super.setChild(parentValue, childValue, leftOrRight);
+        e = super.setChild(parentValue, childValue);
 
-        if(leftOrRight == LEFT) {
-            childValue.setId( parentValue.getId() + 1 );
-        } else {
-            childValue.setId( parentValue.getId() + 2 );
-        }
+        childValue.setId(parentValue.getId() + 1);
 
         return e;
     }
