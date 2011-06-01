@@ -130,7 +130,7 @@ public class TaskSchedulerTest {
             assertThat(snapshot.maxInternalId(), equalTo(2));
 
             final IndexBenefitGraph graph = p.getIndexBenefitGraph();
-            assertThat(Double.compare(graph.emptyCost(), 1.0) == 0.0, is(true));
+            assertThat(Double.compare(graph.emptyCost(), 1.0) == 0, is(true));
 
         } finally {
             scheduler.shutdown();

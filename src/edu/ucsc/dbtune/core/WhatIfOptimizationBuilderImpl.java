@@ -64,10 +64,12 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
      *      new cost value.
      */
     void addCost(double value){
-        Console.streaming().info("actual cost=" + cost.get() + ", new cost=" + value);
+        Console.streaming().info("WhatIfOptimizationBuilderImpl#addCost(double) has " +
+                "an actual cost="
+                + cost.get() + ", and will take a new cost="
+                + value
+        );
         cost.compareAndSet(cost.get(), value);
-        Console.streaming().info("updated cost=" + cost.get() + ", passed cost=" + value);
-
     }
 
     /**
@@ -139,6 +141,7 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
         if(Double.compare(0.0, cost.get()) == 0){
             whatIfOptimizer.calculateOptimizationCost();
         }
+        Console.streaming().info("WhatIfOptimizationBuilderImpl#toGetCost() will return a worload cost=" + cost.get());
         return cost.get();
     }
 

@@ -223,8 +223,9 @@ public class PGCommands {
                 if(resultSet != null) {
                     try{
 
-                        final double qCost =  resultSet.getDouble("qcost");
-                        Console.streaming().info("the workload cost is " + qCost);
+                        final double qCost =  Double.parseDouble(resultSet.getString("qcost"));
+                        Console.streaming().info("PGCommands#explainCost(IndexBitSet) returned a workload cost* of " + Double.valueOf(resultSet.getString("qcost")));
+                        Console.streaming().info("PGCommands#explainCost(IndexBitSet) returned a workload cost of " + qCost);
                         usedSet.clear();
                         // todo(Huascar) I am getting actual costs, but no indexes? this is weird.
                         final String indexesString  = resultSet.getString("indexes");
@@ -262,12 +263,20 @@ public class PGCommands {
                 final Integer               cardinality = input.getParameterValue(Integer.class);
                 SQLCategory category    = null;
                 double      totalCost   = 0.0;
+                Console.streaming().info("PGCommands#explainInfo() has initialized a the totalCost variable to " + totalCost);
                 final List<Double> costCollector = Instances.newList();
                 try {
+                    Console.streaming().info("PGCommands#explainInfo() ");
                     category = SQLCategory.from(resultSet.getString("category"));
+                    Console.streaming().info("PGCommands#explainInfo() has set the category:SQLCategory to " + category);
                     // overhead = oh
                     final String    indexOverhead   = resultSet.getString("index_overhead");
                     final String[]  ohArray         = indexOverhead.split(" ");
+                    Console.streaming().info("PGCommands#explainInfo() has set the " +
+                            "indexOverhead:String, ohArray to "
+                            + indexOverhead
+                            + ", " + Arrays.toString(ohArray)
+                    );
                     verifyOverheadArray(cardinality, ohArray);
 
                     final List<String> indexesAsStrings = Arrays.asList(ohArray);
@@ -279,6 +288,7 @@ public class PGCommands {
                     }
 
                     totalCost = Double.valueOf(resultSet.getString("qcost"));
+                    Console.streaming().info("PGCommands#explainInfo() has updated the totalCost variable to " + totalCost);
                 } finally {
                     if(resultSet != null){
                         resultSet.close();
@@ -290,7 +300,10 @@ public class PGCommands {
                     castCost[i] = costCollector.get(i);
                 }
 
-
+                Console.streaming().info("PGCommands#explainInfo() has updated the " +
+                        "overhead variable to "
+                        + Arrays.toString(castCost)
+                );
                 return new PGExplainInfo(
                         category,
                         castCost,

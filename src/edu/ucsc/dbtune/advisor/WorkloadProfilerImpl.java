@@ -126,6 +126,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
         ExplainInfo info;
 		try {
 			info = ibgWhatIfOptimizer.explain(sql);
+            console.info("WorkloadProfilerImpl#processQuery(String) returned an ExplainInfo object=" + info) ;
 		} catch (SQLException e) {
 			console.error("SQLException caught while explaining command", e);
 			throw new Error(e);

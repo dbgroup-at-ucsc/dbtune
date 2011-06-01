@@ -77,9 +77,11 @@ public class PGExplainInfo extends AbstractExplainInfo implements Serializable {
 
     @Override
     public String toString() {
+        final boolean isTotalCost = Double.compare(0.0, totalCost) == 0;
         return new ToStringBuilder<PGExplainInfo>(this)
                .add("sql category", getSQLCategory())
                .add("update cost", Arrays.toString(updateCost))
+               .add("qcost", totalCost)
                .add("isDML", isDML())
                .add("isQuery", isQuery())
                .toString();

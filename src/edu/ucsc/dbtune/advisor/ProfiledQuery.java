@@ -23,6 +23,7 @@ import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.satuning.spi.Supplier;
@@ -167,9 +168,12 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
      *      the total cost of this query.
      */
     public double totalCost(IndexBitSet configuration){
+        Console.streaming().info("ProfiledQuery#totalCost(IndexBitSet) will use " + configuration + " for total cost (plan + maintenance)");
         double plan  = planCost(configuration);
         double maint = maintenanceCost(configuration);
-        return plan + maint;
+        double total = plan + maint;
+        Console.streaming().info("ProfiledQuery#totalCost(IndexBitSet) has calculated a total cost = " + total);
+        return total;
     }
 
     @Override

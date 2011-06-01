@@ -99,7 +99,11 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
                     new Double[indexSet.size()]
         );
 
-        Console.streaming().info("is workload cost null? ans=" + (returnVal == null) + ", then its value will be set to 0.0");
+        Console.streaming().info("PostgresIBGWhatIfOptimizer#estimateCost(WhatIfOptimizationBuilder) " +
+                "has returned a "
+                + (returnVal == null ? "null (which will be set to 0.0)" : returnVal)
+                + " workload cost"
+        );
         return returnVal == null ? 0.0 : returnVal;
     }
 

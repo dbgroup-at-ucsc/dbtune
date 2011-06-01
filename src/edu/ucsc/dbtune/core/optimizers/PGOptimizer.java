@@ -33,8 +33,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
 import static edu.ucsc.dbtune.core.metadata.PGCommands.getVersion;
-import static edu.ucsc.dbtune.core.optimizers.plan.StatementPlan.LEFT;
-import static edu.ucsc.dbtune.core.optimizers.plan.StatementPlan.RIGHT;
+import static edu.ucsc.dbtune.core.optimizers.plan.StatementPlan.*;
 
 /**
  * {@inheritDoc}

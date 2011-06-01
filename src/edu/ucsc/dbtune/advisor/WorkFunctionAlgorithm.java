@@ -157,6 +157,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
     }
 
     private void preprocessCostIntoVector(ProfiledQuery<I> qinfo, SubMachine<I> subm) {
+        console.info("WorkFunctionAlgorithm#preprocessCostIntoVector(ProfiledQuery, SubMachine) inputs: " + qinfo + ", " + subm);
         // preprocess cost into a vector
         for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
             // this will explicitly set each index in the array to 1 or 0
