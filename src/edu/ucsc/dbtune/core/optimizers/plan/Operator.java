@@ -59,7 +59,7 @@ public class Operator implements Comparable<Operator>
      */
     public Operator(String name, double cost, long cardinality) {
         this.id           = 0;
-        this.name = name;
+        this.name         = name;
         this.cost         = cost;
         this.cardinality  = cardinality;
         this.tableName    = null;

@@ -5,6 +5,8 @@
 
     <path id="compile.classpath">
       <fileset dir="${lib.dir}" includes="*.jar" />
+      <fileset dir="extensions/cli/lib/" includes="*.jar" />
+      <fileset dir="extensions/ml/lib/" includes="*.jar" />
     </path>
 
     <target name="compile" description="Compile Java source.">
