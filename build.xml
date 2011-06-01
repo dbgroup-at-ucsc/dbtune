@@ -38,7 +38,8 @@
              private="true"
              windowtitle="DbTune 0.1 API">
       <sourcepath>
-        <pathelement location="${cli.src.dir}" />        
+        <pathelement location="${cli.src.dir}" />
+        <pathelement location="${ml.src.dir}" />
         <pathelement location="${src.dir}" />
       </sourcepath>
       <classpath refid="compile.classpath" />
@@ -47,22 +48,27 @@
 
   <target name="clean.all" depends="clean" description="Remove generated files">
     <ant antfile="extensions/cli/build.xml" target="clean" inheritall="false" />
+    <ant antfile="extensions/ml/build.xml" target="clean" inheritall="false" />
   </target>
 
   <target name="compile.all" depends="compile" description="compile all source">
     <ant antfile="extensions/cli/build.xml" target="compile" inheritAll="false" />
+    <ant antfile="extensions/ml/build.xml" target="compile" inheritAll="false" />
   </target>
 
   <target name="compile.all.tests" depends="compile.tests">
     <ant antfile="extensions/cli/build.xml" target="compile.tests" inheritAll="false" />
+    <ant antfile="extensions/ml/build.xml" target="compile.tests" inheritAll="false" />
   </target>
 
   <target name="test.all.unit" depends="test.unit">
     <ant antfile="extensions/cli/build.xml" target="test.unit" inheritAll="false" />
+    <ant antfile="extensions/ml/build.xml" target="test.unit" inheritAll="false" />
   </target>
 
   <target name="test.all.functional" depends="test.functional">
     <ant antfile="extensions/cli/build.xml" target="test.functional" inheritAll="false" />
+    <ant antfile="extensions/ml/build.xml" target="test.functional" inheritAll="false" />
   </target>
 
   <target name="test.unit.and.functional" depends="test.unit,test.functional" />

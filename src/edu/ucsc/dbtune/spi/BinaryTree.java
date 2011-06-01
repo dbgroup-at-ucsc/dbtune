@@ -15,21 +15,13 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.spi;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
  * A binary tree implementation
  */
-public class BinaryTree<T extends Comparable<? super T>>
+public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
 {
-    protected Entry<T>        root;
-    protected Map<T,Entry<T>> elements;
-    protected int             size;
-
     /** denotes a left child */
     public static final int LEFT = 0;
 
@@ -37,17 +29,10 @@ public class BinaryTree<T extends Comparable<? super T>>
     public static final int RIGHT = 1;
 
     /**
-     * Builds a tree with the given argument as root
-     *
-     * @param root
-     *     the root of the tree
+     * {@inheritDoc}
      */
     public BinaryTree( T root ) {
-        this.root     = new Entry<T>(root);
-        this.elements = new HashMap<T,Entry<T>>();
-        this.size     = 1;
-
-        elements.put( root, this.root );
+        super(root);
     }
 
     /* 
@@ -56,6 +41,9 @@ public class BinaryTree<T extends Comparable<? super T>>
      *   remove(T) => remove(T, Entry<T>)
      *   findMin(Entry<T>)
      *   findMax(Entry<T>)
+     *   iteratorInorder()
+     *   iteratorPreorder()
+     *   iteratorPostorder()
      *   removeInorderNext(Entry<T>)
      *   removeInorderPrev(Entry<T>)
      *   removePreorderNext(Entry<T>)
@@ -63,69 +51,6 @@ public class BinaryTree<T extends Comparable<? super T>>
      *   removePostorderNext(Entry<T>)
      *   removePostorderPrev(Entry<T>)
      */
-
-    /**
-     * returns the root element.
-     *
-     * @return
-     *     element at the root
-     */
-    public T getRootElement() {
-        return root.element;
-    }
-
-	/**
-	 * returns the children of an element.
-     *
-	 * @return
-	 *     a list containing the children elements of the given value. Empty if the given element is 
-	 *     a leaf of the tree.
-	 * @throws NoSuchElementException
-	 *     if {@code value} isn't a member of the tree
-     */
-    public List<T> getChildren(T value) throws NoSuchElementException {
-		Entry<T> entry = find(value, root);
-
-		if(entry == null) {
-			throw new NoSuchElementException( value + " is not a member");
-		}
-
-		List<T> children = new ArrayList<T>();
-
-		if(entry.left != null) {
-			children.add(valueOf(entry.left));
-		}
-
-		if(entry.right != null) {
-			children.add(valueOf(entry.right));
-		}
-
-		return children;
-    }
-
-    /**
-     * whether or not the tree contains the given value.
-     *
-     * @param value
-     *     element searched in the tree
-     * @return
-     *     {@code true} if the element is contained; {@code false} otherwise.
-     */
-    public boolean contains(T value) {
-        return valueOf(find(value, root)) != null;
-    }
-
-    /**
-     * returns the value contained in the given entry
-     *
-     * @param entry
-     *     entry whose value is extracted from
-     * @return
-     *     the corresponding element; {@code null} if entry is {@code null}
-     */
-    private T valueOf(Entry<T> entry) {
-        return entry == null ? null : entry.element;
-    }
 
     /**
      * Sets a value as the parent of another given child value.
@@ -143,7 +68,7 @@ public class BinaryTree<T extends Comparable<? super T>>
      *     childValue} is already in the tree; if {@code parentValue} already has a child in the 
      *     given position (left or right).
      */
-    public Entry<T> setChild( T parentValue, T childValue, int leftOrRight ) {
+    public Entry<T> setChild(T parentValue, T childValue, int leftOrRight) {
 
         if(leftOrRight != LEFT && leftOrRight != RIGHT) {
             throw new IllegalArgumentException( leftOrRight + " not a valid child position");
@@ -162,38 +87,32 @@ public class BinaryTree<T extends Comparable<? super T>>
             throw new NoSuchElementException(parentValue + " not in tree");
         }
 
-        if( leftOrRight == LEFT ) {
-            childEntry = parentEntry.left;
-        } else {
-            childEntry = parentEntry.right;
+        childEntry = null;
+
+        if( leftOrRight == LEFT && parentEntry.children.size() > 0) {
+            childEntry = parentEntry.children.get(0);
+        } else if(leftOrRight == RIGHT && parentEntry.children.size() > 1) {
+            childEntry = parentEntry.children.get(1);
         }
 
         if(childEntry != null) {
             throw new IllegalArgumentException("Parent already has child");
         }
 
-        childEntry = new Entry<T>(childValue);
-
-        elements.put(childValue, childEntry);
-
-        if( leftOrRight == LEFT ) {
-            parentEntry.left = childEntry;
-        } else {
-            parentEntry.right = childEntry;
-        }
-
-        size++;
-
-        return childEntry;
+        return super.setChild(parentValue,childValue);
     }
 
     /**
-     * returns the number of elements in the tree
-     *
-     * @return size of the tree.
+     * {@inheritDoc}
      */
-    public int size() {
-        return size;
+    public Entry<T> setChild(T parentValue, T childValue) {
+        Entry<T> parentEntry = elements.get(parentValue);
+
+        if(parentEntry.children.size() == 1) {
+            throw new IllegalArgumentException("Parent already has child at given sub-tree");
+        }
+
+        return setChild(parentValue,childValue);
     }
 
     /**
@@ -207,89 +126,26 @@ public class BinaryTree<T extends Comparable<? super T>>
      * @return
      *     the value if found; null, otherwise
      */
-    private Entry<T> find(T value, Entry<T> entry) {
+    @Override
+    protected Entry<T> find(T value, Entry<T> entry) {
         while (entry != null) {
             if (value.compareTo(entry.element) < 0) {
-                entry = entry.left;
+                if(entry.children.size() > 0) {
+                    entry = entry.children.get(0);
+                } else {
+                    entry = null;
+                }
 			} else if (value.compareTo(entry.element) > 0) {
-                entry = entry.right;
+                if(entry.children.size() > 1) {
+                    entry = entry.children.get(1);
+                } else {
+                    entry = null;
+                }
 			} else {
                 return entry;
 			}
         }
+
         return null;
-    }
-
-    /**
-     * returns the string representation of the sub-tree rooted at {@code entry}.
-     *
-     * @param entry
-     *     root of the sub-tree
-     * @param padding
-     *     the string used to pad the result
-     * @return
-     *     string representation of the sub-tree
-     */
-    private String toString(Entry<T> entry, String padding) {
-        String str = "";
-
-        if (entry != null) {
-            str += padding + entry.element + "\n";
-            str += toString(entry.left,  padding + padding );
-            str += toString(entry.right, padding + padding );
-        }
-
-        return str;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String toString()
-    {
-        return toString(root, "");
-    }
-
-    /**
-     * An entry of the binary tree
-     */
-    public static class Entry<T extends Comparable<? super T>>
-    {
-        T        element;
-        Entry<T> left;
-        Entry<T> right;
-
-        /**
-         * creates a binary tree entry
-         *
-         * @param element
-         *     element to be wrapped by this entry
-         */
-        public Entry(T element)
-        {
-            this.element = element;
-            this.left    = null;
-            this.right   = null;
-        }
-
-        /**
-         * Returns the corresponding element
-         *
-         * @return the element wrapped by the entry
-         */
-        public T getElement()
-        {
-            return element;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public String toString()
-        {
-            return element.toString();
-        }
     }
 }

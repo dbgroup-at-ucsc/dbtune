@@ -33,8 +33,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
 import static edu.ucsc.dbtune.core.metadata.PGCommands.getVersion;
-import static edu.ucsc.dbtune.core.optimizers.plan.StatementPlan.LEFT;
-import static edu.ucsc.dbtune.core.optimizers.plan.StatementPlan.RIGHT;
 
 /**
  * {@inheritDoc}
@@ -193,24 +191,11 @@ public class PGOptimizer extends Optimizer
         }
 
         Operator childOperator = null;
-        int      whichChild    = LEFT;
 
         for(Map<String,Object> childData : childrenData) {
             childOperator = extractNode(childData);
 
-            if(whichChild == LEFT) {
-                plan.setChild(parent, childOperator, LEFT);
-                whichChild = RIGHT;
-            } else {
-                plan.setChild(parent, childOperator, RIGHT);
-            }
-
-            // XXX the above if statement should be removed and replaced with:
-            //
-            //    plan.setNextChild(parent, childOperator);
-            //
-            // since we prefer having a tree-structure agnostic interface.
-
+            plan.setChild(parent, childOperator);
             extractChildNodes(plan, childOperator, childData);
         }
     }
@@ -241,7 +226,7 @@ public class PGOptimizer extends Optimizer
             throw new Exception("Type, cost or cardinality is (are) null");
         }
 
-        operator = new Operator((String) type, (Double) cost, (Integer) cardinality);
+        operator = new Operator((String) type, (Double) cost, ((Number) cardinality).longValue());
 
         return operator;
     }

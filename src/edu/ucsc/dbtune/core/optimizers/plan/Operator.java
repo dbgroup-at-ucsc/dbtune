@@ -26,7 +26,7 @@ public class Operator implements Comparable<Operator>
     protected int id;
 
     /** Name of operator */
-    protected String operatorName;
+    protected String name;
 
     /** Cost of the operator (not the accumulated cost) */
     protected double cost;
@@ -59,7 +59,7 @@ public class Operator implements Comparable<Operator>
      */
     public Operator(String name, double cost, long cardinality) {
         this.id           = 0;
-        this.operatorName = name;
+        this.name = name;
         this.cost         = cost;
         this.cardinality  = cardinality;
         this.tableName    = null;
@@ -122,8 +122,8 @@ public class Operator implements Comparable<Operator>
      * @return
      *     name of operator
      */
-    public String getOperatorName() {
-        return operatorName;
+    public String getName() {
+        return name;
     }
 
     /**

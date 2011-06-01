@@ -3,15 +3,15 @@
 
   <import file="../../tasks.xml"/>
 
-  <path id="compile.cli.classpath">
-    <path        refid="compile.classpath" />
-    <fileset     dir="${lib.dir}" includes="*.jar" />
+  <path id="compile.classpath">
+    <fileset dir="../../${lib.dir}" includes="*.jar" />
+    <fileset dir="${lib.dir}" includes="*.jar" />
     <pathelement location="${build.dir}/classes/" />
   </path>
 
   <target name="init">
     <taskdef resource="scala/tools/ant/antlib.xml">
-      <classpath refid="compile.cli.classpath"/>
+      <classpath refid="compile.classpath"/>
     </taskdef>
   </target>
 
@@ -19,7 +19,7 @@
   <target name="compile" depends="init" description="Compile Scala source">
     <scalac srcdir="${src.dir}"
          destdir="${build.dir}/classes"
-         classpathref="compile.cli.classpath"
+         classpathref="compile.classpath"
          addParams="-make:changed" >
       <include name="**/*.scala" />
       <exclude name="edu/ucsc/dbtune/cli/init.scala" />
@@ -29,7 +29,7 @@
   <target name="compile.tests" depends="compile" description="Compile test source">
     <scalac srcdir="${src.dir}"
          destdir="${build.dir}/classes"
-         classpathref="compile.cli.classpath"
+         classpathref="compile.classpath"
          addParams="-make:changed" >
       <include name="**/*Test.scala" />
       <exclude name="edu/ucsc/dbtune/cli/init.scala" />

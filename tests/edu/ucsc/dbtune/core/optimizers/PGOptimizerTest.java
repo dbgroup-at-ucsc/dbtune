@@ -131,7 +131,7 @@ public class PGOptimizerTest {
 
 		assertEquals(4,           plan.size());
 		assertEquals(25005000,    plan.getRootOperator().getCardinality());
-		assertEquals("Hash Join", plan.getRootOperator().getOperatorName());
+		assertEquals("Hash Join", plan.getRootOperator().getName());
 		assertEquals(375510.00,   plan.getRootOperator().getCost(), 1.00);
 		assertEquals(2,           plan.getChildren(plan.getRootElement()).size());
 	}

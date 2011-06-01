@@ -3,37 +3,28 @@
 
   <import file="../../tasks.xml"/>
 
-  <path id="compile.ml.classpath">
-    <path        refid="compile.classpath" />
-    <fileset     dir="${lib.dir}" includes="*.jar" />
+  <path id="compile.classpath">
+    <fileset dir="../../${lib.dir}" includes="*.jar" />
+    <fileset dir="${lib.dir}" includes="*.jar" />
     <pathelement location="${build.dir}/classes/" />
   </path>
 
   <target name="init">
     <taskdef resource="scala/tools/ant/antlib.xml">
-      <classpath refid="compile.ml.classpath"/>
+      <classpath refid="compile.classpath"/>
     </taskdef>
   </target>
 
   <!-- this depends on running 'ant compile' from dbtune root manually -->
   <target name="compile" depends="init" description="Compile Scala source">
-    <echo message="Libraries: ${compile.ml.classpath}"/>
-    <scalac srcdir="${src.dir}"
-         destdir="${build.dir}/classes"
-         classpathref="compile.ml.classpath"
-         addParams="-make:changed" >
+    <scalac srcdir="${src.dir}" destdir="${build.dir}/classes" classpathref="compile.classpath"><!-- addParams="-verbose"> -->
       <include name="**/*.scala" />
-      <exclude name="edu/ucsc/dbtune/ml/init.scala" />
     </scalac>
   </target>
 
   <target name="compile.tests" depends="compile" description="Compile test source">
-    <scalac srcdir="${src.dir}"
-         destdir="${build.dir}/classes"
-         classpathref="compile.ml.classpath"
-         addParams="-make:changed" >
-      <include name="**/*Test.scala" />
-      <exclude name="edu/ucsc/dbtune/ml/init.scala" />
+    <scalac srcdir="${test.dir}" destdir="${build.dir}/tests" classpathref="compile.classpath" ><!-- addParams="-verbose"> -->
+      <include name="**/*.scala" />
     </scalac>
   </target>
 
