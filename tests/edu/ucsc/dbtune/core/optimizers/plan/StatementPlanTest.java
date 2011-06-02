@@ -41,7 +41,6 @@ public class StatementPlanTest {
         assertThat(plan.size(), is(3));
 
         assertThat(plan.getRootOperator().getId(), is(1));
-        assertThat(left.getId(), is(2));
-        assertThat(right.getId(), is(3));
+        assertThat(plan.getChildren(plan.getRootOperator()).size(), is(2));
     }
 }
