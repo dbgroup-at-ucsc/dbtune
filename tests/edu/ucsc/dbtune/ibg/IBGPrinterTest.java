@@ -80,8 +80,8 @@ public class IBGPrinterTest {
 
         final CandidatePool<DBIndex> candidatePool = (CandidatePool<DBIndex>) mock(CandidatePool.class);
         final Node<DBIndex>          root          = (Node<DBIndex>) mock(Node.class);
-        when(root.index).thenReturn(twin);
-        when(root.next).thenReturn(root);
+        when(root.getIndex()).thenReturn(twin);
+        when(root.getNext()).thenReturn(root);
 
         when(candidatePool.getFirstNode()).thenReturn(root);
         final Connection connection = mock(Connection.class);

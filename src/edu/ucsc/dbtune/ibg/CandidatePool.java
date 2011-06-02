@@ -133,15 +133,31 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 		/* serialization support */
 		private static final long serialVersionUID = CandidatePool.serialVersionUID;
         Node(I index, Node<I> next) {
-			this.index = index;
-			this.next = next;
+			this.setIndex(index);
+			this.setNext(next);
 		}
+
+        I getIndex() {
+            return index;
+        }
+
+        Node<I> getNext() {
+            return next;
+        }
+
+        void setIndex(I index) {
+            this.index = index;
+        }
+
+        void setNext(Node<I> next) {
+            this.next = next;
+        }
 
         @Override
         public String toString() {
             return new ToStringBuilder<Node<I>>(this)
-                   .add("index", index)
-                   .add("next node", next)
+                   .add("index", getIndex())
+                   .add("next node", getNext())
                    .toString();
         }
     }
@@ -160,7 +176,7 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 		protected Snapshot() { }
 
 		private Snapshot(Node<I> first) {
-			maxId = (first == null) ? -1 : first.index.internalId();
+			maxId = (first == null) ? -1 : first.getIndex().internalId();
 			this.first = first;
 			bs = new IndexBitSet();
 			bs.set(0, maxId+1);
@@ -214,8 +230,8 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 		public I next() {
 			if (next == null)
 				throw new NoSuchElementException();
-			I current = next.index;
-			next = next.next;
+			I current = next.getIndex();
+			next = next.getNext();
 			return current;
 		}
 

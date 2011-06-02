@@ -229,13 +229,12 @@ public class PGCommands {
                         usedSet.clear();
                         // todo(Huascar) I am getting actual costs, but no indexes? this is weird.
                         final String indexesString  = resultSet.getString("indexes");
-                        if (indexesString.length() == 0){
-                            return null; // this avoids a NumberFormatException on empty string
+                        if (!Strings.isEmpty(indexesString)){
+                            for (String idString : resultSet.getString("indexes").split(" ")){
+                                usedSet.set(Integer.parseInt(idString));
+                            }
                         }
 
-                        for (String idString : resultSet.getString("indexes").split(" ")){
-                            usedSet.set(Integer.parseInt(idString));
-                        }
                         return qCost;
                         } finally {
                             resultSet.close();
