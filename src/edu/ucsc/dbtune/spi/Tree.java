@@ -180,7 +180,7 @@ public class Tree<T extends Comparable<? super T>>
             for(Entry<T> e : entry.children) {
                 found = find(value, e);
 
-                if( found != null ) {
+                if(found != null) {
                     return found;
                 }
             }
@@ -218,7 +218,7 @@ public class Tree<T extends Comparable<? super T>>
     @Override
     public String toString()
     {
-        return toString(root, "");
+        return toString(root, " + ");
     }
 
     /**

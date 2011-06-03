@@ -15,8 +15,6 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers.plan;
 
-import java.lang.UnsupportedOperationException;
-
 /**
  * Represents an operator of a SQL statement plan
  */
@@ -68,6 +66,15 @@ public class Operator implements Comparable<Operator>
         this.cardinality     = cardinality;
         this.tableName       = null;
         this.condition       = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return 1 * 31 + (new Long(id)).hashCode();
     }
 
     /**
@@ -164,6 +171,8 @@ public class Operator implements Comparable<Operator>
      */
 	@Override
     public String toString() {
-        throw new UnsupportedOperationException("unsupported");
+        return
+           "id: " + id + "; operator: " + name + "; cost: " + cost + "; accCost: " + accumulatedCost + "; cardinality: " + cardinality + " \n";
+
     }
 }

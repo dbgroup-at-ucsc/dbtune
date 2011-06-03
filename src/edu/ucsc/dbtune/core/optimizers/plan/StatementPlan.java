@@ -21,6 +21,8 @@ import edu.ucsc.dbtune.spi.Tree;
  * Represents a plan for SQL statements of a RDBMS.
  */
 public class StatementPlan extends Tree<Operator> {
+    /** to keep a register of inserted operators */
+    private int globalId = 1;
 
     /**
      * Creates a SQL statement plan with one (given root) node.
@@ -31,7 +33,9 @@ public class StatementPlan extends Tree<Operator> {
     public StatementPlan(Operator root) {
         super(root);
 
-        root.setId(1);
+        elements.clear();
+        root.setId(globalId++);
+        elements.put(root,this.root);
     }
 
     /**
@@ -49,10 +53,10 @@ public class StatementPlan extends Tree<Operator> {
 	@Override
     public Entry<Operator> setChild(Operator parentValue, Operator childValue) {
         Entry<Operator> e;
+
+        childValue.setId(globalId++);
         
         e = super.setChild(parentValue, childValue);
-
-        childValue.setId(parentValue.getId() + 1);
 
         return e;
     }

@@ -108,7 +108,7 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
     public Entry<T> setChild(T parentValue, T childValue) {
         Entry<T> parentEntry = elements.get(parentValue);
 
-        if(parentEntry.children.size() == 1) {
+        if(parentEntry.children.size() > 1) {
             throw new IllegalArgumentException("Parent already has child at given sub-tree");
         }
 
