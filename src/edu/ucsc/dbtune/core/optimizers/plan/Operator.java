@@ -28,7 +28,10 @@ public class Operator implements Comparable<Operator>
     /** Name of operator */
     protected String name;
 
-    /** Cost of the operator (not the accumulated cost) */
+    /** Accumulated cost of the plan up to this operator */
+    protected double accumulatedCost;
+
+    /** Cost of the operator (not accumulated cost) */
     protected double cost;
 
     /** Number of tuples that the operator produces */
@@ -52,18 +55,19 @@ public class Operator implements Comparable<Operator>
      *
      * @param name
      *     name of the operator
-     * @param cost
-     *     cost of the operator
+     * @param accumulated cost
+     *     cost of the plan up to this operator
      * @param cardinality
      *     number of rows produced by the operator
      */
-    public Operator(String name, double cost, long cardinality) {
-        this.id           = 0;
-        this.name         = name;
-        this.cost         = cost;
-        this.cardinality  = cardinality;
-        this.tableName    = null;
-        this.condition    = null;
+    public Operator(String name, double accumulatedCost, long cardinality) {
+        this.id              = 0;
+        this.name            = name;
+        this.cost            = 0.0;
+        this.accumulatedCost = accumulatedCost;
+        this.cardinality     = cardinality;
+        this.tableName       = null;
+        this.condition       = null;
     }
 
     /**
@@ -84,6 +88,26 @@ public class Operator implements Comparable<Operator>
      */
     public void setId(int id) {
         this.id = id;
+    }
+
+    /**
+     * returns the accumulated cost of the operator
+     *
+     * @return
+     *     the value corresponding to the accumulated cost of the operator
+     */
+    public double getAccumulatedCost() {
+        return accumulatedCost;
+    }
+
+    /**
+     * returns the cost of the operator
+     *
+     * @return
+     *     the value corresponding to the cost of the operator
+     */
+    public void setCost(double cost) {
+        this.cost = cost;
     }
 
     /**

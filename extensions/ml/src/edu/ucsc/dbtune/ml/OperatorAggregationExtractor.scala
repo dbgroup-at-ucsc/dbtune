@@ -16,16 +16,17 @@ import java.util.NoSuchElementException
   *
   * Extracts feature vectors out of `StatementPlan` objects. For each distinct operator (specified 
   * in the `operatorNames` variable) there is a pair of elements in the extracted vector. The first 
-  * entry corresponds to the count of. The order of the operators in the vectors corresponds to the 
-  * order given in the `operatorNames` list.
+  * entry corresponds to the count of the operator and the second to the cost of the operator. The 
+  * order of the operators in the vectors corresponds to the order given in the `operatorNames` 
+  * list.
   *
   * For example, the following represents a plan (in JSON format for ease of illustration):
   *
   * <code>
   * "Plan": {
   *   "Node Type": "Nested Loop",
-  *   "Startup Cost": 926895.36,
-  *   "Total Cost": 926895.37,
+  *   "Startup Cost": 5,
+  *   "Total Cost": 926,
   *   "Plan Rows": 1,
   *   "Plan Width": 0,
   *   "Plans": [
@@ -62,9 +63,9 @@ import java.util.NoSuchElementException
   * Then, [[OperatorAggregationExtractor.extract]] generates the following feature vector:
   *
   * <code>
-  * | 2 |583| 0 | 0 | 1 |926895| 0 | 0 | 0 | 0 |
-  * |---|---|---|---|---|------|---|---|---|---|
-  * | 0 | 1 | 2 | 3 | 4 |   5  | 6 | 7 | 8 | 9 |
+  * | 2 |583| 0 | 0 | 1 |343| 0 | 0 | 0 | 0 |
+  * |---|---|---|---|---|---|---|---|---|---|
+  * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
   * </code>
   *
   * index 0 corresponds to `"Seq Scan"`; 1 to the sum of cardinalities of all `"Seq Scan"` operators 
@@ -72,12 +73,14 @@ import java.util.NoSuchElementException
   * corresponds to:
   *
   * <code>
-  * OperatorName| SeqScan | Limit | NestedLoop | HashJ | Apend |
-  * ------------|---|-----|---|---|---|--------|---|---|---|---|
-  * count / sum | 2 | 583 | 0 | 0 | 1 | 926895 | 0 | 0 | 0 | 0 |
-  * ------------|---------|-------|------------|-------|-------|
-  *     index   | 0 |  1  | 2 | 3 | 4 |   5    | 6 | 7 | 8 | 9 |
+  * OperatorName|SeqScan| Limit | NLoop | HashJ | Apend |
+  * ------------|---|---|---|---|---|---|---|---|---|---|
+  * count / sum | 2 |583| 0 | 0 | 1 |343| 0 | 0 | 0 | 0 |
+  * ------------|-------|-------|-------|-------|-------|
+  *     index   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
   * </code>
+  *
+  * Note that the cost of the operator corresponds to the actual cost and not the accumulated cost.
   *
   * @constructor
   *   creates a new extractor with the given operator names
@@ -123,15 +126,15 @@ class OperatorAggregationExtractor(operatorNames: List[String]) extends PlanInst
     *   if one of the operators in the plan isn't a member of 
     *   [[OperatorAggregationExtractor.operatorNames]] */
   def createInstance(plan: StatementPlan): Instance = {
-    val values = new Array[Double](attributes.size) // XXX do we need to initialize all to zero??
+    val values = new Array[Double](attributes.size)
 
     for(operator <- asScalaBuffer(plan.toList)) {
       val idx = operatorNames.indexOf(operator.getName) * 2
 
       if(idx < 0) throw new NoSuchElementException("Operator " + operator.getName + " not in list")
 
-      values(idx+0) = values(idx) + 1.0;
-      values(idx+1) = values(idx) + operator.getCardinality;
+      values(idx+0) = values(idx+0) + 1.0;
+      values(idx+1) = values(idx+1) + operator.getCost;
     }
     new Instance(1.0,values)
   }

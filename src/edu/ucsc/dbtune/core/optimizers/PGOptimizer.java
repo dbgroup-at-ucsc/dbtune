@@ -190,14 +190,18 @@ public class PGOptimizer extends Optimizer
             return;
         }
 
-        Operator childOperator = null;
+        Operator child;
+        double   childrenCost = 0.0;
 
         for(Map<String,Object> childData : childrenData) {
-            childOperator = extractNode(childData);
+            child         = extractNode(childData);
+            childrenCost += child.getCost();
 
-            plan.setChild(parent, childOperator);
-            extractChildNodes(plan, childOperator, childData);
+            plan.setChild(parent, child);
+            extractChildNodes(plan, child, childData);
         }
+
+        parent.setCost(parent.getAccumulatedCost() - childrenCost);
     }
 
     /**
@@ -215,18 +219,18 @@ public class PGOptimizer extends Optimizer
     private static Operator extractNode(Map<String,Object> nodeData) throws Exception {
         Operator operator;
         Object   type;
-        Object   cost;
+        Object   accCost;
         Object   cardinality;
 
         type        = nodeData.get("Node Type");
-        cost        = nodeData.get("Total Cost");
+        accCost     = nodeData.get("Total Cost");
         cardinality = nodeData.get("Plan Rows");
 
-        if(type == null || cost == null || cardinality == null) {
+        if(type == null || accCost == null || cardinality == null) {
             throw new Exception("Type, cost or cardinality is (are) null");
         }
 
-        operator = new Operator((String) type, (Double) cost, ((Number) cardinality).longValue());
+        operator = new Operator((String) type, (Double) accCost, ((Number) cardinality).longValue());
 
         return operator;
     }
