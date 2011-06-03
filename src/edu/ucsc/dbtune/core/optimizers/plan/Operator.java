@@ -172,7 +172,10 @@ public class Operator implements Comparable<Operator>
 	@Override
     public String toString() {
         return
-           "id: " + id + "; operator: " + name + "; cost: " + cost + "; accCost: " + accumulatedCost + "; cardinality: " + cardinality + " \n";
-
+           "id: " + id +
+           "; operator: " + name +
+           "; cost: " + cost +
+           "; accCost: " + accumulatedCost +
+           "; cardinality: " + cardinality;
     }
 }

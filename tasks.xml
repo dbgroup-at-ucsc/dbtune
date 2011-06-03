@@ -43,7 +43,7 @@
       </junit>
     </target>
 
-	<target name="test.one" depends="compile.tests,argument-checking" description="Execute tests.">
+    <target name="test.one" depends="compile.tests,argument-checking" description="Execute tests.">
       <echo message="running test ${class}"/>
       <mkdir dir="${build.dir}/${junit.out.dir}"/>
       <junit printsummary="no" haltonerror="yes" haltonfailure="yes" showoutput="no" fork="yes">

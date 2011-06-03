@@ -218,7 +218,7 @@ public class Tree<T extends Comparable<? super T>>
     @Override
     public String toString()
     {
-        return toString(root, " + ");
+        return toString(root, "+");
     }
 
     /**
@@ -261,4 +261,3 @@ public class Tree<T extends Comparable<? super T>>
         }
     }
 }
-

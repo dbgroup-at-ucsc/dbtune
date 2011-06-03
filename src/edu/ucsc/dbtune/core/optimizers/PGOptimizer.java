@@ -186,6 +186,8 @@ public class PGOptimizer extends Optimizer
         @SuppressWarnings("unchecked")
         List<Map<String,Object>> childrenData = (List<Map<String,Object>>) parentData.get("Plans");
 
+        parent.setCost(parent.getAccumulatedCost());
+
         if(childrenData == null || childrenData.size() == 0) {
             return;
         }
@@ -195,7 +197,7 @@ public class PGOptimizer extends Optimizer
 
         for(Map<String,Object> childData : childrenData) {
             child         = extractNode(childData);
-            childrenCost += child.getCost();
+            childrenCost += child.getAccumulatedCost();
 
             plan.setChild(parent, child);
             extractChildNodes(plan, child, childData);
@@ -217,10 +219,9 @@ public class PGOptimizer extends Optimizer
      *     planData} map are empty or @{code null}.
      */
     private static Operator extractNode(Map<String,Object> nodeData) throws Exception {
-        Operator operator;
-        Object   type;
-        Object   accCost;
-        Object   cardinality;
+        Object type;
+        Object accCost;
+        Object cardinality;
 
         type        = nodeData.get("Node Type");
         accCost     = nodeData.get("Total Cost");
@@ -230,8 +231,6 @@ public class PGOptimizer extends Optimizer
             throw new Exception("Type, cost or cardinality is (are) null");
         }
 
-        operator = new Operator((String) type, (Double) accCost, ((Number) cardinality).longValue());
-
-        return operator;
+        return new Operator((String) type, (Double) accCost, ((Number) cardinality).longValue());
     }
 }

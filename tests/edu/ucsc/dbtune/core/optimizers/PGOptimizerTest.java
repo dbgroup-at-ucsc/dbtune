@@ -16,6 +16,7 @@
 package edu.ucsc.dbtune.core.optimizers;
 
 import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan;
+import edu.ucsc.dbtune.core.optimizers.plan.Operator;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
 
@@ -107,7 +108,7 @@ public class PGOptimizerTest {
 			"           \"Parent Relationship\": \"Inner\",    " +
 			"           \"Startup Cost\": 155.00,              " +
 			"           \"Total Cost\": 155.00,                " +
-			"           \"Plan Rows\": 10000,                  " +
+			"           \"Plan Rows\": 184,                    " +
 			"           \"Plan Width\": 16,                    " +
 			"           \"Plans\": [                           " +
 			"             {                                    " +
@@ -121,6 +122,13 @@ public class PGOptimizerTest {
 			"               \"Plan Width\": 16                 " +
 			"             }                                    " +
 			"           ]                                      " +
+			"         },                                       " +
+			"         {                                        " +
+			"           \"Node Type\": \"Index Scan\",         " +
+			"           \"Startup Cost\": 0.00,                " +
+			"           \"Total Cost\": 1778.00,               " +
+			"           \"Plan Rows\": 28437,                  " +
+			"           \"Plan Width\": 180                    " +
 			"         }                                        " +
 			"       ]                                          " +
 			"     }                                            " +
@@ -128,16 +136,50 @@ public class PGOptimizerTest {
 			"]";
 
 		StatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan));
+        Operator      root = plan.getRootOperator();
 
-		assertEquals(4,           plan.size());
-		assertEquals(25005000,    plan.getRootOperator().getCardinality());
-		assertEquals("Hash Join", plan.getRootOperator().getName());
-		assertEquals(375510.00,   plan.getRootOperator().getAccumulatedCost(), 0.01);
-		assertEquals(2,           plan.getChildren(plan.getRootElement()).size());
-		assertEquals(0.00,        plan.getChildren(plan.getRootElement()).get(0).getCost(), 0.01);
-		assertEquals(155.00,      plan.getChildren(plan.getRootElement()).get(1).getCost(), 0.01);
-		assertEquals(1,           plan.getChildren(plan.getChildren(plan.getRootElement()).get(0)).size());
-		assertEquals(155.00,      plan.getChildren(plan.getChildren(plan.getRootElement()).get(1)).get(0).getCost(), 0.01);
+        System.out.println(plan);
+
+		assertEquals(5, plan.size());
+
+        // check root
+		assertEquals("Hash Join", root.getName());
+		assertEquals(25005000,    root.getCardinality());
+		assertEquals(375510.00,   root.getAccumulatedCost(), 0.01);
+		assertEquals(3,           plan.getChildren(root).size());
+
+        // check first child
+        Operator child1 = plan.getChildren(root).get(0);
+		assertEquals("Seq Scan", child1.getName());
+		assertEquals(10000,      child1.getCardinality());
+		assertEquals(155.00,     child1.getAccumulatedCost(), 0.0);
+		assertEquals(155.00,     child1.getCost(), 0.01);
+        assertEquals(0,          plan.getChildren(child1).size());
+        
+        // check second child
+        Operator child2 = plan.getChildren(root).get(1);
+		assertEquals("Hash", child2.getName());
+		assertEquals(184,    child2.getCardinality());
+		assertEquals(155.00, child2.getAccumulatedCost(), 0.0);
+        assertEquals(0.0,    child2.getCost(), 0.01);
+		assertEquals(1,      plan.getChildren(child2).size());
+        
+        // check child of second child
+        Operator child3 = plan.getChildren(child2).get(0);
+		assertEquals("Seq Scan", child3.getName());
+		assertEquals(10000,      child3.getCardinality());
+		assertEquals(155.00,     child3.getAccumulatedCost(), 0.0);
+		assertEquals(155.00,     child3.getCost(), 0.01);
+		assertEquals(0,          plan.getChildren(child3).size());
+        
+        // check third child
+        Operator child4 = plan.getChildren(root).get(2);
+		assertEquals("Index Scan", child4.getName());
+		assertEquals(28437,        child4.getCardinality());
+		assertEquals(1778.00,      child4.getAccumulatedCost(), 0.0);
+        assertEquals(1778.00,      child4.getCost(), 0.01);
+		assertEquals(0,            plan.getChildren(child4).size());
+        
 	}
 
 	/**
