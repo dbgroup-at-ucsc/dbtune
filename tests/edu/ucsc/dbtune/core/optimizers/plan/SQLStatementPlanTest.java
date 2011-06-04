@@ -23,12 +23,12 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)
  */
-public class StatementPlanTest {
+public class SQLStatementPlanTest {
 
     @Test
     public void testBasicUsage() {
-        Operator      root = new Operator("Root",20.67,2);
-        StatementPlan plan = new StatementPlan(root);
+        Operator         root = new Operator("Root",20.67,2);
+        SQLStatementPlan plan = new SQLStatementPlan(root);
 
         assertThat(plan.size(), is(1));
 

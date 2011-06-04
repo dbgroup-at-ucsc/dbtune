@@ -15,7 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers;
 
-import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan;
+import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.core.optimizers.plan.Operator;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
@@ -135,8 +135,8 @@ public class PGOptimizerTest {
 			"   }                                              " +
 			"]";
 
-		StatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan));
-        Operator      root = plan.getRootOperator();
+		SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan));
+		Operator         root = plan.getRootOperator();
 
         System.out.println(plan);
 
@@ -190,7 +190,7 @@ public class PGOptimizerTest {
 		/*
 		XXX: this should be implemented using a JDBC mock
 
-		StatementPlan plan = optimizer.explain("select * from tbl t1, tbl t2 where t1.a=t2.a;");
+		SQLStatementPlan plan = optimizer.explain("select * from tbl t1, tbl t2 where t1.a=t2.a;");
 
 		assertEquals(plan.size(),4);
 		*/

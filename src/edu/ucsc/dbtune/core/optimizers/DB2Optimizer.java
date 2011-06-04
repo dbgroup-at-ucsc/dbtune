@@ -15,7 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers;
 
-import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan;
+import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
 import java.sql.Connection;
 
 /**
@@ -26,7 +26,7 @@ public class DB2Optimizer extends Optimizer
     public DB2Optimizer(Connection connection) throws UnsupportedOperationException {
 		throw new UnsupportedOperationException("Not implemented yet");
     }
-	public StatementPlan explain(String sql)
+	public SQLStatementPlan explain(String sql)
 	{
 		throw new UnsupportedOperationException("Not implemented yet");
 	}

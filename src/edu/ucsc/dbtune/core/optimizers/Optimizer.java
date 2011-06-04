@@ -15,11 +15,11 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers;
 
-import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan;
+import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
 import java.sql.SQLException;
 
 /**
- * Represents an operator of a SQL statement plan for postgres systems
+ * Represents an optimizer of a DBMS system.
  */
 public abstract class Optimizer
 {
@@ -29,9 +29,9 @@ public abstract class Optimizer
      * @param sql
      *      SQL statement
      * @return
-     *      an {@link StatementPlan} object describing the results of an optimization call.
+     *      an {@link SQLStatementPlan} object describing the results of an optimization call.
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public abstract StatementPlan explain(String sql) throws SQLException;
+    public abstract SQLStatementPlan explain(String sql) throws SQLException;
 }

@@ -17,6 +17,7 @@ package edu.ucsc.dbtune.core.optimizers;
 
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
 import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 /**
@@ -43,6 +44,9 @@ public class SQLStatement
     // class (which will be named SQLStatement) that is orthogonal and then have this one (renamed 
     // to OptimizedSQLStatement) as its child.
     protected Configuration configuration;
+
+    /** the optimized plan */
+    protected SQLStatementPlan plan;
 
     /**
      * Constructs a {@code SQLStatement} given its type and the literal contents.

@@ -15,7 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers;
 
-import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan;
+import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.core.optimizers.plan.Operator;
 
 import java.io.Reader;
@@ -69,10 +69,10 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public StatementPlan explain(String sql) throws SQLException {
-        StatementPlan plan = null;
-        Statement     st   = connection.createStatement();
-        ResultSet     rs   = st.executeQuery(explain + sql);
+    public SQLStatementPlan explain(String sql) throws SQLException {
+        SQLStatementPlan plan = null;
+        Statement        st   = connection.createStatement();
+        ResultSet        rs   = st.executeQuery(explain + sql);
 
         while(rs.next()) {
             try {
@@ -136,12 +136,12 @@ public class PGOptimizer extends Optimizer
      * @throws IOException
      *     if an error occurs when reading from source
      */
-    public static StatementPlan parseJSON(Reader reader)
+    public static SQLStatementPlan parseJSON(Reader reader)
         throws IOException, ClassCastException, Exception
     {
-        ObjectMapper  mapper;
-        StatementPlan plan;
-        Operator      root;
+        ObjectMapper     mapper;
+        SQLStatementPlan plan;
+        Operator         root;
 
         mapper = new ObjectMapper();
 
@@ -149,7 +149,7 @@ public class PGOptimizer extends Optimizer
         List<Map<String,Object>> planData = mapper.readValue(reader, List.class);
 
         if(planData == null) {
-            return new StatementPlan(new Operator());
+            return new SQLStatementPlan(new Operator());
         }
 
         if(planData.size() > 1) {
@@ -160,7 +160,7 @@ public class PGOptimizer extends Optimizer
         Map<String,Object> rootData = (Map<String,Object>) planData.get(0).get("Plan");
 
         root = extractNode(rootData);
-        plan = new StatementPlan(root);
+        plan = new SQLStatementPlan(root);
 
         extractChildNodes(plan, root, rootData);
 
@@ -180,7 +180,7 @@ public class PGOptimizer extends Optimizer
      *     the map containing the data of plans
      * @see <a href="http://wiki.fasterxml.com/JacksonDocumentation">Jackson Documentation</a>
      */
-    private static void extractChildNodes(StatementPlan plan, Operator parent, Map<String,Object> parentData )
+    private static void extractChildNodes(SQLStatementPlan plan, Operator parent, Map<String,Object> parentData )
         throws ClassCastException, Exception
     {
         @SuppressWarnings("unchecked")

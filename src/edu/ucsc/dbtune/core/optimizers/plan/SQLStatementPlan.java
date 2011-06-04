@@ -20,7 +20,7 @@ import edu.ucsc.dbtune.spi.Tree;
 /**
  * Represents a plan for SQL statements of a RDBMS.
  */
-public class StatementPlan extends Tree<Operator> {
+public class SQLStatementPlan extends Tree<Operator> {
     /** to keep a register of inserted operators */
     private int globalId = 1;
 
@@ -30,7 +30,7 @@ public class StatementPlan extends Tree<Operator> {
      * @param root
      *     root of the plan
      */
-    public StatementPlan(Operator root) {
+    public SQLStatementPlan(Operator root) {
         super(root);
 
         elements.clear();
