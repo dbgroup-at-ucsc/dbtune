@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2ExplainInfo;
 import edu.ucsc.dbtune.core.metadata.DB2QualifiedName;
+import edu.ucsc.dbtune.core.metadata.SQLCategory;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.*;
 
@@ -60,7 +61,7 @@ class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
         Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
         updateCachedSQL(sql);
 
-        SQLStatement.SQLCategory    category     = null;
+        SQLCategory    category     = null;
         DB2QualifiedName            updatedTable = null;
         double                      updateCost   = 0.0;
 
@@ -78,7 +79,7 @@ class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
             connection.execute(sql);
             submit(explainModeNo(), connection);
             category = supplyValue(fetchExplainStatementType(), connection);
-            if(SQLStatement.SQLCategory.DML.isSame(category)){
+            if(SQLCategory.DML.isSame(category)){
                 updatedTable = supplyValue(fetchExplainObjectUpdatedTable(), connection);
                 updateCost   = supplyValue(fetchExplainOpUpdateCost(), connection);
             }

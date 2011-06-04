@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.CostLevel;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.SQLStatement;
+import edu.ucsc.dbtune.core.metadata.SQLCategory;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Parameter;
@@ -117,7 +117,7 @@ public class DB2Commands {
         return FetchExplainStatementTotals.INSTANCE;
     }
 
-    public static Function<SQLStatement.SQLCategory, SQLException> fetchExplainStatementType(){
+    public static Function<SQLCategory, SQLException> fetchExplainStatementType(){
         return FetchExplainStatementTypeStatement.INSTANCE;
     }
 
@@ -453,11 +453,11 @@ public class DB2Commands {
     }
 
     // enum singleton pattern
-    private enum FetchExplainStatementTypeStatement implements Function<SQLStatement.SQLCategory, SQLException> {
+    private enum FetchExplainStatementTypeStatement implements Function<SQLCategory, SQLException> {
         INSTANCE;
 
         @Override
-        public SQLStatement.SQLCategory apply(Parameter input) throws SQLException {
+        public SQLCategory apply(Parameter input) throws SQLException {
             final Connection connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
 			final PreparedStatement ps = connection.prepareStatement(
 					"SELECT TRIM(STATEMENT_TYPE) AS TYPE "
@@ -474,7 +474,7 @@ public class DB2Commands {
                 final String category = rs.getString(1);
                 ensureCategoryExist(category);
                 ensureOneOneRecord(rs);
-                return SQLStatement.SQLCategory.from(category);
+                return SQLCategory.from(category);
             } finally {
                 rs.close();
                 connection.commit();

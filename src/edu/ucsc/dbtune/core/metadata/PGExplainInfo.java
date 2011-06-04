@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.core.metadata;
 import edu.ucsc.dbtune.core.AbstractExplainInfo;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
+import edu.ucsc.dbtune.core.metadata.SQLCategory;
 
 import java.io.Serializable;
 import java.util.Arrays;

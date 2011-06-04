@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
+import edu.ucsc.dbtune.core.metadata.SQLCategory;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;

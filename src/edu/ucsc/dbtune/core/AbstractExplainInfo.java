@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.SQLStatement.SQLCategory;
+import edu.ucsc.dbtune.core.metadata.SQLCategory;
 
 /**
  * This class provides a skeletal implementation of the {@link ExplainInfo}
