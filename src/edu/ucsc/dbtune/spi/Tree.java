@@ -166,7 +166,7 @@ public class Tree<T extends Comparable<? super T>>
      *
      * @param value
      *     value whose entry is being searched for
-     * @param value
+     * @param entry
      *     root of the sub-tree where the value is being looked for
      * @return
      *     the corresponding entry if found; null, otherwise

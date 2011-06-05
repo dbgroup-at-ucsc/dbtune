@@ -29,7 +29,10 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
     public static final int RIGHT = 1;
 
     /**
-     * {@inheritDoc}
+     * Creates a binary tree with the given root.
+     *
+     * @param root
+     *     root of the tree
      */
     public BinaryTree( T root ) {
         super(root);
@@ -64,9 +67,9 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
      * @throws NoSuchElementException
      *     if parentValue isn't a member of the tree
      * @throws IllegalArgumentException
-     *     if the {@code leftOrRight} parameter isn't {@link LEFT} or {@link RIGHT}; if {@code 
-     *     childValue} is already in the tree; if {@code parentValue} already has a child in the 
-     *     given position (left or right).
+     *     if the {@code leftOrRight} parameter isn't {@link BinaryTree#LEFT} or {@link 
+     *     BinaryTree#RIGHT}; if {@code childValue} is already in the tree; if {@code parentValue} 
+     *     already has a child in the given position (left or right).
      */
     public Entry<T> setChild(T parentValue, T childValue, int leftOrRight) {
 
@@ -121,7 +124,7 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
      *
      * @param value
      *     value whose entry is being searched for
-     * @param value
+     * @param entry
      *     root of the sub-tree where the value is being looked for
      * @return
      *     the value if found; null, otherwise

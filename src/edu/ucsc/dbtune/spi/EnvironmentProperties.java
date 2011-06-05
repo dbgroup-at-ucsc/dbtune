@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.spi;
 
-import edu.ucsc.dbtune.advisor.WfaTrace;
 import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm;
 import edu.ucsc.dbtune.core.JdbcConnectionManager;
 
@@ -63,9 +62,9 @@ public class EnvironmentProperties {
 
     /**
      * Name of a previously defined workload. This is used to uniquely identify a workload inside 
-     * the {@link #WORKLOADS_FOLDERNAME}.
+     * the {@code WORKLOADS_FOLDERNAME}.
      *
-     * @see {@link #WORKLOADS_FOLDERNAME}
+     * @see #WORKLOADS_FOLDERNAME
      */
     public static final String WORKLOAD_NAME = "workload.name";
 
@@ -90,8 +89,8 @@ public class EnvironmentProperties {
     /**
      * Whether or not we want to keep the history of the Workload Function Algorithm.
      *
-     * @see WorkFunctionAlgorithm#WorkFunctionAlgorithm
-     * @see {@link WfaTrace}
+     * @see WorkFunctionAlgorithm
+     * @see edu.ucsc.dbtune.advisor.WfaTrace
      */
     public static final String WFA_KEEP_HISTORY = "wfa.keep.history";
 

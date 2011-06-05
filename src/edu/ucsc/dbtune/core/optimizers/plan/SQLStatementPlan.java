@@ -50,7 +50,7 @@ public class SQLStatementPlan extends Tree<Operator> {
     /**
      * {@inheritDoc}
      */
-	@Override
+    @Override
     public Entry<Operator> setChild(Operator parentValue, Operator childValue) {
         Entry<Operator> e;
 

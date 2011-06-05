@@ -26,8 +26,8 @@ package edu.ucsc.dbtune.core;
  */
 public interface ExplainInfo {
     /**
-     * @return the total estimated cost of indexes in they were to be
-     *      materialized.
+     * @return
+     *     the total estimated cost of indexes in they were to be materialized.
      */
     double getTotalCost();
 
@@ -42,16 +42,16 @@ public interface ExplainInfo {
 	double getIndexMaintenanceCost(DBIndex index);
 
     /**
-     * @return {@code true} if it's
-     *      {@link SQLStatement.SQLCategory#DML},
-     *      {@code false} otherwise.
+     * @return
+     *     {@code true} if it's {@link edu.ucsc.dbtune.core.metadata.SQLCategory#DML}; {@code false} 
+     *     otherwise.
      */
     boolean isDML();
 
     /**
-     * @return {@code true} if it's
-     *      {@link SQLStatement.SQLCategory#QUERY},
-     *      {@code false} otherwise.
+     * @return
+     *     {@code true} if it's {{@link edu.ucsc.dbtune.core.metadata.SQLCategory#QUERY}; {@code 
+     *     false} otherwise.
      */
     boolean isQuery();
 }

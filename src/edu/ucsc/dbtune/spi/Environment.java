@@ -204,14 +204,14 @@ public class Environment {
      * {@link EnvironmentProperties#WORKLOAD_NAME}. The contents of the
      * returned string look like:
      * <p>
-     * {@link #getWorkloadsFoldername()} + "/" + {@link #getWorkloadName() + {@code filename} }
+     * {@code getWorkloadsFoldername()} + "/" + {@code getWorkloadName() + {@code filename} }
      *
      * @param filename
      *    name of file contained inside {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}.
      * @return
      *    {@code String} containing the path to the given script filename
-     * @see {@link #getWorkloadsFoldername()}
-     * @see {@link #getWorkloadName()}
+     * @see #getWorkloadsFoldername
+     * @see #getWorkloadName
      */
     public String getFilenameAtWorkloadFolder(String filename){
         return getWorkloadsFoldername() + "/" + getWorkloadName() + "/" + filename;
@@ -223,14 +223,14 @@ public class Environment {
      * {@link EnvironmentProperties#WORKLOAD_NAME}. The contents of the
      * returned string look like:
      * <p>
-     * {@link #getOutputFoldername()} + "/" + {@link #getWorkloadName() + {@code filename} }
+     * {@code getOutputFoldername()} + "/" + {@code getWorkloadName() + {@code filename} }
      *
      * @param filename
      *    name of file contained inside {@link EnvironmentProperties#OUTPUT_FOLDERNAME}.
      * @return
      *    {@code String} containing the path to the given script filename
-     * @see {@link #getOuptutFoldername()}
-     * @see {@link #getWorkloadName()}
+     * @see #getOutputFoldername
+     * @see #getWorkloadName
      */
     public String getFilenameAtOutputFolder(String filename){
         return getOutputFoldername() + "/" + getWorkloadName() + "/" + filename;

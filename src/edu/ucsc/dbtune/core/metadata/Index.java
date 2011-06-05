@@ -291,7 +291,7 @@ public class Index extends DatabaseObject
      * @return
      *     <code>true</code> if found; <code>false</code> otherwise
      */
-    public boolean contains( Column column )
+    public boolean contains(Column column)
     {
         return columns.contains(column);
     }

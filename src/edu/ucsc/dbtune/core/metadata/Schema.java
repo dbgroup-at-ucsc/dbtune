@@ -49,7 +49,7 @@ public class Schema extends DatabaseObject
      * @param other
      *     other schema being copied
      */
-    public Schema( Schema other)
+    public Schema(Schema other)
     {
         super(other);
 

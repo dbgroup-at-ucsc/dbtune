@@ -1,7 +1,7 @@
 // @license
 package edu.ucsc.dbtune.ml
 
-import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan
+import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan
 
 import java.io.File
 
@@ -20,7 +20,7 @@ trait PlanInstancesExtractor {
     *   the set of plans that vectors are created from.
     * @return
     *   an `Instances` object containing one `Instance` object per plan. */
-  def extract(plans: List[StatementPlan]): Instances
+  def extract(plans: List[SQLStatementPlan]): Instances
 
   /** Extracts `Instance` objects and creates a `.arff` file.
     * 
@@ -33,7 +33,7 @@ trait PlanInstancesExtractor {
     * @param fileName
     *   name of the file the `Instances` object is exported to.
     */
-  def extract(plans: List[StatementPlan], fileName: String): Unit = {
+  def extract(plans: List[SQLStatementPlan], fileName: String): Unit = {
      var arffSaver = new ArffSaver
      var instances = extract(plans)
 

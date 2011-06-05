@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.ml
 
-import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan
+import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan
 
 import weka.core.FastVector
 import weka.core.Attribute
@@ -12,13 +12,13 @@ import scala.collection.JavaConversions.asScalaBuffer
 
 import java.util.NoSuchElementException
 
-/** Extracts feature vectors out of `StatementPlan` objects.
+/** Extracts feature vectors out of `SQLStatementPlan` objects.
   *
-  * Extracts feature vectors out of `StatementPlan` objects. For each distinct operator (specified 
-  * in the `operatorNames` variable) there is a pair of elements in the extracted vector. The first 
-  * entry corresponds to the count of the operator and the second to the cost of the operator. The 
-  * order of the operators in the vectors corresponds to the order given in the `operatorNames` 
-  * list.
+  * Extracts feature vectors out of `SQLStatementPlan` objects. For each distinct operator 
+  * (specified in the `operatorNames` variable) there is a pair of elements in the extracted vector. 
+  * The first entry corresponds to the count of the operator and the second to the cost of the 
+  * operator. The order of the operators in the vectors corresponds to the order given in the 
+  * `operatorNames` list.
   *
   * For example, the following represents a plan (in JSON format for ease of illustration):
   *
@@ -106,7 +106,7 @@ class OperatorAggregationExtractor(operatorNames: List[String]) extends PlanInst
     * @throws NoSuchElementException
     *   if an operator contained in the plan isn't a member of 
     *   [[OperatorAggregationExtractor.operatorNames]] */
-  def extract(plans: List[StatementPlan]): Instances = {
+  def extract(plans: List[SQLStatementPlan]): Instances = {
     val data = new Instances("Instances", attributes, plans.size)
       
     for(plan <- plans) {
@@ -125,7 +125,7 @@ class OperatorAggregationExtractor(operatorNames: List[String]) extends PlanInst
     * @throws NoSuchElementException
     *   if one of the operators in the plan isn't a member of 
     *   [[OperatorAggregationExtractor.operatorNames]] */
-  def createInstance(plan: StatementPlan): Instance = {
+  def createInstance(plan: SQLStatementPlan): Instance = {
     val values = new Array[Double](attributes.size)
 
     for(operator <- asScalaBuffer(plan.toList)) {

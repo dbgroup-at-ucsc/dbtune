@@ -32,7 +32,7 @@ public abstract class AbstractExplainInfo implements ExplainInfo {
     /**
      * construct an {@code AbstractExplainInfo} object.
      * @param category
-     *      a {@link SQLStatement.SQLCategory} object.
+     *      a {@link SQLCategory} object.
      */
     protected AbstractExplainInfo(SQLCategory category){
         this.category = category;

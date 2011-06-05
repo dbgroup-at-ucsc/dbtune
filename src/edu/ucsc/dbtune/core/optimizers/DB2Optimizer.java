@@ -19,7 +19,7 @@ import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
 import java.sql.Connection;
 
 /**
- * {@inheritDoc}
+ * Not implemented yet
  */
 public class DB2Optimizer extends Optimizer
 {
