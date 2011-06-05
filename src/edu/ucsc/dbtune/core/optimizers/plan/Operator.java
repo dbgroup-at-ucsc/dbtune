@@ -1,22 +1,27 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied  *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
+/* *************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                        *
+ *                                                                             *
+ *   Licensed under the Apache License, Version 2.0 (the "License");           *
+ *   you may not use this file except in compliance with the License.          *
+ *   You may obtain a copy of the License at                                   *
+ *                                                                             *
+ *       http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                             *
+ *   Unless required by applicable law or agreed to in writing, software       *
+ *   distributed under the License is distributed on an "AS IS" BASIS,         *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  *
+ *   See the License for the specific language governing permissions and       *
+ *   limitations under the License.                                            *
+ * *************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers.plan;
 
+import edu.ucsc.dbtune.core.metadata.DatabaseObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Represents an operator of a SQL statement plan
+ * Represents an operator of a SQL statement plan.
  */
 public class Operator implements Comparable<Operator>
 {
@@ -35,17 +40,14 @@ public class Operator implements Comparable<Operator>
     /** Number of tuples that the operator produces */
     protected long cardinality;
 
-    /** When the operator is applied to a base table */
-    protected String tableName;
-
-    /** When the operator is filtering tuples */
-    protected String condition;
+    /** When the operator is applied to base objects */
+    protected List<DatabaseObject> objects;
 
     /**
-     * creates an empty operator, its name is "EMPTY". This can be used to represent empty plans.
+     * creates an empty operator ({@code name="empty"). This can be used to represent empty plans.
      */
     public Operator() {
-        this("EMPTY", 0.0, 0);
+        this("empty", 0.0, 0);
     }
 
     /**
@@ -53,7 +55,7 @@ public class Operator implements Comparable<Operator>
      *
      * @param name
      *     name of the operator
-     * @param accumulated cost
+     * @param accumulatedCost
      *     cost of the plan up to this operator
      * @param cardinality
      *     number of rows produced by the operator
@@ -64,8 +66,7 @@ public class Operator implements Comparable<Operator>
         this.cost            = 0.0;
         this.accumulatedCost = accumulatedCost;
         this.cardinality     = cardinality;
-        this.tableName       = null;
-        this.condition       = null;
+        this.objects         = new ArrayList<DatabaseObject>();
     }
 
     /**
@@ -75,6 +76,28 @@ public class Operator implements Comparable<Operator>
     public int hashCode()
     {
         return 1 * 31 + (new Long(id)).hashCode();
+    }
+
+    /**
+     * Adds a {@link DatabaseObject} to the list of objects that are touched by this operator. 
+     * Usually this corresponds to base operators like sequential and index scans, as well as 
+     * columns used in predicates.
+     *
+     * @param dbObject
+     *     the object that this operator is processing
+     */
+    public void add(DatabaseObject dbObject) {
+        objects.add(dbObject);
+    }
+
+    /**
+     * Returns the list of objects that are touched by this operator
+     *
+     * @return
+     *     list of objects that are referenced by the operator
+     */
+    public List<DatabaseObject> getDatabaseObjects() {
+        return new ArrayList<DatabaseObject>(objects);
     }
 
     /**
@@ -110,7 +133,7 @@ public class Operator implements Comparable<Operator>
     /**
      * returns the cost of the operator
      *
-     * @return
+     * @param cost
      *     the value corresponding to the cost of the operator
      */
     public void setCost(double cost) {
@@ -138,16 +161,6 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * returns the name of the table that the operator reads from
-     *
-     * @return
-     *     name of table the operator is applied to
-     */
-    public String getTableName() {
-        return tableName;
-    }
-
-    /**
      * returns the operator name
      *
      * @return
@@ -160,7 +173,7 @@ public class Operator implements Comparable<Operator>
     /**
      * {@inheritDoc}
      */
-	@Override
+    @Override
     public int compareTo(Operator operator)
     {
         return new Integer(this.id).compareTo(operator.id);
@@ -169,13 +182,21 @@ public class Operator implements Comparable<Operator>
     /**
      * {@inheritDoc}
      */
-	@Override
+    @Override
     public String toString() {
-        return
+        StringBuilder str = new StringBuilder();
+
+        str.append(
            "id: " + id +
            "; operator: " + name +
            "; cost: " + cost +
            "; accCost: " + accumulatedCost +
-           "; cardinality: " + cardinality;
+           "; cardinality: " + cardinality);
+
+        for(DatabaseObject obj : objects) {
+           str.append("; " + obj.getClass().getName() + ": " + obj);
+        }
+
+        return str.toString();
     }
 }

@@ -136,4 +136,31 @@ public class Schema extends DatabaseObject
     {
         return _baseConfiguration;
     }
+
+    /**
+     * Finds the table whose name matches the given argument.
+     *
+     * @param name
+     *     name of the object that is searched for in <code>this</code> table.
+     * @return
+     *     the table that has the given name; {@code null} if not found
+     */
+    public Table findTable(String name)
+    {
+        return (Table) DatabaseObject.findByName(new ArrayList<DatabaseObject>(_tables),name);
+    }
+
+    /**
+     * Finds the index whose name matches the given argument.
+     *
+     * @param name
+     *     name of the object that is searched for in <code>this</code> table.
+     * @return
+     *     the index that with the given name; {@code null} if not found.
+     */
+    public Index findIndex(String name)
+    {
+        return (Index) DatabaseObject.findByName(
+                new ArrayList<DatabaseObject>(_baseConfiguration.getIndexes()), name);
+    }
 }

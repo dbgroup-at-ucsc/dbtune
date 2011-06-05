@@ -190,10 +190,9 @@ public class GenericJDBCExtractor implements MetaDataExtractor
 
 								isUnique       = !rsset.getBoolean("NON_UNIQUE");
 								indexName      = rsset.getString("INDEX_NAME");
-								index          = new Index(table, isPrimary, isClustered, isUnique);
+								index          = new Index(indexName, table, isPrimary, isClustered, isUnique);
 								indexToColumns = new HashMap<Integer,Column>();
 
-								index.setName(indexName);
 								table.add(index);
 								allIndexes.add(index);
 							}

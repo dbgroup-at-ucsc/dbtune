@@ -15,8 +15,14 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers;
 
-import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.core.metadata.Column;
+import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.core.metadata.Table;
+import edu.ucsc.dbtune.core.metadata.Schema;
+import edu.ucsc.dbtune.core.metadata.SQLTypes;
 import edu.ucsc.dbtune.core.optimizers.plan.Operator;
+import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
 
@@ -135,10 +141,10 @@ public class PGOptimizerTest {
 			"   }                                              " +
 			"]";
 
-		SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan));
+		SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan), null);
 		Operator         root = plan.getRootOperator();
 
-        System.out.println(plan);
+		//System.out.println(plan);
 
 		assertEquals(5, plan.size());
 
@@ -180,6 +186,71 @@ public class PGOptimizerTest {
         assertEquals(1778.00,      child4.getCost(), 0.01);
 		assertEquals(0,            plan.getChildren(child4).size());
         
+	}
+
+	/**
+	 * Checks bound conversion. {@code DatabaseObject} instances should be bound to the 
+	 * corresponding operators
+	 */
+    @Test
+    public void testBoundConversion() throws Exception {
+		String jsonPlan =
+			"[                                                 " +
+			"   {                                              " +
+			"     \"Plan\": {                                  " +
+			"       \"Node Type\": \"Nested Loop\",            " +
+			"       \"Total Cost\": 375510.00,                 " +
+			"       \"Plan Rows\": 25005000,                   " +
+			"       \"Plans\": [                               " +
+			"         {                                        " +
+			"           \"Node Type\": \"Seq Scan\",           " +
+			"           \"Relation Name\": \"tbl\",            " +
+			"           \"Alias\": \"t1\",                     " +
+			"           \"Total Cost\": 155.00,                " +
+			"           \"Plan Rows\": 10000                   " +
+			"         },                                       " +
+			"         {                                        " +
+			"           \"Node Type\": \"Index Scan\",         " +
+			"           \"Index Name\": \"index_a\",           " +
+			"           \"Total Cost\": 1778.00,               " +
+			"           \"Plan Rows\": 28437                   " +
+			"         }                                        " +
+			"       ]                                          " +
+			"     }                                            " +
+			"   }                                              " +
+			"]";
+
+		Schema sch = new Schema("test");
+		Table  tbl = new Table("tbl");
+		Column col = new Column("a", SQLTypes.INTEGER);
+		Index  idx = new Index("index_a",tbl,false,false,false);
+
+		tbl.add(col);
+		idx.add(col);
+		tbl.add(idx);
+		sch.add(tbl);
+		sch.setBaseConfiguration(new Configuration(tbl.getIndexes()));
+
+		SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan), sch);
+		Operator         root = plan.getRootOperator();
+
+		//System.out.println(plan);
+
+		assertEquals(3, plan.size());
+
+        // check root
+		assertEquals("Nested Loop", root.getName());
+		assertEquals(2, plan.getChildren(root).size());
+
+        // check first child
+        Operator child1 = plan.getChildren(root).get(0);
+		assertEquals("Seq Scan", child1.getName());
+		assertEquals("tbl", child1.getDatabaseObjects().get(0).getName());
+        
+        // check second child
+        Operator child2 = plan.getChildren(root).get(1);
+		assertEquals("Index Scan", child2.getName());
+		assertEquals("index_a", child2.getDatabaseObjects().get(0).getName());
 	}
 
 	/**

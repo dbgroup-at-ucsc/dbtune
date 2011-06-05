@@ -34,15 +34,7 @@ public class Column extends DatabaseObject
     String  defaultValue;
     int     size;
 
-    /**
-     * constructor
-     */
-    public Column(String name)
-    {
-        this(name, -1);
-    }
-
-    /**
+	/**
      * copy constructor
      *
      * @param other

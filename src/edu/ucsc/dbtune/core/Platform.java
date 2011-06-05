@@ -182,7 +182,7 @@ public class Platform {
         @Override
         public Optimizer newOptimizer(DatabaseConnection connection) {
 			try {
-				return new PGOptimizer(connection.getJdbcConnection());
+				return new PGOptimizer(connection.getJdbcConnection(), null);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}

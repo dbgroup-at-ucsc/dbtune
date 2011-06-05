@@ -15,6 +15,8 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers;
 
+import edu.ucsc.dbtune.core.metadata.DatabaseObject;
+import edu.ucsc.dbtune.core.metadata.Schema;
 import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.core.optimizers.plan.Operator;
 
@@ -27,7 +29,6 @@ import java.sql.Statement;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.List;
-import java.lang.ClassCastException;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -35,25 +36,31 @@ import static edu.ucsc.dbtune.util.Strings.compareVersion;
 import static edu.ucsc.dbtune.core.metadata.PGCommands.getVersion;
 
 /**
- * {@inheritDoc}
+ * The interface with the PostgreSQL optimizer.
  */
 public class PGOptimizer extends Optimizer
 {
     private Connection connection;
     private String     explain;
+    private Schema     schema;
 
     /**
      * Creates a new optimizer for PostgreSQL systems.
      *
      * @param connection
      *     JDBC connection used to communicate to a PostgreSQL system.
+     * @param schema
+     *     can be null. A {@code Schema} where metadata of an object referred by an operator is 
+     *     stored. If not null, it is used to bind operator references to actual metadata objects.
      * @throws SQLException
      *     if an error occurs while communicating to the server.
      * @throws UnsupportedOperationException
      *     if the version of the PostgreSQL {@code connection} is communicating with isn't 9.0.0 or 
      *     above.
      */
-    public PGOptimizer(Connection connection) throws SQLException, UnsupportedOperationException {
+    public PGOptimizer(Connection connection, Schema schema)
+        throws SQLException, UnsupportedOperationException
+    {
         String version = getVersion(connection);
 
         if(compareVersion("9.0.0", version) > 0) {
@@ -61,6 +68,7 @@ public class PGOptimizer extends Optimizer
                 "PostgreSQL version " + version + " doesn't produce formatted EXPLAIN plans");
         }
 
+        this.schema     = schema;
         this.connection = connection;
         this.explain    = "EXPLAIN (COSTS true, FORMAT json) ";
     }
@@ -76,7 +84,7 @@ public class PGOptimizer extends Optimizer
 
         while(rs.next()) {
             try {
-                plan = parseJSON(new StringReader(rs.getString(1)));
+                plan = parseJSON(new StringReader(rs.getString(1)), schema);
             } catch (Exception e) {
                 throw new SQLException(e);
             }
@@ -131,13 +139,18 @@ public class PGOptimizer extends Optimizer
      *
      * @param reader
      *     object where the plan contents are retrieved from.
+     * @param schema
+     *     can be null. A {@code Schema} where metadata of an object referred by an operator is 
+     *     stored. If not null, it is used to bind operator references to actual metadata objects.
      * @return
      *     the object representing the plan for the statement contained in the reader's source.
      * @throws IOException
-     *     if an error occurs when reading from source
+     *     if an error occurs when reading from data from {@reader}
+     * @throws SQLException
+     *     when an error occurs during the parsing, eg. a data type conversion error occurs.
      */
-    public static SQLStatementPlan parseJSON(Reader reader)
-        throws IOException, ClassCastException, Exception
+    public static SQLStatementPlan parseJSON(Reader reader, Schema schema)
+        throws IOException, SQLException
     {
         ObjectMapper     mapper;
         SQLStatementPlan plan;
@@ -153,16 +166,16 @@ public class PGOptimizer extends Optimizer
         }
 
         if(planData.size() > 1) {
-            throw new Exception("More than one root node");
+            throw new SQLException("More than one root node");
         }
 
         @SuppressWarnings("unchecked")
         Map<String,Object> rootData = (Map<String,Object>) planData.get(0).get("Plan");
 
-        root = extractNode(rootData);
+        root = extractNode(rootData, schema);
         plan = new SQLStatementPlan(root);
 
-        extractChildNodes(plan, root, rootData);
+        extractChildNodes(plan, root, rootData, schema);
 
         return plan;
     }
@@ -178,10 +191,19 @@ public class PGOptimizer extends Optimizer
      *     being extracted from and assigned to.
      * @param parentData
      *     the map containing the data of plans
+     * @param schema
+     *     can be null. A {@code Schema} where metadata of an object referred by an operator is 
+     *     stored. If not null, it is used to bind operator references to actual metadata objects.
+     * @throws SQLException
+     *     when an error occurs during the parsing, eg. a data type conversion error occurs.
      * @see <a href="http://wiki.fasterxml.com/JacksonDocumentation">Jackson Documentation</a>
      */
-    private static void extractChildNodes(SQLStatementPlan plan, Operator parent, Map<String,Object> parentData )
-        throws ClassCastException, Exception
+    private static void extractChildNodes(
+            SQLStatementPlan   plan,
+            Operator           parent,
+            Map<String,Object> parentData,
+            Schema             schema )
+        throws SQLException
     {
         @SuppressWarnings("unchecked")
         List<Map<String,Object>> childrenData = (List<Map<String,Object>>) parentData.get("Plans");
@@ -196,11 +218,11 @@ public class PGOptimizer extends Optimizer
         double   childrenCost = 0.0;
 
         for(Map<String,Object> childData : childrenData) {
-            child         = extractNode(childData);
+            child         = extractNode(childData, schema);
             childrenCost += child.getAccumulatedCost();
 
             plan.setChild(parent, child);
-            extractChildNodes(plan, child, childData);
+            extractChildNodes(plan, child, childData, schema);
         }
 
         parent.setCost(parent.getAccumulatedCost() - childrenCost);
@@ -210,27 +232,75 @@ public class PGOptimizer extends Optimizer
      * Extracts the data corresponding to node that is structured Jackson's Simple Data Binding 
      * format and creates an {@link Operator} object.
      *
+     * The operator information that postgres' {@code EXPLAIN} produces contains at least:
+     *
+     * The complete list of attributes are explained <a 
+     * href="http://archives.postgresql.org/pgsql-hackers/2010-11/msg00214.php">here</a> and can be extracted from 
+     * PostgreSQL's source code, by looking to file {@code src/backend/commands/explain.c}
+     *
+     * If a schema object is given, the database objects that are referenced by a plan are bound to 
+     * the operator.
+     *
      * @param nodeData
      *     mapping of node attribute names and values.
+     * @param schema
+     *     can be null. A {@code Schema} where metadata of an object referred by an operator is 
+     *     stored. If not null, it is used to bind operator references to actual metadata objects.
      * @return
-     *     the {@link Operator} object containing the info from {@link planData}.
-     * @throws Exception
+     *     the {@code Operator} object containing the info that was extracted from {@code nodeData}.
+     * @throws SQLException
      *     if {@code "Node Type"}, {@code "Total Cost"} or {@code "Plan Rows"} entries in the {@code 
-     *     planData} map are empty or @{code null}.
+     *     planData} map are empty or @{code null}. Also, when {@code schema} isn't null and the 
+     *     metadata corresponding to a database object referred in a node is not found.
      */
-    private static Operator extractNode(Map<String,Object> nodeData) throws Exception {
-        Object type;
-        Object accCost;
-        Object cardinality;
+    private static Operator extractNode(Map<String,Object> nodeData, Schema schema)
+        throws SQLException
+    {
+        Object         type;
+        Object         accCost;
+        Object         cardinality;
+        Object         dbObjectName;
+        Operator       operator;
+        DatabaseObject dbObject;
 
         type        = nodeData.get("Node Type");
         accCost     = nodeData.get("Total Cost");
         cardinality = nodeData.get("Plan Rows");
 
         if(type == null || accCost == null || cardinality == null) {
-            throw new Exception("Type, cost or cardinality is (are) null");
+            throw new SQLException("Type, cost or cardinality is (are) null");
         }
 
-        return new Operator((String) type, (Double) accCost, ((Number) cardinality).longValue());
+        operator = new Operator((String) type, (Double) accCost, ((Number) cardinality).longValue());
+
+        if( schema == null ) {
+            return operator;
+        }
+
+        dbObjectName = nodeData.get("Relation Name");
+
+        if(dbObjectName != null) {
+            dbObject = schema.findTable((String)dbObjectName);
+
+            if(dbObject == null) {
+                throw new SQLException("Table " + dbObjectName + " not found in schema");
+            }
+
+            operator.add(dbObject);
+        }
+
+        dbObjectName = nodeData.get("Index Name");
+
+        if(dbObjectName != null) {
+            dbObject = schema.findIndex((String)dbObjectName);
+
+            if(dbObject == null) {
+                throw new SQLException("Index " + dbObjectName + " not found in schema");
+            }
+
+            operator.add(dbObject);
+        }
+
+        return operator;
     }
 }

@@ -1,21 +1,18 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ****************************************************************************
- */
-
+/* *************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                        *
+ *                                                                             *
+ *   Licensed under the Apache License, Version 2.0 (the "License");           *
+ *   you may not use this file except in compliance with the License.          *
+ *   You may obtain a copy of the License at                                   *
+ *                                                                             *
+ *       http://www.apache.org/licenses/LICENSE-2.0                            *
+ *                                                                             *
+ *   Unless required by applicable law or agreed to in writing, software       *
+ *   distributed under the License is distributed on an "AS IS" BASIS,         *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  *
+ *   See the License for the specific language governing permissions and       *
+ *   limitations under the License.                                            *
+ * *************************************************************************** */
 package edu.ucsc.dbtune.core.metadata;
 
 import java.util.List;
@@ -63,7 +60,7 @@ public class IndexTest
     {
         Index index;
 
-        index = new Index( table, PRIMARY, CLUSTERED, UNIQUE );
+        index = new Index( "testi", table, PRIMARY, CLUSTERED, UNIQUE );
 
         assertEquals( table, index.getTable() );
 
@@ -82,7 +79,7 @@ public class IndexTest
 
         index1 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
         index2 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
-        index3 = new Index( table, PRIMARY, CLUSTERED, UNIQUE );
+        index3 = new Index( "testi", table, PRIMARY, CLUSTERED, UNIQUE );
 
         for( int i = 0; i < table.getColumns().size(); i++ )
         {
@@ -107,7 +104,7 @@ public class IndexTest
 
         index1 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
         index2 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
-        index3 = new Index( table, PRIMARY, CLUSTERED, UNIQUE );
+        index3 = new Index( "testi", table, PRIMARY, CLUSTERED, UNIQUE );
 
         for( int i = 0; i < table.getColumns().size(); i++ )
         {

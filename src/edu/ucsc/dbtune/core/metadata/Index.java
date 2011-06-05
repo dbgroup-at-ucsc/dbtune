@@ -45,6 +45,8 @@ public class Index extends DatabaseObject
     /**
      * Creates an empty index.
      *
+	 * @param name
+	 *     name of the index
      * @param table
      *     table over which the index will be defined.
      * @param primary
@@ -54,16 +56,15 @@ public class Index extends DatabaseObject
      * @param clustered
      *     whether the corresponding table is clustered on this index
      */
-    public Index(Table table, boolean primary, boolean unique, boolean clustered)
+    public Index(String name, Table table, boolean primary, boolean unique, boolean clustered)
     {
-        super();
+        super(name);
 
         this.table     = table;
         this.type      = UNKNOWN;
         this.primary   = primary;
         this.unique    = unique;
         this.columns   = new ArrayList<Column>();
-        this.name      = "";
         this.clustered = clustered;
     }
 
