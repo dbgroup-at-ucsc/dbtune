@@ -15,7 +15,12 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers.plan;
 
+import edu.ucsc.dbtune.core.metadata.DatabaseObject;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.spi.Tree;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Represents a plan for SQL statements of a RDBMS.
@@ -41,10 +46,46 @@ public class SQLStatementPlan extends Tree<Operator> {
     /**
      * Returns the operator at the root of the plan.
      *
-     * @return root node of the plan
+     * @return
+     *     root node of the plan
      */
     public Operator getRootOperator() {
         return super.getRootElement();
+    }
+
+    /**
+     * Aggregates the set of database objects referenced by all the operators in a list and returns 
+     * it.
+     *
+     * @return
+     *     list of objects referenced by one or more operators in the plan.
+     */
+    public List<DatabaseObject> getDatabaseObjects() {
+        List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
+
+        for(Operator op : toList()) {
+            objects.addAll(op.getDatabaseObjects());
+        }
+
+        return objects;
+    }
+
+    /**
+     * Returns the set of indexes referenced by the plan.
+     *
+     * @return
+     *     list of indexes referenced by the operators in the plan.
+     */
+    public List<Index> getIndexes() {
+        List<Index> indexes = new ArrayList<Index>();
+
+        for(DatabaseObject ob : getDatabaseObjects()) {
+            if(ob instanceof Index) {
+                indexes.add((Index) ob);
+            }
+        }
+
+        return indexes;
     }
 
     /**
