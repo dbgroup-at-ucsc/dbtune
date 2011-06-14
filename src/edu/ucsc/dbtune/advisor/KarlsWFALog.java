@@ -131,20 +131,16 @@ public class KarlsWFALog {
   public static <I extends DBIndex> KarlsWFALog generateFixed(java.util.List<ProfiledQuery<I>> qinfos, IndexBitSet[] recs, Snapshot<I> snapshot, IndexPartitions<I> parts, double[] overheads) {
     int queryCount = qinfos.size();
     KarlsWFALog log = new KarlsWFALog();
-    IndexBitSet scratch = new IndexBitSet();
 
     IndexBitSet[] partBitSets = parts.bitSetArray();
     for (int q = 0; q < queryCount; q++) {
-      ProfiledQuery<I> qinfo = qinfos.get(q);
-      IndexBitSet state = recs[q];
-      IndexBitSet prevState = q == 0 ? new IndexBitSet() : recs[q-1];
-      double planCost;
-      if (parts != null)
-        planCost = parts.theoreticalCost(qinfo, state, scratch);
-      else
-        planCost = qinfo.planCost(state);
-      double maintCost = qinfo.maintenanceCost(state);
-      double transitionCost = WorkFunctionAlgorithm.transitionCost(snapshot, prevState, state);
+      ProfiledQuery<I> qinfo          = qinfos.get(q);
+      IndexBitSet      state          = recs[q];
+      IndexBitSet      prevState      = q == 0 ? new IndexBitSet() : recs[q-1];
+      double           planCost       = qinfo.planCost(state);
+      double           maintCost      = qinfo.maintenanceCost(state);
+      double           transitionCost = WorkFunctionAlgorithm.transitionCost(snapshot, prevState, state);
+
       log.add(qinfo, partBitSets, state, planCost, maintCost, transitionCost, qinfo.getWhatIfCount(), overheads[q]);
     }
 

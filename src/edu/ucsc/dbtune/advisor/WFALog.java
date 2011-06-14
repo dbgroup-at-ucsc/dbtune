@@ -108,7 +108,7 @@ public class WFALog implements Serializable {
 
     // print all pairs i,j where i is a query and j is recommended at step i
     public void dumpHistory(PrintStream out) {
-        int i = 1;
+        int i = 0;
         IndexBitSet prev = new IndexBitSet();
         for (Entry e : list) {
             IndexBitSet bs = e.recommendation;
@@ -125,15 +125,18 @@ public class WFALog implements Serializable {
     }
     
     /**
-     * Writes the log for an experiment with a fixed candidate set. Iterates through the given {@code ProfiledQuery} objects 
-     * and obtains the costs for each of the queries, as well as each of the recommendations done at each.
+     * Writes the log for an experiment with a fixed candidate set. Iterates through the given 
+     * {@code ProfiledQuery} objects and obtains the costs for each of the queries, as well as each 
+     * of the recommendations done for each.
      *
      * @param qinfos
-     *     represents a workload where each query has been profiled and used in WFIT, containing the historical information 
-     *     (in the corresponding {@link IBG} object) executed at each step of the algorithm.
+     *     the profile of each of the queries that are contained in a workload. Each of them have 
+     *     been filled with the data corresponding to the WFIT process and contain the historical 
+     *     information (in the corresponding {@link IBG} object) executed at each step of the 
+     *     algorithm.
      * @param recs
-     *     set of possible recommendations at each step; there should be a one to one correspondence between an {@code 
-     *     IndexBitSet} and a profiled query. This means that
+     *     set of possible recommendations at each step; there should be a one to one correspondence 
+     *     between an {@code IndexBitSet} and a profiled query.
      * @param snapshot
      *     set of indexes that are created/dropped during the execution of the workload
      * @param parts

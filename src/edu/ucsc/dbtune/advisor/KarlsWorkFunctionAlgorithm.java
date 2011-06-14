@@ -412,7 +412,9 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 					bestState = stateNum;
 					bestValue = value;
 					bestTransitionCost = transition;
+                    System.out.println("New best: " + bestState);
 				}
+                System.out.println("Just checking");
 			}
 
 			if (bestState < 0)
