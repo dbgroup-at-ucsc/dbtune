@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.ml
 
-import edu.ucsc.dbtune.core.optimizers.plan.StatementPlan
+import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan
 import edu.ucsc.dbtune.core.optimizers.plan.Operator
 import edu.ucsc.dbtune.ml.OperatorAggregationExtractorTest._
 
@@ -40,7 +40,7 @@ class OperatorAggregationExtractorTest {
 object OperatorAggregationExtractorTest {
     val plan1 = {
         val root = new Operator("Nested Loop", 926.37, 1)
-        val plan = new StatementPlan(root)
+        val plan = new SQLStatementPlan(root)
 
         root.setCost(343.00)
 
@@ -55,7 +55,7 @@ object OperatorAggregationExtractorTest {
     }
     val plan2 = {
         val root = new Operator("Limit", 115.11, 12345)
-        val plan = new StatementPlan(root)
+        val plan = new SQLStatementPlan(root)
 
         root.setCost(115.11)
 
