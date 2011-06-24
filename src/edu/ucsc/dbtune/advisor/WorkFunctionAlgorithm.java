@@ -20,6 +20,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -40,15 +41,18 @@ import java.util.List;
  * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
  *     "On-line Index Selection for Physical Database Tuning"</a>
  */
-public class WorkFunctionAlgorithm<I extends DBIndex>
-{
-    SubMachineArray<I>  submachines;
-    TotalWorkValues     wf;
-    private int         maxNumStates;
-    private int         maxHotSize;
-    private Workspace   workspace;
+public class WorkFunctionAlgorithm<I extends DBIndex> {
+    private static final Environment ENV = Environment.getInstance();
+    private static final int MAX_NUM_STATES   = ENV.getMaxNumStates();
+    private static final int MAX_HOTSET_SIZE  = ENV.getMaxNumIndexes();
+
+    // for tracking history
     private boolean     keepHistory;
     private WfaTrace<I> trace;
+
+    private TotalWorkValues     wf          = new TotalWorkValues();
+    private SubMachineArray<I>  submachines = new SubMachineArray<I>(0);
+    private Workspace           workspace   = new Workspace();
 
     private final Console console = Console.streaming();
 
@@ -63,18 +67,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
      *      {@code true} if we want to keep some history of the work done by this object,
      *      {@code false} if we don't want to.
      */
-    public WorkFunctionAlgorithm(
-            IndexPartitions<I> parts,
-            int                maxNumStates,
-            int                maxHotSize,
-            boolean            keepHistory)
-    {
-        this.maxNumStates = maxNumStates;
-        this.maxHotSize   = maxHotSize;
-        this.workspace    = new Workspace(this.maxNumStates,this.maxHotSize);
-        this.submachines  = new SubMachineArray<I>(0);
-        this.wf           = new TotalWorkValues(this.maxNumStates, this.maxHotSize);
-    
+    public WorkFunctionAlgorithm(IndexPartitions<I> parts,boolean keepHistory){
         if (parts != null) {
             repartition(parts);
 
@@ -83,13 +76,10 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
             }
 
             this.keepHistory = keepHistory;
-        }
-        else {
+        } else {
             Checks.checkAssertion(!keepHistory, "may only keep history if given the initial partition");
             this.keepHistory = false;
         }
-        
-        //dump("INITIAL");
     }
 
     /**
@@ -98,8 +88,9 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
      * @param parts
      *    a list of index partitions.
      */
+    //todo(Huascar) remove maxNumStates and maxHotsize once getting good results.
     public WorkFunctionAlgorithm(IndexPartitions<I> parts, int maxNumStates, int maxHotSize) {
-        this(parts, maxNumStates, maxHotSize, false);
+        this(parts, false);
     }
 
     /**
@@ -136,41 +127,39 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
      * @see {@link #getRecommendation()}
      */
     public void newTask(ProfiledQuery<I> qinfo) {
-        workspace.tempBitSet.clear(); // just to be safe
-        
-        for (int subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
-            SubMachine<I> subm = submachines.get(subsetNum);
-            preprocessCostIntoVector(qinfo, subm);
+      workspace.tempBitSet.clear(); // just to be safe
+
+      console.info("WorkFunctionAlgorithm#newTask(ProfiledQuery) inputs: " + qinfo + ".");
+      for (int subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
+          SubMachine<I> subm = submachines.get(subsetNum);
+          // preprocess cost into a vector
+          for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
+            // this will explicitly set each index in the array to 1 or 0
+            setStateBits(subm.indexIds, stateNum, workspace.tempBitSet);
+            double queryCost = qinfo.totalCost(workspace.tempBitSet);
+            workspace.tempCostVector.set(stateNum, queryCost);
+          }
+
+          // clear all indexes in the array
+          clearStateBits(subm.indexIds, workspace.tempBitSet);
+
+          // run the task through the submachine
+          subm.newTask(workspace.tempCostVector, wf, workspace.wf2);
         }
         
         // all submachines have assigned the new values into wf2
         // swap wf and wf2
-        { TotalWorkValues wfTemp = wf; wf = workspace.wf2; workspace.wf2 = wfTemp; }
+        {
+          TotalWorkValues wfTemp = wf;
+          wf = workspace.wf2;
+          workspace.wf2 = wfTemp;
+        }
         
         // keep trace info
         if (keepHistory) {
             double nullCost = qinfo.getIndexBenefitGraph().emptyCost();
             trace.addValues(wf, nullCost);
         }
-        
-        //dump("NEW TASK");
-    }
-
-    private void preprocessCostIntoVector(ProfiledQuery<I> qinfo, SubMachine<I> subm) {
-        console.info("WorkFunctionAlgorithm#preprocessCostIntoVector(ProfiledQuery, SubMachine) inputs: " + qinfo + ", " + subm);
-        // preprocess cost into a vector
-        for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
-            // this will explicitly set each index in the array to 1 or 0
-            setStateBits(subm.indexIds, stateNum, workspace.tempBitSet);
-            double queryCost = qinfo.totalCost(workspace.tempBitSet);
-            workspace.tempCostVector.set(stateNum, queryCost);
-        }
-
-        // clear all indexes in the array
-        clearStateBits(subm.indexIds, workspace.tempBitSet);
-
-        // run the task through the submachine
-        subm.newTask(workspace.tempCostVector, wf, workspace.wf2);
     }
 
     /**
@@ -188,7 +177,6 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
                 subm.vote(wf, index, isPositive);
             }
         }
-        //dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + index.internalId());
     }
 
     /**
@@ -198,7 +186,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
      * @return a list of recommended {@link DBIndex indexes}.
      */
     public List<I> getRecommendation() {
-        ArrayList<I> rec = new ArrayList<I>(maxHotSize);
+        ArrayList<I> rec = new ArrayList<I>(MAX_HOTSET_SIZE);
         for (SubMachine<I> subm : submachines) {
             for (I index : subm.subset) {
                 if (subm.currentBitSet.get(index.internalId())){
@@ -300,7 +288,6 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
         
         submachines = submachines2; // start using new subsets
         wf.reallocate(workspace.wf2); // copy wf2 into wf (also changes the implicit partitioning within wf)
-        //dump("REPARTITION");
     }
 
 
@@ -403,7 +390,11 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
     private static class CostVector {
         private double[] vector;
         private int cap;
-        
+
+        CostVector(){
+          this(MAX_NUM_STATES);
+        }
+
         CostVector(int maxNumStates) {
             cap = maxNumStates;
             vector = new double[cap];
@@ -421,7 +412,9 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
         final void grow(int minSize) {
             int newCap = minSize + vector.length;
             double[] newVector = new double[newCap];
-            System.arraycopy(vector, 0, newVector, 0, cap);
+            for (int i = 0; i < cap; i++) {
+              newVector[i] = vector[i];
+            }
             vector = newVector;
             cap = newCap;
         }
@@ -672,6 +665,10 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
         int[] predecessor;
         int[] subsetStart;
 
+        TotalWorkValues(){
+          this(MAX_NUM_STATES, MAX_HOTSET_SIZE);
+        }
+
         /**
          * construct a {@code total work values} object. This object is constructed given the
          * max number of states and the max hotset size accepted by the {@code work function algo}.
@@ -741,8 +738,10 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
                 subsetStart = new int[newSubsetCount];
             }
 
-            System.arraycopy(wf2.subsetStart, 0, subsetStart, 0, newSubsetCount);
-            
+            for (int subsetNum = 0; subsetNum < newSubsetCount; subsetNum++) {
+              subsetStart[subsetNum] = wf2.subsetStart[subsetNum];
+            }
+
             for (int i = 0; i < newValueCount; i++) {
                 values[i] = wf2.values[i];
                 predecessor[i] = wf2.predecessor[i];
@@ -763,15 +762,8 @@ public class WorkFunctionAlgorithm<I extends DBIndex>
      * WorkFunctionAlgorithm's workspace.
      */
     private static class Workspace {
-        TotalWorkValues wf2;
-        CostVector      tempCostVector;
-        IndexBitSet     tempBitSet;
-
-        Workspace(int maxNumStates, int maxHotSize)
-        {
-            wf2            = new TotalWorkValues(maxNumStates,maxHotSize);
-            tempCostVector = new CostVector(maxNumStates);
-            tempBitSet     = new IndexBitSet();
-        }
+        TotalWorkValues wf2            = new TotalWorkValues();
+        CostVector      tempCostVector = new CostVector();
+        IndexBitSet     tempBitSet     = new IndexBitSet();
     }
 }

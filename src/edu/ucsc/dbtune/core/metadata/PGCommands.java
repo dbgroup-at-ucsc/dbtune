@@ -20,28 +20,25 @@ package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.SQLCategory;
+import static edu.ucsc.dbtune.core.metadata.PGReifiedTypes.ReifiedPGIndexList;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
 import edu.ucsc.dbtune.util.Checks;
+import static edu.ucsc.dbtune.util.Checks.checkSQLRelatedState;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
+import static edu.ucsc.dbtune.util.Instances.newList;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.Strings;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
-
-import static edu.ucsc.dbtune.core.metadata.PGReifiedTypes.ReifiedPGIndexList;
-import static edu.ucsc.dbtune.util.Checks.checkSQLRelatedState;
-import static edu.ucsc.dbtune.util.Instances.newList;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -57,7 +54,7 @@ public class PGCommands {
     public static Function<PGExplainInfo, SQLException> explainIndexes(){
         final Function<Parameter, SQLException> rs;
         final Function<PGExplainInfo, SQLException> eidx;
-        rs     = shareResultSetCommand();
+        rs     = sharedResultSetCommand();
         eidx   = explainInfo();
         return Functions.compose(rs, eidx);
     }
@@ -202,11 +199,14 @@ public class PGCommands {
         final Function<Parameter, SQLException> rs;
         final Function<Double, SQLException> ec;
         Console.streaming().info("used set=" + (usedSet == null ? "null" : usedSet));
-        rs   = shareResultSetCommand();
+        rs   = sharedResultSetCommand();
         ec   = explainCost(usedSet);
         return Functions.compose(rs, ec);
     }
 
+    private static SharedResultSetCommand sharedResultSetCommand(){
+      return SharedResultSetCommand.INSTANCE;
+    }
 
     /**
      * Returns a command that will explain indexes's cost.
@@ -224,7 +224,6 @@ public class PGCommands {
                     try{
 
                         final double qCost =  Double.parseDouble(resultSet.getString("qcost"));
-                        Console.streaming().info("PGCommands#explainCost(IndexBitSet) returned a workload cost* of " + Double.valueOf(resultSet.getString("qcost")));
                         Console.streaming().info("PGCommands#explainCost(IndexBitSet) returned a workload cost of " + qCost);
                         usedSet.clear();
                         // todo(Huascar) I am getting actual costs, but no indexes? this is weird.
@@ -266,6 +265,8 @@ public class PGCommands {
                 final List<Double> costCollector = Instances.newList();
                 try {
                     Console.streaming().info("PGCommands#explainInfo() ");
+                    final String catcat =  resultSet.getString("category");
+                    Console.streaming().info("AHA===>" + catcat + " and statement ==>" + Strings.str(resultSet.getStatement()));
                     category = SQLCategory.from(resultSet.getString("category"));
                     Console.streaming().info("PGCommands#explainInfo() has set the category:SQLCategory to " + category);
                     // overhead = oh
@@ -313,43 +314,46 @@ public class PGCommands {
         };
     }
 
+
     /**
-     * makes a command that will share an initialized {@link java.sql.ResultSet} object.
+     * persists a command that will share an initialized {@link java.sql.ResultSet} object.
      *
-     * @return a command that will initialize a {@link java.sql.ResultSet} and share it with
-     *      other commands that will perform a more specific operation.
-     *      <strong>NOTE</strong> these other commands will have the responsibility
-     *      of closing the {@link java.sql.ResultSet} and commiting to the db by calling
-     *      {@link java.sql.Connection#commit()}.
+     * The normal flow goes like this:
+     * a command that will initialize a {@link java.sql.ResultSet} and share it with
+     * other commands that will perform a more specific operation.
+     * <strong>NOTE</strong> these other commands will have the responsibility
+     * of closing the {@link java.sql.ResultSet} and commiting to the db by calling
+     * {@link java.sql.Connection#commit()}.
      */
-    private static Function<Parameter, SQLException> shareResultSetCommand(){
-        return new Function<Parameter, SQLException>(){
-            private Statement statement;
-            @Override
-            public Parameter apply(Parameter input) throws SQLException {
-                final Connection            connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-                final ReifiedPGIndexList    indexes     = input.getParameterValue(ReifiedPGIndexList.class);
-                final IndexBitSet           config      = input.getParameterValue(IndexBitSet.class);
-                final String                sql         = input.getParameterValue(String.class);
-                final Integer               cardinality = input.getParameterValue(Integer.class);
-                final Double[]              maintCost   = input.getParameterValue(Double[].class);
+    private enum SharedResultSetCommand implements Function <Parameter, SQLException> {
+      INSTANCE;
+      private Statement statement;
+      @Override public Parameter apply(Parameter input) throws SQLException {
+          final Connection            connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+          final ReifiedPGIndexList    indexes     = input.getParameterValue(ReifiedPGIndexList.class);
+          final IndexBitSet           config      = input.getParameterValue(IndexBitSet.class);
+          final String                sql         = input.getParameterValue(String.class);
+          final Integer               cardinality = input.getParameterValue(Integer.class);
+          final Double[]              maintCost   = input.getParameterValue(Double[].class);
 
-                if(statement == null) {
-                    statement = connection.createStatement();
-                }
+          if(statement == null) {
+              statement = connection.createStatement();
+          }
 
-                final String explainSql = "EXPLAIN INDEXES " + indexListString(indexes, config) + sql;
-                final ResultSet rs = statement.executeQuery(explainSql);
-                checkSQLRelatedState(rs.next(), "no row returned from EXPLAIN INDEXES");
+          final String explainSql = "EXPLAIN INDEXES " + indexListString(indexes, config) + sql;
+          final ResultSet rs = statement.executeQuery(explainSql);
+          checkSQLRelatedState(rs.next(), "no row returned from EXPLAIN INDEXES");
 
-                return Parameters.makeAnonymousParameter(
-                        rs,
-                        cardinality, 
-                        maintCost
-                );
-            }
+          return Parameters.makeAnonymousParameter(
+                  rs,
+                  cardinality,
+                  maintCost
+          );
+      }
 
-        };
+      @Override public String toString() {
+        return "sharedResultSetCommand()";
+      }
     }
 
 

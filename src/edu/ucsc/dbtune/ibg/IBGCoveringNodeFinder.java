@@ -61,10 +61,10 @@ public class IBGCoveringNodeFinder {
 	public final double findCost(IndexBenefitGraph ibg, IndexBitSet config) {
 		if (config.isEmpty()) {
 			return ibg.emptyCost();
-        } else {
-            final IBGNode foundNode = findFast(ibg.rootNode(), config, null);
+    } else {
+      final IBGNode foundNode = findFast(ibg.rootNode(), config, null);
 			return foundNode != null ? foundNode.cost() : ZERO_COST;
-        }
+    }
 	}
 
     /**
@@ -80,7 +80,7 @@ public class IBGCoveringNodeFinder {
 		double cost = 0;
 		for (IndexBenefitGraph ibg : ibgs){
 			cost += findCost(ibg, config);
-        }
+    }
 		return cost;
 	}
 
@@ -105,8 +105,8 @@ public class IBGCoveringNodeFinder {
 		while (true) {
 			// stop if an unexpanded node is found
 			if (!currentNode.isExpanded()){
-                return null;
-            }
+        return null;
+      }
 			
 			IBGChild ch = currentNode.firstChild();
 			while (true) {
@@ -141,24 +141,24 @@ public class IBGCoveringNodeFinder {
 			IBGNode node = pending.next();
 			
 			if (visited.get(node.id)) {
-                continue;
-            }
+        continue;
+      }
 			visited.set(node.id);
 			
 			// skip unexpanded nodes
 			if (!node.isExpanded()){
-                continue;
-            }
+        continue;
+      }
 			
 			// prune non-supersets
 			if (!config.subsetOf(node.config)){
-                continue;
-            }
+        continue;
+      }
 			
 			// return if we have found covering node
 			if (node.usedSetIsSubsetOf(config)){
-                return node;
-            }
+        return node;
+      }
 			
 			// this node has children that might be covering nodes... continue on
 			pending.addChildren(node.firstChild());
@@ -182,13 +182,13 @@ public class IBGCoveringNodeFinder {
 			IBGNode node = pending.next();
 			
 			if (visited.get(node.id)) {
-                continue;
-            }
+          continue;
+      }
 			visited.set(node.id);
 			
 			if (!node.isExpanded()){
-                continue;
-            }
+        continue;
+      }
 
 			boolean missingCoveringNode = false;
 			boolean supersetOfMissing = false;
@@ -206,11 +206,11 @@ public class IBGCoveringNodeFinder {
 			}
 
 			if (!missingCoveringNode){
-                return;
-            }
+          return;
+      }
 			if (supersetOfMissing){
-                pending.addChildren(node.firstChild());
-            }
+          pending.addChildren(node.firstChild());
+      }
 		}
 	}
 

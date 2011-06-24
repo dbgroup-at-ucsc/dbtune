@@ -31,6 +31,7 @@ import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.Objects;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
@@ -148,7 +149,7 @@ public class DatabasePackageTest {
         ie.explain("SELECT * FROM R;");
     }
 
-    @Test
+    @Ignore @Test
     public void testBasicUsageScenario_IBGSpecific_EstimatedCost() throws Exception {
         // create connections
         // used empty configuration and usedSet bitsets
@@ -169,7 +170,7 @@ public class DatabasePackageTest {
         }
     }
 
-    @Test
+    @Ignore @Test
     public void testBasicUsageScenario_IBGSpecific_WhatIfOptimizationCostWithProfiledIndex() throws Exception {
         checkIBGWhatIfOptimizerCostWithProfiledIndex(
                 new IndexBitSet(),              // index configuration

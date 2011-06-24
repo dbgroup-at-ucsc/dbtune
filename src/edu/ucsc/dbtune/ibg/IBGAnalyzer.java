@@ -91,39 +91,42 @@ public class IBGAnalyzer {
 		// we might need to go through several nodes to find one that we haven't visited yet
 		while (true) {
 			IBGNode node;
-			
+
 			if (nodeQueue.hasNext()) {
-				if (nodeQueue.peek().isExpanded()) { 
+				if (nodeQueue.peek().isExpanded()) {
 					node = nodeQueue.next();
-				} else if (wait) {
+				}
+				else if (wait) {
 					node = nodeQueue.next();
 					ibgCons.waitUntilExpanded(node);
-				} else if (revisitQueue.hasNext()) {
+				}
+				else if (revisitQueue.hasNext()) {
 					node = revisitQueue.next();
-				} else {
+				}
+				else {
 					return StepStatus.BLOCKED;
 				}
-			} else if (revisitQueue.hasNext()) {
+			}
+			else if (revisitQueue.hasNext()) {
 				node = revisitQueue.next();
-			} else {
+			}
+			else {
 				return StepStatus.DONE;
 			}
-			
-			if (visitedNodes.get(node.id)){
-                continue;
-            }
-			
+
+			if (visitedNodes.get(node.id))
+				continue;
+
 			if (analyzeNode(node, logger)) {
-				// node is done ... move on to children
 				visitedNodes.set(node.id);
 				nodeQueue.addChildren(node.firstChild());
-			} else {
+			}
+			else {
 				revisitQueue.addNode(node);
 			}
-			
-			if (revisitQueue.hasNext() || nodeQueue.hasNext()) {
-                return StepStatus.SUCCESS;
-            }
+
+			if (revisitQueue.hasNext() || nodeQueue.hasNext())
+				return StepStatus.SUCCESS;
 		}
 	}
 
@@ -136,13 +139,127 @@ public class IBGAnalyzer {
      *      an {@link InteractionLogger graph logger}.
      * @return {@code true} if the analysis was successful.
 	 */
+	// We have a bunch of structures that we keep around to
+	// avoid excessive garbage collection. These structures are only used in
+	// analyzeNode().
+	//
+	// TODO: We might want to group these together in some object ("IBGAnalyzerWorkspace"?)
+	private IndexBitSet candidatesBitSet = new IndexBitSet();
+	private IndexBitSet usedBitSet = new IndexBitSet();
+
+	private IndexBitSet bitset_YaSimple = new IndexBitSet();
+	private IndexBitSet bitset_Ya = new IndexBitSet();
+	private IndexBitSet bitset_YbMinus = new IndexBitSet();
+	private IndexBitSet bitset_YbPlus = new IndexBitSet();
+	private IndexBitSet bitset_Yab = new IndexBitSet();
+
+	/*
+	 * Return true if the analysis was successful
+	 */
 	private boolean analyzeNode(IBGNode node, InteractionLogger logger) {
-        return new IBGAnalyzerWorkspace(
-                node,
-                logger,
-                rootBitSet,
-                allUsedIndexes
-        ).runAnalysis(coveringNodeFinder, ibgCons);
+		IndexBitSet bitset_Y = node.config;
+
+		// get the used set
+		usedBitSet.clear();
+		node.addUsedIndexes(usedBitSet);
+
+		// store the used set
+		allUsedIndexes.or(usedBitSet);
+
+		// set up candidates
+		candidatesBitSet.set(rootBitSet);
+		candidatesBitSet.andNot(usedBitSet);
+		candidatesBitSet.and(allUsedIndexes);
+
+		boolean retval = true; // set false on first failure
+		for (int a = candidatesBitSet.nextSetBit(0); a >= 0; a = candidatesBitSet.nextSetBit(a+1)) {
+			IBGNode Y;
+			double costY;
+
+			// Y is just the current node
+			Y = node;
+			costY = Y.cost();
+
+			// fetch YaSimple
+			bitset_YaSimple.set(bitset_Y);
+			bitset_YaSimple.set(a);
+			IBGNode YaSimple = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YaSimple, null);
+			if (YaSimple == null)
+				retval = false;
+			else
+				logger.assignBenefit(a, costY - YaSimple.cost());
+
+			for (int b = candidatesBitSet.nextSetBit(a+1); b >= 0; b = candidatesBitSet.nextSetBit(b+1)) {
+				IBGNode Ya, Yab, YbPlus, YbMinus;
+				double costYa, costYab;
+
+				// fetch Ya and Yab
+				bitset_Ya.set(bitset_Y);
+				bitset_Ya.set(a);
+				bitset_Ya.clear(b);
+
+				bitset_Yab.set(bitset_Y);
+				bitset_Yab.set(a);
+				bitset_Yab.set(b);
+
+				Yab = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_Yab, YaSimple);
+				Ya = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_Ya, Yab);
+
+				if (Ya == null) {
+					retval = false;
+					continue;
+				}
+				if (Yab == null) {
+					retval = false;
+					continue;
+				}
+				costYa = Ya.cost();
+				costYab = Yab.cost();
+
+				// fetch YbMinus and YbPlus
+				bitset_YbMinus.clear();
+				Y.addUsedIndexes(bitset_YbMinus);
+				Ya.addUsedIndexes(bitset_YbMinus);
+				Yab.addUsedIndexes(bitset_YbMinus);
+				bitset_YbMinus.clear(a);
+				bitset_YbMinus.set(b);
+
+				bitset_YbPlus.set(bitset_Y);
+				bitset_YbPlus.clear(a);
+				bitset_YbPlus.set(b);
+
+				YbPlus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YbPlus, Yab);
+				YbMinus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YbMinus, YbPlus);
+
+				// try to set lower bound based on Y, Ya, YbPlus, and Yab
+				if (YbPlus != null) {
+					logger.assignInteraction(a, b, interactionLevel(costY, costYa, YbPlus.cost(), costYab));
+				}
+				else {
+					retval = false;
+				}
+
+				// try to set lower bound based on Y, Ya, YbMinus, and Yab
+				if (YbMinus != null) {
+					logger.assignInteraction(a, b, interactionLevel(costY, costYa, YbMinus.cost(), costYab));
+				}
+				else {
+					retval = false;
+				}
+			}
+		}
+
+		return retval;
+	}
+
+
+	/*
+	 * Compute the interaction level based on the four costs
+	 *
+	 *     | C - C_a - C_b + C_ab |
+	 */
+	private static double interactionLevel(double empty, double a, double b, double ab) {
+		return Math.abs(empty - a - b + ab);
 	}
 
 

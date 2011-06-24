@@ -197,8 +197,8 @@ public class IndexBenefitGraph implements Serializable {
 		public void clearUsedIndexes(IndexBitSet bs) {
 			assert(isExpanded());
 			for (IBGChild ch = firstChild; ch != null; ch = ch.next){
-                bs.clear(ch.usedIndex);
-            }
+          bs.clear(ch.usedIndex);
+      }
 		}
 		
 		/**
@@ -211,11 +211,11 @@ public class IndexBenefitGraph implements Serializable {
 		public boolean usedSetIsSubsetOf(IndexBitSet other) {
 			assert(isExpanded());
 			for (IBGChild ch = firstChild; ch != null; ch = ch.next) {
-                if (!other.get(ch.usedIndex)){
-                    return false;
-                }
+          if (!other.get(ch.usedIndex)){
+              return false;
+          }
 
-            }
+      }
 			return true;
 		}
 		
@@ -227,10 +227,10 @@ public class IndexBenefitGraph implements Serializable {
 		public boolean usedSetContains(int id) {
 			assert(isExpanded());
 			for (IBGChild ch = firstChild; ch != null; ch = ch.next){
-                if (id == ch.usedIndex){
-                    return true;
-                }
-            }
+          if (id == ch.usedIndex){
+              return true;
+          }
+      }
 			return false;
 		}
 
@@ -243,16 +243,16 @@ public class IndexBenefitGraph implements Serializable {
 			this.cost = cost;
 		}
 
-        @Override
-        public String toString() {
-            return new ToStringBuilder<IBGNode>(this)
-                   .add("node's id", id)
-                   .add("index configuration", config)
-                   .add("cost", cost)
-                   .add("first child", firstChild)
-                   .toString();
-        }
+    @Override
+    public String toString() {
+        return new ToStringBuilder<IBGNode>(this)
+               .add("node's id", id)
+               .add("index configuration", config)
+               .add("cost", cost)
+               .add("first child", firstChild)
+               .toString();
     }
+  }
 
     /**
      *  Represents a child node in the Index Benefit Graph.
@@ -275,15 +275,15 @@ public class IndexBenefitGraph implements Serializable {
 			this.usedIndex  = usedIndex;
 		}
 
-        @Override
-        public String toString() {
-            return new ToStringBuilder<IBGChild>(this)
-                   .add("usedIndex", usedIndex)
-                   .add("actual child node", node)
-                   .add("next node", next)
-                   .toString();
-        }
+    @Override
+    public String toString() {
+        return new ToStringBuilder<IBGChild>(this)
+               .add("usedIndex", usedIndex)
+               .add("actual child node", node)
+               .add("next node", next)
+               .toString();
     }
+  }
 }
 
 

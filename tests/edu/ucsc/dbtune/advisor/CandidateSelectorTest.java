@@ -37,7 +37,8 @@ public class CandidateSelectorTest {
         final DynamicIndexSet<PGIndex> userHotSet = new DynamicIndexSet<PGIndex>(){{postgresIndex(2345, 43521);}};
         final CandidatesSelector<PGIndex> candidatesSelector = new CandidatesSelector<PGIndex>(
                 new IndexStatisticsFunction<PGIndex>(100),
-                new WorkFunctionAlgorithm<PGIndex>(new IndexPartitions<PGIndex>(new StaticIndexSet<PGIndex>(Arrays.asList(postgresIndex(234, 4321)))), 40,12345,false),
+                new WorkFunctionAlgorithm<PGIndex>(new IndexPartitions<PGIndex>(new StaticIndexSet<PGIndex>(Arrays.asList(postgresIndex(234, 4321)))),
+                    false),
                 new StaticIndexSet<PGIndex>(Arrays.asList(postgresIndex(234, 4321))),
                 new DynamicIndexSet<PGIndex>(){{add(postgresIndex(234, 4321));}},
                 userHotSet,40,12345,100

@@ -19,17 +19,13 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.ToStringBuilder;
-
-import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static edu.ucsc.dbtune.util.Instances.newAtomicReference;
-import static edu.ucsc.dbtune.util.Objects.as;
 import static edu.ucsc.dbtune.util.Objects.cast;
+import edu.ucsc.dbtune.util.ToStringBuilder;
+import java.sql.SQLException;
 
 /**
  * This class provides a skeletal implementation of the {@link IBGWhatIfOptimizer}
@@ -38,7 +34,6 @@ import static edu.ucsc.dbtune.util.Objects.cast;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer implements IBGWhatIfOptimizer {
-    private final AtomicReference<WhatIfOptimizationBuilderImpl>    optimizer;
     private final AbstractWhatIfOptimizer                           delegate;
 
     /**
@@ -49,19 +44,8 @@ public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer
     protected AbstractIBGWhatIfOptimizer(WhatIfOptimizer delegate){
         super();
         this.delegate   = cast(Checks.checkNotNull(delegate), AbstractWhatIfOptimizer.class);
-        optimizer       = newAtomicReference();
     }
 
-    /**
-     * runs n what-if optimizations and return n results (i.e., optimization cost)
-     * @throws java.sql.SQLException
-     *      unable to calculate costs b/c a database error.
-     */
-    public void calculateOptimizationCost() throws SQLException {
-        Checks.checkSQLRelatedState(getWhatIfOptimizationBuilder() != null, "Error: not initialized optimizer.");
-        final WhatIfOptimizationBuilderImpl each = as(getWhatIfOptimizationBuilder());
-        each.addCost(estimateCost(each));
-    }
 
     /**
      * @return the IBG-specific What-if optimizer.
@@ -78,13 +62,21 @@ public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer
     @Override
     public double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used) throws SQLException {
         updateCachedSQL(sql);
-        return whatIfOptimize(sql).using(configuration, used).toGetCost();
+        incrementWhatIfCount();
+        Console.streaming().dot();
+        if (getWhatIfCount() % 75 == 0) Console.streaming().skip();
+        return estimateCost(sql, getCandidateSet(), configuration, used);
+    }
+
+    // a hook method that should be overriden by implementations of this class.
+    double estimateCost(String sql, Iterable<DBIndex> candidate, IndexBitSet configuration,
+        IndexBitSet used){
+      return 0.0;
     }
 
     @Override
     public double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used, DBIndex profiledIndex) throws SQLException {
-        updateCachedSQL(sql);
-        return whatIfOptimize(sql).using(configuration, profiledIndex, used).toGetCost();
+        throw new UnsupportedOperationException("AbstractIBGWhatIfOptimizer#estimateCost(..) not supported yet.");
     }
 
     @Override
@@ -108,12 +100,6 @@ public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer
      */
     public abstract Iterable<DBIndex> getCandidateSet();
 
-    /**
-     * @return the recently created {@code WhatIfOptimizationBuilder} (scenarios).
-     */
-    public WhatIfOptimizationBuilder getWhatIfOptimizationBuilder(){
-        return optimizer.get();
-    }
 
     /**
      * @return {@code true} if the optimizer is disabled. {@code false} otherwise.
@@ -154,24 +140,8 @@ public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer
     @Override
     public String toString() {
         return new ToStringBuilder<AbstractIBGWhatIfOptimizer>(this)
-               .add("optimizations", getWhatIfOptimizationBuilder())
                .add("candidateSet", getCandidateSet())
                .toString();
     }
 
-    /**
-     * calculates the cost of what-if optimization given a workload (sql query).
-     * @param sql
-     *      experiment's query needed for calculating the cost of what-if optimization.
-     * @return
-     *      the total cost of the optimization.
-     * @throws java.sql.SQLException
-     *      an error has occurred when building/running a what-if optimization scenario.
-     */
-    public WhatIfOptimizationBuilder whatIfOptimize(String sql) throws SQLException {
-        Checks.checkSQLRelatedState(isEnabled(),"Error: connection is closed.");
-        final WhatIfOptimizationBuilderImpl o = new WhatIfOptimizationBuilderImpl(this, sql);
-        optimizer.compareAndSet(optimizer.get(), o);
-        return o;
-    }
 }

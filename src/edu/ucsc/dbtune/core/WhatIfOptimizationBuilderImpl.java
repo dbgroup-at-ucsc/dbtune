@@ -34,6 +34,7 @@ import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
 /**
  * default implementation of {@link edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder} type.
  */
+// todo(Huascar) remove asap
 class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
 
     private final String sql;
@@ -139,7 +140,7 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
     @Override
     public Double toGetCost() throws SQLException{
         if(Double.compare(0.0, cost.get()) == 0){
-            whatIfOptimizer.calculateOptimizationCost();
+            //whatIfOptimizer.calculateOptimizationCost();
         }
         Console.streaming().info("WhatIfOptimizationBuilderImpl#toGetCost() will return a worload cost=" + cost.get());
         return cost.get();

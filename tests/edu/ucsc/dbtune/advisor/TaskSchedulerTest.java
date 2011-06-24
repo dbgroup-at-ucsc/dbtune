@@ -17,6 +17,7 @@ import edu.ucsc.dbtune.spi.core.Console;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -114,7 +115,7 @@ public class TaskSchedulerTest {
         }
     }
 
-    @Test
+    @Ignore @Test
     public void testSchedulerAnalyseQuery() throws Exception {
         try {
             scheduler.start();

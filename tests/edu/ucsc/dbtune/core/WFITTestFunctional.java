@@ -25,6 +25,8 @@ import edu.ucsc.dbtune.advisor.IndexPartitions;
 import edu.ucsc.dbtune.advisor.IndexStatisticsFunction;
 import edu.ucsc.dbtune.advisor.InteractionSelection;
 import edu.ucsc.dbtune.advisor.InteractionSelector;
+import edu.ucsc.dbtune.advisor.KarlsWFALog;
+import edu.ucsc.dbtune.advisor.KarlsWorkFunctionAlgorithm;
 import edu.ucsc.dbtune.advisor.ProfiledQuery;
 import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.advisor.StatisticsFunction;
@@ -33,33 +35,28 @@ import edu.ucsc.dbtune.advisor.WfaTrace;
 import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm;
 import edu.ucsc.dbtune.advisor.WorkloadProfiler;
 import edu.ucsc.dbtune.advisor.WorkloadProfilerImpl;
+import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.DBUtilities;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.StopWatch;
-import edu.ucsc.dbtune.util.SQLScriptExecuter;
-import edu.ucsc.dbtune.util.DBUtilities;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
+import static edu.ucsc.dbtune.util.Strings.str;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.ArrayList;
-
-import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
-import static edu.ucsc.dbtune.util.StopWatch.normalize;
-import static edu.ucsc.dbtune.util.Strings.str;
+import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
+import org.junit.AfterClass;
 import static org.junit.Assert.assertThat;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Functional test for the WFIT use case.
@@ -120,105 +117,124 @@ public class WFITTestFunctional
     @Test
     public void testWFIT() throws Exception
     {
-        List<ProfiledQuery<DBIndex>>   qinfos;
-        CandidatePool<DBIndex>         pool;
-        Snapshot<DBIndex>              snapshot;
-        IndexPartitions<DBIndex>       partitions;
-        WorkFunctionAlgorithm<DBIndex> wfa;
-        WfaTrace<DBIndex>              trace;
+      // ignore task's steady-state execution profile, and focus only on the initial performance
+      // of WFIT algorithm execution. This is done via a warm up phase.
+      // warm up the hotspot compiler, so that we can run this like we
+      // were in a live execution (JUnit by default prevents this)
+      //testWfitAlgorithm(0);
 
-        WFALog        log;
-        IndexBitSet[] wfitSchedule;
-        IndexBitSet[] optSchedule;
-        IndexBitSet[] minSched;
-        String        workloadFile;
-        String        bootstrapFile;
-        double[]      overheads;
-        double[]      minWfValues;
-        int           maxNumIndexes;
-        int           maxNumStates;
-        int           queryCount;
-        boolean       exportWfit;
-        boolean       exportOptWfit;
-        boolean       exportOptWfitMins;
+      // real execution
+      testWfitAlgorithm(1);
 
-        maxNumIndexes     = env.getMaxNumIndexes();
-        maxNumStates      = env.getMaxNumStates();
-        bootstrapFile     = env.getFilenameAtWorkloadFolder("candidate_set_bootstrap_workload.sql");
-        workloadFile      = env.getFilenameAtWorkloadFolder("workload.sql");
-        pool              = getCandidates(connection, bootstrapFile);
-        qinfos            = getOfflineProfiledQueries(connection, pool, workloadFile);
-        queryCount        = qinfos.size();
-        overheads         = new double[queryCount];
-        wfitSchedule      = new IndexBitSet[queryCount];
-        snapshot          = pool.getSnapshot();
-        partitions        = getPartitions(snapshot,qinfos,maxNumIndexes,maxNumStates);
-        exportWfit        = false;
-        exportOptWfit     = false;
-        exportOptWfitMins = false;
-        wfa               = new WorkFunctionAlgorithm<DBIndex>(partitions,maxNumStates,maxNumIndexes,exportWfit);
-
-        for (int q = 0; q < wfitSchedule.length; q++) {
-
-            ProfiledQuery<DBIndex> query = qinfos.get(q);
-
-            log("Query " + q);
-            log(query.toString());
-            log("---------------");
-
-            final StopWatch watch = new StopWatch();
-
-            wfa.newTask(query);
-
-            Iterable<DBIndex> rec = wfa.getRecommendation();
-
-            final long elapsedTime = watch.elapsedtime();
-            
-            wfitSchedule[q] = new IndexBitSet();
-
-            for (DBIndex idx : rec) {
-                wfitSchedule[q].set(idx.internalId());
-            }
-
-            overheads[q] = normalize(elapsedTime, env.getOverheadFactor());
-        }
-        
-        if (exportWfit) {
-            log = WFALog.generateFixed(qinfos, wfitSchedule, snapshot, partitions, overheads);
-
-            log.dump();
-        }
-        
-        if (exportOptWfit) {
-            trace       = wfa.getTrace();
-            optSchedule = trace.optimalSchedule(partitions, qinfos.size(), qinfos);
-            log         = WFALog.generateFixed(qinfos, optSchedule, snapshot, partitions, new double[queryCount]);
-
-            log.dump();
-            
-            if (exportOptWfitMins) {
-                minWfValues = new double[qinfos.size()+1];
-
-                for (int q = 0; q <= qinfos.size(); q++) {
-                    minSched       = trace.optimalSchedule(partitions, q, qinfos);
-                    minWfValues[q] = wfa.getScheduleCost(snapshot, q, qinfos, partitions, minSched);
-
-                    log("Optimal cost " + q + " = " + minWfValues[q]);
-
-                    for (int i = 0; i < q; i++) {
-                        log(str(minSched[i]));
-                    }
-                }
-            }
-        }
-
-        // check that there have no configurations for query yet
-        //assertThat(wfitSchedule[q].isEmpty(),is(true));
-
-        assertThat(true, is(true));
+      assertThat(true, is(true));
     }
 
-    private IndexPartitions<DBIndex> getPartitions(
+  private static void testWfitAlgorithm(int reps) throws SQLException, IOException {
+    log(reps == 1 ? "Real Test start...." : "Warm-up phase start....");
+    for(int warmupIdx = 0; warmupIdx < reps; warmupIdx++){
+      List<ProfiledQuery<DBIndex>> qinfos;
+      CandidatePool<DBIndex> pool;
+      Snapshot<DBIndex> snapshot;
+      IndexPartitions<DBIndex> partitions;
+      KarlsWorkFunctionAlgorithm<DBIndex> wfa;
+      KarlsWorkFunctionAlgorithm.WfaTrace<DBIndex> trace;
+
+      KarlsWFALog log;
+      IndexBitSet[] wfitSchedule;
+      IndexBitSet[] optSchedule;
+      IndexBitSet[] minSched;
+      String        workloadFile;
+      String        bootstrapFile;
+      double[]      overheads;
+      double[]      minWfValues;
+      int           maxNumIndexes;
+      int           maxNumStates;
+      int           queryCount;
+      boolean       exportWfit;
+      boolean       exportOptWfit;
+      boolean       exportOptWfitMins;
+
+      maxNumIndexes     = env.getMaxNumIndexes();
+      maxNumStates      = env.getMaxNumStates();
+      bootstrapFile     = env.getFilenameAtWorkloadFolder("candidate_set_bootstrap_workload.sql");
+      workloadFile      = env.getFilenameAtWorkloadFolder("workload.sql");
+      pool              = getCandidates(connection, bootstrapFile);
+      qinfos            = getOfflineProfiledQueries(connection, pool, workloadFile);
+      queryCount        = qinfos.size();
+      overheads         = new double[queryCount];
+      wfitSchedule      = new IndexBitSet[queryCount];
+      snapshot          = pool.getSnapshot();
+      partitions        = getPartitions(snapshot,qinfos,maxNumIndexes,maxNumStates);
+      exportWfit        = true; // in the WFIT mode this value is true.
+      exportOptWfit     = false;
+      exportOptWfitMins = false;
+      wfa               = new KarlsWorkFunctionAlgorithm<DBIndex>(partitions, exportWfit);
+
+      for (int q = 0; q < wfitSchedule.length; q++) {
+
+        ProfiledQuery<DBIndex> query = qinfos.get(q);
+
+        if(warmupIdx == 0){
+          log("Query " + q);
+          log(query.toString());
+          log("---------------");
+        }
+
+        final StopWatch watch = new StopWatch();
+        wfa.newTask(query);
+
+        Iterable<DBIndex> rec = wfa.getRecommendation();
+
+        wfitSchedule[q] = new IndexBitSet();
+
+        for (DBIndex idx : rec) {
+          wfitSchedule[q].set(idx.internalId());
+        }
+
+        overheads[q] = watch.milliseconds();
+      }
+
+      if (exportWfit) {
+        log = KarlsWFALog.generateFixed(qinfos, wfitSchedule, snapshot, partitions, overheads);
+        if(warmupIdx == 0){
+          log.dump();
+        }
+      }
+
+      if (exportOptWfit) {
+        trace       = wfa.getTrace();
+        optSchedule = trace.optimalSchedule(partitions, qinfos.size(), qinfos);
+        log         = KarlsWFALog.generateFixed(qinfos, optSchedule, snapshot, partitions, new double[queryCount]);
+        if(warmupIdx == 0){
+          log.dump();
+        }
+
+        if (exportOptWfitMins) {
+          minWfValues = new double[qinfos.size()+1];
+
+          for (int q = 0; q <= qinfos.size(); q++) {
+            minSched       = trace.optimalSchedule(partitions, q, qinfos);
+            minWfValues[q] = wfa.getScheduleCost(snapshot, q, qinfos, partitions, minSched);
+
+            if(warmupIdx == 0){
+              log("Optimal cost " + q + " = " + minWfValues[q]);
+            }
+
+            for (int i = 0; i < q; i++) {
+              if(warmupIdx == 1){
+                log(str(minSched[i]));
+              }
+            }
+          }
+        }
+      }
+
+    }
+
+    log(reps == 1 ? "Real Test finished...." : "Warm-up phase finished....");
+  }
+
+  private static IndexPartitions<DBIndex> getPartitions(
             Snapshot<DBIndex>            candidateSet,
             List<ProfiledQuery<DBIndex>> qinfos, 
             int                          maxNumIndexes,
@@ -245,7 +261,7 @@ public class WFITTestFunctional
         return parts;
     }
 
-    private StaticIndexSet<DBIndex> getHotSet(
+    private static StaticIndexSet<DBIndex> getHotSet(
             Snapshot<DBIndex>            candidateSet,
             List<ProfiledQuery<DBIndex>> qinfos,
             int                          maxNumIndexes)
@@ -413,12 +429,12 @@ public class WFITTestFunctional
         Console.streaming().log(message);
     }
 
-    private CandidatePool<DBIndex> getCandidates(DatabaseConnection con, String workloadFilename)
+    private static CandidatePool<DBIndex> getCandidates(DatabaseConnection con, String workloadFilename)
         throws SQLException, IOException {
 
         CandidatePool<DBIndex> pool    = new CandidatePool<DBIndex>();
         File workloadFile              = new File(workloadFilename);
-        Iterable<DBIndex> candidateSet = null;
+        Iterable<DBIndex> candidateSet;
 
         candidateSet = con.getIndexExtractor().recommendIndexes(workloadFile);
 
@@ -429,15 +445,15 @@ public class WFITTestFunctional
         return pool;
     }
 
-    private List<ProfiledQuery<DBIndex>> getOfflineProfiledQueries(
+    private static List<ProfiledQuery<DBIndex>> getOfflineProfiledQueries(
             DatabaseConnection con, CandidatePool<DBIndex> pool, String workloadFilename)
         throws IOException
     {
         WorkloadProfiler<DBIndex> profiler = new WorkloadProfilerImpl<DBIndex>(con, pool, false);
-        
+
         // get an IBG etc for each statement
-        List<ProfiledQuery<DBIndex>> qinfos = null;
-        List<String>                 lines  = null;
+        List<ProfiledQuery<DBIndex>> qinfos;
+        List<String>                 lines;
 
         lines = Files.getLines(new File(workloadFilename));
         

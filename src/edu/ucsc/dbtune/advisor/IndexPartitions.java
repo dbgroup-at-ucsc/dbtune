@@ -76,10 +76,10 @@ public class IndexPartitions<I extends DBIndex> {
 				I idx = snapshot.findIndexId(i);
 				if (idx != null) {
 					if (subset != null){
-                        subset = new Subset<I>(subset, new Subset<I>(idx));
-                    } else{
-                        subset = new Subset<I>(idx);
-                    }
+              subset = new Subset<I>(subset, new Subset<I>(idx));
+          } else{
+              subset = new Subset<I>(idx);
+          }
 				}
 			}
 			if (subset != null) {
@@ -112,13 +112,13 @@ public class IndexPartitions<I extends DBIndex> {
 	@Override
 	public boolean equals(Object o1) {
 		if (!(o1 instanceof IndexPartitions)){
-            return false;
-        }
+        return false;
+    }
 
 		IndexPartitions<?> other = (IndexPartitions<?>) o1;
-        return !(indexCount != other.indexCount || stateCount != other.stateCount) && subsets.equals(other.subsets);
-
-    }
+    return !(indexCount != other.indexCount || stateCount != other.stateCount)
+        && subsets.equals(other.subsets);
+  }
 
     /**
      * Returns a {@code subset} of indexes at a given position in some linked list of
@@ -132,10 +132,10 @@ public class IndexPartitions<I extends DBIndex> {
 		return subsets.get(i);
 	}
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(indexCount, stateCount, subsets);
-    }
+  @Override
+  public int hashCode() {
+      return Objects.hashCode(indexCount, stateCount, subsets);
+  }
 
     /**
      * @return the number indexes in this {@code index partitions} object.
@@ -144,14 +144,14 @@ public class IndexPartitions<I extends DBIndex> {
 		return indexCount;
 	}
 
-    /**
-     * merges two subsets A and B in which A contains an index <em>i1</em> and B contains an
-     * index <em>i2</em>.
-     * @param i1
-     *      first index object.
-     * @param i2
-     *      second index object.
-     */
+  /**
+   * merges two subsets A and B in which A contains an index <em>i1</em> and B contains an
+   * index <em>i2</em>.
+   * @param i1
+   *      first index object.
+   * @param i2
+   *      second index object.
+   */
 	public final void merge(I i1, I i2) {
 		int s1 = subsets.whichSubset(i1);
 		int s2 = subsets.whichSubset(i2);
@@ -168,8 +168,8 @@ public class IndexPartitions<I extends DBIndex> {
      */
 	public void merge(int s1, int s2) {
 		if (s1 == s2){
-            return;
-        }
+        return;
+    }
 
 		Subset<I> subset1   = subsets.get(s1);
 		Subset<I> subset2   = subsets.get(s2);

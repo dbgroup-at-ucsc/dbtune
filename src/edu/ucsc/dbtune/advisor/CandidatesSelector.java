@@ -27,7 +27,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.util.List;
 
 public class CandidatesSelector<I extends DBIndex> {
-    private final   IndexStatisticsFunction<I>  idxStats;
+    private final   IndexStatisticsFunction<I>     idxStats;
     private final   WorkFunctionAlgorithm<I>    wfa;
     private final   DynamicIndexSet<I>          matSet;
     private         StaticIndexSet<I>           hotSet;

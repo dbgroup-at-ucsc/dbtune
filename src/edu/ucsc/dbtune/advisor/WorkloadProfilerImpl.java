@@ -15,6 +15,7 @@ import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
 import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.util.StopWatch;
 import edu.ucsc.dbtune.util.Threads;
 
 import java.sql.SQLException;
@@ -70,11 +71,12 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
                          CandidatePool<I> candidatePool,
                          boolean onlineCandidates
     ) {
-		this.connection         = connection;
-		this.candidatePool      = candidatePool;
-		this.onlineCandidates   = onlineCandidates;
-		this.ibgAnalysis        = analysis;
-        this.ibgConstruction    = construction;
+      this.connection         = connection;
+      this.candidatePool      = candidatePool;
+      this.onlineCandidates   = onlineCandidates;
+      this.ibgAnalysis        = analysis;
+      this.ibgConstruction    = construction;
+      runProfiler();
     }
 
 
@@ -137,21 +139,33 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 			IndexBenefitGraphConstructor<I> ibgCons     = new IndexBenefitGraphConstructor<I>(connection, sql, snapshot);
 			IBGAnalyzer                     ibgAnalyzer = new IBGAnalyzer(ibgCons);
 
-			ibgConstruction.startConstruction(ibgCons);
-			
-            long nStart = System.nanoTime();
-			ibgAnalysis.startAnalysis(ibgAnalyzer, logger);
-			long nStop = System.nanoTime();
+//      ibgConstruction.startConstruction(ibgCons);
+//
+//      final StopWatch watch = new StopWatch();
+//      ibgAnalysis.startAnalysis(ibgAnalyzer, logger);
+//      double elapasedTime = watch.milliseconds();
 
-            // pass the result to the tuner
-            return new ProfiledQuery.Builder<I>(sql)
-                    .explainInfo(info)
-                    .snapshotOfCandidateSet(snapshot)
-                    .indexBenefitGraph(ibgCons.getIBG())
-                    .interactionBank(logger.getInteractionBank())
-                    .whatIfCount(ibgWhatIfOptimizer.getWhatIfCount())
-                    .indexBenefitGraphAnalysisTime(((nStop - nStart) / 1000000.0))
-                    .get();
+      ibgConstruction.startConstruction(ibgCons);
+      ibgConstruction.waitUntilDone();
+      ibgAnalysis.startAnalysis(ibgAnalyzer, logger);
+
+      long nStart = System.nanoTime();
+      ibgAnalysis.waitUntilDone();
+      long nStop = System.nanoTime();
+
+      console.info("Analysis: " + ((nStop - nStart) / 1000000000.0));
+      console.info("IBG has " + ibgCons.nodeCount() + " nodes");
+
+
+      // pass the result to the tuner
+      return new ProfiledQuery.Builder<I>(sql)
+            .explainInfo(info)
+            .snapshotOfCandidateSet(snapshot)
+            .indexBenefitGraph(ibgCons.getIBG())
+            .interactionBank(logger.getInteractionBank())
+            .whatIfCount(ibgWhatIfOptimizer.getWhatIfCount())
+            .indexBenefitGraphAnalysisTime((nStop - nStart)/1000000.0)
+            .get();
 		} catch (SQLException e) {
             final String msg = "SQLException caught while building ibg";
 			console.error(msg, e);
@@ -168,7 +182,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
      * run the profiler, which involves two tasks: {@link ThreadIBGAnalysis analysis} and
      * {@link ThreadIBGConstruction construction} tasks.
      */
-    public void runProfiler(){
+    public final void runProfiler(){
         execute(ibgAnalysis, ibgConstruction);
     }
 }

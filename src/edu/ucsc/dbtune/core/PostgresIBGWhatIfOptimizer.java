@@ -77,6 +77,21 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
+    double estimateCost(String sql, Iterable<DBIndex> candidate,
+        IndexBitSet configuration, IndexBitSet used) {
+      final PGReifiedTypes.ReifiedPGIndexList indexSet = new PGReifiedTypes.ReifiedPGIndexList(cachedCandidateSet);
+      return supplyValue(
+          explainIndexesCost(used),
+          getConnection(),
+          indexSet,
+          configuration,
+          sql,
+          configuration.cardinality(),
+          new Double[indexSet.size()]
+      );
+    }
+
+    @Override
     protected double estimateCost(WhatIfOptimizationBuilder builder) throws SQLException {
         incrementWhatIfCount();
         Console.streaming().dot();

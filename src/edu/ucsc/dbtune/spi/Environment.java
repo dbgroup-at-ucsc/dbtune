@@ -1,8 +1,25 @@
 package edu.ucsc.dbtune.spi;
 
-import edu.ucsc.dbtune.util.Objects;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.DATABASE;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.MIN_WF_FILENAME;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPT_LOG_FILENAME;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.OUTPUT_FOLDERNAME;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.OVERHEAD_FACTOR;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.URL;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFA_KEEP_HISTORY;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFIT_LOG_FILENAME;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOAD_NAME;
 import edu.ucsc.dbtune.spi.core.Console;
-
+import static edu.ucsc.dbtune.util.Objects.cast;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -11,27 +28,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.lang.NumberFormatException;
-
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.URL;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.DATABASE;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.OUTPUT_FOLDERNAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOAD_NAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFA_KEEP_HISTORY;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.OVERHEAD_FACTOR;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFIT_LOG_FILENAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPT_LOG_FILENAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.MIN_WF_FILENAME;
-import static edu.ucsc.dbtune.util.Objects.as;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -52,67 +48,72 @@ public class Environment {
         this.configuration = configuration;
     }
 
+
+    private static String asString(Object obj){
+      return cast(obj, String.class);
+    }
+
     /**
      * @return {@link EnvironmentProperties#URL}
      */
     public String getDatabaseUrl(){
-        return as(configuration.getProperty(URL));
+        return asString(configuration.getProperty(URL));
     }
 
     /**
      * @return {@link EnvironmentProperties#JDBC_DRIVER}
      */
     public String getJDBCDriver(){
-        return as(configuration.getProperty(JDBC_DRIVER));
+        return asString(configuration.getProperty(JDBC_DRIVER));
     }
 
     /**
      * @return {@link EnvironmentProperties#DATABASE}
      */
     public String getDatabaseName(){
-        return as(configuration.getProperty(DATABASE));
+        return asString(configuration.getProperty(DATABASE));
     }
 
     /**
      * @return {@link EnvironmentProperties#USERNAME}
      */
     public String getUsername(){
-        return as(configuration.getProperty(USERNAME));
+        return asString(configuration.getProperty(USERNAME));
     }
 
     /**
      * @return {}EnvironmentProperties#PASSWORD
      */
     public String getPassword(){
-        return as(configuration.getProperty(PASSWORD));
+        return asString(configuration.getProperty(PASSWORD));
     }
 
     /**
      * @return {@link EnvironmentProperties#OUTPUT_FOLDERNAME}
      */
     public String getOutputFoldername(){
-        return as(configuration.getProperty(OUTPUT_FOLDERNAME));
+        return asString(configuration.getProperty(OUTPUT_FOLDERNAME));
     }
 
     /**
      * @return {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}
      */
     public String getWorkloadsFoldername(){
-        return as(configuration.getProperty(WORKLOADS_FOLDERNAME));
+        return asString(configuration.getProperty(WORKLOADS_FOLDERNAME));
     }
 
     /**
      * @return {@link EnvironmentProperties#WORKLOAD_NAME}
      */
     public String getWorkloadName(){
-        return as(configuration.getProperty(WORKLOAD_NAME));
+        return asString(configuration.getProperty(WORKLOAD_NAME));
     }
 
     /**
      * @return {@link EnvironmentProperties#MAX_NUM_INDEXES}
      */
     public int getMaxNumIndexes(){
-        String maxSize = as(configuration.getProperty(MAX_NUM_INDEXES));
+        String maxSize = asString(configuration.getProperty(MAX_NUM_INDEXES));
         return Integer.valueOf(maxSize);
     }
 
@@ -120,7 +121,7 @@ public class Environment {
      * @return {@link EnvironmentProperties#WFA_KEEP_HISTORY }
      */
     public boolean getWFAKeepHistory(){
-        String keepHistory = (String) as(configuration.getProperty(WFA_KEEP_HISTORY));
+        String keepHistory = asString(configuration.getProperty(WFA_KEEP_HISTORY));
         return Boolean.valueOf(keepHistory);
     }
 
@@ -130,7 +131,7 @@ public class Environment {
      *      unable to return the max num of states due to the stated reason.
      */
     public int getMaxNumStates() throws NumberFormatException {
-        String numOfStates = (String) as(configuration.getProperty(MAX_NUM_STATES));
+        String numOfStates = asString(configuration.getProperty(MAX_NUM_STATES));
         return Integer.valueOf(numOfStates);
     }
 
@@ -140,7 +141,7 @@ public class Environment {
      *      unable to return the overhead factor due to the stated reason.
      */
     public float getOverheadFactor() throws NumberFormatException {
-        String overheadFactor = (String) as(configuration.getProperty(OVERHEAD_FACTOR));
+        String overheadFactor = asString(configuration.getProperty(OVERHEAD_FACTOR));
         return Float.valueOf(overheadFactor);
     }
 
@@ -150,7 +151,7 @@ public class Environment {
      *      unable to return the overhead factor due to the stated reason.
      */
     public int getNumPartitionIterations() throws NumberFormatException {
-        String numPartitionIterations = (String) as(configuration.getProperty(NUM_PARTITION_ITERATIONS));
+        String numPartitionIterations = asString(configuration.getProperty(NUM_PARTITION_ITERATIONS));
         return Integer.valueOf(numPartitionIterations);
     }
 
@@ -160,7 +161,7 @@ public class Environment {
      *      unable to return the overhead factor due to the stated reason.
      */
     public int getIndexStatisticsWindow() throws NumberFormatException {
-        String indexStatisticsWindow = (String) as(configuration.getProperty(INDEX_STATISTICS_WINDOW));
+        String indexStatisticsWindow = asString(configuration.getProperty(INDEX_STATISTICS_WINDOW));
         return Integer.valueOf(indexStatisticsWindow);
     }
 
@@ -168,21 +169,21 @@ public class Environment {
      * @return {@link EnvironmentProperties#WFIT_LOG_FILENAME }
      */
     public String getWFITLogFilename(){
-        return as(configuration.getProperty(WFIT_LOG_FILENAME));
+        return asString(configuration.getProperty(WFIT_LOG_FILENAME));
     }
 
     /**
      * @return {@link EnvironmentProperties#OPT_LOG_FILENAME}
      */
     public String getOPTLogFilename(){
-        return as(configuration.getProperty(OPT_LOG_FILENAME));
+        return asString(configuration.getProperty(OPT_LOG_FILENAME));
     }
 
     /**
      * @return {@link EnvironmentProperties#MIN_WF_FILENAME}
      */
     public String getMinWFFilename(){
-        return as(configuration.getProperty(MIN_WF_FILENAME));
+        return asString(configuration.getProperty(MIN_WF_FILENAME));
     }
 
     /**
@@ -372,7 +373,7 @@ public class Environment {
 
         private void setAllProperties(Properties properties) {
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                setProperty(Objects.<String>as(entry.getKey()), entry.getValue());
+                setProperty(asString(entry.getKey()), entry.getValue());
             }
         }
     }

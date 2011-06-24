@@ -24,6 +24,7 @@ import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DefaultQueue;
 import edu.ucsc.dbtune.util.Instances;
@@ -95,8 +96,8 @@ public class IndexBenefitGraphConstructor<I extends DBIndex> {
 		IndexBitSet rootConfig = this.candidateSet.bitSet();
 		rootNode = new IBGNode(rootConfig, nodeCount++);
 
-        final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
-        emptyCost = optimizer.estimateCost(this.sql, Instances.newBitSet(), Instances.newBitSet());
+    final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
+    emptyCost = optimizer.estimateCost(this.sql, Instances.newBitSet(), Instances.newBitSet());
 
 		// initialize the queue
 		queue.add(rootNode);
@@ -179,9 +180,9 @@ public class IndexBenefitGraphConstructor<I extends DBIndex> {
 			totalCost = coveringNode.cost();
 			coveringNode.addUsedIndexes(usedBitSet);
 		} else {
-            final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
-			totalCost = optimizer.estimateCost(sql, newNode.config, usedBitSet);
-		}
+        final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
+        totalCost = optimizer.estimateCost(sql, newNode.config, usedBitSet);
+    }
 		
 		// create the child list
 		// if any IBGNode did not exist yet, add it to the queue
@@ -196,8 +197,7 @@ public class IndexBenefitGraphConstructor<I extends DBIndex> {
 			IBGNode childNode = find(queue, childBitSet);
 			if (childNode == null) {
 				isUsed.set(u);
-                final IndexBitSet castBitset = Objects.as(childBitSet.clone());
-				childNode = new IBGNode(castBitset, nodeCount++);
+				childNode = new IBGNode(childBitSet.clone(), nodeCount++);
 				queue.add(childNode);
 			}
 			childBitSet.set(u);
@@ -213,10 +213,11 @@ public class IndexBenefitGraphConstructor<I extends DBIndex> {
 		
 		// Expand the node and notify waiting threads
 		synchronized (nodeExpansionMonitor) {
+      Console.streaming().info(String.format("newNode's cost(%s) and first child(%s)", totalCost, firstChild));
 			newNode.expand(totalCost, firstChild);
 			nodeExpansionMonitor.notifyAll();
 		}
-		
+
 		return !queue.isEmpty();
 	}
 	

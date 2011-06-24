@@ -70,7 +70,7 @@ public enum SQLCategory {
      *     {@code true} if the category contains the given {@code code}; {@code false} otherwise.
      */
     boolean contains(String code){
-        return code.contains(code);
+        return this.code.contains(code);
     }
 
     /**
