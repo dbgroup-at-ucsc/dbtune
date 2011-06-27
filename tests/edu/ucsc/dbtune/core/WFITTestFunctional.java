@@ -25,6 +25,8 @@ import edu.ucsc.dbtune.advisor.IndexPartitions;
 import edu.ucsc.dbtune.advisor.IndexStatisticsFunction;
 import edu.ucsc.dbtune.advisor.InteractionSelection;
 import edu.ucsc.dbtune.advisor.InteractionSelector;
+import edu.ucsc.dbtune.advisor.KarlsHotsetSelector;
+import edu.ucsc.dbtune.advisor.KarlsInteractionSelector;
 import edu.ucsc.dbtune.advisor.KarlsWFALog;
 import edu.ucsc.dbtune.advisor.KarlsWorkFunctionAlgorithm;
 import edu.ucsc.dbtune.advisor.ProfiledQuery;
@@ -164,7 +166,7 @@ public class WFITTestFunctional
       overheads         = new double[queryCount];
       wfitSchedule      = new IndexBitSet[queryCount];
       snapshot          = pool.getSnapshot();
-      partitions        = getPartitions(snapshot,qinfos,maxNumIndexes,maxNumStates);
+      partitions        = getIndexPartitions(snapshot, qinfos, maxNumIndexes, maxNumStates);
       exportWfit        = true; // in the WFIT mode this value is true.
       exportOptWfit     = false;
       exportOptWfitMins = false;
@@ -234,198 +236,28 @@ public class WFITTestFunctional
     log(reps == 1 ? "Real Test finished...." : "Warm-up phase finished....");
   }
 
-  private static IndexPartitions<DBIndex> getPartitions(
-            Snapshot<DBIndex>            candidateSet,
-            List<ProfiledQuery<DBIndex>> qinfos, 
-            int                          maxNumIndexes,
-            int                          maxNumStates)
-    {
-        // get the hot set
-        StaticIndexSet<DBIndex> hotSet = getHotSet(candidateSet, qinfos, maxNumIndexes);
-
-        InteractionSelection<DBIndex> is;
-
-        StatisticsFunction<DBIndex> doiFunc =
-            new TempDoiFunction(qinfos, candidateSet, env.getIndexStatisticsWindow());
-
-        is = 
-            new InteractionSelection<DBIndex>(
-                new IndexPartitions<DBIndex>(hotSet),
-                doiFunc,
-                maxNumStates,
-                hotSet);
-        
-        IndexPartitions<DBIndex> parts = 
-            InteractionSelector.choosePartitions(is, env.getNumPartitionIterations());
-        
-        return parts;
-    }
-
-    private static StaticIndexSet<DBIndex> getHotSet(
+  private static IndexPartitions<DBIndex> getIndexPartitions(
             Snapshot<DBIndex>            candidateSet,
             List<ProfiledQuery<DBIndex>> qinfos,
-            int                          maxNumIndexes)
-    {
-        StatisticsFunction<DBIndex> benefitFunc;
-        HotsetSelection<DBIndex> hs;
-        
-        benefitFunc =
-            new TempBenefitFunction(
-                    qinfos,
-                    candidateSet.maxInternalId(),
-                    env.getIndexStatisticsWindow());
+            int                          maxNumIndexes,
+            int                          maxNumStates
+  ) {
+    final StaticIndexSet<DBIndex> hotSet = KarlsHotsetSelector.chooseHotSet(
+       candidateSet, new StaticIndexSet<DBIndex>(), new DynamicIndexSet<DBIndex>(),
+       DBTuneInstances.newTempBenefitFunction(qinfos, candidateSet.maxInternalId()),
+      maxNumIndexes, false
+    );
 
-        hs =
-            new HotsetSelection<DBIndex>(
-                    candidateSet,
-                    new StaticIndexSet<DBIndex>(),
-                    new DynamicIndexSet<DBIndex>(),
-                    benefitFunc,
-                    maxNumIndexes,
-                    false);
+    return KarlsInteractionSelector.choosePartitions(
+        hotSet,
+        new IndexPartitions<DBIndex>(hotSet),
+        DBTuneInstances.newTempDoiFunction(qinfos, candidateSet),
+        maxNumStates
+    );
 
-        StaticIndexSet<DBIndex> hotSet = HotSetSelector.chooseHotSetGreedy(hs);
+  }
 
-        return hotSet;
-    }
-
-    private static class TempDoiFunction extends IndexStatisticsFunction<DBIndex>
-    {
-        private InteractionBank bank;
-
-        TempDoiFunction(
-                List<ProfiledQuery<DBIndex>> qinfos,
-                Snapshot<DBIndex> candidateSet,
-                int indexStatisticsWindow )
-        {
-            super(indexStatisticsWindow);
-
-            bank = new InteractionBank(candidateSet);
-
-            for (DBIndex a : candidateSet) {
-                int id_a = a.internalId();
-                for (DBIndex b : candidateSet) {
-                    int id_b = b.internalId();
-                    if (id_a < id_b) {
-                        double doi = 0;
-                        for (ProfiledQuery<DBIndex> qinfo : qinfos) {
-                            doi += qinfo.getBank().interactionLevel(a.internalId(), b.internalId());
-                        }
-                        bank.assignInteraction(a.internalId(), b.internalId(), doi);
-                    }
-                }
-            }
-        }
-
-        @Override public double doi(DBIndex a, DBIndex b) {
-            return bank.interactionLevel(a.internalId(), b.internalId());
-        }
-    }
-
-    private static class TempBenefitFunction extends IndexStatisticsFunction<DBIndex> {
-        List<ProfiledQuery<DBIndex>> qinfos;
-
-        IBGBestBenefitFinder finder = new IBGBestBenefitFinder();
-        double[][]      bbCache;
-        double[]        bbSumCache;
-        int[][]         componentId;
-        IndexBitSet[]   prevM;
-        IndexBitSet     diffM;
-        
-        TempBenefitFunction(
-                List<ProfiledQuery<DBIndex>> qinfos0,
-                int maxInternalId,
-                int indexStatisticsWindow)
-        {
-            super(indexStatisticsWindow);
-            qinfos = qinfos0;
-            
-            componentId = componentIds(qinfos0, maxInternalId);
-            
-            bbCache = new double[maxInternalId+1][qinfos0.size()];
-            bbSumCache = new double[maxInternalId+1];
-            prevM = new IndexBitSet[maxInternalId+1];
-            for (int i = 0; i <= maxInternalId; i++) {
-                prevM[i] = new IndexBitSet();
-                reinit(i, prevM[i]);
-            }
-            diffM = new IndexBitSet(); // temp bit set
-        }
-        
-        private static int[][] componentIds(List<ProfiledQuery<DBIndex>> qinfos, int maxInternalId) {
-            int[][] componentId = new int[qinfos.size()][maxInternalId+1];
-            int q = 0;
-            for (ProfiledQuery<DBIndex> qinfo : qinfos) {
-                IndexBitSet[] parts = qinfo.getBank().stablePartitioning(0);
-                for (DBIndex index : qinfo.getCandidateSnapshot()) {
-                    int id = index.internalId();
-                    componentId[q][id] = -id;
-                    for (int p = 0; p < parts.length; p++) {
-                        if (parts[p].get(id)) {
-                            componentId[q][id] = p;
-                            break;
-                        }
-                    }
-                }
-                ++q;
-            }
-            return componentId;
-        }
-        
-        private void reinit(int id, IndexBitSet M) {
-            int q = 0;
-            double ben = 0;
-            double cache[] = bbCache[id];
-            for (ProfiledQuery<DBIndex> qinfo : qinfos) {
-                double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
-                cache[q] = bb;
-                ben += bb;
-                ++q;
-            }
-            bbSumCache[id] = ben;
-            prevM[id].set(M); 
-        }
-        
-        private void reinitIncremental(int id, IndexBitSet M, int b) {
-            int q = 0;
-            double ben = 0;
-            double cache[] = bbCache[id];
-            for (ProfiledQuery<DBIndex> qinfo : qinfos) {
-                if (componentId[q][id] == componentId[q][b]) {
-                    // interaction, recompute
-                    double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
-                    cache[q] = bb;
-                    ben += bb;
-                }
-                else 
-                    ben += cache[q];
-                ++q;
-            }
-            prevM[id].set(M);
-            bbSumCache[id] = ben;
-        }
-        
-        @Override public double benefit(DBIndex a, IndexBitSet M) {
-            int id = a.internalId();
-            if (!M.equals(prevM)) {
-                diffM.set(M);
-                diffM.xor(prevM[id]);
-                if (diffM.cardinality() == 1) {
-                    reinitIncremental(id, M, diffM.nextSetBit(0));
-                }
-                else {
-                    reinit(id, M);
-                }
-            }
-            return bbSumCache[id];
-        }
-
-        @Override public double doi(DBIndex a, DBIndex b) {
-            throw new RuntimeException("Not implemented");
-        }
-    }
-
-    private static void log(String message){
+  private static void log(String message){
         Console.streaming().log(message);
     }
 
