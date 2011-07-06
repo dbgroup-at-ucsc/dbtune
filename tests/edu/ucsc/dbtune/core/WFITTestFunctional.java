@@ -145,8 +145,8 @@ public class WFITTestFunctional
 
             maxNumIndexes     = env.getMaxNumIndexes();
             maxNumStates      = env.getMaxNumStates();
-            bootstrapFile     = env.getFilenameAtWorkloadFolder("candidate_set_bootstrap_workload.sql");
-            workloadFile      = env.getFilenameAtWorkloadFolder("workload.sql");
+            bootstrapFile     = env.getScriptAtWorkloadsFolder("one_table/candidate_set_bootstrap_workload.sql");
+            workloadFile      = env.getScriptAtWorkloadsFolder("one_table/workload.sql");
             pool              = getCandidates(connection, bootstrapFile);
             qinfos            = getOfflineProfiledQueries(connection, pool, workloadFile);
             queryCount        = qinfos.size();
