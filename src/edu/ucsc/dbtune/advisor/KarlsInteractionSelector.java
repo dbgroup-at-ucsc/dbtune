@@ -14,17 +14,17 @@ public class KarlsInteractionSelector {
 	/*
 	 * Note that when this is called, hotSet and hotPartitions are out of sync!
 	 */
-	public static <I extends DBIndex> IndexPartitions<I>
-	choosePartitions(StaticIndexSet<I> newHotSet, IndexPartitions<I> oldPartitions,
+	public static <I extends DBIndex> KarlsIndexPartitions<I>
+	choosePartitions(StaticIndexSet<I> newHotSet, KarlsIndexPartitions<I> oldPartitions,
 					 DoiFunction<I> doiFunc, int maxNumStates) {
 		java.util.Random rand = new java.util.Random(50);
-		IndexPartitions<I> bestPartitions;
+		KarlsIndexPartitions<I> bestPartitions;
 		double bestCost;
 
 		/* construct initial guess, which put indexes together that were previously together */
-		bestPartitions = new IndexPartitions<I>(newHotSet);
+		bestPartitions = new KarlsIndexPartitions<I>(newHotSet);
 		for (int s = 0; s < oldPartitions.subsetCount(); s++) {
-			IndexPartitions.Subset<I> subset = oldPartitions.get(s);
+			KarlsIndexPartitions<I>.Subset subset = oldPartitions.get(s);
 			for (I i1 : subset) {
 				if (!newHotSet.contains(i1))
 					continue;
@@ -38,7 +38,7 @@ public class KarlsInteractionSelector {
 		bestCost = partitionCost(bestPartitions, doiFunc);
 
 		for (int attempts = 0; attempts < PARTITION_ITERATIONS; attempts++) {
-			IndexPartitions<I> currentPartitions = new IndexPartitions<I>(newHotSet);
+			KarlsIndexPartitions<I> currentPartitions = new KarlsIndexPartitions<I>(newHotSet);
 			while (true) {
 				double currentSubsetCount = currentPartitions.subsetCount();
 				double currentStateCount = currentPartitions.wfaStateCount();
@@ -46,10 +46,10 @@ public class KarlsInteractionSelector {
 				double totalWeightOthers = 0;
 				boolean foundSingletonPair = false;
 				for (int s1 = 0; s1 < currentSubsetCount; s1++) {
-					IndexPartitions.Subset<I> subset1 = currentPartitions.get(s1);
+					KarlsIndexPartitions<I>.Subset subset1 = currentPartitions.get(s1);
 					double size1 = subset1.size();
 					for (int s2 = s1+1; s2 < currentSubsetCount; s2++) {
-						IndexPartitions.Subset<I> subset2 = currentPartitions.get(s2);
+						KarlsIndexPartitions<I>.Subset subset2 = currentPartitions.get(s2);
 						double size2 = subset2.size();
 						double weight = interactionWeight(subset1, subset2, doiFunc);
 						if (weight == 0)
@@ -78,10 +78,10 @@ public class KarlsInteractionSelector {
 
 				double accumWeight = 0;
 				for (int s1 = 0; s1 < currentSubsetCount && accumWeight <= weightThreshold; s1++) {
-					IndexPartitions.Subset<I> subset1 = currentPartitions.get(s1);
+					KarlsIndexPartitions<I>.Subset subset1 = currentPartitions.get(s1);
 					double size1 = subset1.size();
 					for (int s2 = s1+1; s2 < currentSubsetCount && accumWeight <= weightThreshold; s2++) {
-						IndexPartitions.Subset<I> subset2 = currentPartitions.get(s2);
+						KarlsIndexPartitions<I>.Subset subset2 = currentPartitions.get(s2);
 						double size2 = subset2.size();
 						double weight = interactionWeight(subset1, subset2, doiFunc);
 						if (weight == 0)
@@ -115,12 +115,12 @@ public class KarlsInteractionSelector {
 	}
 
 	private static <I extends DBIndex> double
-	partitionCost(IndexPartitions<I> partitions, DoiFunction<I> doiFunc) {
+	partitionCost(KarlsIndexPartitions<I> partitions, DoiFunction<I> doiFunc) {
 		double cost = 0;
 		for (int s1 = 0; s1 < partitions.subsetCount(); s1++) {
-			IndexPartitions.Subset<I> subset1 = partitions.get(s1);
+			KarlsIndexPartitions<I>.Subset subset1 = partitions.get(s1);
 			for (int s2 = s1+1; s2 < partitions.subsetCount(); s2++) {
-				IndexPartitions.Subset<I> subset2 = partitions.get(s2);
+				KarlsIndexPartitions<I>.Subset subset2 = partitions.get(s2);
 				cost += interactionWeight(subset1, subset2, doiFunc);
 			}
 		}
@@ -128,7 +128,7 @@ public class KarlsInteractionSelector {
 	}
 
 	private static <I extends DBIndex> double
-	interactionWeight(IndexPartitions.Subset<I> s1, IndexPartitions.Subset<I> s2, DoiFunction<I> doiFunc) {
+	interactionWeight(KarlsIndexPartitions<I>.Subset s1, KarlsIndexPartitions<I>.Subset s2, DoiFunction<I> doiFunc) {
 		double weight = 0;
 		for (I i1 : s1)
 			for (I i2 : s2)

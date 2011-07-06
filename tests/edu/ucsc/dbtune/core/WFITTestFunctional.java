@@ -18,6 +18,7 @@ package edu.ucsc.dbtune.core;
 import edu.ucsc.dbtune.advisor.DynamicIndexSet;
 import edu.ucsc.dbtune.advisor.IndexPartitions;
 import edu.ucsc.dbtune.advisor.KarlsHotsetSelector;
+import edu.ucsc.dbtune.advisor.KarlsIndexPartitions;
 import edu.ucsc.dbtune.advisor.KarlsInteractionSelector;
 import edu.ucsc.dbtune.advisor.KarlsWFALog;
 import edu.ucsc.dbtune.advisor.KarlsWorkFunctionAlgorithm;
@@ -123,7 +124,7 @@ public class WFITTestFunctional
             List<ProfiledQuery<DBIndex>> qinfos;
             CandidatePool<DBIndex> pool;
             Snapshot<DBIndex> snapshot;
-            IndexPartitions<DBIndex> partitions;
+            KarlsIndexPartitions<DBIndex> partitions;
             KarlsWorkFunctionAlgorithm<DBIndex> wfa;
             KarlsWorkFunctionAlgorithm.WfaTrace<DBIndex> trace;
 
@@ -250,7 +251,7 @@ public class WFITTestFunctional
         log(reps == 1 ? "Real Test finished...." : "Warm-up phase finished....");
     }
 
-    private static IndexPartitions<DBIndex> getIndexPartitions(
+    private static KarlsIndexPartitions<DBIndex> getIndexPartitions(
             Snapshot<DBIndex>            candidateSet,
             List<ProfiledQuery<DBIndex>> qinfos,
             int                          maxNumIndexes,
@@ -264,7 +265,7 @@ public class WFITTestFunctional
 
         return KarlsInteractionSelector.choosePartitions(
                 hotSet,
-                new IndexPartitions<DBIndex>(hotSet),
+                new KarlsIndexPartitions<DBIndex>(hotSet),
                 DBTuneInstances.newTempDoiFunction(qinfos, candidateSet),
                 maxNumStates
                 );

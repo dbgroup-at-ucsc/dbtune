@@ -6,6 +6,7 @@ import edu.ucsc.dbtune.util.IndexBitSet;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * ...
@@ -128,7 +129,7 @@ public class KarlsWFALog {
   }
 
   // write whole log for an experiment with a fixed candidate set
-  public static <I extends DBIndex> KarlsWFALog generateFixed(java.util.List<ProfiledQuery<I>> qinfos, IndexBitSet[] recs, Snapshot<I> snapshot, IndexPartitions<I> parts, double[] overheads) {
+  public static <I extends DBIndex> KarlsWFALog generateFixed(List<ProfiledQuery<I>> qinfos, IndexBitSet[] recs, Snapshot<I> snapshot, KarlsIndexPartitions<I> parts, double[] overheads) {
     int queryCount = qinfos.size();
     KarlsWFALog log = new KarlsWFALog();
 

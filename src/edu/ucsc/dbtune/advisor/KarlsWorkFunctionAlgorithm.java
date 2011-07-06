@@ -31,7 +31,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 	private CostVector tempCostVector = new CostVector();
 	private IndexBitSet tempBitSet = new IndexBitSet();
 
-	public KarlsWorkFunctionAlgorithm(IndexPartitions<I> parts, boolean keepHistory0) {
+	public KarlsWorkFunctionAlgorithm(KarlsIndexPartitions<I> parts, boolean keepHistory0) {
 		if (parts != null) {
 			repartition(parts);
 			if (keepHistory0) {
@@ -49,7 +49,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		dump("INITIAL");
 	}
 
-	public KarlsWorkFunctionAlgorithm(IndexPartitions<I> parts) {
+	public KarlsWorkFunctionAlgorithm(KarlsIndexPartitions<I> parts) {
 		this(parts, false);
 	}
 
@@ -120,7 +120,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		return rec;
 	}
 
-	public void repartition(IndexPartitions<I> newPartitions) {
+	public void repartition(KarlsIndexPartitions<I> newPartitions) {
 		Checks.checkAssertion(!keepHistory, "tracing WFA is not supported with repartitioning");
 		int newSubsetCount = newPartitions.subsetCount();
 		int oldSubsetCount = submachines.length;
@@ -139,7 +139,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		wf2.reallocate(newPartitions);
 
 		for (int newSubsetNum = 0; newSubsetNum < newSubsetCount; newSubsetNum++) {
-			IndexPartitions.Subset<I> newSubset = newPartitions.get(newSubsetNum);
+			KarlsIndexPartitions<I>.Subset newSubset = newPartitions.get(newSubsetNum);
 
 			// translate old recommendation into new
 			IndexBitSet recBitSet = new IndexBitSet();
@@ -232,7 +232,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		return transition;
 	}
 
-	private static <J extends DBIndex> double transitionCost(IndexPartitions.Subset<J> subset, int x, int y) {
+	private static <J extends DBIndex> double transitionCost(KarlsIndexPartitions<J>.Subset subset, int x, int y) {
 		double transition = 0;
 		int i = 0;
 		for (J index : subset) {
@@ -276,7 +276,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 	}
 
 	private static class SubMachine<J extends DBIndex> implements Iterable<J> {
-		private IndexPartitions.Subset<J> subset;
+		private KarlsIndexPartitions<J>.Subset subset;
 		private int subsetNum;
 		private int numIndexes;
 		private int numStates;
@@ -284,7 +284,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		private IndexBitSet currentBitSet;
 		private int[] indexIds;
 
-		SubMachine(IndexPartitions.Subset<J> subset0, int subsetNum0, int state0, IndexBitSet bs0) {
+		SubMachine(KarlsIndexPartitions<J>.Subset subset0, int subsetNum0, int state0, IndexBitSet bs0) {
 			subset = subset0;
 			subsetNum = subsetNum0;
 			numIndexes = subset0.size();
@@ -463,7 +463,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 			predecessor[i] = p;
 		}
 
-		void reallocate(IndexPartitions<?> newPartitions) {
+		void reallocate(KarlsIndexPartitions<?> newPartitions) {
 			int newValueCount = newPartitions.wfaStateCount();
 			if (newValueCount > values.length) {
 				values = new double[newValueCount];
@@ -535,7 +535,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 
 	// given a schedule over a set of candidates and queries, get the total work
 	public <J extends DBIndex> double
-	getScheduleCost(Snapshot<J> candidateSet, int queryCount, List<ProfiledQuery<J>> qinfos, IndexPartitions<J> parts, IndexBitSet[] schedule) {
+	getScheduleCost(Snapshot<J> candidateSet, int queryCount, List<ProfiledQuery<J>> qinfos, KarlsIndexPartitions<J> parts, IndexBitSet[] schedule) {
 		double cost = 0;
 		IndexBitSet prevState = new IndexBitSet();
 		IndexBitSet subset = new IndexBitSet();
@@ -563,7 +563,7 @@ public static class WfaTrace<I extends DBIndex> {
 	private ArrayList<TotalWorkValues> wfValues = new ArrayList<TotalWorkValues>();
 	private ArrayList<Double> sumNullCost = new ArrayList<Double>();
 
-	public WfaTrace(IndexPartitions<I> parts0, TotalWorkValues wf) {
+	public WfaTrace(KarlsIndexPartitions<I> parts0, TotalWorkValues wf) {
 //		parts = parts0.bitSetArray();
 		wfValues.add(new TotalWorkValues(wf));
 		sumNullCost.add(0.0);
@@ -592,7 +592,7 @@ public static class WfaTrace<I extends DBIndex> {
 //	}
 
 
-	public IndexBitSet[] optimalSchedule(IndexPartitions<I> parts, int queryCount, Iterable<ProfiledQuery<I>> qinfos) {
+	public IndexBitSet[] optimalSchedule(KarlsIndexPartitions<I> parts, int queryCount, Iterable<ProfiledQuery<I>> qinfos) {
 
 		// We will fill each BitSet with the optimal indexes for the corresponding query
 		IndexBitSet[] bss = new IndexBitSet[queryCount];
@@ -608,7 +608,7 @@ public static class WfaTrace<I extends DBIndex> {
 		for (int q = 0; q <= queryCount; q++) partSchedule[q] = new IndexBitSet();
 
 		for (int subsetNum = 0; subsetNum < parts.subsetCount(); subsetNum++) {
-			IndexPartitions.Subset<I> subset = parts.get(subsetNum);
+			KarlsIndexPartitions<I>.Subset subset = parts.get(subsetNum);
 			int[] indexIds = subset.indexIds();
 			int stateCount = (int) subset.stateCount(); // XXX: this should return int
 
