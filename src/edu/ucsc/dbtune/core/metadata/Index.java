@@ -34,13 +34,15 @@ public class Index extends DatabaseObject
     public static final boolean CLUSTERED = true;
     public static final boolean UNIQUE    = true;
 
-    protected Table        table;
-    protected List<Column> columns;
-    protected int          type;
-    protected boolean      unique;
-    protected boolean      primary;
-    protected boolean      clustered;
-    protected boolean      materialized;
+    protected Table         table;
+    protected List<Column>  columns;
+    protected List<Boolean> descending;
+    protected int           type;
+    protected boolean       unique;
+    protected boolean       primary;
+    protected boolean       clustered;
+    protected boolean       materialized;
+    protected double        creationCost;
 
     /**
      * Creates an empty index.
@@ -60,12 +62,14 @@ public class Index extends DatabaseObject
     {
         super(name);
 
-        this.table     = table;
-        this.type      = UNKNOWN;
-        this.primary   = primary;
-        this.unique    = unique;
-        this.columns   = new ArrayList<Column>();
-        this.clustered = clustered;
+        this.table        = table;
+        this.type         = UNKNOWN;
+        this.primary      = primary;
+        this.unique       = unique;
+        this.columns      = new ArrayList<Column>();
+        this.clustered    = clustered;
+        this.descending   = new ArrayList<Boolean>();
+        this.creationCost = 0.0;
     }
 
     /**
@@ -85,6 +89,8 @@ public class Index extends DatabaseObject
         this.primary      = other.primary;
         this.clustered    = other.clustered;
         this.materialized = other.materialized;
+        this.descending   = other.descending;
+        this.creationCost = other.creationCost;
     }
 
     /**
@@ -122,11 +128,13 @@ public class Index extends DatabaseObject
             this.columns.add(columns.get(i));
         }
 
-        this.type      = UNKNOWN;
-        this.primary   = primary;
-        this.unique    = unique;
-        this.name      = "";
-        this.clustered = clustered;
+        this.type         = UNKNOWN;
+        this.primary      = primary;
+        this.unique       = unique;
+        this.name         = "";
+        this.clustered    = clustered;
+        this.descending   = new ArrayList<Boolean>();
+        this.creationCost = 0.0;
     }
 
     /**
@@ -464,4 +472,43 @@ public class Index extends DatabaseObject
     {
         return table;
     }
+
+    /**
+     * Returns the cost of creating the index
+     *
+     * @return
+     *     cost of materializing the index
+     */
+    public double creationCost()
+    {
+        return creationCost;
+    }
+
+    /**
+     * Returns the cost of creating the index
+     *
+     * @return
+     *     cost of materializing the index
+     */
+    public void setCreationCost(double cost)
+    {
+        creationCost = cost;
+    }
+
+    /**
+     * {@ inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        return getCreateStatement();
+    }
+
+    /**
+     * @return create index statement.
+     */
+	String getCreateStatement() {
+        throw new RuntimeException();
+    }
+
 }

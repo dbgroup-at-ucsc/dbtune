@@ -28,22 +28,22 @@ public interface DBIndex {
     /**
      * @return the cost required to create this index.
      */
-    double creationCost();
+    double creationCost(); // #44: Index.getCreationCost(); Index.setCreationCost();
 
     /**
      * @return create index statement.
      */
-	String creationText();
+	String creationText(); // #44: Index.getCreateStatement();
 
     /**
      * @return the base table where this index will be used.
      */
-	DatabaseTable baseTable();
+	DatabaseTable baseTable(); // #44: Index.getTable();
 
     /**
      * @return the number of columns of the schema where this is index is part of.
      */
-	int columnCount();
+	int columnCount(); // #44: Index.size();
 
     /**
      * duplicate an index in a type-safe fashion.
@@ -53,20 +53,19 @@ public interface DBIndex {
      * @throws java.sql.SQLException
      *      unable to duplicate an index for the stated reasons.
      */
-	DBIndex consDuplicate(int id) throws SQLException;
+	DBIndex consDuplicate(int id) throws SQLException; // #44: drop
 
     @Override
-    boolean equals(Object obj);
+    boolean equals(Object obj); // #44: Index.equals();
 
     /**
      * @param i position of col
      * @return a database column at position {@code i}.
      */
-	// we only need to use the equals() method of a column
-    DatabaseColumn getColumn(int i);
+    DatabaseColumn getColumn(int i); // #44: Index.get(i);
     
     @Override
-	int hashCode();
+	int hashCode(); // #44: Index.hashCode();
 
     /**
      * compares qualified names.
@@ -76,18 +75,18 @@ public interface DBIndex {
      *      {@code true} if both qualified names are the same, false
      *      otherwise.
      */
-    boolean isOn(DatabaseTable name);
+    boolean isOn(DatabaseTable name); // #44: drop
 
     /**
      * @return the internal Id of this index.
      */
-	int internalId();
+	int internalId(); // #44: DatabaseObject.getId()
 
     /**
      * @return the size of the index.
      */
-	double megabytes();
+	double megabytes(); // #44: DatabaseObject.getMegaBytes()
 
     @Override   // this encourages developer to provide a human-readable string.
-	String toString();
+	String toString(); // #44: Index.toString();
 }

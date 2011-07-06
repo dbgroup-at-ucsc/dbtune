@@ -92,7 +92,8 @@ public abstract class DatabaseObject
     /**
      * Returns the name of the object.
      *
-     * @return string value representing the object's name
+     * @return
+     *     string value representing the object's name
      */
     public String getName()
     {
@@ -112,7 +113,8 @@ public abstract class DatabaseObject
     /**
      * Returns the id of the object.
      *
-     * @return long value representing the object's id
+     * @return
+     *     long value representing the object's id
      */
     public long getId()
     {
@@ -133,7 +135,8 @@ public abstract class DatabaseObject
     /**
      * Returns the cardinality of the object
      *
-     * @return cardinality value
+     * @return
+     *     cardinality value
      */
     public long getCardinality()
     {
@@ -153,7 +156,8 @@ public abstract class DatabaseObject
     /**
      * Returns the number of pages that the object occupies in disk
      *
-     * @return number of pages
+     * @return
+     *     number of pages
      */
     public long getPages()
     {
@@ -163,7 +167,8 @@ public abstract class DatabaseObject
     /**
      * returns the string representation of the object
      *
-     * @return String value of the database object
+     * @return
+     *     String value of the database object
      */
     @Override
     public String toString()
@@ -195,5 +200,16 @@ public abstract class DatabaseObject
         }
 
         return null;
+    }
+
+    /**
+     * Returns the number of bytes that the object occupies in disk
+     *
+     * @return
+     *     size in megabytes
+     */
+    public long getMegaBytes()
+    {
+        return size;
     }
 }
