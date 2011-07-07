@@ -121,8 +121,8 @@ public class PGCommands {
             int id = 0;
             try {
                 while(rs.next()){
-                    ++id;
                     touchIndexSchema(candidateSet, rs, id);
+                    ++id;
                 }
             } finally {
                 rs.close();
@@ -131,9 +131,7 @@ public class PGCommands {
             return candidateSet;
         }
 
-        private static void touchIndexSchema(List<PGIndex> candidateSet,
-        ResultSet rs, int id
-        ) throws SQLException {
+        private static void touchIndexSchema(List<PGIndex> candidateSet, ResultSet rs, int id) throws SQLException {
             final int       reloid = Integer.valueOf(rs.getString("reloid"));
             final boolean   isSync = rs.getString("sync").charAt(0) == 'Y';
             final List<DatabaseColumn> columns = newList();

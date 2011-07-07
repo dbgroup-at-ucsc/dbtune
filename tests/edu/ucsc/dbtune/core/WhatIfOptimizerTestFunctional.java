@@ -49,19 +49,28 @@ public class WhatIfOptimizerTestFunctional {
         final ConnectionManager manager     = makeDatabaseConnectionManager(connProps);
 
         try {connection = manager.connect();} catch (Exception e) {connection = null;}
+
+        File   outputdir   = new File(environment.getOutputFoldername() + "/one_table");
+        String ddlfilename = environment.getScriptAtWorkloadsFolder("one_table/create.sql");
+
+        outputdir.mkdirs();
+		//SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        connection.getJdbcConnection().setAutoCommit(false);
     }
 
     @Test // this test will pass once the what if optimizer returns something....
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLWhatIfOptimization() throws Exception {
-        final String            query       = "select rate from ratings where rate = 5;";
-        final IndexExtractor    extractor   = connection.getIndexExtractor();
-        final Iterable<DBIndex> candidates  = extractor.recommendIndexes(query);
-        final WhatIfOptimizer   optimizer   = connection.getWhatIfOptimizer();
+        final String            query      = "select a from tbl where a = 5;";
+        final IndexExtractor    extractor  = connection.getIndexExtractor();
+        final Iterable<DBIndex> candidates = extractor.recommendIndexes(query);
+        final WhatIfOptimizer   optimizer  = connection.getWhatIfOptimizer();
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        final ExplainInfo       info        = optimizer.explain(query, candidates);
+        System.out.println("Getting cost with candidates " + candidates);
+
+        final ExplainInfo info = optimizer.explain(query, candidates);
 
         assertThat(info, CoreMatchers.<Object>notNullValue());
         assertThat(info.isQuery(), is(true));
@@ -72,12 +81,9 @@ public class WhatIfOptimizerTestFunctional {
 
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testManyWorloadsWhatIfOptimization() throws Exception {
-        final IndexExtractor    extractor   = connection.getIndexExtractor();
-        final File workload    = new File(
-                environment.getScriptAtWorkloadsFolder("/movies/workload.sql")
-        );
-
-        final WhatIfOptimizer   optimizer   = connection.getWhatIfOptimizer();
+        final IndexExtractor  extractor = connection.getIndexExtractor();
+        final File            workload  = new File(environment.getScriptAtWorkloadsFolder("/one_table/workload.sql"));
+        final WhatIfOptimizer optimizer = connection.getWhatIfOptimizer();
 
 
         for (String line : Files.getLines(workload)) {
@@ -86,7 +92,7 @@ public class WhatIfOptimizerTestFunctional {
 
             assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-            final ExplainInfo       info        = optimizer.explain(sql, candidates);
+            final ExplainInfo info = optimizer.explain(sql, candidates);
             assertThat(info, CoreMatchers.<Object>notNullValue());
 
             for(DBIndex each : candidates){
@@ -99,17 +105,16 @@ public class WhatIfOptimizerTestFunctional {
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLIBGWhatIfOptimization() throws Exception {
-        final String            query       = "select count(*) from actors where " +
-                "actors.afirstname like '%an%';";
+        final String             query       = "select count(*) from tbl where b > 3";
         final IndexExtractor     extractor   = connection.getIndexExtractor();
         final Iterable<DBIndex>  candidates  = extractor.recommendIndexes(query);
         final IBGWhatIfOptimizer optimizer   = connection.getIBGWhatIfOptimizer();
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        double       cost        = optimizer.estimateCost(query, newBitSet(), newBitSet());
+        double cost = optimizer.estimateCost(query, newBitSet(), newBitSet());
 
-        assumeThat(cost >= -1.0, is(true));
+        assumeThat(cost >= 0, is(true));
     }
 
     @AfterClass

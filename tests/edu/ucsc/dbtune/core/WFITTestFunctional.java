@@ -16,7 +16,6 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.advisor.DynamicIndexSet;
-import edu.ucsc.dbtune.advisor.IndexPartitions;
 import edu.ucsc.dbtune.advisor.KarlsHotsetSelector;
 import edu.ucsc.dbtune.advisor.KarlsIndexPartitions;
 import edu.ucsc.dbtune.advisor.KarlsInteractionSelector;
