@@ -58,10 +58,14 @@ This is needed in order to solve #44. In the case of DB2, we need to merge also 
 
 ## 80
 
+d
+
 ## 83
 
 dbtune.workload package
 
 ## 84:
+
+d
 
 [querulous_dbcp]: https://github.com/twitter/querulous/blob/master/src/main/scala/com/twitter/querulous/database/ApachePoolingDatabase.scala

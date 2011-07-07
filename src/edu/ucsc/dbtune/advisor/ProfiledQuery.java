@@ -168,11 +168,9 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
      *      the total cost of this query.
      */
     public double totalCost(IndexBitSet configuration){
-        Console.streaming().info("ProfiledQuery#totalCost(IndexBitSet) will use " + configuration + " for total cost (plan + maintenance)");
         double plan  = planCost(configuration);
         double maint = maintenanceCost(configuration);
         double total = plan + maint;
-        Console.streaming().info("ProfiledQuery#totalCost(IndexBitSet) has calculated a total cost = " + total);
         return total;
     }
 

@@ -39,6 +39,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -257,56 +258,45 @@ public class PGCommands {
 
             @Override
             public PGExplainInfo apply(Parameter input) throws SQLException {
-                final ResultSet             resultSet   = input.getParameterValue(ResultSet.class);
-                final Integer               cardinality = input.getParameterValue(Integer.class);
-                SQLCategory category    = null;
-                double      totalCost   = 0.0;
-                Console.streaming().info("PGCommands#explainInfo() has initialized a the totalCost variable to " + totalCost);
-                final List<Double> costCollector = Instances.newList();
+                final ResultSet resultSet     = input.getParameterValue(ResultSet.class);
+                final Integer   cardinality   = input.getParameterValue(Integer.class);
+                SQLCategory     category      = null;
+                double          totalCost     = 0.0;
+                final String    indexOverhead;
+                final String[]  ohArray;
+                final double[]  maintCost;
+
                 try {
-                    Console.streaming().info("PGCommands#explainInfo() ");
-                    final String catcat =  resultSet.getString("category");
-                    Console.streaming().info("AHA===>" + catcat + " and statement ==>" + Strings.str(resultSet.getStatement()));
-                    category = SQLCategory.from(resultSet.getString("category"));
-                    Console.streaming().info("PGCommands#explainInfo() has set the category:SQLCategory to " + category);
-                    // overhead = oh
-                    final String    indexOverhead   = resultSet.getString("index_overhead");
-                    final String[]  ohArray         = indexOverhead.split(" ");
-                    Console.streaming().info("PGCommands#explainInfo() has set the " +
-                            "indexOverhead:String, ohArray to "
-                            + indexOverhead
-                            + ", " + Arrays.toString(ohArray)
-                    );
+                    category      = SQLCategory.from(resultSet.getString("category"));
+                    indexOverhead = resultSet.getString("index_overhead");
+                    ohArray       = indexOverhead.split(" ");
+                    maintCost     = new double[cardinality];
+
                     verifyOverheadArray(cardinality, ohArray);
 
-                    final List<String> indexesAsStrings = Arrays.asList(ohArray);
-                    for(String eachIndex : indexesAsStrings){
-                        final String[] splitVals = eachIndex.split("=");
+                    for(int i = 0; i < cardinality; i++){
+
+                        final String   ohString  = ohArray[i];
+                        final String[] splitVals = ohString.split("=");
+
                         Checks.checkAssertion(splitVals.length == 2, "We got an unexpected result in index_overhead.");
-                        final double overhead   = Double.valueOf(splitVals[1]);
-                        costCollector.add(overhead);
+
+                        final int    id       = Integer.valueOf(splitVals[0]);
+                        final double overhead = Double.valueOf(splitVals[1]);
+
+                        maintCost[id] = overhead;
                     }
 
                     totalCost = Double.valueOf(resultSet.getString("qcost"));
-                    Console.streaming().info("PGCommands#explainInfo() has updated the totalCost variable to " + totalCost);
                 } finally {
                     if(resultSet != null){
                         resultSet.close();
                     }
                 }
 
-                final double[] castCost = new double[costCollector.size()];
-                for(int i = 0; i < costCollector.size(); i++){
-                    castCost[i] = costCollector.get(i);
-                }
-
-                Console.streaming().info("PGCommands#explainInfo() has updated the " +
-                        "overhead variable to "
-                        + Arrays.toString(castCost)
-                );
                 return new PGExplainInfo(
                         category,
-                        castCost,
+                        maintCost,
                         totalCost
                 );
             }
