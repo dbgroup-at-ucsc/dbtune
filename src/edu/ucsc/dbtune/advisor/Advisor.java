@@ -16,6 +16,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 
@@ -32,7 +33,7 @@ public abstract class Advisor
      * @throws SQLException
      *      if the given statement can't be processed
      */
-    public abstract void process(String sql) throws SQLException;
+    public abstract void process(SQLStatement sql) throws SQLException;
 
     /**
      * Returns the configuration obtained by the Advisor.

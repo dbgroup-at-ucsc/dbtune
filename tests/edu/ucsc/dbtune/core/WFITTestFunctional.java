@@ -79,7 +79,7 @@ public class WFITTestFunctional
         String ddlfilename = env.getScriptAtWorkloadsFolder("one_table/create.sql");
 
         outputdir.mkdirs();
-        SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+		SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
         connection.getJdbcConnection().setAutoCommit(false);
     }
 
@@ -120,14 +120,14 @@ public class WFITTestFunctional
         log(reps == 1 ? "Real Test start...." : "Warm-up phase start....");
 
         for(int warmupIdx = 0; warmupIdx < reps; warmupIdx++){
-            List<ProfiledQuery<DBIndex>> qinfos;
-            CandidatePool<DBIndex> pool;
-            Snapshot<DBIndex> snapshot;
-            KarlsIndexPartitions<DBIndex> partitions;
-            KarlsWorkFunctionAlgorithm<DBIndex> wfa;
+            List<ProfiledQuery<DBIndex>>                 qinfos;
+            CandidatePool<DBIndex>                       pool;
+            Snapshot<DBIndex>                            snapshot;
+            KarlsIndexPartitions<DBIndex>                partitions;
+            KarlsWorkFunctionAlgorithm<DBIndex>          wfa;
             KarlsWorkFunctionAlgorithm.WfaTrace<DBIndex> trace;
 
-            KarlsWFALog log;
+            KarlsWFALog   log;
             IndexBitSet[] wfitSchedule;
             IndexBitSet[] optSchedule;
             IndexBitSet[] minSched;
@@ -204,6 +204,7 @@ public class WFITTestFunctional
                     throw new SQLException("Workload should have 7 statements");
                 }
 
+				System.out.println("Cardinality: " + wfitSchedule[q].cardinality());
                 whatIfCount = query.getWhatIfCount();
             }
 
