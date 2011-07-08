@@ -57,7 +57,7 @@ import static org.junit.Assert.assertThat;
  *
  * @see <a href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
  *     "On-line Index Selection for Physical Database Tuning"</a>
- * @author ivo@cs.ucsc.edu (Ivo Jimenez)
+ * @author Ivo Jimenez
  */
 public class WFITTestFunctional
 {

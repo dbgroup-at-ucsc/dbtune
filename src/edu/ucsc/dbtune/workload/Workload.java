@@ -15,39 +15,84 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.workload;
 
-import edu.ucsc.dbtune.core.optimizers.SQLStatement;
+import edu.ucsc.dbtune.core.metadata.SQLCategory;
 
+import java.io.Reader;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.lang.Iterable;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.lang.Iterable;
 
 /**
  * Represents a workload.
+ *
+ * @author Ivo Jimenez
  */
 public class Workload implements Iterable<SQLStatement>
 {
-	List<SQLStatement> sqls;
+    private List<SQLStatement> sqls;
 
-	/**
-	 * Creates a workload containing 
-	 */
-	public Workload(String workloadFile) {
-		// XXX: create one SQLStatement per statement in the file
-		throw new RuntimeException("not implemented yet");
-	}
+    /**
+     * Creates a workload containing the set of SQL statements provided by the {@code 
+     * workloadStream} object. It's assumed that there's one statement per line and only one-line 
+     * comments (line beginning with string {@code "--"}).
+     *
+     * @param workloadStream
+     *     stream that provides the set of SQL statements. One statement per line is assumed; 
+     *     single-line comments only.
+     */
+    public Workload(Reader workloadStream) throws IOException {
+        BufferedReader reader;
+        String         line;
+        String         lineLow;
+        SQLCategory    category;
 
-	/**
-	 * Iterates
-	 */
-	public Iterator<SQLStatement> iterator() {
-		return sqls.iterator();
-	}
+        sqls   = new ArrayList<SQLStatement>();
+        reader = new BufferedReader(workloadStream);
 
-	// possible useful methods:
-	//  *  SQLStatement get(int i)      // return the ith statement contained in the workload
-	//
-	//  *  SQLStatement get(String sql) // return the statement corresponding to the given sql
-	//                                  // string. This would require string matching stuff, or
-	//                                  // even having to do some query processing (parse, rewrite 
-	//                                  // views, query flattening, etc) in order to compare queries
+        while((line = reader.readLine()) != null) {
+
+            line    = line.trim();
+            lineLow = line.toLowerCase();
+
+            if(lineLow.startsWith("--")) {
+                continue;
+            } else if(lineLow.startsWith("select") || lineLow.startsWith("with")) {
+                category = SQLCategory.QUERY;
+            } else {
+                category = SQLCategory.DML;
+            }
+
+            if(line.endsWith(";")) {
+                sqls.add(new SQLStatement(category, line.substring(0, line.length()-1)));
+            } else {
+                sqls.add(new SQLStatement(category, line));
+            }
+        }
+    }
+
+    /**
+     * Returns the statement at the given position (zero-indexing).
+     *
+     * @param index
+     *     index of the SQL statement retrieved
+     */
+    public SQLStatement get(int i) {
+        return sqls.get(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Iterator<SQLStatement> iterator() {
+        return sqls.iterator();
+    }
+
+    // SQLStatement get(String sql) // return the statement corresponding to the given sql
+    //                              // string. This would require string matching stuff, or
+    //                              // even having to do some query processing (parse, rewrite
+    //                              // views, query flattening, etc) in order to compare queries
 }

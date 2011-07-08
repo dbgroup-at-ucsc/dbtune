@@ -2,9 +2,7 @@ package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Files;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
-import java.util.List;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -54,7 +52,7 @@ public class WhatIfOptimizerTestFunctional {
         String ddlfilename = environment.getScriptAtWorkloadsFolder("one_table/create.sql");
 
         outputdir.mkdirs();
-		//SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
         connection.getJdbcConnection().setAutoCommit(false);
     }
 

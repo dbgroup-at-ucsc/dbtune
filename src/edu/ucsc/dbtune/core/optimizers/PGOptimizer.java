@@ -37,6 +37,8 @@ import static edu.ucsc.dbtune.core.metadata.PGCommands.getVersion;
 
 /**
  * The interface with the PostgreSQL optimizer.
+ *
+ * @author Ivo Jimenez
  */
 public class PGOptimizer extends Optimizer
 {

@@ -52,7 +52,7 @@ import static org.junit.Assert.*;
  * <p>
  * The test fails entirely if the above two conditions aren't met.
  *
- * @author ivo@cs.ucsc.edu (Ivo Jimenez)
+ * @author Ivo Jimenez
  */
 public class MetaDataExtractorTestFunctional
 {
@@ -78,13 +78,13 @@ public class MetaDataExtractorTestFunctional
     @BeforeClass
     public static void setUp() throws Exception
     {
-		String ddlfilename;
+        String ddlfilename;
 
-		environment = Environment.getInstance();
-		connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
-		ddlfilename = environment.getScriptAtWorkloadsFolder("movies/create.sql");
+        environment = Environment.getInstance();
+        connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
+        ddlfilename = environment.getScriptAtWorkloadsFolder("movies/create.sql");
 
-		SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
 
         extractor = Strings.contains(environment.getJDBCDriver(), "postgresql")
                 ? new PGExtractor()
@@ -99,25 +99,25 @@ public class MetaDataExtractorTestFunctional
         if(connection != null) connection.close();
     }
 
-	/**
-	 * Tests that the schema we created exists.
+    /**
+     * Tests that the schema we created exists.
      */
     @Test
     public void testSchemaExists() throws Exception
     {
-		Schema moviesSchema = null;
+        Schema moviesSchema = null;
 
         for (Schema schema : catalog.getSchemas())
         {
-			if(schema.getName().equals("movies")) {
-				moviesSchema = schema;
-			}
-		}
+            if(schema.getName().equals("movies")) {
+                moviesSchema = schema;
+            }
+        }
 
-		assertTrue(moviesSchema != null);
+        assertTrue(moviesSchema != null);
 
-		schema = moviesSchema;
-	}
+        schema = moviesSchema;
+    }
 
     /**
      * Tests the size of database object containers
@@ -293,7 +293,7 @@ public class MetaDataExtractorTestFunctional
             }
             else if (Strings.same(table.getName(), RATINGS))
             {
-				// none
+                // none
             }
             else
             {

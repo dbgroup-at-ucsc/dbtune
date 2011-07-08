@@ -20,6 +20,10 @@ import java.util.List;
 
 /**
  * enum representing possible SQL categories.
+ *
+ * @author Karl Schnaitter
+ * @author Huascar Sanchez
+ * @author Ivo Jimenez
  */
 public enum SQLCategory {
     /**
