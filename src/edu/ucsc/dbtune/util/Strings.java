@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 
 /**
@@ -103,6 +104,8 @@ public class Strings
         else
             return firstLine;
     }
+    return list;
+  }
 
     /**
      * Treats each element from {@code valArray} as a {@link Double} and returns an array containing 
@@ -415,33 +418,14 @@ public class Strings
             this(new FileInputStream(file), "UTF-8");
         }
 
-
-        private static void unableToOpenFile(Throwable cause){
-            throw new RuntimeException("unable to open the given file", cause);
+        public String next() {
+          return line;
         }
 
-        public Iterator<String> iterator() {
-            return new Iterator<String>(){
-                private String line;
-                public boolean hasNext() {
-                    try {
-                        line = reader.readLine();
-                    } catch (IOException e) {
-                        throw new IllegalStateException(e);
-                    }
-                    return line != null;
-                }
-
-                public String next() {
-                    return line;
-                }
-
-                public void remove() {
-                    throw new UnsupportedOperationException("remove operation is not supported");
-                }
-            };
+        public void remove() {
+          throw new UnsupportedOperationException("remove operation is not supported");
         }
-
+      };
     }
 
     public static void formatIdentifier(String str, StringBuilder sbuf) {
@@ -488,5 +472,4 @@ public class Strings
          }
          sbuf.append('\'');
      }
-
 }

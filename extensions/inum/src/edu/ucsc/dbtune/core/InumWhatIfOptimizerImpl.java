@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.core;
 
-import com.google.caliper.internal.guava.collect.ImmutableList;
 import edu.cmu.db.autopilot.AutoPilotDelegate;
 import edu.cmu.db.autopilot.autopilot;
 import edu.cmu.db.inum.PostgresIndexAccessGenerator;
@@ -9,14 +8,17 @@ import edu.cmu.db.model.Index;
 import edu.cmu.db.model.PhysicalConfiguration;
 import edu.cmu.db.model.Plan;
 import edu.cmu.db.model.QueryDesc;
+import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.StopWatch;
 import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.satuning.util.Objects;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -32,6 +34,15 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   private final Autopilot           autopilot;
 
   private static final Console CONSOLE = Console.streaming();
+  private static final Set<String> WORKLOADS = new HashSet<String>();
+  static {
+    final Environment                 env       = Environment.getInstance();
+    final WorkloadDirectoryNode directory       = new WorkloadDirectoryNode(
+        new File(env.getOutputFoldername())
+    );
+    final WalkThroughWorkloadsVisitor visitor   = new WalkThroughWorkloadsVisitor();
+    WORKLOADS.addAll(directory.accept(visitor));
+  }
 
   /**
    * construct a new {@code InumWhatIfOptimizer} object.
@@ -62,10 +73,11 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   }
 
   @Override public double estimateCost(String workload) {
-    return estimateCost(workload, ImmutableList.<DBIndex>of());
+    return estimateCost(workload, Collections.<DBIndex>emptyList());
   }
 
   @Override public double estimateCost(String workload, Iterable<DBIndex> hypotheticalIndexes) {
+    preprocessIfSeenBefore(workload);
     final Iterable<DBIndex> indexes = Checks.checkNotNull(hypotheticalIndexes);
     double cost;
 
@@ -89,6 +101,12 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
     final String plan = generator.indexAccessCost(pc, queryDesc, true);
     cost = getPlanCost(plan);
     return cost;
+  }
+
+  private void preprocessIfSeenBefore(String workload) {
+    if(!seenBefore(workload)){
+       // perform
+    }
   }
 
   public static double getPlanCost(String plan){
@@ -154,7 +172,7 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
     @Override public void drop_configuration(PhysicalConfiguration configuration) {
       if(configuration == null) { return; }
 
-      final Connection conn = getConnection();
+      final Connection conn   = getConnection();
       final StopWatch  start  = new StopWatch();
       getAutopilotDelate().drop_configuration(configuration, conn);
       start.resetAndLog("dropping configuration took");
@@ -216,6 +234,10 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
 
   private static void logError(String message, Throwable error){
     CONSOLE.error(message, error);
+  }
+
+  private static boolean seenBefore(String workload){
+    return WORKLOADS.contains(workload);
   }
 
 }
