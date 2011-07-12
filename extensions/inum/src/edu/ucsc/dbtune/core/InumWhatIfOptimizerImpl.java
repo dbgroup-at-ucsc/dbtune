@@ -1,13 +1,16 @@
 package edu.ucsc.dbtune.core;
 
+import Zql.ParseException;
 import edu.cmu.db.autopilot.AutoPilotDelegate;
 import edu.cmu.db.autopilot.autopilot;
+import edu.cmu.db.inum.CostEstimator;
 import edu.cmu.db.inum.PostgresIndexAccessGenerator;
 import edu.cmu.db.model.Configuration;
 import edu.cmu.db.model.Index;
 import edu.cmu.db.model.PhysicalConfiguration;
 import edu.cmu.db.model.Plan;
 import edu.cmu.db.model.QueryDesc;
+import edu.cmu.db.model.WorkloadProcessor;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
@@ -15,6 +18,7 @@ import edu.ucsc.dbtune.util.StopWatch;
 import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.satuning.util.Objects;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -34,14 +38,14 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   private final Autopilot           autopilot;
 
   private static final Console CONSOLE = Console.streaming();
-  private static final Set<String> WORKLOADS = new HashSet<String>();
+  private static final Set<String> WORKLOADS;
   static {
     final Environment                 env       = Environment.getInstance();
     final WorkloadDirectoryNode directory       = new WorkloadDirectoryNode(
         new File(env.getOutputFoldername())
     );
     final WalkThroughWorkloadsVisitor visitor   = new WalkThroughWorkloadsVisitor();
-    WORKLOADS.addAll(directory.accept(visitor));
+    WORKLOADS = Collections.unmodifiableSet(directory.accept(visitor));
   }
 
   /**
@@ -124,7 +128,24 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   }
 
   /**
-   *
+   * todo(Huascar) decide what to extend here....
+   */
+  private static class InumCostEstimator extends CostEstimator {
+
+    InumCostEstimator(DatabaseConnection connection, String workloadFile) throws IOException, ParseException {
+      super(new Autopilot(connection), initializeWorkloadProcessor(workloadFile), workloadFile);
+    }
+
+    private static WorkloadProcessor initializeWorkloadProcessor(String workloadFile)
+        throws ParseException {
+      final WorkloadProcessor processor = new WorkloadProcessor(workloadFile);
+      processor.getInterestingOrders();
+      return processor;
+    }
+  }
+
+  /**
+   * converts an INUM-Index to a dbtune DBIndex.
    */
   private static class IndexAdapter extends Index {
 
