@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<project name="inum-integration" basedir="." default="compile">
-  <import file="../../tasks.xml"/>
-
-  <path id="compile.classpath">
-    <fileset dir="${lib.dir}" includes="*.jar"/>
-  </path>
-</project>

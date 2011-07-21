@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+
+<project name="dbtune" default="compile">
+  <!-- common definitions are stored in common.xml. -->
+  <import file="common.xml"/>
+
+  <path id="compile.classpath">
+    <fileset dir="${lib.dir}" includes="*.jar"/>
+  </path>
+
+  <target name="jar" depends="compile">
+    <mkdir dir="${build.dir}/dist" />
+    <jar destfile="${build.dir}/dist/dbtune-${version}.jar" basedir="${build.dir}/classes" excludes="edu/ucsc/satuning/**" />
+  </target>
+
+  <target name="dist" depends="distjars, javadoc"
+       description="Build entire distribution.">
+    <!--<ant antfile="extensions/cli/build.xml"  target="distjars" inheritAll="false"/>-->
+    <!--<ant antfile="extensions/ml/build.xml"   target="distjars" inheritAll="false"/>-->
+    <ant antfile="extensions/inum/dbtune-build.xml" target="distjars" inheritAll="false"/>
+
+    <!--<copy toDir="${build.dir}/dist">-->
+      <!--<fileset dir="extensions/cli/build" includes="*.jar" excludes="*dbtune-${version}.jar"/>-->
+    <!--</copy>-->
+    <!--<copy toDir="${build.dir}/dist">-->
+      <!--<fileset dir="extensions/ml/build" includes="*.jar" excludes="*dbtune-${version}.jar"/>-->
+    <!--</copy>-->
+    <copy toDir="${build.dir}/dist">
+      <fileset dir="extensions/inum/build" includes="*.jar" excludes="*-with-deps.jar"/>
+      <fileset dir="extensions/inum/lib"   includes="*.jar" excludes="*-with-deps.jar"/>
+    </copy>
+
+    <copy toDir="${build.dir}/dist" file="LICENSE"/>
+    <copy toDir="${build.dir}/dist">
+      <fileset dir="${lib.dir}"
+        includes="*.jar"/>
+    </copy>
+    <copy toDir="${build.dir}/dist">
+      <fileset dir="${build.dir}" includes="javadoc/**/*"/>
+    </copy>
+
+    <zip destfile="${build.dir}/dbtune-${version}.zip">
+      <zipfileset dir="${build.dir}/dist" prefix="${project.name}-${version}" excludes="*-src.jar"/>
+    </zip>
+    <zip destfile="${build.dir}/${project.name}-${version}-src.zip">
+      <zipfileset dir="." prefix="${project.name}-${version}-src"
+          excludes="build/**,www/**/*,**/.svn/**,**/.git/**,.git*,classes/**,.settings/**, edu/ucsc/satuning/**
+          bin/**,latest-api-diffs/**,latest-javadoc/**,.classpath,.project, pgtests/**, resources/**, .project*"/>
+
+    </zip>
+  </target>
+
+  <target name="test.dist"
+      depends="jar, test.compile-with-deps"
+      description="Execute Unit tests against distribution jar.">
+    <junit printsummary="yes"
+         haltonerror="yes"
+         haltonfailure="yes"
+         fork="yes">
+
+        <classpath>
+            <pathelement location="${build.dir}/dbtune-${version}-tests.jar"/>
+            <pathelement location="${build.dir}/dist/dbtune-${version}.jar"/>
+            <pathelement location="lib/caliper-0.0.jar"/>
+            <pathelement location="lib/junit-4.9b2.jar"/>
+            <pathelement location="lib/mockito-all-1.8.5.jar"/>
+            <pathelement location="lib/postgresql-9.0-801.jdbc4.jar"/>
+            <pathelement location="lib/scala-compiler-2.8.1.jar"/>
+            <pathelement location="lib/scala-library-2.8.1.jar"/>
+        </classpath>
+        <batchtest fork="yes"
+                   todir="${build.dir}/${junit.out.dir}">
+          <fileset dir="${test.dir}">
+            <include name="${unit.test.pat}"/>
+            <exclude name="**/AllTests.java"/>
+          </fileset>
+        </batchtest>
+        <syspropertyset>
+            <propertyref name="dbtune.custom.loader"/>
+            <propertyref name="version"/>
+            <propertyref name="build.dir"/>
+            <propertyref name="lib.dir"/>
+        </syspropertyset>
+    </junit>
+  </target>
+
+  <target name="javadoc"
+          description="Generate Javadocs.">
+      <mkdir dir="${build.dir}/javadoc"/>
+      <javadoc sourcepath="${src.dir}"
+               packagenames="*"
+               excludepackagenames="tests, edu.ucsc.satuning.*"
+               destdir="${build.dir}/javadoc"
+               author="true"
+               maxmemory="512M"
+               protected="true" windowtitle="${project.name}-${version} API">
+          <sourcepath>
+            <pathelement location="${src.dir}"/>
+            <pathelement location="${cli.src.dir}"/>
+            <pathelement location="${ml.src.dir}"/>
+            <pathelement location="${inum.src.dir}"/>
+          </sourcepath>
+          <classpath refid="compile.classpath"/>
+        </javadoc>
+    </target>
+
+  <target name="clean.all"
+      depends="clean"
+      description="Remove generated files.">
+    <!--<ant dir="extensions/cli" antfile="build.xml" target="clean"/>-->
+    <!--<ant dir="extensions/ml" antfile="build.xml" target="clean"/>-->
+    <ant dir="extensions/inum" antfile="dbtune-build.xml" target="clean"/>
+  </target>
+
+</project>

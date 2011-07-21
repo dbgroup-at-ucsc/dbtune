@@ -40,7 +40,7 @@
       <sourcepath>
         <pathelement location="${cli.src.dir}" />
         <pathelement location="${ml.src.dir}" />
-          <pathelement location="${inum.src.dir}" />
+         <!--<pathelement location="${inum.src.dir}" />-->
         <pathelement location="${src.dir}" />
       </sourcepath>
       <classpath refid="compile.classpath" />
@@ -50,7 +50,7 @@
   <target name="clean.all" depends="clean" description="Remove generated files">
     <ant antfile="extensions/cli/build.xml" target="clean" inheritall="false" />
     <ant antfile="extensions/ml/build.xml" target="clean" inheritall="false" />
-    <ant antfile="extensions/inum/build.xml" target="clean" inheritall="false" />
+    <!--<ant antfile="extensions/inum/build.xml" target="clean" inheritall="false" />-->
   </target>
 
   <target name="compile.all" depends="compile" description="compile all source">

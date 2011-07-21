@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.tools.cmudb.inum.PostgresIndexAccessGenerator;
+import edu.ucsc.dbtune.inum.PostgresIndexAccessGenerator;
 
 /**
  * ...

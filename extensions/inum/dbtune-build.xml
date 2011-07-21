@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<project name="dbtune-inum" basedir="." default="jar">
+
+  <import file="../../common.xml"/>
+
+  <path id="compile.classpath">
+    <fileset dir="${lib.dir}" includes="*.jar"/>
+  	<fileset dir="${ext.lib.dir}" includes="*.jar"/>
+    <pathelement path="../../build/classes"/>
+  </path>
+
+  <target name="jar" depends="jar.withdeps" description="Build jar.">
+    <jar destfile="${build.dir}/${ant.project.name}-${version}.jar">
+      <zipfileset src="${build.dir}/${ant.project.name}-with-deps.jar"
+          excludes="edu/ucsc/satuning/**"/>
+    </jar>
+  </target>
+
+</project>
