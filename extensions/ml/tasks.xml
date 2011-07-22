@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="dbtune-ml-tasks" basedir="." default="compile">
 
-  <import file="../../tasks.xml"/>
+  <import file="../../common.xml"/>
 
   <path id="ml.compile.classpath">
     <fileset dir="../../${lib.dir}" includes="*.jar" />

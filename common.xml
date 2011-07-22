@@ -2,7 +2,7 @@
 
 <project name="common">
 
-  <property file="dbtune.properties"/>
+  <property file="build.properties"/>
 
   <!-- can be overridden at the command line with -Dversion=
        or in IDEA, in the ant properties dialog -->
@@ -43,6 +43,7 @@
       depends="test.compile"
       description="Execute Unit tests.">
     <echo message="Executing Unit tests"/>
+    <mkdir dir="${build.dir}/${junit.out.dir}"/>
     <junit printsummary="yes"
          haltonerror="yes"
          haltonfailure="yes"
@@ -66,6 +67,7 @@
       depends="test.compile"
       description="Execute Functional tests.">
     <echo message="Executing Functional tests"/>
+    <mkdir dir="${build.dir}/${junit.out.dir}"/>
     <junit printsummary="yes"
          haltonerror="yes"
          haltonfailure="yes"
@@ -77,7 +79,7 @@
         </classpath>
         <batchtest fork="yes"
                    todir="${build.dir}/${junit.out.dir}">
-          <fileset dir="${test.dir}">
+          <fileset dir="${test.dir}" excludes="edu/ucsc/satuning/**/*">
             <include name="${functional.test.pat}"/>
             <exclude name="**/AllTests.java"/>
           </fileset>
@@ -85,7 +87,7 @@
     </junit>
   </target>
 
-  <target name="test.report" depends="test.compile" description="Execute and then Print Unit tests.">
+  <target name="test-with-report" depends="test.compile" description="Execute and then Print Unit tests.">
     <echo message="Executing unit tests (Generate Exec. Report once finished)"/>
     <mkdir dir="${build.dir}/${junit.out.dir}"/>
     <junit printsummary="yes"
@@ -107,7 +109,7 @@
     </junit>
   </target>
 
-  <target name="test.functional.report" depends="test.compile" description="Execute and then Print Functional tests.">
+  <target name="test.functional-with-report" depends="test.compile" description="Execute and then Print Functional tests.">
     <echo message="Executing Functional tests (Generate Exec. Report once finished)"/>
     <mkdir dir="${build.dir}/${junit.out.dir}"/>
     <junit printsummary="yes"
@@ -135,7 +137,7 @@
     </junitreport>
   </target>
 
-  <target name="test.single"
+  <target name="testclass"
       depends="test.compile,argument-checking"
       description="Execute Single Unit Test.">
     <echo message="running test ${class}"/>
@@ -177,6 +179,10 @@
       depends="source.jar, jar"
       description="Build jar files"/>
 
+
+  <target name="scalacode"
+      depends="scala.test, scala.test.functional"
+      description="Executing Scala unit and functional tests"/>
 
   <target name="test.compile-with-deps" depends="test.compile"
 	  description="Build a jar of tests with spi refocused.">
