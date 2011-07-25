@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static edu.ucsc.dbtune.spi.core.Functions.compose;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import com.google.common.base.Supplier;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)

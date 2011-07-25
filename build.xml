@@ -95,8 +95,9 @@
             <pathelement location="lib/junit-4.9b2.jar"/>
             <pathelement location="lib/mockito-all-1.8.5.jar"/>
             <pathelement location="lib/postgresql-9.0-801.jdbc4.jar"/>
-            <pathelement location="lib/scala-compiler-2.8.1.jar"/> <!-- todo (Huascar) remove this. -->
-            <pathelement location="lib/scala-library-2.8.1.jar"/>  <!-- todo (Huascar) remove this. -->
+            <pathelement location="lib/scala-compiler-2.8.1.jar"/>
+            <pathelement location="lib/scala-library-2.8.1.jar"/>
+            <pathelement location="lib/guava.jar"/>
         </classpath>
         <batchtest fork="yes"
                    todir="${build.dir}/${junit.out.dir}">

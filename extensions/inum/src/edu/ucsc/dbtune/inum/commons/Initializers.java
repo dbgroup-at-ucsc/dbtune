@@ -3,7 +3,6 @@ package edu.ucsc.dbtune.inum.commons;
 import Zql.ParseException;
 import edu.ucsc.dbtune.inum.autopilot.autopilot;
 import edu.ucsc.dbtune.inum.model.WorkloadProcessor;
-import edu.ucsc.dbtune.spi.core.Supplier;
 
 /**
  * a set of helper methods that will allow me pre-configure the

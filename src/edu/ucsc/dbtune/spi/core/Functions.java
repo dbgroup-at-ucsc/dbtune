@@ -18,6 +18,8 @@
 
 package edu.ucsc.dbtune.spi.core;
 
+import com.google.common.base.Suppliers;
+import com.google.common.base.Supplier;
 import java.io.Serializable;
 
 import static edu.ucsc.dbtune.util.Checks.checkNotNull;
@@ -63,8 +65,9 @@ public class Functions {
         return Functions.<R, E>submit(command, param);
     }
 
+    @SuppressWarnings( {"unchecked"})
     public static <R, E extends Exception> Supplier<R> submit(Function<R, E> function, Supplier<Parameter> first){
-        return new Suppliers.SupplierComposition<R, E>(function, first);
+        return new SupplierComposition<R, E>(function, first);
     }
 
     public static void submitAll(Supplier<?>... suppliers){
@@ -106,6 +109,29 @@ public class Functions {
         @Override
         public String toString() {
             return second.toString() + "(" + first.toString() + ")";
+        }
+    }
+
+    private static class SupplierComposition<R, E extends Exception> implements Supplier<R>, Serializable {
+        private static final long serialVersionUID = 0;
+
+        final Function<? extends R, E>   function;
+        final Supplier<Parameter>        first;
+        SupplierComposition(
+                Function<? extends R, E> function,
+                Supplier<Parameter> first
+        ) {
+            this.function = function;
+            this.first    = first;
+        }
+
+        @Override
+        public R get() {
+            try {
+                return function.apply(first.get());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

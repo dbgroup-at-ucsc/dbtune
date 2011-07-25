@@ -153,6 +153,7 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   }
 
   private static boolean seenBefore(String workload){
+   // todo(Huascar) this throws a runtime exception that we should catch...BUG..fix it asap
     return new File(InumUtils.getIndexAccessCostFile(workload)).exists();
   }
 
