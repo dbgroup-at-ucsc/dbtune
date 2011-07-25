@@ -12,6 +12,8 @@ import edu.ucsc.dbtune.inum.model.PhysicalConfiguration;
 import edu.ucsc.dbtune.inum.model.Plan;
 import edu.ucsc.dbtune.inum.model.QueryDesc;
 import edu.ucsc.dbtune.inum.model.WorkloadProcessor;
+import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.util.Strings;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -244,31 +246,57 @@ public class PostgresEnumerationGenerator {
                 System.out.println("Deleting enumeration file failed...");
     }
 
-    public static void main(String[] args) throws ParseException, IOException {
-        String fileName = args[0];
-        // idx_cleaner.main(new String[]{});
-        WorkloadProcessor proc = new WorkloadProcessor(new File(Config.WORKLOAD_DIR, fileName));
-        proc.getInterestingOrders();
-        proc.generateCandidateIndexesPerQuery();
-        // MatViewAccessGenerator.loadConfigEnumerations(fileName, proc.query_descriptors);
-        boolean update = args.length > 1 && args[1].equals("update");
+    // todo(Huascar) document this since we will be using it in inum what if optimizer
+    public static void runPostgresEnumerationGenerator(autopilot autopilot,
+        WorkloadProcessor processor,
+        String workloadFilename,
+        String updateCommand
+    )  throws
+        ParseException,
+        IOException {
 
-        if (new File(InumUtils.getEnumerationFileName(fileName)).exists()) {
-            if (!update) {
-                System.err.println("The file aready exists!");
-                return;
-            } else {
-                EnumerationGenerator.loadConfigEnumerations(fileName, proc.query_descriptors);
-            }
+      final autopilot ap    = Checks.checkNotNull(autopilot);
+      final String fileName = Checks.checkArgument(workloadFilename,
+          !Strings.isEmpty(workloadFilename),
+          "illegal workload file name"
+      );
+      final String            update    = Checks.checkNotNull(updateCommand);
+      final WorkloadProcessor proc      = Checks.checkNotNull(processor);
+
+      // MatViewAccessGenerator.loadConfigEnumerations(fileName, proc.query_descriptors);
+      boolean isUpdate = Strings.same(update, "update");
+
+      if (new File(InumUtils.getEnumerationFileName(fileName)).exists()) {
+        if (!isUpdate) {
+            System.err.println("The file aready exists!");
+            return;
+        } else {
+            EnumerationGenerator.loadConfigEnumerations(fileName, proc.query_descriptors);
         }
-        autopilot ap = new autopilot();
-        ap.init_database();
+      }
 
-        PostgresEnumerationGenerator generator = new PostgresEnumerationGenerator();
-        generator.AllEnumerateConfigs(proc.query_descriptors, ap);
-        EnumerationGenerator.saveConfigEnumerations(fileName, proc.query_descriptors);
+      PostgresEnumerationGenerator generator = new PostgresEnumerationGenerator();
+      generator.AllEnumerateConfigs(proc.query_descriptors, ap);
+      EnumerationGenerator.saveConfigEnumerations(fileName, proc.query_descriptors);
 
-        ap.dispose();
+      ap.dispose();
+
+    }
+
+    public static void main(String[] args) throws ParseException, IOException {
+
+      // idx_cleaner.main(new String[]{});
+      String fileName = args[0];
+      WorkloadProcessor proc = new WorkloadProcessor(fileName);
+      proc.getInterestingOrders();
+      proc.generateCandidateIndexesPerQuery();
+
+      autopilot ap = new autopilot();
+      ap.init_database();
+
+      String updateCommand = args[1];
+
+      runPostgresEnumerationGenerator(ap, proc, fileName, updateCommand);
     }
 }
 

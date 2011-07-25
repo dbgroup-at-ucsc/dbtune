@@ -11,6 +11,8 @@ import edu.ucsc.dbtune.inum.model.Index;
 import edu.ucsc.dbtune.inum.model.Plan;
 import edu.ucsc.dbtune.inum.model.QueryDesc;
 import edu.ucsc.dbtune.inum.model.WorkloadProcessor;
+import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.Checks;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,14 +53,41 @@ public class ProgGenerator {
     private int maxIndexSize;
 
     public ProgGenerator(String workload, float size, int maxIndexSize) {
-      this(Initializers.initializeAutopilot(), workload, size, maxIndexSize);
+      this(
+          Initializers.initializeAutopilot(),
+          initializeWorkloadProcessor(workload),
+          workload,
+          size,
+          maxIndexSize
+      );
     }
 
     public ProgGenerator(autopilot autopilot, String workload, float size, int maxIndexSize) {
+      this(autopilot, initializeWorkloadProcessor(workload), workload, size, maxIndexSize);
+    }
+
+    public ProgGenerator(autopilot autopilot,
+        WorkloadProcessor processor,
+        String workload,
+        float size,
+        int maxIndexSize
+    ) {
       this.ap           = autopilot;
       this.workload     = workload;
       this.size         = size;
       this.maxIndexSize = maxIndexSize;
+      this.proc         = Checks.checkNotNull(processor);
+    }
+
+    private static WorkloadProcessor initializeWorkloadProcessor(String workload) {
+      final WorkloadProcessor proc;
+      try {
+        proc = new WorkloadProcessor(Config.getWorkloadFile(workload));
+        proc.generateCandidateIndexes();
+        return proc;
+      } catch (ParseException ignored) {
+        return null;
+      }
     }
 
 
@@ -66,8 +95,6 @@ public class ProgGenerator {
     public void build(LogListener listener) throws IOException, ParseException {
     	  listener.onLogEvent(LogListener.COPHY, "Building optimization program...");
 
-        proc = new WorkloadProcessor(Config.getWorkloadFile(workload));
-        proc.generateCandidateIndexes();
         //proc.generateCandidateMatViews();
         listener.onLogEvent(LogListener.COPHY, "" + proc.query_descriptors.size() + " queries parsed ...");
         listener.onLogEvent(LogListener.COPHY, "" + proc.candidates.size() + " candidate indexes generated");

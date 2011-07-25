@@ -294,8 +294,8 @@ public class CPlex {
         return variables;
     }
 
-    public GreedyResult processGeneratedIndexes(String queryFile) throws ParseException, IOException {
-        WorkloadProcessor proc = new WorkloadProcessor(new File(Config.WORKLOAD_DIR, queryFile));
+    // todo(Huascar) refine hook method
+    public GreedyResult processGeneratedIndexes(String queryFile, WorkloadProcessor proc) throws ParseException, IOException {
         EnumerationGenerator.loadConfigEnumerations(queryFile, proc.query_descriptors);
         Map indexSizes = IndexAccessGenerator.loadIndexSizes(queryFile);
 
@@ -318,7 +318,7 @@ public class CPlex {
                 }
 
                 idx.setTheSize((Integer) indexSizes.get(idx.getKey()));
-                
+
                 String query = (String) definitions.get("o"+parts[1]);
                 int queryIdx = Integer.parseInt(query);
                 usedIndexes.get(queryIdx).put(idx.getTableName(), idx);
@@ -337,6 +337,10 @@ public class CPlex {
         res.usedIndexes = usedIndexes;
 
         return res;
+    }
+
+    public GreedyResult processGeneratedIndexes(String queryFile) throws ParseException, IOException {
+      return processGeneratedIndexes(queryFile, new WorkloadProcessor(queryFile));
     }
 
     public GreedyResult processGeneratedIndexes(String queryFile, PhysicalConfiguration config) throws ParseException, SQLException, IOException {

@@ -12,6 +12,8 @@ import edu.ucsc.dbtune.inum.model.Index;
 import edu.ucsc.dbtune.inum.model.PhysicalConfiguration;
 import edu.ucsc.dbtune.inum.model.QueryDesc;
 import edu.ucsc.dbtune.inum.model.WorkloadProcessor;
+import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.util.Strings;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -277,26 +279,50 @@ public class PostgresIndexAccessGenerator {
         ap.dispose();
     }
 
+    // todo(Huascar) document this since we will be using it in inum what if optimizer
+    public static void runPostgresIndexAccessGenerator(autopilot autopilot,
+        WorkloadProcessor processor,
+        String workloadFilename) throws
+        ParseException, IOException {
+
+      final WorkloadProcessor proc = Checks.checkNotNull(processor);
+      final autopilot         ap   = Checks.checkNotNull(autopilot);
+
+      final String            filename = Checks.checkArgument(workloadFilename,
+          !Strings.isEmpty(workloadFilename),
+          "illegal workload filename."
+      );
+
+      for(Index each : proc.candidates){
+        System.out.println("index = " + each);
+      }
+
+      PostgresIndexAccessGenerator iag = new PostgresIndexAccessGenerator(
+          ap,
+          proc.candidates,
+          proc.query_descriptors
+      );
+
+      iag.generateIndexAccessCosts();
+      saveIndexCosts(filename, proc.query_descriptors);
+      saveIndexSizes(filename, iag.sizeMap);
+
+      ap.dispose();
+    }
+
     public static void main(String[] args) throws ParseException, IOException {
         if (new File(InumUtils.getIndexAccessCostFile(args[0])).exists()) {
             return;
         }
 
-        WorkloadProcessor proc = new WorkloadProcessor(new File(Config.WORKLOAD_DIR, args[0]));
+        WorkloadProcessor proc = new WorkloadProcessor(args[0]);
         proc.getInterestingOrders();
         proc.generateCandidateIndexes();
-        for (int i = 0; i < proc.candidates.size(); i++) {
-            Index index = proc.candidates.get(i);
-            System.out.println("index = " + index);
-        }
         autopilot ap = new autopilot();
         ap.init_database();
 
-        PostgresIndexAccessGenerator iag = new PostgresIndexAccessGenerator(ap, proc.candidates, proc.query_descriptors);
-        iag.generateIndexAccessCosts();
-        saveIndexCosts(args[0], proc.query_descriptors);
-        saveIndexSizes(args[0], iag.sizeMap);
-        ap.dispose();
+        runPostgresIndexAccessGenerator(ap, proc, args[0]);
+
     }
 }
 

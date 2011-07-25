@@ -8,6 +8,8 @@ import edu.ucsc.dbtune.inum.commons.Initializers;
 import edu.ucsc.dbtune.inum.commons.Utils;
 import edu.ucsc.dbtune.inum.greedy.GreedyResult;
 import edu.ucsc.dbtune.inum.model.PhysicalConfiguration;
+import edu.ucsc.dbtune.inum.model.WorkloadProcessor;
+import edu.ucsc.dbtune.spi.core.Console;
 import ilog.concert.IloException;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -27,17 +29,28 @@ import java.util.List;
  */
 public class CoPhy {
   private final autopilot autopilot;
-  public CoPhy(autopilot autopilot){
+  private final WorkloadProcessor processor;
+
+  public CoPhy(autopilot autopilot, WorkloadProcessor processor){
     this.autopilot = autopilot;
+    this.processor = processor;
   }
 
   public GreedyResult run(String workloadName, CophyConstraints constr, LogListener listener) throws ParseException,
       IOException, IloException, SQLException {
         listener.onLogEvent(LogListener.COPHY, "STARTING");
-        String args[] = new String[] { workloadName };
-        PostgresEnumerationGenerator.main(args);
-        PostgresIndexAccessGenerator.main(args);
-        ProgGenerator gen = new ProgGenerator(autopilot, workloadName, Utils.getPagesFromMBs(constr.indexSize), constr.maxIndexWidth);
+        /*these two calls are the ones that contact the postgres's real what if optimizer.  */
+        PostgresEnumerationGenerator.runPostgresEnumerationGenerator(autopilot, processor, workloadName, "");
+        PostgresIndexAccessGenerator.runPostgresIndexAccessGenerator(autopilot, processor, workloadName);
+
+        ProgGenerator gen = new ProgGenerator(
+            autopilot,
+            processor,
+            workloadName,
+            Utils.getPagesFromMBs(constr.indexSize),
+            constr.maxIndexWidth
+        );
+
         gen.build(listener);
         String cplexFile = workloadName + ".cplex";
         String binFile = workloadName + ".bin";
@@ -49,22 +62,33 @@ public class CoPhy {
         cplex.run();
         listener.onLogEvent("CPLEX", "Solved the optimization problem");
         PhysicalConfiguration config = cplex.getTotalConfiguration();
+        listener.onLogEvent("CPLEX", String.format("Returned a total of %d indexes per table set", config.getIndexedTableNames().size()));
         listener.onLogEvent("CPLEX", "Parsed the generated solutions");
-        GreedyResult ret = cplex.processGeneratedIndexes(workloadName);
+        GreedyResult ret = processGeneratedIndexes(cplex, workloadName);
         listener.onLogEvent(LogListener.COPHY, "FINISHED");
         return ret;
   }
 
+    // hook method that could be overriden by the {@see InumWhatIfOptimizerImpl}.
+    protected GreedyResult processGeneratedIndexes(CPlex cplex, String workloadName)
+        throws IOException, ParseException {
+      return cplex.processGeneratedIndexes(workloadName);
+    }
+
+    protected WorkloadProcessor getWorkloadProcessor(){
+      return processor;
+    }
+
 
     public static void main(String[] arg) throws IOException, ParseException, SQLException, IloException {
         String workloadName = arg[0];
-        GreedyResult res = runCoPhy(workloadName, CophyConstraints.getDefaultConstraints(), new DefaultLogger());
+        runCoPhy(workloadName, CophyConstraints.getDefaultConstraints(), new DefaultLogger());
     }
 
     public static List<ParetoPoint> runSoftCophy(String workloadName, CophyConstraints constraints) throws IOException, ParseException, IloException {
         LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
-                //tocode
+                //do nothing
             }
         };
 
@@ -83,8 +107,12 @@ public class CoPhy {
 
      // todo.Huascar...make this adaptable so that it could be used in dbtune.
      // todo..Huascar... this is the example that I need in order to implement INUM.
-    public static GreedyResult runCoPhy(String workloadName, CophyConstraints constr, LogListener listener) throws ParseException, IOException, IloException, SQLException {
-      return new CoPhy(Initializers.initializeAutopilot()).run(workloadName, constr, listener);
+    public static GreedyResult runCoPhy(String workloadName, CophyConstraints constr, LogListener listener) throws
+        ParseException, IOException, IloException, SQLException {
+      return new CoPhy(
+          Initializers.initializeAutopilot(),
+          Initializers.initializeWorkloadProcessor(workloadName)
+      ).run(workloadName, constr, listener);
     }
 
     public static int countLines(String file) throws IOException {

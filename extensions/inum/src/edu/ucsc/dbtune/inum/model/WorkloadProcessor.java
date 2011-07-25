@@ -11,6 +11,7 @@ import Zql.ZQuery;
 import Zql.ZSelectItem;
 import Zql.ZqlParser;
 import com.google.common.collect.Multimap;
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.inum.Config;
 import edu.ucsc.dbtune.inum.commons.Cloner;
 import edu.ucsc.dbtune.inum.commons.ZqlUtils;
@@ -86,8 +87,16 @@ public class WorkloadProcessor implements Serializable {
         candidatesPerQuery = new ArrayList();
         perQueryHash = new HashSet();
 
+        universeAndInterestingOrdersProcessing();
+    }
+
+    protected void universeAndInterestingOrdersProcessing(){
         getInterestingOrders();
         generateUniverse();
+    }
+
+    protected Vector<ZQuery> getSQLStatements(){
+      return (Vector<ZQuery>)sqlStatements;
     }
 
     //C:here is set in config all the interesting indexes per each query
@@ -196,6 +205,12 @@ public class WorkloadProcessor implements Serializable {
         return covering;
     }
 
+    public void setHypotheticalIndexes(Iterable<DBIndex> hypotheticalIndexes){
+
+      final Set<Index> candidateSet = new HashSet<Index>();
+      final List<Index> uniqList = new ArrayList<Index>();
+    }
+
     public void generateCandidateIndexes() {
         if(Config.generateAllCandidates()) {
             this.generateCandidateIndexesFull();
@@ -280,7 +295,7 @@ public class WorkloadProcessor implements Serializable {
         }
     }
 
-    private void generateCandidatesFromConfig(PhysicalConfiguration config) {
+    protected void generateCandidatesFromConfig(PhysicalConfiguration config) {
         for (final String tableName : config.getIndexedTableNames()) {
             Set fieldSet = new HashSet();
             for (Iterator<Index> iterator = config.getIndexesForTable(tableName).iterator(); iterator.hasNext();) {
