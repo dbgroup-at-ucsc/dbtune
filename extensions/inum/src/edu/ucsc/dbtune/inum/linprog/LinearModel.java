@@ -435,4 +435,9 @@ public class LinearModel {
 
         configCount += newQuery.configCount;
     }
+
+
+    public LinCand[] getCandidateArray(){
+      return candidateArray;
+    }
 }

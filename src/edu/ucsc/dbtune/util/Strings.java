@@ -323,6 +323,17 @@ public class Strings
         return readStream(new IterableFileReader(f));
     }
 
+  /**
+   * Obtain the string representation of an object.
+   *
+   * @param value object of interest.
+   * @param <T> type of the object of interest.
+   * @return a string representation of the object of interest.
+   */
+  public static <T> String str(T value) {
+    return value == null ? "" : value.toString();
+  }
+
     public static List<String> readFileLines(File f) throws IOException {
         List<String> list = new ArrayList<String>();
         final IterableFileReader linesInFile = new IterableFileReader(f);

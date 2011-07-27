@@ -22,6 +22,7 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM_CACHE_DEPLOYMENT_DIR;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
@@ -113,6 +114,13 @@ public class Environment {
      */
     public String getPassword(){
         return asString(configuration.getProperty(PASSWORD));
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#INUM_CACHE_DEPLOYMENT_DIR}
+     */
+    public String getInumCacheDeploymentDir(){
+        return asString(configuration.getProperty(INUM_CACHE_DEPLOYMENT_DIR));
     }
 
     /**

@@ -1,34 +1,52 @@
 package edu.ucsc.dbtune.inum.commons;
 
+import edu.ucsc.dbtune.util.Objects;
+
 /**
- * Created by IntelliJ IDEA.
- * User: ddash
- * Date: May 12, 2008
- * Time: 5:05:38 PM
- * To change this template use File | Settings | File Templates.
+ * @author ddash
+ * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class Pair<L,R> {
-    private R r;
-    private L l;
+  private final L left;
+  private final R right;
 
-    public Pair(L l, R r) {
-        this.l = l;
-        this.r = r;
-    }
+  private Pair(L left, R right) {
+    this.left  = left;
+    this.right = right;
+  }
 
-    public R getR() {
-        return r;
-    }
+  public static <L, R> Pair<L, R> of(L left, R right) {
+    return new Pair<L, R>(left, right);
+  }
 
-    public void setR(R r) {
-        this.r = r;
-    }
+  public static <L, R> Pair<L, R> empty(){
+    return new Pair<L, R>(null, null);
+  }
 
-    public L getL() {
-        return l;
-    }
+  public static <L, R> Pair<L, R> copyOf(Pair<L, R> pair) {
+    return new Pair<L, R>(pair.getLeft(), pair.getRight());
+  }
 
-    public void setL(L l) {
-        this.l = l;
-    }
+  @Override
+  public boolean equals(Object o) {
+    return (o instanceof Pair) && Objects.equals(this, o);
+  }
+
+  public L getLeft() {
+    return left;
+  }
+
+  public R getRight() {
+    return right;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(getLeft(), getRight());
+  }
+
+  @Override
+  public String toString() {
+    return String.format("Pair: (%s, %s)", getLeft(), getRight());
+  }
 }

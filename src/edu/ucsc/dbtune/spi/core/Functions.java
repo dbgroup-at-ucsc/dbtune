@@ -65,9 +65,9 @@ public class Functions {
         return Functions.<R, E>submit(command, param);
     }
 
-    @SuppressWarnings( {"unchecked"})
+    @SuppressWarnings( {"ALL"}) // even though the IDE suggests that the casting is unncessary, the tests indicate that is needed.
     public static <R, E extends Exception> Supplier<R> submit(Function<R, E> function, Supplier<Parameter> first){
-        return new SupplierComposition<R, E>(function, first);
+      return (Supplier<R>)Suppliers.compose(transform(function), first);    // unchecked warning
     }
 
     public static void submitAll(Supplier<?>... suppliers){
@@ -112,7 +112,22 @@ public class Functions {
         }
     }
 
-    private static class SupplierComposition<R, E extends Exception> implements Supplier<R>, Serializable {
+    static <R, E extends Exception> com.google.common.base.Function<? super Parameter, Object> transform(final Function<R, E> function){
+
+      return new com.google.common.base.Function<Parameter, Object>(){
+        @Override public Object apply(Parameter parameter) {
+          try {
+            return function.apply(parameter);
+          } catch (Throwable e) {
+            Console.streaming().error("Fuctions#submit(Function, Supplier) was unable to apply function");
+            throw new RuntimeException(e);
+          }
+        }
+      };
+    }
+
+  // todo(Huascar) remove after confirming the #transform method works.....
+  private static class SupplierComposition<R, E extends Exception> implements Supplier<R>, Serializable {
         private static final long serialVersionUID = 0;
 
         final Function<? extends R, E>   function;

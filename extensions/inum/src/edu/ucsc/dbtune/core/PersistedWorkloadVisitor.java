@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.core;
 
-import java.util.Set;
+import edu.ucsc.dbtune.inum.commons.Pair;
+import java.io.File;
+import java.util.Map;
 
 /**
  * ...
@@ -8,6 +10,6 @@ import java.util.Set;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public interface PersistedWorkloadVisitor {
-  String visit(WorkloadFileNode workload);
-  Set<String> visit(WorkloadDirectoryNode directory);
+  Pair<String, File> visit(WorkloadFileNode workload);
+  Map<String, File> visit(WorkloadDirectoryNode directory);
 }

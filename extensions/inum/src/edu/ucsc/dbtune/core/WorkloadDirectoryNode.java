@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.core;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -10,14 +11,14 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class WorkloadDirectoryNode implements PersistedWorkloadNode<Set<String>> {
+public class WorkloadDirectoryNode implements PersistedWorkloadNode<Map<String, File>> {
   private final File directory;
 
   public WorkloadDirectoryNode(File directory){
     this.directory = directory;
   }
 
-  @Override public Set<String> accept(PersistedWorkloadVisitor visitor) {
+  @Override public Map<String, File> accept(PersistedWorkloadVisitor visitor) {
     return visitor.visit(this);
   }
 

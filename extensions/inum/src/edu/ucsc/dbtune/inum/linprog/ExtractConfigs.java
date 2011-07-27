@@ -496,14 +496,13 @@ public class ExtractConfigs {
             Pair<Index,Float> costList[] = new Pair[configList.size()];
             for (int j = 0; j < configList.size(); j++) {
                 Index config = (Index) configList.get(j);
-                Pair cp = new Pair(config, CE.getAccessCostForQuery(config, QD));
-
+                Pair<Index,Float> cp = Pair.of(config, CE.getAccessCostForQuery(config, QD));
                 costList[j] = cp;
             }
 
             Arrays.sort(costList, new Comparator<Pair<Index,Float>>() {
                 public int compare(Pair<Index, Float> o1, Pair<Index, Float> o2) {
-                    return Float.compare(o1.getR(), o2.getR());
+                    return Float.compare(o1.getRight(), o2.getRight());
                 }
             });
 
@@ -511,7 +510,7 @@ public class ExtractConfigs {
 
             for (int j = 0; j < costList.length;) {
                 Pair<Index,Float> configPair = costList[j];
-                filteredConfigs.add(configPair.getL());
+                filteredConfigs.add(configPair.getLeft());
                 j += (costList.length / MAX_INDICIES_PER_TABLE);
             }
 

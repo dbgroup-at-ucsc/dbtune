@@ -45,42 +45,13 @@ public class CostEstimator {
      *    a persisted workload file.
      * @throws IOException
      *    unable to find workload file.
+     * @throws ParseException
+     *    unable to parse workload file.
      */
     public CostEstimator(autopilot autopilot, WorkloadProcessor processor, String workloadFile)
-        throws IOException {
+        throws IOException, ParseException {
       this.AP   = autopilot;
-
-      if (new File(InumUtils.getIndexAccessCostFile(workloadFile)).exists()) {
-        PostgresIndexAccessGenerator.loadIndexAccessCosts(workloadFile, processor.query_descriptors);
-      }
-
-      IndexAccessGenerator.loadIndexAccessCosts(workloadFile, processor.query_descriptors);
-      AP.setIndexSizeMap(IndexAccessGenerator.loadIndexSizes(workloadFile));
-
-      if (new File(InumUtils.getEnumerationFileName(workloadFile)).exists()) {
-        EnumerationGenerator.loadConfigEnumerations(workloadFile, processor.query_descriptors);
-      } else {
-        PostgresEnumerationGenerator generator = new PostgresEnumerationGenerator();
-        generator.AllEnumerateConfigs(processor.query_descriptors, AP);
-        EnumerationGenerator.saveConfigEnumerations(workloadFile, processor.query_descriptors);
-      }
-
-      // test the validity of plan computation.
-      for (QueryDesc queryDesc : processor.query_descriptors) {
-        for (Object o : queryDesc.plans.values()) {
-          Plan plan = (Plan) o;
-          float cost = plan.getInternalCost();
-          for (String table : queryDesc.getUsedTableNames()) {
-            cost += plan.getAccessCost(table);
-          }
-
-          if (Math.abs(cost - plan.getTotalCost()) / cost > 0.01) {
-            System.out.println("cost = " + cost + ", expected: " + plan.getTotalCost());
-          }
-        }
-      }
-
-      this.proc = processor;
+      this.proc = Initializers.startInumCache(workloadFile, processor, this.AP);
 
     }
 

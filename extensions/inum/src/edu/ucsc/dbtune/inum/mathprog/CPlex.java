@@ -169,8 +169,8 @@ public class CPlex {
         }
         time = (System.currentTimeMillis()-time);
 
-        double cost = cplex.getValue(pair.getL());
-        double storage = cplex.getValue(pair.getR());
+        double cost = cplex.getValue(pair.getLeft());
+        double storage = cplex.getValue(pair.getRight());
 
         System.out.println("cost = " + cost);
         System.out.println("storage = " + storage);
@@ -214,7 +214,7 @@ public class CPlex {
             }
         }
         //System.out.println("cplex = " + cplex);
-        return new Pair(cVar,sVar);
+        return Pair.of(cVar,sVar);
     }
 
     public IloLPMatrix getMatrix(IloCplex cplex) throws IloException {

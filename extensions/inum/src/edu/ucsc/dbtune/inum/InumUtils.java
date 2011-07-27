@@ -18,6 +18,26 @@ public class InumUtils {
         return new File(Config.WORKLOAD_DIR,workloadFile).getPath();
     }
 
+    public static boolean isIndexAccessCostFileAvailable(String workloadFile){
+      boolean result;
+      try {
+        result = new File(InumUtils.getIndexAccessCostFile(workloadFile)).exists();
+      } catch (Throwable ignored){
+        result = false;
+      }
+      return result;
+    }
+
+    public static boolean isEnumerationFileAvailable(String workloadFile){
+      boolean result;
+      try {
+        result = new File(InumUtils.getEnumerationFileName(workloadFile)).exists();
+      } catch (Throwable ignored){
+        result = false;
+      }
+      return result;
+    }
+
     public static String getIndexAccessCostFile(String workloadFile) {
         return getWorkloadPath("iac."+workloadFile+".gz");
     }

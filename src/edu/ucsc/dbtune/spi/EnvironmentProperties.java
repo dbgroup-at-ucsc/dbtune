@@ -126,6 +126,19 @@ public class EnvironmentProperties
     public static final String WORKLOADS_FOLDERNAME = "workloads.dir";
 
 
+   /**
+    *  Folder for storing inum cache files and/or workload files. By convention this folder won't
+    *  contain any sub-folders.
+    */
+    public static final String INUM_CACHE_DEPLOYMENT_DIR = "cache.deployment.dir";
+
+    /**
+     * Name of a previously defined workload. This is used to uniquely identify a workload inside 
+     * the {@code WORKLOADS_FOLDERNAME}.
+     *
+     * @see #WORKLOADS_FOLDERNAME
+     */
+    public static final String WORKLOAD_NAME = "workload.name";
 
     /**
      * Specifies an upper bound on the number of indexes that are monitored by an instance of WFA 

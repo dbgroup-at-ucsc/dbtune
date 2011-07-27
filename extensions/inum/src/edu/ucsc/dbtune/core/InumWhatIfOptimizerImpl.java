@@ -1,13 +1,18 @@
 package edu.ucsc.dbtune.core;
 
 import Zql.ParseException;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.inum.ConsoleLogger;
 import edu.ucsc.dbtune.inum.CostEstimator;
 import edu.ucsc.dbtune.inum.InumUtils;
-import edu.ucsc.dbtune.inum.PostgresIndexAccessGenerator;
 import edu.ucsc.dbtune.inum.autopilot.AutoPilotDelegate;
 import edu.ucsc.dbtune.inum.autopilot.autopilot;
 import edu.ucsc.dbtune.inum.greedy.GreedyResult;
+import edu.ucsc.dbtune.inum.linprog.CPlexBuffer;
+import edu.ucsc.dbtune.inum.linprog.ExtractConfigs;
+import edu.ucsc.dbtune.inum.linprog.LinCand;
+import edu.ucsc.dbtune.inum.linprog.LinearModel;
 import edu.ucsc.dbtune.inum.mathprog.CPlex;
 import edu.ucsc.dbtune.inum.mathprog.CoPhy;
 import edu.ucsc.dbtune.inum.mathprog.CophyConstraints;
@@ -16,7 +21,9 @@ import edu.ucsc.dbtune.inum.model.Configuration;
 import edu.ucsc.dbtune.inum.model.Index;
 import edu.ucsc.dbtune.inum.model.PhysicalConfiguration;
 import edu.ucsc.dbtune.inum.model.Plan;
+import edu.ucsc.dbtune.inum.model.QueryDesc;
 import edu.ucsc.dbtune.inum.model.WorkloadProcessor;
+import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Instances;
@@ -34,7 +41,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -46,7 +55,10 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   private final Autopilot                           autopilot;
   private final AtomicReference<GreedyResult>       result;
   private final AtomicReference<WorkloadProcessor>  processor;
+  private final AtomicReference<Double>             estimateCost;
 
+  // todo remove oldImplementation once I finish my InumWhatIfOptimizerImpl implementation
+  private final AtomicBoolean  oldImplementation = new AtomicBoolean(false);
   private static final Console CONSOLE = Console.streaming();
 
   /**
@@ -72,12 +84,17 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    */
   InumWhatIfOptimizerImpl(Autopilot autopilot, AtomicReference<WorkloadProcessor> processor,
       AtomicReference<GreedyResult> result){
-    this.autopilot  = autopilot;
-    this.result     = result;
-    this.processor  = processor;
+    this.autopilot    = autopilot;
+    this.result       = result;
+    this.processor    = processor;
+    this.estimateCost = Instances.newAtomicReference(0.0);
   }
 
   private double calculateCost() {
+    if(!oldImplementation.get()){
+      return estimateCost.get();
+    }
+
     final GreedyResult current = result.get();
     double total = 0.0;
     for(float each : current.queryCosts){
@@ -98,14 +115,33 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
 
   @Override public double estimateCost(String workload, Iterable<DBIndex> hypotheticalIndexes) {
     preprocessIfNotSeenBefore(workload, hypotheticalIndexes);
-    try {
-      PostgresIndexAccessGenerator.loadIndexAccessCosts(workload, processor.get().query_descriptors);
-    } catch (IOException e) {
-      CONSOLE.error("unable to load index access costs", e);
+    return calculateCost();
+  }
+
+  private static String formatCandidateSet(LinearModel linearModel,
+      Set<Index> clusteredCandidateSet) {
+    final StringBuilder candidateSetString = new StringBuilder("clustered: ");
+    boolean start = false;
+    for (int i = 0; i < linearModel.getCandidateArray().length; i++) {
+      LinCand cand = linearModel.getCandidateArray()[i];
+      if(cand.getUsed() > 0 && clusteredCandidateSet.contains(cand.getIndex())) {
+        if(start) {
+          candidateSetString.append(" + ");
+        }
+
+        candidateSetString.append("y").append(i);
+        start = true;
+      }
     }
+    candidateSetString.append(" <= 1.0 ");
+    return candidateSetString.toString();
+  }
 
-
-    return calculateCost(); // todo(Huascar) is this the correct way to calculate costs? hmm
+  public static long getUsedMemory() {
+    System.gc();
+    System.gc();
+    System.gc();
+    return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
   }
 
   private static WorkloadProcessor initializeWorkloadProcessor(String workloadFile,
@@ -121,20 +157,129 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
     return processor;
   }
 
+  private static List<Index> initInumCandidatePool(Iterable<DBIndex> hypotheticalIndexes) {
+    List<Index> candidatePool = new ArrayList<Index>();
+    for(DBIndex each : hypotheticalIndexes){
+      final IndexAdapter idx = new IndexAdapter(each);
+      candidatePool.add(idx);
+    }
+    return candidatePool;
+  }
+
+  private void initLinearModelThenLoadCandidates(String workload, Iterable<DBIndex> hypotheticalIndexes){
+      try {
+        List<Index> candidatePool = initInumCandidatePool(hypotheticalIndexes);
+
+
+        // create a cost estimator for the Inum linear model.
+        final CostEstimatorAdapter ce = new CostEstimatorAdapter(
+            autopilot,
+            processor.get(),
+            workload
+        );
+
+        if(candidatePool.isEmpty()){
+          candidatePool.addAll(processor.get().getCandidateIndexes());
+        }
+
+        CONSOLE.info("Used Memmory: " + getUsedMemory());
+
+        final ArrayList<Integer> sizes = new ArrayList<Integer>();
+        for(Index inumIndex : candidatePool){
+          sizes.add(autopilot.getIndexSize(inumIndex));
+        }
+
+        final ArrayList<Index>  clusteredCandidates = new ArrayList<Index>();
+        final ExtractConfigs    extractConfigs      = new ExtractConfigs(Lists.newArrayList(candidatePool));
+
+        candidatePool = extractConfigs.filteredConfigs;
+
+        //Initialize a linear model and load the candidates ...
+        final LinearModel linearModel = new LinearModel();
+        linearModel.addCandidates(Lists.newArrayList(candidatePool), sizes);
+
+        final String      outputPrefix  = Environment.getInstance().getInumCacheDeploymentDir() + "/";
+        final CPlexBuffer cPlexBuffer   = new CPlexBuffer(outputPrefix + workload);
+        final List[]      configCostArr = new List[processor.get().query_descriptors.size()];
+
+        int     index     = 0;
+        double  totalCost = 0;
+
+        for(QueryDesc each : processor.get().query_descriptors){
+          configCostArr[index] = extractConfigs.exhaustiveExtract(each, ce, linearModel, cPlexBuffer);
+          index++;
+          totalCost += each.getEmptyCost();
+        }
+
+        CONSOLE.info("totalCost = " + totalCost);
+        double currentTotalCost = estimateCost.get();
+        estimateCost.compareAndSet(currentTotalCost, totalCost);
+
+        for(int idx = 0; idx < configCostArr.length; idx ++){
+          linearModel.addQueryConfigs(
+              idx,                                             // position in array of ConfigPair objects
+              processor.get().query_descriptors.get(idx),      // a Query_Desc object
+              configCostArr[idx],                              // a ConfigPair object
+              Float.MIN_VALUE,                                 // the min val of Float numbers
+              cPlexBuffer                                      // buffer files use by CPlex solver
+          );
+        }
+
+
+        final Set<Index> clusteredCandidateSet = Sets.newHashSet(clusteredCandidates);
+        final String candidateSetString = formatCandidateSet(linearModel,
+            clusteredCandidateSet);
+        cPlexBuffer.getCons().println(candidateSetString);
+
+        final String buf = linearModel.getIndexSizeConstraint((float) 1 * 1024 * 1024 / 8);
+        cPlexBuffer.getCons().print(buf);
+        for (int i = 0; i < linearModel.getCandidateArray().length; i++) {
+          LinCand cand = linearModel.getCandidateArray()[i];
+          StringBuffer buffer = new StringBuffer("y");
+          if(cand.getUsed() > 0) {
+            buffer.append(i).append(" ").append("\\MODEL::").append(cand);
+            cPlexBuffer.getBin().println(buffer);
+          }
+        }
+        cPlexBuffer.close();
+
+      } catch (Exception e){
+        CONSOLE.error("Unable to cost estimate the workload", e);
+      }
+  }
+
   private static void logError(String message, Throwable error){
     CONSOLE.error(message, error);
   }
 
   private void preprocessIfNotSeenBefore(String workload, Iterable<DBIndex> hypotheticalIndexes) {
-    if(!seenBefore(workload)){
-      final CophyConstraints  defaultConstraints  = CophyConstraints.getDefaultConstraints();
-      final GreedyResult      current             = result.get();
-      try {
-        result.compareAndSet(current,
-            runCoPhy(workload, defaultConstraints, new ConsoleLogger(), hypotheticalIndexes));
-      } catch (Exception e) {
-        CONSOLE.error("Unable to run Cophy on " + workload, e);
+    // todo (See the COnfigCosts code and mimic that, so that we could use INUM....finally
+    // todo... I think I have found the code that both generate and use the INUM cache....
+    if(!oldImplementation.get()){
+      // Inum is used here.
+      initLinearModelThenLoadCandidates(workload, hypotheticalIndexes);
+    } else {
+      if(!seenBefore(workload)){
+        // Cophy on top of Inum is used here.
+        // to be removed if the above code seems to be right one....
+        final CophyConstraints  defaultConstraints  = CophyConstraints.getDefaultConstraints();
+        final GreedyResult      current             = result.get();
+        try {
+          result.compareAndSet(current,
+              runCoPhy(workload, defaultConstraints, new ConsoleLogger(), hypotheticalIndexes));
+        } catch (Exception e) {
+          CONSOLE.error("Unable to run Cophy on " + workload, e);
+        }
+      } else {
+        // todo (Huascar) hmm, determine how we can recover the estimate cost and place it in a 
+        // GreedyResult object which update the result.compareAndSet(current, new one)....
+//        try {
+//          PostgresIndexAccessGenerator.loadIndexAccessCosts(workload, processor.get().query_descriptors);
+//        } catch (IOException e) {
+//          CONSOLE.error("unable to load index access costs", e);
+//        }
       }
+
     }
   }
   
@@ -153,19 +298,23 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   }
 
   private static boolean seenBefore(String workload){
-   // todo(Huascar) this throws a runtime exception that we should catch...BUG..fix it asap
-    return new File(InumUtils.getIndexAccessCostFile(workload)).exists();
+    boolean result;
+    try {
+      result = new File(InumUtils.getIndexAccessCostFile(workload)).exists();
+    } catch (Throwable ignored){
+      result = false;
+    }
+    return result;
   }
 
 
   /**
+   * these is the the main one that needs to be updated....for the inum implementation.
    * todo(Huascar) it needs to be injected in all its instances called by Cophy....
    */
   private static class CostEstimatorAdapter extends CostEstimator {
-    CostEstimatorAdapter(DatabaseConnection connection, String workloadFile,
-        Iterable<DBIndex> hypotheticalIndexes) throws IOException, ParseException {
-      super(new Autopilot(connection), initializeWorkloadProcessor(workloadFile,
-          hypotheticalIndexes), workloadFile);
+    CostEstimatorAdapter(Autopilot autopilot, WorkloadProcessor processor, String workloadFile) throws IOException, ParseException {
+      super(autopilot, processor, workloadFile);
     }
 
     //todo(Huascar) this is confussing. there are two Cplex classes: one that uses the CostEstimator
@@ -250,7 +399,7 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
     @Override protected GreedyResult processGeneratedIndexes(CPlex cplex, String workloadName)
         throws IOException, ParseException {
       return cplex.processGeneratedIndexes(workloadName, 
-      /*todo(Huascar) may need a new instance of adapter rather than recycling one*/getWorkloadProcessor());
+      /*todo(Huascar) may need a new instance of adapter rather than using the recycled one*/getWorkloadProcessor());
     }
   }
 

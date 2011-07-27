@@ -1,17 +1,15 @@
 package edu.ucsc.dbtune.core;
 
+import com.google.common.io.Files;
 import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
-import edu.ucsc.dbtune.util.SQLScriptExecuter;
-import edu.ucsc.dbtune.util.Strings;
 import java.io.File;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -20,10 +18,17 @@ import org.junit.Test;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InumWhatIfOptimizerTestFunctional {
-  static DatabaseConnection CONNECTION;
+  static DatabaseConnection       CONNECTION;
   static final Environment        ENV;
+  static final String             WORKLOAD_PATH;
+  static final String             FILE_NAME       = "workload.sql";
+  static final String             DESTINATION;
+  static final String             WORKLOAD_IN_USE;
   static {
-    ENV        = Environment.getInstance();
+    ENV                 = Environment.getInstance();
+    WORKLOAD_PATH       = ENV.getScriptAtWorkloadsFolder("inum/" + FILE_NAME);
+    DESTINATION         = ENV.getInumCacheDeploymentDir() + "/";
+    WORKLOAD_IN_USE     = DESTINATION + FILE_NAME;
     try {
       CONNECTION = makeDatabaseConnectionManager(ENV.getAll()).connect();
     } catch (SQLException e) {
@@ -31,23 +36,20 @@ public class InumWhatIfOptimizerTestFunctional {
     }
   }
 
-  @Ignore @Test public void testInum_EmptyHypotheticalIndexes() throws Exception {
+  @Test public void testInum_EmptyHypotheticalIndexes() throws Exception {
     final InumWhatIfOptimizer optimizer = new InumWhatIfOptimizerImpl(CONNECTION);
-    final String workloadName = ENV.getScriptAtWorkloadsFolder(
-        "one_table/candidate_set_bootstrap_workload.sql");
-    final String oneLiner     = Strings.wholeContentAsSingleLine(new File(workloadName));
-    final double result       = optimizer.estimateCost(oneLiner);
+    optimizer.estimateCost(extractFilename(WORKLOAD_IN_USE));
   }
 
   @BeforeClass public static void setUp() throws Exception {
-    final File outputdir   = new File(ENV.getOutputFoldername() + "/one_table");
-    String ddlfilename     = ENV.getScriptAtWorkloadsFolder("one_table/create.sql");
+    final File    outputdir    = new File(DESTINATION);
+    final File    twinWorkload = new File(WORKLOAD_IN_USE);
 
     if(outputdir.mkdirs())  { Console.streaming().info(outputdir.toString() + " has been created.");}
-    else                    { Console.streaming().info(outputdir.toString() + " hasn't been created.");}
-    
-    SQLScriptExecuter.execute(CONNECTION.getJdbcConnection(), ddlfilename);
-    CONNECTION.getJdbcConnection().setAutoCommit(false);
+    else                    { Console.streaming().info(outputdir.toString() + " already exists.");}
+
+
+    Files.copy(new File(WORKLOAD_PATH), twinWorkload);
   }
 
   @AfterClass public static void tearDown() throws Exception {
@@ -58,6 +60,14 @@ public class InumWhatIfOptimizerTestFunctional {
 
       CONNECTION = null;
     }
+  }
+
+
+  private static String extractFilename(String fullname){
+    final Pattern p = Pattern.compile(".*?([^\\\\/]+)$");
+    final Matcher m = p.matcher(fullname);
+    return (m.find()) ? m.group(1) : "";
+
   }
 
 }
