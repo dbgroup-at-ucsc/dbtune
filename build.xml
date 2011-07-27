@@ -171,9 +171,9 @@
   <target name="compile.all"
       depends="clean.all, compile"
       description="Compile available files.">
-    <ant dir="extensions/cli"  antfile="build.xml" target="compile"/>
-    <ant dir="extensions/ml"   antfile="build.xml" target="compile"/>
-    <ant dir="extensions/inum" antfile="build.xml" target="compile"/>
+    <ant dir="extensions/cli"  antfile="build.xml" target="compile" inheritAll="false"/>
+    <ant dir="extensions/ml"   antfile="build.xml" target="compile" inheritAll="false"/>
+    <ant dir="extensions/inum" antfile="build.xml" target="compile" inheritAll="false"/>
     <!-- 6. reference the new extension's compile command. e.g.,
      <ant antfile="extensions/<new-extension>/build.xml" target="compile" inheritAll="false" />
     -->      

@@ -28,9 +28,9 @@ import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Iterables;
+import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.StopWatch;
 import edu.ucsc.dbtune.util.Strings;
-import edu.ucsc.satuning.util.Objects;
 import ilog.concert.IloException;
 import java.io.File;
 import java.io.IOException;
@@ -190,7 +190,8 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
         }
 
         final ArrayList<Index>  clusteredCandidates = new ArrayList<Index>();
-        final ExtractConfigs    extractConfigs      = new ExtractConfigs(Lists.newArrayList(candidatePool));
+        final ExtractConfigs    extractConfigs      = new ExtractConfigs(
+            Lists.newArrayList(candidatePool));
 
         candidatePool = extractConfigs.filteredConfigs;
 
