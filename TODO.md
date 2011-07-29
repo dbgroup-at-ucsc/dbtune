@@ -16,10 +16,10 @@ This is needed in order to solve #44. In the case of DB2, we need to merge also 
 
 ## 44
 
- * fix issue #74
  * fix issue #28
+ * fix issue #74
  * remove `I extends DBIndex` noise: `egrep -iR '.*extends DBIndex' src/edu/ucsc/dbtune/`
- * create `DBSystem` that only implements the `newIndex()` method (the commit for this should refer its own issue)
+ * create `DBSystem` that only implements the `newIndex()` method (#91)
  * replace `PGTable` by `Table` (may be in its own issue)
  * replace `PGColumn` and `DB2Column` by `Column` (may need to open an issue)
  * drop ReifiedTypes by using a regular `ArrayList<Index>`.
@@ -67,5 +67,22 @@ dbtune.workload package
 ## 84:
 
 d
+
+## 91:
+
+ *  fix #44
+ *  connectivity:
+     * add mysql driver
+     * modify Platform.java to include MySQL
+ *  integrate metadata stuff:
+     * add MySQL metadata extractor
+ *  create MySQLWhatIfOptimizer class
+ *  run existing Wfit and tests against MySQL
+
+## 92:
+
+ *  create newIndex() method
+
+# refs
 
 [querulous_dbcp]: https://github.com/twitter/querulous/blob/master/src/main/scala/com/twitter/querulous/database/ApachePoolingDatabase.scala
