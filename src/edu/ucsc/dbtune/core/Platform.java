@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
-import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
 import edu.ucsc.dbtune.core.metadata.PGCommands;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.core.optimizers.OptimizerFactory;
@@ -228,7 +227,7 @@ public class Platform {
         public Iterable<DBIndex> recommendIndexes(String sql) throws SQLException {
             Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
             final JdbcConnection c = Objects.as(connection);
-            List<DB2IndexMetadata> suppliedMetaList;
+            List<DBIndex> indexList;
 
             try {
 
@@ -241,7 +240,7 @@ public class Platform {
                 // there is an unchecked warning here...
                 final String databaseName = c.getConnectionManager().getDatabaseName();
 
-                suppliedMetaList = supplyValue(readAdviseOnAllIndexes(), c, databaseName);
+                indexList = supplyValue(readAdviseOnAllIndexes(), c, databaseName);
                 submit(clearAdviseIndex(), c);
             } catch (Exception e){
                 try{
@@ -254,13 +253,6 @@ public class Platform {
                 throw new SQLException(e);
             }
 
-            final List<DBIndex> indexList = newList();
-            for(DB2IndexMetadata each : suppliedMetaList){
-                assert connection != null;
-                final double creationCost = each.creationCost(connection.getIBGWhatIfOptimizer());
-                final DBIndex index = new DB2Index(each, creationCost);
-                indexList.add(index);
-            }
             return indexList;
         }
 

@@ -109,7 +109,7 @@ public class DBTuneInstances {
     }
 
     public static PGIndex newPGIndex(int indexId, int schemaId, List<DatabaseColumn> cols, List<Boolean> desc){
-        return new PGIndex(new PGIndexSchema(schemaId, true, cols, desc), indexId, 3.0, 4.5, "Create");
+        return new PGIndex(schemaId, true, cols, desc, indexId, 3.0, 4.5, "Create");
     }
 
     public static List<DatabaseColumn> generateColumns(int howmany){
@@ -165,7 +165,7 @@ public class DBTuneInstances {
 
     public static DB2Index newDB2Index(){
         try {
-            return new DB2Index(newDb2IndexMetadata(newDB2IndexSchema()), 1.0);
+            return new DB2Index(DB_NAME, TABLE_NAME, TABLE_CREATOR, new ArrayList<String>(), new ArrayList<Boolean>(), "U", "N", "REG", 1, "no idea", "no idea", "N", 2, 5.0, 1.0);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -174,7 +174,7 @@ public class DBTuneInstances {
     public static PGIndex newPGIndex(final int id){
         class PI extends PGIndex {
             PI() {
-                super(newPGIndexSchema(), id, 0.0, 0.0, "");
+                super(123456, new Random().nextBoolean(), new ArrayList<DatabaseColumn>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
             }
         }
         return new PI();
@@ -183,7 +183,7 @@ public class DBTuneInstances {
     public static PGIndex newPGIndex(final int schemaId, final int id){
         class PI extends PGIndex {
             PI() {
-                super(newPGIndexSchema(schemaId), id, 0.0, 0.0, "");
+                super(schemaId, new Random().nextBoolean(), new ArrayList<DatabaseColumn>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
             }
         }
         return new PI();
@@ -192,7 +192,7 @@ public class DBTuneInstances {
     public static PGIndex newPGIndex(final boolean flag, final int schemaId, final int id){
         class PI extends PGIndex {
             PI() {
-                super(newPGIndexSchema(flag, schemaId), id, 0.0, 0.0, "");
+                super(schemaId, flag, new ArrayList<DatabaseColumn>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
             }
         }
         return new PI();
@@ -200,53 +200,6 @@ public class DBTuneInstances {
 
     public static PGIndex newPGIndex(){
         return newPGIndex(1);
-    }
-
-    public static PGIndexSchema newPGIndexSchema(int id){
-        return newPGIndexSchema(new Random().nextBoolean(), id);
-    }
-
-    public static PGIndexSchema newPGIndexSchema(boolean flag, int id){
-        try {
-            final Constructor<PGIndexSchema> c = PGIndexSchema.class.getDeclaredConstructor(int.class, boolean.class, List.class, List.class);
-            c.setAccessible(true);
-            final List<DatabaseColumn> columns      = Instances.newList();
-            final List<Boolean>        isDescending = Instances.newList();
-            return c.newInstance(id, flag, columns, isDescending);
-        } catch (Exception e){
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static PGIndexSchema newPGIndexSchema(){
-        return newPGIndexSchema(123456);
-    }
-
-    public static DB2IndexMetadata newDb2IndexMetadata(DB2IndexSchema schema){
-        try {
-            final Constructor<DB2IndexMetadata> c = DB2IndexMetadata.class.getDeclaredConstructor(
-                    DB2IndexSchema.class, int.class, String.class,
-                    String.class, String.class, int.class, double.class);
-            c.setAccessible(true);
-            return c.newInstance(schema, 1, "no idea", "no idea", "N", 2, 5.0);
-        } catch (Exception e) {
-           throw new RuntimeException(e);
-        }
-
-    }
-
-    public static DB2IndexSchema newDB2IndexSchema(){
-        try {
-            final Constructor<DB2IndexSchema> c = DB2IndexSchema.class.getDeclaredConstructor(
-                    String.class, String.class, String.class,
-                    List.class, List.class, String.class, String.class,
-                    String.class
-            );
-            c.setAccessible(true);
-            return c.newInstance(DB_NAME, TABLE_NAME, TABLE_CREATOR, new ArrayList<String>(), new ArrayList<Boolean>(), "U", "N", "REG");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
   public static <I extends DBIndex> BenefitFunction<I> newTempBenefitFunction(List<ProfiledQuery<I>> qinfos, int maxInternalId){

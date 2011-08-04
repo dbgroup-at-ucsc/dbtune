@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
-import edu.ucsc.dbtune.core.metadata.DB2IndexMetadata;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Objects;
@@ -138,29 +137,21 @@ public class Advisor {
 		}
 		
 		public DB2IndexSet getCandidates(DatabaseConnection conn) throws SQLException {
-			final List<DB2IndexMetadata> metaList = new ArrayList<DB2IndexMetadata>();
+			DB2IndexSet candidateSet = new DB2IndexSet();
 			int id = 1;
 			for (IndexInfo info : indexList) {
-                final DB2IndexMetadata meta = supplyValue(
+                final DB2Index idx = supplyValue(
                         readAdviseOnOneIndex(),
                         conn,
                         info.name,
                         id,
                         info.megabytes
                 );
-				metaList.add(meta);
+				candidateSet.add(idx);
 				++id;
 			}
 			
-			// post-process to get creation costs
-			DB2IndexSet candidateSet = new DB2IndexSet();
-			for (DB2IndexMetadata meta : metaList) {
-				final double    creationCost = meta.creationCost(conn.getIBGWhatIfOptimizer());
-				final DB2Index index        = new DB2Index(meta, creationCost);
-				candidateSet.add(index);
-			}
-			
-			// normalize the index candidates
+            // normalize the index candidates
 			candidateSet.normalize();
 			
 			for (DB2Index index : candidateSet) {

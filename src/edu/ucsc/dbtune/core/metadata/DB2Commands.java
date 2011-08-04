@@ -20,6 +20,7 @@ package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.CostLevel;
 import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
@@ -163,11 +164,11 @@ public class DB2Commands {
         return IntegerCallback.makeIntegerCallback(type, value);
     }
 
-    public static Function<List<DB2IndexMetadata>, SQLException> readAdviseOnAllIndexes(){
+    public static Function<List<DBIndex>, SQLException> readAdviseOnAllIndexes(){
         return ReadAdviseOnAllIndexes.INSTANCE;
     }
 
-    public static Function<DB2IndexMetadata, SQLException> readAdviseOnOneIndex(){
+    public static Function<DB2Index, SQLException> readAdviseOnOneIndex(){
         return ReadAdviseOnOneIndex.INSTANCE;
     }
     
@@ -420,11 +421,11 @@ public class DB2Commands {
         private static final StringBuilder QUERY = new StringBuilder();
         static{
           QUERY.append("SELECT DISTINCT CAST(SUBSTRING(object_name FROM ")
-               .append((DB2IndexMetadata.INDEX_NAME_BASE.length() + 1))
+               .append((DB2Index.DB2IndexMetadata.INDEX_NAME_BASE.length() + 1))
                .append(" USING CODEUNITS16) AS INT) ")
                .append("FROM EXPLAIN_OBJECT ")
                .append("WHERE OBJECT_NAME LIKE '")
-               .append(DB2IndexMetadata.INDEX_NAME_BASE)
+               .append(DB2Index.DB2IndexMetadata.INDEX_NAME_BASE)
                .append("_%'");        
         }
         
@@ -550,7 +551,7 @@ public class DB2Commands {
             final StringBuilder cache           = new StringBuilder();
             if(cache.length() == 0){
                 masterquery.append("INSERT INTO advise_index(");
-                implode(masterquery, DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
+                implode(masterquery, DB2Index.DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
                 masterquery.append(") VALUES ");
                 cache.append(masterquery.toString());
             } else {
@@ -574,20 +575,20 @@ public class DB2Commands {
 
 
     // enum singleton pattern
-    private enum ReadAdviseOnAllIndexes implements Function<List<DB2IndexMetadata>, SQLException> {
+    private enum ReadAdviseOnAllIndexes implements Function<List<DBIndex>, SQLException> {
         INSTANCE;
 
         private static final StringBuilder QUERY_ALL = new StringBuilder();
         static {
             QUERY_ALL.append("SELECT ");
-            DBUtilities.implode(QUERY_ALL, DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
+            DBUtilities.implode(QUERY_ALL, DB2Index.DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
             QUERY_ALL.append(" FROM advise_index WHERE exists = 'N'");
         }
 
         private PreparedStatement psAll; // use all indexes in table
 
         @Override
-        public List<DB2IndexMetadata> apply(Parameter input) throws SQLException {
+        public List<DBIndex> apply(Parameter input) throws SQLException {
             final Connection        conn  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
             if(psAll == null){
                 psAll = conn.prepareStatement(QUERY_ALL.toString());
@@ -597,11 +598,11 @@ public class DB2Commands {
             final AtomicInteger id = new AtomicInteger(0);
             final String dbName = input.getParameterValue(String.class);
             @SuppressWarnings({"unchecked"})
-            final List<DB2IndexMetadata> candidateSet = Instances.newList();
+            final List<DBIndex> candidateSet = Instances.newList();
             try {
                while(rs.next()){
                    id.incrementAndGet();
-                   candidateSet.add(DB2IndexMetadata.consFromAdviseIndex(rs, dbName, id.get(), -1));
+                   candidateSet.add(new DB2Index(input.getParameterValue(DatabaseConnection.class), rs, dbName, id.get(), -1));
                }
             } finally {
                 rs.close();
@@ -618,13 +619,13 @@ public class DB2Commands {
     }
 
     // enum singleton pattern
-    private enum ReadAdviseOnOneIndex implements Function<DB2IndexMetadata, SQLException> {
+    private enum ReadAdviseOnOneIndex implements Function<DB2Index, SQLException> {
         INSTANCE;
 
         private static final StringBuilder QUERY_ONE = new StringBuilder();
         static {
             QUERY_ONE.append("SELECT ");
-            DBUtilities.implode(QUERY_ONE, DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
+            DBUtilities.implode(QUERY_ONE, DB2Index.DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
             QUERY_ONE.append(" FROM advise_index WHERE exists = 'N'");
             QUERY_ONE.append(" AND name = ?");
         }
@@ -632,7 +633,7 @@ public class DB2Commands {
         private PreparedStatement psOne; // use one index in table
 
         @Override
-        public DB2IndexMetadata apply(Parameter input) throws SQLException {
+        public DB2Index apply(Parameter input) throws SQLException {
             final DatabaseConnection defaultDatabaseConnection = Objects.as(
                     input.getParameterValue(DatabaseConnection.class)
             );
@@ -652,11 +653,11 @@ public class DB2Commands {
             try {
                 final boolean haveResult = rs.next();
                 Checks.checkAssertion(haveResult, "did not find index " + indexName + " in ADVISE_INDEX");
-                return DB2IndexMetadata.consFromAdviseIndex(rs, dbName, id, megabytes);
+                return new DB2Index(defaultDatabaseConnection, rs, dbName, id, megabytes);
             } finally {
                 rs.close();
                 conn.commit();
-            }            
+            }
         }
 
 

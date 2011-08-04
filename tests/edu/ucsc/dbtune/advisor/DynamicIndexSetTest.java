@@ -4,7 +4,6 @@ import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DBTuneInstances;
 import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.metadata.PGIndexSchema;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.Test;
 
@@ -52,7 +51,7 @@ public class DynamicIndexSetTest {
     private static PGIndex postgresIndex(){
         final List<DatabaseColumn> cols = Instances.newList();
         final List<Boolean>        desc = Instances.newList();
-        return new PGIndex(new PGIndexSchema(12, true, cols, desc), 1, 3.0, 4.5, "");
+        return new PGIndex(12, true, cols, desc, 1, 3.0, 4.5, "");
     }
 
     private <T extends DBIndex> void populateIndexSet(DynamicIndexSet<T> idxset, int numberOfElements, boolean postgres) {

@@ -151,7 +151,6 @@ public class PGCommands {
                 }
             }
 
-            final PGIndexSchema schema          = new PGIndexSchema(reloid, isSync, columns, isDescending);
             final double        creationCost    = Double.valueOf(rs.getString("create_cost"));
             final double        megabytes       = Double.valueOf(rs.getString("megabytes"));
 
@@ -159,7 +158,7 @@ public class PGCommands {
             final String creationText   = updateCreationText(rs, isSync, indexName);
 
             candidateSet.add(
-                    new PGIndex(schema, id, creationCost, megabytes, creationText)
+                    new PGIndex(reloid, isSync, columns, isDescending, id, creationCost, megabytes, creationText)
             );
         }
 
@@ -360,8 +359,7 @@ public class PGCommands {
                 sb.append(table.getOid());
                 for (int i = 0; i < idx.columnCount(); i++) {
                     sb.append(idx.getSchema().getDescending().get(i) ? " desc" : " asc");
-                    final PGIndexSchema schema = idx.getSchema();
-                    final List<DatabaseColumn>   cols   = schema.getColumns();
+                    final List<DatabaseColumn>   cols   = idx.getColumns();
                     final PGColumn each    = Objects.as(cols.get(i));
                     sb.append(" ").append(each.getAttnum());
                 }

@@ -20,7 +20,6 @@ package edu.ucsc.dbtune.core;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.PGColumn;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.metadata.PGIndexSchema;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
@@ -39,13 +38,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static edu.ucsc.dbtune.core.DBTuneInstances.newDB2Index;
 import static edu.ucsc.dbtune.core.DBTuneInstances.newPGIndex;
-import static edu.ucsc.dbtune.core.JdbcMocks.makeMockStatement;
 import static edu.ucsc.dbtune.core.JdbcMocks.makeResultSet;
 import static edu.ucsc.dbtune.util.Strings.str;
 import static org.hamcrest.CoreMatchers.*;
@@ -322,11 +319,9 @@ public class DatabasePackageTest {
         assertThat(info.isDML(), is(false));
         assertThat(Double.compare(info.getIndexMaintenanceCost(index1), 0) == 0, is(true));
 
-        final DatabaseColumn        col     = new PGColumn(12345);
-        final DatabaseIndexSchema   schema  = new PGIndexSchema(56789, true, Arrays.asList(col), Arrays.asList(true));
-
-        final DBIndex idx  = new PGIndex(121112, 3.0, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_121112");
-        final DBIndex idx2 = new PGIndex((PGIndexSchema) schema, 132111, 3.5, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_132111");
+        final DatabaseColumn col  = new PGColumn(12345);
+        final DBIndex        idx  = new PGIndex(121112, 3.0, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_121112");
+        final DBIndex        idx2 = new PGIndex(56789, true, Arrays.asList(col), Arrays.asList(true), 132111, 3.5, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_132111");
 
         connection.getWhatIfOptimizer().explain("SELECT * FROM R", Arrays.asList(idx, idx2));
     }

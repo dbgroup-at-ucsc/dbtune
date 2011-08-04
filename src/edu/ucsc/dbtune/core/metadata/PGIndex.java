@@ -18,21 +18,34 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import edu.ucsc.dbtune.core.DatabaseColumn;
+import edu.ucsc.dbtune.core.DatabaseIndexSchema;
+import edu.ucsc.dbtune.core.DatabaseTable;
+import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
 import java.sql.SQLException;
+import java.util.List;
 
 public class PGIndex extends AbstractIndex implements Serializable {
-	private PGIndexSchema schema;
+    private PGIndexSchema schema;
 
-	// serialization support
-	private static final long serialVersionUID = 1L;
+    // serialization support
+    private static final long serialVersionUID = 1L;
 
     /**
      * construct a new {@code PGIndex} object.
-     * @param schema
-     *      a {@link PGIndexSchema} object.
+     *
+     * @param reloid
+     *     relation object id of the corresponding table
+     * @param isSync
+     *    indicate whether is sync or not.
+     * @param columns
+     *      a list of {@link DatabaseColumn columns}.
+     * @param isDescending
+     *      indicate whether is in descending order.
      * @param internalId
      *     {@link edu.ucsc.dbtune.core.DBIndex}'s internalId.
      * @param creationCost
@@ -43,15 +56,18 @@ public class PGIndex extends AbstractIndex implements Serializable {
      *     {@link edu.ucsc.dbtune.core.DBIndex}'s creation text.
      */
     public PGIndex(
-            PGIndexSchema schema,
+            int reloid,
+            boolean isSync,
+            List<DatabaseColumn> columns,
+            List<Boolean> isDescending,
             int internalId,
             double creationCost,
             double megabytes,
             String creationText
     ) {
-		super(internalId, creationText, creationCost, megabytes);
-        this.schema = schema;
-	}
+        super(internalId, creationText, creationCost, megabytes);
+        this.schema = new PGIndexSchema(reloid, isSync, columns, isDescending);
+    }
 
     public PGIndex(
             int internalId,
@@ -59,45 +75,52 @@ public class PGIndex extends AbstractIndex implements Serializable {
             double megabytes,
             String creationText
     ) {
-		super(internalId, creationText, creationCost, megabytes);
-	}
+        super(internalId, creationText, creationCost, megabytes);
+    }
     @Override
-	public PGTable baseTable() {
-		return Objects.as(getSchema().getBaseTable());
-	}
+    public PGTable baseTable() {
+        return Objects.as(getSchema().getBaseTable());
+    }
+
+    public List<DatabaseColumn> getColumns() {
+        return getSchema().getColumns();
+    }
 
     @Override
-	public int columnCount() {
-		return getSchema().getColumns().size();
-	}
+    public int columnCount() {
+        return getSchema().getColumns().size();
+    }
 
     @Override
-	public PGIndex consDuplicate(int id) throws SQLException {
-		return new PGIndex(
-                getSchema().consDuplicate(),
+    public PGIndex consDuplicate(int id) throws SQLException {
+        return new PGIndex(
+                getSchema().getRelOID(),
+                getSchema().isSync(),
+                getSchema().getColumns(),
+                getSchema().isDescending,
                 id, 
                 creationCost(), 
                 megabytes(), 
                 creationText()
         );
-	}
+    }
 
     @Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof PGIndex)){
+    public boolean equals(Object obj) {
+        if (!(obj instanceof PGIndex)){
             return false;
         }
 
-		PGIndex other = (PGIndex) obj;
+        PGIndex other = (PGIndex) obj;
         final boolean isSchemaNull = getSchema() == null;
-		return isSchemaNull ? internalId() == other.internalId()
+        return isSchemaNull ? internalId() == other.internalId()
                : getSchema().equals(other.getSchema()) && internalId() == other.internalId();
-	}
+    }
 
     @Override
-	public PGColumn getColumn(int i) {
-		return Objects.as(getSchema().getColumns().get(i));
-	}
+    public PGColumn getColumn(int i) {
+        return Objects.as(getSchema().getColumns().get(i));
+    }
 
     /**
      * @return a {@link PGIndexSchema} object related in some sort to this index.
@@ -107,13 +130,133 @@ public class PGIndex extends AbstractIndex implements Serializable {
     }
 
     @Override
-	public int hashCode() {
-		return (Objects.hashCode(getSchema(), internalId()));
-	}
+    public int hashCode() {
+        return (Objects.hashCode(getSchema(), internalId()));
+    }
 
     @Override
-	public String toString() {
-		return creationText();
-	}
+    public String toString() {
+        return creationText();
+    }
 
+    /**
+     * A PG-specific implementation of {@link DatabaseIndexSchema}.
+     */
+    public static class PGIndexSchema implements DatabaseIndexSchema, Serializable {
+        // serialization support
+        private static final long serialVersionUID = 1L;
+
+        private PGTable baseTable;
+        private List<DatabaseColumn> columns;
+        private boolean isSync;
+        private List<Boolean> isDescending;
+        private String signature;
+
+        /**
+         * construct a {@code PGIndexSchema} object.
+         * @param reloid
+         *     relation object id
+         * @param isSync
+         *    indicate whether is sync or not.
+         * @param columns
+         *      a list of {@link DatabaseColumn columns}.
+         * @param isDescending
+         *      indicate whether is in descending order.
+         */
+        public PGIndexSchema(int reloid, boolean isSync,
+                List<DatabaseColumn> columns,
+                List<Boolean> isDescending
+                ) {
+            this.baseTable = new PGTable(reloid);
+            this.isSync = isSync;
+            this.columns = columns;
+            this.isDescending = isDescending;
+
+            Checks.checkArgument(columns.size() == isDescending.size());
+
+            final StringBuilder sb = new StringBuilder();
+            sb.append(reloid);
+            sb.append(isSync() ? 'Y' : 'N');
+            for (DatabaseColumn col : columns) {
+                final PGColumn each = Objects.as(col);
+                sb.append(each.getAttnum()).append(" ");
+            }
+
+            for (boolean d : isDescending) {
+                sb.append(d ? 'y' : 'n');
+            }
+
+            this.signature = sb.toString();
+        }
+
+        /**
+         * @return a {@link edu.ucsc.dbtune.core.metadata.PGIndexSchema} duplicate.
+         */
+        public PGIndexSchema consDuplicate() {
+            final PGTable table = Objects.as(getBaseTable());
+            return new PGIndexSchema(table.getOid(), isSync(), getColumns(), getDescending());
+        }
+
+        @Override
+        public boolean equals(Object that) {
+            if (!(that instanceof PGIndexSchema))
+                return false;
+            final PGIndexSchema other = (PGIndexSchema) that;
+            return getSignature().equals(other.getSignature());
+        }
+
+        @Override
+        public DatabaseTable getBaseTable() {
+            return baseTable;
+        }
+
+        @Override
+        public List<DatabaseColumn> getColumns() {
+            return columns;
+        }
+
+        public int getRelOID() {
+            return baseTable.getOid();
+        }
+
+        /**
+         * @return a list of {@link Boolean} that indicate whether a {@link edu.ucsc.satuning.db.DBIndex}
+         *      is listed in descending or ascending order.
+         */
+        List<Boolean> getDescending() {
+            return isDescending;
+        }
+
+        /**
+         * @return
+         *      the signature of {@link edu.ucsc.satuning.db.DBIndex}
+         */
+        String getSignature() {
+            return signature;
+        }
+
+        @Override
+        public int hashCode() {
+            return getSignature().hashCode();
+        }
+
+        /**
+         * @return {@code true} if the index is sync; {@code false} otherwise.
+         */
+        boolean isSync() {
+            return isSync;
+        }
+
+
+        @Override
+            public String toString() {
+                return new ToStringBuilder<PGIndexSchema>(this)
+                    .add("baseTable", getBaseTable())
+                    .add("columns", getColumns())
+                    .add("isSync", isSync())
+                    .add("isDescending", getDescending())
+                    .add("signature", getSignature())
+                    .toString();
+            }
+    }
 }

@@ -2,7 +2,6 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.metadata.PGIndexSchema;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import org.hamcrest.CoreMatchers;
@@ -58,7 +57,7 @@ public class BcTunerTest {
     }
 
     private static PGIndex newPGIndex(int indexId, int schemaId, double creationcost){
-       return new PGIndex(new PGIndexSchema(schemaId, true, generateColumns(3), generateDescVals(3)), indexId, 3.0, creationcost, "Create");
+       return new PGIndex(schemaId, true, generateColumns(3), generateDescVals(3), indexId, 3.0, creationcost, "Create");
     }
 
 
