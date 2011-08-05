@@ -4,40 +4,39 @@
 
 No need to roll our own. Also, we should define a policy of when and how to use logging to avoid polluting the code.
 
-## 28
-
-This is needed in order to solve #44. In the case of DB2, we need to merge also DB2IndexMetadata
-
 ## 43
 
  *  create `connectivity` package
- *  create `Commands` class/interface
- *  derive `PGCommands` and `DB2Commands` from it.
+ *  move all Connection classes into it
+ *  create `Commands` class/interface derive `PGCommands` and `DB2Commands` from it. (??? better to drop these and let others 
+    worry about SQL generation, like PGOptimizer, MetaDataExtractor, etc...)
 
 ## 44
 
- * fix issue #28
  * fix issue #74
- * remove `I extends DBIndex` noise: `egrep -iR '.*extends DBIndex' src/edu/ucsc/dbtune/`
- * create `DBSystem` that only implements the `newIndex()` method (#91)
- * replace `PGTable` by `Table` (may be in its own issue)
- * replace `PGColumn` and `DB2Column` by `Column` (may need to open an issue)
+ * replace `PGTable` by `Table`
+ * replace `PGColumn` and `DB2Column` by `Column`
  * drop ReifiedTypes by using a regular `ArrayList<Index>`.
- * drop IndexDescriptor
- * add remaining types to `Index` from `DB2Index` and `PGIndex`: `BLOCK,DIMENSION,REGULAR`
- * add new field to `Index` to represent `scanOption`: `REVERSIBLE,NON_REVERSIBLE,SYNCHRONIZED`
- * refactor `PGIndex` and `DB2Index` by removing everything that is already in `Index` and then just add the actual 
-   platform-dependent code (like `getCreateStatement()`). Make them derive from `Index` instead of `DBIndex`
- * replace `DBIndex`, `*IndexSchema` and `DB2IndexMetadata` by `Index` (this will trigger all the changes on everything that 
-   touches these three classes).
- * drop `DBIndex`, `*IndexSchema` and `DB2IndexMetadata`
+ * add remaining types to `Index` from `DB2Index` and `PGIndex`: `BLOCK,DIMENSION,REGULAR` (?)
+ * add new field to `Index` to represent `scanOption`: `REVERSIBLE,NON_REVERSIBLE,SYNCHRONIZED` (?)
+ * remove `I extends DBIndex` noise: `egrep -iR '.*extends DBIndex' src/edu/ucsc/dbtune/`
+ * check that `NewPGIndex` and `NewDB2Index` don't replicate `Index` and that the actual platform-dependent code (like 
+   `getCreateStatement()`) is contained in them.
+ * replace `PGIndex` by `NewPGIndex`
+ * replace `DB2Index` by `NewDB2Index`
+ * drop `AbstractIndex`,`DBIndex`
  * test!!
  * commit :)
+
+## 46
+
+ *  rename package `optimizers` to `optimizer`
+ *  move WhatIf classes from core.\* into `optimizer`
+ *  move ExplainInfo and implementations into `optimizer`
 
 ## 71
 
  *  change Optimizer.explain so that it returns a SQLStatement object instead of a `SQLStatementPlan` one
- *  rename package `optimizers` to `optimizer`
  *  add method Optimizer.explain(sql, Configuration)
  *  move version check from constructor to `PGOptimizer.explain()`
 
@@ -48,7 +47,9 @@ This is needed in order to solve #44. In the case of DB2, we need to merge also 
 ## 74
 
  *  write tests for everything assumed in `MetaDataExtractor`
- *  find use cases from everywhere `DBIndex` and `DBIndexSchema` is used (mainly `PGCommands` and `DB2Commands`)
+ *  make `NewPGIndex` and `NewDB2Index` by making current `PGIndex` and `DB2Index` derive from `Index` instead of `DBIndex`
+ *  write `PGIndexTest` and `DB2Index` classes to test use cases from everywhere `DBIndex`, `DB2Index` and `PGIndex` is used 
+    (mainly `PGCommands` and `DB2Commands`)
  *  test stuff assumed in the CLI
  *  think of any other based on our intuition: how is metadata gonna be used besides the above?
 
@@ -59,10 +60,6 @@ This is needed in order to solve #44. In the case of DB2, we need to merge also 
 ## 80
 
 d
-
-## 83
-
-dbtune.workload package
 
 ## 84:
 
@@ -75,13 +72,14 @@ d
      * add mysql driver
      * modify Platform.java to include MySQL
  *  integrate metadata stuff:
+     * create `MySQLIndex` and `MySQLIndexTest` classes
      * add MySQL metadata extractor
  *  create MySQLWhatIfOptimizer class
  *  run existing Wfit and tests against MySQL
 
 ## 92:
 
- *  create newIndex() method
+ *  create `DBSystem` that only implements the `newIndex()` method
 
 # refs
 
