@@ -128,7 +128,7 @@ public class MetaDataExtractorTestFunctional
         List<Column> columns;
         List<Index>  indexes;
 
-        assertTrue("catalog should have at leas 'movies' schema", catalog.getSchemas().size() >= 1);
+        assertTrue("catalog should have at least the 'movies' schema", catalog.getSchemas().size() >= 1);
         assertEquals("'movies' schema has 8 tables", 8, schema.getTables().size());
 
         for (Table table : schema.getTables())

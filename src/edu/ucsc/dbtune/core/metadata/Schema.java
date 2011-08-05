@@ -141,7 +141,7 @@ public class Schema extends DatabaseObject
      * Finds the table whose name matches the given argument.
      *
      * @param name
-     *     name of the object that is searched for in <code>this</code> table.
+     *     name of the object that is searched for in <code>this</code> schema.
      * @return
      *     the table that has the given name; {@code null} if not found
      */
@@ -154,7 +154,7 @@ public class Schema extends DatabaseObject
      * Finds the index whose name matches the given argument.
      *
      * @param name
-     *     name of the object that is searched for in <code>this</code> table.
+     *     name of the object that is searched for in <code>this</code> schema.
      * @return
      *     the index that with the given name; {@code null} if not found.
      */

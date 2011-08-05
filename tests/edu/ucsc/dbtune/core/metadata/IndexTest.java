@@ -64,7 +64,7 @@ public class IndexTest
 
         assertEquals( table, index.getTable() );
 
-        index = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
+        index = new Index( "other", columns, PRIMARY, CLUSTERED, UNIQUE );
 
         assertEquals( table, index.getTable() );
         assertEquals( table.getColumns().size(), index.size() );
@@ -77,8 +77,8 @@ public class IndexTest
         Index index2;
         Index index3;
 
-        index1 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
-        index2 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
+        index1 = new Index( "index1", columns, PRIMARY, CLUSTERED, UNIQUE );
+        index2 = new Index( "index1", columns, PRIMARY, CLUSTERED, UNIQUE );
         index3 = new Index( "testi", table, PRIMARY, CLUSTERED, UNIQUE );
 
         for( int i = 0; i < table.getColumns().size(); i++ )
@@ -102,8 +102,8 @@ public class IndexTest
         Index index2;
         Index index3;
 
-        index1 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
-        index2 = new Index( columns, PRIMARY, CLUSTERED, UNIQUE );
+        index1 = new Index( "index1", columns, PRIMARY, CLUSTERED, UNIQUE );
+        index2 = new Index( "index2", columns, PRIMARY, CLUSTERED, UNIQUE );
         index3 = new Index( "testi", table, PRIMARY, CLUSTERED, UNIQUE );
 
         for( int i = 0; i < table.getColumns().size(); i++ )

@@ -98,6 +98,9 @@ public class Table extends DatabaseObject
         _indexes.add( index );
 
         index.setTable( this );
+        // XXX: determine whether or not the properties of an added index have to be checked. For
+        //      instance, if an index is already contained and is CLUSTERED, no other index can be
+        //      added that is also CLUSTERED. Similarly for PRIMARY/SECONDARY.
     }
 
     /**

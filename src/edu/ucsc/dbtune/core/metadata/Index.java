@@ -26,13 +26,16 @@ import java.util.ArrayList;
  */
 public class Index extends DatabaseObject
 {
-    public static final int     UNKNOWN   = 0;
-    public static final int     B_TREE    = 1;
-    public static final int     BITMAP    = 2;
-    public static final int     HASH      = 3;
-    public static final boolean PRIMARY   = true;
-    public static final boolean CLUSTERED = true;
-    public static final boolean UNIQUE    = true;
+    public static final int     UNKNOWN     = 0;
+    public static final int     B_TREE      = 1;
+    public static final int     BITMAP      = 2;
+    public static final int     HASH        = 3;
+    public static final boolean PRIMARY     = true;
+    public static final boolean SECONDARY   = false;
+    public static final boolean CLUSTERED   = true;
+    public static final boolean UNCLUSTERED = false;
+    public static final boolean UNIQUE      = true;
+    public static final boolean NON_UNIQUE  = false;
 
     protected Table         table;
     protected List<Column>  columns;
@@ -96,6 +99,8 @@ public class Index extends DatabaseObject
     /**
      * Creates an index from the given columns, primary, uniqueness and clustering values.
      *
+     * @param name
+	 *     name of the index
      * @param columns
      *     columns that will define the index
      * @param primary
@@ -103,20 +108,22 @@ public class Index extends DatabaseObject
      * @param clustered
      *     whether the corresponding table is clustered on this index
      * @throws Exception
-     *     if not all of the columns in the list correspond to the same table.
+     *     if column list empty or not all of the columns in the list correspond to the same table.
      */
-    public Index(List<Column> columns, boolean primary, boolean unique, boolean clustered)
+    public Index(String name, List<Column> columns, boolean primary, boolean unique, boolean clustered)
         throws Exception
     {
-        super();
+        super(name);
+
+        if (columns.size() == 0)
+        {
+            throw new Exception("Column list should have at least one element");
+        }
 
         this.columns = new ArrayList<Column>();
+        this.table   = columns.get(0).getTable();
 
-        if (columns.size() > 0)
-        {
-            this.table = columns.get(0).getTable();
-            this.columns.add(columns.get(0));
-        }
+        this.columns.add(columns.get(0));
 
         for (int i = 1; i < columns.size(); i++)
         {
@@ -131,7 +138,6 @@ public class Index extends DatabaseObject
         this.type         = UNKNOWN;
         this.primary      = primary;
         this.unique       = unique;
-        this.name         = "";
         this.clustered    = clustered;
         this.descending   = new ArrayList<Boolean>();
         this.creationCost = 0.0;
@@ -493,15 +499,6 @@ public class Index extends DatabaseObject
     public void setCreationCost(double cost)
     {
         creationCost = cost;
-    }
-
-    /**
-     * {@ inheritDoc}
-     */
-    @Override
-    public String toString()
-    {
-        return getCreateStatement();
     }
 
     /**

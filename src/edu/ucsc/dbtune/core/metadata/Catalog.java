@@ -86,4 +86,18 @@ public class Catalog extends DatabaseObject
     {
         return new ArrayList<Schema>(_schemas);
     }
+
+    /**
+     * Finds the schema whose name matches the given argument.
+     *
+     * @param name
+     *     name of the object that is searched for in <code>this</code> catalog.
+     * @return
+     *     the schema that has the given name; {@code null} if not found
+     */
+    public Schema findSchema(String name)
+    {
+        return (Schema) DatabaseObject.findByName(new ArrayList<DatabaseObject>(_schemas),name);
+    }
+
 }

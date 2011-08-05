@@ -24,14 +24,14 @@ import java.util.List;
  * The abstraction of a database object. A database object is any data structure that stores 
  * information about objects contained in a database such as Tables, Views, Columns, etc.
  * <p>
- * // TODO describe in more detail the hierarchy containment policy
  * Each containee should have a pointer to its container; each containee is "notified" (eg. a Column 
  * has method setTable() ) by its container. This means that the containee doesn't "notify" its 
  * container that will contain it, rather the container "notifies" the containee.
  * <p>
- * Example of the above: see Table.add(Column)
+ * For an example of the above: see the {@link Table#add} method
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
+ * @see Table#add
  */
 public abstract class DatabaseObject
 {
@@ -181,6 +181,17 @@ public abstract class DatabaseObject
     }
 
     /**
+     * Returns the number of bytes that the object occupies in disk
+     *
+     * @return
+     *     size in megabytes
+     */
+    public long getMegaBytes()
+    {
+        return size;
+    }
+
+    /**
      * Finds a database object that is contained in the given list whose name matches the given 
      * method argument.
      *
@@ -200,16 +211,5 @@ public abstract class DatabaseObject
         }
 
         return null;
-    }
-
-    /**
-     * Returns the number of bytes that the object occupies in disk
-     *
-     * @return
-     *     size in megabytes
-     */
-    public long getMegaBytes()
-    {
-        return size;
     }
 }
