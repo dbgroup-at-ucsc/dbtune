@@ -9,23 +9,27 @@ No need to roll our own. Also, we should define a policy of when and how to use 
  *  create `connectivity` package
  *  move all Connection classes into it
  *  create `Commands` class/interface derive `PGCommands` and `DB2Commands` from it. (??? better to drop these and let others 
-    worry about SQL generation, like PGOptimizer, MetaDataExtractor, etc...)
+    worry about SQL generation, like PGOptimizer, PGMetaDataExtractor, etc...)
 
 ## 44
 
- * fix issue #74
- * replace `PGTable` by `Table`
+ * extend `Table` with stuff used in `PGTable` and `DB2QualifiedName`
+ * replace `PGTable` by `Table`; `DB2QualifiedName` by `Table`
+ * extend `Column` with stuff used in `PGColumn` and `DB2Column`
  * replace `PGColumn` and `DB2Column` by `Column`
- * drop ReifiedTypes by using a regular `ArrayList<Index>`.
- * add remaining types to `Index` from `DB2Index` and `PGIndex`: `BLOCK,DIMENSION,REGULAR` (?)
- * add new field to `Index` to represent `scanOption`: `REVERSIBLE,NON_REVERSIBLE,SYNCHRONIZED` (?)
+ * drop `ReifiedTypes` by using a regular `ArrayList<Index>`.
+ * translate all the method names from `DBIndex` to `Index`-lingo in `PGIndex` and `DB2Index`
+ * add remaining types to `Index` from `DB2Index` and `PGIndex`: `BLOCK,DIMENSION,REGULAR`
+ * add new field to `Index` to represent `scanOption`: `REVERSIBLE,NON_REVERSIBLE,SYNCHRONIZED`
  * remove `I extends DBIndex` noise: `egrep -iR '.*extends DBIndex' src/edu/ucsc/dbtune/`
+ * make `NewPGIndex` and `NewDB2Index` by making current `PGIndex` and `DB2Index` derive from `Index` instead of `DBIndex`
  * check that `NewPGIndex` and `NewDB2Index` don't replicate `Index` and that the actual platform-dependent code (like 
    `getCreateStatement()`) is contained in them.
  * replace `PGIndex` by `NewPGIndex`
  * replace `DB2Index` by `NewDB2Index`
  * drop `AbstractIndex`,`DBIndex`
- * test!!
+ * fix issue #74
+ * more test!!
  * commit :)
 
 ## 46
@@ -33,6 +37,20 @@ No need to roll our own. Also, we should define a policy of when and how to use 
  *  rename package `optimizers` to `optimizer`
  *  move WhatIf classes from core.\* into `optimizer`
  *  move ExplainInfo and implementations into `optimizer`
+
+## 53
+
+ *  make metadata retrieval part of the `DatabaseConnection` initilization protocol. This will help in fullfilling the 
+    [DBTune use case](https://github.com/dbgroup-at-ucsc/dbtune/wiki/java-packages-structure).
+ *  in `Table` class, drop constructor:
+ 
+    ```java
+    Table(String dbName, String schemaName, String name) {
+    ```
+ 
+    the schema and db names should be retrieved from the `Schema` and `Catalog` classes respectively. This info should be 
+    available upon connection as part of the metadata extraction mechanism. Also drop fields `schemaName` and `dbName`; 
+    methods `hashCode()` and `equals()`.
 
 ## 71
 
@@ -46,10 +64,8 @@ No need to roll our own. Also, we should define a policy of when and how to use 
 
 ## 74
 
- *  write tests for everything assumed in `MetaDataExtractor`
- *  make `NewPGIndex` and `NewDB2Index` by making current `PGIndex` and `DB2Index` derive from `Index` instead of `DBIndex`
- *  write `PGIndexTest` and `DB2Index` classes to test use cases from everywhere `DBIndex`, `DB2Index` and `PGIndex` is used 
-    (mainly `PGCommands` and `DB2Commands`)
+ *  add more methods to `IndexTest`; create `PGIndexTest` and `DB2IndexTest` (testing `NewDB2Index` and `NewPGIndex`) classes 
+    to test use cases from everywhere `DBIndex`, `DB2Index` and `PGIndex` is used (mainly `PGCommands` and `DB2Commands`)
  *  test stuff assumed in the CLI
  *  think of any other based on our intuition: how is metadata gonna be used besides the above?
 

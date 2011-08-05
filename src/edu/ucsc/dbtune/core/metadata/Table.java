@@ -27,9 +27,42 @@ import java.util.ArrayList;
 public class Table extends DatabaseObject
 {
     protected Schema schema;
+    private   String schemaName; // XXX: remove after fix of issue #53
+    private   String dbName;     // XXX: remove after fix of issue #53
 
     protected List<Column> _columns;
     protected List<Index>  _indexes;
+
+    /**
+     * Constructor
+     *
+     * @param id
+     *     id of the table object
+     */
+    public Table( long id )
+    {
+        super( id );
+
+        _columns = new ArrayList<Column>();
+        _indexes = new ArrayList<Index>();
+    }
+
+    /**
+     * Constructs a table that corresponds to the given schema and database names.
+     *
+     * @param dbName
+     *      database name
+     * @param schemaName
+     *      schema name
+     * @param name
+     *      table name
+     */
+    public Table(String dbName, String schemaName, String name) {
+        // XXX: this constructor should be dropped when issue #53 is fixed
+        super(name);
+        this.dbName     = dbName;
+        this.schemaName = schemaName;
+    }
 
     /**
      * Constructor
@@ -41,6 +74,7 @@ public class Table extends DatabaseObject
     {
         super( name );
 
+        id       = -1;
         _columns = new ArrayList<Column>();
         _indexes = new ArrayList<Index>();
     }
@@ -174,4 +208,37 @@ public class Table extends DatabaseObject
     {
         return _indexes.contains(index);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode() {
+        // XXX: drop as part of issue #53
+        if(id != -1) {
+            return super.hashCode();
+        } else {
+            return 34 * dbName.hashCode() * schemaName.hashCode() * name.hashCode();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object o) {
+        // XXX: drop as part of issue #53
+        if (!(o instanceof Table))
+			return false;
+
+        if(id != -1) {
+            return super.equals(o);
+        }
+
+        Table other = (Table) o;
+
+        return dbName.equals(other.dbName)
+               && schemaName.equals(other.schemaName)
+               && name.equals(other.name);
+	}
 }
