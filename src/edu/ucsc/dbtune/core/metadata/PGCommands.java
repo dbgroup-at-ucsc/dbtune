@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import static edu.ucsc.dbtune.core.metadata.PGReifiedTypes.ReifiedPGIndexList;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
@@ -311,7 +310,7 @@ public class PGCommands {
       private Statement statement;
       @Override public Parameter apply(Parameter input) throws SQLException {
           final Connection            connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-          final ReifiedPGIndexList    indexes     = input.getParameterValue(ReifiedPGIndexList.class);
+          final List<PGIndex>         indexes     = input.getParameterValue(List.class);
           final IndexBitSet           config      = input.getParameterValue(IndexBitSet.class);
           final String                sql         = input.getParameterValue(String.class);
           final Integer               cardinality = input.getParameterValue(Integer.class);

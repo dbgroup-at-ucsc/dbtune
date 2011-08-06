@@ -1,12 +1,13 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.PGCommands;
-import edu.ucsc.dbtune.core.metadata.PGReifiedTypes;
+import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.util.*;
 
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.List;
 
 /**
  * @author huascar.sanchez@cs.ucsc.edu (Huascar A. Sanchez)
@@ -43,7 +44,7 @@ class PostgresWhatIfOptimizer extends AbstractWhatIfOptimizer {
         Checks.checkSQLRelatedState(null != connection && connection.isOpened(), "Connection is closed.");
         Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
         updateCachedSQL(sql);
-        final PGReifiedTypes.ReifiedPGIndexList indexSet = new PGReifiedTypes.ReifiedPGIndexList(indexes);
+        final List<PGIndex> indexSet = PGIndex.cast(indexes);
         if(getCachedIndexBitSet().isEmpty()) updateCachedIndexBitSet(Instances.newBitSet(indexes));
         final IndexBitSet   cachedIndexBitSet   = getCachedIndexBitSet();
         final Double[]      maintCost           = new Double[indexSet.size()];

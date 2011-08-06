@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 
 import static edu.ucsc.dbtune.core.metadata.DB2Commands.clearAdviseIndex;
 import static edu.ucsc.dbtune.core.metadata.DB2Commands.readAdviseOnOneIndex;
-import static edu.ucsc.dbtune.core.metadata.DB2ReifiedTypes.DB2IndexSet;
+import static edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexSet;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 

@@ -18,9 +18,9 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.DBIndexSet;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.util.DBUtilities;
@@ -39,12 +39,12 @@ import java.sql.ResultSet;
 import static edu.ucsc.dbtune.util.Checks.checkNotNull;
 
 public class DB2Index extends AbstractIndex implements Serializable {
-	// serialized fields
-	protected DB2IndexMetadata meta;
-	private int hashCodeCache;
+    // serialized fields
+    protected DB2IndexMetadata meta;
+    private int hashCodeCache;
 
-	// serialization support
-	private static final long serialVersionUID = 1L;
+    // serialization support
+    private static final long serialVersionUID = 1L;
 
     /**
      * construct new {@code DB2Index} from the ADVISE_INDEX table
@@ -92,11 +92,11 @@ public class DB2Index extends AbstractIndex implements Serializable {
         this.creationText  = this.meta.creationText;
         this.size          = this.meta.megabytes;
         this.creationCost  = this.meta.creationCost(connection.getIBGWhatIfOptimizer());
-		hashCodeCache      = meta.hashCode();
-	}
+        hashCodeCache      = meta.hashCode();
+    }
 
-    private DB2Index(DB2IndexMetadata metadata,	double creationCost) throws SQLException {
-		super(
+    private DB2Index(DB2IndexMetadata metadata, double creationCost) throws SQLException {
+        super(
                 checkNotNull(metadata).internalId,
                 checkNotNull(metadata).creationText,
                 creationCost,
@@ -104,8 +104,8 @@ public class DB2Index extends AbstractIndex implements Serializable {
         );
 
         this.meta     = metadata;
-		hashCodeCache = metadata.hashCode();
-	}
+        hashCodeCache = metadata.hashCode();
+    }
 
     public DB2Index(
             String dbName,
@@ -134,74 +134,78 @@ public class DB2Index extends AbstractIndex implements Serializable {
         this.creationText = this.meta.creationText;
         this.size         = this.meta.megabytes;
         this.creationCost = creationCost;
-		hashCodeCache     = meta.hashCode();
-	}
+        hashCodeCache     = meta.hashCode();
+    }
+
+    public static class DB2IndexSet extends DBIndexSet<DB2Index> {
+        private static final long serialVersionUID = DBIndexSet.serialVersionUID;
+    }
 
     /**
      * @return the name of table
      *      given by the index schema.
      */
-	public String tableName() {
-		return meta.schema.tableName;
-	}
+    public String tableName() {
+        return meta.schema.tableName;
+    }
 
     /**
      * @return
      *      the name of the index schema which created
      *      the index.
      */
-	public String tableSchemaName() {
-		return meta.schema.tableCreatorName;
-	}
+    public String tableSchemaName() {
+        return meta.schema.tableCreatorName;
+    }
 
     @Override
-	public Table baseTable() {
-		return meta.schema.getBaseTable();
-	}
-
-	@Override
-	public int columnCount() {
-		return meta.schema.getColumns().size();
-	}
+    public Table baseTable() {
+        return meta.schema.getBaseTable();
+    }
 
     @Override
-	public DB2Index consDuplicate(int id) throws SQLException {
-		final DB2IndexMetadata dupMeta = DB2IndexMetadata.consDuplicate(meta, id);
+    public int columnCount() {
+        return meta.schema.getColumns().size();
+    }
+
+    @Override
+    public DB2Index consDuplicate(int id) throws SQLException {
+        final DB2IndexMetadata dupMeta = DB2IndexMetadata.consDuplicate(meta, id);
         return new DB2Index(dupMeta, creationCost());
-	}
+    }
 
-	// crucial override
-	@Override
-	public boolean equals(Object obj) {
+    // crucial override
+    @Override
+    public boolean equals(Object obj) {
         return obj instanceof DB2Index
                && ((DB2Index) obj).meta.equals(meta);
     }
 
     @Override
-	public Column getColumn(int i) {
+    public Column getColumn(int i) {
         //noinspection RedundantTypeArguments
         return meta.schema.getColumns().get(i);
-	}
-	
-	// crucial override
-	@Override
-	public int hashCode() {
-		return hashCodeCache;
-	}
+    }
+    
+    // crucial override
+    @Override
+    public int hashCode() {
+        return hashCodeCache;
+    }
 
     @Override
-	public double megabytes() {
+    public double megabytes() {
         // check Effective Java if you want to know why Double#compare(...)
         // is used when comparing double values.
         final boolean isPositive = Double.compare(super.megabytes(), 0.0) >= 0; 
         Checks.checkArgument(isPositive, "Index size is not known");
-		return super.megabytes();
-	}
-	
-	@Override
-	public String toString() {
-		return meta.creationText;
-	}
+        return super.megabytes();
+    }
+    
+    @Override
+    public String toString() {
+        return meta.creationText;
+    }
 
     public static class DB2IndexMetadata implements Serializable {
         // serialized fields

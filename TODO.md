@@ -13,9 +13,6 @@ No need to roll our own. Also, we should define a policy of when and how to use 
 
 ## 44
 
- * extend `Column` with stuff used in `PGColumn` and `DB2Column`
- * replace `PGColumn` and `DB2Column` by `Column`
- * drop `ReifiedTypes` by using a regular `ArrayList<Index>`.
  * translate all the method names from `DBIndex` to `Index`-lingo in `PGIndex` and `DB2Index`
  * add remaining types to `Index` from `DB2Index` and `PGIndex`: `BLOCK,DIMENSION,REGULAR`
  * add new field to `Index` to represent `scanOption`: `REVERSIBLE,NON_REVERSIBLE,SYNCHRONIZED`
@@ -26,6 +23,7 @@ No need to roll our own. Also, we should define a policy of when and how to use 
  * replace `PGIndex` by `NewPGIndex`
  * replace `DB2Index` by `NewDB2Index`
  * drop `AbstractIndex`,`DBIndex`
+ * drop `ReifiedTypes` by using a regular `ArrayList<Index>`.
  * fix issue #74
  * more test!!
  * commit :)

@@ -18,12 +18,14 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PGIndex extends AbstractIndex implements Serializable {
@@ -134,6 +136,16 @@ public class PGIndex extends AbstractIndex implements Serializable {
     @Override
     public String toString() {
         return creationText();
+    }
+
+    public static List<PGIndex> cast(Iterable<? extends DBIndex> indexes) {
+        List<PGIndex> pgIndexes = new ArrayList<PGIndex>();
+
+        for(DBIndex each : indexes){
+            pgIndexes.add((PGIndex) each);
+        }
+
+        return pgIndexes;
     }
 
     /**

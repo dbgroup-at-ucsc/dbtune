@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.PGReifiedTypes;
+import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
@@ -79,7 +79,7 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     @Override
     double estimateCost(String sql, Iterable<DBIndex> candidate,
         IndexBitSet configuration, IndexBitSet used) {
-      final PGReifiedTypes.ReifiedPGIndexList indexSet = new PGReifiedTypes.ReifiedPGIndexList(cachedCandidateSet);
+      List<PGIndex> indexSet = PGIndex.cast(cachedCandidateSet);
       return supplyValue(
           explainIndexesCost(used),
           getConnection(),
@@ -100,10 +100,10 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
         final WhatIfOptimizationBuilderImpl whatIfImpl = Objects.cast(builder, WhatIfOptimizationBuilderImpl.class);
         if(whatIfImpl.withProfiledIndex()) throw new UnsupportedOperationException("Error: Used Columns in Database Connection not supported.");
 
-        final String                            sql             = whatIfImpl.getSQL();
-        final IndexBitSet                       usedSet         = whatIfImpl.getUsedSet();
-        final IndexBitSet                       configuration   = whatIfImpl.getConfiguration();
-        final PGReifiedTypes.ReifiedPGIndexList indexSet        = makeIndexList();
+        final String        sql           = whatIfImpl.getSQL();
+        final IndexBitSet   usedSet       = whatIfImpl.getUsedSet();
+        final IndexBitSet   configuration = whatIfImpl.getConfiguration();
+        final List<PGIndex> indexSet      = newList();
         Double returnVal = supplyValue(
                     explainIndexesCost(usedSet),
                     getConnection(),
@@ -120,10 +120,6 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
                 + " workload cost"
         );
         return returnVal == null ? 0.0 : returnVal;
-    }
-
-    private PGReifiedTypes.ReifiedPGIndexList makeIndexList(){
-        return new PGReifiedTypes.ReifiedPGIndexList(cachedCandidateSet);
     }
 
     @Override

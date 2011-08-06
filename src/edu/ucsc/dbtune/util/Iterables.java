@@ -1,8 +1,5 @@
 package edu.ucsc.dbtune.util;
 
-import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.metadata.PGReifiedTypes;
-
 import java.util.Collection;
 import java.util.List;
 
