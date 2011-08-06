@@ -38,7 +38,7 @@ public class Schema extends DatabaseObject
      */
     public Schema()
     {
-        super();
+        super(-1);
 
         _tables  = new ArrayList<Table>();
     }

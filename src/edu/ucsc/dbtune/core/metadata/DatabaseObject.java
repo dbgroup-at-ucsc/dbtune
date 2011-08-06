@@ -30,13 +30,13 @@ import java.util.List;
  * <p>
  * For an example of the above: see the {@link Table#add} method
  *
- * @author ivo@cs.ucsc.edu (Ivo Jimenez)
+ * @author Ivo Jimenez
  * @see Table#add
  */
 public abstract class DatabaseObject
 {
     protected String name;
-    protected long   id;
+    protected long   id; // -1 means UNASSIGNED id
     protected long   cardinality;
     protected long   pages;
     protected long   size;
@@ -44,10 +44,10 @@ public abstract class DatabaseObject
     /**
      * default constructor
      */
-    public DatabaseObject()
+    public DatabaseObject(long ID)
     {
         name        = null;
-        id          = 0;
+        id          = ID;
         cardinality = 0;
         pages       = 0;
         size        = 0;
@@ -61,6 +61,8 @@ public abstract class DatabaseObject
      */
     public DatabaseObject( String name )
     {
+        this(-1);
+
         this.name = name;
     }
 
@@ -72,8 +74,9 @@ public abstract class DatabaseObject
      */
     public DatabaseObject( DatabaseObject dbo )
     {
+        this(dbo.id);
+
         name        = dbo.name;
-        id          = dbo.id;
         cardinality = dbo.cardinality;
         pages       = dbo.pages;
         size        = dbo.size;
@@ -114,7 +117,7 @@ public abstract class DatabaseObject
      * Returns the id of the object.
      *
      * @return
-     *     long value representing the object's id
+     *     long value representing the object's id; -1 if it hasn't been assigned
      */
     public long getId()
     {
@@ -165,10 +168,36 @@ public abstract class DatabaseObject
     }
 
     /**
-     * returns the string representation of the object
+     * Returns the number of bytes that the object occupies in disk
      *
      * @return
-     *     String value of the database object
+     *     size in megabytes
+     */
+    public long getMegaBytes()
+    {
+        return size;
+    }
+
+    /**
+     * Evaluates equality based on the internal id of the object
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        return (other instanceof DatabaseObject) && (((DatabaseObject)other).id == id);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return (new Long(id)).hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
      */
     @Override
     public String toString()
@@ -178,17 +207,6 @@ public abstract class DatabaseObject
         } else {
             return new String(name);
         }
-    }
-
-    /**
-     * Returns the number of bytes that the object occupies in disk
-     *
-     * @return
-     *     size in megabytes
-     */
-    public long getMegaBytes()
-    {
-        return size;
     }
 
     /**

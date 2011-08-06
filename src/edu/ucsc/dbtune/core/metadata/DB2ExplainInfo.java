@@ -20,21 +20,17 @@ package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.core.AbstractExplainInfo;
 import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.DatabaseTable;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
-import java.io.Serializable;
-
 /**
  *  implements a DB2-specific {@link edu.ucsc.dbtune.core.ExplainInfo}.
  */
-public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable {
-	private static final long serialVersionUID = 1L;
-	private final DB2QualifiedName  updatedTable;
-	private final double            updateCost;
-    private final double            totalCost;
+public class DB2ExplainInfo extends AbstractExplainInfo {
+	private final Table       updatedTable;
+	private final double      updateCost;
+    private final double      totalCost;
 
     /**
      * construct a {@code DB2ExplainInfo} object.
@@ -45,17 +41,17 @@ public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable 
      * @param updCost
      *      the updating cost.
      */
-	public DB2ExplainInfo(SQLCategory cat, DatabaseTable updTable, double updCost) {
+	public DB2ExplainInfo(SQLCategory cat, Table updTable, double updCost) {
         this(cat, updTable, updCost, 0.0);
 	}
 
-    public DB2ExplainInfo(SQLCategory category, DatabaseTable updatedTable, double updatingCost, double totalCost){
+    public DB2ExplainInfo(SQLCategory category, Table updatedTable, double updatingCost, double totalCost){
         super(category);
         if (SQLCategory.DML.isSame(category)) {
             Checks.checkAssertion(updatedTable != null, "need updated table for DML");
             Checks.checkAssertion(updatingCost >= 0, "invalid update cost");
         }
-        this.updatedTable   = (DB2QualifiedName) updatedTable;
+        this.updatedTable   = (Table) updatedTable;
         this.updateCost     = updatingCost;
         this.totalCost      = totalCost;
     }
@@ -69,7 +65,7 @@ public class DB2ExplainInfo extends AbstractExplainInfo implements Serializable 
 	public double getIndexMaintenanceCost(DBIndex index) {
 		if (!SQLCategory.DML.isSame(getSQLCategory()))
 			return 0;
-		if (!index.isOn(updatedTable))
+		if (!index.baseTable().equals(updatedTable))
 			return 0;
 		return updateCost;
 	}

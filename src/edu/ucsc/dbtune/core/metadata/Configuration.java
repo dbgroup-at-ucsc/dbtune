@@ -36,7 +36,7 @@ public class Configuration extends DatabaseObject
      */
     public Configuration(List<Index> indexes)
     {
-        super();
+        super(-1);
         this._indexes  = new ArrayList<Index>(indexes);
     }
 

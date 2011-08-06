@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2ExplainInfo;
-import edu.ucsc.dbtune.core.metadata.DB2QualifiedName;
+import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.*;
@@ -62,7 +62,7 @@ class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
         updateCachedSQL(sql);
 
         SQLCategory    category     = null;
-        DB2QualifiedName            updatedTable = null;
+        Table            updatedTable = null;
         double                      updateCost   = 0.0;
 
         try {

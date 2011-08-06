@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Table;
 import java.sql.SQLException;
 
 /**
@@ -38,7 +39,7 @@ public interface DBIndex {
     /**
      * @return the base table where this index will be used.
      */
-	DatabaseTable baseTable(); // #44: Index.getTable();
+	Table baseTable(); // #44: Index.getTable();
 
     /**
      * @return the number of columns of the schema where this is index is part of.
@@ -66,16 +67,6 @@ public interface DBIndex {
     
     @Override
 	int hashCode(); // #44: Index.hashCode();
-
-    /**
-     * compares qualified names.
-     * @param name
-     *    qualied name to be used in the comparison.
-     * @return
-     *      {@code true} if both qualified names are the same, false
-     *      otherwise.
-     */
-    boolean isOn(DatabaseTable name); // #44: drop
 
     /**
      * @return the internal Id of this index.

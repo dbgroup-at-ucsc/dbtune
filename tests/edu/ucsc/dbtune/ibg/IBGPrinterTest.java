@@ -2,8 +2,8 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DatabaseTable;
 import edu.ucsc.dbtune.core.IndexExtractor;
+import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.ibg.CandidatePool.Node;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
@@ -52,7 +52,7 @@ public class IBGPrinterTest {
     @Test
     public void testIndexBenefitGraph() throws Exception{
         final String basicQuery = "Select * from R;";
-        final DatabaseTable table = mock(DatabaseTable.class);
+        final Table table = mock(Table.class);
 
         // configure indexex
 
@@ -61,14 +61,12 @@ public class IBGPrinterTest {
         when(twin.internalId()).thenReturn(1);
         when(twin.creationCost()).thenReturn(22.3);
         when(twin.megabytes()).thenReturn(2.0);
-        when(twin.isOn(table)).thenReturn(true);
         when(twin.baseTable()).thenReturn(table);
 
         final DBIndex soleIndex = mock(DBIndex.class);
         when(soleIndex.internalId()).thenReturn(1);
         when(soleIndex.creationCost()).thenReturn(22.3);
         when(soleIndex.megabytes()).thenReturn(2.0);
-        when(soleIndex.isOn(table)).thenReturn(true);
         when(soleIndex.baseTable()).thenReturn(table);
         when(soleIndex.consDuplicate(1)).thenReturn(twin);
 

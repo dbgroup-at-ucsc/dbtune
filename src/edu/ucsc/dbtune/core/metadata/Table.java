@@ -43,8 +43,10 @@ public class Table extends DatabaseObject
     {
         super( id );
 
-        _columns = new ArrayList<Column>();
-        _indexes = new ArrayList<Index>();
+        dbName     = "";
+        schemaName = "";
+        _columns   = new ArrayList<Column>();
+        _indexes   = new ArrayList<Index>();
     }
 
     /**
@@ -74,9 +76,11 @@ public class Table extends DatabaseObject
     {
         super( name );
 
-        id       = -1;
-        _columns = new ArrayList<Column>();
-        _indexes = new ArrayList<Index>();
+        id         = -1;
+        dbName     = "";
+        schemaName = "";
+        _columns   = new ArrayList<Column>();
+        _indexes   = new ArrayList<Index>();
     }
 
     /**

@@ -23,6 +23,8 @@ import java.util.ArrayList;
 
 /**
  * Represents the abstraction for Index metadata
+ *
+ * @author Ivo Jimenez
  */
 public class Index extends DatabaseObject
 {
@@ -322,121 +324,6 @@ public class Index extends DatabaseObject
     }
 
     /**
-     * Returns the hash code value for this index. The hash code of a index is defined to be the sum 
-     * of the hash codes of the <code>Set<Column></code> object, plus the index type,uniqueness, 
-     * clustered and primary properties, as well as the name.
-     * 
-     * This ensures that s1.equals(s2) implies that s1.hashCode()==s2.hashCode() for any two index 
-     * objects s1 and s2, as required by the general contract of Object.hashCode()
-     *
-     * @return
-     *     integer representing the hashCode for the Index
-     */
-    @Override
-    public int hashCode()
-    {
-        int hash;
-
-        if (id != 0)
-        {
-            return 1 * 31 + (new Long(id)).hashCode();
-        }
-
-        hash = 1;
-
-        hash = hash * 31 + table.hashCode();
-
-        for (Column col : columns)
-        {
-            hash = hash * 31 + col.hashCode();
-        }
-
-        hash = hash *31 + (new Integer(type)).hashCode();
-        hash = hash *31 + (new Boolean(primary)).hashCode();
-        hash = hash *31 + (new Boolean(clustered)).hashCode();
-        hash = hash *31 + (new Boolean(unique)).hashCode();
-
-        return hash;
-    }
-
-    /**
-     * an Index object is equal to other if:
-     *   - both refer to the same Table
-     *   - both contain the same set of columns in the same order
-     *   - both are of the same type
-     *
-     * @param other
-     *     object that is compared to this one
-     * @return
-     *     true if equal, false if not
-     */
-    @Override
-    public boolean equals(Object other)
-    {
-        if (this == other)
-        {
-            return true;
-        }
-
-        if (!(other instanceof Index))
-        {
-            return false;
-        }
-
-        Index idx = (Index) other;
-
-        if (id != 0 && idx.getId() != 0)
-        {
-            return id == idx.getId();
-        }
-
-        if (name != idx.getName())
-        {
-            return false;
-        }
-
-        if (clustered != idx.isClustered())
-        {
-            return false;
-        }
-
-        if (primary != idx.isPrimary())
-        {
-            return false;
-        }
-
-        if (unique != idx.isUnique())
-        {
-            return false;
-        }
-
-        if (table != idx.getTable())
-        {
-            return false;
-        }
-
-        if (idx.size() != columns.size()) 
-        {
-            return false;
-        }
-
-        if (idx.getType() != type)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < idx.size(); i++)
-        {
-            if (!idx.get(i).equals(columns.get(i)))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * returns the number of columns contained in the index
      *
      * @return
@@ -508,4 +395,118 @@ public class Index extends DatabaseObject
         throw new RuntimeException();
     }
 
+    /**
+     * Returns the hash code value for this index. The hash code of a index is defined to be the sum 
+     * of the hash codes of the <code>Set<Column></code> object, plus the index type,uniqueness, 
+     * clustered and primary properties, as well as the name.
+     * 
+     * This ensures that s1.equals(s2) implies that s1.hashCode()==s2.hashCode() for any two index 
+     * objects s1 and s2, as required by the general contract of Object.hashCode()
+     *
+     * @return
+     *     integer representing the hashCode for the Index
+     */
+    @Override
+    public int hashCode()
+    {
+        int hash;
+
+        if (id != -1)
+        {
+            return 1 * 31 + (new Long(id)).hashCode();
+        }
+
+        hash = 1;
+
+        hash = hash * 31 + table.hashCode();
+
+        for (Column col : columns)
+        {
+            hash = hash * 31 + col.hashCode();
+        }
+
+        hash = hash *31 + (new Integer(type)).hashCode();
+        hash = hash *31 + (new Boolean(primary)).hashCode();
+        hash = hash *31 + (new Boolean(clustered)).hashCode();
+        hash = hash *31 + (new Boolean(unique)).hashCode();
+
+        return hash;
+    }
+
+    /**
+     * an Index object is equal to other if:
+     *   - both refer to the same Table
+     *   - both contain the same set of columns in the same order
+     *   - both are of the same type
+     *
+     * @param other
+     *     object that is compared to this one
+     * @return
+     *     true if equal, false if not
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if (this == other)
+        {
+            return true;
+        }
+
+        if (!(other instanceof Index))
+        {
+            return false;
+        }
+
+        Index idx = (Index) other;
+
+        if (id != -1 && idx.getId() != -1)
+        {
+            return id == idx.getId();
+        }
+
+        if (name != idx.getName())
+        {
+            return false;
+        }
+
+        if (clustered != idx.isClustered())
+        {
+            return false;
+        }
+
+        if (primary != idx.isPrimary())
+        {
+            return false;
+        }
+
+        if (unique != idx.isUnique())
+        {
+            return false;
+        }
+
+        if (table != idx.getTable())
+        {
+            return false;
+        }
+
+        if (idx.size() != columns.size()) 
+        {
+            return false;
+        }
+
+        if (idx.getType() != type)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < idx.size(); i++)
+        {
+            if (!idx.get(i).equals(columns.get(i)))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

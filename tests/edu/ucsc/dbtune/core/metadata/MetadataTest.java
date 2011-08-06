@@ -38,27 +38,42 @@ import static edu.ucsc.dbtune.core.metadata.Index.NON_UNIQUE;
 public class MetadataTest
 {
     private static Catalog catalog;
+    private static List<DatabaseObject> allObjects;
 
     /**
      * Creates catalogs that are used by all the tests
      */
     @BeforeClass
     public static void setUp() throws Exception {
+        allObjects = new ArrayList<DatabaseObject>();
         for(int i = 0; i < 1; i++) {
             catalog = new Catalog("catalog_" + i);
+            allObjects.add(catalog);
             for(int j = 0; j < 2; j++) {
                 Schema schema = new Schema("schema_" + j);
                 catalog.add(schema);
+                allObjects.add(schema);
                 for(int k = 0; k < 3; k++) {
                     Table table = new Table("table_" + k);
                     int l;
                     schema.add(table);
+                    allObjects.add(table);
                     for(l = 0; l < 4; l++) {
                         Column column = new Column("column_" + l, l+1);
                         table.add(column);
-                        table.add(new Index("index_" + l, Arrays.asList(column), PRIMARY, CLUSTERED, UNIQUE));
+                        allObjects.add(column);
+
+                        Index index =
+                            new Index(
+                                "index_" + l, Arrays.asList(column), PRIMARY,CLUSTERED, UNIQUE);
+                        table.add(index);
+                        allObjects.add(index);
                     }
-                    table.add(new Index("index_" + l, table.getColumns(), SECONDARY, UNCLUSTERED, NON_UNIQUE));
+                    Index index =
+                        new Index(
+                            "index_" + l, table.getColumns(), SECONDARY, UNCLUSTERED, NON_UNIQUE);
+                    table.add(index);
+                    allObjects.add(index);
                 }
             }
         }
@@ -114,5 +129,17 @@ public class MetadataTest
         assertEquals(2, catalog.getSchemas().size());
         assertEquals(3, catalog.getSchemas().get(0).getTables().size());
         assertEquals(4, catalog.getSchemas().get(0).getTables().get(0).getColumns().size());
+    }
+
+    /**
+     * Test unassignment of ID. Since no dbobject was assigned an ID explicitly in the construction 
+     * of them, their ID should be -1
+     */
+    @Test
+    public void testID() throws Exception
+    {
+        for(DatabaseObject dbo : allObjects) {
+            assertEquals(-1,dbo.getId());
+        }
     }
 }

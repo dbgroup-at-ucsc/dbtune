@@ -13,8 +13,6 @@ No need to roll our own. Also, we should define a policy of when and how to use 
 
 ## 44
 
- * extend `Table` with stuff used in `PGTable` and `DB2QualifiedName`
- * replace `PGTable` by `Table`; `DB2QualifiedName` by `Table`
  * extend `Column` with stuff used in `PGColumn` and `DB2Column`
  * replace `PGColumn` and `DB2Column` by `Column`
  * drop `ReifiedTypes` by using a regular `ArrayList<Index>`.
@@ -22,7 +20,7 @@ No need to roll our own. Also, we should define a policy of when and how to use 
  * add remaining types to `Index` from `DB2Index` and `PGIndex`: `BLOCK,DIMENSION,REGULAR`
  * add new field to `Index` to represent `scanOption`: `REVERSIBLE,NON_REVERSIBLE,SYNCHRONIZED`
  * remove `I extends DBIndex` noise: `egrep -iR '.*extends DBIndex' src/edu/ucsc/dbtune/`
- * make `NewPGIndex` and `NewDB2Index` by making current `PGIndex` and `DB2Index` derive from `Index` instead of `DBIndex`
+ * make `NewPGIndex` and `NewDB2Index` by make `PGIndex` and `DB2Index` derive from `Index` instead of `DBIndex`
  * check that `NewPGIndex` and `NewDB2Index` don't replicate `Index` and that the actual platform-dependent code (like 
    `getCreateStatement()`) is contained in them.
  * replace `PGIndex` by `NewPGIndex`

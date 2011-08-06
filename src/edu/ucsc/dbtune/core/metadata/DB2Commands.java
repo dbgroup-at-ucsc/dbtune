@@ -136,7 +136,7 @@ public class DB2Commands {
         return FetchExplainPredicateString.INSTANCE;
     }
     
-    public static Function<DB2QualifiedName, SQLException> fetchExplainObjectUpdatedTable(){
+    public static Function<Table, SQLException> fetchExplainObjectUpdatedTable(){
         return FetchExplainObjectUpdatedTable.INSTANCE;
     }
 
@@ -306,7 +306,7 @@ public class DB2Commands {
     }
 
     // enum singleton pattern.
-    private enum FetchExplainObjectUpdatedTable implements Function<DB2QualifiedName, SQLException> {
+    private enum FetchExplainObjectUpdatedTable implements Function<Table, SQLException> {
         INSTANCE;
         private static final StringBuilder QUERY = new StringBuilder();
         static {
@@ -318,7 +318,7 @@ public class DB2Commands {
         private PreparedStatement ps;
 
         @Override
-        public DB2QualifiedName apply(Parameter input) throws SQLException {
+        public Table apply(Parameter input) throws SQLException {
             final Connection connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
             if(ps == null){
                 ps = connection.prepareStatement(QUERY.toString());
@@ -337,7 +337,7 @@ public class DB2Commands {
                 }
                 
                 final String dbName = input.getParameterValue(String.class);
-                return new DB2QualifiedName(dbName, schemaName, tableName);
+                return new Table(dbName, schemaName, tableName);
             } finally {
                 rs.close();
                 connection.commit();

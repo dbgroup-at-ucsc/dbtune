@@ -36,6 +36,7 @@ public class Catalog extends DatabaseObject
      */
     public Catalog()
     {
+        super(-1);
         _schemas = new ArrayList<Schema>();
     }
 
@@ -60,7 +61,7 @@ public class Catalog extends DatabaseObject
      */
     public Catalog(String name)
     {
-        this.name = name;
+        super(name);
         _schemas = new ArrayList<Schema>();
     }
 

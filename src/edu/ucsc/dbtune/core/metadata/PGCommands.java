@@ -29,7 +29,6 @@ import edu.ucsc.dbtune.spi.core.Parameters;
 import edu.ucsc.dbtune.util.Checks;
 import static edu.ucsc.dbtune.util.Checks.checkSQLRelatedState;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Instances;
 import static edu.ucsc.dbtune.util.Instances.newList;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.Strings;
@@ -37,9 +36,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -355,8 +352,8 @@ public class PGCommands {
                     sb.append("synchronized ");
                 }
 
-                final PGTable table = Objects.as(idx.getSchema().getBaseTable());
-                sb.append(table.getOid());
+                final Table table = Objects.as(idx.getSchema().getBaseTable());
+                sb.append(table.getId());
                 for (int i = 0; i < idx.columnCount(); i++) {
                     sb.append(idx.getSchema().getDescending().get(i) ? " desc" : " asc");
                     final List<DatabaseColumn>   cols   = idx.getColumns();

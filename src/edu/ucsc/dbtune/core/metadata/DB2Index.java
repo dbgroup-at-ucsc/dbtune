@@ -18,14 +18,12 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.core.DatabaseTable;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.DatabaseIndexSchema;
 import edu.ucsc.dbtune.util.DBUtilities;
 import edu.ucsc.dbtune.util.HashFunction;
 import edu.ucsc.dbtune.util.Instances;
@@ -158,7 +156,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
 	}
 
     @Override
-	public DB2QualifiedName baseTable() {
+	public Table baseTable() {
 		return meta.schema.getBaseTable();
 	}
 
@@ -190,19 +188,6 @@ public class DB2Index extends AbstractIndex implements Serializable {
 	@Override
 	public int hashCode() {
 		return hashCodeCache;
-	}
-
-    /**
-     * compares qualified names.
-     * @param name
-     *    qualied name to be used in the comparison.
-     * @return
-     *      {@code true} if both qualified names are the same, false
-     *      otherwise.
-     */
-	public boolean isOn(DatabaseTable name) {
-        final DB2QualifiedName table = (DB2QualifiedName) name;
-		return table.equals(meta.schema.getBaseTable());
 	}
 
     @Override
@@ -600,7 +585,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
             IID(null),
             
             /* enable the index for what-if analysis */
-            /* XXX: not sure if this can be used to rule out real indexes??? */
+            /* note: not sure if this can be used to rule out real indexes??? */
             USE_INDEX(null), // 'Y' or 'N'
             
             /* statistics, set to -1 to indicate unknown */
@@ -657,7 +642,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
          *  Does NOT have all the information for creating an ADVISE_INDEX entry
          */
         public static class DB2IndexSchema
-            implements DatabaseIndexSchema, Serializable, Comparable<DB2IndexSchema>
+            implements Serializable, Comparable<DB2IndexSchema>
         {
             /* serializable fields */
             protected String dbName;
@@ -672,7 +657,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
             protected TypeOption indexType;
 
             /* redundant representation of the table */
-            private DB2QualifiedName tableQualifiedName;
+            private Table table;
 
             /* use this to cache the signature */
             private byte[] m_signature;
@@ -738,7 +723,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
                 this.uniqueRule = uniqueRule;
                 this.reverseScan = reverseScan;
                 this.indexType = indexType;
-                this.tableQualifiedName = new DB2QualifiedName(this.dbName, this.tableCreatorName, this.tableName);
+                this.table = new Table(this.dbName, this.tableCreatorName, this.tableName);
             }
 
 
@@ -842,20 +827,18 @@ public class DB2Index extends AbstractIndex implements Serializable {
                     return true;
                 }
 
-            @Override
-                public List<DatabaseColumn> getColumns() {
-                    return columns;
-                }
+            public List<DatabaseColumn> getColumns() {
+                return columns;
+            }
+
+            public Table getBaseTable() {
+                return table;
+            }
 
             @Override
-                public DB2QualifiedName getBaseTable() {
-                    return tableQualifiedName;
-                }
-
-            @Override
-                public int hashCode() {
-                    return HashFunction.hashCode(signature());
-                }
+            public int hashCode() {
+                return HashFunction.hashCode(signature());
+            }
 
             private byte[] signature() {
                 if (m_signature == null) {
