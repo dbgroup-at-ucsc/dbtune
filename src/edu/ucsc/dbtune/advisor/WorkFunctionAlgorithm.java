@@ -41,17 +41,17 @@ import java.util.List;
  * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
  *     "On-line Index Selection for Physical Database Tuning"</a>
  */
-public class WorkFunctionAlgorithm<I extends DBIndex> {
+public class WorkFunctionAlgorithm {
     private static final Environment ENV = Environment.getInstance();
     private static final int MAX_NUM_STATES   = ENV.getMaxNumStates();
     private static final int MAX_HOTSET_SIZE  = ENV.getMaxNumIndexes();
 
     // for tracking history
     private boolean     keepHistory;
-    private WfaTrace<I> trace;
+    private WfaTrace trace;
 
     private TotalWorkValues     wf          = new TotalWorkValues();
-    private SubMachineArray<I>  submachines = new SubMachineArray<I>(0);
+    private SubMachineArray  submachines = new SubMachineArray(0);
     private Workspace           workspace   = new Workspace();
 
     private final Console console = Console.streaming();
@@ -67,12 +67,12 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      *      {@code true} if we want to keep some history of the work done by this object,
      *      {@code false} if we don't want to.
      */
-    public WorkFunctionAlgorithm(IndexPartitions<I> parts,boolean keepHistory){
+    public WorkFunctionAlgorithm(IndexPartitions parts,boolean keepHistory){
         if (parts != null) {
             repartition(parts);
 
             if (keepHistory) {
-                trace = new WfaTrace<I>(wf);
+                trace = new WfaTrace(wf);
             }
 
             this.keepHistory = keepHistory;
@@ -89,7 +89,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      *    a list of index partitions.
      */
     //todo(Huascar) remove maxNumStates and maxHotsize once getting good results.
-    public WorkFunctionAlgorithm(IndexPartitions<I> parts, int maxNumStates, int maxHotSize) {
+    public WorkFunctionAlgorithm(IndexPartitions parts, int maxNumStates, int maxHotSize) {
         this(parts, false);
     }
 
@@ -126,12 +126,12 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      *    a {@link ProfiledQuery query}.
      * @see {@link #getRecommendation()}
      */
-    public void newTask(ProfiledQuery<I> qinfo) {
+    public void newTask(ProfiledQuery qinfo) {
       workspace.tempBitSet.clear(); // just to be safe
 
       console.info("WorkFunctionAlgorithm#newTask(ProfiledQuery) inputs: " + qinfo + ".");
       for (int subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
-          SubMachine<I> subm = submachines.get(subsetNum);
+          SubMachine subm = submachines.get(subsetNum);
           // preprocess cost into a vector
           for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
             // this will explicitly set each index in the array to 1 or 0
@@ -162,6 +162,10 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
         }
     }
 
+	private static void clearStateBits(int[] ids, IndexBitSet bitSet) {
+		for (int id : ids) bitSet.clear(id);
+	}
+
     /**
      * process a positive or negative vote for the index found in some {@code SubMachine}.
      *
@@ -170,9 +174,9 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      * @param isPositive
      *      value of vote given to an index object.
      */
-    public void vote(I index, boolean isPositive) {
+    public void vote(DBIndex index, boolean isPositive) {
         Checks.checkAssertion(!keepHistory, "tracing WFA is not supported with user feedback");
-        for (SubMachine<I> subm : submachines) {
+        for (SubMachine subm : submachines) {
             if (subm.subset.contains(index)){
                 subm.vote(wf, index, isPositive);
             }
@@ -185,10 +189,10 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      *
      * @return a list of recommended {@link DBIndex indexes}.
      */
-    public List<I> getRecommendation() {
-        ArrayList<I> rec = new ArrayList<I>(MAX_HOTSET_SIZE);
-        for (SubMachine<I> subm : submachines) {
-            for (I index : subm.subset) {
+    public List<DBIndex> getRecommendation() {
+        ArrayList<DBIndex> rec = new ArrayList<DBIndex>(MAX_HOTSET_SIZE);
+        for (SubMachine subm : submachines) {
+            for (DBIndex index : subm.subset) {
                 if (subm.currentBitSet.get(index.internalId())){
                     rec.add(index);
                 }                        
@@ -207,16 +211,16 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      * @param newPartitions
      *      a {@link IndexPartitions} object.
      */
-    public void repartition(IndexPartitions<I> newPartitions) {
+    public void repartition(IndexPartitions newPartitions) {
         Checks.checkAssertion(!keepHistory, "tracing WFA is not supported with repartitioning");
         int newSubsetCount = newPartitions.subsetCount();
         int oldSubsetCount = submachines.length;
-        SubMachineArray<I> submachines2 = new SubMachineArray<I>(newSubsetCount);
+        SubMachineArray submachines2 = new SubMachineArray(newSubsetCount);
         IndexBitSet overlappingSubsets = new IndexBitSet();
         
         // get the set of previously hot indexes
         IndexBitSet oldHotSet = new IndexBitSet();
-        for (SubMachine<I> oldSubmachine : submachines) {
+        for (SubMachine oldSubmachine : submachines) {
             for (int oldIndexId : oldSubmachine.indexIds) {
                 oldHotSet.set(oldIndexId);
             }
@@ -226,20 +230,20 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
         workspace.wf2.reallocate(newPartitions);
         
         for (int newSubsetNum = 0; newSubsetNum < newSubsetCount; newSubsetNum++) {
-            IndexPartitions.Subset<I> newSubset = newPartitions.get(newSubsetNum);
+            IndexPartitions.Subset newSubset = newPartitions.get(newSubsetNum);
             
             // translate old recommendation into a new one.
             IndexBitSet recBitSet = new IndexBitSet();
             int recStateNum = 0;
             int i = 0;
-            for (I index : newSubset) {
+            for (DBIndex index : newSubset) {
                 if (isRecommended(index)) {
                     recBitSet.set(index.internalId());
                     recStateNum |= (1 << i);
                 }
                 ++i;
             }
-            SubMachine<I> newSubmachine = new SubMachine<I>(newSubset, newSubsetNum, recStateNum, recBitSet);
+            SubMachine newSubmachine = new SubMachine(newSubset, newSubsetNum, recStateNum, recBitSet);
             submachines2.set(newSubsetNum, newSubmachine);
 
             // find overlapping subsets (required to recompute work function)
@@ -256,7 +260,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
                 
                 // add creation cost of new indexes
                 i = 0;
-                for (I index : newSubmachine.subset) {
+                for (DBIndex index : newSubmachine.subset) {
                     int mask = (1 << (i++));
                     if (0 != (stateNum & mask) && !oldHotSet.get(index.internalId()))
                         value += index.creationCost();
@@ -305,13 +309,9 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
             bitSet.set(ids[i], 0 != (stateNum & (1 << i)));
     }
 
-    private static void clearStateBits(int[] ids, IndexBitSet bitSet) {
-        for (int id : ids) bitSet.clear(id);
-    }
-    
-    private boolean isRecommended(I idx) {
+    private boolean isRecommended(DBIndex idx) {
         // not sure which submachine has the index, so check them all
-        for (SubMachine<I> subm : submachines) {
+        for (SubMachine subm : submachines) {
             if (subm.currentBitSet.get(idx.internalId())){
                 return true;
             }
@@ -319,9 +319,9 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
         return false;
     }
     
-    public static <J extends DBIndex> double transitionCost(Snapshot<J> candidateSet, IndexBitSet x, IndexBitSet y) {
+    public static double transitionCost(Snapshot candidateSet, IndexBitSet x, IndexBitSet y) {
         double transition = 0;
-        for (J index : candidateSet) {
+        for (DBIndex index : candidateSet) {
             int id = index.internalId();
             if (y.get(id) && !x.get(id))
                 transition += index.creationCost();
@@ -329,10 +329,10 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
         return transition;
     }
 
-    private static <J extends DBIndex> double transitionCost(IndexPartitions.Subset<J> subset, int x, int y) {
+    private static double transitionCost(IndexPartitions.Subset subset, int x, int y) {
         double transition = 0;
         int i = 0;
-        for (J index : subset) {
+        for (DBIndex index : subset) {
             int mask = 1 << (i++);
             
             if (mask == (y & mask) - (x & mask))
@@ -359,9 +359,9 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
      * @return
      *      a schedule cost over a set of candidate and queries.
      */
-    public <J extends DBIndex> double getScheduleCost(Snapshot<J> candidateSet,
-                                                         int queryCount, List<ProfiledQuery<J>> qinfos,
-                                                         IndexPartitions<J> parts, IndexBitSet[] schedule
+    public double getScheduleCost(Snapshot candidateSet,
+                                                         int queryCount, List<ProfiledQuery> qinfos,
+                                                         IndexPartitions parts, IndexBitSet[] schedule
     ) {
         double cost = 0;
         IndexBitSet prevState = new IndexBitSet();
@@ -383,7 +383,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
     /**
      * @return the {@link WorkFunctionAlgorithm}'s work trace.
      */
-    public WfaTrace<I> getTrace() {
+    public WfaTrace getTrace() {
         return trace;
     }
     
@@ -429,42 +429,42 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
     }
     
     
-    private static class SubMachineArray<J extends DBIndex> implements Iterable<SubMachine<J>> {
+    private static class SubMachineArray implements Iterable<SubMachine> {
         public final int length;
-        private final List<SubMachine<J>> arr;
+        private final List<SubMachine> arr;
         
         public SubMachineArray(int len0) {
             this.length = len0;
-            arr = new ArrayList<SubMachine<J>>(len0);
+            arr = new ArrayList<SubMachine>(len0);
             for (int i = 0; i < len0; i++){
                 arr.add(null);
             }
         }
 
-        public SubMachine<J> get(int i) {
+        public SubMachine get(int i) {
             return arr.get(i);
         }
         
-        public void set(int i, SubMachine<J> subm) {
+        public void set(int i, SubMachine subm) {
             arr.set(i, subm);
         }
 
         @Override
-        public Iterator<SubMachine<J>> iterator() {
+        public Iterator<SubMachine> iterator() {
             return arr.iterator();
         }
 
         @Override
         public String toString() {
-            return new ToStringBuilder<SubMachineArray<J>>(this)
+            return new ToStringBuilder<SubMachineArray>(this)
                    .add("arr", arr.toString())
                    .add("length", length)
                    .toString();
         }
     }
     
-    private static class SubMachine<J extends DBIndex> implements Iterable<J> {
-        private IndexPartitions.Subset<J> subset;
+    private static class SubMachine implements Iterable<DBIndex> {
+        private IndexPartitions.Subset subset;
         private int subsetNum;
         private int numIndexes;
         private int numStates;
@@ -473,7 +473,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
         private int[] indexIds;
         private final Console console = Console.streaming();
         
-        SubMachine(IndexPartitions.Subset<J> subset, int subsetNum, int state, IndexBitSet bitSet) {
+        SubMachine(IndexPartitions.Subset subset, int subsetNum, int state, IndexBitSet bitSet) {
             this.subset         = subset;
             this.subsetNum      = subsetNum;
             this.numIndexes     = subset.size();
@@ -483,7 +483,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
             
             this.indexIds = new int[numIndexes];
             int i = 0;
-            for (J index : subset) {
+            for (DBIndex index : subset) {
                 this.indexIds[i++] = index.internalId();
             }
         }
@@ -528,7 +528,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
          * @param isPositive
          *      a positive ({@code true} value) or negative({@code false} value) vote.
          */
-        public void vote(TotalWorkValues wf, J index, boolean isPositive) {
+        public void vote(TotalWorkValues wf, DBIndex index, boolean isPositive) {
             // find the position in indexIds
             int indexIdsPos;
             int stateMask;
@@ -639,13 +639,13 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
         }
 
         @Override
-        public Iterator<J> iterator() {
+        public Iterator<DBIndex> iterator() {
             return subset.iterator();
         }
 
         @Override
         public String toString() {
-            return new ToStringBuilder<SubMachine<J>>(this)
+            return new ToStringBuilder<SubMachine>(this)
                    .add("subsetNum",subsetNum)
                    .add("numIndexes",numIndexes)
                    .add("numStates",numStates)
@@ -708,7 +708,7 @@ public class WorkFunctionAlgorithm<I extends DBIndex> {
             predecessor[i] = p;
         }
 
-        void reallocate(IndexPartitions<?> newPartitions) {
+        void reallocate(IndexPartitions newPartitions) {
             int newValueCount = newPartitions.wfaStateCount();
             if (newValueCount > values.length) {
                 values = new double[newValueCount];

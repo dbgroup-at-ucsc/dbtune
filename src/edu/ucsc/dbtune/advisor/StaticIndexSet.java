@@ -19,18 +19,16 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.util.Checks;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.core.DBIndex;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<I> {
-    private final Set<I> delegate;
+public class StaticIndexSet implements Iterable<DBIndex>, Iterator<DBIndex> {
+    private final Set<DBIndex> delegate;
 
     /**
      * construct a {@code static and immutable index set} from some iterable input (e.g., list, collection, set)
@@ -38,9 +36,9 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
      * @param input
      *      iterable input of indexes.
      */
-    public StaticIndexSet(Iterable<I> input) {
-        delegate = new HashSet<I>();
-        for(I each : input){
+    public StaticIndexSet(Iterable<DBIndex> input) {
+        delegate = new HashSet<DBIndex>();
+        for(DBIndex each : input){
             delegate.add(Checks.checkNotNull(each));
         }
     }
@@ -49,7 +47,7 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
      * construct an empty {@code static index set} (i.e., set's size == 0).
      */
     public StaticIndexSet() {
-      this(Collections.<I>emptyList());
+      this(Collections.<DBIndex>emptyList());
     }
 
     /**
@@ -59,7 +57,7 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
      * @return
      *      {@code true} if the index is in the set; {@code false} otherwise.
      */
-    public boolean contains(I index) {
+    public boolean contains(DBIndex index) {
         return delegate.contains(index);
     }
 
@@ -76,12 +74,12 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
     }
 
     @Override
-    public Iterator<I> iterator() {
+    public Iterator<DBIndex> iterator() {
       return delegate.iterator();
     }
 
     @Override
-    public I next() {
+    public DBIndex next() {
         return delegate.iterator().next();
     }
 
@@ -96,7 +94,7 @@ public class StaticIndexSet<I extends DBIndex> implements Iterable<I>, Iterator<
 
     @Override
     public String toString() {
-        return new ToStringBuilder<StaticIndexSet<I>>(this)
+        return new ToStringBuilder<StaticIndexSet>(this)
                .add("indexes", delegate)
                .add("size", size())
                .toString();

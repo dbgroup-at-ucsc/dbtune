@@ -19,7 +19,7 @@ import static org.junit.Assert.assertThat;
 public class DynamicIndexSetTest {
     @Test
     public void testDynamicIndexSetTestCreation() throws Exception {
-        final DynamicIndexSet<PGIndex> idxset = new DynamicIndexSet<PGIndex>();
+        final DynamicIndexSet idxset = new DynamicIndexSet();
         populateIndexSet(idxset, 1000, true);
         assertThat(idxset.isEmpty(), is(false));
         assertThat(idxset.size(), equalTo(1000));
@@ -28,7 +28,7 @@ public class DynamicIndexSetTest {
 
     @Test
     public void testAddRemove() throws Exception {
-        final DynamicIndexSet<PGIndex> idxset = new DynamicIndexSet<PGIndex>();
+        final DynamicIndexSet idxset = new DynamicIndexSet();
         idxset.add(postgresIndex());
         assertThat(idxset.size(), equalTo(1));
         idxset.remove(postgresIndex());
@@ -37,11 +37,11 @@ public class DynamicIndexSetTest {
 
     @Test
     public void testWeirdSideEffect() throws Exception {
-        final DynamicIndexSet<PGIndex> idxset = new DynamicIndexSet<PGIndex>();
+        final DynamicIndexSet idxset = new DynamicIndexSet();
         populateIndexSet(idxset, 1000, true);
-        for(PGIndex each : idxset){}
+        for(DBIndex each : idxset){}
         boolean again = false;
-        for(PGIndex each : idxset){
+        for(DBIndex each : idxset){
             again |= true;
         }
 
@@ -54,9 +54,9 @@ public class DynamicIndexSetTest {
         return new PGIndex(12, true, cols, desc, 1, 3.0, 4.5, "");
     }
 
-    private <T extends DBIndex> void populateIndexSet(DynamicIndexSet<T> idxset, int numberOfElements, boolean postgres) {
+    private void populateIndexSet(DynamicIndexSet idxset, int numberOfElements, boolean postgres) {
         for(int idx = 0; idx < numberOfElements; idx++){
-            idxset.add((T) (postgres ? DBTuneInstances.newPGIndex(idx) : DBTuneInstances.newDB2Index()));
+            idxset.add(postgres ? DBTuneInstances.newPGIndex(idx) : DBTuneInstances.newDB2Index());
         }
     }
 }

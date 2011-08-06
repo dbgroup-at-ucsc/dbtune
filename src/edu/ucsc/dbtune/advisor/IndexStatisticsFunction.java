@@ -30,25 +30,25 @@ import java.util.Map;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFunction<I> {
+public class IndexStatisticsFunction implements StatisticsFunction {
     private int indexStatisticsWindow;
 
     double        currentTimeStamp;
-    private       DoiFunction<I>     doi;
-    private       BenefitFunction<I> benefit;
-    private       DBIndexPair<I>     tempPair;
+    private       DoiFunction     doi;
+    private       BenefitFunction benefit;
+    private       DBIndexPair     tempPair;
 
-    private final Map<DBIndexPair<I>, MeasurementWindow>    doiWindows;
-    private final Map<I, MeasurementWindow>                 benefitWindows;
+    private final Map<DBIndexPair, MeasurementWindow>    doiWindows;
+    private final Map<DBIndex, MeasurementWindow>        benefitWindows;
 
     /**
      * Construct an {@code IndexStatistics} object.
      */
     public IndexStatisticsFunction(int indexStatisticsWindow){
         this(
-            DBIndexPair.<I>                              emptyPair(),
-            Instances.<DBIndexPair<I>,MeasurementWindow> newHashMap(),
-            Instances.<I,MeasurementWindow>              newHashMap(),
+            DBIndexPair.                              emptyPair(),
+            Instances.<DBIndexPair,MeasurementWindow> newHashMap(),
+            Instances.<DBIndex,MeasurementWindow>              newHashMap(),
             indexStatisticsWindow);
     }
 
@@ -64,9 +64,9 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
      *      a map of {@link DBIndex index} to {@link MeasurementWindow window}.
      */
     public IndexStatisticsFunction(
-            DBIndexPair<I> indexPair,
-            Map<DBIndexPair<I>, MeasurementWindow> doiWindows,
-            Map<I, MeasurementWindow> benefitWindows,
+            DBIndexPair indexPair,
+            Map<DBIndexPair, MeasurementWindow> doiWindows,
+            Map<DBIndex, MeasurementWindow> benefitWindows,
             int indexStatisticsWindow
     ){
         this.tempPair              = indexPair;
@@ -79,14 +79,14 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
     }
 
     private void bindIndexStatisticsWithDoiAndBenefit(){
-        this.doi                = new DoiFunctionImpl<I>(this);
-        this.benefit            = new BenefitFunctionImpl<I>(this);
+        this.doi                = new DoiFunctionImpl(this);
+        this.benefit            = new BenefitFunctionImpl(this);
     }
 
     @Override
-    public void addQuery(ProfiledQuery<I> queryInfo, DynamicIndexSet<?> matSet) {
-        Iterable<I> candSet = queryInfo.getCandidateSnapshot();
-        for (I index : candSet) {
+    public void addQuery(ProfiledQuery queryInfo, DynamicIndexSet matSet) {
+        Iterable<DBIndex> candSet = queryInfo.getCandidateSnapshot();
+        for (DBIndex index : candSet) {
             final InteractionBank bank          = queryInfo.getInteractionBank();
             final ExplainInfo explainInfo   = queryInfo.getExplainInfo();
 
@@ -107,14 +107,14 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
     }
 
     private void calculateInteractionLevel(
-            ProfiledQuery<I> queryInfo,
-            DynamicIndexSet<?> matSet,
-            Iterable<I> candSet
+            ProfiledQuery queryInfo,
+            DynamicIndexSet matSet,
+            Iterable<DBIndex> candSet
     ) {
         // not the most efficient double loop, but an ok compromise for now
-        for (I a : candSet) {
+        for (DBIndex a : candSet) {
             int id1 = a.internalId();
-            for (I b : candSet) {
+            for (DBIndex b : candSet) {
                 int id2 = b.internalId();
                 if (id1 >= id2){
                     continue;
@@ -136,11 +136,11 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
         tempPair.a = null; tempPair.b = null;
     }
 
-    private void updateIndexPairs(I a, I b){
+    private void updateIndexPairs(DBIndex a, DBIndex b){
         tempPair.a = a; tempPair.b = b;
     }
 
-    private void addsMeasurement(I a, I b, double doi) {
+    private void addsMeasurement(DBIndex a, DBIndex b, double doi) {
         // add measurement, creating new window if necessary
         updateIndexPairs(a, b);
         MeasurementWindow doiwin = doiWindows.get(tempPair);
@@ -153,12 +153,12 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
     }
 
     @Override
-    public double doi(I a, I b) {
+    public double doi(DBIndex a, DBIndex b) {
         return doi.apply(a, b) ;
     }
 
     @Override
-    public double benefit(I a, IndexBitSet m) {
+    public double benefit(DBIndex a, IndexBitSet m) {
         return benefit.apply(a, m);
     }
 
@@ -246,15 +246,15 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
     }
 
 
-    private static class DoiFunctionImpl<I extends DBIndex> implements DoiFunction<I> {
-        private final IndexStatisticsFunction<I> statistics;
+    private static class DoiFunctionImpl implements DoiFunction {
+        private final IndexStatisticsFunction statistics;
 
-        DoiFunctionImpl(IndexStatisticsFunction<I> statistics){
+        DoiFunctionImpl(IndexStatisticsFunction statistics){
             this.statistics = statistics;
         }
 
         @Override
-        public double apply(I a, I b) {
+        public double apply(DBIndex a, DBIndex b) {
             if (statistics.currentTimeStamp == 0)
                 return 0;
 
@@ -269,15 +269,15 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
         }
     }
 
-    private static class BenefitFunctionImpl <I extends DBIndex> implements BenefitFunction<I> {
-        private final IndexStatisticsFunction<I> statistics;
+    private static class BenefitFunctionImpl implements BenefitFunction {
+        private final IndexStatisticsFunction statistics;
 
-        BenefitFunctionImpl(IndexStatisticsFunction<I> statistics){
+        BenefitFunctionImpl(IndexStatisticsFunction statistics){
             this.statistics = statistics;
         }
 
         @Override
-        public double apply(I arg, IndexBitSet m) {
+        public double apply(DBIndex arg, IndexBitSet m) {
             if (statistics.currentTimeStamp == 0)
                 return 0;
             final MeasurementWindow window = statistics.benefitWindows.get(arg);
@@ -289,21 +289,21 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
         }
     }
 
-    static class DBIndexPair<I extends DBIndex> {
-        I a;
-        I b;
+    static class DBIndexPair {
+        DBIndex a;
+        DBIndex b;
 
-        DBIndexPair(I a, I b) {
+        DBIndexPair(DBIndex a, DBIndex b) {
             this.a = a;
             this.b = b;
         }
 
-        static <I extends DBIndex> DBIndexPair<I> emptyPair(){
+        static DBIndexPair emptyPair(){
             return of(null, null);
         }
 
-        static <I extends DBIndex> DBIndexPair<I> of(I a, I b){
-            return new DBIndexPair<I>(a, b);
+        static DBIndexPair of(DBIndex a, DBIndex b){
+            return new DBIndexPair(a, b);
         }
 
         @Override
@@ -318,14 +318,14 @@ public class IndexStatisticsFunction<I extends DBIndex> implements StatisticsFun
                 return false;
             }
 
-            final DBIndexPair<?> pair = (DBIndexPair<?>) other;
+            final DBIndexPair pair = (DBIndexPair) other;
             return (a.equals(pair.a) && b.equals(pair.b))
                 || (a.equals(pair.b) && b.equals(pair.a));
         }
 
         @Override
         public String toString() {
-            return new ToStringBuilder<DBIndexPair<I>>(this)
+            return new ToStringBuilder<DBIndexPair>(this)
                    .add("left", a)
                    .add("right", b)
                    .toString();

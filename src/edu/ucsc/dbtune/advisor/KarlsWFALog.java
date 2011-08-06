@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import java.io.PrintStream;
@@ -35,7 +34,7 @@ public class KarlsWFALog {
   }
 
 
-  public void add(AnalyzedQuery<?> qinfo, IndexBitSet recommendation, double planCost, double maintCost, double transitionCost, double overhead) {
+  public void add(AnalyzedQuery qinfo, IndexBitSet recommendation, double planCost, double maintCost, double transitionCost, double overhead) {
     Entry e = new Entry();
     e.planCost = planCost;
     e.maintenanceCost = maintCost;
@@ -49,7 +48,7 @@ public class KarlsWFALog {
     list.add(e);
   }
 
-  public void add(ProfiledQuery<?> qinfo,
+  public void add(ProfiledQuery qinfo,
               IndexBitSet[] partition, IndexBitSet recommendation,
               double planCost, double maintCost, double transitionCost, int whatifCount, double overhead) {
     Entry e = new Entry();
@@ -129,13 +128,13 @@ public class KarlsWFALog {
   }
 
   // write whole log for an experiment with a fixed candidate set
-  public static <I extends DBIndex> KarlsWFALog generateFixed(List<ProfiledQuery<I>> qinfos, IndexBitSet[] recs, Snapshot<I> snapshot, KarlsIndexPartitions<I> parts, double[] overheads) {
+  public static KarlsWFALog generateFixed(List<ProfiledQuery> qinfos, IndexBitSet[] recs, Snapshot snapshot, KarlsIndexPartitions parts, double[] overheads) {
     int queryCount = qinfos.size();
     KarlsWFALog log = new KarlsWFALog();
 
     IndexBitSet[] partBitSets = parts.bitSetArray();
     for (int q = 0; q < queryCount; q++) {
-      ProfiledQuery<I> qinfo          = qinfos.get(q);
+      ProfiledQuery qinfo          = qinfos.get(q);
       IndexBitSet      state          = recs[q];
       IndexBitSet      prevState      = q == 0 ? new IndexBitSet() : recs[q-1];
       double           planCost       = qinfo.planCost(state);
@@ -148,7 +147,7 @@ public class KarlsWFALog {
     return log;
   }
 
-  public static <I extends DBIndex> KarlsWFALog generateDual(java.util.List<ProfiledQuery<I>> qinfos, IndexBitSet[] optRecs, IndexBitSet[] wfitRecs, Snapshot<I> snapshot, IndexPartitions<I> parts, double[] overheads) {
+  public static KarlsWFALog generateDual(java.util.List<ProfiledQuery> qinfos, IndexBitSet[] optRecs, IndexBitSet[] wfitRecs, Snapshot snapshot, IndexPartitions parts, double[] overheads) {
     int queryCount = qinfos.size();
     KarlsWFALog log = new KarlsWFALog();
 
@@ -161,7 +160,7 @@ public class KarlsWFALog {
     IndexBitSet materialized3 = new IndexBitSet();
     IndexBitSet[] partBitSets = parts.bitSetArray();
     for (int q = 0; q < queryCount; q++) {
-      ProfiledQuery<I> qinfo = qinfos.get(q);
+      ProfiledQuery qinfo = qinfos.get(q);
 
       materialized1.set(materialized3);
 
@@ -203,13 +202,13 @@ public class KarlsWFALog {
     return log;
   }
 
-  public static <I extends DBIndex> KarlsWFALog
-  generateDynamic(java.util.List<AnalyzedQuery<I>> qinfos, IndexBitSet[] recs, double[] overheads) {
+  public static KarlsWFALog
+  generateDynamic(java.util.List<AnalyzedQuery> qinfos, IndexBitSet[] recs, double[] overheads) {
     int queryCount = qinfos.size();
     KarlsWFALog log = new KarlsWFALog();
 
     for (int q = 0; q < queryCount; q++) {
-      AnalyzedQuery<I> qinfo = qinfos.get(q);
+      AnalyzedQuery qinfo = qinfos.get(q);
       IndexBitSet state = recs[q];
       IndexBitSet prevState = q == 0 ? new IndexBitSet() : recs[q-1];
       double planCost = qinfo.getProfileInfo().planCost(state);

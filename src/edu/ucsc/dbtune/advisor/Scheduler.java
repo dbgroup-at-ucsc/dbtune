@@ -8,16 +8,16 @@ import java.util.List;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface Scheduler <I extends DBIndex> {
-    Snapshot<I> addColdCandidate(I index);
-    AnalyzedQuery<I> analyzeQuery(String sql);
-    double create(I index);
-    double drop(I index);
-    double executeProfiledQuery(ProfiledQuery<I> qinfo);
-    List<I> getRecommendation();
-    void negativeVote(I index);
-    void positiveVote(I index);
-    ProfiledQuery<I> profileQuery(String sql);
+public interface Scheduler {
+    Snapshot addColdCandidate(DBIndex index);
+    AnalyzedQuery analyzeQuery(String sql);
+    double create(DBIndex index);
+    double drop(DBIndex index);
+    double executeProfiledQuery(ProfiledQuery qinfo);
+    List<DBIndex> getRecommendation();
+    void negativeVote(DBIndex index);
+    void positiveVote(DBIndex index);
+    ProfiledQuery profileQuery(String sql);
     void shutdown();
     void start();
 }

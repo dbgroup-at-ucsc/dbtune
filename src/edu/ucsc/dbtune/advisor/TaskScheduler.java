@@ -19,19 +19,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
+public class TaskScheduler implements Scheduler  {
 
     static final int UNSCHEDULED = 0;
     static final int SCHEDULED   = 1;
     static final int CANCELLED   = 2;
 
-    private final BlockingQueue<SchedulerTask<I>> profilingQueue;
-    private final BlockingQueue<SchedulerTask<I>> selectionQueue;
-    private final BlockingQueue<SchedulerTask<I>> completionQueue;
+    private final BlockingQueue<SchedulerTask> profilingQueue;
+    private final BlockingQueue<SchedulerTask> selectionQueue;
+    private final BlockingQueue<SchedulerTask> completionQueue;
     private final ExecutorService                 executorService = Threads.explicitThreadPerCpuExecutor("[Task Scheduling].");
 
-    private final WorkloadProfilerImpl<I> profiler;
-    private final CandidatesSelector<I>   selector;
+    private final WorkloadProfilerImpl profiler;
+    private final CandidatesSelector   selector;
 
     /**
      * Construct a TaskScheduler.
@@ -50,11 +50,11 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     {
         this(
                 connection,
-                new CandidatePool<I>(),
-                new CandidatesSelector<I>(maxNumStates,maxHotSetSize,partitionIterations,indexStatisticsWindow),
-                new LinkedBlockingQueue<SchedulerTask<I>>(profilingQueueCapacity),
-                new LinkedBlockingQueue<SchedulerTask<I>>(selectionQueueCapacity),
-                new LinkedBlockingQueue<SchedulerTask<I>>(completionQueueCapacity)
+                new CandidatePool(),
+                new CandidatesSelector(maxNumStates,maxHotSetSize,partitionIterations,indexStatisticsWindow),
+                new LinkedBlockingQueue<SchedulerTask>(profilingQueueCapacity),
+                new LinkedBlockingQueue<SchedulerTask>(selectionQueueCapacity),
+                new LinkedBlockingQueue<SchedulerTask>(completionQueueCapacity)
         );
     }
 
@@ -74,24 +74,24 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      *      completion blocking queue
      */
     TaskScheduler(DatabaseConnection connection, 
-                  CandidatePool<I> candidatePool,  
-                  CandidatesSelector<I> selector,
-                  BlockingQueue<SchedulerTask<I>> profilingQueue,
-                  BlockingQueue<SchedulerTask<I>> selectionQueue,
-                  BlockingQueue<SchedulerTask<I>> completionQueue
+                  CandidatePool candidatePool,  
+                  CandidatesSelector selector,
+                  BlockingQueue<SchedulerTask> profilingQueue,
+                  BlockingQueue<SchedulerTask> selectionQueue,
+                  BlockingQueue<SchedulerTask> completionQueue
     ){
         this.profilingQueue  = profilingQueue;
         this.selectionQueue  = selectionQueue;
         this.completionQueue = completionQueue;
-        this.profiler        = new WorkloadProfilerImpl<I>(connection, candidatePool, true);
+        this.profiler        = new WorkloadProfilerImpl(connection, candidatePool, true);
         this.selector        = selector;
     }
     
     
     @Override
-    public Snapshot<I> addColdCandidate(I index) {
-        final CandidateTask<I> task = new CandidateTask<I>(index, this);
-        Snapshot<I> result = null;
+    public Snapshot addColdCandidate(DBIndex index) {
+        final CandidateTask task = new CandidateTask(index, this);
+        Snapshot result = null;
         try {
             getProfilingQueue().put(task);
             waitForCompletion(task);
@@ -103,9 +103,9 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }
     
     @Override
-    public AnalyzedQuery<I> analyzeQuery(String sql){
-        final AnalyzeTask<I> task   = new AnalyzeTask<I>(sql, this);
-        AnalyzedQuery<I>     result = null;
+    public AnalyzedQuery analyzeQuery(String sql){
+        final AnalyzeTask task   = new AnalyzeTask(sql, this);
+        AnalyzedQuery     result = null;
         try {
             getProfilingQueue().put(task);
             waitForCompletion(task);
@@ -119,12 +119,12 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
 
 
     @Override
-    public double create(I index){
+    public double create(DBIndex index){
         return configChange(index, true);
     }
     
-    private double configChange(I index, boolean create){
-        final ConfigurationTask<I> task = new ConfigurationTask<I>(index, create, this);
+    private double configChange(DBIndex index, boolean create){
+        final ConfigurationTask task = new ConfigurationTask(index, create, this);
         double cost = 0.0;
         try {
             getProfilingQueue().put(task);
@@ -138,7 +138,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }
     
     @Override
-    public double drop(I index){
+    public double drop(DBIndex index){
         return configChange(index, false);
     }
 
@@ -150,8 +150,8 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      *      cost of query.
      */
     @Override
-    public double executeProfiledQuery(ProfiledQuery<I> qinfo){
-        final ExecuteTask<I> task = new ExecuteTask<I>(qinfo, this);
+    public double executeProfiledQuery(ProfiledQuery qinfo){
+        final ExecuteTask task = new ExecuteTask(qinfo, this);
         double result = 0.0;
         try {
             getProfilingQueue().put(task);
@@ -164,19 +164,19 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
         return result;
     }
 
-    WorkloadProfilerImpl<I> getProfiler(){
+    WorkloadProfilerImpl getProfiler(){
         return profiler;
     }
 
-    BlockingQueue<SchedulerTask<I>> getProfilingQueue(){
+    BlockingQueue<SchedulerTask> getProfilingQueue(){
         return profilingQueue;
     }
 
-    BlockingQueue<SchedulerTask<I>> getSelectionQueue(){
+    BlockingQueue<SchedulerTask> getSelectionQueue(){
         return selectionQueue;
     }
 
-    BlockingQueue<SchedulerTask<I>> getCompletionQueue(){
+    BlockingQueue<SchedulerTask> getCompletionQueue(){
         return completionQueue;
     }
 
@@ -186,9 +186,9 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      *      a list of recommended indexes.
      */
     @Override
-    public List<I> getRecommendation(){
-        final RecommendationTask<I> task = new RecommendationTask<I>(this);
-        List<I> result = Instances.newList();
+    public List<DBIndex> getRecommendation(){
+        final RecommendationTask task = new RecommendationTask(this);
+        List<DBIndex> result = Instances.newList();
         try {
             getProfilingQueue().put(task);
             waitForCompletion(task);
@@ -207,9 +207,9 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      *      index of interest.
      */
     @Override
-    public void negativeVote(I index){
+    public void negativeVote(DBIndex index){
         try {
-            getProfilingQueue().put(new VoteTask<I>(index, false, this));
+            getProfilingQueue().put(new VoteTask(index, false, this));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -221,18 +221,18 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      *      index of interest.
      */
     @Override
-    public void positiveVote(I index){
+    public void positiveVote(DBIndex index){
         try {
-            getProfilingQueue().put(new VoteTask<I>(index, true, this));
+            getProfilingQueue().put(new VoteTask(index, true, this));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
     
     @Override
-    public ProfiledQuery<I> profileQuery(String sql){
-        final AnalyzeTask<I> task   = new AnalyzeTask<I>(sql, true, this);
-        ProfiledQuery<I>     result = null;
+    public ProfiledQuery profileQuery(String sql){
+        final AnalyzeTask task   = new AnalyzeTask(sql, true, this);
+        ProfiledQuery     result = null;
         try {
             getProfilingQueue().put(task);
             waitForCompletion(task);
@@ -251,15 +251,15 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      */
     @Override
     public void shutdown(){
-        for(SchedulerTask<I> each : profilingQueue){
+        for(SchedulerTask each : profilingQueue){
             each.cancel();
         }
 
-        for(SchedulerTask<I> each : selectionQueue){
+        for(SchedulerTask each : selectionQueue){
             each.cancel();
         }
 
-        for(SchedulerTask<I> each : completionQueue){
+        for(SchedulerTask each : completionQueue){
             each.cancel();
         }
 
@@ -278,7 +278,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
      * @param profilingThread
      *      a {@link ProfilingThread} object.
      */
-    void start(SelectionThread<I> selectionThread, ProfilingThread<I> profilingThread){
+    void start(SelectionThread selectionThread, ProfilingThread profilingThread){
         getProfiler().runProfiler();
         executorService.execute(selectionThread);
         executorService.execute(profilingThread);
@@ -286,13 +286,13 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     
     @Override
     public void start() {
-        start(new SelectionThread<I>(this), new ProfilingThread<I>(this));
+        start(new SelectionThread(this), new ProfilingThread(this));
     }
     
     
-    private void waitForCompletion(SchedulerTask<I> task){
+    private void waitForCompletion(SchedulerTask task){
         try {
-            final SchedulerTask<I> task2 = getCompletionQueue().take();
+            final SchedulerTask task2 = getCompletionQueue().take();
             Checks.checkAssertion(task == task2, "Error: Wrong task placed on completion queue");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -300,10 +300,10 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }    
 
 
-    static class ProfilingThread <I extends DBIndex> implements Runnable {
-        private final TaskScheduler<I> taskScheduler;
+    static class ProfilingThread implements Runnable {
+        private final TaskScheduler taskScheduler;
 
-        ProfilingThread(TaskScheduler<I> taskScheduler){
+        ProfilingThread(TaskScheduler taskScheduler){
             this.taskScheduler = taskScheduler;
         }
         
@@ -315,7 +315,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
                         break;
                     }
                     StopWatch stop = new StopWatch();
-                    SchedulerTask<I> task = taskScheduler.profilingQueue.take();
+                    SchedulerTask task = taskScheduler.profilingQueue.take();
                     task.profiling();
                     stop.resetAndLog("Profiling Task finished at ");
                 } catch (InterruptedException e) {
@@ -325,10 +325,10 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
         }
     }
     
-    static class SelectionThread <I extends DBIndex> implements Runnable {
-        private final TaskScheduler<I> taskScheduler;
+    static class SelectionThread implements Runnable {
+        private final TaskScheduler taskScheduler;
 
-        SelectionThread(TaskScheduler<I> taskScheduler){
+        SelectionThread(TaskScheduler taskScheduler){
             this.taskScheduler = taskScheduler;
         }
         
@@ -340,7 +340,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
                         break;
                     }
                     StopWatch stop = new StopWatch();
-                    SchedulerTask<I> task = taskScheduler.selectionQueue.take();
+                    SchedulerTask task = taskScheduler.selectionQueue.take();
                     task.selection();
                     stop.resetAndLog("Selection Task finished at ");
                 } catch (InterruptedException e) {
@@ -352,17 +352,15 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
 
     /**
      * construct a scheduler task.
-     * @param <I>       
-     *     bound type.
      */
-    abstract static class SchedulerTask <I extends DBIndex> {
+    abstract static class SchedulerTask {
         final Object lock = new Object();
         int      state    = UNSCHEDULED;
         
         final Console           console;
-        final TaskScheduler<I>  scheduler;
+        final TaskScheduler  scheduler;
 
-        SchedulerTask(TaskScheduler<I> scheduler, Console console){
+        SchedulerTask(TaskScheduler scheduler, Console console){
             this.scheduler = scheduler;
             this.console   = console;
         }
@@ -392,16 +390,16 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
          */
         abstract void profiling();
         
-        void placeOnComplection(SchedulerTask<I> task) throws InterruptedException {
+        void placeOnComplection(SchedulerTask task) throws InterruptedException {
             scheduler.getCompletionQueue().put(task);
         }
         
-        void placeOnProfiling(SchedulerTask<I> task) throws InterruptedException {
+        void placeOnProfiling(SchedulerTask task) throws InterruptedException {
             task.state = SCHEDULED;
             scheduler.getProfilingQueue().put(task);
         }
                                               
-        void placeOnSelection(SchedulerTask<I> task) throws InterruptedException {
+        void placeOnSelection(SchedulerTask task) throws InterruptedException {
             task.state = SCHEDULED;
             scheduler.getSelectionQueue().put(task);
         }
@@ -413,13 +411,13 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }
     
     
-    static class RecommendationTask <I extends DBIndex> extends SchedulerTask<I> {
-        private List<I> recommendation = Instances.newList();
-        RecommendationTask(TaskScheduler <I> taskScheduler) {
+    static class RecommendationTask extends SchedulerTask {
+        private List<DBIndex> recommendation = Instances.newList();
+        RecommendationTask(TaskScheduler taskScheduler) {
             super(taskScheduler, Console.streaming());
         }
         
-        List<I> getRecommendation(){
+        List<DBIndex> getRecommendation(){
             return recommendation;
         }
 
@@ -445,17 +443,17 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
         }
     }
     
-    static class AnalyzeTask <I extends DBIndex> extends SchedulerTask<I> {
+    static class AnalyzeTask extends SchedulerTask {
         String              sql;
         boolean             profileOnly;
-        ProfiledQuery<I>    profiledInfo;
-        AnalyzedQuery<I>    analyzedInfo;
+        ProfiledQuery    profiledInfo;
+        AnalyzedQuery    analyzedInfo;
         
-        AnalyzeTask(String sql, TaskScheduler<I> taskScheduler){
+        AnalyzeTask(String sql, TaskScheduler taskScheduler){
             this(sql, false, taskScheduler);
         }
         
-        AnalyzeTask(String sql, boolean profileOnly, TaskScheduler<I> taskScheduler){
+        AnalyzeTask(String sql, boolean profileOnly, TaskScheduler taskScheduler){
             this(taskScheduler);
             this.sql            = sql;
             this.profileOnly    = profileOnly;
@@ -463,7 +461,7 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
             this.analyzedInfo   = null;
         }
         
-        AnalyzeTask(TaskScheduler<I> taskScheduler){
+        AnalyzeTask(TaskScheduler taskScheduler){
             super(taskScheduler, Console.streaming());
         }
     
@@ -497,11 +495,11 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }
     
     
-    static class ExecuteTask <I extends DBIndex> extends SchedulerTask <I> {
-        ProfiledQuery<I> profiledQuery;
+    static class ExecuteTask extends SchedulerTask  {
+        ProfiledQuery profiledQuery;
         double cost = -1;
         
-        ExecuteTask(ProfiledQuery<I> profiledQuery, TaskScheduler<I> taskScheduler){
+        ExecuteTask(ProfiledQuery profiledQuery, TaskScheduler taskScheduler){
             super(taskScheduler, Console.streaming());
             this.profiledQuery = profiledQuery;
         }
@@ -529,12 +527,12 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }
     
     
-    static class VoteTask <I extends DBIndex> extends SchedulerTask<I> {
+    static class VoteTask extends SchedulerTask {
         boolean     isPositive;
-        I           index;
-        Snapshot<I> candidateSet;
+        DBIndex           index;
+        Snapshot candidateSet;
         
-        VoteTask(I index, boolean isPositive, TaskScheduler<I> taskScheduler){
+        VoteTask(DBIndex index, boolean isPositive, TaskScheduler taskScheduler){
             super(taskScheduler, Console.streaming());
             this.index        = index;
             this.isPositive   = isPositive;
@@ -566,12 +564,12 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }
     
     
-    static class ConfigurationTask <I extends DBIndex> extends SchedulerTask <I> {
-        I       index;
+    static class ConfigurationTask extends SchedulerTask  {
+        DBIndex       index;
         boolean isTobeMaterialized;
         double  transitionCost = -1;
         
-        ConfigurationTask(I index, boolean isTobeMaterialized, TaskScheduler<I> taskScheduler){
+        ConfigurationTask(DBIndex index, boolean isTobeMaterialized, TaskScheduler taskScheduler){
             super(taskScheduler, Console.streaming());
             this.index              = index;
             this.isTobeMaterialized = isTobeMaterialized;
@@ -601,11 +599,11 @@ public class TaskScheduler <I extends DBIndex> implements Scheduler <I> {
     }
     
     
-    static class CandidateTask <I extends DBIndex> extends SchedulerTask <I> {
-        I           index;
-        Snapshot<I> candidateSet;
+    static class CandidateTask extends SchedulerTask  {
+        DBIndex           index;
+        Snapshot candidateSet;
 
-        CandidateTask(I index, TaskScheduler<I> taskScheduler){
+        CandidateTask(DBIndex index, TaskScheduler taskScheduler){
             super(taskScheduler, Console.streaming());
             this.index = index;
         }

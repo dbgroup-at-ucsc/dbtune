@@ -30,16 +30,16 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-public class BcBenefitInfo<I extends DBIndex> {
+public class BcBenefitInfo {
 	private final double[]          origCosts;
 	private final double[]          newCosts;
 	private final int[]             reqLevels;
 	private final double[]          overheads;
-    private final ProfiledQuery<I>  profiledQuery;
+    private final ProfiledQuery  profiledQuery;
 
     private BcBenefitInfo(double[] origCosts, double[] newCosts,
                           int[] reqLevels, double[] overheads,
-                          ProfiledQuery<I> profiledQuery
+                          ProfiledQuery profiledQuery
     ) {
 		this.origCosts      = origCosts;
 		this.newCosts       = newCosts;
@@ -54,14 +54,12 @@ public class BcBenefitInfo<I extends DBIndex> {
      * profiled query}.
      * @param arg
      *      a {@link BenefitInfoInput} object.
-     * @param <I>
-     *      a {@link DBIndex} object.
-     * @return
+	 * @return
      *      a new {@link BcBenefitInfo} object.
      * @throws SQLException
      *      unexpected error has occurred.
      */
-    public static <I extends DBIndex> BcBenefitInfo<I> makeBcBenefitInfo(BenefitInfoInput<I> arg) throws SQLException {
+    public static BcBenefitInfo makeBcBenefitInfo(BenefitInfoInput arg) throws SQLException {
         return genBcBenefitInfo(
                 arg.getDatabaseConnection(),
                 arg.getSnapshot(),
@@ -71,11 +69,11 @@ public class BcBenefitInfo<I extends DBIndex> {
         );
     }
 	
-	static <I extends DBIndex> BcBenefitInfo<I> genBcBenefitInfo(DatabaseConnection conn,
-                                                                    Snapshot<I> snapshot,
-                                                                    StaticIndexSet<I> hotSet,
+	static BcBenefitInfo genBcBenefitInfo(DatabaseConnection conn,
+                                                                    Snapshot snapshot,
+                                                                    StaticIndexSet hotSet,
                                                                     IndexBitSet config,
-                                                                    ProfiledQuery<I> profiledQuery
+                                                                    ProfiledQuery profiledQuery
     ) throws SQLException {
 		String sql = profiledQuery.getSQL();
 		double[] origCosts = new double[snapshot.maxInternalId()+1];
@@ -86,7 +84,7 @@ public class BcBenefitInfo<I extends DBIndex> {
 		conn.getIBGWhatIfOptimizer().fixCandidates(snapshot);
 		IndexBitSet tempBitSet = new IndexBitSet();
 		IndexBitSet usedColumns = new IndexBitSet();
-		for (I idx : hotSet) {
+		for (DBIndex idx : hotSet) {
 			int id = idx.internalId();
 			
 			// reset tempBitSet
@@ -112,7 +110,7 @@ public class BcBenefitInfo<I extends DBIndex> {
 			overheads[id] = explainInfo.isDML() ? explainInfo.getIndexMaintenanceCost(idx) : 0;
 		}
 		
-		return new BcBenefitInfo<I>(origCosts, newCosts, reqLevels, overheads, profiledQuery);
+		return new BcBenefitInfo(origCosts, newCosts, reqLevels, overheads, profiledQuery);
 	}
 
     /**
@@ -158,13 +156,13 @@ public class BcBenefitInfo<I extends DBIndex> {
     /**
      * @return the {@link ProfiledQuery} used in this {@code BcBenefitInfo} object.
      */
-    public ProfiledQuery<I> getProfiledQuery(){
+    public ProfiledQuery getProfiledQuery(){
         return profiledQuery;
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder<BcBenefitInfo<I>>(this)
+        return new ToStringBuilder<BcBenefitInfo>(this)
                .add("origCosts", Arrays.toString(origCosts))
                .add("newCosts", Arrays.toString(newCosts))
                .add("reqLevels", Arrays.toString(reqLevels))

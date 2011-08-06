@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
 
-public class BcIndexInfo<I extends DBIndex> {
+public class BcIndexInfo {
 	/*
 	 * State of the index, materialized or not
 	 */
@@ -104,7 +104,7 @@ public class BcIndexInfo<I extends DBIndex> {
 		return (delta - deltaMin) - creationCost;
 	}
 	
-	public String toString(I idx) {
+	public String toString(DBIndex idx) {
 		return "   DELTA = " + delta + "\n" +
 		       "         = " + origCost[0] + " - " + newCost[0] + "\n" +
 		       "         = " + origCost[1] + " - " + newCost[1] + "\n" +

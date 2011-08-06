@@ -78,8 +78,8 @@ public class WfitTestFunctional
     @Test
     public void testWFIT() throws Exception
     {
-        ProfiledQuery<DBIndex> qinfo;
-        CandidatePool<DBIndex> pool;
+        ProfiledQuery qinfo;
+        CandidatePool pool;
         WFIT wfit;
         Workload workload;
         String   workloadFile;
@@ -135,15 +135,15 @@ public class WfitTestFunctional
         }
     }
 
-    private static CandidatePool<DBIndex> getCandidates(DatabaseConnection con, String 
+    private static CandidatePool getCandidates(DatabaseConnection con, String 
             workloadFilename)
         throws SQLException, IOException
     {
-        CandidatePool<DBIndex> pool;
+        CandidatePool pool;
         Iterable<DBIndex>      candidateSet;
         File                   workloadFile;
 
-        pool         = new CandidatePool<DBIndex>();
+        pool         = new CandidatePool();
         workloadFile = new File(workloadFilename);
         candidateSet = con.getIndexExtractor().recommendIndexes(workloadFile);
 

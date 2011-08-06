@@ -25,7 +25,7 @@ import java.sql.SQLException;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface WorkloadProfiler<I extends DBIndex> {
+public interface WorkloadProfiler {
     /**
      * Adds new candidate indexes to the current pool of candidates.
      * @param index
@@ -37,7 +37,7 @@ public interface WorkloadProfiler<I extends DBIndex> {
      *      an unexpected error has occurred while adding new indexes
      *      to the pool.
      */
-    Snapshot<I> addCandidate(I index) throws SQLException;
+    Snapshot addCandidate(DBIndex index) throws SQLException;
 
     /**
      * process a {@code sql} query and returned a profiled version of it.
@@ -46,7 +46,7 @@ public interface WorkloadProfiler<I extends DBIndex> {
      * @return
      *      a new {@link ProfiledQuery} instance.
      */
-    ProfiledQuery<I> processQuery(String sql);
+    ProfiledQuery processQuery(String sql);
 
     /**
      * process a vote on a given index. if the vote is positive then
@@ -62,5 +62,5 @@ public interface WorkloadProfiler<I extends DBIndex> {
      *      an unexpected error has occurred while adding new indexes (with positive vote)
      *      to the pool.
      */
-    Snapshot<I> processVote(I index, boolean isPositive) throws SQLException;
+    Snapshot processVote(DBIndex index, boolean isPositive) throws SQLException;
 }

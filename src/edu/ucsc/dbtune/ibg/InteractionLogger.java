@@ -30,7 +30,7 @@ public class InteractionLogger {
      * @param candidateSet
      *      a set of candidate indexes.
      */
-	public InteractionLogger(Snapshot<?> candidateSet) {
+	public InteractionLogger(Snapshot candidateSet) {
         this(new InteractionBank(candidateSet));
 	}
 

@@ -20,7 +20,6 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DBIndexSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
@@ -30,12 +29,12 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class CandidatePool<I extends DBIndex> implements Serializable {
+public class CandidatePool implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/* serializable fields */
-	Node<I> firstNode;
-	Set<I>  indexSet;
+	Node<DBIndex> firstNode;
+	Set<DBIndex>  indexSet;
 	int maxInternalId;
 
     /**
@@ -47,7 +46,7 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
      * @param maxInternalId
      *      the max internal id of a index node.
      */
-    public CandidatePool(Node<I> firstNode, Set<I> indexSet, int maxInternalId){
+    public CandidatePool(Node<DBIndex> firstNode, Set<DBIndex> indexSet, int maxInternalId){
         this.firstNode      = firstNode;
         this.indexSet       = indexSet;
         this.maxInternalId  = maxInternalId;
@@ -59,32 +58,30 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
      * to -1.
      */
 	public CandidatePool() {
-        this(null, new HashSet<I>(), -1);
+        this(null, new HashSet<DBIndex>(), -1);
 	}
 
-	public final void addIndex(I index) throws SQLException {
+	public final void addIndex(DBIndex index) throws SQLException {
 		if (!indexSet.contains(index)) {
 			++maxInternalId;
             // todo(Huascar) test this.
             final DBIndex duplicate = index.consDuplicate(maxInternalId);
-			@SuppressWarnings({"RedundantTypeArguments"}) // unchecked warning - redundant type arg is necessary
-            I indexCopy = Objects.<I>as(duplicate);
-			firstNode = new Node<I>(indexCopy, firstNode);
+			firstNode = new Node<DBIndex>(duplicate, firstNode);
 			indexSet.add(index);
 		}
 	}
 
-    Node<I> getFirstNode() {
+    Node<DBIndex> getFirstNode() {
         return firstNode;
     }
 
-    public void addIndexes(Iterable<I> newIndexes) throws SQLException {
-		for (I index : newIndexes){
+    public void addIndexes(Iterable<DBIndex> newIndexes) throws SQLException {
+		for (DBIndex index : newIndexes){
             addIndex(index);
         }
 	}
 
-	public final boolean contains(I index) {
+	public final boolean contains(DBIndex index) {
 		return indexSet.contains(index);
 	}
 
@@ -94,20 +91,20 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
      *      the type of {@link DBIndex}.
      * @return an empty snapshot.
      */
-	public static <I extends DBIndex> Snapshot<I> emptySnapshot() {
-		return new Snapshot<I>(null);
+	public static Snapshot emptySnapshot() {
+		return new Snapshot(null);
 	}
 
-	public Snapshot<I> getSnapshot() {
-		return new Snapshot<I>(getFirstNode());
+	public Snapshot getSnapshot() {
+		return new Snapshot(getFirstNode());
 	}
 
     /**
      * @return an updated {@link DBIndexSet} object.
      */
-	public DBIndexSet<I> getDB2IndexSet() {
-		DBIndexSet<I> retval = new DBIndexSet<I>();
-		for (I idx : indexSet){
+	public DBIndexSet getDB2IndexSet() {
+		DBIndexSet retval = new DBIndexSet();
+		for (DBIndex idx : indexSet){
             retval.add(idx);
         }
 		return retval;
@@ -117,8 +114,8 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 		return firstNode == null;
 	}
 
-	public Iterator<I> iterator() {
-		return new SnapshotIterator<I>(firstNode);
+	public Iterator<DBIndex> iterator() {
+		return new SnapshotIterator(firstNode);
 	}
 
     /**
@@ -165,25 +162,25 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 	/**
 	 * A snapshot of the candidate set (immutable set of indexes)
 	 */
-	public static class Snapshot<I extends DBIndex> implements Iterable<I>, Serializable {
+	public static class Snapshot implements Iterable<DBIndex>, Serializable {
 		/* serializable fields */
 		int maxId;
-		Node<I> first;
+		Node<DBIndex> first;
 		IndexBitSet bs;
 
 		/* serialization support */
 		private static final long serialVersionUID = CandidatePool.serialVersionUID;
 		protected Snapshot() { }
 
-		private Snapshot(Node<I> first) {
+		private Snapshot(Node<DBIndex> first) {
 			maxId = (first == null) ? -1 : first.getIndex().internalId();
 			this.first = first;
 			bs = new IndexBitSet();
 			bs.set(0, maxId+1);
 		}
 
-		public Iterator<I> iterator() {
-			return new SnapshotIterator<I>(first);
+		public Iterator<DBIndex> iterator() {
+			return new SnapshotIterator(first);
 		}
 
 		public int maxInternalId() {
@@ -194,8 +191,8 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 			return bs; // no need to clone -- this set is immutable
 		}
 
-		public I findIndexId(int i) {
-			for (I idx : this) {
+		public DBIndex findIndexId(int i) {
+			for (DBIndex idx : this) {
                 if (idx.internalId() == i) {
                     return idx;
                 }
@@ -205,7 +202,7 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 
         @Override
         public String toString() {
-            return new ToStringBuilder<Snapshot<I>>(this)
+            return new ToStringBuilder<Snapshot>(this)
                    .add("maxInternalId", maxInternalId())
                    .add("first node", first)
                    .add("indexes configuration", bitSet())
@@ -216,10 +213,10 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 	/*
 	 * Iterator for a snapshot of the candidate set
 	 */
-	private static class SnapshotIterator<I extends DBIndex> implements Iterator<I> {
-		Node<I> next;
+	private static class SnapshotIterator implements Iterator<DBIndex> {
+		Node<DBIndex> next;
 
-		SnapshotIterator(Node<I> start) {
+		SnapshotIterator(Node<DBIndex> start) {
 			next = start;
 		}
 
@@ -227,10 +224,10 @@ public class CandidatePool<I extends DBIndex> implements Serializable {
 			return next != null;
 		}
 
-		public I next() {
+		public DBIndex next() {
 			if (next == null)
 				throw new NoSuchElementException();
-			I current = next.getIndex();
+			DBIndex current = next.getIndex();
 			next = next.getNext();
 			return current;
 		}

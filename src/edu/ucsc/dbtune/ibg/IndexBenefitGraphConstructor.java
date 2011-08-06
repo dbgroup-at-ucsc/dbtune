@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
@@ -28,17 +27,16 @@ import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DefaultQueue;
 import edu.ucsc.dbtune.util.Instances;
-import edu.ucsc.dbtune.util.Objects;
 
 import java.sql.SQLException;
 
-public class IndexBenefitGraphConstructor<I extends DBIndex> {
+public class IndexBenefitGraphConstructor {
 	/* 
 	 * Parameters of the construction.
 	 */
 	protected final DatabaseConnection  conn;
 	protected final String              sql;
-	protected final Snapshot<I>         candidateSet;
+	protected final Snapshot         candidateSet;
 	
 	/*
 	 * The primary information stored by the graph
@@ -86,7 +84,7 @@ public class IndexBenefitGraphConstructor<I extends DBIndex> {
      * @throws java.sql.SQLException
      *      an unexpected error has occurred.
      */
-	public IndexBenefitGraphConstructor(DatabaseConnection conn, String sql, Snapshot<I> candidateSet)
+	public IndexBenefitGraphConstructor(DatabaseConnection conn, String sql, Snapshot candidateSet)
 	throws SQLException {
 		this.conn = conn;
 		this.sql = sql;
@@ -136,7 +134,7 @@ public class IndexBenefitGraphConstructor<I extends DBIndex> {
     /**
      * @return a {@link Snapshot} of the set of candidate indexes.
      */
-	public final Snapshot<I> candidateSet() {
+	public final Snapshot candidateSet() {
 		return candidateSet;
 	}
 

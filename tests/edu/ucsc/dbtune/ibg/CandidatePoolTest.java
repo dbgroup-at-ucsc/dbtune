@@ -18,6 +18,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.core.DBTuneInstances;
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.Test;
@@ -33,12 +34,12 @@ import static org.junit.Assert.assertTrue;
 public class CandidatePoolTest {
     @Test
     public void testPopulatingCandidatePool() throws Exception {
-        final CandidatePool<PGIndex> pool = new CandidatePool<PGIndex>();
+        final CandidatePool pool = new CandidatePool();
         pool.addIndexes(populate());
-        final CandidatePool.Snapshot<PGIndex> snapshot = pool.getSnapshot();
+        final CandidatePool.Snapshot snapshot = pool.getSnapshot();
         assertNotNull("the snapshot is not null", snapshot);
         int counter  = 0;
-        for(PGIndex each : snapshot){
+        for(DBIndex each : snapshot){
             final boolean isOkay = each.internalId() == 1 || each.internalId() == 0;
             assertTrue(isOkay);
             ++counter;
@@ -48,8 +49,8 @@ public class CandidatePoolTest {
     }
 
 
-    private static Iterable<PGIndex> populate() throws Exception {
-        final List<PGIndex> indexes = Instances.newList();
+    private static Iterable<DBIndex> populate() throws Exception {
+        final List<DBIndex> indexes = Instances.newList();
         indexes.add(DBTuneInstances.newPGIndex(true, 1238765, 987));
         indexes.add(DBTuneInstances.newPGIndex(false, 12765, 97));
         return indexes;
@@ -57,7 +58,7 @@ public class CandidatePoolTest {
 
     @Test
     public void testIndexInSnapshot() throws Exception {
-        final CandidatePool<PGIndex> pool = new CandidatePool<PGIndex>();
+        final CandidatePool pool = new CandidatePool();
         pool.addIndexes(populate());
         final PGIndex indexToBeFound1 = DBTuneInstances.newPGIndex(false, 12765, 97);
         final PGIndex indexToBeFound2 = DBTuneInstances.newPGIndex(true, 1238765, 987);

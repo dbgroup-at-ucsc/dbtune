@@ -76,7 +76,7 @@ public class IBGPrinterTest {
         final IndexExtractor extractor = mock(IndexExtractor.class);
         when(extractor.recommendIndexes(basicQuery)).thenReturn(recommendedIndexes);
 
-        final CandidatePool<DBIndex> candidatePool = (CandidatePool<DBIndex>) mock(CandidatePool.class);
+        final CandidatePool candidatePool = (CandidatePool) mock(CandidatePool.class);
         final Node<DBIndex>          root          = (Node<DBIndex>) mock(Node.class);
         when(root.getIndex()).thenReturn(twin);
         when(root.getNext()).thenReturn(root);

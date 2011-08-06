@@ -14,8 +14,6 @@ import edu.ucsc.dbtune.ibg.InteractionLogger;
 import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
 import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
 import edu.ucsc.dbtune.spi.core.Console;
-import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.StopWatch;
 import edu.ucsc.dbtune.util.Threads;
 
 import java.sql.SQLException;
@@ -24,9 +22,9 @@ import java.util.concurrent.ExecutorService;
 /**
  * Represents an workload profiler.
  */
-public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler <I> {
+public class WorkloadProfilerImpl implements WorkloadProfiler {
 	private final DatabaseConnection    connection;
-	private final CandidatePool<I>      candidatePool;
+	private final CandidatePool      candidatePool;
 	private final ThreadIBGAnalysis     ibgAnalysis;
 	private final ThreadIBGConstruction ibgConstruction;
 	private final boolean               onlineCandidates;
@@ -46,7 +44,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
      * @param onlineCandidates
      *      {@code true} if we are dealing with online candidates. {@code false} otherwise.
      */
-	public WorkloadProfilerImpl(DatabaseConnection connection, CandidatePool<I> candidatePool, boolean onlineCandidates) {
+	public WorkloadProfilerImpl(DatabaseConnection connection, CandidatePool candidatePool, boolean onlineCandidates) {
         this(connection, new ThreadIBGAnalysis(), new ThreadIBGConstruction(), candidatePool, onlineCandidates);
 	}
 
@@ -68,7 +66,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
     WorkloadProfilerImpl(DatabaseConnection connection,
                          ThreadIBGAnalysis analysis,
                          ThreadIBGConstruction construction,
-                         CandidatePool<I> candidatePool,
+                         CandidatePool candidatePool,
                          boolean onlineCandidates
     ) {
       this.connection         = connection;
@@ -81,7 +79,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 
 
     @Override
-	public Snapshot<I> addCandidate(I index) throws SQLException {
+	public Snapshot addCandidate(DBIndex index) throws SQLException {
 		candidatePool.addIndex(index);
 		return candidatePool.getSnapshot();
 	}
@@ -98,7 +96,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 
 
     @Override
-    public ProfiledQuery<I> processQuery(String sql){
+    public ProfiledQuery processQuery(String sql){
 
 		// generate new index candidates
 		if (onlineCandidates) {
@@ -107,7 +105,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
                 final Iterable<DBIndex> recommendedIndexes  = extractor.recommendIndexes(sql);
 
                 for(DBIndex each : recommendedIndexes){
-                    candidatePool.addIndex(Objects.<I>as(each));
+                    candidatePool.addIndex(each);
                 }
 			} catch (SQLException e) {
                 console.error("SQLException caught while recommending indexes", e);
@@ -115,7 +113,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 		}
 
 		// get the current set of candidates
-		Snapshot<I> snapshot = candidatePool.getSnapshot();
+		Snapshot snapshot = candidatePool.getSnapshot();
         final IBGWhatIfOptimizer ibgWhatIfOptimizer = connection.getIBGWhatIfOptimizer();
 		try {
 			ibgWhatIfOptimizer.fixCandidates(snapshot);
@@ -136,7 +134,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 		// build the IBG
 		try {
 			InteractionLogger               logger      = new InteractionLogger(snapshot);
-			IndexBenefitGraphConstructor<I> ibgCons     = new IndexBenefitGraphConstructor<I>(connection, sql, snapshot);
+			IndexBenefitGraphConstructor ibgCons     = new IndexBenefitGraphConstructor(connection, sql, snapshot);
 			IBGAnalyzer                     ibgAnalyzer = new IBGAnalyzer(ibgCons);
 
 //      ibgConstruction.startConstruction(ibgCons);
@@ -158,7 +156,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
 
 
       // pass the result to the tuner
-      return new ProfiledQuery.Builder<I>(sql)
+      return new ProfiledQuery.Builder(sql)
             .explainInfo(info)
             .snapshotOfCandidateSet(snapshot)
             .indexBenefitGraph(ibgCons.getIBG())
@@ -174,7 +172,7 @@ public class WorkloadProfilerImpl<I extends DBIndex> implements WorkloadProfiler
     }
 
     @Override
-	public Snapshot<I> processVote(I index, boolean isPositive) throws SQLException {
+	public Snapshot processVote(DBIndex index, boolean isPositive) throws SQLException {
 		return isPositive ? addCandidate(index) : candidatePool.getSnapshot();
 	}
 

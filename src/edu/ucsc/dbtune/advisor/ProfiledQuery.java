@@ -23,29 +23,26 @@ import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
-import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.satuning.spi.Supplier;
-
-import java.io.Serializable;
 
 /**
  * @author Karl Schnaitter
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class ProfiledQuery <I extends DBIndex> implements Serializable {
+public class ProfiledQuery {
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
     private final String            sql;
     private final ExplainInfo       explainInfo;
-    private final Snapshot<I>       candidateSet;
+    private final Snapshot          candidateSet;
     private final IndexBenefitGraph ibg;
     private final InteractionBank   bank;
     private final int               whatIfCount;
     private final double            ibgAnalysisTime;
 
-    private ProfiledQuery(Builder<I> builder){
+    private ProfiledQuery(Builder builder){
         sql             = builder.sql;
         explainInfo     = builder.explainInfo;
         candidateSet    = builder.candidateSet;
@@ -92,7 +89,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
      * @return a {@link Snapshot snapshot} of
      *      the candidate indexes. 
      */
-    public Snapshot<I> getCandidateSnapshot(){
+    public Snapshot getCandidateSnapshot(){
         return candidateSet;
     }
 
@@ -138,7 +135,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
         }
 
 		double maintenanceCost = 0;
-		for (I eachIndex : candidateSet) {
+		for (DBIndex eachIndex : candidateSet) {
 			if (configuration.get(eachIndex.internalId())) {
 				maintenanceCost += explainInfo.getIndexMaintenanceCost(eachIndex);
 			}
@@ -176,7 +173,7 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<ProfiledQuery<I>>(this)
+        return new ToStringBuilder<ProfiledQuery>(this)
                .add("sql", getSQL())
                .add("explainInfo", getExplainInfo())
                .add("candidateSet", getCandidateSnapshot())
@@ -192,10 +189,10 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
      * @param <I>
      *      index type.
      */
-    public static class Builder<I extends DBIndex> implements Supplier<ProfiledQuery<I>> {
+    public static class Builder implements Supplier<ProfiledQuery> {
         private final String                sql;
         private ExplainInfo explainInfo;
-        private Snapshot<I> candidateSet;
+        private Snapshot candidateSet;
         private IndexBenefitGraph           ibg;
         private InteractionBank             bank;
         private int                         whatifCount;     // value from DatabaseConnection after profiling
@@ -205,33 +202,33 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
             this.sql = sql;
         }
 
-        public Builder<I> explainInfo(ExplainInfo value){
+        public Builder explainInfo(ExplainInfo value){
             explainInfo = value;
             return this;
         }
 
-        public Builder<I> snapshotOfCandidateSet(Snapshot<I> value){
+        public Builder snapshotOfCandidateSet(Snapshot value){
             candidateSet = value;
             return this;
         }
 
-        public Builder<I> indexBenefitGraph(IndexBenefitGraph value){
+        public Builder indexBenefitGraph(IndexBenefitGraph value){
             ibg = value;
             return this;
         }
 
-        public Builder<I> interactionBank(InteractionBank value){
+        public Builder interactionBank(InteractionBank value){
             bank = value;
             return this;
         }
 
-        public Builder<I> whatIfCount(int value){
+        public Builder whatIfCount(int value){
             // value from DatabaseConnection after profiling
             whatifCount = value;
             return this;
         }
 
-        public Builder<I> indexBenefitGraphAnalysisTime(double value){
+        public Builder indexBenefitGraphAnalysisTime(double value){
             // in milliseconds
             ibgAnalysisTime = value;
             return this;
@@ -239,8 +236,8 @@ public class ProfiledQuery <I extends DBIndex> implements Serializable {
 
 
         @Override
-        public ProfiledQuery<I> get() {
-            return new ProfiledQuery<I>(this);
+        public ProfiledQuery get() {
+            return new ProfiledQuery(this);
         }
     }
 }

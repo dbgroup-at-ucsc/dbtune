@@ -31,14 +31,12 @@ public class InteractionSelector {
      * part of a {@code snapshot} of a {@link edu.ucsc.dbtune.ibg.CandidatePool}.
      * @param arg
      *      a {@link InteractionSelection} object.
-     * @param <I>
-     *      a {@link DBIndex index} type.
-     * @return a {@link IndexPartitions} object. <strong>IMPORTANT NOTE</strong>: When
+	 * @return a {@link IndexPartitions} object. <strong>IMPORTANT NOTE</strong>: When
      *      {@code #choosePartitions(InteractionSelection)} is called, hotSet and
      *      hotPartitions are out of sync!
      */
-    public static <I extends DBIndex> IndexPartitions<I> choosePartitions(
-            InteractionSelection<I> arg,
+    public static IndexPartitions choosePartitions(
+            InteractionSelection arg,
             int partitionIterations)
     {
         return choosePartitions(
@@ -49,19 +47,19 @@ public class InteractionSelector {
                 partitionIterations );
     }
 
-    static <I extends DBIndex> IndexPartitions<I> choosePartitions(
-            StaticIndexSet<I>     newHotSet,
-            IndexPartitions<I>    oldPartitions,
-            StatisticsFunction<I> doiFunc,
+    static IndexPartitions choosePartitions(
+            StaticIndexSet     newHotSet,
+            IndexPartitions    oldPartitions,
+            StatisticsFunction doiFunc,
             int                   maxNumStates,
             int                   partitionIterations)
     {
         Random rand = new Random(50);
-        IndexPartitions<I> bestPartitions = constructInitialGuess(newHotSet, oldPartitions);
+        IndexPartitions bestPartitions = constructInitialGuess(newHotSet, oldPartitions);
         double bestCost = partitionCost(bestPartitions, doiFunc);
 
         for (int attempts = 0; attempts < partitionIterations; attempts++) {
-            IndexPartitions<I> currentPartitions = new IndexPartitions<I>(newHotSet);
+            IndexPartitions currentPartitions = new IndexPartitions(newHotSet);
             while (true) {
                 double currentSubsetCount = currentPartitions.subsetCount();
                 double currentStateCount = currentPartitions.wfaStateCount();
@@ -69,12 +67,12 @@ public class InteractionSelector {
                 double totalWeightOthers = 0;
                 boolean foundSingletonPair = false;
                 for (int s1 = 0; s1 < currentSubsetCount; s1++) {
-                    IndexPartitions.Subset<I> subset1 = currentPartitions.get(s1);
+                    IndexPartitions.Subset subset1 = currentPartitions.get(s1);
                     double size1 = subset1.size();
                     for (int s2 = s1+1; s2 < currentSubsetCount; s2++) { 
-                        IndexPartitions.Subset<I> subset2 = currentPartitions.get(s2);
-                        InteractionWeightSupplier<I> interactionWeight = new 
-                            InteractionWeightSupplier<I>(
+                        IndexPartitions.Subset subset2 = currentPartitions.get(s2);
+                        InteractionWeightSupplier interactionWeight = new 
+                            InteractionWeightSupplier(
                                 doiFunc,
                                 maxNumStates
                                 ).currentStateCount(currentStateCount)
@@ -99,12 +97,12 @@ public class InteractionSelector {
 
                 double accumWeight = 0;
                 for (int s1 = 0; s1 < currentSubsetCount && accumWeight <= weightThreshold; s1++) {
-                    IndexPartitions.Subset<I> subset1 = currentPartitions.get(s1);
+                    IndexPartitions.Subset subset1 = currentPartitions.get(s1);
                     double size1 = subset1.size();
                     for (int s2 = s1+1; s2 < currentSubsetCount && accumWeight <= weightThreshold; s2++) { 
-                        IndexPartitions.Subset<I> subset2 = currentPartitions.get(s2);
-                        InteractionWeightAccumulator<I> interactionWeightAccumulator = new 
-                            InteractionWeightAccumulator<I>(
+                        IndexPartitions.Subset subset2 = currentPartitions.get(s2);
+                        InteractionWeightAccumulator interactionWeightAccumulator = new 
+                            InteractionWeightAccumulator(
                                 doiFunc,
                                 maxNumStates
                                 ).currentStateCount(currentStateCount)
@@ -132,17 +130,17 @@ public class InteractionSelector {
         return bestPartitions;
     }
 
-    private static <I extends DBIndex> IndexPartitions<I> constructInitialGuess(StaticIndexSet<I> newHotSet, IndexPartitions<I> oldPartitions) {
-        IndexPartitions<I> bestPartitions;
+    private static IndexPartitions constructInitialGuess(StaticIndexSet newHotSet, IndexPartitions oldPartitions) {
+        IndexPartitions bestPartitions;
 
         // construct initial guess, which put indexes together that were previously together
-        bestPartitions = new IndexPartitions<I>(newHotSet);
+        bestPartitions = new IndexPartitions(newHotSet);
         for (int s = 0; s < oldPartitions.subsetCount(); s++) {
-            IndexPartitions.Subset<I> subset = oldPartitions.get(s);
-            for (I i1 : subset) {
+            IndexPartitions.Subset subset = oldPartitions.get(s);
+            for (DBIndex i1 : subset) {
                 if (!newHotSet.contains(i1))
                     continue;
-                for (I i2 : subset) {
+                for (DBIndex i2 : subset) {
                     if (i1 == i2 || !newHotSet.contains(i2))
                         continue;
                     bestPartitions.merge(i1, i2);
@@ -152,72 +150,72 @@ public class InteractionSelector {
         return bestPartitions;
     }
 
-    private static <I extends DBIndex> double partitionCost(IndexPartitions<I> partitions,
-                                                               StatisticsFunction<I> doiFunc
+    private static double partitionCost(IndexPartitions partitions,
+                                                               StatisticsFunction doiFunc
     ) {
         double cost = 0;
         for (int s1 = 0; s1 < partitions.subsetCount(); s1++) {
-            IndexPartitions.Subset<I> subset1 = partitions.get(s1);
+            IndexPartitions.Subset subset1 = partitions.get(s1);
             for (int s2 = s1+1; s2 < partitions.subsetCount(); s2++) { 
-                IndexPartitions.Subset<I> subset2 = partitions.get(s2);
+                IndexPartitions.Subset subset2 = partitions.get(s2);
                 cost += interactionWeight(subset1, subset2, doiFunc);
             }
         }
         return cost;
     }
 
-    private static <I extends DBIndex> double interactionWeight(IndexPartitions.Subset<I> s1,
-                                                                   IndexPartitions.Subset<I> s2,
-                                                                   StatisticsFunction<I> doiFunc
+    private static double interactionWeight(IndexPartitions.Subset s1,
+                                                                   IndexPartitions.Subset s2,
+                                                                   StatisticsFunction doiFunc
     ) {
         double weight = 0;
-        for (I i1 : s1)
-            for (I i2 : s2) 
+        for (DBIndex i1 : s1)
+            for (DBIndex i2 : s2) 
                 weight += doiFunc.doi(i1, i2);
         return weight;
     }
 
-    private static class InteractionWeightSupplier<I extends DBIndex>
-    implements Supplier<InteractionWeightSupplier<I>> {
-        private StatisticsFunction<I> doiFunc;
+    private static class InteractionWeightSupplier
+    implements Supplier<InteractionWeightSupplier> {
+        private StatisticsFunction doiFunc;
         private int maxNumStates;
         private double currentStateCount;
         private double totalWeightSingletons;
         private double totalWeightOthers;
         private boolean foundSingletonPair;
-        private IndexPartitions.Subset<I> subset1;
+        private IndexPartitions.Subset subset1;
         private double size1;
-        private IndexPartitions.Subset<I> subset2;
+        private IndexPartitions.Subset subset2;
 
-        public InteractionWeightSupplier(StatisticsFunction<I> doiFunc, int maxNumStates) {
+        public InteractionWeightSupplier(StatisticsFunction doiFunc, int maxNumStates) {
             this.doiFunc        = doiFunc;
             this.maxNumStates   = maxNumStates;
         }
 
-        public InteractionWeightSupplier<I> currentStateCount(double value){
+        public InteractionWeightSupplier currentStateCount(double value){
             currentStateCount = value;
             return this;
         }
 
-        public InteractionWeightSupplier<I> totalWeightSingletons(double value){
+        public InteractionWeightSupplier totalWeightSingletons(double value){
             totalWeightSingletons = value;
             return this;
         }
 
-        public InteractionWeightSupplier<I> totalWeightOthers(double value){
+        public InteractionWeightSupplier totalWeightOthers(double value){
             totalWeightOthers = value;
             return this;
         }
 
-        public InteractionWeightSupplier<I> foundSingletonPair(boolean value){
+        public InteractionWeightSupplier foundSingletonPair(boolean value){
             foundSingletonPair = value;
             return this;
         }
 
-        public InteractionWeightSupplier<I> availableSubsetsAndSizeOfFirstOne(
-                IndexPartitions.Subset<I> subset1,
+        public InteractionWeightSupplier availableSubsetsAndSizeOfFirstOne(
+                IndexPartitions.Subset subset1,
                 double size1,
-                IndexPartitions.Subset<I> subset2
+                IndexPartitions.Subset subset2
         ){
             this.subset1 = subset1;
             this.size1   = size1;
@@ -238,7 +236,7 @@ public class InteractionSelector {
         }
 
         @Override
-        public InteractionWeightSupplier<I> get() {
+        public InteractionWeightSupplier get() {
             double size2 = subset2.size();
             double weight = interactionWeight(subset1, subset2, doiFunc);
             if (weight == 0)
@@ -257,41 +255,41 @@ public class InteractionSelector {
         }
     }
 
-    private static class InteractionWeightAccumulator<I extends DBIndex>
-    implements Supplier<InteractionWeightAccumulator<I>> {
-        private StatisticsFunction<I>     doiFunc;
+    private static class InteractionWeightAccumulator
+    implements Supplier<InteractionWeightAccumulator> {
+        private StatisticsFunction     doiFunc;
         private int                       maxNumStates;
         private double                    currentStateCount;
         private boolean                   foundSingletonPair;
         private double                    accumWeight;
-        private IndexPartitions.Subset<I> subset1;
+        private IndexPartitions.Subset subset1;
         private double                    size1;
-        private IndexPartitions.Subset<I> subset2;
+        private IndexPartitions.Subset subset2;
 
-        public InteractionWeightAccumulator(StatisticsFunction<I> doiFunc, int maxNumStates) {
+        public InteractionWeightAccumulator(StatisticsFunction doiFunc, int maxNumStates) {
             this.doiFunc        = doiFunc;
             this.maxNumStates   = maxNumStates;
         }
 
-        public InteractionWeightAccumulator<I> currentStateCount(double value){
+        public InteractionWeightAccumulator currentStateCount(double value){
             currentStateCount = value;
             return this;
         }
 
-        public InteractionWeightAccumulator<I> foundSingletonPair(boolean value){
+        public InteractionWeightAccumulator foundSingletonPair(boolean value){
             foundSingletonPair = value;
             return this;
         }
 
-        public InteractionWeightAccumulator<I> accumWeight(double value){
+        public InteractionWeightAccumulator accumWeight(double value){
             accumWeight = value;
             return this;
         }
 
-        public InteractionWeightAccumulator<I> availableSubsetsAndSizeOfFirstOne(
-                IndexPartitions.Subset<I> subset1,
+        public InteractionWeightAccumulator availableSubsetsAndSizeOfFirstOne(
+                IndexPartitions.Subset subset1,
                 double size1,
-                IndexPartitions.Subset<I> subset2
+                IndexPartitions.Subset subset2
         ){
             this.subset1 = subset1;
             this.size1   = size1;
@@ -304,7 +302,7 @@ public class InteractionSelector {
         }
 
         @Override
-        public InteractionWeightAccumulator<I> get() {
+        public InteractionWeightAccumulator get() {
             double size2 = subset2.size();
             double weight = interactionWeight(subset1, subset2, doiFunc);
             if (weight == 0)

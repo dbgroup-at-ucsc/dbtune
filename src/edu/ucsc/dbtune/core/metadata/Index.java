@@ -392,7 +392,7 @@ public class Index extends DatabaseObject
      * @return create index statement.
      */
 	String getCreateStatement() {
-        throw new RuntimeException();
+        throw new RuntimeException("Not implemented here");
     }
 
     /**

@@ -34,13 +34,13 @@ import java.sql.SQLException;
  */
 public class WFIT extends Advisor
 {
-    List<ProfiledQuery<DBIndex>> qinfos;
+    List<ProfiledQuery> qinfos;
     List<Double> overheads;
     List<IndexBitSet> configurations;
-    WorkloadProfiler<DBIndex> profiler;
-    Snapshot<DBIndex>      snapshot;
-    KarlsIndexPartitions<DBIndex> partitions;
-    KarlsWorkFunctionAlgorithm<DBIndex> wfa;
+    WorkloadProfiler profiler;
+    Snapshot      snapshot;
+    KarlsIndexPartitions partitions;
+    KarlsWorkFunctionAlgorithm wfa;
 
     int maxNumIndexes;
     int maxNumStates;
@@ -49,7 +49,7 @@ public class WFIT extends Advisor
      */
     public WFIT(
             DatabaseConnection con,
-            CandidatePool<DBIndex> pool,
+            CandidatePool pool,
             int maxNumIndexes,
             int maxNumStates)
     {
@@ -57,9 +57,9 @@ public class WFIT extends Advisor
         this.maxNumIndexes = maxNumIndexes;
         this.maxNumStates  = maxNumStates;
 
-        profiler       = new WorkloadProfilerImpl<DBIndex>(con, pool, false);
-        qinfos         = new ArrayList<ProfiledQuery<DBIndex>>();
-        wfa            = new KarlsWorkFunctionAlgorithm<DBIndex>(partitions, false);
+        profiler       = new WorkloadProfilerImpl(con, pool, false);
+        qinfos         = new ArrayList<ProfiledQuery>();
+        wfa            = new KarlsWorkFunctionAlgorithm(partitions, false);
         overheads      = new ArrayList<Double>();
         configurations = new ArrayList<IndexBitSet>();
     }
@@ -75,7 +75,7 @@ public class WFIT extends Advisor
     @Override
     public void process(SQLStatement sql) throws SQLException
     {
-        ProfiledQuery<DBIndex> qinfo;
+        ProfiledQuery qinfo;
         IndexBitSet configuration;
 
         qinfo = profiler.processQuery(sql.getSQL());
@@ -111,43 +111,43 @@ public class WFIT extends Advisor
         return configurations.get(qinfos.size()-1);
     }
 
-    public ProfiledQuery<DBIndex> getProfiledQuery(int i) {
+    public ProfiledQuery getProfiledQuery(int i) {
         return qinfos.get(i);
     }
-    public KarlsIndexPartitions<DBIndex> getPartitions() {
+    public KarlsIndexPartitions getPartitions() {
         return partitions;
     }
 
-    private KarlsIndexPartitions<DBIndex> getIndexPartitions(
-            Snapshot<DBIndex>            candidateSet,
-            List<ProfiledQuery<DBIndex>> qinfos,
+    private KarlsIndexPartitions getIndexPartitions(
+            Snapshot            candidateSet,
+            List<ProfiledQuery> qinfos,
             int                          maxNumIndexes,
             int                          maxNumStates )
     {
-        final StaticIndexSet<DBIndex> hotSet = KarlsHotsetSelector.chooseHotSet(
-                candidateSet, new StaticIndexSet<DBIndex>(), new DynamicIndexSet<DBIndex>(),
-                new TempBenefitFunction<DBIndex>(qinfos, candidateSet.maxInternalId()),
+        final StaticIndexSet hotSet = KarlsHotsetSelector.chooseHotSet(
+                candidateSet, new StaticIndexSet(), new DynamicIndexSet(),
+                new TempBenefitFunction(qinfos, candidateSet.maxInternalId()),
                 maxNumIndexes, false
                 );
 
         return KarlsInteractionSelector.choosePartitions(
                 hotSet,
-                new KarlsIndexPartitions<DBIndex>(hotSet),
-                new TempDoiFunction<DBIndex>(qinfos, candidateSet),
+                new KarlsIndexPartitions(hotSet),
+                new TempDoiFunction(qinfos, candidateSet),
                 maxNumStates
                 );
     }
 
-    private static class TempBenefitFunction<I extends DBIndex> implements BenefitFunction<I> {
+    private static class TempBenefitFunction implements BenefitFunction {
 		IBGBestBenefitFinder finder = new IBGBestBenefitFinder();
 		double[][] bbCache;
 		double[] bbSumCache;
 		int[][] componentId;
 		IndexBitSet[] prevM;
 		IndexBitSet diffM;
-		List<ProfiledQuery<I>> qinfos;
+		List<ProfiledQuery> qinfos;
 
-		TempBenefitFunction(List<ProfiledQuery<I>> qinfos0, int maxInternalId) {
+		TempBenefitFunction(List<ProfiledQuery> qinfos0, int maxInternalId) {
 			qinfos = qinfos0;
 
 			componentId = componentIds(qinfos0, maxInternalId);
@@ -162,12 +162,12 @@ public class WFIT extends Advisor
 			diffM = new IndexBitSet(); // temp bit set
 		}
 
-		private static <I extends DBIndex> int[][] componentIds(List<ProfiledQuery<I>> qinfos, int maxInternalId) {
+		private static int[][] componentIds(List<ProfiledQuery> qinfos, int maxInternalId) {
 			int[][] componentId = new int[qinfos.size()][maxInternalId+1];
 			int q = 0;
-			for (ProfiledQuery<I> qinfo : qinfos) {
+			for (ProfiledQuery qinfo : qinfos) {
 				IndexBitSet[] parts = qinfo.getInteractionBank().stablePartitioning(0);
-				for (I index : qinfo.getCandidateSnapshot()) {
+				for (DBIndex index : qinfo.getCandidateSnapshot()) {
 					int id = index.internalId();
 					componentId[q][id] = -id;
 					for (int p = 0; p < parts.length; p++) {
@@ -186,7 +186,7 @@ public class WFIT extends Advisor
 			int q = 0;
 			double ben = 0;
 			double cache[] = bbCache[id];
-			for (ProfiledQuery<I> qinfo : qinfos) {
+			for (ProfiledQuery qinfo : qinfos) {
 				double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
 				cache[q] = bb;
 				ben += bb;
@@ -200,7 +200,7 @@ public class WFIT extends Advisor
 			int q = 0;
 			double ben = 0;
 			double cache[] = bbCache[id];
-			for (ProfiledQuery<I> qinfo : qinfos) {
+			for (ProfiledQuery qinfo : qinfos) {
 				if (componentId[q][id] == componentId[q][b]) {
 					// interaction, recompute
 					double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
@@ -216,7 +216,7 @@ public class WFIT extends Advisor
 		}
 
         @Override
-		public double apply(I a, IndexBitSet M) {
+		public double apply(DBIndex a, IndexBitSet M) {
 			int id = a.internalId();
 			if (!M.equals(prevM)) {
 				diffM.set(M);
@@ -232,17 +232,17 @@ public class WFIT extends Advisor
 		}
 	}
 
-    private static class TempDoiFunction<I extends DBIndex> implements DoiFunction<I> {
+    private static class TempDoiFunction implements DoiFunction {
 		private InteractionBank bank;
-		TempDoiFunction(List<ProfiledQuery<I>> qinfos, Snapshot<I> candidateSet) {
+		TempDoiFunction(List<ProfiledQuery> qinfos, Snapshot candidateSet) {
 			bank = new InteractionBank(candidateSet);
-			for (I a : candidateSet) {
+			for (DBIndex a : candidateSet) {
 				int id_a = a.internalId();
-				for (I b : candidateSet) {
+				for (DBIndex b : candidateSet) {
 					int id_b = b.internalId();
 					if (id_a < id_b) {
 						double doi = 0;
-						for (ProfiledQuery<I> qinfo : qinfos) {
+						for (ProfiledQuery qinfo : qinfos) {
 							doi += qinfo.getInteractionBank().interactionLevel(a.internalId(), b.internalId());
 						}
 						bank.assignInteraction(a.internalId(), b.internalId(), doi);
@@ -252,7 +252,7 @@ public class WFIT extends Advisor
 		}
 
         @Override
-		public double apply(I a, I b) {
+		public double apply(DBIndex a, DBIndex b) {
 			return bank.interactionLevel(a.internalId(), b.internalId());
 		}
 	}

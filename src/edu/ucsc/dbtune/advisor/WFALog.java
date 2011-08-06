@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
@@ -31,7 +30,7 @@ public class WFALog implements Serializable {
     }
 
 
-    public void add(AnalyzedQuery<?> qinfo, IndexBitSet recommendation, double planCost, double maintCost, double transitionCost, double overhead) {
+    public void add(AnalyzedQuery qinfo, IndexBitSet recommendation, double planCost, double maintCost, double transitionCost, double overhead) {
         Entry e = new Entry();
         e.planCost = planCost;
         e.maintenanceCost = maintCost;
@@ -45,7 +44,7 @@ public class WFALog implements Serializable {
         list.add(e);
     }
 
-    public void add(ProfiledQuery<?> qinfo, 
+    public void add(ProfiledQuery qinfo, 
                     IndexBitSet[] partition, IndexBitSet recommendation,
                     double planCost, double maintCost, double transitionCost, int whatifCount, double overhead) {
         Entry e = new Entry();
@@ -145,10 +144,10 @@ public class WFALog implements Serializable {
      *     overheads
      */
     public static WFALog generateFixed(
-            List<ProfiledQuery<DBIndex>> qinfos,
+            List<ProfiledQuery> qinfos,
             IndexBitSet[]                recs,
-            Snapshot<DBIndex>            snapshot,
-            IndexPartitions<DBIndex>     parts,
+            Snapshot            snapshot,
+            IndexPartitions     parts,
             double[]                     overheads)
     {
         IndexBitSet[] partIndexBitSets;
@@ -165,7 +164,7 @@ public class WFALog implements Serializable {
 
         for (int q = 0; q < queryCount; q++) {
 
-            ProfiledQuery<DBIndex> qinfo     = qinfos.get(q);
+            ProfiledQuery qinfo     = qinfos.get(q);
             IndexBitSet            state     = recs[q];
             IndexBitSet            prevState = q == 0 ? new IndexBitSet() : recs[q-1];
             double                 planCost;
@@ -186,11 +185,11 @@ public class WFALog implements Serializable {
     }
 
     public static WFALog generateDual(
-            List<ProfiledQuery<DBIndex>> qinfos,
+            List<ProfiledQuery> qinfos,
             IndexBitSet[] optRecs,
             IndexBitSet[] wfitRecs,
-            Snapshot<DBIndex> snapshot,
-            IndexPartitions<DBIndex> parts,
+            Snapshot snapshot,
+            IndexPartitions parts,
             double[] overheads)
     {
         IndexBitSet[] partIndexBitSets;
@@ -211,7 +210,7 @@ public class WFALog implements Serializable {
             partIndexBitSets = null;
 
         for (int q = 0; q < queryCount; q++) {
-            ProfiledQuery<DBIndex> qinfo = qinfos.get(q);
+            ProfiledQuery qinfo = qinfos.get(q);
 
             materialized1.set(materialized3);
             
@@ -253,12 +252,12 @@ public class WFALog implements Serializable {
         return log;
     }
 
-    public static WFALog generateDynamic(java.util.List<AnalyzedQuery<DBIndex>> qinfos, IndexBitSet[] recs, double[] overheads) {
+    public static WFALog generateDynamic(java.util.List<AnalyzedQuery> qinfos, IndexBitSet[] recs, double[] overheads) {
         int queryCount = qinfos.size();
         WFALog log = new WFALog();
         
         for (int q = 0; q < queryCount; q++) {
-            AnalyzedQuery<DBIndex> qinfo = qinfos.get(q);
+            AnalyzedQuery qinfo = qinfos.get(q);
             IndexBitSet state = recs[q];
             IndexBitSet prevState = q == 0 ? new IndexBitSet() : recs[q-1];
             double planCost = qinfo.getProfileInfo().planCost(state);

@@ -17,7 +17,6 @@
  */
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.spi.core.Function;
@@ -279,7 +278,7 @@ public class DatabasePackageTest {
 
     @Test
     public void testFixCandidatesScenario() throws Exception {
-        final List<DB2Index> db2CandidateSet = Instances.newList();
+        final List<DBIndex> db2CandidateSet = Instances.newList();
         db2CandidateSet.add(newDB2Index());
         final List<PGIndex>  pgCandidateSet  = Instances.newList();
         pgCandidateSet.add(newPGIndex());
@@ -304,11 +303,11 @@ public class DatabasePackageTest {
     }
 
     @SuppressWarnings({"RedundantTypeArguments"})
-    private static <T extends DBIndex> void checkExplainInfoScenario(DatabaseConnection connection) throws Exception {
+    private static void checkExplainInfoScenario(DatabaseConnection connection) throws Exception {
         final WhatIfOptimizer whatIfOptimizer   = connection.getWhatIfOptimizer();
-        final List<T>  pgCandidateSet  = Instances.newList();
-        final T index1 = Objects.<T>as(newPGIndex(12));
-        final T index2 = Objects.<T>as(newPGIndex(21));
+        final List<DBIndex>  pgCandidateSet  = Instances.newList();
+        final DBIndex index1 = newPGIndex(12);
+        final DBIndex index2 = newPGIndex(21);
 
         pgCandidateSet.add(index1);
         pgCandidateSet.add(index2);

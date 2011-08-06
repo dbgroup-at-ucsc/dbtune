@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
@@ -20,17 +21,17 @@ import static org.junit.Assert.assertThat;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class BcTunerTest {
-    private BcTuner<PGIndex> tuner;
+    private BcTuner tuner;
 
     @Before
     public void setUp() throws Exception {
         final DatabaseConnection connection;
 
         connection  = newPGDatabaseConnectionManager().connect();
-        tuner       = new BcTuner<PGIndex>(
+        tuner       = new BcTuner(
                 connection,
                 generateSnapshot(10),
-                new StaticIndexSet<PGIndex>(
+                new StaticIndexSet(
                         Arrays.asList(
                                 newPGIndex(987, 678, 4.5),
                                 newPGIndex(3, 1234, -4.5)
@@ -41,13 +42,13 @@ public class BcTunerTest {
 
     @Test
     public void testIndexToCreate() throws Exception {
-        final PGIndex c = tuner.chooseIndexToCreate();
+        final DBIndex c = tuner.chooseIndexToCreate();
         assertThat(c, CoreMatchers.<Object>notNullValue());
     }
 
     @Test
     public void testIndexToDrop() throws Exception {
-        final PGIndex c = tuner.chooseIndexToDrop();
+        final DBIndex c = tuner.chooseIndexToDrop();
         assertThat(c, CoreMatchers.<Object>nullValue());
     }
 
@@ -56,13 +57,13 @@ public class BcTunerTest {
         tuner = null;
     }
 
-    private static PGIndex newPGIndex(int indexId, int schemaId, double creationcost){
+    private static DBIndex newPGIndex(int indexId, int schemaId, double creationcost){
        return new PGIndex(schemaId, true, generateColumns(3), generateDescVals(3), indexId, 3.0, creationcost, "Create");
     }
 
 
-    private static Snapshot<PGIndex> generateSnapshot(int howmany) throws Exception {
-        final CandidatePool<PGIndex> c = new CandidatePool<PGIndex>();
+    private static Snapshot generateSnapshot(int howmany) throws Exception {
+        final CandidatePool c = new CandidatePool();
         for(int i = 0; i < howmany; i++){
             c.addIndex(newPGIndex(i, (i % 3 == 0 ? 1234 : 4321), (i == 3 ? -4.5 : 4.5)));
         }

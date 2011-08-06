@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.core.DBTuneInstances;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.ExplainInfo;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
@@ -27,16 +27,16 @@ import static org.junit.Assert.assertThat;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class WorkloadProfilerTest {
-    private WorkloadProfilerImpl<PGIndex> nonConcurrentProfiler;
-    private WorkloadProfilerImpl<PGIndex> concurrentProfiler;
+    private WorkloadProfilerImpl nonConcurrentProfiler;
+    private WorkloadProfilerImpl concurrentProfiler;
 
     @Before
     public void setUp() throws Exception {
         final DatabaseConnection  connection;
 
         connection            = newPGDatabaseConnectionManager().connect();
-        final CandidatePool<PGIndex> pool = candidatePool(new CandidatePool<PGIndex>(), 5, 20);
-        nonConcurrentProfiler = new WorkloadProfilerImpl<PGIndex>(
+        final CandidatePool pool = candidatePool(new CandidatePool(), 5, 20);
+        nonConcurrentProfiler = new WorkloadProfilerImpl(
                 connection,
                 pool,
                 true
@@ -66,24 +66,24 @@ public class WorkloadProfilerTest {
             }
         };
 
-        concurrentProfiler    = new WorkloadProfilerImpl<PGIndex>(
+        concurrentProfiler    = new WorkloadProfilerImpl(
                 connection,
                 analysis,
                 construction,
-                new CandidatePool<PGIndex>(),
+                new CandidatePool(),
                 true
         );
     }
 
     @Test
     public void testProcessVote() throws Exception {
-        final PGIndex index67 = newPGIndex(67, 65);
-        final PGIndex index68 = newPGIndex(68, 65);
+        final DBIndex index67 = newPGIndex(67, 65);
+        final DBIndex index68 = newPGIndex(68, 65);
 
         // Note: the internal id of any new index with positive vote added to the candidate pool
         // will be changed to the next maximum internal id stored in the candidate pool
-        final Snapshot<PGIndex> positiveSnapshot = nonConcurrentProfiler.processVote(index67, true);
-        final Snapshot<PGIndex> negativeSnapshot = nonConcurrentProfiler.processVote(index68, false);
+        final Snapshot positiveSnapshot = nonConcurrentProfiler.processVote(index67, true);
+        final Snapshot negativeSnapshot = nonConcurrentProfiler.processVote(index68, false);
 
         assertThat(positiveSnapshot.findIndexId(20), equalTo(newPGIndex(20, 65)));
         assertThat(negativeSnapshot.findIndexId(21), CoreMatchers.<Object>nullValue());
@@ -92,7 +92,7 @@ public class WorkloadProfilerTest {
 
     @Ignore @Test
     public void testProcessQuery() throws Exception {
-        final ProfiledQuery<PGIndex> pq = concurrentProfiler.processQuery("SELECT * FROM R;");
+        final ProfiledQuery pq = concurrentProfiler.processQuery("SELECT * FROM R;");
         assertThat(pq, CoreMatchers.<Object>notNullValue());
 
         final ExplainInfo info                      = pq.getExplainInfo();
@@ -108,7 +108,7 @@ public class WorkloadProfilerTest {
         assertThat(Double.compare(maintenanceCostOfIndex2, 3.0) == 0.0, is(false));
         assertThat(pq.getWhatIfCount(), equalTo(2));
 
-        final Snapshot<PGIndex> snapshot = pq.getCandidateSnapshot();
+        final Snapshot snapshot = pq.getCandidateSnapshot();
         assertThat(snapshot.maxInternalId(), equalTo(2));
 
         final IndexBenefitGraph graph = pq.getIndexBenefitGraph();
@@ -121,7 +121,7 @@ public class WorkloadProfilerTest {
         concurrentProfiler    = null;
     }
 
-    private static CandidatePool<PGIndex> candidatePool(CandidatePool<PGIndex> pool, int interval, int howmany) throws Exception {
+    private static CandidatePool candidatePool(CandidatePool pool, int interval, int howmany) throws Exception {
         int count = 0;
         for(int idx = 0; idx < howmany; idx++){
             if(idx == interval){
@@ -134,7 +134,7 @@ public class WorkloadProfilerTest {
     }
 
 
-    private static PGIndex newPGIndex(int indexId, int schemaId){
+    private static DBIndex newPGIndex(int indexId, int schemaId){
        return DBTuneInstances.newPGIndex(indexId, schemaId, generateColumns(3), generateDescVals(3));
     }
 

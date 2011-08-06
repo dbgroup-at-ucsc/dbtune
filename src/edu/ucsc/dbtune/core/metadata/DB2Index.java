@@ -137,7 +137,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
         hashCodeCache     = meta.hashCode();
     }
 
-    public static class DB2IndexSet extends DBIndexSet<DB2Index> {
+    public static class DB2IndexSet extends DBIndexSet {
         private static final long serialVersionUID = DBIndexSet.serialVersionUID;
     }
 

@@ -18,8 +18,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.metadata.DB2Index;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.DBIndex;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -35,8 +34,8 @@ import static org.junit.Assert.assertThat;
 public class StaticIndexSetTest {
     @Test
     public void testBasicScenarioOfQueue() throws Exception {
-        final StaticIndexSet<PGIndex> sidx1 = new StaticIndexSet<PGIndex>(StaticIndexSetTest.<PGIndex>populateIndexSet(1000, true));
-        final StaticIndexSet<DB2Index> sidx2 = new StaticIndexSet<DB2Index>(StaticIndexSetTest.<DB2Index>populateIndexSet(1, false));
+        final StaticIndexSet sidx1 = new StaticIndexSet(StaticIndexSetTest.populateIndexSet(1000, true));
+        final StaticIndexSet sidx2 = new StaticIndexSet(StaticIndexSetTest.populateIndexSet(1, false));
 
         assertThat(sidx1.isEmpty() && sidx2.isEmpty(), is(false));
         assertThat(sidx1.size(), equalTo(1000));
@@ -45,7 +44,7 @@ public class StaticIndexSetTest {
 
     @Test
     public void testExistanceOfIndex() throws Exception {
-        final StaticIndexSet<PGIndex> indexSet = new StaticIndexSet<PGIndex>(StaticIndexSetTest.<PGIndex>populateIndexSet(10, true));
+        final StaticIndexSet indexSet = new StaticIndexSet(StaticIndexSetTest.populateIndexSet(10, true));
         System.out.println(indexSet);
         assertThat(indexSet.contains(DBTuneInstances.newPGIndex(3, 123, DBTuneInstances.generateColumns(3), DBTuneInstances.generateDescVals(3))), is(true));
         assertThat(indexSet.size(), equalTo(10));
@@ -53,10 +52,10 @@ public class StaticIndexSetTest {
 
     @Test
     public void testWeirdSideEffect() throws Exception {
-        final StaticIndexSet<PGIndex> indexSet = new StaticIndexSet<PGIndex>(StaticIndexSetTest.<PGIndex>populateIndexSet(10, true));
-        for(PGIndex each : indexSet){}
+        final StaticIndexSet indexSet = new StaticIndexSet(StaticIndexSetTest.populateIndexSet(10, true));
+        for(DBIndex each : indexSet){}
         boolean again = false;
-        for(PGIndex each : indexSet){
+        for(DBIndex each : indexSet){
             again |= true;
         }
 
@@ -64,10 +63,10 @@ public class StaticIndexSetTest {
     }
 
 
-    private static <T>List<T> populateIndexSet(int size, boolean postgres){
-        final List<T> o = new ArrayList<T>();
+    private static List<DBIndex> populateIndexSet(int size, boolean postgres){
+        final List<DBIndex> o = new ArrayList<DBIndex>();
         for(int idx = 0; idx < size; idx++){
-            o.add((T) (postgres ? DBTuneInstances.newPGIndex(idx, 123, DBTuneInstances.generateColumns(3), DBTuneInstances.generateDescVals(3)) : DBTuneInstances.newDB2Index()));
+            o.add((DBIndex) (postgres ? DBTuneInstances.newPGIndex(idx, 123, DBTuneInstances.generateColumns(3), DBTuneInstances.generateDescVals(3)) : DBTuneInstances.newDB2Index()));
         }
         return o;
     }

@@ -11,18 +11,18 @@ import java.util.Map;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class KarlsIndexStatistics<I extends DBIndex> implements BenefitFunction<I>, DoiFunction<I> {
+public class KarlsIndexStatistics implements BenefitFunction, DoiFunction {
 	double currentTimeStamp = 0;
-	Map<I,Window> benefitWindows = new HashMap<I,Window>();
+	Map<DBIndex,Window> benefitWindows = new HashMap<DBIndex,Window>();
 	Map<DBIndexPair,Window> doiWindows = new HashMap<DBIndexPair,Window>();
 	DBIndexPair tempPair = new DBIndexPair(null, null); // for lookups
 
 	public KarlsIndexStatistics() {
 	}
 
-	public void addQuery(ProfiledQuery<I> qinfo, DynamicIndexSet<?> matSet) {
-		Iterable<I> candSet = qinfo.getCandidateSnapshot();
-		for (I index : candSet) {
+	public void addQuery(ProfiledQuery qinfo, DynamicIndexSet matSet) {
+		Iterable<DBIndex> candSet = qinfo.getCandidateSnapshot();
+		for (DBIndex index : candSet) {
 			double bestBenefit = qinfo.getInteractionBank().bestBenefit(index.internalId())
 								    - qinfo.getExplainInfo().getIndexMaintenanceCost(index);
 			if (bestBenefit != 0) {
@@ -37,9 +37,9 @@ public class KarlsIndexStatistics<I extends DBIndex> implements BenefitFunction<
 		}
 
 		// not the most efficient double loop, but an ok compromise for now
-		for (I a : candSet) {
+		for (DBIndex a : candSet) {
 			int id1 = a.internalId();
-			for (I b : candSet) {
+			for (DBIndex b : candSet) {
 				int id2 = b.internalId();
 				if (id1 >= id2)
 					continue;
@@ -64,7 +64,7 @@ public class KarlsIndexStatistics<I extends DBIndex> implements BenefitFunction<
 		currentTimeStamp += executionCost;
 	}
 
-	public double benefit(I index, IndexBitSet M) {
+	public double benefit(DBIndex index, IndexBitSet M) {
 		if (currentTimeStamp == 0)
 			return 0;
 
@@ -75,7 +75,7 @@ public class KarlsIndexStatistics<I extends DBIndex> implements BenefitFunction<
 			return window.maxRate(currentTimeStamp);
 	}
 
-	public double doi(I a, I b) {
+	public double doi(DBIndex a, DBIndex b) {
 		if (currentTimeStamp == 0)
 			return 0;
 
@@ -89,11 +89,11 @@ public class KarlsIndexStatistics<I extends DBIndex> implements BenefitFunction<
 			return window.maxRate(currentTimeStamp);
 	}
 
-  @Override public double apply(I arg, IndexBitSet m) {
+  @Override public double apply(DBIndex arg, IndexBitSet m) {
     return benefit(arg, m);
   }
 
-  @Override public double apply(I a, I b) {
+  @Override public double apply(DBIndex a, DBIndex b) {
     return doi(a, b);
   }
 
@@ -160,9 +160,9 @@ public class KarlsIndexStatistics<I extends DBIndex> implements BenefitFunction<
 	}
 
 	private class DBIndexPair {
-		I a, b;
+		DBIndex a, b;
 
-		DBIndexPair(I index1, I index2) {
+		DBIndexPair(DBIndex index1, DBIndex index2) {
 			a = index1;
 			b = index2;
 		}

@@ -24,18 +24,18 @@ import edu.ucsc.dbtune.core.DBIndex;
 
 import java.util.Map;
 
-public class BcIndexPool<I extends DBIndex> {
-	Map<Integer, BcIndexInfo<I>> map;
+public class BcIndexPool {
+	Map<Integer, BcIndexInfo> map;
 
     /**
      * construct a {@code BcIndexPool} object from a hot set of indexes.
      * @param hotSet
      *      a hot set of indexes.
      */
-	public BcIndexPool(StaticIndexSet<I> hotSet) {
+	public BcIndexPool(StaticIndexSet hotSet) {
 		map = Instances.newHashMap(hotSet.size());
-		for (I idx : hotSet) {
-			map.put(idx.internalId(), new BcIndexInfo<I>());
+		for (DBIndex idx : hotSet) {
+			map.put(idx.internalId(), new BcIndexInfo());
 		}
 	}
 
@@ -45,13 +45,13 @@ public class BcIndexPool<I extends DBIndex> {
      *      index's id.
      * @return the {@code BcIndexInfo} matching an index's id.
      */
-	public BcIndexInfo<I> get(int id) {
+	public BcIndexInfo get(int id) {
 		return map.get(id);
 	}
 
     @Override
     public String toString() {
-        return new ToStringBuilder<BcIndexPool<I>>(this)
+        return new ToStringBuilder<BcIndexPool>(this)
                .add("idToBcIndexInfo map", map)
                .toString();
     }

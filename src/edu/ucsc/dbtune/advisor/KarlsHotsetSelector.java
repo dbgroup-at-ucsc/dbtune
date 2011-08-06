@@ -11,25 +11,25 @@ import edu.ucsc.dbtune.util.MinQueue;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class KarlsHotsetSelector {
-	public static <I extends DBIndex> StaticIndexSet<I>
-	chooseHotSet(Snapshot<I> candSet,
-	             StaticIndexSet<I> oldHotSet,
-	             DynamicIndexSet<I> requiredIndexSet,
-	             BenefitFunction<I> benefitFunc,
+	public static StaticIndexSet
+	chooseHotSet(Snapshot candSet,
+	             StaticIndexSet oldHotSet,
+	             DynamicIndexSet requiredIndexSet,
+	             BenefitFunction benefitFunc,
 	             int maxSize,
 	             boolean debugOutput) {
 		IndexBitSet emptyConfig = new IndexBitSet();
 
 		int numToChoose = maxSize - requiredIndexSet.size();
 		if (numToChoose <= 0) {
-			return new StaticIndexSet<I>(requiredIndexSet);
+			return new StaticIndexSet(requiredIndexSet);
 		}
 		else {
-			MinQueue<I> topSet = new MinQueue<I>(numToChoose);
+			MinQueue<DBIndex> topSet = new MinQueue<DBIndex>(numToChoose);
 
 			if (debugOutput)
 				System.out.println("choosing hot set:");
-			for (I index : candSet) {
+			for (DBIndex index : candSet) {
 				if (requiredIndexSet.contains(index))
 					continue;
 
@@ -46,44 +46,44 @@ public class KarlsHotsetSelector {
 				}
 			}
 
-			java.util.ArrayList<I> list = new java.util.ArrayList<I>();
-			for (I index : requiredIndexSet)
+			java.util.ArrayList<DBIndex> list = new java.util.ArrayList<DBIndex>();
+			for (DBIndex index : requiredIndexSet)
 				list.add(index);
 			while (topSet.size() > 0)
 				list.add(topSet.deleteMin());
 
-			return new StaticIndexSet<I>(list);
+			return new StaticIndexSet(list);
 		}
 	}
 
-	public static <I extends DBIndex> StaticIndexSet<I>
-	chooseHotSetGreedy(Snapshot<I> candSet,
-	             StaticIndexSet<I> oldHotSet,
-	             DynamicIndexSet<I> requiredIndexSet,
-	             BenefitFunction<I> benefitFunc,
+	public static StaticIndexSet
+	chooseHotSetGreedy(Snapshot candSet,
+	             StaticIndexSet oldHotSet,
+	             DynamicIndexSet requiredIndexSet,
+	             BenefitFunction benefitFunc,
 	             int maxSize,
 	             boolean debugOutput) {
 
 		int numToChoose = maxSize - requiredIndexSet.size();
 		if (numToChoose <= 0) {
-			return new StaticIndexSet<I>(requiredIndexSet);
+			return new StaticIndexSet(requiredIndexSet);
 		}
 		else {
-			java.util.ArrayList<I> list = new java.util.ArrayList<I>();
+			java.util.ArrayList<DBIndex> list = new java.util.ArrayList<DBIndex>();
 			IndexBitSet M = new IndexBitSet();
 
 			// add required indexes
-			for (I index : requiredIndexSet) {
+			for (DBIndex index : requiredIndexSet) {
 				list.add(index);
 				M.set(index.internalId());
 			}
 
 			// add top indexes
 			for (int i = 0; i < numToChoose; i++) {
-				I bestIndex = null;
+				DBIndex bestIndex = null;
 				double bestScore = Double.NEGATIVE_INFINITY;
 
-				for (I index : candSet) {
+				for (DBIndex index : candSet) {
 					if (M.get(index.internalId()))
 						continue;
 
@@ -106,7 +106,7 @@ public class KarlsHotsetSelector {
 				}
 			}
 
-			return new StaticIndexSet<I>(list);
+			return new StaticIndexSet(list);
 		}
 	}
 }

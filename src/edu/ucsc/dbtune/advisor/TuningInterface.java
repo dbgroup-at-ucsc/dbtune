@@ -11,9 +11,9 @@ import java.sql.SQLException;
 /**
  * Index Tuning Service.
  */
-public class TuningInterface <I extends DBIndex> {
+public class TuningInterface  {
     private final DatabaseConnection connection;
-    private final Scheduler<I>       taskScheduler;
+    private final Scheduler       taskScheduler;
 
     /**
      * construct an index tuning service.
@@ -33,7 +33,7 @@ public class TuningInterface <I extends DBIndex> {
     {
         this(
             connection,
-            new TaskScheduler<I>(
+            new TaskScheduler(
                 connection,
                 profilingQueueCapacity,
                 selectionQueueCapacity,
@@ -52,7 +52,7 @@ public class TuningInterface <I extends DBIndex> {
      * @param taskScheduler
      *      a {@link Scheduler task scheduler}
      */
-    TuningInterface(DatabaseConnection connection, Scheduler<I> taskScheduler){
+    TuningInterface(DatabaseConnection connection, Scheduler taskScheduler){
         this.connection    = connection;
         this.taskScheduler = taskScheduler;
     }
@@ -64,7 +64,7 @@ public class TuningInterface <I extends DBIndex> {
      * @return
      *      a {@link Snapshot} of candidate indexes.
      */
-    public Snapshot<I> addColdCandidate(I index) {
+    public Snapshot addColdCandidate(DBIndex index) {
         return taskScheduler.addColdCandidate(index);
     }
 
@@ -77,7 +77,7 @@ public class TuningInterface <I extends DBIndex> {
      * @throws SQLException
      *      unable to analyze sql due to the stated reasons.
      */
-    public AnalyzedQuery<I> analyzeSQL(String sql) throws SQLException {
+    public AnalyzedQuery analyzeSQL(String sql) throws SQLException {
         sql = DBUtilities.trimSqlStatement(sql);
         return taskScheduler.analyzeQuery(sql);
     }
@@ -89,7 +89,7 @@ public class TuningInterface <I extends DBIndex> {
      * @return
      *      transition cost due to the creation of the index.
      */
-    public double createIndex(I index) {
+    public double createIndex(DBIndex index) {
         taskScheduler.positiveVote(index);
         return taskScheduler.create(index);
     }
@@ -101,7 +101,7 @@ public class TuningInterface <I extends DBIndex> {
      * @return
      *      cost due to the dropping of the index.
      */
-    public double dropIndex(I index) {
+    public double dropIndex(DBIndex index) {
         taskScheduler.negativeVote(index);
         return taskScheduler.drop(index);
     }
@@ -115,7 +115,7 @@ public class TuningInterface <I extends DBIndex> {
      * @throws SQLException
      *      unable to execute profiled query.
      */
-    public double executeProfiledQuery(ProfiledQuery<I> qinfo) throws SQLException {
+    public double executeProfiledQuery(ProfiledQuery qinfo) throws SQLException {
         return taskScheduler.executeProfiledQuery(qinfo);
     }
 
@@ -131,9 +131,9 @@ public class TuningInterface <I extends DBIndex> {
      * @return
      *      a list of recommended index.
      */
-    public DBIndexSet<I> getRecommendation() {
-        DBIndexSet<I> indexSet = new DBIndexSet<I>();
-        for (I index : taskScheduler.getRecommendation()) {
+    public DBIndexSet getRecommendation() {
+        DBIndexSet indexSet = new DBIndexSet();
+        for (DBIndex index : taskScheduler.getRecommendation()) {
             indexSet.add(index);
         }
         return indexSet;
@@ -144,7 +144,7 @@ public class TuningInterface <I extends DBIndex> {
      * @param index
      *      index of interest.
      */
-    public void negativeVote(I index) {
+    public void negativeVote(DBIndex index) {
         taskScheduler.negativeVote(index);
     }
 
@@ -157,7 +157,7 @@ public class TuningInterface <I extends DBIndex> {
      * @throws SQLException
      *      unable to profile sql due to the stated reasons.
      */
-    public ProfiledQuery<I> profileSQL(String sql) throws SQLException {
+    public ProfiledQuery profileSQL(String sql) throws SQLException {
         sql = DBUtilities.trimSqlStatement(sql);
         return taskScheduler.profileQuery(sql);
     }
@@ -167,7 +167,7 @@ public class TuningInterface <I extends DBIndex> {
      * @param index
      *      index of interest.
      */
-    public void positiveVote(I index) {
+    public void positiveVote(DBIndex index) {
         taskScheduler.positiveVote(index);
     }    
     

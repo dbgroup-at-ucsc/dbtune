@@ -38,7 +38,7 @@ public class InteractionBank implements Serializable {
      * @param candidateSet
      *      an immutable snapshot of the set of candidate indexes.
      */
-	public InteractionBank(Snapshot<?> candidateSet) {
+	public InteractionBank(Snapshot candidateSet) {
 		indexCount = candidateSet.maxInternalId() + 1;
 		bestBenefit = new double[indexCount];
 		lowerBounds = new double[indexCount][];

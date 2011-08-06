@@ -120,12 +120,12 @@ public class WFITTestFunctional
         log(reps == 1 ? "Real Test start...." : "Warm-up phase start....");
 
         for(int warmupIdx = 0; warmupIdx < reps; warmupIdx++){
-            List<ProfiledQuery<DBIndex>>                 qinfos;
-            CandidatePool<DBIndex>                       pool;
-            Snapshot<DBIndex>                            snapshot;
-            KarlsIndexPartitions<DBIndex>                partitions;
-            KarlsWorkFunctionAlgorithm<DBIndex>          wfa;
-            KarlsWorkFunctionAlgorithm.WfaTrace<DBIndex> trace;
+            List<ProfiledQuery>                 qinfos;
+            CandidatePool                       pool;
+            Snapshot                            snapshot;
+            KarlsIndexPartitions                partitions;
+            KarlsWorkFunctionAlgorithm          wfa;
+            KarlsWorkFunctionAlgorithm.WfaTrace trace;
 
             KarlsWFALog   log;
             IndexBitSet[] wfitSchedule;
@@ -158,14 +158,14 @@ public class WFITTestFunctional
             exportWfit        = true; // in the WFIT mode this value is true.
             exportOptWfit     = false;
             exportOptWfitMins = false;
-            wfa               = new KarlsWorkFunctionAlgorithm<DBIndex>(partitions, exportWfit);
+            wfa               = new KarlsWorkFunctionAlgorithm(partitions, exportWfit);
 
             // only one subset for this small example
             assertThat(partitions.subsetCount(), is(1));
 
             for (int q = 0; q < wfitSchedule.length; q++) {
 
-                ProfiledQuery<DBIndex> query = qinfos.get(q);
+                ProfiledQuery query = qinfos.get(q);
 
                 if(warmupIdx == 0){
                     log("Query " + q);
@@ -251,21 +251,21 @@ public class WFITTestFunctional
         log(reps == 1 ? "Real Test finished...." : "Warm-up phase finished....");
     }
 
-    private static KarlsIndexPartitions<DBIndex> getIndexPartitions(
-            Snapshot<DBIndex>            candidateSet,
-            List<ProfiledQuery<DBIndex>> qinfos,
+    private static KarlsIndexPartitions getIndexPartitions(
+            Snapshot            candidateSet,
+            List<ProfiledQuery> qinfos,
             int                          maxNumIndexes,
             int                          maxNumStates )
     {
-        final StaticIndexSet<DBIndex> hotSet = KarlsHotsetSelector.chooseHotSet(
-                candidateSet, new StaticIndexSet<DBIndex>(), new DynamicIndexSet<DBIndex>(),
+        final StaticIndexSet hotSet = KarlsHotsetSelector.chooseHotSet(
+                candidateSet, new StaticIndexSet(), new DynamicIndexSet(),
                 DBTuneInstances.newTempBenefitFunction(qinfos, candidateSet.maxInternalId()),
                 maxNumIndexes, false
                 );
 
         return KarlsInteractionSelector.choosePartitions(
                 hotSet,
-                new KarlsIndexPartitions<DBIndex>(hotSet),
+                new KarlsIndexPartitions(hotSet),
                 DBTuneInstances.newTempDoiFunction(qinfos, candidateSet),
                 maxNumStates
                 );
@@ -275,11 +275,11 @@ public class WFITTestFunctional
         Console.streaming().log(message);
     }
 
-    private static CandidatePool<DBIndex> getCandidates(DatabaseConnection con, String workloadFilename)
+    private static CandidatePool getCandidates(DatabaseConnection con, String workloadFilename)
         throws SQLException, IOException
     {
-        CandidatePool<DBIndex> pool    = new CandidatePool<DBIndex>();
-        File workloadFile              = new File(workloadFilename);
+        CandidatePool     pool         = new CandidatePool();
+        File              workloadFile = new File(workloadFilename);
         Iterable<DBIndex> candidateSet;
 
         candidateSet = con.getIndexExtractor().recommendIndexes(workloadFile);
@@ -291,19 +291,19 @@ public class WFITTestFunctional
         return pool;
     }
 
-    private static List<ProfiledQuery<DBIndex>> getOfflineProfiledQueries(
-            DatabaseConnection con, CandidatePool<DBIndex> pool, String workloadFilename)
+    private static List<ProfiledQuery> getOfflineProfiledQueries(
+            DatabaseConnection con, CandidatePool pool, String workloadFilename)
         throws IOException
     {
-        WorkloadProfiler<DBIndex> profiler = new WorkloadProfilerImpl<DBIndex>(con, pool, false);
+        WorkloadProfiler profiler = new WorkloadProfilerImpl(con, pool, false);
 
         // get an IBG etc for each statement
-        List<ProfiledQuery<DBIndex>> qinfos;
+        List<ProfiledQuery> qinfos;
         List<String>                 lines;
 
         lines = Files.getLines(new File(workloadFilename));
 
-        qinfos = new ArrayList<ProfiledQuery<DBIndex>>();
+        qinfos = new ArrayList<ProfiledQuery>();
 
         for (String sql : lines) {
             qinfos.add(profiler.processQuery(DBUtilities.trimSqlStatement(sql)));

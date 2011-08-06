@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.util.IndexBitSet;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface StatisticsFunction<I extends DBIndex> {
+public interface StatisticsFunction {
     /**
      * adds a {@link ProfiledQuery} given a {@link DynamicIndexSet set} of
      * materialized {@link DBIndex indexes}.
@@ -32,7 +32,7 @@ public interface StatisticsFunction<I extends DBIndex> {
      * @param matSet
      *    a {@link DynamicIndexSet set} of materialized indexes.
      */
-    void addQuery(ProfiledQuery<I> queryInfo, DynamicIndexSet<?> matSet);
+    void addQuery(ProfiledQuery queryInfo, DynamicIndexSet matSet);
 
     /**
      * applies the {@link DoiFunction} to two indexes.
@@ -43,7 +43,7 @@ public interface StatisticsFunction<I extends DBIndex> {
      * @return
      *      the result of the {@code doi}'s execution.
      */
-    double doi(I a, I b);
+    double doi(DBIndex a, DBIndex b);
 
     /**
      * Applies the function to an index object of type {@code I} and to an index configuration,
@@ -54,5 +54,5 @@ public interface StatisticsFunction<I extends DBIndex> {
      * @param m the index configuration.
      * @return the benefit value of the index object given an index configuration.
      */
-    double benefit(I a, IndexBitSet m);
+    double benefit(DBIndex a, IndexBitSet m);
 }

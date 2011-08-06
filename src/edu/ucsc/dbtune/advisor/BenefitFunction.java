@@ -18,11 +18,12 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.core.DBIndex;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface BenefitFunction<I> {
+public interface BenefitFunction {
     /**
      * Applies the function to an index object of type {@code I} and to an index configuration,
      * resulting in an object of type {@code double}, which an the benefit value of the index
@@ -32,5 +33,5 @@ public interface BenefitFunction<I> {
      * @param m the index configuration.
      * @return the benefit value of the index object given an index configuration.
      */
-    double apply(I arg, IndexBitSet m);
+    double apply(DBIndex arg, IndexBitSet DBIndex);
 }

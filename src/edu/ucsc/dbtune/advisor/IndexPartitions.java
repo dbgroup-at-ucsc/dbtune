@@ -31,19 +31,19 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
-public class IndexPartitions<I extends DBIndex> {
+public class IndexPartitions {
     private static final int MAXIMUM_INDEX_COUNT = Integer.MAX_VALUE / 2;
 
-    private final int               indexCount;
-    private       int               stateCount;
-    private       SubsetList<I>     subsets;
+    private final int                 indexCount;
+    private       int                 stateCount;
+    private       SubsetList          subsets;
 
     /**
      * construct an {@link IndexPartitions} object given a set of static indexes.
      * @param indexes
      *      a {@link StaticIndexSet set of static indexes}.
      */
-    public IndexPartitions(StaticIndexSet<I> indexes) {
+    public IndexPartitions(StaticIndexSet indexes) {
         Checks.checkArgument(
                 indexes.size() <= MAXIMUM_INDEX_COUNT,
                 "Cannot create partitions for " + indexes.size() + "indexes"
@@ -51,9 +51,9 @@ public class IndexPartitions<I extends DBIndex> {
 
         indexCount  = indexes.size();
         stateCount  = indexes.size() * 2;
-        subsets     = new SubsetList<I>();
-        for (I index : indexes) {
-            subsets.add(new Subset<I>(index));
+        subsets     = new SubsetList();
+        for (DBIndex index : indexes) {
+            subsets.add(new Subset(index));
         }
     }
 
@@ -65,20 +65,20 @@ public class IndexPartitions<I extends DBIndex> {
      * @param partitionBitSets
      *     an array of partitions of indexes represented as bitsets.
      */
-    public IndexPartitions(Snapshot<I> snapshot, IndexBitSet[] partitionBitSets) {
+    public IndexPartitions(Snapshot snapshot, IndexBitSet[] partitionBitSets) {
         // create subsets
         int indexCount0 = 0;
         int stateCount0 = 0;
-        subsets = new SubsetList<I>();
+        subsets = new SubsetList();
         for (IndexBitSet eachBitSet : partitionBitSets) {
-            Subset<I> subset = null;
+            Subset subset = null;
             for (int i = eachBitSet.nextSetBit(0); i >= 0; i = eachBitSet.nextSetBit(i+1)) {
-                I idx = snapshot.findIndexId(i);
+                DBIndex idx = snapshot.findIndexId(i);
                 if (idx != null) {
                     if (subset != null){
-                        subset = new Subset<I>(subset, new Subset<I>(idx));
+                        subset = new Subset(subset, new Subset(idx));
                     } else{
-                        subset = new Subset<I>(idx);
+                        subset = new Subset(idx);
                     }
                 }
             }
@@ -115,7 +115,7 @@ public class IndexPartitions<I extends DBIndex> {
             return false;
         }
 
-        IndexPartitions<?> other = (IndexPartitions<?>) o1;
+        IndexPartitions other = (IndexPartitions) o1;
         return !(indexCount != other.indexCount || stateCount != other.stateCount)
             && subsets.equals(other.subsets);
     }
@@ -128,7 +128,7 @@ public class IndexPartitions<I extends DBIndex> {
      * @return
      *      a {@code subset} of indexes
      */
-    public final Subset<I> get(int i) {
+    public final Subset get(int i) {
         return subsets.get(i);
     }
 
@@ -146,13 +146,13 @@ public class IndexPartitions<I extends DBIndex> {
 
     /**
      * merges two subsets A and B in which A contains an index <em>i1</em> and B contains an
-     * index <em>i2</em>.
+	 * index <em>i2</em>.
      * @param i1
      *      first index object.
      * @param i2
      *      second index object.
      */
-    public final void merge(I i1, I i2) {
+    public final void merge(DBIndex i1, DBIndex i2) {
         int s1 = subsets.whichSubset(i1);
         int s2 = subsets.whichSubset(i2);
         merge(s1, s2);
@@ -171,9 +171,9 @@ public class IndexPartitions<I extends DBIndex> {
             return;
         }
 
-        Subset<I> subset1   = subsets.get(s1);
-        Subset<I> subset2   = subsets.get(s2);
-        Subset<I> newSubset = new Subset<I>(subset1, subset2);
+        Subset subset1   = subsets.get(s1);
+        Subset subset2   = subsets.get(s2);
+        Subset newSubset = new Subset(subset1, subset2);
 
         // calculate & check new state count
         long oldStateCount = stateCount;
@@ -207,7 +207,7 @@ public class IndexPartitions<I extends DBIndex> {
      * @return
      *      the <em>theoretical</em> plan cost
      */
-    public <J extends DBIndex> double theoreticalCost(ProfiledQuery<J> qinfo, IndexBitSet state, IndexBitSet scratch) {
+    public double theoreticalCost(ProfiledQuery qinfo, IndexBitSet state, IndexBitSet scratch) {
         // Let's override the nonsense for now
         return qinfo.planCost(state);
     }
@@ -222,7 +222,7 @@ public class IndexPartitions<I extends DBIndex> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<IndexPartitions<I>>(this)
+        return new ToStringBuilder<IndexPartitions>(this)
             .add("indexCount", indexCount())
             .add("stateCount", wfaStateCount())
             .add("subsets count", subsetCount())
@@ -232,15 +232,14 @@ public class IndexPartitions<I extends DBIndex> {
 
     /**
      * A subset of indexes.
-     * @param <I> the {@link DBIndex} type.
      */
-    public static class Subset<I extends DBIndex> implements Iterable<I> {
+    public static class Subset implements Iterable<DBIndex> {
         private final int sumIndexIds;
         private final int minIndexIds;
 
         private int[] indexIds;
 
-        private TreeMap<Integer,I> map = new TreeMap<Integer,I>();
+        private TreeMap<Integer,DBIndex> map = new TreeMap<Integer,DBIndex>();
 
         /**
          * construct a subset of indexes. This object will maintain a set of attributes describing
@@ -248,7 +247,7 @@ public class IndexPartitions<I extends DBIndex> {
          * @param index
          *      the first index to be stored in the subset object.
          */
-        Subset(I index) {
+        Subset(DBIndex index) {
             map.put(index.internalId(), index);
             indexIds = new int[] { index.internalId() };
             sumIndexIds = minIndexIds = index.internalId();
@@ -261,14 +260,14 @@ public class IndexPartitions<I extends DBIndex> {
          * @param s2
          *      second subset.
          */
-        Subset(Subset<I> s1, Subset<I> s2) {
-            for (I idx : s1)
+        Subset(Subset s1, Subset s2) {
+            for (DBIndex idx : s1)
                 map.put(idx.internalId(), idx);
-            for (I idx : s2)
+            for (DBIndex idx : s2)
                 map.put(idx.internalId(), idx);
 
             indexIds = new int[map.size()];
-            { int i = 0; for (I idx : map.values()) indexIds[i++] = idx.internalId(); }
+            { int i = 0; for (DBIndex idx : map.values()) indexIds[i++] = idx.internalId(); }
 
             sumIndexIds = s1.sumIndexIds + s2.sumIndexIds;
             minIndexIds = Math.min(s1.minIndexIds, s2.minIndexIds);
@@ -281,7 +280,7 @@ public class IndexPartitions<I extends DBIndex> {
          * @return {@code true} if some index is contained in this subset,
          *      {@code false} otherwise.
          */
-        public final boolean contains(I index) {
+        public final boolean contains(DBIndex index) {
             return map.containsKey(index.internalId());
         }
 
@@ -312,7 +311,7 @@ public class IndexPartitions<I extends DBIndex> {
             return 1L << size();
         }
 
-        public Iterator<I> iterator() {
+        public Iterator<DBIndex> iterator() {
             return map.values().iterator();
         }
 
@@ -323,8 +322,8 @@ public class IndexPartitions<I extends DBIndex> {
          * @return
          *      {@code true} if both subsets overlaps, {@code false} otherwise.
          */
-        public boolean overlaps(Subset<I> other) {
-            for (I x : map.values()) {
+        public boolean overlaps(Subset other) {
+            for (DBIndex x : map.values()) {
                 if (other.contains(x)){
                     return true;
                 }
@@ -336,7 +335,7 @@ public class IndexPartitions<I extends DBIndex> {
         public boolean equals(Object o) {
             if (!(o instanceof IndexPartitions.Subset))
                 return false;
-            Subset<?> other = (Subset<?>) o;
+            Subset other = (Subset) o;
             if (other.size() != size())
                 return false;
 
@@ -360,7 +359,7 @@ public class IndexPartitions<I extends DBIndex> {
          */
         public IndexBitSet bitSet() {
             IndexBitSet bs = new IndexBitSet();
-            for (I x : this) bs.set(x.internalId());
+            for (DBIndex x : this) bs.set(x.internalId());
             return bs;
         }
 
@@ -387,7 +386,7 @@ public class IndexPartitions<I extends DBIndex> {
 
         @Override
         public String toString() {
-            return new ToStringBuilder<Subset<I>>(this)
+            return new ToStringBuilder<Subset>(this)
                 .add("sumIndex", sumIndexIds)
                 .add("minIndexIds", minIndexIds())
                 .add("averageIndexIds", avgIndexId())
@@ -398,17 +397,15 @@ public class IndexPartitions<I extends DBIndex> {
 
     /**
      * a linked list of indexes subsets.
-     * @param <I>
-     *      the {@link DBIndex} type.
      */
-    private static class SubsetList <I extends DBIndex> {
-        LinkedList<Subset<I>> list;
+    private static class SubsetList {
+        LinkedList<Subset> list;
 
         SubsetList() {
-            list = new LinkedList<Subset<I>>();
+            list = new LinkedList<Subset>();
         }
 
-        final Subset<I> get(int i) {
+        final Subset get(int i) {
             return list.get(i);
         }
 
@@ -417,7 +414,7 @@ public class IndexPartitions<I extends DBIndex> {
             if (!(o instanceof IndexPartitions.SubsetList))
                 return false;
 
-            SubsetList<?> other = (SubsetList<?>) o;
+            SubsetList other = (SubsetList) o;
             return list.equals(other.list);
         }
 
@@ -426,11 +423,11 @@ public class IndexPartitions<I extends DBIndex> {
             return Objects.hashCode(list);
         }
 
-        final void add(Subset<I> subset) {
-            ListIterator<Subset<I>> iter = list.listIterator();
+        final void add(Subset subset) {
+            ListIterator<Subset> iter = list.listIterator();
 
             while (iter.hasNext()) {
-                Subset<I> n = iter.next();
+                Subset n = iter.next();
                 if (subset.avgIndexId() < n.avgIndexId()
                         || (subset.avgIndexId() == n.avgIndexId() && subset.minIndexIds() < n.minIndexIds())) {
                     iter.previous();
@@ -443,7 +440,7 @@ public class IndexPartitions<I extends DBIndex> {
             list.add(subset);
         }
 
-        final int whichSubset(I index) {
+        final int whichSubset(DBIndex index) {
             for (int i = 0; i < list.size(); i++) {
                 if (list.get(i).contains(index))
                     return i;

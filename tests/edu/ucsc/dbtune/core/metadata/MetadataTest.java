@@ -142,4 +142,9 @@ public class MetadataTest
             assertEquals(-1,dbo.getId());
         }
     }
+
+    /**
+     * XXX Tests that objects constructed by sending other metadata objects as parameters to the 
+     * constructors produce correct objects.
+     */
 }

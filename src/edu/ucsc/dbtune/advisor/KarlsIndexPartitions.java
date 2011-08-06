@@ -11,24 +11,24 @@ import java.util.ListIterator;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class KarlsIndexPartitions<I extends DBIndex> {
+public class KarlsIndexPartitions{
 	private static final int MAXIMUM_INDEX_COUNT = Integer.MAX_VALUE / 2;
 	private final int indexCount;
 	private int stateCount;
 	private SubsetList subsets;
 
-	public KarlsIndexPartitions(StaticIndexSet<I> indexes) {
+	public KarlsIndexPartitions(StaticIndexSet indexes) {
 		if (indexes.size() > MAXIMUM_INDEX_COUNT)
 			throw new IllegalArgumentException("Cannot create partitions for " + indexes.size() + "indexes");
 		indexCount = indexes.size();
 		stateCount = indexes.size() * 2;
 		subsets = new SubsetList();
-		for (I index : indexes) {
+		for (DBIndex index : indexes) {
 			subsets.add(new Subset(index));
 		}
 	}
 
-	public KarlsIndexPartitions(Snapshot<I> snapshot, IndexBitSet[] partitionBitSets) {
+	public KarlsIndexPartitions(Snapshot snapshot, IndexBitSet[] partitionBitSets) {
 		// create subsets
 		int indexCount0 = 0;
 		int stateCount0 = 0;
@@ -36,7 +36,7 @@ public class KarlsIndexPartitions<I extends DBIndex> {
 		for (IndexBitSet bs : partitionBitSets) {
 			Subset subset = null;
 			for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
-				I idx = snapshot.findIndexId(i);
+				DBIndex idx = snapshot.findIndexId(i);
 				if (idx != null) {
 					if (subset != null)
 						subset = new Subset(subset, new Subset(idx));
@@ -82,7 +82,7 @@ public class KarlsIndexPartitions<I extends DBIndex> {
 		return arr;
 	}
 
-	public final void merge(I i1, I i2) {
+	public final void merge(DBIndex i1, DBIndex i2) {
 		int s1 = subsets.whichSubset(i1);
 		int s2 = subsets.whichSubset(i2);
 		merge(s1, s2);
@@ -108,8 +108,8 @@ public class KarlsIndexPartitions<I extends DBIndex> {
 		stateCount = (int) newStateCount;
 	}
 
-	public <J extends DBIndex> double
-	theoreticalCost(ProfiledQuery<J> qinfo, IndexBitSet state, IndexBitSet scratch) {
+	public double
+	theoreticalCost(ProfiledQuery qinfo, IndexBitSet state, IndexBitSet scratch) {
 		// Let's override the nonsense for now
 		return qinfo.planCost(state);
 
@@ -133,41 +133,41 @@ public class KarlsIndexPartitions<I extends DBIndex> {
 		if (!(o1 instanceof IndexPartitions))
 			return false;
 
-		KarlsIndexPartitions<?> other = (KarlsIndexPartitions<?>) o1;
+		KarlsIndexPartitions other = (KarlsIndexPartitions) o1;
 		if (indexCount != other.indexCount || stateCount != other.stateCount)
 			return false;
 
 		return subsets.equals(other.subsets);
 	}
 
-	public class Subset implements Iterable<I> {
+	public class Subset implements Iterable<DBIndex> {
 		private final int sumIndexIds;
 		private final int minIndexIds;
 
 		private int[] indexIds;
 
-		private java.util.TreeMap<Integer,I> map = new java.util.TreeMap<Integer,I>();
+		private java.util.TreeMap<Integer,DBIndex> map = new java.util.TreeMap<Integer,DBIndex>();
 
-		Subset(I index) {
+		Subset(DBIndex index) {
 			map.put(index.internalId(), index);
 			indexIds = new int[] { index.internalId() };
 			sumIndexIds = minIndexIds = index.internalId();
 		}
 
 		Subset(Subset s1, Subset s2) {
-			for (I idx : s1)
+			for (DBIndex idx : s1)
 				map.put(idx.internalId(), idx);
-			for (I idx : s2)
+			for (DBIndex idx : s2)
 				map.put(idx.internalId(), idx);
 
 			indexIds = new int[map.size()];
-			{ int i = 0; for (I idx : map.values()) indexIds[i++] = idx.internalId(); }
+			{ int i = 0; for (DBIndex idx : map.values()) indexIds[i++] = idx.internalId(); }
 
 			sumIndexIds = s1.sumIndexIds + s2.sumIndexIds;
 			minIndexIds = Math.min(s1.minIndexIds, s2.minIndexIds);
 		}
 
-		public final boolean contains(I index) {
+		public final boolean contains(DBIndex index) {
 			return map.containsKey(index.internalId());
 		}
 
@@ -183,12 +183,12 @@ public class KarlsIndexPartitions<I extends DBIndex> {
 			return 1L << size();
 		}
 
-		public java.util.Iterator<I> iterator() {
+		public java.util.Iterator<DBIndex> iterator() {
 			return map.values().iterator();
 		}
 
 		public boolean overlaps(Subset other) {
-			for (I x : map.values()) {
+			for (DBIndex x : map.values()) {
 				if (other.contains(x))
 					return true;
 			}
@@ -215,7 +215,7 @@ public class KarlsIndexPartitions<I extends DBIndex> {
 
 		public IndexBitSet bitSet() {
 			IndexBitSet bs = new IndexBitSet();
-			for (I x : this) bs.set(x.internalId());
+			for (DBIndex x : this) bs.set(x.internalId());
 			return bs;
 		}
 
@@ -269,7 +269,7 @@ public class KarlsIndexPartitions<I extends DBIndex> {
 			list.add(subset);
 		}
 
-		final int whichSubset(I index) {
+		final int whichSubset(DBIndex index) {
 			for (int i = 0; i < list.size(); i++) {
 				if (list.get(i).contains(index))
 					return i;

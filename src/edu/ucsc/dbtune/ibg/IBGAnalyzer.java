@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.util.IndexBitSet;
 
 public class IBGAnalyzer {
 	// the IBG we are currently exploring
-	protected final IndexBenefitGraphConstructor<?> ibgCons;
+	protected final IndexBenefitGraphConstructor ibgCons;
 
 	// queue of nodes to explore
 	private final IBGNodeQueue nodeQueue;
@@ -54,7 +54,7 @@ public class IBGAnalyzer {
      * @param revisitQueue
      *      a given {@link IBGNodeQueue} object which contains IBG node that will be revisited.
      */
-    public IBGAnalyzer(IndexBenefitGraphConstructor<?> ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue revisitQueue){
+    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue revisitQueue){
 		// initialize fields
 		this.ibgCons        = ibgCons;
 		this.nodeQueue      = nodeQueue;
@@ -72,7 +72,7 @@ public class IBGAnalyzer {
      * @param ibgCons
      *      a given {@link IndexBenefitGraphConstructor} object.
      */
-	public IBGAnalyzer(IndexBenefitGraphConstructor<?> ibgCons) {
+	public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons) {
         this(ibgCons, new IBGNodeQueue(), new IBGNodeQueue());
 	}
 

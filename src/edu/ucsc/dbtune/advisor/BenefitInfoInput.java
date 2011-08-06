@@ -17,7 +17,6 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Supplier;
@@ -28,14 +27,14 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class BenefitInfoInput <I extends DBIndex> {
+public class BenefitInfoInput {
     private final DatabaseConnection connection;
-    private final Snapshot<I>             snapshot;
-    private final StaticIndexSet<I>       hotSet;
+    private final Snapshot             snapshot;
+    private final StaticIndexSet       hotSet;
     private final IndexBitSet config;
-    private final ProfiledQuery<I>        profiledQ;
+    private final ProfiledQuery        profiledQ;
 
-    private BenefitInfoInput(StrictBuilder<I> builder){
+    private BenefitInfoInput(StrictBuilder builder){
         connection = builder.conn;
         snapshot   = builder.snapshot;
         hotSet     = builder.hotSet;
@@ -47,11 +46,11 @@ public class BenefitInfoInput <I extends DBIndex> {
         return connection;
     }
 
-    public Snapshot<I> getSnapshot() {
+    public Snapshot getSnapshot() {
         return snapshot;
     }
 
-    public StaticIndexSet<I> getHotSet() {
+    public StaticIndexSet getHotSet() {
         return hotSet;
     }
 
@@ -59,13 +58,13 @@ public class BenefitInfoInput <I extends DBIndex> {
         return config;
     }
 
-    public ProfiledQuery<I> getProfiledQuery() {
+    public ProfiledQuery getProfiledQuery() {
         return profiledQ;
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder<BenefitInfoInput<I>>(this)
+        return new ToStringBuilder<BenefitInfoInput>(this)
                .add("connection", getDatabaseConnection())
                .add("snapshot", getSnapshot())
                .add("hotSet", getHotSet())
@@ -74,39 +73,39 @@ public class BenefitInfoInput <I extends DBIndex> {
              .toString();
     }
 
-    public static class StrictBuilder <I extends DBIndex> implements Supplier<BenefitInfoInput<I>> {
+    public static class StrictBuilder implements Supplier<BenefitInfoInput> {
         private DatabaseConnection conn;
-        private Snapshot<I>             snapshot;
-        private StaticIndexSet<I>       hotSet;
+        private Snapshot             snapshot;
+        private StaticIndexSet       hotSet;
         private IndexBitSet config;
-        private ProfiledQuery<I>        profiledQuery;
+        private ProfiledQuery        profiledQuery;
         public StrictBuilder(DatabaseConnection connection){
             this.conn = connection;
         }
 
-        public StrictBuilder<I> snapshot(Snapshot<I> value){
+        public StrictBuilder snapshot(Snapshot value){
             snapshot = Checks.checkNotNull(value);
             return this;
         }
 
-        public StrictBuilder<I> hotSet(StaticIndexSet<I> value){
+        public StrictBuilder hotSet(StaticIndexSet value){
             hotSet = Checks.checkNotNull(value);
             return this;
         }
 
-        public StrictBuilder<I> recommendedIndexes(IndexBitSet value){
+        public StrictBuilder recommendedIndexes(IndexBitSet value){
             config = Checks.checkNotNull(value);
             return this;
         }
 
-        public StrictBuilder<I> profiledQuery(ProfiledQuery<I> value){
+        public StrictBuilder profiledQuery(ProfiledQuery value){
             profiledQuery =  Checks.checkNotNull(value);
             return this;
         }
 
         @Override
-        public BenefitInfoInput<I> get() {
-            return new BenefitInfoInput<I>(this);
+        public BenefitInfoInput get() {
+            return new BenefitInfoInput(this);
         }
     }
 }

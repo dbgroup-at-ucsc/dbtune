@@ -33,12 +33,12 @@ public class HotSetSelector {
      * @param arg
      *      a hot {@link HotsetSelection selection var} which contains specific values that will
      *      be utilized during the hot set selection process.
-     * @param <I>
+     * @param 
      *      the {@link DBIndex} type.
      * @return
      *      a hot set (i.e., a {@link StaticIndexSet}) 
      */
-    public static <I extends DBIndex> StaticIndexSet<I> chooseHotSet(HotsetSelection<I> arg){
+    public static StaticIndexSet chooseHotSet(HotsetSelection arg){
         return chooseHotSet(
                 arg.getCandidateSet(),
                 arg.getOldHotSet(),
@@ -55,12 +55,12 @@ public class HotSetSelector {
      * @param arg
      *      a hot {@link HotsetSelection selection var} which contains specific values that will
      *      be utilized during the greedy hot set selection process.
-     * @param <I>
+     * @param 
      *      the {@link DBIndex} type.
      * @return
      *      a hot set (i.e., a {@link StaticIndexSet})
      */
-    public static <I extends DBIndex> StaticIndexSet<I> chooseHotSetGreedy(HotsetSelection<I> arg){
+    public static StaticIndexSet chooseHotSetGreedy(HotsetSelection arg){
         return chooseHotSetGreedy(
                 arg.getCandidateSet(),
                 arg.getOldHotSet(),
@@ -71,10 +71,10 @@ public class HotSetSelector {
         );
     }
 
-    static <I extends DBIndex> StaticIndexSet<I> chooseHotSet(CandidatePool.Snapshot<I> candSet,
-                                                                 StaticIndexSet<I> oldHotSet,
-                                                                 DynamicIndexSet<I> requiredIndexSet,
-                                                                 StatisticsFunction<I> benefitFunc,
+    static StaticIndexSet chooseHotSet(CandidatePool.Snapshot candSet,
+                                                                 StaticIndexSet oldHotSet,
+                                                                 DynamicIndexSet requiredIndexSet,
+                                                                 StatisticsFunction benefitFunc,
                                                                  int maxSize,
                                                                  boolean debugOutput
     ) {
@@ -82,12 +82,12 @@ public class HotSetSelector {
         
         int numToChoose = maxSize - requiredIndexSet.size();
         if (numToChoose <= 0) {
-            return new StaticIndexSet<I>(requiredIndexSet);
+            return new StaticIndexSet(requiredIndexSet);
         }
         else {
-            MinQueue<I> topSet = new MinQueue<I>(numToChoose);
+            MinQueue<DBIndex> topSet = new MinQueue<DBIndex>(numToChoose);
 
-            for (I index : candSet) {
+            for (DBIndex index : candSet) {
                 if (requiredIndexSet.contains(index))
                     continue;
 
@@ -102,44 +102,44 @@ public class HotSetSelector {
                 }
             }
 
-            java.util.ArrayList<I> list = new java.util.ArrayList<I>();
-            for (I index : requiredIndexSet)
+            java.util.ArrayList<DBIndex> list = new java.util.ArrayList<DBIndex>();
+            for (DBIndex index : requiredIndexSet)
                 list.add(index);
             while (topSet.size() > 0)
                 list.add(topSet.deleteMin());
 
-            return new StaticIndexSet<I>(list);
+            return new StaticIndexSet(list);
         }
     }
     
-    static <I extends DBIndex> StaticIndexSet<I> chooseHotSetGreedy(CandidatePool.Snapshot<I> candSet,
-                                                                       StaticIndexSet<I> oldHotSet,
-                                                                       DynamicIndexSet<I> requiredIndexSet,
-                                                                       StatisticsFunction<I> benefitFunc,
+    static StaticIndexSet chooseHotSetGreedy(CandidatePool.Snapshot candSet,
+                                                                       StaticIndexSet oldHotSet,
+                                                                       DynamicIndexSet requiredIndexSet,
+                                                                       StatisticsFunction benefitFunc,
                                                                        int maxSize,
                                                                        boolean debugOutput
     ) {
         
         int numToChoose = maxSize - requiredIndexSet.size();
         if (numToChoose <= 0) {
-            return new StaticIndexSet<I>(requiredIndexSet);
+            return new StaticIndexSet(requiredIndexSet);
         }
         else {
-            java.util.ArrayList<I> list = new java.util.ArrayList<I>();
+            java.util.ArrayList<DBIndex> list = new java.util.ArrayList<DBIndex>();
             IndexBitSet M = new IndexBitSet();
             
             // add required indexes
-            for (I index : requiredIndexSet) {
+            for (DBIndex index : requiredIndexSet) {
                 list.add(index);
                 M.set(index.internalId());
             }
             
             // add top indexes
             for (int i = 0; i < numToChoose; i++) {
-                I bestIndex = null;
+                DBIndex bestIndex = null;
                 double bestScore = Double.NEGATIVE_INFINITY;
                 
-                for (I index : candSet) {
+                for (DBIndex index : candSet) {
                     if (M.get(index.internalId()))
                         continue;
                     
@@ -158,7 +158,7 @@ public class HotSetSelector {
                 }
             }
 
-            return new StaticIndexSet<I>(list);
+            return new StaticIndexSet(list);
         }
     }
 

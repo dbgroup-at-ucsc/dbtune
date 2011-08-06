@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -26,18 +25,18 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class InteractionSelection<I extends DBIndex> {
-    private final IndexPartitions<I>    oldPartitions;
-    private final StatisticsFunction<I> doiFunc;
+public class InteractionSelection {
+    private final IndexPartitions    oldPartitions;
+    private final StatisticsFunction doiFunc;
     private final int                   maxNumStates;
-    private final StaticIndexSet<I>     newHotSet;
+    private final StaticIndexSet     newHotSet;
 
     /**
      * Construct a {code selection variable} which will be utilized by {@link InteractionSelector}.
      * @param builder
      *      a {@link InteractionSelection}'s builder.
      */
-    private InteractionSelection(StrictBuilder<I> builder){
+    private InteractionSelection(StrictBuilder builder){
         this.oldPartitions = builder.oldPartitions;
         this.doiFunc       = builder.doiFunc;
         this.maxNumStates  = builder.maxNumStates;
@@ -45,10 +44,10 @@ public class InteractionSelection<I extends DBIndex> {
     }
 
     public InteractionSelection(
-        IndexPartitions<I>    oldPartitions,
-        StatisticsFunction<I> doiFunc,
+        IndexPartitions    oldPartitions,
+        StatisticsFunction doiFunc,
         int                   maxNumStates,
-        StaticIndexSet<I>     newHotSet ) {
+        StaticIndexSet     newHotSet ) {
 
         this.oldPartitions = oldPartitions;
         this.doiFunc       = doiFunc;
@@ -57,17 +56,17 @@ public class InteractionSelection<I extends DBIndex> {
     }
 
 
-    public StaticIndexSet<I> getNewHotSet(){
+    public StaticIndexSet getNewHotSet(){
         return Checks.checkNotNull(newHotSet);
     }
 
 
-    public IndexPartitions<I> getOldPartitions(){
+    public IndexPartitions getOldPartitions(){
         return Checks.checkNotNull(oldPartitions);
     }
 
 
-    public StatisticsFunction<I> getDoiFunction(){
+    public StatisticsFunction getDoiFunction(){
         return Checks.checkNotNull(doiFunc);
     }
 
@@ -78,7 +77,7 @@ public class InteractionSelection<I extends DBIndex> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<InteractionSelection<I>>(this)
+        return new ToStringBuilder<InteractionSelection>(this)
                .add("newHotSet", getNewHotSet())
                .add("oldPartitions", getOldPartitions())
                .add("doiFunction", getDoiFunction())
@@ -89,41 +88,39 @@ public class InteractionSelection<I extends DBIndex> {
     /**
      * A builder of {@link InteractionSelection}s. This partition builder is strict in the sense of not
      * taking optional values. In other words, all arguments values should not be null.
-     * @param <I>
-     *      the {@link edu.ucsc.dbtune.core.DBIndex index type}.
      */
-    public static class StrictBuilder<I extends DBIndex> implements Supplier<InteractionSelection<I>> {
-        private IndexPartitions<I>    oldPartitions;
-        private StatisticsFunction<I> doiFunc;
+    public static class StrictBuilder implements Supplier<InteractionSelection> {
+        private IndexPartitions    oldPartitions;
+        private StatisticsFunction doiFunc;
         private int                   maxNumStates;
-        private StaticIndexSet<I>     newHotSet;
+        private StaticIndexSet     newHotSet;
 
         public StrictBuilder(){}
 
-        public StrictBuilder<I> newHotSet(StaticIndexSet<I> value){
+        public StrictBuilder newHotSet(StaticIndexSet value){
             this.newHotSet = value;
             return this;
         }
 
-        public StrictBuilder<I> oldPartitions(IndexPartitions<I> value){
+        public StrictBuilder oldPartitions(IndexPartitions value){
             this.oldPartitions = Checks.checkNotNull(value);
             return this;
         }
 
-        public StrictBuilder<I> doiFunction(StatisticsFunction<I> value){
+        public StrictBuilder doiFunction(StatisticsFunction value){
             this.doiFunc = Checks.checkNotNull(value);
             return this;
         }
 
-        public StrictBuilder<I> maxNumStates(int value){
+        public StrictBuilder maxNumStates(int value){
             this.maxNumStates = Checks.checkNotNull(value);
             return this;
         }
 
         
         @Override
-        public InteractionSelection<I> get() {
-            return new InteractionSelection<I>(this);
+        public InteractionSelection get() {
+            return new InteractionSelection(this);
         }
     }
 }

@@ -15,27 +15,27 @@ import java.util.List;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
+public class KarlsWorkFunctionAlgorithm {
   private static final Environment ENV = Environment.getInstance();
   private static final int MAX_NUM_STATES   = ENV.getMaxNumStates();
   private static final int MAX_HOTSET_SIZE  = ENV.getMaxNumIndexes();
 
 	TotalWorkValues wf = new TotalWorkValues();
-	SubMachineArray<I> submachines = new SubMachineArray<I>(0);
+	SubMachineArray submachines = new SubMachineArray(0);
 
 	// for tracking history
 	private boolean keepHistory;
-	private WfaTrace<I> trace;
+	private WfaTrace trace;
 
 	private TotalWorkValues wf2 = new TotalWorkValues();
 	private CostVector tempCostVector = new CostVector();
 	private IndexBitSet tempBitSet = new IndexBitSet();
 
-	public KarlsWorkFunctionAlgorithm(KarlsIndexPartitions<I> parts, boolean keepHistory0) {
+	public KarlsWorkFunctionAlgorithm(KarlsIndexPartitions parts, boolean keepHistory0) {
 		if (parts != null) {
 			repartition(parts);
 			if (keepHistory0) {
-				trace = new WfaTrace<I>(parts, wf);
+				trace = new WfaTrace(parts, wf);
 			}
 			keepHistory = keepHistory0;
 		}
@@ -49,7 +49,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		dump("INITIAL");
 	}
 
-	public KarlsWorkFunctionAlgorithm(KarlsIndexPartitions<I> parts) {
+	public KarlsWorkFunctionAlgorithm(KarlsIndexPartitions parts) {
 		this(parts, false);
 	}
 
@@ -67,11 +67,11 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		Console.streaming().log("----");
 	}
 
-	public void newTask(ProfiledQuery<I> qinfo) {
+	public void newTask(ProfiledQuery qinfo) {
 		tempBitSet.clear(); // just to be safe
 
 		for (int subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
-			SubMachine<I> subm = submachines.get(subsetNum);
+			SubMachine subm = submachines.get(subsetNum);
 
 			// preprocess cost into a vector
 			for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
@@ -101,35 +101,35 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		dump("NEW TASK");
 	}
 
-	public void vote(I index, boolean isPositive) {
+	public void vote(DBIndex index, boolean isPositive) {
 		Checks.checkAssertion(!keepHistory, "tracing WFA is not supported with user feedback");
-		for (SubMachine<I> subm : submachines)
+		for (SubMachine subm : submachines)
 			if (subm.subset.contains(index))
 				subm.vote(wf, index, isPositive);
 
 		dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + index.internalId());
 	}
 
-	public List<I> getRecommendation() {
-		ArrayList<I> rec = new ArrayList<I>(MAX_HOTSET_SIZE);
-		for (SubMachine<I> subm : submachines) {
-			for (I index : subm.subset)
+	public List<DBIndex> getRecommendation() {
+		ArrayList<DBIndex> rec = new ArrayList<DBIndex>(MAX_HOTSET_SIZE);
+		for (SubMachine subm : submachines) {
+			for (DBIndex index : subm.subset)
 				if (subm.currentBitSet.get(index.internalId()))
 					rec.add(index);
 		}
 		return rec;
 	}
 
-	public void repartition(KarlsIndexPartitions<I> newPartitions) {
+	public void repartition(KarlsIndexPartitions newPartitions) {
 		Checks.checkAssertion(!keepHistory, "tracing WFA is not supported with repartitioning");
 		int newSubsetCount = newPartitions.subsetCount();
 		int oldSubsetCount = submachines.length;
-		SubMachineArray<I> submachines2 = new SubMachineArray<I>(newSubsetCount);
+		SubMachineArray submachines2 = new SubMachineArray(newSubsetCount);
 		IndexBitSet overlappingSubsets = new IndexBitSet();
 
 		// get the set of previously hot indexes
 		IndexBitSet oldHotSet = new IndexBitSet();
-		for (SubMachine<I> oldSubmachine : submachines) {
+		for (SubMachine oldSubmachine : submachines) {
 			for (int oldIndexId : oldSubmachine.indexIds) {
 				oldHotSet.set(oldIndexId);
 			}
@@ -139,20 +139,20 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		wf2.reallocate(newPartitions);
 
 		for (int newSubsetNum = 0; newSubsetNum < newSubsetCount; newSubsetNum++) {
-			KarlsIndexPartitions<I>.Subset newSubset = newPartitions.get(newSubsetNum);
+			KarlsIndexPartitions.Subset newSubset = newPartitions.get(newSubsetNum);
 
 			// translate old recommendation into new
 			IndexBitSet recBitSet = new IndexBitSet();
 			int recStateNum = 0;
 			int i = 0;
-			for (I index : newSubset) {
+			for (DBIndex index : newSubset) {
 				if (isRecommended(index)) {
 					recBitSet.set(index.internalId());
 					recStateNum |= (1 << i);
 				}
 				++i;
 			}
-			SubMachine<I> newSubmachine = new SubMachine<I>(newSubset, newSubsetNum, recStateNum, recBitSet);
+			SubMachine newSubmachine = new SubMachine(newSubset, newSubsetNum, recStateNum, recBitSet);
 			submachines2.set(newSubsetNum, newSubmachine);
 
 			// find overlapping subsets (required to recompute work function)
@@ -169,7 +169,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 
 				// add creation cost of new indexes
 				i = 0;
-				for (I index : newSubmachine.subset) {
+				for (DBIndex index : newSubmachine.subset) {
 					int mask = (1 << (i++));
 					if (0 != (stateNum & mask) && !oldHotSet.get(index.internalId()))
 						value += index.creationCost();
@@ -191,7 +191,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 					value += wf.get(oldSubsetNum, oldStateNum);
 				}
 
-				wf2.set(newSubsetNum, stateNum, value, 0); // XXX: we don't recompute the predecessor during repartitioning, but it is feasible
+				wf2.set(newSubsetNum, stateNum, value, 0); // note: we don't recompute the predecessor during repartitioning, but it is feasible
 			}
 		}
 
@@ -213,18 +213,18 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 			bitSet.clear(ids[i]);
 	}
 
-	private boolean isRecommended(I idx) {
+	private boolean isRecommended(DBIndex idx) {
 		// not sure which submachine has the index, so check them all
-		for (SubMachine<I> subm : submachines) {
+		for (SubMachine subm : submachines) {
 			if (subm.currentBitSet.get(idx.internalId()))
 				return true;
 		}
 		return false;
 	}
 
-	public static <J extends DBIndex> double transitionCost(Snapshot<J> candidateSet, IndexBitSet x, IndexBitSet y) {
+	public static  double transitionCost(Snapshot candidateSet, IndexBitSet x, IndexBitSet y) {
 		double transition = 0;
-		for (J index : candidateSet) {
+		for (DBIndex index : candidateSet) {
 			int id = index.internalId();
 			if (y.get(id) && !x.get(id))
 				transition += index.creationCost();
@@ -232,10 +232,10 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		return transition;
 	}
 
-	private static <J extends DBIndex> double transitionCost(KarlsIndexPartitions<J>.Subset subset, int x, int y) {
+	private static double transitionCost(KarlsIndexPartitions.Subset subset, int x, int y) {
 		double transition = 0;
 		int i = 0;
-		for (J index : subset) {
+		for (DBIndex index : subset) {
 			int mask = 1 << (i++);
 
 			if (mask == (y & mask) - (x & mask))
@@ -250,33 +250,33 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 //		return new TotalWorkValues(wf);
 //	}
 
-	private static class SubMachineArray<J extends DBIndex> implements Iterable<SubMachine<J>> {
+	private static class SubMachineArray implements Iterable<SubMachine> {
 		public final int length;
-		private final ArrayList<SubMachine<J>> arr;
+		private final ArrayList<SubMachine> arr;
 
 		public SubMachineArray(int len0) {
 			length = len0;
-			arr = new ArrayList<SubMachine<J>>(len0);
+			arr = new ArrayList<SubMachine>(len0);
 			for (int i = 0; i < len0; i++)
 				arr.add(null);
 		}
 
-		public SubMachine<J> get(int i) {
+		public SubMachine get(int i) {
 			return arr.get(i);
 		}
 
-		public void set(int i, SubMachine<J> subm) {
+		public void set(int i, SubMachine subm) {
 			arr.set(i, subm);
 		}
 
-		public Iterator<SubMachine<J>> iterator() {
+		public Iterator<SubMachine> iterator() {
 			return arr.iterator();
 		}
 
 	}
 
-	private static class SubMachine<J extends DBIndex> implements Iterable<J> {
-		private KarlsIndexPartitions<J>.Subset subset;
+	private static class SubMachine implements Iterable<DBIndex> {
+		private KarlsIndexPartitions.Subset subset;
 		private int subsetNum;
 		private int numIndexes;
 		private int numStates;
@@ -284,7 +284,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		private IndexBitSet currentBitSet;
 		private int[] indexIds;
 
-		SubMachine(KarlsIndexPartitions<J>.Subset subset0, int subsetNum0, int state0, IndexBitSet bs0) {
+		SubMachine(KarlsIndexPartitions.Subset subset0, int subsetNum0, int state0, IndexBitSet bs0) {
 			subset = subset0;
 			subsetNum = subsetNum0;
 			numIndexes = subset0.size();
@@ -294,7 +294,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 
 			indexIds = new int[numIndexes];
 			int i = 0;
-			for (J index : subset0) {
+			for (DBIndex index : subset0) {
 				indexIds[i++] = index.internalId();
 			}
 		}
@@ -320,7 +320,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 
 		// process a positive or negative vote for the index
 		// do the necessary bookkeeping in the input workfunction, and update the current state
-		public void vote(TotalWorkValues wf, J index, boolean isPositive) {
+		public void vote(TotalWorkValues wf, DBIndex index, boolean isPositive) {
 			// find the position in indexIds
 			int indexIdsPos;
 			int stateMask;
@@ -424,7 +424,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 			setStateBits(indexIds, currentState, currentBitSet);
 		}
 
-		public Iterator<J> iterator() {
+		public Iterator<DBIndex> iterator() {
 			return subset.iterator();
 		}
 	}
@@ -463,7 +463,7 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 			predecessor[i] = p;
 		}
 
-		void reallocate(KarlsIndexPartitions<?> newPartitions) {
+		void reallocate(KarlsIndexPartitions newPartitions) {
 			int newValueCount = newPartitions.wfaStateCount();
 			if (newValueCount > values.length) {
 				values = new double[newValueCount];
@@ -534,8 +534,8 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 
 
 	// given a schedule over a set of candidates and queries, get the total work
-	public <J extends DBIndex> double
-	getScheduleCost(Snapshot<J> candidateSet, int queryCount, List<ProfiledQuery<J>> qinfos, KarlsIndexPartitions<J> parts, IndexBitSet[] schedule) {
+	public  double
+	getScheduleCost(Snapshot candidateSet, int queryCount, List<ProfiledQuery> qinfos, KarlsIndexPartitions parts, IndexBitSet[] schedule) {
 		double cost = 0;
 		IndexBitSet prevState = new IndexBitSet();
 		IndexBitSet subset = new IndexBitSet();
@@ -553,17 +553,17 @@ public class KarlsWorkFunctionAlgorithm <I extends DBIndex>{
 		return cost;
 	}
 
-	public WfaTrace<I> getTrace() {
+	public WfaTrace getTrace() {
 		return trace;
 	}
 
 
-public static class WfaTrace<I extends DBIndex> {
+public static class WfaTrace {
 //	private BitSet[] parts;
 	private ArrayList<TotalWorkValues> wfValues = new ArrayList<TotalWorkValues>();
 	private ArrayList<Double> sumNullCost = new ArrayList<Double>();
 
-	public WfaTrace(KarlsIndexPartitions<I> parts0, TotalWorkValues wf) {
+	public WfaTrace(KarlsIndexPartitions parts0, TotalWorkValues wf) {
 //		parts = parts0.bitSetArray();
 		wfValues.add(new TotalWorkValues(wf));
 		sumNullCost.add(0.0);
@@ -592,7 +592,7 @@ public static class WfaTrace<I extends DBIndex> {
 //	}
 
 
-	public IndexBitSet[] optimalSchedule(KarlsIndexPartitions<I> parts, int queryCount, Iterable<ProfiledQuery<I>> qinfos) {
+	public IndexBitSet[] optimalSchedule(KarlsIndexPartitions parts, int queryCount, Iterable<ProfiledQuery> qinfos) {
 
 		// We will fill each BitSet with the optimal indexes for the corresponding query
 		IndexBitSet[] bss = new IndexBitSet[queryCount];
@@ -608,9 +608,9 @@ public static class WfaTrace<I extends DBIndex> {
 		for (int q = 0; q <= queryCount; q++) partSchedule[q] = new IndexBitSet();
 
 		for (int subsetNum = 0; subsetNum < parts.subsetCount(); subsetNum++) {
-			KarlsIndexPartitions<I>.Subset subset = parts.get(subsetNum);
+			KarlsIndexPartitions.Subset subset = parts.get(subsetNum);
 			int[] indexIds = subset.indexIds();
-			int stateCount = (int) subset.stateCount(); // XXX: this should return int
+			int stateCount = (int) subset.stateCount();
 
 			// get the best final state
 			int bestSuccessor = -1;

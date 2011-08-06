@@ -31,15 +31,15 @@ import java.util.Set;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
-    private final Set<I> delegate;
+public class DynamicIndexSet implements Iterable<DBIndex> {
+    private final Set<DBIndex> delegate;
     private final IndexBitSet ownedBitSet;
 
     /**
      * construct a {@code DynamicIndexSet} object.
      */
     public DynamicIndexSet(){
-       this(Instances.<I>newHashSet(), new IndexBitSet());
+       this(Instances.<DBIndex>newHashSet(), new IndexBitSet());
     }
 
     /**
@@ -51,7 +51,7 @@ public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
      *      ownedBitSet which will be used for further index processing given the
      *      indexes's {@code internalId}.
      */
-    DynamicIndexSet(Set<I> delegate, IndexBitSet ownedBitSet){
+    DynamicIndexSet(Set<DBIndex> delegate, IndexBitSet ownedBitSet){
         this.delegate = delegate;
         this.ownedBitSet = ownedBitSet;
     }
@@ -61,7 +61,7 @@ public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
      * @param index
      *      index object to be added.
      */
-    public void add(I index){
+    public void add(DBIndex index){
         if(!delegate.contains(index)){
             delegate.add(index);
             synchronized (delegate){
@@ -87,7 +87,7 @@ public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
      *    {@code true} if the {@code dynamic set} contains the desired index,
      *    {@code false} otherwise.
      */
-    public boolean contains(I index){
+    public boolean contains(DBIndex index){
         // before it was bs.get(index.internalId()); => (Huascar) I think this is
         // broken.
         return ownedBitSet.get(index.internalId()) && delegate.contains(index);
@@ -101,7 +101,7 @@ public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
     }
 
     @Override
-    public Iterator<I> iterator() {
+    public Iterator<DBIndex> iterator() {
         return delegate.iterator();
     }
 
@@ -110,7 +110,7 @@ public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
      * @param index
      *      index to be removed.
      */
-    public void remove(I index){
+    public void remove(DBIndex index){
         if(delegate.contains(index)){
             delegate.remove(index);
             ownedBitSet.clear(index.internalId());
@@ -133,7 +133,7 @@ public class DynamicIndexSet<I extends DBIndex> implements Iterable<I> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<DynamicIndexSet<I>>(this)
+        return new ToStringBuilder<DynamicIndexSet>(this)
                .add("delegate", delegate)
                .add("ownedBitSet", ownedBitSet).toString();
     }

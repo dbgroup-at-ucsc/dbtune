@@ -22,8 +22,8 @@ import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
-public class AnalyzedQuery<I extends DBIndex> {
-    private final ProfiledQuery<I> profileInfo;
+public class AnalyzedQuery {
+    private final ProfiledQuery profileInfo;
     private final IndexBitSet[]    partition;
 
     /**
@@ -33,7 +33,7 @@ public class AnalyzedQuery<I extends DBIndex> {
      * @param partition
      *      an array of index partitions.
      */
-    public AnalyzedQuery(ProfiledQuery<I> orig, IndexBitSet[] partition) {
+    public AnalyzedQuery(ProfiledQuery orig, IndexBitSet[] partition) {
         this.profileInfo    = orig;
         this.partition      = partition;
     }
@@ -41,7 +41,7 @@ public class AnalyzedQuery<I extends DBIndex> {
     /**
      * @return original query before it got analyzed.
      */
-    public ProfiledQuery<I> getProfileInfo() {
+    public ProfiledQuery getProfileInfo() {
         return profileInfo;
     }
 
@@ -54,7 +54,7 @@ public class AnalyzedQuery<I extends DBIndex> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<AnalyzedQuery<I>>(this)
+        return new ToStringBuilder<AnalyzedQuery>(this)
                .add("original", profileInfo)
                .add("partition", partition)
                .toString();

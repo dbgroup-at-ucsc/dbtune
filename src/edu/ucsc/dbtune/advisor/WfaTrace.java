@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm.TotalWorkValues;
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
@@ -27,7 +26,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.List;
 
-public class WfaTrace<I extends DBIndex> {
+public class WfaTrace {
 	private List<TotalWorkValues>   wfValues    = Instances.newList();
 	private List<Double>            sumNullCost = Instances.newList();
 
@@ -79,7 +78,7 @@ public class WfaTrace<I extends DBIndex> {
      *      the optimal schedule (i.e., an array of bitsets refering indexes' internalIds) of a
      *      number of profiled queries.
      */
-	public IndexBitSet[] optimalSchedule(IndexPartitions<I> parts, int queryCount, Iterable<ProfiledQuery<I>> qinfos) {
+	public IndexBitSet[] optimalSchedule(IndexPartitions parts, int queryCount, Iterable<ProfiledQuery> qinfos) {
 		
 		// We will fill each BitSet with the optimal indexes for the corresponding query
 		IndexBitSet[] bss = new IndexBitSet[queryCount];
@@ -95,9 +94,9 @@ public class WfaTrace<I extends DBIndex> {
 		for (int q = 0; q <= queryCount; q++) partSchedule[q] = new IndexBitSet();
 		
 		for (int subsetNum = 0; subsetNum < parts.subsetCount(); subsetNum++) {
-			IndexPartitions.Subset<I> subset = parts.get(subsetNum);
+			IndexPartitions.Subset subset = parts.get(subsetNum);
 			int[] indexIds = subset.indexIds();
-			int stateCount = (int) subset.stateCount(); // XXX: this should return int
+			int stateCount = (int) subset.stateCount();
 			
 			// get the best final state
 			int bestSuccessor = -1;
@@ -138,7 +137,7 @@ public class WfaTrace<I extends DBIndex> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<WfaTrace<I>>(this)
+        return new ToStringBuilder<WfaTrace>(this)
                .add("WFA totalWorkValues", wfValues)
                .add("sumNullCost", sumNullCost)
                .toString();

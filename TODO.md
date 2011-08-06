@@ -13,17 +13,11 @@ No need to roll our own. Also, we should define a policy of when and how to use 
 
 ## 44
 
- * translate all the method names from `DBIndex` to `Index`-lingo in `PGIndex` and `DB2Index`
+ * implement missing `Index` methods in `PGIndex` and `DB2Index`
  * add remaining types to `Index` from `DB2Index` and `PGIndex`: `BLOCK,DIMENSION,REGULAR`
  * add new field to `Index` to represent `scanOption`: `REVERSIBLE,NON_REVERSIBLE,SYNCHRONIZED`
- * remove `I extends DBIndex` noise: `egrep -iR '.*extends DBIndex' src/edu/ucsc/dbtune/`
- * make `NewPGIndex` and `NewDB2Index` by make `PGIndex` and `DB2Index` derive from `Index` instead of `DBIndex`
- * check that `NewPGIndex` and `NewDB2Index` don't replicate `Index` and that the actual platform-dependent code (like 
-   `getCreateStatement()`) is contained in them.
- * replace `PGIndex` by `NewPGIndex`
- * replace `DB2Index` by `NewDB2Index`
+ * make `PGIndex` and `DB2Index` derive from `Index` instead of `DBIndex` (use eclipse!!)
  * drop `AbstractIndex`,`DBIndex`
- * drop `ReifiedTypes` by using a regular `ArrayList<Index>`.
  * fix issue #74
  * more test!!
  * commit :)
@@ -69,8 +63,8 @@ No need to roll our own. Also, we should define a policy of when and how to use 
 
 ## 74
 
- *  add more methods to `IndexTest`; create `PGIndexTest` and `DB2IndexTest` (testing `NewDB2Index` and `NewPGIndex`) classes 
-    to test use cases from everywhere `DBIndex`, `DB2Index` and `PGIndex` is used (mainly `PGCommands` and `DB2Commands`)
+ *  add more methods to `IndexTest`; create `PGIndexTest` and `DB2IndexTest` classes to test use cases from everywhere 
+    `DBIndex`, `DB2Index` and `PGIndex` is used (mainly `PGCommands` and `DB2Commands`)
  *  test stuff assumed in the CLI
  *  think of any other based on our intuition: how is metadata gonna be used besides the above?
 

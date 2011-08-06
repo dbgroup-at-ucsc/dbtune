@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Console;
 import org.junit.Test;
@@ -30,11 +30,11 @@ public class InteractionBankTest {
     }
 
 
-    private static Snapshot<PGIndex> snapshotOfThree() throws Exception {
-        return candidatePool(new CandidatePool<PGIndex>(), 2, 3).getSnapshot();
+    private static Snapshot snapshotOfThree() throws Exception {
+        return candidatePool(new CandidatePool(), 2, 3).getSnapshot();
     }
 
-    private static CandidatePool<PGIndex> candidatePool(CandidatePool<PGIndex> pool, int interval, int howmany) throws Exception {
+    private static CandidatePool candidatePool(CandidatePool pool, int interval, int howmany) throws Exception {
         int count = 0;
         info("Creating " + howmany + " indexes.");
         for(int idx = 0; idx < howmany; idx++){
@@ -49,7 +49,7 @@ public class InteractionBankTest {
     }
 
 
-    private static PGIndex newPGIndex(int indexId, int schemaId){
+    private static DBIndex newPGIndex(int indexId, int schemaId){
        return DBTuneInstances.newPGIndex(indexId, schemaId, generateColumns(3), generateDescVals(3));
     }
 

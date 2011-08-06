@@ -136,8 +136,8 @@ public class Advisor {
 			output    = processFile(stream, indexList);
 		}
 		
-		public DB2IndexSet getCandidates(DatabaseConnection conn) throws SQLException {
-			DB2IndexSet candidateSet = new DB2IndexSet();
+		public DBIndexSet getCandidates(DatabaseConnection conn) throws SQLException {
+			DBIndexSet candidateSet = new DB2IndexSet();
 			int id = 1;
 			for (IndexInfo info : indexList) {
                 final DB2Index idx = supplyValue(
@@ -154,7 +154,7 @@ public class Advisor {
             // normalize the index candidates
 			candidateSet.normalize();
 			
-			for (DB2Index index : candidateSet) {
+			for (DBIndex index : candidateSet) {
 				System.out.println("Candidate Index " + index.internalId() + ": " + index.megabytes());
 				System.out.println(index.creationText());
 			}

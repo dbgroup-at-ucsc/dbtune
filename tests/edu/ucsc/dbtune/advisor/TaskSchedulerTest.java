@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.advisor.TaskScheduler.SchedulerTask;
 import edu.ucsc.dbtune.core.DBTuneInstances;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGAnalyzer;
@@ -34,12 +34,12 @@ import static org.junit.Assert.assertThat;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class TaskSchedulerTest {
-    TaskScheduler<PGIndex> scheduler;
+    TaskScheduler scheduler;
 
     @Before
     public void setUp() throws Exception {
         final DatabaseConnection connection;
-        final WorkloadProfilerImpl<PGIndex> profiler;
+        final WorkloadProfilerImpl profiler;
 
         final ThreadIBGAnalysis     analysis     = new ThreadIBGAnalysis(){
             @Override
@@ -81,23 +81,23 @@ public class TaskSchedulerTest {
             }
 
             @Override
-            public void startConstruction(IndexBenefitGraphConstructor<?> ibgCons) {
+            public void startConstruction(IndexBenefitGraphConstructor ibgCons) {
                 info("started construction");
             }
         };
 
         connection = newPGDatabaseConnectionManager().connect();
-        profiler   = new WorkloadProfilerImpl<PGIndex>(connection, analysis, construction, new CandidatePool<PGIndex>(), true);
-        scheduler  = new TaskScheduler<PGIndex>(
+        profiler   = new WorkloadProfilerImpl(connection, analysis, construction, new CandidatePool(), true);
+        scheduler  = new TaskScheduler(
                  connection,
-                 new CandidatePool<PGIndex>(),
-                 new CandidatesSelector<PGIndex>(40,12345,10,100),
-                 new LinkedBlockingDeque<SchedulerTask<PGIndex>>(),
-                 new LinkedBlockingDeque<SchedulerTask<PGIndex>>(),
-                 new LinkedBlockingDeque<SchedulerTask<PGIndex>>()
+                 new CandidatePool(),
+                 new CandidatesSelector(40,12345,10,100),
+                 new LinkedBlockingDeque<SchedulerTask>(),
+                 new LinkedBlockingDeque<SchedulerTask>(),
+                 new LinkedBlockingDeque<SchedulerTask>()
         ){
             @Override
-            WorkloadProfilerImpl<PGIndex> getProfiler() {
+            WorkloadProfilerImpl getProfiler() {
                 return profiler;
             }
         };
@@ -119,15 +119,15 @@ public class TaskSchedulerTest {
     public void testSchedulerAnalyseQuery() throws Exception {
         try {
             scheduler.start();
-            final AnalyzedQuery<PGIndex> aq = scheduler.analyzeQuery("SELECT * FROM T;");
+            final AnalyzedQuery aq = scheduler.analyzeQuery("SELECT * FROM T;");
 
             assertThat(aq, CoreMatchers.<Object>notNullValue());
 
-            final ProfiledQuery<PGIndex> p = aq.getProfileInfo();
+            final ProfiledQuery p = aq.getProfileInfo();
             assertThat(p, CoreMatchers.<Object>notNullValue());
             assertThat(p.getWhatIfCount(), equalTo(2));
 
-            final Snapshot<PGIndex> snapshot = p.getCandidateSnapshot();
+            final Snapshot snapshot = p.getCandidateSnapshot();
             assertThat(snapshot.maxInternalId(), equalTo(2));
 
             final IndexBenefitGraph graph = p.getIndexBenefitGraph();
@@ -145,7 +145,7 @@ public class TaskSchedulerTest {
     }
 
 
-    private static PGIndex newPGIndex(int indexId, int schemaId){
+    private static DBIndex newPGIndex(int indexId, int schemaId){
        return DBTuneInstances.newPGIndex(indexId, schemaId, generateColumns(3), generateDescVals(3));
     }
 

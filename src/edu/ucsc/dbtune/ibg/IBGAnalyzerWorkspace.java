@@ -71,7 +71,7 @@ public class IBGAnalyzerWorkspace {
 	}
 
 
-    public boolean runAnalysis(IBGCoveringNodeFinder coveringNodeFinder, IndexBenefitGraphConstructor<?> ibgCons){
+    public boolean runAnalysis(IBGCoveringNodeFinder coveringNodeFinder, IndexBenefitGraphConstructor ibgCons){
         IndexBitSet bitset_Y = startingNode.config;
         updateUsedSet();
         storeUsedSet(allUsedIndexes);
@@ -91,7 +91,7 @@ public class IBGAnalyzerWorkspace {
 		candidatesBitSet.and(allUsedIndexes);
     }
 
-    private boolean traverseCandidatePool(IBGCoveringNodeFinder coveringNodeFinder, IndexBenefitGraphConstructor<?> ibgCons, IndexBitSet bitset_Y) {
+    private boolean traverseCandidatePool(IBGCoveringNodeFinder coveringNodeFinder, IndexBenefitGraphConstructor ibgCons, IndexBitSet bitset_Y) {
 		boolean retval = true; // set false on first failure
 		for (int a = candidatesBitSet.nextSetBit(0); a >= 0; a = candidatesBitSet.nextSetBit(a+1)) {
 			IBGNode Y;

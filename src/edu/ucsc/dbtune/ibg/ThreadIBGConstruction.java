@@ -26,7 +26,7 @@ public class ThreadIBGConstruction implements Runnable {
     private final Object taskMonitor = new Object();
 
     private final String                    processName;
-    private IndexBenefitGraphConstructor<?> ibgCons;
+    private IndexBenefitGraphConstructor ibgCons;
     private RunnableState                   state;
 
     /**
@@ -48,7 +48,7 @@ public class ThreadIBGConstruction implements Runnable {
      *     either {@link RunnableState#IDLE}, {@link RunnableState#PENDING},
      *     or {@link RunnableState#DONE}.
      */
-    ThreadIBGConstruction(String processName, IndexBenefitGraphConstructor<?> ibgCons, RunnableState state){
+    ThreadIBGConstruction(String processName, IndexBenefitGraphConstructor ibgCons, RunnableState state){
         this.processName = processName;
         this.ibgCons     = ibgCons;
         this.state       = state;
@@ -90,7 +90,7 @@ public class ThreadIBGConstruction implements Runnable {
      * @param ibgCons
      *     an {@link IndexBenefitGraphConstructor} object.
      */
-	public void startConstruction(IndexBenefitGraphConstructor<?> ibgCons) {
+	public void startConstruction(IndexBenefitGraphConstructor ibgCons) {
 		synchronized (taskMonitor) {
 			if (RunnableState.PENDING.isSame(state)) {
 				Console.streaming().error("unexpected state in IBG startConstruction");
