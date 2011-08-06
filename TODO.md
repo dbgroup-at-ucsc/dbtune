@@ -49,6 +49,15 @@ No need to roll our own. Also, we should define a policy of when and how to use 
     the schema and db names should be retrieved from the `Schema` and `Catalog` classes respectively. This info should be 
     available upon connection as part of the metadata extraction mechanism. Also drop fields `schemaName` and `dbName`; 
     methods `hashCode()` and `equals()`.
+ *  in `Column` class, drop constructor:
+ 
+    ```java
+    public Column(int attNum)
+    ```
+ 
+    also, remove the temporal `if` statement contained in `getOrdinalPosition()`
+ *  in `DB2Index.DB2IndexSchema()`, the second constructor, fix the `SQLTypes.INT` that is used to initialize the type. It 
+    should be correctly initialized
 
 ## 71
 

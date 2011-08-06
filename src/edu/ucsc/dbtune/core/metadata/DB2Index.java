@@ -21,7 +21,6 @@ package edu.ucsc.dbtune.core.metadata;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.util.DBUtilities;
@@ -179,9 +178,9 @@ public class DB2Index extends AbstractIndex implements Serializable {
     }
 
     @Override
-	public DB2Column getColumn(int i) {
+	public Column getColumn(int i) {
         //noinspection RedundantTypeArguments
-        return Objects.<DB2Column>as(meta.schema.getColumns().get(i));
+        return meta.schema.getColumns().get(i);
 	}
 	
 	// crucial override
@@ -319,14 +318,13 @@ public class DB2Index extends AbstractIndex implements Serializable {
             int nSortedColumns;
             final StringBuilder sql = new StringBuilder(16 * (nSortedColumns = schema.descending.size()));
             sql.append("SELECT ");
-            for(DatabaseColumn each : schema.getColumns()){
+            for(Column each : schema.getColumns()){
                 if(idx >= nSortedColumns) break;
                 if(idx > 0) {
                     sql.append(',');
                 }
 
-                final DB2Column db2Column = Objects.as(each);
-                DBUtilities.formatIdentifier(db2Column.getName(), sql);
+                DBUtilities.formatIdentifier(each.getName(), sql);
                 idx++;
             }
 
@@ -339,13 +337,12 @@ public class DB2Index extends AbstractIndex implements Serializable {
 
             sql.append(" ORDER BY ");
             idx = 0;
-            for (DatabaseColumn c : schema.getColumns()) {
+            for (Column c : schema.getColumns()) {
                 if (idx > 0) {
                     sql.append(',');
                 }
 
-                final DB2Column db2Column = Objects.as(c);
-                DBUtilities.formatIdentifier(db2Column.getName(), sql);
+                DBUtilities.formatIdentifier(c.getName(), sql);
                 idx++;
             }
 
@@ -361,11 +358,10 @@ public class DB2Index extends AbstractIndex implements Serializable {
 
             i = 0; 
             n = schema.descending.size(); // n is number of *sorted* columns
-            for (DatabaseColumn c : schema.getColumns()) {
+            for (Column c : schema.getColumns()) {
                 if (i >= n) break;
                 if (i > 0) sqlbuf.append(',');
-                final DB2Column db2Column = Objects.as(c);
-                DBUtilities.formatIdentifier(db2Column.getName(), sqlbuf);
+                DBUtilities.formatIdentifier(c.getName(), sqlbuf);
                 i++;
             }
             
@@ -378,10 +374,9 @@ public class DB2Index extends AbstractIndex implements Serializable {
             
             sqlbuf.append(" ORDER BY ");
             i = 0;
-            for (DatabaseColumn c : schema.getColumns()) {
+            for (Column c : schema.getColumns()) {
                 if (i > 0) sqlbuf.append(',');
-                final DB2Column db2Column = Objects.as(c);
-                DBUtilities.formatIdentifier(db2Column.getName(), sqlbuf);
+                DBUtilities.formatIdentifier(c.getName(), sqlbuf);
                 i++;
             }
 
@@ -470,7 +465,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
                    && ((DB2IndexMetadata) o1).schema.equals(schema);
         }
 
-        private String formatColNames(List<DatabaseColumn> columns, List<Boolean> descending) {
+        private String formatColNames(List<Column> columns, List<Boolean> descending) {
             int colCount = columns.size();
             if (descending.size() != colCount)
                 throw new UnsupportedOperationException("do not handle INCLUDE columns yet");
@@ -478,7 +473,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
             StringBuilder sbuf = new StringBuilder();
             for (int i = 0; i < colCount; i++) {
                 sbuf.append(descending.get(i) ? '-' : '+');
-                final DB2Column each = Objects.as(columns.get(i));
+                final Column each = columns.get(i);
                 sbuf.append(each.getName());
             }
             
@@ -648,7 +643,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
             protected String dbName;
             protected String tableName;
             public String tableCreatorName;
-            private List<DatabaseColumn> columns;
+            private List<Column> columns;
             // if shorter than colNames, the rest are INCLUDE columns
             // if longer than colNames, other elements are ignored
             protected List<Boolean> descending;
@@ -716,9 +711,9 @@ public class DB2Index extends AbstractIndex implements Serializable {
                 this.dbName = dbName;
                 this.tableName = tableName;
                 this.tableCreatorName = tableCreatorName;
-                this.columns = new java.util.ArrayList<DatabaseColumn>(colNames.size());
+                this.columns = new java.util.ArrayList<Column>(colNames.size());
                 for (String name : colNames) 
-                    getColumns().add(new DB2Column(name));
+                    getColumns().add(new Column(name,SQLTypes.INT));// XXX: issue #53
                 this.descending = descending;
                 this.uniqueRule = uniqueRule;
                 this.reverseScan = reverseScan;
@@ -757,8 +752,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
                 for (int i = 0; i < descending.size() && i < getColumns().size(); i++) {
                     if (i > 0)
                         sqlbuf.append(", ");
-                    final DB2Column db2Column = Objects.as(getColumns().get(i));
-                    DBUtilities.formatIdentifier(db2Column.getName(), sqlbuf);
+                    DBUtilities.formatIdentifier(getColumns().get(i).getName(), sqlbuf);
                     sqlbuf.append(descending.get(i) ? " DESC" : " ASC");
                 }
                 sqlbuf.append(')');
@@ -770,8 +764,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
                     for (int i = descending.size(); i < getColumns().size(); i++) {
                         if (i > descending.size())
                             sqlbuf.append(", ");
-                        final DB2Column includeDb2Column = Objects.as(getColumns().get(i));
-                        DBUtilities.formatIdentifier(includeDb2Column.getName(), sqlbuf);
+                        DBUtilities.formatIdentifier(getColumns().get(i).getName(), sqlbuf);
                     }
                     sqlbuf.append(')');
                 }
@@ -827,7 +820,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
                     return true;
                 }
 
-            public List<DatabaseColumn> getColumns() {
+            public List<Column> getColumns() {
                 return columns;
             }
 
@@ -852,9 +845,8 @@ public class DB2Index extends AbstractIndex implements Serializable {
                     sbuf.append('.');
                     sbuf.append(getColumns().size());
                     sbuf.append('.');
-                    for (DatabaseColumn c : getColumns()) {
-                        final DB2Column each = Objects.as(c);
-                        DBUtilities.formatIdentifier(each.getName(), sbuf);
+                    for (Column c : getColumns()) {
+                        DBUtilities.formatIdentifier(c.getName(), sbuf);
                         sbuf.append('.');
                     }
                     sbuf.append(descending.size());

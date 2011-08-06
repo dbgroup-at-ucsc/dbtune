@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import static edu.ucsc.dbtune.core.metadata.PGReifiedTypes.ReifiedPGIndexList;
 import edu.ucsc.dbtune.spi.core.Console;
@@ -131,11 +130,11 @@ public class PGCommands {
         private static void touchIndexSchema(List<PGIndex> candidateSet, ResultSet rs, int id) throws SQLException {
             final int       reloid = Integer.valueOf(rs.getString("reloid"));
             final boolean   isSync = rs.getString("sync").charAt(0) == 'Y';
-            final List<DatabaseColumn> columns = newList();
+            final List<Column> columns = newList();
             final String columnsString = rs.getString("atts");
             if(columnsString.length() > 0){
                 for (String attnum  : columnsString.split(" ")){
-                    columns.add(new PGColumn(Integer.valueOf(attnum)));
+                    columns.add(new Column(Integer.valueOf(attnum)));
                 }
             }
 
@@ -159,9 +158,7 @@ public class PGCommands {
             );
         }
 
-        private static String updateCreationText(ResultSet rs,
-        boolean sync, String indexName
-        ) throws SQLException {
+        private static String updateCreationText(ResultSet rs, boolean sync, String indexName) throws SQLException {
             String creationText = rs.getString("create_text");
             if (sync){
                 creationText = creationText.replace(
@@ -356,9 +353,8 @@ public class PGCommands {
                 sb.append(table.getId());
                 for (int i = 0; i < idx.columnCount(); i++) {
                     sb.append(idx.getSchema().getDescending().get(i) ? " desc" : " asc");
-                    final List<DatabaseColumn>   cols   = idx.getColumns();
-                    final PGColumn each    = Objects.as(cols.get(i));
-                    sb.append(" ").append(each.getAttnum());
+                    final List<Column>   cols   = idx.getColumns();
+                    sb.append(" ").append(cols.get(i).getOrdinalPosition());
                 }
                 sb.append(") ");
             }

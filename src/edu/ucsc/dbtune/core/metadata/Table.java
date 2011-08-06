@@ -58,7 +58,10 @@ public class Table extends DatabaseObject
      *      schema name
      * @param name
      *      table name
+     * @deprecated
+     *      see issue #53
      */
+    @Deprecated
     public Table(String dbName, String schemaName, String name) {
         // XXX: this constructor should be dropped when issue #53 is fixed
         super(name);

@@ -19,6 +19,7 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.Table;
+import edu.ucsc.dbtune.core.metadata.Column;
 import java.sql.SQLException;
 
 /**
@@ -63,7 +64,7 @@ public interface DBIndex {
      * @param i position of col
      * @return a database column at position {@code i}.
      */
-    DatabaseColumn getColumn(int i); // #44: Index.get(i);
+    Column getColumn(int i); // #44: Index.get(i);
     
     @Override
 	int hashCode(); // #44: Index.hashCode();

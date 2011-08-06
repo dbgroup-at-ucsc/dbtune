@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.core.metadata;
 import static edu.ucsc.dbtune.core.metadata.SQLTypes.isValidType;
 
 /**
- * POJO for storing column metadata
+ * POJO for representing column metadata
  *
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
@@ -35,22 +35,23 @@ public class Column extends DatabaseObject
     int     size;
 
 	/**
-     * copy constructor
+	 * Creates a column with the given number (with respect to its table).
      *
-     * @param other
-     *     column object being copied
+	 * @param attNum
+	 *     attribute number with respect to its containing table
+	 * @deprecated
+	 *     see issue #53
      */
-    public Column(Column other)
+	@Deprecated
+    public Column(int attNum)
     {
-        this(other.name, other.type);
+		// XXX: this constructor should be dropped when issue #53 is fixed
+        this("",SQLTypes.INT);
 
-        this.table        = other.table;
-        this.isNull       = other.isNull;
-        this.isDefault    = other.isDefault;
-        this.defaultValue = other.defaultValue;
+		this.id = attNum;
     }
 
-    /**
+	/**
      * Creates a column with the given name and type. The type should be one of the values defined 
      * in SQLTypes.
      *
@@ -71,7 +72,23 @@ public class Column extends DatabaseObject
         setDataType(type);
     }
 
-    /**
+	/**
+     * copy constructor
+     *
+     * @param other
+     *     column object being copied
+     */
+    public Column(Column other)
+    {
+        this(other.name, other.type);
+
+        this.table        = other.table;
+        this.isNull       = other.isNull;
+        this.isDefault    = other.isDefault;
+        this.defaultValue = other.defaultValue;
+    }
+
+	/**
      * Assigns the table that contains this column.
      *
      * @param table
@@ -160,6 +177,10 @@ public class Column extends DatabaseObject
      */
     public int getOrdinalPosition()
     {
+		if (table == null) { // XXX: remove when issue #53 is fixed
+			return (int)id; 
+		}
+
         return table._columns.indexOf(this) + 1;
     }
 }

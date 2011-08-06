@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.DB2Index;
-import edu.ucsc.dbtune.core.metadata.PGColumn;
+import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
@@ -319,9 +319,9 @@ public class DatabasePackageTest {
         assertThat(info.isDML(), is(false));
         assertThat(Double.compare(info.getIndexMaintenanceCost(index1), 0) == 0, is(true));
 
-        final DatabaseColumn col  = new PGColumn(12345);
-        final DBIndex        idx  = new PGIndex(121112, 3.0, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_121112");
-        final DBIndex        idx2 = new PGIndex(56789, true, Arrays.asList(col), Arrays.asList(true), 132111, 3.5, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_132111");
+        final Column  col  = new Column(12345);
+        final DBIndex idx  = new PGIndex(121112, 3.0, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_121112");
+        final DBIndex idx2 = new PGIndex(56789, true, Arrays.asList(col), Arrays.asList(true), 132111, 3.5, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_132111");
 
         connection.getWhatIfOptimizer().explain("SELECT * FROM R", Arrays.asList(idx, idx2));
     }

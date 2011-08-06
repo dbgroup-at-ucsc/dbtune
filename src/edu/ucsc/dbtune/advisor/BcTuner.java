@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.DatabaseColumn;
+import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Console;
@@ -297,7 +297,7 @@ public class BcTuner<I extends DBIndex> {
         @Override
         public ColumnChecker<I> get() {
             for (int j2 = 0; j2 < n2; j2++){
-                DatabaseColumn col2 = i2.getColumn(j2);
+                Column col2 = i2.getColumn(j2);
                 /* check for col2 in the same position */
                 if (i1.getColumn(j2).equals(col2)) continue;
 

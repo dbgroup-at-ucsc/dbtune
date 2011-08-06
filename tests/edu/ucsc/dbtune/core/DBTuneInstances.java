@@ -108,14 +108,14 @@ public class DBTuneInstances {
         }};
     }
 
-    public static PGIndex newPGIndex(int indexId, int schemaId, List<DatabaseColumn> cols, List<Boolean> desc){
+    public static PGIndex newPGIndex(int indexId, int schemaId, List<Column> cols, List<Boolean> desc){
         return new PGIndex(schemaId, true, cols, desc, indexId, 3.0, 4.5, "Create");
     }
 
-    public static List<DatabaseColumn> generateColumns(int howmany){
-        final List<DatabaseColumn> cols = Instances.newList();
+    public static List<Column> generateColumns(int howmany){
+        final List<Column> cols = Instances.newList();
         for(int idx = 0; idx < howmany; idx++){
-            cols.add(new PGColumn(idx));
+            cols.add(new Column(idx));
         }
         return cols;
     }
@@ -174,7 +174,7 @@ public class DBTuneInstances {
     public static PGIndex newPGIndex(final int id){
         class PI extends PGIndex {
             PI() {
-                super(123456, new Random().nextBoolean(), new ArrayList<DatabaseColumn>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
+                super(123456, new Random().nextBoolean(), new ArrayList<Column>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
             }
         }
         return new PI();
@@ -183,7 +183,7 @@ public class DBTuneInstances {
     public static PGIndex newPGIndex(final int schemaId, final int id){
         class PI extends PGIndex {
             PI() {
-                super(schemaId, new Random().nextBoolean(), new ArrayList<DatabaseColumn>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
+                super(schemaId, new Random().nextBoolean(), new ArrayList<Column>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
             }
         }
         return new PI();
@@ -192,7 +192,7 @@ public class DBTuneInstances {
     public static PGIndex newPGIndex(final boolean flag, final int schemaId, final int id){
         class PI extends PGIndex {
             PI() {
-                super(schemaId, flag, new ArrayList<DatabaseColumn>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
+                super(schemaId, flag, new ArrayList<Column>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
             }
         }
         return new PI();

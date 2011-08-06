@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -41,7 +40,7 @@ public class PGIndex extends AbstractIndex implements Serializable {
      * @param isSync
      *    indicate whether is sync or not.
      * @param columns
-     *      a list of {@link DatabaseColumn columns}.
+     *      a list of {@link Column columns}.
      * @param isDescending
      *      indicate whether is in descending order.
      * @param internalId
@@ -56,7 +55,7 @@ public class PGIndex extends AbstractIndex implements Serializable {
     public PGIndex(
             int reloid,
             boolean isSync,
-            List<DatabaseColumn> columns,
+            List<Column> columns,
             List<Boolean> isDescending,
             int internalId,
             double creationCost,
@@ -80,7 +79,7 @@ public class PGIndex extends AbstractIndex implements Serializable {
         return getSchema().getBaseTable();
     }
 
-    public List<DatabaseColumn> getColumns() {
+    public List<Column> getColumns() {
         return getSchema().getColumns();
     }
 
@@ -116,7 +115,7 @@ public class PGIndex extends AbstractIndex implements Serializable {
     }
 
     @Override
-    public PGColumn getColumn(int i) {
+    public Column getColumn(int i) {
         return Objects.as(getSchema().getColumns().get(i));
     }
 
@@ -145,7 +144,7 @@ public class PGIndex extends AbstractIndex implements Serializable {
         private static final long serialVersionUID = 1L;
 
         private Table baseTable;
-        private List<DatabaseColumn> columns;
+        private List<Column> columns;
         private boolean isSync;
         private List<Boolean> isDescending;
         private String signature;
@@ -157,12 +156,12 @@ public class PGIndex extends AbstractIndex implements Serializable {
          * @param isSync
          *    indicate whether is sync or not.
          * @param columns
-         *      a list of {@link DatabaseColumn columns}.
+         *      a list of {@link Column columns}.
          * @param isDescending
          *      indicate whether is in descending order.
          */
         public PGIndexSchema(int reloid, boolean isSync,
-                List<DatabaseColumn> columns,
+                List<Column> columns,
                 List<Boolean> isDescending
                 ) {
             this.baseTable = new Table(reloid);
@@ -175,9 +174,9 @@ public class PGIndex extends AbstractIndex implements Serializable {
             final StringBuilder sb = new StringBuilder();
             sb.append(reloid);
             sb.append(isSync() ? 'Y' : 'N');
-            for (DatabaseColumn col : columns) {
-                final PGColumn each = Objects.as(col);
-                sb.append(each.getAttnum()).append(" ");
+            for (Column col : columns) {
+                final Column each = Objects.as(col);
+                sb.append(each.getOrdinalPosition()).append(" ");
             }
 
             for (boolean d : isDescending) {
@@ -207,7 +206,7 @@ public class PGIndex extends AbstractIndex implements Serializable {
             return baseTable;
         }
 
-        public List<DatabaseColumn> getColumns() {
+        public List<Column> getColumns() {
             return columns;
         }
 
