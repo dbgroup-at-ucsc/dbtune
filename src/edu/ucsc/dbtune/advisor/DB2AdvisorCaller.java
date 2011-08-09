@@ -20,10 +20,10 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
-import edu.ucsc.dbtune.core.DBIndexSet;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.DBIndexSet;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Objects;
 

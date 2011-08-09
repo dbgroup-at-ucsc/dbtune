@@ -16,11 +16,9 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.util;
 
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.DBUtilities;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

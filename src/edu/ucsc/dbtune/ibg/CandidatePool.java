@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.DBIndexSet;
+import edu.ucsc.dbtune.util.DBIndexSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
