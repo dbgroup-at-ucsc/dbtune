@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.core.optimizer;
 
-import edu.ucsc.dbtune.core.AbstractExplainInfo;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
 import edu.ucsc.dbtune.core.metadata.Table;
@@ -26,7 +25,7 @@ import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 /**
- *  implements a DB2-specific {@link edu.ucsc.dbtune.core.ExplainInfo}.
+ *  implements a DB2-specific {@link edu.ucsc.dbtune.core.optimizer.ExplainInfo}.
  */
 public class DB2ExplainInfo extends AbstractExplainInfo {
 	private final Table       updatedTable;

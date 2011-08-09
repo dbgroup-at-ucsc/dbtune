@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexMetadata;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.DBIndexSet;
-import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.util.DBUtilities;
 import edu.ucsc.dbtune.util.HashFunction;
 import edu.ucsc.dbtune.util.Instances;

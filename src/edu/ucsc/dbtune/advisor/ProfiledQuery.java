@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.ExplainInfo;
+import edu.ucsc.dbtune.core.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;

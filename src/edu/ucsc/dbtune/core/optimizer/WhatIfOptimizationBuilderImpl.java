@@ -16,11 +16,9 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizationBuilder;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizationCostBuilder;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;

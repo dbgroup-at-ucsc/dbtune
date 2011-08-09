@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
 

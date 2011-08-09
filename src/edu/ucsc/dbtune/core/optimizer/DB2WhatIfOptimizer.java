@@ -1,10 +1,9 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
-import edu.ucsc.dbtune.core.optimizer.DB2ExplainInfo;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.*;
 
@@ -20,13 +19,13 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 * A DB2-specific implementation of {@link WhatIfOptimizer} type.
 * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
 */
-class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
+public class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
     private final DatabaseConnection        connection;
     private final AtomicReference<String>   cachedSQL;
 
     private final static Console SCREEN = Console.streaming();
 
-    DB2WhatIfOptimizer(DatabaseConnection connection){
+    public DB2WhatIfOptimizer(DatabaseConnection connection){
         super();
         this.connection = connection;
         cachedSQL       = Instances.newAtomicReference();

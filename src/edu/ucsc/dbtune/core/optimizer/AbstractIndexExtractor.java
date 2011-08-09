@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -30,7 +30,7 @@ import static edu.ucsc.dbtune.util.Instances.newTrueBoolean;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractIndexExtractor implements IndexExtractor {
+public abstract class AbstractIndexExtractor implements IndexExtractor {
     private final AtomicBoolean  enabled;
     protected AbstractIndexExtractor(){
         enabled = newTrueBoolean();

@@ -20,10 +20,10 @@ package edu.ucsc.dbtune.connectivity;
 
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.core.DatabaseSystem;
-import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.IndexExtractor;
-import edu.ucsc.dbtune.core.WhatIfOptimizer;
+import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.core.optimizer.Optimizer;
+import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 

@@ -1,10 +1,10 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.JdbcConnection;
+import edu.ucsc.dbtune.core.CostLevel;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.*;
 
@@ -22,7 +22,7 @@ import static edu.ucsc.dbtune.util.Objects.cast;
  * A DB2-specific What-If optimizer.
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
+public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     private final AtomicInteger whatifCount;
     private final List<Index> cachedCandidateSet = newLinkedList();
 
@@ -31,7 +31,7 @@ class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
      * @param connection
      *      a database connection
      */
-    DB2IBGWhatIfOptimizer(DatabaseConnection connection){
+    public DB2IBGWhatIfOptimizer(DatabaseConnection connection){
         super(new DB2WhatIfOptimizer(connection));
         whatifCount = newAtomicInteger();
     }

@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
@@ -30,7 +30,7 @@ import java.sql.SQLException;
  * indexes or the total cost of what-if optimizations.
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
- * @see edu.ucsc.dbtune.core.ExplainInfo
+ * @see edu.ucsc.dbtune.core.optimizer.ExplainInfo
  * @see edu.ucsc.dbtune.core.Index
  */
 public interface IndexExtractor {

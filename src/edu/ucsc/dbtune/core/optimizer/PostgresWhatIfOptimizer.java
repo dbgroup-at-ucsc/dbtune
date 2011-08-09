@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.PGCommands;
@@ -15,12 +15,12 @@ import java.util.List;
 /**
  * @author huascar.sanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-class PostgresWhatIfOptimizer extends AbstractWhatIfOptimizer {
+public class PostgresWhatIfOptimizer extends AbstractWhatIfOptimizer {
     private final DatabaseConnection        connection;
     private final AtomicReference<String>   cachedSQL;
     private final IndexBitSet               indexSet;
 
-    PostgresWhatIfOptimizer(DatabaseConnection connection){
+    public PostgresWhatIfOptimizer(DatabaseConnection connection){
         super();
         this.connection     = connection;
         indexSet            = Instances.newBitSet();

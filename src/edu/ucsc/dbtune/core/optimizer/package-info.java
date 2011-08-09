@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 /**
- * Interfaces which make up {@link edu.ucsc.dbtune.core.IBGWhatIfOptimizer}'s
+ * Interfaces which make up {@link edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer}'s
  * whatIfOptmize expression.
  */
 @Generated(value={})

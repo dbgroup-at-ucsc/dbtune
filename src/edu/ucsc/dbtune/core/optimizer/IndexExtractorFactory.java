@@ -16,9 +16,10 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+import edu.ucsc.dbtune.core.ResourceFactory;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)

@@ -1,8 +1,7 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -23,7 +22,7 @@ import static edu.ucsc.dbtune.util.Instances.newList;
  * A Postgres-specific What-if optimizer.
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
+public class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     private final AtomicInteger      whatifCount;
     private final IndexBitSet        cachedBitSet       = newBitSet();
     private final List<Index>      cachedCandidateSet = newList();
@@ -33,7 +32,7 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
      * @param connection
      *      a database connection
      */
-    PostgresIBGWhatIfOptimizer(DatabaseConnection connection){
+    public PostgresIBGWhatIfOptimizer(DatabaseConnection connection){
         super(new PostgresWhatIfOptimizer(connection));
         whatifCount = newAtomicInteger();
     }

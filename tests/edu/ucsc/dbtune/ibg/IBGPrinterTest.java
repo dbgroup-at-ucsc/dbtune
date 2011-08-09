@@ -2,8 +2,8 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.IndexExtractor;
 import edu.ucsc.dbtune.core.metadata.Table;
+import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.ibg.CandidatePool.Node;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;

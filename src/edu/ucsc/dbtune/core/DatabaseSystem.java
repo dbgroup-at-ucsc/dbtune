@@ -1,8 +1,13 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
+import edu.ucsc.dbtune.core.optimizer.IndexExtractorFactory;
 import edu.ucsc.dbtune.core.optimizer.Optimizer;
 import edu.ucsc.dbtune.core.optimizer.OptimizerFactory;
+import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizer;
+import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizerFactory;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Strings;
 
