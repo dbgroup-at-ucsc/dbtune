@@ -25,6 +25,7 @@ import edu.ucsc.dbtune.advisor.ProfiledQuery;
 import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.advisor.WorkloadProfiler;
 import edu.ucsc.dbtune.advisor.WorkloadProfilerImpl;
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
@@ -44,7 +45,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
+import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
 import static edu.ucsc.dbtune.util.Strings.str;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

@@ -32,7 +32,7 @@ import org.junit.Test;
 import java.io.StringReader;
 import java.sql.Connection;
 
-import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
+import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;

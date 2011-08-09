@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.connectivity;
 
-import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.PGIndex;

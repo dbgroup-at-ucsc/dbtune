@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.connectivity;
 
 import java.sql.Connection;
 import java.sql.SQLException;

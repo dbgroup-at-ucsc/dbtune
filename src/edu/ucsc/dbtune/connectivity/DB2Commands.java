@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune.connectivity;
 
 import edu.ucsc.dbtune.core.CostLevel;
-import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;

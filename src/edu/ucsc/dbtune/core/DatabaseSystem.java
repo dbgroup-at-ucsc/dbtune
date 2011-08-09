@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.optimizers.OptimizerFactory;
 import edu.ucsc.dbtune.core.optimizers.Optimizer;
 import edu.ucsc.dbtune.util.Checks;

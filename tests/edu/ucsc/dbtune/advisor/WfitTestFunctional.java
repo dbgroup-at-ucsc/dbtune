@@ -17,8 +17,8 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.advisor.ProfiledQuery;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.spi.Environment;
@@ -31,7 +31,7 @@ import java.sql.SQLException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
+import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 

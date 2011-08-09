@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Console;

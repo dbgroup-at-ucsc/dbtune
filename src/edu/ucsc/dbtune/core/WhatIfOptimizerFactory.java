@@ -18,6 +18,8 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
@@ -34,7 +36,7 @@ public interface WhatIfOptimizerFactory extends ResourceFactory {
     /**
      * makes a new {@link IBGWhatIfOptimizer} object.
      * @param connection
-     *      the {@link edu.ucsc.dbtune.core.DatabaseConnection} that gets this {@code optimizer} assigned to.
+     *      the {@link edu.ucsc.dbtune.connectivity.DatabaseConnection} that gets this {@code optimizer} assigned to.
      * @return
      *      a IBG-specific what-if optimizer.
      */

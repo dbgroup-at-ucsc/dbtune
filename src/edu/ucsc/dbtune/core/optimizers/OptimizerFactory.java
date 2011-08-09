@@ -15,7 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.core.optimizers;
 
-import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 
 /**
  * Creates optimizers

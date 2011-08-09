@@ -18,6 +18,8 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.spi.core.Console;

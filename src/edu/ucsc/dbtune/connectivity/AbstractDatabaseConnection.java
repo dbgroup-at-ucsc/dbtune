@@ -16,9 +16,13 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.connectivity;
 
 import edu.ucsc.dbtune.spi.core.Functions;
+import edu.ucsc.dbtune.core.DatabaseSystem;
+import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.core.IndexExtractor;
+import edu.ucsc.dbtune.core.WhatIfOptimizer;
 import edu.ucsc.dbtune.core.optimizers.Optimizer;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;

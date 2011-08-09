@@ -18,6 +18,8 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */

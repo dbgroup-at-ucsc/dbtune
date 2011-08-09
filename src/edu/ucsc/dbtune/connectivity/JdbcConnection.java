@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.connectivity;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -25,7 +25,7 @@ import java.sql.Statement;
 /**
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-class JdbcConnection extends AbstractDatabaseConnection implements DatabaseConnection {
+public class JdbcConnection extends AbstractDatabaseConnection implements DatabaseConnection {
     /**
      * construct a new {@code DefaultDatabaseConnection} object.
      * @param sqlConnection

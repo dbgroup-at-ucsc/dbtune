@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.core.metadata.extraction;
 
-import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Catalog;
 
 import java.sql.SQLException;

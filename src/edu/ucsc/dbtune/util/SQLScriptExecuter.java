@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.util;
 
-import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 
 import java.io.IOException;
 import java.io.LineNumberReader;

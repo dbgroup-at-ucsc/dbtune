@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.connectivity.ConnectionManager;
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Files;
@@ -14,7 +16,7 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Properties;
 
-import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
+import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
 import static edu.ucsc.dbtune.util.DBUtilities.trimSqlStatement;
 import static edu.ucsc.dbtune.util.Instances.newBitSet;
 import static org.hamcrest.CoreMatchers.is;

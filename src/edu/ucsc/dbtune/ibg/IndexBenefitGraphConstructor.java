@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;

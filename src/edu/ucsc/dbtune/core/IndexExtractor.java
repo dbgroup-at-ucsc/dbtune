@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
 import java.io.File;
 import java.io.IOException;

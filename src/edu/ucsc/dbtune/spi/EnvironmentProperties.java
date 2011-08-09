@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.spi;
 
 import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm;
-import edu.ucsc.dbtune.core.JdbcConnectionManager;
+import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
 
 /**
  * Set of properties used to write functional tests. They are used to introspect the system where 

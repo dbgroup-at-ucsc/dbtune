@@ -22,7 +22,7 @@
  * <p>The principal public APIs in this package are:
  *
  * <dl>
- * <dt>{@link edu.ucsc.dbtune.core.ConnectionManager}
+ * <dt>{@link edu.ucsc.dbtune.connectivity.ConnectionManager}
  * <dd>The interface that you will use in your implementation classes to tell DBTune
  *     to create connections to a specific dbms.
  *

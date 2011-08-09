@@ -18,8 +18,8 @@
 
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;

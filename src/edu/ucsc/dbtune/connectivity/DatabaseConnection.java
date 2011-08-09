@@ -16,8 +16,11 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.connectivity;
 
+import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.core.IndexExtractor;
+import edu.ucsc.dbtune.core.WhatIfOptimizer;
 import edu.ucsc.dbtune.core.optimizers.Optimizer;
 
 /**
@@ -25,7 +28,7 @@ import edu.ucsc.dbtune.core.optimizers.Optimizer;
  * {@link ConnectionManager#connect()}.
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
- * @see edu.ucsc.dbtune.core.DatabaseSession
+ * @see edu.ucsc.dbtune.connectivity.DatabaseSession
  * @see ConnectionManager
  */
 public interface DatabaseConnection extends DatabaseSession {

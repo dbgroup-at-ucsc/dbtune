@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.core.metadata.extraction;
 
-import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Catalog;
 import edu.ucsc.dbtune.core.metadata.Schema;
 import edu.ucsc.dbtune.core.metadata.Column;
@@ -34,7 +34,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static edu.ucsc.dbtune.core.JdbcConnectionManager.*;
+import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.*;
 import static org.junit.Assert.*;
 
 /**

@@ -16,8 +16,9 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.connectivity;
 
+import edu.ucsc.dbtune.core.DatabaseSystem;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.satuning.util.ToStringBuilder;
