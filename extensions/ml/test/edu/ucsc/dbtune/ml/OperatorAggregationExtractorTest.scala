@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.ml
 
-import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan
-import edu.ucsc.dbtune.core.optimizers.plan.Operator
+import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan
+import edu.ucsc.dbtune.core.optimizer.plan.Operator
 import edu.ucsc.dbtune.ml.OperatorAggregationExtractorTest._
 
 import org.junit.Test

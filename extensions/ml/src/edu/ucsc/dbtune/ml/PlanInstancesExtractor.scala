@@ -1,7 +1,7 @@
 // @license
 package edu.ucsc.dbtune.ml
 
-import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan
+import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan
 
 import java.io.File
 

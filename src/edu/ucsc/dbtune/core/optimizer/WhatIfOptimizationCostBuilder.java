@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.optimizers;
+package edu.ucsc.dbtune.core.optimizer;
 
 import java.sql.SQLException;
 

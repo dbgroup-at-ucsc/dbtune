@@ -20,6 +20,6 @@
  * whatIfOptmize expression.
  */
 @Generated(value={})
-package edu.ucsc.dbtune.core.optimizers;
+package edu.ucsc.dbtune.core.optimizer;
 
 import javax.annotation.Generated;

@@ -21,8 +21,9 @@ import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.core.metadata.Schema;
 import edu.ucsc.dbtune.core.metadata.SQLTypes;
-import edu.ucsc.dbtune.core.optimizers.plan.Operator;
-import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.core.optimizer.PGOptimizer;
+import edu.ucsc.dbtune.core.optimizer.plan.Operator;
+import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
 

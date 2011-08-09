@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.optimizers;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.core.AbstractExplainInfo;
 import edu.ucsc.dbtune.core.metadata.Index;

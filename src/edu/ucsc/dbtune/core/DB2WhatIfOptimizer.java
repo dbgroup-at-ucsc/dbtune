@@ -4,7 +4,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
-import edu.ucsc.dbtune.core.optimizers.DB2ExplainInfo;
+import edu.ucsc.dbtune.core.optimizer.DB2ExplainInfo;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.*;
 

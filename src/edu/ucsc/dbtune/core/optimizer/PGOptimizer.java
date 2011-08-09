@@ -13,12 +13,12 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core.optimizers;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.core.metadata.DatabaseObject;
 import edu.ucsc.dbtune.core.metadata.Schema;
-import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.core.optimizers.plan.Operator;
+import edu.ucsc.dbtune.core.optimizer.plan.Operator;
+import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan;
 
 import java.io.Reader;
 import java.io.StringReader;

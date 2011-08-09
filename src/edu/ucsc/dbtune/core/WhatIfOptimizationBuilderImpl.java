@@ -19,8 +19,8 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
-import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationCostBuilder;
+import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizationBuilder;
+import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizationCostBuilder;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -33,7 +33,7 @@ import static edu.ucsc.dbtune.util.Instances.newAtomicReference;
 import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
 
 /**
- * default implementation of {@link edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder} type.
+ * default implementation of {@link edu.ucsc.dbtune.core.optimizer.WhatIfOptimizationBuilder} type.
  */
 // todo(Huascar) remove asap
 class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {

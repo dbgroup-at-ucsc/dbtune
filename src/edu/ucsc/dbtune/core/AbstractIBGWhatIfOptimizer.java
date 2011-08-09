@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
+import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;

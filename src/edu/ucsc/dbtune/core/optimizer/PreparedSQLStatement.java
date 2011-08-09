@@ -13,11 +13,11 @@
  *   See the License for the specific language governing permissions and        *
  *   limitations under the License.                                             *
  * **************************************************************************** */
-package edu.ucsc.dbtune.core.optimizers;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.core.metadata.Configuration;
-import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan;
 
 /**
  * Represents a SQL statement that has been optimized. Each {@code SQLStatement} object is tied to a 

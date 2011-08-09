@@ -17,6 +17,9 @@ package edu.ucsc.dbtune.core.optimizers.plan;
 
 import org.junit.Test;
 
+import edu.ucsc.dbtune.core.optimizer.plan.Operator;
+import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
