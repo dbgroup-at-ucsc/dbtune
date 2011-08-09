@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import java.util.HashMap;
@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class KarlsIndexStatistics implements BenefitFunction, DoiFunction {
 	double currentTimeStamp = 0;
-	Map<DBIndex,Window> benefitWindows = new HashMap<DBIndex,Window>();
+	Map<Index,Window> benefitWindows = new HashMap<Index,Window>();
 	Map<DBIndexPair,Window> doiWindows = new HashMap<DBIndexPair,Window>();
 	DBIndexPair tempPair = new DBIndexPair(null, null); // for lookups
 
@@ -21,9 +21,9 @@ public class KarlsIndexStatistics implements BenefitFunction, DoiFunction {
 	}
 
 	public void addQuery(ProfiledQuery qinfo, DynamicIndexSet matSet) {
-		Iterable<DBIndex> candSet = qinfo.getCandidateSnapshot();
-		for (DBIndex index : candSet) {
-			double bestBenefit = qinfo.getInteractionBank().bestBenefit(index.internalId())
+		Iterable<Index> candSet = qinfo.getCandidateSnapshot();
+		for (Index index : candSet) {
+			double bestBenefit = qinfo.getInteractionBank().bestBenefit(index.getId())
 								    - qinfo.getExplainInfo().getIndexMaintenanceCost(index);
 			if (bestBenefit != 0) {
 				// add measurement, creating new window if necessary
@@ -37,10 +37,10 @@ public class KarlsIndexStatistics implements BenefitFunction, DoiFunction {
 		}
 
 		// not the most efficient double loop, but an ok compromise for now
-		for (DBIndex a : candSet) {
-			int id1 = a.internalId();
-			for (DBIndex b : candSet) {
-				int id2 = b.internalId();
+		for (Index a : candSet) {
+			int id1 = a.getId();
+			for (Index b : candSet) {
+				int id2 = b.getId();
 				if (id1 >= id2)
 					continue;
 
@@ -64,7 +64,7 @@ public class KarlsIndexStatistics implements BenefitFunction, DoiFunction {
 		currentTimeStamp += executionCost;
 	}
 
-	public double benefit(DBIndex index, IndexBitSet M) {
+	public double benefit(Index index, IndexBitSet M) {
 		if (currentTimeStamp == 0)
 			return 0;
 
@@ -75,7 +75,7 @@ public class KarlsIndexStatistics implements BenefitFunction, DoiFunction {
 			return window.maxRate(currentTimeStamp);
 	}
 
-	public double doi(DBIndex a, DBIndex b) {
+	public double doi(Index a, Index b) {
 		if (currentTimeStamp == 0)
 			return 0;
 
@@ -89,11 +89,11 @@ public class KarlsIndexStatistics implements BenefitFunction, DoiFunction {
 			return window.maxRate(currentTimeStamp);
 	}
 
-  @Override public double apply(DBIndex arg, IndexBitSet m) {
+  @Override public double apply(Index arg, IndexBitSet m) {
     return benefit(arg, m);
   }
 
-  @Override public double apply(DBIndex a, DBIndex b) {
+  @Override public double apply(Index a, Index b) {
     return doi(a, b);
   }
 
@@ -160,9 +160,9 @@ public class KarlsIndexStatistics implements BenefitFunction, DoiFunction {
 	}
 
 	private class DBIndexPair {
-		DBIndex a, b;
+		Index a, b;
 
-		DBIndexPair(DBIndex index1, DBIndex index2) {
+		DBIndexPair(Index index1, Index index2) {
 			a = index1;
 			b = index2;
 		}

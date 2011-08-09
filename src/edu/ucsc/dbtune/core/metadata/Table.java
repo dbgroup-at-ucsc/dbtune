@@ -27,11 +27,15 @@ import java.util.ArrayList;
 public class Table extends DatabaseObject
 {
     protected Schema schema;
+    protected int    type;
     private   String schemaName; // XXX: remove after fix of issue #53
     private   String dbName;     // XXX: remove after fix of issue #53
 
     protected List<Column> _columns;
     protected List<Index>  _indexes;
+
+    public static final int REGULAR = 1;
+    public static final int MDC     = 2;
 
     /**
      * Constructor
@@ -39,12 +43,13 @@ public class Table extends DatabaseObject
      * @param id
      *     id of the table object
      */
-    public Table( long id )
+    public Table( int id )
     {
         super( id );
 
         dbName     = "";
         schemaName = "";
+        type       = REGULAR;
         _columns   = new ArrayList<Column>();
         _indexes   = new ArrayList<Index>();
     }
@@ -67,6 +72,9 @@ public class Table extends DatabaseObject
         super(name);
         this.dbName     = dbName;
         this.schemaName = schemaName;
+        this.type       = REGULAR;
+        this._columns   = new ArrayList<Column>();
+        this._indexes   = new ArrayList<Index>();
     }
 
     /**
@@ -82,6 +90,7 @@ public class Table extends DatabaseObject
         id         = -1;
         dbName     = "";
         schemaName = "";
+        type       = REGULAR;
         _columns   = new ArrayList<Column>();
         _indexes   = new ArrayList<Index>();
     }
@@ -96,8 +105,11 @@ public class Table extends DatabaseObject
     {
         super( other );
 
-        _columns = other._columns;
-        _indexes = other._indexes;
+        _columns   = other._columns;
+        _indexes   = other._indexes;
+        type       = other.type;
+        dbName     = other.dbName;
+        schemaName = other.schemaName;
     }
 
     /**

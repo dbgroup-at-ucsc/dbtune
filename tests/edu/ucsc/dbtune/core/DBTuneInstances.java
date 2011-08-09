@@ -6,7 +6,7 @@ import edu.ucsc.dbtune.advisor.ProfiledQuery;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.Column;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
@@ -111,7 +111,7 @@ public class DBTuneInstances {
         }};
     }
 
-    public static DBIndex newPGIndex(int indexId, int schemaId, List<Column> cols, List<Boolean> desc){
+    public static Index newPGIndex(int indexId, int schemaId, List<Column> cols, List<Boolean> desc) throws Exception {
         return new PGIndex(schemaId, true, cols, desc, indexId, 3.0, 4.5, "Create");
     }
 
@@ -166,42 +166,23 @@ public class DBTuneInstances {
         };
     }
 
-    public static DBIndex newDB2Index(){
-        try {
-            return new DB2Index(DB_NAME, TABLE_NAME, TABLE_CREATOR, new ArrayList<String>(), new ArrayList<Boolean>(), "U", "N", "REG", 1, "no idea", "no idea", "N", 2, 5.0, 1.0);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public static Index newDB2Index() throws Exception {
+        return new DB2Index(DB_NAME, TABLE_NAME, TABLE_CREATOR, new ArrayList<String>(), new ArrayList<Boolean>(), "U", "N", "REG", 1, "no idea", "no idea", "N", 2, 5.0, 1.0);
     }
 
-    public static PGIndex newPGIndex(final int id){
-        class PI extends PGIndex {
-            PI() {
-                super(123456, new Random().nextBoolean(), new ArrayList<Column>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
-            }
-        }
-        return new PI();
+    public static PGIndex newPGIndex(final int id) throws Exception {
+        return new PGIndex(123456, new Random().nextBoolean(), new ArrayList<Column>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
     }
 
-    public static PGIndex newPGIndex(final int schemaId, final int id){
-        class PI extends PGIndex {
-            PI() {
-                super(schemaId, new Random().nextBoolean(), new ArrayList<Column>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
-            }
-        }
-        return new PI();
+    public static PGIndex newPGIndex(final int schemaId, final int id) throws Exception {
+        return new PGIndex(schemaId, new Random().nextBoolean(), new ArrayList<Column>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
     }
 
-    public static PGIndex newPGIndex(final boolean flag, final int schemaId, final int id){
-        class PI extends PGIndex {
-            PI() {
-                super(schemaId, flag, new ArrayList<Column>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
-            }
-        }
-        return new PI();
+    public static PGIndex newPGIndex(final boolean flag, final int schemaId, final int id) throws Exception {
+        return new PGIndex(schemaId, flag, new ArrayList<Column>(), new ArrayList<Boolean>(), id, 0.0, 0.0, "");
     }
 
-    public static PGIndex newPGIndex(){
+    public static PGIndex newPGIndex() throws Exception {
         return newPGIndex(1);
     }
 
@@ -238,8 +219,8 @@ public class DBTuneInstances {
 			int q = 0;
 			for (ProfiledQuery qinfo : qinfos) {
 				IndexBitSet[] parts = qinfo.getInteractionBank().stablePartitioning(0);
-				for (DBIndex index : qinfo.getCandidateSnapshot()) {
-					int id = index.internalId();
+				for (Index index : qinfo.getCandidateSnapshot()) {
+					int id = index.getId();
 					componentId[q][id] = -id;
 					for (int p = 0; p < parts.length; p++) {
 						if (parts[p].get(id)) {
@@ -286,8 +267,8 @@ public class DBTuneInstances {
 			bbSumCache[id] = ben;
 		}
 
-		public double apply(DBIndex a, IndexBitSet M) {
-			int id = a.internalId();
+		public double apply(Index a, IndexBitSet M) {
+			int id = a.getId();
 			if (!M.equals(prevM)) {
 				diffM.set(M);
 				diffM.xor(prevM[id]);
@@ -310,23 +291,23 @@ public class DBTuneInstances {
 		private InteractionBank bank;
 		TempDoiFunction(List<ProfiledQuery> qinfos, Snapshot candidateSet) {
 			bank = new InteractionBank(candidateSet);
-			for (DBIndex a : candidateSet) {
-				int id_a = a.internalId();
-				for (DBIndex b : candidateSet) {
-					int id_b = b.internalId();
+			for (Index a : candidateSet) {
+				int id_a = a.getId();
+				for (Index b : candidateSet) {
+					int id_b = b.getId();
 					if (id_a < id_b) {
 						double doi = 0;
 						for (ProfiledQuery qinfo : qinfos) {
-							doi += qinfo.getInteractionBank().interactionLevel(a.internalId(), b.internalId());
+							doi += qinfo.getInteractionBank().interactionLevel(a.getId(), b.getId());
 						}
-						bank.assignInteraction(a.internalId(), b.internalId(), doi);
+						bank.assignInteraction(a.getId(), b.getId(), doi);
 					}
 				}
 			}
 		}
 
-		public double apply(DBIndex a, DBIndex b) {
-			return bank.interactionLevel(a.internalId(), b.internalId());
+		public double apply(Index a, Index b) {
+			return bank.interactionLevel(a.getId(), b.getId());
 		}
 	}
 

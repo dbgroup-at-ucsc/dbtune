@@ -18,6 +18,8 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
+
 /**
  * An immutable type, which describes the output of a what-if optimization
  * call.
@@ -35,11 +37,11 @@ public interface ExplainInfo {
      * gets the maintenance cost of an index.
      *
      * @param index
-     *      a {@link edu.ucsc.dbtune.core.DBIndex} object.
+     *      a {@link edu.ucsc.dbtune.core.Index} object.
      * @return
      *      maintenance cost.
      */
-	double getIndexMaintenanceCost(DBIndex index);
+	double getIndexMaintenanceCost(Index index);
 
     /**
      * @return

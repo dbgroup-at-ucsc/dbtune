@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 
@@ -18,11 +19,11 @@ abstract class AbstractWhatIfOptimizer implements WhatIfOptimizer {
 
     @Override
     public ExplainInfo explain(String sql) throws SQLException {
-        return explain(sql, Instances.<DBIndex>newList());
+        return explain(sql, Instances.<Index>newList());
     }
 
     @Override
-    public ExplainInfo explain(Iterable<? extends DBIndex> indexes) throws SQLException {
+    public ExplainInfo explain(Iterable<? extends Index> indexes) throws SQLException {
         return explain(getCachedSQL(), indexes);
     }
 

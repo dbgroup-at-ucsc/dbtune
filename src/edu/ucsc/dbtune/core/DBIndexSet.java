@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DBUtilities;
 
@@ -28,12 +29,12 @@ import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.*;
 
-public class DBIndexSet implements Iterable<DBIndex>, Serializable {
+public class DBIndexSet implements Iterable<Index>, Serializable {
 	
 	private IndexBitSet bs;
-	private Set<DBIndex> set;
-	private List<DBIndex> list;
-	private int maxInternalId;
+	private Set<Index> set;
+	private List<Index> list;
+	private long maxInternalId;
 
 	/* serialization support */
 	public static final long serialVersionUID = 1L;
@@ -44,7 +45,7 @@ public class DBIndexSet implements Iterable<DBIndex>, Serializable {
 
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.writeInt(list.size());
-		for (DBIndex idx : list)
+		for (Index idx : list)
 			out.writeObject(idx);
 	}
 	
@@ -53,33 +54,36 @@ public class DBIndexSet implements Iterable<DBIndex>, Serializable {
     	clear();
     	int n = in.readInt();
     	for (int i = 0; i < n; i++) {
-    		DBIndex readObject = DBUtilities.<DBIndex>readObject(in);
+    		Index readObject = DBUtilities.<Index>readObject(in);
 			add(readObject);
     	}
     }
 	
 	public final void clear() {
-		set = new HashSet<DBIndex>();
-		list = new ArrayList<DBIndex>();
+		set = new HashSet<Index>();
+		list = new ArrayList<Index>();
 		bs = new IndexBitSet();
 		maxInternalId = -1;
 	}
 	
-	public void add(DBIndex idx) {
+	public void add(Index idx) {
 		if (set.add(idx)) {
 			list.add(idx);
-			bs.set(idx.internalId());
-			if (idx.internalId() > maxInternalId){
-                maxInternalId = idx.internalId();
+            if(idx.getId() > Integer.MAX_VALUE) {
+                throw new RuntimeException("Overflowed id " + idx.getId());
+            }
+			bs.set((int)idx.getId());
+			if (idx.getId() > maxInternalId){
+                maxInternalId = idx.getId();
             }
 		}
 	}
 	
-	public Iterator<DBIndex> iterator() {
+	public Iterator<Index> iterator() {
 		return list.iterator();
 	}
 	
-	public int maxInternalId() {
+	public long maxInternalId() {
 		return maxInternalId;
 	}
 
@@ -91,7 +95,7 @@ public class DBIndexSet implements Iterable<DBIndex>, Serializable {
 		StringBuilder sb = new StringBuilder();
         sb.append(size()).append(" indexes\n");
 		
-		for (DBIndex idx : this) {
+		for (Index idx : this) {
             sb.append(idx).append("\n");
 		}
 		
@@ -101,14 +105,15 @@ public class DBIndexSet implements Iterable<DBIndex>, Serializable {
 	// Renumber the indexes so they are sorted by their creation text 
 	@SuppressWarnings({"unchecked", "RedundantTypeArguments"})
 	public void normalize() throws SQLException {
-		DBIndex[] array = new DBIndex[list.size()];
-		array = list.<DBIndex>toArray(array);
+		Index[] array = new Index[list.size()];
+		array = list.<Index>toArray(array);
 		Arrays.sort(array, schemaComparator);
 		
 		// start from scratch to be safe
 		clear();
 		for (int i = 0; i < array.length; i++) {
-			DBIndex idx = (DBIndex) array[i].consDuplicate(i);
+            Index idx = new Index(array[i]);
+            idx.setId(i);
 			add(idx);
 		}
 	}
@@ -120,9 +125,9 @@ public class DBIndexSet implements Iterable<DBIndex>, Serializable {
 	/*
 	 * java.util.Comparator for displaying indexes in an easy to read format
 	 */
-	private static Comparator<DBIndex> schemaComparator = new Comparator<DBIndex>() {
-		public int compare(DBIndex o1, DBIndex o2) {
-			return o1.creationText().compareTo(o2.creationText());
+	private static Comparator<Index> schemaComparator = new Comparator<Index>() {
+		public int compare(Index o1, Index o2) {
+			return o1.getCreateStatement().compareTo(o2.getCreateStatement());
 		}
 	};
 }

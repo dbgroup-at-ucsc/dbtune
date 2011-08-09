@@ -36,21 +36,23 @@ import java.util.List;
 public abstract class DatabaseObject
 {
     protected String name;
-    protected long   id; // -1 means UNASSIGNED id
+    protected int    id; // -1 means UNASSIGNED id
     protected long   cardinality;
     protected long   pages;
     protected long   size;
+    protected double creationCost;
 
     /**
      * default constructor
      */
-    public DatabaseObject(long ID)
+    public DatabaseObject(int  ID)
     {
-        name        = null;
-        id          = ID;
-        cardinality = 0;
-        pages       = 0;
-        size        = 0;
+        name         = null;
+        id           = ID;
+        cardinality  = 0;
+        pages        = 0;
+        size         = 0;
+        creationCost = 0.0;
     }
 
     /**
@@ -76,10 +78,11 @@ public abstract class DatabaseObject
     {
         this(dbo.id);
 
-        name        = dbo.name;
-        cardinality = dbo.cardinality;
-        pages       = dbo.pages;
-        size        = dbo.size;
+        name         = dbo.name;
+        cardinality  = dbo.cardinality;
+        pages        = dbo.pages;
+        size         = dbo.size;
+        creationCost = dbo.creationCost;
     }
 
     /**
@@ -104,11 +107,33 @@ public abstract class DatabaseObject
     }
 
     /**
+     * Returns the cost of creating the object
+     *
+     * @return
+     *     cost of materializing the object
+     */
+    public void setCreationCost(double cost)
+    {
+        creationCost = cost;
+    }
+
+    /**
+     * Returns the cost of creating the index
+     *
+     * @return
+     *     cost of materializing the index
+     */
+    public double getCreationCost()
+    {
+        return creationCost;
+    }
+
+    /**
      * Assigns the id of the database object.
      *
      * @param id id of the database object
      */
-    public void setId(long id)
+    public void setId(int id)
     {
         this.id = id;
     }
@@ -119,7 +144,7 @@ public abstract class DatabaseObject
      * @return
      *     long value representing the object's id; -1 if it hasn't been assigned
      */
-    public long getId()
+    public int getId()
     {
         return id;
     }

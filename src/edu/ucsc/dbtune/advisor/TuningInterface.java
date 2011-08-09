@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.DBIndexSet;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
@@ -64,7 +64,7 @@ public class TuningInterface  {
      * @return
      *      a {@link Snapshot} of candidate indexes.
      */
-    public Snapshot addColdCandidate(DBIndex index) {
+    public Snapshot addColdCandidate(Index index) {
         return taskScheduler.addColdCandidate(index);
     }
 
@@ -89,7 +89,7 @@ public class TuningInterface  {
      * @return
      *      transition cost due to the creation of the index.
      */
-    public double createIndex(DBIndex index) {
+    public double createIndex(Index index) {
         taskScheduler.positiveVote(index);
         return taskScheduler.create(index);
     }
@@ -101,7 +101,7 @@ public class TuningInterface  {
      * @return
      *      cost due to the dropping of the index.
      */
-    public double dropIndex(DBIndex index) {
+    public double dropIndex(Index index) {
         taskScheduler.negativeVote(index);
         return taskScheduler.drop(index);
     }
@@ -133,7 +133,7 @@ public class TuningInterface  {
      */
     public DBIndexSet getRecommendation() {
         DBIndexSet indexSet = new DBIndexSet();
-        for (DBIndex index : taskScheduler.getRecommendation()) {
+        for (Index index : taskScheduler.getRecommendation()) {
             indexSet.add(index);
         }
         return indexSet;
@@ -144,7 +144,7 @@ public class TuningInterface  {
      * @param index
      *      index of interest.
      */
-    public void negativeVote(DBIndex index) {
+    public void negativeVote(Index index) {
         taskScheduler.negativeVote(index);
     }
 
@@ -167,7 +167,7 @@ public class TuningInterface  {
      * @param index
      *      index of interest.
      */
-    public void positiveVote(DBIndex index) {
+    public void positiveVote(Index index) {
         taskScheduler.positiveVote(index);
     }    
     

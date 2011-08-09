@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -48,7 +48,7 @@ public class CandidateSelectorTest {
         assertThat(userHotSet.contains(postgresIndex(2345, 43521)), is(false));
     }
 
-    private static DBIndex postgresIndex(int id, int schemaId){
+    private static Index postgresIndex(int id, int schemaId) throws Exception {
         return newPGIndex(id, schemaId, generateColumns(3), generateDescVals(3));
     }
 }

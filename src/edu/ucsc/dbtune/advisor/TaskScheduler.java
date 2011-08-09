@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
@@ -89,7 +89,7 @@ public class TaskScheduler implements Scheduler  {
     
     
     @Override
-    public Snapshot addColdCandidate(DBIndex index) {
+    public Snapshot addColdCandidate(Index index) {
         final CandidateTask task = new CandidateTask(index, this);
         Snapshot result = null;
         try {
@@ -119,11 +119,11 @@ public class TaskScheduler implements Scheduler  {
 
 
     @Override
-    public double create(DBIndex index){
+    public double create(Index index){
         return configChange(index, true);
     }
     
-    private double configChange(DBIndex index, boolean create){
+    private double configChange(Index index, boolean create){
         final ConfigurationTask task = new ConfigurationTask(index, create, this);
         double cost = 0.0;
         try {
@@ -138,7 +138,7 @@ public class TaskScheduler implements Scheduler  {
     }
     
     @Override
-    public double drop(DBIndex index){
+    public double drop(Index index){
         return configChange(index, false);
     }
 
@@ -186,9 +186,9 @@ public class TaskScheduler implements Scheduler  {
      *      a list of recommended indexes.
      */
     @Override
-    public List<DBIndex> getRecommendation(){
+    public List<Index> getRecommendation(){
         final RecommendationTask task = new RecommendationTask(this);
-        List<DBIndex> result = Instances.newList();
+        List<Index> result = Instances.newList();
         try {
             getProfilingQueue().put(task);
             waitForCompletion(task);
@@ -207,7 +207,7 @@ public class TaskScheduler implements Scheduler  {
      *      index of interest.
      */
     @Override
-    public void negativeVote(DBIndex index){
+    public void negativeVote(Index index){
         try {
             getProfilingQueue().put(new VoteTask(index, false, this));
         } catch (InterruptedException e) {
@@ -221,7 +221,7 @@ public class TaskScheduler implements Scheduler  {
      *      index of interest.
      */
     @Override
-    public void positiveVote(DBIndex index){
+    public void positiveVote(Index index){
         try {
             getProfilingQueue().put(new VoteTask(index, true, this));
         } catch (InterruptedException e) {
@@ -412,12 +412,12 @@ public class TaskScheduler implements Scheduler  {
     
     
     static class RecommendationTask extends SchedulerTask {
-        private List<DBIndex> recommendation = Instances.newList();
+        private List<Index> recommendation = Instances.newList();
         RecommendationTask(TaskScheduler taskScheduler) {
             super(taskScheduler, Console.streaming());
         }
         
-        List<DBIndex> getRecommendation(){
+        List<Index> getRecommendation(){
             return recommendation;
         }
 
@@ -529,10 +529,10 @@ public class TaskScheduler implements Scheduler  {
     
     static class VoteTask extends SchedulerTask {
         boolean     isPositive;
-        DBIndex           index;
+        Index           index;
         Snapshot candidateSet;
         
-        VoteTask(DBIndex index, boolean isPositive, TaskScheduler taskScheduler){
+        VoteTask(Index index, boolean isPositive, TaskScheduler taskScheduler){
             super(taskScheduler, Console.streaming());
             this.index        = index;
             this.isPositive   = isPositive;
@@ -565,11 +565,11 @@ public class TaskScheduler implements Scheduler  {
     
     
     static class ConfigurationTask extends SchedulerTask  {
-        DBIndex       index;
+        Index       index;
         boolean isTobeMaterialized;
         double  transitionCost = -1;
         
-        ConfigurationTask(DBIndex index, boolean isTobeMaterialized, TaskScheduler taskScheduler){
+        ConfigurationTask(Index index, boolean isTobeMaterialized, TaskScheduler taskScheduler){
             super(taskScheduler, Console.streaming());
             this.index              = index;
             this.isTobeMaterialized = isTobeMaterialized;
@@ -600,10 +600,10 @@ public class TaskScheduler implements Scheduler  {
     
     
     static class CandidateTask extends SchedulerTask  {
-        DBIndex           index;
+        Index           index;
         Snapshot candidateSet;
 
-        CandidateTask(DBIndex index, TaskScheduler taskScheduler){
+        CandidateTask(Index index, TaskScheduler taskScheduler){
             super(taskScheduler, Console.streaming());
             this.index = index;
         }

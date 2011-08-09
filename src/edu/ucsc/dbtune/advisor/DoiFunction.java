@@ -17,7 +17,7 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -31,5 +31,5 @@ public interface DoiFunction {
      * @param b second index object.
      * @return the doi value of two index objects.
      */
-    double apply(DBIndex a, DBIndex b);
+    double apply(Index a, Index b);
 }

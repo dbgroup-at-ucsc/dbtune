@@ -19,7 +19,8 @@
 package edu.ucsc.dbtune.core.metadata;
 
 import edu.ucsc.dbtune.util.Checks;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexMetadata;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.DBIndexSet;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
@@ -36,15 +37,10 @@ import java.util.List;
 import java.util.Map;
 import java.sql.ResultSet;
 
-import static edu.ucsc.dbtune.util.Checks.checkNotNull;
-
-public class DB2Index extends AbstractIndex implements Serializable {
+public class DB2Index extends Index {
     // serialized fields
-    protected DB2IndexMetadata meta;
+    private DB2IndexMetadata meta;
     private int hashCodeCache;
-
-    // serialization support
-    private static final long serialVersionUID = 1L;
 
     /**
      * construct new {@code DB2Index} from the ADVISE_INDEX table
@@ -56,8 +52,8 @@ public class DB2Index extends AbstractIndex implements Serializable {
      * @throws java.sql.SQLException
      *      unexpected error has occurred - unable to create object.
      */
-    public DB2Index(DatabaseConnection connection, ResultSet rs, String dbName, int id, double megabytes) throws SQLException {
-        super(0,"",0,0);
+    public DB2Index(DatabaseConnection connection, ResultSet rs, String dbName, int id, double megabytes) throws SQLException, Exception {
+        super("",(Table)null,SECONDARY,NON_UNIQUE,UNCLUSTERED);
 
         assert connection != null;
 
@@ -87,24 +83,21 @@ public class DB2Index extends AbstractIndex implements Serializable {
         String indexOwner  = rs.getString(DB2IndexMetadata.AdviseIndexColumn.EXPLAIN_REQUESTER.ordinal() + 1);
         String indexExists = rs.getString(DB2IndexMetadata.AdviseIndexColumn.EXISTS.ordinal() + 1);
         int systemRequired = rs.getInt(DB2IndexMetadata.AdviseIndexColumn.SYSTEM_REQUIRED.ordinal() + 1);
-        this.meta          = new DB2IndexMetadata(schema, id, indexName, indexOwner, indexExists, systemRequired, megabytes);
-        this.internalId    = this.meta.internalId;
-        this.creationText  = this.meta.creationText;
-        this.size          = this.meta.megabytes;
-        this.creationCost  = this.meta.creationCost(connection.getIBGWhatIfOptimizer());
-        hashCodeCache      = meta.hashCode();
+        this.setMeta(new DB2IndexMetadata(schema, id, indexName, indexOwner, indexExists, systemRequired, megabytes));
+        this.id            = this.getMeta().internalId;
+        this.size          = (long) this.getMeta().megabytes;
+        this.creationCost  = this.getMeta().creationCost(connection.getIBGWhatIfOptimizer());
+        hashCodeCache      = getMeta().hashCode();
     }
 
-    private DB2Index(DB2IndexMetadata metadata, double creationCost) throws SQLException {
-        super(
-                checkNotNull(metadata).internalId,
-                checkNotNull(metadata).creationText,
-                creationCost,
-                checkNotNull(metadata).megabytes
-        );
+    private DB2Index(DB2IndexMetadata metadata, double creationCost) throws SQLException, Exception {
+        super("",(Table)null,SECONDARY,NON_UNIQUE,UNCLUSTERED);
 
-        this.meta     = metadata;
-        hashCodeCache = metadata.hashCode();
+        this.id           = this.getMeta().internalId;
+        this.size         = (long) this.getMeta().megabytes;
+        this.creationCost = creationCost;
+        this.setMeta(metadata);
+        hashCodeCache     = metadata.hashCode();
     }
 
     public DB2Index(
@@ -123,18 +116,17 @@ public class DB2Index extends AbstractIndex implements Serializable {
             int systemRequired,
             double megabytes,
             double creationCost)
-        throws SQLException
+        throws SQLException, Exception
     {
-        super(0,"",0,0);
+        super("",(Table)null,SECONDARY,NON_UNIQUE,UNCLUSTERED);
 
         DB2IndexMetadata.DB2IndexSchema schema = new DB2IndexMetadata.DB2IndexSchema(dbName, tableName, tableCreator, colNames, descending,
                                                    uniqueRule, reverseScanOpt, indexType);
-        this.meta         = new DB2IndexMetadata(schema, internalId, indexName, indexOwner, indexExists, systemRequired, megabytes);
-        this.internalId   = this.meta.internalId;
-        this.creationText = this.meta.creationText;
-        this.size         = this.meta.megabytes;
+        this.setMeta(new DB2IndexMetadata(schema, internalId, indexName, indexOwner, indexExists, systemRequired, megabytes));
+        this.id           = this.getMeta().internalId;
+        this.size         = (long) this.getMeta().megabytes;
         this.creationCost = creationCost;
-        hashCodeCache     = meta.hashCode();
+        hashCodeCache     = getMeta().hashCode();
     }
 
     public static class DB2IndexSet extends DBIndexSet {
@@ -146,7 +138,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
      *      given by the index schema.
      */
     public String tableName() {
-        return meta.schema.tableName;
+        return getMeta().schema.tableName;
     }
 
     /**
@@ -155,36 +147,30 @@ public class DB2Index extends AbstractIndex implements Serializable {
      *      the index.
      */
     public String tableSchemaName() {
-        return meta.schema.tableCreatorName;
+        return getMeta().schema.tableCreatorName;
     }
 
     @Override
-    public Table baseTable() {
-        return meta.schema.getBaseTable();
+    public Table getTable() {
+        return getMeta().schema.getBaseTable();
     }
 
     @Override
-    public int columnCount() {
-        return meta.schema.getColumns().size();
-    }
-
-    @Override
-    public DB2Index consDuplicate(int id) throws SQLException {
-        final DB2IndexMetadata dupMeta = DB2IndexMetadata.consDuplicate(meta, id);
-        return new DB2Index(dupMeta, creationCost());
+    public int size() {
+        return getMeta().schema.getColumns().size();
     }
 
     // crucial override
     @Override
     public boolean equals(Object obj) {
         return obj instanceof DB2Index
-               && ((DB2Index) obj).meta.equals(meta);
+               && ((DB2Index) obj).getMeta().equals(getMeta());
     }
 
     @Override
     public Column getColumn(int i) {
         //noinspection RedundantTypeArguments
-        return meta.schema.getColumns().get(i);
+        return getMeta().schema.getColumns().get(i);
     }
     
     // crucial override
@@ -194,20 +180,27 @@ public class DB2Index extends AbstractIndex implements Serializable {
     }
 
     @Override
-    public double megabytes() {
-        // check Effective Java if you want to know why Double#compare(...)
-        // is used when comparing double values.
-        final boolean isPositive = Double.compare(super.megabytes(), 0.0) >= 0; 
-        Checks.checkArgument(isPositive, "Index size is not known");
-        return super.megabytes();
-    }
-    
-    @Override
     public String toString() {
-        return meta.creationText;
+        return getMeta().creationText;
     }
 
-    public static class DB2IndexMetadata implements Serializable {
+    public String getCreateStatement() {
+        return getMeta().creationText;
+    }
+
+    public long getMegaBytes() {
+        return size;
+    }
+
+    public void setMeta(DB2IndexMetadata meta) {
+		this.meta = meta;
+	}
+
+	public DB2IndexMetadata getMeta() {
+		return meta;
+	}
+
+	public static class DB2IndexMetadata implements Serializable {
         // serialized fields
         protected DB2IndexSchema schema;
         protected int internalId;
@@ -219,7 +212,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
         protected double megabytes;
         
         // for index names
-        protected static final String INDEX_NAME_BASE = "recommendation_tool_index_";
+        public static final String INDEX_NAME_BASE = "recommendation_tool_index_";
 
         // serialization support
         private static final long serialVersionUID = 1L;
@@ -388,7 +381,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
         }
 
         private static double calculateTotalCost(DatabaseConnection connection, String sql) throws SQLException {
-            connection.getIBGWhatIfOptimizer().fixCandidates(Instances.<DBIndex>newLinkedList());
+            connection.getIBGWhatIfOptimizer().fixCandidates(Instances.<Index>newLinkedList());
             return connection.getIBGWhatIfOptimizer().estimateCost(sql, Instances.newBitSet(), Instances.newBitSet());
         }
         
@@ -556,7 +549,7 @@ public class DB2Index extends AbstractIndex implements Serializable {
          * We assume that the table is SELECTed and INSERTed with the columns in this order
          * ------------------
          */
-        enum AdviseIndexColumn {
+        public enum AdviseIndexColumn {
             /* user metadata... extract it from the system's recommended indexes */
             EXPLAIN_REQUESTER(null),
             TBCREATOR(null), 

@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.DBTuneInstances;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
@@ -39,22 +39,22 @@ public class DynamicIndexSetTest {
     public void testWeirdSideEffect() throws Exception {
         final DynamicIndexSet idxset = new DynamicIndexSet();
         populateIndexSet(idxset, 1000, true);
-        for(DBIndex each : idxset){}
+        for(Index each : idxset){}
         boolean again = false;
-        for(DBIndex each : idxset){
+        for(Index each : idxset){
             again |= true;
         }
 
         assertThat(again, is(true));
     }
 
-    private static PGIndex postgresIndex(){
+    private static PGIndex postgresIndex() throws Exception {
         final List<Column> cols = Instances.newList();
         final List<Boolean>        desc = Instances.newList();
         return new PGIndex(12, true, cols, desc, 1, 3.0, 4.5, "");
     }
 
-    private void populateIndexSet(DynamicIndexSet idxset, int numberOfElements, boolean postgres) {
+    private void populateIndexSet(DynamicIndexSet idxset, int numberOfElements, boolean postgres) throws Exception {
         for(int idx = 0; idx < numberOfElements; idx++){
             idxset.add(postgres ? DBTuneInstances.newPGIndex(idx) : DBTuneInstances.newDB2Index());
         }

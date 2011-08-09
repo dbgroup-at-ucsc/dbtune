@@ -28,26 +28,29 @@ import java.util.ArrayList;
  */
 public class Index extends DatabaseObject
 {
-    public static final int     UNKNOWN     = 0;
-    public static final int     B_TREE      = 1;
-    public static final int     BITMAP      = 2;
-    public static final int     HASH        = 3;
-    public static final boolean PRIMARY     = true;
-    public static final boolean SECONDARY   = false;
-    public static final boolean CLUSTERED   = true;
-    public static final boolean UNCLUSTERED = false;
-    public static final boolean UNIQUE      = true;
-    public static final boolean NON_UNIQUE  = false;
+    public static final int     UNKNOWN        = 0;
+    public static final int     B_TREE         = 1;
+    public static final int     BITMAP         = 2;
+    public static final int     HASH           = 3;
+    public static final int     REVERSIBLE     = 4;
+    public static final int     NON_REVERSIBLE = 5;
+    public static final int     SYNCHRONIZED   = 6;
+    public static final boolean PRIMARY        = true;
+    public static final boolean SECONDARY      = false;
+    public static final boolean CLUSTERED      = true;
+    public static final boolean UNCLUSTERED    = false;
+    public static final boolean UNIQUE         = true;
+    public static final boolean NON_UNIQUE     = false;
 
     protected Table         table;
     protected List<Column>  columns;
     protected List<Boolean> descending;
     protected int           type;
+    protected int           scanOption;
     protected boolean       unique;
     protected boolean       primary;
     protected boolean       clustered;
     protected boolean       materialized;
-    protected double        creationCost;
 
     /**
      * Creates an empty index.
@@ -74,7 +77,7 @@ public class Index extends DatabaseObject
         this.columns      = new ArrayList<Column>();
         this.clustered    = clustered;
         this.descending   = new ArrayList<Boolean>();
-        this.creationCost = 0.0;
+        this.scanOption   = NON_REVERSIBLE;
     }
 
     /**
@@ -95,7 +98,7 @@ public class Index extends DatabaseObject
         this.clustered    = other.clustered;
         this.materialized = other.materialized;
         this.descending   = other.descending;
-        this.creationCost = other.creationCost;
+        this.scanOption   = other.scanOption;
     }
 
     /**
@@ -142,7 +145,7 @@ public class Index extends DatabaseObject
         this.unique       = unique;
         this.clustered    = clustered;
         this.descending   = new ArrayList<Boolean>();
-        this.creationCost = 0.0;
+        this.scanOption   = NON_REVERSIBLE;
     }
 
     /**
@@ -197,6 +200,28 @@ public class Index extends DatabaseObject
     public void setUnique(boolean unique)
     {
         this.unique = unique;
+    }
+
+    /**
+     * Returns the scan option of the index.
+     *
+     * @return
+     *     scan option of this index
+     */
+    public int getScanOption()
+    {
+        return scanOption;
+    }
+
+    /**
+     * Sets the value of the <code>scanOption</code> property of this index.
+     *
+     * @param scanOption
+     *     value to be assigned
+     */
+    public void setScanOption(int scanOption)
+    {
+        this.scanOption = scanOption;
     }
 
     /**
@@ -354,6 +379,16 @@ public class Index extends DatabaseObject
             return null;
         }
     }
+    public Column getColumn(int i) {
+        if (i < columns.size())
+        {
+            return columns.get(i);
+        }
+        else
+        {
+            return null;
+        }
+    }
 
     /**
      * Returns the corresponding table object.
@@ -367,31 +402,20 @@ public class Index extends DatabaseObject
     }
 
     /**
-     * Returns the cost of creating the index
+     * Returns the list of descending values of the index
      *
      * @return
-     *     cost of materializing the index
+     *     <code>true</code> if descending; <code>false</code> if ascending
      */
-    public double creationCost()
+    public List<Boolean> getDescending()
     {
-        return creationCost;
-    }
-
-    /**
-     * Returns the cost of creating the index
-     *
-     * @return
-     *     cost of materializing the index
-     */
-    public void setCreationCost(double cost)
-    {
-        creationCost = cost;
+        return descending;
     }
 
     /**
      * @return create index statement.
      */
-	String getCreateStatement() {
+	public String getCreateStatement() {
         throw new RuntimeException("Not implemented here");
     }
 
@@ -486,16 +510,19 @@ public class Index extends DatabaseObject
 
         if (table != idx.getTable())
         {
+            System.out.println("Table!!!");
             return false;
         }
 
         if (idx.size() != columns.size()) 
         {
+            System.out.println("ColSize!!!");
             return false;
         }
 
         if (idx.getType() != type)
         {
+            System.out.println("Type!!!");
             return false;
         }
 
@@ -503,6 +530,7 @@ public class Index extends DatabaseObject
         {
             if (!idx.get(i).equals(columns.get(i)))
             {
+                System.out.println("Column!!!");
                 return false;
             }
         }

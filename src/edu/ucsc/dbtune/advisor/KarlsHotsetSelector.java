@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.MinQueue;
@@ -25,18 +25,18 @@ public class KarlsHotsetSelector {
 			return new StaticIndexSet(requiredIndexSet);
 		}
 		else {
-			MinQueue<DBIndex> topSet = new MinQueue<DBIndex>(numToChoose);
+			MinQueue<Index> topSet = new MinQueue<Index>(numToChoose);
 
 			if (debugOutput)
 				System.out.println("choosing hot set:");
-			for (DBIndex index : candSet) {
+			for (Index index : candSet) {
 				if (requiredIndexSet.contains(index))
 					continue;
 
-				double penalty = oldHotSet.contains(index) ? 0 : index.creationCost();
+				double penalty = oldHotSet.contains(index) ? 0 : index.getCreationCost();
 				double score = benefitFunc.apply(index, emptyConfig) - penalty;
 				if (debugOutput)
-					System.out.println(index.internalId() + " score = " + score);
+					System.out.println(index.getId() + " score = " + score);
 				if (topSet.size() < numToChoose) {
 					topSet.insertKey(index, score);
 				}
@@ -46,8 +46,8 @@ public class KarlsHotsetSelector {
 				}
 			}
 
-			java.util.ArrayList<DBIndex> list = new java.util.ArrayList<DBIndex>();
-			for (DBIndex index : requiredIndexSet)
+			java.util.ArrayList<Index> list = new java.util.ArrayList<Index>();
+			for (Index index : requiredIndexSet)
 				list.add(index);
 			while (topSet.size() > 0)
 				list.add(topSet.deleteMin());
@@ -69,25 +69,25 @@ public class KarlsHotsetSelector {
 			return new StaticIndexSet(requiredIndexSet);
 		}
 		else {
-			java.util.ArrayList<DBIndex> list = new java.util.ArrayList<DBIndex>();
+			java.util.ArrayList<Index> list = new java.util.ArrayList<Index>();
 			IndexBitSet M = new IndexBitSet();
 
 			// add required indexes
-			for (DBIndex index : requiredIndexSet) {
+			for (Index index : requiredIndexSet) {
 				list.add(index);
-				M.set(index.internalId());
+				M.set(index.getId());
 			}
 
 			// add top indexes
 			for (int i = 0; i < numToChoose; i++) {
-				DBIndex bestIndex = null;
+				Index bestIndex = null;
 				double bestScore = Double.NEGATIVE_INFINITY;
 
-				for (DBIndex index : candSet) {
-					if (M.get(index.internalId()))
+				for (Index index : candSet) {
+					if (M.get(index.getId()))
 						continue;
 
-					double penalty = oldHotSet.contains(index) ? 0 : index.creationCost();
+					double penalty = oldHotSet.contains(index) ? 0 : index.getCreationCost();
 					double score = benefitFunc.apply(index, M) - penalty;
 					if (score > bestScore) {
 						bestIndex = index;
@@ -95,14 +95,14 @@ public class KarlsHotsetSelector {
 					}
 
 					if (debugOutput) {
-						System.out.println("index " + index.internalId() + " score = " + score);
+						System.out.println("index " + index.getId() + " score = " + score);
 					}
 				}
 				if (bestIndex == null)
 					break;
 				else {
 					list.add(bestIndex);
-					M.set(bestIndex.internalId());
+					M.set(bestIndex.getId());
 				}
 			}
 

@@ -34,24 +34,24 @@ public class Column extends DatabaseObject
     String  defaultValue;
     int     size;
 
-	/**
-	 * Creates a column with the given number (with respect to its table).
+    /**
+     * Creates a column with the given number (with respect to its table).
      *
-	 * @param attNum
-	 *     attribute number with respect to its containing table
-	 * @deprecated
-	 *     see issue #53
+     * @param attNum
+     *     attribute number with respect to its containing table
+     * @deprecated
+     *     see issue #53
      */
-	@Deprecated
+    @Deprecated
     public Column(int attNum)
     {
-		// XXX: this constructor should be dropped when issue #53 is fixed
+        // XXX: this constructor should be dropped when issue #53 is fixed
         this("",SQLTypes.INT);
 
-		this.id = attNum;
+        this.id = attNum;
     }
 
-	/**
+    /**
      * Creates a column with the given name and type. The type should be one of the values defined 
      * in SQLTypes.
      *
@@ -72,7 +72,7 @@ public class Column extends DatabaseObject
         setDataType(type);
     }
 
-	/**
+    /**
      * copy constructor
      *
      * @param other
@@ -88,7 +88,7 @@ public class Column extends DatabaseObject
         this.defaultValue = other.defaultValue;
     }
 
-	/**
+    /**
      * Assigns the table that contains this column.
      *
      * @param table
@@ -177,9 +177,9 @@ public class Column extends DatabaseObject
      */
     public int getOrdinalPosition()
     {
-		if (table == null) { // XXX: remove when issue #53 is fixed
-			return (int)id; 
-		}
+        if (table == null) { // XXX: remove when issue #53 is fixed
+            return (int)id; 
+        }
 
         return table._columns.indexOf(this) + 1;
     }

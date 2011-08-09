@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -29,7 +30,7 @@ import java.sql.SQLException;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  * @see edu.ucsc.dbtune.core.ExplainInfo
- * @see edu.ucsc.dbtune.core.DBIndex
+ * @see edu.ucsc.dbtune.core.Index
  */
 public interface IndexExtractor {
     /**
@@ -54,7 +55,7 @@ public interface IndexExtractor {
      *      an error has occurred when interacting with a database during
      *      the recommendation process.
      */
-	Iterable<DBIndex> recommendIndexes(String sql) throws SQLException;
+	Iterable<Index> recommendIndexes(String sql) throws SQLException;
 
     /**
      * recommends a {@link Iterable list} of indexes that could help improve performance, given a
@@ -70,5 +71,5 @@ public interface IndexExtractor {
      * @throws java.io.IOException
      *      an error has occurred when trying to open the workload file.
      */
-    Iterable<DBIndex> recommendIndexes(File workloadFile) throws SQLException, IOException;
+    Iterable<Index> recommendIndexes(File workloadFile) throws SQLException, IOException;
 }

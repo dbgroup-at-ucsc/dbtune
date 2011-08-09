@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
@@ -61,7 +62,7 @@ public class WhatIfOptimizerTestFunctional {
     public void testSingleSQLWhatIfOptimization() throws Exception {
         final String            query      = "select a from tbl where a = 5;";
         final IndexExtractor    extractor  = connection.getIndexExtractor();
-        final Iterable<DBIndex> candidates = extractor.recommendIndexes(query);
+        final Iterable<Index> candidates = extractor.recommendIndexes(query);
         final WhatIfOptimizer   optimizer  = connection.getWhatIfOptimizer();
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
@@ -72,7 +73,7 @@ public class WhatIfOptimizerTestFunctional {
 
         assertThat(info, CoreMatchers.<Object>notNullValue());
         assertThat(info.isQuery(), is(true));
-        for(DBIndex each : candidates){
+        for(Index each : candidates){
            assumeThat(info.getIndexMaintenanceCost(each) >= 0.0, is(true));
         }
     }
@@ -86,14 +87,14 @@ public class WhatIfOptimizerTestFunctional {
 
         for (String line : Files.getLines(workload)) {
             final String            sql         = trimSqlStatement(line);
-            final Iterable<DBIndex> candidates  = extractor.recommendIndexes(workload);
+            final Iterable<Index> candidates  = extractor.recommendIndexes(workload);
 
             assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
             final ExplainInfo info = optimizer.explain(sql, candidates);
             assertThat(info, CoreMatchers.<Object>notNullValue());
 
-            for(DBIndex each : candidates){
+            for(Index each : candidates){
                assumeThat(info.getIndexMaintenanceCost(each) >= 0.0, is(true));
             }
         }
@@ -105,7 +106,7 @@ public class WhatIfOptimizerTestFunctional {
     public void testSingleSQLIBGWhatIfOptimization() throws Exception {
         final String             query       = "select count(*) from tbl where b > 3";
         final IndexExtractor     extractor   = connection.getIndexExtractor();
-        final Iterable<DBIndex>  candidates  = extractor.recommendIndexes(query);
+        final Iterable<Index>  candidates  = extractor.recommendIndexes(query);
         final IBGWhatIfOptimizer optimizer   = connection.getIBGWhatIfOptimizer();
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());

@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -53,9 +53,9 @@ public class StaticIndexSetTest {
     @Test
     public void testWeirdSideEffect() throws Exception {
         final StaticIndexSet indexSet = new StaticIndexSet(StaticIndexSetTest.populateIndexSet(10, true));
-        for(DBIndex each : indexSet){}
+        for(Index each : indexSet){}
         boolean again = false;
-        for(DBIndex each : indexSet){
+        for(Index each : indexSet){
             again |= true;
         }
 
@@ -63,10 +63,10 @@ public class StaticIndexSetTest {
     }
 
 
-    private static List<DBIndex> populateIndexSet(int size, boolean postgres){
-        final List<DBIndex> o = new ArrayList<DBIndex>();
+    private static List<Index> populateIndexSet(int size, boolean postgres) throws Exception {
+        final List<Index> o = new ArrayList<Index>();
         for(int idx = 0; idx < size; idx++){
-            o.add((DBIndex) (postgres ? DBTuneInstances.newPGIndex(idx, 123, DBTuneInstances.generateColumns(3), DBTuneInstances.generateDescVals(3)) : DBTuneInstances.newDB2Index()));
+            o.add((Index) (postgres ? DBTuneInstances.newPGIndex(idx, 123, DBTuneInstances.generateColumns(3), DBTuneInstances.generateDescVals(3)) : DBTuneInstances.newDB2Index()));
         }
         return o;
     }

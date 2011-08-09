@@ -19,6 +19,7 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -69,13 +70,13 @@ public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer
     }
 
     // a hook method that should be overriden by implementations of this class.
-    double estimateCost(String sql, Iterable<DBIndex> candidate, IndexBitSet configuration,
+    double estimateCost(String sql, Iterable<Index> candidate, IndexBitSet configuration,
         IndexBitSet used){
       return 0.0;
     }
 
     @Override
-    public double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used, DBIndex profiledIndex) throws SQLException {
+    public double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used, Index profiledIndex) throws SQLException {
         throw new UnsupportedOperationException("AbstractIBGWhatIfOptimizer#estimateCost(..) not supported yet.");
     }
 
@@ -86,19 +87,19 @@ public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer
     }
 
     @Override
-    public ExplainInfo explain(Iterable<? extends DBIndex> indexes) throws SQLException {
+    public ExplainInfo explain(Iterable<? extends Index> indexes) throws SQLException {
         return explain(getCachedSQL(), indexes);
     }
 
     @Override
-    public ExplainInfo explain(String sql, Iterable<? extends DBIndex> indexes) throws SQLException {
+    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
         return delegate.explain(sql, indexes);
     }
 
     /**
      * @return a current candidate set after calling {@link #fixCandidates(Iterable)} method.
      */
-    public abstract Iterable<DBIndex> getCandidateSet();
+    public abstract Iterable<Index> getCandidateSet();
 
 
     /**

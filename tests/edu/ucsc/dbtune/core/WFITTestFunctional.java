@@ -25,6 +25,7 @@ import edu.ucsc.dbtune.advisor.ProfiledQuery;
 import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.advisor.WorkloadProfiler;
 import edu.ucsc.dbtune.advisor.WorkloadProfilerImpl;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.Environment;
@@ -176,12 +177,12 @@ public class WFITTestFunctional
                 final StopWatch watch = new StopWatch();
                 wfa.newTask(query);
 
-                Iterable<DBIndex> rec = wfa.getRecommendation();
+                Iterable<Index> rec = wfa.getRecommendation();
 
                 wfitSchedule[q] = new IndexBitSet();
 
-                for (DBIndex idx : rec) {
-                    wfitSchedule[q].set(idx.internalId());
+                for (Index idx : rec) {
+                    wfitSchedule[q].set(idx.getId());
                 }
 
                 overheads[q] = watch.milliseconds();
@@ -280,11 +281,11 @@ public class WFITTestFunctional
     {
         CandidatePool     pool         = new CandidatePool();
         File              workloadFile = new File(workloadFilename);
-        Iterable<DBIndex> candidateSet;
+        Iterable<Index> candidateSet;
 
         candidateSet = con.getIndexExtractor().recommendIndexes(workloadFile);
 
-        for (DBIndex index : candidateSet) {
+        for (Index index : candidateSet) {
             pool.addIndex(index);
         }
 

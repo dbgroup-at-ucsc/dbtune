@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
@@ -79,7 +79,7 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 
 
     @Override
-	public Snapshot addCandidate(DBIndex index) throws SQLException {
+	public Snapshot addCandidate(Index index) throws SQLException {
 		candidatePool.addIndex(index);
 		return candidatePool.getSnapshot();
 	}
@@ -102,9 +102,9 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 		if (onlineCandidates) {
 			try {
                 final IndexExtractor    extractor           = connection.getIndexExtractor();
-                final Iterable<DBIndex> recommendedIndexes  = extractor.recommendIndexes(sql);
+                final Iterable<Index> recommendedIndexes  = extractor.recommendIndexes(sql);
 
-                for(DBIndex each : recommendedIndexes){
+                for(Index each : recommendedIndexes){
                     candidatePool.addIndex(each);
                 }
 			} catch (SQLException e) {
@@ -172,7 +172,7 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
     }
 
     @Override
-	public Snapshot processVote(DBIndex index, boolean isPositive) throws SQLException {
+	public Snapshot processVote(Index index, boolean isPositive) throws SQLException {
 		return isPositive ? addCandidate(index) : candidatePool.getSnapshot();
 	}
 

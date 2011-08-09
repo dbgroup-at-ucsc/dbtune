@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationCostBuilder;
 import edu.ucsc.dbtune.spi.core.Console;
@@ -43,7 +44,7 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
     // optional variables
     private IndexBitSet configuration;
     private IndexBitSet usedSet;
-    private DBIndex         profiledIndex;
+    private Index         profiledIndex;
     private IndexBitSet usedColumns;
 
     private final AbstractIBGWhatIfOptimizer whatIfOptimizer;
@@ -85,7 +86,7 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
      * @return
      *      a profiled index.
      */
-    public DBIndex getProfiledIndex(){
+    public Index getProfiledIndex(){
         return profiledIndex;
     }
 
@@ -127,7 +128,7 @@ class WhatIfOptimizationBuilderImpl implements WhatIfOptimizationBuilder {
 
     @Override
     public WhatIfOptimizationCostBuilder using(IndexBitSet config,
-           DBIndex profiledIndex, IndexBitSet usedColumns
+           Index profiledIndex, IndexBitSet usedColumns
     ) {
         this.withProfiledIndex.set(true);
         this.configuration = config;

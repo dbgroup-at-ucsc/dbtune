@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.IndexExtractor;
 import edu.ucsc.dbtune.core.metadata.Table;
@@ -57,27 +57,26 @@ public class IBGPrinterTest {
         // configure indexex
 
         // duplicate index
-        final DBIndex twin = mock(DBIndex.class);
-        when(twin.internalId()).thenReturn(1);
-        when(twin.creationCost()).thenReturn(22.3);
-        when(twin.megabytes()).thenReturn(2.0);
-        when(twin.baseTable()).thenReturn(table);
+        final Index twin = mock(Index.class);
+        when(twin.getId()).thenReturn(1);
+        when(twin.getCreationCost()).thenReturn(22.3);
+        when(twin.getMegaBytes()).thenReturn(2000000000000l);
+        when(twin.getTable()).thenReturn(table);
 
-        final DBIndex soleIndex = mock(DBIndex.class);
-        when(soleIndex.internalId()).thenReturn(1);
-        when(soleIndex.creationCost()).thenReturn(22.3);
-        when(soleIndex.megabytes()).thenReturn(2.0);
-        when(soleIndex.baseTable()).thenReturn(table);
-        when(soleIndex.consDuplicate(1)).thenReturn(twin);
-
+        final Index soleIndex = mock(Index.class);
+        when(soleIndex.getId()).thenReturn(1);
+        when(soleIndex.getCreationCost()).thenReturn(22.3);
+        when(twin.getMegaBytes()).thenReturn(2000000000000l);
+        when(soleIndex.getTable()).thenReturn(table);
 
 
-        final Iterable<DBIndex> recommendedIndexes = new ArrayList<DBIndex>(Arrays.asList(soleIndex));
+
+        final Iterable<Index> recommendedIndexes = new ArrayList<Index>(Arrays.asList(soleIndex));
         final IndexExtractor extractor = mock(IndexExtractor.class);
         when(extractor.recommendIndexes(basicQuery)).thenReturn(recommendedIndexes);
 
         final CandidatePool candidatePool = (CandidatePool) mock(CandidatePool.class);
-        final Node<DBIndex>          root          = (Node<DBIndex>) mock(Node.class);
+        final Node<Index>          root          = (Node<Index>) mock(Node.class);
         when(root.getIndex()).thenReturn(twin);
         when(root.getNext()).thenReturn(root);
 

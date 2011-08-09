@@ -17,7 +17,7 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
@@ -39,7 +39,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
     private       DBIndexPair     tempPair;
 
     private final Map<DBIndexPair, MeasurementWindow>    doiWindows;
-    private final Map<DBIndex, MeasurementWindow>        benefitWindows;
+    private final Map<Index, MeasurementWindow>        benefitWindows;
 
     /**
      * Construct an {@code IndexStatistics} object.
@@ -48,7 +48,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
         this(
             DBIndexPair.                              emptyPair(),
             Instances.<DBIndexPair,MeasurementWindow> newHashMap(),
-            Instances.<DBIndex,MeasurementWindow>              newHashMap(),
+            Instances.<Index,MeasurementWindow>              newHashMap(),
             indexStatisticsWindow);
     }
 
@@ -57,16 +57,16 @@ public class IndexStatisticsFunction implements StatisticsFunction {
      * correspond to either doi or benefit measurements at some point in time (i.e.,
      * {@link MeasurementWindow measurement window}).
      * @param indexPair
-     *      a pair of {@link DBIndex indexes} used for lookups.
+     *      a pair of {@link Index indexes} used for lookups.
      * @param doiWindows
      *      a map of {@link DBIndexPair indexes pair} to {@link MeasurementWindow window}.
      * @param benefitWindows
-     *      a map of {@link DBIndex index} to {@link MeasurementWindow window}.
+     *      a map of {@link Index index} to {@link MeasurementWindow window}.
      */
     public IndexStatisticsFunction(
             DBIndexPair indexPair,
             Map<DBIndexPair, MeasurementWindow> doiWindows,
-            Map<DBIndex, MeasurementWindow> benefitWindows,
+            Map<Index, MeasurementWindow> benefitWindows,
             int indexStatisticsWindow
     ){
         this.tempPair              = indexPair;
@@ -85,12 +85,12 @@ public class IndexStatisticsFunction implements StatisticsFunction {
 
     @Override
     public void addQuery(ProfiledQuery queryInfo, DynamicIndexSet matSet) {
-        Iterable<DBIndex> candSet = queryInfo.getCandidateSnapshot();
-        for (DBIndex index : candSet) {
+        Iterable<Index> candSet = queryInfo.getCandidateSnapshot();
+        for (Index index : candSet) {
             final InteractionBank bank          = queryInfo.getInteractionBank();
             final ExplainInfo explainInfo   = queryInfo.getExplainInfo();
 
-            double bestBenefit = bank.bestBenefit(index.internalId())
+            double bestBenefit = bank.bestBenefit(index.getId())
                                  - explainInfo.getIndexMaintenanceCost(index);
             if (bestBenefit != 0) {
                 // add measurement, creating new window if necessary
@@ -109,13 +109,13 @@ public class IndexStatisticsFunction implements StatisticsFunction {
     private void calculateInteractionLevel(
             ProfiledQuery queryInfo,
             DynamicIndexSet matSet,
-            Iterable<DBIndex> candSet
+            Iterable<Index> candSet
     ) {
         // not the most efficient double loop, but an ok compromise for now
-        for (DBIndex a : candSet) {
-            int id1 = a.internalId();
-            for (DBIndex b : candSet) {
-                int id2 = b.internalId();
+        for (Index a : candSet) {
+            int id1 = a.getId();
+            for (Index b : candSet) {
+                int id2 = b.getId();
                 if (id1 >= id2){
                     continue;
                 }
@@ -136,11 +136,11 @@ public class IndexStatisticsFunction implements StatisticsFunction {
         tempPair.a = null; tempPair.b = null;
     }
 
-    private void updateIndexPairs(DBIndex a, DBIndex b){
+    private void updateIndexPairs(Index a, Index b){
         tempPair.a = a; tempPair.b = b;
     }
 
-    private void addsMeasurement(DBIndex a, DBIndex b, double doi) {
+    private void addsMeasurement(Index a, Index b, double doi) {
         // add measurement, creating new window if necessary
         updateIndexPairs(a, b);
         MeasurementWindow doiwin = doiWindows.get(tempPair);
@@ -153,12 +153,12 @@ public class IndexStatisticsFunction implements StatisticsFunction {
     }
 
     @Override
-    public double doi(DBIndex a, DBIndex b) {
+    public double doi(Index a, Index b) {
         return doi.apply(a, b) ;
     }
 
     @Override
-    public double benefit(DBIndex a, IndexBitSet m) {
+    public double benefit(Index a, IndexBitSet m) {
         return benefit.apply(a, m);
     }
 
@@ -254,7 +254,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
         }
 
         @Override
-        public double apply(DBIndex a, DBIndex b) {
+        public double apply(Index a, Index b) {
             if (statistics.currentTimeStamp == 0)
                 return 0;
 
@@ -277,7 +277,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
         }
 
         @Override
-        public double apply(DBIndex arg, IndexBitSet m) {
+        public double apply(Index arg, IndexBitSet m) {
             if (statistics.currentTimeStamp == 0)
                 return 0;
             final MeasurementWindow window = statistics.benefitWindows.get(arg);
@@ -290,10 +290,10 @@ public class IndexStatisticsFunction implements StatisticsFunction {
     }
 
     static class DBIndexPair {
-        DBIndex a;
-        DBIndex b;
+        Index a;
+        Index b;
 
-        DBIndexPair(DBIndex a, DBIndex b) {
+        DBIndexPair(Index a, Index b) {
             this.a = a;
             this.b = b;
         }
@@ -302,7 +302,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
             return of(null, null);
         }
 
-        static DBIndexPair of(DBIndex a, DBIndex b){
+        static DBIndexPair of(Index a, Index b){
             return new DBIndexPair(a, b);
         }
 

@@ -94,8 +94,10 @@ public class IndexBenefitGraphConstructor {
 		IndexBitSet rootConfig = this.candidateSet.bitSet();
 		rootNode = new IBGNode(rootConfig, nodeCount++);
 
-    final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
-    emptyCost = optimizer.estimateCost(this.sql, Instances.newBitSet(), Instances.newBitSet());
+        final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
+        emptyCost = optimizer.estimateCost(this.sql, Instances.newBitSet(), Instances.newBitSet());
+
+        System.out.println("empty costoo: " + emptyCost);
 
 		// initialize the queue
 		queue.add(rootNode);

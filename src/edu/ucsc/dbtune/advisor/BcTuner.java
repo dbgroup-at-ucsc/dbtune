@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
@@ -58,14 +58,14 @@ public class BcTuner {
     /**
      * @return the {@code index} to create.
      */
-	DBIndex chooseIndexToCreate() {
-		DBIndex indexToCreate = null;
+	Index chooseIndexToCreate() {
+		Index indexToCreate = null;
 		double maxBenefit = 0;
 
-		for (DBIndex idx : hotSet) {
-			BcIndexInfo stats = pool.get(idx.internalId());
+		for (Index idx : hotSet) {
+			BcIndexInfo stats = pool.get(idx.getId());
 			if (stats.state == BcIndexInfo.State.HYPOTHETICAL) {
-				double benefit = stats.benefit(idx.creationCost());
+				double benefit = stats.benefit(idx.getCreationCost());
 				if (benefit >= 0 && (indexToCreate == null || benefit > maxBenefit)) {
 					indexToCreate = idx;
 					maxBenefit = benefit;
@@ -79,14 +79,14 @@ public class BcTuner {
     /**
      * @return the {@code index} to drop.
      */
-    DBIndex chooseIndexToDrop() {
-		DBIndex indexToDrop = null;
+    Index chooseIndexToDrop() {
+		Index indexToDrop = null;
 		double minResidual = 0;
 
-		for (DBIndex idx : hotSet) {
-			BcIndexInfo stats = pool.get(idx.internalId());
+		for (Index idx : hotSet) {
+			BcIndexInfo stats = pool.get(idx.getId());
 			if (stats.state == BcIndexInfo.State.MATERIALIZED) {
-				double residual = stats.residual(idx.creationCost());
+				double residual = stats.residual(idx.getCreationCost());
 				if (residual <= 0 && (indexToDrop == null || residual < minResidual)) {
 					indexToDrop = idx;
 					minResidual = residual;
@@ -101,11 +101,11 @@ public class BcTuner {
      * dump to index pool on the screen (print it on screen).
      */
 	public void dumpIndexPool() {
-		for (DBIndex idx : hotSet) {
-			int id = idx.internalId();
+		for (Index idx : hotSet) {
+			int id = idx.getId();
 			BcIndexInfo stats = pool.get(id);
 			
-			console.log(idx.creationText());
+			console.log(idx.getCreateStatement());
 			console.log(stats.toString(idx));
 			console.skip();
 		}
@@ -116,15 +116,15 @@ public class BcTuner {
      */
 	public IndexBitSet getRecommendation() {
 		IndexBitSet bs = new IndexBitSet();
-		for (DBIndex index : hotSet) {
-			if (pool.get(index.internalId()).state == BcIndexInfo.State.MATERIALIZED){
-                bs.set(index.internalId());
+		for (Index index : hotSet) {
+			if (pool.get(index.getId()).state == BcIndexInfo.State.MATERIALIZED){
+                bs.set(index.getId());
             }
 		}
 		return bs;
 	}
 
-    private int inferUseLevel(DBIndex i1, DBIndex i2, boolean prefix) {
+    private int inferUseLevel(Index i1, Index i2, boolean prefix) {
         if (prefix) {
             return 2;
         } else if (i1.getColumn(0).equals(i2.getColumn(0))) {
@@ -153,8 +153,8 @@ public class BcTuner {
         BcBenefitInfo qinfo = BcBenefitInfo.makeBcBenefitInfo(input);
 		
 		// update statistics
-		for (DBIndex idx : hotSet) {
-			int id = idx.internalId();
+		for (Index idx : hotSet) {
+			int id = idx.getId();
 			BcIndexInfo stats = pool.get(id);
 			
 			if (qinfo.origCost(id) != qinfo.newCost(id)) // kludge to check if the index was used
@@ -170,11 +170,11 @@ public class BcTuner {
 		// iteratively drop indices 
 		while (true) {
 			// choose the worst index to drop
-			DBIndex indexToDrop = chooseIndexToDrop();
+			Index indexToDrop = chooseIndexToDrop();
 			if (indexToDrop == null) 
 				break;
 			
-			BcIndexInfo indexToDropStats = pool.get(indexToDrop.internalId());
+			BcIndexInfo indexToDropStats = pool.get(indexToDrop.getId());
 			
 			// record the drop
 			indexToDropStats.state = BcIndexInfo.State.HYPOTHETICAL;
@@ -191,10 +191,10 @@ public class BcTuner {
 	            else
 	                beta[level] = costO / costN;
 	        }
-			for (DBIndex ij : hotSet) {
+			for (Index ij : hotSet) {
 				if (ij == indexToDrop)
 					continue;
-				BcIndexInfo ijStats = pool.get(ij.internalId());
+				BcIndexInfo ijStats = pool.get(ij.getId());
 				int useLevel = useLevel(indexToDrop, ij);
 				for (int level = 0; level <= useLevel; level++) {
 					double costO = ijStats.origCost(level);
@@ -209,24 +209,24 @@ public class BcTuner {
 		// iteratively create indices
 		while (true) {
 			// choose the best index to create
-			DBIndex indexToCreate = chooseIndexToCreate();
+			Index indexToCreate = chooseIndexToCreate();
 			if (indexToCreate == null) 
 				break;
 			
-			BcIndexInfo indexToCreateStats = pool.get(indexToCreate.internalId());
+			BcIndexInfo indexToCreateStats = pool.get(indexToCreate.getId());
 			
 			// record the create
 			indexToCreateStats.state = BcIndexInfo.State.MATERIALIZED;
 			indexToCreateStats.initDeltaMax();
 			
 			// record interactions
-			double indexToCreateSize = indexToCreate.megabytes();
-			for (DBIndex ij : hotSet) {
+			double indexToCreateSize = indexToCreate.getMegaBytes();
+			for (Index ij : hotSet) {
 				if (ij == indexToCreate)
 					continue;
-				BcIndexInfo ijStats = pool.get(ij.internalId());
+				BcIndexInfo ijStats = pool.get(ij.getId());
 				int useLevel = useLevel(indexToCreate, ij);
-				double alpha = ij.megabytes() / indexToCreateSize;
+				double alpha = ij.getMegaBytes() / indexToCreateSize;
 				for (int level = 0; level <= useLevel; level++) {
 					double costO = ijStats.origCost(level);
 					double costN = ijStats.newCost(level);
@@ -237,13 +237,13 @@ public class BcTuner {
 		} // done creating indices
 	}
 	
-	private int useLevel(DBIndex i1, DBIndex i2) {
+	private int useLevel(Index i1, Index i2) {
 		/* Shortcut if different relations */
-		if (!i1.baseTable().equals(i2.baseTable()))
+		if (!i1.getTable().equals(i2.getTable()))
 			return -1;
 		
-		int n1 = i1.columnCount();
-		int n2 = i2.columnCount();
+		int n1 = i1.size();
+		int n2 = i2.size();
 		
 		/* Shortcut if I1 has fewer columns than I2 */
 	    if (n1 < n2){
@@ -277,13 +277,13 @@ public class BcTuner {
      * position within I1
      */    
     private static class ColumnChecker implements Supplier<ColumnChecker> {
-        private DBIndex       i1;
-        private DBIndex       i2;
+        private Index       i1;
+        private Index       i2;
         private int     n1;
         private int     n2;
         private boolean prefix;
 
-        public ColumnChecker(DBIndex i1, DBIndex i2, int n1, int n2) {
+        public ColumnChecker(Index i1, Index i2, int n1, int n2) {
             this.i1 = i1;
             this.i2 = i2;
             this.n1 = n1;

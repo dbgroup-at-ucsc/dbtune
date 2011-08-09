@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
@@ -170,11 +170,11 @@ public class WorkFunctionAlgorithm {
      * process a positive or negative vote for the index found in some {@code SubMachine}.
      *
      * @param index
-     *      a {@link DBIndex index} object.
+     *      a {@link Index index} object.
      * @param isPositive
      *      value of vote given to an index object.
      */
-    public void vote(DBIndex index, boolean isPositive) {
+    public void vote(Index index, boolean isPositive) {
         Checks.checkAssertion(!keepHistory, "tracing WFA is not supported with user feedback");
         for (SubMachine subm : submachines) {
             if (subm.subset.contains(index)){
@@ -187,13 +187,13 @@ public class WorkFunctionAlgorithm {
      * This method along with method {@link #newTask(ProfiledQuery)} corresponds to algorithm {@code 
      * chooseCands} from Schnaitter's thesis, which is described in page in page 169 (Figure 6.5).
      *
-     * @return a list of recommended {@link DBIndex indexes}.
+     * @return a list of recommended {@link Index indexes}.
      */
-    public List<DBIndex> getRecommendation() {
-        ArrayList<DBIndex> rec = new ArrayList<DBIndex>(MAX_HOTSET_SIZE);
+    public List<Index> getRecommendation() {
+        ArrayList<Index> rec = new ArrayList<Index>(MAX_HOTSET_SIZE);
         for (SubMachine subm : submachines) {
-            for (DBIndex index : subm.subset) {
-                if (subm.currentBitSet.get(index.internalId())){
+            for (Index index : subm.subset) {
+                if (subm.currentBitSet.get(index.getId())){
                     rec.add(index);
                 }                        
             }
@@ -236,9 +236,9 @@ public class WorkFunctionAlgorithm {
             IndexBitSet recBitSet = new IndexBitSet();
             int recStateNum = 0;
             int i = 0;
-            for (DBIndex index : newSubset) {
+            for (Index index : newSubset) {
                 if (isRecommended(index)) {
-                    recBitSet.set(index.internalId());
+                    recBitSet.set(index.getId());
                     recStateNum |= (1 << i);
                 }
                 ++i;
@@ -260,10 +260,10 @@ public class WorkFunctionAlgorithm {
                 
                 // add creation cost of new indexes
                 i = 0;
-                for (DBIndex index : newSubmachine.subset) {
+                for (Index index : newSubmachine.subset) {
                     int mask = (1 << (i++));
-                    if (0 != (stateNum & mask) && !oldHotSet.get(index.internalId()))
-                        value += index.creationCost();
+                    if (0 != (stateNum & mask) && !oldHotSet.get(index.getId()))
+                        value += index.getCreationCost();
                 }
                 
                 for (int oldSubsetNum = 0; oldSubsetNum < oldSubsetCount; oldSubsetNum++) {
@@ -309,10 +309,10 @@ public class WorkFunctionAlgorithm {
             bitSet.set(ids[i], 0 != (stateNum & (1 << i)));
     }
 
-    private boolean isRecommended(DBIndex idx) {
+    private boolean isRecommended(Index idx) {
         // not sure which submachine has the index, so check them all
         for (SubMachine subm : submachines) {
-            if (subm.currentBitSet.get(idx.internalId())){
+            if (subm.currentBitSet.get(idx.getId())){
                 return true;
             }
         }
@@ -321,10 +321,10 @@ public class WorkFunctionAlgorithm {
     
     public static double transitionCost(Snapshot candidateSet, IndexBitSet x, IndexBitSet y) {
         double transition = 0;
-        for (DBIndex index : candidateSet) {
-            int id = index.internalId();
+        for (Index index : candidateSet) {
+            int id = index.getId();
             if (y.get(id) && !x.get(id))
-                transition += index.creationCost();
+                transition += index.getCreationCost();
         }
         return transition;
     }
@@ -332,11 +332,11 @@ public class WorkFunctionAlgorithm {
     private static double transitionCost(IndexPartitions.Subset subset, int x, int y) {
         double transition = 0;
         int i = 0;
-        for (DBIndex index : subset) {
+        for (Index index : subset) {
             int mask = 1 << (i++);
             
             if (mask == (y & mask) - (x & mask))
-                transition += index.creationCost();
+                transition += index.getCreationCost();
         }
         return transition;
     }
@@ -355,7 +355,7 @@ public class WorkFunctionAlgorithm {
      * @param schedule
      *      an array of bit sets; each one represent an index configuration.
      * @param <J>
-     *     the {@link DBIndex index} object.
+     *     the {@link Index index} object.
      * @return
      *      a schedule cost over a set of candidate and queries.
      */
@@ -463,7 +463,7 @@ public class WorkFunctionAlgorithm {
         }
     }
     
-    private static class SubMachine implements Iterable<DBIndex> {
+    private static class SubMachine implements Iterable<Index> {
         private IndexPartitions.Subset subset;
         private int subsetNum;
         private int numIndexes;
@@ -483,8 +483,8 @@ public class WorkFunctionAlgorithm {
             
             this.indexIds = new int[numIndexes];
             int i = 0;
-            for (DBIndex index : subset) {
-                this.indexIds[i++] = index.internalId();
+            for (Index index : subset) {
+                this.indexIds[i++] = index.getId();
             }
         }
         
@@ -524,16 +524,16 @@ public class WorkFunctionAlgorithm {
          * @param wf
          *      the {@link WorkFunctionAlgorithm}'s total work values.
          * @param index
-         *      a {@link DBIndex index} object.
+         *      a {@link Index index} object.
          * @param isPositive
          *      a positive ({@code true} value) or negative({@code false} value) vote.
          */
-        public void vote(TotalWorkValues wf, DBIndex index, boolean isPositive) {
+        public void vote(TotalWorkValues wf, Index index, boolean isPositive) {
             // find the position in indexIds
             int indexIdsPos;
             int stateMask;
             for (indexIdsPos = 0; indexIdsPos < numIndexes; indexIdsPos++) 
-                if (indexIds[indexIdsPos] == index.internalId())
+                if (indexIds[indexIdsPos] == index.getId())
                     break;
             if (indexIdsPos >= numIndexes) {
                 console.error("could not process vote: index not found in subset");
@@ -545,16 +545,16 @@ public class WorkFunctionAlgorithm {
                     
             // register the vote in the recommendation
             if (isPositive) {
-                currentBitSet.set(index.internalId());
+                currentBitSet.set(index.getId());
                 currentState |= stateMask;
             }
             else {
-                currentBitSet.clear(index.internalId());
+                currentBitSet.clear(index.getId());
                 currentState ^= stateMask;
             }
             
             // register the vote in the work function
-            double minScore = wf.get(subsetNum, currentState) + index.creationCost();
+            double minScore = wf.get(subsetNum, currentState) + index.getCreationCost();
             for (int stateNum = 0; stateNum < numStates; stateNum++) {
                 boolean stateContainsIndex = stateMask == (stateMask & stateNum);
                 if (isPositive != stateContainsIndex) {
@@ -639,7 +639,7 @@ public class WorkFunctionAlgorithm {
         }
 
         @Override
-        public Iterator<DBIndex> iterator() {
+        public Iterator<Index> iterator() {
             return subset.iterator();
         }
 

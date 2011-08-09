@@ -18,21 +18,17 @@
 
 package edu.ucsc.dbtune.core.metadata;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
-public class PGIndex extends AbstractIndex implements Serializable {
+public class PGIndex extends Index {
     private PGIndexSchema schema;
-
-    // serialization support
-    private static final long serialVersionUID = 1L;
+    private String creationText;
 
     /**
      * construct a new {@code PGIndex} object.
@@ -46,13 +42,13 @@ public class PGIndex extends AbstractIndex implements Serializable {
      * @param isDescending
      *      indicate whether is in descending order.
      * @param internalId
-     *     {@link edu.ucsc.dbtune.core.DBIndex}'s internalId.
+     *     {@link edu.ucsc.dbtune.core.Index}'s internalId.
      * @param creationCost
-     *     {@link edu.ucsc.dbtune.core.DBIndex}'s creation cost.
+     *     {@link edu.ucsc.dbtune.core.Index}'s creation cost.
      * @param megabytes
-     *     {@link edu.ucsc.dbtune.core.DBIndex}'s size (in megabytes).
+     *     {@link edu.ucsc.dbtune.core.Index}'s size (in megabytes).
      * @param creationText
-     *     {@link edu.ucsc.dbtune.core.DBIndex}'s creation text.
+     *     {@link edu.ucsc.dbtune.core.Index}'s creation text.
      */
     public PGIndex(
             int reloid,
@@ -60,12 +56,24 @@ public class PGIndex extends AbstractIndex implements Serializable {
             List<Column> columns,
             List<Boolean> isDescending,
             int internalId,
-            double creationCost,
             double megabytes,
+            double creationCost,
             String creationText
-    ) {
-        super(internalId, creationText, creationCost, megabytes);
-        this.schema = new PGIndexSchema(reloid, isSync, columns, isDescending);
+    ) throws Exception {
+        super("", (Table) null, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+
+        this.id           = internalId;
+        this.creationText = creationText;
+        this.creationCost = creationCost;
+        this.schema       = new PGIndexSchema(reloid, isSync, columns, isDescending);
+        this.columns      = columns;
+        this.size         = (long) megabytes;
+        this.table        = getSchema().baseTable;
+        this.descending   = getSchema().getDescending();
+
+        if(isSync) {
+            this.scanOption = SYNCHRONIZED;
+        }
     }
 
     public PGIndex(
@@ -73,52 +81,12 @@ public class PGIndex extends AbstractIndex implements Serializable {
             double creationCost,
             double megabytes,
             String creationText
-    ) {
-        super(internalId, creationText, creationCost, megabytes);
-    }
-    @Override
-    public Table baseTable() {
-        return getSchema().getBaseTable();
-    }
-
-    public List<Column> getColumns() {
-        return getSchema().getColumns();
-    }
-
-    @Override
-    public int columnCount() {
-        return getSchema().getColumns().size();
-    }
-
-    @Override
-    public PGIndex consDuplicate(int id) throws SQLException {
-        return new PGIndex(
-                getSchema().getRelOID(),
-                getSchema().isSync(),
-                getSchema().getColumns(),
-                getSchema().isDescending,
-                id, 
-                creationCost(), 
-                megabytes(), 
-                creationText()
-        );
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof PGIndex)){
-            return false;
-        }
-
-        PGIndex other = (PGIndex) obj;
-        final boolean isSchemaNull = getSchema() == null;
-        return isSchemaNull ? internalId() == other.internalId()
-               : getSchema().equals(other.getSchema()) && internalId() == other.internalId();
-    }
-
-    @Override
-    public Column getColumn(int i) {
-        return Objects.as(getSchema().getColumns().get(i));
+    )  throws Exception {
+        super("", (Table) null, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+        this.id           = internalId;
+        this.creationText = creationText;
+        this.creationCost = creationCost;
+        this.size         = (long) megabytes;
     }
 
     /**
@@ -129,23 +97,13 @@ public class PGIndex extends AbstractIndex implements Serializable {
     }
 
     @Override
-    public int hashCode() {
-        return (Objects.hashCode(getSchema(), internalId()));
+    public String toString() {
+        return creationText;
     }
 
     @Override
-    public String toString() {
-        return creationText();
-    }
-
-    public static List<PGIndex> cast(Iterable<? extends DBIndex> indexes) {
-        List<PGIndex> pgIndexes = new ArrayList<PGIndex>();
-
-        for(DBIndex each : indexes){
-            pgIndexes.add((PGIndex) each);
-        }
-
-        return pgIndexes;
+    public String getCreateStatement() {
+        return creationText;
     }
 
     /**

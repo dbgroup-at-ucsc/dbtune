@@ -17,6 +17,7 @@
  */
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.spi.core.Function;
@@ -186,7 +187,7 @@ public class DatabasePackageTest {
         );
     }
 
-    private static <T extends DBIndex> void checkIBGWhatIfOptimizerCostWithProfiledIndex(IndexBitSet configuration,
+    private static <T extends Index> void checkIBGWhatIfOptimizerCostWithProfiledIndex(IndexBitSet configuration,
                                                                                          IndexBitSet usedSet,
                                                                                          T pi,
                                                                                          DatabaseConnection connection
@@ -245,7 +246,7 @@ public class DatabasePackageTest {
 
     private static void checkRecommendIndexesFromSQL(DatabaseConnection... connections) throws Exception {
         for(DatabaseConnection each : connections){
-            final Iterable<DBIndex> found = Objects.as(each.getIndexExtractor().recommendIndexes("SELECT * FROM R;"));
+            final Iterable<Index> found = Objects.as(each.getIndexExtractor().recommendIndexes("SELECT * FROM R;"));
             assertThat(Iterables.count(found) == 3, is(true));
         }
     }
@@ -265,7 +266,7 @@ public class DatabasePackageTest {
 
     private static void checkRecommendIndexesFromWorkloadFile(File workload, DatabaseConnection... connections) throws Exception {
         for(DatabaseConnection each : connections){
-            final Iterable<DBIndex> found = Objects.as(each.getIndexExtractor().recommendIndexes(workload));
+            final Iterable<Index> found = Objects.as(each.getIndexExtractor().recommendIndexes(workload));
             assertThat(Iterables.count(found) == 3, is(true));
         }
     }
@@ -278,7 +279,7 @@ public class DatabasePackageTest {
 
     @Test
     public void testFixCandidatesScenario() throws Exception {
-        final List<DBIndex> db2CandidateSet = Instances.newList();
+        final List<Index> db2CandidateSet = Instances.newList();
         db2CandidateSet.add(newDB2Index());
         final List<PGIndex>  pgCandidateSet  = Instances.newList();
         pgCandidateSet.add(newPGIndex());
@@ -286,10 +287,10 @@ public class DatabasePackageTest {
         checkFixCandidatesScenario(pgCandidateSet, connectionManager2.connect());
     }
 
-    private static void checkFixCandidatesScenario(List<? extends DBIndex> candidateSet, DatabaseConnection connection) throws Exception {
+    private static void checkFixCandidatesScenario(List<? extends Index> candidateSet, DatabaseConnection connection) throws Exception {
         final IBGWhatIfOptimizer optimizer = connection.getIBGWhatIfOptimizer();
         optimizer.fixCandidates(candidateSet);
-        assertThat(Objects.<Iterable<DBIndex>>as(candidateSet), equalTo(Objects.<AbstractIBGWhatIfOptimizer>as(optimizer).getCandidateSet()));
+        assertThat(Objects.<Iterable<Index>>as(candidateSet), equalTo(Objects.<AbstractIBGWhatIfOptimizer>as(optimizer).getCandidateSet()));
     }
 
     @Test
@@ -305,9 +306,9 @@ public class DatabasePackageTest {
     @SuppressWarnings({"RedundantTypeArguments"})
     private static void checkExplainInfoScenario(DatabaseConnection connection) throws Exception {
         final WhatIfOptimizer whatIfOptimizer   = connection.getWhatIfOptimizer();
-        final List<DBIndex>  pgCandidateSet  = Instances.newList();
-        final DBIndex index1 = newPGIndex(12);
-        final DBIndex index2 = newPGIndex(21);
+        final List<Index>  pgCandidateSet  = Instances.newList();
+        final Index index1 = newPGIndex(12);
+        final Index index2 = newPGIndex(21);
 
         pgCandidateSet.add(index1);
         pgCandidateSet.add(index2);
@@ -319,8 +320,8 @@ public class DatabasePackageTest {
         assertThat(Double.compare(info.getIndexMaintenanceCost(index1), 0) == 0, is(true));
 
         final Column  col  = new Column(12345);
-        final DBIndex idx  = new PGIndex(121112, 3.0, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_121112");
-        final DBIndex idx2 = new PGIndex(56789, true, Arrays.asList(col), Arrays.asList(true), 132111, 3.5, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_132111");
+        final Index idx  = new PGIndex(121112, 3.0, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_121112");
+        final Index idx2 = new PGIndex(56789, true, Arrays.asList(col), Arrays.asList(true), 132111, 3.5, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_132111");
 
         connection.getWhatIfOptimizer().explain("SELECT * FROM R", Arrays.asList(idx, idx2));
     }

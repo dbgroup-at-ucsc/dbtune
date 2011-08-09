@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.core.DBTuneInstances;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.ExplainInfo;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
@@ -77,15 +77,15 @@ public class WorkloadProfilerTest {
 
     @Test
     public void testProcessVote() throws Exception {
-        final DBIndex index67 = newPGIndex(67, 65);
-        final DBIndex index68 = newPGIndex(68, 65);
+        final Index index67 = newPGIndex(67, 65);
+        final Index index68 = newPGIndex(68, 65);
 
         // Note: the internal id of any new index with positive vote added to the candidate pool
         // will be changed to the next maximum internal id stored in the candidate pool
         final Snapshot positiveSnapshot = nonConcurrentProfiler.processVote(index67, true);
         final Snapshot negativeSnapshot = nonConcurrentProfiler.processVote(index68, false);
 
-        assertThat(positiveSnapshot.findIndexId(20), equalTo(newPGIndex(20, 65)));
+        assertThat(positiveSnapshot.findIndexId(20), is(newPGIndex(20, 65)));
         assertThat(negativeSnapshot.findIndexId(21), CoreMatchers.<Object>nullValue());
     }
 
@@ -134,7 +134,7 @@ public class WorkloadProfilerTest {
     }
 
 
-    private static DBIndex newPGIndex(int indexId, int schemaId){
+    private static Index newPGIndex(int indexId, int schemaId) throws Exception {
        return DBTuneInstances.newPGIndex(indexId, schemaId, generateColumns(3), generateDescVals(3));
     }
 

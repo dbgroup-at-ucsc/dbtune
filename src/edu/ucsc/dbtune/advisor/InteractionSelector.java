@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Supplier;
 
 import java.util.Random;
@@ -137,10 +137,10 @@ public class InteractionSelector {
         bestPartitions = new IndexPartitions(newHotSet);
         for (int s = 0; s < oldPartitions.subsetCount(); s++) {
             IndexPartitions.Subset subset = oldPartitions.get(s);
-            for (DBIndex i1 : subset) {
+            for (Index i1 : subset) {
                 if (!newHotSet.contains(i1))
                     continue;
-                for (DBIndex i2 : subset) {
+                for (Index i2 : subset) {
                     if (i1 == i2 || !newHotSet.contains(i2))
                         continue;
                     bestPartitions.merge(i1, i2);
@@ -169,8 +169,8 @@ public class InteractionSelector {
                                                                    StatisticsFunction doiFunc
     ) {
         double weight = 0;
-        for (DBIndex i1 : s1)
-            for (DBIndex i2 : s2) 
+        for (Index i1 : s1)
+            for (Index i2 : s2) 
                 weight += doiFunc.doi(i1, i2);
         return weight;
     }

@@ -18,8 +18,8 @@
 
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.DB2Index;
-import edu.ucsc.dbtune.core.metadata.PGCommands;
+import edu.ucsc.dbtune.connectivity.PGCommands;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.core.optimizers.OptimizerFactory;
 import edu.ucsc.dbtune.core.optimizers.Optimizer;
@@ -40,15 +40,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.clearAdviseIndex;
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.explainModeRecommendIndexes;
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.isolationLevelReadCommitted;
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.readAdviseOnAllIndexes;
+import static edu.ucsc.dbtune.connectivity.DB2Commands.clearAdviseIndex;
+import static edu.ucsc.dbtune.connectivity.DB2Commands.explainModeRecommendIndexes;
+import static edu.ucsc.dbtune.connectivity.DB2Commands.isolationLevelReadCommitted;
+import static edu.ucsc.dbtune.connectivity.DB2Commands.readAdviseOnAllIndexes;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.submitAll;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 import static edu.ucsc.dbtune.util.DBUtilities.trimSqlStatement;
-import static edu.ucsc.dbtune.util.Instances.newList;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -224,10 +223,10 @@ public class Platform {
 
 
         @Override
-        public Iterable<DBIndex> recommendIndexes(String sql) throws SQLException {
+        public Iterable<Index> recommendIndexes(String sql) throws SQLException {
             Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
             final JdbcConnection c = Objects.as(connection);
-            List<DBIndex> indexList;
+            List<Index> indexList;
 
             try {
 
@@ -257,7 +256,7 @@ public class Platform {
         }
 
         @Override
-        public Iterable<DBIndex> recommendIndexes(File workloadFile) throws SQLException, IOException {
+        public Iterable<Index> recommendIndexes(File workloadFile) throws SQLException, IOException {
             Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
             final JdbcConnection c = Objects.as(connection);
             try {
@@ -268,7 +267,7 @@ public class Platform {
                         workloadFile
                 );
 
-                return Iterables.<DBIndex>asIterable(advisorFile.getCandidates(c));
+                return Iterables.<Index>asIterable(advisorFile.getCandidates(c));
             } catch (AdvisorException a){
                 throw new SQLException(a);
             }
@@ -294,19 +293,19 @@ public class Platform {
         }
 
         @Override
-        public Iterable<DBIndex> recommendIndexes(String sql) throws SQLException {
+        public Iterable<Index> recommendIndexes(String sql) throws SQLException {
             Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
             Iterable<PGIndex> suppliedIterable = supplyValue(PGCommands.recommendIndexes(), connection, sql);
-            return Iterables.<DBIndex>asIterable(suppliedIterable);
+            return Iterables.<Index>asIterable(suppliedIterable);
         }
 
         @Override
-        public Iterable<DBIndex> recommendIndexes(File workloadFile) throws SQLException, IOException {
+        public Iterable<Index> recommendIndexes(File workloadFile) throws SQLException, IOException {
             if(!isEnabled()) throw new SQLException("IndexExtractor is Disabled.");
-            final List<DBIndex> candidateSet = new ArrayList<DBIndex>();
+            final List<Index> candidateSet = new ArrayList<Index>();
             for (String line : Files.getLines(workloadFile)) {
                 final String sql = trimSqlStatement(line);
-                final Iterable<? extends DBIndex> recommended = recommendIndexes(sql);
+                final Iterable<? extends Index> recommended = recommendIndexes(sql);
                 candidateSet.addAll(Iterables.asCollection(recommended));
             }
             return candidateSet;

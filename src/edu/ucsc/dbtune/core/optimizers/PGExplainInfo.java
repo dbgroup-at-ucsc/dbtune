@@ -16,10 +16,10 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.core.optimizers;
 
 import edu.ucsc.dbtune.core.AbstractExplainInfo;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
 
@@ -67,17 +67,16 @@ public class PGExplainInfo extends AbstractExplainInfo implements Serializable {
     }
 
     @Override
-	public double getIndexMaintenanceCost(DBIndex index) {
+	public double getIndexMaintenanceCost(Index index) {
         if(!SQLCategory.DML.isSame(getSQLCategory())){
             return 0;
         }
 
-		return updateCost[index.internalId()];
+		return updateCost[index.getId()];
 	}
 
     @Override
     public String toString() {
-        final boolean isTotalCost = Double.compare(0.0, totalCost) == 0;
         return new ToStringBuilder<PGExplainInfo>(this)
                .add("sql category", getSQLCategory())
                .add("update cost", Arrays.toString(updateCost))

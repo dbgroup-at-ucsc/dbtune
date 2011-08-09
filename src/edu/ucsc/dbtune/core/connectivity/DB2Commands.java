@@ -16,17 +16,20 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.connectivity;
 
 import edu.ucsc.dbtune.core.CostLevel;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.DB2Index;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
+import edu.ucsc.dbtune.core.metadata.Table;
+import edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexMetadata;
+import edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexMetadata.AdviseIndexColumn;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.util.*;
-import edu.ucsc.dbtune.util.IndexBitSet;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -164,7 +167,7 @@ public class DB2Commands {
         return IntegerCallback.makeIntegerCallback(type, value);
     }
 
-    public static Function<List<DBIndex>, SQLException> readAdviseOnAllIndexes(){
+    public static Function<List<Index>, SQLException> readAdviseOnAllIndexes(){
         return ReadAdviseOnAllIndexes.INSTANCE;
     }
 
@@ -560,7 +563,7 @@ public class DB2Commands {
 
             while(config.hasNext()){
                 final DB2Index idx = config.next();
-                idx.meta.adviseIndexRowText(masterquery, enable);
+                idx.getMeta().adviseIndexRowText(masterquery, enable);
                 if (config.hasNext()){
                     masterquery.append(", ");
                 }
@@ -575,7 +578,7 @@ public class DB2Commands {
 
 
     // enum singleton pattern
-    private enum ReadAdviseOnAllIndexes implements Function<List<DBIndex>, SQLException> {
+    private enum ReadAdviseOnAllIndexes implements Function<List<Index>, SQLException> {
         INSTANCE;
 
         private static final StringBuilder QUERY_ALL = new StringBuilder();
@@ -588,7 +591,7 @@ public class DB2Commands {
         private PreparedStatement psAll; // use all indexes in table
 
         @Override
-        public List<DBIndex> apply(Parameter input) throws SQLException {
+        public List<Index> apply(Parameter input) throws SQLException {
             final Connection        conn  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
             if(psAll == null){
                 psAll = conn.prepareStatement(QUERY_ALL.toString());
@@ -598,12 +601,14 @@ public class DB2Commands {
             final AtomicInteger id = new AtomicInteger(0);
             final String dbName = input.getParameterValue(String.class);
             @SuppressWarnings({"unchecked"})
-            final List<DBIndex> candidateSet = Instances.newList();
+            final List<Index> candidateSet = Instances.newList();
             try {
                while(rs.next()){
                    id.incrementAndGet();
                    candidateSet.add(new DB2Index(input.getParameterValue(DatabaseConnection.class), rs, dbName, id.get(), -1));
                }
+            } catch(Exception ex) {
+                throw new SQLException(ex);
             } finally {
                 rs.close();
                 conn.commit();
@@ -654,6 +659,8 @@ public class DB2Commands {
                 final boolean haveResult = rs.next();
                 Checks.checkAssertion(haveResult, "did not find index " + indexName + " in ADVISE_INDEX");
                 return new DB2Index(defaultDatabaseConnection, rs, dbName, id, megabytes);
+            } catch(Exception ex) {
+                throw new SQLException(ex);
             } finally {
                 rs.close();
                 conn.commit();

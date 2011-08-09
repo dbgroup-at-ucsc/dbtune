@@ -1,15 +1,16 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.DB2ExplainInfo;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
+import edu.ucsc.dbtune.core.optimizers.DB2ExplainInfo;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.*;
 
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.*;
+import static edu.ucsc.dbtune.connectivity.DB2Commands.*;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.submitAll;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
@@ -32,11 +33,11 @@ class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
 
     @Override
     public ExplainInfo explain(String sql) throws SQLException {
-        return explain(sql, Instances.<DBIndex>newList());
+        return explain(sql, Instances.<Index>newList());
     }
 
     @Override
-    public ExplainInfo explain(Iterable<? extends DBIndex> indexes) throws SQLException {
+    public ExplainInfo explain(Iterable<? extends Index> indexes) throws SQLException {
         return explain(cachedSQL.get(), indexes);
     }
 
@@ -56,7 +57,7 @@ class DB2WhatIfOptimizer extends AbstractWhatIfOptimizer {
     }
 
     @Override
-    public ExplainInfo explain(String sql, Iterable<? extends DBIndex> indexes) throws SQLException {
+    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
         Checks.checkSQLRelatedState(null != connection && connection.isOpened(), "Connection is closed.");
         Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
         updateCachedSQL(sql);

@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.core.Console;
 import org.junit.Test;
@@ -49,7 +49,7 @@ public class InteractionBankTest {
     }
 
 
-    private static DBIndex newPGIndex(int indexId, int schemaId){
+    private static Index newPGIndex(int indexId, int schemaId) throws Exception {
        return DBTuneInstances.newPGIndex(indexId, schemaId, generateColumns(3), generateDescVals(3));
     }
 

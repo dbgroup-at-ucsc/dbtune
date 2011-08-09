@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
@@ -42,13 +42,13 @@ public class BcTunerTest {
 
     @Test
     public void testIndexToCreate() throws Exception {
-        final DBIndex c = tuner.chooseIndexToCreate();
+        final Index c = tuner.chooseIndexToCreate();
         assertThat(c, CoreMatchers.<Object>notNullValue());
     }
 
     @Test
     public void testIndexToDrop() throws Exception {
-        final DBIndex c = tuner.chooseIndexToDrop();
+        final Index c = tuner.chooseIndexToDrop();
         assertThat(c, CoreMatchers.<Object>nullValue());
     }
 
@@ -57,7 +57,7 @@ public class BcTunerTest {
         tuner = null;
     }
 
-    private static DBIndex newPGIndex(int indexId, int schemaId, double creationcost){
+    private static Index newPGIndex(int indexId, int schemaId, double creationcost) throws Exception {
        return new PGIndex(schemaId, true, generateColumns(3), generateDescVals(3), indexId, 3.0, creationcost, "Create");
     }
 

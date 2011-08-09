@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 
 public class BcIndexInfo {
 	/*
@@ -104,7 +104,7 @@ public class BcIndexInfo {
 		return (delta - deltaMin) - creationCost;
 	}
 	
-	public String toString(DBIndex idx) {
+	public String toString(Index idx) {
 		return "   DELTA = " + delta + "\n" +
 		       "         = " + origCost[0] + " - " + newCost[0] + "\n" +
 		       "         = " + origCost[1] + " - " + newCost[1] + "\n" +
@@ -112,11 +112,11 @@ public class BcIndexInfo {
 		       "         = " + updateDelta + "\n" +
 		       "DELTAMIN = " + deltaMin + "\n" +
 		       "DELTAMAX = " + deltaMax + "\n" +
-		       "CREATION = " + idx.creationCost() + "\n" +
-		       "    SIZE = " + idx.megabytes() + "\n" +
+		       "CREATION = " + idx.getCreationCost() + "\n" +
+		       "    SIZE = " + idx.getMegaBytes() + "\n" +
 		       (state == State.MATERIALIZED ?
-		        "   RESID = " + residual(idx.creationCost()) :
-		        "     BEN = " + benefit(idx.creationCost()));
+		        "   RESID = " + residual(idx.getCreationCost()) :
+		        "     BEN = " + benefit(idx.getCreationCost()));
 		
 	}
 }

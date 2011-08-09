@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.spi.Environment;
 
 /**
@@ -25,10 +25,10 @@ public class KarlsInteractionSelector {
 		bestPartitions = new KarlsIndexPartitions(newHotSet);
 		for (int s = 0; s < oldPartitions.subsetCount(); s++) {
 			KarlsIndexPartitions.Subset subset = oldPartitions.get(s);
-			for (DBIndex i1 : subset) {
+			for (Index i1 : subset) {
 				if (!newHotSet.contains(i1))
 					continue;
-				for (DBIndex i2 : subset) {
+				for (Index i2 : subset) {
 					if (i1 == i2 || !newHotSet.contains(i2))
 						continue;
 					bestPartitions.merge(i1, i2);
@@ -130,8 +130,8 @@ public class KarlsInteractionSelector {
 	private static double
 	interactionWeight(KarlsIndexPartitions.Subset s1, KarlsIndexPartitions.Subset s2, DoiFunction doiFunc) {
 		double weight = 0;
-		for (DBIndex i1 : s1)
-			for (DBIndex i2 : s2)
+		for (Index i1 : s1)
+			for (Index i2 : s2)
 				weight += doiFunc.apply(i1, i2);
 		return weight;
 	}

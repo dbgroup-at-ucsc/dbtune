@@ -11,17 +11,6 @@ No need to roll our own. Also, we should define a policy of when and how to use 
  *  create `Commands` class/interface derive `PGCommands` and `DB2Commands` from it. (??? better to drop these and let others 
     worry about SQL generation, like PGOptimizer, PGMetaDataExtractor, etc...)
 
-## 44
-
- * implement missing `Index` methods in `PGIndex` and `DB2Index`
- * add remaining types to `Index` from `DB2Index` and `PGIndex`: `BLOCK,DIMENSION,REGULAR`
- * add new field to `Index` to represent `scanOption`: `REVERSIBLE,NON_REVERSIBLE,SYNCHRONIZED`
- * make `PGIndex` and `DB2Index` derive from `Index` instead of `DBIndex` (use eclipse!!)
- * drop `AbstractIndex`,`DBIndex`
- * fix issue #74
- * more test!!
- * commit :)
-
 ## 46
 
  *  rename package `optimizers` to `optimizer`
@@ -32,6 +21,7 @@ No need to roll our own. Also, we should define a policy of when and how to use 
 
  *  make metadata retrieval part of the `DatabaseConnection` initilization protocol. This will help in fullfilling the 
     [DBTune use case](https://github.com/dbgroup-at-ucsc/dbtune/wiki/java-packages-structure).
+
  *  in `Table` class, drop constructor:
  
     ```java

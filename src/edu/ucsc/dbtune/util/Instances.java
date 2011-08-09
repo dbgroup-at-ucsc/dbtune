@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.util;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 
 import java.util.*;
 import java.util.List;
@@ -93,10 +93,10 @@ public class Instances {
         return new IndexBitSet();
     }
 
-    public static IndexBitSet newBitSet(Iterable<? extends DBIndex> indexes){
+    public static IndexBitSet newBitSet(Iterable<? extends Index> indexes){
         final IndexBitSet idxset = newBitSet();
-        for(DBIndex each : indexes){
-            idxset.set(each.internalId());
+        for(Index each : indexes){
+            idxset.set(each.getId());
         }
         return idxset;
     }

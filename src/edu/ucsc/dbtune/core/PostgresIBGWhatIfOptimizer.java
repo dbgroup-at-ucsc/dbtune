@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static edu.ucsc.dbtune.core.metadata.PGCommands.explainIndexesCost;
+import static edu.ucsc.dbtune.connectivity.PGCommands.explainIndexesCost;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 import static edu.ucsc.dbtune.util.Instances.newAtomicInteger;
 import static edu.ucsc.dbtune.util.Instances.newBitSet;
@@ -25,7 +25,7 @@ import static edu.ucsc.dbtune.util.Instances.newList;
 class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     private final AtomicInteger      whatifCount;
     private final IndexBitSet        cachedBitSet       = newBitSet();
-    private final List<DBIndex>      cachedCandidateSet = newList();
+    private final List<Index>      cachedCandidateSet = newList();
 
     /**
      * construct a {@code Postgres-WhatIfOptimizer} object.
@@ -38,13 +38,13 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
-    public void fixCandidates(Iterable<? extends DBIndex> candidateSet) throws SQLException {
+    public void fixCandidates(Iterable<? extends Index> candidateSet) throws SQLException {
         Checks.checkArgument(isEnabled(), "Error: Database Connection is closed.");
         cachedCandidateSet.clear();
         getCachedIndexBitSet().clear();
-        for (DBIndex idx : candidateSet) {
+        for (Index idx : candidateSet) {
             cachedCandidateSet.add(idx);
-            getCachedIndexBitSet().set(idx.internalId());
+            getCachedIndexBitSet().set(idx.getId());
         }
     }
 
@@ -67,7 +67,7 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
 
 
     @Override
-    public Iterable<DBIndex> getCandidateSet() {
+    public Iterable<Index> getCandidateSet() {
         return cachedCandidateSet;
     }
 
@@ -77,17 +77,17 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
-    double estimateCost(String sql, Iterable<DBIndex> candidate,
+    double estimateCost(String sql, Iterable<Index> candidate,
         IndexBitSet configuration, IndexBitSet used) {
-      List<PGIndex> indexSet = PGIndex.cast(cachedCandidateSet);
+	  //List<Index> indexSet = PGIndex.cast(cachedCandidateSet);
       return supplyValue(
           explainIndexesCost(used),
           getConnection(),
-          indexSet,
+          cachedCandidateSet,
           configuration,
           sql,
           configuration.cardinality(),
-          new Double[indexSet.size()]
+          new Double[cachedCandidateSet.size()]
       );
     }
 
@@ -103,7 +103,7 @@ class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
         final String        sql           = whatIfImpl.getSQL();
         final IndexBitSet   usedSet       = whatIfImpl.getUsedSet();
         final IndexBitSet   configuration = whatIfImpl.getConfiguration();
-        final List<PGIndex> indexSet      = newList();
+        final List<Index>   indexSet      = newList();
         Double returnVal = supplyValue(
                     explainIndexesCost(usedSet),
                     getConnection(),

@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.core.IBGWhatIfOptimizer;
@@ -84,8 +84,8 @@ public class BcBenefitInfo {
 		conn.getIBGWhatIfOptimizer().fixCandidates(snapshot);
 		IndexBitSet tempBitSet = new IndexBitSet();
 		IndexBitSet usedColumns = new IndexBitSet();
-		for (DBIndex idx : hotSet) {
-			int id = idx.internalId();
+		for (Index idx : hotSet) {
+			int id = idx.getId();
 			
 			// reset tempBitSet
 			tempBitSet.set(config);

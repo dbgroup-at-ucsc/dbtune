@@ -16,11 +16,12 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.core.optimizers;
 
 import edu.ucsc.dbtune.core.AbstractExplainInfo;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
+import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -62,10 +63,10 @@ public class DB2ExplainInfo extends AbstractExplainInfo {
     }
 
     @Override
-	public double getIndexMaintenanceCost(DBIndex index) {
+	public double getIndexMaintenanceCost(Index index) {
 		if (!SQLCategory.DML.isSame(getSQLCategory()))
 			return 0;
-		if (!index.baseTable().equals(updatedTable))
+		if (!index.getTable().equals(updatedTable))
 			return 0;
 		return updateCost;
 	}

@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.MinQueue;
@@ -34,7 +34,7 @@ public class HotSetSelector {
      *      a hot {@link HotsetSelection selection var} which contains specific values that will
      *      be utilized during the hot set selection process.
      * @param 
-     *      the {@link DBIndex} type.
+     *      the {@link Index} type.
      * @return
      *      a hot set (i.e., a {@link StaticIndexSet}) 
      */
@@ -56,7 +56,7 @@ public class HotSetSelector {
      *      a hot {@link HotsetSelection selection var} which contains specific values that will
      *      be utilized during the greedy hot set selection process.
      * @param 
-     *      the {@link DBIndex} type.
+     *      the {@link Index} type.
      * @return
      *      a hot set (i.e., a {@link StaticIndexSet})
      */
@@ -85,13 +85,13 @@ public class HotSetSelector {
             return new StaticIndexSet(requiredIndexSet);
         }
         else {
-            MinQueue<DBIndex> topSet = new MinQueue<DBIndex>(numToChoose);
+            MinQueue<Index> topSet = new MinQueue<Index>(numToChoose);
 
-            for (DBIndex index : candSet) {
+            for (Index index : candSet) {
                 if (requiredIndexSet.contains(index))
                     continue;
 
-                double penalty = oldHotSet.contains(index) ? 0 : index.creationCost();
+                double penalty = oldHotSet.contains(index) ? 0 : index.getCreationCost();
                 double score = benefitFunc.benefit(index, emptyConfig) - penalty;
                 if (topSet.size() < numToChoose) {
                     topSet.insertKey(index, score);
@@ -102,8 +102,8 @@ public class HotSetSelector {
                 }
             }
 
-            java.util.ArrayList<DBIndex> list = new java.util.ArrayList<DBIndex>();
-            for (DBIndex index : requiredIndexSet)
+            java.util.ArrayList<Index> list = new java.util.ArrayList<Index>();
+            for (Index index : requiredIndexSet)
                 list.add(index);
             while (topSet.size() > 0)
                 list.add(topSet.deleteMin());
@@ -125,25 +125,25 @@ public class HotSetSelector {
             return new StaticIndexSet(requiredIndexSet);
         }
         else {
-            java.util.ArrayList<DBIndex> list = new java.util.ArrayList<DBIndex>();
+            java.util.ArrayList<Index> list = new java.util.ArrayList<Index>();
             IndexBitSet M = new IndexBitSet();
             
             // add required indexes
-            for (DBIndex index : requiredIndexSet) {
+            for (Index index : requiredIndexSet) {
                 list.add(index);
-                M.set(index.internalId());
+                M.set(index.getId());
             }
             
             // add top indexes
             for (int i = 0; i < numToChoose; i++) {
-                DBIndex bestIndex = null;
+                Index bestIndex = null;
                 double bestScore = Double.NEGATIVE_INFINITY;
                 
-                for (DBIndex index : candSet) {
-                    if (M.get(index.internalId()))
+                for (Index index : candSet) {
+                    if (M.get(index.getId()))
                         continue;
                     
-                    double penalty = oldHotSet.contains(index) ? 0 : index.creationCost();
+                    double penalty = oldHotSet.contains(index) ? 0 : index.getCreationCost();
                     double score = benefitFunc.benefit(index, M) - penalty;
                     if (score > bestScore) {
                         bestIndex = index;
@@ -154,7 +154,7 @@ public class HotSetSelector {
                     break;
                 else {
                     list.add(bestIndex);
-                    M.set(bestIndex.internalId());
+                    M.set(bestIndex.getId());
                 }
             }
 

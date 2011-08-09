@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
@@ -13,12 +14,10 @@ import org.junit.Test;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.util.Properties;
 
 import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeThat;
 
 /**
  * Depends on the 'one_table' workload.
@@ -35,9 +34,9 @@ public class IndexExtractorTestFunctional {
 		String ddlfilename;
 
         connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
-        ddlfilename = environment.getFilenameAtWorkloadFolder("/one_table/workload.sql");
+        ddlfilename = environment.getScriptAtWorkloadsFolder("one_table/create.sql");
 		
-        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
         connection.getJdbcConnection().setAutoCommit(false);
     }
 
@@ -63,7 +62,7 @@ public class IndexExtractorTestFunctional {
     public void testRecommendIndexes() throws Exception {
         final IndexExtractor    extractor   = connection.getIndexExtractor();
         final File              workload    = new File( environment.getScriptAtWorkloadsFolder("/one_table/workload.sql") );
-        final Iterable<DBIndex> candidates  = extractor.recommendIndexes(workload);
+        final Iterable<Index> candidates  = extractor.recommendIndexes(workload);
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
@@ -73,8 +72,9 @@ public class IndexExtractorTestFunctional {
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLRecommendIndexes() throws Exception {
         final IndexExtractor    extractor   = connection.getIndexExtractor();
-        final Iterable<DBIndex> candidates  = extractor.recommendIndexes("select a from tbl where a = 5;");
+        final Iterable<Index> candidates  = extractor.recommendIndexes("select a from tbl where a = 5;");
 
+        System.out.println("caca");
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
     }

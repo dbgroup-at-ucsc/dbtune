@@ -33,7 +33,7 @@ import java.util.List;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
-import static edu.ucsc.dbtune.core.metadata.PGCommands.getVersion;
+import static edu.ucsc.dbtune.connectivity.PGCommands.getVersion;
 
 /**
  * The interface with the PostgreSQL optimizer.

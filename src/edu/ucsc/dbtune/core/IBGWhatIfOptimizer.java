@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 import java.sql.SQLException;
@@ -39,7 +40,7 @@ public interface IBGWhatIfOptimizer extends WhatIfOptimizer {
      *      an error has occurred when interacting with a database during
      *      the fixing of candidates.
      */
-    void fixCandidates(Iterable<? extends DBIndex> candidateSet) throws
+    void fixCandidates(Iterable<? extends Index> candidateSet) throws
          SQLException;
 
     /**
@@ -74,11 +75,11 @@ public interface IBGWhatIfOptimizer extends WhatIfOptimizer {
      * @param used
      *      the used indexes in the index configuration.
      * @param profiledIndex
-     *      an already profiled {@link DBIndex} instance.
+     *      an already profiled {@link Index} instance.
      * @return the estimated optimization cost.
      * @throws java.sql.SQLException
      *      unable to estimate cost due to the stated reasons.
      */
-    double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used, DBIndex profiledIndex) throws
+    double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used, Index profiledIndex) throws
            SQLException;
 }

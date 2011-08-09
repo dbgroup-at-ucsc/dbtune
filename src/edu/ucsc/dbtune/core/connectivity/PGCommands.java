@@ -16,9 +16,15 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.connectivity;
 
 import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.core.metadata.Column;
+import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.metadata.SQLCategory;
+import edu.ucsc.dbtune.core.metadata.Table;
+import edu.ucsc.dbtune.core.optimizers.PGExplainInfo;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
@@ -152,9 +158,14 @@ public class PGCommands {
             final String indexName      = "sat_index_" + id;
             final String creationText   = updateCreationText(rs, isSync, indexName);
 
-            candidateSet.add(
-                    new PGIndex(reloid, isSync, columns, isDescending, id, creationCost, megabytes, creationText)
-            );
+            try {
+                candidateSet.add(
+                    new PGIndex(
+                        reloid, isSync, columns, isDescending, id,
+                        megabytes, creationCost, creationText) );
+            } catch(Exception ex) {
+                throw new SQLException(ex);
+            }
         }
 
         private static String updateCreationText(ResultSet rs, boolean sync, String indexName) throws SQLException {
@@ -310,7 +321,7 @@ public class PGCommands {
       private Statement statement;
       @Override public Parameter apply(Parameter input) throws SQLException {
           final Connection            connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-          final List<PGIndex>         indexes     = input.getParameterValue(List.class);
+          final List<Index>           indexes     = input.getParameterValue(List.class);
           final IndexBitSet           config      = input.getParameterValue(IndexBitSet.class);
           final String                sql         = input.getParameterValue(String.class);
           final Integer               cardinality = input.getParameterValue(Integer.class);
@@ -337,21 +348,21 @@ public class PGCommands {
     }
 
 
-    private static String indexListString(Iterable<PGIndex> indexes, IndexBitSet config) {
+    private static String indexListString(Iterable<Index> indexes, IndexBitSet config) {
         final StringBuilder sb                   = new StringBuilder();
 
         sb.append("( ");
-        for (PGIndex idx : indexes) {
-            if (config.get(idx.internalId())) {
-                sb.append(idx.internalId()).append("(");
-                if (idx.getSchema().isSync()) {
+        for (Index idx : indexes) {
+            if (config.get(idx.getId())) {
+                sb.append(idx.getId()).append("(");
+                if (idx.getScanOption() == Index.SYNCHRONIZED) {
                     sb.append("synchronized ");
                 }
 
-                final Table table = Objects.as(idx.getSchema().getBaseTable());
+                final Table table = idx.getTable();
                 sb.append(table.getId());
-                for (int i = 0; i < idx.columnCount(); i++) {
-                    sb.append(idx.getSchema().getDescending().get(i) ? " desc" : " asc");
+                for (int i = 0; i < idx.size(); i++) {
+                    sb.append(idx.getDescending().get(i) ? " desc" : " asc");
                     final List<Column>   cols   = idx.getColumns();
                     sb.append(" ").append(cols.get(i).getOrdinalPosition());
                 }

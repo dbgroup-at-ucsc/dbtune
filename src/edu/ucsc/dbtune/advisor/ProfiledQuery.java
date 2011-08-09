@@ -17,7 +17,7 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.ExplainInfo;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
@@ -135,8 +135,8 @@ public class ProfiledQuery {
         }
 
 		double maintenanceCost = 0;
-		for (DBIndex eachIndex : candidateSet) {
-			if (configuration.get(eachIndex.internalId())) {
+		for (Index eachIndex : candidateSet) {
+			if (configuration.get(eachIndex.getId())) {
 				maintenanceCost += explainInfo.getIndexMaintenanceCost(eachIndex);
 			}
 		}

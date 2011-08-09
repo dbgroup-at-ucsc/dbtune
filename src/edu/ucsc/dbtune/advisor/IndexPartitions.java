@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -52,7 +52,7 @@ public class IndexPartitions {
         indexCount  = indexes.size();
         stateCount  = indexes.size() * 2;
         subsets     = new SubsetList();
-        for (DBIndex index : indexes) {
+        for (Index index : indexes) {
             subsets.add(new Subset(index));
         }
     }
@@ -73,7 +73,7 @@ public class IndexPartitions {
         for (IndexBitSet eachBitSet : partitionBitSets) {
             Subset subset = null;
             for (int i = eachBitSet.nextSetBit(0); i >= 0; i = eachBitSet.nextSetBit(i+1)) {
-                DBIndex idx = snapshot.findIndexId(i);
+                Index idx = snapshot.findIndexId(i);
                 if (idx != null) {
                     if (subset != null){
                         subset = new Subset(subset, new Subset(idx));
@@ -152,7 +152,7 @@ public class IndexPartitions {
      * @param i2
      *      second index object.
      */
-    public final void merge(DBIndex i1, DBIndex i2) {
+    public final void merge(Index i1, Index i2) {
         int s1 = subsets.whichSubset(i1);
         int s2 = subsets.whichSubset(i2);
         merge(s1, s2);
@@ -203,7 +203,7 @@ public class IndexPartitions {
      * @param scratch
      *      a scratch bit set of indexes' internal ids.
      * @param <J>
-     *      the {@link DBIndex} type.
+     *      the {@link Index} type.
      * @return
      *      the <em>theoretical</em> plan cost
      */
@@ -233,13 +233,13 @@ public class IndexPartitions {
     /**
      * A subset of indexes.
      */
-    public static class Subset implements Iterable<DBIndex> {
+    public static class Subset implements Iterable<Index> {
         private final int sumIndexIds;
         private final int minIndexIds;
 
         private int[] indexIds;
 
-        private TreeMap<Integer,DBIndex> map = new TreeMap<Integer,DBIndex>();
+        private TreeMap<Integer,Index> map = new TreeMap<Integer,Index>();
 
         /**
          * construct a subset of indexes. This object will maintain a set of attributes describing
@@ -247,10 +247,10 @@ public class IndexPartitions {
          * @param index
          *      the first index to be stored in the subset object.
          */
-        Subset(DBIndex index) {
-            map.put(index.internalId(), index);
-            indexIds = new int[] { index.internalId() };
-            sumIndexIds = minIndexIds = index.internalId();
+        Subset(Index index) {
+            map.put(index.getId(), index);
+            indexIds = new int[] { index.getId() };
+            sumIndexIds = minIndexIds = index.getId();
         }
 
         /**
@@ -261,13 +261,13 @@ public class IndexPartitions {
          *      second subset.
          */
         Subset(Subset s1, Subset s2) {
-            for (DBIndex idx : s1)
-                map.put(idx.internalId(), idx);
-            for (DBIndex idx : s2)
-                map.put(idx.internalId(), idx);
+            for (Index idx : s1)
+                map.put(idx.getId(), idx);
+            for (Index idx : s2)
+                map.put(idx.getId(), idx);
 
             indexIds = new int[map.size()];
-            { int i = 0; for (DBIndex idx : map.values()) indexIds[i++] = idx.internalId(); }
+            { int i = 0; for (Index idx : map.values()) indexIds[i++] = idx.getId(); }
 
             sumIndexIds = s1.sumIndexIds + s2.sumIndexIds;
             minIndexIds = Math.min(s1.minIndexIds, s2.minIndexIds);
@@ -280,8 +280,8 @@ public class IndexPartitions {
          * @return {@code true} if some index is contained in this subset,
          *      {@code false} otherwise.
          */
-        public final boolean contains(DBIndex index) {
-            return map.containsKey(index.internalId());
+        public final boolean contains(Index index) {
+            return map.containsKey(index.getId());
         }
 
         /**
@@ -311,7 +311,7 @@ public class IndexPartitions {
             return 1L << size();
         }
 
-        public Iterator<DBIndex> iterator() {
+        public Iterator<Index> iterator() {
             return map.values().iterator();
         }
 
@@ -323,7 +323,7 @@ public class IndexPartitions {
          *      {@code true} if both subsets overlaps, {@code false} otherwise.
          */
         public boolean overlaps(Subset other) {
-            for (DBIndex x : map.values()) {
+            for (Index x : map.values()) {
                 if (other.contains(x)){
                     return true;
                 }
@@ -359,7 +359,7 @@ public class IndexPartitions {
          */
         public IndexBitSet bitSet() {
             IndexBitSet bs = new IndexBitSet();
-            for (DBIndex x : this) bs.set(x.internalId());
+            for (Index x : this) bs.set(x.getId());
             return bs;
         }
 
@@ -440,7 +440,7 @@ public class IndexPartitions {
             list.add(subset);
         }
 
-        final int whichSubset(DBIndex index) {
+        final int whichSubset(Index index) {
             for (int i = 0; i < list.size(); i++) {
                 if (list.get(i).contains(index))
                     return i;

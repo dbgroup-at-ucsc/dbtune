@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.advisor.TaskScheduler.SchedulerTask;
 import edu.ucsc.dbtune.core.DBTuneInstances;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGAnalyzer;
@@ -145,7 +145,7 @@ public class TaskSchedulerTest {
     }
 
 
-    private static DBIndex newPGIndex(int indexId, int schemaId){
+    private static Index newPGIndex(int indexId, int schemaId) throws Exception {
        return DBTuneInstances.newPGIndex(indexId, schemaId, generateColumns(3), generateDescVals(3));
     }
 

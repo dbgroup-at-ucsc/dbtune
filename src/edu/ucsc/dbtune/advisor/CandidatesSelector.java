@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.advisor;
 
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -111,18 +111,18 @@ public class CandidatesSelector {
      * Called by main thread to get a recommendation.
      * @return a list of indexes recommendations.
      */
-    public List<DBIndex> getRecommendation() {
+    public List<Index> getRecommendation() {
         return wfa.getRecommendation();
     }
 
     /**
      * Bias the statistics of an index, in a candidate pool of indexes, in its favor.
      * @param index
-     *      a {@link DBIndex index} object.
+     *      a {@link Index index} object.
      * @param candSet
      *      a {@code snapshot} of a {@code candidate pool} of indexes.
      */
-    public void positiveVote(DBIndex index, CandidatePool.Snapshot candSet) {
+    public void positiveVote(Index index, CandidatePool.Snapshot candSet) {
         // get it in the hot set
         if (!userHotSet.contains(index)) {
             userHotSet.add(index);
@@ -141,9 +141,9 @@ public class CandidatesSelector {
     /**
      * Bias the statistics against the index. 
      * @param index
-     *      a {@link DBIndex index} object.
+     *      a {@link Index index} object.
      */
-    public void negativeVote(DBIndex index) {     
+    public void negativeVote(Index index) {     
         // Check if the index is hot before doing anything.
         //
         // If the index is not being tracked by WFA, we have nothing to do.
@@ -180,7 +180,7 @@ public class CandidatesSelector {
      * @return
      *      zero since there is no cost to drop.
      */
-    public double drop(DBIndex index) {
+    public double drop(Index index) {
         matSet.remove(index);
         return 0; // XXX: assuming no cost to drop
     }
@@ -192,10 +192,10 @@ public class CandidatesSelector {
      * @return either the index's {@code creationCost} or (if the index is already in the
      *      materialized index set) 0.
      */
-    public double create(DBIndex index) {
+    public double create(Index index) {
         if (!matSet.contains(index)) {
             matSet.add(index);
-            return index.creationCost();
+            return index.getCreationCost();
         }
         return 0;
     }
@@ -209,8 +209,8 @@ public class CandidatesSelector {
     private void reorganizeCandidates(CandidatePool.Snapshot candSet) {
         // determine the hot set
         DynamicIndexSet reqIndexes = new DynamicIndexSet();
-        for (DBIndex index : userHotSet) reqIndexes.add(index);
-        for (DBIndex index : matSet) reqIndexes.add(index);
+        for (Index index : userHotSet) reqIndexes.add(index);
+        for (Index index : matSet) reqIndexes.add(index);
         final HotsetSelection hotSelection = new HotsetSelection.StrictBuilder(false)
                 .candidateSet(candSet)
                 .oldHotSet(hotSet)

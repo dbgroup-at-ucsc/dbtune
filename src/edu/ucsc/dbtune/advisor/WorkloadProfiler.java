@@ -17,7 +17,7 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 
 import java.sql.SQLException;
@@ -29,7 +29,7 @@ public interface WorkloadProfiler {
     /**
      * Adds new candidate indexes to the current pool of candidates.
      * @param index
-     *      new {@link DBIndex index}.
+     *      new {@link Index index}.
      * @return
      *      an immutable {@link Snapshot snapshot} of the pool of
      *      candidates.
@@ -37,7 +37,7 @@ public interface WorkloadProfiler {
      *      an unexpected error has occurred while adding new indexes
      *      to the pool.
      */
-    Snapshot addCandidate(DBIndex index) throws SQLException;
+    Snapshot addCandidate(Index index) throws SQLException;
 
     /**
      * process a {@code sql} query and returned a profiled version of it.
@@ -62,5 +62,5 @@ public interface WorkloadProfiler {
      *      an unexpected error has occurred while adding new indexes (with positive vote)
      *      to the pool.
      */
-    Snapshot processVote(DBIndex index, boolean isPositive) throws SQLException;
+    Snapshot processVote(Index index, boolean isPositive) throws SQLException;
 }

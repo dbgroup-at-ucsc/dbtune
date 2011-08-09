@@ -16,7 +16,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 
@@ -34,12 +34,12 @@ import java.sql.SQLException;
  */
 public class WFIT extends Advisor
 {
-    List<ProfiledQuery> qinfos;
-    List<Double> overheads;
-    List<IndexBitSet> configurations;
-    WorkloadProfiler profiler;
-    Snapshot      snapshot;
-    KarlsIndexPartitions partitions;
+    List<ProfiledQuery>        qinfos;
+    List<Double>               overheads;
+    List<IndexBitSet>          configurations;
+    WorkloadProfiler           profiler;
+    Snapshot                   snapshot;
+    KarlsIndexPartitions       partitions;
     KarlsWorkFunctionAlgorithm wfa;
 
     int maxNumIndexes;
@@ -89,8 +89,8 @@ public class WFIT extends Advisor
 
         configuration = new IndexBitSet();
 
-        for (DBIndex idx : wfa.getRecommendation()) {
-            configuration.set(idx.internalId());
+        for (Index idx : wfa.getRecommendation()) {
+            configuration.set(idx.getId());
         }
 
         configurations.add(configuration);
@@ -167,8 +167,8 @@ public class WFIT extends Advisor
 			int q = 0;
 			for (ProfiledQuery qinfo : qinfos) {
 				IndexBitSet[] parts = qinfo.getInteractionBank().stablePartitioning(0);
-				for (DBIndex index : qinfo.getCandidateSnapshot()) {
-					int id = index.internalId();
+				for (Index index : qinfo.getCandidateSnapshot()) {
+					int id = index.getId();
 					componentId[q][id] = -id;
 					for (int p = 0; p < parts.length; p++) {
 						if (parts[p].get(id)) {
@@ -216,8 +216,8 @@ public class WFIT extends Advisor
 		}
 
         @Override
-		public double apply(DBIndex a, IndexBitSet M) {
-			int id = a.internalId();
+		public double apply(Index a, IndexBitSet M) {
+			int id = a.getId();
 			if (!M.equals(prevM)) {
 				diffM.set(M);
 				diffM.xor(prevM[id]);
@@ -236,24 +236,24 @@ public class WFIT extends Advisor
 		private InteractionBank bank;
 		TempDoiFunction(List<ProfiledQuery> qinfos, Snapshot candidateSet) {
 			bank = new InteractionBank(candidateSet);
-			for (DBIndex a : candidateSet) {
-				int id_a = a.internalId();
-				for (DBIndex b : candidateSet) {
-					int id_b = b.internalId();
+			for (Index a : candidateSet) {
+				int id_a = a.getId();
+				for (Index b : candidateSet) {
+					int id_b = b.getId();
 					if (id_a < id_b) {
 						double doi = 0;
 						for (ProfiledQuery qinfo : qinfos) {
-							doi += qinfo.getInteractionBank().interactionLevel(a.internalId(), b.internalId());
+							doi += qinfo.getInteractionBank().interactionLevel(a.getId(), b.getId());
 						}
-						bank.assignInteraction(a.internalId(), b.internalId(), doi);
+						bank.assignInteraction(a.getId(), b.getId(), doi);
 					}
 				}
 			}
 		}
 
         @Override
-		public double apply(DBIndex a, DBIndex b) {
-			return bank.interactionLevel(a.internalId(), b.internalId());
+		public double apply(Index a, Index b) {
+			return bank.interactionLevel(a.getId(), b.getId());
 		}
 	}
 }

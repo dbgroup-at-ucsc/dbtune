@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Files;
@@ -34,8 +35,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.clearAdviseIndex;
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.readAdviseOnOneIndex;
+import static edu.ucsc.dbtune.connectivity.DB2Commands.clearAdviseIndex;
+import static edu.ucsc.dbtune.connectivity.DB2Commands.readAdviseOnOneIndex;
 import static edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexSet;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
@@ -154,9 +155,9 @@ public class Advisor {
             // normalize the index candidates
 			candidateSet.normalize();
 			
-			for (DBIndex index : candidateSet) {
-				System.out.println("Candidate Index " + index.internalId() + ": " + index.megabytes());
-				System.out.println(index.creationText());
+			for (Index index : candidateSet) {
+				System.out.println("Candidate Index " + index.getId() + ": " + index.getMegaBytes());
+				System.out.println(index.getCreateStatement());
 			}
 			
 			return candidateSet;

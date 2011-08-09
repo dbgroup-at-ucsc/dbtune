@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.optimizers.WhatIfOptimizationBuilder;
 import edu.ucsc.dbtune.spi.core.Console;
@@ -9,7 +10,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.*;
+import static edu.ucsc.dbtune.connectivity.DB2Commands.*;
 import static edu.ucsc.dbtune.spi.core.Functions.*;
 import static edu.ucsc.dbtune.util.Instances.newAtomicInteger;
 import static edu.ucsc.dbtune.util.Instances.newLinkedList;
@@ -21,7 +22,7 @@ import static edu.ucsc.dbtune.util.Objects.cast;
  */
 class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     private final AtomicInteger whatifCount;
-    private final List<DBIndex> cachedCandidateSet = newLinkedList();
+    private final List<Index> cachedCandidateSet = newLinkedList();
 
     /**
      * construct a new instance of a {@code DB2-specific} what-if optimizer.
@@ -34,7 +35,7 @@ class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
-    public Iterable<DBIndex> getCandidateSet() {
+    public Iterable<Index> getCandidateSet() {
         return cachedCandidateSet;
     }
 
@@ -54,7 +55,7 @@ class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
-    public void fixCandidates(Iterable<? extends DBIndex> candidateSet) throws SQLException {
+    public void fixCandidates(Iterable<? extends Index> candidateSet) throws SQLException {
         Checks.checkArgument(isEnabled(), "Error: Database connection is closed.");
         cachedCandidateSet.clear();
         Iterables.copy(cachedCandidateSet, candidateSet);
@@ -143,7 +144,7 @@ class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
 
         if(profiledIndex != null){
             final String preds = supplyValue(fetchExplainPredicateString(), activeConnection);
-            for (int i = 0; i < profiledIndex.columnCount(); i++) {
+            for (int i = 0; i < profiledIndex.size(); i++) {
                 if (preds.contains(profiledIndex.getColumn(i).getName())){
                     usedColumns.set(i);
                 }

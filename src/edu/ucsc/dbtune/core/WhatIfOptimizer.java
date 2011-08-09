@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Index;
 import java.sql.SQLException;
 
 /**
@@ -33,7 +34,7 @@ public interface WhatIfOptimizer {
      * @throws java.sql.SQLException
      *      unable to explain the container of indexes for the stated reasons.
      */
-    ExplainInfo explain(Iterable<? extends DBIndex> indexes) throws SQLException;
+    ExplainInfo explain(Iterable<? extends Index> indexes) throws SQLException;
 
     /**
      * estimate what-if optimization cost of a container (i.e., iterable container)
@@ -48,5 +49,5 @@ public interface WhatIfOptimizer {
      * @throws java.sql.SQLException
      *      unable to estimate cost for the stated reasons.
      */
-    ExplainInfo explain(String sql, Iterable<? extends DBIndex> indexes) throws SQLException;
+    ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException;
 }

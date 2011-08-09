@@ -28,7 +28,7 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static edu.ucsc.dbtune.core.metadata.DB2Commands.isolationLevelReadCommitted;
+import static edu.ucsc.dbtune.connectivity.DB2Commands.isolationLevelReadCommitted;
 import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
 import static edu.ucsc.satuning.util.Util.newAtomicReference;
 

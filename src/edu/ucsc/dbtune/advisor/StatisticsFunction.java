@@ -17,7 +17,7 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
@@ -26,7 +26,7 @@ import edu.ucsc.dbtune.util.IndexBitSet;
 public interface StatisticsFunction {
     /**
      * adds a {@link ProfiledQuery} given a {@link DynamicIndexSet set} of
-     * materialized {@link DBIndex indexes}.
+     * materialized {@link Index indexes}.
      * @param queryInfo
      *    a {@link ProfiledQuery profiled query}.
      * @param matSet
@@ -43,7 +43,7 @@ public interface StatisticsFunction {
      * @return
      *      the result of the {@code doi}'s execution.
      */
-    double doi(DBIndex a, DBIndex b);
+    double doi(Index a, Index b);
 
     /**
      * Applies the function to an index object of type {@code I} and to an index configuration,
@@ -54,5 +54,5 @@ public interface StatisticsFunction {
      * @param m the index configuration.
      * @return the benefit value of the index object given an index configuration.
      */
-    double benefit(DBIndex a, IndexBitSet m);
+    double benefit(Index a, IndexBitSet m);
 }

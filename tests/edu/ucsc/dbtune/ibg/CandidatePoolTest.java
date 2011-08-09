@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.Test;
@@ -39,8 +39,8 @@ public class CandidatePoolTest {
         final CandidatePool.Snapshot snapshot = pool.getSnapshot();
         assertNotNull("the snapshot is not null", snapshot);
         int counter  = 0;
-        for(DBIndex each : snapshot){
-            final boolean isOkay = each.internalId() == 1 || each.internalId() == 0;
+        for(Index each : snapshot){
+            final boolean isOkay = each.getId() == 1 || each.getId() == 0;
             assertTrue(isOkay);
             ++counter;
         }
@@ -49,8 +49,8 @@ public class CandidatePoolTest {
     }
 
 
-    private static Iterable<DBIndex> populate() throws Exception {
-        final List<DBIndex> indexes = Instances.newList();
+    private static Iterable<Index> populate() throws Exception {
+        final List<Index> indexes = Instances.newList();
         indexes.add(DBTuneInstances.newPGIndex(true, 1238765, 987));
         indexes.add(DBTuneInstances.newPGIndex(false, 12765, 97));
         return indexes;

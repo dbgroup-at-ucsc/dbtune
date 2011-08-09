@@ -1,12 +1,13 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -70,16 +71,23 @@ public class KarlsWorkFunctionAlgorithm {
 	public void newTask(ProfiledQuery qinfo) {
 		tempBitSet.clear(); // just to be safe
 
+        System.out.println("Obtaining cost for subset " + qinfo.getSQL());
+
 		for (int subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
 			SubMachine subm = submachines.get(subsetNum);
+
+            System.out.println("Obtaining cost for subset " + subsetNum);
 
 			// preprocess cost into a vector
 			for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
 				// this will explicitly set each index in the array to 1 or 0
 				setStateBits(subm.indexIds, stateNum, tempBitSet);
 				double queryCost = qinfo.totalCost(tempBitSet);
+                System.out.println("  cost with state " + tempBitSet + ": " + queryCost);
 				tempCostVector.set(stateNum, queryCost);
 			}
+
+            System.out.println("----");
 
 			// clear all indexes in the array
 			clearStateBits(subm.indexIds, tempBitSet);
@@ -101,20 +109,20 @@ public class KarlsWorkFunctionAlgorithm {
 		dump("NEW TASK");
 	}
 
-	public void vote(DBIndex index, boolean isPositive) {
+	public void vote(Index index, boolean isPositive) {
 		Checks.checkAssertion(!keepHistory, "tracing WFA is not supported with user feedback");
 		for (SubMachine subm : submachines)
 			if (subm.subset.contains(index))
 				subm.vote(wf, index, isPositive);
 
-		dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + index.internalId());
+		dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + index.getId());
 	}
 
-	public List<DBIndex> getRecommendation() {
-		ArrayList<DBIndex> rec = new ArrayList<DBIndex>(MAX_HOTSET_SIZE);
+	public List<Index> getRecommendation() {
+		ArrayList<Index> rec = new ArrayList<Index>(MAX_HOTSET_SIZE);
 		for (SubMachine subm : submachines) {
-			for (DBIndex index : subm.subset)
-				if (subm.currentBitSet.get(index.internalId()))
+			for (Index index : subm.subset)
+				if (subm.currentBitSet.get(index.getId()))
 					rec.add(index);
 		}
 		return rec;
@@ -145,9 +153,9 @@ public class KarlsWorkFunctionAlgorithm {
 			IndexBitSet recBitSet = new IndexBitSet();
 			int recStateNum = 0;
 			int i = 0;
-			for (DBIndex index : newSubset) {
+			for (Index index : newSubset) {
 				if (isRecommended(index)) {
-					recBitSet.set(index.internalId());
+					recBitSet.set(index.getId());
 					recStateNum |= (1 << i);
 				}
 				++i;
@@ -169,10 +177,10 @@ public class KarlsWorkFunctionAlgorithm {
 
 				// add creation cost of new indexes
 				i = 0;
-				for (DBIndex index : newSubmachine.subset) {
+				for (Index index : newSubmachine.subset) {
 					int mask = (1 << (i++));
-					if (0 != (stateNum & mask) && !oldHotSet.get(index.internalId()))
-						value += index.creationCost();
+					if (0 != (stateNum & mask) && !oldHotSet.get(index.getId()))
+						value += index.getCreationCost();
 				}
 
 				for (int oldSubsetNum = 0; oldSubsetNum < oldSubsetCount; oldSubsetNum++) {
@@ -213,10 +221,10 @@ public class KarlsWorkFunctionAlgorithm {
 			bitSet.clear(ids[i]);
 	}
 
-	private boolean isRecommended(DBIndex idx) {
+	private boolean isRecommended(Index idx) {
 		// not sure which submachine has the index, so check them all
 		for (SubMachine subm : submachines) {
-			if (subm.currentBitSet.get(idx.internalId()))
+			if (subm.currentBitSet.get(idx.getId()))
 				return true;
 		}
 		return false;
@@ -224,10 +232,10 @@ public class KarlsWorkFunctionAlgorithm {
 
 	public static  double transitionCost(Snapshot candidateSet, IndexBitSet x, IndexBitSet y) {
 		double transition = 0;
-		for (DBIndex index : candidateSet) {
-			int id = index.internalId();
+		for (Index index : candidateSet) {
+			int id = index.getId();
 			if (y.get(id) && !x.get(id))
-				transition += index.creationCost();
+				transition += index.getCreationCost();
 		}
 		return transition;
 	}
@@ -235,11 +243,15 @@ public class KarlsWorkFunctionAlgorithm {
 	private static double transitionCost(KarlsIndexPartitions.Subset subset, int x, int y) {
 		double transition = 0;
 		int i = 0;
-		for (DBIndex index : subset) {
+		for (Index index : subset) {
+            System.out.println("Index " + index.getId());
+
 			int mask = 1 << (i++);
 
-			if (mask == (y & mask) - (x & mask))
-				transition += index.creationCost();
+			if (mask == (y & mask) - (x & mask)) {
+                System.out.println("  cost " + index.getCreationCost());
+				transition += index.getCreationCost();
+            }
 		}
 		return transition;
 	}
@@ -275,7 +287,7 @@ public class KarlsWorkFunctionAlgorithm {
 
 	}
 
-	private static class SubMachine implements Iterable<DBIndex> {
+	private static class SubMachine implements Iterable<Index> {
 		private KarlsIndexPartitions.Subset subset;
 		private int subsetNum;
 		private int numIndexes;
@@ -294,8 +306,8 @@ public class KarlsWorkFunctionAlgorithm {
 
 			indexIds = new int[numIndexes];
 			int i = 0;
-			for (DBIndex index : subset0) {
-				indexIds[i++] = index.internalId();
+			for (Index index : subset0) {
+				indexIds[i++] = index.getId();
 			}
 		}
 
@@ -320,12 +332,12 @@ public class KarlsWorkFunctionAlgorithm {
 
 		// process a positive or negative vote for the index
 		// do the necessary bookkeeping in the input workfunction, and update the current state
-		public void vote(TotalWorkValues wf, DBIndex index, boolean isPositive) {
+		public void vote(TotalWorkValues wf, Index index, boolean isPositive) {
 			// find the position in indexIds
 			int indexIdsPos;
 			int stateMask;
 			for (indexIdsPos = 0; indexIdsPos < numIndexes; indexIdsPos++)
-				if (indexIds[indexIdsPos] == index.internalId())
+				if (indexIds[indexIdsPos] == index.getId())
 					break;
 			if (indexIdsPos >= numIndexes) {
 				Console.streaming().error("could not process vote: index not found in subset");
@@ -337,16 +349,16 @@ public class KarlsWorkFunctionAlgorithm {
 
 			// register the vote in the recommendation
 			if (isPositive) {
-				currentBitSet.set(index.internalId());
+				currentBitSet.set(index.getId());
 				currentState |= stateMask;
 			}
 			else {
-				currentBitSet.clear(index.internalId());
+				currentBitSet.clear(index.getId());
 				currentState ^= stateMask;
 			}
 
 			// register the vote in the work function
-			double minScore = wf.get(subsetNum, currentState) + index.creationCost();
+			double minScore = wf.get(subsetNum, currentState) + index.getCreationCost();
 			for (int stateNum = 0; stateNum < numStates; stateNum++) {
 				boolean stateContainsIndex = stateMask == (stateMask & stateNum);
 				if (isPositive != stateContainsIndex) {
@@ -366,6 +378,7 @@ public class KarlsWorkFunctionAlgorithm {
 		// this function assigns the new work function values into wfNew, but of course
 		// only the states within this submachine are handled
 		void newTask(CostVector cost, TotalWorkValues wfOld, TotalWorkValues wfNew) {
+            System.out.println("Num of states: " + numStates);
 			// compute new work function
 			for (int newStateNum = 0; newStateNum < numStates; newStateNum++) {
 				// compute one value of the work function
@@ -376,6 +389,9 @@ public class KarlsWorkFunctionAlgorithm {
 					double queryCost = cost.get(oldStateNum);
 					double transition = transitionCost(subset, oldStateNum, newStateNum);
 					double wfValueNew = wfValueOld + queryCost + transition;
+
+                    System.out.println("State: " + newStateNum + "; cost: " + queryCost + "; transCost: " + transition);
+
 					if (wfValueNew < wfValueBest) {
 						wfValueBest = wfValueNew;
 						bestPredecessor = oldStateNum;
@@ -385,6 +401,7 @@ public class KarlsWorkFunctionAlgorithm {
 					Console.streaming().error("failed to compute work function");
 				  wfNew.set(subsetNum, newStateNum, wfValueBest, bestPredecessor);
 			}
+
 
 			// wfNew now contains the updated work function
 
@@ -402,7 +419,10 @@ public class KarlsWorkFunctionAlgorithm {
 				double transition = transitionCost(subset, stateNum, currentState);
 				double value = wfNew.get(subsetNum, stateNum) + transition;
 
-				// switch if value is better
+                System.out.println("Transition: " + transition);
+                System.out.println("Value: " + value);
+
+                // switch if value is better
 				// if it's a tie, go with the state with lower transition cost
 				// if that's a tie, give preference to currentState (which always has transition == 0)
 				// the condition is written in a redundant way on purpose
@@ -424,7 +444,7 @@ public class KarlsWorkFunctionAlgorithm {
 			setStateBits(indexIds, currentState, currentBitSet);
 		}
 
-		public Iterator<DBIndex> iterator() {
+		public Iterator<Index> iterator() {
 			return subset.iterator();
 		}
 	}
@@ -501,6 +521,10 @@ public class KarlsWorkFunctionAlgorithm {
 				predecessor[i] = wf2.predecessor[i];
 			}
 		}
+
+        public String toString() {
+            return "values: " + Arrays.toString(values) + " ; ";
+        }
 	}
 
 	private static class CostVector {

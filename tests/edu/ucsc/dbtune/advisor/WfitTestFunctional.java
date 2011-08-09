@@ -17,7 +17,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.advisor.ProfiledQuery;
 import edu.ucsc.dbtune.ibg.CandidatePool;
@@ -111,6 +111,7 @@ public class WfitTestFunctional
             configuration = wfit.getRecommendation();
 
             qinfo = wfit.getProfiledQuery(q);
+            System.out.println("Q"+q+": "+qinfo);
 
             assertThat(qinfo.getCandidateSnapshot().maxInternalId()+1, is(1));
 
@@ -140,14 +141,14 @@ public class WfitTestFunctional
         throws SQLException, IOException
     {
         CandidatePool pool;
-        Iterable<DBIndex>      candidateSet;
+        Iterable<Index>      candidateSet;
         File                   workloadFile;
 
         pool         = new CandidatePool();
         workloadFile = new File(workloadFilename);
         candidateSet = con.getIndexExtractor().recommendIndexes(workloadFile);
 
-        for (DBIndex index : candidateSet) {
+        for (Index index : candidateSet) {
             pool.addIndex(index);
         }
 

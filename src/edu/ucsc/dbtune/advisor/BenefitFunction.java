@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -33,5 +33,5 @@ public interface BenefitFunction {
      * @param m the index configuration.
      * @return the benefit value of the index object given an index configuration.
      */
-    double apply(DBIndex arg, IndexBitSet DBIndex);
+    double apply(Index arg, IndexBitSet DBIndex);
 }

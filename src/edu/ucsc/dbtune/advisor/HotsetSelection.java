@@ -17,7 +17,7 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.Checks;
@@ -110,7 +110,7 @@ public class HotsetSelection {
      * not take optional values. In other words, all arguments values should not be null.
      *
      * @param 
-     *      the {@link DBIndex index type}.
+     *      the {@link Index index type}.
      */
     public static class StrictBuilder implements Supplier<HotsetSelection> {
         private CandidatePool.Snapshot candSet;
