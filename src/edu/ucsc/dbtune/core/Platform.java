@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.advisor.DB2AdvisorCaller;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.JdbcConnection;
 import edu.ucsc.dbtune.connectivity.PGCommands;
@@ -271,8 +272,7 @@ public class Platform {
         public Iterable<Index> recommendIndexes(File workloadFile) throws SQLException, IOException {
             Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
             final JdbcConnection c = Objects.as(connection);
-            try {
-                final Advisor.FileInfo advisorFile = Advisor.createAdvisorFile(
+                final DB2AdvisorCaller.FileInfo advisorFile = DB2AdvisorCaller.createAdvisorFile(
                         c,
                         db2AdvisorPath,
                         -1,
@@ -280,9 +280,6 @@ public class Platform {
                 );
 
                 return Iterables.<Index>asIterable(advisorFile.getCandidates(c));
-            } catch (AdvisorException a){
-                throw new SQLException(a);
-            }
         }
     }
 

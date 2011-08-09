@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -41,7 +41,7 @@ public class CostLevel {
      * @param count
      *      # of levels
      * @return
-     *      a new immutable {@link edu.ucsc.dbtune.core.CostLevel} object.
+     *      a new immutable {@link edu.ucsc.dbtune.core.optimizer.CostLevel} object.
      */
     public static CostLevel valueOf(double totalCost, int count){
         return new CostLevel(totalCost, count, (!(totalCost == 0.0 || count == 0)));

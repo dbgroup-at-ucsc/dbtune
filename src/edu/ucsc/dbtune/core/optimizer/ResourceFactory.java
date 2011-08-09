@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.core.optimizer;
 
 /**
  * A marker interface that tags the factory objects supported by

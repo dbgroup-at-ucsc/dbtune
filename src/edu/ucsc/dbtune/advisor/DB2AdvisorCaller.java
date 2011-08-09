@@ -16,10 +16,11 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
+import edu.ucsc.dbtune.core.DBIndexSet;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.spi.core.Console;
@@ -64,14 +65,14 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
  * We don't create an output xml file ... just read the db2advis output directly 
  */
 //todo(Huascar) make it a stateful object rather than leaving it like a util class.
-public class Advisor {
+public class DB2AdvisorCaller {
 	private static final Pattern INDEX_HEADER_PATTERN       = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
 	private static final Pattern INDEX_STATEMENT_PATTERN    = Pattern.compile("^\\s*CREATE.+(IDX\\d*)\\\"");
 	private static final Pattern START_INDEXES_PATTERN      = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
 	private static final Pattern END_INDEXES_PATTERN        = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
     private static final Console SCREEN                     = Console.streaming();
 
-	public static FileInfo createAdvisorFile(DatabaseConnection conn, String advisorPath, int budget, File workloadFile) throws IOException, AdvisorException, SQLException {
+	public static FileInfo createAdvisorFile(DatabaseConnection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException {
 		submit(
                 // executes "DELETE FROM advise_index"
                 clearAdviseIndex(), conn
@@ -107,7 +108,7 @@ public class Advisor {
 		}
 		int rc = prcs.exitValue();
 		if (rc != 0){
-            throw new AdvisorException("db2advis returned code "+rc+"\n"+errString);
+            throw new SQLException("db2advis returned code "+rc+"\n"+errString);
         }
 		
 		return info;
@@ -134,7 +135,7 @@ public class Advisor {
 		@SuppressWarnings("unused")
 		private String output;
 		
-		private FileInfo(InputStream stream) throws IOException, AdvisorException {
+		private FileInfo(InputStream stream) throws IOException, SQLException {
 			indexList = new ArrayList<IndexInfo>();
 			output    = processFile(stream, indexList);
 		}
@@ -173,7 +174,7 @@ public class Advisor {
 			return (int) Math.round(total);
 		}
 		
-		private static String processFile(InputStream stream, List<IndexInfo> indexList) throws IOException, AdvisorException { 
+		private static String processFile(InputStream stream, List<IndexInfo> indexList) throws IOException, SQLException { 
 			List<String> lines = Files.getLines(stream); // splits the file into individual lines
 			Iterator<String> iter   = lines.iterator();
 			Matcher headerMatcher   = INDEX_HEADER_PATTERN.matcher("");
@@ -198,7 +199,7 @@ public class Advisor {
 					if (headerMatcher.find()) {
 						createMatcher.reset(iter.next()); // advanced iterator! 
 						if (!createMatcher.find())
-							throw new AdvisorException("Unexpected advisor file format");
+							throw new SQLException("Unexpected advisor file format");
 						
 						String indexName = createMatcher.group(1);
 						double indexMegabytes = Double.parseDouble(headerMatcher.group(1));

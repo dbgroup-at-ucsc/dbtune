@@ -18,13 +18,13 @@
 
 package edu.ucsc.dbtune.connectivity;
 
-import edu.ucsc.dbtune.core.CostLevel;
 import edu.ucsc.dbtune.core.metadata.DB2Index;
 import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.SQLCategory;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexMetadata;
 import edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexMetadata.AdviseIndexColumn;
+import edu.ucsc.dbtune.core.optimizer.CostLevel;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Parameter;
