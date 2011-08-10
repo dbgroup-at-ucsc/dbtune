@@ -109,6 +109,7 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
                 }
 			} catch (SQLException e) {
                 console.error("SQLException caught while recommending indexes", e);
+                throw new RuntimeException(e);
 			}
 		}
 

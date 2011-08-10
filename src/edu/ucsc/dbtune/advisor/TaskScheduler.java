@@ -547,6 +547,7 @@ public class TaskScheduler implements Scheduler  {
                 placeOnSelection(this);
             } catch (SQLException sqlCause){
                 console.error("Could not process vote", sqlCause);
+                throw new RuntimeException(sqlCause);
             } catch (InterruptedException interrupt){
                 Thread.currentThread().interrupt();
             }
@@ -582,6 +583,7 @@ public class TaskScheduler implements Scheduler  {
                 placeOnSelection(this);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
             }
         }
 
@@ -616,6 +618,7 @@ public class TaskScheduler implements Scheduler  {
                 placeOnSelection(this);
             } catch (SQLException sqlCause){
                 console.error("Could not add candidate", sqlCause);
+                throw new RuntimeException(sqlCause);
             } catch (InterruptedException interrupt){
                 Thread.currentThread().interrupt();
             }

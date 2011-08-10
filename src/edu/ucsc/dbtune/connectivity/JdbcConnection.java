@@ -40,7 +40,7 @@ public class JdbcConnection extends AbstractDatabaseConnection implements Databa
         try {
             return connection.createStatement();
         } catch (SQLException e) {
-            return null;
+            throw new RuntimeException(e);
         }
     }
 

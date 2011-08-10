@@ -192,8 +192,10 @@ public final class Command {
             log.verbose("received exit value " + exitValue + " from destroyed command " + this);
         } catch (IllegalThreadStateException destroyUnsuccessful) {
             log.warn("couldn't destroy " + this);
+            throw new RuntimeException(destroyUnsuccessful);
         } catch (InterruptedException e) {
             log.warn("couldn't destroy " + this);
+            throw new RuntimeException(e);
         }
     }
 

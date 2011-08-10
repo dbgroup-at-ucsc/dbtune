@@ -347,6 +347,7 @@ public class Environment {
                 loadProperties();
               } catch (IOException e) {
                 Console.streaming().error("unable to load properties" + e);
+                throw new RuntimeException(e);
               }
             }
         }

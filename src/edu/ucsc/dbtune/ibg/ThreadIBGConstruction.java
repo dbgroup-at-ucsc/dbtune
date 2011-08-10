@@ -76,6 +76,7 @@ public class ThreadIBGConstruction implements Runnable {
 				} while (success);
 			} catch (SQLException e) {
 				Console.streaming().error(" *** IBG construction failed ***", e);
+                throw new RuntimeException(e);
 			}
 
 			synchronized (taskMonitor) {

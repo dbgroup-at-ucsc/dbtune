@@ -48,7 +48,7 @@ class JdbcConnectionFactoryImpl implements JdbcConnectionFactory {
             // registering driver.
             Class.forName(driverClass);
         } catch (ClassNotFoundException e) {
-            throw new SQLException("Fatal Error: JDBC Driver <" + driverClass + "> not found!!!!!");
+            throw new SQLException(e);
         }
     }
 }
