@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.Environment;
 
 /**

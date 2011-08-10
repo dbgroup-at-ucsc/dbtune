@@ -18,10 +18,10 @@
 
 package edu.ucsc.dbtune.connectivity;
 
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
-import edu.ucsc.dbtune.core.optimizer.Optimizer;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IndexExtractor;
+import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 
 /**
  * A connection to a specific database. {@code DatbaseConnection} objects are obtained by using

@@ -15,7 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.workload;
 
-import edu.ucsc.dbtune.core.metadata.SQLCategory;
+import edu.ucsc.dbtune.metadata.SQLCategory;
 
 import java.io.StringReader;
 

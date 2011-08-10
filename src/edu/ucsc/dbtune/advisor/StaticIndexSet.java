@@ -18,9 +18,9 @@
 
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.core.metadata.Index;
 
 import java.util.Collections;
 import java.util.HashSet;

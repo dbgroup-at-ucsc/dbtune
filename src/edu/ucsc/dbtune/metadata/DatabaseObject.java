@@ -16,7 +16,7 @@
  * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.metadata;
 
 import java.util.List;
 
@@ -109,7 +109,7 @@ public abstract class DatabaseObject
     /**
      * Returns the cost of creating the object
      *
-     * @return
+     * @param cost
      *     cost of materializing the object
      */
     public void setCreationCost(double cost)

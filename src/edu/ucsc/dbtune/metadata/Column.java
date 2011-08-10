@@ -16,9 +16,9 @@
  * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.metadata;
 
-import static edu.ucsc.dbtune.core.metadata.SQLTypes.isValidType;
+import static edu.ucsc.dbtune.metadata.SQLTypes.isValidType;
 
 /**
  * POJO for representing column metadata

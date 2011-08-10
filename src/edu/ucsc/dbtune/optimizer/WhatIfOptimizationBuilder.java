@@ -16,9 +16,9 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
@@ -38,13 +38,13 @@ public interface WhatIfOptimizationBuilder extends WhatIfOptimizationCostBuilder
 
     /**
      * use a triple of values (i.e., {@link edu.ucsc.dbtune.util.IndexBitSet configuration},
-     * a {@link edu.ucsc.dbtune.core.Index profiledIndex}, and a {@link edu.ucsc.dbtune.util.IndexBitSet bitset} containing
-     * used columns.)
+     * a {@link edu.ucsc.dbtune.metadata.Index profiledIndex}, and a {@link edu.ucsc.dbtune.util.IndexBitSet bitset} 
+     * containing used columns.)
      *
      * @param config
      *     a new {@link edu.ucsc.dbtune.util.IndexBitSet configuration} instance.
      * @param profiledIndex
-     *      a profiled {@link Index} instance.
+     *      a profiled {@code Index} instance.
      * @param usedColumns
      *      a {@link edu.ucsc.dbtune.util.IndexBitSet set} of used columns.
      * @return

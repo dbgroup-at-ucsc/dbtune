@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.advisor.BenefitFunction;
 import edu.ucsc.dbtune.advisor.DoiFunction;
@@ -6,14 +6,14 @@ import edu.ucsc.dbtune.advisor.ProfiledQuery;
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionFactory;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.metadata.DB2Index;
-import edu.ucsc.dbtune.core.metadata.Column;
-import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.DB2Index;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
-import static edu.ucsc.dbtune.core.JdbcMocks.*;
+import static edu.ucsc.dbtune.JdbcMocks.*;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)

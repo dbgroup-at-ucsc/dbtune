@@ -26,8 +26,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static edu.ucsc.dbtune.core.DBTuneInstances.makeIBGNode;
-import static edu.ucsc.dbtune.core.DBTuneInstances.makeRandomIBGNode;
+import static edu.ucsc.dbtune.DBTuneInstances.makeIBGNode;
+import static edu.ucsc.dbtune.DBTuneInstances.makeRandomIBGNode;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)

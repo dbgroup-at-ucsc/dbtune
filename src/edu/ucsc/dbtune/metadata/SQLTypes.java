@@ -16,7 +16,7 @@
  * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.metadata;
 
 import java.sql.Types;
 

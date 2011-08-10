@@ -1,10 +1,11 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.PGIndex;
+
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
@@ -12,9 +13,9 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static edu.ucsc.dbtune.core.DBTuneInstances.generateColumns;
-import static edu.ucsc.dbtune.core.DBTuneInstances.generateDescVals;
-import static edu.ucsc.dbtune.core.DBTuneInstances.newPGDatabaseConnectionManager;
+import static edu.ucsc.dbtune.DBTuneInstances.generateColumns;
+import static edu.ucsc.dbtune.DBTuneInstances.generateDescVals;
+import static edu.ucsc.dbtune.DBTuneInstances.newPGDatabaseConnectionManager;
 import static org.junit.Assert.assertThat;
 
 /**

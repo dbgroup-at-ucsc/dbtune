@@ -16,10 +16,10 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;

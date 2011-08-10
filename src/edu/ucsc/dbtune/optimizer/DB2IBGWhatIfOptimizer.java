@@ -1,9 +1,9 @@
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.JdbcConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.DB2Index;
+import edu.ucsc.dbtune.metadata.DB2Index;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.*;
 

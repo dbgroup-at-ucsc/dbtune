@@ -16,10 +16,10 @@
  * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata.extraction;
+package edu.ucsc.dbtune.metadata.extraction;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Catalog;
 
 import java.sql.SQLException;
 

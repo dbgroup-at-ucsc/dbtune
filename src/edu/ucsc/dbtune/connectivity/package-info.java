@@ -13,40 +13,21 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.workload;
-
-import edu.ucsc.dbtune.metadata.SQLCategory;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-
 /**
- * Unit test for the {@link SQLStatement} class.
+ * Contains the necessary classes for creating a connection to a DBMS.
+ * <dl>
+ * <dt>{@link edu.ucsc.dbtune.connectivity.ConnectionManager}
+ * <dd>The interface that you will use in your implementation classes to tell DBTune
+ *     to create connections to a specific dbms.
  *
- * @author Ivo Jimenez
+ * <dt>{@link edu.ucsc.dbtune.connectivity.DatabaseConnection}
+ * <dd>The interface you will use in order to perform dbms-specific "operations" --
+ *     Additionally, this is the interface that you will use to retrieve dbms-specific index
+ *     extraction and what-if optimizer strategies.
+ * </dl>
+ *
  */
-public class SQLStatementTest
-{
-    @BeforeClass
-    public static void setUp() throws Exception
-    {
-    }
+@Generated(value={})
+package edu.ucsc.dbtune.connectivity;
 
-    @AfterClass
-    public static void tearDown() throws Exception
-    {
-    }
-
-    /** checks the constructor */
-    @Test
-    public void testConstructor() throws Exception
-    {
-        SQLStatement sql = new SQLStatement(SQLCategory.QUERY, "select * from tbl");
-
-        assertThat(sql.getSQL(),is("select * from tbl"));
-    }
-}
+import javax.annotation.Generated;

@@ -16,12 +16,12 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 

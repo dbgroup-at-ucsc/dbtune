@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.ml
 
-import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan
 
 import weka.core.FastVector
 import weka.core.Attribute

@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and       *
  *   limitations under the License.                                            *
  * *************************************************************************** */
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.metadata;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -22,15 +22,22 @@ import java.util.Arrays;
 import org.junit.Test;
 import org.junit.BeforeClass;
 
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.DatabaseObject;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import static edu.ucsc.dbtune.core.metadata.Index.PRIMARY;
-import static edu.ucsc.dbtune.core.metadata.Index.SECONDARY;
-import static edu.ucsc.dbtune.core.metadata.Index.CLUSTERED;
-import static edu.ucsc.dbtune.core.metadata.Index.UNCLUSTERED;
-import static edu.ucsc.dbtune.core.metadata.Index.UNIQUE;
-import static edu.ucsc.dbtune.core.metadata.Index.NON_UNIQUE;
+import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
+import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
+import static edu.ucsc.dbtune.metadata.Index.PRIMARY;
+import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
+import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
+import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
 
 /**
  * Test for general metadata operations

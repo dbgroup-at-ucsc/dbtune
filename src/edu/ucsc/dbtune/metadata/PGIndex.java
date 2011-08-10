@@ -16,9 +16,9 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.metadata;
 
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -42,13 +42,13 @@ public class PGIndex extends Index {
      * @param isDescending
      *      indicate whether is in descending order.
      * @param internalId
-     *     {@link edu.ucsc.dbtune.core.Index}'s internalId.
+     *     {@link edu.ucsc.dbtune.metadata.Index}'s internalId.
      * @param creationCost
-     *     {@link edu.ucsc.dbtune.core.Index}'s creation cost.
+     *     {@link edu.ucsc.dbtune.metadata.Index}'s creation cost.
      * @param megabytes
-     *     {@link edu.ucsc.dbtune.core.Index}'s size (in megabytes).
+     *     {@link edu.ucsc.dbtune.metadata.Index}'s size (in megabytes).
      * @param creationText
-     *     {@link edu.ucsc.dbtune.core.Index}'s creation text.
+     *     {@link edu.ucsc.dbtune.metadata.Index}'s creation text.
      */
     public PGIndex(
             int reloid,
@@ -107,7 +107,7 @@ public class PGIndex extends Index {
     }
 
     /**
-     * A PG-specific implementation of {@link DatabaseIndexSchema}.
+     * A PG-specific implementation of an schema
      */
     public static class PGIndexSchema implements Serializable {
         // serialization support
@@ -157,7 +157,6 @@ public class PGIndex extends Index {
         }
 
         /**
-         * @return a {@link edu.ucsc.dbtune.core.metadata.PGIndexSchema} duplicate.
          */
         public PGIndexSchema consDuplicate() {
             final Table table = Objects.as(getBaseTable());

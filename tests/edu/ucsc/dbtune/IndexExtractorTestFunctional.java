@@ -1,8 +1,8 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;

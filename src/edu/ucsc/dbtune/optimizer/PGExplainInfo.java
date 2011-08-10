@@ -16,17 +16,17 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.core.metadata.SQLCategory;
 
 import java.io.Serializable;
 import java.util.Arrays;
 
 /**
- *  implements a PG-specific {@link edu.ucsc.dbtune.core.optimizer.ExplainInfo}.
+ *  implements a PG-specific {@link edu.ucsc.dbtune.optimizer.ExplainInfo}.
  */
 public class PGExplainInfo extends AbstractExplainInfo implements Serializable {
 	private static final long serialVersionUID = 1L;

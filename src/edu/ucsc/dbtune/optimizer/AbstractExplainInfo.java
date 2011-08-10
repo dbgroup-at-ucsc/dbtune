@@ -16,9 +16,9 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.core.metadata.SQLCategory;
+import edu.ucsc.dbtune.metadata.SQLCategory;
 
 /**
  * This class provides a skeletal implementation of the {@link ExplainInfo}

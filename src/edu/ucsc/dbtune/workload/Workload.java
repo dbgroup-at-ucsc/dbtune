@@ -15,7 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.workload;
 
-import edu.ucsc.dbtune.core.metadata.SQLCategory;
+import edu.ucsc.dbtune.metadata.SQLCategory;
 
 import java.io.Reader;
 import java.io.BufferedReader;
@@ -76,7 +76,7 @@ public class Workload implements Iterable<SQLStatement>
     /**
      * Returns the statement at the given position (zero-indexing).
      *
-     * @param index
+     * @param i
      *     index of the SQL statement retrieved
      */
     public SQLStatement get(int i) {

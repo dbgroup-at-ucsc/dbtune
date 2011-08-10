@@ -1,12 +1,12 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizer.ExplainInfo;
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizer;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IndexExtractor;
+import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;

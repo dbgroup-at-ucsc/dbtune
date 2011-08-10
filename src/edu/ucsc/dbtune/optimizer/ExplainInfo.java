@@ -16,9 +16,9 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Index;
 
 /**
  * An immutable type, which describes the output of a what-if optimization
@@ -37,7 +37,7 @@ public interface ExplainInfo {
      * gets the maintenance cost of an index.
      *
      * @param index
-     *      a {@link edu.ucsc.dbtune.core.Index} object.
+     *      a {@link edu.ucsc.dbtune.metadata.Index} object.
      * @return
      *      maintenance cost.
      */
@@ -45,14 +45,14 @@ public interface ExplainInfo {
 
     /**
      * @return
-     *     {@code true} if it's {@link edu.ucsc.dbtune.core.metadata.SQLCategory#DML}; {@code false} 
+     *     {@code true} if it's {@link edu.ucsc.dbtune.metadata.SQLCategory#DML}; {@code false} 
      *     otherwise.
      */
     boolean isDML();
 
     /**
      * @return
-     *     {@code true} if it's {{@link edu.ucsc.dbtune.core.metadata.SQLCategory#QUERY}; {@code 
+     *     {@code true} if it's {{@link edu.ucsc.dbtune.metadata.SQLCategory#QUERY}; {@code 
      *     false} otherwise.
      */
     boolean isQuery();

@@ -1,14 +1,14 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.DBTuneInstances;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
 import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.spi.core.Console;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
@@ -16,9 +16,9 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.core.DBTuneInstances.generateColumns;
-import static edu.ucsc.dbtune.core.DBTuneInstances.generateDescVals;
-import static edu.ucsc.dbtune.core.DBTuneInstances.newPGDatabaseConnectionManager;
+import static edu.ucsc.dbtune.DBTuneInstances.generateColumns;
+import static edu.ucsc.dbtune.DBTuneInstances.generateDescVals;
+import static edu.ucsc.dbtune.DBTuneInstances.newPGDatabaseConnectionManager;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

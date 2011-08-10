@@ -16,15 +16,17 @@
  * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata.extraction;
+package edu.ucsc.dbtune.metadata.extraction;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Catalog;
-import edu.ucsc.dbtune.core.metadata.Schema;
-import edu.ucsc.dbtune.core.metadata.Column;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.metadata.extraction.GenericJDBCExtractor;
+import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
 import edu.ucsc.dbtune.spi.Environment;
 
 import edu.ucsc.dbtune.util.Strings;

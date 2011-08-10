@@ -18,12 +18,12 @@
 
 package edu.ucsc.dbtune.connectivity;
 
+import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IndexExtractor;
+import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Functions;
-import edu.ucsc.dbtune.core.DatabaseSystem;
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
-import edu.ucsc.dbtune.core.optimizer.Optimizer;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 

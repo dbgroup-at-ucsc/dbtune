@@ -16,10 +16,14 @@
  *  ****************************************************************************
  */
 /**
- * Interfaces which make up {@link edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer}'s
- * whatIfOptmize expression.
+ * This package contains the main optimizer interface
+ * {@link edu.ucsc.dbtune.optimizer.Optimizer} as well as all its
+ * implementors whatIfOptmize expression.
+ * <p>
+ * {@link edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer}. The object that DBTune uses to perform operations dealing with 
+ * what-if optimizations.
  */
 @Generated(value={})
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
 import javax.annotation.Generated;

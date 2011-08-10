@@ -16,13 +16,13 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata;
+package edu.ucsc.dbtune.metadata;
 
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.DB2Index.DB2IndexMetadata;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexMetadata;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.util.DBIndexSet;
 import edu.ucsc.dbtune.util.DBUtilities;
 import edu.ucsc.dbtune.util.HashFunction;
@@ -45,12 +45,6 @@ public class DB2Index extends Index {
     /**
      * construct new {@code DB2Index} from the ADVISE_INDEX table
      *
-     * @param metadata
-     *      a {@link DB2IndexMetadata} object.
-     * @param creationCost
-     *      {@link edu.ucsc.satuning.db.DBIndex}'s creation cost.
-     * @throws java.sql.SQLException
-     *      unexpected error has occurred - unable to create object.
      */
     public DB2Index(DatabaseConnection connection, ResultSet rs, String dbName, int id, double megabytes) throws SQLException, Exception {
         super("",(Table)null,SECONDARY,NON_UNIQUE,UNCLUSTERED);

@@ -18,8 +18,8 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
@@ -124,7 +124,7 @@ public class WorkFunctionAlgorithm {
      *
      * @param qinfo
      *    a {@link ProfiledQuery query}.
-     * @see {@link #getRecommendation()}
+     * @see #getRecommendation()
      */
     public void newTask(ProfiledQuery qinfo) {
       workspace.tempBitSet.clear(); // just to be safe
@@ -354,8 +354,6 @@ public class WorkFunctionAlgorithm {
      *      available index partitiones.
      * @param schedule
      *      an array of bit sets; each one represent an index configuration.
-     * @param <J>
-     *     the {@link Index index} object.
      * @return
      *      a schedule cost over a set of candidate and queries.
      */

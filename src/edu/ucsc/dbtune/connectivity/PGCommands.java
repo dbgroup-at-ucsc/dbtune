@@ -18,12 +18,12 @@
 
 package edu.ucsc.dbtune.connectivity;
 
-import edu.ucsc.dbtune.core.metadata.Column;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.metadata.SQLCategory;
-import edu.ucsc.dbtune.core.metadata.Table;
-import edu.ucsc.dbtune.core.optimizer.PGExplainInfo;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.PGIndex;
+import edu.ucsc.dbtune.metadata.SQLCategory;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.PGExplainInfo;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;

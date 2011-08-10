@@ -15,7 +15,7 @@
  *   limitations under the License.                                           *
  *  ****************************************************************************
  */
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.satuning.util.Objects;

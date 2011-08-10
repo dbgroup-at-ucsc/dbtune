@@ -1,12 +1,12 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.Table;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.ibg.CandidatePool.Node;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import org.junit.Test;
 
@@ -16,7 +16,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static edu.ucsc.dbtune.core.DBTuneInstances.makeIBGNode;
+import static edu.ucsc.dbtune.DBTuneInstances.makeIBGNode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;

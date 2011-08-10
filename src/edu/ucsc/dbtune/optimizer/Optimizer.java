@@ -13,9 +13,9 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 
 import java.sql.SQLException;
 

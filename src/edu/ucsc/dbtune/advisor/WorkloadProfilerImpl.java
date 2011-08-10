@@ -1,10 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizer.ExplainInfo;
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGAnalyzer;
@@ -13,6 +9,10 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor;
 import edu.ucsc.dbtune.ibg.InteractionLogger;
 import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
 import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Threads;
 

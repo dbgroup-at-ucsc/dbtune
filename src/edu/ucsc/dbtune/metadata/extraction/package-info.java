@@ -14,17 +14,6 @@
  *   limitations under the License.                                             *
  * **************************************************************************** */
 /**
- * Used to represent the DBMS metadata. The SQL standard (as well as JDBC) defines the following hierarchy:
- * <p>
- * <dl>
- * <dt>{@link edu.ucsc.dbtune.metadata.Catalog}
- * <dt>{@link edu.ucsc.dbtune.metadata.Schema}
- * <dt>{@link edu.ucsc.dbtune.metadata.Table}
- * <dt>{@link edu.ucsc.dbtune.metadata.Column}
- * <dt>{@link edu.ucsc.dbtune.metadata.Index}
- * </dl>
- * <p>
- * For more info, refer to the Wiki article
- * <a href="https://github.com/dbgroup-at-ucsc/dbtune/wiki/databasemetadata">"Database Metadata in DBTune"</a>:
+ * Definition of the {@link MetadataExtractor} and its implementations for the supported DBMS's.
  */
-package edu.ucsc.dbtune.metadata;
+package edu.ucsc.dbtune.metadata.extraction;

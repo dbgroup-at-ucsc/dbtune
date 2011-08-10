@@ -15,18 +15,18 @@
  *   limitations under the License.                                           *
  *  ****************************************************************************
  */
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.Column;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.optimizer.AbstractIBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.ExplainInfo;
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizer;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.PGIndex;
+import edu.ucsc.dbtune.optimizer.AbstractIBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IndexExtractor;
+import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
@@ -48,9 +48,9 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-import static edu.ucsc.dbtune.core.DBTuneInstances.newDB2Index;
-import static edu.ucsc.dbtune.core.DBTuneInstances.newPGIndex;
-import static edu.ucsc.dbtune.core.JdbcMocks.makeResultSet;
+import static edu.ucsc.dbtune.DBTuneInstances.newDB2Index;
+import static edu.ucsc.dbtune.DBTuneInstances.newPGIndex;
+import static edu.ucsc.dbtune.JdbcMocks.makeResultSet;
 import static edu.ucsc.dbtune.util.Strings.str;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;

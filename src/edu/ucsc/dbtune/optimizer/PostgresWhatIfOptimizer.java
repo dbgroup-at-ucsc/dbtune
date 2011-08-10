@@ -1,9 +1,9 @@
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.PGCommands;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.util.*;
 

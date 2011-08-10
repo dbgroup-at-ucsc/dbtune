@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.util.ToStringBuilder;
 

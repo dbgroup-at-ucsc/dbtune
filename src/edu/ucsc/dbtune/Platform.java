@@ -16,28 +16,28 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.advisor.DB2AdvisorCaller;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.JdbcConnection;
 import edu.ucsc.dbtune.connectivity.PGCommands;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.optimizer.AbstractIndexExtractor;
-import edu.ucsc.dbtune.core.optimizer.DB2IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.DB2Optimizer;
-import edu.ucsc.dbtune.core.optimizer.DB2WhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractorFactory;
-import edu.ucsc.dbtune.core.optimizer.Optimizer;
-import edu.ucsc.dbtune.core.optimizer.OptimizerFactory;
-import edu.ucsc.dbtune.core.optimizer.PGOptimizer;
-import edu.ucsc.dbtune.core.optimizer.PostgresIBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.PostgresWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizerFactory;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.PGIndex;
+import edu.ucsc.dbtune.optimizer.AbstractIndexExtractor;
+import edu.ucsc.dbtune.optimizer.DB2IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.optimizer.DB2WhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IndexExtractor;
+import edu.ucsc.dbtune.optimizer.IndexExtractorFactory;
+import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.OptimizerFactory;
+import edu.ucsc.dbtune.optimizer.PGOptimizer;
+import edu.ucsc.dbtune.optimizer.PostgresIBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.PostgresWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.WhatIfOptimizerFactory;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Files;

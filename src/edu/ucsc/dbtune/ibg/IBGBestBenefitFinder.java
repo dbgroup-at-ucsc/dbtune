@@ -54,7 +54,7 @@ public class IBGBestBenefitFinder {
      * @param ibg
      *      the {@link IndexBenefitGraph}.
      * @param indexId
-     *      an {@link edu.ucsc.dbtune.core.Index}'s unique identifier.
+     *      an {@link edu.ucsc.dbtune.metadata.Index}'s unique identifier.
      * @param M
      *      an index configuration M.
      * @return

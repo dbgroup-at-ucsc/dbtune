@@ -16,30 +16,12 @@
  *  ****************************************************************************
  */
 /**
- * <i>DBTune</i>'s core package. It contains the necessary classes for creating a connection to a dbms.
- * Currently, we only support PostGresql and DB2.
- *
- * <p>The principal public APIs in this package are:
- *
- * <dl>
- * <dt>{@link edu.ucsc.dbtune.connectivity.ConnectionManager}
- * <dd>The interface that you will use in your implementation classes to tell DBTune
- *     to create connections to a specific dbms.
- *
- * <dt>{@link edu.ucsc.dbtune.core.DatabaseConnection}
- * <dd>The interface you will use in order to perform dbms-specific "operations" --
- *     Additionally, this is the interface that you will use to retrieve dbms-specific index
- *     extraction and what-if optimizer strategies.
- *
- * <dt>{@link edu.ucsc.dbtune.core.IndexExtractor}
- * <dd>The object that DBTune uses to perform operations dealing with index extraction.
- *
- * <dt>{@link edu.ucsc.dbtune.core.IBGWhatIfOptimizer}
- * <dd>The object that DBTune uses to perform operations dealing with what-if optimizations.
- *
- * </dl>
+ * <i>DBTune</i>'s root package. Currently, we only support PostgreSQL and DB2.
+ * <p>
+ * The principal public APIs in this package is {@link edu.ucsc.dbtune.DatabaseSystem}, the object that DBTune uses to 
+ * perform operations dealing with physical design tuning.
  */
 @Generated(value={})
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import javax.annotation.Generated;

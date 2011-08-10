@@ -17,12 +17,12 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.satuning.spi.Supplier;
@@ -186,8 +186,6 @@ public class ProfiledQuery {
 
     /**
      * A {@link ProfiledQuery}'s {@link Builder builder}.
-     * @param <I>
-     *      index type.
      */
     public static class Builder implements Supplier<ProfiledQuery> {
         private final String                sql;

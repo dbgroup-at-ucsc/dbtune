@@ -20,8 +20,8 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.DB2Index;
+import edu.ucsc.dbtune.metadata.DB2Index;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.DBIndexSet;
 import edu.ucsc.dbtune.util.Files;
@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 
 import static edu.ucsc.dbtune.connectivity.DB2Commands.clearAdviseIndex;
 import static edu.ucsc.dbtune.connectivity.DB2Commands.readAdviseOnOneIndex;
-import static edu.ucsc.dbtune.core.metadata.DB2Index.DB2IndexSet;
+import static edu.ucsc.dbtune.metadata.DB2Index.DB2IndexSet;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 

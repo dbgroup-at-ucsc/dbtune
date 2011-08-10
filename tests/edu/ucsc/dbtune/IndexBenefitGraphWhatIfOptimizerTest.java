@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and      *
  * limitations under the License.                                           *
  ****************************************************************************/
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import org.junit.Before;
 import org.junit.Test;

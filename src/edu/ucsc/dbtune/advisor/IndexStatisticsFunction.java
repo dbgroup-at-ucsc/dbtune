@@ -17,12 +17,12 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainInfo;
 
 import java.util.Arrays;
 import java.util.Map;

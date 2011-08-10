@@ -19,10 +19,10 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DefaultQueue;

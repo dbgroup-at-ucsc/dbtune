@@ -1,13 +1,14 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Index;
+
 import org.junit.Test;
 
 import java.util.Arrays;
 
-import static edu.ucsc.dbtune.core.DBTuneInstances.generateColumns;
-import static edu.ucsc.dbtune.core.DBTuneInstances.generateDescVals;
-import static edu.ucsc.dbtune.core.DBTuneInstances.newPGIndex;
+import static edu.ucsc.dbtune.DBTuneInstances.generateColumns;
+import static edu.ucsc.dbtune.DBTuneInstances.generateDescVals;
+import static edu.ucsc.dbtune.DBTuneInstances.newPGIndex;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

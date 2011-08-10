@@ -8,10 +8,10 @@ package metadata {
 }
 
 package object metadata {
-	type CoreSchema        = edu.ucsc.dbtune.core.metadata.Schema
-	type CoreTable         = edu.ucsc.dbtune.core.metadata.Table
-	type CoreColumn        = edu.ucsc.dbtune.core.metadata.Column
-	type CoreIndex         = edu.ucsc.dbtune.core.metadata.Index
-	type CoreConfiguration = edu.ucsc.dbtune.core.metadata.Configuration
+  type CoreSchema        = edu.ucsc.dbtune.metadata.Schema
+	type CoreTable         = edu.ucsc.dbtune.metadata.Table
+	type CoreColumn        = edu.ucsc.dbtune.metadata.Column
+	type CoreIndex         = edu.ucsc.dbtune.metadata.Index
+	type CoreConfiguration = edu.ucsc.dbtune.metadata.Configuration
 }
 

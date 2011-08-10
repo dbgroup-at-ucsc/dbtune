@@ -17,13 +17,13 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.metadata.SQLCategory;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
-import edu.ucsc.dbtune.core.optimizer.PGExplainInfo;
+import edu.ucsc.dbtune.DBTuneInstances;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.metadata.PGIndex;
+import edu.ucsc.dbtune.metadata.SQLCategory;
+import edu.ucsc.dbtune.optimizer.PGExplainInfo;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.After;

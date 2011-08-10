@@ -17,9 +17,9 @@
 package edu.ucsc.dbtune.cli.metadata
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection
-import edu.ucsc.dbtune.core.metadata.extraction.MetaDataExtractor
-import edu.ucsc.dbtune.core.metadata.extraction.GenericJDBCExtractor
-import edu.ucsc.dbtune.core.metadata.extraction.PGExtractor
+import edu.ucsc.dbtune.metadata.extraction.MetaDataExtractor
+import edu.ucsc.dbtune.metadata.extraction.GenericJDBCExtractor
+import edu.ucsc.dbtune.metadata.extraction.PGExtractor
 
 import edu.ucsc.dbtune.connectivity.JdbcConnectionManager._
 

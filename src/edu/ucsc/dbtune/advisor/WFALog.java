@@ -130,9 +130,8 @@ public class WFALog implements Serializable {
      *
      * @param qinfos
      *     the profile of each of the queries that are contained in a workload. Each of them have 
-     *     been filled with the data corresponding to the WFIT process and contain the historical 
-     *     information (in the corresponding {@link IBG} object) executed at each step of the 
-     *     algorithm.
+     *     been filled with the data corresponding to the WFIT process and contain the historical information (in the 
+     *     corresponding {@code IBG} object) executed at each step of the algorithm.
      * @param recs
      *     set of possible recommendations at each step; there should be a one to one correspondence 
      *     between an {@code IndexBitSet} and a profiled query.

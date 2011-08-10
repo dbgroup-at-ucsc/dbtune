@@ -1,13 +1,13 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.DBTuneInstances;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Console;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.core.DBTuneInstances.generateColumns;
-import static edu.ucsc.dbtune.core.DBTuneInstances.generateDescVals;
+import static edu.ucsc.dbtune.DBTuneInstances.generateColumns;
+import static edu.ucsc.dbtune.DBTuneInstances.generateDescVals;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 

@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.advisor.DynamicIndexSet;
 import edu.ucsc.dbtune.advisor.KarlsHotsetSelector;
@@ -26,9 +26,9 @@ import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.advisor.WorkloadProfiler;
 import edu.ucsc.dbtune.advisor.WorkloadProfilerImpl;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.DBUtilities;

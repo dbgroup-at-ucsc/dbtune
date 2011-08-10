@@ -13,17 +13,17 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core.optimizers;
+package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.core.metadata.Column;
-import edu.ucsc.dbtune.core.metadata.Configuration;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.Table;
-import edu.ucsc.dbtune.core.metadata.Schema;
-import edu.ucsc.dbtune.core.metadata.SQLTypes;
-import edu.ucsc.dbtune.core.optimizer.PGOptimizer;
-import edu.ucsc.dbtune.core.optimizer.plan.Operator;
-import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.SQLTypes;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.PGOptimizer;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
 

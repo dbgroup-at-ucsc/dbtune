@@ -17,7 +17,7 @@
  */
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.DBIndexSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -88,8 +88,6 @@ public class CandidatePool implements Serializable {
 
     /**
      * Returns an empty snapshot of the pool of candidates.
-     * @param <I>
-     *      the type of {@link Index}.
      * @return an empty snapshot.
      */
 	public static Snapshot emptySnapshot() {

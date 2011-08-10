@@ -1,21 +1,21 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractor;
-import edu.ucsc.dbtune.core.optimizer.IndexExtractorFactory;
-import edu.ucsc.dbtune.core.optimizer.Optimizer;
-import edu.ucsc.dbtune.core.optimizer.OptimizerFactory;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizer;
-import edu.ucsc.dbtune.core.optimizer.WhatIfOptimizerFactory;
+import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IndexExtractor;
+import edu.ucsc.dbtune.optimizer.IndexExtractorFactory;
+import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.OptimizerFactory;
+import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.WhatIfOptimizerFactory;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Strings;
 
 import java.util.NoSuchElementException;
 
-import static edu.ucsc.dbtune.core.Platform.findIndexExtractorFactory;
-import static edu.ucsc.dbtune.core.Platform.findWhatIfOptimizerFactory;
-import static edu.ucsc.dbtune.core.Platform.findOptimizerFactory;
+import static edu.ucsc.dbtune.Platform.findIndexExtractorFactory;
+import static edu.ucsc.dbtune.Platform.findWhatIfOptimizerFactory;
+import static edu.ucsc.dbtune.Platform.findOptimizerFactory;
 
 /**
  * Enumerates the supported DBMS systems.

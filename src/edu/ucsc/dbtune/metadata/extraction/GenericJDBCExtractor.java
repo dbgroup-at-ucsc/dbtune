@@ -16,15 +16,15 @@
  * ****************************************************************************
  */
 
-package edu.ucsc.dbtune.core.metadata.extraction;
+package edu.ucsc.dbtune.metadata.extraction;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Catalog;
-import edu.ucsc.dbtune.core.metadata.Schema;
-import edu.ucsc.dbtune.core.metadata.Table;
-import edu.ucsc.dbtune.core.metadata.Column;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +56,7 @@ public class GenericJDBCExtractor implements MetaDataExtractor
      * This method tries to extract, through the use of JDBC's {@link DatabaseMetaData}, the 
      * information corresponding to names, data types and indexes (primary and secondary). When some 
      * information is not available through it, the corresponding metadata class (from the
-     * {@link edu.ucsc.dbtune.core.metadata} package) is empty. In the worst case, the returned
+     * {@link edu.ucsc.dbtune.metadata} package) is empty. In the worst case, the returned
      * <code>Catalog</code> object is empty.
      * 
      * @param connection

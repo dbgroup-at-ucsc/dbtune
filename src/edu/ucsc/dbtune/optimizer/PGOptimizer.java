@@ -13,12 +13,12 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core.optimizer;
+package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.core.metadata.DatabaseObject;
-import edu.ucsc.dbtune.core.metadata.Schema;
-import edu.ucsc.dbtune.core.optimizer.plan.Operator;
-import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.metadata.DatabaseObject;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -147,7 +147,7 @@ public class PGOptimizer extends Optimizer
      * @return
      *     the object representing the plan for the statement contained in the reader's source.
      * @throws IOException
-     *     if an error occurs when reading from data from {@reader}
+     *     if an error occurs when reading from data from {@code reader}
      * @throws SQLException
      *     when an error occurs during the parsing, eg. a data type conversion error occurs.
      */

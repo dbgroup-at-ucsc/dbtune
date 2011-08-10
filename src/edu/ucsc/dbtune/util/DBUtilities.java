@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.util;
 
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Index;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

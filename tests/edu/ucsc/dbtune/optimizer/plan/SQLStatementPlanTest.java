@@ -13,12 +13,12 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.core.optimizers.plan;
+package edu.ucsc.dbtune.optimizer.plan;
 
 import org.junit.Test;
 
-import edu.ucsc.dbtune.core.optimizer.plan.Operator;
-import edu.ucsc.dbtune.core.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

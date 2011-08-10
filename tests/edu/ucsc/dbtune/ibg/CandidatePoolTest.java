@@ -17,9 +17,9 @@
  */
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.core.DBTuneInstances;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.DBTuneInstances;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.Test;
 

@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.connectivity;
 
 import java.sql.SQLException;
 
-import edu.ucsc.dbtune.core.DatabaseSystem;
+import edu.ucsc.dbtune.DatabaseSystem;
 
 /**
  * manages a set of {@link DatabaseConnection} instances.  A database connection is established by

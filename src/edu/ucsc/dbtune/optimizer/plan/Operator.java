@@ -13,9 +13,9 @@
  *   See the License for the specific language governing permissions and       *
  *   limitations under the License.                                            *
  * *************************************************************************** */
-package edu.ucsc.dbtune.core.optimizer.plan;
+package edu.ucsc.dbtune.optimizer.plan;
 
-import edu.ucsc.dbtune.core.metadata.DatabaseObject;
+import edu.ucsc.dbtune.metadata.DatabaseObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,7 @@ public class Operator implements Comparable<Operator>
     protected List<DatabaseObject> objects;
 
     /**
-     * creates an empty operator ({@code name="empty"). This can be used to represent empty plans.
+     * creates an empty operator ({@code name="empty"}. This can be used to represent empty plans.
      */
     public Operator() {
         this("empty", 0.0, 0);

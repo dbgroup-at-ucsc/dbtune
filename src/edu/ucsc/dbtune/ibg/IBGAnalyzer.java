@@ -131,7 +131,7 @@ public class IBGAnalyzer {
 	}
 
 
-	/**
+    /*
      * analysis a specific node in the {@link IndexBenefitGraph graph}.
 	 * @param node
      *      an {@link IBGNode node} in the graph.

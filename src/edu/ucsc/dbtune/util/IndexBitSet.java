@@ -21,9 +21,9 @@ package edu.ucsc.dbtune.util;
 import java.util.BitSet;
 
 /**
- * The structure used to represent an index configuration. Semantically, every {@code IndexBitSet} 
- * is tied to a {@link java.util.Collection<edu.ucsc.dbtune.core.DBIndex>}. Thus, the user of this 
- * class is responsible of maintaining this {@code List<DBIndex> <-> IndexBitSet} mapping.
+ * The structure used to represent an index configuration. Semantically, every {@code IndexBitSet} is tied to a {@link 
+ * java.util.Collection} (instantiated with {@link edu.ucsc.dbtune.metadata.Index}. Thus, the user of this class is 
+ * responsible of maintaining this {@code List<DBIndex> <-> IndexBitSet} mapping.
  * <p>
  * Example:
  * <code>

@@ -18,8 +18,8 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Objects;
@@ -202,8 +202,6 @@ public class IndexPartitions {
      *      an index configuration.
      * @param scratch
      *      a scratch bit set of indexes' internal ids.
-     * @param <J>
-     *      the {@link Index} type.
      * @return
      *      the <em>theoretical</em> plan cost
      */
