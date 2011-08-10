@@ -15,12 +15,13 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune;
 
-import edu.ucsc.dbtune.DatabaseConnection;
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.extraction.GenericJDBCExtractor;
 import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Strings;
@@ -28,7 +29,7 @@ import edu.ucsc.dbtune.util.Strings;
 import java.sql.Connection;
 import java.util.List;
 
-import static edu.ucsc.dbtune.JdbcConnectionManager.makeDatabaseConnectionManager;
+import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
 
 /**
  * This class provides a hub for most of the operations that a user can execute through the DBTune API.
