@@ -17,6 +17,7 @@
  */
 package edu.ucsc.dbtune;
 
+import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Column;
@@ -25,7 +26,6 @@ import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.optimizer.AbstractIBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
@@ -130,7 +130,7 @@ public class DatabasePackageTest {
     }
 
     private static void checkIndexExtractorViolation(DatabaseConnection connection) throws Exception {
-        final IndexExtractor ie = connection.getIndexExtractor();
+        final CandidateIndexExtractor ie = connection.getIndexExtractor();
         connection.close();
         ie.recommendIndexes("SELECT * FROM R;");
     }

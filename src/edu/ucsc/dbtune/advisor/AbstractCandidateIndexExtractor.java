@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.optimizer;
+package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -25,14 +25,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static edu.ucsc.dbtune.util.Instances.newTrueBoolean;
 
 /**
- * This class provides a skeletal implementation of the {@link IndexExtractor}
+ * This class provides a skeletal implementation of the {@link CandidateIndexExtractor}
  * interface to minimize the effort required to implement this interface.
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public abstract class AbstractIndexExtractor implements IndexExtractor {
+public abstract class AbstractCandidateIndexExtractor implements CandidateIndexExtractor {
     private final AtomicBoolean  enabled;
-    protected AbstractIndexExtractor(){
+    protected AbstractCandidateIndexExtractor(){
         enabled = newTrueBoolean();
     }
 
@@ -45,7 +45,7 @@ public abstract class AbstractIndexExtractor implements IndexExtractor {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<AbstractIndexExtractor>(this)
+        return new ToStringBuilder<AbstractCandidateIndexExtractor>(this)
                .add("enabled?", isEnabled())
                .toString();
     }

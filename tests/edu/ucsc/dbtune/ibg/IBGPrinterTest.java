@@ -1,12 +1,12 @@
 package edu.ucsc.dbtune.ibg;
 
+import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Node;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import org.junit.Test;
 
@@ -72,7 +72,7 @@ public class IBGPrinterTest {
 
 
         final Iterable<Index> recommendedIndexes = new ArrayList<Index>(Arrays.asList(soleIndex));
-        final IndexExtractor extractor = mock(IndexExtractor.class);
+        final CandidateIndexExtractor extractor = mock(CandidateIndexExtractor.class);
         when(extractor.recommendIndexes(basicQuery)).thenReturn(recommendedIndexes);
 
         final CandidatePool candidatePool = (CandidatePool) mock(CandidatePool.class);

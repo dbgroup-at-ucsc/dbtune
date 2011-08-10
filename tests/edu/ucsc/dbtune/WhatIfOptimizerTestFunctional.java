@@ -1,11 +1,11 @@
 package edu.ucsc.dbtune;
 
+import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Files;
@@ -67,7 +67,7 @@ public class WhatIfOptimizerTestFunctional {
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLWhatIfOptimization() throws Exception {
         final String            query      = "select a from tbl where a = 5;";
-        final IndexExtractor    extractor  = connection.getIndexExtractor();
+        final CandidateIndexExtractor    extractor  = connection.getIndexExtractor();
         final Iterable<Index> candidates = extractor.recommendIndexes(query);
         final WhatIfOptimizer   optimizer  = connection.getWhatIfOptimizer();
 
@@ -86,7 +86,7 @@ public class WhatIfOptimizerTestFunctional {
 
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testManyWorloadsWhatIfOptimization() throws Exception {
-        final IndexExtractor  extractor = connection.getIndexExtractor();
+        final CandidateIndexExtractor  extractor = connection.getIndexExtractor();
         final File            workload  = new File(environment.getScriptAtWorkloadsFolder("/one_table/workload.sql"));
         final WhatIfOptimizer optimizer = connection.getWhatIfOptimizer();
 
@@ -111,7 +111,7 @@ public class WhatIfOptimizerTestFunctional {
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLIBGWhatIfOptimization() throws Exception {
         final String             query       = "select count(*) from tbl where b > 3";
-        final IndexExtractor     extractor   = connection.getIndexExtractor();
+        final CandidateIndexExtractor     extractor   = connection.getIndexExtractor();
         final Iterable<Index>  candidates  = extractor.recommendIndexes(query);
         final IBGWhatIfOptimizer optimizer   = connection.getIBGWhatIfOptimizer();
 

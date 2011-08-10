@@ -1,8 +1,8 @@
 package edu.ucsc.dbtune;
 
+import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
@@ -55,14 +55,14 @@ public class IndexExtractorTestFunctional {
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testIndexExtractorNotNull() throws Exception {
-        final IndexExtractor extractor = connection.getIndexExtractor();
+        final CandidateIndexExtractor extractor = connection.getIndexExtractor();
         assertThat(extractor, CoreMatchers.notNullValue());
     }
 
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testRecommendIndexes() throws Exception {
-        final IndexExtractor    extractor   = connection.getIndexExtractor();
+        final CandidateIndexExtractor    extractor   = connection.getIndexExtractor();
         final File              workload    = new File( environment.getScriptAtWorkloadsFolder("/one_table/workload.sql") );
         final Iterable<Index> candidates  = extractor.recommendIndexes(workload);
 
@@ -73,7 +73,7 @@ public class IndexExtractorTestFunctional {
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLRecommendIndexes() throws Exception {
-        final IndexExtractor    extractor   = connection.getIndexExtractor();
+        final CandidateIndexExtractor    extractor   = connection.getIndexExtractor();
         final Iterable<Index> candidates  = extractor.recommendIndexes("select a from tbl where a = 5;");
 
         System.out.println("caca");

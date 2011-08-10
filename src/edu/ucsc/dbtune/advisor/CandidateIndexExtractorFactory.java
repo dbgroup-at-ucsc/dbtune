@@ -16,16 +16,17 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.optimizer;
+package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+import edu.ucsc.dbtune.optimizer.ResourceFactory;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface IndexExtractorFactory extends ResourceFactory {
+public interface CandidateIndexExtractorFactory extends ResourceFactory {
     /**
-     * makes a new {@link IndexExtractor} object.
+     * makes a new {@link CandidateIndexExtractor} object.
      *
      * @param advisorFolder
      *      a folder where the output of the advisor's execution will be placed.
@@ -34,5 +35,5 @@ public interface IndexExtractorFactory extends ResourceFactory {
      * @return
      *      a dbms-specific index extractor.
      */
-    IndexExtractor newIndexExtractor(String advisorFolder, DatabaseConnection connection);
+    CandidateIndexExtractor newIndexExtractor(String advisorFolder, DatabaseConnection connection);
 }

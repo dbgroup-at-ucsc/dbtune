@@ -18,19 +18,19 @@
 
 package edu.ucsc.dbtune;
 
+import edu.ucsc.dbtune.advisor.AbstractCandidateIndexExtractor;
 import edu.ucsc.dbtune.advisor.DB2AdvisorCaller;
+import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
+import edu.ucsc.dbtune.advisor.CandidateIndexExtractorFactory;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.JdbcConnection;
 import edu.ucsc.dbtune.connectivity.PGCommands;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
-import edu.ucsc.dbtune.optimizer.AbstractIndexExtractor;
 import edu.ucsc.dbtune.optimizer.DB2IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.DB2WhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.IndexExtractor;
-import edu.ucsc.dbtune.optimizer.IndexExtractorFactory;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.OptimizerFactory;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
@@ -66,12 +66,12 @@ import static edu.ucsc.dbtune.util.DBUtilities.trimSqlStatement;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class Platform {
-    private static final Map<String, IndexExtractorFactory>  AVAILABLE_EXTRACTORS;
+    private static final Map<String, CandidateIndexExtractorFactory>  AVAILABLE_EXTRACTORS;
     private static final Map<String, WhatIfOptimizerFactory> AVAILABLE_WHATIF_OPTIMIZERS;
     private static final Map<String, OptimizerFactory>       AVAILABLE_OPTIMIZERS;
     static {
-        Map<String, IndexExtractorFactory> driverToExtractor =
-                new HashMap<String, IndexExtractorFactory>(){
+        Map<String, CandidateIndexExtractorFactory> driverToExtractor =
+                new HashMap<String, CandidateIndexExtractorFactory>(){
                     {
                         put("com.ibm.db2.jcc.DB2Driver", new DB2IndexExtractorFactory());
                         put("org.postgresql.Driver", new PGIndexExtractorFactory());
@@ -104,18 +104,18 @@ public class Platform {
     private Platform(){}
 
     /**
-     * finds the appropriate {@link IndexExtractorFactory} strategy for a given driver. This method
+     * finds the appropriate {@link CandidateIndexExtractorFactory} strategy for a given driver. This method
      * will throw a {@link NullPointerException} if strategy is not found. We rather deal with problem
      * right away (i.e., throwing a NullPointerException) rather than waiting for some side affect along the execution line.
      *
      * @param driver
      *      dbms-driver's fully qualified name.
      * @return
-     *      a found {@link IndexExtractorFactory} pre-instantiated instance.
+     *      a found {@link CandidateIndexExtractorFactory} pre-instantiated instance.
      * @throws NullPointerException
      *      if strategy is not found.
      */
-    public static IndexExtractorFactory findIndexExtractorFactory(String driver){
+    public static CandidateIndexExtractorFactory findIndexExtractorFactory(String driver){
         return  Objects.as(Checks.checkNotNull(AVAILABLE_EXTRACTORS.get(driver)));
     }
 
@@ -151,16 +151,16 @@ public class Platform {
         return Objects.as(Checks.checkNotNull(AVAILABLE_OPTIMIZERS.get(driver)));
     }
 
-    private static class DB2IndexExtractorFactory implements IndexExtractorFactory {
+    private static class DB2IndexExtractorFactory implements CandidateIndexExtractorFactory {
         @Override
-        public IndexExtractor newIndexExtractor(String advisorFolder, DatabaseConnection connection) {
+        public CandidateIndexExtractor newIndexExtractor(String advisorFolder, DatabaseConnection connection) {
             return new DB2DatabaseIndexExtractor(advisorFolder, Checks.checkNotNull(connection));
         }
     }
 
-    private static class PGIndexExtractorFactory implements IndexExtractorFactory {
+    private static class PGIndexExtractorFactory implements CandidateIndexExtractorFactory {
         @Override
-        public IndexExtractor newIndexExtractor(String advisorFolder, DatabaseConnection connection) {
+        public CandidateIndexExtractor newIndexExtractor(String advisorFolder, DatabaseConnection connection) {
             return new PGDatabaseIndexExtractor(Checks.checkNotNull(connection));
         }
     }
@@ -214,7 +214,7 @@ public class Platform {
 	/**
      *  A DB2-specific Database Index Extractor.
      */
-    static class DB2DatabaseIndexExtractor extends AbstractIndexExtractor {
+    static class DB2DatabaseIndexExtractor extends AbstractCandidateIndexExtractor {
         private final String                        db2AdvisorPath;
         private final DatabaseConnection            connection;
 
@@ -286,7 +286,7 @@ public class Platform {
     /**
      *  A PG-specific Database Index Extractor.
      */
-    static class PGDatabaseIndexExtractor extends AbstractIndexExtractor {
+    static class PGDatabaseIndexExtractor extends AbstractCandidateIndexExtractor {
         private final DatabaseConnection connection;
 
 

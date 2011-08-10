@@ -16,10 +16,11 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.optimizer;
+package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +35,7 @@ import java.sql.SQLException;
  * @see edu.ucsc.dbtune.optimizer.ExplainInfo
  * @see edu.ucsc.dbtune.metadata.Index
  */
-public interface IndexExtractor {
+public interface CandidateIndexExtractor {
     /**
      * preps up the database before recommending indexes.
      * @param connection

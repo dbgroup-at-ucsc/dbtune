@@ -1,9 +1,9 @@
 package edu.ucsc.dbtune;
 
+import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
+import edu.ucsc.dbtune.advisor.CandidateIndexExtractorFactory;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.IndexExtractor;
-import edu.ucsc.dbtune.optimizer.IndexExtractorFactory;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.OptimizerFactory;
 import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
@@ -34,7 +34,7 @@ public enum DatabaseSystem {
 
     private final String                 driver;
     private final WhatIfOptimizerFactory wiof;
-    private final IndexExtractorFactory  ief;
+    private final CandidateIndexExtractorFactory  ief;
     private final OptimizerFactory       of;
 
     DatabaseSystem(String driver){
@@ -78,7 +78,7 @@ public enum DatabaseSystem {
      *      database connection
      * @return an instance of the index extractor.
      */
-    public IndexExtractor getIndexExtractor(DatabaseConnection connection){
+    public CandidateIndexExtractor getIndexExtractor(DatabaseConnection connection){
         return ief.newIndexExtractor("/home/karlsch/sqllib/bin/db2advis", Checks.checkNotNull(connection));
     }
 

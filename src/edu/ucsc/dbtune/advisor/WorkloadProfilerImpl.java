@@ -12,7 +12,6 @@ import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.IndexExtractor;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Threads;
 
@@ -101,7 +100,7 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 		// generate new index candidates
 		if (onlineCandidates) {
 			try {
-                final IndexExtractor    extractor           = connection.getIndexExtractor();
+                final CandidateIndexExtractor    extractor           = connection.getIndexExtractor();
                 final Iterable<Index> recommendedIndexes  = extractor.recommendIndexes(sql);
 
                 for(Index each : recommendedIndexes){
