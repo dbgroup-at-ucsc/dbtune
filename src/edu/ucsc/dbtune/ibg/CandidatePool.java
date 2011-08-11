@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.DBIndexSet;
+import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -99,10 +99,10 @@ public class CandidatePool implements Serializable {
 	}
 
     /**
-     * @return an updated {@link DBIndexSet} object.
+     * @return an updated {@link IndexSet} object.
      */
-	public DBIndexSet getDB2IndexSet() {
-		DBIndexSet retval = new DBIndexSet();
+	public IndexSet getDB2IndexSet() {
+		IndexSet retval = new IndexSet();
 		for (Index idx : indexSet){
             retval.add(idx);
         }

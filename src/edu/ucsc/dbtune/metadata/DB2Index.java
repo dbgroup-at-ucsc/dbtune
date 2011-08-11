@@ -23,10 +23,10 @@ import edu.ucsc.dbtune.metadata.DB2Index.DB2IndexMetadata;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.util.DBIndexSet;
-import edu.ucsc.dbtune.util.DBUtilities;
+import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.HashFunction;
 import edu.ucsc.dbtune.util.Instances;
+import edu.ucsc.dbtune.util.Strings;
 
 import java.io.Serializable;
 import java.sql.SQLException;
@@ -123,8 +123,8 @@ public class DB2Index extends Index {
         hashCodeCache     = getMeta().hashCode();
     }
 
-    public static class DB2IndexSet extends DBIndexSet {
-        private static final long serialVersionUID = DBIndexSet.serialVersionUID;
+    public static class DB2IndexSet extends IndexSet {
+        private static final long serialVersionUID = IndexSet.serialVersionUID;
     }
 
     /**
@@ -253,40 +253,40 @@ public class DB2Index extends Index {
                 
                 switch (col) {
                     case EXPLAIN_REQUESTER:
-                        DBUtilities.formatStringLiteral(indexOwner, sbuf);
+                        Strings.formatStringLiteral(indexOwner, sbuf);
                         break;
                     case TBCREATOR:
-                        DBUtilities.formatStringLiteral(schema.tableCreatorName, sbuf);
+                        Strings.formatStringLiteral(schema.tableCreatorName, sbuf);
                         break;
                     case TBNAME:
-                        DBUtilities.formatStringLiteral(schema.tableName, sbuf);
+                        Strings.formatStringLiteral(schema.tableName, sbuf);
                         break;
                     case COLNAMES:
-                        DBUtilities.formatStringLiteral(formatColNames(schema.getColumns(), schema.descending), sbuf);
+                        Strings.formatStringLiteral(formatColNames(schema.getColumns(), schema.descending), sbuf);
                         break;
                     case COLCOUNT:
                         sbuf.append(schema.getColumns().size());
                         break;
                     case UNIQUERULE:
-                        DBUtilities.formatStringLiteral(schema.uniqueRule.getCode(), sbuf);
+                        Strings.formatStringLiteral(schema.uniqueRule.getCode(), sbuf);
                         break;
                     case UNIQUE_COLCOUNT:
                         sbuf.append(isUnique() ? schema.getColumns().size() : -1);
                         break;
                     case REVERSE_SCANS:
-                        DBUtilities.formatStringLiteral(schema.reverseScan.code, sbuf);
+                        Strings.formatStringLiteral(schema.reverseScan.code, sbuf);
                         break;
                     case INDEXTYPE:
-                        DBUtilities.formatStringLiteral(schema.indexType.getCode(), sbuf);
+                        Strings.formatStringLiteral(schema.indexType.getCode(), sbuf);
                         break;
                     case NAME:
-                        DBUtilities.formatStringLiteral(indexName, sbuf);
+                        Strings.formatStringLiteral(indexName, sbuf);
                         break;
                     case CREATION_TEXT:
-                        DBUtilities.formatStringLiteral(creationText, sbuf);
+                        Strings.formatStringLiteral(creationText, sbuf);
                         break;
                     case EXISTS:
-                        DBUtilities.formatStringLiteral(indexExists, sbuf);
+                        Strings.formatStringLiteral(indexExists, sbuf);
                         break;
                     case SYSTEM_REQUIRED:
                         sbuf.append(systemRequired);
@@ -315,16 +315,16 @@ public class DB2Index extends Index {
                     sql.append(',');
                 }
 
-                DBUtilities.formatIdentifier(each.getName(), sql);
+                Strings.formatIdentifier(each.getName(), sql);
                 idx++;
             }
 
             sql.append(" FROM ");
-            DBUtilities.formatIdentifier(schema.dbName, sql);
+            Strings.formatIdentifier(schema.dbName, sql);
             sql.append('.');
-            DBUtilities.formatIdentifier(schema.tableCreatorName, sql);
+            Strings.formatIdentifier(schema.tableCreatorName, sql);
             sql.append('.');
-            DBUtilities.formatIdentifier(schema.tableName, sql);
+            Strings.formatIdentifier(schema.tableName, sql);
 
             sql.append(" ORDER BY ");
             idx = 0;
@@ -333,7 +333,7 @@ public class DB2Index extends Index {
                     sql.append(',');
                 }
 
-                DBUtilities.formatIdentifier(c.getName(), sql);
+                Strings.formatIdentifier(c.getName(), sql);
                 idx++;
             }
 
@@ -352,22 +352,22 @@ public class DB2Index extends Index {
             for (Column c : schema.getColumns()) {
                 if (i >= n) break;
                 if (i > 0) sqlbuf.append(',');
-                DBUtilities.formatIdentifier(c.getName(), sqlbuf);
+                Strings.formatIdentifier(c.getName(), sqlbuf);
                 i++;
             }
             
             sqlbuf.append(" FROM ");
-            DBUtilities.formatIdentifier(schema.dbName, sqlbuf);
+            Strings.formatIdentifier(schema.dbName, sqlbuf);
             sqlbuf.append('.');
-            DBUtilities.formatIdentifier(schema.tableCreatorName, sqlbuf);
+            Strings.formatIdentifier(schema.tableCreatorName, sqlbuf);
             sqlbuf.append('.');
-            DBUtilities.formatIdentifier(schema.tableName, sqlbuf);
+            Strings.formatIdentifier(schema.tableName, sqlbuf);
             
             sqlbuf.append(" ORDER BY ");
             i = 0;
             for (Column c : schema.getColumns()) {
                 if (i > 0) sqlbuf.append(',');
-                DBUtilities.formatIdentifier(c.getName(), sqlbuf);
+                Strings.formatIdentifier(c.getName(), sqlbuf);
                 i++;
             }
 
@@ -731,19 +731,19 @@ public class DB2Index extends Index {
                 }
 
                 sqlbuf.append("INDEX ");
-                DBUtilities.formatIdentifier(indexName, sqlbuf);
+                Strings.formatIdentifier(indexName, sqlbuf);
                 sqlbuf.append(" ON ");
-                DBUtilities.formatIdentifier(dbName, sqlbuf);
+                Strings.formatIdentifier(dbName, sqlbuf);
                 sqlbuf.append('.');
-                DBUtilities.formatIdentifier(tableCreatorName, sqlbuf);
+                Strings.formatIdentifier(tableCreatorName, sqlbuf);
                 sqlbuf.append('.');
-                DBUtilities.formatIdentifier(tableName, sqlbuf);
+                Strings.formatIdentifier(tableName, sqlbuf);
 
                 sqlbuf.append('(');
                 for (int i = 0; i < descending.size() && i < getColumns().size(); i++) {
                     if (i > 0)
                         sqlbuf.append(", ");
-                    DBUtilities.formatIdentifier(getColumns().get(i).getName(), sqlbuf);
+                    Strings.formatIdentifier(getColumns().get(i).getName(), sqlbuf);
                     sqlbuf.append(descending.get(i) ? " DESC" : " ASC");
                 }
                 sqlbuf.append(')');
@@ -755,7 +755,7 @@ public class DB2Index extends Index {
                     for (int i = descending.size(); i < getColumns().size(); i++) {
                         if (i > descending.size())
                             sqlbuf.append(", ");
-                        DBUtilities.formatIdentifier(getColumns().get(i).getName(), sqlbuf);
+                        Strings.formatIdentifier(getColumns().get(i).getName(), sqlbuf);
                     }
                     sqlbuf.append(')');
                 }
@@ -828,16 +828,16 @@ public class DB2Index extends Index {
                 if (m_signature == null) {
                     StringBuilder sbuf = new StringBuilder();
 
-                    DBUtilities.formatIdentifier(dbName, sbuf);
+                    Strings.formatIdentifier(dbName, sbuf);
                     sbuf.append('.');
-                    DBUtilities.formatIdentifier(tableCreatorName, sbuf);
+                    Strings.formatIdentifier(tableCreatorName, sbuf);
                     sbuf.append('.');
-                    DBUtilities.formatIdentifier(tableName, sbuf);
+                    Strings.formatIdentifier(tableName, sbuf);
                     sbuf.append('.');
                     sbuf.append(getColumns().size());
                     sbuf.append('.');
                     for (Column c : getColumns()) {
-                        DBUtilities.formatIdentifier(c.getName(), sbuf);
+                        Strings.formatIdentifier(c.getName(), sbuf);
                         sbuf.append('.');
                     }
                     sbuf.append(descending.size());

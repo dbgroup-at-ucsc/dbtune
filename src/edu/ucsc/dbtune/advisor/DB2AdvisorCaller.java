@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Console;
-import edu.ucsc.dbtune.util.DBIndexSet;
+import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Objects;
 
@@ -140,8 +140,8 @@ public class DB2AdvisorCaller {
 			output    = processFile(stream, indexList);
 		}
 		
-		public DBIndexSet getCandidates(DatabaseConnection conn) throws SQLException {
-			DBIndexSet candidateSet = new DB2IndexSet();
+		public IndexSet getCandidates(DatabaseConnection conn) throws SQLException {
+			IndexSet candidateSet = new DB2IndexSet();
 			int id = 1;
 			for (IndexInfo info : indexList) {
                 final DB2Index idx = supplyValue(

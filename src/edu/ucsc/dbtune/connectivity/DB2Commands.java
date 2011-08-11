@@ -22,8 +22,6 @@ import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.metadata.DB2Index.DB2IndexMetadata;
-import edu.ucsc.dbtune.metadata.DB2Index.DB2IndexMetadata.AdviseIndexColumn;
 import edu.ucsc.dbtune.optimizer.CostLevel;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
@@ -40,7 +38,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static edu.ucsc.dbtune.util.DBUtilities.implode;
 import static edu.ucsc.dbtune.util.Instances.newTreeSet;
 
 /**
@@ -553,7 +550,7 @@ public class DB2Commands {
             final StringBuilder cache           = new StringBuilder();
             if(cache.length() == 0){
                 masterquery.append("INSERT INTO advise_index(");
-                implode(masterquery, DB2Index.DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
+                Strings.implode(masterquery, DB2Index.DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
                 masterquery.append(") VALUES ");
                 cache.append(masterquery.toString());
             } else {
@@ -583,7 +580,7 @@ public class DB2Commands {
         private static final StringBuilder QUERY_ALL = new StringBuilder();
         static {
             QUERY_ALL.append("SELECT ");
-            DBUtilities.implode(QUERY_ALL, DB2Index.DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
+            Strings.implode(QUERY_ALL, DB2Index.DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
             QUERY_ALL.append(" FROM advise_index WHERE exists = 'N'");
         }
 
@@ -629,7 +626,7 @@ public class DB2Commands {
         private static final StringBuilder QUERY_ONE = new StringBuilder();
         static {
             QUERY_ONE.append("SELECT ");
-            DBUtilities.implode(QUERY_ONE, DB2Index.DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
+            Strings.implode(QUERY_ONE, DB2Index.DB2IndexMetadata.AdviseIndexColumn.values(), ", ");
             QUERY_ONE.append(" FROM advise_index WHERE exists = 'N'");
             QUERY_ONE.append(" AND name = ?");
         }

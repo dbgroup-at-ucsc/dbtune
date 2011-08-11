@@ -10,6 +10,8 @@ import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+import edu.ucsc.dbtune.util.Strings;
+
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -21,7 +23,6 @@ import java.io.File;
 import java.util.Properties;
 
 import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
-import static edu.ucsc.dbtune.util.DBUtilities.trimSqlStatement;
 import static edu.ucsc.dbtune.util.Instances.newBitSet;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -92,7 +93,7 @@ public class WhatIfOptimizerTestFunctional {
 
 
         for (String line : Files.getLines(workload)) {
-            final String            sql         = trimSqlStatement(line);
+            final String            sql         = Strings.trimSqlStatement(line);
             final Iterable<Index> candidates  = extractor.recommendIndexes(workload);
 
             assertThat(candidates, CoreMatchers.<Object>notNullValue());

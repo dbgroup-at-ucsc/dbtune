@@ -100,7 +100,6 @@ public class WfitTestFunctional
         whatIfCount   = 0;
         q             = 0;
 
-        // --------------
         wfit = new WFIT(connection, pool, maxNumStates, maxNumIndexes);
 
         for (SQLStatement sql : workload) {

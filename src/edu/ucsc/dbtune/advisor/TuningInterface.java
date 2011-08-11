@@ -3,8 +3,8 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.DBIndexSet;
-import edu.ucsc.dbtune.util.DBUtilities;
+import edu.ucsc.dbtune.util.IndexSet;
+import edu.ucsc.dbtune.util.Strings;
 
 import java.sql.SQLException;
 
@@ -78,7 +78,7 @@ public class TuningInterface  {
      *      unable to analyze sql due to the stated reasons.
      */
     public AnalyzedQuery analyzeSQL(String sql) throws SQLException {
-        sql = DBUtilities.trimSqlStatement(sql);
+        sql = Strings.trimSqlStatement(sql);
         return taskScheduler.analyzeQuery(sql);
     }
 
@@ -131,8 +131,8 @@ public class TuningInterface  {
      * @return
      *      a list of recommended index.
      */
-    public DBIndexSet getRecommendation() {
-        DBIndexSet indexSet = new DBIndexSet();
+    public IndexSet getRecommendation() {
+        IndexSet indexSet = new IndexSet();
         for (Index index : taskScheduler.getRecommendation()) {
             indexSet.add(index);
         }
@@ -158,7 +158,7 @@ public class TuningInterface  {
      *      unable to profile sql due to the stated reasons.
      */
     public ProfiledQuery profileSQL(String sql) throws SQLException {
-        sql = DBUtilities.trimSqlStatement(sql);
+        sql = Strings.trimSqlStatement(sql);
         return taskScheduler.profileQuery(sql);
     }
 

@@ -31,11 +31,12 @@ import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
-import edu.ucsc.dbtune.util.DBUtilities;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
 import edu.ucsc.dbtune.util.StopWatch;
+import edu.ucsc.dbtune.util.Strings;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -308,7 +309,7 @@ public class WFITTestFunctional
         qinfos = new ArrayList<ProfiledQuery>();
 
         for (String sql : lines) {
-            qinfos.add(profiler.processQuery(DBUtilities.trimSqlStatement(sql)));
+            qinfos.add(profiler.processQuery(Strings.trimSqlStatement(sql)));
         }
 
         return qinfos;

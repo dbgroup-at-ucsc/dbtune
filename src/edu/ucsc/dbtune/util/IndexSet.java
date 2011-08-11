@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.*;
 
-public class DBIndexSet implements Iterable<Index>, Serializable {
+public class IndexSet implements Iterable<Index>, Serializable {
 	
 	private IndexBitSet bs;
 	private Set<Index> set;
@@ -37,7 +37,7 @@ public class DBIndexSet implements Iterable<Index>, Serializable {
 	/* serialization support */
 	public static final long serialVersionUID = 1L;
 	
-	public DBIndexSet() {
+	public IndexSet() {
 		clear();
 	}
 
@@ -46,17 +46,7 @@ public class DBIndexSet implements Iterable<Index>, Serializable {
 		for (Index idx : list)
 			out.writeObject(idx);
 	}
-	
-	@SuppressWarnings({"RedundantTypeArguments"})
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    	clear();
-    	int n = in.readInt();
-    	for (int i = 0; i < n; i++) {
-    		Index readObject = DBUtilities.<Index>readObject(in);
-			add(readObject);
-    	}
-    }
-	
+		
 	public final void clear() {
 		set = new HashSet<Index>();
 		list = new ArrayList<Index>();

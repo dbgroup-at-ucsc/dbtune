@@ -4,18 +4,19 @@
 
 No need to roll our own. Also, we should define a policy of when and how to use logging to avoid polluting the code.
 
-## 43
+## 27
 
- *  create `connectivity` package
- *  move all Connection classes into it
- *  create `Commands` class/interface derive `PGCommands` and `DB2Commands` from it. (??? better to drop these and let others 
-    worry about SQL generation, like PGOptimizer, PGMetaDataExtractor, etc...)
+Only remaining class is AbstractDatabaseSession and DatabaseSession
 
-## 46
+## 52
 
- *  rename package `optimizers` to `optimizer`
- *  move WhatIf classes from core.\* into `optimizer`
- *  move ExplainInfo and implementations into `optimizer`
+Things that the current test doesn't check:
+
+* all columns (from `movies` database) on `testColumnOrdering()` method
+* foreign keys constraints
+* unique constraints
+* not null constraints
+* default constraints
 
 ## 53
 
@@ -62,17 +63,9 @@ No need to roll our own. Also, we should define a policy of when and how to use 
 
  *  rename `SQLStatementPlan` to just `Plan`.
 
-## 80
-
-d
-
-## 84:
-
-d
-
 ## 91:
 
- *  fix #44
+ *  fix #52
  *  connectivity:
      * add mysql driver
      * modify Platform.java to include MySQL

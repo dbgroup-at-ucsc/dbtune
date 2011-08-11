@@ -43,6 +43,7 @@ import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.util.Strings;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +61,6 @@ import static edu.ucsc.dbtune.connectivity.DB2Commands.readAdviseOnAllIndexes;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.submitAll;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
-import static edu.ucsc.dbtune.util.DBUtilities.trimSqlStatement;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -313,7 +313,7 @@ public class Platform {
             if(!isEnabled()) throw new SQLException("IndexExtractor is Disabled.");
             final List<Index> candidateSet = new ArrayList<Index>();
             for (String line : Files.getLines(workloadFile)) {
-                final String sql = trimSqlStatement(line);
+                final String sql = Strings.trimSqlStatement(line);
                 final Iterable<? extends Index> recommended = recommendIndexes(sql);
                 candidateSet.addAll(Iterables.asCollection(recommended));
             }
