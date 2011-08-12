@@ -67,7 +67,7 @@ public class WfitTestFunctional
         String ddlfilename = env.getScriptAtWorkloadsFolder("one_table/create.sql");
 
         outputdir.mkdirs();
-        SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
         connection.getJdbcConnection().setAutoCommit(false);
     }
 
@@ -88,19 +88,23 @@ public class WfitTestFunctional
         IndexBitSet configuration;
         int         maxNumIndexes;
         int         maxNumStates;
+        int         windowSize;
+        int         partIterations;
         int         whatIfCount;
         int         q;
 
-        workloadFile  = env.getScriptAtWorkloadsFolder("one_table/workload.sql");
-        maxNumIndexes = env.getMaxNumIndexes();
-        maxNumStates  = env.getMaxNumStates();
-        pool          = getCandidates(connection, workloadFile);
-        fileReader    = new FileReader(workloadFile);
-        workload      = new Workload(fileReader);
-        whatIfCount   = 0;
-        q             = 0;
+        workloadFile   = env.getScriptAtWorkloadsFolder("one_table/workload.sql");
+        maxNumIndexes  = env.getMaxNumIndexes();
+        maxNumStates   = env.getMaxNumStates();
+        windowSize     = env.getIndexStatisticsWindow();
+        partIterations = env.getNumPartitionIterations();
+        pool           = getCandidates(connection, workloadFile);
+        fileReader     = new FileReader(workloadFile);
+        workload       = new Workload(fileReader);
+        whatIfCount    = 0;
+        q              = 0;
 
-        wfit = new WFIT(connection, pool, maxNumStates, maxNumIndexes);
+        wfit = new WFIT(connection, pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
 
         for (SQLStatement sql : workload) {
             wfit.process(sql);
