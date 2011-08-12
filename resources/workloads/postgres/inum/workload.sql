@@ -1,1 +1,1 @@
-SELECT a FROM tbl WHERE a = 2;
+SELECT a, b FROM tbl WHERE a = 2;

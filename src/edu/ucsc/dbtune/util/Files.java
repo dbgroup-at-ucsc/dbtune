@@ -28,7 +28,8 @@ public abstract class Files {
         }   
         return sb.toString();
     }
-    
+
+  // todo(Huascar) replace this with Strings.wholeContentAsSingleLine(File)...
     public static List<String> getLines(File file) 
     throws IOException {
         InputStream stream = new FileInputStream(file);

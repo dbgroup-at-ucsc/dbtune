@@ -1,12 +1,18 @@
 package edu.ucsc.dbtune.core;
 
 import Zql.ParseException;
+import com.google.caliper.internal.guava.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import edu.ucsc.dbtune.core.metadata.PGColumn;
+import edu.ucsc.dbtune.core.metadata.PGIndex;
+import edu.ucsc.dbtune.core.metadata.PGIndexSchema;
+import edu.ucsc.dbtune.core.metadata.PGTable;
 import edu.ucsc.dbtune.inum.ConsoleLogger;
 import edu.ucsc.dbtune.inum.CostEstimator;
 import edu.ucsc.dbtune.inum.InumUtils;
 import edu.ucsc.dbtune.inum.autopilot.AutoPilotDelegate;
+import edu.ucsc.dbtune.inum.autopilot.PostgresGlobalInfo;
 import edu.ucsc.dbtune.inum.autopilot.autopilot;
 import edu.ucsc.dbtune.inum.greedy.GreedyResult;
 import edu.ucsc.dbtune.inum.linprog.CPlexBuffer;
@@ -32,11 +38,13 @@ import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.StopWatch;
 import edu.ucsc.dbtune.util.Strings;
 import ilog.concert.IloException;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,11 +59,12 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
+public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   private final Autopilot                           autopilot;
   private final AtomicReference<GreedyResult>       result;
   private final AtomicReference<WorkloadProcessor>  processor;
   private final AtomicReference<Double>             estimateCost;
+  private final DatabaseConnection                  connection;
 
   // todo remove oldImplementation once I finish my InumWhatIfOptimizerImpl implementation
   private final AtomicBoolean  oldImplementation = new AtomicBoolean(false);
@@ -69,8 +78,8 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   InumWhatIfOptimizerImpl(DatabaseConnection connection){
     this(new Autopilot(checkDatabaseConnection(connection)),
         Instances.<WorkloadProcessor>newAtomicReference(),
-        Instances.<GreedyResult>newAtomicReference()
-    );
+        Instances.<GreedyResult>newAtomicReference(),
+        connection);
   }
 
   /**
@@ -81,16 +90,19 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    *    physical configurations.
    * @param processor a modified version of inum's {@link WorkloadProcessor}.
    * @param result a result object containing the cost of query given a set of indexes.
+   * @param connection
+   *    live database connection provided by dbtune.
    */
   InumWhatIfOptimizerImpl(Autopilot autopilot, AtomicReference<WorkloadProcessor> processor,
-      AtomicReference<GreedyResult> result){
+      AtomicReference<GreedyResult> result, DatabaseConnection connection){
     this.autopilot    = autopilot;
     this.result       = result;
     this.processor    = processor;
     this.estimateCost = Instances.newAtomicReference(0.0);
+    this.connection   = checkDatabaseConnection(connection);
   }
 
-  private double calculateCost() {
+  private double estimateTotalCost() {
     if(!oldImplementation.get()){
       return estimateCost.get();
     }
@@ -115,7 +127,7 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
 
   @Override public double estimateCost(String workload, Iterable<DBIndex> hypotheticalIndexes) {
     preprocessIfNotSeenBefore(workload, hypotheticalIndexes);
-    return calculateCost();
+    return estimateTotalCost();
   }
 
   private static String formatCandidateSet(LinearModel linearModel,
@@ -145,37 +157,120 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   }
 
   private static WorkloadProcessor initializeWorkloadProcessor(String workloadFile,
-      Iterable<DBIndex> hypotheticalIndexes)
-      throws ParseException {
+      Iterable<Index> hypotheticalIndexes, DatabaseConnection connection)
+      throws ParseException, SQLException {
     // hypothetical indexes are converted into the INUM indexes and set in the
     // workload processor rather than autogenerating indexes.
     final WorkloadProcessorAdapter processor = new WorkloadProcessorAdapter(
         workloadFile,
         hypotheticalIndexes
     );
-    processor.useHypotheticalIndexes();
+//    final GlobalInfo globalInfo = new GlobalInfo(connection);
+//    processor.generateCandidateIndexesPerQuery(globalInfo);
+//    processor.generateUniverse(globalInfo);
+//    processor.getInterestingOrders(globalInfo);
+    processor.useHypotheticalIndexes(connection);
     return processor;
   }
 
-  private static List<Index> initInumCandidatePool(Iterable<DBIndex> hypotheticalIndexes) {
-    List<Index> candidatePool = new ArrayList<Index>();
-    for(DBIndex each : hypotheticalIndexes){
-      final IndexAdapter idx = new IndexAdapter(each);
-      candidatePool.add(idx);
+  private static List<Index> initInumCandidatePool(Iterable<DBIndex> hypotheticalIndexes,
+      Statement statement, DatabaseMetaData metadata) {
+        String cmmnd;
+					cmmnd =
+						" SELECT" +
+						"   t.relname as tname" +
+						" FROM" +
+						"    pg_class t" +
+						" WHERE" +
+						"      t.oid      = ";
+    try {
+      List<Index> candidatePool = new ArrayList<Index>();
+      int id = 0;
+      for(DBIndex each : hypotheticalIndexes){
+        final ResultSet result = statement.executeQuery(cmmnd + Objects.cast(each.baseTable(), PGTable.class).getOid());
+        if(result == null) return ImmutableList.of();
+        String tableName = null;
+        final String indexName = "sat_index_" + id;
+        final Set<String> cols = Sets.newHashSet();
+        while(result.next()){
+          tableName = result.getString("tname");
+
+          final ResultSet columnsInfo = metadata.getColumns( null, "public", tableName, "%" );
+          while (columnsInfo.next()){
+
+						String columnName = columnsInfo.getString("COLUMN_NAME");
+            int    attnum     = columnsInfo.getInt("ORDINAL_POSITION");
+						if(attrNumMatch(each.getColumns(),attnum)) cols.add(columnName.toUpperCase());
+					}
+        }
+
+        if(tableName != null && !cols.isEmpty()){
+          final IndexAdapter idx = new IndexAdapter(tableName, new LinkedHashSet<String>(cols),
+              each);
+          idx.setImplementedName(indexName);
+          candidatePool.add(idx);
+          id++;
+        }
+      }
+      return candidatePool;
+    } catch (Exception e){
+      return ImmutableList.of();
     }
-    return candidatePool;
+
+  }
+
+  /**
+   * another adapter...phew...
+   */
+  private static class GlobalInfo extends PostgresGlobalInfo {
+
+    private Connection connection;
+
+    GlobalInfo(DatabaseConnection connection) throws SQLException {
+      super();
+      this.connection = connection.getJdbcConnection();
+    }
+
+    @Override public void getConnection() {
+      // do nothing
+    }
+
+    @Override public Connection getConn() {
+      return connection;
+    }
+
+    @Override public void closeConnection() {
+      // do nothing
+    }
+  }
+
+  private static boolean attrNumMatch(List<DatabaseColumn> cols, int attrnum){
+    for(DatabaseColumn each : cols){
+      if(Objects.cast(each, PGColumn.class).getAttnum() == attrnum){
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private void initLinearModelThenLoadCandidates(String workload, Iterable<DBIndex> hypotheticalIndexes){
       try {
-        List<Index> candidatePool = initInumCandidatePool(hypotheticalIndexes);
+
+        final WorkloadProcessor current = processor.get();
+
+        final String workloadFilename = InumUtils.extractFilename(workload);
+        final Statement statement = connection.getJdbcConnection().createStatement();
+        List<Index> candidatePool = initInumCandidatePool(hypotheticalIndexes, statement, connection.getJdbcConnection().getMetaData());
+        processor.compareAndSet(current, initializeWorkloadProcessor(workloadFilename, candidatePool,
+            connection));
 
 
         // create a cost estimator for the Inum linear model.
         final CostEstimatorAdapter ce = new CostEstimatorAdapter(
             autopilot,
             processor.get(),
-            workload
+            workloadFilename
         );
 
         if(candidatePool.isEmpty()){
@@ -200,7 +295,7 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
         linearModel.addCandidates(Lists.newArrayList(candidatePool), sizes);
 
         final String      outputPrefix  = Environment.getInstance().getInumCacheDeploymentDir() + "/";
-        final CPlexBuffer cPlexBuffer   = new CPlexBuffer(outputPrefix + workload);
+        final CPlexBuffer cPlexBuffer   = new CPlexBuffer(outputPrefix + workloadFilename);
         final List[]      configCostArr = new List[processor.get().query_descriptors.size()];
 
         int     index     = 0;
@@ -260,6 +355,7 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
       // Inum is used here.
       initLinearModelThenLoadCandidates(workload, hypotheticalIndexes);
     } else {
+      // todo(Huascar) the rest of the code in this block will be removed....
       if(!seenBefore(workload)){
         // Cophy on top of Inum is used here.
         // to be removed if the above code seems to be right one....
@@ -291,7 +387,8 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
       Iterable<DBIndex> hypotheticalIndexes) throws
       ParseException, IOException, IloException, SQLException {
     final WorkloadProcessor current = processor.get();
-    processor.compareAndSet(current, initializeWorkloadProcessor(workloadName, hypotheticalIndexes));
+    // todo(Huascar) to be fixed....
+//    processor.compareAndSet(current, initializeWorkloadProcessor(workloadName, hypotheticalIndexes));
     return new CophyAdapter(
         autopilot,
         processor.get()
@@ -299,13 +396,7 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   }
 
   private static boolean seenBefore(String workload){
-    boolean result;
-    try {
-      result = new File(InumUtils.getIndexAccessCostFile(workload)).exists();
-    } catch (Throwable ignored){
-      result = false;
-    }
-    return result;
+    return InumUtils.isIndexAccessCostFileAvailable(workload);
   }
 
 
@@ -328,14 +419,41 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   /**
    * converts an INUM-Index to a dbtune DBIndex.
    */
-  private static class IndexAdapter extends Index {
-
+  public static class IndexAdapter extends Index {
+    private DBIndex delegate;
     IndexAdapter(DBIndex adaptee){
-      this(adaptee.toString(), makeColumns(adaptee.getColumns()));
+      // todo(Huascar) make it work directly here rather than on initInumCandidatePool method.
+      this(adaptee.baseTable().toString(), makeColumns(adaptee.getColumns()), adaptee);
+      this.delegate = adaptee;
     }
 
-    IndexAdapter(String tableName, Set<String> columns) {
+    IndexAdapter(String tableName, Set<String> columns, DBIndex delegate) {
       super(tableName, Objects.cast(columns, LinkedHashSet.class));
+      this.delegate = delegate;
+    }
+
+    public int internalId(){
+      return delegate.internalId();
+    }
+
+    public boolean isSynch(){
+      return ((PGIndex)delegate).getSchema().isSync();
+    }
+
+    public int getColumnCount(){
+      return delegate.getColumns().size();
+    }
+
+    public String getDirection(int idx){
+      return ((PGIndex)delegate).getSchema().getDescending().get(idx) ? " desc" : " asc";
+    }
+
+    public int getTableOid(){
+      return ((PGTable)((PGIndex)delegate).getSchema().getBaseTable()).getOid();
+    }
+
+    public int getAttrnum(int idx){
+      return ((PGColumn)delegate.getColumns().get(idx)).getAttnum();
     }
 
     private static Set<String> makeColumns(Iterable<DatabaseColumn> cols){
@@ -353,22 +471,28 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    * indexes and the converts them to inum;s indexes.
    */
   private static class WorkloadProcessorAdapter extends WorkloadProcessor {
-    private final Iterable<DBIndex> hypotheticalIndexes;
+    private final Iterable<Index> hypotheticalIndexes;
 
-    WorkloadProcessorAdapter(String fileName, Iterable<DBIndex> hypotheticalIndexes) throws ParseException {
+    WorkloadProcessorAdapter(String fileName, Iterable<Index> hypotheticalIndexes) throws ParseException {
       super(fileName);
       this.hypotheticalIndexes = hypotheticalIndexes;
     }
 
-    void useHypotheticalIndexes(){
+    void useHypotheticalIndexes(DatabaseConnection connection) throws SQLException {
       if(Iterables.count(hypotheticalIndexes) == 0) return;
+
+      // interesting orders
+      getInterestingOrders(new GlobalInfo(connection));
+
+      // generate universe
       final PhysicalConfiguration configuration = new PhysicalConfiguration();
-      for(DBIndex each : hypotheticalIndexes){
-        configuration.addIndex(new IndexAdapter(each));
+      for(Index each : hypotheticalIndexes){
+        configuration.addIndex(each);
+        candidates.add(each);
       }
 
       this.universe = configuration;
-      generateCandidatesFromConfig(configuration);
+
 
       final Set<String>       candidateSet = new HashSet<String>();
       final ArrayList<Index>  uniqList     = new ArrayList<Index>();
@@ -453,6 +577,10 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
       // do nothing since the autopilot does not need to terminate a db connection.
     }
 
+    @Override public void closeCurrentConnection() {
+      // do nothing since the it is dbtune the one that could close a connection.
+    }
+
     @Override public void implement_configuration(PhysicalConfiguration configuration) {
       if(configuration == null)                    { return; }
       final Connection conn = getConnection();
@@ -474,7 +602,7 @@ class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
 
     private static Object getFieldValue(Object source, String name){
       try {
-        Class<?> clazz = source.getClass();
+        Class<?> clazz = source.getClass().getSuperclass();
         Field    field = clazz.getDeclaredField(name);
         while(field == null){
            try {

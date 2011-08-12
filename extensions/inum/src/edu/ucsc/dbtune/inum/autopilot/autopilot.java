@@ -99,6 +99,10 @@ public class autopilot {
         }
     }
 
+    public synchronized void closeCurrentConnection(){
+      freeConnection(getConnection());
+    }
+
     public synchronized void freeConnection(Connection conn) {
         try {
             conn.close();

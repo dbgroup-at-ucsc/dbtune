@@ -13,6 +13,7 @@ import Zql.ZqlParser;
 import com.google.common.collect.Multimap;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.inum.Config;
+import edu.ucsc.dbtune.inum.autopilot.PostgresGlobalInfo;
 import edu.ucsc.dbtune.inum.commons.Cloner;
 import edu.ucsc.dbtune.inum.commons.ZqlUtils;
 import java.io.File;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,6 +55,8 @@ public class WorkloadProcessor implements Serializable {
     public static final Pattern DATE_PATTERN = Pattern.compile("\\d\\d\\d\\d-\\d{1,2}-\\d{1,2}");
     public ArrayList materializedViews;
     public HashMap mava_costs;
+
+  private static final AtomicReference<PostgresGlobalInfo> GLOBAL_INFO = new AtomicReference<PostgresGlobalInfo>();
 
     static {
         ZqlUtils.prepareZqlParser();
@@ -161,6 +165,67 @@ public class WorkloadProcessor implements Serializable {
         }
     }
 
+    public void getInterestingOrders(PostgresGlobalInfo globalInfo){
+        if (!query_descriptors.isEmpty()) return;
+
+        for (int i = 0; i < sqlStatements.size(); i++) {
+            ZQuery query = (ZQuery) sqlStatements.elementAt(i);
+            QueryDesc QD = new QueryDesc();
+            QD.queryString = query.toString();
+            QD.parsed_query = query;
+            //save the query info ...
+            query_descriptors.add(QD);
+            // System.out.println("query.toString() = " + query.toString());
+            //C: this will hold the columns names from the query: from select, where clause,joins,  groupby, orderby
+            ColumnsGatherer gen = new ColumnsGatherer(query, globalInfo); //
+
+            //process interesting orders from the parsed representation
+            //Set interesting_columns = gen.getInterestingOrders();
+            //Set used_columns = gen.getUsedColumns();
+
+            //C: will contain the tables used by the query
+            QD.used = new PhysicalConfiguration(gen.associateColumnsWithTables(gen.getUsedColumns()));
+
+            //C: the tables which columns are in the group by
+            if (gen.getGroupByOrders() != null)
+                QD.group_by = new PhysicalConfiguration(gen.getGroupByOrders());
+
+           //C: if group by is null, then get the tables which have columns in order by clause
+            if (QD.group_by == null)
+                QD.group_by = new PhysicalConfiguration(gen.getOrderByOrders());
+
+            //C: tables with have columns in join
+            QD.interesting_orders = new PhysicalConfiguration(gen.associateColumnsWithTables(gen.getInterestingOrders()));
+
+            //printout results for inspection
+            if (QD.group_by != null) {
+                // System.out.println("getInterestingOrders: groupby: " + QD.group_by.toString());
+                for (Iterator iterator = QD.group_by.indexes(); iterator.hasNext();) {
+                    Index index = (Index) iterator.next();
+                    // QD.interesting_orders.addIndex(index);
+                    if(QD.interesting_orders.getIndexedTableNames().contains(index.getTableName())) {
+                        Index idx = QD.interesting_orders.getFirstIndexForTable(index.getTableName());
+                        idx.getColumns().addAll(index.getColumns());
+                    } else {
+                        QD.interesting_orders.addIndex(index);
+                    }
+                }
+            }
+
+            Set tables = gen.getQueryTables();
+            for (Iterator iterator = tables.iterator(); iterator.hasNext();) {
+                String tableName = (String) iterator.next();
+                if (QD.interesting_orders.getIndexesForTable(tableName) == null) {
+                    QD.interesting_orders.addIndex(new Index(tableName, new LinkedHashSet()));
+                }
+            }
+            // get the list of tables and if there is no interesting order column on the table.
+
+            // System.out.println("getInterestingOrders: used: " + QD.used.toString());
+            // System.out.println("getInterestingOrders: interesting: " + QD.interesting_orders.toString());
+        }
+    }
+
     public void generateCandidateIndexesPerQuery() {
         PhysicalConfiguration phconfig = new PhysicalConfiguration();
 
@@ -170,6 +235,20 @@ public class WorkloadProcessor implements Serializable {
             ZQuery query = (ZQuery) sqlStatements.elementAt(i);
             System.out.println("" + (i + 1) + " -- query.toString() = " + query.toString());
             ColumnsGatherer gen = new ColumnsGatherer(query);
+            generateCandidatesFromCG(gen);
+            candidates.addAll(coveringIndexes(gen.getUsedColumns()));
+        }
+    }
+
+    public void generateCandidateIndexesPerQuery(PostgresGlobalInfo globalInfo) {
+        PhysicalConfiguration phconfig = new PhysicalConfiguration();
+
+
+        for (int i = 0; i < sqlStatements.size(); i++) {
+            PhysicalConfiguration config = new PhysicalConfiguration();
+            ZQuery query = (ZQuery) sqlStatements.elementAt(i);
+            System.out.println("" + (i + 1) + " -- query.toString() = " + query.toString());
+            ColumnsGatherer gen = new ColumnsGatherer(query, globalInfo);
             generateCandidatesFromCG(gen);
             candidates.addAll(coveringIndexes(gen.getUsedColumns()));
         }
@@ -205,11 +284,6 @@ public class WorkloadProcessor implements Serializable {
         return covering;
     }
 
-    public void setHypotheticalIndexes(Iterable<DBIndex> hypotheticalIndexes){
-
-      final Set<Index> candidateSet = new HashSet<Index>();
-      final List<Index> uniqList = new ArrayList<Index>();
-    }
 
     public void generateCandidateIndexes() {
         if(Config.generateAllCandidates()) {
@@ -256,6 +330,22 @@ public class WorkloadProcessor implements Serializable {
         for (int i = 0; i < sqlStatements.size(); i++) {
             ZQuery query = (ZQuery) sqlStatements.elementAt(i);
             ColumnsGatherer gen = new ColumnsGatherer(query);
+            Set columns = gen.getUsedColumns(); //the columns used in the query, in select where.. they are stored in eqColumns
+            Multimap<String, String> splitColumns = gen.associateColumnsWithTables(columns); //hashmap for table, columns
+
+            for (final String tableName : splitColumns.keySet()) {
+                LinkedHashSet set = new LinkedHashSet(splitColumns.get(tableName));
+                config.addIndex(new Index(tableName, set)); //add them in config
+            }
+        }
+        this.universe = config;
+    }
+
+    public void generateUniverse(PostgresGlobalInfo globalInfo) {
+        PhysicalConfiguration config = new PhysicalConfiguration();
+        for (int i = 0; i < sqlStatements.size(); i++) {
+            ZQuery query = (ZQuery) sqlStatements.elementAt(i);
+            ColumnsGatherer gen = new ColumnsGatherer(query, globalInfo);
             Set columns = gen.getUsedColumns(); //the columns used in the query, in select where.. they are stored in eqColumns
             Multimap<String, String> splitColumns = gen.associateColumnsWithTables(columns); //hashmap for table, columns
 

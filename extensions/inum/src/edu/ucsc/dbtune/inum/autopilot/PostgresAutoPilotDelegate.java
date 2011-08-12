@@ -4,20 +4,26 @@
  */
 package edu.ucsc.dbtune.inum.autopilot;
 
+import edu.ucsc.dbtune.inum.commons.Pair;
 import edu.ucsc.dbtune.inum.model.Configuration;
 import edu.ucsc.dbtune.inum.model.Index;
 import edu.ucsc.dbtune.inum.model.PhysicalConfiguration;
 import edu.ucsc.dbtune.inum.model.Plan;
 import edu.ucsc.dbtune.inum.model.QueryDesc;
+import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.Strings;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -222,7 +228,9 @@ public class PostgresAutoPilotDelegate extends AutoPilotDelegate {
     		{
     			str = current.substring(end+2);
     		}
-    		lines.add(str);
+        if(!Strings.isEmpty(str)){
+          lines.add(str);
+        }
     	}
 		parentList.add(0, -1);
 
@@ -354,12 +362,32 @@ public class PostgresAutoPilotDelegate extends AutoPilotDelegate {
                 s2 = res.getString(1);
             }
             result = s2;
+          Console.streaming().info(toStringResultSet(res));
         } catch (SQLException ex) {
-            //Logger.getLogger(TableDialog.class.getName()).log(Level.SEVERE, null, ex);
+          Console.streaming().error("Error while trying to get a query execution plan", ex);
         }
-
-
         return result;
+    }
+
+    private static String toStringResultSet(ResultSet resultSet) throws SQLException {
+      if(resultSet == null) return "ResultSet is Null.";
+      final ResultSetMetaData metaData    = resultSet.getMetaData();
+      final int               columnCount = metaData.getColumnCount();
+
+      final StringBuilder     content     = new StringBuilder();
+      final String            recordTag   = "Record#";
+      final StringBuilder     record      = new StringBuilder(recordTag);
+      while(resultSet.next()){
+        for (int i = 1; i <= columnCount; i++) {
+          record.append(i).append("=").append(resultSet.getString(i));
+          if(i < columnCount) {
+            record.append(", ").append(recordTag);
+          }
+        }
+        content.append(record);
+      }
+
+      return content.toString();
     }
 
     //return the col OID for a given tableOID tbOID and a give column name, aux
@@ -468,8 +496,14 @@ public class PostgresAutoPilotDelegate extends AutoPilotDelegate {
         return res2;
     }
 
+    private final Set<Index> preparedIndexes = new HashSet<Index>();
+    public Set<Index> getPreparedIndexes(){
+      return preparedIndexes;
+    }
+
     //get info from the cache index and put it into the cache prepared for query execution plan
     public void prepareInCacheIndex(Index idx) {
+        preparedIndexes.add(idx);
         String idxName = idx.getImplementedName();
         if (indexNameIndNr.containsKey(idxName)) {
             int idxNr = (Integer) indexNameIndNr.get(idxName);//get the indexNr for that indexName
@@ -501,7 +535,7 @@ public class PostgresAutoPilotDelegate extends AutoPilotDelegate {
                 cols = cols.toLowerCase();
             }
             // put info in cache
-            String indN = "idx_" + tbName + "_" + noIndexes;
+            String indN = Strings.isEmpty(idx.getImplementedName()) ? "idx_" + tbName + "_" + noIndexes : idx.getImplementedName();
             indexNames.put(noIndexes, indN);
             indTbNames.put(noIndexes, tbName);
             indColumnNames.put(noIndexes, cols);
@@ -511,7 +545,7 @@ public class PostgresAutoPilotDelegate extends AutoPilotDelegate {
             //set the index name
             idx.setImplementedName(indN);
             noIndexes++;
-        }//end if    
+        }//end if
     }
 
     //here i will only implement the structures i need
@@ -558,6 +592,7 @@ public class PostgresAutoPilotDelegate extends AutoPilotDelegate {
         //now call the function which returns the size
         try {
             Statement st1 = conn.createStatement();
+            // todo(Huascar) turn this sqlQuery into RecommendIndexes function
             String sqlquery = "select indxsize(" + table + ",'{" + cols + "}')";
             ResultSet res = st1.executeQuery(sqlquery);
             String s = "";

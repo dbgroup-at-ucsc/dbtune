@@ -24,19 +24,20 @@ public class Config {
     public static String NewLine            = System.getProperty("line.separator");
 
     public static Properties getDatabaseProperties() {
-        if (props == null) {
-            props = new Properties();
-            String fileName = Joiner.on(File.separator).join(File.separator, CONFIG_DIR ,"db.properties");
-            try {
-                props.load(new FileInputStream(fileName));
-                return props;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return props;
-        }
-
-        return props;
+      return Environment.getInstance().getAll();
+//        if (props == null) {
+//            props = new Properties();
+//            String fileName = Joiner.on(File.separator).join(File.separator, CONFIG_DIR ,"db.properties");
+//            try {
+//                props.load(new FileInputStream(fileName));
+//                return props;
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            return props;
+//        }
+//
+//        return props;
     }
 
     public static String getDatabaseName() {

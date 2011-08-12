@@ -104,7 +104,7 @@ public class PGIndexSchema implements DatabaseIndexSchema, Serializable {
    * @return a list of {@link Boolean} that indicate whether a {@link edu.ucsc.satuning.db.DBIndex}
    *         is listed in descending or ascending order.
    */
-  List<Boolean> getDescending() {
+  public List<Boolean> getDescending() {
     return isDescending;
   }
 
@@ -123,7 +123,7 @@ public class PGIndexSchema implements DatabaseIndexSchema, Serializable {
   /**
    * @return {@code true} if the index is sync; {@code false} otherwise.
    */
-  boolean isSync() {
+  public boolean isSync() {
     return isSync;
   }
 

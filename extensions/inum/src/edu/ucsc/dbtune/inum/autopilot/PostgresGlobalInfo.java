@@ -76,9 +76,9 @@ public class PostgresGlobalInfo {
         if (!global_table_info.isEmpty()) return;
 
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String sqlquery = "select relname,relpages, reltuples, relfilenode from pg_class where relnamespace = 2200 and relam =0";
-            PreparedStatement pst = conn.prepareStatement(sqlquery);
+            PreparedStatement pst = getConn().prepareStatement(sqlquery);
             ResultSet res = st1.executeQuery(sqlquery);
             String tbName = "";
             int relpages = 0;
@@ -151,10 +151,10 @@ public class PostgresGlobalInfo {
         Vector<ColumnInfo> columns = new Vector<ColumnInfo>();
 
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             //			String sqlquery = "select attname, attnum, atttypid from pg_attribute where attnum > 0 and attrelid = " +reloid;
             String sqlquery = "select attname, attnum, atttypid, attnotnull from pg_attribute where attnum > 0 and attrelid = " + reloid;
-            PreparedStatement pst = conn.prepareStatement(sqlquery);
+            PreparedStatement pst = getConn().prepareStatement(sqlquery);
             ResultSet res = st1.executeQuery(sqlquery);
 
             int x = 0;
@@ -234,7 +234,7 @@ public class PostgresGlobalInfo {
         }
         Hashtable<String, String> primaryKeys = new Hashtable<String, String>();
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String sqlquery = "select table_name, column_name  from information_schema.constraint_column_usage " +
                     "where constraint_name LIKE '%_pkey'";
             ResultSet res = st1.executeQuery(sqlquery);
@@ -280,10 +280,10 @@ public class PostgresGlobalInfo {
             open = false;
         }
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String sqlquery = "select max(" + attribute + "), min(" + attribute + "), count(*) from " + tableName;
             System.out.println("Query:" + sqlquery);
-            PreparedStatement pst = conn.prepareStatement(sqlquery);
+            PreparedStatement pst = getConn().prepareStatement(sqlquery);
             res = st1.executeQuery(sqlquery);
         } catch (SQLException ex) {
             Logger.getLogger(PostgresGlobalInfo.class.getName()).log(Level.ERROR, null, ex);
@@ -304,10 +304,10 @@ public class PostgresGlobalInfo {
             open = false;
         }
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String sqlquery = "select reltuples from pg_class where relname = '" + tableName + "'";
             //System.out.println("Query:" +sqlquery);
-            PreparedStatement pst = conn.prepareStatement(sqlquery);
+            PreparedStatement pst = getConn().prepareStatement(sqlquery);
             res = st1.executeQuery(sqlquery);
             if (res != null) {
                 while (res.next())
@@ -337,10 +337,10 @@ public class PostgresGlobalInfo {
             open = false;
         }
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String sqlquery = "select null_frac, avg_width, n_distinct, most_common_vals, most_common_freqs, histogram_bounds from pg_stats where tablename = '" + tableName + "' and attname = '" + attribute + "'";
             System.out.println("Query:" + sqlquery);
-            PreparedStatement pst = conn.prepareStatement(sqlquery);
+            PreparedStatement pst = getConn().prepareStatement(sqlquery);
             res = st1.executeQuery(sqlquery);
         } catch (SQLException ex) {
             Logger.getLogger(PostgresGlobalInfo.class.getName()).log(Level.ERROR, null, ex);
@@ -364,10 +364,10 @@ public class PostgresGlobalInfo {
             open = false;
         }
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String sqlquery = "select relfilenode, reltuples, relpages from pg_class where relname = '" + tableName + "'";
             System.out.println("sqlquery:"+sqlquery);
-            PreparedStatement pst = conn.prepareStatement(sqlquery);
+            PreparedStatement pst = getConn().prepareStatement(sqlquery);
             ResultSet res = st1.executeQuery(sqlquery);
 
             if (res != null) {
@@ -410,9 +410,9 @@ public class PostgresGlobalInfo {
             " from pg_statistic where starelid = "+oldTableOID +" and staattnum = ";
             counter++;
             try {
-                Statement st1 = conn.createStatement();
+                Statement st1 = getConn().createStatement();
                 String sqlquery = command + list.get(i).getAttnum() + ")";
-                PreparedStatement pst = conn.prepareStatement(sqlquery);
+                PreparedStatement pst = getConn().prepareStatement(sqlquery);
                 pst.executeUpdate();
                 pst.close();
             } catch (SQLException ex) {
@@ -443,7 +443,7 @@ public class PostgresGlobalInfo {
                 " from pg_statistic where starelid = " + oldTableOID + " and staattnum in (" + Utils
             .join(attnums, ",") + "))";
         try {
-            PreparedStatement pst = conn.prepareStatement(command);
+            PreparedStatement pst = getConn().prepareStatement(command);
             pst.executeUpdate();
             pst.close();
         } catch (SQLException ex) {
@@ -464,9 +464,9 @@ public class PostgresGlobalInfo {
             open = false;
         }
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String sqlquery = "update pg_class set reltuples = " + reltuples + ", relpages = " + relpages + " where relname = '" + newTableName + "'";
-            PreparedStatement pst = conn.prepareStatement(sqlquery);
+            PreparedStatement pst = getConn().prepareStatement(sqlquery);
             pst.executeUpdate();
             pst.close();
         } catch (SQLException ex) {
@@ -484,7 +484,7 @@ public class PostgresGlobalInfo {
             open = false;
         }
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String explainQuery = "explain select * from " + tableName + " where " + wherePart;
 
             /*
@@ -529,9 +529,9 @@ public class PostgresGlobalInfo {
             open = false;
         }
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String sqlquery = "select pg_size_pretty(pg_relation_size('" + tableName + "'))";
-            PreparedStatement pst = conn.prepareStatement(sqlquery);
+            PreparedStatement pst = getConn().prepareStatement(sqlquery);
             res = st1.executeQuery(sqlquery);
             if (res != null) {
                 while (res.next()) {
@@ -555,9 +555,9 @@ public class PostgresGlobalInfo {
             open = false;
         }
         try {
-            Statement st1 = conn.createStatement();
+            Statement st1 = getConn().createStatement();
             String sqlquery = "select relpages from pg_class where relname = '" + virtualTableName + "'";
-            PreparedStatement pst = conn.prepareStatement(sqlquery);
+            PreparedStatement pst = getConn().prepareStatement(sqlquery);
             res = st1.executeQuery(sqlquery);
             if (res != null) {
                 while (res.next()) {
@@ -574,8 +574,8 @@ public class PostgresGlobalInfo {
 
     public void executeQuery(String query) {
         try {
-            Statement st1 = conn.createStatement();
-            PreparedStatement pst = conn.prepareStatement(query);
+            Statement st1 = getConn().createStatement();
+            PreparedStatement pst = getConn().prepareStatement(query);
             pst.executeQuery();
             pst.close();
         } catch (SQLException ex) {

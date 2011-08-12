@@ -121,8 +121,13 @@ public class PostgresIndexAccessGenerator {
         		Index indBug =  phBug2.getFirstIndexForTable(testBug);
         		LinkedHashSet hsBug = indBug.getColumns(); */
 
-            if (!desc.used.getIndexedTableNames().contains(index.getTableName()) ||
-                    !CollectionUtils.containsAny(desc.used.getFirstIndexForTable(index.getTableName()).getColumns(), index.getColumns())) {
+          final boolean seenAlreadyTableName = !desc.used.getIndexedTableNames().contains(index.getTableName());
+          final boolean seenAlreadyColumns   = !CollectionUtils.containsAny(
+              desc.used.getFirstIndexForTable(index.getTableName()).getColumns(),
+              index.getColumns()
+          );
+            if (seenAlreadyTableName ||
+                    seenAlreadyColumns) {
                 desc.access_costs.put(index.getKey(), 0.0f);
                 sizeMap.put(index.getKey(), ap.getIndexSize(index));
                 continue;
@@ -159,12 +164,7 @@ public class PostgresIndexAccessGenerator {
         }//end for each query
 
         ap.drop_configuration(config);
-        Connection conn = ap.getConnection();
-        try {
-            conn.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        ap.closeCurrentConnection();
     }//end f indexAccessGenerator()
 
     private void printImplementedIndexes() {
@@ -288,9 +288,12 @@ public class PostgresIndexAccessGenerator {
       final WorkloadProcessor proc = Checks.checkNotNull(processor);
       final autopilot         ap   = Checks.checkNotNull(autopilot);
 
-      final String            filename = Checks.checkArgument(workloadFilename,
-          !Strings.isEmpty(workloadFilename),
-          "illegal workload filename."
+      final String            filename = InumUtils.extractFilename(
+          Checks.checkArgument(
+              workloadFilename,
+              !Strings.isEmpty(workloadFilename),
+              "illegal workload filename."
+          )
       );
 
       for(Index each : proc.candidates){

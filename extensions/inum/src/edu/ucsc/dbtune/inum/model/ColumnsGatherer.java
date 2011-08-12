@@ -14,8 +14,10 @@ import com.google.common.collect.Multimap;
 import edu.ucsc.dbtune.inum.Config;
 import edu.ucsc.dbtune.inum.autopilot.PostgresGlobalInfo;
 import edu.ucsc.dbtune.inum.commons.ZqlUtils;
+import edu.ucsc.dbtune.util.Checks;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +27,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.log4j.Logger;
 
 /**
@@ -44,17 +47,23 @@ public class ColumnsGatherer {
     private HashSet whereColumns;
 
     private static Properties columnProperties;
-    public static final String COLUMN_PROPERTIES = Joiner.on(File.separator).join(
-        Config.HOME, "config", "column.properties." + Config.getDatabaseName());
+//    public static final String COLUMN_PROPERTIES = Joiner.on(File.separator).join(
+//        Config.HOME, "config", "column.properties." + Config.getDatabaseName());
     //public static final String COLUMN_PROPERTIES = "column.properties";
     private static Logger log = Logger.getLogger(ColumnsGatherer.class);
 
-    public ColumnsGatherer(ZQuery query) {
-        this.query = query;
+   private static final AtomicReference<PostgresGlobalInfo> GLOBAL_INFO = new AtomicReference<PostgresGlobalInfo>();
 
-        if (query == null)
+    public ColumnsGatherer(ZQuery query) {
+      this(query, new PostgresGlobalInfo());
+    }
+
+    public ColumnsGatherer(ZQuery query, PostgresGlobalInfo globalInfo){
+        this.query = query;
+      if (query == null)
             return;
 
+        GLOBAL_INFO.set(Checks.checkNotNull(globalInfo));
         allColumns = new HashSet();
         eqColumns = new HashSet();
         joinColumns = new HashSet();
@@ -102,12 +111,10 @@ public class ColumnsGatherer {
     private static void loadColumnProperties() {
     	
     	if (columnProperties == null) {
-    		PostgresGlobalInfo getDBInfo = new PostgresGlobalInfo();
-    		getDBInfo.getConnection();
-    		getDBInfo.getTableInfo();
-    		columnProperties = getDBInfo.getProperties();
-    		getDBInfo.closeConnection();
-
+          GLOBAL_INFO.get().getConnection();
+          GLOBAL_INFO.get().getTableInfo();
+          columnProperties = GLOBAL_INFO.get().getProperties();
+          GLOBAL_INFO.get().closeConnection();
         }
     }
 

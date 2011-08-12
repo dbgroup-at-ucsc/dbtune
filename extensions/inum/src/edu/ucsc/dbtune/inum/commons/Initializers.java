@@ -36,22 +36,26 @@ public class Initializers {
     WorkloadProcessor processor = Checks.checkNotNull(workloadProcessor);
     if (InumUtils.isIndexAccessCostFileAvailable(workloadFile)) {
       PostgresIndexAccessGenerator.loadIndexAccessCosts(workloadFile, processor.query_descriptors);
-    } else /*todo(huascar) confirm that this is okay. it looks to me that it should be generated
-             so the next time we create the cost estimator the file will get loaded. I should confirm
-             this will Alkis. */ {
-      PostgresIndexAccessGenerator.runPostgresIndexAccessGenerator(autopilot, processor, workloadFile);
-    }
+    }         else
+        {
+        	  PostgresIndexAccessGenerator iag = new PostgresIndexAccessGenerator(autopilot, processor.candidates, processor.query_descriptors);
+            iag.generateIndexAccessCosts();
+            PostgresIndexAccessGenerator.saveIndexCosts(workloadFile, processor.query_descriptors);
+            PostgresIndexAccessGenerator. saveIndexSizes(workloadFile, iag.getSizeMap());
+        }
 
-    IndexAccessGenerator.loadIndexAccessCosts(workloadFile, processor.query_descriptors);
-    autopilot.setIndexSizeMap(IndexAccessGenerator.loadIndexSizes(workloadFile));
+        IndexAccessGenerator.loadIndexAccessCosts(workloadFile, processor.query_descriptors);
+        autopilot.setIndexSizeMap(IndexAccessGenerator.loadIndexSizes(workloadFile));
 
-    if (InumUtils.isEnumerationFileAvailable(workloadFile)) {
-      EnumerationGenerator.loadConfigEnumerations(workloadFile, processor.query_descriptors);
-    } else {
-      PostgresEnumerationGenerator generator = new PostgresEnumerationGenerator();
-      generator.AllEnumerateConfigs(processor.query_descriptors, autopilot);
-      EnumerationGenerator.saveConfigEnumerations(workloadFile, processor.query_descriptors);
-    }
+        if (new File(InumUtils.getEnumerationFileName(workloadFile)).exists()) {
+            EnumerationGenerator.loadConfigEnumerations(workloadFile, processor.query_descriptors);
+        }
+        else
+        {
+	        PostgresEnumerationGenerator generator = new PostgresEnumerationGenerator();
+	        generator.AllEnumerateConfigs(processor.query_descriptors, autopilot);
+	        EnumerationGenerator.saveConfigEnumerations(workloadFile, processor.query_descriptors);
+        }
 
     // test the validity of plan computation.
     for (QueryDesc queryDesc : processor.query_descriptors) {

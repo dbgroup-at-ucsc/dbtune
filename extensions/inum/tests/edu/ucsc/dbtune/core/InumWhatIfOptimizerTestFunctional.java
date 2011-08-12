@@ -1,9 +1,11 @@
 package edu.ucsc.dbtune.core;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import static edu.ucsc.dbtune.core.JdbcConnectionManager.makeDatabaseConnectionManager;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.Strings;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.regex.Matcher;
@@ -36,9 +38,29 @@ public class InumWhatIfOptimizerTestFunctional {
     }
   }
 
-  @Test public void testInum_EmptyHypotheticalIndexes() throws Exception {
+  @Test public void testUseInumToEstimateCostOfWorload_WithHypotheticalIndexes() throws Exception {
     final InumWhatIfOptimizer optimizer = new InumWhatIfOptimizerImpl(CONNECTION);
-    optimizer.estimateCost(extractFilename(WORKLOAD_IN_USE));
+    final String              workload  = WORKLOAD_IN_USE;
+
+    final Iterable<DBIndex>   candidates = configureCandidates();
+    optimizer.estimateCost(workload, candidates);
+  }
+
+  private static Iterable<DBIndex> configureCandidates() {
+    final IndexExtractor extractor = CONNECTION.getIndexExtractor();
+    final File workloadFile = new File(WORKLOAD_IN_USE);
+    try {
+      //todo(Huascar) the extractor is to constructing PGTables property...
+      // we need the table name and the columns....WE NEED THAT
+      // the problem is that PGTable state after DatabaseObject and
+      // AbstractDatabase is broken
+      final Iterable<DBIndex> candidates = extractor.recommendIndexes(
+          Strings.wholeContentAsSingleLine(workloadFile)
+      );
+      return ImmutableList.copyOf(candidates);
+    } catch (Exception e){
+      return ImmutableList.of();
+    }
   }
 
   @BeforeClass public static void setUp() throws Exception {
@@ -60,14 +82,6 @@ public class InumWhatIfOptimizerTestFunctional {
 
       CONNECTION = null;
     }
-  }
-
-
-  private static String extractFilename(String fullname){
-    final Pattern p = Pattern.compile(".*?([^\\\\/]+)$");
-    final Matcher m = p.matcher(fullname);
-    return (m.find()) ? m.group(1) : "";
-
   }
 
 }
