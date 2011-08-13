@@ -20,15 +20,13 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainInfo;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
 /**
- * An {@code DatabaseIndexExtractor} will look deeply into its crystal ball (i.e., a
- * {@code Profiler}) and suggest optimal
+ * An {@code DatabaseIndexExtractor} will look deeply into its crystal ball (i.e., a {@code Profiler}) and suggest optimal 
  * indexes or the total cost of what-if optimizations.
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -46,9 +44,6 @@ public interface CandidateIndexExtractor {
     /**
      * recommends a {@link Iterable list} of indexes that could help improve performance, given a
      * SQL query.
-     *
-     *
-     *
      *
      * @param sql
      *      SQL query.

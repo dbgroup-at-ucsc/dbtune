@@ -3,18 +3,15 @@ package edu.ucsc.dbtune.optimizer;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Console;
-import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static edu.ucsc.dbtune.connectivity.PGCommands.explainIndexesCost;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
-import static edu.ucsc.dbtune.util.Instances.newAtomicInteger;
 import static edu.ucsc.dbtune.util.Instances.newBitSet;
 import static edu.ucsc.dbtune.util.Instances.newList;
 
@@ -23,7 +20,7 @@ import static edu.ucsc.dbtune.util.Instances.newList;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
-    private final AtomicInteger      whatifCount;
+    private final DatabaseConnection connection;
     private final IndexBitSet        cachedBitSet       = newBitSet();
     private final List<Index>      cachedCandidateSet = newList();
 
@@ -33,13 +30,11 @@ public class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
      *      a database connection
      */
     public PostgresIBGWhatIfOptimizer(DatabaseConnection connection){
-        super(new PostgresWhatIfOptimizer(connection));
-        whatifCount = newAtomicInteger();
+        super(new PGOptimizer(connection));
+        this.connection = connection;
     }
 
-    @Override
     public void fixCandidates(Iterable<? extends Index> candidateSet) throws SQLException {
-        Checks.checkArgument(isEnabled(), "Error: Database Connection is closed.");
         cachedCandidateSet.clear();
         getCachedIndexBitSet().clear();
         for (Index idx : candidateSet) {
@@ -48,23 +43,19 @@ public class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
         }
     }
 
-    @Override
-    public ExplainInfo explain(String sql) throws SQLException {
-        final ExplainInfo result = super.explain(sql);
-        incrementWhatIfCount();
-        return result;
-    }
-
-    @Override
     protected IndexBitSet getCachedIndexBitSet() {
         return cachedBitSet;
     }
 
-    @Override
     protected void updateCachedIndexBitSet(IndexBitSet newOne) {
         cachedBitSet.set(newOne);
     }
 
+    @Override
+    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
+        fixCandidates(indexes);
+        return delegate.explain(sql, indexes);
+    }
 
     @Override
     public Iterable<Index> getCandidateSet() {
@@ -72,17 +63,11 @@ public class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
-    protected void incrementWhatIfCount() {
-        whatifCount.incrementAndGet();
-    }
-
-    @Override
     double estimateCost(String sql, Iterable<Index> candidate,
         IndexBitSet configuration, IndexBitSet used) {
-	  //List<Index> indexSet = PGIndex.cast(cachedCandidateSet);
       return supplyValue(
           explainIndexesCost(used),
-          getConnection(),
+          connection,
           cachedCandidateSet,
           configuration,
           sql,
@@ -93,9 +78,9 @@ public class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
 
     @Override
     protected double estimateCost(WhatIfOptimizationBuilder builder) throws SQLException {
-        incrementWhatIfCount();
+        whatIfCount++;
         Console.streaming().dot();
-        if (whatifCount.get() % 75 == 0) Console.streaming().skip();
+        if (whatIfCount % 75 == 0) Console.streaming().skip();
 
         final WhatIfOptimizationBuilderImpl whatIfImpl = Objects.cast(builder, WhatIfOptimizationBuilderImpl.class);
         if(whatIfImpl.withProfiledIndex()) throw new UnsupportedOperationException("Error: Used Columns in Database Connection not supported.");
@@ -106,7 +91,7 @@ public class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
         final List<Index>   indexSet      = newList();
         Double returnVal = supplyValue(
                     explainIndexesCost(usedSet),
-                    getConnection(),
+                    connection,
                     indexSet,
                     configuration,
                     sql,
@@ -123,14 +108,9 @@ public class PostgresIBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
-    public int getWhatIfCount() {
-        return whatifCount.get();
-    }
-
-    @Override
     public String toString() {
         return new ToStringBuilder<PostgresIBGWhatIfOptimizer>(this)
-               .add("whatIf count", getWhatIfCount())
+               .add("whatIf count", whatIfCount)
                .add("index set", getCachedIndexBitSet())
                .add("candidate index set", getCandidateSet())
             .toString();

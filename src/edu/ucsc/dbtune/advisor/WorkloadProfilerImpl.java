@@ -97,7 +97,6 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
     @Override
     public ProfiledQuery processQuery(String sql){
 
-		// generate new index candidates
 		if (onlineCandidates) {
 			try {
                 final CandidateIndexExtractor    extractor           = connection.getIndexExtractor();
@@ -113,18 +112,11 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 		}
 
 		// get the current set of candidates
-		Snapshot snapshot = candidatePool.getSnapshot();
-        final IBGWhatIfOptimizer ibgWhatIfOptimizer = connection.getIBGWhatIfOptimizer();
+		Snapshot           snapshot           = candidatePool.getSnapshot();
+		IBGWhatIfOptimizer ibgWhatIfOptimizer = connection.getIBGWhatIfOptimizer();
+		ExplainInfo        info;
 		try {
-			ibgWhatIfOptimizer.fixCandidates(snapshot);
-		} catch (SQLException e) {
-			console.error("SQLException caught while setting candidates", e);
-			throw new Error(e);
-		}
-
-        ExplainInfo info;
-		try {
-			info = ibgWhatIfOptimizer.explain(sql);
+			info = ibgWhatIfOptimizer.explain(sql, snapshot);
             console.info("WorkloadProfilerImpl#processQuery(String) returned an ExplainInfo object=" + info) ;
 		} catch (SQLException e) {
 			console.error("SQLException caught while explaining command", e);

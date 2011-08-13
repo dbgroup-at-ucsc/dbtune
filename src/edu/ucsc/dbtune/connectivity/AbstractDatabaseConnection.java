@@ -22,7 +22,6 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -47,8 +46,7 @@ implements DatabaseConnection {
     private final AtomicReference<ConnectionManager>  connectionManager;
     private final AtomicReference<CandidateIndexExtractor>     indexExtractor;
     private final AtomicReference<IBGWhatIfOptimizer> ibgWhatIfOptimizer;
-    private final AtomicReference<WhatIfOptimizer>    whatIfOptimizer;
-    private final Optimizer                           optimizer;
+    private Optimizer                           optimizer;
 
     private final AtomicBoolean once;
 
@@ -63,7 +61,6 @@ implements DatabaseConnection {
         this.connectionManager  = newAtomicReference();
         this.indexExtractor     = newAtomicReference();
         this.ibgWhatIfOptimizer = newAtomicReference();
-        this.whatIfOptimizer    = newAtomicReference();
         this.optimizer          = null;
         this.once               = newFalseBoolean();
     }
@@ -73,7 +70,6 @@ implements DatabaseConnection {
         super.cleanup();
         getConnectionManager().close(this);
         indexExtractor.set(null);
-        whatIfOptimizer.set(null);
         ibgWhatIfOptimizer.set(null);
         connectionManager.set(null);
     }
@@ -94,8 +90,8 @@ implements DatabaseConnection {
         if(once.get()) return;
         final DatabaseSystem trait = getDatabaseSystem();
         indexExtractor.set(trait.getIndexExtractor(this));
-        whatIfOptimizer.set(trait.getSimplifiedWhatIfOptimizer(this));
         ibgWhatIfOptimizer.set(trait.getIBGWhatIfOptimizer(this));
+        optimizer = trait.getOptimizer(this);
         once.set(true);
         getIndexExtractor().adjust(this);  // todo(Huascar)...
     }
@@ -116,11 +112,6 @@ implements DatabaseConnection {
     }
 
     @Override
-    public WhatIfOptimizer getWhatIfOptimizer() {
-        return Checks.checkNotNull(whatIfOptimizer.get());
-    }
-
-    @Override
     public IBGWhatIfOptimizer getIBGWhatIfOptimizer() {
         return Checks.checkNotNull(ibgWhatIfOptimizer.get());
     }
@@ -131,7 +122,6 @@ implements DatabaseConnection {
                 .add("connectionManager", connectionManager.get())
                 .add("indexExtractor", indexExtractor.get())
                 .add("ibgWhatIfOptimizer", ibgWhatIfOptimizer.get())
-                .add("simplifiedWhatIfOptimizer", whatIfOptimizer.get())
                 .add("open", isOpened())
                 .toString();
     }

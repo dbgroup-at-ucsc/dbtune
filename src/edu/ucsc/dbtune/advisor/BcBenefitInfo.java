@@ -81,7 +81,6 @@ public class BcBenefitInfo {
 		int[] reqLevels = new int[snapshot.maxInternalId()+1];
 		double[] overheads = new double[snapshot.maxInternalId()+1];
 		
-		conn.getIBGWhatIfOptimizer().fixCandidates(snapshot);
 		IndexBitSet tempBitSet = new IndexBitSet();
 		IndexBitSet usedColumns = new IndexBitSet();
 		for (Index idx : hotSet) {
@@ -93,6 +92,7 @@ public class BcBenefitInfo {
 			// get original cost
 			tempBitSet.clear(id);
             final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
+            /*
 			origCosts[id] = optimizer.estimateCost(sql, tempBitSet, Instances.newBitSet(), null);
 			
 			// get new cost
@@ -111,6 +111,16 @@ public class BcBenefitInfo {
 		}
 		
 		return new BcBenefitInfo(origCosts, newCosts, reqLevels, overheads, profiledQuery);
+        */
+        }
+        // XXX:
+        // estimateCost(
+        //    String sql, IndexBitSet configuration, IndexBitSet used, Index profiledIndex)
+        // 
+        // this method throws a runtime exception in AbstractIBGWhatIfOptimizer
+        //
+        // so we're throwing it here 
+        throw new RuntimeException("Not implemented yet");
 	}
 
     /**

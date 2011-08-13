@@ -6,7 +6,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
@@ -70,7 +70,7 @@ public class WhatIfOptimizerTestFunctional {
         final String            query      = "select a from tbl where a = 5;";
         final CandidateIndexExtractor    extractor  = connection.getIndexExtractor();
         final Iterable<Index> candidates = extractor.recommendIndexes(query);
-        final WhatIfOptimizer   optimizer  = connection.getWhatIfOptimizer();
+        final Optimizer   optimizer  = connection.getOptimizer();
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
@@ -89,7 +89,7 @@ public class WhatIfOptimizerTestFunctional {
     public void testManyWorloadsWhatIfOptimization() throws Exception {
         final CandidateIndexExtractor  extractor = connection.getIndexExtractor();
         final File            workload  = new File(environment.getScriptAtWorkloadsFolder("/one_table/workload.sql"));
-        final WhatIfOptimizer optimizer = connection.getWhatIfOptimizer();
+        final Optimizer optimizer = connection.getOptimizer();
 
 
         for (String line : Files.getLines(workload)) {

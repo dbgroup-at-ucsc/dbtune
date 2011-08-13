@@ -21,7 +21,6 @@ package edu.ucsc.dbtune.connectivity;
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 
 /**
  * A connection to a specific database. {@code DatbaseConnection} objects are obtained by using
@@ -58,25 +57,13 @@ public interface DatabaseConnection extends DatabaseSession {
     CandidateIndexExtractor getIndexExtractor();
 
     /**
-     * returns the instance of the object representing the optmizer of the DBMS the connection is 
+     * returns the instance of the object representing the optimizer of the DBMS the connection is 
      * associated with.
      *
      * @return
      *     the {@link Optimizer} instance created for this connection.
      */
     Optimizer getOptimizer();
-
-    /**
-     * gets the instance of what-if optmizer created for this connection.
-     *
-     * @return
-     *     the {@link WhatIfOptimizer what-if optimizer} instance created for
-     *     this connection.
-     * @throws NullPointerException
-     *      it will throw a null pointer exception if the optimizer is null.
-     *      this is a normal side effect when the connection was already closed.
-     */
-    WhatIfOptimizer getWhatIfOptimizer();
 
     /**
      * gets the instance of the IBG-specific what-if optmizer created for this connection.

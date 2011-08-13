@@ -72,13 +72,13 @@ public class MetadataTest
 
                         Index index =
                             new Index(
-                                "index_" + l, Arrays.asList(column), PRIMARY,CLUSTERED, UNIQUE);
+                                "index_" + l, Arrays.asList(column), SECONDARY,UNCLUSTERED, NON_UNIQUE);
                         table.add(index);
                         allObjects.add(index);
                     }
                     Index index =
                         new Index(
-                            "index_" + l, table.getColumns(), SECONDARY, UNCLUSTERED, NON_UNIQUE);
+                            "index_" + l, table.getColumns(), PRIMARY, CLUSTERED, UNIQUE);
                     table.add(index);
                     allObjects.add(index);
                 }

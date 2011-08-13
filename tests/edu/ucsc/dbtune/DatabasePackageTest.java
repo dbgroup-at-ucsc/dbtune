@@ -25,8 +25,8 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.optimizer.AbstractIBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
@@ -100,8 +100,8 @@ public class DatabasePackageTest {
 
     private static void checkWhatIfOptimizers(DatabaseConnection... connections){
         for(DatabaseConnection each : connections){
-            final WhatIfOptimizer       wio     = each.getWhatIfOptimizer();
-            final IBGWhatIfOptimizer    ibgWio  = each.getIBGWhatIfOptimizer();
+            final Optimizer          wio    = each.getOptimizer();
+            final IBGWhatIfOptimizer ibgWio = each.getIBGWhatIfOptimizer();
             assertThat(wio, notNullValue());
             assertThat(ibgWio, notNullValue());
             assertThat(ibgWio.getWhatIfCount(), is(0));
@@ -173,39 +173,6 @@ public class DatabasePackageTest {
             assertThat(Double.compare(cost, 1.0) == 0, is(true));
         }
     }
-
-    @Ignore @Test
-    public void testBasicUsageScenario_IBGSpecific_WhatIfOptimizationCostWithProfiledIndex() throws Exception {
-        checkIBGWhatIfOptimizerCostWithProfiledIndex(
-                new IndexBitSet(),              // index configuration
-                new IndexBitSet(),              // used set
-                newDB2Index(),                  // profiled index
-                connectionManager.connect()     // database connection
-        );
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testBasicUsageScenario_IBGSpecific_WhatIfOptimizationCostWithProfiledPGIndex() throws Exception {
-        checkIBGWhatIfOptimizerCostWithProfiledIndex(
-                new IndexBitSet(),                  // index configuration
-                new IndexBitSet(),                  // used set
-                newPGIndex(),                       // profiled index
-                connectionManager2.connect()        // database connection
-        );
-    }
-
-    private static <T extends Index> void checkIBGWhatIfOptimizerCostWithProfiledIndex(IndexBitSet configuration,
-                                                                                         IndexBitSet usedSet,
-                                                                                         T pi,
-                                                                                         DatabaseConnection connection
-    ) throws SQLException {
-        final IBGWhatIfOptimizer wo = connection.getIBGWhatIfOptimizer();
-        final double cost = wo.estimateCost("SELECT * FROM R;", configuration, usedSet, pi);
-        System.out.println(cost);
-        assertThat(Double.compare(cost, 2.0) == 0 || Double.compare(cost, 1.0) == 0, is(true));
-        connection.close();
-    }
-
 
     @Test
     public void testSharingResultSet() throws Exception {
@@ -285,22 +252,6 @@ public class DatabasePackageTest {
     }
 
     @Test
-    public void testFixCandidatesScenario() throws Exception {
-        final List<Index> db2CandidateSet = Instances.newList();
-        db2CandidateSet.add(newDB2Index());
-        final List<PGIndex>  pgCandidateSet  = Instances.newList();
-        pgCandidateSet.add(newPGIndex());
-        checkFixCandidatesScenario(db2CandidateSet, connectionManager.connect());
-        checkFixCandidatesScenario(pgCandidateSet, connectionManager2.connect());
-    }
-
-    private static void checkFixCandidatesScenario(List<? extends Index> candidateSet, DatabaseConnection connection) throws Exception {
-        final IBGWhatIfOptimizer optimizer = connection.getIBGWhatIfOptimizer();
-        optimizer.fixCandidates(candidateSet);
-        assertThat(Objects.<Iterable<Index>>as(candidateSet), equalTo(Objects.<AbstractIBGWhatIfOptimizer>as(optimizer).getCandidateSet()));
-    }
-
-    @Test
     public void testDB2ConnectionAdjustment() throws Exception {
         final ConnectionManager c2 = DBTuneInstances.newDatabaseConnectionManagerWithSwitchOffOnce(
                 DBTuneInstances.newDB2Properties()
@@ -312,7 +263,7 @@ public class DatabasePackageTest {
 
     @SuppressWarnings({"RedundantTypeArguments"})
     private static void checkExplainInfoScenario(DatabaseConnection connection) throws Exception {
-        final WhatIfOptimizer whatIfOptimizer   = connection.getWhatIfOptimizer();
+        final Optimizer whatIfOptimizer   = connection.getOptimizer();
         final List<Index>  pgCandidateSet  = Instances.newList();
         final Index index1 = newPGIndex(12);
         final Index index2 = newPGIndex(21);
@@ -330,7 +281,7 @@ public class DatabasePackageTest {
         final Index idx  = new PGIndex(121112, 3.0, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_121112");
         final Index idx2 = new PGIndex(56789, true, Arrays.asList(col), Arrays.asList(true), 132111, 3.5, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_132111");
 
-        connection.getWhatIfOptimizer().explain("SELECT * FROM R", Arrays.asList(idx, idx2));
+        connection.getOptimizer().explain("SELECT * FROM R", Arrays.asList(idx, idx2));
     }
 
     @After

@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune.metadata;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.DB2Index.DB2IndexMetadata;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
@@ -337,7 +336,6 @@ public class DB2Index extends Index {
                 idx++;
             }
 
-            whatIfOptimizer.fixCandidates(Instances.<DB2Index>newLinkedList());
             return whatIfOptimizer.estimateCost(sql.toString(), Instances.newBitSet(), Instances.newBitSet());
         }
         
@@ -375,7 +373,6 @@ public class DB2Index extends Index {
         }
 
         private static double calculateTotalCost(DatabaseConnection connection, String sql) throws SQLException {
-            connection.getIBGWhatIfOptimizer().fixCandidates(Instances.<Index>newLinkedList());
             return connection.getIBGWhatIfOptimizer().estimateCost(sql, Instances.newBitSet(), Instances.newBitSet());
         }
         

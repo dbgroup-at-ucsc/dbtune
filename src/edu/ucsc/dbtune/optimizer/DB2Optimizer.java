@@ -15,20 +15,89 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.SQLCategory;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.util.Strings;
+import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 
+import java.sql.SQLException;
 import java.sql.Connection;
 
+import static edu.ucsc.dbtune.connectivity.DB2Commands.*;
+import static edu.ucsc.dbtune.spi.core.Functions.submit;
+import static edu.ucsc.dbtune.spi.core.Functions.submitAll;
+import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 /**
  * Not implemented yet
  */
 public class DB2Optimizer extends Optimizer
 {
-    public DB2Optimizer(Connection connection) throws UnsupportedOperationException {
-		throw new UnsupportedOperationException("Not implemented yet");
+    private final Connection connection;
+
+    private final static Console SCREEN = Console.streaming();
+
+    public DB2Optimizer(Connection connection){
+        super();
+        this.connection = connection;
     }
-	public SQLStatementPlan explain(String sql)
+
+    @Override
+	public SQLStatementPlan explain(String sql) throws SQLException
 	{
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new SQLException("Not implemented yet");
 	}
+
+    @Override
+    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
+        Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
+        Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
+
+        SQLCategory category     = null;
+        Table       updatedTable = null;
+        double      updateCost   = 0.0;
+
+        try {
+            // a batch supplying of commands with no returned value.
+            submitAll(
+                    // clear out the tables we'll be reading
+                    submit(clearExplainObject(), connection),
+                    submit(clearExplainStatement(), connection),
+                    submit(clearExplainOperator(), connection),
+                    // execute statment in explain mode = explain
+                    submit(explainModeExplain(), connection)
+            );
+
+            submit(explainModeNo(), connection);
+            category = supplyValue(fetchExplainStatementType(), connection);
+            if(SQLCategory.DML.isSame(category)){
+                updatedTable = supplyValue(fetchExplainObjectUpdatedTable(), connection);
+                updateCost   = supplyValue(fetchExplainOpUpdateCost(), connection);
+            }
+        } catch (RuntimeException e){
+            connection.rollback();
+        }
+
+        try {
+            connection.rollback();
+        } catch (SQLException s){
+            error("Could not rollback transaction", s);
+            throw s;
+        }
+
+        return new DB2ExplainInfo(category, updatedTable, updateCost);
+    }
+
+    private static void error(String message, Throwable cause){
+        SCREEN.error(message, cause);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder<DB2Optimizer>(this)
+               .toString();
+    }
 }

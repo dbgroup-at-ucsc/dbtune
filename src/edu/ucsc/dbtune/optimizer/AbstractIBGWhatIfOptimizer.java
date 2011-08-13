@@ -18,13 +18,10 @@
 
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.spi.core.Console;
-import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Objects;
-import static edu.ucsc.dbtune.util.Objects.cast;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.sql.SQLException;
 
@@ -34,19 +31,19 @@ import java.sql.SQLException;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer implements IBGWhatIfOptimizer {
-    private final AbstractWhatIfOptimizer                           delegate;
+public abstract class AbstractIBGWhatIfOptimizer extends IBGWhatIfOptimizer {
+    protected final Optimizer delegate;
 
     /**
      * initialize an {@code AbstractDatabaseWhatIfOptimizer} object.
      * @param delegate
      *      a DBMS-specific implementation of {@link WhatIfOptimizer} type.
      */
-    protected AbstractIBGWhatIfOptimizer(WhatIfOptimizer delegate){
+    protected AbstractIBGWhatIfOptimizer(Optimizer delegate) {
         super();
-        this.delegate   = cast(Checks.checkNotNull(delegate), AbstractWhatIfOptimizer.class);
+        this.delegate = delegate;
+        whatIfCount = 0;
     }
-
 
     /**
      * @return the IBG-specific What-if optimizer.
@@ -56,70 +53,23 @@ public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer
     }
 
     @Override
-    protected DatabaseConnection getConnection() {
-        return delegate.getConnection();
-    }
-
-    @Override
     public double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used) throws SQLException {
-        updateCachedSQL(sql);
-        incrementWhatIfCount();
-        Console.streaming().dot();
-        if (getWhatIfCount() % 75 == 0) Console.streaming().skip();
+        whatIfCount++;
         return estimateCost(sql, getCandidateSet(), configuration, used);
     }
 
     // a hook method that should be overriden by implementations of this class.
-    double estimateCost(String sql, Iterable<Index> candidate, IndexBitSet configuration,
-        IndexBitSet used){
-      return 0.0;
-    }
+    abstract double estimateCost(String sql, Iterable<Index> candidate, IndexBitSet configuration,IndexBitSet used);
 
     @Override
-    public double estimateCost(String sql, IndexBitSet configuration, IndexBitSet used, Index profiledIndex) throws SQLException {
-        throw new UnsupportedOperationException("AbstractIBGWhatIfOptimizer#estimateCost(..) not supported yet.");
-    }
-
-    @Override
-    public ExplainInfo explain(String sql) throws SQLException {
-        updateCachedSQL(sql);
-        return explain(sql, getCandidateSet());
-    }
-
-    @Override
-    public ExplainInfo explain(Iterable<? extends Index> indexes) throws SQLException {
-        return explain(getCachedSQL(), indexes);
-    }
-
-    @Override
-    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
-        return delegate.explain(sql, indexes);
+    public SQLStatementPlan explain(String sql) throws SQLException {
+        return delegate.explain(sql);
     }
 
     /**
      * @return a current candidate set after calling {@link #fixCandidates(Iterable)} method.
      */
     public abstract Iterable<Index> getCandidateSet();
-
-
-    /**
-     * @return {@code true} if the optimizer is disabled. {@code false} otherwise.
-     */
-    protected boolean isDisabled(){
-        return null == getConnection() || getConnection().isClosed();
-    }
-
-    /**
-     * @return {@code true} if the optimizer is enabled. {@code false} otherwise.
-     */
-    protected boolean isEnabled(){
-        return !isDisabled();
-    }
-
-    /**
-     * increment whatIfCount
-     */
-    protected void incrementWhatIfCount(){}
 
     /**
      * runs a what-if trial.
@@ -132,11 +82,6 @@ public abstract class AbstractIBGWhatIfOptimizer extends AbstractWhatIfOptimizer
      *      unable to run trial b/c a database error.
      */
     protected abstract double estimateCost(WhatIfOptimizationBuilder builder) throws SQLException;
-
-    @Override
-    protected void updateCachedSQL(String sql) {
-        delegate.updateCachedSQL(sql);
-    }
 
     @Override
     public String toString() {

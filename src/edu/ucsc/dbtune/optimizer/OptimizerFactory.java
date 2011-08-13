@@ -31,4 +31,13 @@ public interface OptimizerFactory
      *      a generic optimizer
      */
     Optimizer newOptimizer(DatabaseConnection connection);
+
+	/**
+     * makes a new {@link IBGWhatIfOptimizer} object.
+     * @param connection
+     *      the {@link edu.ucsc.dbtune.connectivity.DatabaseConnection} that gets this {@code optimizer} assigned to.
+     * @return
+     *      a IBG-specific what-if optimizer.
+     */
+    IBGWhatIfOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection);
 }

@@ -6,15 +6,12 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.OptimizerFactory;
-import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.WhatIfOptimizerFactory;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Strings;
 
 import java.util.NoSuchElementException;
 
 import static edu.ucsc.dbtune.Platform.findIndexExtractorFactory;
-import static edu.ucsc.dbtune.Platform.findWhatIfOptimizerFactory;
 import static edu.ucsc.dbtune.Platform.findOptimizerFactory;
 
 /**
@@ -33,24 +30,13 @@ public enum DatabaseSystem {
     DB2("com.ibm.db2.jcc.DB2Driver");
 
     private final String                 driver;
-    private final WhatIfOptimizerFactory wiof;
     private final CandidateIndexExtractorFactory  ief;
     private final OptimizerFactory       of;
 
     DatabaseSystem(String driver){
         this.driver = driver;
-        wiof        = findWhatIfOptimizerFactory(driver);
         ief         = findIndexExtractorFactory(driver);
         of          = findOptimizerFactory(driver);
-    }
-
-    /**
-     * @param connection
-     *      database connection
-     * @return a simplified what-if optimizer.
-     */
-    public WhatIfOptimizer getSimplifiedWhatIfOptimizer(DatabaseConnection connection){
-        return wiof.newWhatIfOptimizer(Checks.checkNotNull(connection));
     }
 
     /**
@@ -59,7 +45,7 @@ public enum DatabaseSystem {
      * @return
      *      an optimizer.
      */
-    public Optimizer geOptimizer(DatabaseConnection connection){
+    public Optimizer getOptimizer(DatabaseConnection connection){
         return of.newOptimizer(connection);
     }
 
@@ -70,7 +56,7 @@ public enum DatabaseSystem {
      *      an IBG-specific what-if optimizer.
      */
     public IBGWhatIfOptimizer getIBGWhatIfOptimizer(DatabaseConnection connection){
-        return wiof.newIBGWhatIfOptimizer(Checks.checkNotNull(connection));
+        return of.newIBGWhatIfOptimizer(Checks.checkNotNull(connection));
     }
 
     /**

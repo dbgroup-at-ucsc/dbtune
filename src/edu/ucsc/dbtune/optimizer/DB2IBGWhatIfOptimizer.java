@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.connectivity.JdbcConnection;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Console;
@@ -9,11 +8,9 @@ import edu.ucsc.dbtune.util.*;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static edu.ucsc.dbtune.connectivity.DB2Commands.*;
 import static edu.ucsc.dbtune.spi.core.Functions.*;
-import static edu.ucsc.dbtune.util.Instances.newAtomicInteger;
 import static edu.ucsc.dbtune.util.Instances.newLinkedList;
 import static edu.ucsc.dbtune.util.Objects.cast;
 
@@ -22,7 +19,7 @@ import static edu.ucsc.dbtune.util.Objects.cast;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
-    private final AtomicInteger whatifCount;
+    private final DatabaseConnection connection;
     private final List<Index> cachedCandidateSet = newLinkedList();
 
     /**
@@ -31,8 +28,8 @@ public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
      *      a database connection
      */
     public DB2IBGWhatIfOptimizer(DatabaseConnection connection){
-        super(new DB2WhatIfOptimizer(connection));
-        whatifCount = newAtomicInteger();
+        super(new DB2Optimizer(connection.getJdbcConnection()));
+        this.connection = connection;
     }
 
     @Override
@@ -40,27 +37,17 @@ public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
         return cachedCandidateSet;
     }
 
-    @Override
-    protected void incrementWhatIfCount() {
-        whatifCount.incrementAndGet();
-    }
-
-    @Override
     protected IndexBitSet getCachedIndexBitSet() {
         return Instances.newBitSet();
     }
 
-    @Override
     protected void updateCachedIndexBitSet(IndexBitSet newOne) {
         // do nothing
     }
 
-    @Override
     public void fixCandidates(Iterable<? extends Index> candidateSet) throws SQLException {
-        Checks.checkArgument(isEnabled(), "Error: Database connection is closed.");
         cachedCandidateSet.clear();
         Iterables.copy(cachedCandidateSet, candidateSet);
-        final DatabaseConnection connection = getConnection();
         submitAll(
                 submit(clearAdviseIndex(), connection),
                 submit(loadAdviseIndex(), candidateSet.iterator(), false, connection)
@@ -68,19 +55,25 @@ public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
+    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
+        fixCandidates(indexes);
+        return delegate.explain(sql, indexes);
+    }
+
+    @Override
     protected double estimateCost(WhatIfOptimizationBuilder builder) throws SQLException {
-        if (whatifCount.incrementAndGet() % 80 == 0) {
+        whatIfCount++;
+        if (whatIfCount % 80 == 0) {
             fixAnyExistingCandidates();
             System.err.println();
         }
 
         final WhatIfOptimizationBuilderImpl whatIfImpl  = Objects.cast(builder, WhatIfOptimizationBuilderImpl.class);
-        final JdbcConnection c           = Objects.cast(getConnection(), JdbcConnection.class);
 
         if(!whatIfImpl.withProfiledIndex()){
-           return estimateCostWithoutProfiledIndex(whatIfImpl, c);
+           return estimateCostWithoutProfiledIndex(whatIfImpl, connection);
         }  else {
-           return estimateCostBasedOnProfiledIndex(whatIfImpl, c);
+           return estimateCostBasedOnProfiledIndex(whatIfImpl, connection);
         }
 
     }
@@ -92,7 +85,7 @@ public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     @SuppressWarnings({"UnusedAssignment"})
     private static Double estimateCostBasedOnProfiledIndex(
             WhatIfOptimizationBuilderImpl whatIfImpl,
-            JdbcConnection activeConnection
+            DatabaseConnection activeConnection
     ) throws SQLException {
         int explainCount; // should be equal to 1
         double totalCost;
@@ -160,7 +153,7 @@ public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     @SuppressWarnings({"UnusedAssignment"})
     private static Double estimateCostWithoutProfiledIndex(
             WhatIfOptimizationBuilderImpl whatIfImpl,
-            JdbcConnection activeConnection
+            DatabaseConnection activeConnection
     ) throws SQLException {
 
         int explainCount; // should be equal to 1
@@ -222,15 +215,9 @@ public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
-    public int getWhatIfCount() {
-        return whatifCount.get();
-    }
-
-
-    @Override
     public String toString() {
         return new ToStringBuilder<DB2IBGWhatIfOptimizer>(this)
-               .add("what if count", getWhatIfCount())
+               .add("what if count", whatIfCount)
                .add("candidate index set", getCandidateSet())
              .toString();
     }

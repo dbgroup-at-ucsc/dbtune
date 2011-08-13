@@ -15,7 +15,9 @@
  * ************************************************************************** */
 
 /**
- * Contains implementations of distinct techniques for automatic physical tuning.
+ * Contains implementations of distinct techniques for automatic physical tuning. The main interface 
+ * is {@link edu.ucsc.dbtune.advisor.Advisor}, which is consistent with both off- and on-line 
+ * tuning. A sample implementation is the {@link CandidateIndexExtractor}.
  */
 @Generated(value={})
 package edu.ucsc.dbtune.advisor;

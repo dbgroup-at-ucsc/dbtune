@@ -29,15 +29,11 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.optimizer.DB2IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
-import edu.ucsc.dbtune.optimizer.DB2WhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.OptimizerFactory;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.optimizer.PostgresIBGWhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.PostgresWhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.WhatIfOptimizer;
-import edu.ucsc.dbtune.optimizer.WhatIfOptimizerFactory;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Files;
@@ -67,7 +63,6 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
  */
 public class Platform {
     private static final Map<String, CandidateIndexExtractorFactory>  AVAILABLE_EXTRACTORS;
-    private static final Map<String, WhatIfOptimizerFactory> AVAILABLE_WHATIF_OPTIMIZERS;
     private static final Map<String, OptimizerFactory>       AVAILABLE_OPTIMIZERS;
     static {
         Map<String, CandidateIndexExtractorFactory> driverToExtractor =
@@ -75,13 +70,6 @@ public class Platform {
                     {
                         put("com.ibm.db2.jcc.DB2Driver", new DB2IndexExtractorFactory());
                         put("org.postgresql.Driver", new PGIndexExtractorFactory());
-                    }
-                };
-        Map<String, WhatIfOptimizerFactory> driverToWhatIfOptimizer =
-                new HashMap<String, WhatIfOptimizerFactory>(){
-                    {
-                        put("com.ibm.db2.jcc.DB2Driver", new DB2WhatIfOptimizerFactory());
-                        put("org.postgresql.Driver", new PGWhatIfOptimizerFactory());
                     }
                 };
 
@@ -94,7 +82,6 @@ public class Platform {
                 };
 
         AVAILABLE_EXTRACTORS        = Collections.unmodifiableMap(driverToExtractor);
-        AVAILABLE_WHATIF_OPTIMIZERS = Collections.unmodifiableMap(driverToWhatIfOptimizer);
         AVAILABLE_OPTIMIZERS        = Collections.unmodifiableMap(driverToOptimizer);
     }
 
@@ -117,22 +104,6 @@ public class Platform {
      */
     public static CandidateIndexExtractorFactory findIndexExtractorFactory(String driver){
         return  Objects.as(Checks.checkNotNull(AVAILABLE_EXTRACTORS.get(driver)));
-    }
-
-    /**
-     * finds the appropriate {@link WhatIfOptimizerFactory} strategy for a given driver. This method
-     * will throw a {@link NullPointerException} if strategy is not found. We rather deal with problem
-     * right away (i.e., throwing a NullPointerException) rather than waiting for some side affect along the execution line.
-     *
-     * @param driver
-     *      dbms-driver's fully qualified name.
-     * @return
-     *      a found {@link WhatIfOptimizerFactory} pre-instantiated instance.
-     * @throws NullPointerException
-     *      if strategy is not found.
-     */
-    public static WhatIfOptimizerFactory findWhatIfOptimizerFactory(String driver){
-        return Objects.as(Checks.checkNotNull(AVAILABLE_WHATIF_OPTIMIZERS.get(driver)));
     }
 
     /**
@@ -165,42 +136,12 @@ public class Platform {
         }
     }
 
-    private static class DB2WhatIfOptimizerFactory implements WhatIfOptimizerFactory {
-        @Override
-        public WhatIfOptimizer newWhatIfOptimizer(DatabaseConnection connection) {
-            return new DB2WhatIfOptimizer(Checks.checkNotNull(connection));
-        }
-
+    private static class DB2OptimizerFactory implements OptimizerFactory {
         @Override
         public IBGWhatIfOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection) {
             return new DB2IBGWhatIfOptimizer(Checks.checkNotNull(connection));
         }
-    }
 
-    private static class PGWhatIfOptimizerFactory implements WhatIfOptimizerFactory {
-        @Override
-        public WhatIfOptimizer newWhatIfOptimizer(DatabaseConnection connection) {
-            return new PostgresWhatIfOptimizer(Checks.checkNotNull(connection));
-        }
-
-        @Override
-        public IBGWhatIfOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection) {
-            return new PostgresIBGWhatIfOptimizer(Checks.checkNotNull(connection));
-        }
-    }
-
-    private static class PGOptimizerFactory implements OptimizerFactory {
-        @Override
-        public Optimizer newOptimizer(DatabaseConnection connection) {
-			try {
-				return new PGOptimizer(connection.getJdbcConnection(), null);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-        }
-    }
-
-    private static class DB2OptimizerFactory implements OptimizerFactory {
         @Override
         public Optimizer newOptimizer(DatabaseConnection connection) {
 			try {
@@ -211,7 +152,22 @@ public class Platform {
         }
     }
 
-	/**
+    private static class PGOptimizerFactory implements OptimizerFactory {
+        @Override
+        public IBGWhatIfOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection) {
+            return new PostgresIBGWhatIfOptimizer(Checks.checkNotNull(connection));
+        }
+        @Override
+        public Optimizer newOptimizer(DatabaseConnection connection) {
+			try {
+				return new PGOptimizer(connection);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+        }
+    }
+
+    /**
      *  A DB2-specific Database Index Extractor.
      */
     static class DB2DatabaseIndexExtractor extends AbstractCandidateIndexExtractor {

@@ -16,6 +16,7 @@
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.metadata.Index;
 
 import java.sql.SQLException;
 
@@ -24,6 +25,8 @@ import java.sql.SQLException;
  */
 public abstract class Optimizer
 {
+    protected int whatIfCount;
+
     /**
      * perform an optimization call for a single SQL statement.
      *
@@ -35,4 +38,31 @@ public abstract class Optimizer
      *      if an error occurs while retrieving the plan
      */
     public abstract SQLStatementPlan explain(String sql) throws SQLException;
+
+	/**
+     * estimate what-if optimization cost of a container (i.e., iterable container)
+     * of indexes.
+     *
+     * @param sql
+     *     sql statement
+     * @param indexes
+     *     iterable container of indexes.
+     * @return
+     *     an {@link ExplainInfo} object describing the results of a
+     *     what-if optimization call.
+     * @throws java.sql.SQLException
+     *     unable to estimate cost for the stated reasons.
+     */
+    public abstract ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException;
+	
+	/**
+     * gets the total count of what-if optimizations were handled/performed by the optimizer.
+     *
+     * @return
+     *     the total count of performed what-if optimizations.
+     */
+    public int getWhatIfCount()
+    {
+        return whatIfCount;
+    }
 }

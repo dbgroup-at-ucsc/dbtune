@@ -15,10 +15,18 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
+import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+import edu.ucsc.dbtune.connectivity.PGCommands;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.spi.core.Functions;
+import edu.ucsc.dbtune.util.Checks;
+import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.Instances;
+import edu.ucsc.dbtune.util.Strings;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -27,6 +35,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.List;
 
@@ -42,9 +51,11 @@ import static edu.ucsc.dbtune.connectivity.PGCommands.getVersion;
  */
 public class PGOptimizer extends Optimizer
 {
-    private Connection connection;
-    private String     explain;
-    private Schema     schema;
+    private DatabaseConnection dbConnection;
+    private Connection         connection;
+    private String             explain;
+    private Schema             schema;
+    private IndexBitSet        indexSet;
 
     /**
      * Creates a new optimizer for PostgreSQL systems.
@@ -70,9 +81,23 @@ public class PGOptimizer extends Optimizer
                 "PostgreSQL version " + version + " doesn't produce formatted EXPLAIN plans");
         }
 
-        this.schema     = schema;
-        this.connection = connection;
-        this.explain    = "EXPLAIN (COSTS true, FORMAT json) ";
+        this.schema       = schema;
+        this.connection   = connection;
+        this.explain      = "EXPLAIN (COSTS true, FORMAT json) ";
+        this.dbConnection = null;
+    }
+
+    public PGOptimizer(DatabaseConnection connection)
+    {
+        this.schema       = null;
+        this.explain      = "EXPLAIN (COSTS true, FORMAT json) ";
+        this.connection   = connection.getJdbcConnection();
+        this.dbConnection = connection;
+        this.indexSet     = Instances.newBitSet();
+    }
+
+    protected DatabaseConnection getConnection() {
+        return dbConnection;
     }
 
     /**
@@ -304,5 +329,41 @@ public class PGOptimizer extends Optimizer
         }
 
         return operator;
+    }
+
+    @Override
+    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
+        Checks.checkSQLRelatedState(
+                null != dbConnection && dbConnection.isOpened(), "Connection is closed.");
+        Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
+        final List<Index> indexSet = makeIndexList(indexes);
+        if(getCachedIndexBitSet().isEmpty()) updateCachedIndexBitSet(Instances.newBitSet(indexes));
+        final IndexBitSet   cachedIndexBitSet   = getCachedIndexBitSet();
+        final Double[]      maintCost           = new Double[indexSet.size()];
+        return Functions.supplyValue(
+                PGCommands.explainIndexes(),             // postgres's explain index command
+                dbConnection,                            // live connection
+                indexSet,                                // index set
+                cachedIndexBitSet,                       // cached bit set
+                sql,                                     // sql statement
+                cachedIndexBitSet.cardinality(),         // cardinality
+                maintCost                                // maintenance cost
+        );
+    }
+
+    private List<Index> makeIndexList(Iterable<? extends Index> indexes) {
+        List<Index> list = new ArrayList<Index>();
+        for(Index idx : indexes) {
+            list.add(idx);
+        }
+        return list;
+    }
+
+    protected IndexBitSet getCachedIndexBitSet() {
+        return indexSet;
+    }
+
+    protected void updateCachedIndexBitSet(IndexBitSet newOne) {
+        indexSet.set(newOne);
     }
 }

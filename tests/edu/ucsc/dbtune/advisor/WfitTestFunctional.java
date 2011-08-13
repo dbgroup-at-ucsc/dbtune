@@ -67,7 +67,7 @@ public class WfitTestFunctional
         String ddlfilename = env.getScriptAtWorkloadsFolder("one_table/create.sql");
 
         outputdir.mkdirs();
-        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+		SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
         connection.getJdbcConnection().setAutoCommit(false);
     }
 
@@ -121,15 +121,15 @@ public class WfitTestFunctional
             if(q < 5) {
                 assertThat(configuration.cardinality(), is(0));
                 assertThat(configuration.isEmpty(), is(true));
-                assertThat(qinfo.getWhatIfCount()-whatIfCount, is(4));
+                assertThat(qinfo.getWhatIfCount()-whatIfCount+1, is(4));
             } else if(q == 5) {
                 assertThat(configuration.cardinality(), is(1));
                 assertThat(configuration.isEmpty(), is(false));
-                assertThat(qinfo.getWhatIfCount()-whatIfCount, is(4));
+                assertThat(qinfo.getWhatIfCount()-whatIfCount+1, is(4));
             } else if(q == 6) {
                 assertThat(configuration.cardinality(), is(0));
                 assertThat(configuration.isEmpty(), is(true));
-                assertThat(qinfo.getWhatIfCount()-whatIfCount, is(3));
+                assertThat(qinfo.getWhatIfCount()-whatIfCount+1, is(3));
             } else {
                 throw new SQLException("Workload should have 7 statements");
             }
