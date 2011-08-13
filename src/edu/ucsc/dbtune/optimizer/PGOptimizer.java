@@ -350,7 +350,7 @@ public class PGOptimizer extends Optimizer
     }
 
     @Override
-    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
+    public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
         Checks.checkSQLRelatedState(
                 null != dbConnection && dbConnection.isOpened(), "Connection is closed.");
         Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");

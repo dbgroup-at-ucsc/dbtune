@@ -23,7 +23,8 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
-import edu.ucsc.dbtune.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.metadata.SQLCategory;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Function;
@@ -269,10 +270,10 @@ public class DatabasePackageTest {
         pgCandidateSet.add(index1);
         pgCandidateSet.add(index2);
 
-        final ExplainInfo info = whatIfOptimizer.explain("SELECT * FROM R", pgCandidateSet);
+        final PreparedSQLStatement info = whatIfOptimizer.explain("SELECT * FROM R", pgCandidateSet);
 
         assertThat(info, notNullValue());
-        assertThat(info.isDML(), is(false));
+        assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.DML), is(false));
         assertThat(Double.compare(info.getIndexMaintenanceCost(index1), 0) == 0, is(true));
 
         final Column  col  = new Column(12345);

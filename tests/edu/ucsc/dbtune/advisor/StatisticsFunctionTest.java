@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.SQLCategory;
-import edu.ucsc.dbtune.optimizer.PGExplainInfo;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.After;
@@ -79,7 +79,7 @@ public class StatisticsFunctionTest {
         return new ProfiledQuery.Builder("SELECT * FROM R;")
                .snapshotOfCandidateSet(candidatePool.getSnapshot())
                .indexBenefitGraph(new IndexBenefitGraph(makeIBGNode(), 5.0, new IndexBitSet()))
-               .explainInfo(new PGExplainInfo(SQLCategory.DML, new double[]{5.0, 3.0, 7.0, 6.0}))
+               .explainInfo(new PreparedSQLStatement("select * from r", SQLCategory.DML, new double[]{5.0, 3.0, 7.0, 6.0}, -1.0))
                .interactionBank(makeInteractionBank())
                .indexBenefitGraphAnalysisTime(40000).get();
     }

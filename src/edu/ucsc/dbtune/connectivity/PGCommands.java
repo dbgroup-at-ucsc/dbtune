@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.optimizer.PGExplainInfo;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
@@ -33,7 +33,6 @@ import edu.ucsc.dbtune.util.Checks;
 import static edu.ucsc.dbtune.util.Checks.checkSQLRelatedState;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import static edu.ucsc.dbtune.util.Instances.newList;
-import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.Strings;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -45,16 +44,18 @@ import java.util.List;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class PGCommands {
+	private static String sqlStatement;
+
     private PGCommands(){}
 
     /**
-     * returns a command that will give you a {@link PGExplainInfo}.
+	 * returns a command that will give you a {@link PreparedSQLStatement}.
      * @return
-     *      a {@code Command<PGExplainInfo>} object.
+	 *      a {@code Command<PreparedSQLStatement>} object.
      */
-    public static Function<PGExplainInfo, SQLException> explainIndexes(){
+    public static Function<PreparedSQLStatement, SQLException> explainIndexes(){
         final Function<Parameter, SQLException> rs;
-        final Function<PGExplainInfo, SQLException> eidx;
+        final Function<PreparedSQLStatement, SQLException> eidx;
         rs     = sharedResultSetCommand();
         eidx   = explainInfo();
         return Functions.compose(rs, eidx);
@@ -251,13 +252,13 @@ public class PGCommands {
     /**
      * Returns a command that will explain indexes.
      * @return
-     *      a new {@code Command<PGExplainInfo>} object.
+	 *      a new {@code Command<PreparedSQLStatement>} object.
      */
-    private static Function<PGExplainInfo, SQLException> explainInfo(){
-        return new Function<PGExplainInfo, SQLException>(){
+    private static Function<PreparedSQLStatement, SQLException> explainInfo(){
+        return new Function<PreparedSQLStatement, SQLException>(){
 
             @Override
-            public PGExplainInfo apply(Parameter input) throws SQLException {
+            public PreparedSQLStatement apply(Parameter input) throws SQLException {
                 final ResultSet resultSet     = input.getParameterValue(ResultSet.class);
                 final Integer   cardinality   = input.getParameterValue(Integer.class);
                 SQLCategory     category      = null;
@@ -294,7 +295,8 @@ public class PGCommands {
                     }
                 }
 
-                return new PGExplainInfo(
+                return new PreparedSQLStatement(
+						sqlStatement,
                         category,
                         maintCost,
                         totalCost
@@ -333,6 +335,8 @@ public class PGCommands {
           final String explainSql = "EXPLAIN INDEXES " + indexListString(indexes, config) + sql;
           final ResultSet rs = statement.executeQuery(explainSql);
           checkSQLRelatedState(rs.next(), "no row returned from EXPLAIN INDEXES");
+
+		  PGCommands.sqlStatement = sql;
 
           return Parameters.makeAnonymousParameter(
                   rs,

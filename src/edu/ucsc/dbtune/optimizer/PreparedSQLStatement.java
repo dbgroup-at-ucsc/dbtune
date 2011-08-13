@@ -16,6 +16,8 @@
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -30,7 +32,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 public class PreparedSQLStatement
 {
     /** statement corresponding to this prepared statement, i.e. SQL statement that was prepared */
-    SQLStatement statement;
+    protected SQLStatement statement;
 
     /** configuration that was used to optimize the statement */
     protected Configuration configuration;
@@ -41,7 +43,9 @@ public class PreparedSQLStatement
     /** the optimized plan */
     protected SQLStatementPlan plan;
 
-    /**
+	private double[] updateCost; // deprecate when
+
+	/**
      * Constructs a {@code PreparedSQLStatement} given its corresponding statement and the cost 
      * assigned to it.
      *
@@ -60,6 +64,24 @@ public class PreparedSQLStatement
     }
 
 	/**
+     * construct a new {@code PGExplainInfo} object.
+	 *
+     * @param category
+     *      sql category.
+     * @param overhead
+     *      an array of incurred overheads.
+     * @param totalCost
+     *      total creation cost.
+     */
+	@Deprecated
+    public PreparedSQLStatement(String sql, SQLCategory category, double[] updateCost, double cost){
+		this.statement  = new SQLStatement(category,sql);
+		this.plan       = null;
+		this.updateCost = updateCost;
+		this.cost       = cost;
+    }
+
+	/**
 	 * Returns the cost of executing the statement.
 	 *
 	 * @return
@@ -68,5 +90,27 @@ public class PreparedSQLStatement
 	public double getCost()
 	{
 		return cost;
+	}
+
+	/**
+     * gets the maintenance cost of an index.
+     *
+     * @param index
+     *      a {@link edu.ucsc.dbtune.metadata.Index} object.
+     * @return
+     *      maintenance cost.
+     */
+	@Deprecated
+	public double getIndexMaintenanceCost(Index index) {
+        if(!SQLCategory.DML.isSame(statement.getSQLCategory())){
+            return 0;
+        }
+
+		return updateCost[index.getId()];
+	}
+
+	public SQLStatement getStatement()
+	{
+		return statement;
 	}
 }

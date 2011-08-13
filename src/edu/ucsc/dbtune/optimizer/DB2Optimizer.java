@@ -25,6 +25,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
 import java.sql.Connection;
+import java.util.Arrays;
 
 import static edu.ucsc.dbtune.connectivity.DB2Commands.*;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
@@ -51,13 +52,14 @@ public class DB2Optimizer extends Optimizer
 	}
 
     @Override
-    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
+    public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
         Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
         Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
 
         SQLCategory category     = null;
         Table       updatedTable = null;
         double      updateCost   = 0.0;
+		int         count        = 0;
 
         try {
             // a batch supplying of commands with no returned value.
@@ -70,6 +72,7 @@ public class DB2Optimizer extends Optimizer
                     submit(explainModeExplain(), connection)
             );
 
+			connection.createStatement().execute(sql);
             submit(explainModeNo(), connection);
             category = supplyValue(fetchExplainStatementType(), connection);
             if(SQLCategory.DML.isSame(category)){
@@ -87,7 +90,14 @@ public class DB2Optimizer extends Optimizer
             throw s;
         }
 
-        return new DB2ExplainInfo(category, updatedTable, updateCost);
+		for(Index idx : indexes) {
+			count++;
+		}
+
+        double[] updateCosts  = new double[count];
+		Arrays.fill(updateCosts, updateCost);
+
+        return new PreparedSQLStatement(sql, category, updateCosts, -1.0);
     }
 
     private static void error(String message, Throwable cause){

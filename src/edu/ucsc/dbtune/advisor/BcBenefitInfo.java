@@ -21,10 +21,8 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
@@ -75,6 +73,15 @@ public class BcBenefitInfo {
                                                                     IndexBitSet config,
                                                                     ProfiledQuery profiledQuery
     ) throws SQLException {
+        /*
+        // XXX:
+        // estimateCost(
+        //    String sql, IndexBitSet configuration, IndexBitSet used, Index profiledIndex)
+        // 
+        // this method throws a runtime exception in AbstractIBGWhatIfOptimizer
+        //
+        // so we're throwing it here 
+        
 		String sql = profiledQuery.getSQL();
 		double[] origCosts = new double[snapshot.maxInternalId()+1];
 		double[] newCosts = new double[snapshot.maxInternalId()+1];
@@ -92,7 +99,6 @@ public class BcBenefitInfo {
 			// get original cost
 			tempBitSet.clear(id);
             final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
-            /*
 			origCosts[id] = optimizer.estimateCost(sql, tempBitSet, Instances.newBitSet(), null);
 			
 			// get new cost
@@ -112,14 +118,6 @@ public class BcBenefitInfo {
 		
 		return new BcBenefitInfo(origCosts, newCosts, reqLevels, overheads, profiledQuery);
         */
-        }
-        // XXX:
-        // estimateCost(
-        //    String sql, IndexBitSet configuration, IndexBitSet used, Index profiledIndex)
-        // 
-        // this method throws a runtime exception in AbstractIBGWhatIfOptimizer
-        //
-        // so we're throwing it here 
         throw new RuntimeException("Not implemented yet");
 	}
 

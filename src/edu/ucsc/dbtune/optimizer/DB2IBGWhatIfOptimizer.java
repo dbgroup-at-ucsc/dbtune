@@ -61,7 +61,7 @@ public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
-    public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
+    public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
         fixCandidates(indexes);
         return delegate.explain(sql, indexes);
     }

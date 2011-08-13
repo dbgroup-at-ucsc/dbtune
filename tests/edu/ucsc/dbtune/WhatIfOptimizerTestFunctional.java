@@ -4,7 +4,8 @@ import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.metadata.SQLCategory;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
@@ -76,10 +77,10 @@ public class WhatIfOptimizerTestFunctional {
 
         System.out.println("Getting cost with candidates " + candidates);
 
-        final ExplainInfo info = optimizer.explain(query, candidates);
+        final PreparedSQLStatement info = optimizer.explain(query, candidates);
 
         assertThat(info, CoreMatchers.<Object>notNullValue());
-        assertThat(info.isQuery(), is(true));
+        assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
         for(Index each : candidates){
            assumeThat(info.getIndexMaintenanceCost(each) >= 0.0, is(true));
         }
@@ -98,7 +99,7 @@ public class WhatIfOptimizerTestFunctional {
 
             assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-            final ExplainInfo info = optimizer.explain(sql, candidates);
+            final PreparedSQLStatement info = optimizer.explain(sql, candidates);
             assertThat(info, CoreMatchers.<Object>notNullValue());
 
             for(Index each : candidates){

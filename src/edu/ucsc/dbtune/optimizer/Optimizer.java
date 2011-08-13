@@ -32,27 +32,26 @@ public abstract class Optimizer
      * @param sql
      *      SQL statement
      * @return
-     *      an {@link SQLStatementPlan} object describing the results of an optimization call.
+     *      an {@link PreparedSQLStatement} object describing the results of an optimization call.
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
     public abstract PreparedSQLStatement explain(String sql) throws SQLException;
 
 	/**
-     * estimate what-if optimization cost of a container (i.e., iterable container)
-     * of indexes.
+     * estimate what-if optimization plan of a statement using the given configuration.
      *
      * @param sql
      *     sql statement
      * @param indexes
-     *     iterable container of indexes.
+     *     configuration
      * @return
      *     an {@link ExplainInfo} object describing the results of a
      *     what-if optimization call.
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
-    public abstract ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException;
+    public abstract PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException;
 	
 	/**
      * gets the total count of what-if optimizations were handled/performed by the optimizer.

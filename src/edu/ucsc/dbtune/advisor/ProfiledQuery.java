@@ -22,7 +22,8 @@ import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.metadata.SQLCategory;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.satuning.spi.Supplier;
@@ -35,7 +36,7 @@ public class ProfiledQuery {
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
     private final String            sql;
-    private final ExplainInfo       explainInfo;
+    private final PreparedSQLStatement       explainInfo;
     private final Snapshot          candidateSet;
     private final IndexBenefitGraph ibg;
     private final InteractionBank   bank;
@@ -79,9 +80,9 @@ public class ProfiledQuery {
     }
 
     /**
-     * @return an {@link ExplainInfo} instance.
+	 * @return an {@link PreparedSQLStatement} instance.
      */
-    public ExplainInfo getExplainInfo(){
+    public PreparedSQLStatement getExplainInfo(){
         return explainInfo;
     }
 
@@ -130,7 +131,7 @@ public class ProfiledQuery {
      *      the maintenance cost of this {@code query}.
      */
     public double maintenanceCost(IndexBitSet configuration){
-        if(!explainInfo.isDML()){
+        if(!explainInfo.getStatement().getSQLCategory().isSame(SQLCategory.DML)){
             return 0;
         }
 
@@ -189,7 +190,7 @@ public class ProfiledQuery {
      */
     public static class Builder implements Supplier<ProfiledQuery> {
         private final String                sql;
-        private ExplainInfo explainInfo;
+        private PreparedSQLStatement explainInfo;
         private Snapshot candidateSet;
         private IndexBenefitGraph           ibg;
         private InteractionBank             bank;
@@ -200,7 +201,7 @@ public class ProfiledQuery {
             this.sql = sql;
         }
 
-        public Builder explainInfo(ExplainInfo value){
+        public Builder explainInfo(PreparedSQLStatement value){
             explainInfo = value;
             return this;
         }

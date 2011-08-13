@@ -10,7 +10,7 @@ import edu.ucsc.dbtune.ibg.InteractionLogger;
 import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
 import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Threads;
@@ -114,10 +114,10 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 		// get the current set of candidates
 		Snapshot           snapshot           = candidatePool.getSnapshot();
 		IBGWhatIfOptimizer ibgWhatIfOptimizer = connection.getIBGWhatIfOptimizer();
-		ExplainInfo        info;
+		PreparedSQLStatement        info;
 		try {
 			info = ibgWhatIfOptimizer.explain(sql, snapshot);
-            console.info("WorkloadProfilerImpl#processQuery(String) returned an ExplainInfo object=" + info) ;
+            console.info("WorkloadProfilerImpl#processQuery(String) returned an PreparedSQLStatement object=" + info) ;
 		} catch (SQLException e) {
 			console.error("SQLException caught while explaining command", e);
 			throw new Error(e);

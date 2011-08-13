@@ -22,7 +22,7 @@ import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainInfo;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -88,7 +88,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
         Iterable<Index> candSet = queryInfo.getCandidateSnapshot();
         for (Index index : candSet) {
             final InteractionBank bank          = queryInfo.getInteractionBank();
-            final ExplainInfo explainInfo   = queryInfo.getExplainInfo();
+            final PreparedSQLStatement explainInfo   = queryInfo.getExplainInfo();
 
             double bestBenefit = bank.bestBenefit(index.getId())
                                  - explainInfo.getIndexMaintenanceCost(index);
