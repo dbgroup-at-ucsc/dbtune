@@ -67,7 +67,7 @@ public class WfitTestFunctional
         String ddlfilename = env.getScriptAtWorkloadsFolder("one_table/create.sql");
 
         outputdir.mkdirs();
-		SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+		//SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
         connection.getJdbcConnection().setAutoCommit(false);
     }
 

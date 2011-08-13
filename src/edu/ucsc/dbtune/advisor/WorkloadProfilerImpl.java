@@ -99,8 +99,8 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 
 		if (onlineCandidates) {
 			try {
-                final CandidateIndexExtractor    extractor           = connection.getIndexExtractor();
-                final Iterable<Index> recommendedIndexes  = extractor.recommendIndexes(sql);
+                final CandidateIndexExtractor extractor          = connection.getIndexExtractor();
+                final Iterable<Index>         recommendedIndexes = extractor.recommendIndexes(sql);
 
                 for(Index each : recommendedIndexes){
                     candidatePool.addIndex(each);
@@ -125,9 +125,9 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 
 		// build the IBG
 		try {
-			InteractionLogger               logger      = new InteractionLogger(snapshot);
+			InteractionLogger            logger      = new InteractionLogger(snapshot);
 			IndexBenefitGraphConstructor ibgCons     = new IndexBenefitGraphConstructor(connection, sql, snapshot);
-			IBGAnalyzer                     ibgAnalyzer = new IBGAnalyzer(ibgCons);
+			IBGAnalyzer                  ibgAnalyzer = new IBGAnalyzer(ibgCons);
 
 //      ibgConstruction.startConstruction(ibgCons);
 //

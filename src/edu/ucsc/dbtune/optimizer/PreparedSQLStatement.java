@@ -21,8 +21,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * Represents a SQL statement that has been optimized. Each {@code SQLStatement} object is tied to a 
- * {@link Configuration} corresponding to the physical design considered by the optimizer to 
- * estimate the cost of the statement.
+ * {@link Configuration} corresponding to the physical design considered by the optimizer at the 
+ * time that the execution cost was estimated.
  *
  * @see    Optimizer
  * @author Ivo Jimenez
@@ -52,9 +52,21 @@ public class PreparedSQLStatement
      * @param configuration
      *      configuration used to optimize the statement.
      */
-    public PreparedSQLStatement(SQLStatement statement, double cost, Configuration configuration) {
-        this.statement     = statement;
+    public PreparedSQLStatement(SQLStatementPlan plan, double cost, Configuration configuration) {
+        this.statement     = plan.getStatement();
+		this.plan          = plan;
         this.cost          = cost;
         this.configuration = configuration;
     }
+
+	/**
+	 * Returns the cost of executing the statement.
+	 *
+	 * @return
+	 *      the execution cost of the statement.
+     */
+	public double getCost()
+	{
+		return cost;
+	}
 }

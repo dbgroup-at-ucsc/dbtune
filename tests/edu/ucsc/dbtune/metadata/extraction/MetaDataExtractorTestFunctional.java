@@ -86,7 +86,7 @@ public class MetaDataExtractorTestFunctional
         connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
         ddlfilename = environment.getScriptAtWorkloadsFolder("movies/create.sql");
 
-        SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+		//SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
 
         extractor = Strings.contains(environment.getJDBCDriver(), "postgresql")
                 ? new PGExtractor()

@@ -15,7 +15,6 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.metadata.Index;
 
 import java.sql.SQLException;
@@ -37,7 +36,7 @@ public abstract class Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public abstract SQLStatementPlan explain(String sql) throws SQLException;
+    public abstract PreparedSQLStatement explain(String sql) throws SQLException;
 
 	/**
      * estimate what-if optimization cost of a container (i.e., iterable container)

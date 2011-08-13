@@ -23,7 +23,6 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
-import edu.ucsc.dbtune.optimizer.AbstractIBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.ExplainInfo;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
@@ -48,7 +47,6 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-import static edu.ucsc.dbtune.DBTuneInstances.newDB2Index;
 import static edu.ucsc.dbtune.DBTuneInstances.newPGIndex;
 import static edu.ucsc.dbtune.JdbcMocks.makeResultSet;
 import static edu.ucsc.dbtune.util.Strings.str;

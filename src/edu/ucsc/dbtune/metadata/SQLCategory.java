@@ -37,7 +37,7 @@ public enum SQLCategory {
     /**
      * Any other type
      */
-    OTHER();
+    OTHER("O");
 
     /** codes corresponding to the category */
     private final List<String> code;

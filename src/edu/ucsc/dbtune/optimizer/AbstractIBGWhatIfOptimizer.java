@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -62,7 +61,7 @@ public abstract class AbstractIBGWhatIfOptimizer extends IBGWhatIfOptimizer {
     abstract double estimateCost(String sql, Iterable<Index> candidate, IndexBitSet configuration,IndexBitSet used);
 
     @Override
-    public SQLStatementPlan explain(String sql) throws SQLException {
+    public PreparedSQLStatement explain(String sql) throws SQLException {
         return delegate.explain(sql);
     }
 

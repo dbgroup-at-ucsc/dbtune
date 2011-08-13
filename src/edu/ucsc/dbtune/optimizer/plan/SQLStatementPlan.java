@@ -18,6 +18,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.Tree;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -29,18 +30,32 @@ public class SQLStatementPlan extends Tree<Operator> {
     /** to keep a register of inserted operators */
     private int globalId = 1;
 
+	/** the statement this plan corresponds to */
+	private SQLStatement sql;
+
     /**
      * Creates a SQL statement plan with one (given root) node.
      *
      * @param root
      *     root of the plan
      */
-    public SQLStatementPlan(Operator root) {
+    public SQLStatementPlan(SQLStatement sql, Operator root) {
         super(root);
 
+		this.sql = sql;
         elements.clear();
         root.setId(globalId++);
         elements.put(root,this.root);
+    }
+
+	/**
+	 * Returns the statement that this plan corresponds to.
+     *
+     * @return
+	 *     statement from which this plan was obtained
+     */
+    public SQLStatement getStatement() {
+        return sql;
     }
 
     /**

@@ -55,6 +55,12 @@ public class DB2IBGWhatIfOptimizer extends AbstractIBGWhatIfOptimizer {
     }
 
     @Override
+    double estimateCost(String sql, Iterable<Index> candidate, IndexBitSet configuration,IndexBitSet used)
+    {
+        return 0.0;
+    }
+
+    @Override
     public ExplainInfo explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
         fixCandidates(indexes);
         return delegate.explain(sql, indexes);

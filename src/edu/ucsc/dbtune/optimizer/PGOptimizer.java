@@ -20,6 +20,8 @@ import edu.ucsc.dbtune.connectivity.PGCommands;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.spi.core.Functions;
@@ -27,10 +29,12 @@ import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Strings;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.IOException;
+import java.io.BufferedReader;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -104,7 +108,7 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public SQLStatementPlan explain(String sql) throws SQLException {
+    public PreparedSQLStatement explain(String sql) throws SQLException {
         SQLStatementPlan plan = null;
         Statement        st   = connection.createStatement();
         ResultSet        rs   = st.executeQuery(explain + sql);
@@ -120,7 +124,7 @@ public class PGOptimizer extends Optimizer
         rs.close();
         st.close();
 
-        return plan;
+        return new PreparedSQLStatement(plan, -1.0, new Configuration("empty"));
     }
 
     /**
@@ -182,14 +186,28 @@ public class PGOptimizer extends Optimizer
         ObjectMapper     mapper;
         SQLStatementPlan plan;
         Operator         root;
+        BufferedReader   breader;
+        StringReader     sreader;
+        String           line;
+        String           sql;
 
-        mapper = new ObjectMapper();
+        // get the SQL since we need it to instantiate SQLStatement objects
+        breader = new BufferedReader(reader);
+        sql     = "";
+
+        while((line = breader.readLine()) != null) {
+            sql += line + "\n";
+        }
+
+        // then create a string reader to pass it down to the JSON mapper
+        sreader = new StringReader(sql);
+        mapper  = new ObjectMapper();
 
         @SuppressWarnings("unchecked")
-        List<Map<String,Object>> planData = mapper.readValue(reader, List.class);
+        List<Map<String,Object>> planData = mapper.readValue(sreader, List.class);
 
         if(planData == null) {
-            return new SQLStatementPlan(new Operator());
+            return new SQLStatementPlan(new SQLStatement(SQLCategory.OTHER, sql), new Operator());
         }
 
         if(planData.size() > 1) {
@@ -200,7 +218,7 @@ public class PGOptimizer extends Optimizer
         Map<String,Object> rootData = (Map<String,Object>) planData.get(0).get("Plan");
 
         root = extractNode(rootData, schema);
-        plan = new SQLStatementPlan(root);
+        plan = new SQLStatementPlan(new SQLStatement(SQLCategory.OTHER, sql), root);
 
         extractChildNodes(plan, root, rootData, schema);
 
@@ -225,7 +243,7 @@ public class PGOptimizer extends Optimizer
      *     when an error occurs during the parsing, eg. a data type conversion error occurs.
      * @see <a href="http://wiki.fasterxml.com/JacksonDocumentation">Jackson Documentation</a>
      */
-    private static void extractChildNodes(
+    protected static void extractChildNodes(
             SQLStatementPlan   plan,
             Operator           parent,
             Map<String,Object> parentData,

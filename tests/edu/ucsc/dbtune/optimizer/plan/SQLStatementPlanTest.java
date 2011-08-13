@@ -17,8 +17,10 @@ package edu.ucsc.dbtune.optimizer.plan;
 
 import org.junit.Test;
 
+import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -31,7 +33,7 @@ public class SQLStatementPlanTest {
     @Test
     public void testBasicUsage() {
         Operator         root = new Operator("Root",20.67,2);
-        SQLStatementPlan plan = new SQLStatementPlan(root);
+        SQLStatementPlan plan = new SQLStatementPlan(new SQLStatement(SQLCategory.QUERY, "select * from test"),root);
 
         assertThat(plan.size(), is(1));
 

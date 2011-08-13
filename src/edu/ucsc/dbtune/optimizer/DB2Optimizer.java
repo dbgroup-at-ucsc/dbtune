@@ -22,7 +22,6 @@ import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 
 import java.sql.SQLException;
 import java.sql.Connection;
@@ -46,7 +45,7 @@ public class DB2Optimizer extends Optimizer
     }
 
     @Override
-	public SQLStatementPlan explain(String sql) throws SQLException
+	public PreparedSQLStatement explain(String sql) throws SQLException
 	{
 		throw new SQLException("Not implemented yet");
 	}
