@@ -28,7 +28,7 @@ import java.sql.SQLException;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public abstract class IBGWhatIfOptimizer extends Optimizer {
+public abstract class IBGOptimizer extends Optimizer {
     /**
      * estimate what-if optimization cost given a single sql statement.
      * @param sql

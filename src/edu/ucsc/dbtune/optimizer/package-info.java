@@ -20,7 +20,7 @@
  * {@link edu.ucsc.dbtune.optimizer.Optimizer} as well as all its
  * implementors whatIfOptmize expression.
  * <p>
- * {@link edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer}. The object that DBTune uses to perform operations dealing with 
+ * {@link edu.ucsc.dbtune.optimizer.IBGOptimizer}. The object that DBTune uses to perform operations dealing with 
  * what-if optimizations.
  */
 @Generated(value={})

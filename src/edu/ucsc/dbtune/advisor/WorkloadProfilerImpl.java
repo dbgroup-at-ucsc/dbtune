@@ -11,7 +11,7 @@ import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
 import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Threads;
@@ -115,7 +115,7 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 
         // get the current set of candidates
         Snapshot           snapshot           = candidatePool.getSnapshot();
-        IBGWhatIfOptimizer ibgWhatIfOptimizer = connection.getIBGWhatIfOptimizer();
+        IBGOptimizer ibgWhatIfOptimizer = connection.getIBGWhatIfOptimizer();
         PreparedSQLStatement        info;
         try {
             info = ibgWhatIfOptimizer.explain(sql.getSQL(), snapshot);

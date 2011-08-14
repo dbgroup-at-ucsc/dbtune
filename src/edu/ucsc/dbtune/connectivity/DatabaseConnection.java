@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.connectivity;
 
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 
 /**
@@ -69,17 +69,17 @@ public interface DatabaseConnection extends DatabaseSession {
      * gets the instance of the IBG-specific what-if optmizer created for this connection.
      *
      * @return
-     *     the {@link IBGWhatIfOptimizer what-if optimizer} instance created for
+     *     the {@link IBGOptimizer what-if optimizer} instance created for
      *     this connection.
      * @throws NullPointerException
      *      it will throw a null pointer exception if the optimizer is null.
      *      this is a normal side effect when the connection was already closed.
      */
-    IBGWhatIfOptimizer getIBGWhatIfOptimizer();
+    IBGOptimizer getIBGWhatIfOptimizer();
 
     /**
      * loads a set of index tuning resources, such as new {@link CandidateIndexExtractor} strategy, a new
-     * {@link WhatIfOptimizer}, or a new {@link IBGWhatIfOptimizer} strategy after construction this {@code connection}
+     * {@link WhatIfOptimizer}, or a new {@link IBGOptimizer} strategy after construction this {@code connection}
      * object. Multiple calls of this method won't result in extra loading effort since these resources could be only
      * loaded the first time this connection was created.
      */

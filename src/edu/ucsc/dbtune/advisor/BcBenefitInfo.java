@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;

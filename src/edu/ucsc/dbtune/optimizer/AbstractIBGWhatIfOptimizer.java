@@ -25,12 +25,12 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.sql.SQLException;
 
 /**
- * This class provides a skeletal implementation of the {@link IBGWhatIfOptimizer}
+ * This class provides a skeletal implementation of the {@link IBGOptimizer}
  * interface to minimize the effort required to implement this interface.
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public abstract class AbstractIBGWhatIfOptimizer extends IBGWhatIfOptimizer {
+public abstract class AbstractIBGWhatIfOptimizer extends IBGOptimizer {
     protected final Optimizer delegate;
 
     /**

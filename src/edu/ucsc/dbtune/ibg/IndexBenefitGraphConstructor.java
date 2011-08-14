@@ -22,7 +22,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DefaultQueue;
@@ -94,7 +94,7 @@ public class IndexBenefitGraphConstructor {
         IndexBitSet rootConfig = this.candidateSet.bitSet();
         rootNode = new IBGNode(rootConfig, nodeCount++);
 
-        final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
+        final IBGOptimizer optimizer = conn.getIBGWhatIfOptimizer();
         emptyCost = optimizer.estimateCost(this.sql, Instances.newBitSet(), Instances.newBitSet());
 
         // initialize the queue
@@ -178,7 +178,7 @@ public class IndexBenefitGraphConstructor {
             totalCost = coveringNode.cost();
             coveringNode.addUsedIndexes(usedBitSet);
         } else {
-            final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
+            final IBGOptimizer optimizer = conn.getIBGWhatIfOptimizer();
             totalCost = optimizer.estimateCost(sql, newNode.config, usedBitSet);
         }
         

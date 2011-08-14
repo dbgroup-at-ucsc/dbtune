@@ -6,7 +6,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
@@ -92,7 +92,7 @@ public class WhatIfOptimizerTestFunctional {
         final SQLStatement            query      = new SQLStatement(SQLCategory.QUERY, "select count(*) from tbl where b > 3");
         final CandidateIndexExtractor extractor  = connection.getIndexExtractor();
         final Iterable<Index>         candidates = extractor.recommendIndexes(query);
-        final IBGWhatIfOptimizer      optimizer  = connection.getIBGWhatIfOptimizer();
+        final IBGOptimizer      optimizer  = connection.getIBGWhatIfOptimizer();
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 

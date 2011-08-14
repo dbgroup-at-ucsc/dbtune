@@ -17,7 +17,7 @@ package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class IndexBenefitGraphWhatIfOptimizerTest {
     @Test
     public void testWhatIfOptimizerForRandQuery() throws Exception {
         final DatabaseConnection connect = connectionManager.connect();
-        final IBGWhatIfOptimizer whatIf  = whatIfOptimizer(connect);
+        final IBGOptimizer whatIf  = whatIfOptimizer(connect);
         final double cost  = whatIf.estimateCost(basicQuery(), firstIndexesConfiguration(), usedSet());
         assertTrue(Double.compare(cost, 1.0) == 0);
     }
@@ -60,7 +60,7 @@ public class IndexBenefitGraphWhatIfOptimizerTest {
         return "SELECT R.salary, R.timeOffCount FROM R WHERE R.fullname = 'Bruce Wayne';";
     }
 
-    private static IBGWhatIfOptimizer whatIfOptimizer(DatabaseConnection connection){
+    private static IBGOptimizer whatIfOptimizer(DatabaseConnection connection){
         return connection.getIBGWhatIfOptimizer();
     }
        

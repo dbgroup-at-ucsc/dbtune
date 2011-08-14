@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
@@ -92,7 +92,7 @@ public class DatabasePackageTest {
     private static void checkWhatIfOptimizers(DatabaseConnection... connections){
         for(DatabaseConnection each : connections){
             final Optimizer          wio    = each.getOptimizer();
-            final IBGWhatIfOptimizer ibgWio = each.getIBGWhatIfOptimizer();
+            final IBGOptimizer ibgWio = each.getIBGWhatIfOptimizer();
             assertThat(wio, notNullValue());
             assertThat(ibgWio, notNullValue());
             assertThat(ibgWio.getWhatIfCount(), is(0));
@@ -139,7 +139,7 @@ public class DatabasePackageTest {
     }
 
     private static void checkWhatIfOptimizerViolation(DatabaseConnection connection) throws Exception {
-        final IBGWhatIfOptimizer ie = connection.getIBGWhatIfOptimizer();
+        final IBGOptimizer ie = connection.getIBGWhatIfOptimizer();
         connection.close();
         ie.explain("SELECT * FROM R;");
     }
@@ -159,7 +159,7 @@ public class DatabasePackageTest {
                                                     DatabaseConnection... connections) throws SQLException
     {
         for(DatabaseConnection each : connections){
-            final IBGWhatIfOptimizer ibgWhatIfOptimizer = each.getIBGWhatIfOptimizer();
+            final IBGOptimizer ibgWhatIfOptimizer = each.getIBGWhatIfOptimizer();
             final double cost = ibgWhatIfOptimizer.estimateCost("SELECT * FROM R;", configuration, usedSet);
             assertThat(Double.compare(cost, 1.0) == 0, is(true));
         }

@@ -29,7 +29,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.optimizer.DB2IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.OptimizerFactory;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
@@ -134,7 +134,7 @@ public class Platform {
 
     private static class DB2OptimizerFactory implements OptimizerFactory {
         @Override
-        public IBGWhatIfOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection) {
+        public IBGOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection) {
             return new DB2IBGWhatIfOptimizer(Checks.checkNotNull(connection));
         }
 
@@ -150,7 +150,7 @@ public class Platform {
 
     private static class PGOptimizerFactory implements OptimizerFactory {
         @Override
-        public IBGWhatIfOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection) {
+        public IBGOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection) {
             return new PostgresIBGWhatIfOptimizer(Checks.checkNotNull(connection));
         }
         @Override

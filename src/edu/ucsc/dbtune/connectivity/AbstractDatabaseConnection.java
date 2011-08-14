@@ -20,7 +20,7 @@ package edu.ucsc.dbtune.connectivity;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.util.Checks;
@@ -45,7 +45,7 @@ abstract class AbstractDatabaseConnection extends AbstractDatabaseSession
 implements DatabaseConnection {
     private final AtomicReference<ConnectionManager>  connectionManager;
     private final AtomicReference<CandidateIndexExtractor>     indexExtractor;
-    private final AtomicReference<IBGWhatIfOptimizer> ibgWhatIfOptimizer;
+    private final AtomicReference<IBGOptimizer> ibgWhatIfOptimizer;
     private Optimizer                           optimizer;
 
     private final AtomicBoolean once;
@@ -112,7 +112,7 @@ implements DatabaseConnection {
     }
 
     @Override
-    public IBGWhatIfOptimizer getIBGWhatIfOptimizer() {
+    public IBGOptimizer getIBGWhatIfOptimizer() {
         return Checks.checkNotNull(ibgWhatIfOptimizer.get());
     }
 

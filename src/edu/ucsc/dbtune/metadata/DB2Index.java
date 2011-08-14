@@ -19,12 +19,11 @@
 package edu.ucsc.dbtune.metadata;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.HashFunction;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Strings;
 
 import java.io.Serializable;
@@ -303,7 +302,7 @@ public class DB2Index extends Index {
             sbuf.append(')');
         }
 
-        public double creationCost(IBGWhatIfOptimizer whatIfOptimizer) throws SQLException{
+        public double creationCost(Optimizer optimizer) throws SQLException{
             int idx             = 0;
             int nSortedColumns;
             final StringBuilder sql = new StringBuilder(16 * (nSortedColumns = schema.descending.size()));
@@ -336,7 +335,7 @@ public class DB2Index extends Index {
                 idx++;
             }
 
-            return whatIfOptimizer.estimateCost(sql.toString(), Instances.newBitSet(), Instances.newBitSet());
+            return optimizer.explain(sql.toString()).getCost();
         }
         
         public double creationCost(DatabaseConnection conn) throws SQLException {
@@ -373,7 +372,7 @@ public class DB2Index extends Index {
         }
 
         private static double calculateTotalCost(DatabaseConnection connection, String sql) throws SQLException {
-            return connection.getIBGWhatIfOptimizer().estimateCost(sql, Instances.newBitSet(), Instances.newBitSet());
+            return connection.getOptimizer().explain(sql).getCost();
         }
         
         public static DB2IndexMetadata consDuplicate(DB2IndexMetadata original, int id) throws SQLException {

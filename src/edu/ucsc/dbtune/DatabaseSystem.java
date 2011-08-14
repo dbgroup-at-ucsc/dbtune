@@ -3,7 +3,7 @@ package edu.ucsc.dbtune;
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractorFactory;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.OptimizerFactory;
 import edu.ucsc.dbtune.util.Checks;
@@ -55,7 +55,7 @@ public enum DatabaseSystem {
      * @return
      *      an IBG-specific what-if optimizer.
      */
-    public IBGWhatIfOptimizer getIBGWhatIfOptimizer(DatabaseConnection connection){
+    public IBGOptimizer getIBGWhatIfOptimizer(DatabaseConnection connection){
         return of.newIBGWhatIfOptimizer(Checks.checkNotNull(connection));
     }
 
