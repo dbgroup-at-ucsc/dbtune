@@ -144,6 +144,7 @@ public class DB2Optimizer extends Optimizer
         }
 
         for(Index idx : indexes) {
+        	idx.getId();
             count++;
         }
 

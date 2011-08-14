@@ -19,7 +19,6 @@ package edu.ucsc.satuning.db.ibm;
 
 import edu.ucsc.satuning.db.AbstractDatabaseConnectionManager;
 import edu.ucsc.satuning.db.CostOfLevel;
-import edu.ucsc.satuning.db.DatabaseConnection;
 import edu.ucsc.satuning.db.DefaultDatabaseConnection;
 import edu.ucsc.satuning.spi.Command;
 import edu.ucsc.satuning.spi.Parameter;

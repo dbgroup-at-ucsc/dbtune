@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.advisor.AbstractCandidateIndexExtractor;
-import edu.ucsc.dbtune.advisor.DB2AdvisorCaller;
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractorFactory;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
@@ -28,7 +27,6 @@ import edu.ucsc.dbtune.connectivity.PGCommands;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
-import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.OptimizerFactory;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;

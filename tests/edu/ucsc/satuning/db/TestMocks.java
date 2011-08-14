@@ -18,13 +18,10 @@
 package edu.ucsc.satuning.db;
 
 import edu.ucsc.satuning.db.ibm.DB2Index;
-import edu.ucsc.satuning.db.ibm.DB2IndexColumn;
 import edu.ucsc.satuning.db.ibm.DB2IndexMetadata;
 import edu.ucsc.satuning.db.ibm.DB2IndexSchema;
-import edu.ucsc.satuning.db.ibm.QualifiedName;
 import edu.ucsc.satuning.db.pg.PGIndex;
 import edu.ucsc.satuning.db.pg.PGIndexSchema;
-import edu.ucsc.satuning.db.pg.PGTable;
 import edu.ucsc.satuning.util.Util;
 
 import java.io.InputStream;
@@ -62,8 +59,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static edu.ucsc.satuning.util.Util.newList;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)

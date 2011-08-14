@@ -19,7 +19,6 @@ package edu.ucsc.satuning.db;
 
 import edu.ucsc.satuning.workload.SQLStatement;
 import edu.ucsc.satuning.workload.SQLStatement.SQLCategory;
-import java.io.Serializable;
 
 /**
  * This class provides a skeletal implementation of the {@link ExplainInfo}

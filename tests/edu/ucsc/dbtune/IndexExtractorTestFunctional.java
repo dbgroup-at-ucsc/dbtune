@@ -6,7 +6,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Iterables;
-import edu.ucsc.dbtune.util.SQLScriptExecuter;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.hamcrest.CoreMatchers;

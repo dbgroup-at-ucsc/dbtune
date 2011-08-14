@@ -25,8 +25,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 
-import java.util.List;
-
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.sql.Statement;

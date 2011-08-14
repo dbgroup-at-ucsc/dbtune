@@ -65,7 +65,6 @@ public class IBGAnalyzerWorkspace {
      *
      *     | C - C_a - C_b + C_ab |
      */
-    @SuppressWarnings({"JavaDoc"})
     private static double interactionLevel(double empty, double a, double b, double ab) {
         return Math.abs(empty - a - b + ab);
     }

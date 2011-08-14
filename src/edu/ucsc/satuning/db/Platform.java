@@ -26,7 +26,6 @@ import edu.ucsc.satuning.db.ibm.QualifiedName;
 import edu.ucsc.satuning.db.pg.PGCommands;
 import edu.ucsc.satuning.db.pg.PGIndex;
 import edu.ucsc.satuning.db.pg.PGReifiedTypes.ReifiedPGIndexList;
-import edu.ucsc.satuning.spi.Supplier;
 import edu.ucsc.satuning.util.BitSet;
 import edu.ucsc.satuning.util.Debug;
 import edu.ucsc.satuning.util.Files;

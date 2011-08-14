@@ -23,8 +23,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.SQLScriptExecuter;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;

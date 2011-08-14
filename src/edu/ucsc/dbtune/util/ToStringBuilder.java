@@ -40,7 +40,7 @@ public class ToStringBuilder<T> {
         this(type.getSimpleName());
     }
 
-    public ToStringBuilder add(String name, Object value) {
+    public ToStringBuilder<T> add(String name, Object value) {
         if (map.put(name, value) != null) {
             throw new RuntimeException("Duplicate names: " + name);
         }

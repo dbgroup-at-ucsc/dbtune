@@ -72,7 +72,6 @@ Things that the current test doesn't check:
 ## 94:
 
  *  make sure that the DB2 version would "work"
- *  remove all "Supress" stuff
 
 # refs
 

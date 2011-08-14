@@ -21,7 +21,6 @@ package edu.ucsc.dbtune.util;
 import edu.ucsc.dbtune.metadata.Index;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.sql.SQLException;
@@ -91,7 +90,6 @@ public class IndexSet implements Iterable<Index>, Serializable {
     }
 
     // Renumber the indexes so they are sorted by their creation text 
-    @SuppressWarnings({"unchecked", "RedundantTypeArguments"})
     public void normalize() throws SQLException {
         Index[] array = new Index[list.size()];
         array = list.<Index>toArray(array);

@@ -31,7 +31,6 @@ import org.junit.Test;
 import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
 import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
 import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
-import static org.junit.Assert.assertTrue;
 
 
 /**

@@ -150,7 +150,6 @@ public class BcTuner {
                 .recommendedIndexes(currentRecommendation)
                 .profiledQuery(profiledQuery)
             .get();
-        @SuppressWarnings({"RedundantTypeArguments"})
         BcBenefitInfo qinfo = BcBenefitInfo.makeBcBenefitInfo(input);
         
         // update statistics

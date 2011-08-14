@@ -73,7 +73,6 @@ public class Objects {
      * @return
      *      E or cast object.
      */
-    @SuppressWarnings({"RedundantTypeArguments"})
     public static <T, E extends T> E cast(T me, Class<? extends E> to){
         return !to.isPrimitive() ? to.cast(me) : Objects.<E>as(me);
     }
@@ -83,7 +82,6 @@ public class Objects {
         return (T) obj;
     }
 
-    @SuppressWarnings({"unchecked"})
     public static <T> Class<T> discoverClass(T instance){
         return as(instance.getClass());
     }

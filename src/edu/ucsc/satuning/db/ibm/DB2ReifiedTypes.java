@@ -19,8 +19,6 @@ package edu.ucsc.satuning.db.ibm;
 
 import edu.ucsc.satuning.db.DBIndexSet;
 
-import java.util.ArrayList;
-
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */

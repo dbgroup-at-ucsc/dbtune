@@ -25,18 +25,13 @@ import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.util.SQLScriptExecuter;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.StringReader;
 import java.sql.Connection;
 
-import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Depends on the 'one_table' workload. Assumes that we're connecting to a PostgreSQL 9.0 system or 

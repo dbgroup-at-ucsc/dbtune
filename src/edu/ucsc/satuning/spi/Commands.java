@@ -18,8 +18,6 @@
 package edu.ucsc.satuning.spi;
 
 import java.io.Serializable;
-import java.sql.SQLException;
-
 import static edu.ucsc.satuning.spi.Parameters.makeAnonymousParameter;
 import static edu.ucsc.satuning.util.PreConditions.checkNotNull;
 

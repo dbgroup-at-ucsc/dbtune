@@ -58,7 +58,6 @@ public class Functions {
         return submit(command, Parameters.makeAnonymousParameter(o));
     }
 
-    @SuppressWarnings({"RedundantTypeArguments"})
     public static <R, E extends Exception> Supplier<R> submit(Function<R, E> command, Parameter first){
         final Supplier<Parameter> param = Suppliers.ofInstance(first);
         return Functions.<R, E>submit(command, param);
