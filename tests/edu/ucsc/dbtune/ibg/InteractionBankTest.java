@@ -17,14 +17,14 @@ import static org.junit.Assert.assertThat;
 public class InteractionBankTest {
     @Test
     public void testBenefitAssignment() throws Exception {
-        final InteractionBank      bank    = new InteractionBank(snapshotOfThree());
+        final InteractionBank      bank    = new InteractionBank(snapshotOfThree().maxInternalId());
         bank.assignBenefit(1, 56.7);
         assertThat(Double.compare(bank.bestBenefit(1), 56.7), equalTo(0));
     }
 
     @Test
     public void testInteractionAssignment() throws Exception {
-        final InteractionBank      bank    = new InteractionBank(snapshotOfThree());
+        final InteractionBank      bank    = new InteractionBank(snapshotOfThree().maxInternalId());
         bank.assignInteraction(1, 2, 65.7);
         assertThat(Double.compare(bank.interactionLevel(1, 2), 65.7), equalTo(0));
     }

@@ -78,7 +78,7 @@ public class DB2Index extends Index {
         this.setMeta(new DB2IndexMetadata(schema, id, indexName, indexOwner, indexExists, systemRequired, megabytes));
         this.id            = this.getMeta().internalId;
         this.size          = (long) this.getMeta().megabytes;
-        this.creationCost  = this.getMeta().creationCost(connection.getIBGWhatIfOptimizer());
+        this.creationCost  = this.getMeta().creationCost(connection.getOptimizer());
         hashCodeCache      = getMeta().hashCode();
     }
 

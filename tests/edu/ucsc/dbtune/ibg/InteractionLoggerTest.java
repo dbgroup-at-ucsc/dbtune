@@ -17,7 +17,7 @@ import static org.junit.Assert.assertThat;
 public class InteractionLoggerTest {
     @Test
     public void testBenefitAssignment() throws Exception {
-        final InteractionBank      bank    = new InteractionBank(snapshotOfThree());
+        final InteractionBank      bank    = new InteractionBank(snapshotOfThree().maxInternalId());
         final InteractionLogger    logger  = new InteractionLogger(bank);
         logger.assignBenefit(1, 56.7);
         assertThat(Double.compare(bank.bestBenefit(1), 56.7), equalTo(0));
@@ -25,7 +25,7 @@ public class InteractionLoggerTest {
 
     @Test
     public void testInteractionAssignment() throws Exception {
-        final InteractionBank      bank    = new InteractionBank(snapshotOfThree());
+        final InteractionBank      bank    = new InteractionBank(snapshotOfThree().maxInternalId());
         final InteractionLogger    logger  = new InteractionLogger(bank);
         logger.assignInteraction(1, 2, 65.7);
         assertThat(Double.compare(bank.interactionLevel(1, 2), 65.7), equalTo(0));

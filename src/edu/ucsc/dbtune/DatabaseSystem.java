@@ -56,7 +56,7 @@ public enum DatabaseSystem {
      *      an IBG-specific what-if optimizer.
      */
     public IBGOptimizer getIBGWhatIfOptimizer(DatabaseConnection connection){
-        return of.newIBGWhatIfOptimizer(Checks.checkNotNull(connection));
+        return of.newIBGOptimizer(Checks.checkNotNull(connection));
     }
 
     /**

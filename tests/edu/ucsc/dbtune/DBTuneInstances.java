@@ -73,7 +73,6 @@ public class DBTuneInstances {
         };
     }
 
-    @SuppressWarnings({"RedundantTypeArguments"})
     public static ConnectionManager newDB2DatabaseConnectionManager(){
         try {
             return DBTuneInstances.newDatabaseConnectionManager(newDB2Properties()
@@ -134,7 +133,6 @@ public class DBTuneInstances {
         return cols;
     }
 
-    @SuppressWarnings({"RedundantTypeArguments"})
     public static ConnectionManager newDatabaseConnectionManager(
             Properties props,
             JdbcConnectionFactory factory
@@ -142,7 +140,6 @@ public class DBTuneInstances {
         return JdbcConnectionManager.makeDatabaseConnectionManager(props, factory);
     }
 
-    @SuppressWarnings({"RedundantTypeArguments"})
     public static ConnectionManager newDatabaseConnectionManager(
             Properties props
     ) throws Exception {
@@ -222,7 +219,7 @@ public class DBTuneInstances {
             int q = 0;
             for (IBGPreparedSQLStatement qinfo : qinfos) {
                 IndexBitSet[] parts = qinfo.getInteractionBank().stablePartitioning(0);
-                for (Index index : qinfo.getCandidateSnapshot()) {
+                for (Index index : qinfo.getConfiguration()) {
                     int id = index.getId();
                     componentId[q][id] = -id;
                     for (int p = 0; p < parts.length; p++) {
@@ -293,7 +290,7 @@ public class DBTuneInstances {
     private static class TempDoiFunction implements DoiFunction {
         private InteractionBank bank;
         TempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Snapshot candidateSet) {
-            bank = new InteractionBank(candidateSet);
+            bank = new InteractionBank(candidateSet.maxInternalId());
             for (Index a : candidateSet) {
                 int id_a = a.getId();
                 for (Index b : candidateSet) {

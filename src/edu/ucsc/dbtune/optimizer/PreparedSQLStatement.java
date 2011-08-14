@@ -21,6 +21,9 @@ import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a SQL statement that has been optimized. Each {@code SQLStatement} object is tied to a 
  * {@link Configuration} corresponding to the physical design considered by the optimizer at the 
@@ -35,13 +38,17 @@ public class PreparedSQLStatement
     protected SQLStatement statement;
 
     /** configuration that was used to optimize the statement */
-    protected Configuration configuration;
+    protected Iterable<? extends Index> configuration;
+    // protected Configuration configuration;
 
     /** cost assigned by an {@link Optimizer} */
     protected double cost;
 
     /** the optimized plan */
     protected SQLStatementPlan plan;
+
+    /** a list of indexes that are used by the optimized plan */
+    protected List<Index> usedIndexes;
 
     private double[] updateCost; // deprecate when
 
@@ -56,11 +63,12 @@ public class PreparedSQLStatement
      * @param configuration
      *      configuration used to optimize the statement.
      */
-    public PreparedSQLStatement(SQLStatementPlan plan, double cost, Configuration configuration) {
+    public PreparedSQLStatement(SQLStatementPlan plan, double cost, Iterable<? extends Index> configuration) {
         this.statement     = plan.getStatement();
         this.plan          = plan;
         this.cost          = cost;
         this.configuration = configuration;
+        this.usedIndexes   = new ArrayList<Index>();
     }
 
     /**
@@ -73,8 +81,8 @@ public class PreparedSQLStatement
      * @param cost
      *      execution cost
      */
-    public PreparedSQLStatement(String sql, SQLCategory category, double cost) {
-        this(sql,category,cost,null);
+    public PreparedSQLStatement(String sql, SQLCategory category, double cost, Iterable<? extends Index> configuration) {
+        this(sql,category,cost,null,configuration);
     }
 
     /**
@@ -88,11 +96,13 @@ public class PreparedSQLStatement
      *      total creation cost.
      */
     @Deprecated
-    public PreparedSQLStatement(String sql, SQLCategory category, double cost, double[] updateCost) {
-        this.statement  = new SQLStatement(category,sql);
-        this.plan       = null;
-        this.updateCost = updateCost;
-        this.cost       = cost;
+    public PreparedSQLStatement(String sql, SQLCategory category, double cost, double[] updateCost, Iterable<? extends Index> configuration) {
+        this.statement     = new SQLStatement(category,sql);
+        this.plan          = null;
+        this.updateCost    = updateCost;
+        this.cost          = cost;
+        this.configuration = configuration;
+        this.usedIndexes   = new ArrayList<Index>();
     }
 
     /**
@@ -108,6 +118,7 @@ public class PreparedSQLStatement
         this.cost          = other.cost;
         this.configuration = other.configuration;
         this.updateCost    = other.updateCost;
+        this.usedIndexes   = other.usedIndexes;
     }
 
     /**
@@ -142,8 +153,49 @@ public class PreparedSQLStatement
         return updateCost[index.getId()];
     }
 
+    /**
+     * Returns the statement that corresponds to this.
+     *
+     * @return
+     *     the SQL statement from which this prepared statement was obtained from.
+     */
     public SQLStatement getStatement()
     {
         return statement;
+    }
+
+    /**
+     * Determines whether a given index is used by the corresponding execution plan.
+     *
+     * @param
+     *     an index
+     * @return
+     *     {@code true} if used; {@code false} otherwise.
+     */
+    public boolean isUsed(Index index)
+    {
+        return usedIndexes.contains(index);
+    }
+
+    /**
+     * Assigns the execution plan.
+     *
+     * @param plan
+     *     the plan
+     */
+    protected void setPlan(SQLStatementPlan plan)
+    {
+        this.plan = plan;
+    }
+
+    /**
+     * Assigns the execution plan.
+     *
+     * @param plan
+     *     the plan
+     */
+    public Iterable<? extends Index> getConfiguration()
+    {
+        return configuration;
     }
 }

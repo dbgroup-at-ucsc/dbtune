@@ -29,7 +29,8 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @author Huascar A. Sanchez
+ * @author Ivo Jimenez
  */
 public class IndexStatisticsFunction implements StatisticsFunction {
     private int indexStatisticsWindow;
@@ -86,8 +87,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
 
     @Override
     public void addQuery(IBGPreparedSQLStatement queryInfo, DynamicIndexSet matSet) {
-        Iterable<Index> candSet = queryInfo.getCandidateSnapshot();
-        for (Index index : candSet) {
+        for (Index index : queryInfo.getConfiguration()) {
             final InteractionBank bank = queryInfo.getInteractionBank();
 
             double bestBenefit = bank.bestBenefit(index.getId())
@@ -103,13 +103,13 @@ public class IndexStatisticsFunction implements StatisticsFunction {
             }
         }
 
-        calculateInteractionLevel(queryInfo, matSet, candSet);
+        calculateInteractionLevel(queryInfo, matSet, queryInfo.getConfiguration());
     }
 
     private void calculateInteractionLevel(
             IBGPreparedSQLStatement queryInfo,
             DynamicIndexSet matSet,
-            Iterable<Index> candSet
+            Iterable<? extends Index> candSet
     ) {
         // not the most efficient double loop, but an ok compromise for now
         for (Index a : candSet) {

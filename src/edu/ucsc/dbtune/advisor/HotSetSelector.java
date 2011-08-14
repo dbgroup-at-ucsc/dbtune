@@ -67,7 +67,7 @@ public class HotSetSelector {
         );
     }
 
-    static StaticIndexSet chooseHotSet(CandidatePool.Snapshot candSet,
+    static StaticIndexSet chooseHotSet(Iterable<? extends Index> candSet,
                                                                  StaticIndexSet oldHotSet,
                                                                  DynamicIndexSet requiredIndexSet,
                                                                  StatisticsFunction benefitFunc,
@@ -108,7 +108,7 @@ public class HotSetSelector {
         }
     }
     
-    static StaticIndexSet chooseHotSetGreedy(CandidatePool.Snapshot candSet,
+    static StaticIndexSet chooseHotSetGreedy(Iterable<? extends Index> candSet,
                                                                        StaticIndexSet oldHotSet,
                                                                        DynamicIndexSet requiredIndexSet,
                                                                        StatisticsFunction benefitFunc,

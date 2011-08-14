@@ -1,6 +1,22 @@
+/* **************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                         *
+ *                                                                              *
+ *   Licensed under the Apache License, Version 2.0 (the "License");            *
+ *   you may not use this file except in compliance with the License.           *
+ *   You may obtain a copy of the License at                                    *
+ *                                                                              *
+ *       http://www.apache.org/licenses/LICENSE-2.0                             *
+ *                                                                              *
+ *   Unless required by applicable law or agreed to in writing, software        *
+ *   distributed under the License is distributed on an "AS IS" BASIS,          *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+ *   See the License for the specific language governing permissions and        *
+ *   limitations under the License.                                             *
+ * **************************************************************************** */
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
@@ -9,6 +25,10 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * @author Huascar A. Sanchez
+ * @author Ivo Jimenez
+ */
 public class WFALog implements Serializable {
     private static final long serialVersionUID = 3L;
     
@@ -39,7 +59,13 @@ public class WFALog implements Serializable {
         e.nullCost = qinfo.getProfileInfo().getIndexBenefitGraph().emptyCost();
         e.partition = qinfo.getPartition();
         e.recommendation = recommendation;
-        e.numCandidates = qinfo.getProfileInfo().getCandidateSnapshot().maxInternalId() + 1;
+
+        int count = 0;
+        for(Index idx : qinfo.getProfileInfo().getConfiguration()) {
+            idx.getId();
+            count++;
+        }
+        e.numCandidates = count;
         e.numWhatif = qinfo.getProfileInfo().getWhatIfCount();
         e.logicOverhead = overhead + qinfo.getProfileInfo().getIBGAnalysisTime();
         list.add(e);
@@ -55,7 +81,13 @@ public class WFALog implements Serializable {
         e.nullCost = qinfo.getIndexBenefitGraph().emptyCost();
         e.partition = partition;
         e.recommendation = recommendation;
-        e.numCandidates = qinfo.getCandidateSnapshot().maxInternalId() + 1;
+
+        int count = 0;
+        for(Index idx : qinfo.getConfiguration()) {
+            idx.getId();
+            count++;
+        }
+        e.numCandidates = count;
         e.numWhatif = whatifCount;
         e.logicOverhead = overhead + qinfo.getIBGAnalysisTime();
         list.add(e);
@@ -262,7 +294,7 @@ public class WFALog implements Serializable {
             IndexBitSet prevState = q == 0 ? new IndexBitSet() : recs[q-1];
             double planCost = qinfo.getProfileInfo().planCost(state);
             double maintCost = qinfo.getProfileInfo().maintenanceCost(state);
-            double transitionCost = WorkFunctionAlgorithm.transitionCost(qinfo.getProfileInfo().getCandidateSnapshot(), prevState, state);
+            double transitionCost = WorkFunctionAlgorithm.transitionCost(qinfo.getProfileInfo().getConfiguration(), prevState, state);
             log.add(qinfo, state, planCost, maintCost, transitionCost, overheads[q]);
         }
         

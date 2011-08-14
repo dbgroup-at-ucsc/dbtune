@@ -15,7 +15,6 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
@@ -32,41 +31,35 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 public class IBGPreparedSQLStatement extends PreparedSQLStatement {
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
-    private final Snapshot          candidateSet;
-    private final IndexBenefitGraph ibg;
-    private final InteractionBank   bank;
-    private final int               whatIfCount;
-    private final double            ibgAnalysisTime;
+    private IndexBenefitGraph ibg;
+    private InteractionBank   bank;
+    private int               whatIfCount;
+    private double            ibgAnalysisTime;
 
     public IBGPreparedSQLStatement(
             PreparedSQLStatement preparedSQLStatement,
-            Snapshot             candidateSet,
             IndexBenefitGraph    ibg,
-            InteractionBank      bank,
-            int                  whatIfCount,
-            double               ibgAnalysisTime )
+            int                  whatIfCount)
     {
         super(preparedSQLStatement);
 
-        this.candidateSet    = candidateSet;
         this.ibg             = ibg;
-        this.bank            = bank;
+        this.bank            = ibg.getInteractionBank();
         this.whatIfCount     = whatIfCount;
-        this.ibgAnalysisTime = ibgAnalysisTime;
+        this.ibgAnalysisTime = ibg.getOverhead();
     }
 
     public IBGPreparedSQLStatement(
             String            sql,
             SQLCategory       sqlCategory,
-            Snapshot          candidateSet,
+            Iterable<? extends Index> configuration,
             IndexBenefitGraph ibg,
             InteractionBank   bank,
             int               whatIfCount,
             double            ibgAnalysisTime )
     {
-        super(sql, sqlCategory, 0.0);
+        super(sql, sqlCategory, 0.0, configuration);
 
-        this.candidateSet    = candidateSet;
         this.ibg             = ibg;
         this.bank            = bank;
         this.whatIfCount     = whatIfCount;
@@ -97,14 +90,6 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
      */
     static double findIGBCost(IndexBenefitGraph graph, IndexBitSet configuration){
         return NODE_FINDER.findCost(graph, configuration);
-    }
-
-    /**
-     * @return a {@link Snapshot snapshot} of
-     *      the candidate indexes. 
-     */
-    public Snapshot getCandidateSnapshot(){
-        return candidateSet;
     }
 
     /**
@@ -144,12 +129,14 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
      *      the maintenance cost of this {@code query}.
      */
     public double maintenanceCost(IndexBitSet configuration){
+        whatIfCount++;
+
         if(!getStatement().getSQLCategory().isSame(SQLCategory.DML)){
             return 0;
         }
 
         double maintenanceCost = 0;
-        for (Index eachIndex : candidateSet) {
+        for (Index eachIndex : getConfiguration()) {
             if (configuration.get(eachIndex.getId())) {
                 maintenanceCost += getIndexMaintenanceCost(eachIndex);
             }
@@ -166,6 +153,7 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
      *      the plan cost of this {@code query}.
      */
     public double planCost(IndexBitSet configuration){
+        whatIfCount++;
         return findIGBCost(ibg, configuration);
     }
 
@@ -189,7 +177,6 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
     @Override
     public String toString() {
         return new ToStringBuilder<IBGPreparedSQLStatement>(this)
-               .add("candidateSet", getCandidateSnapshot())
                .add("index benefit graph", getIndexBenefitGraph())
                .add("interaction bank", getInteractionBank())
                .add("whatIfCount", getWhatIfCount())

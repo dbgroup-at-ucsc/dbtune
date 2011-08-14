@@ -23,7 +23,6 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.SQLCategory;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
@@ -97,7 +96,7 @@ public class StatisticsFunctionTest {
         final CandidatePool candidatePool = new CandidatePool();
         candidatePool.addIndex(DBTuneInstances.newPGIndex(4567, 987123456));
         candidatePool.addIndex(DBTuneInstances.newPGIndex(7654, 4567932));
-        final InteractionBank bank = new InteractionBank(candidatePool.getSnapshot());
+        final InteractionBank bank = new InteractionBank(candidatePool.getSnapshot().maxInternalId());
         bank.assignInteraction(0, 1, 11.0);
         return bank;
     }

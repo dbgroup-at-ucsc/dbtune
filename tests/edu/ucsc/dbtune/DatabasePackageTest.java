@@ -28,9 +28,6 @@ import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
-import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Iterables;
-import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.junit.After;
@@ -38,6 +35,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -91,8 +89,8 @@ public class DatabasePackageTest {
 
     private static void checkWhatIfOptimizers(DatabaseConnection... connections){
         for(DatabaseConnection each : connections){
-            final Optimizer          wio    = each.getOptimizer();
-            final IBGOptimizer ibgWio = each.getIBGWhatIfOptimizer();
+            final Optimizer    wio    = each.getOptimizer();
+            final IBGOptimizer ibgWio = new IBGOptimizer(wio);
             assertThat(wio, notNullValue());
             assertThat(ibgWio, notNullValue());
             assertThat(ibgWio.getWhatIfCount(), is(0));
@@ -127,6 +125,7 @@ public class DatabasePackageTest {
     }
 
 
+    /*
     @Test(expected = SQLException.class)
     public void testBasicUsageScenario_UsingWhatIfOptimizerWithClosedConnection() throws Exception {
         try {
@@ -139,28 +138,24 @@ public class DatabasePackageTest {
     }
 
     private static void checkWhatIfOptimizerViolation(DatabaseConnection connection) throws Exception {
-        final IBGOptimizer ie = connection.getIBGWhatIfOptimizer();
+        final IBGOptimizer ie = new IBGOptimizer(connection.getOptimizer());
         connection.close();
         ie.explain("SELECT * FROM R;");
     }
+    */
 
     @Ignore @Test
     public void testBasicUsageScenario_IBGSpecific_EstimatedCost() throws Exception {
         // create connections
         // used empty configuration and usedSet bitsets
-        checkIBGWhatIfOptimizerCost(
-                new IndexBitSet(), new IndexBitSet(),
-                connectionManager.connect(), connectionManager2.connect()
-        );
+        checkIBGWhatIfOptimizerCost(connectionManager.connect(), connectionManager2.connect());
     }
 
-    private static void checkIBGWhatIfOptimizerCost(IndexBitSet configuration,
-                                                    IndexBitSet usedSet,
-                                                    DatabaseConnection... connections) throws SQLException
+    private static void checkIBGWhatIfOptimizerCost(DatabaseConnection... connections) throws SQLException
     {
         for(DatabaseConnection each : connections){
-            final IBGOptimizer ibgWhatIfOptimizer = each.getIBGWhatIfOptimizer();
-            final double cost = ibgWhatIfOptimizer.estimateCost("SELECT * FROM R;", configuration, usedSet);
+            final IBGOptimizer ibgWhatIfOptimizer = new IBGOptimizer(each.getOptimizer());
+            final double cost = ibgWhatIfOptimizer.explain("SELECT * FROM R;", new ArrayList<Index>()).getCost();
             assertThat(Double.compare(cost, 1.0) == 0, is(true));
         }
     }
@@ -204,6 +199,7 @@ public class DatabasePackageTest {
     }
 
 
+    /*
     @Test
     public void testRecommendIndexesFromSQLScenario() throws Exception {
         checkRecommendIndexesFromSQL(connectionManager.connect(), connectionManager2.connect());
@@ -215,6 +211,7 @@ public class DatabasePackageTest {
             assertThat(Iterables.count(found) == 3, is(true));
         }
     }
+    */
 
     @Test
     public void testDB2ConnectionAdjustment() throws Exception {

@@ -27,13 +27,11 @@ import edu.ucsc.dbtune.connectivity.JdbcConnection;
 import edu.ucsc.dbtune.connectivity.PGCommands;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
-import edu.ucsc.dbtune.optimizer.DB2IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.OptimizerFactory;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
-import edu.ucsc.dbtune.optimizer.PostgresIBGWhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Iterables;
@@ -59,10 +57,10 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
  */
 public class Platform {
     private static final Map<String, CandidateIndexExtractorFactory>  AVAILABLE_EXTRACTORS;
-    private static final Map<String, OptimizerFactory>       AVAILABLE_OPTIMIZERS;
+    private static final Map<String, OptimizerFactory>                AVAILABLE_OPTIMIZERS;
     static {
         Map<String, CandidateIndexExtractorFactory> driverToExtractor =
-                new HashMap<String, CandidateIndexExtractorFactory>(){
+                new HashMap<String, CandidateIndexExtractorFactory>() {
                     {
                         put("com.ibm.db2.jcc.DB2Driver", new DB2CandidateIndexExtractorFactory());
                         put("org.postgresql.Driver", new PGCandidateIndexExtractorFactory());
@@ -70,15 +68,15 @@ public class Platform {
                 };
 
         Map<String, OptimizerFactory> driverToOptimizer =
-                new HashMap<String, OptimizerFactory>(){
+                new HashMap<String, OptimizerFactory>() {
                     {
                         put("com.ibm.db2.jcc.DB2Driver", new DB2OptimizerFactory());
                         put("org.postgresql.Driver", new PGOptimizerFactory());
                     }
                 };
 
-        AVAILABLE_EXTRACTORS        = Collections.unmodifiableMap(driverToExtractor);
-        AVAILABLE_OPTIMIZERS        = Collections.unmodifiableMap(driverToOptimizer);
+        AVAILABLE_EXTRACTORS = Collections.unmodifiableMap(driverToExtractor);
+        AVAILABLE_OPTIMIZERS = Collections.unmodifiableMap(driverToOptimizer);
     }
 
     /**
@@ -132,27 +130,18 @@ public class Platform {
         }
     }
 
-    private static class DB2OptimizerFactory implements OptimizerFactory {
-        @Override
-        public IBGOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection) {
-            return new DB2IBGWhatIfOptimizer(Checks.checkNotNull(connection));
-        }
-
+    private static class DB2OptimizerFactory extends OptimizerFactory {
         @Override
         public Optimizer newOptimizer(DatabaseConnection connection) {
             try {
-                return new DB2Optimizer(connection.getJdbcConnection());
+                return new DB2Optimizer(connection);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
-    private static class PGOptimizerFactory implements OptimizerFactory {
-        @Override
-        public IBGOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection) {
-            return new PostgresIBGWhatIfOptimizer(Checks.checkNotNull(connection));
-        }
+    private static class PGOptimizerFactory extends OptimizerFactory {
         @Override
         public Optimizer newOptimizer(DatabaseConnection connection) {
             try {
@@ -167,17 +156,13 @@ public class Platform {
      *  A DB2-specific Database Index Extractor.
      */
     static class DB2CandidateIndexExtractor extends AbstractCandidateIndexExtractor {
-        private final String                        db2AdvisorPath;
-        private final DatabaseConnection            connection;
+        private final DatabaseConnection connection;
 
         DB2CandidateIndexExtractor(String db2AdvisorPath, DatabaseConnection connection){
             super();
-            this.db2AdvisorPath = db2AdvisorPath;
-            this.connection     = connection;
+            this.connection = connection;
         }
 
-
-        @SuppressWarnings({"RedundantTypeArguments"})
         @Override
         public void adjust(DatabaseConnection connection) {
             submit(

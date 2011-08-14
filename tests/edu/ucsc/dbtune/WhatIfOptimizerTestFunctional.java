@@ -23,7 +23,6 @@ import java.io.File;
 import java.util.Properties;
 
 import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
-import static edu.ucsc.dbtune.util.Instances.newBitSet;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
@@ -92,11 +91,11 @@ public class WhatIfOptimizerTestFunctional {
         final SQLStatement            query      = new SQLStatement(SQLCategory.QUERY, "select count(*) from tbl where b > 3");
         final CandidateIndexExtractor extractor  = connection.getIndexExtractor();
         final Iterable<Index>         candidates = extractor.recommendIndexes(query);
-        final IBGOptimizer      optimizer  = connection.getIBGWhatIfOptimizer();
+        final IBGOptimizer            optimizer  = new IBGOptimizer(connection.getOptimizer());
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        double cost = optimizer.estimateCost(query.getSQL(), newBitSet(), newBitSet());
+        double cost = optimizer.explain(query.getSQL()).getCost();
 
         assumeThat(cost >= 0, is(true));
     }

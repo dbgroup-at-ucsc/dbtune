@@ -322,7 +322,7 @@ public class WorkFunctionAlgorithm {
         return false;
     }
     
-    public static double transitionCost(Snapshot candidateSet, IndexBitSet x, IndexBitSet y) {
+    public static double transitionCost(Iterable<? extends Index> candidateSet, IndexBitSet x, IndexBitSet y) {
         double transition = 0;
         for (Index index : candidateSet) {
             int id = index.getId();

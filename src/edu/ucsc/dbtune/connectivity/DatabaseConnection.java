@@ -65,19 +65,7 @@ public interface DatabaseConnection extends DatabaseSession {
      */
     Optimizer getOptimizer();
 
-    /**
-     * gets the instance of the IBG-specific what-if optmizer created for this connection.
-     *
-     * @return
-     *     the {@link IBGOptimizer what-if optimizer} instance created for
-     *     this connection.
-     * @throws NullPointerException
-     *      it will throw a null pointer exception if the optimizer is null.
-     *      this is a normal side effect when the connection was already closed.
-     */
-    IBGOptimizer getIBGWhatIfOptimizer();
-
-    /**
+	/**
      * loads a set of index tuning resources, such as new {@link CandidateIndexExtractor} strategy, a new
      * {@link WhatIfOptimizer}, or a new {@link IBGOptimizer} strategy after construction this {@code connection}
      * object. Multiple calls of this method won't result in extra loading effort since these resources could be only

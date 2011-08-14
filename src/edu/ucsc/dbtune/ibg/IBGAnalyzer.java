@@ -143,7 +143,6 @@ public class IBGAnalyzer {
     // avoid excessive garbage collection. These structures are only used in
     // analyzeNode().
     //
-    // TODO: We might want to group these together in some object ("IBGAnalyzerWorkspace"?)
     private IndexBitSet candidatesBitSet = new IndexBitSet();
     private IndexBitSet usedBitSet = new IndexBitSet();
 

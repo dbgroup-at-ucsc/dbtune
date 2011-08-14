@@ -392,5 +392,4 @@ public class Strings {
         else
             return firstLine;
     }
-
 }

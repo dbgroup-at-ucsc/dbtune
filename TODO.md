@@ -42,12 +42,6 @@ Things that the current test doesn't check:
  *  in `DB2Index.DB2IndexSchema()`, the second constructor, fix the `SQLTypes.INT` that is used to initialize the type. It 
     should be correctly initialized
 
-## 71
-
- *  change Optimizer.explain so that it returns a SQLStatement object instead of a `SQLStatementPlan` one
- *  add method Optimizer.explain(sql, Configuration)
- *  move version check from constructor to `PGOptimizer.explain()`
-
 ## 72
 
  *  take a look at Querulous' [`ApachePoolingDatabase`][querulous_dbcp] class to get an idea on how to implement this
@@ -58,10 +52,6 @@ Things that the current test doesn't check:
     `DBIndex`, `DB2Index` and `PGIndex` is used (mainly `PGCommands` and `DB2Commands`)
  *  test stuff assumed in the CLI
  *  think of any other based on our intuition: how is metadata gonna be used besides the above?
-
-## 75
-
- *  rename `SQLStatementPlan` to just `Plan`.
 
 ## 91:
 
@@ -78,6 +68,11 @@ Things that the current test doesn't check:
 ## 92:
 
  *  create `DBSystem` that only implements the `newIndex()` method
+
+## 94:
+
+ *  make sure that the DB2 version would "work"
+ *  remove all "Supress" stuff
 
 # refs
 

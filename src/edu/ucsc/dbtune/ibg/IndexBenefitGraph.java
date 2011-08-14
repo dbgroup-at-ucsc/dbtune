@@ -37,6 +37,10 @@ public class IndexBenefitGraph implements Serializable {
     
     /* true if the index is used somewhere in the graph */
     private final IndexBitSet isUsed;
+
+    protected InteractionBank bank;
+    protected int maxId;
+    protected double overhead;
     
     /**
      * Creates an IBG which is in a state ready for building.
@@ -65,6 +69,36 @@ public class IndexBenefitGraph implements Serializable {
      */
     public final double emptyCost() {
         return emptyCost;
+    }
+
+    public InteractionBank getInteractionBank()
+    {
+        return bank;
+    }
+
+    public int maxId()
+    {
+        return maxId;
+    }
+
+    public void setInteractionBank(InteractionBank bank)
+    {
+        this.bank = bank;
+    }
+
+    public void setMaxId(int maxId)
+    {
+        this.maxId = maxId;
+    }
+
+    public void setOverhead(double overhead)
+    {
+        this.overhead = overhead;
+    }
+
+    public double getOverhead()
+    {
+        return overhead;
     }
 
     /**
@@ -132,7 +166,7 @@ public class IndexBenefitGraph implements Serializable {
          * @param config index configuration.
          * @param id node's id.
          */
-        IBGNode(IndexBitSet config, int id) {
+        public IBGNode(IndexBitSet config, int id) {
             this.config = config;
             this.id = id;
             this.cost = -1.0;
@@ -143,7 +177,7 @@ public class IndexBenefitGraph implements Serializable {
          * Check if it has children/cost yet
          * @return {@code true} if the cost is greater or equal than zero.
          */
-        protected final boolean isExpanded() { return cost >= 0; }
+        public final boolean isExpanded() { return cost >= 0; }
         
         /**
          * Set the cost and list of children (one for each used index).
@@ -152,7 +186,7 @@ public class IndexBenefitGraph implements Serializable {
          * @param firstChild
          *      first child node.
          */
-        protected final void expand(double cost, IBGChild firstChild) {
+        public final void expand(double cost, IBGChild firstChild) {
             assert(!isExpanded());
             assert(cost >= 0);
 
@@ -172,7 +206,7 @@ public class IndexBenefitGraph implements Serializable {
         /**
          * @return the head of the child list
          */
-        protected final IBGChild firstChild() {
+        public final IBGChild firstChild() {
             assert(isExpanded());
             return firstChild; 
         }
@@ -257,12 +291,12 @@ public class IndexBenefitGraph implements Serializable {
     /**
      *  Represents a child node in the Index Benefit Graph.
      */
-    protected static class IBGChild implements Serializable {
+    public static class IBGChild implements Serializable {
         private static final long serialVersionUID = 1L;
         
         final int usedIndex; // the internalID of the used index on this edge
         final IBGNode node;  // the actual child node
-        IBGChild next = null;
+        public IBGChild next = null;
 
         /**
          * construct a child node in the Index Benefit Graph.
@@ -270,20 +304,20 @@ public class IndexBenefitGraph implements Serializable {
          * @param usedIndex the id of the used index.
          */
         // next pointer is initially null
-        IBGChild(IBGNode node, int usedIndex) {
+        public IBGChild(IBGNode node, int usedIndex) {
             this.node       = node;
             this.usedIndex  = usedIndex;
         }
 
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IBGChild>(this)
-               .add("usedIndex", usedIndex)
-               .add("actual child node", node)
-               .add("next node", next)
-               .toString();
+        @Override
+        public String toString() {
+            return new ToStringBuilder<IBGChild>(this)
+                   .add("usedIndex", usedIndex)
+                   .add("actual child node", node)
+                   .add("next node", next)
+                   .toString();
+        }
+      }
     }
-  }
-}
 
 

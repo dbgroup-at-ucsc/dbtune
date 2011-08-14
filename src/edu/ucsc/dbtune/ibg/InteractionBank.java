@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.util.UnionFind;
@@ -38,8 +37,8 @@ public class InteractionBank implements Serializable {
      * @param candidateSet
      *      an immutable snapshot of the set of candidate indexes.
      */
-    public InteractionBank(Snapshot candidateSet) {
-        indexCount = candidateSet.maxInternalId() + 1;
+    public InteractionBank(int maxId) {
+        indexCount = maxId + 1;
         bestBenefit = new double[indexCount];
         lowerBounds = new double[indexCount][];
         for (int i = 0; i < indexCount; i++)

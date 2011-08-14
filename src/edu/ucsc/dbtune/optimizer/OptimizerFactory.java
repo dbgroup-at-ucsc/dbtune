@@ -20,7 +20,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 /**
  * Creates optimizers
  */
-public interface OptimizerFactory
+public abstract class OptimizerFactory
 {
     /**
      * creates a new {@link Optimizer} object.
@@ -30,14 +30,18 @@ public interface OptimizerFactory
      * @return
      *      a generic optimizer
      */
-    Optimizer newOptimizer(DatabaseConnection connection);
+    public abstract Optimizer newOptimizer(DatabaseConnection connection);
 
     /**
      * makes a new {@link IBGOptimizer} object.
+	 *
      * @param connection
      *      the {@link edu.ucsc.dbtune.connectivity.DatabaseConnection} that gets this {@code optimizer} assigned to.
      * @return
      *      a IBG-specific what-if optimizer.
      */
-    IBGOptimizer newIBGWhatIfOptimizer(DatabaseConnection connection);
+    public IBGOptimizer newIBGOptimizer(DatabaseConnection connection)
+	{
+		return new IBGOptimizer(connection.getOptimizer());
+	}
 }

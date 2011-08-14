@@ -101,6 +101,30 @@ public class Instances {
     }
 
     /**
+     * returns a list containing indexes (from {@code indexes}) that are turned on in the given 
+     * {@code bitSet}.
+     */
+    public static List<Index> newIndexList(Iterable<? extends Index> indexes, IndexBitSet bitSet){
+        List<Index> list = new ArrayList<Index>();
+
+        for(Index idx : indexes){
+            if(bitSet.get(idx.getId())) {
+                list.add(idx);
+            }
+        }
+        return list;
+    }
+
+    public static List<Index> newIndexList(Iterable<? extends Index> indexes){
+        List<Index> list = new ArrayList<Index>();
+
+        for(Index idx : indexes){
+            list.add(idx);
+        }
+        return list;
+    }
+
+    /**
      * Convenience method that creates a {@code List} object. One
      * use of this function is for saving on typing, and also to ensure
      * that typesafe Lists are created.

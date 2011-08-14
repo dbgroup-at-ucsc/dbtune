@@ -17,7 +17,6 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.Checks;
@@ -27,7 +26,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class HotsetSelection {
-    private final CandidatePool.Snapshot candSet;
+    private final Iterable<? extends Index> candSet;
     private final StaticIndexSet         oldHotSet;
     private final DynamicIndexSet        requiredIndexSet;
     private final StatisticsFunction     benefitFunc;
@@ -53,7 +52,7 @@ public class HotsetSelection {
      * Construct a {@code selection variable} which will be utilized by {@link HotSetSelector}.
      */
     public HotsetSelection(
-        CandidatePool.Snapshot candSet,
+        Iterable<? extends Index> candSet,
         StaticIndexSet         oldHotSet,
         DynamicIndexSet        requiredIndexSet,
         StatisticsFunction     benefitFunc,
@@ -69,7 +68,7 @@ public class HotsetSelection {
     }
 
 
-    public CandidatePool.Snapshot getCandidateSet(){
+    public Iterable<? extends Index> getCandidateSet(){
         return Checks.checkNotNull(candSet);
     }
 
@@ -113,7 +112,7 @@ public class HotsetSelection {
      *      the {@link Index index type}.
      */
     public static class StrictBuilder implements Supplier<HotsetSelection> {
-        private CandidatePool.Snapshot candSet;
+        private Iterable<? extends Index> candSet;
         private StaticIndexSet         oldHotSet;
         private DynamicIndexSet        requiredIndexSet;
         private StatisticsFunction     benefitFunc;
@@ -124,7 +123,7 @@ public class HotsetSelection {
             this.debugOutput = debugOutput;
         }
 
-        public StrictBuilder candidateSet(CandidatePool.Snapshot snapshot){
+        public StrictBuilder candidateSet(Iterable<? extends Index> snapshot){
             candSet = Checks.checkNotNull(snapshot);
             return this;
         }

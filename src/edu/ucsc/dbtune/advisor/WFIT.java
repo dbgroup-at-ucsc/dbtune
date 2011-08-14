@@ -16,11 +16,10 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.ibg.CandidatePool;
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -34,39 +33,48 @@ import java.sql.SQLException;
  */
 public class WFIT extends Advisor
 {
-    List<IBGPreparedSQLStatement>        qinfos;
-    List<Double>               overheads;
-    List<IndexBitSet>          configurations;
-    WorkloadProfiler           profiler;
-    Snapshot                   snapshot;
-    IndexPartitions       partitions;
-    WorkFunctionAlgorithm wfa;
+    List<IBGPreparedSQLStatement> qinfos;
+    List<Double>                  overheads;
+    List<IndexBitSet>             configurations;
+    Iterable<? extends Index>     indexes;
+    IndexPartitions               partitions;
+    WorkFunctionAlgorithm         wfa;
+    IBGOptimizer                  ibgOptimizer;
 
     int maxNumIndexes;
     int maxNumStates;
     int windowSize;
     int partitionIterations;
+    int maxId;
 
     /**
      */
     public WFIT(
             DatabaseConnection con,
-            CandidatePool pool,
+            Iterable<? extends Index> configuration,
             int maxNumIndexes,
             int maxNumStates,
             int windowSize,
             int partitionIterations)
     {
-        this.snapshot            = pool.getSnapshot();
+        this.indexes             = configuration;
         this.maxNumIndexes       = maxNumIndexes;
         this.maxNumStates        = maxNumStates;
         this.windowSize          = windowSize;
         this.partitionIterations = partitionIterations;
-        this.profiler            = new WorkloadProfilerImpl(con, pool, false);
+        this.ibgOptimizer        = new IBGOptimizer(con.getOptimizer());
         this.qinfos              = new ArrayList<IBGPreparedSQLStatement>();
         this.wfa                 = new WorkFunctionAlgorithm(partitions, false);
         this.overheads           = new ArrayList<Double>();
         this.configurations      = new ArrayList<IndexBitSet>();
+        this.maxId               = 0;
+
+        for(Index idx : indexes) {
+            if(idx.getId() > maxId) {
+                maxId = idx.getId();
+            }
+        }
+
     }
 
     /**
@@ -81,15 +89,15 @@ public class WFIT extends Advisor
     public void process(SQLStatement sql) throws SQLException
     {
         IBGPreparedSQLStatement qinfo;
-        IndexBitSet configuration;
+        IndexBitSet             configuration;
 
-        qinfo = profiler.processQuery(sql);
+        qinfo = (IBGPreparedSQLStatement) ibgOptimizer.explain(sql.getSQL(),indexes);
 
         qinfos.add(qinfo);
 
         partitions =
             getIndexPartitions(
-                snapshot, qinfos, maxNumIndexes, maxNumStates, windowSize, partitionIterations);
+                indexes, qinfos, maxId, maxNumIndexes, maxNumStates, windowSize, partitionIterations);
 
         wfa.repartition(partitions);
         wfa.newTask(qinfo);
@@ -130,20 +138,21 @@ public class WFIT extends Advisor
     }
 
   private IndexPartitions getIndexPartitions(
-            Snapshot            candidateSet,
+            Iterable<? extends Index>     candidateSet,
             List<IBGPreparedSQLStatement> qinfos, 
+            int                 maxId,
             int                 maxNumIndexes,
             int                 maxNumStates,
             int                 windowSize,
             int                 partitionIterations )
     {
         // get the hot set
-        StaticIndexSet hotSet = getHotSet(candidateSet, qinfos, maxNumIndexes, windowSize);
+        StaticIndexSet hotSet = getHotSet(candidateSet, qinfos, maxId, maxNumIndexes, windowSize);
 
         InteractionSelection is;
 
         StatisticsFunction doiFunc =
-            new TempDoiFunction(qinfos, candidateSet, windowSize);
+            new TempDoiFunction(qinfos, candidateSet, maxId, windowSize);
 
         is = 
             new InteractionSelection(
@@ -159,8 +168,9 @@ public class WFIT extends Advisor
     }
 
     private StaticIndexSet getHotSet(
-            Snapshot            candidateSet,
+            Iterable<? extends Index>            candidateSet,
             List<IBGPreparedSQLStatement> qinfos,
+            int                 maxId,
             int                 maxNumIndexes,
             int                 windowSize)
     {
@@ -170,7 +180,7 @@ public class WFIT extends Advisor
         benefitFunc =
             new TempBenefitFunction(
                     qinfos,
-                    candidateSet.maxInternalId(),
+                    maxId,
                     windowSize);
 
         hs =
@@ -193,12 +203,13 @@ public class WFIT extends Advisor
 
         TempDoiFunction(
                 List<IBGPreparedSQLStatement> qinfos,
-                Snapshot candidateSet,
+                Iterable<? extends Index> candidateSet,
+                int maxId,
                 int indexStatisticsWindow )
         {
             super(indexStatisticsWindow);
 
-            bank = new InteractionBank(candidateSet);
+            bank = new InteractionBank(maxId);
 
             for (Index a : candidateSet) {
                 int id_a = a.getId();
@@ -255,7 +266,7 @@ public class WFIT extends Advisor
             int q = 0;
             for (IBGPreparedSQLStatement qinfo : qinfos) {
                 IndexBitSet[] parts = qinfo.getBank().stablePartitioning(0);
-                for (Index index : qinfo.getCandidateSnapshot()) {
+                for (Index index : qinfo.getConfiguration()) {
                     int id = index.getId();
                     componentId[q][id] = -id;
                     for (int p = 0; p < parts.length; p++) {

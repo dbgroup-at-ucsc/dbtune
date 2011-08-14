@@ -19,10 +19,10 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.optimizer.IBGOptimizer;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DefaultQueue;
@@ -34,10 +34,10 @@ public class IndexBenefitGraphConstructor {
     /* 
      * Parameters of the construction.
      */
-    protected final DatabaseConnection  conn;
-    protected final String              sql;
-    protected final Snapshot         candidateSet;
-    
+    protected final String    sql;
+    protected final Iterable<? extends Index>  candidateSet;
+    protected final Optimizer optimizer;
+
     /*
      * The primary information stored by the graph
      * 
@@ -46,26 +46,26 @@ public class IndexBenefitGraphConstructor {
      */
     private final IBGNode rootNode;
     private double emptyCost;
-    
+
     /* The queue of pending nodes to expand */
     DefaultQueue<IBGNode> queue = new DefaultQueue<IBGNode>();
-    
+
     /* A monitor for waiting on a node expansion */
     private final Object nodeExpansionMonitor = new Object();
 
     /* An object that allows for covering node searches */
     private final IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
-    
+
     /* true if the index is used somewhere in the graph */
     private final IndexBitSet isUsed = new IndexBitSet();
-    
+
     /* Counter for assigning unique node IDs */
     private int nodeCount = 0;
 
     /* Temporary bit sets allocated once to allow reuse... only used in BuildNode */ 
     private final IndexBitSet usedBitSet  = new IndexBitSet();
     private final IndexBitSet childBitSet = new IndexBitSet();
-    
+
     /**
      * Creates an IBG which is in a state ready for building.
      * Specifically, the rootNode is physically constructed, but it is not
@@ -84,18 +84,18 @@ public class IndexBenefitGraphConstructor {
      * @throws java.sql.SQLException
      *      an unexpected error has occurred.
      */
-    public IndexBenefitGraphConstructor(DatabaseConnection conn, String sql, Snapshot candidateSet)
-    throws SQLException {
-        this.conn = conn;
-        this.sql = sql;
+    public IndexBenefitGraphConstructor(Optimizer optimizer, String sql, Iterable<? extends Index> candidateSet)
+        throws SQLException
+    {
+        this.optimizer    = optimizer;
+        this.sql          = sql;
         this.candidateSet = candidateSet;
 
         // set up the root node, and initialize the queue
-        IndexBitSet rootConfig = this.candidateSet.bitSet();
+        IndexBitSet rootConfig = Instances.newBitSet(candidateSet);
         rootNode = new IBGNode(rootConfig, nodeCount++);
 
-        final IBGOptimizer optimizer = conn.getIBGWhatIfOptimizer();
-        emptyCost = optimizer.estimateCost(this.sql, Instances.newBitSet(), Instances.newBitSet());
+        emptyCost = optimizer.explain(this.sql).getCost();
 
         // initialize the queue
         queue.add(rootNode);
@@ -132,13 +132,6 @@ public class IndexBenefitGraphConstructor {
     }
 
     /**
-     * @return a {@link Snapshot} of the set of candidate indexes.
-     */
-    public final Snapshot candidateSet() {
-        return candidateSet;
-    }
-
-    /**
      * Wait for a specific node to be expanded
      * @param node
      *      a node to be expanded.
@@ -153,7 +146,7 @@ public class IndexBenefitGraphConstructor {
                 }
         }
     }
-    
+
     /**
      * Expands one node of the IBG. Returns true if a node was expanded, or false if there are no unexpanded nodes.
      * This function is not safe to be called from more than one thread.
@@ -168,9 +161,9 @@ public class IndexBenefitGraphConstructor {
         if (queue.isEmpty()) {
             return false;
         }
-        
+
         newNode = queue.remove();
-        
+
         // get cost and used set (stored into usedBitSet)
         usedBitSet.clear();
         coveringNode = coveringNodeFinder.find(rootNode, newNode.config);
@@ -178,10 +171,11 @@ public class IndexBenefitGraphConstructor {
             totalCost = coveringNode.cost();
             coveringNode.addUsedIndexes(usedBitSet);
         } else {
-            final IBGOptimizer optimizer = conn.getIBGWhatIfOptimizer();
-            totalCost = optimizer.estimateCost(sql, newNode.config, usedBitSet);
+            totalCost =
+                optimizer.explain(
+                    sql, Instances.newIndexList(candidateSet, newNode.config)).getCost();
         }
-        
+
         // create the child list
         // if any IBGNode did not exist yet, add it to the queue
         // We make sure to keep the child list in the same order as the nodeQueue, so that
@@ -199,7 +193,7 @@ public class IndexBenefitGraphConstructor {
                 queue.add(childNode);
             }
             childBitSet.set(u);
-            
+
             IBGChild child = new IBGChild(childNode, u);
             if (firstChild == null) {
                 firstChild = lastChild = child;
@@ -208,7 +202,7 @@ public class IndexBenefitGraphConstructor {
                 lastChild = child;
             }
         }
-        
+
         // Expand the node and notify waiting threads
         synchronized (nodeExpansionMonitor) {
             Console.streaming().info(String.format("newNode's cost(%s) and first child(%s)", totalCost, firstChild));
@@ -218,7 +212,7 @@ public class IndexBenefitGraphConstructor {
 
         return !queue.isEmpty();
     }
-    
+
     /**
      * Auxiliary method for buildNodes which will find a built node or return null
      * if not found.
@@ -253,6 +247,46 @@ public class IndexBenefitGraphConstructor {
     public IndexBenefitGraph getIBG() {
         return new IndexBenefitGraph(rootNode, emptyCost, isUsed);
     }
+
+    /**
+     */
+    public static IndexBenefitGraph construct(Optimizer optimizer, String sql, Iterable<? extends Index> indexes, int maxId)
+        throws SQLException
+    {
+        InteractionLogger            logger      = new InteractionLogger(maxId);
+        IndexBenefitGraphConstructor ibgCons     = new IndexBenefitGraphConstructor(optimizer, sql, indexes);
+        IBGAnalyzer                  ibgAnalyzer = new IBGAnalyzer(ibgCons);
+
+        long nStart = System.nanoTime();
+
+        boolean success;
+
+        do {
+            success = ibgCons.buildNode();
+        } while (success);
+
+        boolean done = false;
+
+        while (!done) {
+            switch (ibgAnalyzer.analysisStep(logger, true)) {
+                case SUCCESS:
+                    break;
+                case DONE:
+                case BLOCKED:
+                default:
+                    done = true;
+                    break;
+            }
+        }
+
+        long nStop = System.nanoTime();
+
+        IndexBenefitGraph ibg = ibgCons.getIBG();
+
+        ibg.setMaxId(maxId);
+        ibg.setInteractionBank(logger.getInteractionBank());
+        ibg.setOverhead(nStart - nStop / 1000000.0);
+
+        return ibg;
+    }
 }
-
-

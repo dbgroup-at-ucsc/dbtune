@@ -24,16 +24,18 @@ import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 
 /**
  * Functional test for the WFIT use case.
@@ -68,7 +70,7 @@ public class WfitTestFunctional
 
         outputdir.mkdirs();
         //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
-        connection.getJdbcConnection().setAutoCommit(false);
+        //connection.getJdbcConnection().setAutoCommit(false);
     }
 
     /**
@@ -90,8 +92,8 @@ public class WfitTestFunctional
         int         maxNumStates;
         int         windowSize;
         int         partIterations;
-        int         whatIfCount;
         int         q;
+        int         count;
 
         workloadFile   = env.getScriptAtWorkloadsFolder("one_table/workload.sql");
         maxNumIndexes  = env.getMaxNumIndexes();
@@ -101,10 +103,9 @@ public class WfitTestFunctional
         pool           = getCandidates(connection, workloadFile);
         fileReader     = new FileReader(workloadFile);
         workload       = new Workload(fileReader);
-        whatIfCount    = 0;
         q              = 0;
 
-        wfit = new WFIT(connection, pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
+        wfit = new WFIT(connection, pool.getSnapshot(), maxNumStates, maxNumIndexes, windowSize, partIterations);
 
         for (SQLStatement sql : workload) {
             wfit.process(sql);
@@ -114,27 +115,30 @@ public class WfitTestFunctional
             configuration = wfit.getRecommendation();
 
             qinfo = wfit.getProfiledQuery(q);
-            System.out.println("Q"+q+": "+qinfo.getStatement()+":"+qinfo);
+            count = 0;
 
-            assertThat(qinfo.getCandidateSnapshot().maxInternalId()+1, is(1));
+            for(Index idx : qinfo.getConfiguration()) {
+                count++;
+            }
+
+            assertThat(count, is(1));
 
             if(q < 5) {
                 assertThat(configuration.cardinality(), is(0));
                 assertThat(configuration.isEmpty(), is(true));
-                assertThat(qinfo.getWhatIfCount()-whatIfCount+1, is(4));
+                assertThat(qinfo.getWhatIfCount(), is(4));
             } else if(q == 5) {
                 assertThat(configuration.cardinality(), is(1));
                 assertThat(configuration.isEmpty(), is(false));
-                assertThat(qinfo.getWhatIfCount()-whatIfCount+1, is(4));
+                assertThat(qinfo.getWhatIfCount(), is(4));
             } else if(q == 6) {
                 assertThat(configuration.cardinality(), is(0));
                 assertThat(configuration.isEmpty(), is(true));
-                assertThat(qinfo.getWhatIfCount()-whatIfCount+1, is(3));
+                assertThat(qinfo.getWhatIfCount(), is(4));
             } else {
                 throw new SQLException("Workload should have 7 statements");
             }
 
-            whatIfCount = qinfo.getWhatIfCount();
             q++;
         }
     }

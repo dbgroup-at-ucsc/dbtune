@@ -16,19 +16,17 @@
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.connectivity.PGCommands;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
-import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
-import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.io.Reader;
@@ -55,11 +53,9 @@ import static edu.ucsc.dbtune.connectivity.PGCommands.getVersion;
  */
 public class PGOptimizer extends Optimizer
 {
-    private DatabaseConnection dbConnection;
-    private Connection         connection;
-    private String             explain;
-    private Schema             schema;
-    private IndexBitSet        indexSet;
+    private Connection connection;
+    private Schema     schema;
+    private boolean    obtainPlan;
 
     /**
      * Creates a new optimizer for PostgreSQL systems.
@@ -87,21 +83,14 @@ public class PGOptimizer extends Optimizer
 
         this.schema       = schema;
         this.connection   = connection;
-        this.explain      = "EXPLAIN (COSTS true, FORMAT json) ";
-        this.dbConnection = null;
+        this.obtainPlan   = true;
     }
 
     public PGOptimizer(DatabaseConnection connection)
     {
         this.schema       = null;
-        this.explain      = "EXPLAIN (COSTS true, FORMAT json) ";
+        this.obtainPlan   = false;
         this.connection   = connection.getJdbcConnection();
-        this.dbConnection = connection;
-        this.indexSet     = Instances.newBitSet();
-    }
-
-    protected DatabaseConnection getConnection() {
-        return dbConnection;
     }
 
     /**
@@ -109,22 +98,137 @@ public class PGOptimizer extends Optimizer
      */
     @Override
     public PreparedSQLStatement explain(String sql) throws SQLException {
-        SQLStatementPlan plan = null;
-        Statement        st   = connection.createStatement();
-        ResultSet        rs   = st.executeQuery(explain + sql);
+        return explain(sql, new ArrayList<Index>());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
+        List<Index> indexSet;
+        ResultSet   rs;
+        Statement   stmt;
+        SQLCategory category;
+        String      explainSql;
+        String      indexOverhead;
+        String[]    ohArray;
+        double[]    maintCost;
+        double      totalCost;
+
+        indexSet   = Instances.newIndexList(indexes);
+        explainSql = "EXPLAIN INDEXES " + indexListString(indexes) + sql;
+        stmt       = connection.createStatement();
+        rs         = stmt.executeQuery(explainSql);
+
+        if(!rs.next()) {
+            throw new SQLException("No result from EXPLAIN statement");
+        }
+
+        category      = SQLCategory.from(rs.getString("category"));
+        indexOverhead = rs.getString("index_overhead");
+        ohArray       = indexOverhead.split(" ");
+        maintCost     = new double[indexSet.size()];
+
+        System.out.println("iohead: " + rs.getString("index_overhead"));
+        System.out.println("ohArray size: " + ohArray.length);
+        System.out.println("indexSet size: " + indexSet.size());
+
+        verifyOverheadArray(indexSet.size(), ohArray);
+
+        for(int i = 0; i < indexSet.size(); i++){
+
+            final String   ohString  = ohArray[i];
+            final String[] splitVals = ohString.split("=");
+
+            Checks.checkAssertion(splitVals.length == 2, "We got an unexpected result in index_overhead.");
+
+            final int    id       = Integer.valueOf(splitVals[0]);
+            final double overhead = Double.valueOf(splitVals[1]);
+
+            maintCost[id] = overhead;
+        }
+
+        totalCost = Double.valueOf(rs.getString("qcost"));
+
+        PreparedSQLStatement sqlStmt = new PreparedSQLStatement(sql,category,totalCost,maintCost,indexes);
+
+        if(obtainPlan) {
+            sqlStmt.setPlan(getPlan(connection,sql));
+        }
+
+        rs.close();
+        stmt.close();
+
+        return sqlStmt;
+    }
+
+    /**
+     */
+    private static void verifyOverheadArray(Integer cardinality, String[] ohArray) {
+        if(cardinality == 0){
+            // we expect ohArray to have one elt that is the empty string
+            // but don't complain if it's empty
+            if(ohArray.length != 0){
+                Checks.checkAssertion(ohArray.length == 1, "Too many elements in ohArray.");
+                Checks.checkAssertion(ohArray[0].length() == 0, "There is an unexpected element in ohArray.");
+            }
+        } else {
+            Checks.checkAssertion(cardinality == ohArray.length, "Wrong length of ohArray.");
+        }
+    }
+
+    private static String indexListString(Iterable<? extends Index> indexes) {
+        final StringBuilder sb = new StringBuilder();
+
+        sb.append("( ");
+
+        for (Index idx : indexes) {
+            sb.append(idx.getId()).append("(");
+            if (idx.getScanOption() == Index.SYNCHRONIZED) {
+                sb.append("synchronized ");
+            }
+
+            Table table = idx.getTable();
+            sb.append(table.getId());
+            for (int i = 0; i < idx.size(); i++) {
+                sb.append(idx.getDescending().get(i) ? " desc" : " asc");
+                final List<Column> cols = idx.getColumns();
+                sb.append(" ").append(cols.get(i).getOrdinalPosition());
+            }
+            sb.append(") ");
+        }
+        sb.append(") ");
+        return sb.toString();
+    }
+
+    /**
+     */
+    protected SQLStatementPlan getPlan(Connection connection, String sql) throws SQLException
+    {
+        String           explain = "EXPLAIN (COSTS true, FORMAT json) ";
+        Statement        st      = connection.createStatement();
+        ResultSet        rs      = st.executeQuery(explain + sql);
+        SQLStatementPlan plan    = null;
+        int              cnt     = 0;
 
         while(rs.next()) {
             try {
                 plan = parseJSON(new StringReader(rs.getString(1)), schema);
+                cnt++;
             } catch (Exception e) {
                 throw new SQLException(e);
             }
         }
 
+        if(cnt != 1) {
+            throw new SQLException("Something wrong happened, got " + cnt + " plan(s)");
+        }
+
         rs.close();
         st.close();
 
-        return new PreparedSQLStatement(plan, -1.0, new Configuration("empty"));
+        return plan;
     }
 
     /**
@@ -347,41 +451,5 @@ public class PGOptimizer extends Optimizer
         }
 
         return operator;
-    }
-
-    @Override
-    public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
-        Checks.checkSQLRelatedState(
-                null != dbConnection && dbConnection.isOpened(), "Connection is closed.");
-        Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
-        final List<Index> indexSet = makeIndexList(indexes);
-        if(getCachedIndexBitSet().isEmpty()) updateCachedIndexBitSet(Instances.newBitSet(indexes));
-        final IndexBitSet   cachedIndexBitSet   = getCachedIndexBitSet();
-        final Double[]      maintCost           = new Double[indexSet.size()];
-        return Functions.supplyValue(
-                PGCommands.explainIndexes(),             // postgres's explain index command
-                dbConnection,                            // live connection
-                indexSet,                                // index set
-                cachedIndexBitSet,                       // cached bit set
-                sql,                                     // sql statement
-                cachedIndexBitSet.cardinality(),         // cardinality
-                maintCost                                // maintenance cost
-        );
-    }
-
-    private List<Index> makeIndexList(Iterable<? extends Index> indexes) {
-        List<Index> list = new ArrayList<Index>();
-        for(Index idx : indexes) {
-            list.add(idx);
-        }
-        return list;
-    }
-
-    protected IndexBitSet getCachedIndexBitSet() {
-        return indexSet;
-    }
-
-    protected void updateCachedIndexBitSet(IndexBitSet newOne) {
-        indexSet.set(newOne);
     }
 }

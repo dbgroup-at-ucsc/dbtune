@@ -46,7 +46,7 @@ public class InteractionSelection {
     public InteractionSelection(
         IndexPartitions    oldPartitions,
         StatisticsFunction doiFunc,
-        int                   maxNumStates,
+        int                maxNumStates,
         StaticIndexSet     newHotSet ) {
 
         this.oldPartitions = oldPartitions;

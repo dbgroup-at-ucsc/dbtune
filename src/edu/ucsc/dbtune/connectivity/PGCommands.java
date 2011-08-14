@@ -19,17 +19,10 @@
 package edu.ucsc.dbtune.connectivity;
 
 import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
-import edu.ucsc.dbtune.metadata.SQLCategory;
-import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
-import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
-import edu.ucsc.dbtune.spi.core.Parameters;
-import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -40,29 +33,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
-import static edu.ucsc.dbtune.util.Checks.checkSQLRelatedState;
 import static edu.ucsc.dbtune.util.Instances.newList;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class PGCommands {
-    private static String sqlStatement;
-
     private PGCommands(){}
-
-    /**
-     * returns a command that will give you a {@link PreparedSQLStatement}.
-     * @return
-     *      a {@code Command<PreparedSQLStatement>} object.
-     */
-    public static Function<PreparedSQLStatement, SQLException> explainIndexes(){
-        final Function<Parameter, SQLException> rs;
-        final Function<PreparedSQLStatement, SQLException> eidx;
-        rs     = sharedResultSetCommand();
-        eidx   = explainInfo();
-        return Functions.compose(rs, eidx);
-    }
 
     /**
      * returns a command that will recommend indexes.
@@ -200,26 +177,6 @@ public class PGCommands {
      * @return
      *      a new {@code Command<Double>} object.
      */
-    public static Function<Double, SQLException> explainIndexesCost(IndexBitSet usedSet){
-        final Function<Parameter, SQLException> rs;
-        final Function<Double, SQLException> ec;
-        Console.streaming().info("used set=" + (usedSet == null ? "null" : usedSet));
-        rs   = sharedResultSetCommand();
-        ec   = explainCost(usedSet);
-        return Functions.compose(rs, ec);
-    }
-
-    private static SharedResultSetCommand sharedResultSetCommand(){
-      return SharedResultSetCommand.INSTANCE;
-    }
-
-    /**
-     * Returns a command that will explain indexes's cost.
-     * @param usedSet
-     *      used index set.
-     * @return
-     *      a new {@code Command<Double>} object.
-     */
     private static Function<Double, SQLException> explainCost(final IndexBitSet usedSet){
         return new Function<Double, SQLException>(){
             @Override
@@ -251,150 +208,4 @@ public class PGCommands {
 
         };
     }
-
-    /**
-     * Returns a command that will explain indexes.
-     * @return
-     *      a new {@code Command<PreparedSQLStatement>} object.
-     */
-    private static Function<PreparedSQLStatement, SQLException> explainInfo(){
-        return new Function<PreparedSQLStatement, SQLException>(){
-
-            @Override
-            public PreparedSQLStatement apply(Parameter input) throws SQLException {
-                final ResultSet resultSet     = input.getParameterValue(ResultSet.class);
-                final Integer   cardinality   = input.getParameterValue(Integer.class);
-                SQLCategory     category      = null;
-                double          totalCost     = 0.0;
-                final String    indexOverhead;
-                final String[]  ohArray;
-                final double[]  maintCost;
-
-                try {
-                    category      = SQLCategory.from(resultSet.getString("category"));
-                    indexOverhead = resultSet.getString("index_overhead");
-                    ohArray       = indexOverhead.split(" ");
-                    maintCost     = new double[cardinality];
-
-                    verifyOverheadArray(cardinality, ohArray);
-
-                    for(int i = 0; i < cardinality; i++){
-
-                        final String   ohString  = ohArray[i];
-                        final String[] splitVals = ohString.split("=");
-
-                        Checks.checkAssertion(splitVals.length == 2, "We got an unexpected result in index_overhead.");
-
-                        final int    id       = Integer.valueOf(splitVals[0]);
-                        final double overhead = Double.valueOf(splitVals[1]);
-
-                        maintCost[id] = overhead;
-                    }
-
-                    totalCost = Double.valueOf(resultSet.getString("qcost"));
-                } finally {
-                    if(resultSet != null){
-                        resultSet.close();
-                    }
-                }
-
-                return new PreparedSQLStatement(
-                        sqlStatement,
-                        category,
-                        totalCost,
-                        maintCost
-                );
-            }
-
-        };
-    }
-
-
-    /**
-     * persists a command that will share an initialized {@link java.sql.ResultSet} object.
-     *
-     * The normal flow goes like this:
-     * a command that will initialize a {@link java.sql.ResultSet} and share it with
-     * other commands that will perform a more specific operation.
-     * <strong>NOTE</strong> these other commands will have the responsibility
-     * of closing the {@link java.sql.ResultSet} and commiting to the db by calling
-     * {@link java.sql.Connection#commit()}.
-     */
-    private enum SharedResultSetCommand implements Function <Parameter, SQLException> {
-      INSTANCE;
-      private Statement statement;
-      @Override public Parameter apply(Parameter input) throws SQLException {
-          final Connection            connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-          final List<Index>           indexes     = input.getParameterValue(List.class);
-          final IndexBitSet           config      = input.getParameterValue(IndexBitSet.class);
-          final String                sql         = input.getParameterValue(String.class);
-          final Integer               cardinality = input.getParameterValue(Integer.class);
-          final Double[]              maintCost   = input.getParameterValue(Double[].class);
-
-          if(statement == null) {
-              statement = connection.createStatement();
-          }
-
-          final String explainSql = "EXPLAIN INDEXES " + indexListString(indexes, config) + sql;
-          final ResultSet rs = statement.executeQuery(explainSql);
-          checkSQLRelatedState(rs.next(), "no row returned from EXPLAIN INDEXES");
-
-          PGCommands.sqlStatement = sql;
-
-          return Parameters.makeAnonymousParameter(
-                  rs,
-                  cardinality,
-                  maintCost
-          );
-      }
-
-      @Override public String toString() {
-        return "sharedResultSetCommand()";
-      }
-    }
-
-
-    private static String indexListString(Iterable<Index> indexes, IndexBitSet config) {
-        final StringBuilder sb                   = new StringBuilder();
-
-        sb.append("( ");
-        for (Index idx : indexes) {
-            if (config.get(idx.getId())) {
-                sb.append(idx.getId()).append("(");
-                if (idx.getScanOption() == Index.SYNCHRONIZED) {
-                    sb.append("synchronized ");
-                }
-
-                final Table table = idx.getTable();
-                sb.append(table.getId());
-                for (int i = 0; i < idx.size(); i++) {
-                    sb.append(idx.getDescending().get(i) ? " desc" : " asc");
-                    final List<Column>   cols   = idx.getColumns();
-                    sb.append(" ").append(cols.get(i).getOrdinalPosition());
-                }
-                sb.append(") ");
-            }
-        }
-        sb.append(") ");
-        return sb.toString();
-    }
-
-    private static void verifyOverheadArray(Integer cardinality, String[] ohArray) {
-        // verify ohArray contents
-        if(cardinality == 0){
-            // we expect ohArray to have one elt that is the empty string
-            // but don't complain if it's empty
-            if(ohArray.length != 0){
-                Checks.checkAssertion(
-                        ohArray.length == 1, "Too many elements in ohArray."
-                );
-                Checks.checkAssertion(
-                        ohArray[0].length() == 0, "There is an unexpected element in ohArray."
-                );
-            }
-        } else {
-            Checks.checkAssertion(cardinality == ohArray.length, "Wrong length of ohArray.");
-        }
-    }
-
 }

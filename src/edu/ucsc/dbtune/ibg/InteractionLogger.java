@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class InteractionLogger {
@@ -30,8 +29,8 @@ public class InteractionLogger {
      * @param candidateSet
      *      a set of candidate indexes.
      */
-    public InteractionLogger(Snapshot candidateSet) {
-        this(new InteractionBank(candidateSet));
+    public InteractionLogger(int maxId) {
+        this(new InteractionBank(maxId));
     }
 
     /**

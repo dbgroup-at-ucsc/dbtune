@@ -15,11 +15,8 @@
  *   limitations under the License.                                           *
  *  ****************************************************************************
  */
-
 package edu.ucsc.dbtune.advisor;
 
-
-import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
@@ -27,6 +24,10 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.List;
 
+/**
+ * @author Huascar A. Sanchez
+ * @author Ivo Jimenez
+ */
 public class CandidatesSelector {
     private final   IndexStatisticsFunction     idxStats;
     private final   WorkFunctionAlgorithm    wfa;
@@ -101,7 +102,7 @@ public class CandidatesSelector {
         // add the query to the statistics repository
         idxStats.addQuery(qinfo, matSet);
         
-        reorganizeCandidates(qinfo.getCandidateSnapshot());
+        reorganizeCandidates(qinfo.getConfiguration());
         
         wfa.newTask(qinfo);
         
@@ -123,7 +124,7 @@ public class CandidatesSelector {
      * @param candSet
      *      a {@code snapshot} of a {@code candidate pool} of indexes.
      */
-    public void positiveVote(Index index, CandidatePool.Snapshot candSet) {
+    public void positiveVote(Index index, Iterable<? extends Index> candSet) {
         // get it in the hot set
         if (!userHotSet.contains(index)) {
             userHotSet.add(index);
@@ -183,7 +184,7 @@ public class CandidatesSelector {
      */
     public double drop(Index index) {
         matSet.remove(index);
-        return 0; // XXX: assuming no cost to drop
+        return 0; // note: assuming no cost to drop
     }
 
     /**
@@ -206,8 +207,7 @@ public class CandidatesSelector {
      * @param candSet
      *      a {@code snapshot} of {@code candidate pool of indexes}.
      */
-    @SuppressWarnings({"RedundantTypeArguments"})
-    private void reorganizeCandidates(CandidatePool.Snapshot candSet) {
+    private void reorganizeCandidates(Iterable<? extends Index> candSet) {
         // determine the hot set
         DynamicIndexSet reqIndexes = new DynamicIndexSet();
         for (Index index : userHotSet) reqIndexes.add(index);

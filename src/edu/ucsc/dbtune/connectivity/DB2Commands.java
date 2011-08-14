@@ -22,7 +22,6 @@ import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.optimizer.CostLevel;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Parameter;
@@ -596,7 +595,6 @@ public class DB2Commands {
             final ResultSet rs = psAll.executeQuery();
             final AtomicInteger id = new AtomicInteger(0);
             final String dbName = input.getParameterValue(String.class);
-            @SuppressWarnings({"unchecked"})
             final List<Index> candidateSet = Instances.newList();
             try {
                while(rs.next()){
@@ -669,4 +667,58 @@ public class DB2Commands {
             return "ReadAdviseIndex";
         }
     }
+
+	public static class CostLevel {
+		private final double    totalCost;
+		private final int       count;
+		private final boolean   initialized;
+
+		private CostLevel(double totalCost, int count, boolean initialized) {
+			this.totalCost   = totalCost;
+			this.count       = count;
+			this.initialized = initialized;
+		}
+
+		/**
+		 * create an immutable {@code CostOfLevel} instance.
+		 * @param totalCost
+		 *      total cost of level.
+		 * @param count
+		 *      # of levels
+		 * @return
+		 *      a new immutable {@link edu.ucsc.dbtune.optimizer.CostLevel} object.
+		 */
+		public static CostLevel valueOf(double totalCost, int count) {
+			return new CostLevel(totalCost, count, (!(totalCost == 0.0 || count == 0)));
+		}
+		
+		void ensureInitialization(){
+			if(!isInitialized()){
+				throw new IllegalStateException();
+			}
+		}
+
+		public double getTotalCost() {
+			ensureInitialization();
+			return totalCost;
+		}
+
+		public int getCount() {
+			ensureInitialization();
+			return count;
+		}
+
+		public boolean isInitialized(){
+			return initialized;
+		}
+
+		@Override
+		public String toString() {
+			if(!isInitialized()) return "CostLevel(...)";
+			return new ToStringBuilder<CostLevel>(this)
+				   .add("total cost", getTotalCost())
+				   .add("count", getCount())
+				   .toString();
+		}
+	}
 }

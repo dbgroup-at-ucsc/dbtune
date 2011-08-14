@@ -322,6 +322,7 @@ public class Index extends DatabaseObject
         if (!contains(column))
         {
             columns.add(column);
+            descending.add(true);
         }
     }
 
