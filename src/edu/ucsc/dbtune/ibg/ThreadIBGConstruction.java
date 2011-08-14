@@ -55,69 +55,69 @@ public class ThreadIBGConstruction implements Runnable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         System.out.printf("%s is running.\n",processName);
-		while (true) {
-			synchronized (taskMonitor) {
-				while (!RunnableState.PENDING.isSame(state)) {
-					try {
-						taskMonitor.wait();
-					} catch (InterruptedException e) {
+        while (true) {
+            synchronized (taskMonitor) {
+                while (!RunnableState.PENDING.isSame(state)) {
+                    try {
+                        taskMonitor.wait();
+                    } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         return;
                     }
-				}
-			}
+                }
+            }
 
-			try {
-				boolean success; // bad name for this variable, should be called "moreNodesToBuild" or something to that effect
-				do {
-					success = ibgCons.buildNode();
-				} while (success);
-			} catch (SQLException e) {
-				Console.streaming().error(" *** IBG construction failed ***", e);
+            try {
+                boolean success; // bad name for this variable, should be called "moreNodesToBuild" or something to that effect
+                do {
+                    success = ibgCons.buildNode();
+                } while (success);
+            } catch (SQLException e) {
+                Console.streaming().error(" *** IBG construction failed ***", e);
                 throw new RuntimeException(e);
-			}
+            }
 
-			synchronized (taskMonitor) {
-				state = RunnableState.DONE;
-				taskMonitor.notify();
-			}
-		}
-	}
+            synchronized (taskMonitor) {
+                state = RunnableState.DONE;
+                taskMonitor.notify();
+            }
+        }
+    }
 
     /**
      * tells the construction thread to start constructing an IBG, and returns immediately
      * @param ibgCons
      *     an {@link IndexBenefitGraphConstructor} object.
      */
-	public void startConstruction(IndexBenefitGraphConstructor ibgCons) {
-		synchronized (taskMonitor) {
-			if (RunnableState.PENDING.isSame(state)) {
-				Console.streaming().error("unexpected state in IBG startConstruction");
-			}
+    public void startConstruction(IndexBenefitGraphConstructor ibgCons) {
+        synchronized (taskMonitor) {
+            if (RunnableState.PENDING.isSame(state)) {
+                Console.streaming().error("unexpected state in IBG startConstruction");
+            }
 
-			this.ibgCons    = ibgCons;
-			this.state      = RunnableState.PENDING;
-			taskMonitor.notify();
-		}
-	}
+            this.ibgCons    = ibgCons;
+            this.state      = RunnableState.PENDING;
+            taskMonitor.notify();
+        }
+    }
 
     /**
      * wait until the thread has finalized doing its job.
      */
-	public void waitUntilDone() {
-		synchronized (taskMonitor) {
-			while (RunnableState.PENDING.isSame(state)) {
-				try {
-					taskMonitor.wait();
-				} catch (InterruptedException e) {
+    public void waitUntilDone() {
+        synchronized (taskMonitor) {
+            while (RunnableState.PENDING.isSame(state)) {
+                try {
+                    taskMonitor.wait();
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
-			}
+            }
 
-			ibgCons = null;
-			state = RunnableState.IDLE;
-		}
-	}
+            ibgCons = null;
+            state = RunnableState.IDLE;
+        }
+    }
 }

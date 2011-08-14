@@ -248,7 +248,7 @@ public class Table extends DatabaseObject
     public boolean equals(Object o) {
         // XXX: drop as part of issue #53
         if (!(o instanceof Table))
-			return false;
+            return false;
 
         if(id != -1) {
             return super.equals(o);
@@ -259,5 +259,5 @@ public class Table extends DatabaseObject
         return dbName.equals(other.dbName)
                && schemaName.equals(other.schemaName)
                && name.equals(other.name);
-	}
+    }
 }

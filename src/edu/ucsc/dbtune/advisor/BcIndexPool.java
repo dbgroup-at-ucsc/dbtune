@@ -25,19 +25,19 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.util.Map;
 
 public class BcIndexPool {
-	Map<Integer, BcIndexInfo> map;
+    Map<Integer, BcIndexInfo> map;
 
     /**
      * construct a {@code BcIndexPool} object from a hot set of indexes.
      * @param hotSet
      *      a hot set of indexes.
      */
-	public BcIndexPool(StaticIndexSet hotSet) {
-		map = Instances.newHashMap(hotSet.size());
-		for (Index idx : hotSet) {
-			map.put(idx.getId(), new BcIndexInfo());
-		}
-	}
+    public BcIndexPool(StaticIndexSet hotSet) {
+        map = Instances.newHashMap(hotSet.size());
+        for (Index idx : hotSet) {
+            map.put(idx.getId(), new BcIndexInfo());
+        }
+    }
 
     /**
      * Returns the {@code BcIndexInfo} matching an index's id.
@@ -45,9 +45,9 @@ public class BcIndexPool {
      *      index's id.
      * @return the {@code BcIndexInfo} matching an index's id.
      */
-	public BcIndexInfo get(int id) {
-		return map.get(id);
-	}
+    public BcIndexInfo get(int id) {
+        return map.get(id);
+    }
 
     @Override
     public String toString() {

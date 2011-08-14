@@ -35,12 +35,12 @@ public class IndexExtractorTestFunctional {
 
     @BeforeClass
     public static void setUp() throws Exception {
-		String ddlfilename;
+        String ddlfilename;
 
         connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
         ddlfilename = environment.getScriptAtWorkloadsFolder("one_table/create.sql");
-		
-		//SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        
+        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
         connection.getJdbcConnection().setAutoCommit(false);
     }
 
@@ -64,21 +64,21 @@ public class IndexExtractorTestFunctional {
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLRecommendIndexes() throws Exception {
-		SQLStatement            sql        = new SQLStatement(SQLCategory.QUERY,"select a from tbl where a = 5;");
+        SQLStatement            sql        = new SQLStatement(SQLCategory.QUERY,"select a from tbl where a = 5;");
         CandidateIndexExtractor extractor  = connection.getIndexExtractor();
         Iterable<Index>         candidates = extractor.recommendIndexes(sql);
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
-		assertThat(sql.getSQLCategory().isSame(SQLCategory.QUERY), is(true));
+        assertThat(sql.getSQLCategory().isSame(SQLCategory.QUERY), is(true));
 
-		sql        = new SQLStatement(SQLCategory.DML, "update tbl set a=-1 where a = 5;");
+        sql        = new SQLStatement(SQLCategory.DML, "update tbl set a=-1 where a = 5;");
         extractor  = connection.getIndexExtractor();
         candidates = extractor.recommendIndexes(sql);
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
-		assertThat(sql.getSQLCategory().isSame(SQLCategory.DML), is(true));
+        assertThat(sql.getSQLCategory().isSame(SQLCategory.DML), is(true));
     }
 
     @AfterClass

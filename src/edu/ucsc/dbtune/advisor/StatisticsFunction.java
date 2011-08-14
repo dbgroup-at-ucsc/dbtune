@@ -26,10 +26,10 @@ import edu.ucsc.dbtune.util.IndexBitSet;
  */
 public interface StatisticsFunction {
     /**
-	 * adds a {@link IBGPreparedSQLStatement} given a {@link DynamicIndexSet set} of
+     * adds a {@link IBGPreparedSQLStatement} given a {@link DynamicIndexSet set} of
      * materialized {@link Index indexes}.
      * @param queryInfo
-	 *    a {@link IBGPreparedSQLStatement profiled query}.
+     *    a {@link IBGPreparedSQLStatement profiled query}.
      * @param matSet
      *    a {@link DynamicIndexSet set} of materialized indexes.
      */

@@ -69,157 +69,157 @@ public class GenericJDBCExtractor implements MetaDataExtractor
      * @see DatabaseMetaData#getColumns
      * @see DatabaseMetaData#getIndexInfo
      */
-	public Catalog extract( DatabaseConnection connection )
-		throws SQLException
-	{
-		Map<Integer,Column> indexToColumns;
-		Map<String,Schema>  schemaNamesToSchemas;
-		List<Table>         tables;
-		List<Index>         allIndexes;
+    public Catalog extract( DatabaseConnection connection )
+        throws SQLException
+    {
+        Map<Integer,Column> indexToColumns;
+        Map<String,Schema>  schemaNamesToSchemas;
+        List<Table>         tables;
+        List<Index>         allIndexes;
 
-		DatabaseMetaData jdbcMetaData;
-		ResultSet        rsset;
-		Catalog          catalog;
-		Schema           schema;
-		Column           column;
-		Index            index;
-		String           schemaName;
-		String           columnName;
-		String           indexName;
-		int              type;
-		boolean          isUnique;
-		boolean          isClustered;
-		boolean          isPrimary = false;
+        DatabaseMetaData jdbcMetaData;
+        ResultSet        rsset;
+        Catalog          catalog;
+        Schema           schema;
+        Column           column;
+        Index            index;
+        String           schemaName;
+        String           columnName;
+        String           indexName;
+        int              type;
+        boolean          isUnique;
+        boolean          isClustered;
+        boolean          isPrimary = false;
 
-		try
-		{
-			schemaNamesToSchemas = new HashMap<String,Schema>();
+        try
+        {
+            schemaNamesToSchemas = new HashMap<String,Schema>();
 
-			jdbcMetaData = connection.getJdbcConnection().getMetaData();
+            jdbcMetaData = connection.getJdbcConnection().getMetaData();
 
-			if (jdbcMetaData == null)
-			{
-				throw new SQLException( "Connection " + connection + " doesn't handle JDBC metadata" );
-			}
+            if (jdbcMetaData == null)
+            {
+                throw new SQLException( "Connection " + connection + " doesn't handle JDBC metadata" );
+            }
 
-			String[] tableTypes = {"TABLE"};
+            String[] tableTypes = {"TABLE"};
 
-			rsset = jdbcMetaData.getTables( null, null, "%", tableTypes );
+            rsset = jdbcMetaData.getTables( null, null, "%", tableTypes );
 
-			catalog = new Catalog();
+            catalog = new Catalog();
 
-			while (rsset.next())
-			{
-				catalog.setName(rsset.getString("TABLE_CAT"));
+            while (rsset.next())
+            {
+                catalog.setName(rsset.getString("TABLE_CAT"));
 
-				schemaName = rsset.getString("TABLE_SCHEM");
+                schemaName = rsset.getString("TABLE_SCHEM");
 
-				if(schemaName == null) {
-					schemaName = "default";
-				}
+                if(schemaName == null) {
+                    schemaName = "default";
+                }
 
-				schema = schemaNamesToSchemas.get(schemaName);
+                schema = schemaNamesToSchemas.get(schemaName);
 
-				if(schema == null) {
-					schema = new Schema(schemaName);
-					schemaNamesToSchemas.put(schemaName,schema);
-					catalog.add(schema);
-				}
+                if(schema == null) {
+                    schema = new Schema(schemaName);
+                    schemaNamesToSchemas.put(schemaName,schema);
+                    catalog.add(schema);
+                }
 
-				schema.add(new Table(rsset.getString("TABLE_NAME")));
-			}
+                schema.add(new Table(rsset.getString("TABLE_NAME")));
+            }
 
-			rsset.close();
+            rsset.close();
 
-			allIndexes = new ArrayList<Index>();
+            allIndexes = new ArrayList<Index>();
 
-			for(Schema sch : catalog.getSchemas()) {
+            for(Schema sch : catalog.getSchemas()) {
 
-				tables = sch.getTables();
+                tables = sch.getTables();
 
-				for(Table table : tables) {
+                for(Table table : tables) {
 
-					rsset = jdbcMetaData.getColumns( null, sch.getName(), table.getName(), "%" );
+                    rsset = jdbcMetaData.getColumns( null, sch.getName(), table.getName(), "%" );
 
-					while (rsset.next())
-					{
-						columnName = rsset.getString("COLUMN_NAME");
-						type       = rsset.getInt("DATA_TYPE");
+                    while (rsset.next())
+                    {
+                        columnName = rsset.getString("COLUMN_NAME");
+                        type       = rsset.getInt("DATA_TYPE");
 
-						table.add(new Column( columnName, type ));
-					}
+                        table.add(new Column( columnName, type ));
+                    }
 
-					rsset.close();
+                    rsset.close();
 
-					rsset          = jdbcMetaData.getIndexInfo( null, sch.getName(), table.getName(), false, true );
-					indexToColumns = new HashMap<Integer,Column>();
-					indexName      = "";
-					index          = null;
+                    rsset          = jdbcMetaData.getIndexInfo( null, sch.getName(), table.getName(), false, true );
+                    indexToColumns = new HashMap<Integer,Column>();
+                    indexName      = "";
+                    index          = null;
 
-					while (rsset.next())
-					{
-						type = rsset.getShort("TYPE");
+                    while (rsset.next())
+                    {
+                        type = rsset.getShort("TYPE");
 
-						if (type == DatabaseMetaData.tableIndexStatistic)
-						{
-							table.setPages( rsset.getInt("PAGES") );
-							table.setCardinality( rsset.getInt("CARDINALITY") );
-						}
-						else
-						{
-							if (!indexName.equals(rsset.getString("INDEX_NAME")))
-							{
-								if (index != null)
-								{
-									for (int i = 0; i < indexToColumns.size(); i++)
-									{
-										index.add(indexToColumns.get(i+1));
-									}
-								}
+                        if (type == DatabaseMetaData.tableIndexStatistic)
+                        {
+                            table.setPages( rsset.getInt("PAGES") );
+                            table.setCardinality( rsset.getInt("CARDINALITY") );
+                        }
+                        else
+                        {
+                            if (!indexName.equals(rsset.getString("INDEX_NAME")))
+                            {
+                                if (index != null)
+                                {
+                                    for (int i = 0; i < indexToColumns.size(); i++)
+                                    {
+                                        index.add(indexToColumns.get(i+1));
+                                    }
+                                }
 
-								type = rsset.getShort("TYPE");
+                                type = rsset.getShort("TYPE");
 
-								if (type == DatabaseMetaData.tableIndexClustered)
-								{
-									isClustered = true;
-								}
-								else
-								{
-									isClustered = false;
-								}
+                                if (type == DatabaseMetaData.tableIndexClustered)
+                                {
+                                    isClustered = true;
+                                }
+                                else
+                                {
+                                    isClustered = false;
+                                }
 
-								isUnique       = !rsset.getBoolean("NON_UNIQUE");
-								indexName      = rsset.getString("INDEX_NAME");
-								index          = new Index(indexName, table, isPrimary, isClustered, isUnique);
-								indexToColumns = new HashMap<Integer,Column>();
+                                isUnique       = !rsset.getBoolean("NON_UNIQUE");
+                                indexName      = rsset.getString("INDEX_NAME");
+                                index          = new Index(indexName, table, isPrimary, isClustered, isUnique);
+                                indexToColumns = new HashMap<Integer,Column>();
 
-								table.add(index);
-								allIndexes.add(index);
-							}
+                                table.add(index);
+                                allIndexes.add(index);
+                            }
 
-							columnName = rsset.getString("COLUMN_NAME");
-							column     = table.findColumn(columnName);
+                            columnName = rsset.getString("COLUMN_NAME");
+                            column     = table.findColumn(columnName);
 
-							if (column == null)
-							{
-								throw new SQLException("Column " + columnName + " not in " + table);
-							}
+                            if (column == null)
+                            {
+                                throw new SQLException("Column " + columnName + " not in " + table);
+                            }
 
-							indexToColumns.put(rsset.getInt("ORDINAL_POSITION"), column);
-						}
-					}
+                            indexToColumns.put(rsset.getInt("ORDINAL_POSITION"), column);
+                        }
+                    }
 
-					rsset.close();
-				}
+                    rsset.close();
+                }
 
-				sch.setBaseConfiguration(new Configuration(allIndexes));
-			}
-		}
-		catch (Exception e)
-		{
-			throw new SQLException(e);
-		}
+                sch.setBaseConfiguration(new Configuration(allIndexes));
+            }
+        }
+        catch (Exception e)
+        {
+            throw new SQLException(e);
+        }
 
-		return catalog;
-	}
+        return catalog;
+    }
 }

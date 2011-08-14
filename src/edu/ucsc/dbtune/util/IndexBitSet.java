@@ -42,32 +42,32 @@ import java.util.BitSet;
  * accordingly.
  */
 public class IndexBitSet extends BitSet {
-	private static final long serialVersionUID = 1L;
-	
-	private static final BitSet t = new BitSet();
-	
-	public IndexBitSet() {
-		super();
-	}
+    private static final long serialVersionUID = 1L;
+    
+    private static final BitSet t = new BitSet();
+    
+    public IndexBitSet() {
+        super();
+    }
 
     @Override
-	public IndexBitSet clone() {
-		return (IndexBitSet) super.clone();
-	}
-	
-	public final void set(IndexBitSet other) {
-		clear();
-		or(other);
-	}
-	
-	// probably better in average case
-	public final boolean subsetOf(IndexBitSet b) {
-		synchronized (t) {
-			t.clear();
-			t.or(this);
-			t.and(b);
-			return (t.equals(this));
-		}
-	}
+    public IndexBitSet clone() {
+        return (IndexBitSet) super.clone();
+    }
+    
+    public final void set(IndexBitSet other) {
+        clear();
+        or(other);
+    }
+    
+    // probably better in average case
+    public final boolean subsetOf(IndexBitSet b) {
+        synchronized (t) {
+            t.clear();
+            t.or(this);
+            t.and(b);
+            return (t.equals(this));
+        }
+    }
     
 }

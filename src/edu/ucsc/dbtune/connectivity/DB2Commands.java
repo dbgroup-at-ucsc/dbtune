@@ -389,7 +389,7 @@ public class DB2Commands {
         @Override
         public CostLevel apply(Parameter input) throws SQLException {
             final Connection        connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-			if(ps == null){
+            if(ps == null){
                 ps = connection.prepareStatement(QUERY.toString());
             }
 
@@ -459,10 +459,10 @@ public class DB2Commands {
         @Override
         public SQLCategory apply(Parameter input) throws SQLException {
             final Connection connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-			final PreparedStatement ps = connection.prepareStatement(
-					"SELECT TRIM(STATEMENT_TYPE) AS TYPE "
-				  + "FROM explain_statement "
-				  + "WHERE explain_level = 'P'"
+            final PreparedStatement ps = connection.prepareStatement(
+                    "SELECT TRIM(STATEMENT_TYPE) AS TYPE "
+                  + "FROM explain_statement "
+                  + "WHERE explain_level = 'P'"
             );
 
             final ResultSet rs = ps.executeQuery();

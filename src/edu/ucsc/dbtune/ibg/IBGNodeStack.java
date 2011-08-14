@@ -24,7 +24,7 @@ import edu.ucsc.dbtune.util.DefaultStack;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGNodeStack {
-	private final DefaultStack<Object> stack;
+    private final DefaultStack<Object> stack;
 
     /**
      * construct a new {@link IBGNodeStack} object.
@@ -48,56 +48,56 @@ public class IBGNodeStack {
      * @param ch
      *      new child to be added.
      */
-	final void addChildren(IBGChild ch) {
-		if (ch != null) stack.push(ch);
-	}
+    final void addChildren(IBGChild ch) {
+        if (ch != null) stack.push(ch);
+    }
 
     /**
      * add a new ibg node to the stack.
      * @param node
      *      node to be added to the stack.
      */
-	final void addNode(IBGNode node) {
-		stack.push(node);
-	}
+    final void addNode(IBGNode node) {
+        stack.push(node);
+    }
 
     /**
      * test if the stack has something remaining
      * @return
      *      {@code true} if the stack has something remaining.
      */
-	final boolean hasNext() {
-		return !stack.isEmpty();
-	}
+    final boolean hasNext() {
+        return !stack.isEmpty();
+    }
 
     /**
      * remove all stack nodes.
      */
-	final void reset() {
-		stack.popAll();
-	}
+    final void reset() {
+        stack.popAll();
+    }
 
     /**
      * @return the next node, or return null if none
      */
-	final IBGNode next() {
-		if (stack.isEmpty()) return null;
-		
-		Object obj = stack.peek();
-		if (obj instanceof IBGChild) {
-			IBGChild child = (IBGChild) stack.peek();
-			if (child.next != null) {
+    final IBGNode next() {
+        if (stack.isEmpty()) return null;
+        
+        Object obj = stack.peek();
+        if (obj instanceof IBGChild) {
+            IBGChild child = (IBGChild) stack.peek();
+            if (child.next != null) {
                 stack.swap(child.next);
             } else {
-				stack.pop();
+                stack.pop();
             }
 
             return child.node;
-		} else {
-			stack.pop();
-			return (IBGNode) obj;
-		}
-	}
+        } else {
+            stack.pop();
+            return (IBGNode) obj;
+        }
+    }
 
     @Override
     public String toString() {

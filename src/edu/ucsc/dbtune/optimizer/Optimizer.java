@@ -38,7 +38,7 @@ public abstract class Optimizer
      */
     public abstract PreparedSQLStatement explain(String sql) throws SQLException;
 
-	/**
+    /**
      * estimate what-if optimization plan of a statement using the given configuration.
      *
      * @param sql
@@ -52,8 +52,8 @@ public abstract class Optimizer
      *     unable to estimate cost for the stated reasons.
      */
     public abstract PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException;
-	
-	/**
+    
+    /**
      * gets the total count of what-if optimizations were handled/performed by the optimizer.
      *
      * @return

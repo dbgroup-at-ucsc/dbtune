@@ -46,7 +46,7 @@ public interface WorkloadProfiler {
      * @param sql
      *      plain {@code sql} query.
      * @return
-	 *      a new {@link IBGPreparedSQLStatement} instance.
+     *      a new {@link IBGPreparedSQLStatement} instance.
      */
     IBGPreparedSQLStatement processQuery(SQLStatement sql);
 

@@ -31,8 +31,8 @@ public class SQLStatement
     /** literal contents of the statement */
     private String sql;
 
-	/**
-	 * Constructs a {@code SQLStatement} with unknown category
+    /**
+     * Constructs a {@code SQLStatement} with unknown category
      *
      * @param category
      *      the corresponding {@link SQLCategory} representing the type of statement.

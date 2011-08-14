@@ -52,5 +52,5 @@ public interface CandidateIndexExtractor {
      *      an error has occurred when interacting with a database during
      *      the recommendation process.
      */
-	Iterable<Index> recommendIndexes(SQLStatement sql) throws SQLException;
+    Iterable<Index> recommendIndexes(SQLStatement sql) throws SQLException;
 }

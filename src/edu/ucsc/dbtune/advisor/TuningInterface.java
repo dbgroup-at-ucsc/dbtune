@@ -110,7 +110,7 @@ public class TuningInterface  {
     /**
      * execute profiled query.
      * @param qinfo
-	 *      a {@link IBGPreparedSQLStatement} object.
+     *      a {@link IBGPreparedSQLStatement} object.
      * @return
      *      the transition cost of this profiled query.
      * @throws SQLException
@@ -154,7 +154,7 @@ public class TuningInterface  {
      * @param sql
      *      sql statement.
      * @return
-	 *      an {@link IBGPreparedSQLStatement} object.
+     *      an {@link IBGPreparedSQLStatement} object.
      * @throws SQLException
      *      unable to profile sql due to the stated reasons.
      */

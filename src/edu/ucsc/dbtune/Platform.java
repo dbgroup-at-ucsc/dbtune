@@ -140,11 +140,11 @@ public class Platform {
 
         @Override
         public Optimizer newOptimizer(DatabaseConnection connection) {
-			try {
-				return new DB2Optimizer(connection.getJdbcConnection());
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+            try {
+                return new DB2Optimizer(connection.getJdbcConnection());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -155,11 +155,11 @@ public class Platform {
         }
         @Override
         public Optimizer newOptimizer(DatabaseConnection connection) {
-			try {
-				return new PGOptimizer(connection);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+            try {
+                return new PGOptimizer(connection);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

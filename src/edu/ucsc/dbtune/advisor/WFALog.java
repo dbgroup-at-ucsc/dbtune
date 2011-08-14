@@ -125,9 +125,9 @@ public class WFALog implements Serializable {
     }
     
     /**
-	 * Writes the log for an experiment with a fixed candidate set. Iterates through the given 
-	 * {@code IBGPreparedSQLStatement} objects and obtains the costs for each of the queries, as 
-	 * well as each of the recommendations done for each.
+     * Writes the log for an experiment with a fixed candidate set. Iterates through the given 
+     * {@code IBGPreparedSQLStatement} objects and obtains the costs for each of the queries, as 
+     * well as each of the recommendations done for each.
      *
      * @param qinfos
      *     the profile of each of the queries that are contained in a workload. Each of them have 

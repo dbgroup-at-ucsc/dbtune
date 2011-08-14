@@ -30,8 +30,8 @@ public class SQLStatementPlan extends Tree<Operator> {
     /** to keep a register of inserted operators */
     private int globalId = 1;
 
-	/** the statement this plan corresponds to */
-	private SQLStatement sql;
+    /** the statement this plan corresponds to */
+    private SQLStatement sql;
 
     /**
      * Creates a SQL statement plan with one (given root) node.
@@ -42,17 +42,17 @@ public class SQLStatementPlan extends Tree<Operator> {
     public SQLStatementPlan(SQLStatement sql, Operator root) {
         super(root);
 
-		this.sql = sql;
+        this.sql = sql;
         elements.clear();
         root.setId(globalId++);
         elements.put(root,this.root);
     }
 
-	/**
-	 * Returns the statement that this plan corresponds to.
+    /**
+     * Returns the statement that this plan corresponds to.
      *
      * @return
-	 *     statement from which this plan was obtained
+     *     statement from which this plan was obtained
      */
     public SQLStatement getStatement() {
         return sql;

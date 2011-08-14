@@ -138,15 +138,15 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
                 } else {
                     entry = null;
                 }
-			} else if (value.compareTo(entry.element) > 0) {
+            } else if (value.compareTo(entry.element) > 0) {
                 if(entry.children.size() > 1) {
                     entry = entry.children.get(1);
                 } else {
                     entry = null;
                 }
-			} else {
+            } else {
                 return entry;
-			}
+            }
         }
 
         return null;

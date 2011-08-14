@@ -186,14 +186,14 @@ public class DB2Index extends Index {
     }
 
     public void setMeta(DB2IndexMetadata meta) {
-		this.meta = meta;
-	}
+        this.meta = meta;
+    }
 
-	public DB2IndexMetadata getMeta() {
-		return meta;
-	}
+    public DB2IndexMetadata getMeta() {
+        return meta;
+    }
 
-	public static class DB2IndexMetadata implements Serializable {
+    public static class DB2IndexMetadata implements Serializable {
         // serialized fields
         protected DB2IndexSchema schema;
         protected int internalId;

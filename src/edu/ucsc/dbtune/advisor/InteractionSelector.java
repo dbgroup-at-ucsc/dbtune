@@ -31,7 +31,7 @@ public class InteractionSelector {
      * part of a {@code snapshot} of a {@link edu.ucsc.dbtune.ibg.CandidatePool}.
      * @param arg
      *      a {@link InteractionSelection} object.
-	 * @return a {@link IndexPartitions} object. <strong>IMPORTANT NOTE</strong>: When
+     * @return a {@link IndexPartitions} object. <strong>IMPORTANT NOTE</strong>: When
      *      {@code #choosePartitions(InteractionSelection)} is called, hotSet and
      *      hotPartitions are out of sync!
      */

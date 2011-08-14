@@ -55,8 +55,8 @@ public class Index extends DatabaseObject
     /**
      * Creates an empty index.
      *
-	 * @param name
-	 *     name of the index
+     * @param name
+     *     name of the index
      * @param table
      *     table over which the index will be defined.
      * @param primary
@@ -105,7 +105,7 @@ public class Index extends DatabaseObject
      * Creates an index from the given columns, primary, uniqueness and clustering values.
      *
      * @param name
-	 *     name of the index
+     *     name of the index
      * @param columns
      *     columns that will define the index
      * @param primary
@@ -415,7 +415,7 @@ public class Index extends DatabaseObject
     /**
      * @return create index statement.
      */
-	public String getCreateStatement() {
+    public String getCreateStatement() {
         throw new RuntimeException("Not implemented here");
     }
 

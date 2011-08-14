@@ -67,7 +67,7 @@ public class WfitTestFunctional
         String ddlfilename = env.getScriptAtWorkloadsFolder("one_table/create.sql");
 
         outputdir.mkdirs();
-		//SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
         connection.getJdbcConnection().setAutoCommit(false);
     }
 
@@ -145,17 +145,17 @@ public class WfitTestFunctional
         CandidatePool   pool;
         Iterable<Index> candidateSet;
         Workload        wl;
-		
-		wl   = new Workload(new FileReader(workloadFilename));
-		pool = new CandidatePool();
+        
+        wl   = new Workload(new FileReader(workloadFilename));
+        pool = new CandidatePool();
 
-		for(SQLStatement sql : wl) {
-			candidateSet = con.getIndexExtractor().recommendIndexes(sql);
+        for(SQLStatement sql : wl) {
+            candidateSet = con.getIndexExtractor().recommendIndexes(sql);
 
-			for (Index index : candidateSet) {
-				pool.addIndex(index);
-			}
-		}
+            for (Index index : candidateSet) {
+                pool.addIndex(index);
+            }
+        }
 
         return pool;
     }

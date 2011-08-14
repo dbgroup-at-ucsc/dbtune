@@ -193,125 +193,125 @@ public class DBTuneInstances {
     return new TempBenefitFunction(qinfos, maxInternalId);
   }
 
-	private static class TempBenefitFunction implements BenefitFunction {
-		IBGBestBenefitFinder finder = new IBGBestBenefitFinder();
-		double[][] bbCache;
-		double[] bbSumCache;
-		int[][] componentId;
-		IndexBitSet[] prevM;
-		IndexBitSet diffM;
-		List<IBGPreparedSQLStatement> qinfos;
+    private static class TempBenefitFunction implements BenefitFunction {
+        IBGBestBenefitFinder finder = new IBGBestBenefitFinder();
+        double[][] bbCache;
+        double[] bbSumCache;
+        int[][] componentId;
+        IndexBitSet[] prevM;
+        IndexBitSet diffM;
+        List<IBGPreparedSQLStatement> qinfos;
 
-		TempBenefitFunction(List<IBGPreparedSQLStatement> qinfos0, int maxInternalId) {
-			qinfos = qinfos0;
+        TempBenefitFunction(List<IBGPreparedSQLStatement> qinfos0, int maxInternalId) {
+            qinfos = qinfos0;
 
-			componentId = componentIds(qinfos0, maxInternalId);
+            componentId = componentIds(qinfos0, maxInternalId);
 
-			bbCache = new double[maxInternalId+1][qinfos0.size()];
-			bbSumCache = new double[maxInternalId+1];
-			prevM = new IndexBitSet[maxInternalId+1];
-			for (int i = 0; i <= maxInternalId; i++) {
-				prevM[i] = new IndexBitSet();
-				reinit(i, prevM[i]);
-			}
-			diffM = new IndexBitSet(); // temp bit set
-		}
+            bbCache = new double[maxInternalId+1][qinfos0.size()];
+            bbSumCache = new double[maxInternalId+1];
+            prevM = new IndexBitSet[maxInternalId+1];
+            for (int i = 0; i <= maxInternalId; i++) {
+                prevM[i] = new IndexBitSet();
+                reinit(i, prevM[i]);
+            }
+            diffM = new IndexBitSet(); // temp bit set
+        }
 
-		private static int[][] componentIds(List<IBGPreparedSQLStatement> qinfos, int maxInternalId) {
-			int[][] componentId = new int[qinfos.size()][maxInternalId+1];
-			int q = 0;
-			for (IBGPreparedSQLStatement qinfo : qinfos) {
-				IndexBitSet[] parts = qinfo.getInteractionBank().stablePartitioning(0);
-				for (Index index : qinfo.getCandidateSnapshot()) {
-					int id = index.getId();
-					componentId[q][id] = -id;
-					for (int p = 0; p < parts.length; p++) {
-						if (parts[p].get(id)) {
-							componentId[q][id] = p;
-							break;
-						}
-					}
-				}
-				++q;
-			}
-			return componentId;
-		}
+        private static int[][] componentIds(List<IBGPreparedSQLStatement> qinfos, int maxInternalId) {
+            int[][] componentId = new int[qinfos.size()][maxInternalId+1];
+            int q = 0;
+            for (IBGPreparedSQLStatement qinfo : qinfos) {
+                IndexBitSet[] parts = qinfo.getInteractionBank().stablePartitioning(0);
+                for (Index index : qinfo.getCandidateSnapshot()) {
+                    int id = index.getId();
+                    componentId[q][id] = -id;
+                    for (int p = 0; p < parts.length; p++) {
+                        if (parts[p].get(id)) {
+                            componentId[q][id] = p;
+                            break;
+                        }
+                    }
+                }
+                ++q;
+            }
+            return componentId;
+        }
 
-		private void reinit(int id, IndexBitSet M) {
-			int q = 0;
-			double ben = 0;
-			double cache[] = bbCache[id];
-			for (IBGPreparedSQLStatement qinfo : qinfos) {
-				double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
-				cache[q] = bb;
-				ben += bb;
-				++q;
-			}
-			bbSumCache[id] = ben;
-			prevM[id].set(M);
-		}
+        private void reinit(int id, IndexBitSet M) {
+            int q = 0;
+            double ben = 0;
+            double cache[] = bbCache[id];
+            for (IBGPreparedSQLStatement qinfo : qinfos) {
+                double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
+                cache[q] = bb;
+                ben += bb;
+                ++q;
+            }
+            bbSumCache[id] = ben;
+            prevM[id].set(M);
+        }
 
-		private void reinitIncremental(int id, IndexBitSet M, int b) {
-			int q = 0;
-			double ben = 0;
-			double cache[] = bbCache[id];
-			for (IBGPreparedSQLStatement qinfo : qinfos) {
-				if (componentId[q][id] == componentId[q][b]) {
-					// interaction, recompute
-					double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
-					cache[q] = bb;
-					ben += bb;
-				}
-				else
-					ben += cache[q];
-				++q;
-			}
-			prevM[id].set(M);
-			bbSumCache[id] = ben;
-		}
+        private void reinitIncremental(int id, IndexBitSet M, int b) {
+            int q = 0;
+            double ben = 0;
+            double cache[] = bbCache[id];
+            for (IBGPreparedSQLStatement qinfo : qinfos) {
+                if (componentId[q][id] == componentId[q][b]) {
+                    // interaction, recompute
+                    double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
+                    cache[q] = bb;
+                    ben += bb;
+                }
+                else
+                    ben += cache[q];
+                ++q;
+            }
+            prevM[id].set(M);
+            bbSumCache[id] = ben;
+        }
 
-		public double apply(Index a, IndexBitSet M) {
-			int id = a.getId();
-			if (!M.equals(prevM)) {
-				diffM.set(M);
-				diffM.xor(prevM[id]);
-				if (diffM.cardinality() == 1) {
-					reinitIncremental(id, M, diffM.nextSetBit(0));
-				}
-				else {
-					reinit(id, M);
-				}
-			}
-			return bbSumCache[id];
-		}
-	}
+        public double apply(Index a, IndexBitSet M) {
+            int id = a.getId();
+            if (!M.equals(prevM)) {
+                diffM.set(M);
+                diffM.xor(prevM[id]);
+                if (diffM.cardinality() == 1) {
+                    reinitIncremental(id, M, diffM.nextSetBit(0));
+                }
+                else {
+                    reinit(id, M);
+                }
+            }
+            return bbSumCache[id];
+        }
+    }
 
   public static DoiFunction newTempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Snapshot candidateSet){
     return new TempDoiFunction(qinfos, candidateSet);
   }
 
-	private static class TempDoiFunction implements DoiFunction {
-		private InteractionBank bank;
-		TempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Snapshot candidateSet) {
-			bank = new InteractionBank(candidateSet);
-			for (Index a : candidateSet) {
-				int id_a = a.getId();
-				for (Index b : candidateSet) {
-					int id_b = b.getId();
-					if (id_a < id_b) {
-						double doi = 0;
-						for (IBGPreparedSQLStatement qinfo : qinfos) {
-							doi += qinfo.getInteractionBank().interactionLevel(a.getId(), b.getId());
-						}
-						bank.assignInteraction(a.getId(), b.getId(), doi);
-					}
-				}
-			}
-		}
+    private static class TempDoiFunction implements DoiFunction {
+        private InteractionBank bank;
+        TempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Snapshot candidateSet) {
+            bank = new InteractionBank(candidateSet);
+            for (Index a : candidateSet) {
+                int id_a = a.getId();
+                for (Index b : candidateSet) {
+                    int id_b = b.getId();
+                    if (id_a < id_b) {
+                        double doi = 0;
+                        for (IBGPreparedSQLStatement qinfo : qinfos) {
+                            doi += qinfo.getInteractionBank().interactionLevel(a.getId(), b.getId());
+                        }
+                        bank.assignInteraction(a.getId(), b.getId(), doi);
+                    }
+                }
+            }
+        }
 
-		public double apply(Index a, Index b) {
-			return bank.interactionLevel(a.getId(), b.getId());
-		}
-	}
+        public double apply(Index a, Index b) {
+            return bank.interactionLevel(a.getId(), b.getId());
+        }
+    }
 
 }

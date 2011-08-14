@@ -129,7 +129,7 @@ abstract class AbstractDatabaseSession implements DatabaseSession {
      * @throws Exception
      *      unable to fulfill the contract of this method.
      */
-	public abstract void init() throws Exception;
+    public abstract void init() throws Exception;
 
     @Override
     public boolean isClosed() {

@@ -25,7 +25,7 @@ import java.sql.SQLException;
  */
 public abstract class Advisor
 {
-	/**
+    /**
      * Adds a query to the set of queries that are considered for recommendation.
      *
      * @param sql

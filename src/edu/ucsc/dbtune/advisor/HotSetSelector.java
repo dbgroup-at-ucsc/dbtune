@@ -33,7 +33,7 @@ public class HotSetSelector {
      * @param arg
      *      a hot {@link HotsetSelection selection var} which contains specific values that will
      *      be utilized during the hot set selection process.
-	 * @return
+     * @return
      *      a hot set (i.e., a {@link StaticIndexSet}) 
      */
     public static StaticIndexSet chooseHotSet(HotsetSelection arg){
@@ -53,7 +53,7 @@ public class HotSetSelector {
      * @param arg
      *      a hot {@link HotsetSelection selection var} which contains specific values that will
      *      be utilized during the greedy hot set selection process.
-	 * @return
+     * @return
      *      a hot set (i.e., a {@link StaticIndexSet})
      */
     public static StaticIndexSet chooseHotSetGreedy(HotsetSelection arg){

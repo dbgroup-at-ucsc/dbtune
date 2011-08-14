@@ -23,10 +23,10 @@ import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGBestBenefitFinder {
-	private final IndexBitSet visited;
-	private final IndexBitSet bitset_Ya;
-	private final IBGNodeQueue          pending;
-	private final IBGCoveringNodeFinder finder;
+    private final IndexBitSet visited;
+    private final IndexBitSet bitset_Ya;
+    private final IBGNodeQueue          pending;
+    private final IBGCoveringNodeFinder finder;
 
     /**
      * construct a new {@link IBGBestBenefitFinder} object; assumming default values for its private members.
@@ -60,32 +60,32 @@ public class IBGBestBenefitFinder {
      * @return
      *     the best benefit for a given index in the index benefit graph.
      */
-	public double bestBenefit(IndexBenefitGraph ibg, int indexId, IndexBitSet M) {
-		visited.clear();
-		pending.reset();
-		
-		double bestValue = 0;
-		
-		pending.addNode(ibg.rootNode());
-		while (pending.hasNext()) {
-			IBGNode Y = pending.next();
+    public double bestBenefit(IndexBenefitGraph ibg, int indexId, IndexBitSet M) {
+        visited.clear();
+        pending.reset();
+        
+        double bestValue = 0;
+        
+        pending.addNode(ibg.rootNode());
+        while (pending.hasNext()) {
+            IBGNode Y = pending.next();
 
-			if (visited.get(Y.id)) 
-				continue;
-			visited.set(Y.id);
+            if (visited.get(Y.id)) 
+                continue;
+            visited.set(Y.id);
 
-			if (!Y.config.get(indexId) && M.subsetOf(Y.config)) {
-				bitset_Ya.set(Y.config);
-				bitset_Ya.set(indexId);
-				IBGNode Ya = finder.findFast(ibg.rootNode(), bitset_Ya, null);
-				double value = Y.cost() - Ya.cost();
-				bestValue = Math.max(value, bestValue);
-			}
-			pending.addChildren(Y.firstChild());
-		}
-		
-		return bestValue;
-	}
+            if (!Y.config.get(indexId) && M.subsetOf(Y.config)) {
+                bitset_Ya.set(Y.config);
+                bitset_Ya.set(indexId);
+                IBGNode Ya = finder.findFast(ibg.rootNode(), bitset_Ya, null);
+                double value = Y.cost() - Ya.cost();
+                bestValue = Math.max(value, bestValue);
+            }
+            pending.addChildren(Y.firstChild());
+        }
+        
+        return bestValue;
+    }
 
     @Override
     public String toString() {

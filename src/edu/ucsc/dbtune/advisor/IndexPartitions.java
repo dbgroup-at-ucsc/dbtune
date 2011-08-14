@@ -147,7 +147,7 @@ public class IndexPartitions {
 
     /**
      * merges two subsets A and B in which A contains an index <em>i1</em> and B contains an
-	 * index <em>i2</em>.
+     * index <em>i2</em>.
      * @param i1
      *      first index object.
      * @param i2
@@ -198,7 +198,7 @@ public class IndexPartitions {
     /**
      * Returns the <em>theoretical</em> plan cost of a {@code profiled query}.
      * @param qinfo
-	 *      a {@link IBGPreparedSQLStatement} object.
+     *      a {@link IBGPreparedSQLStatement} object.
      * @param state
      *      an index configuration.
      * @param scratch

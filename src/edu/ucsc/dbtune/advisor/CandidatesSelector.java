@@ -94,7 +94,7 @@ public class CandidatesSelector {
     /**
      * Perform the per-query tasks that are done after profiling
      * @param qinfo
-	 *      a {@link IBGPreparedSQLStatement} object.
+     *      a {@link IBGPreparedSQLStatement} object.
      * @return an {@link AnalyzedQuery} object.
      */
     public AnalyzedQuery analyzeQuery(IBGPreparedSQLStatement qinfo) {
@@ -165,7 +165,7 @@ public class CandidatesSelector {
      * Returns the current cost of a {@code profiled query} given a set
      * of materialized indexes.
      * @param qinfo
-	 *      a {@link IBGPreparedSQLStatement} object.
+     *      a {@link IBGPreparedSQLStatement} object.
      * @return
      *      the total cost of a {@code profiled query}.
      */

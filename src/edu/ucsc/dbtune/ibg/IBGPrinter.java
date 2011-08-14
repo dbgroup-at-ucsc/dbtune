@@ -25,8 +25,8 @@ import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGPrinter {
-	private final IndexBitSet visited;
-	private final IBGNodeQueue  pending;
+    private final IndexBitSet visited;
+    private final IBGNodeQueue  pending;
     private static final int INITIAL_MSG_SIZE = 10000;
 
     /**
@@ -51,52 +51,52 @@ public class IBGPrinter {
      * prints an {@link IndexBenefitGraph} object.
      * @param ibg an {@link IndexBenefitGraph} object to be printed.
      */
-	public void print(IndexBenefitGraph ibg) {
-		visited.clear();
-		pending.reset();
-		
-		pending.addNode(ibg.rootNode());
-		while (pending.hasNext()) {
-			IBGNode node = pending.next();
+    public void print(IndexBenefitGraph ibg) {
+        visited.clear();
+        pending.reset();
+        
+        pending.addNode(ibg.rootNode());
+        while (pending.hasNext()) {
+            IBGNode node = pending.next();
 
-			if (visited.get(node.id)) {
+            if (visited.get(node.id)) {
                 continue;
             }
-			visited.set(node.id);
-			
-			// we don't print unexpanded nodes... 
-			// we do print the used set of expanded nodes
-			if (node.isExpanded()) {
-				printExpanded(ibg, node);
-				pending.addChildren(node.firstChild());
-			}
-		}
-	}
-	
-	void printExpanded(IndexBenefitGraph ibg, IBGNode node) {
+            visited.set(node.id);
+            
+            // we don't print unexpanded nodes... 
+            // we do print the used set of expanded nodes
+            if (node.isExpanded()) {
+                printExpanded(ibg, node);
+                pending.addChildren(node.firstChild());
+            }
+        }
+    }
+    
+    void printExpanded(IndexBenefitGraph ibg, IBGNode node) {
         final StringBuilder screenOutput = new StringBuilder(INITIAL_MSG_SIZE);
-		boolean first;
+        boolean first;
         screenOutput.append("NODE:\t{");
-		first = true;
-		for (int i = node.config.nextSetBit(0); i >= 0; i = node.config.nextSetBit(i+1)) {
-			if (ibg.isUsed(i)) {
-				if (!first) screenOutput.append(", ");
+        first = true;
+        for (int i = node.config.nextSetBit(0); i >= 0; i = node.config.nextSetBit(i+1)) {
+            if (ibg.isUsed(i)) {
+                if (!first) screenOutput.append(", ");
                 screenOutput.append(i);
-				first = false;
-			}
-		}
+                first = false;
+            }
+        }
         screenOutput.append("}\n").append("\tused {");
-		first = true;
-		for (IBGChild c = node.firstChild(); c != null; c = c.next) {
-			if (!first) {
+        first = true;
+        for (IBGChild c = node.firstChild(); c != null; c = c.next) {
+            if (!first) {
                 screenOutput.append(", ");
-			}
+            }
             screenOutput.append(c.usedIndex);
-		    first = false;
-		}
+            first = false;
+        }
         screenOutput.append("}\n").append("\tcost ").append(node.cost()).append("\n\n");
         Console.streaming().log(screenOutput.toString());
-	}
+    }
 
     @Override
     public String toString() {

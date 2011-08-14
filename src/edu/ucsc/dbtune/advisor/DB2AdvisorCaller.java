@@ -66,84 +66,84 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
  */
 //todo(Huascar) make it a stateful object rather than leaving it like a util class.
 public class DB2AdvisorCaller {
-	private static final Pattern INDEX_HEADER_PATTERN       = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
-	private static final Pattern INDEX_STATEMENT_PATTERN    = Pattern.compile("^\\s*CREATE.+(IDX\\d*)\\\"");
-	private static final Pattern START_INDEXES_PATTERN      = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
-	private static final Pattern END_INDEXES_PATTERN        = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
+    private static final Pattern INDEX_HEADER_PATTERN       = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
+    private static final Pattern INDEX_STATEMENT_PATTERN    = Pattern.compile("^\\s*CREATE.+(IDX\\d*)\\\"");
+    private static final Pattern START_INDEXES_PATTERN      = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
+    private static final Pattern END_INDEXES_PATTERN        = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
     private static final Console SCREEN                     = Console.streaming();
 
-	public static FileInfo createAdvisorFile(DatabaseConnection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException {
-		submit(
+    public static FileInfo createAdvisorFile(DatabaseConnection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException {
+        submit(
                 // executes "DELETE FROM advise_index"
                 clearAdviseIndex(), conn
         );
 
-		final String cmd = getCmd(conn, advisorPath, budget, workloadFile, false);
-		final String cleanCmd = getCmd(conn, advisorPath, budget, workloadFile, true);
+        final String cmd = getCmd(conn, advisorPath, budget, workloadFile, false);
+        final String cleanCmd = getCmd(conn, advisorPath, budget, workloadFile, true);
 
         log("Running db2advis on " + workloadFile);
-		log("command = " + cleanCmd);
+        log("command = " + cleanCmd);
 
         Process prcs = Runtime.getRuntime().exec(cmd);
-		
-		FileInfo info;
-		InputStream in   = new BufferedInputStream(prcs.getInputStream());
-		InputStream err  = new BufferedInputStream(prcs.getErrorStream());
-		String errString = "";
-		try {
-			info        = new FileInfo(in);
-			errString   = Files.readStream(err);
-		} finally {
-			in.close();
-			err.close();
-		}
-		
-		while (true) {
-			try {
-				prcs.waitFor();
-				break;
-			} catch (InterruptedException e) {
+        
+        FileInfo info;
+        InputStream in   = new BufferedInputStream(prcs.getInputStream());
+        InputStream err  = new BufferedInputStream(prcs.getErrorStream());
+        String errString = "";
+        try {
+            info        = new FileInfo(in);
+            errString   = Files.readStream(err);
+        } finally {
+            in.close();
+            err.close();
+        }
+        
+        while (true) {
+            try {
+                prcs.waitFor();
+                break;
+            } catch (InterruptedException e) {
                 log("InterruptedException"+ " Cause: " + e.toString());
             }
-		}
-		int rc = prcs.exitValue();
-		if (rc != 0){
+        }
+        int rc = prcs.exitValue();
+        if (rc != 0){
             throw new SQLException("db2advis returned code "+rc+"\n"+errString);
         }
-		
-		return info;
-	}
+        
+        return info;
+    }
 
-	private static String getCmd(DatabaseConnection conn, String advisorPath, int budget, File inFile, boolean clean) {
+    private static String getCmd(DatabaseConnection conn, String advisorPath, int budget, File inFile, boolean clean) {
         final JdbcConnectionManager manager = Objects.as(conn.getConnectionManager());
-		final String db   = manager.getDatabaseName();
-		final String pw   = manager.getPassword();
-		final String user = manager.getUsername();
-		
-		return advisorPath
-		       +" -d "+db
-		       +" -a "+user+"/"+(clean?"****":pw)
-		       +" -i "+inFile
-		       +" -l "+budget
-		       +" -m I -f -k OFF";
-		
-	}
-	
-	public static class FileInfo {
-		List<IndexInfo> indexList;
-		
-		@SuppressWarnings("unused")
-		private String output;
-		
-		private FileInfo(InputStream stream) throws IOException, SQLException {
-			indexList = new ArrayList<IndexInfo>();
-			output    = processFile(stream, indexList);
-		}
-		
-		public IndexSet getCandidates(DatabaseConnection conn) throws SQLException {
-			IndexSet candidateSet = new DB2IndexSet();
-			int id = 1;
-			for (IndexInfo info : indexList) {
+        final String db   = manager.getDatabaseName();
+        final String pw   = manager.getPassword();
+        final String user = manager.getUsername();
+        
+        return advisorPath
+               +" -d "+db
+               +" -a "+user+"/"+(clean?"****":pw)
+               +" -i "+inFile
+               +" -l "+budget
+               +" -m I -f -k OFF";
+        
+    }
+    
+    public static class FileInfo {
+        List<IndexInfo> indexList;
+        
+        @SuppressWarnings("unused")
+        private String output;
+        
+        private FileInfo(InputStream stream) throws IOException, SQLException {
+            indexList = new ArrayList<IndexInfo>();
+            output    = processFile(stream, indexList);
+        }
+        
+        public IndexSet getCandidates(DatabaseConnection conn) throws SQLException {
+            IndexSet candidateSet = new DB2IndexSet();
+            int id = 1;
+            for (IndexInfo info : indexList) {
                 final DB2Index idx = supplyValue(
                         readAdviseOnOneIndex(),
                         conn,
@@ -151,77 +151,77 @@ public class DB2AdvisorCaller {
                         id,
                         info.megabytes
                 );
-				candidateSet.add(idx);
-				++id;
-			}
-			
+                candidateSet.add(idx);
+                ++id;
+            }
+            
             // normalize the index candidates
-			candidateSet.normalize();
-			
-			for (Index index : candidateSet) {
-				System.out.println("Candidate Index " + index.getId() + ": " + index.getMegaBytes());
-				System.out.println(index.getCreateStatement());
-			}
-			
-			return candidateSet;
-		}
-		
-		public int getMegabytes() {
-			double total = 0;
-			for (IndexInfo info : indexList) 
-				total += info.megabytes;
-			System.out.println("Total size = " + total);
-			return (int) Math.round(total);
-		}
-		
-		private static String processFile(InputStream stream, List<IndexInfo> indexList) throws IOException, SQLException { 
-			List<String> lines = Files.getLines(stream); // splits the file into individual lines
-			Iterator<String> iter   = lines.iterator();
-			Matcher headerMatcher   = INDEX_HEADER_PATTERN.matcher("");
-			Matcher startMatcher    = START_INDEXES_PATTERN.matcher("");
-			Matcher endMatcher      = END_INDEXES_PATTERN.matcher("");
-			Matcher createMatcher   = INDEX_STATEMENT_PATTERN.matcher("");
-			while (iter.hasNext()) {
-				String line = iter.next();
-				startMatcher.reset(line);
-				if (startMatcher.find())
-					break;
-			}
-			
-			String str = "";
-			while (iter.hasNext()) {
-				String line = iter.next();
-				endMatcher.reset(line);
-				if (endMatcher.find())
-					break;
-				else {
-					headerMatcher.reset(line);
-					if (headerMatcher.find()) {
-						createMatcher.reset(iter.next()); // advanced iterator! 
-						if (!createMatcher.find())
-							throw new SQLException("Unexpected advisor file format");
-						
-						String indexName = createMatcher.group(1);
-						double indexMegabytes = Double.parseDouble(headerMatcher.group(1));
-						indexList.add(new IndexInfo(indexName, indexMegabytes));
-						System.out.println(indexMegabytes + "\t" + indexName + "\t" + line);
-					}
-				}
-				str += line + "\n";
-			}
-			return str;
-		}
-	}
-	
-	private static class IndexInfo {
-		String name;
-		double megabytes;
-		
-		IndexInfo(String n, double m) {
-			name = n;
-			megabytes = m;
-		}
-	}
+            candidateSet.normalize();
+            
+            for (Index index : candidateSet) {
+                System.out.println("Candidate Index " + index.getId() + ": " + index.getMegaBytes());
+                System.out.println(index.getCreateStatement());
+            }
+            
+            return candidateSet;
+        }
+        
+        public int getMegabytes() {
+            double total = 0;
+            for (IndexInfo info : indexList) 
+                total += info.megabytes;
+            System.out.println("Total size = " + total);
+            return (int) Math.round(total);
+        }
+        
+        private static String processFile(InputStream stream, List<IndexInfo> indexList) throws IOException, SQLException { 
+            List<String> lines = Files.getLines(stream); // splits the file into individual lines
+            Iterator<String> iter   = lines.iterator();
+            Matcher headerMatcher   = INDEX_HEADER_PATTERN.matcher("");
+            Matcher startMatcher    = START_INDEXES_PATTERN.matcher("");
+            Matcher endMatcher      = END_INDEXES_PATTERN.matcher("");
+            Matcher createMatcher   = INDEX_STATEMENT_PATTERN.matcher("");
+            while (iter.hasNext()) {
+                String line = iter.next();
+                startMatcher.reset(line);
+                if (startMatcher.find())
+                    break;
+            }
+            
+            String str = "";
+            while (iter.hasNext()) {
+                String line = iter.next();
+                endMatcher.reset(line);
+                if (endMatcher.find())
+                    break;
+                else {
+                    headerMatcher.reset(line);
+                    if (headerMatcher.find()) {
+                        createMatcher.reset(iter.next()); // advanced iterator! 
+                        if (!createMatcher.find())
+                            throw new SQLException("Unexpected advisor file format");
+                        
+                        String indexName = createMatcher.group(1);
+                        double indexMegabytes = Double.parseDouble(headerMatcher.group(1));
+                        indexList.add(new IndexInfo(indexName, indexMegabytes));
+                        System.out.println(indexMegabytes + "\t" + indexName + "\t" + line);
+                    }
+                }
+                str += line + "\n";
+            }
+            return str;
+        }
+    }
+    
+    private static class IndexInfo {
+        String name;
+        double megabytes;
+        
+        IndexInfo(String n, double m) {
+            name = n;
+            megabytes = m;
+        }
+    }
 
     private static void log(String message){
         SCREEN.log(message);

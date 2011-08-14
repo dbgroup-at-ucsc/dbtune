@@ -54,29 +54,29 @@ public class Tree<T extends Comparable<? super T>>
         return root.element;
     }
 
-	/**
-	 * returns the children of an element.
+    /**
+     * returns the children of an element.
      *
-	 * @return
-	 *     a list containing the children elements of the given value. Empty if the given element is 
-	 *     a leaf of the tree.
-	 * @throws NoSuchElementException
-	 *     if {@code value} isn't a member of the tree
+     * @return
+     *     a list containing the children elements of the given value. Empty if the given element is 
+     *     a leaf of the tree.
+     * @throws NoSuchElementException
+     *     if {@code value} isn't a member of the tree
      */
     public List<T> getChildren(T value) throws NoSuchElementException {
-		Entry<T> entry = find(value, root);
+        Entry<T> entry = find(value, root);
 
-		if(entry == null) {
-			throw new NoSuchElementException( value + " is not a member");
-		}
+        if(entry == null) {
+            throw new NoSuchElementException( value + " is not a member");
+        }
 
-		List<T> children = new ArrayList<T>();
+        List<T> children = new ArrayList<T>();
 
-		for(Entry<T> e : entry.children) {
-			children.add(valueOf(e));
-		}
+        for(Entry<T> e : entry.children) {
+            children.add(valueOf(e));
+        }
 
-		return children;
+        return children;
     }
 
     /**

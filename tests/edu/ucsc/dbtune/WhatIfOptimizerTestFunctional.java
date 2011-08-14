@@ -60,7 +60,7 @@ public class WhatIfOptimizerTestFunctional {
         String ddlfilename = environment.getScriptAtWorkloadsFolder("one_table/create.sql");
 
         outputdir.mkdirs();
-		//SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
         connection.getJdbcConnection().setAutoCommit(false);
     }
 

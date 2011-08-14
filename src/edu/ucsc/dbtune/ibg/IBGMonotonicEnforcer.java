@@ -23,9 +23,9 @@ import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGMonotonicEnforcer {
-	private final IndexBitSet visited;
-	private final IBGNodeQueue  pending;
-	private final SubSearch     sub;
+    private final IndexBitSet visited;
+    private final IBGNodeQueue  pending;
+    private final SubSearch     sub;
 
     /**
      * construct an {@link IBGMonotonicEnforcer} object.
@@ -54,36 +54,36 @@ public class IBGMonotonicEnforcer {
      * @param ibg
      *      the {@link IndexBenefitGraph} to be fixed.
      */
-	public void fix(IndexBenefitGraph ibg) {
-		visited.clear();
-		pending.reset();
-		
-		pending.addNode(ibg.rootNode());
-		while (pending.hasNext()) {
-			IBGNode node = pending.next();
-			
-			if (visited.get(node.id)){
+    public void fix(IndexBenefitGraph ibg) {
+        visited.clear();
+        pending.reset();
+        
+        pending.addNode(ibg.rootNode());
+        while (pending.hasNext()) {
+            IBGNode node = pending.next();
+            
+            if (visited.get(node.id)){
                 continue;
             }
             
-			visited.set(node.id);
-			
-			sub.fixSubsets(ibg, node.config, node.cost());
-			
-			if (node.isExpanded()) {
-				if (node.firstChild() == null) {
-					if (node.cost() > ibg.emptyCost()) {
-						System.out.flush();
-						System.err.printf("monotonicity violation: %f%% ", 100.0*(node.cost() - ibg.emptyCost())/node.cost());
-						System.err.flush();
-						ibg.setEmptyCost(node.cost());
-					}
-				} else{
+            visited.set(node.id);
+            
+            sub.fixSubsets(ibg, node.config, node.cost());
+            
+            if (node.isExpanded()) {
+                if (node.firstChild() == null) {
+                    if (node.cost() > ibg.emptyCost()) {
+                        System.out.flush();
+                        System.err.printf("monotonicity violation: %f%% ", 100.0*(node.cost() - ibg.emptyCost())/node.cost());
+                        System.err.flush();
+                        ibg.setEmptyCost(node.cost());
+                    }
+                } else{
                     pending.addChildren(node.firstChild());
                 }
-			}
-		}	
-	}
+            }
+        }   
+    }
 
 
     @Override
@@ -98,36 +98,36 @@ public class IBGMonotonicEnforcer {
     /**
      * a Subsearch space in the {@link IndexBenefitGraph}.
      */
-	private static class SubSearch {
-		private final IndexBitSet visited = new IndexBitSet();
-		private final IBGNodeStack pending = new IBGNodeStack();
-		
-		private void fixSubsets(IndexBenefitGraph ibg, IndexBitSet config, double cost) {
-			visited.clear();
-			pending.reset();
-			
-			pending.addNode(ibg.rootNode());
-			while (pending.hasNext()) {
-				IBGNode node = pending.next();
-				
-				if (visited.get(node.id)){
+    private static class SubSearch {
+        private final IndexBitSet visited = new IndexBitSet();
+        private final IBGNodeStack pending = new IBGNodeStack();
+        
+        private void fixSubsets(IndexBenefitGraph ibg, IndexBitSet config, double cost) {
+            visited.clear();
+            pending.reset();
+            
+            pending.addNode(ibg.rootNode());
+            while (pending.hasNext()) {
+                IBGNode node = pending.next();
+                
+                if (visited.get(node.id)){
                     continue;
                 }
 
-				visited.set(node.id);
-				
-				if (node.config.subsetOf(config) && !node.config.equals(config)) {
-					if (node.cost() < cost) {
-						System.out.flush();
-						System.err.printf("monotonicity violation: %f%% ", 100.0*(node.cost() - cost)/node.cost());
-						System.err.flush();
-						node.setCost(cost);
-					}
-				}
-				else if (node.isExpanded()) 
-					pending.addChildren(node.firstChild());
-			}		
-		}
+                visited.set(node.id);
+                
+                if (node.config.subsetOf(config) && !node.config.equals(config)) {
+                    if (node.cost() < cost) {
+                        System.out.flush();
+                        System.err.printf("monotonicity violation: %f%% ", 100.0*(node.cost() - cost)/node.cost());
+                        System.err.flush();
+                        node.setCost(cost);
+                    }
+                }
+                else if (node.isExpanded()) 
+                    pending.addChildren(node.firstChild());
+            }       
+        }
 
         @Override
         public String toString() {

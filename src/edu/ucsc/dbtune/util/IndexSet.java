@@ -28,94 +28,94 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class IndexSet implements Iterable<Index>, Serializable {
-	
-	private IndexBitSet bs;
-	private Set<Index> set;
-	private List<Index> list;
-	private long maxInternalId;
+    
+    private IndexBitSet bs;
+    private Set<Index> set;
+    private List<Index> list;
+    private long maxInternalId;
 
-	/* serialization support */
-	public static final long serialVersionUID = 1L;
-	
-	public IndexSet() {
-		clear();
-	}
+    /* serialization support */
+    public static final long serialVersionUID = 1L;
+    
+    public IndexSet() {
+        clear();
+    }
 
-	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.writeInt(list.size());
-		for (Index idx : list)
-			out.writeObject(idx);
-	}
-		
-	public final void clear() {
-		set = new HashSet<Index>();
-		list = new ArrayList<Index>();
-		bs = new IndexBitSet();
-		maxInternalId = -1;
-	}
-	
-	public void add(Index idx) {
-		if (set.add(idx)) {
-			list.add(idx);
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeInt(list.size());
+        for (Index idx : list)
+            out.writeObject(idx);
+    }
+        
+    public final void clear() {
+        set = new HashSet<Index>();
+        list = new ArrayList<Index>();
+        bs = new IndexBitSet();
+        maxInternalId = -1;
+    }
+    
+    public void add(Index idx) {
+        if (set.add(idx)) {
+            list.add(idx);
             if(idx.getId() > Integer.MAX_VALUE) {
                 throw new RuntimeException("Overflowed id " + idx.getId());
             }
-			bs.set((int)idx.getId());
-			if (idx.getId() > maxInternalId){
+            bs.set((int)idx.getId());
+            if (idx.getId() > maxInternalId){
                 maxInternalId = idx.getId();
             }
-		}
-	}
-	
-	public Iterator<Index> iterator() {
-		return list.iterator();
-	}
-	
-	public long maxInternalId() {
-		return maxInternalId;
-	}
+        }
+    }
+    
+    public Iterator<Index> iterator() {
+        return list.iterator();
+    }
+    
+    public long maxInternalId() {
+        return maxInternalId;
+    }
 
-	public int size() {
-		return set.size();
-	}
-	
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
+    public int size() {
+        return set.size();
+    }
+    
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
         sb.append(size()).append(" indexes\n");
-		
-		for (Index idx : this) {
+        
+        for (Index idx : this) {
             sb.append(idx).append("\n");
-		}
-		
-		return sb.toString();
-	}
+        }
+        
+        return sb.toString();
+    }
 
-	// Renumber the indexes so they are sorted by their creation text 
-	@SuppressWarnings({"unchecked", "RedundantTypeArguments"})
-	public void normalize() throws SQLException {
-		Index[] array = new Index[list.size()];
-		array = list.<Index>toArray(array);
-		Arrays.sort(array, schemaComparator);
-		
-		// start from scratch to be safe
-		clear();
-		for (int i = 0; i < array.length; i++) {
+    // Renumber the indexes so they are sorted by their creation text 
+    @SuppressWarnings({"unchecked", "RedundantTypeArguments"})
+    public void normalize() throws SQLException {
+        Index[] array = new Index[list.size()];
+        array = list.<Index>toArray(array);
+        Arrays.sort(array, schemaComparator);
+        
+        // start from scratch to be safe
+        clear();
+        for (int i = 0; i < array.length; i++) {
             Index idx = new Index(array[i]);
             idx.setId(i);
-			add(idx);
-		}
-	}
+            add(idx);
+        }
+    }
 
-	public IndexBitSet bitSet() {
-		return bs.clone();
-	}
-	
-	/*
-	 * java.util.Comparator for displaying indexes in an easy to read format
-	 */
-	private static Comparator<Index> schemaComparator = new Comparator<Index>() {
-		public int compare(Index o1, Index o2) {
-			return o1.getCreateStatement().compareTo(o2.getCreateStatement());
-		}
-	};
+    public IndexBitSet bitSet() {
+        return bs.clone();
+    }
+    
+    /*
+     * java.util.Comparator for displaying indexes in an easy to read format
+     */
+    private static Comparator<Index> schemaComparator = new Comparator<Index>() {
+        public int compare(Index o1, Index o2) {
+            return o1.getCreateStatement().compareTo(o2.getCreateStatement());
+        }
+    };
 }

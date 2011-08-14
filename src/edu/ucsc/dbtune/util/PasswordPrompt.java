@@ -41,32 +41,32 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class PasswordPrompt {
-	public static String getPassword() {
-		PasswordRunnable runnable = new PasswordRunnable();
-		Thread t = new Thread(runnable);
-		t.start();
-		try {
-			t.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-		return runnable.password;
-	}
-	private static class PasswordRunnable implements Runnable {
-		String password;
-		public void run() {
-			CustomDialog d = new CustomDialog(null);
-			d.pack();
-			d.setVisible(true);
-			d.getContentPane().removeAll();
-			if (d.typedText == null) {
-				// user canceled
-				System.exit(0);
-			}
-			password = d.typedText;
-		}
-	}
+    public static String getPassword() {
+        PasswordRunnable runnable = new PasswordRunnable();
+        Thread t = new Thread(runnable);
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        return runnable.password;
+    }
+    private static class PasswordRunnable implements Runnable {
+        String password;
+        public void run() {
+            CustomDialog d = new CustomDialog(null);
+            d.pack();
+            d.setVisible(true);
+            d.getContentPane().removeAll();
+            if (d.typedText == null) {
+                // user canceled
+                System.exit(0);
+            }
+            password = d.typedText;
+        }
+    }
 }
 
 
@@ -135,8 +135,8 @@ class CustomDialog extends JDialog
             Object value = optionPane.getValue();
 
             if (btnString1.equals(value)) {
-            	typedText = textField.getText();
-            	setVisible(false);
+                typedText = textField.getText();
+                setVisible(false);
             } else { //user closed dialog or clicked cancel
                 typedText = null;
                 setVisible(false);

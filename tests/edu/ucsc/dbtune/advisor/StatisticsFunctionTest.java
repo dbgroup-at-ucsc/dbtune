@@ -78,7 +78,7 @@ public class StatisticsFunctionTest {
         candidatePool.addIndex(callback.get(1));
 
         return new IBGPreparedSQLStatement("SELECT * FROM R;",
-			   SQLCategory.QUERY,
+               SQLCategory.QUERY,
                candidatePool.getSnapshot(),
                new IndexBenefitGraph(makeIBGNode(), 5.0, new IndexBitSet()),
                makeInteractionBank(),

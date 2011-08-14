@@ -43,10 +43,10 @@ public interface ConnectionManager {
     DatabaseSystem getDatabaseSystem();
 
     /**
-	 * sets the connection manager's state to <em>open</em> by establishing a new database connection
+     * sets the connection manager's state to <em>open</em> by establishing a new database connection
      * (assumming this is the first connection). The state won't be updated if more than one connection is
      * created by this manager.
-	 * @return
+     * @return
      *      an object that will complete when the database connection has been established or failed.
      * @throws java.sql.SQLException
      *      thrown if we were unable to connect to a database system.
@@ -54,9 +54,9 @@ public interface ConnectionManager {
     DatabaseConnection connect() throws SQLException;
 
     /**
-	 * closes all the database connections managed by this {@code DatabaseConnectionManager} and
+     * closes all the database connections managed by this {@code DatabaseConnectionManager} and
      * releases any resources used for managing these database connections.
-	 * @throws java.sql.SQLException
+     * @throws java.sql.SQLException
      *        if there's an error closing all the database connections
      */
     void close() throws SQLException;
@@ -70,17 +70,17 @@ public interface ConnectionManager {
      */
     void close(DatabaseConnection connection);
 
-	/**
-	 * Indicates if this {@code DatabaseConnectionManager} is closed.
-	 * @return  {@code true}
+    /**
+     * Indicates if this {@code DatabaseConnectionManager} is closed.
+     * @return  {@code true}
      *      if this {@code DatabaseConnectionManager} is closed, false otherwise.
-	 */
-	boolean isClosed();
+     */
+    boolean isClosed();
 
-	/**
-	 * Indicates if this {@code DatabaseConnectionManager} is opened.
-	 * @return  {@code true}
+    /**
+     * Indicates if this {@code DatabaseConnectionManager} is opened.
+     * @return  {@code true}
      *      if this {@code DatabaseConnectionManager} is opened, {@code false} otherwise.
-	 */
+     */
     boolean isOpened();
 }

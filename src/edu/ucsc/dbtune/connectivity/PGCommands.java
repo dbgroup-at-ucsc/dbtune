@@ -47,14 +47,14 @@ import static edu.ucsc.dbtune.util.Instances.newList;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class PGCommands {
-	private static String sqlStatement;
+    private static String sqlStatement;
 
     private PGCommands(){}
 
     /**
-	 * returns a command that will give you a {@link PreparedSQLStatement}.
+     * returns a command that will give you a {@link PreparedSQLStatement}.
      * @return
-	 *      a {@code Command<PreparedSQLStatement>} object.
+     *      a {@code Command<PreparedSQLStatement>} object.
      */
     public static Function<PreparedSQLStatement, SQLException> explainIndexes(){
         final Function<Parameter, SQLException> rs;
@@ -255,7 +255,7 @@ public class PGCommands {
     /**
      * Returns a command that will explain indexes.
      * @return
-	 *      a new {@code Command<PreparedSQLStatement>} object.
+     *      a new {@code Command<PreparedSQLStatement>} object.
      */
     private static Function<PreparedSQLStatement, SQLException> explainInfo(){
         return new Function<PreparedSQLStatement, SQLException>(){
@@ -299,7 +299,7 @@ public class PGCommands {
                 }
 
                 return new PreparedSQLStatement(
-						sqlStatement,
+                        sqlStatement,
                         category,
                         totalCost,
                         maintCost
@@ -339,7 +339,7 @@ public class PGCommands {
           final ResultSet rs = statement.executeQuery(explainSql);
           checkSQLRelatedState(rs.next(), "no row returned from EXPLAIN INDEXES");
 
-		  PGCommands.sqlStatement = sql;
+          PGCommands.sqlStatement = sql;
 
           return Parameters.makeAnonymousParameter(
                   rs,

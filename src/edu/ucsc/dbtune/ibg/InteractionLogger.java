@@ -22,7 +22,7 @@ import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class InteractionLogger {
-	private final InteractionBank bank;
+    private final InteractionBank bank;
 
     /**
      * construct an {@link InteractionLogger} for a particular
@@ -30,9 +30,9 @@ public class InteractionLogger {
      * @param candidateSet
      *      a set of candidate indexes.
      */
-	public InteractionLogger(Snapshot candidateSet) {
+    public InteractionLogger(Snapshot candidateSet) {
         this(new InteractionBank(candidateSet));
-	}
+    }
 
     /**
      * construct an {@link InteractionLogger} for a particular
@@ -44,9 +44,9 @@ public class InteractionLogger {
         this.bank = bank;
     }
 
-	
-	/**
-	 * Assign interaction with an exact value
+    
+    /**
+     * Assign interaction with an exact value
      * @param id1
      *      identifier of first index.
      * @param id2
@@ -54,9 +54,9 @@ public class InteractionLogger {
      * @param newValue
      *      new value of interaction.
      */
-	public final void assignInteraction(int id1, int id2, double newValue) {		
-		bank.assignInteraction(id1, id2, newValue);
-	}
+    public final void assignInteraction(int id1, int id2, double newValue) {        
+        bank.assignInteraction(id1, id2, newValue);
+    }
 
     /**
      * assign benefit to a particular index
@@ -65,16 +65,16 @@ public class InteractionLogger {
      * @param newValue
      *      benefit value.
      */
-	public void assignBenefit(int id, double newValue) {
-		bank.assignBenefit(id, newValue);
-	}
+    public void assignBenefit(int id, double newValue) {
+        bank.assignBenefit(id, newValue);
+    }
 
     /**
      * @return an {@link InteractionBank} part of logger.
      */
-	public final InteractionBank getInteractionBank() {
-		return bank;
-	}
+    public final InteractionBank getInteractionBank() {
+        return bank;
+    }
 
     @Override
     public String toString() {

@@ -30,29 +30,29 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 abstract class AbstractConnectionManager
         implements ConnectionManager {
 
-	private final String username;
-	private final String password;
-	private final String database;
+    private final String username;
+    private final String password;
+    private final String database;
 
-	protected AbstractConnectionManager(
+    protected AbstractConnectionManager(
             String username,
             String password,
             String database
     ) {
-		this.username = Checks.checkNotNull(username);
-		this.password = Checks.checkNotNull(password);
-		this.database = Checks.checkNotNull(database);
-	}
+        this.username = Checks.checkNotNull(username);
+        this.password = Checks.checkNotNull(password);
+        this.database = Checks.checkNotNull(database);
+    }
 
     abstract void addConnection(DatabaseConnection connection);
 
-	public String getUsername() {
-		return username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    public String getPassword() {
+        return password;
+    }
 
     @Override
     public String getDatabaseName() {

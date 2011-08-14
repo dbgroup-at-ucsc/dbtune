@@ -31,11 +31,11 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.sql.SQLException;
 
 public class BcTuner {
-	private final DatabaseConnection    connection;
-	private final StaticIndexSet     hotSet;
-	private final BcIndexPool        pool;
-	private final Snapshot           snapshot;
-	private final IndexBitSet           currentRecommendation;
+    private final DatabaseConnection    connection;
+    private final StaticIndexSet     hotSet;
+    private final BcIndexPool        pool;
+    private final Snapshot           snapshot;
+    private final IndexBitSet           currentRecommendation;
     private final Console console = Console.streaming();
 
     /**
@@ -48,82 +48,82 @@ public class BcTuner {
      * @param hotSet
      *      a {@code hotSet} of indexes.
      */
-	public BcTuner(DatabaseConnection databaseConnection, Snapshot snapshot, StaticIndexSet hotSet) {
-		this.connection             = databaseConnection;
-		this.snapshot               = snapshot;
-		this.hotSet                 = hotSet;
-		this.pool                   = new BcIndexPool(this.hotSet);
-		this.currentRecommendation  = new IndexBitSet();
-	}
+    public BcTuner(DatabaseConnection databaseConnection, Snapshot snapshot, StaticIndexSet hotSet) {
+        this.connection             = databaseConnection;
+        this.snapshot               = snapshot;
+        this.hotSet                 = hotSet;
+        this.pool                   = new BcIndexPool(this.hotSet);
+        this.currentRecommendation  = new IndexBitSet();
+    }
 
     /**
      * @return the {@code index} to create.
      */
-	Index chooseIndexToCreate() {
-		Index indexToCreate = null;
-		double maxBenefit = 0;
+    Index chooseIndexToCreate() {
+        Index indexToCreate = null;
+        double maxBenefit = 0;
 
-		for (Index idx : hotSet) {
-			BcIndexInfo stats = pool.get(idx.getId());
-			if (stats.state == BcIndexInfo.State.HYPOTHETICAL) {
-				double benefit = stats.benefit(idx.getCreationCost());
-				if (benefit >= 0 && (indexToCreate == null || benefit > maxBenefit)) {
-					indexToCreate = idx;
-					maxBenefit = benefit;
-				}
-			}
-		}
-		
-		return indexToCreate;
-	}
+        for (Index idx : hotSet) {
+            BcIndexInfo stats = pool.get(idx.getId());
+            if (stats.state == BcIndexInfo.State.HYPOTHETICAL) {
+                double benefit = stats.benefit(idx.getCreationCost());
+                if (benefit >= 0 && (indexToCreate == null || benefit > maxBenefit)) {
+                    indexToCreate = idx;
+                    maxBenefit = benefit;
+                }
+            }
+        }
+        
+        return indexToCreate;
+    }
 
     /**
      * @return the {@code index} to drop.
      */
     Index chooseIndexToDrop() {
-		Index indexToDrop = null;
-		double minResidual = 0;
+        Index indexToDrop = null;
+        double minResidual = 0;
 
-		for (Index idx : hotSet) {
-			BcIndexInfo stats = pool.get(idx.getId());
-			if (stats.state == BcIndexInfo.State.MATERIALIZED) {
-				double residual = stats.residual(idx.getCreationCost());
-				if (residual <= 0 && (indexToDrop == null || residual < minResidual)) {
-					indexToDrop = idx;
-					minResidual = residual;
-				}
-			}
-		}
-		
-		return indexToDrop;
-	}
+        for (Index idx : hotSet) {
+            BcIndexInfo stats = pool.get(idx.getId());
+            if (stats.state == BcIndexInfo.State.MATERIALIZED) {
+                double residual = stats.residual(idx.getCreationCost());
+                if (residual <= 0 && (indexToDrop == null || residual < minResidual)) {
+                    indexToDrop = idx;
+                    minResidual = residual;
+                }
+            }
+        }
+        
+        return indexToDrop;
+    }
 
     /**
      * dump to index pool on the screen (print it on screen).
      */
-	public void dumpIndexPool() {
-		for (Index idx : hotSet) {
-			int id = idx.getId();
-			BcIndexInfo stats = pool.get(id);
-			
-			console.log(idx.getCreateStatement());
-			console.log(stats.toString(idx));
-			console.skip();
-		}
-	}
+    public void dumpIndexPool() {
+        for (Index idx : hotSet) {
+            int id = idx.getId();
+            BcIndexInfo stats = pool.get(id);
+            
+            console.log(idx.getCreateStatement());
+            console.log(stats.toString(idx));
+            console.skip();
+        }
+    }
 
     /**
      * @return the recommended indexes configuration.
      */
-	public IndexBitSet getRecommendation() {
-		IndexBitSet bs = new IndexBitSet();
-		for (Index index : hotSet) {
-			if (pool.get(index.getId()).state == BcIndexInfo.State.MATERIALIZED){
+    public IndexBitSet getRecommendation() {
+        IndexBitSet bs = new IndexBitSet();
+        for (Index index : hotSet) {
+            if (pool.get(index.getId()).state == BcIndexInfo.State.MATERIALIZED){
                 bs.set(index.getId());
             }
-		}
-		return bs;
-	}
+        }
+        return bs;
+    }
 
     private int inferUseLevel(Index i1, Index i2, boolean prefix) {
         if (prefix) {
@@ -143,115 +143,115 @@ public class BcTuner {
      * @throws SQLException
      *      an unexpected error occurred.
      */
-	public void processQuery(IBGPreparedSQLStatement profiledQuery) throws SQLException {
+    public void processQuery(IBGPreparedSQLStatement profiledQuery) throws SQLException {
         final BenefitInfoInput input = new BenefitInfoInput.StrictBuilder(connection)
                 .snapshot(snapshot)
                 .hotSet(hotSet)
                 .recommendedIndexes(currentRecommendation)
                 .profiledQuery(profiledQuery)
             .get();
-		@SuppressWarnings({"RedundantTypeArguments"})
+        @SuppressWarnings({"RedundantTypeArguments"})
         BcBenefitInfo qinfo = BcBenefitInfo.makeBcBenefitInfo(input);
-		
-		// update statistics
-		for (Index idx : hotSet) {
-			int id = idx.getId();
-			BcIndexInfo stats = pool.get(id);
-			
-			if (qinfo.origCost(id) != qinfo.newCost(id)) // kludge to check if the index was used
-				stats.addCosts(qinfo.reqLevel(id), qinfo.origCost(id), qinfo.newCost(id));
-			
-			stats.addUpdateCosts(qinfo.overhead(id));
-			stats.updateDeltaMinMax();
-		}
-		
-		console.log("*** UPDATED STATS");
-		dumpIndexPool();
-		
-		// iteratively drop indices 
-		while (true) {
-			// choose the worst index to drop
-			Index indexToDrop = chooseIndexToDrop();
-			if (indexToDrop == null) 
-				break;
-			
-			BcIndexInfo indexToDropStats = pool.get(indexToDrop.getId());
-			
-			// record the drop
-			indexToDropStats.state = BcIndexInfo.State.HYPOTHETICAL;
-			indexToDropStats.initDeltaMin();
-			
-			// record interactions
-			double[] beta = new double[3];
-	        for (int level = 0; level <= 2; level++)
-	        {
-	            double costO = indexToDropStats.origCost(level);
-	            double costN = indexToDropStats.newCost(level);
-	            if (costN == 0 && costO == 0)
-	                beta[level] = 1;
-	            else
-	                beta[level] = costO / costN;
-	        }
-			for (Index ij : hotSet) {
-				if (ij == indexToDrop)
-					continue;
-				BcIndexInfo ijStats = pool.get(ij.getId());
-				int useLevel = useLevel(indexToDrop, ij);
-				for (int level = 0; level <= useLevel; level++) {
-					double costO = ijStats.origCost(level);
-					double costN = ijStats.newCost(level);
-					ijStats.setCost(level, costO * beta[level], costN);
-				}
-				ijStats.updateDeltaMinMax();
-			}
-			
-		} // done dropping indices
-		
-		// iteratively create indices
-		while (true) {
-			// choose the best index to create
-			Index indexToCreate = chooseIndexToCreate();
-			if (indexToCreate == null) 
-				break;
-			
-			BcIndexInfo indexToCreateStats = pool.get(indexToCreate.getId());
-			
-			// record the create
-			indexToCreateStats.state = BcIndexInfo.State.MATERIALIZED;
-			indexToCreateStats.initDeltaMax();
-			
-			// record interactions
-			double indexToCreateSize = indexToCreate.getMegaBytes();
-			for (Index ij : hotSet) {
-				if (ij == indexToCreate)
-					continue;
-				BcIndexInfo ijStats = pool.get(ij.getId());
-				int useLevel = useLevel(indexToCreate, ij);
-				double alpha = ij.getMegaBytes() / indexToCreateSize;
-				for (int level = 0; level <= useLevel; level++) {
-					double costO = ijStats.origCost(level);
-					double costN = ijStats.newCost(level);
-					ijStats.setCost(level, Math.min(costO, alpha * costN), costN);
-				}
-				ijStats.updateDeltaMinMax();
-			}
-		} // done creating indices
-	}
-	
-	private int useLevel(Index i1, Index i2) {
-		/* Shortcut if different relations */
-		if (!i1.getTable().equals(i2.getTable()))
-			return -1;
-		
-		int n1 = i1.size();
-		int n2 = i2.size();
-		
-		/* Shortcut if I1 has fewer columns than I2 */
-	    if (n1 < n2){
+        
+        // update statistics
+        for (Index idx : hotSet) {
+            int id = idx.getId();
+            BcIndexInfo stats = pool.get(id);
+            
+            if (qinfo.origCost(id) != qinfo.newCost(id)) // kludge to check if the index was used
+                stats.addCosts(qinfo.reqLevel(id), qinfo.origCost(id), qinfo.newCost(id));
+            
+            stats.addUpdateCosts(qinfo.overhead(id));
+            stats.updateDeltaMinMax();
+        }
+        
+        console.log("*** UPDATED STATS");
+        dumpIndexPool();
+        
+        // iteratively drop indices 
+        while (true) {
+            // choose the worst index to drop
+            Index indexToDrop = chooseIndexToDrop();
+            if (indexToDrop == null) 
+                break;
+            
+            BcIndexInfo indexToDropStats = pool.get(indexToDrop.getId());
+            
+            // record the drop
+            indexToDropStats.state = BcIndexInfo.State.HYPOTHETICAL;
+            indexToDropStats.initDeltaMin();
+            
+            // record interactions
+            double[] beta = new double[3];
+            for (int level = 0; level <= 2; level++)
+            {
+                double costO = indexToDropStats.origCost(level);
+                double costN = indexToDropStats.newCost(level);
+                if (costN == 0 && costO == 0)
+                    beta[level] = 1;
+                else
+                    beta[level] = costO / costN;
+            }
+            for (Index ij : hotSet) {
+                if (ij == indexToDrop)
+                    continue;
+                BcIndexInfo ijStats = pool.get(ij.getId());
+                int useLevel = useLevel(indexToDrop, ij);
+                for (int level = 0; level <= useLevel; level++) {
+                    double costO = ijStats.origCost(level);
+                    double costN = ijStats.newCost(level);
+                    ijStats.setCost(level, costO * beta[level], costN);
+                }
+                ijStats.updateDeltaMinMax();
+            }
+            
+        } // done dropping indices
+        
+        // iteratively create indices
+        while (true) {
+            // choose the best index to create
+            Index indexToCreate = chooseIndexToCreate();
+            if (indexToCreate == null) 
+                break;
+            
+            BcIndexInfo indexToCreateStats = pool.get(indexToCreate.getId());
+            
+            // record the create
+            indexToCreateStats.state = BcIndexInfo.State.MATERIALIZED;
+            indexToCreateStats.initDeltaMax();
+            
+            // record interactions
+            double indexToCreateSize = indexToCreate.getMegaBytes();
+            for (Index ij : hotSet) {
+                if (ij == indexToCreate)
+                    continue;
+                BcIndexInfo ijStats = pool.get(ij.getId());
+                int useLevel = useLevel(indexToCreate, ij);
+                double alpha = ij.getMegaBytes() / indexToCreateSize;
+                for (int level = 0; level <= useLevel; level++) {
+                    double costO = ijStats.origCost(level);
+                    double costN = ijStats.newCost(level);
+                    ijStats.setCost(level, Math.min(costO, alpha * costN), costN);
+                }
+                ijStats.updateDeltaMinMax();
+            }
+        } // done creating indices
+    }
+    
+    private int useLevel(Index i1, Index i2) {
+        /* Shortcut if different relations */
+        if (!i1.getTable().equals(i2.getTable()))
+            return -1;
+        
+        int n1 = i1.size();
+        int n2 = i2.size();
+        
+        /* Shortcut if I1 has fewer columns than I2 */
+        if (n1 < n2){
             return -1;
         }
-	    
-	    /* Set isPrefix true until we find a counterexample */	    
+        
+        /* Set isPrefix true until we find a counterexample */      
         ColumnChecker columnChecker = new ColumnChecker(i1, i2, n1, n2).get();
         boolean isPrefix = columnChecker.isPrefix();
 

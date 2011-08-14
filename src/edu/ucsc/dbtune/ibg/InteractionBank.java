@@ -26,11 +26,11 @@ import edu.ucsc.dbtune.util.UnionFind;
 import java.io.Serializable;
 
 public class InteractionBank implements Serializable {
-	private static final long serialVersionUID = 1L;
-	
-	public  final int           indexCount;
-	private final double[]      bestBenefit;
-	private final double[][]    lowerBounds;
+    private static final long serialVersionUID = 1L;
+    
+    public  final int           indexCount;
+    private final double[]      bestBenefit;
+    private final double[][]    lowerBounds;
 
     /**
      * construct an {@link InteractionBank} given a particular set of
@@ -38,16 +38,16 @@ public class InteractionBank implements Serializable {
      * @param candidateSet
      *      an immutable snapshot of the set of candidate indexes.
      */
-	public InteractionBank(Snapshot candidateSet) {
-		indexCount = candidateSet.maxInternalId() + 1;
-		bestBenefit = new double[indexCount];
-		lowerBounds = new double[indexCount][];
-		for (int i = 0; i < indexCount; i++)
-			lowerBounds[i] = new double[i];
-	}
-	
-	/**
-	 * Assign interaction with an exact value
+    public InteractionBank(Snapshot candidateSet) {
+        indexCount = candidateSet.maxInternalId() + 1;
+        bestBenefit = new double[indexCount];
+        lowerBounds = new double[indexCount][];
+        for (int i = 0; i < indexCount; i++)
+            lowerBounds[i] = new double[i];
+    }
+    
+    /**
+     * Assign interaction with an exact value
      * @param id1
      *      identifier of first index.
      * @param id2
@@ -55,18 +55,18 @@ public class InteractionBank implements Serializable {
      * @param newValue
      *      new value of interaction.
      */
-	public final void assignInteraction(int id1, int id2, double newValue) {
-		assert (newValue >= 0);
-		assert (id1 != id2);
+    public final void assignInteraction(int id1, int id2, double newValue) {
+        assert (newValue >= 0);
+        assert (id1 != id2);
 
-		if (id1 < id2) {
-			int t   = id1;
-			id1     = id2;
-			id2     = t;
-		}
-		
-		lowerBounds[id1][id2] = Math.max(newValue, lowerBounds[id1][id2]);
-	}
+        if (id1 < id2) {
+            int t   = id1;
+            id1     = id2;
+            id2     = t;
+        }
+        
+        lowerBounds[id1][id2] = Math.max(newValue, lowerBounds[id1][id2]);
+    }
 
     /**
      * assign benefit to a particular index
@@ -75,35 +75,35 @@ public class InteractionBank implements Serializable {
      * @param newValue
      *      benefit value.
      */
-	public void assignBenefit(int id, double newValue) {
-		bestBenefit[id] = Math.max(newValue, bestBenefit[id]);
-	}
-	
-	/**
+    public void assignBenefit(int id, double newValue) {
+        bestBenefit[id] = Math.max(newValue, bestBenefit[id]);
+    }
+    
+    /**
      * Returns the best benefit value of a particular index matching an id.
-	 * @param id
+     * @param id
      *      index's id.
      * @return the best benefit of an index
-	 */
-	public final double bestBenefit(int id) {
-		return bestBenefit[id];
-	}
-	
-	/**
+     */
+    public final double bestBenefit(int id) {
+        return bestBenefit[id];
+    }
+    
+    /**
      * calculates the interaction level between two indexes.
-	 * @param id1 id of first index
+     * @param id1 id of first index
      * @param id2 id of second index
      * @return an interaction value given the ids of two indexes.
-	 */
-	public final double interactionLevel(int id1, int id2) {
-		assert (id1 != id2);        
-		if (id1 < id2){
+     */
+    public final double interactionLevel(int id1, int id2) {
+        assert (id1 != id2);        
+        if (id1 < id2){
             return lowerBounds[id2][id1];
 
         } else {
             return lowerBounds[id1][id2];
         }
-	}
+    }
 
     /**
      * performs a stable partitioning of the interaction bank.
@@ -111,17 +111,17 @@ public class InteractionBank implements Serializable {
      *      partition threshold 
      * @return an array of bit sets.
      */
-	public final IndexBitSet[] stablePartitioning(double threshold) {
-		UnionFind uf = new UnionFind(indexCount);
-		for (int a = 0; a < indexCount; a++) { 
-			for (int b = 0; b < a; b++) { 
-				if (lowerBounds[a][b] > threshold) {
-					uf.union(a,b);
+    public final IndexBitSet[] stablePartitioning(double threshold) {
+        UnionFind uf = new UnionFind(indexCount);
+        for (int a = 0; a < indexCount; a++) { 
+            for (int b = 0; b < a; b++) { 
+                if (lowerBounds[a][b] > threshold) {
+                    uf.union(a,b);
                 } 
             } 
         }
-		return uf.sets();
-	}
+        return uf.sets();
+    }
 
     @Override
     public String toString() {

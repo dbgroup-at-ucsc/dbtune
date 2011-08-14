@@ -28,8 +28,8 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.util.List;
 
 public class WfaTrace {
-	private List<TotalWorkValues>   wfValues    = Instances.newList();
-	private List<Double>            sumNullCost = Instances.newList();
+    private List<TotalWorkValues>   wfValues    = Instances.newList();
+    private List<Double>            sumNullCost = Instances.newList();
 
     /**
      * Construct a {@link WorkFunctionAlgorithm}'s work trace from this {@code algorithm}'s
@@ -37,10 +37,10 @@ public class WfaTrace {
      * @param wf
      *      a {@link WorkFunctionAlgorithm}'s {@link TotalWorkValues total work values}.
      */
-	public WfaTrace(TotalWorkValues wf) {
-		wfValues.add(new TotalWorkValues(wf));
-		sumNullCost.add(0.0);
-	}
+    public WfaTrace(TotalWorkValues wf) {
+        wfValues.add(new TotalWorkValues(wf));
+        sumNullCost.add(0.0);
+    }
 
     /**
      * adds both a new {@link TotalWorkValues total work values} and the incurred {@code nullCost}.
@@ -49,21 +49,21 @@ public class WfaTrace {
      * @param nullCost
      *     incurred {@code nullCost}.
      */
-	public void addValues(TotalWorkValues wf, double nullCost) {
-		double prevSum = sumNullCost.get(sumNullCost.size()-1);
-		
-		wfValues.add(new TotalWorkValues(wf));
-		sumNullCost.add(prevSum + nullCost);
-	}
+    public void addValues(TotalWorkValues wf, double nullCost) {
+        double prevSum = sumNullCost.get(sumNullCost.size()-1);
+        
+        wfValues.add(new TotalWorkValues(wf));
+        sumNullCost.add(prevSum + nullCost);
+    }
 
 
     /**
      * @return an array of {@link TotalWorkValues total work values}.
      */
-	public TotalWorkValues[] getTotalWorkValues() {
-		TotalWorkValues[] arr = new TotalWorkValues[wfValues.size()];
-		return wfValues.toArray(arr);
-	}
+    public TotalWorkValues[] getTotalWorkValues() {
+        TotalWorkValues[] arr = new TotalWorkValues[wfValues.size()];
+        return wfValues.toArray(arr);
+    }
 
     /**
      * obtains the optimal schedule for an iterable partition object (e.g., list, set, or collection)
@@ -79,62 +79,62 @@ public class WfaTrace {
      *      the optimal schedule (i.e., an array of bitsets refering indexes' internalIds) of a
      *      number of profiled queries.
      */
-	public IndexBitSet[] optimalSchedule(IndexPartitions parts, int queryCount, Iterable<IBGPreparedSQLStatement> qinfos) {
-		
-		// We will fill each BitSet with the optimal indexes for the corresponding query
-		IndexBitSet[] bss = new IndexBitSet[queryCount];
-		for (int i = 0; i < queryCount; i++) bss[i] = new IndexBitSet();
-		
-		// this array holds the optimal schedule for a single partition
-		// it has the state that each query should be processed in, plus the 
-		// last state that should the system should be in after the last
-		// query (which we expect to be the same as the state for the last
-		// query, but that's not required). Each schedule, excluding the last
-		// state, will be pushed into bss after it's computed
-		IndexBitSet[] partSchedule = new IndexBitSet[queryCount+1];
-		for (int q = 0; q <= queryCount; q++) partSchedule[q] = new IndexBitSet();
-		
-		for (int subsetNum = 0; subsetNum < parts.subsetCount(); subsetNum++) {
-			IndexPartitions.Subset subset = parts.get(subsetNum);
-			int[] indexIds = subset.indexIds();
-			int stateCount = (int) subset.stateCount();
-			
-			// get the best final state
-			int bestSuccessor = -1;
-			{
-				double bestValue = Double.POSITIVE_INFINITY;
-				for (int stateNum = 0; stateNum < stateCount; stateNum++) {
-					double value = wfValues.get(queryCount).get(subsetNum, stateNum);
-					// use non-strict inequality to favor states with more indices
-					// this is a mild hack to get more intuitive schedules
-					if (value <= bestValue) {
-						bestSuccessor = stateNum;
-						bestValue = value;
-					}
-				}
-			}
+    public IndexBitSet[] optimalSchedule(IndexPartitions parts, int queryCount, Iterable<IBGPreparedSQLStatement> qinfos) {
+        
+        // We will fill each BitSet with the optimal indexes for the corresponding query
+        IndexBitSet[] bss = new IndexBitSet[queryCount];
+        for (int i = 0; i < queryCount; i++) bss[i] = new IndexBitSet();
+        
+        // this array holds the optimal schedule for a single partition
+        // it has the state that each query should be processed in, plus the 
+        // last state that should the system should be in after the last
+        // query (which we expect to be the same as the state for the last
+        // query, but that's not required). Each schedule, excluding the last
+        // state, will be pushed into bss after it's computed
+        IndexBitSet[] partSchedule = new IndexBitSet[queryCount+1];
+        for (int q = 0; q <= queryCount; q++) partSchedule[q] = new IndexBitSet();
+        
+        for (int subsetNum = 0; subsetNum < parts.subsetCount(); subsetNum++) {
+            IndexPartitions.Subset subset = parts.get(subsetNum);
+            int[] indexIds = subset.indexIds();
+            int stateCount = (int) subset.stateCount();
+            
+            // get the best final state
+            int bestSuccessor = -1;
+            {
+                double bestValue = Double.POSITIVE_INFINITY;
+                for (int stateNum = 0; stateNum < stateCount; stateNum++) {
+                    double value = wfValues.get(queryCount).get(subsetNum, stateNum);
+                    // use non-strict inequality to favor states with more indices
+                    // this is a mild hack to get more intuitive schedules
+                    if (value <= bestValue) {
+                        bestSuccessor = stateNum;
+                        bestValue = value;
+                    }
+                }
+            }
 
-			Checks.checkAssertion(bestSuccessor >= 0, "could not determine best final state");
-			partSchedule[queryCount].clear();
-			WorkFunctionAlgorithm.setStateBits(indexIds, bestSuccessor, partSchedule[queryCount]);
-			
-			// traverse the workload to get the path
-			for (int q = queryCount - 1; q >= 0; q--) {
-				int stateNum = wfValues.get(q+1).predecessor(subsetNum, bestSuccessor);
-				partSchedule[q].clear();
-				WorkFunctionAlgorithm.setStateBits(indexIds, stateNum, partSchedule[q]);
-				bestSuccessor = stateNum;
-			}
-			
-			// now bestStates has the optimal schedule within current subset
-			// merge with the global schedule
-			for (int q = 0; q < queryCount; q++) {
-				bss[q].or(partSchedule[q]);
-			}
-		}
-		
-		return bss;
-	}
+            Checks.checkAssertion(bestSuccessor >= 0, "could not determine best final state");
+            partSchedule[queryCount].clear();
+            WorkFunctionAlgorithm.setStateBits(indexIds, bestSuccessor, partSchedule[queryCount]);
+            
+            // traverse the workload to get the path
+            for (int q = queryCount - 1; q >= 0; q--) {
+                int stateNum = wfValues.get(q+1).predecessor(subsetNum, bestSuccessor);
+                partSchedule[q].clear();
+                WorkFunctionAlgorithm.setStateBits(indexIds, stateNum, partSchedule[q]);
+                bestSuccessor = stateNum;
+            }
+            
+            // now bestStates has the optimal schedule within current subset
+            // merge with the global schedule
+            for (int q = 0; q < queryCount; q++) {
+                bss[q].or(partSchedule[q]);
+            }
+        }
+        
+        return bss;
+    }
 
     @Override
     public String toString() {

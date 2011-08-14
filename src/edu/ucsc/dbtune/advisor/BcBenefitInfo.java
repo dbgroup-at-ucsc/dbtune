@@ -30,20 +30,20 @@ import java.sql.SQLException;
 import java.util.Arrays;
 
 public class BcBenefitInfo {
-	private final double[]          origCosts;
-	private final double[]          newCosts;
-	private final int[]             reqLevels;
-	private final double[]          overheads;
+    private final double[]          origCosts;
+    private final double[]          newCosts;
+    private final int[]             reqLevels;
+    private final double[]          overheads;
     private final IBGPreparedSQLStatement  profiledQuery;
 
     private BcBenefitInfo(double[] origCosts, double[] newCosts,
                           int[] reqLevels, double[] overheads,
                           IBGPreparedSQLStatement profiledQuery
     ) {
-		this.origCosts      = origCosts;
-		this.newCosts       = newCosts;
-		this.reqLevels      = reqLevels;
-		this.overheads      = overheads;
+        this.origCosts      = origCosts;
+        this.newCosts       = newCosts;
+        this.reqLevels      = reqLevels;
+        this.overheads      = overheads;
         this.profiledQuery  = profiledQuery;
     }
 
@@ -53,7 +53,7 @@ public class BcBenefitInfo {
      * profiled query}.
      * @param arg
      *      a {@link BenefitInfoInput} object.
-	 * @return
+     * @return
      *      a new {@link BcBenefitInfo} object.
      * @throws SQLException
      *      unexpected error has occurred.
@@ -67,8 +67,8 @@ public class BcBenefitInfo {
                 arg.getProfiledQuery()
         );
     }
-	
-	static BcBenefitInfo genBcBenefitInfo(DatabaseConnection conn,
+    
+    static BcBenefitInfo genBcBenefitInfo(DatabaseConnection conn,
                                                                     Snapshot snapshot,
                                                                     StaticIndexSet hotSet,
                                                                     IndexBitSet config,
@@ -83,44 +83,44 @@ public class BcBenefitInfo {
         //
         // so we're throwing it here 
         
-		String sql = profiledQuery.getSQL();
-		double[] origCosts = new double[snapshot.maxInternalId()+1];
-		double[] newCosts = new double[snapshot.maxInternalId()+1];
-		int[] reqLevels = new int[snapshot.maxInternalId()+1];
-		double[] overheads = new double[snapshot.maxInternalId()+1];
-		
-		IndexBitSet tempBitSet = new IndexBitSet();
-		IndexBitSet usedColumns = new IndexBitSet();
-		for (Index idx : hotSet) {
-			int id = idx.getId();
-			
-			// reset tempBitSet
-			tempBitSet.set(config);
-			
-			// get original cost
-			tempBitSet.clear(id);
+        String sql = profiledQuery.getSQL();
+        double[] origCosts = new double[snapshot.maxInternalId()+1];
+        double[] newCosts = new double[snapshot.maxInternalId()+1];
+        int[] reqLevels = new int[snapshot.maxInternalId()+1];
+        double[] overheads = new double[snapshot.maxInternalId()+1];
+        
+        IndexBitSet tempBitSet = new IndexBitSet();
+        IndexBitSet usedColumns = new IndexBitSet();
+        for (Index idx : hotSet) {
+            int id = idx.getId();
+            
+            // reset tempBitSet
+            tempBitSet.set(config);
+            
+            // get original cost
+            tempBitSet.clear(id);
             final IBGWhatIfOptimizer optimizer = conn.getIBGWhatIfOptimizer();
-			origCosts[id] = optimizer.estimateCost(sql, tempBitSet, Instances.newBitSet(), null);
-			
-			// get new cost
-			tempBitSet.set(id);
-			usedColumns.clear();
-			newCosts[id] = optimizer.estimateCost(sql, tempBitSet, usedColumns, idx);
-			
-			// get request level
-			reqLevels[id] = usedColumns.get(0)
-			              ? (usedColumns.get(1) ? 2 : 1)
-			              : 0;
-			             
-			// get maintenance
-			ExplainInfo explainInfo = profiledQuery.getExplainInfo();
-			overheads[id] = explainInfo.isDML() ? explainInfo.getIndexMaintenanceCost(idx) : 0;
-		}
-		
-		return new BcBenefitInfo(origCosts, newCosts, reqLevels, overheads, profiledQuery);
+            origCosts[id] = optimizer.estimateCost(sql, tempBitSet, Instances.newBitSet(), null);
+            
+            // get new cost
+            tempBitSet.set(id);
+            usedColumns.clear();
+            newCosts[id] = optimizer.estimateCost(sql, tempBitSet, usedColumns, idx);
+            
+            // get request level
+            reqLevels[id] = usedColumns.get(0)
+                          ? (usedColumns.get(1) ? 2 : 1)
+                          : 0;
+                         
+            // get maintenance
+            ExplainInfo explainInfo = profiledQuery.getExplainInfo();
+            overheads[id] = explainInfo.isDML() ? explainInfo.getIndexMaintenanceCost(idx) : 0;
+        }
+        
+        return new BcBenefitInfo(origCosts, newCosts, reqLevels, overheads, profiledQuery);
         */
         throw new RuntimeException("Not implemented yet");
-	}
+    }
 
     /**
      * Returns the new cost of a given index (identified by its id)
@@ -128,7 +128,7 @@ public class BcBenefitInfo {
      *      index's id
      * @return the new cost of an index.
      */
-	public double newCost(int id) {
+    public double newCost(int id) {
         return newCosts[id];
     }
 
@@ -138,7 +138,7 @@ public class BcBenefitInfo {
      *      index's id
      * @return the original cost of an index.
      */
-	public double origCost(int id) {
+    public double origCost(int id) {
         return origCosts[id];
     }
 
@@ -148,7 +148,7 @@ public class BcBenefitInfo {
      *      index's id
      * @return the required level of an index.
      */
-	public int reqLevel(int id) {
+    public int reqLevel(int id) {
         return reqLevels[id];
     }
 
@@ -158,7 +158,7 @@ public class BcBenefitInfo {
      *      index's id
      * @return the overhead of an index.
      */
-	public double overhead(int id) {
+    public double overhead(int id) {
         return overheads[id];
     }
 

@@ -91,7 +91,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
             final InteractionBank bank = queryInfo.getInteractionBank();
 
             double bestBenefit = bank.bestBenefit(index.getId())
-								 - queryInfo.getIndexMaintenanceCost(index);
+                                 - queryInfo.getIndexMaintenanceCost(index);
             if (bestBenefit != 0) {
                 // add measurement, creating new window if necessary
                 MeasurementWindow benwin = benefitWindows.get(index);

@@ -46,10 +46,10 @@ public class DB2Optimizer extends Optimizer
     }
 
     @Override
-	public PreparedSQLStatement explain(String sql) throws SQLException
-	{
-		throw new SQLException("Not implemented yet");
-	}
+    public PreparedSQLStatement explain(String sql) throws SQLException
+    {
+        throw new SQLException("Not implemented yet");
+    }
 
     @Override
     public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
@@ -59,7 +59,7 @@ public class DB2Optimizer extends Optimizer
         SQLCategory category     = null;
         Table       updatedTable = null;
         double      updateCost   = 0.0;
-		int         count        = 0;
+        int         count        = 0;
 
         try {
             // a batch supplying of commands with no returned value.
@@ -72,7 +72,7 @@ public class DB2Optimizer extends Optimizer
                     submit(explainModeExplain(), connection)
             );
 
-			connection.createStatement().execute(sql);
+            connection.createStatement().execute(sql);
             submit(explainModeNo(), connection);
             category = supplyValue(fetchExplainStatementType(), connection);
             if(SQLCategory.DML.isSame(category)){
@@ -90,12 +90,12 @@ public class DB2Optimizer extends Optimizer
             throw s;
         }
 
-		for(Index idx : indexes) {
-			count++;
-		}
+        for(Index idx : indexes) {
+            count++;
+        }
 
         double[] updateCosts  = new double[count];
-		Arrays.fill(updateCosts, updateCost);
+        Arrays.fill(updateCosts, updateCost);
 
         return new PreparedSQLStatement(sql, category, -1.0, updateCosts);
     }
