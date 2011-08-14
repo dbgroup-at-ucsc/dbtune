@@ -13,6 +13,7 @@ import edu.ucsc.dbtune.ibg.RunnableState;
 import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
 import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
@@ -123,7 +124,7 @@ public class TaskSchedulerTest {
 
             assertThat(aq, CoreMatchers.<Object>notNullValue());
 
-            final ProfiledQuery p = aq.getProfileInfo();
+            final IBGPreparedSQLStatement p = aq.getProfileInfo();
             assertThat(p, CoreMatchers.<Object>notNullValue());
             assertThat(p.getWhatIfCount(), equalTo(2));
 

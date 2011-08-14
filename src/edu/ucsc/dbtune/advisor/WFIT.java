@@ -18,10 +18,10 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
-
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -34,7 +34,7 @@ import java.sql.SQLException;
  */
 public class WFIT extends Advisor
 {
-    List<ProfiledQuery>        qinfos;
+    List<IBGPreparedSQLStatement>        qinfos;
     List<Double>               overheads;
     List<IndexBitSet>          configurations;
     WorkloadProfiler           profiler;
@@ -63,7 +63,7 @@ public class WFIT extends Advisor
         this.windowSize          = windowSize;
         this.partitionIterations = partitionIterations;
         this.profiler            = new WorkloadProfilerImpl(con, pool, false);
-        this.qinfos              = new ArrayList<ProfiledQuery>();
+        this.qinfos              = new ArrayList<IBGPreparedSQLStatement>();
         this.wfa                 = new WorkFunctionAlgorithm(partitions, false);
         this.overheads           = new ArrayList<Double>();
         this.configurations      = new ArrayList<IndexBitSet>();
@@ -80,10 +80,10 @@ public class WFIT extends Advisor
     @Override
     public void process(SQLStatement sql) throws SQLException
     {
-        ProfiledQuery qinfo;
+        IBGPreparedSQLStatement qinfo;
         IndexBitSet configuration;
 
-        qinfo = profiler.processQuery(sql.getSQL());
+        qinfo = profiler.processQuery(sql);
 
         qinfos.add(qinfo);
 
@@ -115,10 +115,14 @@ public class WFIT extends Advisor
     @Override
     public IndexBitSet getRecommendation() throws SQLException
     {
+        if(qinfos.size() == 0) {
+            return new IndexBitSet();
+        }
+
         return configurations.get(qinfos.size()-1);
     }
 
-    public ProfiledQuery getProfiledQuery(int i) {
+    public IBGPreparedSQLStatement getProfiledQuery(int i) {
         return qinfos.get(i);
     }
     public IndexPartitions getPartitions() {
@@ -127,7 +131,7 @@ public class WFIT extends Advisor
 
   private IndexPartitions getIndexPartitions(
             Snapshot            candidateSet,
-            List<ProfiledQuery> qinfos, 
+            List<IBGPreparedSQLStatement> qinfos, 
             int                 maxNumIndexes,
             int                 maxNumStates,
             int                 windowSize,
@@ -156,7 +160,7 @@ public class WFIT extends Advisor
 
     private StaticIndexSet getHotSet(
             Snapshot            candidateSet,
-            List<ProfiledQuery> qinfos,
+            List<IBGPreparedSQLStatement> qinfos,
             int                 maxNumIndexes,
             int                 windowSize)
     {
@@ -188,7 +192,7 @@ public class WFIT extends Advisor
         private InteractionBank bank;
 
         TempDoiFunction(
-                List<ProfiledQuery> qinfos,
+                List<IBGPreparedSQLStatement> qinfos,
                 Snapshot candidateSet,
                 int indexStatisticsWindow )
         {
@@ -202,7 +206,7 @@ public class WFIT extends Advisor
                     int id_b = b.getId();
                     if (id_a < id_b) {
                         double doi = 0;
-                        for (ProfiledQuery qinfo : qinfos) {
+                        for (IBGPreparedSQLStatement qinfo : qinfos) {
                             doi += qinfo.getBank().interactionLevel(a.getId(), b.getId());
                         }
                         bank.assignInteraction(a.getId(), b.getId(), doi);
@@ -217,7 +221,7 @@ public class WFIT extends Advisor
     }
 
     private class TempBenefitFunction extends IndexStatisticsFunction {
-        List<ProfiledQuery> qinfos;
+        List<IBGPreparedSQLStatement> qinfos;
 
         IBGBestBenefitFinder finder = new IBGBestBenefitFinder();
         double[][]      bbCache;
@@ -227,7 +231,7 @@ public class WFIT extends Advisor
         IndexBitSet     diffM;
         
         TempBenefitFunction(
-                List<ProfiledQuery> qinfos0,
+                List<IBGPreparedSQLStatement> qinfos0,
                 int maxInternalId,
                 int indexStatisticsWindow)
         {
@@ -246,10 +250,10 @@ public class WFIT extends Advisor
             diffM = new IndexBitSet(); // temp bit set
         }
         
-        private int[][] componentIds(List<ProfiledQuery> qinfos, int maxInternalId) {
+        private int[][] componentIds(List<IBGPreparedSQLStatement> qinfos, int maxInternalId) {
             int[][] componentId = new int[qinfos.size()][maxInternalId+1];
             int q = 0;
-            for (ProfiledQuery qinfo : qinfos) {
+            for (IBGPreparedSQLStatement qinfo : qinfos) {
                 IndexBitSet[] parts = qinfo.getBank().stablePartitioning(0);
                 for (Index index : qinfo.getCandidateSnapshot()) {
                     int id = index.getId();
@@ -270,7 +274,7 @@ public class WFIT extends Advisor
             int q = 0;
             double ben = 0;
             double cache[] = bbCache[id];
-            for (ProfiledQuery qinfo : qinfos) {
+            for (IBGPreparedSQLStatement qinfo : qinfos) {
                 double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
                 cache[q] = bb;
                 ben += bb;
@@ -284,7 +288,7 @@ public class WFIT extends Advisor
             int q = 0;
             double ben = 0;
             double cache[] = bbCache[id];
-            for (ProfiledQuery qinfo : qinfos) {
+            for (IBGPreparedSQLStatement qinfo : qinfos) {
                 if (componentId[q][id] == componentId[q][b]) {
                     // interaction, recompute
                     double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);

@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.metadata.Index;
 
 import java.util.List;
@@ -13,11 +14,11 @@ public interface Scheduler {
     AnalyzedQuery analyzeQuery(String sql);
     double create(Index index);
     double drop(Index index);
-    double executeProfiledQuery(ProfiledQuery qinfo);
+    double executeProfiledQuery(IBGPreparedSQLStatement qinfo);
     List<Index> getRecommendation();
     void negativeVote(Index index);
     void positiveVote(Index index);
-    ProfiledQuery profileQuery(String sql);
+    IBGPreparedSQLStatement profileQuery(String sql);
     void shutdown();
     void start();
 }

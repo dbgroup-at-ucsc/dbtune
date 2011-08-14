@@ -65,7 +65,7 @@ public enum DatabaseSystem {
      * @return an instance of the index extractor.
      */
     public CandidateIndexExtractor getIndexExtractor(DatabaseConnection connection){
-        return ief.newIndexExtractor("/home/karlsch/sqllib/bin/db2advis", Checks.checkNotNull(connection));
+        return ief.newCandidateIndexExtractor("/home/karlsch/sqllib/bin/db2advis", Checks.checkNotNull(connection));
     }
 
 

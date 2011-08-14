@@ -12,8 +12,10 @@ import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Threads;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
@@ -22,11 +24,11 @@ import java.util.concurrent.ExecutorService;
  * Represents an workload profiler.
  */
 public class WorkloadProfilerImpl implements WorkloadProfiler {
-	private final DatabaseConnection    connection;
-	private final CandidatePool      candidatePool;
-	private final ThreadIBGAnalysis     ibgAnalysis;
-	private final ThreadIBGConstruction ibgConstruction;
-	private final boolean               onlineCandidates;
+    private final DatabaseConnection    connection;
+    private final CandidatePool      candidatePool;
+    private final ThreadIBGAnalysis     ibgAnalysis;
+    private final ThreadIBGConstruction ibgConstruction;
+    private final boolean               onlineCandidates;
 
     // prints to screen details of the profiling process
     private final Console               console  = Console.streaming();
@@ -43,9 +45,9 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
      * @param onlineCandidates
      *      {@code true} if we are dealing with online candidates. {@code false} otherwise.
      */
-	public WorkloadProfilerImpl(DatabaseConnection connection, CandidatePool candidatePool, boolean onlineCandidates) {
+    public WorkloadProfilerImpl(DatabaseConnection connection, CandidatePool candidatePool, boolean onlineCandidates) {
         this(connection, new ThreadIBGAnalysis(), new ThreadIBGConstruction(), candidatePool, onlineCandidates);
-	}
+    }
 
     /**
      * Construct a {@code profiler} given a {@link CandidatePool pool of candidate indexes},
@@ -78,10 +80,10 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 
 
     @Override
-	public Snapshot addCandidate(Index index) throws SQLException {
-		candidatePool.addIndex(index);
-		return candidatePool.getSnapshot();
-	}
+    public Snapshot addCandidate(Index index) throws SQLException {
+        candidatePool.addIndex(index);
+        return candidatePool.getSnapshot();
+    }
 
 
     private void execute(ThreadIBGAnalysis analysis, ThreadIBGConstruction construction){
@@ -95,39 +97,39 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 
 
     @Override
-    public ProfiledQuery processQuery(String sql){
+    public IBGPreparedSQLStatement processQuery(SQLStatement sql){
 
-		if (onlineCandidates) {
-			try {
+        if (onlineCandidates) {
+            try {
                 final CandidateIndexExtractor extractor          = connection.getIndexExtractor();
                 final Iterable<Index>         recommendedIndexes = extractor.recommendIndexes(sql);
 
                 for(Index each : recommendedIndexes){
                     candidatePool.addIndex(each);
                 }
-			} catch (SQLException e) {
+            } catch (SQLException e) {
                 console.error("SQLException caught while recommending indexes", e);
                 throw new RuntimeException(e);
-			}
-		}
+            }
+        }
 
-		// get the current set of candidates
-		Snapshot           snapshot           = candidatePool.getSnapshot();
-		IBGWhatIfOptimizer ibgWhatIfOptimizer = connection.getIBGWhatIfOptimizer();
-		PreparedSQLStatement        info;
-		try {
-			info = ibgWhatIfOptimizer.explain(sql, snapshot);
+        // get the current set of candidates
+        Snapshot           snapshot           = candidatePool.getSnapshot();
+        IBGWhatIfOptimizer ibgWhatIfOptimizer = connection.getIBGWhatIfOptimizer();
+        PreparedSQLStatement        info;
+        try {
+            info = ibgWhatIfOptimizer.explain(sql.getSQL(), snapshot);
             console.info("WorkloadProfilerImpl#processQuery(String) returned an PreparedSQLStatement object=" + info) ;
-		} catch (SQLException e) {
-			console.error("SQLException caught while explaining command", e);
-			throw new Error(e);
-		}
+        } catch (SQLException e) {
+            console.error("SQLException caught while explaining command", e);
+            throw new Error(e);
+        }
 
-		// build the IBG
-		try {
-			InteractionLogger            logger      = new InteractionLogger(snapshot);
-			IndexBenefitGraphConstructor ibgCons     = new IndexBenefitGraphConstructor(connection, sql, snapshot);
-			IBGAnalyzer                  ibgAnalyzer = new IBGAnalyzer(ibgCons);
+        // build the IBG
+        try {
+            InteractionLogger            logger      = new InteractionLogger(snapshot);
+            IndexBenefitGraphConstructor ibgCons     = new IndexBenefitGraphConstructor(connection, sql.getSQL(), snapshot);
+            IBGAnalyzer                  ibgAnalyzer = new IBGAnalyzer(ibgCons);
 
 //      ibgConstruction.startConstruction(ibgCons);
 //
@@ -148,25 +150,20 @@ public class WorkloadProfilerImpl implements WorkloadProfiler {
 
 
       // pass the result to the tuner
-      return new ProfiledQuery.Builder(sql)
-            .explainInfo(info)
-            .snapshotOfCandidateSet(snapshot)
-            .indexBenefitGraph(ibgCons.getIBG())
-            .interactionBank(logger.getInteractionBank())
-            .whatIfCount(ibgWhatIfOptimizer.getWhatIfCount())
-            .indexBenefitGraphAnalysisTime((nStop - nStart)/1000000.0)
-            .get();
-		} catch (SQLException e) {
+      return new IBGPreparedSQLStatement(
+            info, snapshot, ibgCons.getIBG(),logger.getInteractionBank(),
+            ibgWhatIfOptimizer.getWhatIfCount(), (nStop - nStart)/1000000.0);
+        } catch (SQLException e) {
             final String msg = "SQLException caught while building ibg";
-			console.error(msg, e);
-			throw new IBGConstructionException(msg, e);
-		}
+            console.error(msg, e);
+            throw new IBGConstructionException(msg, e);
+        }
     }
 
     @Override
-	public Snapshot processVote(Index index, boolean isPositive) throws SQLException {
-		return isPositive ? addCandidate(index) : candidatePool.getSnapshot();
-	}
+    public Snapshot processVote(Index index, boolean isPositive) throws SQLException {
+        return isPositive ? addCandidate(index) : candidatePool.getSnapshot();
+    }
 
     /**
      * run the profiler, which involves two tasks: {@link ThreadIBGAnalysis analysis} and

@@ -24,6 +24,7 @@ import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import org.junit.After;
@@ -71,17 +72,17 @@ public class StatisticsFunctionTest {
         pgStatistics = null;
     }
 
-    private static ProfiledQuery makeProfiledQuery(List<PGIndex> callback) throws Exception {
+    private static IBGPreparedSQLStatement makeProfiledQuery(List<PGIndex> callback) throws Exception {
         final CandidatePool candidatePool = new CandidatePool();
         candidatePool.addIndex(callback.get(0));
         candidatePool.addIndex(callback.get(1));
 
-        return new ProfiledQuery.Builder("SELECT * FROM R;")
-               .snapshotOfCandidateSet(candidatePool.getSnapshot())
-               .indexBenefitGraph(new IndexBenefitGraph(makeIBGNode(), 5.0, new IndexBitSet()))
-               .explainInfo(new PreparedSQLStatement("select * from r", SQLCategory.DML, new double[]{5.0, 3.0, 7.0, 6.0}, -1.0))
-               .interactionBank(makeInteractionBank())
-               .indexBenefitGraphAnalysisTime(40000).get();
+        return new IBGPreparedSQLStatement("SELECT * FROM R;",
+			   SQLCategory.QUERY,
+               candidatePool.getSnapshot(),
+               new IndexBenefitGraph(makeIBGNode(), 5.0, new IndexBitSet()),
+               makeInteractionBank(),
+               40000, 0.0);
     }
 
     private static IndexBenefitGraph.IBGNode makeIBGNode() throws Exception {

@@ -20,9 +20,8 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
-import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 
 /**
@@ -53,21 +52,5 @@ public interface CandidateIndexExtractor {
      *      an error has occurred when interacting with a database during
      *      the recommendation process.
      */
-	Iterable<Index> recommendIndexes(String sql) throws SQLException;
-
-    /**
-     * recommends a {@link Iterable list} of indexes that could help improve performance, given a
-     * workload file.
-     *
-     * @param workloadFile
-     *      a file consisting of workload statements to be executed.
-     * @return
-     *     a {@link Iterable list} of indexes.
-     * @throws java.sql.SQLException
-     *      an error has occurred when interacting with a database during
-     *      the recommendation process.
-     * @throws java.io.IOException
-     *      an error has occurred when trying to open the workload file.
-     */
-    Iterable<Index> recommendIndexes(File workloadFile) throws SQLException, IOException;
+	Iterable<Index> recommendIndexes(SQLStatement sql) throws SQLException;
 }

@@ -30,15 +30,18 @@ import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
 import edu.ucsc.dbtune.util.Checks;
-import static edu.ucsc.dbtune.util.Checks.checkSQLRelatedState;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import static edu.ucsc.dbtune.util.Instances.newList;
 import edu.ucsc.dbtune.util.Strings;
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+
+import static edu.ucsc.dbtune.util.Checks.checkSQLRelatedState;
+import static edu.ucsc.dbtune.util.Instances.newList;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -111,14 +114,14 @@ public class PGCommands {
         @Override
         public List<PGIndex> apply(Parameter input) throws SQLException {
             final Connection         connection     = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-            final String             sql            = input.getParameterValue(String.class);
+            final SQLStatement       sql            = input.getParameterValue(SQLStatement.class);
             final List<PGIndex>      candidateSet   = newList();
 
             if(statement == null){
                 statement = connection.createStatement();
             }
 
-            final ResultSet rs = statement.executeQuery("RECOMMEND INDEXES " + sql);
+            final ResultSet rs = statement.executeQuery("RECOMMEND INDEXES " + sql.getSQL());
             int id = 0;
             try {
                 while(rs.next()){
@@ -298,8 +301,8 @@ public class PGCommands {
                 return new PreparedSQLStatement(
 						sqlStatement,
                         category,
-                        maintCost,
-                        totalCost
+                        totalCost,
+                        maintCost
                 );
             }
 

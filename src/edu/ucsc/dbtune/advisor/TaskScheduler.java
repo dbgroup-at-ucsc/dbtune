@@ -4,11 +4,14 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.SQLCategory;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.StopWatch;
 import edu.ucsc.dbtune.util.Threads;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -150,7 +153,7 @@ public class TaskScheduler implements Scheduler  {
      *      cost of query.
      */
     @Override
-    public double executeProfiledQuery(ProfiledQuery qinfo){
+    public double executeProfiledQuery(IBGPreparedSQLStatement qinfo){
         final ExecuteTask task = new ExecuteTask(qinfo, this);
         double result = 0.0;
         try {
@@ -230,9 +233,9 @@ public class TaskScheduler implements Scheduler  {
     }
     
     @Override
-    public ProfiledQuery profileQuery(String sql){
+    public IBGPreparedSQLStatement profileQuery(String sql){
         final AnalyzeTask task   = new AnalyzeTask(sql, true, this);
-        ProfiledQuery     result = null;
+        IBGPreparedSQLStatement     result = null;
         try {
             getProfilingQueue().put(task);
             waitForCompletion(task);
@@ -446,7 +449,7 @@ public class TaskScheduler implements Scheduler  {
     static class AnalyzeTask extends SchedulerTask {
         String              sql;
         boolean             profileOnly;
-        ProfiledQuery    profiledInfo;
+        IBGPreparedSQLStatement    profiledInfo;
         AnalyzedQuery    analyzedInfo;
         
         AnalyzeTask(String sql, TaskScheduler taskScheduler){
@@ -470,7 +473,7 @@ public class TaskScheduler implements Scheduler  {
         void profiling() {
             checkLiveness();
             try {
-                profiledInfo = scheduler.getProfiler().processQuery(sql);
+                profiledInfo = scheduler.getProfiler().processQuery(new SQLStatement(SQLCategory.UNKNOWN,sql));
                 placeOnSelection(this);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -496,10 +499,10 @@ public class TaskScheduler implements Scheduler  {
     
     
     static class ExecuteTask extends SchedulerTask  {
-        ProfiledQuery profiledQuery;
+        IBGPreparedSQLStatement profiledQuery;
         double cost = -1;
         
-        ExecuteTask(ProfiledQuery profiledQuery, TaskScheduler taskScheduler){
+        ExecuteTask(IBGPreparedSQLStatement profiledQuery, TaskScheduler taskScheduler){
             super(taskScheduler, Console.streaming());
             this.profiledQuery = profiledQuery;
         }

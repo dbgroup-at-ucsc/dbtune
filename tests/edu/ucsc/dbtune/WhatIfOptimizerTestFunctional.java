@@ -9,9 +9,8 @@ import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
-import edu.ucsc.dbtune.util.Strings;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
@@ -68,16 +67,16 @@ public class WhatIfOptimizerTestFunctional {
     @Test // this test will pass once the what if optimizer returns something....
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLWhatIfOptimization() throws Exception {
-        final String            query      = "select a from tbl where a = 5;";
-        final CandidateIndexExtractor    extractor  = connection.getIndexExtractor();
-        final Iterable<Index> candidates = extractor.recommendIndexes(query);
-        final Optimizer   optimizer  = connection.getOptimizer();
+        final SQLStatement            query      = new SQLStatement(SQLCategory.QUERY, "select a from tbl where a = 5;");
+        final CandidateIndexExtractor extractor  = connection.getIndexExtractor();
+        final Iterable<Index>         candidates = extractor.recommendIndexes(query);
+        final Optimizer               optimizer  = connection.getOptimizer();
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
         System.out.println("Getting cost with candidates " + candidates);
 
-        final PreparedSQLStatement info = optimizer.explain(query, candidates);
+        final PreparedSQLStatement info = optimizer.explain(query.getSQL(), candidates);
 
         assertThat(info, CoreMatchers.<Object>notNullValue());
         assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
@@ -86,40 +85,18 @@ public class WhatIfOptimizerTestFunctional {
         }
     }
 
-    @If(condition = "isDatabaseConnectionAvailable", is = true)
-    public void testManyWorloadsWhatIfOptimization() throws Exception {
-        final CandidateIndexExtractor  extractor = connection.getIndexExtractor();
-        final File            workload  = new File(environment.getScriptAtWorkloadsFolder("/one_table/workload.sql"));
-        final Optimizer optimizer = connection.getOptimizer();
-
-
-        for (String line : Files.getLines(workload)) {
-            final String            sql         = Strings.trimSqlStatement(line);
-            final Iterable<Index> candidates  = extractor.recommendIndexes(workload);
-
-            assertThat(candidates, CoreMatchers.<Object>notNullValue());
-
-            final PreparedSQLStatement info = optimizer.explain(sql, candidates);
-            assertThat(info, CoreMatchers.<Object>notNullValue());
-
-            for(Index each : candidates){
-               assumeThat(info.getIndexMaintenanceCost(each) >= 0.0, is(true));
-            }
-        }
-    }
-
 
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLIBGWhatIfOptimization() throws Exception {
-        final String             query       = "select count(*) from tbl where b > 3";
-        final CandidateIndexExtractor     extractor   = connection.getIndexExtractor();
-        final Iterable<Index>  candidates  = extractor.recommendIndexes(query);
-        final IBGWhatIfOptimizer optimizer   = connection.getIBGWhatIfOptimizer();
+        final SQLStatement            query      = new SQLStatement(SQLCategory.QUERY, "select count(*) from tbl where b > 3");
+        final CandidateIndexExtractor extractor  = connection.getIndexExtractor();
+        final Iterable<Index>         candidates = extractor.recommendIndexes(query);
+        final IBGWhatIfOptimizer      optimizer  = connection.getIBGWhatIfOptimizer();
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        double cost = optimizer.estimateCost(query, newBitSet(), newBitSet());
+        double cost = optimizer.estimateCost(query.getSQL(), newBitSet(), newBitSet());
 
         assumeThat(cost >= 0, is(true));
     }

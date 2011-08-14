@@ -18,6 +18,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
@@ -25,14 +26,14 @@ import edu.ucsc.dbtune.util.IndexBitSet;
  */
 public interface StatisticsFunction {
     /**
-     * adds a {@link ProfiledQuery} given a {@link DynamicIndexSet set} of
+	 * adds a {@link IBGPreparedSQLStatement} given a {@link DynamicIndexSet set} of
      * materialized {@link Index indexes}.
      * @param queryInfo
-     *    a {@link ProfiledQuery profiled query}.
+	 *    a {@link IBGPreparedSQLStatement profiled query}.
      * @param matSet
      *    a {@link DynamicIndexSet set} of materialized indexes.
      */
-    void addQuery(ProfiledQuery queryInfo, DynamicIndexSet matSet);
+    void addQuery(IBGPreparedSQLStatement queryInfo, DynamicIndexSet matSet);
 
     /**
      * applies the {@link DoiFunction} to two indexes.

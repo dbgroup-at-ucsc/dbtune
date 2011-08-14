@@ -19,6 +19,8 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 
@@ -44,9 +46,9 @@ public interface WorkloadProfiler {
      * @param sql
      *      plain {@code sql} query.
      * @return
-     *      a new {@link ProfiledQuery} instance.
+	 *      a new {@link IBGPreparedSQLStatement} instance.
      */
-    ProfiledQuery processQuery(String sql);
+    IBGPreparedSQLStatement processQuery(SQLStatement sql);
 
     /**
      * process a vote on a given index. if the vote is positive then

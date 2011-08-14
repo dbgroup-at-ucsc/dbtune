@@ -97,7 +97,7 @@ public class DB2Optimizer extends Optimizer
         double[] updateCosts  = new double[count];
 		Arrays.fill(updateCosts, updateCost);
 
-        return new PreparedSQLStatement(sql, category, updateCosts, -1.0);
+        return new PreparedSQLStatement(sql, category, -1.0, updateCosts);
     }
 
     private static void error(String message, Throwable cause){

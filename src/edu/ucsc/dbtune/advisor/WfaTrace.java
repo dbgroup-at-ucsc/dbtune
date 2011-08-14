@@ -19,6 +19,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm.TotalWorkValues;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
@@ -78,7 +79,7 @@ public class WfaTrace {
      *      the optimal schedule (i.e., an array of bitsets refering indexes' internalIds) of a
      *      number of profiled queries.
      */
-	public IndexBitSet[] optimalSchedule(IndexPartitions parts, int queryCount, Iterable<ProfiledQuery> qinfos) {
+	public IndexBitSet[] optimalSchedule(IndexPartitions parts, int queryCount, Iterable<IBGPreparedSQLStatement> qinfos) {
 		
 		// We will fill each BitSet with the optimal indexes for the corresponding query
 		IndexBitSet[] bss = new IndexBitSet[queryCount];

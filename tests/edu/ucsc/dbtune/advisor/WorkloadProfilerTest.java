@@ -9,8 +9,10 @@ import edu.ucsc.dbtune.ibg.ThreadIBGAnalysis;
 import edu.ucsc.dbtune.ibg.ThreadIBGConstruction;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
@@ -93,16 +95,15 @@ public class WorkloadProfilerTest {
 
     @Ignore @Test
     public void testProcessQuery() throws Exception {
-        final ProfiledQuery pq = concurrentProfiler.processQuery("SELECT * FROM R;");
+        final IBGPreparedSQLStatement pq = concurrentProfiler.processQuery(new SQLStatement(SQLCategory.QUERY, "SELECT * FROM R;"));
         assertThat(pq, CoreMatchers.<Object>notNullValue());
 
-        final PreparedSQLStatement info                      = pq.getExplainInfo();
-        final double      maintenanceCostOfIndex0   = info.getIndexMaintenanceCost(newPGIndex(0, 123456));
-        final double      maintenanceCostOfIndex1   = info.getIndexMaintenanceCost(newPGIndex(1, 123456));
-        final double      maintenanceCostOfIndex2   = info.getIndexMaintenanceCost(newPGIndex(2, 123456));
+        final double maintenanceCostOfIndex0   = pq.getIndexMaintenanceCost(newPGIndex(0, 123456));
+        final double maintenanceCostOfIndex1   = pq.getIndexMaintenanceCost(newPGIndex(1, 123456));
+        final double maintenanceCostOfIndex2   = pq.getIndexMaintenanceCost(newPGIndex(2, 123456));
 
-        assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
-        assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.DML), is(false));
+        assertThat(pq.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
+        assertThat(pq.getStatement().getSQLCategory().isSame(SQLCategory.DML), is(false));
         // since we are dealing with a query, then costs shouldn't be 0.0
         assertThat(Double.compare(maintenanceCostOfIndex0, 1.1) == 0.0, is(false));
         assertThat(Double.compare(maintenanceCostOfIndex1, 2.0) == 0.0, is(false));

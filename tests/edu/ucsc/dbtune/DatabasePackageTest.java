@@ -20,11 +20,8 @@ package edu.ucsc.dbtune;
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.SQLCategory;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Function;
@@ -32,23 +29,18 @@ import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
 
-import static edu.ucsc.dbtune.DBTuneInstances.newPGIndex;
 import static edu.ucsc.dbtune.JdbcMocks.makeResultSet;
 import static edu.ucsc.dbtune.util.Strings.str;
 import static org.hamcrest.CoreMatchers.*;
@@ -131,7 +123,7 @@ public class DatabasePackageTest {
     private static void checkIndexExtractorViolation(DatabaseConnection connection) throws Exception {
         final CandidateIndexExtractor ie = connection.getIndexExtractor();
         connection.close();
-        ie.recommendIndexes("SELECT * FROM R;");
+        ie.recommendIndexes(new SQLStatement(SQLCategory.QUERY, "SELECT * FROM R;"));
     }
 
 
@@ -219,35 +211,9 @@ public class DatabasePackageTest {
 
     private static void checkRecommendIndexesFromSQL(DatabaseConnection... connections) throws Exception {
         for(DatabaseConnection each : connections){
-            final Iterable<Index> found = Objects.as(each.getIndexExtractor().recommendIndexes("SELECT * FROM R;"));
+            final Iterable<Index> found = Objects.as(each.getIndexExtractor().recommendIndexes(new SQLStatement(SQLCategory.QUERY, "SELECT * FROM R;")));
             assertThat(Iterables.count(found) == 3, is(true));
         }
-    }
-
-    @Test
-    public void testRecommendIndexesFromWorkloadFileScenario() throws Exception {
-        File a = File.createTempFile("workload", ".sql");
-        try {
-            prepareFile(a);
-            // DB2 Connection Manager uses the Advisor, so the idea is to refactor that advisor and
-            // make it an actual Object rather a utility class.
-            checkRecommendIndexesFromWorkloadFile(a, connectionManager2.connect());
-        } finally {
-            a.deleteOnExit();
-        }
-    }
-
-    private static void checkRecommendIndexesFromWorkloadFile(File workload, DatabaseConnection... connections) throws Exception {
-        for(DatabaseConnection each : connections){
-            final Iterable<Index> found = Objects.as(each.getIndexExtractor().recommendIndexes(workload));
-            assertThat(Iterables.count(found) == 3, is(true));
-        }
-    }
-
-    private static void prepareFile(File file) throws Exception {
-        final BufferedWriter out = new BufferedWriter(new FileWriter(file));
-        out.write("SELECT * FROM R;");
-        out.close();
     }
 
     @Test
@@ -260,29 +226,6 @@ public class DatabasePackageTest {
         System.out.println(d);
     }
 
-    @SuppressWarnings({"RedundantTypeArguments"})
-    private static void checkExplainInfoScenario(DatabaseConnection connection) throws Exception {
-        final Optimizer whatIfOptimizer   = connection.getOptimizer();
-        final List<Index>  pgCandidateSet  = Instances.newList();
-        final Index index1 = newPGIndex(12);
-        final Index index2 = newPGIndex(21);
-
-        pgCandidateSet.add(index1);
-        pgCandidateSet.add(index2);
-
-        final PreparedSQLStatement info = whatIfOptimizer.explain("SELECT * FROM R", pgCandidateSet);
-
-        assertThat(info, notNullValue());
-        assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.DML), is(false));
-        assertThat(Double.compare(info.getIndexMaintenanceCost(index1), 0) == 0, is(true));
-
-        final Column  col  = new Column(12345);
-        final Index idx  = new PGIndex(121112, 3.0, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_121112");
-        final Index idx2 = new PGIndex(56789, true, Arrays.asList(col), Arrays.asList(true), 132111, 3.5, 45.0, "CREATE SYNCHRONIZED INDEX sat_index_132111");
-
-        connection.getOptimizer().explain("SELECT * FROM R", Arrays.asList(idx, idx2));
-    }
-
     @After
     public void tearDown() throws Exception {
         connectionManager.close();
@@ -290,5 +233,4 @@ public class DatabasePackageTest {
         connectionManager2.close();
         connectionManager2 = null;
     }
-
 }

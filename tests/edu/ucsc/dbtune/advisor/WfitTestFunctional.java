@@ -18,9 +18,9 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.advisor.ProfiledQuery;
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
@@ -78,7 +78,7 @@ public class WfitTestFunctional
     @Test
     public void testWFIT() throws Exception
     {
-        ProfiledQuery qinfo;
+        IBGPreparedSQLStatement qinfo;
         CandidatePool pool;
         WFIT wfit;
         Workload workload;
@@ -114,7 +114,7 @@ public class WfitTestFunctional
             configuration = wfit.getRecommendation();
 
             qinfo = wfit.getProfiledQuery(q);
-            System.out.println("Q"+q+": "+qinfo);
+            System.out.println("Q"+q+": "+qinfo.getStatement()+":"+qinfo);
 
             assertThat(qinfo.getCandidateSnapshot().maxInternalId()+1, is(1));
 
@@ -139,21 +139,23 @@ public class WfitTestFunctional
         }
     }
 
-    private static CandidatePool getCandidates(DatabaseConnection con, String 
-            workloadFilename)
+    private static CandidatePool getCandidates(DatabaseConnection con, String workloadFilename)
         throws SQLException, IOException
     {
-        CandidatePool pool;
-        Iterable<Index>      candidateSet;
-        File                   workloadFile;
+        CandidatePool   pool;
+        Iterable<Index> candidateSet;
+        Workload        wl;
+		
+		wl   = new Workload(new FileReader(workloadFilename));
+		pool = new CandidatePool();
 
-        pool         = new CandidatePool();
-        workloadFile = new File(workloadFilename);
-        candidateSet = con.getIndexExtractor().recommendIndexes(workloadFile);
+		for(SQLStatement sql : wl) {
+			candidateSet = con.getIndexExtractor().recommendIndexes(sql);
 
-        for (Index index : candidateSet) {
-            pool.addIndex(index);
-        }
+			for (Index index : candidateSet) {
+				pool.addIndex(index);
+			}
+		}
 
         return pool;
     }

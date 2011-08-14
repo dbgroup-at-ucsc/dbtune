@@ -31,6 +31,19 @@ public class SQLStatement
     /** literal contents of the statement */
     private String sql;
 
+	/**
+	 * Constructs a {@code SQLStatement} with unknown category
+     *
+     * @param category
+     *      the corresponding {@link SQLCategory} representing the type of statement.
+     * @param sql
+     *      a sql statement.
+     */
+    public SQLStatement(String sql) {
+        this.type = SQLCategory.UNKNOWN;
+        this.sql  = sql;
+    }
+
     /**
      * Constructs a {@code SQLStatement} given its type and the literal contents.
      *

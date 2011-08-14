@@ -20,6 +20,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Objects;
@@ -197,7 +198,7 @@ public class IndexPartitions {
     /**
      * Returns the <em>theoretical</em> plan cost of a {@code profiled query}.
      * @param qinfo
-     *      a {@link ProfiledQuery} object.
+	 *      a {@link IBGPreparedSQLStatement} object.
      * @param state
      *      an index configuration.
      * @param scratch
@@ -205,7 +206,7 @@ public class IndexPartitions {
      * @return
      *      the <em>theoretical</em> plan cost
      */
-    public double theoreticalCost(ProfiledQuery qinfo, IndexBitSet state, IndexBitSet scratch) {
+    public double theoreticalCost(IBGPreparedSQLStatement qinfo, IndexBitSet state, IndexBitSet scratch) {
         // Let's override the nonsense for now
         return qinfo.planCost(state);
     }

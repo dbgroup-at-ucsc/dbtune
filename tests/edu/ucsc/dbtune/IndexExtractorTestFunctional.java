@@ -3,9 +3,12 @@ package edu.ucsc.dbtune;
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -13,7 +16,6 @@ import org.junit.Condition;
 import org.junit.If;
 import org.junit.Test;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 
@@ -61,24 +63,22 @@ public class IndexExtractorTestFunctional {
 
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
-    public void testRecommendIndexes() throws Exception {
-        final CandidateIndexExtractor    extractor   = connection.getIndexExtractor();
-        final File              workload    = new File( environment.getScriptAtWorkloadsFolder("/one_table/workload.sql") );
-        final Iterable<Index> candidates  = extractor.recommendIndexes(workload);
-
-        assertThat(candidates, CoreMatchers.<Object>notNullValue());
-        assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
-    }
-
-    @Test
-    @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLRecommendIndexes() throws Exception {
-        final CandidateIndexExtractor    extractor   = connection.getIndexExtractor();
-        final Iterable<Index> candidates  = extractor.recommendIndexes("select a from tbl where a = 5;");
+		SQLStatement            sql        = new SQLStatement(SQLCategory.QUERY,"select a from tbl where a = 5;");
+        CandidateIndexExtractor extractor  = connection.getIndexExtractor();
+        Iterable<Index>         candidates = extractor.recommendIndexes(sql);
 
-        System.out.println("caca");
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
+		assertThat(sql.getSQLCategory().isSame(SQLCategory.QUERY), is(true));
+
+		sql        = new SQLStatement(SQLCategory.DML, "update tbl set a=-1 where a = 5;");
+        extractor  = connection.getIndexExtractor();
+        candidates = extractor.recommendIndexes(sql);
+
+        assertThat(candidates, CoreMatchers.<Object>notNullValue());
+        assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
+		assertThat(sql.getSQLCategory().isSame(SQLCategory.DML), is(true));
     }
 
     @AfterClass

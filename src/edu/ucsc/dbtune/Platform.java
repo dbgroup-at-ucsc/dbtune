@@ -36,15 +36,11 @@ import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.optimizer.PostgresIBGWhatIfOptimizer;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
-import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.Strings;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
-import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -68,8 +64,8 @@ public class Platform {
         Map<String, CandidateIndexExtractorFactory> driverToExtractor =
                 new HashMap<String, CandidateIndexExtractorFactory>(){
                     {
-                        put("com.ibm.db2.jcc.DB2Driver", new DB2IndexExtractorFactory());
-                        put("org.postgresql.Driver", new PGIndexExtractorFactory());
+                        put("com.ibm.db2.jcc.DB2Driver", new DB2CandidateIndexExtractorFactory());
+                        put("org.postgresql.Driver", new PGCandidateIndexExtractorFactory());
                     }
                 };
 
@@ -122,17 +118,17 @@ public class Platform {
         return Objects.as(Checks.checkNotNull(AVAILABLE_OPTIMIZERS.get(driver)));
     }
 
-    private static class DB2IndexExtractorFactory implements CandidateIndexExtractorFactory {
+    private static class DB2CandidateIndexExtractorFactory implements CandidateIndexExtractorFactory {
         @Override
-        public CandidateIndexExtractor newIndexExtractor(String advisorFolder, DatabaseConnection connection) {
-            return new DB2DatabaseIndexExtractor(advisorFolder, Checks.checkNotNull(connection));
+        public CandidateIndexExtractor newCandidateIndexExtractor(String advisorFolder, DatabaseConnection connection) {
+            return new DB2CandidateIndexExtractor(advisorFolder, Checks.checkNotNull(connection));
         }
     }
 
-    private static class PGIndexExtractorFactory implements CandidateIndexExtractorFactory {
+    private static class PGCandidateIndexExtractorFactory implements CandidateIndexExtractorFactory {
         @Override
-        public CandidateIndexExtractor newIndexExtractor(String advisorFolder, DatabaseConnection connection) {
-            return new PGDatabaseIndexExtractor(Checks.checkNotNull(connection));
+        public CandidateIndexExtractor newCandidateIndexExtractor(String advisorFolder, DatabaseConnection connection) {
+            return new PGCandidateIndexExtractor(Checks.checkNotNull(connection));
         }
     }
 
@@ -170,11 +166,11 @@ public class Platform {
     /**
      *  A DB2-specific Database Index Extractor.
      */
-    static class DB2DatabaseIndexExtractor extends AbstractCandidateIndexExtractor {
+    static class DB2CandidateIndexExtractor extends AbstractCandidateIndexExtractor {
         private final String                        db2AdvisorPath;
         private final DatabaseConnection            connection;
 
-        DB2DatabaseIndexExtractor(String db2AdvisorPath, DatabaseConnection connection){
+        DB2CandidateIndexExtractor(String db2AdvisorPath, DatabaseConnection connection){
             super();
             this.db2AdvisorPath = db2AdvisorPath;
             this.connection     = connection;
@@ -192,7 +188,7 @@ public class Platform {
 
 
         @Override
-        public Iterable<Index> recommendIndexes(String sql) throws SQLException {
+        public Iterable<Index> recommendIndexes(SQLStatement sql) throws SQLException {
             Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
             final JdbcConnection c = Objects.as(connection);
             List<Index> indexList;
@@ -203,7 +199,7 @@ public class Platform {
                         submit(clearAdviseIndex(), c),
                         submit(explainModeRecommendIndexes(), c)
                 );
-                try {c.execute(sql);} catch (SQLException ignore){}
+                try {c.execute(sql.getSQL());} catch (SQLException ignore){}
 
                 // there is an unchecked warning here...
                 final String databaseName = c.getConnectionManager().getDatabaseName();
@@ -223,30 +219,16 @@ public class Platform {
 
             return indexList;
         }
-
-        @Override
-        public Iterable<Index> recommendIndexes(File workloadFile) throws SQLException, IOException {
-            Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
-            final JdbcConnection c = Objects.as(connection);
-                final DB2AdvisorCaller.FileInfo advisorFile = DB2AdvisorCaller.createAdvisorFile(
-                        c,
-                        db2AdvisorPath,
-                        -1,
-                        workloadFile
-                );
-
-                return Iterables.<Index>asIterable(advisorFile.getCandidates(c));
-        }
     }
 
     /**
      *  A PG-specific Database Index Extractor.
      */
-    static class PGDatabaseIndexExtractor extends AbstractCandidateIndexExtractor {
+    static class PGCandidateIndexExtractor extends AbstractCandidateIndexExtractor {
         private final DatabaseConnection connection;
 
 
-        PGDatabaseIndexExtractor(DatabaseConnection connection){
+        PGCandidateIndexExtractor(DatabaseConnection connection){
             super();
             this.connection = connection;
         }
@@ -258,22 +240,10 @@ public class Platform {
         }
 
         @Override
-        public Iterable<Index> recommendIndexes(String sql) throws SQLException {
+        public Iterable<Index> recommendIndexes(SQLStatement sql) throws SQLException {
             Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
             Iterable<PGIndex> suppliedIterable = supplyValue(PGCommands.recommendIndexes(), connection, sql);
             return Iterables.<Index>asIterable(suppliedIterable);
-        }
-
-        @Override
-        public Iterable<Index> recommendIndexes(File workloadFile) throws SQLException, IOException {
-            if(!isEnabled()) throw new SQLException("IndexExtractor is Disabled.");
-            final List<Index> candidateSet = new ArrayList<Index>();
-            for (String line : Files.getLines(workloadFile)) {
-                final String sql = Strings.trimSqlStatement(line);
-                final Iterable<? extends Index> recommended = recommendIndexes(sql);
-                candidateSet.addAll(Iterables.asCollection(recommended));
-            }
-            return candidateSet;
         }
     }
 }

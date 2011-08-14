@@ -18,12 +18,12 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class AnalyzedQuery {
-    private final ProfiledQuery profileInfo;
+    private final IBGPreparedSQLStatement profileInfo;
     private final IndexBitSet[]    partition;
 
     /**
@@ -33,7 +33,7 @@ public class AnalyzedQuery {
      * @param partition
      *      an array of index partitions.
      */
-    public AnalyzedQuery(ProfiledQuery orig, IndexBitSet[] partition) {
+    public AnalyzedQuery(IBGPreparedSQLStatement orig, IndexBitSet[] partition) {
         this.profileInfo    = orig;
         this.partition      = partition;
     }
@@ -41,7 +41,7 @@ public class AnalyzedQuery {
     /**
      * @return original query before it got analyzed.
      */
-    public ProfiledQuery getProfileInfo() {
+    public IBGPreparedSQLStatement getProfileInfo() {
         return profileInfo;
     }
 

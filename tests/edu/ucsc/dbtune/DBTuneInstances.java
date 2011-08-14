@@ -2,7 +2,6 @@ package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.advisor.BenefitFunction;
 import edu.ucsc.dbtune.advisor.DoiFunction;
-import edu.ucsc.dbtune.advisor.ProfiledQuery;
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionFactory;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
@@ -14,6 +13,7 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 
@@ -189,7 +189,7 @@ public class DBTuneInstances {
         return newPGIndex(1);
     }
 
-  public static BenefitFunction newTempBenefitFunction(List<ProfiledQuery> qinfos, int maxInternalId){
+  public static BenefitFunction newTempBenefitFunction(List<IBGPreparedSQLStatement> qinfos, int maxInternalId){
     return new TempBenefitFunction(qinfos, maxInternalId);
   }
 
@@ -200,9 +200,9 @@ public class DBTuneInstances {
 		int[][] componentId;
 		IndexBitSet[] prevM;
 		IndexBitSet diffM;
-		List<ProfiledQuery> qinfos;
+		List<IBGPreparedSQLStatement> qinfos;
 
-		TempBenefitFunction(List<ProfiledQuery> qinfos0, int maxInternalId) {
+		TempBenefitFunction(List<IBGPreparedSQLStatement> qinfos0, int maxInternalId) {
 			qinfos = qinfos0;
 
 			componentId = componentIds(qinfos0, maxInternalId);
@@ -217,10 +217,10 @@ public class DBTuneInstances {
 			diffM = new IndexBitSet(); // temp bit set
 		}
 
-		private static int[][] componentIds(List<ProfiledQuery> qinfos, int maxInternalId) {
+		private static int[][] componentIds(List<IBGPreparedSQLStatement> qinfos, int maxInternalId) {
 			int[][] componentId = new int[qinfos.size()][maxInternalId+1];
 			int q = 0;
-			for (ProfiledQuery qinfo : qinfos) {
+			for (IBGPreparedSQLStatement qinfo : qinfos) {
 				IndexBitSet[] parts = qinfo.getInteractionBank().stablePartitioning(0);
 				for (Index index : qinfo.getCandidateSnapshot()) {
 					int id = index.getId();
@@ -241,7 +241,7 @@ public class DBTuneInstances {
 			int q = 0;
 			double ben = 0;
 			double cache[] = bbCache[id];
-			for (ProfiledQuery qinfo : qinfos) {
+			for (IBGPreparedSQLStatement qinfo : qinfos) {
 				double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
 				cache[q] = bb;
 				ben += bb;
@@ -255,7 +255,7 @@ public class DBTuneInstances {
 			int q = 0;
 			double ben = 0;
 			double cache[] = bbCache[id];
-			for (ProfiledQuery qinfo : qinfos) {
+			for (IBGPreparedSQLStatement qinfo : qinfos) {
 				if (componentId[q][id] == componentId[q][b]) {
 					// interaction, recompute
 					double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
@@ -286,13 +286,13 @@ public class DBTuneInstances {
 		}
 	}
 
-  public static DoiFunction newTempDoiFunction(List<ProfiledQuery> qinfos, Snapshot candidateSet){
+  public static DoiFunction newTempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Snapshot candidateSet){
     return new TempDoiFunction(qinfos, candidateSet);
   }
 
 	private static class TempDoiFunction implements DoiFunction {
 		private InteractionBank bank;
-		TempDoiFunction(List<ProfiledQuery> qinfos, Snapshot candidateSet) {
+		TempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Snapshot candidateSet) {
 			bank = new InteractionBank(candidateSet);
 			for (Index a : candidateSet) {
 				int id_a = a.getId();
@@ -300,7 +300,7 @@ public class DBTuneInstances {
 					int id_b = b.getId();
 					if (id_a < id_b) {
 						double doi = 0;
-						for (ProfiledQuery qinfo : qinfos) {
+						for (IBGPreparedSQLStatement qinfo : qinfos) {
 							doi += qinfo.getInteractionBank().interactionLevel(a.getId(), b.getId());
 						}
 						bank.assignInteraction(a.getId(), b.getId(), doi);

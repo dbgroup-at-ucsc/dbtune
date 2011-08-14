@@ -43,9 +43,9 @@ public class PreparedSQLStatement
     /** the optimized plan */
     protected SQLStatementPlan plan;
 
-	private double[] updateCost; // deprecate when
+    private double[] updateCost; // deprecate when
 
-	/**
+    /**
      * Constructs a {@code PreparedSQLStatement} given its corresponding statement and the cost 
      * assigned to it.
      *
@@ -58,14 +58,28 @@ public class PreparedSQLStatement
      */
     public PreparedSQLStatement(SQLStatementPlan plan, double cost, Configuration configuration) {
         this.statement     = plan.getStatement();
-		this.plan          = plan;
+        this.plan          = plan;
         this.cost          = cost;
         this.configuration = configuration;
     }
 
-	/**
-     * construct a new {@code PGExplainInfo} object.
-	 *
+    /**
+     * construct a new {@code PreparedSQLStatement} object.
+     *
+     * @param sql
+     *      the contents of the statement
+     * @param category
+     *      sql category.
+     * @param cost
+     *      execution cost
+     */
+    public PreparedSQLStatement(String sql, SQLCategory category, double cost) {
+        this(sql,category,cost,null);
+    }
+
+    /**
+     * construct a new {@code PreparedSQLStatement} object.
+     *
      * @param category
      *      sql category.
      * @param overhead
@@ -73,26 +87,41 @@ public class PreparedSQLStatement
      * @param totalCost
      *      total creation cost.
      */
-	@Deprecated
-    public PreparedSQLStatement(String sql, SQLCategory category, double[] updateCost, double cost){
-		this.statement  = new SQLStatement(category,sql);
-		this.plan       = null;
-		this.updateCost = updateCost;
-		this.cost       = cost;
+    @Deprecated
+    public PreparedSQLStatement(String sql, SQLCategory category, double cost, double[] updateCost) {
+        this.statement  = new SQLStatement(category,sql);
+        this.plan       = null;
+        this.updateCost = updateCost;
+        this.cost       = cost;
     }
 
-	/**
-	 * Returns the cost of executing the statement.
-	 *
-	 * @return
-	 *      the execution cost of the statement.
+    /**
+     * copy constructor
+     *
+     * @param other
+     *      object being copied
      */
-	public double getCost()
-	{
-		return cost;
-	}
+    public PreparedSQLStatement(PreparedSQLStatement other)
+    {
+        this.statement     = other.getStatement();
+        this.plan          = other.plan;
+        this.cost          = other.cost;
+        this.configuration = other.configuration;
+        this.updateCost    = other.updateCost;
+    }
 
-	/**
+    /**
+     * Returns the cost of executing the statement.
+     *
+     * @return
+     *      the execution cost of the statement.
+     */
+    public double getCost()
+    {
+        return cost;
+    }
+
+    /**
      * gets the maintenance cost of an index.
      *
      * @param index
@@ -100,17 +129,21 @@ public class PreparedSQLStatement
      * @return
      *      maintenance cost.
      */
-	@Deprecated
-	public double getIndexMaintenanceCost(Index index) {
+    @Deprecated
+    public double getIndexMaintenanceCost(Index index) {
         if(!SQLCategory.DML.isSame(statement.getSQLCategory())){
-            return 0;
+            return 0.0;
         }
 
-		return updateCost[index.getId()];
-	}
+        if(updateCost == null) {
+            return 0.0;
+        }
 
-	public SQLStatement getStatement()
-	{
-		return statement;
-	}
+        return updateCost[index.getId()];
+    }
+
+    public SQLStatement getStatement()
+    {
+        return statement;
+    }
 }

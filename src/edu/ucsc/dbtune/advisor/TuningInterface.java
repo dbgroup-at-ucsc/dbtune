@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.Strings;
 
@@ -109,13 +110,13 @@ public class TuningInterface  {
     /**
      * execute profiled query.
      * @param qinfo
-     *      a {@link ProfiledQuery} object.
+	 *      a {@link IBGPreparedSQLStatement} object.
      * @return
      *      the transition cost of this profiled query.
      * @throws SQLException
      *      unable to execute profiled query.
      */
-    public double executeProfiledQuery(ProfiledQuery qinfo) throws SQLException {
+    public double executeProfiledQuery(IBGPreparedSQLStatement qinfo) throws SQLException {
         return taskScheduler.executeProfiledQuery(qinfo);
     }
 
@@ -153,11 +154,11 @@ public class TuningInterface  {
      * @param sql
      *      sql statement.
      * @return
-     *      an {@link ProfiledQuery} object.
+	 *      an {@link IBGPreparedSQLStatement} object.
      * @throws SQLException
      *      unable to profile sql due to the stated reasons.
      */
-    public ProfiledQuery profileSQL(String sql) throws SQLException {
+    public IBGPreparedSQLStatement profileSQL(String sql) throws SQLException {
         sql = Strings.trimSqlStatement(sql);
         return taskScheduler.profileQuery(sql);
     }

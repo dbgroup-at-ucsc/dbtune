@@ -207,7 +207,7 @@ public class PGOptimizer extends Optimizer
         List<Map<String,Object>> planData = mapper.readValue(sreader, List.class);
 
         if(planData == null) {
-            return new SQLStatementPlan(new SQLStatement(SQLCategory.OTHER, sql), new Operator());
+            return new SQLStatementPlan(new SQLStatement(SQLCategory.UNKNOWN, sql), new Operator());
         }
 
         if(planData.size() > 1) {
@@ -218,7 +218,7 @@ public class PGOptimizer extends Optimizer
         Map<String,Object> rootData = (Map<String,Object>) planData.get(0).get("Plan");
 
         root = extractNode(rootData, schema);
-        plan = new SQLStatementPlan(new SQLStatement(SQLCategory.OTHER, sql), root);
+        plan = new SQLStatementPlan(new SQLStatement(SQLCategory.UNKNOWN, sql), root);
 
         extractChildNodes(plan, root, rootData, schema);
 

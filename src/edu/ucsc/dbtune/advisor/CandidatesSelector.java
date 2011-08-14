@@ -21,6 +21,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -93,10 +94,10 @@ public class CandidatesSelector {
     /**
      * Perform the per-query tasks that are done after profiling
      * @param qinfo
-     *      a {@link ProfiledQuery} object.
+	 *      a {@link IBGPreparedSQLStatement} object.
      * @return an {@link AnalyzedQuery} object.
      */
-    public AnalyzedQuery analyzeQuery(ProfiledQuery qinfo) {
+    public AnalyzedQuery analyzeQuery(IBGPreparedSQLStatement qinfo) {
         // add the query to the statistics repository
         idxStats.addQuery(qinfo, matSet);
         
@@ -164,11 +165,11 @@ public class CandidatesSelector {
      * Returns the current cost of a {@code profiled query} given a set
      * of materialized indexes.
      * @param qinfo
-     *      a {@link ProfiledQuery} object.
+	 *      a {@link IBGPreparedSQLStatement} object.
      * @return
      *      the total cost of a {@code profiled query}.
      */
-    public double currentCost(ProfiledQuery qinfo) {
+    public double currentCost(IBGPreparedSQLStatement qinfo) {
         return qinfo.totalCost(matSet.bitSet());
     }
 

@@ -20,6 +20,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
@@ -116,20 +117,21 @@ public class WorkFunctionAlgorithm {
     }
 
     /**
-     * run a new task for a {@link ProfiledQuery query} through a {@link WorkFunctionAlgorithm}'s
+     * run a new task for a {@link IBGPreparedSQLStatement query} through a {@link 
+     * WorkFunctionAlgorithm}'s
      * submachine.
      * <p>
      * This method corresponds to algorithm {@code analyzeQuery} from Schnaitter's thesis, which is 
      * described in page in page 162 (Figure 6.3)
      *
      * @param qinfo
-     *    a {@link ProfiledQuery query}.
+     *    a {@link IBGPreparedSQLStatement query}.
      * @see #getRecommendation()
      */
-    public void newTask(ProfiledQuery qinfo) {
+    public void newTask(IBGPreparedSQLStatement qinfo) {
       workspace.tempBitSet.clear(); // just to be safe
 
-      console.info("WorkFunctionAlgorithm#newTask(ProfiledQuery) inputs: " + qinfo + ".");
+      console.info("WorkFunctionAlgorithm#newTask(IBGPreparedSQLStatement) inputs: " + qinfo + ".");
       for (int subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
           SubMachine subm = submachines.get(subsetNum);
           // preprocess cost into a vector
@@ -162,9 +164,9 @@ public class WorkFunctionAlgorithm {
         }
     }
 
-	private static void clearStateBits(int[] ids, IndexBitSet bitSet) {
-		for (int id : ids) bitSet.clear(id);
-	}
+    private static void clearStateBits(int[] ids, IndexBitSet bitSet) {
+        for (int id : ids) bitSet.clear(id);
+    }
 
     /**
      * process a positive or negative vote for the index found in some {@code SubMachine}.
@@ -184,8 +186,9 @@ public class WorkFunctionAlgorithm {
     }
 
     /**
-     * This method along with method {@link #newTask(ProfiledQuery)} corresponds to algorithm {@code 
-     * chooseCands} from Schnaitter's thesis, which is described in page in page 169 (Figure 6.5).
+     * This method along with method {@link #newTask(IBGPreparedSQLStatement)} corresponds to 
+     * algorithm {@code chooseCands} from Schnaitter's thesis, which is described in page in page 
+     * 169 (Figure 6.5).
      *
      * @return a list of recommended {@link Index indexes}.
      */
@@ -358,7 +361,7 @@ public class WorkFunctionAlgorithm {
      *      a schedule cost over a set of candidate and queries.
      */
     public double getScheduleCost(Snapshot candidateSet,
-                                                         int queryCount, List<ProfiledQuery> qinfos,
+                                                         int queryCount, List<IBGPreparedSQLStatement> qinfos,
                                                          IndexPartitions parts, IndexBitSet[] schedule
     ) {
         double cost = 0;

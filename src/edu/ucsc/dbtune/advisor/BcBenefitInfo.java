@@ -22,6 +22,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGWhatIfOptimizer;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -33,11 +34,11 @@ public class BcBenefitInfo {
 	private final double[]          newCosts;
 	private final int[]             reqLevels;
 	private final double[]          overheads;
-    private final ProfiledQuery  profiledQuery;
+    private final IBGPreparedSQLStatement  profiledQuery;
 
     private BcBenefitInfo(double[] origCosts, double[] newCosts,
                           int[] reqLevels, double[] overheads,
-                          ProfiledQuery profiledQuery
+                          IBGPreparedSQLStatement profiledQuery
     ) {
 		this.origCosts      = origCosts;
 		this.newCosts       = newCosts;
@@ -71,7 +72,7 @@ public class BcBenefitInfo {
                                                                     Snapshot snapshot,
                                                                     StaticIndexSet hotSet,
                                                                     IndexBitSet config,
-                                                                    ProfiledQuery profiledQuery
+                                                                    IBGPreparedSQLStatement profiledQuery
     ) throws SQLException {
         /*
         // XXX:
@@ -162,9 +163,9 @@ public class BcBenefitInfo {
     }
 
     /**
-     * @return the {@link ProfiledQuery} used in this {@code BcBenefitInfo} object.
+     * @return the {@link IBGPreparedSQLStatement} used in this {@code BcBenefitInfo} object.
      */
-    public ProfiledQuery getProfiledQuery(){
+    public IBGPreparedSQLStatement getProfiledQuery(){
         return profiledQuery;
     }
 

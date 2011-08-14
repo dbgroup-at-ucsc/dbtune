@@ -1,12 +1,13 @@
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
+import edu.ucsc.dbtune.util.IndexBitSet;
+
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
-
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
-import edu.ucsc.dbtune.util.IndexBitSet;
 
 public class WFALog implements Serializable {
     private static final long serialVersionUID = 3L;
@@ -44,7 +45,7 @@ public class WFALog implements Serializable {
         list.add(e);
     }
 
-    public void add(ProfiledQuery qinfo, 
+    public void add(IBGPreparedSQLStatement qinfo, 
                     IndexBitSet[] partition, IndexBitSet recommendation,
                     double planCost, double maintCost, double transitionCost, int whatifCount, double overhead) {
         Entry e = new Entry();
@@ -124,9 +125,9 @@ public class WFALog implements Serializable {
     }
     
     /**
-     * Writes the log for an experiment with a fixed candidate set. Iterates through the given 
-     * {@code ProfiledQuery} objects and obtains the costs for each of the queries, as well as each 
-     * of the recommendations done for each.
+	 * Writes the log for an experiment with a fixed candidate set. Iterates through the given 
+	 * {@code IBGPreparedSQLStatement} objects and obtains the costs for each of the queries, as 
+	 * well as each of the recommendations done for each.
      *
      * @param qinfos
      *     the profile of each of the queries that are contained in a workload. Each of them have 
@@ -143,7 +144,7 @@ public class WFALog implements Serializable {
      *     overheads
      */
     public static WFALog generateFixed(
-            List<ProfiledQuery> qinfos,
+            List<IBGPreparedSQLStatement> qinfos,
             IndexBitSet[]                recs,
             Snapshot            snapshot,
             IndexPartitions     parts,
@@ -163,7 +164,7 @@ public class WFALog implements Serializable {
 
         for (int q = 0; q < queryCount; q++) {
 
-            ProfiledQuery qinfo     = qinfos.get(q);
+            IBGPreparedSQLStatement qinfo     = qinfos.get(q);
             IndexBitSet            state     = recs[q];
             IndexBitSet            prevState = q == 0 ? new IndexBitSet() : recs[q-1];
             double                 planCost;
@@ -184,7 +185,7 @@ public class WFALog implements Serializable {
     }
 
     public static WFALog generateDual(
-            List<ProfiledQuery> qinfos,
+            List<IBGPreparedSQLStatement> qinfos,
             IndexBitSet[] optRecs,
             IndexBitSet[] wfitRecs,
             Snapshot snapshot,
@@ -209,7 +210,7 @@ public class WFALog implements Serializable {
             partIndexBitSets = null;
 
         for (int q = 0; q < queryCount; q++) {
-            ProfiledQuery qinfo = qinfos.get(q);
+            IBGPreparedSQLStatement qinfo = qinfos.get(q);
 
             materialized1.set(materialized3);
             

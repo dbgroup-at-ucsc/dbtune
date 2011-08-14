@@ -19,6 +19,7 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -32,7 +33,7 @@ public class BenefitInfoInput {
     private final Snapshot             snapshot;
     private final StaticIndexSet       hotSet;
     private final IndexBitSet config;
-    private final ProfiledQuery        profiledQ;
+    private final IBGPreparedSQLStatement        profiledQ;
 
     private BenefitInfoInput(StrictBuilder builder){
         connection = builder.conn;
@@ -58,7 +59,7 @@ public class BenefitInfoInput {
         return config;
     }
 
-    public ProfiledQuery getProfiledQuery() {
+    public IBGPreparedSQLStatement getProfiledQuery() {
         return profiledQ;
     }
 
@@ -78,7 +79,7 @@ public class BenefitInfoInput {
         private Snapshot             snapshot;
         private StaticIndexSet       hotSet;
         private IndexBitSet config;
-        private ProfiledQuery        profiledQuery;
+        private IBGPreparedSQLStatement        profiledQuery;
         public StrictBuilder(DatabaseConnection connection){
             this.conn = connection;
         }
@@ -98,7 +99,7 @@ public class BenefitInfoInput {
             return this;
         }
 
-        public StrictBuilder profiledQuery(ProfiledQuery value){
+        public StrictBuilder profiledQuery(IBGPreparedSQLStatement value){
             profiledQuery =  Checks.checkNotNull(value);
             return this;
         }

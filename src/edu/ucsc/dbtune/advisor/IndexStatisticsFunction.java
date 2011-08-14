@@ -23,6 +23,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -84,14 +85,13 @@ public class IndexStatisticsFunction implements StatisticsFunction {
     }
 
     @Override
-    public void addQuery(ProfiledQuery queryInfo, DynamicIndexSet matSet) {
+    public void addQuery(IBGPreparedSQLStatement queryInfo, DynamicIndexSet matSet) {
         Iterable<Index> candSet = queryInfo.getCandidateSnapshot();
         for (Index index : candSet) {
-            final InteractionBank bank          = queryInfo.getInteractionBank();
-            final PreparedSQLStatement explainInfo   = queryInfo.getExplainInfo();
+            final InteractionBank bank = queryInfo.getInteractionBank();
 
             double bestBenefit = bank.bestBenefit(index.getId())
-                                 - explainInfo.getIndexMaintenanceCost(index);
+								 - queryInfo.getIndexMaintenanceCost(index);
             if (bestBenefit != 0) {
                 // add measurement, creating new window if necessary
                 MeasurementWindow benwin = benefitWindows.get(index);
@@ -107,7 +107,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
     }
 
     private void calculateInteractionLevel(
-            ProfiledQuery queryInfo,
+            IBGPreparedSQLStatement queryInfo,
             DynamicIndexSet matSet,
             Iterable<Index> candSet
     ) {

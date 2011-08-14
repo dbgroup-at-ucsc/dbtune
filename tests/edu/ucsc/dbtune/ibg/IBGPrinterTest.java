@@ -7,7 +7,10 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -51,7 +54,7 @@ public class IBGPrinterTest {
     @SuppressWarnings({"unchecked"})
     @Test
     public void testIndexBenefitGraph() throws Exception{
-        final String basicQuery = "Select * from R;";
+        final SQLStatement sql = new SQLStatement(SQLCategory.QUERY,"Select * from R;");
         final Table table = mock(Table.class);
 
         // configure indexex
@@ -73,7 +76,7 @@ public class IBGPrinterTest {
 
         final Iterable<Index> recommendedIndexes = new ArrayList<Index>(Arrays.asList(soleIndex));
         final CandidateIndexExtractor extractor = mock(CandidateIndexExtractor.class);
-        when(extractor.recommendIndexes(basicQuery)).thenReturn(recommendedIndexes);
+        when(extractor.recommendIndexes(sql)).thenReturn(recommendedIndexes);
 
         final CandidatePool candidatePool = (CandidatePool) mock(CandidatePool.class);
         final Node<Index>          root          = (Node<Index>) mock(Node.class);

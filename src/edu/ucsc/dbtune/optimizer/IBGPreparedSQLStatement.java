@@ -1,21 +1,19 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-package edu.ucsc.dbtune.advisor;
+/* **************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                         *
+ *                                                                              *
+ *   Licensed under the Apache License, Version 2.0 (the "License");            *
+ *   you may not use this file except in compliance with the License.           *
+ *   You may obtain a copy of the License at                                    *
+ *                                                                              *
+ *       http://www.apache.org/licenses/LICENSE-2.0                             *
+ *                                                                              *
+ *   Unless required by applicable law or agreed to in writing, software        *
+ *   distributed under the License is distributed on an "AS IS" BASIS,          *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+ *   See the License for the specific language governing permissions and        *
+ *   limitations under the License.                                             *
+ * **************************************************************************** */
+package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
@@ -23,36 +21,64 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.satuning.spi.Supplier;
 
 /**
  * @author Karl Schnaitter
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @author Huascar A. Sanchez
+ * @author Ivo Jimenez
  */
-public class ProfiledQuery {
+public class IBGPreparedSQLStatement extends PreparedSQLStatement {
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
-    private final String            sql;
-    private final PreparedSQLStatement       explainInfo;
     private final Snapshot          candidateSet;
     private final IndexBenefitGraph ibg;
     private final InteractionBank   bank;
     private final int               whatIfCount;
     private final double            ibgAnalysisTime;
 
-    private ProfiledQuery(Builder builder){
-        sql             = builder.sql;
-        explainInfo     = builder.explainInfo;
-        candidateSet    = builder.candidateSet;
-        ibg             = builder.ibg;
-        bank            = builder.bank;
-        whatIfCount     = builder.whatifCount;
-        ibgAnalysisTime = builder.ibgAnalysisTime;
+    public IBGPreparedSQLStatement(
+            PreparedSQLStatement preparedSQLStatement,
+            Snapshot             candidateSet,
+            IndexBenefitGraph    ibg,
+            InteractionBank      bank,
+            int                  whatIfCount,
+            double               ibgAnalysisTime )
+    {
+        super(preparedSQLStatement);
+
+        this.candidateSet    = candidateSet;
+        this.ibg             = ibg;
+        this.bank            = bank;
+        this.whatIfCount     = whatIfCount;
+        this.ibgAnalysisTime = ibgAnalysisTime;
     }
 
+    public IBGPreparedSQLStatement(
+            String            sql,
+            SQLCategory       sqlCategory,
+            Snapshot          candidateSet,
+            IndexBenefitGraph ibg,
+            InteractionBank   bank,
+            int               whatIfCount,
+            double            ibgAnalysisTime )
+    {
+        super(sql, sqlCategory, 0.0);
+
+        this.candidateSet    = candidateSet;
+        this.ibg             = ibg;
+        this.bank            = bank;
+        this.whatIfCount     = whatIfCount;
+        this.ibgAnalysisTime = ibgAnalysisTime;
+    }
+
+    /**
+     * Returns the interaction bank.
+     *
+     * @return
+     *     the interaction bank
+     */
     public InteractionBank getBank() {
         return bank;
     }
@@ -60,6 +86,7 @@ public class ProfiledQuery {
     /**
      * Returns the plan cost of this {@code query} given its index benefit graph and
      * an indexes configuration.
+     *
      * @param graph
      *      an {@link IndexBenefitGraph} instance.
      * @param configuration
@@ -70,20 +97,6 @@ public class ProfiledQuery {
      */
     static double findIGBCost(IndexBenefitGraph graph, IndexBitSet configuration){
         return NODE_FINDER.findCost(graph, configuration);
-    }
-
-    /**
-     * @return the actual {@code SQL query} wrapped into this object..
-     */
-    public String getSQL(){
-        return sql;
-    }
-
-    /**
-	 * @return an {@link PreparedSQLStatement} instance.
-     */
-    public PreparedSQLStatement getExplainInfo(){
-        return explainInfo;
     }
 
     /**
@@ -131,18 +144,18 @@ public class ProfiledQuery {
      *      the maintenance cost of this {@code query}.
      */
     public double maintenanceCost(IndexBitSet configuration){
-        if(!explainInfo.getStatement().getSQLCategory().isSame(SQLCategory.DML)){
+        if(!getStatement().getSQLCategory().isSame(SQLCategory.DML)){
             return 0;
         }
 
-		double maintenanceCost = 0;
-		for (Index eachIndex : candidateSet) {
-			if (configuration.get(eachIndex.getId())) {
-				maintenanceCost += explainInfo.getIndexMaintenanceCost(eachIndex);
-			}
-		}
+        double maintenanceCost = 0;
+        for (Index eachIndex : candidateSet) {
+            if (configuration.get(eachIndex.getId())) {
+                maintenanceCost += getIndexMaintenanceCost(eachIndex);
+            }
+        }
 
-		return maintenanceCost;
+        return maintenanceCost;
     }
 
     /**
@@ -160,6 +173,7 @@ public class ProfiledQuery {
      * Returns the total cost of this {@code query}. The total
      * is equal to the sum of the {@code query}'s plan cost and
      * the {@code query}'s maintenance cost.
+     *
      * @param configuration
      *      indexes configuration.
      * @return
@@ -174,69 +188,12 @@ public class ProfiledQuery {
 
     @Override
     public String toString() {
-        return new ToStringBuilder<ProfiledQuery>(this)
-               .add("sql", getSQL())
-               .add("explainInfo", getExplainInfo())
+        return new ToStringBuilder<IBGPreparedSQLStatement>(this)
                .add("candidateSet", getCandidateSnapshot())
                .add("index benefit graph", getIndexBenefitGraph())
                .add("interaction bank", getInteractionBank())
                .add("whatIfCount", getWhatIfCount())
                .add("ibg analysis time", getIBGAnalysisTime())
                .toString();
-    }
-
-    /**
-     * A {@link ProfiledQuery}'s {@link Builder builder}.
-     */
-    public static class Builder implements Supplier<ProfiledQuery> {
-        private final String                sql;
-        private PreparedSQLStatement explainInfo;
-        private Snapshot candidateSet;
-        private IndexBenefitGraph           ibg;
-        private InteractionBank             bank;
-        private int                         whatifCount;     // value from DatabaseConnection after profiling
-        private double                      ibgAnalysisTime; // in milliseconds
-
-        public Builder(String sql){
-            this.sql = sql;
-        }
-
-        public Builder explainInfo(PreparedSQLStatement value){
-            explainInfo = value;
-            return this;
-        }
-
-        public Builder snapshotOfCandidateSet(Snapshot value){
-            candidateSet = value;
-            return this;
-        }
-
-        public Builder indexBenefitGraph(IndexBenefitGraph value){
-            ibg = value;
-            return this;
-        }
-
-        public Builder interactionBank(InteractionBank value){
-            bank = value;
-            return this;
-        }
-
-        public Builder whatIfCount(int value){
-            // value from DatabaseConnection after profiling
-            whatifCount = value;
-            return this;
-        }
-
-        public Builder indexBenefitGraphAnalysisTime(double value){
-            // in milliseconds
-            ibgAnalysisTime = value;
-            return this;
-        }
-
-
-        @Override
-        public ProfiledQuery get() {
-            return new ProfiledQuery(this);
-        }
     }
 }

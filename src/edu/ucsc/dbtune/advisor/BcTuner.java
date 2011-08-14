@@ -22,6 +22,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -142,7 +143,7 @@ public class BcTuner {
      * @throws SQLException
      *      an unexpected error occurred.
      */
-	public void processQuery(ProfiledQuery profiledQuery) throws SQLException {
+	public void processQuery(IBGPreparedSQLStatement profiledQuery) throws SQLException {
         final BenefitInfoInput input = new BenefitInfoInput.StrictBuilder(connection)
                 .snapshot(snapshot)
                 .hotSet(hotSet)
