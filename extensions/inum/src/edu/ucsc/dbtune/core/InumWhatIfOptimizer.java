@@ -1,40 +1,46 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.inum.PostgresIndexAccessGenerator;
-import java.io.File;
+import edu.ucsc.dbtune.inum.Inum;
 
 /**
- * ...
+ * The (IN)dex (U)sage (M)odel (INUM) What-if optimizer.
+ *
+ * The InumWhatIfOptimizer takes as inputs a workload (single query)
+ * and a configuration for evaluation. The output is the cost for
+ * the query given a matched optimal plan.
+ *
+ * Internally, the implementation of this class will interact with
+ * the {@link Inum INUM} main object. This class is responsible for
+ * orchestrating the execution of INUM.
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public interface InumWhatIfOptimizer {
-
   /**
    * estimate the cost of executing a given workload; an empty set of
-   * hypothetical indexes is provided.
+   * hypothetical indexes (a.k.a., empty configuration) is provided.
+   *
    * @param workload
    *    a single workload (file name)
    * @return
    *    the estimated cost for executing a single workload without using
    *    indexes.
-   * @see {@link #estimateCost(String, Iterable)}
+   * @see {@link #estimateCost(String, Iterable)}.
    */
   double estimateCost(String workload);
 
   /**
    * estimate the cost involved in materializing a bag of hypothetical
-   * indexes for a given workload. The bag of hypothetical indexes may
-   * be empty.
+   * indexes (a.k.a., configuration) for a given workload. The bag of hypothetical
+   * indexes may be empty (a.k.a., empty configuration).
+   *
    * @param workload
    *    a single workload (file name)
    * @param hypotheticalIndexes
-   *    a bag of hypothetical indexes
+   *    a bag of hypothetical indexes.
    * @return
    *    the estimated cost for materializing a bag of hypothetical
    *    indexes.
-   * @throws IndexAccessGenerationException if {@link PostgresIndexAccessGenerator}
-   *    was unable to parse the workload.
    */
   double estimateCost(String workload, Iterable<DBIndex> hypotheticalIndexes);
 }
