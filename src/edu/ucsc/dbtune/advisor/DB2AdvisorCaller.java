@@ -38,8 +38,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static edu.ucsc.dbtune.connectivity.DB2Commands.clearAdviseIndex;
-import static edu.ucsc.dbtune.connectivity.DB2Commands.readAdviseOnOneIndex;
+import static edu.ucsc.dbtune.optimizer.DB2Optimizer.DB2Commands.clearAdviseIndex;
+import static edu.ucsc.dbtune.optimizer.DB2Optimizer.DB2Commands.readAdviseOnOneIndex;
 import static edu.ucsc.dbtune.metadata.DB2Index.DB2IndexSet;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;

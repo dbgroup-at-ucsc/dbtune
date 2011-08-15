@@ -18,8 +18,6 @@
 
 package edu.ucsc.dbtune.connectivity;
 
-import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
-import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 
 /**
@@ -44,19 +42,7 @@ public interface DatabaseConnection extends DatabaseSession {
      */
     ConnectionManager getConnectionManager();
 
-    /**
-     * gets the instance of a database index extractor created for this connection.
-     *
-     * @return
-     *      the {@link CandidateIndexExtractor index extractor} instance created
-     *      for this connection.
-     * @throws NullPointerException
-     *      it will throw a null pointer exception if the index extractor is null.
-     *      this is a normal side effect when the connection was already closed.
-     */
-    CandidateIndexExtractor getIndexExtractor();
-
-    /**
+	/**
      * returns the instance of the object representing the optimizer of the DBMS the connection is 
      * associated with.
      *

@@ -20,6 +20,7 @@ import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
 
@@ -54,8 +55,8 @@ public class IBGOptimizer extends Optimizer {
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(String sql) throws SQLException {
-        return delegate.explain(sql);
+    public List<Index> recommendIndexes(String sql) throws SQLException {
+        return delegate.recommendIndexes(sql);
     }
 
     /**

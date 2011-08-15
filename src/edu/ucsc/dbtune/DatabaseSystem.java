@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune;
 
-import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
-import edu.ucsc.dbtune.advisor.CandidateIndexExtractorFactory;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -11,7 +9,6 @@ import edu.ucsc.dbtune.util.Strings;
 
 import java.util.NoSuchElementException;
 
-import static edu.ucsc.dbtune.Platform.findIndexExtractorFactory;
 import static edu.ucsc.dbtune.Platform.findOptimizerFactory;
 
 /**
@@ -29,13 +26,11 @@ public enum DatabaseSystem {
      */
     DB2("com.ibm.db2.jcc.DB2Driver");
 
-    private final String                 driver;
-    private final CandidateIndexExtractorFactory  ief;
-    private final OptimizerFactory       of;
+    private final String           driver;
+    private final OptimizerFactory of;
 
     DatabaseSystem(String driver){
         this.driver = driver;
-        ief         = findIndexExtractorFactory(driver);
         of          = findOptimizerFactory(driver);
     }
 
@@ -58,16 +53,6 @@ public enum DatabaseSystem {
     public IBGOptimizer getIBGWhatIfOptimizer(DatabaseConnection connection){
         return of.newIBGOptimizer(Checks.checkNotNull(connection));
     }
-
-    /**
-     * @param connection
-     *      database connection
-     * @return an instance of the index extractor.
-     */
-    public CandidateIndexExtractor getIndexExtractor(DatabaseConnection connection){
-        return ief.newCandidateIndexExtractor("/home/karlsch/sqllib/bin/db2advis", Checks.checkNotNull(connection));
-    }
-
 
     /**
      * checks whether a given {@link DatabaseSystem} is equal to {@link DatabaseSystem this}. e.g.,

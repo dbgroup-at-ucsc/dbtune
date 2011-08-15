@@ -19,6 +19,7 @@ import org.junit.If;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.List;
 import java.util.Properties;
 
 import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
@@ -65,16 +66,12 @@ public class WhatIfOptimizerTestFunctional {
     @Test // this test will pass once the what if optimizer returns something....
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLWhatIfOptimization() throws Exception {
-        final SQLStatement            query      = new SQLStatement(SQLCategory.QUERY, "select a from tbl where a = 5;");
-        final CandidateIndexExtractor extractor  = connection.getIndexExtractor();
-        final Iterable<Index>         candidates = extractor.recommendIndexes(query);
-        final Optimizer               optimizer  = connection.getOptimizer();
+        final Optimizer   optimizer  = connection.getOptimizer();
+        final List<Index> candidates = optimizer.recommendIndexes("select a from tbl where a = 5;");
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        System.out.println("Getting cost with candidates " + candidates);
-
-        final PreparedSQLStatement info = optimizer.explain(query.getSQL(), candidates);
+        final PreparedSQLStatement info = optimizer.explain("select a from tbl where a = 5;", candidates);
 
         assertThat(info, CoreMatchers.<Object>notNullValue());
         assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
@@ -87,14 +84,12 @@ public class WhatIfOptimizerTestFunctional {
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLIBGWhatIfOptimization() throws Exception {
-        final SQLStatement            query      = new SQLStatement(SQLCategory.QUERY, "select count(*) from tbl where b > 3");
-        final CandidateIndexExtractor extractor  = connection.getIndexExtractor();
-        final Iterable<Index>         candidates = extractor.recommendIndexes(query);
-        final IBGOptimizer            optimizer  = new IBGOptimizer(connection.getOptimizer());
+        final List<Index> candidates = connection.getOptimizer().recommendIndexes("select count(*) from tbl where b > 3");
+        final IBGOptimizer optimizer = new IBGOptimizer(connection.getOptimizer());
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        double cost = optimizer.explain(query.getSQL()).getCost();
+        double cost = optimizer.explain("select count(*) from tbl where b > 3").getCost();
 
         assumeThat(cost >= 0, is(true));
     }

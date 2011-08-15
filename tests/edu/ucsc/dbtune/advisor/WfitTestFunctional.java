@@ -152,7 +152,7 @@ public class WfitTestFunctional
         pool = new CandidatePool();
 
         for(SQLStatement sql : wl) {
-            candidateSet = con.getIndexExtractor().recommendIndexes(sql);
+            candidateSet = con.getOptimizer().recommendIndexes(sql.getSQL());
 
             for (Index index : candidateSet) {
                 pool.addIndex(index);

@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.SQLCategory;
@@ -43,7 +44,6 @@ import java.util.List;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
-import static edu.ucsc.dbtune.connectivity.PGCommands.getVersion;
 
 /**
  * The interface with the PostgreSQL optimizer.
@@ -90,14 +90,6 @@ public class PGOptimizer extends Optimizer
         this.schema       = null;
         this.obtainPlan   = false;
         this.connection   = connection.getJdbcConnection();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public PreparedSQLStatement explain(String sql) throws SQLException {
-        return explain(sql, new ArrayList<Index>());
     }
 
     /**
@@ -163,7 +155,109 @@ public class PGOptimizer extends Optimizer
     }
 
     /**
+     * {@inheritDoc}
      */
+    @Override
+    public List<Index> recommendIndexes(String sql) throws SQLException {
+        Statement stmt = connection.createStatement();
+        ResultSet rs   = stmt.executeQuery("RECOMMEND INDEXES " + sql);
+        int       id   = 0;
+
+        List<Index> indexes = new ArrayList<Index>();
+
+        while(rs.next()){
+            touchIndexSchema(indexes, rs, id);
+            ++id;
+        }
+
+        return indexes;
+    }
+
+    /**
+     * returns the version of the PostgreSQL instance that the given {@code connection} is 
+     * communicating to.
+     *
+     * @param connection
+     *     connection object from which the version will be retrieved from
+     * @return
+     *     a string containing the version number, e.g. "9.0.4"; "0.0.0" if not known
+     * @throws SQLException
+     *     if the underlying system is old enough such that it doesn't implement the {@code 
+     *     version()} function; if another SQL error occurs while retrieving the system version.
+     */
+    public static String getVersion(Connection connection) throws SQLException {
+        Statement st;
+        ResultSet rs;
+        String    version;
+
+        st = connection.createStatement();
+        rs = st.executeQuery("SELECT version()");
+
+        version = "0.0.0";
+
+        while(rs.next()) {
+            version = rs.getString("version");
+            version = version.substring(11,version.indexOf(" on "));
+        }
+
+        rs.close();
+        st.close();
+
+        return version;
+    }
+
+    private void touchIndexSchema(List<Index> candidateSet, ResultSet rs, int id) throws SQLException {
+        final int       reloid = Integer.valueOf(rs.getString("reloid"));
+        final boolean   isSync = rs.getString("sync").charAt(0) == 'Y';
+        final List<Column> columns = new ArrayList<Column>();
+        final String columnsString = rs.getString("atts");
+        if(columnsString.length() > 0){
+            for (String attnum  : columnsString.split(" ")){
+                columns.add(new Column(Integer.valueOf(attnum)));
+            }
+        }
+
+        // descending
+        final List<Boolean> isDescending        = new ArrayList<Boolean>();
+        final String        descendingString    = rs.getString("desc");
+        if(descendingString.length() > 0){
+            for (String desc : rs.getString("desc").split(" ")){
+                isDescending.add(desc.charAt(0) == 'Y');
+            }
+        }
+
+        final double        creationCost    = Double.valueOf(rs.getString("create_cost"));
+        final double        megabytes       = Double.valueOf(rs.getString("megabytes"));
+
+        final String indexName    = "sat_index_" + id;
+        final String creationText = updateCreationText(rs, isSync, indexName);
+
+        try {
+            candidateSet.add(
+                new PGIndex(
+                    reloid, isSync, columns, isDescending, id,
+                    megabytes, creationCost, creationText) );
+        } catch(Exception ex) {
+            throw new SQLException(ex);
+        }
+    }
+
+    private String updateCreationText(ResultSet rs, boolean sync, String indexName) throws SQLException {
+        String creationText = rs.getString("create_text");
+        if (sync){
+            creationText = creationText.replace(
+                    "CREATE SYNCHRONIZED INDEX ?",
+                    "CREATE SYNCHRONIZED INDEX " + indexName
+                    );
+        } else {
+            creationText = creationText.replace(
+                    "CREATE INDEX ?",
+                    "CREATE INDEX " + indexName
+                    );
+        }
+        return creationText;
+    }
+
     private static void verifyOverheadArray(Integer cardinality, String[] ohArray) {
         if(cardinality == 0){
             // we expect ohArray to have one elt that is the empty string
@@ -202,6 +296,16 @@ public class PGOptimizer extends Optimizer
     }
 
     /**
+     * Returns the plan for the given statement
+     *
+     * @param connection
+     *     connection to the DBMS
+     * @param sql
+     *     statement whose plan is retrieved
+     * @return
+     *     an execution plan for the given statement
+     * @throws SQLException
+     *     if something goes wrong while talking to the DBMS
      */
     protected SQLStatementPlan getPlan(Connection connection, String sql) throws SQLException
     {

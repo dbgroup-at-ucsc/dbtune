@@ -16,7 +16,6 @@
 package edu.ucsc.dbtune.connectivity;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.core.Functions;
@@ -28,7 +27,7 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static edu.ucsc.dbtune.connectivity.DB2Commands.isolationLevelReadCommitted;
+import static edu.ucsc.dbtune.optimizer.DB2Optimizer.DB2Commands.isolationLevelReadCommitted;
 import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
 import static edu.ucsc.satuning.util.Util.newAtomicReference;
 
@@ -42,7 +41,6 @@ import static edu.ucsc.satuning.util.Util.newAtomicReference;
 abstract class AbstractDatabaseConnection extends AbstractDatabaseSession
 implements DatabaseConnection {
     private final AtomicReference<ConnectionManager>  connectionManager;
-    private final AtomicReference<CandidateIndexExtractor>     indexExtractor;
     private final AtomicReference<IBGOptimizer> ibgWhatIfOptimizer;
     private Optimizer                           optimizer;
 
@@ -57,7 +55,6 @@ implements DatabaseConnection {
             Connection connection){
         super(connection);
         this.connectionManager  = newAtomicReference();
-        this.indexExtractor     = newAtomicReference();
         this.ibgWhatIfOptimizer = newAtomicReference();
         this.optimizer          = null;
         this.once               = newFalseBoolean();
@@ -67,7 +64,6 @@ implements DatabaseConnection {
     void cleanup() throws SQLException {
         super.cleanup();
         getConnectionManager().close(this);
-        indexExtractor.set(null);
         ibgWhatIfOptimizer.set(null);
         connectionManager.set(null);
     }
@@ -87,21 +83,14 @@ implements DatabaseConnection {
     public final void loadResources() {
         if(once.get()) return;
         final DatabaseSystem trait = getDatabaseSystem();
-        indexExtractor.set(trait.getIndexExtractor(this));
         ibgWhatIfOptimizer.set(trait.getIBGWhatIfOptimizer(this));
         optimizer = trait.getOptimizer(this);
         once.set(true);
-        getIndexExtractor().adjust(this);  // todo(Huascar)...
     }
 
     @Override
     public ConnectionManager getConnectionManager() {
         return Checks.checkNotNull(connectionManager.get());
-    }
-
-    @Override
-    public CandidateIndexExtractor getIndexExtractor() {
-        return Checks.checkNotNull(indexExtractor.get());
     }
 
     @Override
@@ -113,7 +102,6 @@ implements DatabaseConnection {
     public String toString() {
         return new ToStringBuilder<AbstractDatabaseConnection>(this)
                 .add("connectionManager", connectionManager.get())
-                .add("indexExtractor", indexExtractor.get())
                 .add("ibgWhatIfOptimizer", ibgWhatIfOptimizer.get())
                 .add("open", isOpened())
                 .toString();

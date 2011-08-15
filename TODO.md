@@ -69,9 +69,6 @@ Things that the current test doesn't check:
 
  *  create `DBSystem` that only implements the `newIndex()` method
 
-## 94:
-
- *  make sure that the DB2 version would "work"
 
 # refs
 

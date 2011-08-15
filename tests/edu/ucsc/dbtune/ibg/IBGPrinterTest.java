@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.CandidatePool.Node;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
@@ -98,9 +97,5 @@ public class IBGPrinterTest {
           true,    // first time .next() will return true,
           false    // second time will return false.
         );
-
-        final DatabaseConnection db = mock(DatabaseConnection.class);
-        when(db.getIndexExtractor()).thenReturn(extractor);
-
     }
 }

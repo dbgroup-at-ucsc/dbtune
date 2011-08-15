@@ -46,6 +46,5 @@ public class JdbcConnection extends AbstractDatabaseConnection implements Databa
 
     @Override
     public void init() throws Exception {
-        getIndexExtractor().adjust(this);
     }
 }

@@ -18,6 +18,8 @@ package edu.ucsc.dbtune.optimizer;
 import edu.ucsc.dbtune.metadata.Index;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents an optimizer of a DBMS system.
@@ -36,7 +38,9 @@ public abstract class Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public abstract PreparedSQLStatement explain(String sql) throws SQLException;
+    public PreparedSQLStatement explain(String sql) throws SQLException {
+        return explain(sql, new ArrayList<Index>());
+    }
 
     /**
      * estimate what-if optimization plan of a statement using the given configuration.
@@ -53,6 +57,18 @@ public abstract class Optimizer
      */
     public abstract PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException;
     
+    /**
+     * Given a sql statement, it recommends indexes to make it run faster.
+     *
+     * @param sql
+     *      SQL statement
+     * @return
+     *      a list of indexes that would improve the statement's performance
+     * @throws SQLException
+     *      if an error occurs while retrieving the plan
+     */
+    public abstract List<Index> recommendIndexes(String sql) throws SQLException;
+
     /**
      * gets the total count of what-if optimizations were handled/performed by the optimizer.
      *
