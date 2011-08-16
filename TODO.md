@@ -4,19 +4,15 @@
 
 No need to roll our own. Also, we should define a policy of when and how to use logging to avoid polluting the code.
 
-## 27
-
-Only remaining class is AbstractDatabaseSession and DatabaseSession
-
 ## 52
 
 Things that the current test doesn't check:
 
-* all columns (from `movies` database) on `testColumnOrdering()` method
-* foreign keys constraints
-* unique constraints
-* not null constraints
-* default constraints
+ *  all columns (from `movies` database) on `testColumnOrdering()` method
+ *  foreign keys constraints
+ *  unique constraints
+ *  not null constraints
+ *  default constraints
 
 ## 53
 

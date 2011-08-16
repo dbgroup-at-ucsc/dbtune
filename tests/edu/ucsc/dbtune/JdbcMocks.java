@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.util.Instances;
-import edu.ucsc.satuning.util.Objects;
+import edu.ucsc.dbtune.util.Objects;
 
 import java.io.InputStream;
 import java.io.Reader;

@@ -16,12 +16,10 @@
  *  ****************************************************************************
  */
 /**
- * This package contains the main optimizer interface
- * {@link edu.ucsc.dbtune.optimizer.Optimizer} as well as all its
- * implementors whatIfOptmize expression.
+ * This package contains the main optimizer interface {@link edu.ucsc.dbtune.optimizer.Optimizer} as well as all its
+ * implementors.
  * <p>
- * {@link edu.ucsc.dbtune.optimizer.IBGOptimizer}. The object that DBTune uses to perform operations dealing with 
- * what-if optimizations.
+ * The information returned by an optimizer is represented by a {@link PreparedSQLStatement}.
  */
 @Generated(value={})
 package edu.ucsc.dbtune.optimizer;

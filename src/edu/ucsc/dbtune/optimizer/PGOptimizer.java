@@ -108,7 +108,7 @@ public class PGOptimizer extends Optimizer
         double      totalCost;
 
         indexSet   = Instances.newIndexList(indexes);
-        explainSql = "EXPLAIN INDEXES " + indexListString(indexes) + sql;
+        explainSql = "EXPLAIN INDEXES " + explainIndexListString(indexes) + sql;
         stmt       = connection.createStatement();
         rs         = stmt.executeQuery(explainSql);
 
@@ -120,10 +120,6 @@ public class PGOptimizer extends Optimizer
         indexOverhead = rs.getString("index_overhead");
         ohArray       = indexOverhead.split(" ");
         maintCost     = new double[indexSet.size()];
-
-        System.out.println("iohead: " + rs.getString("index_overhead"));
-        System.out.println("ohArray size: " + ohArray.length);
-        System.out.println("indexSet size: " + indexSet.size());
 
         verifyOverheadArray(indexSet.size(), ohArray);
 
@@ -150,6 +146,8 @@ public class PGOptimizer extends Optimizer
 
         rs.close();
         stmt.close();
+
+        optimizationCount++;
 
         return sqlStmt;
     }
@@ -211,6 +209,7 @@ public class PGOptimizer extends Optimizer
         final boolean   isSync = rs.getString("sync").charAt(0) == 'Y';
         final List<Column> columns = new ArrayList<Column>();
         final String columnsString = rs.getString("atts");
+
         if(columnsString.length() > 0){
             for (String attnum  : columnsString.split(" ")){
                 columns.add(new Column(Integer.valueOf(attnum)));
@@ -271,8 +270,18 @@ public class PGOptimizer extends Optimizer
         }
     }
 
-    private static String indexListString(Iterable<? extends Index> indexes) {
-        final StringBuilder sb = new StringBuilder();
+    /**
+     * Returns a string containing a comma-separated list of the given indexes.
+     *
+     * @param indexes
+     *     a string containing the PG-dependent string representation of the given list, as the 
+     *     EXPLAIN INDEXES statement expects it
+     */
+    private static String explainIndexListString(Iterable<? extends Index> indexes) {
+        // It's important that this method generates the string in the same order that 
+        // Configuration.getIterator() produces the index list
+        
+        StringBuilder sb = new StringBuilder();
 
         sb.append("( ");
 
@@ -284,6 +293,7 @@ public class PGOptimizer extends Optimizer
 
             Table table = idx.getTable();
             sb.append(table.getId());
+
             for (int i = 0; i < idx.size(); i++) {
                 sb.append(idx.getDescending().get(i) ? " desc" : " asc");
                 final List<Column> cols = idx.getColumns();
@@ -292,6 +302,7 @@ public class PGOptimizer extends Optimizer
             sb.append(") ");
         }
         sb.append(") ");
+
         return sb.toString();
     }
 

@@ -26,7 +26,7 @@ import java.util.List;
  */
 public abstract class Optimizer
 {
-    protected int whatIfCount;
+    protected int optimizationCount;
 
     /**
      * perform an optimization call for a single SQL statement.
@@ -70,13 +70,20 @@ public abstract class Optimizer
     public abstract List<Index> recommendIndexes(String sql) throws SQLException;
 
     /**
-     * gets the total count of what-if optimizations were handled/performed by the optimizer.
+     * Gets the total count of optimizations that were handled/performed by the optimizer. An 
+     * "optimization count" corresponds to an optimization call, i.e. the number of times that an 
+     * optimizer was asked to estimate the cost of a statement.
+     * <p>
+     * Depending on the implementation. In some implementations this may refer to the number times 
+     * that the {@link explain(String, Configuration)} was invoked, whereas in others it could refer 
+     * to the number of times that internal structures where queried in order to simulate an 
+     * optimizer call.
      *
      * @return
      *     the total count of performed what-if optimizations.
      */
-    public int getWhatIfCount()
+    public int getOptimizationCount()
     {
-        return whatIfCount;
+        return optimizationCount;
     }
 }

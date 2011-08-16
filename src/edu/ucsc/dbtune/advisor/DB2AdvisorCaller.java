@@ -21,8 +21,6 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
 import edu.ucsc.dbtune.metadata.DB2Index;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Objects;
@@ -66,11 +64,10 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
  */
 //todo(Huascar) make it a stateful object rather than leaving it like a util class.
 public class DB2AdvisorCaller {
-    private static final Pattern INDEX_HEADER_PATTERN       = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
-    private static final Pattern INDEX_STATEMENT_PATTERN    = Pattern.compile("^\\s*CREATE.+(IDX\\d*)\\\"");
-    private static final Pattern START_INDEXES_PATTERN      = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
-    private static final Pattern END_INDEXES_PATTERN        = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
-    private static final Console SCREEN                     = Console.streaming();
+    private static final Pattern INDEX_HEADER_PATTERN    = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
+    private static final Pattern INDEX_STATEMENT_PATTERN = Pattern.compile("^\\s*CREATE.+(IDX\\d*)\\\"");
+    private static final Pattern START_INDEXES_PATTERN   = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
+    private static final Pattern END_INDEXES_PATTERN     = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
 
     public static FileInfo createAdvisorFile(DatabaseConnection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException {
         submit(
@@ -81,8 +78,8 @@ public class DB2AdvisorCaller {
         final String cmd = getCmd(conn, advisorPath, budget, workloadFile, false);
         final String cleanCmd = getCmd(conn, advisorPath, budget, workloadFile, true);
 
-        log("Running db2advis on " + workloadFile);
-        log("command = " + cleanCmd);
+        System.out.println("Running db2advis on " + workloadFile);
+        System.out.println("command = " + cleanCmd);
 
         Process prcs = Runtime.getRuntime().exec(cmd);
         
@@ -103,7 +100,7 @@ public class DB2AdvisorCaller {
                 prcs.waitFor();
                 break;
             } catch (InterruptedException e) {
-                log("InterruptedException"+ " Cause: " + e.toString());
+                System.out.println("InterruptedException"+ " Cause: " + e.toString());
             }
         }
         int rc = prcs.exitValue();
@@ -157,11 +154,6 @@ public class DB2AdvisorCaller {
             
             // normalize the index candidates
             candidateSet.normalize();
-            
-            for (Index index : candidateSet) {
-                System.out.println("Candidate Index " + index.getId() + ": " + index.getMegaBytes());
-                System.out.println(index.getCreateStatement());
-            }
             
             return candidateSet;
         }
@@ -221,9 +213,5 @@ public class DB2AdvisorCaller {
             name = n;
             megabytes = m;
         }
-    }
-
-    private static void log(String message){
-        SCREEN.log(message);
     }
 }

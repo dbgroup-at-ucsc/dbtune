@@ -27,4 +27,7 @@
  * For more info, refer to the Wiki article
  * <a href="https://github.com/dbgroup-at-ucsc/dbtune/wiki/databasemetadata">"Database Metadata in DBTune"</a>:
  */
+@Generated(value={})
 package edu.ucsc.dbtune.metadata;
+
+import javax.annotation.Generated;

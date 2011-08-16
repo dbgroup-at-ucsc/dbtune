@@ -21,7 +21,7 @@ package edu.ucsc.dbtune.connectivity;
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.util.Files;
 import edu.ucsc.dbtune.util.Checks;
-import edu.ucsc.satuning.util.ToStringBuilder;
+import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.File;
 import java.io.IOException;

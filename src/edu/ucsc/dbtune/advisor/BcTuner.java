@@ -23,7 +23,6 @@ import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
-import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -36,7 +35,6 @@ public class BcTuner {
     private final BcIndexPool        pool;
     private final Snapshot           snapshot;
     private final IndexBitSet           currentRecommendation;
-    private final Console console = Console.streaming();
 
     /**
      * Construct a {@code BcTuner} object.
@@ -99,20 +97,6 @@ public class BcTuner {
     }
 
     /**
-     * dump to index pool on the screen (print it on screen).
-     */
-    public void dumpIndexPool() {
-        for (Index idx : hotSet) {
-            int id = idx.getId();
-            BcIndexInfo stats = pool.get(id);
-            
-            console.log(idx.getCreateStatement());
-            console.log(stats.toString(idx));
-            console.skip();
-        }
-    }
-
-    /**
      * @return the recommended indexes configuration.
      */
     public IndexBitSet getRecommendation() {
@@ -163,9 +147,6 @@ public class BcTuner {
             stats.addUpdateCosts(qinfo.overhead(id));
             stats.updateDeltaMinMax();
         }
-        
-        console.log("*** UPDATED STATS");
-        dumpIndexPool();
         
         // iteratively drop indices 
         while (true) {

@@ -20,8 +20,10 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
-import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
+import edu.ucsc.dbtune.util.Instances;
+
+import java.sql.SQLException;
 
 /**
  * @author Karl Schnaitter
@@ -29,12 +31,10 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
  * @author Ivo Jimenez
  */
 public class IBGPreparedSQLStatement extends PreparedSQLStatement {
-    private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
-
     private IndexBenefitGraph ibg;
     private InteractionBank   bank;
-    private int               whatIfCount;
-    private double            ibgAnalysisTime;
+
+    private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
     public IBGPreparedSQLStatement(
             PreparedSQLStatement preparedSQLStatement,
@@ -43,10 +43,10 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
     {
         super(preparedSQLStatement);
 
-        this.ibg             = ibg;
-        this.bank            = ibg.getInteractionBank();
-        this.whatIfCount     = whatIfCount;
-        this.ibgAnalysisTime = ibg.getOverhead();
+        this.ibg               = ibg;
+        this.bank              = ibg.getInteractionBank();
+        this.optimizationCount = whatIfCount;
+        this.analysisTime      = ibg.getOverhead();
     }
 
     public IBGPreparedSQLStatement(
@@ -56,54 +56,27 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
             IndexBenefitGraph ibg,
             InteractionBank   bank,
             int               whatIfCount,
-            double            ibgAnalysisTime )
+            double            analysisTime )
     {
         super(sql, sqlCategory, 0.0, configuration);
 
-        this.ibg             = ibg;
-        this.bank            = bank;
-        this.whatIfCount     = whatIfCount;
-        this.ibgAnalysisTime = ibgAnalysisTime;
+        this.ibg               = ibg;
+        this.bank              = bank;
+        this.optimizationCount = whatIfCount;
+        this.analysisTime   = analysisTime;
     }
 
     /**
-     * Returns the interaction bank.
-     *
-     * @return
-     *     the interaction bank
+     * copy constructor
      */
-    public InteractionBank getBank() {
-        return bank;
-    }
+    public IBGPreparedSQLStatement(IBGPreparedSQLStatement other)
+    {
+        super(other);
 
-    /**
-     * Returns the plan cost of this {@code query} given its index benefit graph and
-     * an indexes configuration.
-     *
-     * @param graph
-     *      an {@link IndexBenefitGraph} instance.
-     * @param configuration
-     *      indexes configuration.
-     * @return
-     *      the plan cost for a given indexes configuration based on
-     *      an index benefit graph.
-     */
-    static double findIGBCost(IndexBenefitGraph graph, IndexBitSet configuration){
-        return NODE_FINDER.findCost(graph, configuration);
-    }
-
-    /**
-     * @return the whatIfCount for this query.
-     */
-    public int getWhatIfCount(){
-        return whatIfCount;
-    }
-
-    /**
-     * @return the ibg analysis time.
-     */
-    public double getIBGAnalysisTime(){
-        return ibgAnalysisTime;
+        this.ibg               = other.ibg;
+        this.bank              = other.ibg.getInteractionBank();
+        this.optimizationCount = other.optimizationCount;
+        this.analysisTime      = other.ibg.getOverhead();
     }
 
     /**
@@ -122,56 +95,32 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
     }
 
     /**
-     * Returns the maintenance cost of this {@code query}.
-     * @param configuration
-     *      indexes configuration.
-     * @return
-     *      the maintenance cost of this {@code query}.
-     */
-    public double maintenanceCost(IndexBitSet configuration){
-        whatIfCount++;
-
-        if(!getStatement().getSQLCategory().isSame(SQLCategory.DML)){
-            return 0;
-        }
-
-        double maintenanceCost = 0;
-        for (Index eachIndex : getConfiguration()) {
-            if (configuration.get(eachIndex.getId())) {
-                maintenanceCost += getIndexMaintenanceCost(eachIndex);
-            }
-        }
-
-        return maintenanceCost;
-    }
-
-    /**
-     * Returns the plan cost of this {@code profiled query}.
-     * @param configuration
-     *      indexes configuration.
-     * @return
-     *      the plan cost of this {@code query}.
-     */
-    public double planCost(IndexBitSet configuration){
-        whatIfCount++;
-        return findIGBCost(ibg, configuration);
-    }
-
-    /**
-     * Returns the total cost of this {@code query}. The total
-     * is equal to the sum of the {@code query}'s plan cost and
-     * the {@code query}'s maintenance cost.
+     * Uses the IBG to calculate obtain a new PreparedSQLStatement.
      *
      * @param configuration
-     *      indexes configuration.
+     *      the configuration considered to estimate the cost of the new statement. This can (or 
+     *      not) be the same as {@link getConfiguration}.
      * @return
-     *      the total cost of this query.
+     *      a new statement
+     * @throws SQLException
+     *      if it's not possible to do what-if optimization on the given configuration
      */
-    public double totalCost(IndexBitSet configuration){
-        double plan  = planCost(configuration);
-        double maint = maintenanceCost(configuration);
-        double total = plan + maint;
-        return total;
+    public PreparedSQLStatement explain(Iterable<? extends Index> configuration) throws SQLException
+    {
+        optimizationCount++;
+        // XXX: compare configuration with this' to see if it's contained. Will be added as part of 
+        // issue #82
+        IBGPreparedSQLStatement newStatement = new IBGPreparedSQLStatement(this);
+
+        if(!configuration.iterator().hasNext()) {
+            newStatement.setCost(getIndexBenefitGraph().emptyCost());
+        } else {
+            newStatement.setCost(NODE_FINDER.findCost(getIndexBenefitGraph(),Instances.newBitSet(configuration)));
+        }
+
+        newStatement.setConfiguration(configuration);
+
+        return newStatement;
     }
 
     @Override
@@ -179,8 +128,8 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
         return new ToStringBuilder<IBGPreparedSQLStatement>(this)
                .add("index benefit graph", getIndexBenefitGraph())
                .add("interaction bank", getInteractionBank())
-               .add("whatIfCount", getWhatIfCount())
-               .add("ibg analysis time", getIBGAnalysisTime())
+               .add("whatIfCount", getOptimizationCount())
+               .add("ibg analysis time", getAnalysisTime())
                .toString();
     }
 }

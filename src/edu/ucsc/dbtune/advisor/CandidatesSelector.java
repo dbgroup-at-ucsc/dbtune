@@ -19,30 +19,30 @@ package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
-import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.ToStringBuilder;
+import edu.ucsc.dbtune.util.Instances;
 
 import java.util.List;
+import java.sql.SQLException;
 
 /**
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
  */
 public class CandidatesSelector {
-    private final   IndexStatisticsFunction     idxStats;
-    private final   WorkFunctionAlgorithm    wfa;
-    private final   DynamicIndexSet          matSet;
-    private         StaticIndexSet           hotSet;
-    private final   DynamicIndexSet          userHotSet;
-    private         IndexPartitions          hotPartitions;
-    private         int                         maxHotSetSize;
-    private         int                         maxNumStates;
-    private         int                         partitionIterations;
-    private final   Console console = Console.streaming();
+    private final   IndexStatisticsFunction idxStats;
+    private final   WorkFunctionAlgorithm   wfa;
+    private final   DynamicIndexSet         matSet;
+    private         StaticIndexSet          hotSet;
+    private final   DynamicIndexSet         userHotSet;
+    private         IndexPartitions         hotPartitions;
+    private         int                     maxHotSetSize;
+    private         int                     maxNumStates;
+    private         int                     partitionIterations;
 
     /**
-     * Construct a {@code CandidatesSelector} object.
-     */
+      * Construct a {@code CandidatesSelector} object.
+      */
     public CandidatesSelector(
             int maxNumStates,
             int maxHotSetSize,
@@ -50,7 +50,7 @@ public class CandidatesSelector {
             int indexStatisticsWindow)
     {
         this(new IndexStatisticsFunction(indexStatisticsWindow),
-             new WorkFunctionAlgorithm(maxNumStates, maxHotSetSize),
+             new WorkFunctionAlgorithm(null, maxNumStates, maxHotSetSize),
              new StaticIndexSet(),
              new DynamicIndexSet(),
              new DynamicIndexSet(),
@@ -98,7 +98,7 @@ public class CandidatesSelector {
      *      a {@link IBGPreparedSQLStatement} object.
      * @return an {@link AnalyzedQuery} object.
      */
-    public AnalyzedQuery analyzeQuery(IBGPreparedSQLStatement qinfo) {
+    public AnalyzedQuery analyzeQuery(IBGPreparedSQLStatement qinfo) throws SQLException {
         // add the query to the statistics repository
         idxStats.addQuery(qinfo, matSet);
         
@@ -170,8 +170,10 @@ public class CandidatesSelector {
      * @return
      *      the total cost of a {@code profiled query}.
      */
-    public double currentCost(IBGPreparedSQLStatement qinfo) {
-        return qinfo.totalCost(matSet.bitSet());
+    public double currentCost(IBGPreparedSQLStatement qinfo) throws SQLException {
+        return qinfo.explain(
+                Instances.newIndexList(
+                    qinfo.getConfiguration(), matSet.bitSet())).getTotalCost();
     }
 
     /**
@@ -237,10 +239,6 @@ public class CandidatesSelector {
         hotSet = newHotSet;
         if (hotSet.size() > maxHotSetSize) {
             maxHotSetSize = hotSet.size();
-            console.info(
-                    "Maximum number of monitored indexes has been automatically increased to "
-                            + maxHotSetSize
-            );
         }
         
         // commit new partitioning

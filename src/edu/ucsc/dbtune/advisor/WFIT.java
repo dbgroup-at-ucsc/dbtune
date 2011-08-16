@@ -130,14 +130,14 @@ public class WFIT extends Advisor
         return configurations.get(qinfos.size()-1);
     }
 
-    public IBGPreparedSQLStatement getProfiledQuery(int i) {
+    public IBGPreparedSQLStatement getStatement(int i) {
         return qinfos.get(i);
     }
     public IndexPartitions getPartitions() {
         return partitions;
     }
 
-  private IndexPartitions getIndexPartitions(
+    private IndexPartitions getIndexPartitions(
             Iterable<? extends Index>     candidateSet,
             List<IBGPreparedSQLStatement> qinfos, 
             int                 maxId,
@@ -146,7 +146,6 @@ public class WFIT extends Advisor
             int                 windowSize,
             int                 partitionIterations )
     {
-        // get the hot set
         StaticIndexSet hotSet = getHotSet(candidateSet, qinfos, maxId, maxNumIndexes, windowSize);
 
         InteractionSelection is;
@@ -156,14 +155,14 @@ public class WFIT extends Advisor
 
         is = 
             new InteractionSelection(
-                new IndexPartitions(hotSet),
-                doiFunc,
-                maxNumStates,
-                hotSet);
-        
+                    new IndexPartitions(hotSet),
+                    doiFunc,
+                    maxNumStates,
+                    hotSet);
+
         IndexPartitions parts = 
             InteractionSelector.choosePartitions(is, partitionIterations);
-        
+
         return parts;
     }
 
@@ -176,7 +175,7 @@ public class WFIT extends Advisor
     {
         StatisticsFunction benefitFunc;
         HotsetSelection hs;
-        
+
         benefitFunc =
             new TempBenefitFunction(
                     qinfos,
@@ -218,7 +217,8 @@ public class WFIT extends Advisor
                     if (id_a < id_b) {
                         double doi = 0;
                         for (IBGPreparedSQLStatement qinfo : qinfos) {
-                            doi += qinfo.getBank().interactionLevel(a.getId(), b.getId());
+                            doi +=
+                                qinfo.getInteractionBank().interactionLevel(a.getId(), b.getId());
                         }
                         bank.assignInteraction(a.getId(), b.getId(), doi);
                     }
@@ -226,7 +226,8 @@ public class WFIT extends Advisor
             }
         }
 
-        @Override public double doi(Index a, Index b) {
+        @Override
+        public double doi(Index a, Index b) {
             return bank.interactionLevel(a.getId(), b.getId());
         }
     }
@@ -240,7 +241,7 @@ public class WFIT extends Advisor
         int[][]         componentId;
         IndexBitSet[]   prevM;
         IndexBitSet     diffM;
-        
+
         TempBenefitFunction(
                 List<IBGPreparedSQLStatement> qinfos0,
                 int maxInternalId,
@@ -248,9 +249,9 @@ public class WFIT extends Advisor
         {
             super(indexStatisticsWindow);
             qinfos = qinfos0;
-            
+
             componentId = componentIds(qinfos0, maxInternalId);
-            
+
             bbCache = new double[maxInternalId+1][qinfos0.size()];
             bbSumCache = new double[maxInternalId+1];
             prevM = new IndexBitSet[maxInternalId+1];
@@ -260,12 +261,13 @@ public class WFIT extends Advisor
             }
             diffM = new IndexBitSet(); // temp bit set
         }
-        
+
         private int[][] componentIds(List<IBGPreparedSQLStatement> qinfos, int maxInternalId) {
             int[][] componentId = new int[qinfos.size()][maxInternalId+1];
             int q = 0;
             for (IBGPreparedSQLStatement qinfo : qinfos) {
-                IndexBitSet[] parts = qinfo.getBank().stablePartitioning(0);
+                IndexBitSet[] parts =
+                    qinfo.getInteractionBank().stablePartitioning(0);
                 for (Index index : qinfo.getConfiguration()) {
                     int id = index.getId();
                     componentId[q][id] = -id;
@@ -280,7 +282,7 @@ public class WFIT extends Advisor
             }
             return componentId;
         }
-        
+
         private void reinit(int id, IndexBitSet M) {
             int q = 0;
             double ben = 0;
@@ -294,7 +296,7 @@ public class WFIT extends Advisor
             bbSumCache[id] = ben;
             prevM[id].set(M); 
         }
-        
+
         private void reinitIncremental(int id, IndexBitSet M, int b) {
             int q = 0;
             double ben = 0;
@@ -313,8 +315,9 @@ public class WFIT extends Advisor
             prevM[id].set(M);
             bbSumCache[id] = ben;
         }
-        
-        @Override public double benefit(Index a, IndexBitSet M) {
+
+        @Override
+        public double benefit(Index a, IndexBitSet M) {
             int id = a.getId();
             if (!M.equals(prevM)) {
                 diffM.set(M);
@@ -329,7 +332,8 @@ public class WFIT extends Advisor
             return bbSumCache[id];
         }
 
-        @Override public double doi(Index a, Index b) {
+        @Override
+        public double doi(Index a, Index b) {
             throw new RuntimeException("Not implemented");
         }
     }

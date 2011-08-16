@@ -23,7 +23,6 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DefaultQueue;
 import edu.ucsc.dbtune.util.Instances;
@@ -205,7 +204,6 @@ public class IndexBenefitGraphConstructor {
 
         // Expand the node and notify waiting threads
         synchronized (nodeExpansionMonitor) {
-            Console.streaming().info(String.format("newNode's cost(%s) and first child(%s)", totalCost, firstChild));
             newNode.expand(totalCost, firstChild);
             nodeExpansionMonitor.notifyAll();
         }

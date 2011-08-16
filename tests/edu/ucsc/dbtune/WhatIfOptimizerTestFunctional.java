@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune;
 
-import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
@@ -76,7 +75,7 @@ public class WhatIfOptimizerTestFunctional {
         assertThat(info, CoreMatchers.<Object>notNullValue());
         assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
         for(Index each : candidates){
-           assumeThat(info.getIndexMaintenanceCost(each) >= 0.0, is(true));
+           assumeThat(info.getUpdateCost(each) >= 0.0, is(true));
         }
     }
 

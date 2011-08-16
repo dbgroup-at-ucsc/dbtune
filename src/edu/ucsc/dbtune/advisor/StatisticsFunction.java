@@ -21,6 +21,8 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
+import java.sql.SQLException;
+
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
@@ -33,7 +35,7 @@ public interface StatisticsFunction {
      * @param matSet
      *    a {@link DynamicIndexSet set} of materialized indexes.
      */
-    void addQuery(IBGPreparedSQLStatement queryInfo, DynamicIndexSet matSet);
+    void addQuery(IBGPreparedSQLStatement queryInfo, DynamicIndexSet matSet) throws SQLException;
 
     /**
      * applies the {@link DoiFunction} to two indexes.

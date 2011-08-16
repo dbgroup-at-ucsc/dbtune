@@ -26,6 +26,7 @@ import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.sql.SQLException;
 
 /**
  * @author Huascar A. Sanchez
@@ -85,12 +86,12 @@ public class IndexStatisticsFunction implements StatisticsFunction {
     }
 
     @Override
-    public void addQuery(IBGPreparedSQLStatement queryInfo, DynamicIndexSet matSet) {
+    public void addQuery(IBGPreparedSQLStatement queryInfo, DynamicIndexSet matSet) throws SQLException {
         for (Index index : queryInfo.getConfiguration()) {
             final InteractionBank bank = queryInfo.getInteractionBank();
 
             double bestBenefit = bank.bestBenefit(index.getId())
-                                 - queryInfo.getIndexMaintenanceCost(index);
+                                 - queryInfo.getUpdateCost(index);
             if (bestBenefit != 0) {
                 // add measurement, creating new window if necessary
                 MeasurementWindow benwin = benefitWindows.get(index);
@@ -109,7 +110,7 @@ public class IndexStatisticsFunction implements StatisticsFunction {
             IBGPreparedSQLStatement queryInfo,
             DynamicIndexSet matSet,
             Iterable<? extends Index> candSet
-    ) {
+    ) throws SQLException {
         // not the most efficient double loop, but an ok compromise for now
         for (Index a : candSet) {
             int id1 = a.getId();
@@ -127,8 +128,10 @@ public class IndexStatisticsFunction implements StatisticsFunction {
             }
         }
 
-        double executionCost = queryInfo.totalCost(matSet.bitSet());
-        currentTimeStamp += executionCost;
+        currentTimeStamp += 
+            queryInfo.explain(
+                    Instances.newIndexList(
+                        queryInfo.getConfiguration(), matSet.bitSet())).getTotalCost();
     }
 
     private void clearIndexPairs(){        

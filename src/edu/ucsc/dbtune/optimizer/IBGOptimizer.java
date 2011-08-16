@@ -47,8 +47,8 @@ public class IBGOptimizer extends Optimizer {
      * {@inheritDoc}
      */
     @Override
-    public int getWhatIfCount() {
-        return delegate.getWhatIfCount();
+    public int getOptimizationCount() {
+        return delegate.getOptimizationCount();
     }
 
     /**
@@ -86,6 +86,6 @@ public class IBGOptimizer extends Optimizer {
         }
 
         return new IBGPreparedSQLStatement(
-                info, construct(delegate, sql, indexes, maxId), delegate.getWhatIfCount());
+                info, construct(delegate, sql, indexes, maxId), delegate.getOptimizationCount());
     }
 }

@@ -68,7 +68,6 @@ public class WfitTestFunctional
 
         outputdir.mkdirs();
         //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
-        //connection.getJdbcConnection().setAutoCommit(false);
     }
 
     /**
@@ -92,6 +91,7 @@ public class WfitTestFunctional
         int         partIterations;
         int         q;
         int         count;
+        int         whatIfCount;
 
         workloadFile   = env.getScriptAtWorkloadsFolder("one_table/workload.sql");
         maxNumIndexes  = env.getMaxNumIndexes();
@@ -102,6 +102,7 @@ public class WfitTestFunctional
         fileReader     = new FileReader(workloadFile);
         workload       = new Workload(fileReader);
         q              = 0;
+        whatIfCount    = 0;
 
         wfit = new WFIT(connection, pool.getSnapshot(), maxNumStates, maxNumIndexes, windowSize, partIterations);
 
@@ -112,7 +113,7 @@ public class WfitTestFunctional
 
             configuration = wfit.getRecommendation();
 
-            qinfo = wfit.getProfiledQuery(q);
+            qinfo = wfit.getStatement(q);
             count = 0;
 
             for(Index idx : qinfo.getConfiguration()) {
@@ -121,21 +122,26 @@ public class WfitTestFunctional
 
             assertThat(count, is(1));
 
+            if(q == 0) {
+                assertThat(qinfo.getOptimizationCount()-whatIfCount, is(5));
+            } else {
+                assertThat(qinfo.getOptimizationCount()-whatIfCount, is(3));
+            }
+
             if(q < 5) {
                 assertThat(configuration.cardinality(), is(0));
                 assertThat(configuration.isEmpty(), is(true));
-                assertThat(qinfo.getWhatIfCount(), is(4));
             } else if(q == 5) {
                 assertThat(configuration.cardinality(), is(1));
                 assertThat(configuration.isEmpty(), is(false));
-                assertThat(qinfo.getWhatIfCount(), is(4));
             } else if(q == 6) {
                 assertThat(configuration.cardinality(), is(0));
                 assertThat(configuration.isEmpty(), is(true));
-                assertThat(qinfo.getWhatIfCount(), is(4));
             } else {
                 throw new SQLException("Workload should have 7 statements");
             }
+
+            whatIfCount = qinfo.getOptimizationCount();
 
             q++;
         }

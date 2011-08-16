@@ -27,7 +27,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
@@ -65,7 +64,7 @@ public class DB2Optimizer extends Optimizer
      */
     @Override
     public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
-        whatIfCount++;
+        optimizationCount++;
         Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
         Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
 
@@ -374,7 +373,6 @@ public class DB2Optimizer extends Optimizer
                             throw new SQLException("Could not get update cost: too many rows");
                         }
 
-                        Console.streaming().log("updateCost = " + (updateOpCost - childOpCost));
                         return updateOpCost - childOpCost;                 
                     } finally {
                         rs.close();

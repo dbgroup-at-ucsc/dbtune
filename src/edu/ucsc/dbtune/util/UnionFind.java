@@ -30,14 +30,11 @@ public class UnionFind {
         for (int e = 0; e < eltCount; e++) {
             if (filter.get(e) && elts[e].parent == e) {
                 int i = e;
-                System.out.print("{ ");
                 while (true) {
-                    System.out.print(i + " ");
                     if (tempElts[i].parent == i)
                         break;
                     i = tempElts[i].parent;
                 } 
-                System.out.println("}");
             }
         }
     }

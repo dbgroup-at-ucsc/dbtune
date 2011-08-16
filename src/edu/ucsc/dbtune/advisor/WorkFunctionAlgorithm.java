@@ -1,5 +1,4 @@
-/*
- * ****************************************************************************
+/* ************************************************************************** *
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -10,27 +9,26 @@
  *                                                                            *
  *   Unless required by applicable law or agreed to in writing, software      *
  *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied  *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
+ * ************************************************************************** */
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
+import edu.ucsc.dbtune.util.Instances;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.sql.SQLException;
 
 /**
  * The foundation for WFIT. The general Work Function Algorithm is described in subsection 3.3 of 
@@ -42,20 +40,17 @@ import java.util.List;
  * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
  *     "On-line Index Selection for Physical Database Tuning"</a>
  */
-public class WorkFunctionAlgorithm {
-    private static final Environment ENV = Environment.getInstance();
-    private static final int MAX_NUM_STATES   = ENV.getMaxNumStates();
-    private static final int MAX_HOTSET_SIZE  = ENV.getMaxNumIndexes();
+public class WorkFunctionAlgorithm 
+{
+    private static final Environment ENV             = Environment.getInstance();
+    private static final int         MAX_NUM_STATES  = ENV.getMaxNumStates();
+    private static final int         MAX_HOTSET_SIZE = ENV.getMaxNumIndexes();
 
-    // for tracking history
-    private boolean     keepHistory;
-    private WfaTrace trace;
-
-    private TotalWorkValues     wf          = new TotalWorkValues();
-    private SubMachineArray  submachines = new SubMachineArray(0);
-    private Workspace           workspace   = new Workspace();
-
-    private final Console console = Console.streaming();
+    private boolean         keepHistory;
+    private WfaTrace        trace;
+    private TotalWorkValues wf          = new TotalWorkValues();
+    private SubMachineArray submachines = new SubMachineArray(0);
+    private Workspace       workspace   = new Workspace();
 
     /**
      * construct a {@link WorkFunctionAlgorithm} object from a list of partitions. This object
@@ -83,37 +78,8 @@ public class WorkFunctionAlgorithm {
         }
     }
 
-    /**
-     * construct a {@link WorkFunctionAlgorithm} object from a list of partitions.
-     *
-     * @param parts
-     *    a list of index partitions.
-     */
-    //todo(Huascar) remove maxNumStates and maxHotsize once getting good results.
     public WorkFunctionAlgorithm(IndexPartitions parts, int maxNumStates, int maxHotSize) {
         this(parts, false);
-    }
-
-    /**
-     * construct a {@link WorkFunctionAlgorithm} object from a {@code null} list of partitions.
-     */
-    public WorkFunctionAlgorithm(int maxNumStates, int maxHotSize) {
-        this(null, maxNumStates, maxHotSize);
-    }
-
-    /**
-     * dump the total work values per {@link SubMachine}.
-     * @param msg
-     *      a debug message.
-     */
-    public void dump(String msg) {
-        console.log(msg);
-        for (int i = 0; i < submachines.length; i++) {
-            console.log("SUBMACHINE " + i);
-            submachines.get(i).dump();
-            console.skip();
-        }
-        console.log("----");
     }
 
     /**
@@ -128,17 +94,17 @@ public class WorkFunctionAlgorithm {
      *    a {@link IBGPreparedSQLStatement query}.
      * @see #getRecommendation()
      */
-    public void newTask(IBGPreparedSQLStatement qinfo) {
+    public void newTask(PreparedSQLStatement qinfo) throws SQLException {
       workspace.tempBitSet.clear(); // just to be safe
 
-      console.info("WorkFunctionAlgorithm#newTask(IBGPreparedSQLStatement) inputs: " + qinfo + ".");
       for (int subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
           SubMachine subm = submachines.get(subsetNum);
           // preprocess cost into a vector
           for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
             // this will explicitly set each index in the array to 1 or 0
             setStateBits(subm.indexIds, stateNum, workspace.tempBitSet);
-            double queryCost = qinfo.totalCost(workspace.tempBitSet);
+            double queryCost = qinfo.explain(Instances.newIndexList(qinfo.getConfiguration(), 
+                        workspace.tempBitSet)).getTotalCost();
             workspace.tempCostVector.set(stateNum, queryCost);
           }
 
@@ -155,12 +121,6 @@ public class WorkFunctionAlgorithm {
           TotalWorkValues wfTemp = wf;
           wf = workspace.wf2;
           workspace.wf2 = wfTemp;
-        }
-        
-        // keep trace info
-        if (keepHistory) {
-            double nullCost = qinfo.getIndexBenefitGraph().emptyCost();
-            trace.addValues(wf, nullCost);
         }
     }
 
@@ -361,21 +321,30 @@ public class WorkFunctionAlgorithm {
      *      a schedule cost over a set of candidate and queries.
      */
     public double getScheduleCost(Snapshot candidateSet,
-                                                         int queryCount, List<IBGPreparedSQLStatement> qinfos,
-                                                         IndexPartitions parts, IndexBitSet[] schedule
-    ) {
+            int queryCount, List<PreparedSQLStatement> qinfos,
+            IndexPartitions parts, IndexBitSet[] schedule )
+        throws SQLException
+    {
         double cost = 0;
         IndexBitSet prevState = new IndexBitSet();
-        IndexBitSet subset = new IndexBitSet();
+        //IndexBitSet subset = new IndexBitSet();
         for (int q = 0; q < queryCount; q++) {
             IndexBitSet state = schedule[q];
-            if (parts != null)
-                cost += parts.theoreticalCost(qinfos.get(q), state, subset);
-            else
-                cost += qinfos.get(q).planCost(state);
+            //if (parts != null)
+            //
+            // parts.theoreticalCost is just invoking a explain() on the qinfo, that is, the else is 
+            // doing the same that the if. Commenting until this gets clarified.
+            //
+            //    cost += parts.theoreticalCost(qinfos.get(q), state, subset);
+            //else
+                cost += 
+                    qinfos.get(q).explain(
+                            Instances.newIndexList(
+                                qinfos.get(q).getConfiguration(), state)).getCost();
             
-            cost += qinfos.get(q).maintenanceCost(state);
+            cost += qinfos.get(q).getUpdateCost(Instances.newIndexList(qinfos.get(q).getConfiguration(), state));
             cost += transitionCost(candidateSet, prevState, state);
+
             prevState = state;
         }
         return cost;
@@ -472,7 +441,6 @@ public class WorkFunctionAlgorithm {
         private int currentState;
         private IndexBitSet currentBitSet;
         private int[] indexIds;
-        private final Console console = Console.streaming();
         
         SubMachine(IndexPartitions.Subset subset, int subsetNum, int state, IndexBitSet bitSet) {
             this.subset         = subset;
@@ -504,21 +472,6 @@ public class WorkFunctionAlgorithm {
         }
 
         /**
-         * prints a debugging message, for this {@link SubMachine}, displaying all indexes'
-         * internalIds.
-         */
-        public void dump() {
-            final StringBuilder message = new StringBuilder();
-            message.append("Index IDs : [ ");
-            for (int id : indexIds) message.append(id).append(" ");
-            message.append("]   ").append("REC : [ ");
-
-            for (int id : indexIds) if (currentBitSet.get(id)) message.append(id).append(" ");
-            message.append("]");
-            console.log(message.toString());
-        }
-
-        /**
          * process a positive or negative vote for the index and do the necessary bookkeeping in
          * the input workfunction, and update the current state.
          * 
@@ -537,7 +490,6 @@ public class WorkFunctionAlgorithm {
                 if (indexIds[indexIdsPos] == index.getId())
                     break;
             if (indexIdsPos >= numIndexes) {
-                console.error("could not process vote: index not found in subset");
                 return;
             }
             
@@ -598,8 +550,6 @@ public class WorkFunctionAlgorithm {
                         bestPredecessor = oldStateNum;
                     }
                 }
-                if (Double.isInfinite(wfValueBest))
-                    console.error("failed to compute work function");
                 wfNew.set(subsetNum, newStateNum, wfValueBest, bestPredecessor);
             }
             

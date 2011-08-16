@@ -73,9 +73,6 @@ public class IBGMonotonicEnforcer {
             if (node.isExpanded()) {
                 if (node.firstChild() == null) {
                     if (node.cost() > ibg.emptyCost()) {
-                        System.out.flush();
-                        System.err.printf("monotonicity violation: %f%% ", 100.0*(node.cost() - ibg.emptyCost())/node.cost());
-                        System.err.flush();
                         ibg.setEmptyCost(node.cost());
                     }
                 } else{
@@ -118,9 +115,6 @@ public class IBGMonotonicEnforcer {
                 
                 if (node.config.subsetOf(config) && !node.config.equals(config)) {
                     if (node.cost() < cost) {
-                        System.out.flush();
-                        System.err.printf("monotonicity violation: %f%% ", 100.0*(node.cost() - cost)/node.cost());
-                        System.err.flush();
                         node.setCost(cost);
                     }
                 }

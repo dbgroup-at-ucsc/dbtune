@@ -78,7 +78,7 @@ public class DatabasePackageTest {
             final IBGOptimizer ibgWio = new IBGOptimizer(wio);
             assertThat(wio, notNullValue());
             assertThat(ibgWio, notNullValue());
-            assertThat(ibgWio.getWhatIfCount(), is(0));
+            assertThat(ibgWio.getOptimizationCount(), is(0));
         }
     }
 

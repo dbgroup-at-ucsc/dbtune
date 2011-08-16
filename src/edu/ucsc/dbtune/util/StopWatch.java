@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.util;
 
 import edu.ucsc.dbtune.spi.EnvironmentProperties;
-import edu.ucsc.dbtune.spi.core.Console;
 
 /**
  * monitor execution time.
@@ -9,7 +8,6 @@ import edu.ucsc.dbtune.spi.core.Console;
  */
 public class StopWatch {
     private long start = System.nanoTime();
-    private final Console console = Console.streaming();
 
     /**
      * @return
@@ -61,6 +59,6 @@ public class StopWatch {
      *      message label.
      */
     public void resetAndLog(String label) {
-        console.info(label + ": " + milliseconds() + "ms");
+        milliseconds();
     }
 }

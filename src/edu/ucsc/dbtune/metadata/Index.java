@@ -47,6 +47,7 @@ public class Index extends DatabaseObject
     protected List<Boolean> descending;
     protected int           type;
     protected int           scanOption;
+    protected double        updateCost;
     protected boolean       unique;
     protected boolean       primary;
     protected boolean       clustered;
@@ -70,14 +71,15 @@ public class Index extends DatabaseObject
     {
         super(name);
 
-        this.table        = table;
-        this.type         = UNKNOWN;
-        this.primary      = primary;
-        this.unique       = unique;
-        this.columns      = new ArrayList<Column>();
-        this.clustered    = clustered;
-        this.descending   = new ArrayList<Boolean>();
-        this.scanOption   = NON_REVERSIBLE;
+        this.table      = table;
+        this.type       = UNKNOWN;
+        this.primary    = primary;
+        this.unique     = unique;
+        this.columns    = new ArrayList<Column>();
+        this.clustered  = clustered;
+        this.descending = new ArrayList<Boolean>();
+        this.scanOption = NON_REVERSIBLE;
+        this.updateCost = 0.0;
     }
 
     /**
@@ -99,6 +101,7 @@ public class Index extends DatabaseObject
         this.materialized = other.materialized;
         this.descending   = other.descending;
         this.scanOption   = other.scanOption;
+        this.updateCost   = other.updateCost;
     }
 
     /**
@@ -146,6 +149,7 @@ public class Index extends DatabaseObject
         this.clustered    = clustered;
         this.descending   = new ArrayList<Boolean>();
         this.scanOption   = NON_REVERSIBLE;
+        this.updateCost   = 0.0;
     }
 
     /**
@@ -511,19 +515,16 @@ public class Index extends DatabaseObject
 
         if (table != idx.getTable())
         {
-            System.out.println("Table!!!");
             return false;
         }
 
         if (idx.size() != columns.size()) 
         {
-            System.out.println("ColSize!!!");
             return false;
         }
 
         if (idx.getType() != type)
         {
-            System.out.println("Type!!!");
             return false;
         }
 
@@ -531,7 +532,6 @@ public class Index extends DatabaseObject
         {
             if (!idx.get(i).equals(columns.get(i)))
             {
-                System.out.println("Column!!!");
                 return false;
             }
         }

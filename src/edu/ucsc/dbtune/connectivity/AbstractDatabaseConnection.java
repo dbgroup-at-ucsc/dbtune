@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static edu.ucsc.dbtune.optimizer.DB2Optimizer.DB2Commands.isolationLevelReadCommitted;
 import static edu.ucsc.dbtune.util.Instances.newFalseBoolean;
-import static edu.ucsc.satuning.util.Util.newAtomicReference;
+import static edu.ucsc.dbtune.util.Instances.newAtomicReference;
 
 /**
  * This class provides a skeletal implementation of the {@link DatabaseConnection}

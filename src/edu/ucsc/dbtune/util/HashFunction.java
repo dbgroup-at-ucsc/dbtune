@@ -221,9 +221,6 @@ class MD5 {
             return;
         }
         md.md5final(out);
-
-        System.out.println("file length: "+len);
-        System.out.println("hash: "+dumpBytes(out));
     }
 
 
@@ -376,23 +373,6 @@ class MD5 {
         b[off+2] = (byte) ((value >> 16)& 0xff);
         b[off+3] = (byte) ((value >> 24)& 0xff);
     }
-
-    // These are debug routines I was using while trying to
-    // get this code to generate the same hashes as the C version.
-    // (IIRC, all the errors were due to the absence of unsigned
-    // ints in Java.)
-    /*
-    private void debugStatus(String m) {
-        System.out.println(m+":");
-        System.out.println("in: "+dumpBytes(in));
-        System.out.println("bits: "+bits);
-        System.out.println("buf: "
-            +Integer.toHexString(buf[0])+" "
-            +Integer.toHexString(buf[1])+" "
-            +Integer.toHexString(buf[2])+" "
-            +Integer.toHexString(buf[3]));
-    }
-    */
 
     private static String dumpBytes(byte[] bytes) {
         int i;
