@@ -18,10 +18,9 @@ package edu.ucsc.dbtune.optimizer;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
-import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.metadata.SQLCategory;
-import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.util.Instances;
 
 import java.sql.SQLException;
 
@@ -38,12 +37,14 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
 
     public IBGPreparedSQLStatement(
             PreparedSQLStatement preparedSQLStatement,
+            Configuration        configuration,
             IndexBenefitGraph    ibg,
             int                  whatIfCount)
     {
         super(preparedSQLStatement);
 
         this.ibg               = ibg;
+        this.configuration     = configuration;
         this.bank              = ibg.getInteractionBank();
         this.optimizationCount = whatIfCount;
         this.analysisTime      = ibg.getOverhead();
@@ -52,7 +53,7 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
     public IBGPreparedSQLStatement(
             String            sql,
             SQLCategory       sqlCategory,
-            Iterable<? extends Index> configuration,
+            Configuration     configuration,
             IndexBenefitGraph ibg,
             InteractionBank   bank,
             int               whatIfCount,
@@ -105,31 +106,31 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
      * @throws SQLException
      *      if it's not possible to do what-if optimization on the given configuration
      */
-    public PreparedSQLStatement explain(Iterable<? extends Index> configuration) throws SQLException
+    public PreparedSQLStatement explain(Configuration configuration) throws SQLException
     {
         optimizationCount++;
-        // XXX: compare configuration with this' to see if it's contained. Will be added as part of 
-        // issue #82
-        IBGPreparedSQLStatement newStatement = new IBGPreparedSQLStatement(this);
 
-        if(!configuration.iterator().hasNext()) {
-            newStatement.setCost(getIndexBenefitGraph().emptyCost());
-        } else {
-            newStatement.setCost(NODE_FINDER.findCost(getIndexBenefitGraph(),Instances.newBitSet(configuration)));
+        if(!getConfiguration().getIndexes().containsAll(configuration.getIndexes())) {
+            throw new SQLException("Configuration " + configuration +
+                    " not contained in statement's" + getConfiguration());
         }
+
+        IBGPreparedSQLStatement newStatement = new IBGPreparedSQLStatement(this);
 
         newStatement.setConfiguration(configuration);
 
-        return newStatement;
-    }
+        if(!configuration.isEmpty()) {
+            newStatement.setCost(getIndexBenefitGraph().emptyCost());
+            return newStatement;
+        }
 
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IBGPreparedSQLStatement>(this)
-               .add("index benefit graph", getIndexBenefitGraph())
-               .add("interaction bank", getInteractionBank())
-               .add("whatIfCount", getOptimizationCount())
-               .add("ibg analysis time", getAnalysisTime())
-               .toString();
+        if(configuration instanceof ConfigurationBitSet) {
+            ConfigurationBitSet conf = (ConfigurationBitSet) configuration;
+            newStatement.setCost(NODE_FINDER.findCost(getIndexBenefitGraph(),conf.getBitSet()));
+        } else {
+            throw new SQLException("can't recommend");
+        }
+
+        return newStatement;
     }
 }

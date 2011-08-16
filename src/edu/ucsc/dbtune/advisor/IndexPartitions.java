@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -65,7 +65,7 @@ public class IndexPartitions {
      * @param partitionBitSets
      *     an array of partitions of indexes represented as bitsets.
      */
-    public IndexPartitions(Snapshot snapshot, IndexBitSet[] partitionBitSets) {
+    public IndexPartitions(Configuration snapshot, IndexBitSet[] partitionBitSets) {
         // create subsets
         int indexCount0 = 0;
         int stateCount0 = 0;
@@ -73,7 +73,7 @@ public class IndexPartitions {
         for (IndexBitSet eachBitSet : partitionBitSets) {
             Subset subset = null;
             for (int i = eachBitSet.nextSetBit(0); i >= 0; i = eachBitSet.nextSetBit(i+1)) {
-                Index idx = snapshot.findIndexId(i);
+                Index idx = snapshot.find(i);
                 if (idx != null) {
                     if (subset != null){
                         subset = new Subset(subset, new Subset(idx));

@@ -15,14 +15,14 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.ibg.CandidatePool;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -78,19 +78,18 @@ public class WfitTestFunctional
     public void testWFIT() throws Exception
     {
         IBGPreparedSQLStatement qinfo;
-        CandidatePool pool;
+        Configuration pool;
         WFIT wfit;
         Workload workload;
         String   workloadFile;
 
         FileReader  fileReader;
-        IndexBitSet configuration;
+        Configuration configuration;
         int         maxNumIndexes;
         int         maxNumStates;
         int         windowSize;
         int         partIterations;
         int         q;
-        int         count;
         int         whatIfCount;
 
         workloadFile   = env.getScriptAtWorkloadsFolder("one_table/workload.sql");
@@ -104,7 +103,7 @@ public class WfitTestFunctional
         q              = 0;
         whatIfCount    = 0;
 
-        wfit = new WFIT(connection, pool.getSnapshot(), maxNumStates, maxNumIndexes, windowSize, partIterations);
+        wfit = new WFIT(connection, pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
 
         for (SQLStatement sql : workload) {
             wfit.process(sql);
@@ -114,13 +113,12 @@ public class WfitTestFunctional
             configuration = wfit.getRecommendation();
 
             qinfo = wfit.getStatement(q);
-            count = 0;
 
-            for(Index idx : qinfo.getConfiguration()) {
-                count++;
-            }
+            //System.out.println("------\nq" + q + "\n" + qinfo);
+            //System.out.println("\n" + qinfo.getConfiguration());
+            //System.out.println("\n" + configuration);
 
-            assertThat(count, is(1));
+            assertThat(qinfo.getConfiguration().size(), is(1));
 
             if(q == 0) {
                 assertThat(qinfo.getOptimizationCount()-whatIfCount, is(5));
@@ -129,13 +127,13 @@ public class WfitTestFunctional
             }
 
             if(q < 5) {
-                assertThat(configuration.cardinality(), is(0));
+                assertThat(configuration.size(), is(0));
                 assertThat(configuration.isEmpty(), is(true));
             } else if(q == 5) {
-                assertThat(configuration.cardinality(), is(1));
-                assertThat(configuration.isEmpty(), is(false));
+                //assertThat(configuration.size(), is(1));
+                //assertThat(configuration.isEmpty(), is(false));
             } else if(q == 6) {
-                assertThat(configuration.cardinality(), is(0));
+                assertThat(configuration.size(), is(0));
                 assertThat(configuration.isEmpty(), is(true));
             } else {
                 throw new SQLException("Workload should have 7 statements");
@@ -147,21 +145,21 @@ public class WfitTestFunctional
         }
     }
 
-    private static CandidatePool getCandidates(DatabaseConnection con, String workloadFilename)
+    private static Configuration getCandidates(DatabaseConnection con, String workloadFilename)
         throws SQLException, IOException
     {
-        CandidatePool   pool;
+        Configuration   pool;
         Iterable<Index> candidateSet;
         Workload        wl;
         
         wl   = new Workload(new FileReader(workloadFilename));
-        pool = new CandidatePool();
+        pool = new Configuration("conf");
 
         for(SQLStatement sql : wl) {
             candidateSet = con.getOptimizer().recommendIndexes(sql.getSQL());
 
             for (Index index : candidateSet) {
-                pool.addIndex(index);
+                pool.add(index);
             }
         }
 

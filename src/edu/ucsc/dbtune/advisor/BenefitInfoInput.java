@@ -18,7 +18,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.Checks;
@@ -30,7 +30,7 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
  */
 public class BenefitInfoInput {
     private final DatabaseConnection connection;
-    private final Snapshot             snapshot;
+    private final Configuration             snapshot;
     private final StaticIndexSet       hotSet;
     private final IndexBitSet config;
     private final IBGPreparedSQLStatement        profiledQ;
@@ -47,7 +47,7 @@ public class BenefitInfoInput {
         return connection;
     }
 
-    public Snapshot getSnapshot() {
+    public Configuration getConfiguration() {
         return snapshot;
     }
 
@@ -67,7 +67,7 @@ public class BenefitInfoInput {
     public String toString() {
         return new ToStringBuilder<BenefitInfoInput>(this)
                .add("connection", getDatabaseConnection())
-               .add("snapshot", getSnapshot())
+               .add("snapshot", getConfiguration())
                .add("hotSet", getHotSet())
                .add("recommendedIndexes", getRecommendedIndexes())
                .add("profiledQuery", getProfiledQuery())
@@ -76,7 +76,7 @@ public class BenefitInfoInput {
 
     public static class StrictBuilder implements Supplier<BenefitInfoInput> {
         private DatabaseConnection conn;
-        private Snapshot             snapshot;
+        private Configuration             snapshot;
         private StaticIndexSet       hotSet;
         private IndexBitSet config;
         private IBGPreparedSQLStatement        profiledQuery;
@@ -84,7 +84,7 @@ public class BenefitInfoInput {
             this.conn = connection;
         }
 
-        public StrictBuilder snapshot(Snapshot value){
+        public StrictBuilder snapshot(Configuration value){
             snapshot = Checks.checkNotNull(value);
             return this;
         }

@@ -43,6 +43,9 @@ public class InteractionBank implements Serializable {
         lowerBounds = new double[indexCount][];
         for (int i = 0; i < indexCount; i++)
             lowerBounds[i] = new double[i];
+        if(maxId > 10240) {
+            throw new RuntimeException("Can't be larger than 10240");
+        }
     }
     
     /**

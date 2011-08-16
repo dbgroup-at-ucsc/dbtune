@@ -18,6 +18,7 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
@@ -35,23 +36,23 @@ public class WFIT extends Advisor
 {
     List<IBGPreparedSQLStatement> qinfos;
     List<Double>                  overheads;
-    List<IndexBitSet>             configurations;
-    Iterable<? extends Index>     indexes;
-    IndexPartitions               partitions;
-    WorkFunctionAlgorithm         wfa;
-    IBGOptimizer                  ibgOptimizer;
+    List<Configuration>           configurations;
+
+    Configuration         indexes;
+    IndexPartitions       partitions;
+    WorkFunctionAlgorithm wfa;
+    IBGOptimizer          ibgOptimizer;
 
     int maxNumIndexes;
     int maxNumStates;
     int windowSize;
     int partitionIterations;
-    int maxId;
 
     /**
      */
     public WFIT(
             DatabaseConnection con,
-            Iterable<? extends Index> configuration,
+            Configuration configuration,
             int maxNumIndexes,
             int maxNumStates,
             int windowSize,
@@ -66,15 +67,7 @@ public class WFIT extends Advisor
         this.qinfos              = new ArrayList<IBGPreparedSQLStatement>();
         this.wfa                 = new WorkFunctionAlgorithm(partitions, false);
         this.overheads           = new ArrayList<Double>();
-        this.configurations      = new ArrayList<IndexBitSet>();
-        this.maxId               = 0;
-
-        for(Index idx : indexes) {
-            if(idx.getId() > maxId) {
-                maxId = idx.getId();
-            }
-        }
-
+        this.configurations      = new ArrayList<Configuration>();
     }
 
     /**
@@ -89,7 +82,6 @@ public class WFIT extends Advisor
     public void process(SQLStatement sql) throws SQLException
     {
         IBGPreparedSQLStatement qinfo;
-        IndexBitSet             configuration;
 
         qinfo = (IBGPreparedSQLStatement) ibgOptimizer.explain(sql.getSQL(),indexes);
 
@@ -97,18 +89,12 @@ public class WFIT extends Advisor
 
         partitions =
             getIndexPartitions(
-                indexes, qinfos, maxId, maxNumIndexes, maxNumStates, windowSize, partitionIterations);
+                indexes, qinfos, maxNumIndexes, maxNumStates, windowSize, partitionIterations);
 
         wfa.repartition(partitions);
         wfa.newTask(qinfo);
 
-        configuration = new IndexBitSet();
-
-        for (Index idx : wfa.getRecommendation()) {
-            configuration.set(idx.getId());
-        }
-
-        configurations.add(configuration);
+        configurations.add(new Configuration(wfa.getRecommendation()));
     }
 
     /**
@@ -121,10 +107,10 @@ public class WFIT extends Advisor
      *      if the given statement can't be processed
      */
     @Override
-    public IndexBitSet getRecommendation() throws SQLException
+    public Configuration getRecommendation() throws SQLException
     {
         if(qinfos.size() == 0) {
-            return new IndexBitSet();
+            return new Configuration("");
         }
 
         return configurations.get(qinfos.size()-1);
@@ -140,18 +126,17 @@ public class WFIT extends Advisor
     private IndexPartitions getIndexPartitions(
             Iterable<? extends Index>     candidateSet,
             List<IBGPreparedSQLStatement> qinfos, 
-            int                 maxId,
             int                 maxNumIndexes,
             int                 maxNumStates,
             int                 windowSize,
             int                 partitionIterations )
     {
-        StaticIndexSet hotSet = getHotSet(candidateSet, qinfos, maxId, maxNumIndexes, windowSize);
-
+        int maxId = 1024;
+        StaticIndexSet hotSet = getHotSet(candidateSet, qinfos, maxNumIndexes, windowSize, maxId);
         InteractionSelection is;
 
         StatisticsFunction doiFunc =
-            new TempDoiFunction(qinfos, candidateSet, maxId, windowSize);
+            new TempDoiFunction(qinfos, candidateSet, windowSize,maxId);
 
         is = 
             new InteractionSelection(
@@ -167,11 +152,11 @@ public class WFIT extends Advisor
     }
 
     private StaticIndexSet getHotSet(
-            Iterable<? extends Index>            candidateSet,
+            Iterable<? extends Index>     candidateSet,
             List<IBGPreparedSQLStatement> qinfos,
-            int                 maxId,
             int                 maxNumIndexes,
-            int                 windowSize)
+            int                 windowSize,
+            int                 maxId)
     {
         StatisticsFunction benefitFunc;
         HotsetSelection hs;
@@ -203,8 +188,8 @@ public class WFIT extends Advisor
         TempDoiFunction(
                 List<IBGPreparedSQLStatement> qinfos,
                 Iterable<? extends Index> candidateSet,
-                int maxId,
-                int indexStatisticsWindow )
+                int indexStatisticsWindow,
+                int maxId)
         {
             super(indexStatisticsWindow);
 

@@ -83,6 +83,7 @@ public class SQLStatement
      */
     @Override
     public String toString() {
-        return "[" + type + "]: sql" + sql;
+        return "[ type=" + type +
+               " text=\"" + sql + "\"]";
     }
 }

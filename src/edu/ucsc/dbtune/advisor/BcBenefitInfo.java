@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -59,7 +59,7 @@ public class BcBenefitInfo {
     public static BcBenefitInfo makeBcBenefitInfo(BenefitInfoInput arg) throws SQLException {
         return genBcBenefitInfo(
                 arg.getDatabaseConnection(),
-                arg.getSnapshot(),
+                arg.getConfiguration(),
                 arg.getHotSet(),
                 arg.getRecommendedIndexes(),
                 arg.getProfiledQuery()
@@ -67,11 +67,12 @@ public class BcBenefitInfo {
     }
     
     static BcBenefitInfo genBcBenefitInfo(DatabaseConnection conn,
-                                                                    Snapshot snapshot,
-                                                                    StaticIndexSet hotSet,
-                                                                    IndexBitSet config,
-                                                                    IBGPreparedSQLStatement profiledQuery
-    ) throws SQLException {
+            Configuration snapshot,
+            StaticIndexSet hotSet,
+            IndexBitSet config,
+            IBGPreparedSQLStatement profiledQuery )
+        throws SQLException
+    {
         /*
         // XXX:
         // estimateCost(

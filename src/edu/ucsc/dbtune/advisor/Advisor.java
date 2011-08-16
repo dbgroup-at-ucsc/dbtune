@@ -15,7 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
@@ -44,5 +44,5 @@ public abstract class Advisor
      * @throws SQLException
      *      if the given statement can't be processed
      */
-    public abstract IndexBitSet getRecommendation() throws SQLException;
+    public abstract Configuration getRecommendation() throws SQLException;
 }

@@ -21,11 +21,12 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DefaultQueue;
-import edu.ucsc.dbtune.util.Instances;
 
 import java.sql.SQLException;
 
@@ -33,9 +34,9 @@ public class IndexBenefitGraphConstructor {
     /* 
      * Parameters of the construction.
      */
-    protected final String    sql;
-    protected final Iterable<? extends Index>  candidateSet;
-    protected final Optimizer optimizer;
+    protected final String              sql;
+    protected final ConfigurationBitSet configuration;
+    protected final Optimizer           optimizer;
 
     /*
      * The primary information stored by the graph
@@ -78,20 +79,20 @@ public class IndexBenefitGraphConstructor {
      *      an opened {@link DatabaseConnection connection}
      * @param sql
      *      a {@code sql query}.
-     * @param candidateSet
+     * @param configuration
      *      a set of candidate indexes.
      * @throws java.sql.SQLException
      *      an unexpected error has occurred.
      */
-    public IndexBenefitGraphConstructor(Optimizer optimizer, String sql, Iterable<? extends Index> candidateSet)
+    public IndexBenefitGraphConstructor(Optimizer optimizer, String sql, ConfigurationBitSet configuration)
         throws SQLException
     {
-        this.optimizer    = optimizer;
-        this.sql          = sql;
-        this.candidateSet = candidateSet;
+        this.optimizer     = optimizer;
+        this.sql           = sql;
+        this.configuration = configuration;
 
         // set up the root node, and initialize the queue
-        IndexBitSet rootConfig = Instances.newBitSet(candidateSet);
+        IndexBitSet rootConfig = configuration.getBitSet();
         rootNode = new IBGNode(rootConfig, nodeCount++);
 
         emptyCost = optimizer.explain(this.sql).getCost();
@@ -155,6 +156,7 @@ public class IndexBenefitGraphConstructor {
      */
     public boolean buildNode() throws SQLException {
         IBGNode newNode, coveringNode;
+        PreparedSQLStatement stmt;
         double totalCost;
 
         if (queue.isEmpty()) {
@@ -170,9 +172,16 @@ public class IndexBenefitGraphConstructor {
             totalCost = coveringNode.cost();
             coveringNode.addUsedIndexes(usedBitSet);
         } else {
-            totalCost =
+            stmt =
                 optimizer.explain(
-                    sql, Instances.newIndexList(candidateSet, newNode.config)).getCost();
+                    sql, new ConfigurationBitSet(configuration.getIndexes(), newNode.config));
+            totalCost = stmt.getTotalCost();
+
+            for(Index idx : configuration.getIndexes()) {
+                if(stmt.isUsed(idx)) {
+                    usedBitSet.set(idx.getId());
+                }
+            }
         }
 
         // create the child list
@@ -248,11 +257,11 @@ public class IndexBenefitGraphConstructor {
 
     /**
      */
-    public static IndexBenefitGraph construct(Optimizer optimizer, String sql, Iterable<? extends Index> indexes, int maxId)
+    public static IndexBenefitGraph construct(Optimizer optimizer, String sql, ConfigurationBitSet conf)
         throws SQLException
     {
-        InteractionLogger            logger      = new InteractionLogger(maxId);
-        IndexBenefitGraphConstructor ibgCons     = new IndexBenefitGraphConstructor(optimizer, sql, indexes);
+        InteractionLogger            logger      = new InteractionLogger(conf.getMaxId());
+        IndexBenefitGraphConstructor ibgCons     = new IndexBenefitGraphConstructor(optimizer, sql, conf);
         IBGAnalyzer                  ibgAnalyzer = new IBGAnalyzer(ibgCons);
 
         long nStart = System.nanoTime();
@@ -281,7 +290,7 @@ public class IndexBenefitGraphConstructor {
 
         IndexBenefitGraph ibg = ibgCons.getIBG();
 
-        ibg.setMaxId(maxId);
+        ibg.setMaxId(conf.getMaxId());
         ibg.setInteractionBank(logger.getInteractionBank());
         ibg.setOverhead(nStart - nStop / 1000000.0);
 

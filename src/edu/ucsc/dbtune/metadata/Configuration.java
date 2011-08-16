@@ -17,6 +17,7 @@ package edu.ucsc.dbtune.metadata;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * A configuration represents a set of physical structures over tables (and/or columns) that are 
@@ -26,9 +27,22 @@ import java.util.ArrayList;
  *
  * @author Ivo Jimenez
  */
-public class Configuration extends DatabaseObject
+public class Configuration implements Iterable<Index>
 {
     protected List<Index> _indexes;
+    protected String      name;
+
+    /**
+     * @param indexes
+     *     list of indexes that comprise the configuration
+     */
+    public Configuration(Iterable<Index> indexes)
+    {
+        this("");
+        for(Index idx : indexes) {
+            this._indexes.add(idx);
+        }
+    }
 
     /**
      * @param indexes
@@ -36,8 +50,7 @@ public class Configuration extends DatabaseObject
      */
     public Configuration(List<Index> indexes)
     {
-        super(-1);
-        this._indexes  = new ArrayList<Index>(indexes);
+        this((Iterable<Index>)indexes);
     }
 
     /**
@@ -48,9 +61,8 @@ public class Configuration extends DatabaseObject
      */
     public Configuration(Configuration other)
     {
-        super(other);
-
-        _indexes = other._indexes;
+        this(other._indexes);
+        this.name = other.name;
     }
 
     /**
@@ -61,19 +73,21 @@ public class Configuration extends DatabaseObject
      */
     public Configuration(String name)
     {
-        super(name);
+        this.name     = name;
         this._indexes = new ArrayList<Index>();
     }
 
     /**
-     * adds an index to the schema
+     * adds an index to the schema. If the index is already contained it's not added.
      *
      * @param index
      *     new index to add
      */
     public void add(Index index)
     {
-        _indexes.add(index);
+        if(!_indexes.contains(index)) {
+            _indexes.add(index);
+        }
     }
 
     /**
@@ -88,6 +102,28 @@ public class Configuration extends DatabaseObject
     }
 
     /**
+     * Returns the number of elements in the configuration
+     *
+     * @return
+     *     number of elements
+     */
+    public int size()
+    {
+        return _indexes.size();
+    }
+
+    /**
+     * Whether or not this configuration contains any elements.
+     *
+     * @return
+     *     {@code true} if empty; {@code false} otherwise.
+     */
+    public boolean isEmpty()
+    {
+        return _indexes.isEmpty();
+    }
+
+    /**
      * checks if a given index is contained in the configuration.
      *
      * @param index
@@ -96,5 +132,69 @@ public class Configuration extends DatabaseObject
     public boolean contains(Index index)
     {
         return _indexes.contains(index);
+    }
+
+    /**
+     * Whether the given configuration is contained in this one.
+     *
+     * @return
+     *     {@code true} if all elements of given configuration are contained in this configuration; 
+     *     {@code false} otherwise.
+     */
+    public boolean contains(Configuration configuration)
+    {
+        for(Index idx : configuration) {
+            if(!contains(idx)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns the index that has the given id.
+     *
+     * @param id
+     *     id of the index that is looked for
+     * @return
+     *     reference to index if found; {@code null} otherwise.
+     */
+    public Index find(int id)
+    {
+        for (Index idx : this) {
+            if (idx.getId() == id) {
+                return idx;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Iterator<Index> iterator()
+    {
+        return _indexes.iterator();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        String str;
+        
+        if (name == null) {
+            str = "";
+        } else {
+            str = name;
+        }
+
+        for(Index idx : this) {
+            str += "\n  " + idx;
+        }
+        return str;
     }
 }

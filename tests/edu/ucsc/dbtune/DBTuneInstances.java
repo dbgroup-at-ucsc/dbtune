@@ -5,10 +5,10 @@ import edu.ucsc.dbtune.advisor.DoiFunction;
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionFactory;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.Index;
@@ -283,14 +283,14 @@ public class DBTuneInstances {
         }
     }
 
-  public static DoiFunction newTempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Snapshot candidateSet){
+  public static DoiFunction newTempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Configuration candidateSet){
     return new TempDoiFunction(qinfos, candidateSet);
   }
 
     private static class TempDoiFunction implements DoiFunction {
         private InteractionBank bank;
-        TempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Snapshot candidateSet) {
-            bank = new InteractionBank(candidateSet.maxInternalId());
+        TempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Configuration candidateSet) {
+            bank = new InteractionBank(1024);
             for (Index a : candidateSet) {
                 int id_a = a.getId();
                 for (Index b : candidateSet) {

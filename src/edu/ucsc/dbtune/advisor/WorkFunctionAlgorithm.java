@@ -15,14 +15,14 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.util.Instances;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,7 +63,7 @@ public class WorkFunctionAlgorithm
      *      {@code true} if we want to keep some history of the work done by this object,
      *      {@code false} if we don't want to.
      */
-    public WorkFunctionAlgorithm(IndexPartitions parts,boolean keepHistory){
+    public WorkFunctionAlgorithm(IndexPartitions parts, boolean keepHistory){
         if (parts != null) {
             repartition(parts);
 
@@ -97,14 +97,17 @@ public class WorkFunctionAlgorithm
     public void newTask(PreparedSQLStatement qinfo) throws SQLException {
       workspace.tempBitSet.clear(); // just to be safe
 
+      Configuration conf;
+      double queryCost;
+
       for (int subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
           SubMachine subm = submachines.get(subsetNum);
           // preprocess cost into a vector
           for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
             // this will explicitly set each index in the array to 1 or 0
             setStateBits(subm.indexIds, stateNum, workspace.tempBitSet);
-            double queryCost = qinfo.explain(Instances.newIndexList(qinfo.getConfiguration(), 
-                        workspace.tempBitSet)).getTotalCost();
+            conf = new ConfigurationBitSet(qinfo.getConfiguration(), workspace.tempBitSet);
+            queryCost = qinfo.explain(conf).getTotalCost();
             workspace.tempCostVector.set(stateNum, queryCost);
           }
 
@@ -320,14 +323,16 @@ public class WorkFunctionAlgorithm
      * @return
      *      a schedule cost over a set of candidate and queries.
      */
-    public double getScheduleCost(Snapshot candidateSet,
+    public double getScheduleCost(Configuration candidateSet,
             int queryCount, List<PreparedSQLStatement> qinfos,
             IndexPartitions parts, IndexBitSet[] schedule )
         throws SQLException
     {
         double cost = 0;
         IndexBitSet prevState = new IndexBitSet();
-        //IndexBitSet subset = new IndexBitSet();
+        Configuration conf;
+        PreparedSQLStatement stmt;
+
         for (int q = 0; q < queryCount; q++) {
             IndexBitSet state = schedule[q];
             //if (parts != null)
@@ -337,12 +342,10 @@ public class WorkFunctionAlgorithm
             //
             //    cost += parts.theoreticalCost(qinfos.get(q), state, subset);
             //else
-                cost += 
-                    qinfos.get(q).explain(
-                            Instances.newIndexList(
-                                qinfos.get(q).getConfiguration(), state)).getCost();
-            
-            cost += qinfos.get(q).getUpdateCost(Instances.newIndexList(qinfos.get(q).getConfiguration(), state));
+            conf = new ConfigurationBitSet(qinfos.get(q).getConfiguration(), state);
+            stmt = qinfos.get(q).explain(conf);
+            cost += stmt.getCost();
+            cost += stmt.getUpdateCost(stmt.getUsedConfiguration().getIndexes());
             cost += transitionCost(candidateSet, prevState, state);
 
             prevState = state;

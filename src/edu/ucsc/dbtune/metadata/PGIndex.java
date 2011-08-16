@@ -98,7 +98,7 @@ public class PGIndex extends Index {
 
     @Override
     public String toString() {
-        return creationText;
+        return "id: " + id + "; sql = " + creationText;
     }
 
     @Override

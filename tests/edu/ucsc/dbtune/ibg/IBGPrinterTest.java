@@ -1,22 +1,19 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.advisor.CandidateIndexExtractor;
-import edu.ucsc.dbtune.ibg.CandidatePool.Node;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import static edu.ucsc.dbtune.DBTuneInstances.makeIBGNode;
 import static org.hamcrest.CoreMatchers.is;
@@ -53,7 +50,6 @@ public class IBGPrinterTest {
     @SuppressWarnings({"unchecked"})
     @Test
     public void testIndexBenefitGraph() throws Exception{
-        final SQLStatement sql = new SQLStatement(SQLCategory.QUERY,"Select * from R;");
         final Table table = mock(Table.class);
 
         // configure indexex
@@ -71,18 +67,13 @@ public class IBGPrinterTest {
         when(twin.getMegaBytes()).thenReturn(2000000000000l);
         when(soleIndex.getTable()).thenReturn(table);
 
+        final List<Index> list = new ArrayList<Index>();
+        list.add(twin);
+        list.add(soleIndex);
 
+        final Configuration candidatePool = (Configuration) mock(Configuration.class);
 
-        final Iterable<Index> recommendedIndexes = new ArrayList<Index>(Arrays.asList(soleIndex));
-        final CandidateIndexExtractor extractor = mock(CandidateIndexExtractor.class);
-        when(extractor.recommendIndexes(sql)).thenReturn(recommendedIndexes);
-
-        final CandidatePool candidatePool = (CandidatePool) mock(CandidatePool.class);
-        final Node<Index>          root          = (Node<Index>) mock(Node.class);
-        when(root.getIndex()).thenReturn(twin);
-        when(root.getNext()).thenReturn(root);
-
-        when(candidatePool.getFirstNode()).thenReturn(root);
+        when(candidatePool.getIndexes()).thenReturn(list);
         final Connection connection = mock(Connection.class);
         final Statement statement  = mock(Statement.class);
         final ResultSet resultSet  = mock(ResultSet.class);

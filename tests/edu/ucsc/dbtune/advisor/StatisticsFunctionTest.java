@@ -18,9 +18,9 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.DBTuneInstances;
-import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
@@ -72,13 +72,13 @@ public class StatisticsFunctionTest {
     }
 
     private static IBGPreparedSQLStatement makeProfiledQuery(List<PGIndex> callback) throws Exception {
-        final CandidatePool candidatePool = new CandidatePool();
-        candidatePool.addIndex(callback.get(0));
-        candidatePool.addIndex(callback.get(1));
+        final Configuration candidatePool = new Configuration("conf");
+        candidatePool.add(callback.get(0));
+        candidatePool.add(callback.get(1));
 
         return new IBGPreparedSQLStatement("SELECT * FROM R;",
                SQLCategory.QUERY,
-               candidatePool.getSnapshot(),
+               candidatePool,
                new IndexBenefitGraph(makeIBGNode(), 5.0, new IndexBitSet()),
                makeInteractionBank(),
                40000, 0.0);
@@ -93,10 +93,10 @@ public class StatisticsFunctionTest {
 
 
     private static InteractionBank makeInteractionBank() throws Exception {
-        final CandidatePool candidatePool = new CandidatePool();
-        candidatePool.addIndex(DBTuneInstances.newPGIndex(4567, 987123456));
-        candidatePool.addIndex(DBTuneInstances.newPGIndex(7654, 4567932));
-        final InteractionBank bank = new InteractionBank(candidatePool.getSnapshot().maxInternalId());
+        final Configuration candidatePool = new Configuration("conf");
+        candidatePool.add(DBTuneInstances.newPGIndex(1, 987123456));
+        candidatePool.add(DBTuneInstances.newPGIndex(2, 4567932));
+        final InteractionBank bank = new InteractionBank(3);
         bank.assignInteraction(0, 1, 11.0);
         return bank;
     }

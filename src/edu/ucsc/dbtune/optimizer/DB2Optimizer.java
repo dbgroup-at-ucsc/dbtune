@@ -15,14 +15,8 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import java.sql.Statement;
-
-import java.util.concurrent.atomic.AtomicInteger;
-
-import java.util.Iterator;
-import java.util.Set;
-
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
@@ -39,8 +33,12 @@ import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Iterator;
+import java.util.Set;
 
 import static edu.ucsc.dbtune.optimizer.DB2Optimizer.DB2Commands.*;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
@@ -63,7 +61,7 @@ public class DB2Optimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
+    public PreparedSQLStatement explain(String sql, Configuration indexes) throws SQLException {
         optimizationCount++;
         Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
         Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
@@ -150,7 +148,7 @@ public class DB2Optimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public List<Index> recommendIndexes(String sql) throws SQLException {
+    public Configuration recommendIndexes(String sql) throws SQLException {
         Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
         List<Index> indexList;
 
@@ -166,7 +164,7 @@ public class DB2Optimizer extends Optimizer
         indexList = supplyValue(readAdviseOnAllIndexes(), connection, databaseName);
         submit(clearAdviseIndex(), connection);
 
-        return indexList;
+        return new Configuration(indexList);
     }
 
     public static class DB2Commands {

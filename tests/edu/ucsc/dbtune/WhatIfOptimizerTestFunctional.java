@@ -2,13 +2,14 @@ package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.util.SQLScriptExecuter;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
@@ -18,7 +19,6 @@ import org.junit.If;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.List;
 import java.util.Properties;
 
 import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
@@ -66,7 +66,7 @@ public class WhatIfOptimizerTestFunctional {
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLWhatIfOptimization() throws Exception {
         final Optimizer   optimizer  = connection.getOptimizer();
-        final List<Index> candidates = optimizer.recommendIndexes("select a from tbl where a = 5;");
+        final Configuration candidates = optimizer.recommendIndexes("select a from tbl where a = 5;");
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
@@ -83,7 +83,7 @@ public class WhatIfOptimizerTestFunctional {
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLIBGWhatIfOptimization() throws Exception {
-        final List<Index> candidates = connection.getOptimizer().recommendIndexes("select count(*) from tbl where b > 3");
+        final Configuration candidates = connection.getOptimizer().recommendIndexes("select count(*) from tbl where b > 3");
         final IBGOptimizer optimizer = new IBGOptimizer(connection.getOptimizer());
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());

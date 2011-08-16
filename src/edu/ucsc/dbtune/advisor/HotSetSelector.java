@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.ibg.CandidatePool;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.MinQueue;

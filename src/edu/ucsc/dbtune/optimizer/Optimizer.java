@@ -15,11 +15,9 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Configuration;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Represents an optimizer of a DBMS system.
@@ -39,7 +37,7 @@ public abstract class Optimizer
      *      if an error occurs while retrieving the plan
      */
     public PreparedSQLStatement explain(String sql) throws SQLException {
-        return explain(sql, new ArrayList<Index>());
+        return explain(sql, new Configuration("empty"));
     }
 
     /**
@@ -47,15 +45,15 @@ public abstract class Optimizer
      *
      * @param sql
      *     sql statement
-     * @param indexes
-     *     configuration
+     * @param configuration
+     *     physical configuration the optimizer should consider when preparing the statement
      * @return
-     *     an {@link ExplainInfo} object describing the results of a
-     *     what-if optimization call.
+     *     an {@link PreparedSQLStatement} object describing the results of a what-if optimization 
+     *     call.
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
-    public abstract PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException;
+    public abstract PreparedSQLStatement explain(String sql, Configuration configuration) throws SQLException;
     
     /**
      * Given a sql statement, it recommends indexes to make it run faster.
@@ -67,7 +65,7 @@ public abstract class Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public abstract List<Index> recommendIndexes(String sql) throws SQLException;
+    public abstract Configuration recommendIndexes(String sql) throws SQLException;
 
     /**
      * Gets the total count of optimizations that were handled/performed by the optimizer. An 

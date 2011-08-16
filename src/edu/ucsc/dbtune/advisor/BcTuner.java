@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
@@ -33,7 +33,7 @@ public class BcTuner {
     private final DatabaseConnection    connection;
     private final StaticIndexSet     hotSet;
     private final BcIndexPool        pool;
-    private final Snapshot           snapshot;
+    private final Configuration           snapshot;
     private final IndexBitSet           currentRecommendation;
 
     /**
@@ -41,12 +41,12 @@ public class BcTuner {
      * @param databaseConnection
      *      a {@link DatabaseConnection} object.
      * @param snapshot
-     *      a {@code snapshot} of the {@link edu.ucsc.dbtune.ibg.CandidatePool candidate pool of
-     *      indexes}.
+     *      a {@code snapshot} of the {@link edu.ucsc.dbtune.metadata.Configuration} candidate pool 
+     *      of indexes.
      * @param hotSet
      *      a {@code hotSet} of indexes.
      */
-    public BcTuner(DatabaseConnection databaseConnection, Snapshot snapshot, StaticIndexSet hotSet) {
+    public BcTuner(DatabaseConnection databaseConnection, Configuration snapshot, StaticIndexSet hotSet) {
         this.connection             = databaseConnection;
         this.snapshot               = snapshot;
         this.hotSet                 = hotSet;

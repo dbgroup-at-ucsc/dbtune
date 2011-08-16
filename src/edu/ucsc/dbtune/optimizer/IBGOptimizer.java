@@ -15,12 +15,13 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.IBGOptimizer;
-import edu.ucsc.dbtune.optimizer.IBGOptimizer;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
+import edu.ucsc.dbtune.util.IndexBitSet;
 
 import java.sql.SQLException;
-import java.util.List;
 
 import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
 
@@ -55,7 +56,7 @@ public class IBGOptimizer extends Optimizer {
      * {@inheritDoc}
      */
     @Override
-    public List<Index> recommendIndexes(String sql) throws SQLException {
+    public Configuration recommendIndexes(String sql) throws SQLException {
         return delegate.recommendIndexes(sql);
     }
 
@@ -71,21 +72,24 @@ public class IBGOptimizer extends Optimizer {
      * @throws SQLException
      *      unable to estimate cost due to the stated reasons.
      */
-    public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes)
+    public PreparedSQLStatement explain(String sql, Configuration configuration)
         throws SQLException
     {
-        PreparedSQLStatement info;
-        int maxId = -1;
+        PreparedSQLStatement stmt;
+        ConfigurationBitSet  bitConf;
+        IndexBenefitGraph    ibg;
+        IndexBitSet          bitSet;
 
-        info = delegate.explain(sql, indexes);
+        bitSet  = new IndexBitSet();
+        stmt    = delegate.explain(sql, configuration);
 
-        for(Index idx : indexes) {
-            if(idx.getId() > maxId) {
-                maxId = idx.getId();
-            }
+        for(Index idx : configuration) {
+            bitSet.set(idx.getId());
         }
 
-        return new IBGPreparedSQLStatement(
-                info, construct(delegate, sql, indexes, maxId), delegate.getOptimizationCount());
+        bitConf = new ConfigurationBitSet(configuration, bitSet);
+        ibg     = construct(delegate, sql, bitConf);
+
+        return new IBGPreparedSQLStatement(stmt, bitConf, ibg, delegate.getOptimizationCount());
     }
 }

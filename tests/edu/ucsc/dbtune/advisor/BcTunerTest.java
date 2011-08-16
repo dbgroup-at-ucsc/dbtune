@@ -1,8 +1,7 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.ibg.CandidatePool;
-import edu.ucsc.dbtune.ibg.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
 
@@ -63,12 +62,12 @@ public class BcTunerTest {
     }
 
 
-    private static Snapshot generateSnapshot(int howmany) throws Exception {
-        final CandidatePool c = new CandidatePool();
+    private static Configuration generateSnapshot(int howmany) throws Exception {
+        final Configuration c = new Configuration("Conf");
         for(int i = 0; i < howmany; i++){
-            c.addIndex(newPGIndex(i, (i % 3 == 0 ? 1234 : 4321), (i == 3 ? -4.5 : 4.5)));
+            c.add(newPGIndex(i, (i % 3 == 0 ? 1234 : 4321), (i == 3 ? -4.5 : 4.5)));
         }
 
-        return c.getSnapshot();
+        return c;
     }
 }

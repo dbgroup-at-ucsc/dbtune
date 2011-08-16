@@ -17,12 +17,14 @@
  */
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.ibg.InteractionBank;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -128,10 +130,8 @@ public class IndexStatisticsFunction implements StatisticsFunction {
             }
         }
 
-        currentTimeStamp += 
-            queryInfo.explain(
-                    Instances.newIndexList(
-                        queryInfo.getConfiguration(), matSet.bitSet())).getTotalCost();
+        Configuration conf = new ConfigurationBitSet(queryInfo.getConfiguration(), matSet.bitSet());
+        currentTimeStamp += queryInfo.explain(conf).getTotalCost();
     }
 
     private void clearIndexPairs(){        

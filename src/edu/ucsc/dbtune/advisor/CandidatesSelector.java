@@ -17,10 +17,11 @@
  */
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.util.Instances;
 
 import java.util.List;
 import java.sql.SQLException;
@@ -171,9 +172,8 @@ public class CandidatesSelector {
      *      the total cost of a {@code profiled query}.
      */
     public double currentCost(IBGPreparedSQLStatement qinfo) throws SQLException {
-        return qinfo.explain(
-                Instances.newIndexList(
-                    qinfo.getConfiguration(), matSet.bitSet())).getTotalCost();
+        Configuration conf = new ConfigurationBitSet(qinfo.getConfiguration(), matSet.bitSet());
+        return qinfo.explain(conf).getTotalCost();
     }
 
     /**

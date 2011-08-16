@@ -19,6 +19,7 @@ package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
@@ -123,7 +124,7 @@ public class DatabasePackageTest {
     {
         for(DatabaseConnection each : connections){
             final IBGOptimizer ibgWhatIfOptimizer = new IBGOptimizer(each.getOptimizer());
-            final double cost = ibgWhatIfOptimizer.explain("SELECT * FROM R;", new ArrayList<Index>()).getCost();
+            final double cost = ibgWhatIfOptimizer.explain("SELECT * FROM R;").getCost();
             assertThat(Double.compare(cost, 1.0) == 0, is(true));
         }
     }
@@ -175,7 +176,7 @@ public class DatabasePackageTest {
 
     private static void checkRecommendIndexesFromSQL(DatabaseConnection... connections) throws Exception {
         for(DatabaseConnection each : connections){
-            final List<Index> found = each.getOptimizer().recommendIndexes("SELECT * FROM R;");
+            final Configuration found = each.getOptimizer().recommendIndexes("SELECT * FROM R;");
             assertThat(found.size() == 3, is(true));
         }
     }

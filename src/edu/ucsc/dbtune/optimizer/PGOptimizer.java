@@ -18,6 +18,7 @@ package edu.ucsc.dbtune.optimizer;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.Table;
@@ -96,8 +97,7 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(String sql, Iterable<? extends Index> indexes) throws SQLException {
-        List<Index> indexSet;
+    public PreparedSQLStatement explain(String sql, Configuration indexes) throws SQLException {
         ResultSet   rs;
         Statement   stmt;
         SQLCategory category;
@@ -107,7 +107,6 @@ public class PGOptimizer extends Optimizer
         double[]    maintCost;
         double      totalCost;
 
-        indexSet   = Instances.newIndexList(indexes);
         explainSql = "EXPLAIN INDEXES " + explainIndexListString(indexes) + sql;
         stmt       = connection.createStatement();
         rs         = stmt.executeQuery(explainSql);
@@ -119,11 +118,11 @@ public class PGOptimizer extends Optimizer
         category      = SQLCategory.from(rs.getString("category"));
         indexOverhead = rs.getString("index_overhead");
         ohArray       = indexOverhead.split(" ");
-        maintCost     = new double[indexSet.size()];
+        maintCost     = new double[indexes.size()];
 
-        verifyOverheadArray(indexSet.size(), ohArray);
+        verifyOverheadArray(indexes.size(), ohArray);
 
-        for(int i = 0; i < indexSet.size(); i++){
+        for(int i = 0; i < indexes.size(); i++){
 
             final String   ohString  = ohArray[i];
             final String[] splitVals = ohString.split("=");
@@ -156,7 +155,7 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public List<Index> recommendIndexes(String sql) throws SQLException {
+    public Configuration recommendIndexes(String sql) throws SQLException {
         Statement stmt = connection.createStatement();
         ResultSet rs   = stmt.executeQuery("RECOMMEND INDEXES " + sql);
         int       id   = 0;
@@ -168,7 +167,7 @@ public class PGOptimizer extends Optimizer
             ++id;
         }
 
-        return indexes;
+        return new Configuration(indexes);
     }
 
     /**

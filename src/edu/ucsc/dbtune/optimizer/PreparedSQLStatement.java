@@ -20,8 +20,8 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.util.ToStringBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.sql.SQLException;
 
@@ -45,8 +45,7 @@ public class PreparedSQLStatement
     protected SQLStatement statement;
 
     /** configuration that was used to optimize the statement */
-    protected Iterable<? extends Index> configuration;
-    // protected Configuration configuration;
+    protected Configuration configuration;
 
     /** cost assigned by an {@link Optimizer} */
     protected double cost;
@@ -55,7 +54,7 @@ public class PreparedSQLStatement
     protected SQLStatementPlan plan;
 
     /** a list of indexes that are used by the optimized plan */
-    protected List<? extends Index> usedIndexes;
+    protected Configuration usedIndexes;
 
     /** for update statements, the cost that implies on each of the indexes containe in {@link getConfiguration} */
     protected double[] updateCosts;
@@ -79,10 +78,7 @@ public class PreparedSQLStatement
      * @param configuration
      *      configuration used to optimize the statement.
      */
-    public PreparedSQLStatement(
-            SQLStatementPlan plan,
-            double cost,
-            Iterable<? extends Index> configuration) {
+    public PreparedSQLStatement(SQLStatementPlan plan, double cost, Configuration configuration) {
         this(plan.getStatement(), plan, cost, null, configuration);
     }
 
@@ -96,11 +92,7 @@ public class PreparedSQLStatement
      * @param cost
      *      execution cost
      */
-    public PreparedSQLStatement(
-            String sql, 
-            SQLCategory category, 
-            double cost, 
-            Iterable<? extends Index> configuration) {
+    public PreparedSQLStatement(String sql, SQLCategory category, double cost, Configuration configuration) {
         this(new SQLStatement(category,sql), null, cost, null, configuration);
     }
 
@@ -119,7 +111,7 @@ public class PreparedSQLStatement
             SQLCategory category,
             double cost,
             double[] updateCosts,
-            Iterable<? extends Index> configuration) {
+            Configuration configuration) {
         this(new SQLStatement(category,sql), null, cost, updateCosts, configuration);
     }
 
@@ -144,13 +136,13 @@ public class PreparedSQLStatement
             SQLStatementPlan plan,
             double cost,
             double[] updateCosts,
-            Iterable<? extends Index> configuration)
+            Configuration configuration)
     {
         this.statement           = statement;
         this.plan                = plan;
         this.cost                = cost;
         this.updateCosts         = updateCosts;
-        this.usedIndexes         = new ArrayList<Index>();
+        this.usedIndexes         = new Configuration("usedIndexes");
         this.configuration       = configuration;
         this.optimizationCount   = 0; // optimizer.getOptimizationCount();
         this.analysisTime        = 0.0;
@@ -203,7 +195,7 @@ public class PreparedSQLStatement
      * @throws SQLException
      *      if it's not possible to do what-if optimization on the given configuration
      */
-    public PreparedSQLStatement explain(Iterable<? extends Index> configuration)
+    public PreparedSQLStatement explain(Configuration configuration)
         throws SQLException
     {
         throw new SQLException("Not implemented yet");
@@ -250,7 +242,7 @@ public class PreparedSQLStatement
      * @param configuration
      *     the list of indexes considered at optimization time.
      */
-    protected void setConfiguration(Iterable<? extends Index> configuration)
+    protected void setConfiguration(Configuration configuration)
     {
         this.configuration = configuration;
     }
@@ -266,14 +258,14 @@ public class PreparedSQLStatement
      *      maintenance cost.
      *      the execution cost of the statement.
      */
-    public double getUpdateCost(Index index) throws SQLException
+    public double getUpdateCost(Index index)
     {
         if(!SQLCategory.DML.isSame(statement.getSQLCategory())) {
             return 0.0;
         }
 
         if(updateCosts == null) {
-            throw new SQLException("No update costs given when instantiating object");
+            return 0.0;
         }
 
         return updateCosts[index.getId()];
@@ -289,7 +281,7 @@ public class PreparedSQLStatement
      * @return
      *      aggregation of update costs of the given configuration.
      */
-    public double getUpdateCost(Iterable<? extends Index> indexes) throws SQLException
+    public double getUpdateCost(List<Index> indexes)
     {
         double updateCost = 0.0;
 
@@ -307,9 +299,9 @@ public class PreparedSQLStatement
      * @return
      *     the update costs for the given configuration.
      */
-    public double getUpdateCost() throws SQLException
+    public double getUpdateCost()
     {
-        return getUpdateCost(getConfiguration());
+        return getUpdateCost(getConfiguration().getIndexes());
     }
 
     /**
@@ -320,7 +312,7 @@ public class PreparedSQLStatement
      *      the total cost of this query.
      * @see getUpdatedConfiguration
      */
-    public double getTotalCost() throws SQLException
+    public double getTotalCost()
     {
         return getCost() + getUpdateCost();
     }
@@ -356,7 +348,7 @@ public class PreparedSQLStatement
      * @return
      *     the list of indexes considered at optimization time.
      */
-    public Iterable<? extends Index> getConfiguration()
+    public Configuration getConfiguration()
     {
         return configuration;
     }
@@ -369,9 +361,9 @@ public class PreparedSQLStatement
      *     the configuration that is used by the execution plan, i.e. the set of physical structures that are read when 
      *     calculating the answer of a statement.
      */
-    public List<Index> getUsedConfiguration()
+    public Configuration getUsedConfiguration()
     {
-        List<Index> usedConfiguration = new ArrayList<Index>();
+        Configuration usedConfiguration = new Configuration("conf");
 
         for(Index idx : getConfiguration()) {
             if( isUsed(idx) ) {
@@ -390,9 +382,9 @@ public class PreparedSQLStatement
      *     the configuration that is used by the execution plan, i.e. the set of physical structures that are read when 
      *     calculating the answer of a statement.
      */
-    public List<Index> getUpdatedConfiguration()
+    public Configuration getUpdatedConfiguration()
     {
-        List<Index> updatedConfiguration = new ArrayList<Index>();
+        Configuration updatedConfiguration = new Configuration("conf");
 
         for(Index idx : getConfiguration()) {
             if(updateCosts[idx.getId()] != 0) {
@@ -425,5 +417,18 @@ public class PreparedSQLStatement
     public int getOptimizationCount()
     {
         return optimizationCount;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder<PreparedSQLStatement>(this)
+               .add("statement", getStatement())
+               .add("cost", getCost())
+               .add("totalCost", getTotalCost())
+               .add("updateCost", getUpdateCost())
+               .toString();
     }
 }
