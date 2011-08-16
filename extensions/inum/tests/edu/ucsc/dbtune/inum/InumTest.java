@@ -59,9 +59,10 @@ public class InumTest {
   private static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception {
     final MatchingStrategy matchingLogic = Mockito.mock(MatchingStrategy.class);
     final OptimalPlan plan = Lists.newArrayList(inumSpace.getAllSavedOptimalPlans()).get(0);
-    Mockito.when(matchingLogic.matches(Mockito.anySet(), Mockito.anySet())).thenReturn(plan);
+    final Set<OptimalPlan> plans = inumSpace.getAllSavedOptimalPlans();
+    Mockito.when(matchingLogic.matches(Mockito.eq(plans), Mockito.anySetOf(DBIndex.class))).thenReturn(plan);
     final double cost = plan.getTotalCost();
-    Mockito.when(matchingLogic.derivesCost(Mockito.eq(plan), Mockito.anySet())).thenReturn(cost);
+    Mockito.when(matchingLogic.derivesCost(Mockito.eq(plan), Mockito.anySetOf(DBIndex.class))).thenReturn(cost);
     return matchingLogic;
   }
 

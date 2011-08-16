@@ -32,7 +32,7 @@ public class Inum {
 
     final SetupWorkloadVisitor  loader            = new SetupWorkloadVisitor();
     final WorkloadDirectoryNode workloadDirectory = new WorkloadDirectoryNode(new File(workloadPath));
-    WORKLOADS = ImmutableSet.<String>builder().addAll(workloadDirectory.accept(loader)).build();
+    WORKLOADS = ImmutableSet.copyOf(workloadDirectory.accept(loader));
   }
 
   private Inum(DatabaseConnection connection, Precomputation precomputation, MatchingStrategy matchingLogic){
@@ -49,6 +49,15 @@ public class Inum {
     final Precomputation     nonNullPrecomputation = Preconditions.checkNotNull(precomputation);
     final MatchingStrategy   nonNullMatchingLogic  = Preconditions.checkNotNull(matchingLogic);
     return new Inum(nonNullConnection, nonNullPrecomputation, nonNullMatchingLogic);
+  }
+
+  public static Inum newInumInstance(DatabaseConnection connection){
+    final DatabaseConnection nonNullConnection = Preconditions.checkNotNull(connection);
+    return newInumInstance(
+        nonNullConnection,
+        new InumPrecomputation(nonNullConnection),
+        new InumMatchingStrategy()
+    );
   }
 
   public InumSpace getInumSpace(){
@@ -117,5 +126,6 @@ public class Inum {
 
   public void end()   {
     isStarted.set(false);
+    precomputation.getInumSpace().clear();
   }
 }

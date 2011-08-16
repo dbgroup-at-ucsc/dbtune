@@ -33,8 +33,8 @@ public interface Precomputation {
    * interesting orders for table {@code T_i}. We also include the &quot;empty&quot; interesting order
    * in {@code O_i}, to account for the indexes on {@code T_i} that do not cover an interesting order.
    *
-   * The set {@code O = O_1 x O_2 x .... x O_n} contains all the combinations of interesting orders
-   * that a configuration can cover. For every member of {@code O} there exist a single optimal
+   * The set {@code O = O_1 x O_2 x .... x O_n} co.ntains all the combinations of interesting orders
+   * that a configuration can cover For every member of {@code O} there exist a single optimal
    * {@code MHJ} plan. Thus, to compute the INUM space it is sufficient to invoke the optimizer once
    * for each member {@code o in O}.&quot;
    *

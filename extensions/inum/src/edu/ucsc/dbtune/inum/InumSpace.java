@@ -30,6 +30,12 @@ import java.util.Set;
  */
 public interface InumSpace {
   /**
+   * clears the Inum space (cached plans). This will help the garbage collector to dispose the objects
+   * found in this cache appropriately.
+   */
+  void clear();
+
+  /**
    * Get all the {@link OptimalPlan optimal plan}s from the
    * {@link InumSpace INUM Space}.
    *
