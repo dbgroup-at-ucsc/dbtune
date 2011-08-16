@@ -4,10 +4,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.StopWatch;
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
@@ -27,11 +25,8 @@ public class Inum {
 
   private static final Set<String> WORKLOADS;
   static {
-    final Environment environment   = Environment.getInstance();
-    final String      workloadPath  = environment.getScriptAtWorkloadsFolder("inum/");
-
     final SetupWorkloadVisitor  loader            = new SetupWorkloadVisitor();
-    final WorkloadDirectoryNode workloadDirectory = new WorkloadDirectoryNode(new File(workloadPath));
+    final WorkloadDirectoryNode workloadDirectory = new WorkloadDirectoryNode();
     WORKLOADS = ImmutableSet.copyOf(workloadDirectory.accept(loader));
   }
 
