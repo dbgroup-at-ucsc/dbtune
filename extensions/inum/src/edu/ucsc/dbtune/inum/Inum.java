@@ -1,9 +1,16 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.collect.Lists;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.inum.commons.Pair;
-import java.util.List;
+import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.spi.Environment;
+import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.StopWatch;
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -13,41 +20,85 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class Inum {
-  private final Precomputation    precomputation;
-  private final MatchingStrategy  matchingLogic;
-  private final AtomicBoolean     isStarted;
+  private final DatabaseConnection connection;
+  private final Precomputation     precomputation;
+  private final MatchingStrategy   matchingLogic;
+  private final AtomicBoolean      isStarted;
 
-  private Inum(Precomputation precomputation, MatchingStrategy matchingLogic){
+  private static final Set<String> WORKLOADS;
+  static {
+    final Environment environment   = Environment.getInstance();
+    final String      workloadPath  = environment.getScriptAtWorkloadsFolder("inum/");
+
+    final SetupWorkloadVisitor  loader            = new SetupWorkloadVisitor();
+    final WorkloadDirectoryNode workloadDirectory = new WorkloadDirectoryNode(new File(workloadPath));
+    WORKLOADS = ImmutableSet.<String>builder().addAll(workloadDirectory.accept(loader)).build();
+  }
+
+  private Inum(DatabaseConnection connection, Precomputation precomputation, MatchingStrategy matchingLogic){
+    this.connection     = connection;
     this.precomputation = precomputation;
     this.matchingLogic  = matchingLogic;
     this.isStarted      = new AtomicBoolean(false);
   }
 
-  public static Inum newInumInstance(Precomputation precomputation, MatchingStrategy matchingLogic){
-    return new Inum(precomputation, matchingLogic);
+  public static Inum newInumInstance(DatabaseConnection connection,
+      Precomputation precomputation,
+      MatchingStrategy matchingLogic){
+    final DatabaseConnection nonNullConnection     = Preconditions.checkNotNull(connection);
+    final Precomputation     nonNullPrecomputation = Preconditions.checkNotNull(precomputation);
+    final MatchingStrategy   nonNullMatchingLogic  = Preconditions.checkNotNull(matchingLogic);
+    return new Inum(nonNullConnection, nonNullPrecomputation, nonNullMatchingLogic);
+  }
+
+  public InumSpace getInumSpace(){
+    return precomputation.getInumSpace();
   }
 
   /**
-   * INUM setup will be on demand.
+   * INUM setup will load any representative workload found in the inum workload
+   * directory.
    */
   public void start(){
-    start(Lists.<Pair<String,Iterable<DBIndex>>>newArrayList());
+    try {
+      start(WORKLOADS);
+    } catch (IOException e) {
+      Console.streaming().error("unable to load workload", e);
+    }
   }
 
   /**
    * INUM will get prepopulated first with representative workloads and configurations.
    * @param input
-   *    a list of <query-configuration> pairs.
+   *    a list of representative workloads.
+   * @throws IOException
+   *    if unable to parse the input.
    */
-  public void start(List<Pair<String, Iterable<DBIndex>>> input) {
+  public void start(Set<String> input) throws IOException {
     isStarted.set(true);
-    for(Pair<String,       // the query
-        Iterable<DBIndex>  // the configuration
-        > each : input){
 
-      precomputation.setup(each.getLeft(), each.getRight());
+    final StopWatch timing = new StopWatch();
+    for(String eachQuery : input){
+      // todo(Huascar) question to Team: should we parse the interesting orders or rely on
+      //           the recommended indexes by the extractor? For sake of speed, I am
+      //           using the recommended indexes. For parsing the interesting orders, we
+      //           need using Zql parser (include in Dash's code.
+      final Iterable<DBIndex> ios = recommendPromissingIndexes(eachQuery, connection);
+      precomputation.setup(eachQuery, ios);
+    }
+    timing.resetAndLog("precomputation took ");
+  }
+
+  private static Iterable<DBIndex> recommendPromissingIndexes(String query,
+      DatabaseConnection connection){
+    try {
+      return connection.getIndexExtractor().recommendIndexes(query);
+    } catch (SQLException e) {
+      Console.streaming().error("unable to get indexes. an empty set is returned.", e);
+      return ImmutableSet.of();
     }
   }
+
 
   public double calculateQueryCost(String workload, Iterable<DBIndex> inputConfiguration){
     if(!isStarted.get()) throw new InumExecutionException("INUM has not been started yet. Please call start(..) method.");
@@ -55,7 +106,7 @@ public class Inum {
       precomputation.setup(workload, inputConfiguration);
     }
 
-    final InumSpace cachedPlans = precomputation.getInumSpace();
+    final InumSpace   cachedPlans       = precomputation.getInumSpace();
     final OptimalPlan singleOptimalPlan = matchingLogic.matches(
         cachedPlans.getAllSavedOptimalPlans(),
         inputConfiguration
