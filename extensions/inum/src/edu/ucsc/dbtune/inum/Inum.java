@@ -86,7 +86,7 @@ public class Inum {
       // todo(Huascar) question to Team: should we parse the interesting orders or rely on
       //           the recommended indexes by the extractor? For sake of speed, I am
       //           using the recommended indexes. For parsing the interesting orders, we
-      //           need using Zql parser (include in Dash's code.
+      //           need to use Zql parser (included in Dash's code).
       final Iterable<DBIndex> ios = recommendPromissingIndexes(eachQuery, connection);
       precomputation.setup(eachQuery, ios);
     }
