@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.advisor.bc.BcTuner;
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
@@ -15,7 +14,6 @@ import java.util.Arrays;
 
 import static edu.ucsc.dbtune.DBTuneInstances.generateColumns;
 import static edu.ucsc.dbtune.DBTuneInstances.generateDescVals;
-import static edu.ucsc.dbtune.DBTuneInstances.newPGDatabaseConnectionManager;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -26,11 +24,7 @@ public class BcTunerTest {
 
     @Before
     public void setUp() throws Exception {
-        final DatabaseConnection connection;
-
-        connection  = newPGDatabaseConnectionManager().connect();
-        tuner       = new BcTuner(
-                connection,
+        tuner = new BcTuner(
                 generateSnapshot(10),
                 new StaticIndexSet(
                         Arrays.asList(

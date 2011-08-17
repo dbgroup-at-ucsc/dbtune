@@ -25,11 +25,11 @@ import edu.ucsc.dbtune.advisor.InteractionSelection;
 import edu.ucsc.dbtune.advisor.InteractionSelector;
 import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.advisor.StatisticsFunction;
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -61,7 +61,7 @@ public class WFIT extends Advisor
     /**
      */
     public WFIT(
-            DatabaseConnection con,
+            Optimizer optimizer,
             Configuration configuration,
             int maxNumIndexes,
             int maxNumStates,
@@ -73,7 +73,7 @@ public class WFIT extends Advisor
         this.maxNumStates        = maxNumStates;
         this.windowSize          = windowSize;
         this.partitionIterations = partitionIterations;
-        this.ibgOptimizer        = new IBGOptimizer(con.getOptimizer());
+        this.ibgOptimizer        = new IBGOptimizer(optimizer); // XXX: check if optimizer is IBGOptimizer
         this.qinfos              = new ArrayList<IBGPreparedSQLStatement>();
         this.wfa                 = new WorkFunctionAlgorithm(partitions, false);
         this.overheads           = new ArrayList<Double>();

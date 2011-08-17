@@ -15,8 +15,8 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.wfit.WFIT;
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
@@ -30,10 +30,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 
@@ -50,13 +50,13 @@ import static org.hamcrest.CoreMatchers.is;
  */
 public class WfitTestFunctional
 {
-    public final static DatabaseConnection connection;
-    public final static Environment        env;
+    public final static DatabaseSystem db;
+    public final static Environment    en;
 
     static {
         try {       
-            env        = Environment.getInstance();
-            connection = makeDatabaseConnectionManager(env.getAll()).connect();
+            en = Environment.getInstance();
+            db = new DatabaseSystem();
         } catch(SQLException ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -65,11 +65,16 @@ public class WfitTestFunctional
     @BeforeClass
     public static void setUp() throws Exception
     {
-        File   outputdir   = new File(env.getOutputFoldername() + "/one_table");
-        String ddlfilename = env.getScriptAtWorkloadsFolder("one_table/create.sql");
+        File   outputdir   = new File(en.getOutputFoldername() + "/one_table");
+        String ddlfilename = en.getScriptAtWorkloadsFolder("one_table/create.sql");
 
         outputdir.mkdirs();
         //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception{
+        db.getConnection().close();
     }
 
     /**
@@ -94,18 +99,18 @@ public class WfitTestFunctional
         int         q;
         int         whatIfCount;
 
-        workloadFile   = env.getScriptAtWorkloadsFolder("one_table/workload.sql");
-        maxNumIndexes  = env.getMaxNumIndexes();
-        maxNumStates   = env.getMaxNumStates();
-        windowSize     = env.getIndexStatisticsWindow();
-        partIterations = env.getNumPartitionIterations();
-        pool           = getCandidates(connection, workloadFile);
+        workloadFile   = en.getScriptAtWorkloadsFolder("one_table/workload.sql");
+        maxNumIndexes  = en.getMaxNumIndexes();
+        maxNumStates   = en.getMaxNumStates();
+        windowSize     = en.getIndexStatisticsWindow();
+        partIterations = en.getNumPartitionIterations();
+        pool           = getCandidates(workloadFile);
         fileReader     = new FileReader(workloadFile);
         workload       = new Workload(fileReader);
         q              = 0;
         whatIfCount    = 0;
 
-        wfit = new WFIT(connection, pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
+        wfit = new WFIT(db.getOptimizer(), pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
 
         for (SQLStatement sql : workload) {
             wfit.process(sql);
@@ -123,9 +128,9 @@ public class WfitTestFunctional
             assertThat(qinfo.getConfiguration().size(), is(1));
 
             if(q == 0) {
-                assertThat(qinfo.getOptimizationCount()-whatIfCount, is(5));
+                assertThat(qinfo.getOptimizationCount()-whatIfCount, is(11));
             } else {
-                assertThat(qinfo.getOptimizationCount()-whatIfCount, is(3));
+                assertThat(qinfo.getOptimizationCount()-whatIfCount, is(9));
             }
 
             if(q < 5) {
@@ -147,7 +152,7 @@ public class WfitTestFunctional
         }
     }
 
-    private static Configuration getCandidates(DatabaseConnection con, String workloadFilename)
+    private static Configuration getCandidates(String workloadFilename)
         throws SQLException, IOException
     {
         Configuration   pool;
@@ -158,7 +163,7 @@ public class WfitTestFunctional
         pool = new Configuration("conf");
 
         for(SQLStatement sql : wl) {
-            candidateSet = con.getOptimizer().recommendIndexes(sql);
+            candidateSet = db.getOptimizer().recommendIndexes(sql);
 
             for (Index index : candidateSet) {
                 pool.add(index);

@@ -17,9 +17,8 @@
  */
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -29,22 +28,16 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class BenefitInfoInput {
-    private final DatabaseConnection connection;
-    private final Configuration             snapshot;
+    private final Configuration        snapshot;
     private final StaticIndexSet       hotSet;
-    private final IndexBitSet config;
-    private final IBGPreparedSQLStatement        profiledQ;
+    private final IndexBitSet          config;
+    private final PreparedSQLStatement profiledQ;
 
     private BenefitInfoInput(StrictBuilder builder){
-        connection = builder.conn;
         snapshot   = builder.snapshot;
         hotSet     = builder.hotSet;
         config     = builder.config;
         profiledQ  = builder.profiledQuery;
-    }
-
-    public DatabaseConnection getDatabaseConnection() {
-        return connection;
     }
 
     public Configuration getConfiguration() {
@@ -59,14 +52,13 @@ public class BenefitInfoInput {
         return config;
     }
 
-    public IBGPreparedSQLStatement getProfiledQuery() {
+    public PreparedSQLStatement getProfiledQuery() {
         return profiledQ;
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder<BenefitInfoInput>(this)
-               .add("connection", getDatabaseConnection())
                .add("snapshot", getConfiguration())
                .add("hotSet", getHotSet())
                .add("recommendedIndexes", getRecommendedIndexes())
@@ -75,18 +67,13 @@ public class BenefitInfoInput {
     }
 
     public static class StrictBuilder implements Supplier<BenefitInfoInput> {
-        private DatabaseConnection conn;
-        private Configuration             snapshot;
+        private Configuration        snapshot;
         private StaticIndexSet       hotSet;
-        private IndexBitSet config;
-        private IBGPreparedSQLStatement        profiledQuery;
-        public StrictBuilder(DatabaseConnection connection){
-            this.conn = connection;
-        }
+        private IndexBitSet          config;
+        private PreparedSQLStatement profiledQuery;
 
-        public StrictBuilder snapshot(Configuration value){
+        public StrictBuilder(Configuration value){
             snapshot = Checks.checkNotNull(value);
-            return this;
         }
 
         public StrictBuilder hotSet(StaticIndexSet value){
@@ -99,7 +86,7 @@ public class BenefitInfoInput {
             return this;
         }
 
-        public StrictBuilder profiledQuery(IBGPreparedSQLStatement value){
+        public StrictBuilder profiledQuery(PreparedSQLStatement value){
             profiledQuery =  Checks.checkNotNull(value);
             return this;
         }

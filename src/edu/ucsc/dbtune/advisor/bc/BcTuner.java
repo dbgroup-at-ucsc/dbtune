@@ -1,5 +1,4 @@
-/*
- * ****************************************************************************
+/* ************************************************************************** *
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -10,17 +9,14 @@
  *                                                                            *
  *   Unless required by applicable law or agreed to in writing, software      *
  *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied  *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
+ * ************************************************************************** */
 package edu.ucsc.dbtune.advisor.bc;
 
 import edu.ucsc.dbtune.advisor.BenefitInfoInput;
 import edu.ucsc.dbtune.advisor.StaticIndexSet;
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
@@ -32,7 +28,6 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.sql.SQLException;
 
 public class BcTuner {
-    private final DatabaseConnection    connection;
     private final StaticIndexSet     hotSet;
     private final BcIndexPool        pool;
     private final Configuration           snapshot;
@@ -40,16 +35,13 @@ public class BcTuner {
 
     /**
      * Construct a {@code BcTuner} object.
-     * @param databaseConnection
-     *      a {@link DatabaseConnection} object.
      * @param snapshot
      *      a {@code snapshot} of the {@link edu.ucsc.dbtune.metadata.Configuration} candidate pool 
      *      of indexes.
      * @param hotSet
      *      a {@code hotSet} of indexes.
      */
-    public BcTuner(DatabaseConnection databaseConnection, Configuration snapshot, StaticIndexSet hotSet) {
-        this.connection             = databaseConnection;
+    public BcTuner(Configuration snapshot, StaticIndexSet hotSet) {
         this.snapshot               = snapshot;
         this.hotSet                 = hotSet;
         this.pool                   = new BcIndexPool(this.hotSet);
@@ -130,8 +122,7 @@ public class BcTuner {
      *      an unexpected error occurred.
      */
     public void processQuery(IBGPreparedSQLStatement profiledQuery) throws SQLException {
-        final BenefitInfoInput input = new BenefitInfoInput.StrictBuilder(connection)
-                .snapshot(snapshot)
+        final BenefitInfoInput input = new BenefitInfoInput.StrictBuilder(snapshot)
                 .hotSet(hotSet)
                 .recommendedIndexes(currentRecommendation)
                 .profiledQuery(profiledQuery)
@@ -246,7 +237,6 @@ public class BcTuner {
     @Override
     public String toString() {
         return new ToStringBuilder<BcTuner>(this)
-               .add("connection", connection)
                .add("snapshot", snapshot)
                .add("hotSet", hotSet)
                .add("indexPool", pool)

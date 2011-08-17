@@ -62,7 +62,7 @@ public class Parameters {
      *      a new {@code Parameter} instance.
      */
     @SuppressWarnings("unchecked")
-	public static Parameter makeNamedParameter(String name, Object... params){
+    public static Parameter makeNamedParameter(String name, Object... params){
         final Parameter param = new SingleValueParameter(name);
 
         for(Object each : params){
@@ -91,11 +91,11 @@ public class Parameters {
         static {
             Map<Class<?>, Class<?>> primitiveToWrapper =
                 new HashMap<Class<?>, Class<?>>() {/**
-					 * 
-					 */
-					private static final long serialVersionUID = 1L;
+                     * 
+                     */
+                    private static final long serialVersionUID = 1L;
 
-				{
+                {
                  put(int.class, Integer.class);
                  put(long.class, Long.class);
                  put(boolean.class, Boolean.class);

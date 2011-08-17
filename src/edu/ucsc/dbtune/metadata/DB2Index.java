@@ -21,7 +21,6 @@ package edu.ucsc.dbtune.metadata;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Checks;
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.HashFunction;
 import edu.ucsc.dbtune.util.Strings;
@@ -37,14 +36,12 @@ import java.util.Map;
 import java.sql.ResultSet;
 
 public class DB2Index extends Index {
-    // serialized fields
     private DB2IndexMetadata meta;
     private int hashCodeCache;
 
     /**
      * construct new {@code DB2Index} from the ADVISE_INDEX table
      *
-     */
     public DB2Index(DatabaseConnection connection, ResultSet rs, String dbName, int id, double megabytes) throws SQLException, Exception {
         super("",(Table)null,SECONDARY,NON_UNIQUE,UNCLUSTERED);
 
@@ -82,6 +79,9 @@ public class DB2Index extends Index {
         this.creationCost  = this.getMeta().creationCost(connection.getOptimizer());
         hashCodeCache      = getMeta().hashCode();
     }
+
+XXX: will fix as part of issue #64
+     */
 
     private DB2Index(DB2IndexMetadata metadata, double creationCost) throws SQLException, Exception {
         super("",(Table)null,SECONDARY,NON_UNIQUE,UNCLUSTERED);
@@ -339,6 +339,7 @@ public class DB2Index extends Index {
             return optimizer.explain(new SQLStatement(sql.toString())).getCost();
         }
         
+        /*
         public double creationCost(DatabaseConnection conn) throws SQLException {
             int i, n;
             
@@ -375,6 +376,9 @@ public class DB2Index extends Index {
         private static double calculateTotalCost(DatabaseConnection connection, String sql) throws SQLException {
             return connection.getOptimizer().explain(new SQLStatement(sql)).getCost();
         }
+
+XXX: will fix as part of issue #64
+        */
         
         public static DB2IndexMetadata consDuplicate(DB2IndexMetadata original, int id) throws SQLException {
             // construct the object

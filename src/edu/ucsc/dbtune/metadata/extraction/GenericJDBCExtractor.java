@@ -1,5 +1,4 @@
-/*
- * ****************************************************************************
+/* ************************************************************************** *
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -13,12 +12,9 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- * ****************************************************************************
- */
-
+ * ************************************************************************** */
 package edu.ucsc.dbtune.metadata.extraction;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
@@ -31,16 +27,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-import java.sql.SQLException;
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import java.sql.ResultSet;
 
 /**
  * Extractor that uses JDBC's DatabaseMetadata class to obtain basic metadata information.
  *
- * @author ivo@cs.ucsc.edu (Ivo Jimenez)
+ * @author Ivo Jimenez
  */
-public class GenericJDBCExtractor implements MetaDataExtractor
+public class GenericJDBCExtractor implements MetadataExtractor
 {
     /**
      * Given a database connection, it extracts metadata information. The information is comprised 
@@ -69,7 +66,7 @@ public class GenericJDBCExtractor implements MetaDataExtractor
      * @see DatabaseMetaData#getColumns
      * @see DatabaseMetaData#getIndexInfo
      */
-    public Catalog extract( DatabaseConnection connection )
+    public Catalog extract(Connection connection)
         throws SQLException
     {
         Map<Integer,Column> indexToColumns;
@@ -95,7 +92,7 @@ public class GenericJDBCExtractor implements MetaDataExtractor
         {
             schemaNamesToSchemas = new HashMap<String,Schema>();
 
-            jdbcMetaData = connection.getJdbcConnection().getMetaData();
+            jdbcMetaData = connection.getMetaData();
 
             if (jdbcMetaData == null)
             {

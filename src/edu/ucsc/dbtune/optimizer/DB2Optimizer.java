@@ -15,14 +15,12 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.spi.core.Function;
@@ -37,7 +35,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -48,14 +45,16 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 import static edu.ucsc.dbtune.util.Instances.newTreeSet;
 
 /**
- * Not implemented yet
+ * @author Ivo Jimenez
  */
 public class DB2Optimizer extends Optimizer
 {
-    private final DatabaseConnection connection;
+    private final Connection connection;
+    private final String     databaseName;
 
-    public DB2Optimizer(DatabaseConnection connection){
-        this.connection = connection;
+    public DB2Optimizer(Connection connection, String databaseName){
+        this.connection   = connection;
+        this.databaseName = databaseName;
     }
 
     /**
@@ -83,7 +82,7 @@ public class DB2Optimizer extends Optimizer
                 submit(explainModeExplain(), connection)
                 );
 
-        connection.getJdbcConnection().createStatement().execute(sql.getSQL());
+        connection.createStatement().execute(sql.getSQL());
         submit(explainModeNo(), connection);
         category = supplyValue(fetchExplainStatementType(), connection);
         if(SQLCategory.DML.isSame(category)){
@@ -92,7 +91,7 @@ public class DB2Optimizer extends Optimizer
         }
 
         for(Index idx : indexes) {
-        	idx.getId();
+            idx.getId();
             count++;
         }
 
@@ -115,7 +114,7 @@ public class DB2Optimizer extends Optimizer
         );
 
         submit(fetchExplainObjectCandidates(), connection, new IndexBitSet());
-        sql.setSQLCategory(getStatementType(connection.getJdbcConnection()));
+        sql.setSQLCategory(getStatementType(connection));
 
         double[] updateCosts  = new double[count];
         Arrays.fill(updateCosts, updateCost);
@@ -157,10 +156,12 @@ public class DB2Optimizer extends Optimizer
                 submit(clearAdviseIndex(), connection),
                 submit(explainModeRecommendIndexes(), connection)
                 );
-        try {connection.execute(sql.getSQL());} catch (SQLException ignore){}
-
-        // there is an unchecked warning here...
-        final String databaseName = connection.getConnectionManager().getDatabaseName();
+        try {
+            Statement stmt = connection.createStatement();
+            stmt.execute(sql.getSQL());
+            stmt.close();
+        } catch (SQLException ignore) {
+        }
 
         indexList = supplyValue(readAdviseOnAllIndexes(), connection, databaseName);
         submit(clearAdviseIndex(), connection);
@@ -302,7 +303,8 @@ public class DB2Optimizer extends Optimizer
             INSTANCE;
             @Override
                 public Integer apply(Parameter input) throws SQLException {
-                    final Connection connection     = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection connection =
+                        input.getParameterValue(Connection.class);
                     final IndexBitSet configuration  = input.getParameterValue(IndexBitSet.class);
 
                     final Statement statement = connection.createStatement();
@@ -351,7 +353,7 @@ public class DB2Optimizer extends Optimizer
 
             @Override
                 public Double apply(Parameter input) throws SQLException {
-                    final Connection connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection connection = input.getParameterValue(Connection.class);
                     if(ps == null){
                         ps = connection.prepareStatement(QUERY.toString());
                     }
@@ -395,7 +397,7 @@ public class DB2Optimizer extends Optimizer
             @Override
                 public String apply(Parameter input) throws SQLException {
                     Checks.checkAssertion(tempPredicateSet.size() == 0, "tempPredicateSet was not cleared");
-                    final Connection connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection connection = input.getParameterValue(Connection.class);
                     if(ps == null){
                         ps = connection.prepareStatement(QUERY.toString());
                     }
@@ -444,7 +446,7 @@ public class DB2Optimizer extends Optimizer
 
             @Override
                 public Table apply(Parameter input) throws SQLException {
-                    final Connection connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection connection = input.getParameterValue(Connection.class);
                     if(ps == null){
                         ps = connection.prepareStatement(QUERY.toString());
                     }
@@ -487,7 +489,7 @@ public class DB2Optimizer extends Optimizer
 
             @Override
                 public Void apply(Parameter input) throws SQLException {
-                    final Connection        connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection        connection  = input.getParameterValue(Connection.class);
                     final PreparedStatement ps          = connection.prepareStatement(value);
                     if(ps.execute()){
                         throw new SQLException("Command returned unexpected result set");
@@ -515,7 +517,7 @@ public class DB2Optimizer extends Optimizer
             private PreparedStatement ps;
             @Override
                 public DB2Optimizer.CostLevel apply(Parameter input) throws SQLException {
-                    final Connection        connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection        connection = input.getParameterValue(Connection.class);
                     if(ps == null){
                         ps = connection.prepareStatement(QUERY.toString());
                     }
@@ -559,7 +561,7 @@ public class DB2Optimizer extends Optimizer
 
             @Override
                 public Void apply(Parameter input) throws SQLException {
-                    final Connection c  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection c  = input.getParameterValue(Connection.class);
                     final IndexBitSet b  = input.getParameterValue(IndexBitSet.class);
                     if(ps == null){
                         ps = c.prepareStatement(QUERY.toString());
@@ -586,7 +588,7 @@ public class DB2Optimizer extends Optimizer
 
             @Override
                 public SQLCategory apply(Parameter input) throws SQLException {
-                    final Connection connection = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection connection = input.getParameterValue(Connection.class);
                     final PreparedStatement ps = connection.prepareStatement(
                             "SELECT TRIM(STATEMENT_TYPE) AS TYPE "
                             + "FROM explain_statement "
@@ -642,7 +644,7 @@ public class DB2Optimizer extends Optimizer
 
             @Override
                 public Integer apply(Parameter input) throws SQLException {
-                    final Connection        connection  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection        connection  = input.getParameterValue(Connection.class);
                     final PreparedStatement ps          = connection.prepareStatement(value);
                     final int               count       = ps.executeUpdate();
                     connection.commit();
@@ -668,7 +670,7 @@ public class DB2Optimizer extends Optimizer
                     @SuppressWarnings({"unchecked"})
                         final Iterator<DB2Index> config = input.getParameterValue(Iterator.class);
                     final boolean            enable = input.getParameterValue(Boolean.class);
-                    final Connection         conn   = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
+                    final Connection         conn   = input.getParameterValue(Connection.class);
                     if(!config.hasNext()) return 0;
                     if(statement == null){
                         statement = conn.createStatement();
@@ -712,32 +714,37 @@ public class DB2Optimizer extends Optimizer
                 QUERY_ALL.append(" FROM advise_index WHERE exists = 'N'");
             }
 
-            private PreparedStatement psAll; // use all indexes in table
+            //private PreparedStatement psAll; // use all indexes in table
 
             @Override
-                public List<Index> apply(Parameter input) throws SQLException {
-                    final Connection        conn  = input.getParameterValue(DatabaseConnection.class).getJdbcConnection();
-                    if(psAll == null){
-                        psAll = conn.prepareStatement(QUERY_ALL.toString());
-                    }
-
-                    final ResultSet rs = psAll.executeQuery();
-                    final AtomicInteger id = new AtomicInteger(0);
-                    final String dbName = input.getParameterValue(String.class);
-                    final List<Index> candidateSet = Instances.newList();
-                    try {
-                        while(rs.next()){
-                            id.incrementAndGet();
-                            candidateSet.add(new DB2Index(input.getParameterValue(DatabaseConnection.class), rs, dbName, id.get(), -1));
-                        }
-                    } catch(Exception ex) {
-                        throw new SQLException(ex);
-                    } finally {
-                        rs.close();
-                        conn.commit();
-                    }
-                    return candidateSet;
+            public List<Index> apply(Parameter input) throws SQLException {
+                throw new SQLException("not implemented yet"); // will fix in issue #64
+                /*
+                final Connection        conn  = input.getParameterValue(Connection.class);
+                if(psAll == null){
+                    psAll = conn.prepareStatement(QUERY_ALL.toString());
                 }
+
+                final ResultSet rs = psAll.executeQuery();
+                final AtomicInteger id = new AtomicInteger(0);
+                final String dbName = input.getParameterValue(String.class);
+                final List<Index> candidateSet = Instances.newList();
+                try {
+                    while(rs.next()){
+                        id.incrementAndGet();
+                        //candidateSet.add(new 
+                        //DB2Index(input.getParameterValue(Connection.class), rs, dbName, 
+                        //id.get(), -1));
+                    }
+                } catch(Exception ex) {
+                    throw new SQLException(ex);
+                } finally {
+                    rs.close();
+                    conn.commit();
+                }
+                return candidateSet;
+                */
+            }
 
 
             @Override
@@ -761,34 +768,33 @@ public class DB2Optimizer extends Optimizer
             private PreparedStatement psOne; // use one index in table
 
             @Override
-                public DB2Index apply(Parameter input) throws SQLException {
-                    final DatabaseConnection defaultDatabaseConnection = 
-                        input.getParameterValue(DatabaseConnection.class)
-                            ;
-                    final String dbName = defaultDatabaseConnection.getConnectionManager().getDatabaseName();
-
-                    final Connection  conn   = defaultDatabaseConnection.getJdbcConnection();
-                    if(psOne == null){
-                        psOne = conn.prepareStatement(QUERY_ONE.toString());
-                    }
-                    final String indexName = input.getParameterValue(String.class);
-                    psOne.setString(1, indexName);
-
-                    final ResultSet rs          = psOne.executeQuery();
-                    final Integer   id          = input.getParameterValue(Integer.class);
-                    final Double    megabytes   = input.getParameterValue(Double.class);
-
-                    try {
-                        final boolean haveResult = rs.next();
-                        Checks.checkAssertion(haveResult, "did not find index " + indexName + " in ADVISE_INDEX");
-                        return new DB2Index(defaultDatabaseConnection, rs, dbName, id, megabytes);
-                    } catch(Exception ex) {
-                        throw new SQLException(ex);
-                    } finally {
-                        rs.close();
-                        conn.commit();
-                    }
+            public DB2Index apply(Parameter input) throws SQLException {
+                /*
+                final Connection conn = input.getParameterValue(Connection.class)
+                    ;
+                if(psOne == null){
+                    psOne = conn.prepareStatement(QUERY_ONE.toString());
                 }
+                final String indexName = input.getParameterValue(String.class);
+                psOne.setString(1, indexName);
+
+                final ResultSet rs          = psOne.executeQuery();
+                final Integer   id          = input.getParameterValue(Integer.class);
+                final Double    megabytes   = input.getParameterValue(Double.class);
+
+                try {
+                    final boolean haveResult = rs.next();
+                    Checks.checkAssertion(haveResult, "did not find index " + indexName + " in ADVISE_INDEX");
+                    return new DB2Index(defaultDatabaseConnection, rs, dbName, id, megabytes);
+                } catch(Exception ex) {
+                    throw new SQLException(ex);
+                } finally {
+                    rs.close();
+                    conn.commit();
+                }
+                */
+                throw new SQLException("not implemented yet"); // will fix in issue #64
+            }
         }
     }
     public static class CostLevel {

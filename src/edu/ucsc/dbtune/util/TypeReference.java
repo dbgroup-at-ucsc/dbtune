@@ -47,7 +47,7 @@ public abstract class TypeReference<T> {
      }
 
     @SuppressWarnings("rawtypes")
-	@Override
+    @Override
     public boolean equals(Object o) {
         return (o instanceof TypeReference) && Objects.equals(this.getType(), ((TypeReference) o).getType());
     }

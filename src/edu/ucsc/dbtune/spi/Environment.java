@@ -3,15 +3,20 @@ package edu.ucsc.dbtune.spi;
 import edu.ucsc.dbtune.spi.core.Console;
 
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.DATABASE;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OUTPUT_FOLDERNAME;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OVERHEAD_FACTOR;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.URL;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
@@ -77,6 +82,26 @@ public class Environment {
      */
     public String getUsername(){
         return asString(configuration.getProperty(USERNAME));
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#SCHEMA}
+     */
+    public String getSchema(){
+        return asString(configuration.getProperty(SCHEMA));
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#OPTIMIZER}
+     */
+    public String getOptimizer() throws IllegalArgumentException {
+        String opt = asString(configuration.getProperty(OPTIMIZER));
+
+        if(!opt.equals(INUM) && !opt.equals(IBG) && !opt.equals(DBMS)) {
+            throw new IllegalArgumentException("Bad optimizer option " + opt);
+        }
+
+        return opt;
     }
 
     /**
@@ -228,11 +253,11 @@ public class Environment {
     private static Properties getDefaultProperties(){
         return new Properties(){
             /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-			{
+            {
                 setProperty(URL,         "jdbc:postgresql://aigaion.cse.ucsc.edu/test");
                 setProperty(USERNAME,    "dbtune");
                 setProperty(PASSWORD,    "dbtuneadmin");

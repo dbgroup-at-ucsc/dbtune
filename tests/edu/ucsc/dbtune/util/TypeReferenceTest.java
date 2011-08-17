@@ -16,35 +16,35 @@ import static org.junit.Assert.assertNotSame;
 public class TypeReferenceTest {
 
     @SuppressWarnings("unchecked")
-	@Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testBasicArrayListExample() throws Exception {
         // Consider GuardingList<T>, which enforces type safety at runtime...
         final List<String> o = new GuardingList<String>(new TypeReference<String>(){});
         o.add("Yeah!");
         @SuppressWarnings("rawtypes")
-		final List raw = as(o);
+        final List raw = as(o);
         raw.add(1234);  // it should throw an illegal argument exception 
     }
 
     @SuppressWarnings("unchecked")
-	@Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testDealingWithRawTypes() throws Exception {
         @SuppressWarnings("rawtypes")
-		final Dancing salsa = salsaDancingToRaw();
+        final Dancing salsa = salsaDancingToRaw();
         @SuppressWarnings("rawtypes")
-		final Dancing tango = tangoDancingToRaw();
+        final Dancing tango = tangoDancingToRaw();
         assertNotSame(tango, salsa);
         salsa.mix(tango);
     }
 
 
     @SuppressWarnings("rawtypes")
-	static Dancing salsaDancingToRaw(){
+    static Dancing salsaDancingToRaw(){
         return new SalsaDancing(new TypeReference<SalsaDancing>(){});
     }
 
     @SuppressWarnings("rawtypes")
-	static Dancing tangoDancingToRaw(){
+    static Dancing tangoDancingToRaw(){
         return new TangoDancing(new TypeReference<TangoDancing>(){});
     }
 

@@ -1,10 +1,9 @@
 package edu.ucsc.dbtune;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.hamcrest.CoreMatchers;
@@ -14,10 +13,8 @@ import org.junit.Condition;
 import org.junit.If;
 import org.junit.Test;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 
-import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -27,40 +24,42 @@ import static org.junit.Assert.assertThat;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  * @author ivo@cs.ucsc.edu (Ivo Jimenez)
  */
-public class IndexExtractorTestFunctional {
-    private static DatabaseConnection connection;
-    private static Environment        environment = Environment.getInstance();;
+public class IndexExtractorTestFunctional
+{
+    public final static DatabaseSystem db;
+    public final static Environment    en;
+
+    static {
+        try {       
+            en = Environment.getInstance();
+            db = new DatabaseSystem();
+        } catch(SQLException ex) {
+            throw new ExceptionInInitializerError(ex);
+        }
+    }
 
     @BeforeClass
     public static void setUp() throws Exception {
-        String ddlfilename;
-
-        connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
-        ddlfilename = environment.getScriptAtWorkloadsFolder("one_table/create.sql");
-        
+        String ddlfilename = en.getScriptAtWorkloadsFolder("one_table/create.sql");
         //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
-        connection.getJdbcConnection().setAutoCommit(false);
     }
 
 
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testConnectionIsAlive() throws Exception {
-        assertThat(connection.isOpened(), is(true));
-        final Connection jdbcConnection = connection.getJdbcConnection();
-        final DatabaseMetaData meta = jdbcConnection.getMetaData();
-        assertThat(meta, CoreMatchers.<Object>notNullValue());
+        assertThat(db.getConnection().isClosed(), is(false));
     }
 
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLRecommendIndexes() throws Exception {
-        Configuration candidates = connection.getOptimizer().recommendIndexes(new SQLStatement("select a from tbl where a = 5;"));
+        Configuration candidates = db.getOptimizer().recommendIndexes(new SQLStatement("select a from tbl where a = 5;"));
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
 
-        candidates = connection.getOptimizer().recommendIndexes(new SQLStatement("update tbl set a=-1 where a = 5;"));
+        candidates = db.getOptimizer().recommendIndexes(new SQLStatement("update tbl set a=-1 where a = 5;"));
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
@@ -68,20 +67,12 @@ public class IndexExtractorTestFunctional {
 
     @AfterClass
     public static void tearDown() throws Exception{
-        if(connection != null) connection.close();
-        connection  = null;
-        environment.getAll().clear();
-        environment = null;
+        db.getConnection().close();
     }
 
     @Condition
-    public static boolean isDatabaseConnectionAvailable(){
-        final boolean isNotNull = connection != null;
-        boolean isOpened = false;
-        if(isNotNull){
-            isOpened = connection.isOpened();
-        }
-        return isNotNull && isOpened;
+    public static boolean isDatabaseConnectionAvailable() throws SQLException {
+        return !db.getConnection().isClosed();
     }
 
 }

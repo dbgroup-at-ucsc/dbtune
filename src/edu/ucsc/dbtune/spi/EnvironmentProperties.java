@@ -1,8 +1,5 @@
 package edu.ucsc.dbtune.spi;
 
-import edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm;
-import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
-
 /**
  * Set of properties used to write functional tests. They are used to introspect the system where 
  * the tests are running. The {@code FILE} field indicates where the settings are supposed to be 
@@ -14,32 +11,55 @@ public class EnvironmentProperties {
     /**
      * Name of the configuration properties file.
      */
-    public static final String FILE = "dbtune.cfg";
-
-    /**
+    public static final String FILE = "dbtune.cfg"; /**
      * Developer's DBMS username.
      */
-    public static final String USERNAME = JdbcConnectionManager.USERNAME;
+    public static final String USERNAME = "username";
 
     /**
      * Developer's DBMS password
      */
-    public static final String PASSWORD = JdbcConnectionManager.PASSWORD;
+    public static final String PASSWORD = "password";
 
     /**
      * Name of the target database
      */
-    public static final String DATABASE = JdbcConnectionManager.DATABASE;
+    public static final String DATABASE = "database";
+
+    /**
+     * Name of the target schema (for postgres)
+     */
+    public static final String SCHEMA = "schema";
 
     /**
      * Fully qualified path to JDBC's {@code Driver} class
      */
-    public static final String JDBC_DRIVER = JdbcConnectionManager.DRIVER;
+    public static final String JDBC_DRIVER = "driver";
 
     /**
      * JDBC connection url.
      */
-    public static final String URL = JdbcConnectionManager.URL;
+    public static final String URL = "url";
+
+    /**
+     * Type of optimizer to use
+     */
+    public static final String OPTIMIZER = "optimizer";
+
+    /**
+     * DBMS optimizer
+     */
+    public static final String DBMS = "dbms";
+
+    /**
+     * INUM optimizer
+     */
+    public static final String INUM = "inum";
+
+    /**
+     * IBG optimizer
+     */
+    public static final String IBG = "ibg";
 
     /**
      * Folder for previously defined workloads. By convention, this folder contains many sub-folders 

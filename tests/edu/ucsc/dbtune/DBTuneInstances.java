@@ -2,9 +2,6 @@ package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.advisor.BenefitFunction;
 import edu.ucsc.dbtune.advisor.DoiFunction;
-import edu.ucsc.dbtune.connectivity.ConnectionManager;
-import edu.ucsc.dbtune.connectivity.JdbcConnectionFactory;
-import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
@@ -16,16 +13,13 @@ import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
+import edu.ucsc.dbtune.spi.EnvironmentProperties;
 
 import java.lang.reflect.Constructor;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
-
-import static edu.ucsc.dbtune.JdbcMocks.*;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -52,74 +46,31 @@ public class DBTuneInstances {
         }
     }
 
-    public static JdbcConnectionFactory newJdbcConnectionFactory(){
-        return new JdbcConnectionFactory(){
-            @Override
-            public Connection makeConnection(String url,
-                                             String driverClass, String username,
-                                             String password, boolean autoCommit
-            ) throws SQLException {
-                final JdbcMocks.MockConnection conn = new JdbcMocks.MockConnection();
-                conn.register(
-                        makeMockStatement(true, true, conn),
-                        makeMockPreparedStatement(true, true, conn)
-                );
-
-
-
-
-                return conn;
-            }
-        };
-    }
-
-    public static ConnectionManager newDB2DatabaseConnectionManager(){
-        try {
-            return DBTuneInstances.newDatabaseConnectionManager(newDB2Properties()
-            );
-        } catch (Exception e) {
-            throw new AssertionError("unable to create ConnectionManager");
-        }
-    }
-
     public static Properties newDB2Properties() {
         return new Properties(){
-            /**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-
-			{
-                setProperty(JdbcConnectionManager.URL, "");
-                setProperty(JdbcConnectionManager.USERNAME, "newo");
-                setProperty(JdbcConnectionManager.PASSWORD, "hahaha");
-                setProperty(JdbcConnectionManager.DATABASE, "matrix");
-                setProperty(JdbcConnectionManager.DRIVER, "com.ibm.db2.jcc.DB2Driver");
+            private static final long serialVersionUID = 1L;
+            {
+                setProperty(EnvironmentProperties.URL, "");
+                setProperty(EnvironmentProperties.USERNAME, "newo");
+                setProperty(EnvironmentProperties.PASSWORD, "hahaha");
+                setProperty(EnvironmentProperties.DATABASE, "matrix");
+                setProperty(EnvironmentProperties.JDBC_DRIVER, "com.ibm.db2.jcc.DB2Driver");
             }
         };
-    }
-
-    public static ConnectionManager newPGDatabaseConnectionManager(){
-        try {
-            return DBTuneInstances.newDatabaseConnectionManager(newPGSQLProperties()
-            );
-        } catch (Exception e) {
-            throw new AssertionError("unable to create ConnectionManager");
-        }
     }
 
     public static Properties newPGSQLProperties() {
         return new Properties(){/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-		{
-            setProperty(JdbcConnectionManager.URL, "");
-            setProperty(JdbcConnectionManager.USERNAME, "newo");
-            setProperty(JdbcConnectionManager.PASSWORD, "hahaha");
-            setProperty(JdbcConnectionManager.DATABASE, "matrix");
-            setProperty(JdbcConnectionManager.DRIVER, "org.postgresql.Driver");
+        {
+            setProperty(EnvironmentProperties.URL, "");
+            setProperty(EnvironmentProperties.USERNAME, "newo");
+            setProperty(EnvironmentProperties.PASSWORD, "hahaha");
+            setProperty(EnvironmentProperties.DATABASE, "matrix");
+            setProperty(EnvironmentProperties.JDBC_DRIVER, "org.postgresql.Driver");
         }};
     }
 
@@ -141,39 +92,6 @@ public class DBTuneInstances {
             cols.add(true);
         }
         return cols;
-    }
-
-    public static ConnectionManager newDatabaseConnectionManager(
-            Properties props,
-            JdbcConnectionFactory factory
-    ) throws Exception {
-        return JdbcConnectionManager.makeDatabaseConnectionManager(props, factory);
-    }
-
-    public static ConnectionManager newDatabaseConnectionManager(
-            Properties props
-    ) throws Exception {
-         return DBTuneInstances.newDatabaseConnectionManager(props, newJdbcConnectionFactory());
-    }
-
-    public static ConnectionManager newDatabaseConnectionManagerWithSwitchOffOnce(
-            Properties props
-    ) throws Exception {
-        return DBTuneInstances.newDatabaseConnectionManager(props, makeJdbcConnectionFactoryWithSwitchOffOnce());
-    }
-
-    public static JdbcConnectionFactory makeJdbcConnectionFactoryWithSwitchOffOnce(){
-        return new JdbcConnectionFactory(){
-            @Override
-            public Connection makeConnection(String url, String driverClass, String username, String password, boolean autoCommit) throws SQLException {
-                final JdbcMocks.MockConnection conn = new JdbcMocks.MockConnection();
-                conn.register(
-                        makeMockStatementSwitchOffOne(true, true, conn),
-                        makeMockPreparedStatementSwitchOffOne(true, true, conn)
-                );
-                return conn;
-            }
-        };
     }
 
     public static Index newDB2Index() throws Exception {
@@ -297,28 +215,27 @@ public class DBTuneInstances {
     return new TempDoiFunction(qinfos, candidateSet);
   }
 
-    private static class TempDoiFunction implements DoiFunction {
-        private InteractionBank bank;
-        TempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Configuration candidateSet) {
-            bank = new InteractionBank(1024);
-            for (Index a : candidateSet) {
-                int id_a = a.getId();
-                for (Index b : candidateSet) {
-                    int id_b = b.getId();
-                    if (id_a < id_b) {
-                        double doi = 0;
-                        for (IBGPreparedSQLStatement qinfo : qinfos) {
-                            doi += qinfo.getInteractionBank().interactionLevel(a.getId(), b.getId());
-                        }
-                        bank.assignInteraction(a.getId(), b.getId(), doi);
-                    }
-                }
-            }
-        }
+  private static class TempDoiFunction implements DoiFunction {
+      private InteractionBank bank;
+      TempDoiFunction(List<IBGPreparedSQLStatement> qinfos, Configuration candidateSet) {
+          bank = new InteractionBank(1024);
+          for (Index a : candidateSet) {
+              int id_a = a.getId();
+              for (Index b : candidateSet) {
+                  int id_b = b.getId();
+                  if (id_a < id_b) {
+                      double doi = 0;
+                      for (IBGPreparedSQLStatement qinfo : qinfos) {
+                          doi += qinfo.getInteractionBank().interactionLevel(a.getId(), b.getId());
+                      }
+                      bank.assignInteraction(a.getId(), b.getId(), doi);
+                  }
+              }
+          }
+      }
 
-        public double apply(Index a, Index b) {
-            return bank.interactionLevel(a.getId(), b.getId());
-        }
-    }
-
+      public double apply(Index a, Index b) {
+          return bank.interactionLevel(a.getId(), b.getId());
+      }
+  }
 }

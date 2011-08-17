@@ -20,9 +20,8 @@ package edu.ucsc.dbtune.advisor.bc;
 
 import edu.ucsc.dbtune.advisor.BenefitInfoInput;
 import edu.ucsc.dbtune.advisor.StaticIndexSet;
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -30,15 +29,15 @@ import java.sql.SQLException;
 import java.util.Arrays;
 
 public class BcBenefitInfo {
-    private final double[]          origCosts;
-    private final double[]          newCosts;
-    private final int[]             reqLevels;
-    private final double[]          overheads;
-    private final IBGPreparedSQLStatement  profiledQuery;
+    private final double[]              origCosts;
+    private final double[]              newCosts;
+    private final int[]                 reqLevels;
+    private final double[]              overheads;
+    private final PreparedSQLStatement  profiledQuery;
 
     private BcBenefitInfo(double[] origCosts, double[] newCosts,
                           int[] reqLevels, double[] overheads,
-                          IBGPreparedSQLStatement profiledQuery
+                          PreparedSQLStatement profiledQuery
     ) {
         this.origCosts      = origCosts;
         this.newCosts       = newCosts;
@@ -60,7 +59,6 @@ public class BcBenefitInfo {
      */
     public static BcBenefitInfo makeBcBenefitInfo(BenefitInfoInput arg) throws SQLException {
         return genBcBenefitInfo(
-                arg.getDatabaseConnection(),
                 arg.getConfiguration(),
                 arg.getHotSet(),
                 arg.getRecommendedIndexes(),
@@ -68,11 +66,11 @@ public class BcBenefitInfo {
         );
     }
     
-    static BcBenefitInfo genBcBenefitInfo(DatabaseConnection conn,
+    static BcBenefitInfo genBcBenefitInfo(
             Configuration snapshot,
             StaticIndexSet hotSet,
             IndexBitSet config,
-            IBGPreparedSQLStatement profiledQuery )
+            PreparedSQLStatement profiledQuery )
         throws SQLException
     {
         /*
@@ -166,7 +164,7 @@ public class BcBenefitInfo {
     /**
      * @return the {@link IBGPreparedSQLStatement} used in this {@code BcBenefitInfo} object.
      */
-    public IBGPreparedSQLStatement getProfiledQuery(){
+    public PreparedSQLStatement getProfiledQuery(){
         return profiledQuery;
     }
 

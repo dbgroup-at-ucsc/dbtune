@@ -26,7 +26,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
- * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)
+ * @author Ivo Jimenez
  */
 public class SQLStatementPlanTest {
 

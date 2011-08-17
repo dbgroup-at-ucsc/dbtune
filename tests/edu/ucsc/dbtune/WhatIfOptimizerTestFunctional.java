@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune;
 
-import edu.ucsc.dbtune.connectivity.ConnectionManager;
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
@@ -20,9 +18,8 @@ import org.junit.If;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Properties;
+import java.sql.SQLException;
 
-import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.makeDatabaseConnectionManager;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
@@ -43,30 +40,25 @@ import static org.junit.Assume.assumeThat;
  *     "On-line Index Selection for Physical Database Tuning"</a>
  */
 public class WhatIfOptimizerTestFunctional {
-    private static DatabaseConnection connection;
-    private static Environment environment;
+    private static DatabaseSystem db;
+    private static Environment    en;
 
     @BeforeClass
     public static void setUp() throws Exception {
-        environment = Environment.getInstance();
+        en = Environment.getInstance();
+        db = new DatabaseSystem();
 
-        final Properties        connProps   = environment.getAll();
-        final ConnectionManager manager     = makeDatabaseConnectionManager(connProps);
-
-        try {connection = manager.connect();} catch (Exception e) {connection = null;}
-
-        File   outputdir   = new File(environment.getOutputFoldername() + "/one_table");
-        String ddlfilename = environment.getScriptAtWorkloadsFolder("one_table/create.sql");
+        File   outputdir   = new File(en.getOutputFoldername() + "/one_table");
+        String ddlfilename = en.getScriptAtWorkloadsFolder("one_table/create.sql");
 
         outputdir.mkdirs();
         //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
-        connection.getJdbcConnection().setAutoCommit(false);
     }
 
     @Test // this test will pass once the what if optimizer returns something....
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLWhatIfOptimization() throws Exception {
-        final Optimizer   optimizer  = connection.getOptimizer();
+        final Optimizer   optimizer  = db.getOptimizer();
         final Configuration candidates = optimizer.recommendIndexes(new SQLStatement("select a from tbl where a = 5;"));
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
@@ -84,8 +76,8 @@ public class WhatIfOptimizerTestFunctional {
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLIBGWhatIfOptimization() throws Exception {
-        final Configuration candidates = connection.getOptimizer().recommendIndexes(new SQLStatement("select count(*) from tbl where b > 3"));
-        final IBGOptimizer optimizer = new IBGOptimizer(connection.getOptimizer());
+        final Configuration candidates = db.getOptimizer().recommendIndexes(new SQLStatement("select count(*) from tbl where b > 3"));
+        final IBGOptimizer optimizer = new IBGOptimizer(db.getOptimizer());
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
@@ -96,19 +88,11 @@ public class WhatIfOptimizerTestFunctional {
 
     @AfterClass
     public static void tearDown() throws Exception{
-        if(connection != null) connection.close();
-        connection  = null;
-        environment.getAll().clear();
-        environment = null;
+        db.getConnection().close();
     }
 
     @Condition
-    public static boolean isDatabaseConnectionAvailable(){
-        final boolean isNotNull = connection != null;
-        boolean isOpened = false;
-        if(isNotNull){
-            isOpened = connection.isOpened();
-        }
-        return isNotNull && isOpened;
+    public static boolean isDatabaseConnectionAvailable() throws SQLException {
+        return !db.getConnection().isClosed();
     }
 }

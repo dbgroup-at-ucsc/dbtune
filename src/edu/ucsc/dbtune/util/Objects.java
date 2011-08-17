@@ -176,7 +176,7 @@ public class Objects {
     * booleans.
     */
     @SuppressWarnings("unused")
-	public static int hash( int aSeed, boolean aBoolean ) {
+    public static int hash( int aSeed, boolean aBoolean ) {
       return firstTerm( aSeed ) + ( aBoolean ? 1 : 0 );
     }
   
@@ -184,7 +184,7 @@ public class Objects {
     * chars.
     */
     @SuppressWarnings("unused")
-	public static int hash( int aSeed, char aChar ) {
+    public static int hash( int aSeed, char aChar ) {
       return firstTerm( aSeed ) + (int)aChar;
     }
   
@@ -211,7 +211,7 @@ public class Objects {
     * floats.
     */
     @SuppressWarnings("unused")
-	public static int hash( int aSeed , float aFloat ) {
+    public static int hash( int aSeed , float aFloat ) {
       return hash( aSeed, Float.floatToIntBits(aFloat) );
     }
   
@@ -219,7 +219,7 @@ public class Objects {
     * doubles.
     */
     @SuppressWarnings("unused")
-	public static int hash( int aSeed , double aDouble ) {
+    public static int hash( int aSeed , double aDouble ) {
       return hash( aSeed, Double.doubleToLongBits(aDouble) );
     }
   

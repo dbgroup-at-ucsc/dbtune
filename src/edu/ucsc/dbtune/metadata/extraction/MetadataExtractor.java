@@ -18,17 +18,17 @@
 
 package edu.ucsc.dbtune.metadata.extraction;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Catalog;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
  * Interface for the main class of the metadata extraction package
  *
- * @author ivo@cs.ucsc.edu (Ivo Jimenez)
+ * @author Ivo Jimenez
  */
-public interface MetaDataExtractor
+public interface MetadataExtractor
 {
     /**
      * Given a database connection, it extracts metadata information. The information is comprised 
@@ -37,5 +37,5 @@ public interface MetaDataExtractor
      * @param connection
      *     object used to obtain metadata for its associated database
      */
-    public Catalog extract( DatabaseConnection connection ) throws SQLException;
+    public Catalog extract(Connection connection) throws SQLException;
 }

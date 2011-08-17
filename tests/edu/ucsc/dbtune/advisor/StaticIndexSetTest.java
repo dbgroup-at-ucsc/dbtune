@@ -57,7 +57,7 @@ public class StaticIndexSetTest {
         for(Index each : indexSet){each.getId();}
         boolean again = false;
         for(Index each : indexSet){
-        	each.getId();
+            each.getId();
             again |= true;
         }
 

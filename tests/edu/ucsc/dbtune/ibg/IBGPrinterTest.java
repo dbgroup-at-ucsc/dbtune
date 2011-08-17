@@ -31,20 +31,20 @@ public class IBGPrinterTest {
         final IBGNode root  = makeIBGNode(1);
         root.setCost(20.0);
         final IBGNode first = new IBGNode(new IndexBitSet(){/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-		{set(3); set(4);}}, 2);
+        {set(3); set(4);}}, 2);
         first.setCost(40.0);
         root.expand(67.8, new IBGChild(first, 2));
 
         final IndexBenefitGraph graph   = new IndexBenefitGraph(root, 5.0, new IndexBitSet(){/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+             * 
+             */
+            private static final long serialVersionUID = 1L;
 
-		{set(3); set(4);}});
+        {set(3); set(4);}});
         final IBGPrinter        printer = new IBGPrinter(new IndexBitSet(), new IBGNodeQueue()){
             @Override
             void printExpanded(IndexBenefitGraph ibg, IBGNode node) {

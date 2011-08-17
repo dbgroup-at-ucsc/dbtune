@@ -42,7 +42,7 @@ public class DynamicIndexSetTest {
         for(Index each : idxset){each.getId();}
         boolean again = false;
         for(Index each : idxset){
-        	each.getId();
+            each.getId();
             again |= true;
         }
 

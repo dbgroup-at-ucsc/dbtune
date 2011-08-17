@@ -15,7 +15,6 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
@@ -73,23 +72,34 @@ public class PGOptimizer extends Optimizer
     public PGOptimizer(Connection connection, Schema schema)
         throws SQLException, UnsupportedOperationException
     {
-        String version = getVersion(connection);
+        this.schema     = schema;
+        this.connection = connection;
 
-        if(compareVersion("9.0.0", version) > 0) {
-            throw new UnsupportedOperationException(
-                "PostgreSQL version " + version + " doesn't produce formatted EXPLAIN plans");
+        if(schema == null) {
+            obtainPlan = true;
+        } else {
+            String version = getVersion(connection);
+
+            if(compareVersion("9.0.0", version) > 0) {
+                throw new UnsupportedOperationException(
+                        "PostgreSQL version " + version + " doesn't produce formatted EXPLAIN plans");
+            }
+
+            obtainPlan = false;
         }
-
-        this.schema       = schema;
-        this.connection   = connection;
-        this.obtainPlan   = true;
     }
 
-    public PGOptimizer(DatabaseConnection connection)
+    /**
+     * Creates an optimizer that doesn't obtain execution plans.
+     *
+     * @param connection
+     *     JDBC connection
+     */
+    public PGOptimizer(Connection connection) throws SQLException
     {
-        this.schema       = null;
-        this.obtainPlan   = false;
-        this.connection   = connection.getJdbcConnection();
+        this(connection,null);
+
+        this.obtainPlan = false;
     }
 
     /**

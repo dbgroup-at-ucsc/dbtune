@@ -1,5 +1,4 @@
-/*
- * ****************************************************************************
+/* ************************************************************************** *
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -13,18 +12,16 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- * ****************************************************************************
- */
-
+ * ************************************************************************** */
 package edu.ucsc.dbtune.metadata.extraction;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -32,10 +29,9 @@ import java.sql.Statement;
 /**
  * Metadata extractor for PostgreSQL.
  * <p>
- * This class assumes a PostgreSQL system version 8.3 or greater is on the backend and JDBC driver 
- * (type 4) version.
+ * This class assumes a PostgreSQL system version 8.3 or greater is on the backend and a JDBC driver (type 4) version.
  *
- * @author ivo@cs.ucsc.edu (Ivo Jimenez)
+ * @author Ivo Jimenez
  */
 public class PGExtractor extends GenericJDBCExtractor
 {
@@ -58,12 +54,11 @@ public class PGExtractor extends GenericJDBCExtractor
      * @see GenericJDBCExtractor
      */
     @Override
-    public Catalog extract( DatabaseConnection connection )
+    public Catalog extract(Connection connection)
         throws SQLException
     {
         Catalog             catalog;
         Index               index;
-        java.sql.Connection con;
         Statement           stmnt;
         ResultSet           rsset;
         String              cmmnd;
@@ -72,12 +67,11 @@ public class PGExtractor extends GenericJDBCExtractor
         try
         {
             catalog = super.extract(connection);
-            con     = connection.getJdbcConnection();
 
             for (Schema schema : catalog.getSchemas()) {
                 for (Table table : schema.getTables() ) {
 
-                    stmnt = con.createStatement();
+                    stmnt = connection.createStatement();
                     cmmnd = 
                         " SELECT" +
                         "    t.relname," +
@@ -101,7 +95,7 @@ public class PGExtractor extends GenericJDBCExtractor
 
                     stmnt.close();
 
-                    stmnt = con.createStatement();
+                    stmnt = connection.createStatement();
                     cmmnd = 
                         " SELECT" +
                         "   t.relname as tname," +
@@ -146,7 +140,7 @@ public class PGExtractor extends GenericJDBCExtractor
 
                     for( Column column : table.getColumns() )
                     {
-                        stmnt = con.createStatement();
+                        stmnt = connection.createStatement();
                         cmmnd =
                             " SELECT " +
                             "   count(DISTINCT " + column.getName() + ") " +

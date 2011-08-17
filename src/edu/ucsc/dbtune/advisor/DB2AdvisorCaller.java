@@ -18,17 +18,16 @@
 
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
-import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.Files;
-import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.spi.Environment;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -69,14 +68,14 @@ public class DB2AdvisorCaller {
     private static final Pattern START_INDEXES_PATTERN   = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
     private static final Pattern END_INDEXES_PATTERN     = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
 
-    public static FileInfo createAdvisorFile(DatabaseConnection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException {
+    public static FileInfo createAdvisorFile(Connection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException {
         submit(
                 // executes "DELETE FROM advise_index"
                 clearAdviseIndex(), conn
         );
 
-        final String cmd = getCmd(conn, advisorPath, budget, workloadFile, false);
-        final String cleanCmd = getCmd(conn, advisorPath, budget, workloadFile, true);
+        final String cmd = getCmd(advisorPath, budget, workloadFile, false);
+        final String cleanCmd = getCmd(advisorPath, budget, workloadFile, true);
 
         System.out.println("Running db2advis on " + workloadFile);
         System.out.println("command = " + cleanCmd);
@@ -111,11 +110,10 @@ public class DB2AdvisorCaller {
         return info;
     }
 
-    private static String getCmd(DatabaseConnection conn, String advisorPath, int budget, File inFile, boolean clean) {
-        final JdbcConnectionManager manager = Objects.as(conn.getConnectionManager());
-        final String db   = manager.getDatabaseName();
-        final String pw   = manager.getPassword();
-        final String user = manager.getUsername();
+    private static String getCmd(String advisorPath, int budget, File inFile, boolean clean) {
+        final String db   = Environment.getInstance().getDatabaseName();
+        final String pw   = Environment.getInstance().getPassword();
+        final String user = Environment.getInstance().getUsername();
         
         return advisorPath
                +" -d "+db
@@ -137,7 +135,7 @@ public class DB2AdvisorCaller {
             output    = processFile(stream, indexList);
         }
         
-        public IndexSet getCandidates(DatabaseConnection conn) throws SQLException {
+        public IndexSet getCandidates(Connection conn) throws SQLException {
             IndexSet candidateSet = new DB2IndexSet();
             int id = 1;
             for (IndexInfo info : indexList) {

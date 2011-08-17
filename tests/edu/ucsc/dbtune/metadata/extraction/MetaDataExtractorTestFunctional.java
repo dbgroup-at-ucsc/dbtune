@@ -18,14 +18,12 @@
 
 package edu.ucsc.dbtune.metadata.extraction;
 
-import edu.ucsc.dbtune.connectivity.DatabaseConnection;
+import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.metadata.extraction.GenericJDBCExtractor;
-import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
 import edu.ucsc.dbtune.spi.Environment;
 
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
@@ -36,7 +34,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static edu.ucsc.dbtune.connectivity.JdbcConnectionManager.*;
 import static org.junit.Assert.*;
 
 /**
@@ -58,11 +55,10 @@ import static org.junit.Assert.*;
  */
 public class MetaDataExtractorTestFunctional
 {
-    private static DatabaseConnection   connection;
-    private static GenericJDBCExtractor extractor;
+    private static DatabaseSystem       db;
+    private static Environment          en;
     private static Catalog              catalog;
     private static Schema               schema;
-    private static Environment          environment;
 
     private static final String RATINGS     = "ratings";
     private static final String QUEUE       = "queue";
@@ -80,25 +76,21 @@ public class MetaDataExtractorTestFunctional
     @BeforeClass
     public static void setUp() throws Exception
     {
-        String ddlfilename;
+        String ddl;
 
-        environment = Environment.getInstance();
-        connection  = makeDatabaseConnectionManager(environment.getAll()).connect();
-        ddlfilename = environment.getScriptAtWorkloadsFolder("movies/create.sql");
+        en  = Environment.getInstance();
+        db  = new DatabaseSystem();
+        ddl = en.getScriptAtWorkloadsFolder("movies/create.sql");
 
-        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        // SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
 
-        extractor = Strings.contains(environment.getJDBCDriver(), "postgresql")
-                ? new PGExtractor()
-                : new GenericJDBCExtractor();
-
-        catalog = extractor.extract(connection);
+        catalog = db.getCatalog();
     }
 
     @AfterClass
     public static void tearDown() throws Exception
     {
-        if(connection != null) connection.close();
+        db.getConnection().close();
     }
 
     /**
