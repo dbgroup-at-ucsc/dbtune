@@ -87,14 +87,6 @@ public class EnvironmentProperties {
     public static final String MAX_NUM_STATES = "max.num.states";
 
     /**
-     * Whether or not we want to keep the history of the Workload Function Algorithm.
-     *
-     * @see WorkFunctionAlgorithm
-     * @see edu.ucsc.dbtune.advisor.wfit.WfaTrace
-     */
-    public static final String WFA_KEEP_HISTORY = "wfa.keep.history";
-
-    /**
      * Factor used to obtain the overhead of a query based on the start and end time. The overhead 
      * is obtained by
      *
@@ -111,21 +103,6 @@ public class EnvironmentProperties {
      * XXX document
      */
     public static final String INDEX_STATISTICS_WINDOW = "index.statistics.window";
-
-    /**
-     * XXX document it
-     */
-    public static final String WFIT_LOG_FILENAME = "wfit.log.filename";
-
-    /**
-     * XXX document it
-     */
-    public static final String OPT_LOG_FILENAME = "opt.log.filename";
-
-    /**
-     * XXX document it
-     */
-    public static final String MIN_WF_FILENAME = "min.wf.filename";
 
     private EnvironmentProperties(){}
 }

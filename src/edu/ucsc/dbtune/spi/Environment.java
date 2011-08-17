@@ -1,25 +1,23 @@
 package edu.ucsc.dbtune.spi;
 
+import edu.ucsc.dbtune.spi.core.Console;
+
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.DATABASE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.MIN_WF_FILENAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPT_LOG_FILENAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OUTPUT_FOLDERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OVERHEAD_FACTOR;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.URL;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFA_KEEP_HISTORY;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.WFIT_LOG_FILENAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOAD_NAME;
-import edu.ucsc.dbtune.spi.core.Console;
 import static edu.ucsc.dbtune.util.Objects.cast;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -118,14 +116,6 @@ public class Environment {
     }
 
     /**
-     * @return {@link EnvironmentProperties#WFA_KEEP_HISTORY }
-     */
-    public boolean getWFAKeepHistory(){
-        String keepHistory = asString(configuration.getProperty(WFA_KEEP_HISTORY));
-        return Boolean.valueOf(keepHistory);
-    }
-
-    /**
      * @return {@link EnvironmentProperties#MAX_NUM_STATES}
      * @throws NumberFormatException
      *      unable to return the max num of states due to the stated reason.
@@ -163,27 +153,6 @@ public class Environment {
     public int getIndexStatisticsWindow() throws NumberFormatException {
         String indexStatisticsWindow = asString(configuration.getProperty(INDEX_STATISTICS_WINDOW));
         return Integer.valueOf(indexStatisticsWindow);
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#WFIT_LOG_FILENAME }
-     */
-    public String getWFITLogFilename(){
-        return asString(configuration.getProperty(WFIT_LOG_FILENAME));
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#OPT_LOG_FILENAME}
-     */
-    public String getOPTLogFilename(){
-        return asString(configuration.getProperty(OPT_LOG_FILENAME));
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#MIN_WF_FILENAME}
-     */
-    public String getMinWFFilename(){
-        return asString(configuration.getProperty(MIN_WF_FILENAME));
     }
 
     /**
@@ -383,7 +352,6 @@ public class Environment {
             }
         }
     }
-
 
     /**
      * @return the environment singleton.
