@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.DatabaseConnection;
 import java.util.Set;
 
 /**
@@ -10,13 +11,15 @@ import java.util.Set;
  */
 public class InumMatchingStrategy implements MatchingStrategy {
   private final IndexAccessCostEstimation accessCostEstimator;
+  private final DatabaseConnection        connection;
 
-  InumMatchingStrategy(IndexAccessCostEstimation accessCostEstimator){
+  InumMatchingStrategy(IndexAccessCostEstimation accessCostEstimator, DatabaseConnection connection){
     this.accessCostEstimator = accessCostEstimator;
+    this.connection = connection;
   }
 
-  public InumMatchingStrategy(){
-    this(new InumIndexAccessCostEstimation());
+  public InumMatchingStrategy(DatabaseConnection connection){
+    this(new InumIndexAccessCostEstimation(), connection);
   }
 
   @Override

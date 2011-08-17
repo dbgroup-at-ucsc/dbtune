@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.inum;
 
 import com.google.caliper.internal.guava.collect.ImmutableList;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
@@ -78,51 +79,15 @@ public class InumPrecomputation implements Precomputation {
     this.seenWorkloads  = Sets.newHashSet();
   }
 
-
-  @Override public InumSpace getInumSpace() {
-    return Preconditions.checkNotNull(inumSpace.get());
-  }
-
-  @Override public Set<OptimalPlan> setup(String workload, Iterable<DBIndex> configuration) {
-    if(inumSpace.get() == null) {
-      inumSpace.set(new InmemoryInumSpace());
-    }
-
-    seenWorkloads.add(workload);
-    final Set<OptimalPlan> optimalPlans = Sets.newHashSet();
-
-    // todo(Huascar)
-    // call optimizer given the workload and an input configuration
-    //   get optimal plan as a String
-    //   parse it and collect information needed to create a new instance of Optimal plan
-    //   add all returned plans to optimalPlans
-    //   save plans in InumSpace
-    // return a reference to the set of optimal plans
-    final String queryExecutionPlan = getQueryExecutionPlan(connection.getJdbcConnection(),
-        workload, configuration);
-    if(Strings.isEmpty(queryExecutionPlan)) return optimalPlans;
-
-    optimalPlans.addAll(buildPlans(queryExecutionPlan));
-
-    return getInumSpace().save(optimalPlans);
-  }
-
-  private void addIfHavenotSeenBefore(String query){
+  private void addQuerytoListOfSeenQueries(String query){
     Preconditions.checkArgument(!Strings.isEmpty(query));
     if(!seenWorkloads.contains(query)){
       seenWorkloads.add(query);
     }
   }
 
-  private static String getQueryExecutionPlan(Connection connection, String query,
-      Iterable<DBIndex> configuration){
-    // example of a possible suggested plan
-    return "Hash Join  (cost=174080.39..9364262539.50 rows=1 width=193)";   // we can have one or many query plans
-  }
-
   // parsing plan suggested by optimizer
   private static Set<OptimalPlan> buildPlans(String queryExecutionPlan){
-    // todo(Huascar) implement this.
     final Set<OptimalPlan> suggestedPlans = Sets.newHashSet();
     final OptimalPlan   optimalPlan = new SqlExecutionOptimalPlan();
     final List<String>  parsedlines = Lists.newArrayList();
@@ -239,7 +204,42 @@ public class InumPrecomputation implements Precomputation {
   }
 
 
-  @Override public boolean skip(String workload) {
-    return seenWorkloads.contains(workload);
+  @Override public InumSpace getInumSpace() {
+    return Preconditions.checkNotNull(inumSpace.get());
+  }
+
+  @Override public Set<OptimalPlan> setup(String query, Iterable<DBIndex> interestingOrders) {
+    if(inumSpace.get() == null) {
+      inumSpace.set(new InmemoryInumSpace());
+    }
+
+    addQuerytoListOfSeenQueries(query);
+    for(DBIndex eachInterestingOrder : interestingOrders) {
+      final Set<OptimalPlan> optimalPlans = Sets.newHashSet();
+      // call optimizer given the workload and an input configuration
+      //   get optimal plan as a String
+      //   parse it and collect information needed to create a new instance of Optimal plan
+      //   add all returned plans to optimalPlans
+      //   save plans in InumSpace indexed by interesting order.
+      // return a reference to the set of optimal plans
+      final String queryExecutionPlan = getQueryExecutionPlan(connection.getJdbcConnection(),
+        query, eachInterestingOrder);
+      if(Strings.isEmpty(queryExecutionPlan)) continue;
+      optimalPlans.addAll(buildPlans(queryExecutionPlan));
+      return getInumSpace().save(eachInterestingOrder, optimalPlans);
+    }
+
+    return ImmutableSet.of();
+  }
+
+  private static String getQueryExecutionPlan(Connection connection, String query,
+      DBIndex interestingOrder){
+    // example of a possible suggested plan
+    return "Hash Join  (cost=174080.39..9364262539.50 rows=1 width=193)";   // we can have one or many query plans
+  }
+
+
+  @Override public boolean skip(String query) {
+    return seenWorkloads.contains(query);
   }
 }

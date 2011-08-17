@@ -1,13 +1,14 @@
 package edu.ucsc.dbtune.inum;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.StopWatch;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -23,11 +24,11 @@ public class Inum {
   private final MatchingStrategy   matchingLogic;
   private final AtomicBoolean      isStarted;
 
-  private static final Set<String> WORKLOADS;
+  private static final Set<String> QUERIES;
   static {
     final SetupWorkloadVisitor  loader            = new SetupWorkloadVisitor();
     final WorkloadDirectoryNode workloadDirectory = new WorkloadDirectoryNode();
-    WORKLOADS = ImmutableSet.copyOf(workloadDirectory.accept(loader));
+    QUERIES = ImmutableSet.copyOf(workloadDirectory.accept(loader));
   }
 
   private Inum(DatabaseConnection connection, Precomputation precomputation, MatchingStrategy matchingLogic){
@@ -51,12 +52,43 @@ public class Inum {
     return newInumInstance(
         nonNullConnection,
         new InumPrecomputation(nonNullConnection),
-        new InumMatchingStrategy()
+        new InumMatchingStrategy(nonNullConnection)
     );
+  }
+
+  public double calculateQueryCost(String query, Iterable<DBIndex> inputConfiguration){
+    if(!isStarted.get()) throw new InumExecutionException("INUM has not been started yet. Please call start(..) method.");
+    if(!precomputation.skip(query)) {
+      precomputation.setup(
+          query, 
+          findInterestingOrders(query)
+      );
+    }
+
+    final InumSpace   cachedPlans       = precomputation.getInumSpace();
+    final OptimalPlan singleOptimalPlan = matchingLogic.matches(
+        cachedPlans.getAllSavedOptimalPlans(),
+        inputConfiguration
+    );
+
+    return matchingLogic.derivesCost(singleOptimalPlan, inputConfiguration);
+  }
+
+  public void end()   {
+    isStarted.set(false);
+    precomputation.getInumSpace().clear();
+  }
+  
+  private static Iterable<DBIndex> findInterestingOrders(String query){
+    return Sets.newHashSet();
   }
 
   public InumSpace getInumSpace(){
     return precomputation.getInumSpace();
+  }
+  
+  public DatabaseConnection getDatabaseConnection(){
+    return connection;
   }
 
   /**
@@ -65,7 +97,7 @@ public class Inum {
    */
   public void start(){
     try {
-      start(WORKLOADS);
+      start(QUERIES);
     } catch (IOException e) {
       Console.streaming().error("unable to load workload", e);
     }
@@ -83,44 +115,15 @@ public class Inum {
 
     final StopWatch timing = new StopWatch();
     for(String eachQuery : input){
-      // todo(Huascar) question to Team: should we parse the interesting orders or rely on
-      //           the recommended indexes by the extractor? For sake of speed, I am
-      //           using the recommended indexes. For parsing the interesting orders, we
-      //           need to use Zql parser (included in Dash's code).
-      final Iterable<DBIndex> ios = recommendPromissingIndexes(eachQuery, connection);
-      precomputation.setup(eachQuery, ios);
+      precomputation.setup(eachQuery, findInterestingOrders(eachQuery));
     }
     timing.resetAndLog("precomputation took ");
   }
 
-  private static Iterable<DBIndex> recommendPromissingIndexes(String query,
-      DatabaseConnection connection){
-    try {
-      return connection.getIndexExtractor().recommendIndexes(query);
-    } catch (SQLException e) {
-      Console.streaming().error("unable to get indexes. an empty set is returned.", e);
-      return ImmutableSet.of();
-    }
-  }
-
-
-  public double calculateQueryCost(String workload, Iterable<DBIndex> inputConfiguration){
-    if(!isStarted.get()) throw new InumExecutionException("INUM has not been started yet. Please call start(..) method.");
-    if(!precomputation.skip(workload)) {
-      precomputation.setup(workload, inputConfiguration);
-    }
-
-    final InumSpace   cachedPlans       = precomputation.getInumSpace();
-    final OptimalPlan singleOptimalPlan = matchingLogic.matches(
-        cachedPlans.getAllSavedOptimalPlans(),
-        inputConfiguration
-    );
-
-    return matchingLogic.derivesCost(singleOptimalPlan, inputConfiguration);
-  }
-
-  public void end()   {
-    isStarted.set(false);
-    precomputation.getInumSpace().clear();
+  @Override public String toString() {
+    return Objects.toStringHelper(this)
+        .add("started?", isStarted.get())
+        .add("liveDBConnection?", getDatabaseConnection().isOpened())
+    .toString();
   }
 }

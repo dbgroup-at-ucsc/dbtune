@@ -25,13 +25,9 @@ public class InumTest {
     assertThat(inum.getInumSpace().getAllSavedOptimalPlans().isEmpty(), is(false));
   }
 
-  private static DatabaseConnection configureConnection() throws Exception {
-    DBIndex soleOne = Mockito.mock(DBIndex.class);
-    Mockito.when(soleOne.internalId()).thenReturn(1);
-    Mockito.when(soleOne.creationCost()).thenReturn(2.0);
-    Mockito.when(soleOne.columnCount()).thenReturn(1);
+  private static DatabaseConnection configureConnection(DBIndex index) throws Exception {
     final Set<DBIndex> configuration = Sets.newHashSet();
-    configuration.add(soleOne);
+    configuration.add(index);
     IndexExtractor extractor = Mockito.mock(IndexExtractor.class);
     Mockito.when(extractor.recommendIndexes(Mockito.anyString())).thenReturn(configuration);
     DatabaseConnection connection = Mockito.mock(DatabaseConnection.class);
@@ -39,20 +35,29 @@ public class InumTest {
     return connection;
   }
 
+  private static DBIndex configureIndex() {
+    DBIndex soleOne = Mockito.mock(DBIndex.class);
+    Mockito.when(soleOne.internalId()).thenReturn(1);
+    Mockito.when(soleOne.creationCost()).thenReturn(2.0);
+    Mockito.when(soleOne.columnCount()).thenReturn(1);
+    return soleOne;
+  }
+
   private static Inum configureInum() throws Exception {
-    final DatabaseConnection connection     = configureConnection();
-    final InumSpace          inumSpace      = configureInumSpace();
+    final DBIndex            index          = configureIndex();
+    final DatabaseConnection connection     = configureConnection(index);
+    final InumSpace          inumSpace      = configureInumSpace(index);
     final Precomputation     precomputation = configurePrecomputation(inumSpace);
     final MatchingStrategy   matchingLogic  = configureMatchingLogic(inumSpace);
 
     return Inum.newInumInstance(connection, precomputation, matchingLogic);
   }
 
-  private static InumSpace configureInumSpace() throws Exception {
+  private static InumSpace configureInumSpace(DBIndex index) throws Exception {
     final InumSpace inumSpace = Mockito.mock(InumSpace.class);
     final Set<OptimalPlan> plans = configureSingleOptimalPlan();
     Mockito.when(inumSpace.getAllSavedOptimalPlans()).thenReturn(plans);
-    Mockito.when(inumSpace.save(plans)).thenReturn(plans);
+    Mockito.when(inumSpace.save(index, plans)).thenReturn(plans);
     return inumSpace;
   }
 
