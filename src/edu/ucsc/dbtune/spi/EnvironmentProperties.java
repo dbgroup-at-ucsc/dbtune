@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.spi;
 
-import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm;
+import edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm;
 import edu.ucsc.dbtune.connectivity.JdbcConnectionManager;
 
 /**
@@ -90,7 +90,7 @@ public class EnvironmentProperties {
      * Whether or not we want to keep the history of the Workload Function Algorithm.
      *
      * @see WorkFunctionAlgorithm
-     * @see edu.ucsc.dbtune.advisor.WfaTrace
+     * @see edu.ucsc.dbtune.advisor.wfit.WfaTrace
      */
     public static final String WFA_KEEP_HISTORY = "wfa.keep.history";
 

@@ -15,6 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.advisor.wfit.WFIT;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;

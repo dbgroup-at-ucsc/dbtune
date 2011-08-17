@@ -16,9 +16,10 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.advisor;
+package edu.ucsc.dbtune.advisor.wfit;
 
-import edu.ucsc.dbtune.advisor.WorkFunctionAlgorithm.TotalWorkValues;
+import edu.ucsc.dbtune.advisor.IndexPartitions;
+import edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm.TotalWorkValues;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;

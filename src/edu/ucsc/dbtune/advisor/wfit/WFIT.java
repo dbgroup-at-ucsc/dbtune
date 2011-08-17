@@ -13,8 +13,18 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.advisor;
+package edu.ucsc.dbtune.advisor.wfit;
 
+import edu.ucsc.dbtune.advisor.Advisor;
+import edu.ucsc.dbtune.advisor.DynamicIndexSet;
+import edu.ucsc.dbtune.advisor.HotSetSelector;
+import edu.ucsc.dbtune.advisor.HotsetSelection;
+import edu.ucsc.dbtune.advisor.IndexPartitions;
+import edu.ucsc.dbtune.advisor.IndexStatisticsFunction;
+import edu.ucsc.dbtune.advisor.InteractionSelection;
+import edu.ucsc.dbtune.advisor.InteractionSelector;
+import edu.ucsc.dbtune.advisor.StaticIndexSet;
+import edu.ucsc.dbtune.advisor.StatisticsFunction;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
 import edu.ucsc.dbtune.ibg.InteractionBank;

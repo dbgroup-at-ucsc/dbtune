@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm;
 import edu.ucsc.dbtune.metadata.Index;
 
 import org.junit.Test;

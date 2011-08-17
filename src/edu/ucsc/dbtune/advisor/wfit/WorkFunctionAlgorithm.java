@@ -13,8 +13,9 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.advisor;
+package edu.ucsc.dbtune.advisor.wfit;
 
+import edu.ucsc.dbtune.advisor.IndexPartitions;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
