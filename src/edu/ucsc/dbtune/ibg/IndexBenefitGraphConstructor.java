@@ -27,6 +27,7 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DefaultQueue;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 
@@ -34,7 +35,7 @@ public class IndexBenefitGraphConstructor {
     /* 
      * Parameters of the construction.
      */
-    protected final String              sql;
+    protected final SQLStatement        sql;
     protected final ConfigurationBitSet configuration;
     protected final Optimizer           optimizer;
 
@@ -84,7 +85,7 @@ public class IndexBenefitGraphConstructor {
      * @throws java.sql.SQLException
      *      an unexpected error has occurred.
      */
-    public IndexBenefitGraphConstructor(Optimizer optimizer, String sql, ConfigurationBitSet configuration)
+    public IndexBenefitGraphConstructor(Optimizer optimizer, SQLStatement sql, ConfigurationBitSet configuration)
         throws SQLException
     {
         this.optimizer     = optimizer;
@@ -257,7 +258,7 @@ public class IndexBenefitGraphConstructor {
 
     /**
      */
-    public static IndexBenefitGraph construct(Optimizer optimizer, String sql, ConfigurationBitSet conf)
+    public static IndexBenefitGraph construct(Optimizer optimizer, SQLStatement sql, ConfigurationBitSet conf)
         throws SQLException
     {
         InteractionLogger            logger      = new InteractionLogger(conf.getMaxId());

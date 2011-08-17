@@ -92,8 +92,8 @@ public class PreparedSQLStatement
      * @param cost
      *      execution cost
      */
-    public PreparedSQLStatement(String sql, SQLCategory category, double cost, Configuration configuration) {
-        this(new SQLStatement(category,sql), null, cost, null, configuration);
+    public PreparedSQLStatement(SQLStatement sql, double cost, Configuration configuration) {
+        this(sql, null, cost, null, configuration);
     }
 
     /**
@@ -106,13 +106,8 @@ public class PreparedSQLStatement
      * @param totalCost
      *      total creation cost.
      */
-    public PreparedSQLStatement(
-            String sql, 
-            SQLCategory category,
-            double cost,
-            double[] updateCosts,
-            Configuration configuration) {
-        this(new SQLStatement(category,sql), null, cost, updateCosts, configuration);
+    public PreparedSQLStatement(SQLStatement sql,double cost,double[] updateCosts,Configuration configuration) {
+        this(sql, null, cost, updateCosts, configuration);
     }
 
     /**

@@ -25,8 +25,8 @@ import edu.ucsc.dbtune.metadata.SQLCategory;
  */
 public class SQLStatement
 {
-    /** type of statement */
-    private SQLCategory type;
+    /** category of statement */
+    private SQLCategory category;
 
     /** literal contents of the statement */
     private String sql;
@@ -35,37 +35,47 @@ public class SQLStatement
      * Constructs a {@code SQLStatement} with unknown category
      *
      * @param category
-     *      the corresponding {@link SQLCategory} representing the type of statement.
+     *      the corresponding {@link SQLCategory} representing the category of statement.
      * @param sql
      *      a sql statement.
      */
     public SQLStatement(String sql) {
-        this.type = SQLCategory.UNKNOWN;
-        this.sql  = sql;
+        this(sql, SQLCategory.UNKNOWN);
     }
 
     /**
-     * Constructs a {@code SQLStatement} given its type and the literal contents.
+     * Constructs a {@code SQLStatement} given its category and the literal contents.
      *
      * @param category
-     *      the corresponding {@link SQLCategory} representing the type of statement.
+     *      the corresponding {@link SQLCategory} representing the category of statement.
      * @param sql
      *      a sql statement.
      */
-    public SQLStatement(SQLCategory category, String sql) {
-        this.type = category;
-        this.sql  = sql;
+    public SQLStatement(String sql, SQLCategory category) {
+        this.category = category;
+        this.sql      = sql;
     }
 
     /**
-     * Returns the type of statement.
+     * Assigns the category of statement.
+     *
+     * @param category
+     *     a sql category.
+     * @see SQLCategory
+     */
+    public void setSQLCategory(SQLCategory category) {
+        this.category = category;
+    }
+
+    /**
+     * Returns the category of statement.
      *
      * @return
      *     a sql category.
      * @see SQLCategory
      */
     public SQLCategory getSQLCategory() {
-        return type;
+        return category;
     }
 
     /**
@@ -83,7 +93,7 @@ public class SQLStatement
      */
     @Override
     public String toString() {
-        return "[ type=" + type +
+        return "[ category=" + category +
                " text=\"" + sql + "\"]";
     }
 }

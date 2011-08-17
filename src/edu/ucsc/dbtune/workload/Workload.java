@@ -66,9 +66,9 @@ public class Workload implements Iterable<SQLStatement>
             }
 
             if(line.endsWith(";")) {
-                sqls.add(new SQLStatement(category, line.substring(0, line.length()-1)));
+                sqls.add(new SQLStatement(line.substring(0, line.length()-1),category));
             } else {
-                sqls.add(new SQLStatement(category, line));
+                sqls.add(new SQLStatement(line,category));
             }
         }
     }

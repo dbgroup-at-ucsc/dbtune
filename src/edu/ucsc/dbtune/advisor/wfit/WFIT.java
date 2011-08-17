@@ -93,7 +93,7 @@ public class WFIT extends Advisor
     {
         IBGPreparedSQLStatement qinfo;
 
-        qinfo = (IBGPreparedSQLStatement) ibgOptimizer.explain(sql.getSQL(),indexes);
+        qinfo = (IBGPreparedSQLStatement) ibgOptimizer.explain(sql,indexes);
 
         qinfos.add(qinfo);
 

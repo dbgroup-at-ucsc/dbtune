@@ -26,6 +26,8 @@ import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -76,12 +78,12 @@ public class StatisticsFunctionTest {
         candidatePool.add(callback.get(0));
         candidatePool.add(callback.get(1));
 
-        return new IBGPreparedSQLStatement("SELECT * FROM R;",
-               SQLCategory.QUERY,
-               candidatePool,
-               new IndexBenefitGraph(makeIBGNode(), 5.0, new IndexBitSet()),
-               makeInteractionBank(),
-               40000, 0.0);
+        return new IBGPreparedSQLStatement(
+                new SQLStatement("SELECT * FROM R;", SQLCategory.QUERY),
+                candidatePool,
+                new IndexBenefitGraph(makeIBGNode(), 5.0, new IndexBitSet()),
+                makeInteractionBank(),
+                40000, 0.0);
     }
 
     private static IndexBenefitGraph.IBGNode makeIBGNode() throws Exception {

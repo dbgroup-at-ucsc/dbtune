@@ -10,6 +10,7 @@ import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
@@ -66,11 +67,11 @@ public class WhatIfOptimizerTestFunctional {
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLWhatIfOptimization() throws Exception {
         final Optimizer   optimizer  = connection.getOptimizer();
-        final Configuration candidates = optimizer.recommendIndexes("select a from tbl where a = 5;");
+        final Configuration candidates = optimizer.recommendIndexes(new SQLStatement("select a from tbl where a = 5;"));
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        final PreparedSQLStatement info = optimizer.explain("select a from tbl where a = 5;", candidates);
+        final PreparedSQLStatement info = optimizer.explain(new SQLStatement("select a from tbl where a = 5;"), candidates);
 
         assertThat(info, CoreMatchers.<Object>notNullValue());
         assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
@@ -83,12 +84,12 @@ public class WhatIfOptimizerTestFunctional {
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLIBGWhatIfOptimization() throws Exception {
-        final Configuration candidates = connection.getOptimizer().recommendIndexes("select count(*) from tbl where b > 3");
+        final Configuration candidates = connection.getOptimizer().recommendIndexes(new SQLStatement("select count(*) from tbl where b > 3"));
         final IBGOptimizer optimizer = new IBGOptimizer(connection.getOptimizer());
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        double cost = optimizer.explain("select count(*) from tbl where b > 3").getCost();
+        double cost = optimizer.explain(new SQLStatement("select count(*) from tbl where b > 3")).getCost();
 
         assumeThat(cost >= 0, is(true));
     }

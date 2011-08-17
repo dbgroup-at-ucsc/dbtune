@@ -96,17 +96,16 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(String sql, Configuration indexes) throws SQLException {
-        ResultSet   rs;
-        Statement   stmt;
-        SQLCategory category;
-        String      explainSql;
-        String      indexOverhead;
-        String[]    ohArray;
-        double[]    maintCost;
-        double      totalCost;
+    public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes) throws SQLException {
+        ResultSet rs;
+        Statement stmt;
+        String    explainSql;
+        String    indexOverhead;
+        String[]  ohArray;
+        double[]  maintCost;
+        double    totalCost;
 
-        explainSql = "EXPLAIN INDEXES " + explainIndexListString(indexes) + sql;
+        explainSql = "EXPLAIN INDEXES " + explainIndexListString(indexes) + sql.getSQL();
         stmt       = connection.createStatement();
         rs         = stmt.executeQuery(explainSql);
 
@@ -114,7 +113,7 @@ public class PGOptimizer extends Optimizer
             throw new SQLException("No result from EXPLAIN statement");
         }
 
-        category      = SQLCategory.from(rs.getString("category"));
+        sql.setSQLCategory(SQLCategory.from(rs.getString("category")));
         indexOverhead = rs.getString("index_overhead");
         ohArray       = indexOverhead.split(" ");
         maintCost     = new double[indexes.size()];
@@ -136,7 +135,7 @@ public class PGOptimizer extends Optimizer
 
         totalCost = Double.valueOf(rs.getString("qcost"));
 
-        PreparedSQLStatement sqlStmt = new PreparedSQLStatement(sql,category,totalCost,maintCost,indexes);
+        PreparedSQLStatement sqlStmt = new PreparedSQLStatement(sql,totalCost,maintCost,indexes);
 
         if(obtainPlan) {
             sqlStmt.setPlan(getPlan(connection,sql));
@@ -154,9 +153,9 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public Configuration recommendIndexes(String sql) throws SQLException {
+    public Configuration recommendIndexes(SQLStatement sql) throws SQLException {
         Statement stmt = connection.createStatement();
-        ResultSet rs   = stmt.executeQuery("RECOMMEND INDEXES " + sql);
+        ResultSet rs   = stmt.executeQuery("RECOMMEND INDEXES " + sql.getSQL());
         int       id   = 0;
 
         List<Index> indexes = new ArrayList<Index>();
@@ -165,6 +164,9 @@ public class PGOptimizer extends Optimizer
             touchIndexSchema(indexes, rs, id);
             ++id;
         }
+
+        rs.close();
+        stmt.close();
 
         return new Configuration(indexes);
     }
@@ -316,11 +318,11 @@ public class PGOptimizer extends Optimizer
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    protected SQLStatementPlan getPlan(Connection connection, String sql) throws SQLException
+    protected SQLStatementPlan getPlan(Connection connection, SQLStatement sql) throws SQLException
     {
         String           explain = "EXPLAIN (COSTS true, FORMAT json) ";
         Statement        st      = connection.createStatement();
-        ResultSet        rs      = st.executeQuery(explain + sql);
+        ResultSet        rs      = st.executeQuery(explain + sql.getSQL());
         SQLStatementPlan plan    = null;
         int              cnt     = 0;
 
@@ -337,6 +339,7 @@ public class PGOptimizer extends Optimizer
             throw new SQLException("Something wrong happened, got " + cnt + " plan(s)");
         }
 
+        plan.setStatement(sql);
         rs.close();
         st.close();
 
@@ -423,7 +426,7 @@ public class PGOptimizer extends Optimizer
         List<Map<String,Object>> planData = mapper.readValue(sreader, List.class);
 
         if(planData == null) {
-            return new SQLStatementPlan(new SQLStatement(SQLCategory.UNKNOWN, sql), new Operator());
+            return new SQLStatementPlan(new SQLStatement(sql, SQLCategory.UNKNOWN), new Operator());
         }
 
         if(planData.size() > 1) {
@@ -434,7 +437,7 @@ public class PGOptimizer extends Optimizer
         Map<String,Object> rootData = (Map<String,Object>) planData.get(0).get("Plan");
 
         root = extractNode(rootData, schema);
-        plan = new SQLStatementPlan(new SQLStatement(SQLCategory.UNKNOWN, sql), root);
+        plan = new SQLStatementPlan(new SQLStatement(sql,SQLCategory.UNKNOWN), root);
 
         extractChildNodes(plan, root, rootData, schema);
 

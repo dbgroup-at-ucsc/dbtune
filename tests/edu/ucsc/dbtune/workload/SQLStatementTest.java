@@ -45,7 +45,7 @@ public class SQLStatementTest
     @Test
     public void testConstructor() throws Exception
     {
-        SQLStatement sql = new SQLStatement(SQLCategory.QUERY, "select * from tbl");
+        SQLStatement sql = new SQLStatement("select * from tbl",SQLCategory.QUERY);
 
         assertThat(sql.getSQL(),is("select * from tbl"));
     }

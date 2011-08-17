@@ -25,6 +25,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.HashFunction;
 import edu.ucsc.dbtune.util.Strings;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.io.Serializable;
 import java.sql.SQLException;
@@ -335,7 +336,7 @@ public class DB2Index extends Index {
                 idx++;
             }
 
-            return optimizer.explain(sql.toString()).getCost();
+            return optimizer.explain(new SQLStatement(sql.toString())).getCost();
         }
         
         public double creationCost(DatabaseConnection conn) throws SQLException {
@@ -372,7 +373,7 @@ public class DB2Index extends Index {
         }
 
         private static double calculateTotalCost(DatabaseConnection connection, String sql) throws SQLException {
-            return connection.getOptimizer().explain(sql).getCost();
+            return connection.getOptimizer().explain(new SQLStatement(sql)).getCost();
         }
         
         public static DB2IndexMetadata consDuplicate(DB2IndexMetadata original, int id) throws SQLException {

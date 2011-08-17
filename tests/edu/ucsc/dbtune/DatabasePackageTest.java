@@ -26,6 +26,7 @@ import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Functions;
 import edu.ucsc.dbtune.spi.core.Parameter;
 import edu.ucsc.dbtune.spi.core.Parameters;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.junit.After;
 import org.junit.Before;
@@ -121,7 +122,7 @@ public class DatabasePackageTest {
     {
         for(DatabaseConnection each : connections){
             final IBGOptimizer ibgWhatIfOptimizer = new IBGOptimizer(each.getOptimizer());
-            final double cost = ibgWhatIfOptimizer.explain("SELECT * FROM R;").getCost();
+            final double cost = ibgWhatIfOptimizer.explain(new SQLStatement("SELECT * FROM R;")).getCost();
             assertThat(Double.compare(cost, 1.0) == 0, is(true));
         }
     }
@@ -173,7 +174,7 @@ public class DatabasePackageTest {
 
     private static void checkRecommendIndexesFromSQL(DatabaseConnection... connections) throws Exception {
         for(DatabaseConnection each : connections){
-            final Configuration found = each.getOptimizer().recommendIndexes("SELECT * FROM R;");
+            final Configuration found = each.getOptimizer().recommendIndexes(new SQLStatement("SELECT * FROM R;"));
             assertThat(found.size() == 3, is(true));
         }
     }

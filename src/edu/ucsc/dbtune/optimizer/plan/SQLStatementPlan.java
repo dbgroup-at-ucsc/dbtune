@@ -59,6 +59,16 @@ public class SQLStatementPlan extends Tree<Operator> {
     }
 
     /**
+     * Assigns the statement that this plan corresponds to.
+     *
+     * @param sql
+     *     statement from which this plan was obtained
+     */
+    public void setStatement(SQLStatement sql) {
+        this.sql = sql;
+    }
+
+    /**
      * Returns the operator at the root of the plan.
      *
      * @return

@@ -46,6 +46,8 @@ import static edu.ucsc.dbtune.spi.core.Functions.submitAll;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 import static edu.ucsc.dbtune.util.Instances.newTreeSet;
 
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 /**
  * Not implemented yet
  */
@@ -61,10 +63,10 @@ public class DB2Optimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(String sql, Configuration indexes) throws SQLException {
+    public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes) throws SQLException {
         optimizationCount++;
         Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
-        Checks.checkArgument(!Strings.isEmpty(sql), "Empty SQL statement");
+        Checks.checkArgument(!Strings.isEmpty(sql.getSQL()), "Empty SQL statement");
 
         SQLCategory category     = null;
         double      updateCost   = 0.0;
@@ -82,7 +84,7 @@ public class DB2Optimizer extends Optimizer
                 submit(explainModeExplain(), connection)
                 );
 
-        connection.getJdbcConnection().createStatement().execute(sql);
+        connection.getJdbcConnection().createStatement().execute(sql.getSQL());
         submit(explainModeNo(), connection);
         category = supplyValue(fetchExplainStatementType(), connection);
         if(SQLCategory.DML.isSame(category)){
@@ -114,12 +116,12 @@ public class DB2Optimizer extends Optimizer
         );
 
         submit(fetchExplainObjectCandidates(), connection, new IndexBitSet());
-        SQLCategory cat = getStatementType(connection.getJdbcConnection());
+        sql.setSQLCategory(getStatementType(connection.getJdbcConnection()));
 
         double[] updateCosts  = new double[count];
         Arrays.fill(updateCosts, updateCost);
 
-        return new PreparedSQLStatement(sql, cat, totalCost, indexes);
+        return new PreparedSQLStatement(sql, totalCost, indexes);
     }
 
     private SQLCategory getStatementType(Connection connection) throws SQLException {
@@ -148,7 +150,7 @@ public class DB2Optimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public Configuration recommendIndexes(String sql) throws SQLException {
+    public Configuration recommendIndexes(SQLStatement sql) throws SQLException {
         Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
         List<Index> indexList;
 
@@ -156,7 +158,7 @@ public class DB2Optimizer extends Optimizer
                 submit(clearAdviseIndex(), connection),
                 submit(explainModeRecommendIndexes(), connection)
                 );
-        try {connection.execute(sql);} catch (SQLException ignore){}
+        try {connection.execute(sql.getSQL());} catch (SQLException ignore){}
 
         // there is an unchecked warning here...
         final String databaseName = connection.getConnectionManager().getDatabaseName();

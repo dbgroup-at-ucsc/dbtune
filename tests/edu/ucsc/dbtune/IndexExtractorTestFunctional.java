@@ -5,6 +5,7 @@ import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
@@ -54,12 +55,12 @@ public class IndexExtractorTestFunctional {
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLRecommendIndexes() throws Exception {
-        Configuration candidates = connection.getOptimizer().recommendIndexes("select a from tbl where a = 5;");
+        Configuration candidates = connection.getOptimizer().recommendIndexes(new SQLStatement("select a from tbl where a = 5;"));
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
 
-        candidates = connection.getOptimizer().recommendIndexes("update tbl set a=-1 where a = 5;");
+        candidates = connection.getOptimizer().recommendIndexes(new SQLStatement("update tbl set a=-1 where a = 5;"));
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));

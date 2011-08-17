@@ -20,6 +20,7 @@ import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 
@@ -56,7 +57,7 @@ public class IBGOptimizer extends Optimizer {
      * {@inheritDoc}
      */
     @Override
-    public Configuration recommendIndexes(String sql) throws SQLException {
+    public Configuration recommendIndexes(SQLStatement sql) throws SQLException {
         return delegate.recommendIndexes(sql);
     }
 
@@ -72,7 +73,7 @@ public class IBGOptimizer extends Optimizer {
      * @throws SQLException
      *      unable to estimate cost due to the stated reasons.
      */
-    public PreparedSQLStatement explain(String sql, Configuration configuration)
+    public PreparedSQLStatement explain(SQLStatement sql, Configuration configuration)
         throws SQLException
     {
         PreparedSQLStatement stmt;

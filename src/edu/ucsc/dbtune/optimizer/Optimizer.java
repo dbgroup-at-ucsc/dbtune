@@ -16,6 +16,7 @@
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 
@@ -36,7 +37,7 @@ public abstract class Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public PreparedSQLStatement explain(String sql) throws SQLException {
+    public PreparedSQLStatement explain(SQLStatement sql) throws SQLException {
         return explain(sql, new Configuration("empty"));
     }
 
@@ -53,7 +54,7 @@ public abstract class Optimizer
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
-    public abstract PreparedSQLStatement explain(String sql, Configuration configuration) throws SQLException;
+    public abstract PreparedSQLStatement explain(SQLStatement sql, Configuration configuration) throws SQLException;
     
     /**
      * Given a sql statement, it recommends indexes to make it run faster.
@@ -65,7 +66,7 @@ public abstract class Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public abstract Configuration recommendIndexes(String sql) throws SQLException;
+    public abstract Configuration recommendIndexes(SQLStatement sql) throws SQLException;
 
     /**
      * Gets the total count of optimizations that were handled/performed by the optimizer. An 

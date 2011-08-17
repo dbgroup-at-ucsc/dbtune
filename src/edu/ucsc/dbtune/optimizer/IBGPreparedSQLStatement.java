@@ -20,7 +20,7 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
-import edu.ucsc.dbtune.metadata.SQLCategory;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 
@@ -51,15 +51,14 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
     }
 
     public IBGPreparedSQLStatement(
-            String            sql,
-            SQLCategory       sqlCategory,
+            SQLStatement      sql,
             Configuration     configuration,
             IndexBenefitGraph ibg,
             InteractionBank   bank,
             int               whatIfCount,
             double            analysisTime )
     {
-        super(sql, sqlCategory, 0.0, configuration);
+        super(sql, 0.0, configuration);
 
         this.ibg               = ibg;
         this.bank              = bank;
