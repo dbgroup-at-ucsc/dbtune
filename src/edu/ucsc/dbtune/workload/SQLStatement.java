@@ -15,7 +15,6 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.workload;
 
-import edu.ucsc.dbtune.metadata.SQLCategory;
 
 /**
  * Represents a SQL statement. Each {@code SQLStatement} object is tied to a {@code String} object 

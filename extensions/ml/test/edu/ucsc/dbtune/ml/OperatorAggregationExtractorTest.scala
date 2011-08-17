@@ -1,10 +1,10 @@
 package edu.ucsc.dbtune.ml
 
-import edu.ucsc.dbtune.metadata.SQLCategory
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan
 import edu.ucsc.dbtune.optimizer.plan.Operator
 import edu.ucsc.dbtune.ml.OperatorAggregationExtractorTest._
 import edu.ucsc.dbtune.workload.SQLStatement
+import edu.ucsc.dbtune.workload.SQLCategory
 
 import org.junit.Test
 import org.junit.Assert.assertEquals

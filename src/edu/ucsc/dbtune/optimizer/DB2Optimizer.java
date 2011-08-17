@@ -19,7 +19,6 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.DB2Index;
-import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -28,6 +27,8 @@ import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.spi.core.Function;
 import edu.ucsc.dbtune.spi.core.Parameter;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.SQLCategory;
 
 import java.sql.SQLException;
 import java.sql.Connection;
@@ -45,8 +46,6 @@ import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.submitAll;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 import static edu.ucsc.dbtune.util.Instances.newTreeSet;
-
-import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * Not implemented yet

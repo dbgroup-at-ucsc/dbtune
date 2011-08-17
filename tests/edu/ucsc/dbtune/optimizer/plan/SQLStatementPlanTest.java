@@ -17,9 +17,9 @@ package edu.ucsc.dbtune.optimizer.plan;
 
 import org.junit.Test;
 
-import edu.ucsc.dbtune.metadata.SQLCategory;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static org.hamcrest.CoreMatchers.is;

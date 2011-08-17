@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and        *
  *   limitations under the License.                                             *
  * **************************************************************************** */
-package edu.ucsc.dbtune.metadata;
+package edu.ucsc.dbtune.workload;
 
 import java.util.Arrays;
 import java.util.List;

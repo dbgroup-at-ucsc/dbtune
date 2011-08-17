@@ -15,8 +15,6 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.workload;
 
-import edu.ucsc.dbtune.metadata.SQLCategory;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
