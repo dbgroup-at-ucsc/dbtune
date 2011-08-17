@@ -16,8 +16,10 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.advisor;
+package edu.ucsc.dbtune.advisor.bc;
 
+import edu.ucsc.dbtune.advisor.BenefitInfoInput;
+import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;

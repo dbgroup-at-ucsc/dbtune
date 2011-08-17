@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.advisor;
+package edu.ucsc.dbtune.advisor.bc;
 
 import edu.ucsc.dbtune.metadata.Index;
 

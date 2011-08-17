@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.advisor.bc.BcTuner;
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
