@@ -24,12 +24,12 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.spi.Environment;
+//import edu.ucsc.dbtune.spi.Environment;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.StringReader;
-import java.sql.Connection;
+//import java.sql.Connection;
 
 import static org.junit.Assert.assertEquals;
 
@@ -40,9 +40,9 @@ import static org.junit.Assert.assertEquals;
  * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)
  */
 public class PGOptimizerTest {
-    private static Environment environment;
-    private static Connection  connection;
-    private static PGOptimizer optimizer;
+    //private static Environment environment;
+    //private static Connection  connection;
+    //private static PGOptimizer optimizer;
 
     /**
      * Executes the SQL script that should contain the 'one_table' workload.

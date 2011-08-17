@@ -4,6 +4,7 @@ import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Iterables;
+import edu.ucsc.dbtune.util.SQLScriptExecuter;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;

@@ -258,7 +258,12 @@ public class Environment {
 
     private static Properties getDefaultProperties(){
         return new Properties(){
-            {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			{
                 setProperty(URL,         "jdbc:postgresql://aigaion.cse.ucsc.edu/test");
                 setProperty(USERNAME,    "dbtune");
                 setProperty(PASSWORD,    "dbtuneadmin");

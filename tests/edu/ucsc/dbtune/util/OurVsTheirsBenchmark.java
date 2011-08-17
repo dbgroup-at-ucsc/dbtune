@@ -32,7 +32,6 @@ import static edu.ucsc.dbtune.DBTuneInstances.makeRandomIBGNode;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-@SuppressWarnings({"UnusedDeclaration", "MismatchedQueryAndUpdateOfCollection"})
 public class OurVsTheirsBenchmark extends SimpleBenchmark {
   // created in advance so that the time of its construction (reflection is  is not taken into
   // consideration when updating the object containers in the below

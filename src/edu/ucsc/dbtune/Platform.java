@@ -39,7 +39,12 @@ public class Platform {
     static {
         Map<String, OptimizerFactory> driverToOptimizer =
                 new HashMap<String, OptimizerFactory>() {
-                    {
+                    /**
+					 * 
+					 */
+					private static final long serialVersionUID = 1L;
+
+					{
                         put("com.ibm.db2.jcc.DB2Driver", new DB2OptimizerFactory());
                         put("org.postgresql.Driver", new PGOptimizerFactory());
                     }

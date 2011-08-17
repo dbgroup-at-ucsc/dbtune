@@ -84,7 +84,12 @@ public class DBTuneInstances {
 
     public static Properties newDB2Properties() {
         return new Properties(){
-            {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			{
                 setProperty(JdbcConnectionManager.URL, "");
                 setProperty(JdbcConnectionManager.USERNAME, "newo");
                 setProperty(JdbcConnectionManager.PASSWORD, "hahaha");
@@ -104,7 +109,12 @@ public class DBTuneInstances {
     }
 
     public static Properties newPGSQLProperties() {
-        return new Properties(){{
+        return new Properties(){/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+		{
             setProperty(JdbcConnectionManager.URL, "");
             setProperty(JdbcConnectionManager.USERNAME, "newo");
             setProperty(JdbcConnectionManager.PASSWORD, "hahaha");

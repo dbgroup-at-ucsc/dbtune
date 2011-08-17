@@ -13,32 +13,38 @@ import static org.junit.Assert.assertNotSame;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-@SuppressWarnings({"ALL"})
 public class TypeReferenceTest {
 
-    @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
+	@Test(expected = IllegalArgumentException.class)
     public void testBasicArrayListExample() throws Exception {
         // Consider GuardingList<T>, which enforces type safety at runtime...
         final List<String> o = new GuardingList<String>(new TypeReference<String>(){});
         o.add("Yeah!");
-        final List raw = as(o);
+        @SuppressWarnings("rawtypes")
+		final List raw = as(o);
         raw.add(1234);  // it should throw an illegal argument exception 
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
+	@Test(expected = IllegalArgumentException.class)
     public void testDealingWithRawTypes() throws Exception {
-        final Dancing salsa = salsaDancingToRaw();
-        final Dancing tango = tangoDancingToRaw();
+        @SuppressWarnings("rawtypes")
+		final Dancing salsa = salsaDancingToRaw();
+        @SuppressWarnings("rawtypes")
+		final Dancing tango = tangoDancingToRaw();
         assertNotSame(tango, salsa);
         salsa.mix(tango);
     }
 
 
-    static Dancing salsaDancingToRaw(){
+    @SuppressWarnings("rawtypes")
+	static Dancing salsaDancingToRaw(){
         return new SalsaDancing(new TypeReference<SalsaDancing>(){});
     }
 
-    static Dancing tangoDancingToRaw(){
+    @SuppressWarnings("rawtypes")
+	static Dancing tangoDancingToRaw(){
         return new TangoDancing(new TypeReference<TangoDancing>(){});
     }
 
@@ -50,7 +56,6 @@ public class TypeReferenceTest {
 
     static class SalsaDancing implements Dancing<SalsaDancing>{
         private final TypeReference<SalsaDancing> ref;
-        private Dancing<SalsaDancing> that;
 
         SalsaDancing(TypeReference<SalsaDancing> ref){
             this.ref = ref;
@@ -59,7 +64,6 @@ public class TypeReferenceTest {
         @Override
         public void mix(Dancing<SalsaDancing> that) {
             if(!ref.getGenericClass().isInstance(that)) throw new IllegalArgumentException();
-            this.that = that;
         }
 
         @Override

@@ -39,9 +39,10 @@ public class DynamicIndexSetTest {
     public void testWeirdSideEffect() throws Exception {
         final DynamicIndexSet idxset = new DynamicIndexSet();
         populateIndexSet(idxset, 1000, true);
-        for(Index each : idxset){}
+        for(Index each : idxset){each.getId();}
         boolean again = false;
         for(Index each : idxset){
+        	each.getId();
             again |= true;
         }
 

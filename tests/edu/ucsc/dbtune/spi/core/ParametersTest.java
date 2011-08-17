@@ -56,7 +56,6 @@ public class ParametersTest {
 
     @Test
     public void testDualKeyParameter() throws Exception {
-        @SuppressWarnings({"UnnecessaryBoxing"})
         final Parameter p = Parameters.makeAnonymousParameter(true);
         assertTrue(p.getParameterValue(Boolean.class));
         assertTrue(p.getParameterValue(boolean.class));

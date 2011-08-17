@@ -14,8 +14,9 @@
  * limitations under the License.                                           *
  ****************************************************************************/
 package edu.ucsc.dbtune;
-
+/*
 import edu.ucsc.dbtune.connectivity.ConnectionManager;
+
 import edu.ucsc.dbtune.connectivity.DatabaseConnection;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Column;
@@ -24,34 +25,36 @@ import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 
 import java.util.ArrayList;
 import java.util.List;
+*/
 
 import org.junit.Before;
 import org.junit.Test;
 
+/*
 import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
 import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
 import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
-
+*/
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class IndexBenefitGraphWhatIfOptimizerTest {
-    private ConnectionManager connectionManager;
+    //private ConnectionManager connectionManager;
     @Before
     public void setUp() throws Exception {
-         connectionManager = DBTuneInstances.newPGDatabaseConnectionManager();
+         //connectionManager = DBTuneInstances.newPGDatabaseConnectionManager();
     }
 
     @Test
     public void testWhatIfOptimizerForRandQuery() throws Exception {
-        final DatabaseConnection connect = connectionManager.connect();
-        final IBGOptimizer whatIf  = new IBGOptimizer(connect.getOptimizer());
+        //final DatabaseConnection connect = connectionManager.connect();
+        //final IBGOptimizer whatIf  = new IBGOptimizer(connect.getOptimizer());
         // Mocking for empty configuration is not returning a ResultSet correctly
         // final double cost = whatIf.explain(basicQuery(), getIndexes()).getCost();
         //assertTrue(Double.compare(cost, 1.0) == 0);
     }
-
+/*
     private List<Index> getIndexes() throws Exception
     {
         List<Index> list = new ArrayList<Index>();
@@ -87,5 +90,5 @@ public class IndexBenefitGraphWhatIfOptimizerTest {
 
     private static String basicQuery(){
         return "SELECT R.salary, R.timeOffCount FROM R WHERE R.fullname = 'Bruce Wayne';";
-    }
+    }*/
 }

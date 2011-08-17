@@ -230,7 +230,7 @@ public abstract class DatabaseObject
         if (name == null) {
             return new String("");
         } else {
-            return new String(id + " " + name);
+            return new String(name);
         }
     }
 

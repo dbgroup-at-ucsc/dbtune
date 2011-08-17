@@ -28,6 +28,7 @@ import edu.ucsc.dbtune.metadata.extraction.GenericJDBCExtractor;
 import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
 import edu.ucsc.dbtune.spi.Environment;
 
+import edu.ucsc.dbtune.util.SQLScriptExecuter;
 import edu.ucsc.dbtune.util.Strings;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

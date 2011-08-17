@@ -54,9 +54,10 @@ public class StaticIndexSetTest {
     @Test
     public void testWeirdSideEffect() throws Exception {
         final StaticIndexSet indexSet = new StaticIndexSet(StaticIndexSetTest.populateIndexSet(10, true));
-        for(Index each : indexSet){}
+        for(Index each : indexSet){each.getId();}
         boolean again = false;
         for(Index each : indexSet){
+        	each.getId();
             again |= true;
         }
 

@@ -46,7 +46,8 @@ public abstract class TypeReference<T> {
         type = cast(superclass, ParameterizedType.class).getActualTypeArguments()[0];
      }
 
-    @Override
+    @SuppressWarnings("rawtypes")
+	@Override
     public boolean equals(Object o) {
         return (o instanceof TypeReference) && Objects.equals(this.getType(), ((TypeReference) o).getType());
     }
