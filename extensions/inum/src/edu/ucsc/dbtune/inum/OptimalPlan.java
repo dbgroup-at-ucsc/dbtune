@@ -17,6 +17,15 @@ import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
  */
 public interface OptimalPlan {
   /**
+   * Adds a subplan.
+   * @param subplan
+   *    subplan to be added.
+   * @return
+   *    {@code true} if the subplan was added. {@code false} otherwise.
+   */
+  boolean addSubplan(Subplan subplan);
+
+  /**
    * compute internal plan cost (subtract table access operations).
    */
   void computeInternalPlanCost();
@@ -50,6 +59,15 @@ public interface OptimalPlan {
   boolean isDirty();
 
   /**
+   * removes a subplan from the optimal plan.
+   * @param subplan
+   *    subplan to be removed.
+   * @return
+   *    {@code true} if the subplan was removed. {@code false} otherwise.
+   */
+  boolean removeSubplan(Subplan subplan);
+
+  /**
    * sets the cost to access a given table. 
    * @param tableName
    *    the name of table that will be assigned
@@ -58,5 +76,45 @@ public interface OptimalPlan {
    *    the access cost value.
    */
   void setAccessCost(String tableName, double cost);
+
+  /**
+   * Internal subplans which will become part of an OptimalPlan.
+   */
+  interface Subplan {
+    /**
+     * @return the row id
+     */
+    int getRowId();
+
+    /**
+     * @return the parent id
+     */
+    int getParentId();
+
+    /**
+     * @return the operator.
+     */
+    String getOperator();
+
+    /**
+     * @return the target (For Indexes, Table Scan etc)
+     */
+    String getTarget();
+
+    /**
+     * @return the internal cost (cost of whole operation) of the subplan.
+     */
+    double getCost();
+
+    /**
+     * @return the init cost of subplan.
+     */
+    double getInitCost();
+
+    /**
+     * @return the number of tuples.
+     */
+    long getCardinality();
+  }
  
 }
