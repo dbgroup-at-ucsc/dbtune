@@ -210,7 +210,7 @@ public class InumPrecomputation implements Precomputation {
 
   @Override public Set<OptimalPlan> setup(String query, Iterable<DBIndex> interestingOrders) {
     if(inumSpace.get() == null) {
-      inumSpace.set(new InmemoryInumSpace());
+      inumSpace.set(new InMemoryInumSpace());
     }
 
     addQuerytoListOfSeenQueries(query);

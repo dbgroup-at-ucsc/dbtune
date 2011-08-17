@@ -15,14 +15,14 @@ import org.mockito.Mockito;
  */
 public class InumSpaceTest {
   @Test public void testPopulateInumSpace() throws Exception {
-    final InumSpace space = new InmemoryInumSpace();
+    final InumSpace space = new InMemoryInumSpace();
     final Set<OptimalPlan> plans = space.save(configureIndex(), configureOptimalPlans());
     assertThat(!plans.isEmpty(), is(true));
     assertThat(!space.getAllSavedOptimalPlans().isEmpty(), is(true));
   }
 
   @Test public void testClearingInumSpace() throws Exception {
-    final InumSpace space = new InmemoryInumSpace();
+    final InumSpace space = new InMemoryInumSpace();
     final Set<OptimalPlan> plans = space.save(configureIndex(), configureOptimalPlans());
     assertThat(!plans.isEmpty(), is(true));
     space.clear();
@@ -30,7 +30,7 @@ public class InumSpaceTest {
   }
 
   @Test public void testRetrievalOfOptimalPlansPerKey() throws Exception {
-    final InumSpace space = new InmemoryInumSpace();
+    final InumSpace space = new InMemoryInumSpace();
     final DBIndex   key   = configureIndex();
     space.save(key, configureOptimalPlans());
     final Set<OptimalPlan> found = space.getOptimalPlans(key);
