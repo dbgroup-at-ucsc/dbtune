@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.advisor;
+package edu.ucsc.dbtune.advisor.wfit;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.wfit.WFIT;

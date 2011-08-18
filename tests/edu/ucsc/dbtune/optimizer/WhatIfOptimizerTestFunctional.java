@@ -1,5 +1,6 @@
-package edu.ucsc.dbtune;
+package edu.ucsc.dbtune.optimizer;
 
+import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
@@ -7,6 +8,7 @@ import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.SQLScriptExecuter;
+import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -34,7 +36,8 @@ import static org.junit.Assume.assumeThat;
  * For more information on what these properties mean, refer to page 57 (Chapter 4, Section 2.1,
  * Property 4.1 and 4.2 respectively).
  *
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @author Huascar A. Sanchez
+ * @author Ivo Jimenez
  * @see {@code thesis} <a
  * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
  *     "On-line Index Selection for Physical Database Tuning"</a>
@@ -84,6 +87,26 @@ public class WhatIfOptimizerTestFunctional {
         double cost = optimizer.explain(new SQLStatement("select count(*) from tbl where b > 3")).getCost();
 
         assumeThat(cost >= 0, is(true));
+    }
+
+    @Test
+    @If(condition = "isDatabaseConnectionAvailable", is = true)
+    public void testConnectionIsAlive() throws Exception {
+        assertThat(db.getConnection().isClosed(), is(false));
+    }
+
+    @Test
+    @If(condition = "isDatabaseConnectionAvailable", is = true)
+    public void testSingleSQLRecommendIndexes() throws Exception {
+        Configuration candidates = db.getOptimizer().recommendIndexes(new SQLStatement("select a from tbl where a = 5;"));
+
+        assertThat(candidates, CoreMatchers.<Object>notNullValue());
+        assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
+
+        candidates = db.getOptimizer().recommendIndexes(new SQLStatement("update tbl set a=-1 where a = 5;"));
+
+        assertThat(candidates, CoreMatchers.<Object>notNullValue());
+        assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
     }
 
     @AfterClass
