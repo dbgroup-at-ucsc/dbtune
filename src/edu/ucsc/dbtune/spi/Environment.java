@@ -36,7 +36,18 @@ import java.util.Set;
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
 public class Environment {
+
     private final Configuration configuration;
+
+    /**
+     * Creates an environment object from the given set of properties.
+     *
+     * @param properties
+     *     properties to be accessed through the this object.
+     */
+    public Environment(Properties properties) throws IOException {
+        this(new PropertiesConfiguration(getDefaultProperties()," "));
+    }
 
     public Environment() throws IOException {
         this(

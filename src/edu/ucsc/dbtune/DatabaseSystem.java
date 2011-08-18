@@ -19,7 +19,7 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.extraction.MetadataExtractor;
-//import edu.ucsc.dbtune.metadata.extraction.MySQLExtractor;
+import edu.ucsc.dbtune.metadata.extraction.MySQLExtractor;
 import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
@@ -47,14 +47,14 @@ public class DatabaseSystem
     private Catalog     catalog;
 
     /**
-     * Creates a database system instance. It relies on {@link Environment}.
+     * Creates a database system instance with the given properties.
      *
-     * @see Environment
-     * @see EnvironmentProperties
+     * @param environment
+     *     an environment object used to access the properties of the system
      */
-    public DatabaseSystem() throws SQLException
+    public DatabaseSystem(Environment environment) throws SQLException
     {
-        environment = Environment.getInstance();
+        this.environment = environment;
 
         try {
             Class.forName(environment.getJDBCDriver());
@@ -65,6 +65,19 @@ public class DatabaseSystem
         connection = connect();
         catalog    = getCatalog(connection);
         optimizer  = getOptimizer(connection,catalog);
+    }
+
+    /**
+     * Creates a database system instance with the properties from {@link Environment}.
+     *
+     * @param properties
+     *     settings to be used in the construction of the object
+     * @see Environment
+     * @see EnvironmentProperties
+     */
+    public DatabaseSystem() throws SQLException
+    {
+        this(Environment.getInstance());
     }
 
     /**
@@ -83,8 +96,8 @@ public class DatabaseSystem
             //optimizer = new DB2Optimizer(connection, catalog);
             optimizer = new DB2Optimizer(connection, environment.getDatabaseName());
         } else if(environment.getJDBCDriver().equals("org.postgresql.Driver")) {
-            optimizer = new PGOptimizer(connection);
             //optimizer = new PGOptimizer(connection, catalog.findSchema(environment.getSchema()));
+            optimizer = new PGOptimizer(connection);
         } else {
             throw new SQLException("Unsupported driver " + environment.getJDBCDriver());
         }
@@ -111,7 +124,7 @@ public class DatabaseSystem
         MetadataExtractor extractor = null;
 
         if(environment.getJDBCDriver().equals("com.mysql.jdbc.Driver")) {
-            //extractor = new MySQLExtractor();
+            extractor = new MySQLExtractor();
         } else if(environment.getJDBCDriver().equals("com.ibm.db2.jcc.DB2Driver")) {
             throw new SQLException("DB2Extractor doesn't exist yet");
         } else if(environment.getJDBCDriver().equals("org.postgresql.Driver")) {
