@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.core.DBIndex;
-import java.util.Set;
 
 /**
  * This represents the matching logic that determines the optimality
@@ -18,6 +17,8 @@ public interface MatchingStrategy {
    * derives the query cost without going to the optimizer, simply by adding the cached cost to
    * the index access costs computed on-the-fly.
    *
+   * @param query
+   *    single query.
    * @param optimalPlan
    *    the corresponding {@link OptimalPlan optimal plan} for a given input configuration.
    * @param inputConfiguration
@@ -26,17 +27,18 @@ public interface MatchingStrategy {
    *    the query cost obtained by adding the cached cost in the {@link OptimalPlan optimal plan}
    *    to the index access costs computed on-the-fly.
    */
-  double derivesCost(OptimalPlan optimalPlan, Iterable<DBIndex> inputConfiguration);
+  double derivesCost(String query, OptimalPlan optimalPlan, Iterable<DBIndex> inputConfiguration);
 
   /**
-   * it matches the input configuration to its corresponding optimal plan.
-   * @param optimalPlans
-   *    the optimal plans cached in the {@link InumSpace INUM Space}.
+   * it matches the input configuration to its corresponding optimal plan.  If the input matches
+   * more than one optimal plan, then pick the optimal plan with min cost.
+   * @param inumSpace
+   *    the space containing all cached optimal plans.
    * @param inputConfiguration
    *    an input configuration for which we will find its optimal plan.
    * @return
    *    the matched {@link OptimalPlan optimal plan} for the given input
    *    configuration.
    */
-  OptimalPlan matches(Set<OptimalPlan> optimalPlans, Iterable<DBIndex> inputConfiguration);
+  OptimalPlan matches(InumSpace inumSpace, Iterable<DBIndex> inputConfiguration);
 }

@@ -67,7 +67,7 @@ public class InumTest {
     final Set<OptimalPlan> plans = inumSpace.getAllSavedOptimalPlans();
     Mockito.when(matchingLogic.matches(Mockito.eq(plans), Mockito.anySetOf(DBIndex.class))).thenReturn(plan);
     final double cost = plan.getTotalCost();
-    Mockito.when(matchingLogic.derivesCost(Mockito.eq(plan), Mockito.anySetOf(DBIndex.class))).thenReturn(cost);
+    Mockito.when(matchingLogic.derivesCost(null, Mockito.eq(plan), Mockito.anySetOf(DBIndex.class))).thenReturn(cost);
     return matchingLogic;
   }
 

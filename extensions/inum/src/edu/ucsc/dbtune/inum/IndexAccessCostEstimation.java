@@ -17,10 +17,12 @@ public interface IndexAccessCostEstimation {
    * Estimate the cost of accessing the index in an input configuration.
    * Computing only the individual index access costs is much faster than
    * a full blown optimizer call.
-   *
-   * @param indexes indexes to be used in the index access cost calculation
+   * @param query
+   *    single query.
+   * @param indexes
+   *    indexes to be used in the index access cost calculation
    * @return
    *    the cost of accessing the given index.
    */
-  double estimateIndexAccessCost(Iterable<DBIndex> indexes);
+  double estimateIndexAccessCost(String query, Iterable<DBIndex> indexes);
 }

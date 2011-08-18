@@ -1,7 +1,10 @@
 package edu.ucsc.dbtune.inum;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
+import static java.lang.Double.compare;
 import java.util.Set;
 
 /**
@@ -9,26 +12,50 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
+//todo(Huascar) write test...
 public class InumMatchingStrategy implements MatchingStrategy {
   private final IndexAccessCostEstimation accessCostEstimator;
-  private final DatabaseConnection        connection;
 
-  InumMatchingStrategy(IndexAccessCostEstimation accessCostEstimator, DatabaseConnection connection){
+  InumMatchingStrategy(IndexAccessCostEstimation accessCostEstimator){
     this.accessCostEstimator = accessCostEstimator;
-    this.connection = connection;
   }
 
   public InumMatchingStrategy(DatabaseConnection connection){
-    this(new InumIndexAccessCostEstimation(), connection);
+    this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
   }
 
   @Override
-  public double derivesCost(OptimalPlan optimalPlan, Iterable<DBIndex> inputConfiguration) {
-    return 0;  //todo(Huascar) implement this
+  public double derivesCost(String query, OptimalPlan optimalPlan,
+      Iterable<DBIndex> inputConfiguration) {
+    // adding the cached cost + index access costs
+    final double indexAccessCosts = accessCostEstimator.estimateIndexAccessCost(query, inputConfiguration);
+    return sumCachedCosts(optimalPlan) + indexAccessCosts;
+  }
+
+  private static double sumCachedCosts(OptimalPlan optimalPlan){
+    optimalPlan.computeInternalPlanCost();  // sum all subplans' costs.
+    return optimalPlan.getInternalCost();
   }
 
   @Override
-  public OptimalPlan matches(Set<OptimalPlan> optimalPlans, Iterable<DBIndex> inputConfiguration) {
-    return null;  //todo(Huascar) implement this
+  public OptimalPlan matches(InumSpace inumSpace, Iterable<DBIndex> inputConfiguration) {
+    final Set<OptimalPlan> found = Sets.newHashSet();
+    // assuming there is a match, pick the one with the min cost.
+    for(DBIndex each : inputConfiguration){
+      final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(each);
+      found.addAll(optimalPlans);
+    }
+
+    return findOneWithMinCost(found);
+  }
+
+  private static OptimalPlan findOneWithMinCost(Set<OptimalPlan> matches){
+    OptimalPlan min = new SqlExecutionOptimalPlan();
+    for(OptimalPlan each : matches){
+      if(compare(min.getTotalCost(), each.getTotalCost()) < 0) {
+        min = each;
+      }
+    }
+    return min;
   }
 }

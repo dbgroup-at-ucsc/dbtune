@@ -1,9 +1,8 @@
 package edu.ucsc.dbtune.inum.commons;
 
-import edu.ucsc.dbtune.util.Objects;
+import com.google.common.base.Objects;
 
 /**
- * @author ddash
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class Pair<L,R> {
@@ -29,7 +28,7 @@ public class Pair<L,R> {
 
   @Override
   public boolean equals(Object o) {
-    return (o instanceof Pair) && Objects.equals(this, o);
+    return (o instanceof Pair) && Objects.equal(this, o);
   }
 
   public L getLeft() {

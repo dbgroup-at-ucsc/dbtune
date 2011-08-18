@@ -56,7 +56,7 @@ public class Inum {
     );
   }
 
-  public double calculateQueryCost(String query, Iterable<DBIndex> inputConfiguration){
+  public double estimateCost(String query, Iterable<DBIndex> inputConfiguration){
     if(!isStarted.get()) throw new InumExecutionException("INUM has not been started yet. Please call start(..) method.");
     if(!precomputation.skip(query)) {
       precomputation.setup(
@@ -67,11 +67,11 @@ public class Inum {
 
     final InumSpace   cachedPlans       = precomputation.getInumSpace();
     final OptimalPlan singleOptimalPlan = matchingLogic.matches(
-        cachedPlans.getAllSavedOptimalPlans(),
+        cachedPlans,
         inputConfiguration
     );
 
-    return matchingLogic.derivesCost(singleOptimalPlan, inputConfiguration);
+    return matchingLogic.derivesCost(query, singleOptimalPlan, inputConfiguration);
   }
 
   public void end()   {

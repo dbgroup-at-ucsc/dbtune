@@ -47,7 +47,7 @@ public interface OptimalPlan {
   double getAccessCost(String tableName);
 
   /**
-   * @return The internal plan cost.
+   * @return The internal plan cost (sum all subplans' costs)
    */
   double getInternalCost();
 
