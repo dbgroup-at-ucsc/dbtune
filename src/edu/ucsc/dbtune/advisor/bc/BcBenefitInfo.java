@@ -162,7 +162,7 @@ public class BcBenefitInfo {
     }
 
     /**
-     * @return the {@link IBGPreparedSQLStatement} used in this {@code BcBenefitInfo} object.
+     * @return the {@link PreparedSQLStatement} used in this {@code BcBenefitInfo} object.
      */
     public PreparedSQLStatement getProfiledQuery(){
         return profiledQuery;

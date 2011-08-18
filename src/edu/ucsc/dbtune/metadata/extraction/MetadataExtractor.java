@@ -1,5 +1,4 @@
-/*
- * ****************************************************************************
+/* ************************************************************************** *
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -13,9 +12,7 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- * ****************************************************************************
- */
-
+ * ************************************************************************** */
 package edu.ucsc.dbtune.metadata.extraction;
 
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -36,6 +33,7 @@ public interface MetadataExtractor
      * 
      * @param connection
      *     object used to obtain metadata for its associated database
+     * @see edu.ucsc.dbtune.metadata
      */
     public Catalog extract(Connection connection) throws SQLException;
 }

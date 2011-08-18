@@ -45,7 +45,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
 
 /**
- * The interface with the PostgreSQL optimizer.
+ * The interface to the PostgreSQL optimizer.
  *
  * @author Ivo Jimenez
  */

@@ -29,7 +29,8 @@ import java.sql.Statement;
 /**
  * Metadata extractor for PostgreSQL.
  * <p>
- * This class assumes a PostgreSQL system version 8.3 or greater is on the backend and a JDBC driver (type 4) version.
+ * This class assumes a PostgreSQL system version 8.3 or greater is on the backend and connections
+ * created using the postgres' JDBC driver (type 4) version 9.0 or greater.
  *
  * @author Ivo Jimenez
  */

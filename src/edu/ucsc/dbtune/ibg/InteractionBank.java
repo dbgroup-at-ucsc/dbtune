@@ -34,8 +34,9 @@ public class InteractionBank implements Serializable {
     /**
      * construct an {@link InteractionBank} given a particular set of
      * candidate indexes.
-     * @param candidateSet
-     *      an immutable snapshot of the set of candidate indexes.
+     * 
+     * @param maxId
+     *      the maximum id that an index can have.
      */
     public InteractionBank(int maxId) {
         indexCount = maxId + 1;

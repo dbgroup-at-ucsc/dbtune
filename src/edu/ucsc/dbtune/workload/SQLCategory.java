@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * enum representing possible SQL categories.
+ * Enum representing possible SQL categories.
  *
  * @author Karl Schnaitter
  * @author Huascar Sanchez

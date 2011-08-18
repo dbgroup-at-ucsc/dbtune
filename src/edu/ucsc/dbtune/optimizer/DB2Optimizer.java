@@ -45,6 +45,10 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 import static edu.ucsc.dbtune.util.Instances.newTreeSet;
 
 /**
+ * Interface to the DB2 optimizer.
+ *
+ * @author Karl Schnaitter
+ * @author Huascar Sanchez
  * @author Ivo Jimenez
  */
 public class DB2Optimizer extends Optimizer
@@ -52,6 +56,14 @@ public class DB2Optimizer extends Optimizer
     private final Connection connection;
     private final String     databaseName;
 
+    /**
+     * Creates a DB2 optimizer with the given information.
+     *
+     * @param connection
+     *     a live connection to DB2
+     * @param databaseName
+     *     the name of the database the connection is connected to
+     */
     public DB2Optimizer(Connection connection, String databaseName){
         this.connection   = connection;
         this.databaseName = databaseName;
@@ -815,7 +827,7 @@ public class DB2Optimizer extends Optimizer
          * @param count
          *      # of levels
          * @return
-         *      a new immutable {@link edu.ucsc.dbtune.optimizer.CostLevel} object.
+         *      a new immutable cost level object.
          */
         public static CostLevel valueOf(double totalCost, int count) {
             return new CostLevel(totalCost, count, (!(totalCost == 0.0 || count == 0)));

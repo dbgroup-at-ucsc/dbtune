@@ -74,9 +74,9 @@ public abstract class Optimizer
      * optimizer was asked to estimate the cost of a statement.
      * <p>
      * Depending on the implementation. In some implementations this may refer to the number times 
-     * that the {@link explain(String, Configuration)} was invoked, whereas in others it could refer 
-     * to the number of times that internal structures where queried in order to simulate an 
-     * optimizer call.
+     * that the {@link #explain(SQLStatement, Configuration)} was invoked, whereas in others it 
+     * could refer to the number of times that internal structures where queried in order to 
+     * simulate an optimizer call.
      *
      * @return
      *     the total count of performed what-if optimizations.

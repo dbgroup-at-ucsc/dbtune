@@ -27,6 +27,10 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 
+/**
+ * @author Huascar Sanchez
+ * @author Ivo Jimenez
+ */
 public class IndexBenefitGraphConstructor {
     /* 
      * Parameters of the construction.
@@ -67,13 +71,12 @@ public class IndexBenefitGraphConstructor {
      * Creates an IBG which is in a state ready for building.
      * Specifically, the rootNode is physically constructed, but it is not
      * expanded, so its cost and used set have not been determined.
-     * 
+     * <p>
      * In the initial state, the cost of the workload under the empty configuration
      * is set, and may be accessed through emptyCost()
-     * 
+     * <p>
      * Nodes are built by calling buildNode() until it returns false.
-     * @param conn
-     *      an opened {@link DatabaseConnection connection}
+     *
      * @param sql
      *      a {@code sql query}.
      * @param configuration
@@ -253,6 +256,14 @@ public class IndexBenefitGraphConstructor {
     }
 
     /**
+     * Construct an IBG from the given parameters.
+     *
+     * @param optimizer
+     *     optimizer delegate that is being used.
+     * @param sql
+     *     statement being explained
+     * @param conf
+     *     configuration to take into account
      */
     public static IndexBenefitGraph construct(Optimizer optimizer, SQLStatement sql, ConfigurationBitSet conf)
         throws SQLException

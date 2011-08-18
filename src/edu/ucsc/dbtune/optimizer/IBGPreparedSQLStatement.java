@@ -25,45 +25,77 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import java.sql.SQLException;
 
 /**
+ * Prepared statements that are produced by the {@link IBGOptimizer}.
+ *
+ * @see IBGOptimizer
  * @author Karl Schnaitter
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
  */
-public class IBGPreparedSQLStatement extends PreparedSQLStatement {
+public class IBGPreparedSQLStatement extends PreparedSQLStatement
+{
     private IndexBenefitGraph ibg;
     private InteractionBank   bank;
 
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
-    public IBGPreparedSQLStatement(
-            PreparedSQLStatement preparedSQLStatement,
-            Configuration        configuration,
-            IndexBenefitGraph    ibg,
-            int                  whatIfCount)
-    {
-        super(preparedSQLStatement);
-
-        this.ibg               = ibg;
-        this.configuration     = configuration;
-        this.bank              = ibg.getInteractionBank();
-        this.optimizationCount = whatIfCount;
-        this.analysisTime      = ibg.getOverhead();
-    }
-
+    /**
+     * Constructs a prepared statement for the given statement.
+     *
+     * @param sql
+     *     corresponding statement
+     * @param configuration
+     *     configuration that the this new explained statement will be assigned to
+     * @param ibg
+     *     IBG that this new statement will use to execute what-if optimization calls
+     * @param bank
+     *     interaction bank used
+     * @param optimizationCount
+     *     number of optimization calls that were done to produce {@code other}
+     * @param analysisTime
+     *     time it took the optimizer to prepare the statement
+     */
     public IBGPreparedSQLStatement(
             SQLStatement      sql,
             Configuration     configuration,
             IndexBenefitGraph ibg,
             InteractionBank   bank,
-            int               whatIfCount,
+            int               optimizationCount,
             double            analysisTime )
     {
         super(sql, 0.0, configuration);
 
         this.ibg               = ibg;
         this.bank              = bank;
-        this.optimizationCount = whatIfCount;
+        this.optimizationCount = optimizationCount;
         this.analysisTime   = analysisTime;
+    }
+
+    /**
+     * Constructs a prepared statement out of another one and assigns the IBG-related information.
+     *
+     * @param other
+     *     an existing prepared statement
+     * @param configuration
+     *     configuration that the this new explained statement will be assigned to
+     * @param ibg
+     *     IBG that this new statement will use to execute what-if optimization calls
+     * @param optimizationCount
+     *     number of optimization calls that were done to produce {@code other}
+     */
+    public IBGPreparedSQLStatement(
+            PreparedSQLStatement other,
+            Configuration        configuration,
+            IndexBenefitGraph    ibg,
+            int                  optimizationCount)
+    {
+        super(other);
+
+        this.ibg               = ibg;
+        this.configuration     = configuration;
+        this.bank              = ibg.getInteractionBank();
+        this.optimizationCount = optimizationCount;
+        this.analysisTime      = ibg.getOverhead();
     }
 
     /**
@@ -99,7 +131,7 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement {
      *
      * @param configuration
      *      the configuration considered to estimate the cost of the new statement. This can (or 
-     *      not) be the same as {@link getConfiguration}.
+     *      not) be the same as {@link #getConfiguration}.
      * @return
      *      a new statement
      * @throws SQLException

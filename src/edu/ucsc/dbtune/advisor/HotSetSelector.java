@@ -26,8 +26,8 @@ public class HotSetSelector {
     private HotSetSelector(){}
 
     /**
-     * Choose a hot set (i.e., a {@link StaticIndexSet}) that will be used for reorganizing 
-     * candidates part of a {@code snapshot} of a {@link CandidatePool}.
+	 * Choose a hot set (i.e., a {@link StaticIndexSet}) that will be used for reorganizing 
+	 * candidates part of a {@code snapshot}.
      *
      * @param arg
      *      a hot {@link HotsetSelection selection var} which contains specific values that will

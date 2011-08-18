@@ -84,15 +84,14 @@ public class WorkFunctionAlgorithm
     }
 
     /**
-     * run a new task for a {@link IBGPreparedSQLStatement query} through a {@link 
-     * WorkFunctionAlgorithm}'s
+     * run a new task for a {@link PreparedSQLStatement query} through a {@link WorkFunctionAlgorithm}'s
      * submachine.
      * <p>
      * This method corresponds to algorithm {@code analyzeQuery} from Schnaitter's thesis, which is 
      * described in page in page 162 (Figure 6.3)
      *
      * @param qinfo
-     *    a {@link IBGPreparedSQLStatement query}.
+     *    a {@link PreparedSQLStatement} query.
      * @see #getRecommendation()
      */
     public void newTask(PreparedSQLStatement qinfo) throws SQLException {
@@ -150,9 +149,8 @@ public class WorkFunctionAlgorithm
     }
 
     /**
-     * This method along with method {@link #newTask(IBGPreparedSQLStatement)} corresponds to 
-     * algorithm {@code chooseCands} from Schnaitter's thesis, which is described in page in page 
-     * 169 (Figure 6.5).
+     * This method along with method {@link #newTask(PreparedSQLStatement)} corresponds to algorithm {@code chooseCands} from 
+     * Schnaitter's thesis, which is described in page in page 169 (Figure 6.5).
      *
      * @return a list of recommended {@link Index indexes}.
      */

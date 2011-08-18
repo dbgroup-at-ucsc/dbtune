@@ -26,8 +26,9 @@ public class InteractionLogger {
     /**
      * construct an {@link InteractionLogger} for a particular
      * {@link IndexBenefitGraph}.
-     * @param candidateSet
-     *      a set of candidate indexes.
+     *
+     * @param maxId
+     *      maximum id that an index can have
      */
     public InteractionLogger(int maxId) {
         this(new InteractionBank(maxId));

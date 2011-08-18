@@ -33,8 +33,15 @@ import java.sql.DriverManager;
 import java.util.List;
 
 /**
- * Represents a DBMS system. There's a single connection used to communicate with the system. The 
- * user is responsible for closing it.
+ * Represents a DBMS system.The class `DatabaseSystem` represents a DBMS and it's the main entry point to the API. The class 
+ * is in charge of creating/providing with DBMS-specific objects. In general, its responsibilities are:
+ * <p>
+ * <ol>
+ *   <li>Create DBMS-specific metadata (specifically {@link Index}) and {@link Connection} objects.</li>
+ *   <li>Provide with the proper {@link Optimizer} and {@link Catalog} objects</li>
+ * </ol>
+ * <p>
+ * <b>Note:</b>There's a single connection used to communicate with the system. The user is responsible for closing it.
  *
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
@@ -47,7 +54,9 @@ public class DatabaseSystem
     private Catalog     catalog;
 
     /**
-     * Creates a database system instance with the given properties.
+     * Creates a database system instance with the given properties. This effectively acts as a factory constructor that 
+     * takes the description of a system along with connectivity information and creates a {@link Connection}, {@link 
+     * Catalog} and {@link Optimizer} objects of the corresponding type, with the appropriate members. 
      *
      * @param environment
      *     an environment object used to access the properties of the system
@@ -68,12 +77,10 @@ public class DatabaseSystem
     }
 
     /**
-     * Creates a database system instance with the properties from {@link Environment}.
+     * Creates a database system instance with the properties taken from {@link Environment}.
      *
-     * @param properties
-     *     settings to be used in the construction of the object
      * @see Environment
-     * @see EnvironmentProperties
+     * @see edu.ucsc.dbtune.spi.EnvironmentProperties
      */
     public DatabaseSystem() throws SQLException
     {

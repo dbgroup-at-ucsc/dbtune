@@ -40,6 +40,7 @@ public class IndexPartitions {
 
     /**
      * construct an {@link IndexPartitions} object given a set of static indexes.
+     *
      * @param indexes
      *      a {@link StaticIndexSet set of static indexes}.
      */
@@ -60,8 +61,9 @@ public class IndexPartitions {
     /**
      * construct an {@link IndexPartitions} object given a snapshot of candidate indexes
      * and an array of partitions of indexes represented as bitsets.
+     *
      * @param snapshot
-     *      a {@link Snapshot} of candidate indexes.
+     *      a {@link Configuration} of candidate indexes.
      * @param partitionBitSets
      *     an array of partitions of indexes represented as bitsets.
      */

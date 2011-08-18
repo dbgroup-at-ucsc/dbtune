@@ -32,7 +32,7 @@ public class ConfigurationBitSet extends Configuration
     /**
      * Constructs a configuration.
      *
-     * @param configuration
+     * @param other
      *     other configuration whose indexes are referred by {@code bitSet}
      * @param bitSet
      *     the bitset that represents which indexes are turned on.
@@ -43,7 +43,8 @@ public class ConfigurationBitSet extends Configuration
     }
 
     /**
-     * Constructs a configuration.
+     * Constructs a configuration. The given list of indexes may include more indexes that are not in the configuration. The 
+     * indexes that are actually included are described by the given bitSet.
      *
      * @param indexes
      *     list of indexes that are contained in the configuration

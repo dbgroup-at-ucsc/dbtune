@@ -14,20 +14,14 @@
  *   limitations under the License.                                             *
  * **************************************************************************** */
 /**
- * Used to represent the DBMS metadata. The SQL standard (as well as JDBC) defines the following hierarchy:
+ * Definition of the {@link edu.ucsc.dbtune.metadata.workload.SQLStatement} class. This abstraction allows to easily 
+ * manipulate SQL statements, for example, if there's the need of identifying if a statement is being submitted again to an 
+ * {@link edu.ucsc.dbtune.optimizer.Optimizer}.
  * <p>
- * <ul>
- * <li>{@link edu.ucsc.dbtune.metadata.Catalog}</li>
- * <li>{@link edu.ucsc.dbtune.metadata.Schema}</li>
- * <li>{@link edu.ucsc.dbtune.metadata.Table}</li>
- * <li>{@link edu.ucsc.dbtune.metadata.Column}</li>
- * <li>{@link edu.ucsc.dbtune.metadata.Index}</li>
- * </ul>
- * <p>
- * For more info, refer to the Wiki article
- * <a href="https://github.com/dbgroup-at-ucsc/dbtune/wiki/databasemetadata">"Database Metadata in DBTune"</a>:
+ * The {@link edu.ucsc.dbtune.metadata.workload.Workload} class facilitates the manipulation of SQL scripts.
  */
 @Generated(value={})
-package edu.ucsc.dbtune.metadata;
+package edu.ucsc.dbtune.workload;
 
 import javax.annotation.Generated;
+

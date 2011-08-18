@@ -28,7 +28,8 @@ public class InteractionSelector {
 
     /**
      * choose an index partitions object (i.e., a {@link IndexPartitions}) that will be used for reorganizing candidates
-     * part of a {@code snapshot} of a {@link edu.ucsc.dbtune.ibg.CandidatePool}.
+     * part of a {@code snapshot}.
+     *
      * @param arg
      *      a {@link InteractionSelection} object.
      * @return a {@link IndexPartitions} object. <strong>IMPORTANT NOTE</strong>: When

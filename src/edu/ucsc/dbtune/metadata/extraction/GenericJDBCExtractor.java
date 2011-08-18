@@ -33,7 +33,7 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 
 /**
- * Extractor that uses JDBC's DatabaseMetadata class to obtain basic metadata information.
+ * Extractor that uses JDBC's {@link DatabaseMetaData} class to obtain basic metadata information.
  *
  * @author Ivo Jimenez
  */

@@ -14,20 +14,11 @@
  *   limitations under the License.                                             *
  * **************************************************************************** */
 /**
- * Used to represent the DBMS metadata. The SQL standard (as well as JDBC) defines the following hierarchy:
- * <p>
- * <ul>
- * <li>{@link edu.ucsc.dbtune.metadata.Catalog}</li>
- * <li>{@link edu.ucsc.dbtune.metadata.Schema}</li>
- * <li>{@link edu.ucsc.dbtune.metadata.Table}</li>
- * <li>{@link edu.ucsc.dbtune.metadata.Column}</li>
- * <li>{@link edu.ucsc.dbtune.metadata.Index}</li>
- * </ul>
- * <p>
- * For more info, refer to the Wiki article
- * <a href="https://github.com/dbgroup-at-ucsc/dbtune/wiki/databasemetadata">"Database Metadata in DBTune"</a>:
+ * Definition of the {@link edu.ucsc.dbtune.metadata.optimizer.plan.SQLStatementPlan} that is used to represent execution 
+ * plans for a SQL statement. Each operator contained in a plan is represented by an instance of {@link 
+ * edu.ucsc.dbtune.metadata.optimizer.plan.Operator}
  */
 @Generated(value={})
-package edu.ucsc.dbtune.metadata;
+package edu.ucsc.dbtune.optimizer.plan;
 
 import javax.annotation.Generated;

@@ -27,19 +27,22 @@ import java.sql.SQLException;
 import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
 
 /**
- * Represents a variant of What-if optimizer concept in the dbtune API.
+ * Represents a variant of the optimizer concept in the dbtune API that relies on the {@link 
+ * IndexBenefitGraph} to optimize statements.
  *
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
  */
-public class IBGOptimizer extends Optimizer {
+public class IBGOptimizer extends Optimizer
+{
     protected Optimizer delegate;
 
     /**
-     * Construct an {@code IBGOptimizer} that relies on the given Optimizer.
+     * Constructs an {@code IBGOptimizer}. Relies on the given {@code optimizer} to execute actual 
+     * optimization calls.
      *
      * @param delegate
-     *      a DBMS-specific implementation of {@link WhatIfOptimizer} type.
+     *      a DBMS-specific implementation of an {@link Optimizer} type.
      */
     public IBGOptimizer(Optimizer delegate) {
         this.delegate = delegate;

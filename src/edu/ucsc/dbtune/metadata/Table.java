@@ -1,19 +1,18 @@
-/*
- ******************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- ******************************************************************************/
+/* **************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                         *
+ *                                                                              *
+ *   Licensed under the Apache License, Version 2.0 (the "License");            *
+ *   you may not use this file except in compliance with the License.           *
+ *   You may obtain a copy of the License at                                    *
+ *                                                                              *
+ *       http://www.apache.org/licenses/LICENSE-2.0                             *
+ *                                                                              *
+ *   Unless required by applicable law or agreed to in writing, software        *
+ *   distributed under the License is distributed on an "AS IS" BASIS,          *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+ *   See the License for the specific language governing permissions and        *
+ *   limitations under the License.                                             *
+ * **************************************************************************** */
 package edu.ucsc.dbtune.metadata;
 
 import java.util.List;
@@ -22,14 +21,14 @@ import java.util.ArrayList;
 /**
  * Metadata for a table.
  *
- * @author ivo@cs.ucsc.edu (Ivo Jimenez)
+ * @author Ivo Jimenez
  */
 public class Table extends DatabaseObject
 {
     protected Schema schema;
     protected int    type;
-    private   String schemaName; // XXX: remove after fix of issue #53
-    private   String dbName;     // XXX: remove after fix of issue #53
+    private   String schemaName; // XXX: remove after fix of issue #64
+    private   String dbName;     // XXX: remove after fix of issue #64
 
     protected List<Column> _columns;
     protected List<Index>  _indexes;
@@ -68,7 +67,7 @@ public class Table extends DatabaseObject
      */
     @Deprecated
     public Table(String dbName, String schemaName, String name) {
-        // XXX: this constructor should be dropped when issue #53 is fixed
+        // XXX: this constructor should be dropped when issue #64 is fixed
         super(name);
         this.dbName     = dbName;
         this.schemaName = schemaName;
@@ -233,7 +232,7 @@ public class Table extends DatabaseObject
      */
     @Override
     public int hashCode() {
-        // XXX: drop as part of issue #53
+        // XXX: drop as part of issue #64
         if(id != -1) {
             return super.hashCode();
         } else {
@@ -246,7 +245,7 @@ public class Table extends DatabaseObject
      */
     @Override
     public boolean equals(Object o) {
-        // XXX: drop as part of issue #53
+        // XXX: drop as part of issue #64
         if (!(o instanceof Table))
             return false;
 

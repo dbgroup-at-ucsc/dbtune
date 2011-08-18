@@ -91,18 +91,20 @@ public class EnvironmentProperties {
     /**
      * Specifies an upper bound on the number of indexes that are monitored by an instance of WFA 
      * and is used within function {@code chooseCands} (as referenced in page 169 (Figure 6.5) of 
-     * Schnaitter's thesis), and implemented in {@link WorkFunctionAlgorithm#getRecommendation()}.
+     * Schnaitter's thesis), and implemented in {@link 
+     * edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm#getRecommendation}.
      *
-     * @see WorkFunctionAlgorithm#getRecommendation
+     * @see edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm#getRecommendation
      */
     public static final String MAX_NUM_INDEXES = "max.num.indexes";
 
     /**
      * Specifies an upper bound on the number of configurations tracked by WFIT and is read from 
      * function {@code chooseCands} (as referenced in page 169 (Figure 6.5) of Schnaitter's thesis), 
-     * and implemented in {@link WorkFunctionAlgorithm#getRecommendation}.
+     * and implemented in {@link 
+     * edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm#getRecommendation}.
      *
-     * @see WorkFunctionAlgorithm#getRecommendation
+     * @see edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm#getRecommendation
      */
     public static final String MAX_NUM_STATES = "max.num.states";
 

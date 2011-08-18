@@ -15,7 +15,6 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.workload;
 
-
 /**
  * Represents a SQL statement. Each {@code SQLStatement} object is tied to a {@code String} object 
  * that contains the actual literal contents of the SQL statement.
@@ -33,8 +32,6 @@ public class SQLStatement
     /**
      * Constructs a {@code SQLStatement} with unknown category
      *
-     * @param category
-     *      the corresponding {@link SQLCategory} representing the category of statement.
      * @param sql
      *      a sql statement.
      */
