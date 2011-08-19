@@ -50,7 +50,7 @@ import static org.hamcrest.CoreMatchers.is;
  *     "On-line Index Selection for Physical Database Tuning"</a>
  * @author Ivo Jimenez
  */
-public class WfitTestFunctional
+public class WFITTestFunctional
 {
     public static DatabaseSystem db;
     public static Environment    en;

@@ -39,7 +39,7 @@ import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class IndexBenefitGraphWhatIfOptimizerTest {
+public class IBGOptimizerTest {
     //private ConnectionManager connectionManager;
     @Before
     public void setUp() throws Exception {
