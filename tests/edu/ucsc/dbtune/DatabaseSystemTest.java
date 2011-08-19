@@ -36,7 +36,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import static edu.ucsc.dbtune.DbTuneMocks.makeOptimizerMock;
+import static edu.ucsc.dbtune.DBTuneMocks.makeOptimizerMock;
 import static edu.ucsc.dbtune.DBTuneInstances.configureDB2;
 import static edu.ucsc.dbtune.DBTuneInstances.configureMySQL;
 import static edu.ucsc.dbtune.DBTuneInstances.configurePG;

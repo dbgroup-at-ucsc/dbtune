@@ -62,12 +62,12 @@ import static org.mockito.Mockito.spy;
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
  */
-public class DbTuneMocks
+public class DBTuneMocks
 {
     /**
      * Utility class
      */
-    private DbTuneMocks(){}
+    private DBTuneMocks(){}
 
     /**
      * Creates a mock of an optimizer, with default behavior
