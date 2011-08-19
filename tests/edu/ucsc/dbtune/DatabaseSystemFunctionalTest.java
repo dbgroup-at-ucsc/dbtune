@@ -23,7 +23,7 @@ import static org.hamcrest.CoreMatchers.is;
 /**
  * @author Ivo Jimenez
  */
-public class DatabaseSystemTestFunctional
+public class DatabaseSystemFunctionalTest
 {
     /**
      * Checks if a system is constructed correctly. This test depends on the contents of the default 

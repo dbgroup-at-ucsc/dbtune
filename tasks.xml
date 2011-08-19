@@ -9,14 +9,14 @@
       <fileset dir="extensions/ml/lib/" includes="*.jar" />
     </path>
 
-    <target name="compile" description="Compile Java source.">
+    <target name="compile" description="Compile the API source code.">
         <mkdir dir="${build.dir}/classes"/>
         <javac srcdir="${src.dir}" debug="on" destdir="${build.dir}/classes" includeantruntime="no">
             <classpath refid="compile.classpath"/>
         </javac>
     </target>
 
-    <target name="compile.tests" depends="compile" description="Compile test source.">
+    <target name="compile.tests" depends="compile" description="Compile the source code of tests.">
         <mkdir dir="${build.dir}/tests"/>
         <javac srcdir="${test.dir}" debug="on" destdir="${build.dir}/tests" includeantruntime="no">
             <classpath path="${build.dir}/classes"/>
@@ -24,7 +24,10 @@
         </javac>
     </target>
 
-    <target name="test.unit" depends="compile.tests" description="Execute tests.">
+    <target name="test.unit"
+            depends="compile.tests"
+            description="Execute unit tests: all classes sufixed with ${unit} (eg. 
+            tests/edu/ucsc/dbtune/DatabaseSystem${unit}).">
       <echo message="running unit tests"/>
       <mkdir dir="${build.dir}/${junit.out.dir}"/>
       <junit printsummary="yes" haltonerror="yes" haltonfailure="yes" fork="yes">
@@ -35,7 +38,8 @@
         </classpath>
         <batchtest fork="yes" todir="${build.dir}/${junit.out.dir}">
             <fileset dir="${test.dir}">
-                <include name="${unit}"/>
+                <include name="**/*${unit}"/>
+                <exclude name="**/*${functional}"/>
                 <exclude name="**/AllTests.java"/>
             </fileset>
         </batchtest>
@@ -43,7 +47,32 @@
       </junit>
     </target>
 
-    <target name="test.one" depends="compile.tests,argument-checking" description="Execute tests.">
+    <target name="test.functional"
+            depends="compile.tests"
+            description="Execute functional tests: classes sufixed with ${functional} (eg. 
+            tests/edu/ucsc/dbtune/DatabaseSystem${functional}.java).">
+        <echo message="running functional tests"/>
+        <mkdir dir="${build.dir}/${junit.out.dir}"/>
+        <junit printsummary="yes" haltonerror="yes" haltonfailure="yes" fork="yes">
+            <classpath>
+                <path refid="compile.classpath"/>
+                <pathelement location="${build.dir}/classes"/>
+                <pathelement location="${build.dir}/tests"/>
+            </classpath>
+            <batchtest fork="yes" todir="${build.dir}/${junit.out.dir}">
+                <fileset dir="${test.dir}">
+                    <include name="**/*${functional}"/>
+                    <exclude name="**/AllTests.java"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml" />
+        </junit>
+    </target>
+
+    <target name="test.one"
+            depends="compile.tests,argument-checking"
+            description="Execute one test specified by the 'class' command line parameter
+                         (eg. '-Dclass=edu.ucsc.dbtune.DatabaseSystemTest').">
       <echo message="running test ${class}"/>
       <mkdir dir="${build.dir}/${junit.out.dir}"/>
       <junit printsummary="no" haltonerror="yes" haltonfailure="yes" showoutput="no" fork="yes">
@@ -57,29 +86,22 @@
       </junit>
     </target>
 
-    <target name="test.functional" depends="compile.tests" description="Execute tests.">
-        <echo message="running functional tests"/>
-        <mkdir dir="${build.dir}/${junit.out.dir}"/>
-        <junit printsummary="yes" haltonerror="no" haltonfailure="no" fork="yes">
-            <classpath>
-                <path refid="compile.classpath"/>
-                <pathelement location="${build.dir}/classes"/>
-                <pathelement location="${build.dir}/tests"/>
-            </classpath>
-            <batchtest fork="yes" todir="${build.dir}/${junit.out.dir}">
-                <fileset dir="${test.dir}">
-                    <include name="${functional}"/>
-                    <exclude name="**/AllTests.java"/>
-                </fileset>
-            </batchtest>
-            <formatter type="xml" />
-        </junit>
-        <junitreport todir="${build.dir}/${junit.out.dir}">
-          <fileset dir="${build.dir}/${junit.out.dir}">
-            <include name="TEST-*.xml" />
-          </fileset>
-          <report format="frames" todir="${build.dir}/${junit.out.dir}" />
-        </junitreport>
+    <target name="test.debug"
+            depends="compile.tests,argument-checking"
+            description="Runs a test by invoking the JVM with JDB parameters (port=8765).">
+      <echo message="running test ${class}"/>
+      <mkdir dir="${build.dir}/${junit.out.dir}"/>
+      <junit printsummary="no" haltonerror="yes" haltonfailure="yes" showoutput="no" fork="yes">
+        <jvmarg value="-Xdebug"/>
+        <jvmarg value="-Xrunjdwp:transport=dt_socket,address=8765,server=y,suspend=y"/>
+        <classpath>
+          <path refid="compile.classpath"/>
+          <pathelement location="${build.dir}/classes"/>
+          <pathelement location="${build.dir}/tests"/>
+        </classpath>
+        <test todir="${build.dir}/${junit.out.dir}" name="${class}"/>
+        <formatter usefile="false" type="plain"/>
+      </junit>
     </target>
 
     <target name="clean"
@@ -87,7 +109,9 @@
         <delete dir="${build.dir}"/>
     </target>
 
-    <target name="argument-checking" depends="compile.tests" >
+    <target name="argument-checking"
+            depends="compile.tests"
+            description="Checks that the name referred by the 'class' command line parameter exists">
         <fail message="No class variable defined" unless="class" />
         <available
             classname="${class}"

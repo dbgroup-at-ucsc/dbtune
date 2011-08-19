@@ -74,4 +74,26 @@
   <target name="test.unit.and.functional" depends="test.unit,test.functional" />
 
   <target name="test.all.unit.and.functional" depends="test.all.unit,test.all.functional" />
+
+  <target name="test.report"
+          depends="test.unit.and.functional"
+          description="Execute unit and functional tests and generate an HTML report.">
+    <junitreport todir="${build.dir}/${junit.out.dir}">
+      <fileset dir="${build.dir}/${junit.out.dir}">
+        <include name="TEST-*.xml" />
+      </fileset>
+      <report format="frames" todir="${build.dir}/${junit.out.dir}" />
+    </junitreport>
+  </target>
+
+  <target name="test.all.report"
+          depends="test.all.unit.and.functional"
+          description="Execute ALL unit and functional tests and generate an HTML report.">
+    <junitreport todir="${build.dir}/${junit.out.dir}">
+      <fileset dir="${build.dir}/${junit.out.dir}">
+        <include name="TEST-*.xml" />
+      </fileset>
+      <report format="frames" todir="${build.dir}/${junit.out.dir}" />
+    </junitreport>
+  </target>
 </project>

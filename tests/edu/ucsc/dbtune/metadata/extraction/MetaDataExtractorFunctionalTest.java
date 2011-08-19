@@ -42,7 +42,7 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
  * @author Ivo Jimenez
  * @see GenericJDBCExtractorTestFunctional
  */
-public class MetaDataExtractorTestFunctional
+public class MetaDataExtractorFunctionalTest
 {
     private static DatabaseSystem db;
     private static Environment    en;

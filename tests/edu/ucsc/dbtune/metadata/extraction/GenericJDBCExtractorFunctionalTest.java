@@ -53,7 +53,7 @@ import static org.hamcrest.CoreMatchers.is;
  * @see EnvironmentProperties
  * @see DatabaseSystem
  */
-public class GenericJDBCExtractorTestFunctional
+public class GenericJDBCExtractorFunctionalTest
 {
     private static DatabaseSystem db;
     private static Environment    en;

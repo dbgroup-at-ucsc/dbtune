@@ -58,7 +58,7 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
  * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
  *     "On-line Index Selection for Physical Database Tuning"</a>
  */
-public class OptimizerTestFunctional
+public class OptimizerFunctionalTest
 {
     public static DatabaseSystem db;
     public static Environment    en;
