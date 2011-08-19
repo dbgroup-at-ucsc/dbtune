@@ -40,9 +40,6 @@ public class MySQLOptimizer extends Optimizer
      *     stored. If not null, it is used to bind operator references to actual metadata objects.
      * @throws SQLException
      *     if an error occurs while communicating to the server.
-     * @throws UnsupportedOperationException
-     *     if the version of the PostgreSQL {@code connection} is communicating with isn't 9.0.0 or 
-     *     above.
      */
     public MySQLOptimizer(Connection connection, Catalog catalog) throws SQLException
     {

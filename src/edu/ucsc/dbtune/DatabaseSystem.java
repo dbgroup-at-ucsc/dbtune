@@ -24,6 +24,7 @@ import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
+import edu.ucsc.dbtune.optimizer.MySQLOptimizer;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.spi.Environment;
 
@@ -37,8 +38,9 @@ import java.util.List;
  * is in charge of creating/providing with DBMS-specific objects. In general, its responsibilities are:
  * <p>
  * <ol>
- *   <li>Create DBMS-specific metadata (specifically {@link Index}) and {@link Connection} objects.</li>
- *   <li>Provide with the proper {@link Optimizer} and {@link Catalog} objects</li>
+ *   <li>Create DBMS-specific {@link Connection} objects.</li>
+ *   <li>Provide with the proper {@link Optimizer} and {@link Catalog} objects.</li>
+ *   <li>Create DBMS-specific {@link Index} objects.</li>
  * </ol>
  * <p>
  * <b>Note:</b>There's a single connection used to communicate with the system. The user is responsible for closing it.
@@ -48,99 +50,28 @@ import java.util.List;
  */
 public class DatabaseSystem
 {
-    private Environment environment;
-    private Connection  connection;
-    private Optimizer   optimizer;
-    private Catalog     catalog;
+    private Connection connection;
+    private Optimizer  optimizer;
+    private Catalog    catalog;
 
     /**
-     * Creates a database system instance with the given properties. This effectively acts as a factory constructor that 
-     * takes the description of a system along with connectivity information and creates a {@link Connection}, {@link 
-     * Catalog} and {@link Optimizer} objects of the corresponding type, with the appropriate members. 
+     * Creates a database system instance with the given elements. This effectively acts as sort-of system "trait".
      *
-     * @param environment
-     *     an environment object used to access the properties of the system
-     */
-    public DatabaseSystem(Environment environment) throws SQLException
-    {
-        this.environment = environment;
-
-        try {
-            Class.forName(environment.getJDBCDriver());
-        } catch(Exception e) {
-            throw new SQLException(e);
-        }
-
-        connection = connect();
-        catalog    = getCatalog(connection);
-        optimizer  = getOptimizer(connection,catalog);
-    }
-
-    /**
-     * Creates a database system instance with the properties taken from {@link Environment}.
-     *
-     * @see Environment
-     * @see edu.ucsc.dbtune.spi.EnvironmentProperties
-     */
-    public DatabaseSystem() throws SQLException
-    {
-        this(Environment.getInstance());
-    }
-
-    /**
-     * Returns the corresponding optimizer.
-     *
-     * @return
-     *      an optimizer.
+     * @param connection
+     *     a JDBC connection
+     * @param catalog
+     *     a metadata catalog
+     * @param optimizer
+     *     an optimizer
+     * @see Connection
+     * @see Catalog
      * @see Optimizer
      */
-    private Optimizer getOptimizer(Connection connection, Catalog catalog) throws SQLException
+    public DatabaseSystem(Connection connection, Catalog catalog, Optimizer optimizer) throws SQLException
     {
-        if(environment.getJDBCDriver().equals("com.mysql.jdbc.Driver")) {
-            //optimizer = new MySQLOptimizer(connection, catalog);
-            throw new SQLException("MySQLOptimizer doesn't exist yet");
-        } else if(environment.getJDBCDriver().equals("com.ibm.db2.jcc.DB2Driver")) {
-            //optimizer = new DB2Optimizer(connection, catalog);
-            optimizer = new DB2Optimizer(connection, environment.getDatabaseName());
-        } else if(environment.getJDBCDriver().equals("org.postgresql.Driver")) {
-            //optimizer = new PGOptimizer(connection, catalog.findSchema(environment.getSchema()));
-            optimizer = new PGOptimizer(connection);
-        } else {
-            throw new SQLException("Unsupported driver " + environment.getJDBCDriver());
-        }
-
-        if(environment.getOptimizer().equals("dbms")) {
-            return optimizer;
-        } else if(environment.getOptimizer().equals("ibg")) {
-            return new IBGOptimizer(optimizer);
-        } else if(environment.getOptimizer().equals("inum")) {
-            throw new SQLException("INUMOptimizer doesn't exist yet");
-        } else {
-            throw new SQLException("unknown optimizer option: " + environment.getOptimizer());
-        }
-    }
-
-    /**
-     * Returns the corresponding metadata extractor.
-     *
-     * @return
-     *      a metadata extractor
-     */
-    private Catalog getCatalog(Connection connection) throws SQLException
-    {
-        MetadataExtractor extractor = null;
-
-        if(environment.getJDBCDriver().equals("com.mysql.jdbc.Driver")) {
-            extractor = new MySQLExtractor();
-        } else if(environment.getJDBCDriver().equals("com.ibm.db2.jcc.DB2Driver")) {
-            throw new SQLException("DB2Extractor doesn't exist yet");
-        } else if(environment.getJDBCDriver().equals("org.postgresql.Driver")) {
-            extractor = new PGExtractor();
-        } else {
-            throw new SQLException("Unsupported driver " + environment.getJDBCDriver());
-        }
-
-        return extractor.extract(connection);
+        this.connection = connection;
+        this.catalog    = catalog;
+        this.optimizer  = optimizer;
     }
 
     /**
@@ -164,23 +95,6 @@ public class DatabaseSystem
     public Catalog getCatalog()
     {
         return catalog;
-    }
-
-    /**
-     * Creates and opens a connection to the DBMS. The user is responsible for closing it.
-     *
-     * @return
-     *      a connection
-     * @see Connection
-     */
-    private Connection connect() throws SQLException {
-        String url = environment.getDatabaseUrl();
-        String usr = environment.getUsername();
-        String pwd = environment.getPassword();
-        
-        return DriverManager.getConnection(url,usr,pwd);
-
-        // may need to run a SET SEARCH_PATH for postgres in order to set the schema name correctly
     }
 
     /**
@@ -209,5 +123,117 @@ public class DatabaseSystem
     public Index createIndex(List<Column> cols, List<Boolean> descending, int type) throws SQLException
     {
         throw new RuntimeException("not implemented yet");
+    }
+
+    /**
+     * Creates and opens a connection to the DBMS. The caller is responsible for closing it.
+     *
+     * @return
+     *      a connection
+     * @see Connection
+     */
+    private static Connection getConnection(Environment env) throws SQLException {
+        String url = env.getDatabaseUrl()+"/"+env.getDatabaseName();
+        String usr = env.getUsername();
+        String pwd = env.getPassword();
+        
+        return DriverManager.getConnection(url,usr,pwd);
+
+        // may need to run a SET SEARCH_PATH for postgres in order to set the schema name correctly
+    }
+
+    /**
+     * Returns the corresponding metadata extractor.
+     *
+     * @return
+     *      a metadata extractor
+     */
+    private static MetadataExtractor getExtractor(Environment env) throws SQLException
+    {
+        MetadataExtractor extractor = null;
+
+        if(env.getJDBCDriver().equals("com.mysql.jdbc.Driver")) {
+            extractor = new MySQLExtractor();
+        } else if(env.getJDBCDriver().equals("com.ibm.db2.jcc.DB2Driver")) {
+            throw new SQLException("DB2Extractor doesn't exist yet");
+        } else if(env.getJDBCDriver().equals("org.postgresql.Driver")) {
+            extractor = new PGExtractor();
+        } else {
+            throw new SQLException("Unsupported driver " + env.getJDBCDriver());
+        }
+
+        return extractor;
+    }
+
+    /**
+     * Returns the corresponding optimizer.
+     *
+     * @return
+     *      an optimizer.
+     * @see Optimizer
+     */
+    private static Optimizer getOptimizer(Environment env, Connection con) throws SQLException
+    {
+        Optimizer optimizer;
+
+        if(env.getJDBCDriver().equals("com.mysql.jdbc.Driver")) {
+            optimizer = new MySQLOptimizer(con);
+        } else if(env.getJDBCDriver().equals("com.ibm.db2.jcc.DB2Driver")) {
+            optimizer = new DB2Optimizer(con);
+        } else if(env.getJDBCDriver().equals("org.postgresql.Driver")) {
+            optimizer = new PGOptimizer(con);
+        } else {
+            throw new SQLException("Unsupported driver " + env.getJDBCDriver());
+        }
+
+        if(env.getOptimizer().equals("dbms")) {
+            return optimizer;
+        } else if(env.getOptimizer().equals("ibg")) {
+            return new IBGOptimizer(optimizer);
+        } else if(env.getOptimizer().equals("inum")) {
+            throw new SQLException("INUMOptimizer doesn't exist yet");
+        } else {
+            throw new SQLException("unknown optimizer option: " + env.getOptimizer());
+        }
+    }
+
+    /**
+     * Creates a database system instance with the given properties. This effectively acts as a factory method that takes the 
+     * description of a system along with connectivity information and creates a {@link Connection}, {@link Catalog} and 
+     * {@link Optimizer} objects of the corresponding type, with the appropriate members. 
+     *
+     * @param env
+     *     an environment object used to access the properties of the system
+     */
+    public static DatabaseSystem newDatabaseSystem(Environment env) throws SQLException
+    {
+        Connection connection;
+        Optimizer  optimizer;
+        Catalog    catalog;
+
+        try {
+            Class.forName(env.getJDBCDriver());
+        } catch(Exception e) {
+            throw new SQLException(e);
+        }
+
+        connection = getConnection(env);
+        catalog    = getExtractor(env).extract(connection);
+        optimizer  = getOptimizer(env, connection);
+
+        optimizer.setCatalog(catalog);
+        
+        return new DatabaseSystem(connection, catalog, optimizer);
+    }
+
+    /**
+     * Creates a database system instance with the default properties from {@link Environment}.
+     *
+     * @param env
+     *     an environment object used to access the properties of the system
+     */
+    public static DatabaseSystem newDatabaseSystem() throws SQLException
+    {
+        return newDatabaseSystem(Environment.getInstance());
     }
 }

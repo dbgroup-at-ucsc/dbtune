@@ -17,7 +17,8 @@ import static org.junit.Assert.assertThat;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class CandidateSelectorTest {
+public class CandidateSelectorTest
+{
     @Test
     public void testCreationCostOfNewIndex() throws Exception {
         final CandidatesSelector candidatesSelector = new CandidatesSelector(40,12345,10,100);

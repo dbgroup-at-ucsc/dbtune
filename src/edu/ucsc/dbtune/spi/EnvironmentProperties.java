@@ -81,14 +81,6 @@ public class EnvironmentProperties {
     public static final String OUTPUT_FOLDERNAME = "output.dir";
 
     /**
-     * Name of a previously defined workload. This is used to uniquely identify a workload inside 
-     * the {@code WORKLOADS_FOLDERNAME}.
-     *
-     * @see #WORKLOADS_FOLDERNAME
-     */
-    public static final String WORKLOAD_NAME = "workload.name";
-
-    /**
      * Specifies an upper bound on the number of indexes that are monitored by an instance of WFA 
      * and is used within function {@code chooseCands} (as referenced in page 169 (Figure 6.5) of 
      * Schnaitter's thesis), and implemented in {@link 
@@ -96,7 +88,7 @@ public class EnvironmentProperties {
      *
      * @see edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm#getRecommendation
      */
-    public static final String MAX_NUM_INDEXES = "max.num.indexes";
+    public static final String MAX_NUM_INDEXES = "max.number.of.indexes";
 
     /**
      * Specifies an upper bound on the number of configurations tracked by WFIT and is read from 
@@ -106,7 +98,7 @@ public class EnvironmentProperties {
      *
      * @see edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm#getRecommendation
      */
-    public static final String MAX_NUM_STATES = "max.num.states";
+    public static final String MAX_NUM_STATES = "max.number.of.states";
 
     /**
      * Factor used to obtain the overhead of a query based on the start and end time. The overhead 

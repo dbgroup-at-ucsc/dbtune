@@ -1,3 +1,18 @@
+/* ************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                       *
+ *                                                                            *
+ *   Licensed under the Apache License, Version 2.0 (the "License");          *
+ *   you may not use this file except in compliance with the License.         *
+ *   You may obtain a copy of the License at                                  *
+ *                                                                            *
+ *       http://www.apache.org/licenses/LICENSE-2.0                           *
+ *                                                                            *
+ *   Unless required by applicable law or agreed to in writing, software      *
+ *   distributed under the License is distributed on an "AS IS" BASIS,        *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *   See the License for the specific language governing permissions and      *
+ *   limitations under the License.                                           *
+ * ************************************************************************** */
 package edu.ucsc.dbtune.spi;
 
 import edu.ucsc.dbtune.spi.core.Console;
@@ -20,7 +35,6 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.URL;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOAD_NAME;
 import static edu.ucsc.dbtune.util.Objects.cast;
 
 import java.io.File;
@@ -33,7 +47,8 @@ import java.util.Properties;
 import java.util.Set;
 
 /**
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @author Huascar A. Sanchez
+ * @author Ivo Jimenez
  */
 public class Environment {
 
@@ -46,16 +61,13 @@ public class Environment {
      *     properties to be accessed through the this object.
      */
     public Environment(Properties properties) throws IOException {
-        this(new PropertiesConfiguration(getDefaultProperties()," "));
+        this(new PropertiesConfiguration(properties));
     }
 
     public Environment() throws IOException {
         this(
-                new PropertiesConfiguration(
-                        getDefaultProperties(),
-                        System.getProperty("user.dir") + "/config/" + FILE
-                )
-        );
+            new PropertiesConfiguration(
+                getDefaultProperties(), System.getProperty("user.dir") + "/config/" + FILE));
     }
 
     Environment(Configuration configuration){
@@ -137,13 +149,6 @@ public class Environment {
     }
 
     /**
-     * @return {@link EnvironmentProperties#WORKLOAD_NAME}
-     */
-    public String getWorkloadName(){
-        return asString(configuration.getProperty(WORKLOAD_NAME));
-    }
-
-    /**
      * @return {@link EnvironmentProperties#MAX_NUM_INDEXES}
      */
     public int getMaxNumIndexes(){
@@ -220,26 +225,7 @@ public class Environment {
      * @see #getWorkloadName
      */
     public String getFilenameAtWorkloadFolder(String filename){
-        return getWorkloadsFoldername() + "/" + getWorkloadName() + "/" + filename;
-    }
-
-    /**
-     * Returns the path to a file inside the output folder. The path is qualified against the 
-     * concatenation of {@link EnvironmentProperties#OUTPUT_FOLDERNAME} and
-     * {@link EnvironmentProperties#WORKLOAD_NAME}. The contents of the
-     * returned string look like:
-     * <p>
-     * {@code getOutputFoldername()} + "/" + {@code getWorkloadName() + {@code filename} }
-     *
-     * @param filename
-     *    name of file contained inside {@link EnvironmentProperties#OUTPUT_FOLDERNAME}.
-     * @return
-     *    {@code String} containing the path to the given script filename
-     * @see #getOutputFoldername
-     * @see #getWorkloadName
-     */
-    public String getFilenameAtOutputFolder(String filename){
-        return getOutputFoldername() + "/" + getWorkloadName() + "/" + filename;
+        return getWorkloadsFoldername() + "/" + filename;
     }
 
     /**
@@ -340,6 +326,14 @@ public class Environment {
 
         private boolean useDefaults = false;
         private long    lastModified = 0;
+
+        PropertiesConfiguration(Properties defaults) throws IOException {
+            super();
+            this.defaults    = defaults;
+            this.file        = new File("");
+            this.useDefaults = true;
+            loadProperties();
+        }
 
         PropertiesConfiguration(Properties defaults, String filename) throws IOException {
             super();

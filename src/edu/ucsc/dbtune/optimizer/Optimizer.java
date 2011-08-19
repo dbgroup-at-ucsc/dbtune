@@ -15,6 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -25,7 +26,8 @@ import java.sql.SQLException;
  */
 public abstract class Optimizer
 {
-    protected int optimizationCount;
+    protected Catalog catalog;
+    protected int     optimizationCount;
 
     /**
      * perform an optimization call for a single SQL statement.
@@ -84,5 +86,16 @@ public abstract class Optimizer
     public int getOptimizationCount()
     {
         return optimizationCount;
+    }
+
+    /**
+     * Assigns the catalog that should be used to bind metadata to prepared statements.
+     *
+     * @param catalog
+     *     metadata to be used when binding database objects.
+     */
+    public void setCatalog(Catalog catalog)
+    {
+        this.catalog = catalog;
     }
 }

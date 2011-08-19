@@ -18,6 +18,8 @@ package edu.ucsc.dbtune.metadata;
 import java.util.List;
 import java.util.ArrayList;
 
+import java.sql.SQLException;
+
 /**
  * Represents the abstraction for Index metadata
  *
@@ -312,12 +314,11 @@ public class Index extends DatabaseObject
      * @param column
      *     new column to be inserted to the sequence
      */
-    public void add(Column column)
-        throws Exception
+    public void add(Column column) throws SQLException
     {
         if (table != column.getTable())
         {
-            throw new Exception("Table " + table + " doesn't contain column " + column);
+            throw new SQLException("Table " + table + " doesn't contain column " + column);
         }
 
         if (!contains(column))

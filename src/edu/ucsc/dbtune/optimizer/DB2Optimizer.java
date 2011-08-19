@@ -54,7 +54,6 @@ import static edu.ucsc.dbtune.util.Instances.newTreeSet;
 public class DB2Optimizer extends Optimizer
 {
     private final Connection connection;
-    private final String     databaseName;
 
     /**
      * Creates a DB2 optimizer with the given information.
@@ -64,9 +63,8 @@ public class DB2Optimizer extends Optimizer
      * @param databaseName
      *     the name of the database the connection is connected to
      */
-    public DB2Optimizer(Connection connection, String databaseName){
+    public DB2Optimizer(Connection connection){
         this.connection   = connection;
-        this.databaseName = databaseName;
     }
 
     /**
@@ -175,7 +173,7 @@ public class DB2Optimizer extends Optimizer
         } catch (SQLException ignore) {
         }
 
-        indexList = supplyValue(readAdviseOnAllIndexes(), connection, databaseName);
+        indexList = supplyValue(readAdviseOnAllIndexes(), connection, catalog.getName());
         submit(clearAdviseIndex(), connection);
 
         return new Configuration(indexList);

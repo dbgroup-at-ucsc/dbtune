@@ -21,19 +21,21 @@ import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.util.SQLScriptExecuter;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Properties;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
+
+import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 
@@ -50,26 +52,33 @@ import static org.hamcrest.CoreMatchers.is;
  */
 public class WfitTestFunctional
 {
-    public final static DatabaseSystem db;
-    public final static Environment    en;
-
-    static {
-        try {       
-            en = Environment.getInstance();
-            db = new DatabaseSystem();
-        } catch(SQLException ex) {
-            throw new ExceptionInInitializerError(ex);
-        }
-    }
+    public static DatabaseSystem db;
+    public static Environment    en;
 
     @BeforeClass
     public static void setUp() throws Exception
     {
-        File   outputdir   = new File(en.getOutputFoldername() + "/one_table");
-        String ddlfilename = en.getScriptAtWorkloadsFolder("one_table/create.sql");
+        Properties cfg;
+        String     ddl;
 
-        outputdir.mkdirs();
-        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        cfg = new Properties(Environment.getInstance().getAll());
+
+        cfg.setProperty(SCHEMA,"one_table");
+
+        en  = new Environment(cfg);
+        db  = DatabaseSystem.newDatabaseSystem(en);
+        ddl = en.getScriptAtWorkloadsFolder("one_table/create.sql");
+
+        {
+            // DatabaseSystem reads the catalog as part of its creation, so we need to wipe anything 
+            // in the movies schema and reload the data. Then create a DB again to get a fresh 
+            // catalog
+            //execute(db.getConnection(), ddl);
+            db.getConnection().close();
+
+            db = null;
+            db = DatabaseSystem.newDatabaseSystem(en);
+        }
     }
 
     @AfterClass

@@ -15,10 +15,11 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune;
 
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.optimizer.Optimizer;
+
 import org.junit.Test;
-/*
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -26,50 +27,58 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
+import static edu.ucsc.dbtune.DbTuneMocks.makeOptimizerMock;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-*/
 
-//@RunWith(PowerMockRunner.class)
+@RunWith(PowerMockRunner.class)
 /**
  * @author Ivo Jimenez
  */
-//@PrepareForTest({DatabaseSystem.class})
+@PrepareForTest({DatabaseSystem.class})
 public class DatabaseSystemTest
 {
     /**
-     * Checks if a system is constructed correctly. All dependencies are mocked
+     * Checks if a system is constructed correctly.
      */
     @Test
-    public void testConstruction() throws Exception
+    public void testConstructor() throws Exception
     {
-        /*
-         * XXX: this tests depends on having Connection mocks for:
-         *        - metadata.extraction.GenericJDBCExtractor
-         *        - metadata.extraction.PGExtractor
-         *        - metadata.extraction.MySQLExctractor
-         *        - metadata.extraction.DB2Exctractor
-         *        - metadata.extraction.IBGOptimizer
-         *        - metadata.extraction.PGOptimizer
-         *        - metadata.extraction.DB2Optimizer
-         *        - metadata.extraction.MySQLOptimizer
-         *        - metadata.extraction.InumOptimizer
-         *
-         *      with mocks for all the above, we can easily use them in the DatabaseSystem 
-         *      construction
         mockStatic(DriverManager.class);
 
-        Connection c = Mockito.mock(Connection.class);
+        Connection     con = mock(Connection.class);
+        Catalog        cat = mock(Catalog.class);
+        Optimizer      opt = makeOptimizerMock();
+        DatabaseSystem db  = new DatabaseSystem(con,cat,opt);
 
-        when(DriverManager.getConnection(anyString(), anyString(), anyString())).thenReturn(c);
+        assertThat(db.getConnection(), is(con));
+        assertThat(db.getCatalog(), is(cat));
+        assertThat(db.getOptimizer(), is(opt));
+    }
 
-        DatabaseSystem db = new DatabaseSystem();
+    /**
+     * Checks that the static (factory) methods work
+     */
+    @Test
+    public void testFactory() throws Exception
+    {
+        mockStatic(DriverManager.class);
 
-        assertThat(db.getConnection(), is(c));
+        Connection     con = mock(Connection.class);
+        Catalog        cat = mock(Catalog.class);
+        Optimizer      opt = makeOptimizerMock();
 
-        */
+        when(DriverManager.getConnection(anyString(), anyString(), anyString())).thenReturn(con);
+
+        DatabaseSystem db  = new DatabaseSystem(con,cat,opt);
+
+        assertThat(db.getConnection(), is(con));
+        assertThat(db.getCatalog(), is(cat));
+        assertThat(db.getOptimizer(), is(opt));
     }
 }

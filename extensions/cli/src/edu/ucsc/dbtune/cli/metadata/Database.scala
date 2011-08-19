@@ -16,7 +16,7 @@
  ******************************************************************************/
 package edu.ucsc.dbtune.cli.metadata
 
-import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.DatabaseSystem._;
 import java.util.Properties
 
 /**
@@ -43,7 +43,7 @@ object Database
    *    password used to authenticate
    */
   def connect(url:String, usr:String, pwd:String) : Database = {
-    var cat = (new DatabaseSystem).getCatalog
+    var cat = newDatabaseSystem.getCatalog
     var db  = new Database(cat.getSchemas.get(0))
 
     return db

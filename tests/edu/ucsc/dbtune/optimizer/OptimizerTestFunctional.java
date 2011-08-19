@@ -22,7 +22,6 @@ import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.util.SQLScriptExecuter;
 import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -34,12 +33,14 @@ import org.junit.Condition;
 import org.junit.If;
 import org.junit.Test;
 
-import java.io.File;
 import java.sql.SQLException;
+import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
+import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
 
 /**
  * Functional test for what-if optimizer implementations
@@ -57,20 +58,40 @@ import static org.junit.Assume.assumeThat;
  * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
  *     "On-line Index Selection for Physical Database Tuning"</a>
  */
-public class OptimizerTestFunctional {
-    private static DatabaseSystem db;
-    private static Environment    en;
+public class OptimizerTestFunctional
+{
+    public static DatabaseSystem db;
+    public static Environment    en;
 
     @BeforeClass
-    public static void setUp() throws Exception {
-        en = Environment.getInstance();
-        db = new DatabaseSystem();
+    public static void setUp() throws Exception
+    {
+        Properties cfg;
+        String     ddl;
 
-        File   outputdir   = new File(en.getOutputFoldername() + "/one_table");
-        String ddlfilename = en.getScriptAtWorkloadsFolder("one_table/create.sql");
+        cfg = new Properties(Environment.getInstance().getAll());
 
-        outputdir.mkdirs();
-        //SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        cfg.setProperty(SCHEMA,"one_table");
+
+        en  = new Environment(cfg);
+        db  = DatabaseSystem.newDatabaseSystem(en);
+        ddl = en.getScriptAtWorkloadsFolder("one_table/create.sql");
+
+        {
+            // DatabaseSystem reads the catalog as part of its creation, so we need to wipe anything 
+            // in the movies schema and reload the data. Then create a DB again to get a fresh 
+            // catalog
+            //execute(db.getConnection(), ddl);
+            db.getConnection().close();
+
+            db = null;
+            db = DatabaseSystem.newDatabaseSystem(en);
+        }
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception{
+        db.getConnection().close();
     }
 
     @Test // this test will pass once the what if optimizer returns something....
@@ -89,7 +110,6 @@ public class OptimizerTestFunctional {
            assumeThat(info.getUpdateCost(each) >= 0.0, is(true));
         }
     }
-
 
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
@@ -122,11 +142,6 @@ public class OptimizerTestFunctional {
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception{
-        db.getConnection().close();
     }
 
     @Condition

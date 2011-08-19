@@ -17,8 +17,8 @@ package edu.ucsc.dbtune;
 
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 
 /**
  * @author Ivo Jimenez
@@ -34,10 +34,12 @@ public class DatabaseSystemTestFunctional
     @Test
     public void testDBConnection() throws Exception
     {
-        DatabaseSystem db = new DatabaseSystem();
+        DatabaseSystem db = DatabaseSystem.newDatabaseSystem();
 
         assertThat(db.getConnection() != null, is(true));
         assertThat(db.getOptimizer() != null, is(true));
         assertThat(db.getCatalog() != null, is(true));
+
+        db.getConnection().close();
     }
 }

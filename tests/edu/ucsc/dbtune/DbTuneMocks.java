@@ -15,6 +15,10 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune;
 
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
 
@@ -52,6 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.mockito.Mockito.spy;
 
 /**
  * @author Huascar A. Sanchez
@@ -59,6 +64,30 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class DbTuneMocks
 {
+    /**
+     * Utility class
+     */
+    private DbTuneMocks(){}
+
+    /**
+     * Creates a mock of an optimizer, with default behavior
+     *
+     * @return
+     *     an optimizer that is able to prepare any statement and returns empty configurations
+     */
+    public static Optimizer makeOptimizerMock()
+    {
+        OptimizerImpl opt = spy(new OptimizerImpl());
+
+        return opt;
+    }
+
+    public static class OptimizerImpl extends Optimizer {
+        public PreparedSQLStatement explain(SQLStatement sql) {return null;}
+        public PreparedSQLStatement explain(SQLStatement sql, Configuration conf) {return null;}
+        public Configuration recommendIndexes(SQLStatement sql) {return null;}
+    }
+
     public static Statement makeMockStatement(boolean next, boolean withCounterForGetInt, Connection connection){
         final MockStatement statement = new MockStatement(new MockResultSet(next, false, withCounterForGetInt));
         statement.register(connection);
