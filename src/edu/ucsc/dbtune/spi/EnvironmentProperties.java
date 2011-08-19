@@ -32,14 +32,21 @@ public class EnvironmentProperties {
     public static final String SCHEMA = "schema";
 
     /**
+     * JDBC connection url.
+     */
+    public static final String URL = "url";
+
+    /**
      * Fully qualified path to JDBC's {@code Driver} class
      */
     public static final String JDBC_DRIVER = "driver";
 
     /**
-     * JDBC connection url.
+     * Driver names for the supported DBMSs
      */
-    public static final String URL = "url";
+    public static final String DB2   = "com.ibm.db2.jcc.DB2Driver";
+    public static final String MYSQL = "com.mysql.jdbc.Driver";
+    public static final String PG    = "org.postgresql.Driver";
 
     /**
      * Type of optimizer to use

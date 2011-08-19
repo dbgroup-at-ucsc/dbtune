@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.extraction.MetadataExtractor;
+import edu.ucsc.dbtune.metadata.extraction.DB2Extractor;
 import edu.ucsc.dbtune.metadata.extraction.MySQLExtractor;
 import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -32,6 +33,13 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.util.List;
+
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.MYSQL;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.PG;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.DB2;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
 
 /**
  * Represents a DBMS system.The class `DatabaseSystem` represents a DBMS and it's the main entry point to the API. The class 
@@ -132,7 +140,7 @@ public class DatabaseSystem
      *      a connection
      * @see Connection
      */
-    private static Connection getConnection(Environment env) throws SQLException {
+    protected static Connection getConnection(Environment env) throws SQLException {
         String url = env.getDatabaseUrl()+"/"+env.getDatabaseName();
         String usr = env.getUsername();
         String pwd = env.getPassword();
@@ -148,15 +156,15 @@ public class DatabaseSystem
      * @return
      *      a metadata extractor
      */
-    private static MetadataExtractor getExtractor(Environment env) throws SQLException
+    protected static MetadataExtractor getExtractor(Environment env) throws SQLException
     {
         MetadataExtractor extractor = null;
 
-        if(env.getJDBCDriver().equals("com.mysql.jdbc.Driver")) {
+        if(env.getJDBCDriver().equals(MYSQL)) {
             extractor = new MySQLExtractor();
-        } else if(env.getJDBCDriver().equals("com.ibm.db2.jcc.DB2Driver")) {
-            throw new SQLException("DB2Extractor doesn't exist yet");
-        } else if(env.getJDBCDriver().equals("org.postgresql.Driver")) {
+        } else if(env.getJDBCDriver().equals(DB2)) {
+            extractor = new DB2Extractor();
+        } else if(env.getJDBCDriver().equals(PG)) {
             extractor = new PGExtractor();
         } else {
             throw new SQLException("Unsupported driver " + env.getJDBCDriver());
@@ -172,25 +180,25 @@ public class DatabaseSystem
      *      an optimizer.
      * @see Optimizer
      */
-    private static Optimizer getOptimizer(Environment env, Connection con) throws SQLException
+    protected static Optimizer getOptimizer(Environment env, Connection con) throws SQLException
     {
         Optimizer optimizer;
 
-        if(env.getJDBCDriver().equals("com.mysql.jdbc.Driver")) {
+        if(env.getJDBCDriver().equals(MYSQL)) {
             optimizer = new MySQLOptimizer(con);
-        } else if(env.getJDBCDriver().equals("com.ibm.db2.jcc.DB2Driver")) {
+        } else if(env.getJDBCDriver().equals(DB2)) {
             optimizer = new DB2Optimizer(con);
-        } else if(env.getJDBCDriver().equals("org.postgresql.Driver")) {
+        } else if(env.getJDBCDriver().equals(PG)) {
             optimizer = new PGOptimizer(con);
         } else {
             throw new SQLException("Unsupported driver " + env.getJDBCDriver());
         }
 
-        if(env.getOptimizer().equals("dbms")) {
+        if(env.getOptimizer().equals(DBMS)) {
             return optimizer;
-        } else if(env.getOptimizer().equals("ibg")) {
+        } else if(env.getOptimizer().equals(IBG)) {
             return new IBGOptimizer(optimizer);
-        } else if(env.getOptimizer().equals("inum")) {
+        } else if(env.getOptimizer().equals(INUM)) {
             throw new SQLException("INUMOptimizer doesn't exist yet");
         } else {
             throw new SQLException("unknown optimizer option: " + env.getOptimizer());

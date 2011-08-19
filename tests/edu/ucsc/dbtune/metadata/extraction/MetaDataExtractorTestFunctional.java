@@ -1,5 +1,4 @@
-/*
- * ****************************************************************************
+/* ************************************************************************** *
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -13,9 +12,7 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- * ****************************************************************************
- */
-
+ * ************************************************************************** */
 package edu.ucsc.dbtune.metadata.extraction;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -25,40 +22,32 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.spi.Environment;
-
-import edu.ucsc.dbtune.util.SQLScriptExecuter;
 import edu.ucsc.dbtune.util.Strings;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Properties;
 
 import static org.junit.Assert.*;
+import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
 
 /**
- * Test for the metadata extraction package.
- * <p>
- * The test assumes that a database has been configured in the <code>build.properties</code> file.  
- * Depending on the value for the <code>test.dbms.url</code> property, the test instantiates and 
- * calls the appropriate JDBCExtractorTest implementation.
- * <p>
- * Also, the file <code>movies.sql</code> in folder <code>test.dbms.script.folder</code> is expected 
- * to exist and contain the DBMS-dependant SQL statements that create and load the Movies database.  
- * <p>
- * Lastly, properties <code>test.dbms.username</code> and <code>test.dbms.password</code> are used 
- * to create new connections to the database, so they must also be provided.
- * <p>
- * The test fails entirely if the above two conditions aren't met.
+ * Test for the metadata extraction functionality. This test assumes that the system on the backend 
+ * passes the {@link GenericJDBCExtractorTestFunctional} test.
  *
  * @author Ivo Jimenez
+ * @see GenericJDBCExtractorTestFunctional
  */
 public class MetaDataExtractorTestFunctional
 {
-    private static DatabaseSystem       db;
-    private static Environment          en;
-    private static Catalog              catalog;
-    private static Schema               schema;
+    private static DatabaseSystem db;
+    private static Environment    en;
+    private static Catalog        catalog;
+    private static Schema         schema;
 
     private static final String RATINGS     = "ratings";
     private static final String QUEUE       = "queue";
@@ -71,18 +60,32 @@ public class MetaDataExtractorTestFunctional
 
     /**
      * Executes the SQL script that should contain the 'movies' database, then extracts the metadata 
-     * for this database using the appropriate <code>MetaDataExtractor</code> implementor.
+     * for this database using the appropriate {@link MetadataExtractor} implementor.
      */
     @BeforeClass
     public static void setUp() throws Exception
     {
-        String ddl;
+        Properties cfg;
+        String     ddl;
 
-        en  = Environment.getInstance();
-        db  = new DatabaseSystem();
+        cfg = new Properties(Environment.getInstance().getAll());
+
+        cfg.setProperty(SCHEMA,"movies");
+
+        en  = new Environment(cfg);
+        db  = DatabaseSystem.newDatabaseSystem(en);
         ddl = en.getScriptAtWorkloadsFolder("movies/create.sql");
 
-        // SQLScriptExecuter.execute(connection.getJdbcConnection(), ddlfilename);
+        {
+            // DatabaseSystem reads the catalog as part of its creation, so we need to wipe anything 
+            // in the movies schema and reload the data. Then create a DB again to get a fresh 
+            // catalog
+            //execute(db.getConnection(), ddl);
+            db.getConnection().close();
+
+            db = null;
+            db = DatabaseSystem.newDatabaseSystem(en);
+        }
 
         catalog = db.getCatalog();
     }

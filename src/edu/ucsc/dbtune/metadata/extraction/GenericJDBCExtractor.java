@@ -29,8 +29,8 @@ import java.util.HashMap;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Extractor that uses JDBC's {@link DatabaseMetaData} class to obtain basic metadata information.
@@ -66,8 +66,7 @@ public class GenericJDBCExtractor implements MetadataExtractor
      * @see DatabaseMetaData#getColumns
      * @see DatabaseMetaData#getIndexInfo
      */
-    public Catalog extract(Connection connection)
-        throws SQLException
+    public Catalog extract(Connection connection) throws SQLException
     {
         Map<Integer,Column> indexToColumns;
         Map<String,Schema>  schemaNamesToSchemas;
@@ -88,133 +87,126 @@ public class GenericJDBCExtractor implements MetadataExtractor
         boolean          isClustered;
         boolean          isPrimary = false;
 
-        try
+        schemaNamesToSchemas = new HashMap<String,Schema>();
+
+        jdbcMetaData = connection.getMetaData();
+
+        if (jdbcMetaData == null)
         {
-            schemaNamesToSchemas = new HashMap<String,Schema>();
-
-            jdbcMetaData = connection.getMetaData();
-
-            if (jdbcMetaData == null)
-            {
-                throw new SQLException( "Connection " + connection + " doesn't handle JDBC metadata" );
-            }
-
-            String[] tableTypes = {"TABLE"};
-
-            rsset = jdbcMetaData.getTables( null, null, "%", tableTypes );
-
-            catalog = new Catalog();
-
-            while (rsset.next())
-            {
-                catalog.setName(rsset.getString("TABLE_CAT"));
-
-                schemaName = rsset.getString("TABLE_SCHEM");
-
-                if(schemaName == null) {
-                    schemaName = "default";
-                }
-
-                schema = schemaNamesToSchemas.get(schemaName);
-
-                if(schema == null) {
-                    schema = new Schema(schemaName);
-                    schemaNamesToSchemas.put(schemaName,schema);
-                    catalog.add(schema);
-                }
-
-                schema.add(new Table(rsset.getString("TABLE_NAME")));
-            }
-
-            rsset.close();
-
-            allIndexes = new ArrayList<Index>();
-
-            for(Schema sch : catalog.getSchemas()) {
-
-                tables = sch.getTables();
-
-                for(Table table : tables) {
-
-                    rsset = jdbcMetaData.getColumns( null, sch.getName(), table.getName(), "%" );
-
-                    while (rsset.next())
-                    {
-                        columnName = rsset.getString("COLUMN_NAME");
-                        type       = rsset.getInt("DATA_TYPE");
-
-                        table.add(new Column( columnName, type ));
-                    }
-
-                    rsset.close();
-
-                    rsset          = jdbcMetaData.getIndexInfo( null, sch.getName(), table.getName(), false, true );
-                    indexToColumns = new HashMap<Integer,Column>();
-                    indexName      = "";
-                    index          = null;
-
-                    while (rsset.next())
-                    {
-                        type = rsset.getShort("TYPE");
-
-                        if (type == DatabaseMetaData.tableIndexStatistic)
-                        {
-                            table.setPages( rsset.getInt("PAGES") );
-                            table.setCardinality( rsset.getInt("CARDINALITY") );
-                        }
-                        else
-                        {
-                            if (!indexName.equals(rsset.getString("INDEX_NAME")))
-                            {
-                                if (index != null)
-                                {
-                                    for (int i = 0; i < indexToColumns.size(); i++)
-                                    {
-                                        index.add(indexToColumns.get(i+1));
-                                    }
-                                }
-
-                                type = rsset.getShort("TYPE");
-
-                                if (type == DatabaseMetaData.tableIndexClustered)
-                                {
-                                    isClustered = true;
-                                }
-                                else
-                                {
-                                    isClustered = false;
-                                }
-
-                                isUnique       = !rsset.getBoolean("NON_UNIQUE");
-                                indexName      = rsset.getString("INDEX_NAME");
-                                index          = new Index(indexName, table, isPrimary, isClustered, isUnique);
-                                indexToColumns = new HashMap<Integer,Column>();
-
-                                table.add(index);
-                                allIndexes.add(index);
-                            }
-
-                            columnName = rsset.getString("COLUMN_NAME");
-                            column     = table.findColumn(columnName);
-
-                            if (column == null)
-                            {
-                                throw new SQLException("Column " + columnName + " not in " + table);
-                            }
-
-                            indexToColumns.put(rsset.getInt("ORDINAL_POSITION"), column);
-                        }
-                    }
-
-                    rsset.close();
-                }
-
-                sch.setBaseConfiguration(new Configuration(allIndexes));
-            }
+            throw new SQLException("Connection " + connection + " doesn't handle JDBC metadata");
         }
-        catch (Exception e)
+
+        String[] tableTypes = {"TABLE"};
+
+        rsset = jdbcMetaData.getTables( null, null, "%", tableTypes );
+
+        catalog = new Catalog();
+
+        while (rsset.next())
         {
-            throw new SQLException(e);
+            catalog.setName(rsset.getString("TABLE_CAT"));
+
+            schemaName = rsset.getString("TABLE_SCHEM");
+
+            if(schemaName == null) {
+                schemaName = "default";
+            }
+
+            schema = schemaNamesToSchemas.get(schemaName);
+
+            if(schema == null) {
+                schema = new Schema(schemaName);
+                schemaNamesToSchemas.put(schemaName,schema);
+                catalog.add(schema);
+            }
+
+            schema.add(new Table(rsset.getString("TABLE_NAME")));
+        }
+
+        rsset.close();
+
+        allIndexes = new ArrayList<Index>();
+
+        for(Schema sch : catalog.getSchemas()) {
+
+            tables = sch.getTables();
+
+            for(Table table : tables) {
+
+                rsset = jdbcMetaData.getColumns( null, sch.getName(), table.getName(), "%" );
+
+                while (rsset.next())
+                {
+                    columnName = rsset.getString("COLUMN_NAME");
+                    type       = rsset.getInt("DATA_TYPE");
+
+                    table.add(new Column( columnName, type ));
+                }
+
+                rsset.close();
+
+                rsset          = jdbcMetaData.getIndexInfo( null, sch.getName(), table.getName(), false, true );
+                indexToColumns = new HashMap<Integer,Column>();
+                indexName      = "";
+                index          = null;
+
+                while (rsset.next())
+                {
+                    type = rsset.getShort("TYPE");
+
+                    if (type == DatabaseMetaData.tableIndexStatistic)
+                    {
+                        table.setPages( rsset.getInt("PAGES") );
+                        table.setCardinality( rsset.getInt("CARDINALITY") );
+                    }
+                    else
+                    {
+                        if (!indexName.equals(rsset.getString("INDEX_NAME")))
+                        {
+                            if (index != null)
+                            {
+                                for (int i = 0; i < indexToColumns.size(); i++)
+                                {
+                                    index.add(indexToColumns.get(i+1));
+                                }
+                            }
+
+                            type = rsset.getShort("TYPE");
+
+                            if (type == DatabaseMetaData.tableIndexClustered)
+                            {
+                                isClustered = true;
+                            }
+                            else
+                            {
+                                isClustered = false;
+                            }
+
+                            isUnique       = !rsset.getBoolean("NON_UNIQUE");
+                            indexName      = rsset.getString("INDEX_NAME");
+                            index          = new Index(indexName, table, isPrimary, isClustered, isUnique);
+                            indexToColumns = new HashMap<Integer,Column>();
+
+                            table.add(index);
+                            allIndexes.add(index);
+                        }
+
+                        columnName = rsset.getString("COLUMN_NAME");
+                        column     = table.findColumn(columnName);
+
+                        if (column == null)
+                        {
+                            throw new SQLException("Column " + columnName + " not in " + table);
+                        }
+
+                        indexToColumns.put(rsset.getInt("ORDINAL_POSITION"), column);
+                    }
+                }
+
+                rsset.close();
+            }
+
+            sch.setBaseConfiguration(new Configuration(allIndexes));
         }
 
         return catalog;

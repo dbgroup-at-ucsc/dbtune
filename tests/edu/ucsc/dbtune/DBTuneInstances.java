@@ -13,7 +13,6 @@ import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
-import edu.ucsc.dbtune.spi.EnvironmentProperties;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -21,8 +20,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.*;
+
 /**
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
+ * @author Huascar A. Sanchez
+ * @author Ivo Jimenez
  */
 public class DBTuneInstances {
     public static final String DB_NAME         = "superDB";
@@ -30,9 +32,103 @@ public class DBTuneInstances {
     public static final String TABLE_NAME      = "R";
     public static final String TABLE_CREATOR   = "123";
 
+    /**
+     * Utility class
+     */
     private DBTuneInstances(){}
 
-    public static IndexBenefitGraph.IBGNode makeRandomIBGNode(){
+    /**
+     * Returns a configuration for DB2
+     */
+    public static Properties configureDB2()
+    {
+        Properties cfg = new Properties(configureGeneric());
+
+        cfg.setProperty(JDBC_DRIVER, DB2);
+
+        return cfg;
+    }
+
+    /**
+     * Returns a configuration for an inexistent DBMS
+     */
+    public static Properties configureInexistentDBMS()
+    {
+        Properties cfg = new Properties(configureGeneric());
+
+        cfg.setProperty(JDBC_DRIVER, "edu.ucsc.dbtune.superduperdbms");
+
+        return cfg;
+    }
+
+    /**
+     * Returns a configuration for postgres
+     */
+    public static Properties configureMySQL()
+    {
+        Properties cfg = new Properties(configureGeneric());
+
+        cfg.setProperty(JDBC_DRIVER, MYSQL);
+
+        return cfg;
+    }
+
+    /**
+     * Returns a configuration for postgres
+     */
+    public static Properties configurePG()
+    {
+        Properties cfg = new Properties(configureGeneric());
+
+        cfg.setProperty(JDBC_DRIVER, PG);
+
+        return cfg;
+    }
+
+    /**
+     * Returns a configuration with generic connectivity settings
+     */
+    public static Properties configureGeneric()
+    {
+        Properties cfg = new Properties();
+
+        cfg.setProperty(URL, "");
+        cfg.setProperty(USERNAME, "newo");
+        cfg.setProperty(PASSWORD, "hahaha");
+        cfg.setProperty(DATABASE, "matrix");
+
+        return cfg;
+    }
+
+    /**
+     * Returns a configuration with generic connectivity settings
+     */
+    public static Properties configureDBMSOptimizer(Properties cfg)
+    {
+        cfg.setProperty(OPTIMIZER, DBMS);
+        return cfg;
+    }
+
+    /**
+     * Returns a configuration with generic connectivity settings
+     */
+    public static Properties configureIBGOptimizer(Properties cfg)
+    {
+        cfg.setProperty(OPTIMIZER, IBG);
+        return cfg;
+    }
+
+    /**
+     * Returns a configuration with generic connectivity settings
+     */
+    public static Properties configureINUMOptimizer(Properties cfg)
+    {
+        cfg.setProperty(OPTIMIZER, INUM);
+        return cfg;
+    }
+
+    public static IndexBenefitGraph.IBGNode makeRandomIBGNode()
+    {
         return makeIBGNode(new Random().nextInt());
     }
 
@@ -44,34 +140,6 @@ public class DBTuneInstances {
         } catch (Exception e) {
             throw new IllegalStateException("ERROR: unable to construct an IBGNode");
         }
-    }
-
-    public static Properties newDB2Properties() {
-        return new Properties(){
-            private static final long serialVersionUID = 1L;
-            {
-                setProperty(EnvironmentProperties.URL, "");
-                setProperty(EnvironmentProperties.USERNAME, "newo");
-                setProperty(EnvironmentProperties.PASSWORD, "hahaha");
-                setProperty(EnvironmentProperties.DATABASE, "matrix");
-                setProperty(EnvironmentProperties.JDBC_DRIVER, "com.ibm.db2.jcc.DB2Driver");
-            }
-        };
-    }
-
-    public static Properties newPGSQLProperties() {
-        return new Properties(){/**
-             * 
-             */
-            private static final long serialVersionUID = 1L;
-
-        {
-            setProperty(EnvironmentProperties.URL, "");
-            setProperty(EnvironmentProperties.USERNAME, "newo");
-            setProperty(EnvironmentProperties.PASSWORD, "hahaha");
-            setProperty(EnvironmentProperties.DATABASE, "matrix");
-            setProperty(EnvironmentProperties.JDBC_DRIVER, "org.postgresql.Driver");
-        }};
     }
 
     public static Index newPGIndex(int indexId, int schemaId, List<Column> cols, List<Boolean> desc) throws Exception {
