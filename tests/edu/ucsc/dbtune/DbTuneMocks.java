@@ -1,5 +1,4 @@
-/*
- * ****************************************************************************
+/* ************************************************************************** *
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -13,8 +12,7 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- *  ****************************************************************************
- */
+ * ************************************************************************** */
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.util.Instances;
@@ -54,12 +52,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
- */
-public class JdbcMocks {
-    private JdbcMocks(){}
 
+/**
+ * @author Huascar A. Sanchez
+ * @author Ivo Jimenez
+ */
+public class DbTuneMocks
+{
     public static Statement makeMockStatement(boolean next, boolean withCounterForGetInt, Connection connection){
         final MockStatement statement = new MockStatement(new MockResultSet(next, false, withCounterForGetInt));
         statement.register(connection);
