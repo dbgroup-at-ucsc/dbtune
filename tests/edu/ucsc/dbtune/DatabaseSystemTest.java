@@ -65,8 +65,6 @@ public class DatabaseSystemTest
     @Test
     public void testConstructor() throws Exception
     {
-        mockStatic(DriverManager.class);
-
         Connection     con = mock(Connection.class);
         Catalog        cat = mock(Catalog.class);
         Optimizer      opt = makeOptimizerMock();

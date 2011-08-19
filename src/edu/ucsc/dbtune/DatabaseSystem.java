@@ -42,8 +42,9 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
 
 /**
- * Represents a DBMS system.The class `DatabaseSystem` represents a DBMS and it's the main entry point to the API. The class 
- * is in charge of creating/providing with DBMS-specific objects. In general, its responsibilities are:
+ * Represents a DBMS system. The class `DatabaseSystem` represents a DBMS and it's the main entry 
+ * point to the API. The class is in charge of creating/providing with DBMS-specific objects. In 
+ * general, its responsibilities are:
  * <p>
  * <ol>
  *   <li>Create DBMS-specific {@link Connection} objects.</li>
@@ -51,7 +52,8 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
  *   <li>Create DBMS-specific {@link Index} objects.</li>
  * </ol>
  * <p>
- * <b>Note:</b>There's a single connection used to communicate with the system. The user is responsible for closing it.
+ * <b>Note:</b>There's a single connection used to communicate with the system. The user is 
+ * responsible for closing it.
  *
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
@@ -63,7 +65,8 @@ public class DatabaseSystem
     private Catalog    catalog;
 
     /**
-     * Creates a database system instance with the given elements. This effectively acts as sort-of system "trait".
+     * Creates a database system instance with the given elements. This effectively acts as a 
+     * sort-of database system "trait".
      *
      * @param connection
      *     a JDBC connection
@@ -75,7 +78,7 @@ public class DatabaseSystem
      * @see Catalog
      * @see Optimizer
      */
-    public DatabaseSystem(Connection connection, Catalog catalog, Optimizer optimizer) throws SQLException
+    protected DatabaseSystem(Connection connection, Catalog catalog, Optimizer optimizer) throws SQLException
     {
         this.connection = connection;
         this.catalog    = catalog;
@@ -128,7 +131,7 @@ public class DatabaseSystem
      * @throws SQLException
      *     if something wrong occurs during the creation
      */
-    public Index createIndex(List<Column> cols, List<Boolean> descending, int type) throws SQLException
+    private Index createIndex(List<Column> cols, List<Boolean> descending, int type) throws SQLException
     {
         throw new RuntimeException("not implemented yet");
     }
@@ -140,7 +143,8 @@ public class DatabaseSystem
      *      a connection
      * @see Connection
      */
-    protected static Connection getConnection(Environment env) throws SQLException {
+    protected static Connection getConnection(Environment env) throws SQLException
+    {
         String url = env.getDatabaseUrl()+"/"+env.getDatabaseName();
         String usr = env.getUsername();
         String pwd = env.getPassword();
