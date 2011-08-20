@@ -22,16 +22,6 @@ public class EnvironmentProperties {
     public static final String PASSWORD = "password";
 
     /**
-     * Name of the target database
-     */
-    public static final String DATABASE = "database";
-
-    /**
-     * Name of the target schema (for postgres)
-     */
-    public static final String SCHEMA = "schema";
-
-    /**
      * JDBC connection url.
      */
     public static final String URL = "url";

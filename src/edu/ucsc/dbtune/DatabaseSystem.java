@@ -70,18 +70,18 @@ public class DatabaseSystem
      *
      * @param connection
      *     a JDBC connection
-     * @param catalog
-     *     a metadata catalog
+     * @param extractor
+     *     a metadata extractor
      * @param optimizer
      *     an optimizer
      * @see Connection
      * @see Catalog
      * @see Optimizer
      */
-    protected DatabaseSystem(Connection connection, Catalog catalog, Optimizer optimizer) throws SQLException
+    protected DatabaseSystem(Connection connection, MetadataExtractor extractor, Optimizer optimizer) throws SQLException
     {
         this.connection = connection;
-        this.catalog    = catalog;
+        this.catalog    = extractor.extract(connection);
         this.optimizer  = optimizer;
     }
 
@@ -143,9 +143,9 @@ public class DatabaseSystem
      *      a connection
      * @see Connection
      */
-    protected static Connection getConnection(Environment env) throws SQLException
+    public static Connection newConnection(Environment env) throws SQLException
     {
-        String url = env.getDatabaseUrl()+"/"+env.getDatabaseName();
+        String url = env.getDatabaseUrl();
         String usr = env.getUsername();
         String pwd = env.getPassword();
         
@@ -160,7 +160,7 @@ public class DatabaseSystem
      * @return
      *      a metadata extractor
      */
-    protected static MetadataExtractor getExtractor(Environment env) throws SQLException
+    public static MetadataExtractor newExtractor(Environment env) throws SQLException
     {
         MetadataExtractor extractor = null;
 
@@ -184,7 +184,7 @@ public class DatabaseSystem
      *      an optimizer.
      * @see Optimizer
      */
-    protected static Optimizer getOptimizer(Environment env, Connection con) throws SQLException
+    public static Optimizer newOptimizer(Environment env, Connection con) throws SQLException
     {
         Optimizer optimizer;
 
@@ -219,33 +219,53 @@ public class DatabaseSystem
      */
     public static DatabaseSystem newDatabaseSystem(Environment env) throws SQLException
     {
-        Connection connection;
-        Optimizer  optimizer;
-        Catalog    catalog;
-
-        try {
-            Class.forName(env.getJDBCDriver());
-        } catch(Exception e) {
-            throw new SQLException(e);
-        }
-
-        connection = getConnection(env);
-        catalog    = getExtractor(env).extract(connection);
-        optimizer  = getOptimizer(env, connection);
-
-        optimizer.setCatalog(catalog);
-        
-        return new DatabaseSystem(connection, catalog, optimizer);
+        return Factory.newDatabaseSystem(env);
     }
 
     /**
      * Creates a database system instance with the default properties from {@link Environment}.
-     *
-     * @param env
-     *     an environment object used to access the properties of the system
      */
     public static DatabaseSystem newDatabaseSystem() throws SQLException
     {
-        return newDatabaseSystem(Environment.getInstance());
+        return Factory.newDatabaseSystem(Environment.getInstance());
+    }
+
+    /**
+     * Class defined just to aid in testing. This class shouldn't be used by any client, only by {@code 
+     * edu.ucsc.dbtune.DatabaseSystemTest}
+     */
+    protected static class Factory
+    {
+        /**
+         * Creates a database system instance with the given properties. This effectively acts as a factory method that takes the 
+         * description of a system along with connectivity information and creates a {@link Connection}, {@link Catalog} and 
+         * {@link Optimizer} objects of the corresponding type, with the appropriate members. 
+         *
+         * @param env
+         *     an environment object used to access the properties of the system
+         */
+        public static DatabaseSystem newDatabaseSystem(Environment env) throws SQLException
+        {
+            Connection        connection;
+            Optimizer         optimizer;
+            MetadataExtractor extractor;
+            DatabaseSystem    db;
+
+            try {
+                Class.forName(env.getJDBCDriver());
+            } catch(Exception e) {
+                throw new SQLException(e);
+            }
+
+            connection = newConnection(env);
+            extractor  = newExtractor(env);
+            optimizer  = newOptimizer(env, connection);
+
+            db = new DatabaseSystem(connection, extractor, optimizer);
+
+            optimizer.setCatalog(db.getCatalog());
+
+            return db;
+        }
     }
 }

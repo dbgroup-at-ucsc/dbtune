@@ -21,7 +21,6 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.Files;
-import edu.ucsc.dbtune.spi.Environment;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -62,7 +61,8 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
  * We don't create an output xml file ... just read the db2advis output directly 
  */
 //todo(Huascar) make it a stateful object rather than leaving it like a util class.
-public class DB2AdvisorCaller {
+public class DB2AdvisorCaller
+{
     private static final Pattern INDEX_HEADER_PATTERN    = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
     private static final Pattern INDEX_STATEMENT_PATTERN = Pattern.compile("^\\s*CREATE.+(IDX\\d*)\\\"");
     private static final Pattern START_INDEXES_PATTERN   = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
@@ -110,7 +110,11 @@ public class DB2AdvisorCaller {
         return info;
     }
 
-    private static String getCmd(String advisorPath, int budget, File inFile, boolean clean) {
+    private static String getCmd(String advisorPath, int budget, File inFile, boolean clean)
+    {
+        throw new RuntimeException("not implemented yet"); // will fix later
+
+        /*
         final String db   = Environment.getInstance().getDatabaseName();
         final String pw   = Environment.getInstance().getPassword();
         final String user = Environment.getInstance().getUsername();
@@ -121,6 +125,7 @@ public class DB2AdvisorCaller {
                +" -i "+inFile
                +" -l "+budget
                +" -m I -f -k OFF";
+        */
         
     }
     

@@ -14,11 +14,11 @@
  *   limitations under the License.                                             *
  * **************************************************************************** */
 /**
- * Definition of the {@link edu.ucsc.dbtune.metadata.workload.SQLStatement} class. This abstraction allows to easily 
- * manipulate SQL statements, for example, if there's the need of identifying if a statement is being submitted again to an 
- * {@link edu.ucsc.dbtune.optimizer.Optimizer}.
+ * Definition of the {@link edu.ucsc.dbtune.workload.SQLStatement} class. This abstraction allows to easily manipulate SQL 
+ * statements, for example, if there's the need of identifying if a statement is being submitted again to an {@link 
+ * edu.ucsc.dbtune.optimizer.Optimizer}.
  * <p>
- * The {@link edu.ucsc.dbtune.metadata.workload.Workload} class facilitates the manipulation of SQL scripts.
+ * The {@link edu.ucsc.dbtune.workload.Workload} class facilitates the manipulation of SQL scripts.
  */
 @Generated(value={})
 package edu.ucsc.dbtune.workload;

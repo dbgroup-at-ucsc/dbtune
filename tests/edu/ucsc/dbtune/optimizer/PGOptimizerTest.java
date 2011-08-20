@@ -140,8 +140,6 @@ public class PGOptimizerTest {
         SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan), null);
         Operator         root = plan.getRootOperator();
 
-        //System.out.println(plan);
-
         assertEquals(5, plan.size());
 
         // check root
@@ -229,8 +227,6 @@ public class PGOptimizerTest {
 
         SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan), sch);
         Operator         root = plan.getRootOperator();
-
-        //System.out.println(plan);
 
         assertEquals(3, plan.size());
 

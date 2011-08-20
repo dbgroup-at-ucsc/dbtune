@@ -26,6 +26,9 @@ import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -33,14 +36,13 @@ import org.junit.Condition;
 import org.junit.If;
 import org.junit.Test;
 
-import java.sql.SQLException;
-import java.util.Properties;
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
+import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
-import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
 
 /**
  * Functional test for what-if optimizer implementations
@@ -66,27 +68,17 @@ public class OptimizerFunctionalTest
     @BeforeClass
     public static void setUp() throws Exception
     {
-        Properties cfg;
+        Connection con;
         String     ddl;
 
-        cfg = new Properties(Environment.getInstance().getAll());
-
-        cfg.setProperty(SCHEMA,"one_table");
-
-        en  = new Environment(cfg);
-        db  = DatabaseSystem.newDatabaseSystem(en);
+        en  = Environment.getInstance();
         ddl = en.getScriptAtWorkloadsFolder("one_table/create.sql");
+        con = newConnection(en);
 
-        {
-            // DatabaseSystem reads the catalog as part of its creation, so we need to wipe anything 
-            // in the movies schema and reload the data. Then create a DB again to get a fresh 
-            // catalog
-            //execute(db.getConnection(), ddl);
-            db.getConnection().close();
+        //execute(con, ddl);
+        con.close();
 
-            db = null;
-            db = DatabaseSystem.newDatabaseSystem(en);
-        }
+        db = newDatabaseSystem(en);
     }
 
     @AfterClass
@@ -98,11 +90,11 @@ public class OptimizerFunctionalTest
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLWhatIfOptimization() throws Exception {
         final Optimizer   optimizer  = db.getOptimizer();
-        final Configuration candidates = optimizer.recommendIndexes(new SQLStatement("select a from tbl where a = 5;"));
+        final Configuration candidates = optimizer.recommendIndexes(new SQLStatement("select a from one_table.tbl where a = 5;"));
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        final PreparedSQLStatement info = optimizer.explain(new SQLStatement("select a from tbl where a = 5;"), candidates);
+        final PreparedSQLStatement info = optimizer.explain(new SQLStatement("select a from one_table.tbl where a = 5;"), candidates);
 
         assertThat(info, CoreMatchers.<Object>notNullValue());
         assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
@@ -114,12 +106,12 @@ public class OptimizerFunctionalTest
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLIBGWhatIfOptimization() throws Exception {
-        final Configuration candidates = db.getOptimizer().recommendIndexes(new SQLStatement("select count(*) from tbl where b > 3"));
+        final Configuration candidates = db.getOptimizer().recommendIndexes(new SQLStatement("select count(*) from one_table.tbl where b > 3"));
         final IBGOptimizer optimizer = new IBGOptimizer(db.getOptimizer());
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
 
-        double cost = optimizer.explain(new SQLStatement("select count(*) from tbl where b > 3")).getCost();
+        double cost = optimizer.explain(new SQLStatement("select count(*) from one_table.tbl where b > 3")).getCost();
 
         assumeThat(cost >= 0, is(true));
     }
@@ -133,12 +125,12 @@ public class OptimizerFunctionalTest
     @Test
     @If(condition = "isDatabaseConnectionAvailable", is = true)
     public void testSingleSQLRecommendIndexes() throws Exception {
-        Configuration candidates = db.getOptimizer().recommendIndexes(new SQLStatement("select a from tbl where a = 5;"));
+        Configuration candidates = db.getOptimizer().recommendIndexes(new SQLStatement("select a from one_table.tbl where a = 5;"));
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
 
-        candidates = db.getOptimizer().recommendIndexes(new SQLStatement("update tbl set a=-1 where a = 5;"));
+        candidates = db.getOptimizer().recommendIndexes(new SQLStatement("update one_table.tbl set a=-1 where a = 5;"));
 
         assertThat(candidates, CoreMatchers.<Object>notNullValue());
         assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));

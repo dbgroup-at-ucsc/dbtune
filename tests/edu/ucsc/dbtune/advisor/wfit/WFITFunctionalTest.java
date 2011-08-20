@@ -26,6 +26,7 @@ import edu.ucsc.dbtune.workload.Workload;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -33,9 +34,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
-
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
+
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 
@@ -58,27 +60,17 @@ public class WFITFunctionalTest
     @BeforeClass
     public static void setUp() throws Exception
     {
-        Properties cfg;
+        Connection con;
         String     ddl;
 
-        cfg = new Properties(Environment.getInstance().getAll());
-
-        cfg.setProperty(SCHEMA,"one_table");
-
-        en  = new Environment(cfg);
-        db  = DatabaseSystem.newDatabaseSystem(en);
+        en  = Environment.getInstance();
         ddl = en.getScriptAtWorkloadsFolder("one_table/create.sql");
+        con = newConnection(en);
 
-        {
-            // DatabaseSystem reads the catalog as part of its creation, so we need to wipe anything 
-            // in the movies schema and reload the data. Then create a DB again to get a fresh 
-            // catalog
-            //execute(db.getConnection(), ddl);
-            db.getConnection().close();
+        //execute(con, ddl);
+        con.close();
 
-            db = null;
-            db = DatabaseSystem.newDatabaseSystem(en);
-        }
+        db = newDatabaseSystem(en);
     }
 
     @AfterClass

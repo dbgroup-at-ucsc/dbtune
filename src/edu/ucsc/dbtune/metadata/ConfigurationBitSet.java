@@ -91,7 +91,6 @@ public class ConfigurationBitSet extends Configuration
     {
         if(!this.contains(index))
         {
-            System.out.println("adding " + index);
             _indexes.add(index);
             bitSet.set(index.getId());
         }

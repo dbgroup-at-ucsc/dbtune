@@ -17,6 +17,7 @@ package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.extraction.DB2Extractor;
+import edu.ucsc.dbtune.metadata.extraction.MetadataExtractor;
 import edu.ucsc.dbtune.metadata.extraction.MySQLExtractor;
 import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -49,6 +50,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -65,10 +67,14 @@ public class DatabaseSystemTest
     @Test
     public void testConstructor() throws Exception
     {
-        Connection     con = mock(Connection.class);
-        Catalog        cat = mock(Catalog.class);
-        Optimizer      opt = makeOptimizerMock();
-        DatabaseSystem db  = new DatabaseSystem(con,cat,opt);
+        Connection        con = mock(Connection.class);
+        Catalog           cat = mock(Catalog.class);
+        MetadataExtractor ext = mock(MetadataExtractor.class);
+        Optimizer         opt = makeOptimizerMock();
+
+        when(ext.extract(con)).thenReturn(cat);
+
+        DatabaseSystem db  = new DatabaseSystem(con,ext,opt);
 
         assertThat(db.getConnection(), is(con));
         assertThat(db.getCatalog(), is(cat));
@@ -79,7 +85,7 @@ public class DatabaseSystemTest
      * Checks the static (factory) methods
      */
     @Test
-    public void testFactory() throws Exception
+    public void testFactories() throws Exception
     {
         Environment env;
 
@@ -92,75 +98,103 @@ public class DatabaseSystemTest
         // check DB2
         env = new Environment(configureDBMSOptimizer(configureDB2()));
 
-        assertThat(DatabaseSystem.getConnection(env), is(con));
-        assertThat(DatabaseSystem.getOptimizer(env,con) instanceof DB2Optimizer, is(true));
-        assertThat(DatabaseSystem.getExtractor(env) instanceof DB2Extractor, is(true));
+        assertThat(DatabaseSystem.newConnection(env), is(con));
+        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof DB2Optimizer, is(true));
+        assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
 
         // check MySQL
         env = new Environment(configureDBMSOptimizer(configureMySQL()));
 
-        assertThat(DatabaseSystem.getConnection(env), is(con));
-        assertThat(DatabaseSystem.getOptimizer(env,con) instanceof MySQLOptimizer, is(true));
-        assertThat(DatabaseSystem.getExtractor(env) instanceof MySQLExtractor, is(true));
+        assertThat(DatabaseSystem.newConnection(env), is(con));
+        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof MySQLOptimizer, is(true));
+        assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
 
         // check PostgreSQL
         env = new Environment(configureDBMSOptimizer(configurePG()));
 
-        assertThat(DatabaseSystem.getConnection(env), is(con));
-        assertThat(DatabaseSystem.getOptimizer(env,con) instanceof PGOptimizer, is(true));
-        assertThat(DatabaseSystem.getExtractor(env) instanceof PGExtractor, is(true));
+        assertThat(DatabaseSystem.newConnection(env), is(con));
+        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof PGOptimizer, is(true));
+        assertThat(DatabaseSystem.newExtractor(env) instanceof PGExtractor, is(true));
         
         // check IBG
         env = new Environment(configureIBGOptimizer(configureDB2()));
 
-        assertThat(DatabaseSystem.getConnection(env), is(con));
-        assertThat(DatabaseSystem.getOptimizer(env,con) instanceof IBGOptimizer, is(true));
-        assertThat(DatabaseSystem.getExtractor(env) instanceof DB2Extractor, is(true));
+        assertThat(DatabaseSystem.newConnection(env), is(con));
+        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof IBGOptimizer, is(true));
+        assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
 
         env = new Environment(configureIBGOptimizer(configureMySQL()));
 
-        assertThat(DatabaseSystem.getConnection(env), is(con));
-        assertThat(DatabaseSystem.getOptimizer(env,con) instanceof IBGOptimizer, is(true));
-        assertThat(DatabaseSystem.getExtractor(env) instanceof MySQLExtractor, is(true));
+        assertThat(DatabaseSystem.newConnection(env), is(con));
+        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof IBGOptimizer, is(true));
+        assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
 
         env = new Environment(configureIBGOptimizer(configurePG()));
 
-        assertThat(DatabaseSystem.getConnection(env), is(con));
-        assertThat(DatabaseSystem.getOptimizer(env,con) instanceof IBGOptimizer, is(true));
-        assertThat(DatabaseSystem.getExtractor(env) instanceof PGExtractor, is(true));
+        assertThat(DatabaseSystem.newConnection(env), is(con));
+        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof IBGOptimizer, is(true));
+        assertThat(DatabaseSystem.newExtractor(env) instanceof PGExtractor, is(true));
 
         // check INUM
         env = new Environment(configureINUMOptimizer(configureDB2()));
 
-        assertThat(DatabaseSystem.getConnection(env), is(con));
+        assertThat(DatabaseSystem.newConnection(env), is(con));
         try {
-            Optimizer opt = DatabaseSystem.getOptimizer(env,con);
+            Optimizer opt = DatabaseSystem.newOptimizer(env,con);
             fail("Optimizer " + opt + " shouldn't be returned");
         } catch(SQLException e) {
             // nice;
         }
-        assertThat(DatabaseSystem.getExtractor(env) instanceof DB2Extractor, is(true));
+        assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
 
         env = new Environment(configureINUMOptimizer(configureMySQL()));
 
-        assertThat(DatabaseSystem.getConnection(env), is(con));
+        assertThat(DatabaseSystem.newConnection(env), is(con));
         try {
-            Optimizer opt = DatabaseSystem.getOptimizer(env,con);
+            Optimizer opt = DatabaseSystem.newOptimizer(env,con);
             fail("Optimizer " + opt + " shouldn't be returned");
         } catch(SQLException e) {
             // nice;
         }
-        assertThat(DatabaseSystem.getExtractor(env) instanceof MySQLExtractor, is(true));
+        assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
 
         env = new Environment(configureINUMOptimizer(configurePG()));
 
-        assertThat(DatabaseSystem.getConnection(env), is(con));
+        assertThat(DatabaseSystem.newConnection(env), is(con));
         try {
-            Optimizer opt = DatabaseSystem.getOptimizer(env,con);
+            Optimizer opt = DatabaseSystem.newOptimizer(env,con);
             fail("Optimizer " + opt + " shouldn't be returned");
         } catch(SQLException e) {
             // nice;
         }
-        assertThat(DatabaseSystem.getExtractor(env) instanceof PGExtractor, is(true));
+        assertThat(DatabaseSystem.newExtractor(env) instanceof PGExtractor, is(true));
+    }
+
+    /**
+     * Checks if a system is constructed correctly when built through the factory method
+     */
+    @Test
+    public void testFactoryConstruction() throws Exception
+    {
+        Connection        con = mock(Connection.class);
+        Catalog           cat = mock(Catalog.class);
+        MetadataExtractor ext = mock(MetadataExtractor.class);
+        Optimizer         opt = makeOptimizerMock();
+        Environment       env = new Environment(configurePG());
+
+        when(ext.extract(con)).thenReturn(cat);
+
+        mockStatic(DatabaseSystem.class);
+        when(DatabaseSystem.newConnection(env)).thenReturn(con);
+        when(DatabaseSystem.newExtractor(env)).thenReturn(ext);
+        when(DatabaseSystem.newOptimizer(env,con)).thenReturn(opt);
+
+        DatabaseSystem db = DatabaseSystem.Factory.newDatabaseSystem(env);
+
+        verify(opt).setCatalog(cat);
+
+        assertThat(db.getConnection(), is(con));
+        assertThat(db.getCatalog(), is(cat));
+        assertThat(db.getOptimizer(), is(opt));
     }
 }

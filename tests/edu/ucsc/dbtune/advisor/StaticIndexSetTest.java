@@ -46,7 +46,6 @@ public class StaticIndexSetTest {
     @Test
     public void testExistanceOfIndex() throws Exception {
         final StaticIndexSet indexSet = new StaticIndexSet(StaticIndexSetTest.populateIndexSet(10, true));
-        System.out.println(indexSet);
         assertThat(indexSet.contains(DBTuneInstances.newPGIndex(3, 123, DBTuneInstances.generateColumns(3), DBTuneInstances.generateDescVals(3))), is(true));
         assertThat(indexSet.size(), equalTo(10));
     }

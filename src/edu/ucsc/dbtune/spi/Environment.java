@@ -17,7 +17,6 @@ package edu.ucsc.dbtune.spi;
 
 import edu.ucsc.dbtune.spi.core.Console;
 
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.DATABASE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
@@ -31,7 +30,6 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.OUTPUT_FOLDERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OVERHEAD_FACTOR;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.URL;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
@@ -65,9 +63,7 @@ public class Environment {
     }
 
     public Environment() throws IOException {
-        this(
-            new PropertiesConfiguration(
-                getDefaultProperties(), System.getProperty("user.dir") + "/config/" + FILE));
+        this(new PropertiesConfiguration(System.getProperty("user.dir") + "/config/" + FILE));
     }
 
     Environment(Configuration configuration){
@@ -94,24 +90,10 @@ public class Environment {
     }
 
     /**
-     * @return {@link EnvironmentProperties#DATABASE}
-     */
-    public String getDatabaseName(){
-        return asString(configuration.getProperty(DATABASE));
-    }
-
-    /**
      * @return {@link EnvironmentProperties#USERNAME}
      */
     public String getUsername(){
         return asString(configuration.getProperty(USERNAME));
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#SCHEMA}
-     */
-    public String getSchema(){
-        return asString(configuration.getProperty(SCHEMA));
     }
 
     /**
@@ -210,19 +192,16 @@ public class Environment {
     }
 
     /**
-     * Returns the path to a file inside the workload folder. The path is qualified against the 
-     * concatenation of {@link EnvironmentProperties#WORKLOADS_FOLDERNAME} and
-     * {@link EnvironmentProperties#WORKLOAD_NAME}. The contents of the
-     * returned string look like:
+     * Returns the path to a file inside the workload folder. The path is qualified against the {@link 
+     * EnvironmentProperties#WORKLOADS_FOLDERNAME} field. The contents of the returned string look like:
      * <p>
-     * {@code getWorkloadsFoldername()} + "/" + {@code getWorkloadName() + {@code filename} }
+     * {@code getWorkloadsFoldername()} + "/" + {@code filename}
      *
      * @param filename
      *    name of file contained inside {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}.
      * @return
      *    {@code String} containing the path to the given script filename
      * @see #getWorkloadsFoldername
-     * @see #getWorkloadName
      */
     public String getFilenameAtWorkloadFolder(String filename){
         return getWorkloadsFoldername() + "/" + filename;
@@ -245,24 +224,6 @@ public class Environment {
         }
 
         return properties;
-    }
-
-    private static Properties getDefaultProperties(){
-        return new Properties(){
-            /**
-             * 
-             */
-            private static final long serialVersionUID = 1L;
-
-            {
-                setProperty(URL,         "jdbc:postgresql://aigaion.cse.ucsc.edu/test");
-                setProperty(USERNAME,    "dbtune");
-                setProperty(PASSWORD,    "dbtuneadmin");
-                setProperty(WORKLOADS_FOLDERNAME, "resources/workloads/postgres");
-                setProperty(DATABASE,    "test");
-                setProperty(JDBC_DRIVER, "org.postgresql.Driver");
-            }
-        };
     }
 
     static interface Configuration {
@@ -335,11 +296,18 @@ public class Environment {
             loadProperties();
         }
 
-        PropertiesConfiguration(Properties defaults, String filename) throws IOException {
+        PropertiesConfiguration(String filename) throws IOException {
             super();
-            this.defaults       = defaults;
-            this.file           = new File(filename);
-            this.useDefaults    = !file.exists();
+
+            this.file = new File(filename);
+
+            if(!file.exists()) {
+                throw new IOException("File " + filename + " doesn't exist");
+            }
+
+            this.defaults    = null;
+            this.useDefaults = !file.exists();
+
             loadProperties();
         }
 
@@ -372,7 +340,7 @@ public class Environment {
                 properties.load(new FileInputStream(file));
                 setAllProperties(properties);
             } else {
-                setAllProperties(getDefaultProperties());
+                setAllProperties(getDefaults());
             }
         }
 

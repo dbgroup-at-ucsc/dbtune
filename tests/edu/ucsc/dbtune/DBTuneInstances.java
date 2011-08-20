@@ -27,10 +27,10 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.*;
  * @author Ivo Jimenez
  */
 public class DBTuneInstances {
-    public static final String DB_NAME         = "superDB";
-    public static final String SCHEMA_NAME     = "superSchema";
-    public static final String TABLE_NAME      = "R";
-    public static final String TABLE_CREATOR   = "123";
+    public static final String DB_NAME       = "superDB";
+    public static final String SCHEMA_NAME   = "superSchema";
+    public static final String TABLE_NAME    = "R";
+    public static final String TABLE_CREATOR = "123";
 
     /**
      * Utility class
@@ -92,10 +92,9 @@ public class DBTuneInstances {
     {
         Properties cfg = new Properties();
 
-        cfg.setProperty(URL, "");
-        cfg.setProperty(USERNAME, "newo");
-        cfg.setProperty(PASSWORD, "hahaha");
-        cfg.setProperty(DATABASE, "matrix");
+        cfg.setProperty(URL,      "nothing.com");
+        cfg.setProperty(USERNAME, "neo");
+        cfg.setProperty(PASSWORD, "neopassword");
 
         return cfg;
     }
