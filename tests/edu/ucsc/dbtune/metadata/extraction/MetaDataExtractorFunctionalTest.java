@@ -15,7 +15,6 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.metadata.extraction;
 
-import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
@@ -24,16 +23,20 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.Strings;
 
-import org.junit.AfterClass;
+import java.sql.Connection;
+import java.util.List;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.Properties;
-
-import static org.junit.Assert.*;
+import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
+import static edu.ucsc.dbtune.DatabaseSystem.newExtractor;
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.is;
 
 /**
  * Test for the metadata extraction functionality. This test assumes that the system on the backend 
@@ -44,10 +47,10 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.SCHEMA;
  */
 public class MetaDataExtractorFunctionalTest
 {
-    private static DatabaseSystem db;
-    private static Environment    en;
-    private static Catalog        catalog;
-    private static Schema         schema;
+    private static Environment env;
+    private static Connection  con;
+    private static Catalog     cat;
+    private static Schema      sch;
 
     private static final String RATINGS     = "ratings";
     private static final String QUEUE       = "queue";
@@ -65,35 +68,26 @@ public class MetaDataExtractorFunctionalTest
     @BeforeClass
     public static void setUp() throws Exception
     {
-        Properties cfg;
-        String     ddl;
+        String ddl;
 
-        cfg = new Properties(Environment.getInstance().getAll());
+        env = Environment.getInstance();
+        ddl = env.getScriptAtWorkloadsFolder("movies/create.sql");
+        con = newConnection(env);
 
-        cfg.setProperty(SCHEMA,"movies");
+        //execute(con, ddl);
 
-        en  = new Environment(cfg);
-        db  = DatabaseSystem.newDatabaseSystem(en);
-        ddl = en.getScriptAtWorkloadsFolder("movies/create.sql");
+        cat = newExtractor(env).extract(con);
 
-        {
-            // DatabaseSystem reads the catalog as part of its creation, so we need to wipe anything 
-            // in the movies schema and reload the data. Then create a DB again to get a fresh 
-            // catalog
-            //execute(db.getConnection(), ddl);
-            db.getConnection().close();
-
-            db = null;
-            db = DatabaseSystem.newDatabaseSystem(en);
-        }
-
-        catalog = db.getCatalog();
+        con.close();
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception
+    /**
+     * Tests that the catalog we created exists.
+     */
+    @Test
+    public void testCatalogExists() throws Exception
     {
-        db.getConnection().close();
+        assertThat(cat != null, is(true));
     }
 
     /**
@@ -102,81 +96,68 @@ public class MetaDataExtractorFunctionalTest
     @Test
     public void testSchemaExists() throws Exception
     {
-        Schema moviesSchema = null;
+        assertThat(cat.getSchemas().size() > 1, is(true));
 
-        for (Schema schema : catalog.getSchemas())
-        {
-            if(schema.getName().equals("movies")) {
-                moviesSchema = schema;
-            }
-        }
+        sch = cat.findSchema("movies");
 
-        assertTrue(moviesSchema != null);
-
-        schema = moviesSchema;
+        assertThat(sch != null, is(true));
     }
 
     /**
-     * Tests the size of database object containers
+     * Tests tables and columns exist
      */
     @Test
-    public void testContainment() throws Exception
+    public void testTablesAndColumnsExist() throws Exception
     {
         List<Column> columns;
-        List<Index>  indexes;
+        int          expected;
 
-        assertTrue("catalog should have at least the 'movies' schema", catalog.getSchemas().size() >= 1);
-        assertEquals("'movies' schema has 8 tables", 8, schema.getTables().size());
+        assertThat(cat.getSchemas().size() >= 1, is(true));
+        assertThat(sch.getTables().size(), is(8));
 
-        for (Table table : schema.getTables())
+        for (Table tbl : sch.getTables())
         {
-            columns = table.getColumns();
-            indexes = table.getIndexes();
+            columns  = tbl.getColumns();
+            expected = -1;
 
-            if (Strings.same(table.getName(), USERS))
+            if (Strings.same(tbl.getName(), USERS))
             {
-                assertEquals("columns in 'users'", 5, columns.size());
-                assertEquals("indexes in 'users'", 2, indexes.size());
+                expected = 5;
             }
-            else if (Strings.same(table.getName(), CREDITCARDS))
+            else if (Strings.same(tbl.getName(), CREDITCARDS))
             {
-                assertEquals("columns in 'creditcards'", 4, columns.size());
-                assertEquals("indexes in 'creditcards'", 2, indexes.size());
+                expected = 4;
             }
-            else if (Strings.same(table.getName(), MOVIES))
+            else if (Strings.same(tbl.getName(), MOVIES))
             {
-                assertEquals("columns in 'movies'", 5, columns.size());
-                assertEquals("indexes in 'movies'", 2, indexes.size());
+                expected = 5;
             }
-            else if (Strings.same(table.getName(), GENRES))
+            else if (Strings.same(tbl.getName(), GENRES))
             {
-                assertEquals("columns in 'genres'", 2, columns.size());
-                assertEquals("indexes in 'genres'", 1, indexes.size());
+                expected = 2;
             }
-            else if (Strings.same(table.getName(), ACTORS))
+            else if (Strings.same(tbl.getName(), ACTORS))
             {
-                assertEquals("columns in 'actors'", 4, columns.size());
-                assertEquals("indexes in 'actors'", 2, indexes.size());
+                expected = 4;
             }
-            else if (Strings.same(table.getName(), CASTS))
+            else if (Strings.same(tbl.getName(), CASTS))
             {
-                assertEquals("columns in 'casts'", 2, columns.size());
-                assertEquals("indexes in 'casts'", 1, indexes.size());
+                expected = 2;
             }
-            else if (Strings.same(table.getName(), QUEUE))
+            else if (Strings.same(tbl.getName(), QUEUE))
             {
-                assertEquals("columns in 'queue'", 4, columns.size());
-                assertEquals("indexes in 'queue'", 2, indexes.size());
+                expected = 4;
             }
-            else if (Strings.same(table.getName(), RATINGS))
+            else if (Strings.same(tbl.getName(), RATINGS))
             {
-                assertEquals("columns in 'ratings'", 4, columns.size());
-                assertEquals("indexes in 'ratings'", 0, indexes.size());
+                expected = 4;
             }
             else
             {
-                fail("Unexpected table " + table.getName());
+                fail("Unexpected table " + tbl.getName());
             }
+
+            assertThat(columns.size(), is(expected));
         }
     }
 
@@ -190,112 +171,134 @@ public class MetaDataExtractorFunctionalTest
     public void testColumnOrdering() throws Exception
     {
         List<Column> columns;
+        String       expected;
 
-        for (Table table : schema.getTables())
+        for (Table tbl : sch.getTables())
         {
-            columns = table.getColumns();
+            columns  = tbl.getColumns();
+            expected = "";
 
-            if (Strings.same(table.getName(), MOVIES))
+            if (Strings.same(tbl.getName(), MOVIES))
             {
                 for (int i = 0; i < columns.size(); i++)
                 {
                     if (i == 0)
                     {
-                        assertEquals("movieid", columns.get(i).getName());
+                        expected = "movieid";
                     }
                     else if (i == 1)
                     {
-                        assertEquals("title", columns.get(i).getName());
+                        expected = "title";
                     }
                     else if (i == 2)
                     {
-                        assertEquals("yearofr", columns.get(i).getName());
+                        expected = "yearofr";
                     }
                     else if (i == 3)
                     {
-                        assertEquals("summary", columns.get(i).getName());
+                        expected = "summary";
                     }
                     else if (i == 4)
                     {
-                        assertEquals("url", columns.get(i).getName());
+                        expected = "url";
                     }
+                    assertThat(columns.get(i).getName(), is(expected));
                 }
             }
-            else if (Strings.same(table.getName(), ACTORS))
+            else if (Strings.same(tbl.getName(), ACTORS))
             {
                 for (int i = 0; i < columns.size(); i++)
                 {
                     if (i == 0)
                     {
-                        assertEquals("aid", columns.get(i).getName());
+                        expected = "aid";
                     }
                     else if (i == 1)
                     {
-                        assertEquals("afirstname", columns.get(i).getName());
+                        expected = "afirstname";
                     }
                     else if (i == 2)
                     {
-                        assertEquals("alastname", columns.get(i).getName());
+                        expected = "alastname";
                     }
                     else if (i == 3)
                     {
-                        assertEquals("dateofb", columns.get(i).getName());
+                        expected = "dateofb";
                     }
+                    assertThat(columns.get(i).getName(), is(expected));
                 }
             }
         }
     }
-
     /**
-     * Checks that all the indexes that are defined on the <code>movies</code> database are 
-     * extracted correctly. This tests looks only at the name of the indexes.
+     * Tests indexes exist
      */
     @Test
-    public void testIndexes() throws Exception
+    public void testIndexesExist() throws Exception
     {
-        for (Table table : schema.getTables())
+        List<Index>  indexes;
+        int          expectedSize = -1;
+
+        sch = cat.findSchema("movies");
+
+        assertThat(sch != null, is(true));
+        assertThat(cat.getSchemas().size() >= 1, is(true));
+        assertThat(sch.getTables().size(), is(8));
+
+        for (Table tbl : sch.getTables())
         {
-            if (Strings.same(table.getName(), USERS))
+            indexes = tbl.getIndexes();
+
+            if (Strings.same(tbl.getName(), USERS))
             {
-                assertTrue(table.findIndex("users_pkey") != null);
-                assertTrue(table.findIndex("users_userid_key") != null);
+                expectedSize = 2;
+                assertThat(tbl.findIndex("users_pkey") != null, is(true));
+                assertThat(tbl.findIndex("users_userid_email") != null, is(true));
             }
-            else if (Strings.same(table.getName(), CREDITCARDS))
+            else if (Strings.same(tbl.getName(), CREDITCARDS))
             {
-                assertTrue(table.findIndex("creditcards_pkey") != null);
-                assertTrue(table.findIndex("creditcards_creditnum_key") != null);
+                expectedSize = 2;
+                assertThat(tbl.findIndex("creditcards_pkey") != null, is(true));
+                assertThat(tbl.findIndex("creditcards_creditnum_userid_credittype") != null, is(true));
             }
-            else if (Strings.same(table.getName(), MOVIES))
+            else if (Strings.same(tbl.getName(), MOVIES))
             {
-                assertTrue(table.findIndex("movies_pkey") != null);
-                assertTrue(table.findIndex("movies_movieid_key") != null);
+                expectedSize = 2;
+                assertThat(tbl.findIndex("movies_pkey") != null, is(true));
+                assertThat(tbl.findIndex("movies_moiveid_title_yearofr") != null, is(true));
             }
-            else if (Strings.same(table.getName(), GENRES))
+            else if (Strings.same(tbl.getName(), GENRES))
             {
-                assertTrue(table.findIndex("genres_pkey") != null);
+                expectedSize = 1;
+                assertThat(tbl.findIndex("genres_pkey") != null, is(true));
             }
-            else if (Strings.same(table.getName(), ACTORS))
+            else if (Strings.same(tbl.getName(), ACTORS))
             {
-                assertTrue(table.findIndex("actors_pkey") != null);
-                assertTrue(table.findIndex("actors_afirstname_key") != null);
+                expectedSize = 2;
+                assertThat(tbl.findIndex("actors_pkey") != null, is(true));
+                assertThat(tbl.findIndex("actors_afirstname_alastname_dateofb") != null, is(true));
             }
-            else if (Strings.same(table.getName(), CASTS))
+            else if (Strings.same(tbl.getName(), CASTS))
             {
-                assertTrue(table.findIndex("casts_pkey") != null);
+                expectedSize = 1;
+                assertThat(tbl.findIndex("casts_pkey") != null, is(true));
             }
-            else if (Strings.same(table.getName(), QUEUE))
+            else if (Strings.same(tbl.getName(), QUEUE))
             {
-                assertTrue(table.findIndex("queue_pkey") != null);
-                assertTrue(table.findIndex("queue_times_key") != null);
+                expectedSize = 2;
+                assertThat(tbl.findIndex("queue_pkey") != null, is(true));
+                assertThat(tbl.findIndex("queue_times") != null, is(true));
             }
-            else if (Strings.same(table.getName(), RATINGS))
+            else if (Strings.same(tbl.getName(), RATINGS))
             {
-                // none
+                expectedSize = 0;
             }
             else
             {
-                fail("Unexpected table " + table.getName());
+                fail("Unexpected table " + tbl.getName());
             }
+
+            assertThat(indexes.size() >= expectedSize, is(true));
         }
     }
 
@@ -307,56 +310,56 @@ public class MetaDataExtractorFunctionalTest
     @Test
     public void testCardinality() throws Exception
     {
-        for (Table table : schema.getTables())
+        for (Table tbl : sch.getTables())
         {
-            if (Strings.same(table.getName(), USERS))
+            if (Strings.same(tbl.getName(), USERS))
             {
-                assertEquals("rows in 'users'", 6, table.getCardinality());
-                assertEquals(6,table.findColumn("email").getCardinality());
-                assertEquals(5,table.findColumn("ulastname").getCardinality());
+                assertEquals(6,tbl.getCardinality());
+                assertEquals(6,tbl.findColumn("email").getCardinality());
+                assertEquals(5,tbl.findColumn("ulastname").getCardinality());
             }
-            else if (Strings.same(table.getName(), CREDITCARDS))
+            else if (Strings.same(tbl.getName(), CREDITCARDS))
             {
-                assertEquals("rows in 'creditcards'", 6, table.getCardinality());
-                assertEquals(6,table.findColumn("creditnum").getCardinality());
-                assertEquals(3,table.findColumn("credittype").getCardinality());
+                assertEquals(6,tbl.getCardinality());
+                assertEquals(6,tbl.findColumn("creditnum").getCardinality());
+                assertEquals(3,tbl.findColumn("credittype").getCardinality());
             }
-            else if (Strings.same(table.getName(), MOVIES))
+            else if (Strings.same(tbl.getName(), MOVIES))
             {
-                assertEquals("rows in 'movies'", 3, table.getCardinality());
-                assertEquals(3,table.findColumn("movieid").getCardinality());
-                assertEquals(1,table.findColumn("url").getCardinality());
+                assertEquals(3,tbl.getCardinality());
+                assertEquals(3,tbl.findColumn("movieid").getCardinality());
+                assertEquals(1,tbl.findColumn("url").getCardinality());
             }
-            else if (Strings.same(table.getName(), GENRES))
+            else if (Strings.same(tbl.getName(), GENRES))
             {
-                assertEquals("rows in 'genres'", 5, table.getCardinality());
-                assertEquals(2,table.findColumn("mgenre").getCardinality());
+                assertEquals(5,tbl.getCardinality());
+                assertEquals(2,tbl.findColumn("mgenre").getCardinality());
             }
-            else if (Strings.same(table.getName(), ACTORS))
+            else if (Strings.same(tbl.getName(), ACTORS))
             {
-                assertEquals("rows in 'actors'", 8, table.getCardinality());
-                assertEquals(8,table.findColumn("aid").getCardinality());
-                assertEquals(8,table.findColumn("dateofb").getCardinality());
+                assertEquals(8,tbl.getCardinality());
+                assertEquals(8,tbl.findColumn("aid").getCardinality());
+                assertEquals(8,tbl.findColumn("dateofb").getCardinality());
             }
-            else if (Strings.same(table.getName(), CASTS))
+            else if (Strings.same(tbl.getName(), CASTS))
             {
-                assertEquals("rows in 'casts'", 10, table.getCardinality());
+                assertEquals(10,tbl.getCardinality());
             }
-            else if (Strings.same(table.getName(), QUEUE))
+            else if (Strings.same(tbl.getName(), QUEUE))
             {
-                assertEquals("rows in 'queue'", 5, table.getCardinality());
-                assertEquals(2,table.findColumn("position").getCardinality());
-                assertEquals(5,table.findColumn("times").getCardinality());
+                assertEquals(5,tbl.getCardinality());
+                assertEquals(2,tbl.findColumn("position").getCardinality());
+                assertEquals(5,tbl.findColumn("times").getCardinality());
             }
-            else if (Strings.same(table.getName(), RATINGS))
+            else if (Strings.same(tbl.getName(), RATINGS))
             {
-                assertEquals("rows in 'ratings'", 1000, table.getCardinality());
-                assertEquals(4,table.findColumn("rate").getCardinality());
-                assertEquals(8,table.findColumn("review").getCardinality());
+                assertEquals(7,tbl.getCardinality());
+                assertEquals(4,tbl.findColumn("rate").getCardinality());
+                assertEquals(7,tbl.findColumn("review").getCardinality());
             }
             else
             {
-                fail("Unexpected table " + table.getName());
+                fail("Unexpected table " + tbl.getName());
             }
         }
     }
@@ -369,6 +372,13 @@ public class MetaDataExtractorFunctionalTest
      */
     @Test
     public void testSize() throws Exception
+    {
+    }
+
+    /**
+     */
+    @Test
+    public void testPages() throws Exception
     {
     }
 }

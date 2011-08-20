@@ -15,6 +15,11 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.metadata.extraction;
 
+import edu.ucsc.dbtune.metadata.Catalog;
+
+import java.sql.SQLException;
+import java.sql.Connection;
+
 /**
  * Metadata extractor for DB2.
  * <p>
@@ -25,4 +30,29 @@ package edu.ucsc.dbtune.metadata.extraction;
  */
 public class DB2Extractor extends GenericJDBCExtractor
 {
+    @Override
+    protected void extractCatalog(Catalog catalog, Connection connection) throws SQLException
+    {
+        throw new SQLException("Not implemented yet");
+    }
+    @Override
+    protected void extractSchemas(Catalog catalog, Connection connection) throws SQLException
+    {
+        throw new SQLException("Not implemented yet");
+    }
+    @Override
+    protected void extractBytes(Catalog catalog, Connection connection) throws SQLException
+    {
+        throw new SQLException("Not implemented yet");
+    }
+    @Override
+    protected void extractPages(Catalog catalog, Connection connection) throws SQLException
+    {
+        throw new SQLException("Not implemented yet");
+    }
+    @Override
+    protected void extractCardinality(Catalog catalog, Connection connection) throws SQLException
+    {
+        throw new SQLException("Not implemented yet");
+    }
 }
