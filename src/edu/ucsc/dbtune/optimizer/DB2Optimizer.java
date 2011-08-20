@@ -60,8 +60,6 @@ public class DB2Optimizer extends Optimizer
      *
      * @param connection
      *     a live connection to DB2
-     * @param databaseName
-     *     the name of the database the connection is connected to
      */
     public DB2Optimizer(Connection connection){
         this.connection   = connection;

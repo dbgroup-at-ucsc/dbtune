@@ -1,4 +1,8 @@
-DROP TABLE IF EXISTS tbl;
+DROP SCHEMA IF EXISTS one_table CASCADE;
+
+CREATE SCHEMA one_table;
+
+SET SEARCH_PATH TO one_table;
 
 CREATE TABLE tbl (
     a INTEGER,

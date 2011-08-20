@@ -5,12 +5,11 @@ CREATE DATABASE movies;
 USE movies;
 
 CREATE TABLE users (
-    userid      SERIAL,
+    userid      INTEGER,
     email       VARCHAR(30),
     password    VARCHAR(20),
     ufirstname  VARCHAR(20),
     ulastname   VARCHAR(20),
-    UNIQUE      (userid, email),
     PRIMARY KEY (userid)
 );
 
@@ -19,18 +18,16 @@ CREATE TABLE creditcards (
     creditnum   BIGINT,
     credittype  VARCHAR(16),
     expdate     DATE,
-    UNIQUE      (creditnum, userid, credittype),
     PRIMARY KEY (userid),
     FOREIGN KEY (userid) REFERENCES users
 );
 
 CREATE TABLE movies (
-    movieid     SERIAL, 
+    movieid     INTEGER, 
     title       VARCHAR(50),
     yearofr     DATE,
     summary     VARCHAR(1024),
     url         VARCHAR(50) DEFAULT 'unknown',
-    UNIQUE      (movieid, title, yearofr),
     PRIMARY KEY (movieid)
 );
 
@@ -42,11 +39,10 @@ CREATE TABLE genres (
 );
 
 CREATE TABLE actors (
-    aid         SERIAL,
+    aid         INTEGER,
     afirstname  VARCHAR(20),
     alastname   VARCHAR(20),
     dateofb     DATE,
-    UNIQUE      (afirstname, alastname, dateofb),
     PRIMARY KEY (aid)
 );
 
@@ -63,7 +59,6 @@ CREATE TABLE queue (
     movieid     INTEGER,
     position    INTEGER, 
     times       timestamp,
-    UNIQUE      (times),
     PRIMARY KEY (times, movieid, userid),
     FOREIGN KEY (movieid) REFERENCES movies,
     FOREIGN KEY (userid) REFERENCES users
@@ -135,3 +130,9 @@ INSERT INTO ratings(userid, movieid, rate, review) VALUES (6, 2, 5, 'i loved thi
 INSERT INTO ratings(userid, movieid, rate, review) VALUES (5, 2, 4, 'almost made it to my fav list');
 INSERT INTO ratings(userid, movieid, rate, review) VALUES (4, 2, 3, '');
 INSERT INTO ratings(userid, movieid, rate, review) VALUES (1, 3, 1, 'soooo boring; movie is so old!');
+
+CREATE UNIQUE INDEX users_userid_email                      ON users       (userid, email);
+CREATE UNIQUE INDEX creditcards_creditnum_userid_credittype ON creditcards (creditnum, userid, credittype);
+CREATE UNIQUE INDEX movies_moiveid_title_yearofr            ON movies      (movieid, title, yearofr);
+CREATE UNIQUE INDEX actors_afirstname_alastname_dateofb     ON actors      (afirstname, alastname, dateofb);
+CREATE UNIQUE INDEX queue_times                             ON queue       (times);

@@ -13,11 +13,11 @@ Things that the current test doesn't check:
  *  unique constraints
  *  not null constraints
  *  default constraints
+ *  index cardinality
+ *  `getByte()` for each db object
+ *  number of pages
 
 ## 53
-
- *  make metadata retrieval part of the `DatabaseConnection` initilization protocol. This will help in fullfilling the 
-    [DBTune use case](https://github.com/dbgroup-at-ucsc/dbtune/wiki/java-packages-structure).
 
  *  in `Table` class, drop constructor:
  
@@ -49,22 +49,16 @@ Things that the current test doesn't check:
  *  test stuff assumed in the CLI
  *  think of any other based on our intuition: how is metadata gonna be used besides the above?
 
-## 91:
+## 91
 
  *  fix #52
- *  connectivity:
-     * add mysql driver
-     * modify Platform.java to include MySQL
- *  integrate metadata stuff:
-     * create `MySQLIndex` and `MySQLIndexTest` classes
-     * add MySQL metadata extractor
- *  create MySQLWhatIfOptimizer class
+ *  fix #74
+
+## 101
+ *  implement explain(SQLStatement)
+ *  implement explain(SQLStatement,Configuration)
+    *  fix #3, #4 and #5 of mysqlpp project
  *  run existing Wfit and tests against MySQL
-
-## 92:
-
- *  create `DBSystem` that only implements the `newIndex()` method
-
 
 # refs
 
