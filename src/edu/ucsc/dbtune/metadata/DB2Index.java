@@ -92,7 +92,7 @@ XXX: will fix as part of issue #64
         super("",(Table)null,SECONDARY,NON_UNIQUE,UNCLUSTERED);
 
         this.id           = this.getMeta().internalId;
-        this.size         = (long) this.getMeta().megabytes;
+        this.bytes        = (long) this.getMeta().megabytes * 1024 * 1024;
         this.creationCost = creationCost;
         this.setMeta(metadata);
         hashCodeCache     = metadata.hashCode();
@@ -122,7 +122,7 @@ XXX: will fix as part of issue #64
                                                    uniqueRule, reverseScanOpt, indexType);
         this.setMeta(new DB2IndexMetadata(schema, internalId, indexName, indexOwner, indexExists, systemRequired, megabytes));
         this.id           = this.getMeta().internalId;
-        this.size         = (long) this.getMeta().megabytes;
+        this.bytes        = (long) this.getMeta().megabytes * 1024 * 1024;
         this.creationCost = creationCost;
         hashCodeCache     = getMeta().hashCode();
     }
@@ -184,10 +184,6 @@ XXX: will fix as part of issue #64
 
     public String getCreateStatement() {
         return getMeta().creationText;
-    }
-
-    public long getMegaBytes() {
-        return size;
     }
 
     public void setMeta(DB2IndexMetadata meta) {

@@ -36,7 +36,7 @@ public abstract class DatabaseObject
     protected int    id; // -1 means UNASSIGNED id
     protected long   cardinality;
     protected long   pages;
-    protected long   size;
+    protected long   bytes;
     protected double creationCost;
 
     /**
@@ -48,7 +48,7 @@ public abstract class DatabaseObject
         id           = ID;
         cardinality  = 0;
         pages        = 0;
-        size         = 0;
+        bytes        = 0;
         creationCost = 0.0;
     }
 
@@ -78,7 +78,7 @@ public abstract class DatabaseObject
         name         = dbo.name;
         cardinality  = dbo.cardinality;
         pages        = dbo.pages;
-        size         = dbo.size;
+        bytes        = dbo.bytes;
         creationCost = dbo.creationCost;
     }
 
@@ -195,9 +195,9 @@ public abstract class DatabaseObject
      * @return
      *     size in megabytes
      */
-    public long getMegaBytes()
+    public long getBytes()
     {
-        return size;
+        return bytes;
     }
 
     /**

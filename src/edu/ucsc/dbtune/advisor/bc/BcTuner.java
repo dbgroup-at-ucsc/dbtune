@@ -194,13 +194,13 @@ public class BcTuner {
             indexToCreateStats.initDeltaMax();
             
             // record interactions
-            double indexToCreateSize = indexToCreate.getMegaBytes();
+            double indexToCreateSize = indexToCreate.getBytes();
             for (Index ij : hotSet) {
                 if (ij == indexToCreate)
                     continue;
                 BcIndexInfo ijStats = pool.get(ij.getId());
                 int useLevel = useLevel(indexToCreate, ij);
-                double alpha = ij.getMegaBytes() / indexToCreateSize;
+                double alpha = ij.getBytes() / indexToCreateSize;
                 for (int level = 0; level <= useLevel; level++) {
                     double costO = ijStats.origCost(level);
                     double costN = ijStats.newCost(level);

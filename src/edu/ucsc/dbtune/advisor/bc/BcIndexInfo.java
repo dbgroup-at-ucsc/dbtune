@@ -113,7 +113,7 @@ public class BcIndexInfo {
                "DELTAMIN = " + deltaMin + "\n" +
                "DELTAMAX = " + deltaMax + "\n" +
                "CREATION = " + idx.getCreationCost() + "\n" +
-               "    SIZE = " + idx.getMegaBytes() + "\n" +
+               "    SIZE = " + idx.getBytes() + "\n" +
                (state == State.MATERIALIZED ?
                 "   RESID = " + residual(idx.getCreationCost()) :
                 "     BEN = " + benefit(idx.getCreationCost()));

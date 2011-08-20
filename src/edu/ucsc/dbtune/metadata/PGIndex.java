@@ -72,7 +72,7 @@ public class PGIndex extends Index
         this.creationCost = creationCost;
         this.schema       = new PGIndexSchema(reloid, isSync, columns, isDescending);
         this.columns      = columns;
-        this.size         = (long) megabytes;
+        this.bytes        = (long) megabytes * 1024 * 1024;
         this.table        = getSchema().baseTable;
         this.descending   = getSchema().getDescending();
 
@@ -91,7 +91,7 @@ public class PGIndex extends Index
         this.id           = internalId;
         this.creationText = creationText;
         this.creationCost = creationCost;
-        this.size         = (long) megabytes;
+        this.bytes        = (long) megabytes * 1024 * 1024;
     }
 
     /**
