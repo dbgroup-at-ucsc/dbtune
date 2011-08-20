@@ -7,8 +7,10 @@ import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.Combinations;
 import edu.ucsc.dbtune.util.StopWatch;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -89,6 +91,18 @@ public class Inum {
   
   public DatabaseConnection getDatabaseConnection(){
     return connection;
+  }
+
+  /**
+   * generate all possible interesting orders combinations that will be used
+   * during the INUM's {@link Precomputation setup} phase.
+   * @param orders
+   *    original bag of interesting orders extracted from a single query.
+   * @return a set of interesting orders combinations.
+   * @see {@link Precomputation#setup(String, Iterable)}.
+   */
+  public static Set<Set<DBIndex>> generateAllPossibleCombinationsOfInterestingOrders(Iterable<DBIndex> orders){
+    return Combinations.findCombinations(orders);
   }
 
   /**

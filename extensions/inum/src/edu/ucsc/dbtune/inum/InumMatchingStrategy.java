@@ -41,10 +41,9 @@ public class InumMatchingStrategy implements MatchingStrategy {
   public OptimalPlan matches(InumSpace inumSpace, Iterable<DBIndex> inputConfiguration) {
     final Set<OptimalPlan> found = Sets.newHashSet();
     // assuming there is a match, pick the one with the min cost.
-    for(DBIndex each : inputConfiguration){
-      final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(each);
-      found.addAll(optimalPlans);
-    }
+    final Set<DBIndex> key = Sets.newHashSet(inputConfiguration);
+    final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(key);
+    found.addAll(optimalPlans);
 
     return findOneWithMinCost(found);
   }

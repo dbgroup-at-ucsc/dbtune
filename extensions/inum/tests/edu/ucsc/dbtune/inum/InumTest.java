@@ -5,8 +5,11 @@ import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.IndexExtractor;
+import edu.ucsc.dbtune.util.Combinations;
+import edu.ucsc.dbtune.util.Strings;
 import java.util.Set;
 import org.hamcrest.CoreMatchers;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import org.junit.Test;
@@ -25,6 +28,16 @@ public class InumTest {
     assertThat(inum.getInumSpace().getAllSavedOptimalPlans().isEmpty(), is(false));
   }
 
+  @Test public void testCombinationGeneration() throws Exception {
+    final Set<DummyIndex> indexes = Sets.newHashSet();
+    for(int idx = 0; idx < 3; idx++){
+      indexes.add(new DummyIndex(configureIndex("create index " + idx)));
+    }
+
+    final Set<Set<DummyIndex>> combinations = Combinations.findCombinations(indexes);
+    assertThat(combinations.size(), equalTo(8));
+  }
+
   private static DatabaseConnection configureConnection(DBIndex index) throws Exception {
     final Set<DBIndex> configuration = Sets.newHashSet();
     configuration.add(index);
@@ -35,16 +48,17 @@ public class InumTest {
     return connection;
   }
 
-  private static DBIndex configureIndex() {
+  private static DBIndex configureIndex(String text) {
     DBIndex soleOne = Mockito.mock(DBIndex.class);
     Mockito.when(soleOne.internalId()).thenReturn(1);
     Mockito.when(soleOne.creationCost()).thenReturn(2.0);
+    if(!Strings.isEmpty(text)) Mockito.when(soleOne.creationText()).thenReturn(text);
     Mockito.when(soleOne.columnCount()).thenReturn(1);
     return soleOne;
   }
 
   private static Inum configureInum() throws Exception {
-    final DBIndex            index          = configureIndex();
+    final DBIndex            index          = configureIndex(null);
     final DatabaseConnection connection     = configureConnection(index);
     final InumSpace          inumSpace      = configureInumSpace(index);
     final Precomputation     precomputation = configurePrecomputation(inumSpace);
@@ -56,18 +70,19 @@ public class InumTest {
   private static InumSpace configureInumSpace(DBIndex index) throws Exception {
     final InumSpace inumSpace = Mockito.mock(InumSpace.class);
     final Set<OptimalPlan> plans = configureSingleOptimalPlan();
+    final Set<DBIndex> key = Sets.newHashSet();
+    key.add(index);
     Mockito.when(inumSpace.getAllSavedOptimalPlans()).thenReturn(plans);
-    Mockito.when(inumSpace.save(index, plans)).thenReturn(plans);
+    Mockito.when(inumSpace.save(key, plans)).thenReturn(plans);
     return inumSpace;
   }
 
   private static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception {
     final MatchingStrategy matchingLogic = Mockito.mock(MatchingStrategy.class);
     final OptimalPlan plan = Lists.newArrayList(inumSpace.getAllSavedOptimalPlans()).get(0);
-    final Set<OptimalPlan> plans = inumSpace.getAllSavedOptimalPlans();
-    Mockito.when(matchingLogic.matches(Mockito.eq(plans), Mockito.anySetOf(DBIndex.class))).thenReturn(plan);
+    Mockito.when(matchingLogic.matches(Mockito.eq(inumSpace), Mockito.anySetOf(DBIndex.class))).thenReturn(plan);
     final double cost = plan.getTotalCost();
-    Mockito.when(matchingLogic.derivesCost(null, Mockito.eq(plan), Mockito.anySetOf(DBIndex.class))).thenReturn(cost);
+    Mockito.when(matchingLogic.derivesCost(Mockito.anyString(), Mockito.eq(plan), Mockito.anySetOf(DBIndex.class))).thenReturn(cost);
     return matchingLogic;
   }
 
@@ -89,5 +104,18 @@ public class InumTest {
     Mockito.when(opp.isDirty()).thenReturn(false);
     singleOne.add(opp);
     return singleOne;
+  }
+
+  private static class DummyIndex implements
+      Comparable<DummyIndex> /*comparable? why? just because if we want to sort them...*/ {
+    private final DBIndex index;
+
+    DummyIndex(DBIndex index){
+      this.index = index;
+    }
+
+    @Override public int compareTo(DummyIndex comparableIndex) {
+      return index.creationText().compareTo(comparableIndex.index.creationText());
+    }
   }
 }

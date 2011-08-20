@@ -16,13 +16,13 @@ import java.util.Set;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InMemoryInumSpace implements InumSpace {
-  private final Map<DBIndex, Set<OptimalPlan>> cachedPlans;
-  InMemoryInumSpace(Map<DBIndex, Set<OptimalPlan>> cachedPlans){
+  private final Map<Set<DBIndex>, Set<OptimalPlan>> cachedPlans;
+  InMemoryInumSpace(Map<Set<DBIndex>, Set<OptimalPlan>> cachedPlans){
     this.cachedPlans = cachedPlans;
   }
 
   public InMemoryInumSpace(){
-    this(Maps.<DBIndex, Set<OptimalPlan>>newHashMap());
+    this(Maps.<Set<DBIndex>, Set<OptimalPlan>>newHashMap());
   }
 
   @Override public void clear() {
@@ -31,7 +31,7 @@ public class InMemoryInumSpace implements InumSpace {
     }
   }
 
-  @Override public Set<OptimalPlan> getOptimalPlans(DBIndex key) {
+  @Override public Set<OptimalPlan> getOptimalPlans(Set<DBIndex> key) {
     return cachedPlans.get(key);
   }
 
@@ -43,24 +43,24 @@ public class InMemoryInumSpace implements InumSpace {
     return ImmutableSet.copyOf(allSavedOnes);
   }
 
-  @Override public Set<OptimalPlan> save(DBIndex interestingOrder, Set<OptimalPlan> optimalPlans) {
-    if(!cachedPlans.containsKey(interestingOrder)){
+  @Override public Set<OptimalPlan> save(Set<DBIndex> interestingOrders, Set<OptimalPlan> optimalPlans) {
+    if(!cachedPlans.containsKey(interestingOrders)){
       final Set<OptimalPlan> newBatchedOfPlans = Sets.newHashSet();
       for(OptimalPlan each : optimalPlans){
         newBatchedOfPlans.add(new CachedSqlExecutionOptimalPlan(each));
       }
 
-      cachedPlans.put(interestingOrder, newBatchedOfPlans);
+      cachedPlans.put(interestingOrders, newBatchedOfPlans);
     } else {
       for(OptimalPlan each : optimalPlans){
         final CachedSqlExecutionOptimalPlan cp = new CachedSqlExecutionOptimalPlan(each);
-        if(!cachedPlans.get(interestingOrder).contains(cp)){
-           cachedPlans.get(interestingOrder).add(cp);
+        if(!cachedPlans.get(interestingOrders).contains(cp)){
+           cachedPlans.get(interestingOrders).add(cp);
         }
       }
     }
 
-    return getOptimalPlans(interestingOrder);
+    return getOptimalPlans(interestingOrders);
   }
 
   @Override public String toString() {

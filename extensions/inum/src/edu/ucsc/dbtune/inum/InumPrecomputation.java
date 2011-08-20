@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.Combinations;
 import edu.ucsc.dbtune.util.Strings;
 import java.sql.Connection;
 import java.util.Set;
@@ -48,11 +49,8 @@ public class InumPrecomputation implements Precomputation {
     }
 
     addQuerytoListOfSeenQueries(query);
-    // todo(Huascar) it looks this is wrong. Rather than doing this on individual orders, I should
-    // enumerate multiple combinations of these orders, and then call the optimizer on each combination
-    // of orders. This suggest that the InumSpace should updated and change the Get(DBIndex) method
-    // for something like Get(Iterable<DBIndex>.
-    for(DBIndex eachInterestingOrder : interestingOrders) {
+    final Set<Set<DBIndex>> allCombinationsOfInterestingOrders = Combinations.findCombinations(interestingOrders);
+    for(Set<DBIndex> eachIOs : allCombinationsOfInterestingOrders){
       final Set<OptimalPlan> optimalPlansPerInterestingOrder = Sets.newHashSet();
       // call optimizer given the workload and an input configuration
       //   get optimal plan as a String
@@ -60,31 +58,36 @@ public class InumPrecomputation implements Precomputation {
       //   add all returned plans to optimalPlans
       //   save plans in InumSpace indexed by interesting order.
       // return a reference to the set of optimal plans
-      final String queryExecutionPlan = getQueryExecutionPlan(
+      final String queryExecutionPlan = getQueryExecutionPlan(   // get execution plan given the set of interesting orders.
           connection.getJdbcConnection(),
           query,
-          eachInterestingOrder
+          eachIOs
       );
-
       if(Strings.isEmpty(queryExecutionPlan)) continue;
       optimalPlansPerInterestingOrder.addAll(parser.parse(queryExecutionPlan));
+
       final Set<OptimalPlan> referenceToPlans = getInumSpace().save(
-          eachInterestingOrder,
+          eachIOs,
           optimalPlansPerInterestingOrder
       );
+
       Console.streaming().info(
           String.format("%d optimal plans were cached for %s interesting order.",
               referenceToPlans.size(),
               interestingOrders
           )
       );
-    }
 
+    }
+    // todo(Huascar) it looks this is wrong. Rather than doing this on individual orders, I should
+    // enumerate multiple combinations of these orders, and then call the optimizer on each combination
+    // of orders. This suggest that the InumSpace should updated and change the Get(DBIndex) method
+    // for something like Get(Iterable<DBIndex>.
     return getInumSpace().getAllSavedOptimalPlans();
   }
 
   private static String getQueryExecutionPlan(Connection connection, String query,
-      DBIndex interestingOrder){
+      Iterable<DBIndex> interestingOrders){
     // example of a possible suggested plan
     return "Hash Join  (cost=174080.39..9364262539.50 rows=1 width=193)";   // we can have one or many query plans
   }

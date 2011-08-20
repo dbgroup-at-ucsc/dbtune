@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
+import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,14 +17,18 @@ import org.mockito.Mockito;
 public class InumSpaceTest {
   @Test public void testPopulateInumSpace() throws Exception {
     final InumSpace space = new InMemoryInumSpace();
-    final Set<OptimalPlan> plans = space.save(configureIndex(), configureOptimalPlans());
+    final Set<DBIndex> key = Sets.newHashSet();
+    key.add(configureIndex());
+    final Set<OptimalPlan> plans = space.save(key, configureOptimalPlans());
     assertThat(!plans.isEmpty(), is(true));
     assertThat(!space.getAllSavedOptimalPlans().isEmpty(), is(true));
   }
 
   @Test public void testClearingInumSpace() throws Exception {
     final InumSpace space = new InMemoryInumSpace();
-    final Set<OptimalPlan> plans = space.save(configureIndex(), configureOptimalPlans());
+    final Set<DBIndex> key = Sets.newHashSet();
+    key.add(configureIndex());
+    final Set<OptimalPlan> plans = space.save(key, configureOptimalPlans());
     assertThat(!plans.isEmpty(), is(true));
     space.clear();
     assertThat(space.getAllSavedOptimalPlans().isEmpty(), is(true));
@@ -31,7 +36,9 @@ public class InumSpaceTest {
 
   @Test public void testRetrievalOfOptimalPlansPerKey() throws Exception {
     final InumSpace space = new InMemoryInumSpace();
-    final DBIndex   key   = configureIndex();
+    final DBIndex   index   = configureIndex();
+    final Set<DBIndex> key = Sets.newHashSet();
+    key.add(index);
     space.save(key, configureOptimalPlans());
     final Set<OptimalPlan> found = space.getOptimalPlans(key);
     assertThat(!found.isEmpty(), is(true));

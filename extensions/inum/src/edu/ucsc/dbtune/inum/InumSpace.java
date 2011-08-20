@@ -37,12 +37,13 @@ public interface InumSpace {
 
   /**
    * get the set of optimal plans for the given key.
+   *
    * @param key
-   *    index or interesting order.
+   *    index or interesting orders.
    * @return
    *    the set of cached optimal plans for the given key.
    */
-  Set<OptimalPlan> getOptimalPlans(DBIndex key);
+  Set<OptimalPlan> getOptimalPlans(Set<DBIndex> key);
 
   /**
    * Get all the {@link OptimalPlan optimal plan}s from the
@@ -56,9 +57,8 @@ public interface InumSpace {
   /**
    * Save a set of optimal plans per query in the INUM Space.
    *
-   * @param interestingOrder
-   *    the interesting order that will be used to index the optimal plan in the
-   *    {@link InumSpace INUM Space}.
+   * @param interestingOrders
+   *      a single combination of interesting orders.
    * @param optimalPlans
    *      a set of optimal plans to be saved in the {@link InumSpace INUM Space}.
    *      {@link OptimalPlan Plans} that haven't been saved in the {@link InumSpace INUM Space}
@@ -67,5 +67,5 @@ public interface InumSpace {
    *      a reference to the set of saved optimal plans, useful if you wish to hold a reference to
    *      the set for checking post-conditions or other purposes (e.g., logging).
    */
-  Set<OptimalPlan> save(DBIndex interestingOrder, Set<OptimalPlan> optimalPlans);
+  Set<OptimalPlan> save(Set<DBIndex> interestingOrders, Set<OptimalPlan> optimalPlans);
 }
