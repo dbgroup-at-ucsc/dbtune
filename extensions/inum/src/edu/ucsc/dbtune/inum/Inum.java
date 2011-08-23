@@ -59,7 +59,8 @@ public class Inum {
   }
 
   public double estimateCost(String query, Iterable<DBIndex> inputConfiguration){
-    if(!isStarted.get()) throw new InumExecutionException("INUM has not been started yet. Please call start(..) method.");
+    final String errmsg = "INUM has not been started yet. Please call start(..) method.";
+    if(!isStarted.get()) throw new InumExecutionException(errmsg);
     if(!precomputation.skip(query)) {
       precomputation.setup(
           query, 
@@ -82,7 +83,7 @@ public class Inum {
   }
   
   private static Iterable<DBIndex> findInterestingOrders(String query){
-    return Sets.newHashSet();
+    return Sets.newHashSet();  // todo(Huascar) to implement this.
   }
 
   public InumSpace getInumSpace(){

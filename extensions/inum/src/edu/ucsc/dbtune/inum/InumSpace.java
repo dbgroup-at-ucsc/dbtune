@@ -46,6 +46,11 @@ public interface InumSpace {
   Set<OptimalPlan> getOptimalPlans(Set<DBIndex> key);
 
   /**
+   * @return the set of interesting orders.
+   */
+  Set<Set<DBIndex>> getAllInterestingOrders();
+
+  /**
    * Get all the {@link OptimalPlan optimal plan}s from the
    * {@link InumSpace INUM Space}.
    *

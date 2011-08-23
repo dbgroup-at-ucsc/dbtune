@@ -14,6 +14,11 @@ import edu.ucsc.dbtune.core.DBIndex;
  */
 public interface MatchingStrategy {
   /**
+   * @return the index cost estimation {@link IndexAccessCostEstimation algorithm}.
+   */
+  IndexAccessCostEstimation getIndexAccessCostEstimation();
+
+  /**
    * derives the query cost without going to the optimizer, simply by adding the cached cost to
    * the index access costs computed on-the-fly.
    *

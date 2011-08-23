@@ -79,10 +79,7 @@ public class InumPrecomputation implements Precomputation {
       );
 
     }
-    // todo(Huascar) it looks this is wrong. Rather than doing this on individual orders, I should
-    // enumerate multiple combinations of these orders, and then call the optimizer on each combination
-    // of orders. This suggest that the InumSpace should updated and change the Get(DBIndex) method
-    // for something like Get(Iterable<DBIndex>.
+
     return getInumSpace().getAllSavedOptimalPlans();
   }
 

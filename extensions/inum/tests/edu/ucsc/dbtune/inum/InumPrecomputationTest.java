@@ -39,9 +39,10 @@ public class InumPrecomputationTest {
     final Precomputation setup = new InumPrecomputation(mockConnection);
     final Set<DBIndex> configurationOfOneIndex = configureConfiguration();
     setup.setup("Some query", configurationOfOneIndex);
+
     final InumSpace is = setup.getInumSpace();
-    final Integer size         = is.getAllSavedOptimalPlans().size();
-    final Integer expectedSize = 1;
+    final Integer   size         = is.getAllSavedOptimalPlans().size();
+    final Integer   expectedSize = 2; // why 2? We are including the empty interesting order plus the non-empty one (suggested by INUM's VLDB paper)/
     assertThat(size, equalTo(expectedSize));
   }
 

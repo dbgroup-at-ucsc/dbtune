@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.inum;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import static java.lang.Double.compare;
@@ -12,7 +13,6 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-//todo(Huascar) write test...
 public class InumMatchingStrategy implements MatchingStrategy {
   private final IndexAccessCostEstimation accessCostEstimator;
 
@@ -24,11 +24,15 @@ public class InumMatchingStrategy implements MatchingStrategy {
     this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
   }
 
+  @Override public IndexAccessCostEstimation getIndexAccessCostEstimation() {
+    return accessCostEstimator;
+  }
+
   @Override
   public double derivesCost(String query, OptimalPlan optimalPlan,
       Iterable<DBIndex> inputConfiguration) {
     // adding the cached cost + index access costs
-    final double indexAccessCosts = accessCostEstimator.estimateIndexAccessCost(query, inputConfiguration);
+    final double indexAccessCosts = getIndexAccessCostEstimation().estimateIndexAccessCost(query, inputConfiguration);
     return sumCachedCosts(optimalPlan) + indexAccessCosts;
   }
 
@@ -42,8 +46,13 @@ public class InumMatchingStrategy implements MatchingStrategy {
     final Set<OptimalPlan> found = Sets.newHashSet();
     // assuming there is a match, pick the one with the min cost.
     final Set<DBIndex> key = Sets.newHashSet(inputConfiguration);
-    final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(key);
-    found.addAll(optimalPlans);
+    for(Set<DBIndex> match : inumSpace.getAllInterestingOrders()){
+      if(!Sets.intersection(match, key).isEmpty()){
+        final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(key);
+        found.addAll(optimalPlans);
+        break;
+      }
+    }
 
     return findOneWithMinCost(found);
   }

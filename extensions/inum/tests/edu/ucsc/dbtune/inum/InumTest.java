@@ -107,7 +107,7 @@ public class InumTest {
   }
 
   private static class DummyIndex implements
-      Comparable<DummyIndex> /*comparable? why? just because if we want to sort them...*/ {
+      Comparable<DummyIndex> /*comparable? why? just because we want to be able to sort them....*/ {
     private final DBIndex index;
 
     DummyIndex(DBIndex index){

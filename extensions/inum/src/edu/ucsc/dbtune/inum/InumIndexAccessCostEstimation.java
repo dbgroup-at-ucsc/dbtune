@@ -30,7 +30,7 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
     final OptimalPlan singlePlan = singlePlan(getSqlExecutionPlan(connection.getJdbcConnection(), query, indexes));
     double sumOfIndexAccessCosts = 0.0;
     for(DBIndex each : indexes ){
-      sumOfIndexAccessCosts +=  singlePlan.getAccessCost(each.baseTable().toString());
+      sumOfIndexAccessCosts +=  singlePlan.getAccessCost(each.baseTable().toString()/*todo(Huascar) this should be changed to index.getTablename() */);
     }
     return sumOfIndexAccessCosts;
   }

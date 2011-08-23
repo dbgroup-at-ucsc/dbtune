@@ -35,6 +35,10 @@ public class InMemoryInumSpace implements InumSpace {
     return cachedPlans.get(key);
   }
 
+  @Override public Set<Set<DBIndex>> getAllInterestingOrders() {
+    return ImmutableSet.copyOf(cachedPlans.keySet());
+  }
+
   @Override public Set<OptimalPlan> getAllSavedOptimalPlans() {
     final Set<OptimalPlan> allSavedOnes = Sets.newHashSet();
     for(Set<OptimalPlan> each : cachedPlans.values()){
