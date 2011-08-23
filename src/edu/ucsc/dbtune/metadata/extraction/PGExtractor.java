@@ -111,6 +111,7 @@ public class PGExtractor extends GenericJDBCExtractor
     }
 
     /**
+     * {@inheritDoc}
      */
     @Override
     public void extractPages(Catalog catalog, Connection connection)

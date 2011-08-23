@@ -39,35 +39,30 @@ import java.sql.SQLException;
  * The class tries to extract, through the use of JDBC's {@link DatabaseMetaData}, name, data type, 
  * size and indexes (primary and secondary). When some information is not available through it, the 
  * corresponding metadata class (from the {@link edu.ucsc.dbtune.metadata} package) is empty. In the 
- * worst case, the returned {@link Catalog} object is empty.
- * <p>
- * Each abstract method in this class should return information comprised of <p>
- * This method tries to extract, through the use of JDBC's {@link DatabaseMetaData}, names, data 
- * types and indexes (primary and secondary). When some information is not available, the 
- * corresponding metadata class (from the {@link edu.ucsc.dbtune.metadata} package, eg. {@link 
- * Column}) inside the constructed {@link Catalog} is empty.
+ * worst case, the returned {@link Catalog} object is empty. Also, a DBMS-specific implementation 
+ * should find more efficient ways of retrieving metadata, which regularly is achieved by querying 
+ * the system tables.
  *
  * @author Ivo Jimenez
  * @see DatabaseMetaData
  */
 public abstract class GenericJDBCExtractor implements MetadataExtractor
 {
-    /** if an extractor swapped the catalog and schema terms */
+    /** whether or not an extractor has swapped the catalog and schema terms */
     protected boolean swappedTerms;
 
     /**
-     * Given a database connection, it extracts {@link Catalog} and {@link Schema} metadata 
-     * information. The information is comprised of all the database objects that exist in the 
-     * database associated with the given {@link Connection} object and its context. With context we 
-     * mean whatever is the connection's scope, i.e. whatever objects are visible to it, as is. This 
-     * varies depending on how the connection was configured and, for a default configuration, on 
-     * the DBMS/driver being used.
+     * Given a database connection, it extracts metadata information. The information is comprised 
+     * of all the {@link edu.ucsc.dbtune.metadata.DatabaseObject}s that exist in the database 
+     * associated with the given {@link Connection} object and its context. With context we mean 
+     * whatever is the connection's scope, i.e. the objects that are visible to it, as it is passed 
+     * to this method. This varies depending on how the connection was configured, on the 
+     * DBMS/driver being used (for a default configuration), amon other things.
      * <p>
      * This method tries to extract, through the use of JDBC's {@link DatabaseMetaData}, names, data 
-     * types and indexes (primary and secondary). For extracting a {@link Catalog} and {@link 
-     * Schema}  When some information is not available through it, the corresponding metadata class 
-     * (from the {@link edu.ucsc.dbtune.metadata} package) is empty. In the worst case, the returned
-     * <code>Catalog</code> object is empty.
+     * types and indexes (primary and secondary). When some information is not available through it, 
+     * the corresponding metadata class (from the {@link edu.ucsc.dbtune.metadata} package) is 
+     * empty. In the worst case, the returned {@link Catalog} object is empty.
      *
      * @param connection
      *     object used to obtain metadata for its associated database
