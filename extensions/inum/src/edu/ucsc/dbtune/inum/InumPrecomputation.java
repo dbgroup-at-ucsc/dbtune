@@ -49,6 +49,8 @@ public class InumPrecomputation implements Precomputation {
     }
 
     addQuerytoListOfSeenQueries(query);
+    // generate all possible interesting orders combinations that will be used
+    // during the INUM's {@link Precomputation setup} phase.
     final Set<Set<DBIndex>> allCombinationsOfInterestingOrders = Combinations.findCombinations(interestingOrders);
     for(Set<DBIndex> eachIOs : allCombinationsOfInterestingOrders){
       final Set<OptimalPlan> optimalPlansPerInterestingOrder = Sets.newHashSet();

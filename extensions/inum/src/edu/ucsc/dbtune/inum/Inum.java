@@ -94,18 +94,6 @@ public class Inum {
   }
 
   /**
-   * generate all possible interesting orders combinations that will be used
-   * during the INUM's {@link Precomputation setup} phase.
-   * @param orders
-   *    original bag of interesting orders extracted from a single query.
-   * @return a set of interesting orders combinations.
-   * @see {@link Precomputation#setup(String, Iterable)}.
-   */
-  public static Set<Set<DBIndex>> generateAllPossibleCombinationsOfInterestingOrders(Iterable<DBIndex> orders){
-    return Combinations.findCombinations(orders);
-  }
-
-  /**
    * INUM setup will load any representative workload found in the inum workload
    * directory.
    */
