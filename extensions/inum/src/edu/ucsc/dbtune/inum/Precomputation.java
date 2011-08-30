@@ -23,7 +23,7 @@ public interface Precomputation {
    * representative configuration. The resulting {@link OptimalPlan}.
    *
    * The resulting optimal plan is saved in the {@link InumSpace INUM Space},
-   * by calling the {@link InumSpace#save(DBIndex, Set) InumSpace#save(Set<OptimalPlan>)} method.
+   * by calling the {@link InumSpace#save(Set, Set)}  InumSpace#save(Set<DBIndex>, Set<OptimalPlan>)} method.
    * After successfully saving the plan, a reference to the optimal plans is returned to the
    * caller of this method.
    *

@@ -83,6 +83,7 @@ public class InumPrecomputation implements Precomputation {
     return getInumSpace().getAllSavedOptimalPlans();
   }
 
+  //todo(Huascar) to implement once the dbms changes are done
   private static String getQueryExecutionPlan(Connection connection, String query,
       Iterable<DBIndex> interestingOrders){
     // example of a possible suggested plan
