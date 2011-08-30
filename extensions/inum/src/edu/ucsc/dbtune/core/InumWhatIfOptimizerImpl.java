@@ -9,8 +9,6 @@ import edu.ucsc.dbtune.inum.Inum;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
-
-  private final DatabaseConnection                  connection;
   private final Inum                                inum;
 
 
@@ -20,8 +18,7 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    *    a live database connection to postgres
    */
   InumWhatIfOptimizerImpl(DatabaseConnection connection){
-    this.connection = connection;
-    this.inum       = Inum.newInumInstance(this.connection);
+    this.inum       = Inum.newInumInstance(connection);
     this.inum.start();
   }
 
