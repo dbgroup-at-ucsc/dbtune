@@ -85,7 +85,7 @@ public class Index {
     public String getKey() {
         if(key == null) {
             if(columns.isEmpty()) {
-                key = tableName+"EMPTY_INDEX";
+                key = tableName + "EMPTY_INDEX";
             } else {
                 key = columns.toString();
             }

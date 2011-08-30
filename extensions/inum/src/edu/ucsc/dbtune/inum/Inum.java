@@ -3,14 +3,12 @@ package edu.ucsc.dbtune.inum;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Combinations;
 import edu.ucsc.dbtune.util.StopWatch;
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -64,7 +62,7 @@ public class Inum {
     if(!precomputation.skip(query)) {
       precomputation.setup(
           query, 
-          findInterestingOrders(query)
+          findInterestingOrders(query, connection)
       );
     }
 
@@ -82,8 +80,9 @@ public class Inum {
     precomputation.getInumSpace().clear();
   }
   
-  private static Iterable<DBIndex> findInterestingOrders(String query){
-    return Sets.newHashSet();  // todo(Huascar) to implement this.
+  public Iterable<DBIndex> findInterestingOrders(String query,
+      DatabaseConnection connection){
+    return InterestingOrders.extractInterestingOrders(query, connection);
   }
 
   public InumSpace getInumSpace(){
@@ -130,7 +129,7 @@ public class Inum {
 
     final StopWatch timing = new StopWatch();
     for(String eachQuery : input){
-      precomputation.setup(eachQuery, findInterestingOrders(eachQuery));
+      precomputation.setup(eachQuery, findInterestingOrders(eachQuery, connection));
     }
     timing.resetAndLog("precomputation took ");
   }

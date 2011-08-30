@@ -30,7 +30,7 @@ import java.util.List;
  *
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-abstract class AbstractIndex implements DBIndex {
+public abstract class AbstractIndex implements DBIndex {
     protected final int       internalId;
     protected final String    creationText;
     protected final double    creationCost;
