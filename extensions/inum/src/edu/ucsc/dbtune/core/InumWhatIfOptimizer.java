@@ -34,6 +34,10 @@ public interface InumWhatIfOptimizer {
    * indexes (a.k.a., configuration) for a given workload. The bag of hypothetical
    * indexes may be empty (a.k.a., empty configuration).
    *
+   * When using this method for the very first time, there will be an initial performance cost
+   * due to the set up phase of the Index Usage Model (INUM) functionality. Once INUM has been
+   * set up, upcoming calls to this method won't experience this performance cost.
+   *
    * @param workload
    *    a single workload (file name)
    * @param hypotheticalIndexes

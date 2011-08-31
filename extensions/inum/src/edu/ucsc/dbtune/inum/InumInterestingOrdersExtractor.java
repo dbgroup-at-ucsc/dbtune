@@ -36,15 +36,18 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Extracts the interesting orders of a query.
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InterestingOrders {
+public class InumInterestingOrdersExtractor implements InterestingOrdersExtractor {
   private static final Set<String> AGGR_OPER;
   private static final String      BLANK;
+  private final ColumnProperty     properties;
+
   static {
     BLANK     = "";
     Console.streaming().info("preparing the zql parser");
@@ -66,9 +69,15 @@ public class InterestingOrders {
     ZUtils.addCustomFunction("convert", 2);
   }
 
-  private InterestingOrders() {}
+  public InumInterestingOrdersExtractor(DatabaseConnection connection){
+    this(ColumnsProperties.INSTANCE.load(Preconditions.checkNotNull(connection)));
+  }
 
-  public static Set<DBIndex> extractInterestingOrders(String singleQuery, DatabaseConnection connection) {
+  InumInterestingOrdersExtractor(ColumnProperty properties) {
+    this.properties = properties;
+  }
+
+  @Override public Set<DBIndex> extractInterestingOrders(String singleQuery) {
     final Set<DBIndex> result = Sets.newHashSet();
     final Vector statements   = parseQuery(singleQuery);
 
@@ -76,7 +85,7 @@ public class InterestingOrders {
     for (Object statement : statements) {
       final ZQuery           each      = Objects.cast(statement, ZQuery.class);
       final QueryRecord      record    = new QueryRecord();
-      final ColumnsExtractor extractor = new ColumnsExtractor(each, connection);
+      final ColumnsExtractor extractor = new ColumnsExtractor(each, properties);
 
       // tables used by the query.
       record.usedColumns = extractor.usedColumns();
@@ -129,8 +138,9 @@ public class InterestingOrders {
   }
 
   private static Collection<? extends DBIndex> interestingOrdersSpace(List<QueryRecord> records) {
-    final List<DBIndex> indexes = Lists.newArrayList();
+    final Set<DBIndex> indexes = Sets.newHashSet();
     int id = 0;
+    //todo(Huascar) to code: if an index is already in the indexes list, then ignore it; don't store it more than once.
     for(QueryRecord each : records) {
       if(each.groupBy == null) continue;
       for (String table : each.groupBy.keySet()) {
@@ -163,7 +173,7 @@ public class InterestingOrders {
       final ZqlParser   p  = new ZqlParser(is);
       return p.readStatements();
     } catch (Throwable e) {
-      final String errorMessage = "InterestingOrders#parseQuery(..) Error. Unable to parse query.";
+      final String errorMessage = "InumInterestingOrdersExtractor#parseQuery(..) Error. Unable to parse query.";
       Console.streaming().error(errorMessage, e);
       throw new InumExecutionException(errorMessage);
     }
@@ -182,20 +192,17 @@ public class InterestingOrders {
     private final Set<String> orderByColumns;
     private final Set<String> whereColumns;
 
-    private final DatabaseConnection connection;
+    private static final AtomicReference<ColumnProperty> PROPS = new AtomicReference<ColumnProperty>();
 
-    private static final ColumnsProperties PROPS = ColumnsProperties.INSTANCE;
-
-    ColumnsExtractor(ZQuery query, DatabaseConnection connection) {
+    ColumnsExtractor(ZQuery query, ColumnProperty property) {
+      PROPS.set(Preconditions.checkNotNull(property));
       this.query      = query;
-      this.connection = connection;
       allColumns      = Sets.newHashSet();
       eqColumns       = Sets.newHashSet();
       joinColumns     = Sets.newHashSet();
       groupByColumns  = Sets.newLinkedHashSet();
       orderByColumns  = Sets.newLinkedHashSet();
       whereColumns    = Sets.newHashSet();
-      PROPS.load(this.connection);
       buildIndexes(this.query, allColumns, eqColumns, joinColumns);
     }
 
@@ -230,10 +237,9 @@ public class InterestingOrders {
     public Set<String> getInterestingOrders() {
       final Set<String> caps = Sets.newHashSet();
 
-      for (String each : joinColumns) { caps.add(each.toUpperCase());                    }
-
-      if (!groupByColumns.isEmpty())  { caps.add(getGroupByColumns().iterator().next()); }
-      if (!orderByColumns.isEmpty())  { caps.add(getOrderByColumns().iterator().next()); }
+      for (String each : joinColumns)    { caps.add(each.toUpperCase());                    }
+      for (String each : groupByColumns) { caps.add(each.toUpperCase());                    }
+      for (String each : orderByColumns) { caps.add(each.toUpperCase());                    }
 
       return caps;
     }
@@ -287,7 +293,7 @@ public class InterestingOrders {
       Set<String> orderByColumn = Sets.newLinkedHashSet();
       for (Object eachOB : orderBy) {
         ZOrderBy zOrderBy = (ZOrderBy) eachOB;
-        processExpression(zOrderBy.getExpression(), allColumns, allColumns, orderByColumn);
+        processExpression(zOrderBy.getExpression(), allColumns, orderByColumn, allColumns);
       }
 
       allColumns.addAll(orderByColumn);
@@ -331,7 +337,7 @@ public class InterestingOrders {
     public static Multimap<String, String> associateColumnsWithTables(Set<String> columns) {
       final Multimap<String, String> multiMap = HashMultimap.create();
       for (String columnName : columns) {
-        String tableName = PROPS.getProperty(columnName.toUpperCase());
+        String tableName = PROPS.get().getProperty(columnName.toUpperCase());
         if (tableName == null) {
           Console.streaming().info("Cannot retrieve properties for columnName = " + columnName);
           continue;
@@ -483,7 +489,7 @@ public class InterestingOrders {
   /**
    * A record object that holds information of columns.
    */
-  private static class ColumnInformation {
+  public static class ColumnInformation {
     String  columnName;
     String  columnType;
 
@@ -493,8 +499,8 @@ public class InterestingOrders {
     boolean isNullable;
 
   }
-
-  private enum ColumnsProperties {
+  // todo(Huascar) convert this to interface.
+  public enum ColumnsProperties implements ColumnProperty {
     INSTANCE;
 
     final Map<String, Set<ColumnInformation>> stringToSetOfColumnInfo;
@@ -506,18 +512,24 @@ public class InterestingOrders {
       properties                = new Properties();
     }
 
-    void load(DatabaseConnection connection){
-      this.connection = Preconditions.checkNotNull(connection);
-      populate();
-      properties      = getProperties();
+    public DatabaseConnection getDatabaseConnection(){
+      if(connection.isClosed()) throw new IllegalStateException("Connection is closed.");
+      return connection;
     }
 
-    String getProperty(String key){
+    ColumnsProperties load(DatabaseConnection connection){
+      this.connection = Preconditions.checkNotNull(connection);
+      refresh();
+      properties      = getProperties();
+      return this;
+    }
+
+    @Override public String getProperty(String key){
       final String property = properties.getProperty(key);
       return property == null ? BLANK : property;
     }
 
-    private void populate() {
+    @Override public void refresh() {
       final String sqlquery
           = "select relname,relpages, reltuples, relfilenode from pg_class where relnamespace = 2200 and relam =0";
       try {
@@ -537,7 +549,7 @@ public class InterestingOrders {
       }
     }
 
-    Properties getProperties() {
+    @Override public Properties getProperties() {
       final Properties props = new Properties();
       for(String eachTableName : stringToSetOfColumnInfo.keySet()){
         final Set<ColumnInformation> info = stringToSetOfColumnInfo.get(eachTableName);
@@ -548,7 +560,7 @@ public class InterestingOrders {
       return props;
     }
 
-    private Set<ColumnInformation> getColumnInformation(int reloid) {
+    @Override public Set<ColumnInformation> getColumnInformation(int reloid) {
       final Set<ColumnInformation> columns = Sets.newHashSet();
       final String sqlquery =
           "select attname, attnum, atttypid, attnotnull from pg_attribute where attnum > 0 and attrelid = "
@@ -605,6 +617,19 @@ public class InterestingOrders {
       return ImmutableSet.copyOf(columns);
     }
 
+    @Override public int hashCode() {
+      return Objects.hashCode(getTableName(), columns);
+    }
+
+    @Override public boolean equals(Object o) {
+      if(o instanceof IndexShell){
+        final IndexShell other = (IndexShell) o;
+        return Objects.equals(getTableName(), other.getTableName())
+            && Objects.equals(columns, other.columns);
+      }
+      return false;
+    }
+
     @Override public DatabaseTable baseTable() {
       throw new UnsupportedOperationException("to be implemented");
     }
@@ -622,16 +647,15 @@ public class InterestingOrders {
     }
   }
 
-
-  private static class QueryRecord {
+  /**
+   * A record object that holds information of a single query.
+   */
+  public static class QueryRecord {
     Multimap<String, String> usedColumns;
     Multimap<String, String> interestingOrders;
     Multimap<String, String> groupBy;
     Multimap<String, String> orderBy;
     String                   query;
   }
-
-
-
 
 }

@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableSet;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.spi.core.Console;
-import edu.ucsc.dbtune.util.Combinations;
 import edu.ucsc.dbtune.util.StopWatch;
 import java.io.IOException;
 import java.util.Set;
@@ -19,10 +18,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class Inum {
-  private final DatabaseConnection connection;
-  private final Precomputation     precomputation;
-  private final MatchingStrategy   matchingLogic;
-  private final AtomicBoolean      isStarted;
+  private final DatabaseConnection          connection;
+  private final Precomputation              precomputation;
+  private final MatchingStrategy            matchingLogic;
+  private final InterestingOrdersExtractor  ioExtractor;
+  private final AtomicBoolean               isStarted;
 
   private static final Set<String> QUERIES;
   static {
@@ -31,20 +31,24 @@ public class Inum {
     QUERIES = ImmutableSet.copyOf(workloadDirectory.accept(loader));
   }
 
-  private Inum(DatabaseConnection connection, Precomputation precomputation, MatchingStrategy matchingLogic){
+  private Inum(DatabaseConnection connection, Precomputation precomputation,
+      MatchingStrategy matchingLogic, InterestingOrdersExtractor extractor){
     this.connection     = connection;
     this.precomputation = precomputation;
     this.matchingLogic  = matchingLogic;
+    this.ioExtractor    = extractor;
     this.isStarted      = new AtomicBoolean(false);
   }
 
   public static Inum newInumInstance(DatabaseConnection connection,
       Precomputation precomputation,
-      MatchingStrategy matchingLogic){
-    final DatabaseConnection nonNullConnection     = Preconditions.checkNotNull(connection);
-    final Precomputation     nonNullPrecomputation = Preconditions.checkNotNull(precomputation);
-    final MatchingStrategy   nonNullMatchingLogic  = Preconditions.checkNotNull(matchingLogic);
-    return new Inum(nonNullConnection, nonNullPrecomputation, nonNullMatchingLogic);
+      MatchingStrategy matchingLogic, InterestingOrdersExtractor extractor){
+    final DatabaseConnection         nonNullConnection                = Preconditions.checkNotNull(connection);
+    final Precomputation             nonNullPrecomputation            = Preconditions.checkNotNull(precomputation);
+    final MatchingStrategy           nonNullMatchingLogic             = Preconditions.checkNotNull(matchingLogic);
+    final InterestingOrdersExtractor nonNullInteresingOrdersExtractor = Preconditions.checkNotNull(extractor);
+
+    return new Inum(nonNullConnection, nonNullPrecomputation, nonNullMatchingLogic, nonNullInteresingOrdersExtractor);
   }
 
   public static Inum newInumInstance(DatabaseConnection connection){
@@ -52,17 +56,17 @@ public class Inum {
     return newInumInstance(
         nonNullConnection,
         new InumPrecomputation(nonNullConnection),
-        new InumMatchingStrategy(nonNullConnection)
-    );
+        new InumMatchingStrategy(nonNullConnection),
+        new InumInterestingOrdersExtractor(nonNullConnection));
   }
 
   public double estimateCost(String query, Iterable<DBIndex> inputConfiguration){
     final String errmsg = "INUM has not been started yet. Please call start(..) method.";
-    if(!isStarted.get()) throw new InumExecutionException(errmsg);
+    if(isEnded()) throw new InumExecutionException(errmsg);
     if(!precomputation.skip(query)) {
       precomputation.setup(
           query, 
-          findInterestingOrders(query, connection)
+          findInterestingOrders(query)
       );
     }
 
@@ -80,10 +84,10 @@ public class Inum {
     precomputation.getInumSpace().clear();
   }
   
-  public Iterable<DBIndex> findInterestingOrders(String query,
-      DatabaseConnection connection){
-    return InterestingOrders.extractInterestingOrders(query, connection);
+  public Iterable<DBIndex> findInterestingOrders(String query){
+    return ioExtractor.extractInterestingOrders(query);
   }
+
 
   public InumSpace getInumSpace(){
     return precomputation.getInumSpace();
@@ -91,6 +95,14 @@ public class Inum {
   
   public DatabaseConnection getDatabaseConnection(){
     return connection;
+  }
+  
+  public boolean isEnded(){
+    return !isStarted();
+  }
+  
+  public boolean isStarted(){
+    return isStarted.get();
   }
 
   /**
@@ -117,15 +129,15 @@ public class Inum {
 
     final StopWatch timing = new StopWatch();
     for(String eachQuery : input){
-      precomputation.setup(eachQuery, findInterestingOrders(eachQuery, connection));
+      precomputation.setup(eachQuery, findInterestingOrders(eachQuery));
     }
     timing.resetAndLog("precomputation took ");
   }
 
   @Override public String toString() {
     return Objects.toStringHelper(this)
-        .add("started?", isStarted.get())
-        .add("liveDBConnection?", getDatabaseConnection().isOpened())
+        .add("started?", isStarted() ? "Yes" : "No")
+        .add("opened DB connection?", getDatabaseConnection().isOpened() ? "Yes" : "No")
     .toString();
   }
 }

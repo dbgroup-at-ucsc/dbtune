@@ -57,14 +57,30 @@ public class InumTest {
     return soleOne;
   }
 
-  private static Inum configureInum() throws Exception {
-    final DBIndex            index          = configureIndex(null);
-    final DatabaseConnection connection     = configureConnection(index);
-    final InumSpace          inumSpace      = configureInumSpace(index);
-    final Precomputation     precomputation = configurePrecomputation(inumSpace);
-    final MatchingStrategy   matchingLogic  = configureMatchingLogic(inumSpace);
+  public static Inum configureInum() throws Exception {
+    final DBIndex                     index          = configureIndex(null);
+    final DatabaseConnection          connection     = configureConnection(index);
+    final InumSpace                   inumSpace      = configureInumSpace(index);
+    final Precomputation              precomputation = configurePrecomputation(inumSpace);
+    final MatchingStrategy            matchingLogic  = configureMatchingLogic(inumSpace);
+    final InterestingOrdersExtractor  ioExtractor    = configureIOExtractor();
 
-    return Inum.newInumInstance(connection, precomputation, matchingLogic);
+    return Inum.newInumInstance(connection, precomputation, matchingLogic, ioExtractor);
+  }
+
+  private static InterestingOrdersExtractor configureIOExtractor(){
+    final InterestingOrdersExtractor extractor = Mockito.mock(InterestingOrdersExtractor.class);
+    final DBIndex idx1 = configureIndex("1");
+    final DBIndex idx2 = configureIndex("2");
+    final DBIndex idx3 = configureIndex("3");
+
+    final Set<DBIndex> indexes = Sets.newHashSet();
+    indexes.add(idx1);
+    indexes.add(idx2);
+    indexes.add(idx3);
+
+    Mockito.when(extractor.extractInterestingOrders(Mockito.anyString())).thenReturn(indexes);
+    return extractor;
   }
 
   private static InumSpace configureInumSpace(DBIndex index) throws Exception {
