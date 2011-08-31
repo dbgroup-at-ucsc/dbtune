@@ -12,6 +12,7 @@ import org.hamcrest.CoreMatchers;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -36,6 +37,13 @@ public class InumTest {
 
     final Set<Set<DummyIndex>> combinations = Combinations.findCombinations(indexes);
     assertThat(combinations.size(), equalTo(8));
+  }
+
+  @Test (expected = InumExecutionException.class) public void testInumShutdown() throws Exception {
+    final Inum inum = configureInum();
+    inum.end();
+    inum.estimateCost("lalala", Sets.<DBIndex>newHashSet());
+    fail("if we reached this line...then test has failed");
   }
 
   private static DatabaseConnection configureConnection(DBIndex index) throws Exception {
