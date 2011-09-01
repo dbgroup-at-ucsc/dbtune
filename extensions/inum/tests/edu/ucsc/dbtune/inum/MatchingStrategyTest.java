@@ -47,14 +47,17 @@ public class MatchingStrategyTest {
   }
 
   @Test public void testIndexAccessCostEstimation() throws Exception {
-    final IndexAccessCostEstimation estimation    = configureEstimator();
-
+    final DBIndex                   index         = configureIndex(null);
+    final IndexAccessCostEstimation estimation    = new InumIndexAccessCostEstimation(configureConnection(index));
+    final double cost = estimation.estimateIndexAccessCost("lalala", Sets.<DBIndex>newHashSet());
+    // the cost is zero because we are passing an empty set of indexes...
+    assertThat(Double.compare(0.0, cost), is(0));
   }
 
   private static IndexAccessCostEstimation configureEstimator() {
     final IndexAccessCostEstimation estimation = Mockito.mock(IndexAccessCostEstimation.class);
     Mockito.when(estimation.estimateIndexAccessCost(Mockito.anyString(), Mockito.anySetOf(DBIndex.class))).thenReturn(10.0);
-    return estimation;  //tocode
+    return estimation;
   }
 
   private static DatabaseConnection configureConnection(DBIndex index) throws Exception {

@@ -31,34 +31,41 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
     this.inum = inum;
   }
 
-
-  @Override public double estimateCost(String workload) {
-    if(inum.isEnded()) { startInum(); }
-    return estimateCost(workload, Sets.<DBIndex>newHashSet());
-  }
-
-  @Override public double estimateCost(String workload, Iterable<DBIndex> hypotheticalIndexes) {
-    if(inum.isEnded()) { startInum(); }
-    return inum.estimateCost(workload, hypotheticalIndexes);
-  }
-
-  /**
-   * start INUM.
-   */
-  void startInum(){
-    inum.start();
-  }
-
   /**
    * shut down INUM. This method may be called when the main component of the dbtune API
    * request a closing of their {@link DatabaseConnection} object. Once this db connection is
    * closed, there is not need to keep INUM 'on' too.
    */
-  void endInum(){
-    inum.end();
+  public void endInum(){
+    if(getInum().isStarted()) getInum().end();
+  }
+
+
+  @Override public double estimateCost(String workload) {
+    if(getInum().isEnded()) { startInum(); }
+    return estimateCost(workload, Sets.<DBIndex>newHashSet());
+  }
+
+  @Override public double estimateCost(String workload, Iterable<DBIndex> hypotheticalIndexes) {
+    if(getInum().isEnded()) { startInum(); }
+    return getInum().estimateCost(workload, hypotheticalIndexes);
+  }
+
+  /**
+   * @return the assigned {@link Inum} object.
+   */
+  public Inum getInum(){
+    return inum;
+  }
+
+  /**
+   * start INUM.
+   */
+  public void startInum(){
+    getInum().start();
   }
 
   @Override public String toString() {
-    return String.format("Inum status = %s" + inum.toString());
+    return String.format("Inum status = %s" + getInum().toString());
   }
 }

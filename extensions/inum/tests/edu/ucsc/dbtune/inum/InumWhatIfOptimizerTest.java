@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.inum;
 import edu.ucsc.dbtune.core.InumWhatIfOptimizer;
 import edu.ucsc.dbtune.core.InumWhatIfOptimizerImpl;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import org.junit.Test;
 
@@ -18,9 +19,14 @@ public class InumWhatIfOptimizerTest {
     assertThat(Double.compare(7.0, cost), equalTo(0));
   }
 
+  @Test public void testInvalidCostEstimationCall() throws Exception {
+    final InumWhatIfOptimizer optimizer = configureWhatIfOptimizer();
+    ((InumWhatIfOptimizerImpl)optimizer).endInum();
+    assertThat(((InumWhatIfOptimizerImpl)optimizer).getInum().isEnded(), is(true));
+  }
+
   private static InumWhatIfOptimizer configureWhatIfOptimizer() throws Exception {
     final Inum                inum      = InumTest.configureInum();
-    final InumWhatIfOptimizer optimizer = new InumWhatIfOptimizerImpl(inum);
-    return optimizer;
+    return new InumWhatIfOptimizerImpl(inum);
   }
 }
