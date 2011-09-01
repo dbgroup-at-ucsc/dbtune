@@ -178,7 +178,39 @@ public class MetaDataExtractorFunctionalTest
             columns  = tbl.getColumns();
             expected = "";
 
-            if (Strings.same(tbl.getName(), MOVIES))
+            if (Strings.same(tbl.getName(), USERS))
+            {
+                for (int i = 0; i < columns.size(); i++)
+                {
+                    if (i == 0)
+                    {
+                        expected = "userid";
+                    }
+                    else if (i == 1)
+                    {
+                        expected = "email";
+                    }
+                    else if (i == 2)
+                    {
+                        expected = "password";
+                    }
+                    else if (i == 3)
+                    {
+                        expected = "ufirstname";
+                    }
+                    else if (i == 4)
+                    {
+                        expected = "ulastname";
+                    }
+                    else
+                    {
+                        fail("Unexpected column " + columns.get(i));
+                    }
+
+                    assertThat(columns.get(i).getName(), is(expected));
+                }
+            }
+            else if (Strings.same(tbl.getName(), MOVIES))
             {
                 for (int i = 0; i < columns.size(); i++)
                 {
@@ -201,6 +233,10 @@ public class MetaDataExtractorFunctionalTest
                     else if (i == 4)
                     {
                         expected = "url";
+                    }
+                    else
+                    {
+                        fail("Unexpected column " + columns.get(i));
                     }
                     assertThat(columns.get(i).getName(), is(expected));
                 }
@@ -225,11 +261,139 @@ public class MetaDataExtractorFunctionalTest
                     {
                         expected = "dateofb";
                     }
+                    else
+                    {
+                        fail("Unexpected column " + columns.get(i));
+                    }
                     assertThat(columns.get(i).getName(), is(expected));
                 }
             }
+            else if (Strings.same(tbl.getName(), CREDITCARDS))
+            {
+                for (int i = 0; i < columns.size(); i++)
+                {
+                    if (i == 0)
+                    {
+                        expected = "userid";
+                    }
+                    else if (i == 1)
+                    {
+                        expected = "creditnum";
+                    }
+                    else if (i == 2)
+                    {
+                        expected = "credittype";
+                    }
+                    else if (i == 3)
+                    {
+                        expected = "expdate";
+                    }
+                    else
+                    {
+                        fail("Unexpected column " + columns.get(i));
+                    }
+                    assertThat(columns.get(i).getName(), is(expected));
+                }
+            }
+            else if (Strings.same(tbl.getName(), GENRES))
+            {
+                for (int i = 0; i < columns.size(); i++)
+                {
+                    if (i == 0)
+                    {
+                        expected = "mgenre";
+                    }
+                    else if (i == 1)
+                    {
+                        expected = "movieid";
+                    }
+                    else
+                    {
+                        fail("Unexpected column " + columns.get(i));
+                    }
+                    assertThat(columns.get(i).getName(), is(expected));
+                }
+            }
+            else if (Strings.same(tbl.getName(), CASTS))
+            {
+                for (int i = 0; i < columns.size(); i++)
+                {
+                    if (i == 0)
+                    {
+                        expected = "aid";
+                    }
+                    else if (i == 1)
+                    {
+                        expected = "movieid";
+                    }
+                    else
+                    {
+                        fail("Unexpected column " + columns.get(i));
+                    }
+                    assertThat(columns.get(i).getName(), is(expected));
+                }
+            }
+            else if (Strings.same(tbl.getName(), QUEUE))
+            {
+                for (int i = 0; i < columns.size(); i++)
+                {
+                    if (i == 0)
+                    {
+                        expected = "userid";
+                    }
+                    else if (i == 1)
+                    {
+                        expected = "movieid";
+                    }
+                    else if (i == 2)
+                    {
+                        expected = "position";
+                    }
+                    else if (i == 3)
+                    {
+                        expected = "times";
+                    }
+                    else
+                    {
+                        fail("Unexpected column " + columns.get(i));
+                    }
+                    assertThat(columns.get(i).getName(), is(expected));
+                }
+            }
+            else if (Strings.same(tbl.getName(), RATINGS))
+            {
+                for (int i = 0; i < columns.size(); i++)
+                {
+                    if (i == 0)
+                    {
+                        expected = "userid";
+                    }
+                    else if (i == 1)
+                    {
+                        expected = "movieid";
+                    }
+                    else if (i == 2)
+                    {
+                        expected = "rate";
+                    }
+                    else if (i == 3)
+                    {
+                        expected = "review";
+                    }
+                    else
+                    {
+                        fail("Unexpected column " + columns.get(i));
+                    }
+                    assertThat(columns.get(i).getName(), is(expected));
+                }
+            }
+            else
+            {
+                fail("Unexpected table " + tbl.getName());
+            }
         }
     }
+
     /**
      * Tests indexes exist
      */
@@ -238,12 +402,6 @@ public class MetaDataExtractorFunctionalTest
     {
         List<Index>  indexes;
         int          expectedSize = -1;
-
-        sch = cat.findSchema("movies");
-
-        assertThat(sch != null, is(true));
-        assertThat(cat.getSchemas().size() >= 1, is(true));
-        assertThat(sch.getTables().size(), is(8));
 
         for (Table tbl : sch.getTables())
         {
@@ -303,13 +461,46 @@ public class MetaDataExtractorFunctionalTest
     }
 
     /**
-     * Tests cardinality of database objects. Checks that columns and tables have the expected 
-     * cardinality. For columns, this corresponds to the count of unique entries; for tables, the 
-     * number of rows contained in it.
+     */
+    @Test
+    public void testPrimaryKeys() throws Exception
+    {
+        // XXX
+    }
+
+    /**
+     */
+    @Test
+    public void testForeignKeys() throws Exception
+    {
+        // XXX
+    }
+
+    /**
+     */
+    @Test
+    public void testColumnConstraints() throws Exception
+    {
+        // XXX: for columns, check unique, default and not null constraints
+    }
+
+    /**
+     */
+    @Test
+    public void testIndexConstraints() throws Exception
+    {
+        // XXX: for indexes, check asc/desc, default and not null constraints
+    }
+
+    /**
+     * Tests cardinality of database objects. Checks that tables, columns and indexes have the 
+     * expected cardinality. For columns and indexes, this corresponds to the count of unique 
+     * entries; for tables, the number of rows contained in it.
      */
     @Test
     public void testCardinality() throws Exception
     {
+        // XXX: complete for index cardinality
         for (Table tbl : sch.getTables())
         {
             if (Strings.same(tbl.getName(), USERS))
@@ -373,6 +564,7 @@ public class MetaDataExtractorFunctionalTest
     @Test
     public void testSize() throws Exception
     {
+        // XXX:
     }
 
     /**
@@ -380,5 +572,6 @@ public class MetaDataExtractorFunctionalTest
     @Test
     public void testPages() throws Exception
     {
+        // XXX:
     }
 }
