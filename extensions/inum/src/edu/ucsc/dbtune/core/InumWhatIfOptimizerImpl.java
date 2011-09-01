@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.core;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.inum.Inum;
+import edu.ucsc.dbtune.util.StopWatch;
 
 /**
  * default implementation of {@link InumWhatIfOptimizer} type.
@@ -10,7 +11,7 @@ import edu.ucsc.dbtune.inum.Inum;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
-  private final Inum                                inum;
+  private final Inum   inum;
 
 
   /**
@@ -41,14 +42,14 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   }
 
 
-  @Override public double estimateCost(String workload) {
+  @Override public double estimateCost(String query) {
     if(getInum().isEnded()) { startInum(); }
-    return estimateCost(workload, Sets.<DBIndex>newHashSet());
+    return estimateCost(query, Sets.<DBIndex>newHashSet());
   }
 
-  @Override public double estimateCost(String workload, Iterable<DBIndex> hypotheticalIndexes) {
+  @Override public double estimateCost(String query, Iterable<DBIndex> hypotheticalIndexes) {
     if(getInum().isEnded()) { startInum(); }
-    return getInum().estimateCost(workload, hypotheticalIndexes);
+    return getInum().estimateCost(query, hypotheticalIndexes);
   }
 
   /**
@@ -62,7 +63,9 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    * start INUM.
    */
   public void startInum(){
+    final StopWatch inumStarting = new StopWatch();
     getInum().start();
+    inumStarting.resetAndLog("inum starting took ");
   }
 
   @Override public String toString() {
