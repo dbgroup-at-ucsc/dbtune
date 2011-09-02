@@ -26,7 +26,6 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.OUTPUT_FOLDERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OVERHEAD_FACTOR;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
@@ -58,7 +57,7 @@ public class Environment {
      * @param properties
      *     properties to be accessed through the this object.
      */
-    public Environment(Properties properties) throws IOException {
+    public Environment(Properties properties) {
         this(new PropertiesConfiguration(properties));
     }
 
@@ -114,13 +113,6 @@ public class Environment {
      */
     public String getPassword(){
         return asString(configuration.getProperty(PASSWORD));
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#OUTPUT_FOLDERNAME}
-     */
-    public String getOutputFoldername(){
-        return asString(configuration.getProperty(OUTPUT_FOLDERNAME));
     }
 
     /**
@@ -282,18 +274,18 @@ public class Environment {
     }
 
     static class PropertiesConfiguration extends AbstractConfiguration {
-        private final File          file;
-        private final Properties    defaults;
+        private File       file;
+        private Properties defaults;
+        private long       lastModified = 0;
+        private boolean    useDefaults;
 
-        private boolean useDefaults = false;
-        private long    lastModified = 0;
-
-        PropertiesConfiguration(Properties defaults) throws IOException {
+        PropertiesConfiguration(Properties defaults) {
             super();
             this.defaults    = defaults;
             this.file        = new File("");
             this.useDefaults = true;
-            loadProperties();
+
+            setAllProperties(this.defaults);
         }
 
         PropertiesConfiguration(String filename) throws IOException {
@@ -308,15 +300,16 @@ public class Environment {
             this.defaults    = null;
             this.useDefaults = !file.exists();
 
-            loadProperties();
+            loadPropertiesFromFile();
         }
 
         @Override
         protected void checkForPropertyChanges() {
             if (lastModified != file.lastModified()) {
+                lastModified = file.lastModified();
               try {
                 lastModified = file.lastModified();
-                loadProperties();
+                loadPropertiesFromFile();
               } catch (IOException e) {
                 Console.streaming().error("unable to load properties" + e);
                 throw new RuntimeException(e);
@@ -334,14 +327,10 @@ public class Environment {
             return useDefaults;
         }
 
-        private void loadProperties() throws IOException {
-            final Properties properties = new Properties();
-            if(!useDefaults){
-                properties.load(new FileInputStream(file));
-                setAllProperties(properties);
-            } else {
-                setAllProperties(getDefaults());
-            }
+        private void loadPropertiesFromFile() throws IOException {
+            Properties props = new Properties();
+            props.load(new FileInputStream(file));
+            setAllProperties(props);
         }
 
         private void setAllProperties(Properties properties) {
