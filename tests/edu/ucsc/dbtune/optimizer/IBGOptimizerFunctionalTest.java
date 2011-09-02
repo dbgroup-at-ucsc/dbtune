@@ -13,38 +13,28 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune;
+package edu.ucsc.dbtune.optimizer;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
-
 /**
- * Functional test for the {@link DatabaseSystem} class.
+ * IBG-specific functional tests.
  * <p>
- * This test executes all the tests for which {@link DatabaseSystemTest} relies on DBMS-specific 
- * mocks (eg. classes contained in {@link java.sql}).
+ * This test executes all the tests for which {@link IBGOptimizerTest} relies on DBMS-specific mocks 
+ * (i.e. classes contained in {@link java.sql}).
  *
  * @author Ivo Jimenez
+ * @see OptimizerTest
  */
-public class DatabaseSystemFunctionalTest
+public class IBGOptimizerFunctionalTest
 {
     /**
-     * Checks if a system is constructed correctly. This test depends on the contents of the default 
-     * configuration file read by {@link Environment}
-     *
-     * @see Environment
+     * Checks that the bitSet returned by an {@link IBGOptimizer#explain} invokation are turned on 
+     * appropriately
      */
     @Test
-    public void testDBConnection() throws Exception
+    public void testUsedBitSet() throws Exception
     {
-        DatabaseSystem db = DatabaseSystem.newDatabaseSystem();
-
-        assertThat(db.getConnection() != null, is(true));
-        assertThat(db.getOptimizer() != null, is(true));
-        assertThat(db.getCatalog() != null, is(true));
-
-        db.getConnection().close();
+        // XXX
     }
 }

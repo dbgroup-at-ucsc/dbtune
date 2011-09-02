@@ -41,6 +41,9 @@ import static org.hamcrest.CoreMatchers.is;
 /**
  * Test for the metadata extraction functionality. This test assumes that the system on the backend 
  * passes the {@link GenericJDBCExtractorTestFunctional} test.
+ * <p>
+ * This test executes all the tests for which {@link GenericJDBCExtractorTest} relies on 
+ * DBMS-specific mocks (eg. classes contained in {@link java.sql}).
  *
  * @author Ivo Jimenez
  * @see GenericJDBCExtractorTestFunctional

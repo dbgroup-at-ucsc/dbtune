@@ -45,6 +45,13 @@ public Index createIndex(List<Column>, List<Boolean>, boolean, boolean);
     *  fix #3, #4 and #5 of mysqlpp project
  *  run existing Wfit and tests against MySQL
 
+## 103
+ * catalog
+ * metadataextractor
+ * optimizer queries
+ * queries
+
+
 # refs
 
 [querulous_dbcp]: https://github.com/twitter/querulous/blob/master/src/main/scala/com/twitter/querulous/database/ApachePoolingDatabase.scala

@@ -19,51 +19,44 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.util.Iterables;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Condition;
-import org.junit.If;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeThat;
+
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.greaterThan;
 
 /**
- * Functional test for what-if optimizer implementations
- *
- * The test should check basically two properties:
- *   * monotonicity
- *   * sanity
- *
- * For more information on what these properties mean, refer to page 57 (Chapter 4, Section 2.1,
- * Property 4.1 and 4.2 respectively).
+ * Functional test for optimizer implementations. The optimizer being tested is specified by the 
+ * {@link EnvironmentProperties#OPTIMIZER} property.
+ * <p>
+ * This test executes all the tests for which {@link OptimizerTest} relies on DBMS-specific mocks 
+ * (eg. classes contained in {@link java.sql}).
  *
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
- * @see {@code thesis} <a
- * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
- *     "On-line Index Selection for Physical Database Tuning"</a>
+ * @see OptimizerTest
  */
 public class OptimizerFunctionalTest
 {
+    // XXX: test with a workload, eg. tpc-ds
     public static DatabaseSystem db;
-    public static Environment    en;
+    public static Environment    env;
+    public static Optimizer      opt;
 
     @BeforeClass
     public static void setUp() throws Exception
@@ -71,73 +64,67 @@ public class OptimizerFunctionalTest
         Connection con;
         String     ddl;
 
-        en  = Environment.getInstance();
-        ddl = en.getScriptAtWorkloadsFolder("one_table/create.sql");
-        con = newConnection(en);
+        env  = Environment.getInstance();
+        ddl = env.getScriptAtWorkloadsFolder("one_table/create.sql");
+        con = newConnection(env);
 
         //execute(con, ddl);
         con.close();
 
-        db = newDatabaseSystem(en);
+        db  = newDatabaseSystem(env);
+        opt = db.getOptimizer();
     }
 
     @AfterClass
-    public static void tearDown() throws Exception{
+    public static void tearDown() throws Exception
+    {
         db.getConnection().close();
     }
 
-    @Test // this test will pass once the what if optimizer returns something....
-    @If(condition = "isDatabaseConnectionAvailable", is = true)
-    public void testSingleSQLWhatIfOptimization() throws Exception {
-        final Optimizer   optimizer  = db.getOptimizer();
-        final Configuration candidates = optimizer.recommendIndexes(new SQLStatement("select a from one_table.tbl where a = 5;"));
-
-        assertThat(candidates, CoreMatchers.<Object>notNullValue());
-
-        final PreparedSQLStatement info = optimizer.explain(new SQLStatement("select a from one_table.tbl where a = 5;"), candidates);
-
-        assertThat(info, CoreMatchers.<Object>notNullValue());
-        assertThat(info.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
-        for(Index each : candidates){
-           assumeThat(info.getUpdateCost(each) >= 0.0, is(true));
-        }
-    }
-
+    /**
+     * @see OptimizerTest#checkExplain
+     */
     @Test
-    @If(condition = "isDatabaseConnectionAvailable", is = true)
-    public void testSingleSQLIBGWhatIfOptimization() throws Exception {
-        final Configuration candidates = db.getOptimizer().recommendIndexes(new SQLStatement("select count(*) from one_table.tbl where b > 3"));
-        final IBGOptimizer optimizer = new IBGOptimizer(db.getOptimizer());
-
-        assertThat(candidates, CoreMatchers.<Object>notNullValue());
-
-        double cost = optimizer.explain(new SQLStatement("select count(*) from one_table.tbl where b > 3")).getCost();
-
-        assumeThat(cost >= 0, is(true));
+    public void testExplain() throws Exception
+    {
+        OptimizerTest.checkExplain(opt);
     }
 
+    /**
+     * @see OptimizerTest#checkWhatIfExplain
+     */
     @Test
-    @If(condition = "isDatabaseConnectionAvailable", is = true)
-    public void testConnectionIsAlive() throws Exception {
-        assertThat(db.getConnection().isClosed(), is(false));
+    public void testWhatIfExplain() throws Exception
+    {
+        OptimizerTest.checkWhatIfExplain(db.getCatalog(),opt);
     }
 
+    /**
+     * @see OptimizerTest#checkRecommendIndexes
+     */
     @Test
-    @If(condition = "isDatabaseConnectionAvailable", is = true)
-    public void testSingleSQLRecommendIndexes() throws Exception {
-        Configuration candidates = db.getOptimizer().recommendIndexes(new SQLStatement("select a from one_table.tbl where a = 5;"));
-
-        assertThat(candidates, CoreMatchers.<Object>notNullValue());
-        assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
-
-        candidates = db.getOptimizer().recommendIndexes(new SQLStatement("update one_table.tbl set a=-1 where a = 5;"));
-
-        assertThat(candidates, CoreMatchers.<Object>notNullValue());
-        assertThat(Iterables.asCollection(candidates).isEmpty(), is(false));
+    public void testRecommendIndexes() throws Exception
+    {
+        OptimizerTest.checkRecommendIndexes(opt);
     }
 
-    @Condition
-    public static boolean isDatabaseConnectionAvailable() throws SQLException {
-        return !db.getConnection().isClosed();
+    /**
+     * Checks that each supported optimizer is well behaved.
+     *
+     * @see OptimizerTest#checkIsWellBehaved
+     */
+    @Test
+    public void testIsWellBehaved() throws Exception
+    {
+        OptimizerTest.checkIsWellBehaved(opt);
+    }
+
+    /**
+     * @see OptimizerTest#checkMonotonicity
+     */
+    @Test
+    public void testMonotonicity() throws Exception
+    {
+        OptimizerTest.checkMonotonicity(opt);
     }
 }

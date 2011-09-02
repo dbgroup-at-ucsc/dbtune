@@ -56,7 +56,8 @@ public abstract class Optimizer
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
-    public abstract PreparedSQLStatement explain(SQLStatement sql, Configuration configuration) throws SQLException;
+    public abstract PreparedSQLStatement explain(SQLStatement sql, Configuration configuration)
+        throws SQLException;
     
     /**
      * Given a sql statement, it recommends indexes to make it run faster.
@@ -75,10 +76,10 @@ public abstract class Optimizer
      * "optimization count" corresponds to an optimization call, i.e. the number of times that an 
      * optimizer was asked to estimate the cost of a statement.
      * <p>
-     * Depending on the implementation. In some implementations this may refer to the number times 
-     * that the {@link #explain(SQLStatement, Configuration)} was invoked, whereas in others it 
-     * could refer to the number of times that internal structures where queried in order to 
-     * simulate an optimizer call.
+     * This is implementation-dependent. In some, this may refer to the number of times that the 
+     * {@link #explain(SQLStatement, Configuration)} was invoked, whereas in others it could refer 
+     * to the number of times that internal structures where queried in order to simulate an 
+     * optimizer call.
      *
      * @return
      *     the total count of performed what-if optimizations.
