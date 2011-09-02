@@ -936,7 +936,7 @@ public class DBTuneMocks
                 }
                 return "+A-B+C";
             }
-            return 1 == columnIndex ? DBTuneInstances.SCHEMA_NAME : DBTuneInstances.TABLE_NAME;
+            return 1 == columnIndex ? DBTuneInstances.DB_SCH : DBTuneInstances.DB_TBL;
         }
 
         @Override
@@ -1031,7 +1031,7 @@ public class DBTuneMocks
             if(columnLabel.equalsIgnoreCase("indexes")) return Integer.valueOf(31).toString();
             if(columnLabel.equalsIgnoreCase("create_cost")) return Double.valueOf(1.0).toString();
             if(columnLabel.equalsIgnoreCase("megabytes")) return Double.valueOf(1.0).toString();
-            return DBTuneInstances.SCHEMA_NAME;
+            return DBTuneInstances.DB_SCH;
         }
 
         @Override

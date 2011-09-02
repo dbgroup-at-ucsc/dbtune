@@ -6,7 +6,6 @@ import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,7 +14,11 @@ import java.util.Arrays;
 
 import static edu.ucsc.dbtune.DBTuneInstances.generateColumns;
 import static edu.ucsc.dbtune.DBTuneInstances.generateDescVals;
+
 import static org.junit.Assert.assertThat;
+
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
@@ -39,13 +42,13 @@ public class BcTunerTest {
     @Test
     public void testIndexToCreate() throws Exception {
         final Index c = tuner.chooseIndexToCreate();
-        assertThat(c, CoreMatchers.<Object>notNullValue());
+        assertThat(c, notNullValue());
     }
 
     @Test
     public void testIndexToDrop() throws Exception {
         final Index c = tuner.chooseIndexToDrop();
-        assertThat(c, CoreMatchers.<Object>nullValue());
+        assertThat(c, nullValue());
     }
 
     @After

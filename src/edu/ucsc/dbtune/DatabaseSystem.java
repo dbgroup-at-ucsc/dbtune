@@ -32,6 +32,7 @@ import edu.ucsc.dbtune.spi.Environment;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
+import java.util.ArrayList;
 import java.util.List;
 
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MYSQL;
@@ -78,7 +79,11 @@ public class DatabaseSystem
      * @see Catalog
      * @see Optimizer
      */
-    protected DatabaseSystem(Connection connection, MetadataExtractor extractor, Optimizer optimizer) throws SQLException
+    protected DatabaseSystem(
+            Connection connection,
+            MetadataExtractor extractor,
+            Optimizer optimizer)
+        throws SQLException
     {
         this.connection = connection;
         this.catalog    = extractor.extract(connection);
@@ -131,7 +136,8 @@ public class DatabaseSystem
      * @throws SQLException
      *     if something wrong occurs during the creation
      */
-    private Index createIndex(List<Column> cols, List<Boolean> descending, int type) throws SQLException
+    private Index createIndex(List<Column> cols, List<Boolean> descending, int type)
+        throws SQLException
     {
         throw new RuntimeException("not implemented yet");
     }
@@ -150,8 +156,6 @@ public class DatabaseSystem
         String pwd = env.getPassword();
         
         return DriverManager.getConnection(url,usr,pwd);
-
-        // may need to run a SET SEARCH_PATH for postgres in order to set the schema name correctly
     }
 
     /**
@@ -210,9 +214,26 @@ public class DatabaseSystem
     }
 
     /**
-     * Creates a database system instance with the given properties. This effectively acts as a factory method that takes the 
-     * description of a system along with connectivity information and creates a {@link Connection}, {@link Catalog} and 
-     * {@link Optimizer} objects of the corresponding type, with the appropriate members. 
+     * Returns the list of supported optimizers.
+     *
+     * @return
+     *     list of optimizers that the API supports
+     */
+    public static List<String> getSupportedOptimizers()
+    {
+        List<String> supported = new ArrayList<String>();
+
+        supported.add(DBMS);
+        supported.add(IBG);
+
+        return supported;
+    }
+
+    /**
+     * Creates a database system instance with the given properties. This effectively acts as a 
+     * factory method that takes the description of a system along with connectivity information and 
+     * creates a {@link Connection}, {@link Catalog} and {@link Optimizer} objects of the 
+     * corresponding type, with the appropriate members. 
      *
      * @param env
      *     an environment object used to access the properties of the system
@@ -237,9 +258,10 @@ public class DatabaseSystem
     protected static class Factory
     {
         /**
-         * Creates a database system instance with the given properties. This effectively acts as a factory method that takes the 
-         * description of a system along with connectivity information and creates a {@link Connection}, {@link Catalog} and 
-         * {@link Optimizer} objects of the corresponding type, with the appropriate members. 
+         * Creates a database system instance with the given properties. This effectively acts as a 
+         * factory method that takes the description of a system along with connectivity information 
+         * and creates a {@link Connection}, {@link Catalog} and {@link Optimizer} objects of the 
+         * corresponding type, with the appropriate members. 
          *
          * @param env
          *     an environment object used to access the properties of the system

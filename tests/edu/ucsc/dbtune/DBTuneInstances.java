@@ -10,16 +10,21 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
+import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 
 import java.lang.reflect.Constructor;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.DatabaseSystem.getSupportedOptimizers;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.*;
 
 /**
@@ -27,10 +32,13 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.*;
  * @author Ivo Jimenez
  */
 public class DBTuneInstances {
-    public static final String DB_NAME       = "superDB";
-    public static final String SCHEMA_NAME   = "superSchema";
-    public static final String TABLE_NAME    = "R";
-    public static final String TABLE_CREATOR = "123";
+    protected static final String DB_DB      = "jdbc:unknown://nothing.com";
+    protected static final String DB_URL     = "superDB";
+    protected static final String DB_USR     = "neo";
+    protected static final String DB_SCH     = "superSchema";
+    protected static final String DB_PWD     = "password";
+    protected static final String DB_TBL     = "R";
+    protected static final String DB_CREATOR = "123";
 
     /**
      * Utility class
@@ -92,11 +100,29 @@ public class DBTuneInstances {
     {
         Properties cfg = new Properties();
 
-        cfg.setProperty(URL,      "nothing.com");
-        cfg.setProperty(USERNAME, "neo");
-        cfg.setProperty(PASSWORD, "neopassword");
+        cfg.setProperty(URL,      DB_URL);
+        cfg.setProperty(USERNAME, DB_USR);
+        cfg.setProperty(PASSWORD, DB_PWD);
 
         return cfg;
+    }
+
+    /**
+     * Returns a configuration with random dbms properties
+     */
+    public static Properties configureAny()
+    {
+        switch(new Random().nextInt(3))
+        {
+        case 0:
+            return configureDB2();
+        case 1:
+            return configureMySQL();
+        case 2:
+            return configurePG();
+        default:
+            return configureGeneric();
+        }
     }
 
     /**
@@ -124,6 +150,37 @@ public class DBTuneInstances {
     {
         cfg.setProperty(OPTIMIZER, INUM);
         return cfg;
+    }
+
+    /**
+     * Returns an iterator containing all the supported {@link Optimizer} implementations.
+     *
+     * <b>Important:</b> This method assumes that {@link java.sql.DriverManager} and the 
+     * corresponding {@link java.sql.Connection} objects that {@link 
+     * DatabaseSystem#newDatabaseSystem} uses in the creation of new {@link DatabaseSystem} objects 
+     * have been mocked appropriately. Failure to comply with this will cause unexpected results 
+     * like having resources being hanged (when connections aren't properly closed).
+     *
+     * @see DatabaseSystem#getSupportedOptimizers
+     */
+    public static Iterable<Optimizer> getSupportedOptimizersIterator(Environment env)
+        throws SQLException
+    {
+        List<Optimizer> opts;
+        Properties      conf;
+
+        opts = new ArrayList<Optimizer>();
+
+        for(String optId : getSupportedOptimizers()) {
+
+            conf = env.getAll();
+
+            conf.setProperty(OPTIMIZER,optId);
+
+            opts.add(newDatabaseSystem(new Environment(conf)).getOptimizer());
+        }
+
+        return opts;
     }
 
     public static IndexBenefitGraph.IBGNode makeRandomIBGNode()
@@ -162,7 +219,7 @@ public class DBTuneInstances {
     }
 
     public static Index newDB2Index() throws Exception {
-        return new DB2Index(DB_NAME, TABLE_NAME, TABLE_CREATOR, new ArrayList<String>(), new ArrayList<Boolean>(), "U", "N", "REG", 1, "no idea", "no idea", "N", 2, 5.0, 1.0);
+        return new DB2Index(DB_DB, DB_TBL, DB_CREATOR, new ArrayList<String>(), new ArrayList<Boolean>(), "U", "N", "REG", 1, "no idea", "no idea", "N", 2, 5.0, 1.0);
     }
 
     public static PGIndex newPGIndex(final int id) throws Exception {

@@ -56,7 +56,10 @@ public class PreparedSQLStatement
     /** a list of indexes that are used by the optimized plan */
     protected Configuration usedIndexes;
 
-    /** for update statements, the cost that implies on each of the indexes containe in {@link #getConfiguration} */
+    /**
+     * For update statements, the cost that implies on each of the indexes containe in {@link 
+     * #getConfiguration}
+     */
     protected double[] updateCosts;
 
     /** the optimizer that constructed the statement */
@@ -94,7 +97,11 @@ public class PreparedSQLStatement
      * @param configuration
      *      configuration used to optimize the statement.
      */
-    public PreparedSQLStatement(SQLStatement sql, double cost, double[] updateCosts, Configuration configuration) {
+    public PreparedSQLStatement(
+            SQLStatement sql,
+            double cost,
+            double[] updateCosts,
+            Configuration configuration) {
         this(sql, null, cost, updateCosts, configuration);
     }
 
@@ -106,11 +113,12 @@ public class PreparedSQLStatement
      * @param plan
      *     the statement plan
      * @param cost
-     *     the execution cost. For update statements, this cost corresponds only to the SELECT shell, i.e. no update costs 
-     *     are considered
+     *     the execution cost. For update statements, this cost corresponds only to the SELECT 
+     *     shell, i.e. no update costs are considered
      * @param updateCosts
-     *     for update statements, an array of incurred update costs, where each element corresponds to an index contained in 
-     *     in {@link #getConfiguration}. The array should be indexed using each index id ({@link Index#getId}).
+     *     for update statements, an array of incurred update costs, where each element corresponds 
+     *     to an index contained in in {@link #getConfiguration}. The array should be indexed using 
+     *     each index id ({@link Index#getId}).
      * @param configuration
      *     configuration used when the statement was optimized
      */
@@ -154,9 +162,14 @@ public class PreparedSQLStatement
      * implementations will determine how to create a new PreparedSQLStatement in a custom way, 
      * depending on which information is available to them.
      * <p>
-     * This method effectively implements (a sort-of 'mini') what-if optimization using the original context that the 
-     * optimizer used when it optimized the statement, specifically the structures contained in {@link #getConfiguration}). 
-     * For example:
+     * The behavior of this method is implementation-dependent. In some, this may refer to the 
+     * number of times that the {@link #explain(SQLStatement, Configuration)} was invoked, whereas 
+     * in others it could refer to the number of times that internal structures where queried in 
+     * order to simulate an optimizer call.
+     * <p>
+     * In other words, the purpose of this method is to have it execute (a sort-of 'mini') what-if 
+     * optimization using the original context that the optimizer used when it optimized the 
+     * statement, the information contained in {@link #getConfiguration}) among them. For example:
      * <p>
      * XXX: write example
      * <p>
@@ -164,15 +177,15 @@ public class PreparedSQLStatement
      * configuration against the one contained in {@code statement}, proceeding in the following 
      * way:
      * <ul>
-     * <li> If {@link #getUsedConfiguration} is contained in the given {@code configuration}, it produces a new statement 
-     * identical.
+     * <li> If {@link #getUsedConfiguration} is contained in the given {@code configuration}, it 
+     * produces a new statement identical.
      * <li> If not, then the statement is explained again but using the optimizer, with {@code 
      * configuration} as the new configuration.
      * </ul>
      *
      * @param configuration
-     *      the configuration considered to estimate the cost of the new statement. This can (or not) be the same as {@link 
-     *      #getConfiguration}.
+     *      the configuration considered to estimate the cost of the new statement. This can (or 
+     *      not) be the same as {@link #getConfiguration}.
      * @return
      *      a new statement
      * @throws SQLException
@@ -196,9 +209,10 @@ public class PreparedSQLStatement
     }
 
     /**
-     * Returns the cost of executing the statement. The cost returned is the cost that an optimizer estimated given the set    
-     * of physical structures contained in {@link #getConfiguration}. For update statements, this cost doesn't correspond 
-     * only to the SELECT shell, i.e. no update costs are considered. In order
+     * Returns the cost of executing the statement. The cost returned is the cost that an optimizer 
+     * estimated given the set of physical structures contained in {@link #getConfiguration}. For 
+     * update statements, this cost doesn't correspond only to the SELECT shell, i.e. no update 
+     * costs are considered. In order
      *
      * @return
      *      the execution cost of the statement.
@@ -231,9 +245,10 @@ public class PreparedSQLStatement
     }
 
     /**
-     * Returns the UPDATE cost that executing the statement implies on the given index. The cost returned is the cost that an 
-     * optimizer estimated given the set of physical structures contained in {@link #getConfiguration}. This cost doesn't 
-     * include the SELECT shell cost, i.e. the cost of retrieving the tuples that will be affected by the update
+     * Returns the UPDATE cost that executing the statement implies on the given index. The cost 
+     * returned is the cost that an optimizer estimated given the set of physical structures 
+     * contained in {@link #getConfiguration}. This cost doesn't include the SELECT shell cost, i.e. 
+     * the cost of retrieving the tuples that will be affected by the update
      *
      * @param index
      *      a {@link edu.ucsc.dbtune.metadata.Index} object.
@@ -255,9 +270,10 @@ public class PreparedSQLStatement
     }
 
     /**
-     * Returns the UPDATE cost that executing the statement implies on the given set of indexes. The cost returned is the 
-     * cost that an optimizer estimated given the set of physical structures contained in {@link #getConfiguration}. This 
-     * cost doesn't include the SELECT shell cost, i.e. the cost of retrieving the tuples that will be affected by the update
+     * Returns the UPDATE cost that executing the statement implies on the given set of indexes. The 
+     * cost returned is the cost that an optimizer estimated given the set of physical structures 
+     * contained in {@link #getConfiguration}. This cost doesn't include the SELECT shell cost, i.e. 
+     * the cost of retrieving the tuples that will be affected by the update
      *
      * @param indexes
      *      list of {@link edu.ucsc.dbtune.metadata.Index} objects.
@@ -276,8 +292,8 @@ public class PreparedSQLStatement
     }
 
     /**
-     * Returns the update costs for the statement. If an index in {@code configuration} is contained in {@code 
-     * getUpdatedConfiguration()}, then it's cost is aggregated into the returned value.
+     * Returns the update costs for the statement. If an index in {@code configuration} is contained 
+     * in {@code getUpdatedConfiguration()}, then it's cost is aggregated into the returned value.
      *
      * @return
      *     the update costs for the given configuration.
@@ -288,8 +304,9 @@ public class PreparedSQLStatement
     }
 
     /**
-     * Returns the total cost of this statement. The total is equal to the sum of the statement's plan cost and the 
-     * maintenance of each of the updated indexes. For non-update statements this is equal to {@link #getCost}
+     * Returns the total cost of this statement. The total is equal to the sum of the statement's 
+     * plan cost and the maintenance of each of the updated indexes. For non-update statements this 
+     * is equal to {@link #getCost}
      *
      * @return
      *      the total cost of this query.
@@ -325,8 +342,8 @@ public class PreparedSQLStatement
     }
 
     /**
-     * Returns the configuration that the optimizer considered when it optimized the statement. Note that this is different 
-     * from {@link #getUsedConfiguration}
+     * Returns the configuration that the optimizer considered when it optimized the statement. Note 
+     * that this is different from {@link #getUsedConfiguration}
      *
      * @return
      *     the list of indexes considered at optimization time.
@@ -337,12 +354,12 @@ public class PreparedSQLStatement
     }
 
     /**
-     * Returns the set of indexes that are used by the plan. Note that this is different from {@link #getConfiguration} and, 
-     * for update statements, from {@link #getUpdatedConfiguration}.
+     * Returns the set of indexes that are used by the plan. Note that this is different from {@link 
+     * #getConfiguration} and, for update statements, from {@link #getUpdatedConfiguration}.
      *
      * @return
-     *     the configuration that is used by the execution plan, i.e. the set of physical structures that are read when 
-     *     calculating the answer of a statement.
+     *     the configuration that is used by the execution plan, i.e. the set of physical structures 
+     *     that are read when calculating the answer of a statement.
      */
     public Configuration getUsedConfiguration()
     {
@@ -358,12 +375,12 @@ public class PreparedSQLStatement
     }
 
     /**
-     * For UPDATE statements, this method returns the set of indexes that are updated. Note that this is different from 
-     * {@link #getConfiguration} and {@link #getUsedConfiguration}.
+     * For UPDATE statements, this method returns the set of indexes that are updated. Note that 
+     * this is different from {@link #getConfiguration} and {@link #getUsedConfiguration}.
      *
      * @return
-     *     the configuration that is used by the execution plan, i.e. the set of physical structures that are read when 
-     *     calculating the answer of a statement.
+     *     the configuration that is used by the execution plan, i.e. the set of physical structures 
+     *     that are read when calculating the answer of a statement.
      */
     public Configuration getUpdatedConfiguration()
     {
