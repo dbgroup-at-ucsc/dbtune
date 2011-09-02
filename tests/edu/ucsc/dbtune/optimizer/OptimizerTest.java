@@ -153,6 +153,7 @@ public class OptimizerTest
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
         assertThat(sqlp.getCost(), greaterThan(0.0));
+        assertThat(sqlp.getOptimizationCount(), is(1));
 
         conf  = new Configuration("empty");
         sqlp  = opt.explain(sql, conf);
@@ -161,6 +162,7 @@ public class OptimizerTest
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
         assertThat(sqlp.getCost(), greaterThan(0.0));
+        assertThat(sqlp.getOptimizationCount(), is(1));
 
         assertThat(cost1 == cost2, is(true));
     }
@@ -173,13 +175,20 @@ public class OptimizerTest
         SQLStatement         sql;
         PreparedSQLStatement sqlp;
         Configuration        conf = new Configuration("empty");
+        double               cost1;
+        double               cost2;
 
-        sql  = new SQLStatement("select a from one_table.tbl where a = 5;");
-        sqlp = opt.explain(sql, conf);
+        sql   = new SQLStatement("select a from one_table.tbl where a = 5;");
+        sqlp  = opt.explain(sql);
+        cost1 = sqlp.getCost();
+        sqlp  = opt.explain(sql, conf);
+        cost2 = sqlp.getCost();
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
         assertThat(sqlp.getCost(), greaterThan(0.0));
+        assertThat(sqlp.getOptimizationCount(), is(1));
+        assertThat(cost1 == cost2, is(true));
     }
 
     /**

@@ -27,7 +27,6 @@ import java.sql.SQLException;
 public abstract class Optimizer
 {
     protected Catalog catalog;
-    protected int     optimizationCount;
 
     /**
      * perform an optimization call for a single SQL statement.
@@ -70,24 +69,6 @@ public abstract class Optimizer
      *      if an error occurs while retrieving the plan
      */
     public abstract Configuration recommendIndexes(SQLStatement sql) throws SQLException;
-
-    /**
-     * Gets the total count of optimizations that were handled/performed by the optimizer. An 
-     * "optimization count" corresponds to an optimization call, i.e. the number of times that an 
-     * optimizer was asked to estimate the cost of a statement.
-     * <p>
-     * This is implementation-dependent. In some, this may refer to the number of times that the 
-     * {@link #explain(SQLStatement, Configuration)} was invoked, whereas in others it could refer 
-     * to the number of times that internal structures where queried in order to simulate an 
-     * optimizer call.
-     *
-     * @return
-     *     the total count of performed what-if optimizations.
-     */
-    public int getOptimizationCount()
-    {
-        return optimizationCount;
-    }
 
     /**
      * Assigns the catalog that should be used to bind metadata to prepared statements.

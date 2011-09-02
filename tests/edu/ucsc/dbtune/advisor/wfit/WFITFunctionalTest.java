@@ -28,7 +28,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Properties;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -98,7 +97,6 @@ public class WFITFunctionalTest
         int         windowSize;
         int         partIterations;
         int         q;
-        int         whatIfCount;
 
         workloadFile   = en.getScriptAtWorkloadsFolder("one_table/workload.sql");
         maxNumIndexes  = en.getMaxNumIndexes();
@@ -109,7 +107,6 @@ public class WFITFunctionalTest
         fileReader     = new FileReader(workloadFile);
         workload       = new Workload(fileReader);
         q              = 0;
-        whatIfCount    = 0;
 
         wfit = new WFIT(db.getOptimizer(), pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
 
@@ -124,15 +121,12 @@ public class WFITFunctionalTest
 
             //System.out.println("------\nq" + q + "\n" + qinfo);
             //System.out.println("\n" + qinfo.getConfiguration());
+            //System.out.println("\n" + qinfo.getOptimizationCount());
             //System.out.println("\n" + configuration);
 
             assertThat(qinfo.getConfiguration().size(), is(1));
 
-            if(q == 0) {
-                assertThat(qinfo.getOptimizationCount()-whatIfCount, is(11));
-            } else {
-                assertThat(qinfo.getOptimizationCount()-whatIfCount, is(9));
-            }
+            assertThat(qinfo.getOptimizationCount(), is(3));
 
             if(q < 5) {
                 assertThat(configuration.size(), is(0));
@@ -146,8 +140,6 @@ public class WFITFunctionalTest
             } else {
                 throw new SQLException("Workload should have 7 statements");
             }
-
-            whatIfCount = qinfo.getOptimizationCount();
 
             q++;
         }

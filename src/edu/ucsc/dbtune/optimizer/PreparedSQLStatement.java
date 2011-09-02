@@ -65,7 +65,7 @@ public class PreparedSQLStatement
     /** the optimizer that constructed the statement */
     protected Optimizer optimizer;
 
-    /** number of optimization calls done on the statement */
+    /** number of optimization calls done to produce this statement */
     protected int optimizationCount;
 
     /** the time it took an optimizer to produce this statement */
@@ -81,8 +81,12 @@ public class PreparedSQLStatement
      * @param configuration
      *      configuration used to optimize the statement.
      */
-    public PreparedSQLStatement(SQLStatement sql, double cost, Configuration configuration) {
-        this(sql, null, cost, null, configuration);
+    public PreparedSQLStatement(
+            SQLStatement sql,
+            double cost,
+            Configuration configuration,
+            int optimizationCount) {
+        this(sql, null, cost, null, configuration, optimizationCount);
     }
 
     /**
@@ -101,8 +105,10 @@ public class PreparedSQLStatement
             SQLStatement sql,
             double cost,
             double[] updateCosts,
-            Configuration configuration) {
-        this(sql, null, cost, updateCosts, configuration);
+            Configuration configuration,
+            int optimizationCount)
+    {
+        this(sql, null, cost, updateCosts, configuration, optimizationCount);
     }
 
     /**
@@ -121,13 +127,16 @@ public class PreparedSQLStatement
      *     each index id ({@link Index#getId}).
      * @param configuration
      *     configuration used when the statement was optimized
+     * @param optimizationCount
+     *     number of optimization calls done on to produce the statement
      */
     public PreparedSQLStatement(
             SQLStatement statement,
             SQLStatementPlan plan,
             double cost,
             double[] updateCosts,
-            Configuration configuration)
+            Configuration configuration,
+            int optimizationCount)
     {
         this.statement           = statement;
         this.plan                = plan;
@@ -135,7 +144,7 @@ public class PreparedSQLStatement
         this.updateCosts         = updateCosts;
         this.usedIndexes         = new Configuration("usedIndexes");
         this.configuration       = configuration;
-        this.optimizationCount   = 0; // optimizer.getOptimizationCount();
+        this.optimizationCount   = optimizationCount;
         this.analysisTime        = 0.0;
     }
 
@@ -147,12 +156,12 @@ public class PreparedSQLStatement
      */
     public PreparedSQLStatement(PreparedSQLStatement other)
     {
-        this.statement           = other.statement;
-        this.plan                = other.plan;
-        this.cost                = other.cost;
-        this.configuration       = other.configuration;
-        this.updateCosts         = other.updateCosts;
-        this.usedIndexes         = other.usedIndexes;
+        this.statement     = other.statement;
+        this.plan          = other.plan;
+        this.cost          = other.cost;
+        this.configuration = other.configuration;
+        this.updateCosts   = other.updateCosts;
+        this.usedIndexes   = other.usedIndexes;
     }
 
     /**
@@ -407,12 +416,18 @@ public class PreparedSQLStatement
     }
 
     /**
-     * Returns the number of optimization calls that have been done on this object. Note that the 
-     * what if count includes the number of optimization calls that an optimizer did in order to 
-     * generate this statement.
+     * Gets the total count of optimizations that were handled/performed by the optimizer. An 
+     * "optimization count" corresponds to an optimization call, i.e. the number of times that an 
+     * optimizer was asked to estimate the cost of a statement.
+     * <p>
+     * The value is implementation-dependent and also depends on where the {@link 
+     * PreparedSQLStatement} instance was produced. In some, this may refer to the number of times 
+     * that the {@link Optimizer#explain(SQLStatement, Configuration)} was invoked, whereas in 
+     * others it could refer to the number of times that internal structures of an {@link Optimizer} 
+     * or {@link PreparedSQLStatment} where queried in order to simulate an optimizer call.
      *
      * @return
-     *     the optimization count for this statement.
+     *     the total count of performed what-if optimizations.
      */
     public int getOptimizationCount()
     {

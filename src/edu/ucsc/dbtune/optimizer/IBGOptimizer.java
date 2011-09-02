@@ -52,14 +52,6 @@ public class IBGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public int getOptimizationCount() {
-        return delegate.getOptimizationCount();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public Configuration recommendIndexes(SQLStatement sql) throws SQLException {
         return delegate.recommendIndexes(sql);
     }
@@ -94,6 +86,6 @@ public class IBGOptimizer extends Optimizer
         bitConf = new ConfigurationBitSet(configuration, bitSet);
         ibg     = construct(delegate, sql, bitConf);
 
-        return new IBGPreparedSQLStatement(stmt, bitConf, ibg, delegate.getOptimizationCount());
+        return new IBGPreparedSQLStatement(stmt, bitConf, ibg, stmt.getOptimizationCount());
     }
 }

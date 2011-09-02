@@ -26,7 +26,7 @@ import org.junit.Test;
  * @author Ivo Jimenez
  * @see OptimizerTest
  */
-public class IBGOptimizerFunctionalTest
+public class IBGOptimizerTest
 {
     /**
      * @see checkUsedBitSet
@@ -34,6 +34,24 @@ public class IBGOptimizerFunctionalTest
     @Test
     public void testUsedBitSet() throws Exception
     {
-        IBGOptimizerTest.checkUsedBitSet();
+        checkUsedBitSet();
+    }
+
+    /**
+     * Checks that the bitSet returned by an {@link IBGOptimizer#explain} invokation are turned on 
+     * appropriately
+     */
+    public static void checkUsedBitSet() throws Exception
+    {
+        // XXX
+    }
+
+    /**
+     * Checks that the number of optimization counts is set appropriately, taking into account that 
+     * the optimizer is an IBG-based one.
+     */
+    public static void checkOptimizationCount() throws Exception
+    {
+        // XXX
     }
 }

@@ -70,7 +70,6 @@ public class DB2Optimizer extends Optimizer
      */
     @Override
     public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes) throws SQLException {
-        optimizationCount++;
         Checks.checkSQLRelatedState(null != connection && !connection.isClosed(), "Connection is closed.");
         Checks.checkArgument(!Strings.isEmpty(sql.getSQL()), "Empty SQL statement");
 
@@ -127,7 +126,7 @@ public class DB2Optimizer extends Optimizer
         double[] updateCosts  = new double[count];
         Arrays.fill(updateCosts, updateCost);
 
-        return new PreparedSQLStatement(sql, totalCost, indexes);
+        return new PreparedSQLStatement(sql, totalCost, indexes, 1);
     }
 
     private SQLCategory getStatementType(Connection connection) throws SQLException {

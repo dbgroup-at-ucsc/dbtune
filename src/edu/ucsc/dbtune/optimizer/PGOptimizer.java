@@ -145,7 +145,7 @@ public class PGOptimizer extends Optimizer
 
         totalCost = Double.valueOf(rs.getString("qcost"));
 
-        PreparedSQLStatement sqlStmt = new PreparedSQLStatement(sql,totalCost,maintCost,indexes);
+        PreparedSQLStatement sqlStmt = new PreparedSQLStatement(sql,totalCost,maintCost,indexes,1);
 
         if(obtainPlan) {
             sqlStmt.setPlan(getPlan(connection,sql));
@@ -153,8 +153,6 @@ public class PGOptimizer extends Optimizer
 
         rs.close();
         stmt.close();
-
-        optimizationCount++;
 
         return sqlStmt;
     }
