@@ -41,6 +41,11 @@ public class DB2Extractor extends GenericJDBCExtractor
         throw new SQLException("Not implemented yet");
     }
     @Override
+    protected void extractObjectIDs(Catalog catalog, Connection connection) throws SQLException
+    {
+        throw new SQLException("Not implemented yet");
+    }
+    @Override
     protected void extractBytes(Catalog catalog, Connection connection) throws SQLException
     {
         throw new SQLException("Not implemented yet");

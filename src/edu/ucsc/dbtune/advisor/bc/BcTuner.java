@@ -27,11 +27,12 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
 
-public class BcTuner {
-    private final StaticIndexSet     hotSet;
-    private final BcIndexPool        pool;
-    private final Configuration           snapshot;
-    private final IndexBitSet           currentRecommendation;
+public class BcTuner
+{
+    private final StaticIndexSet hotSet;
+    private final BcIndexPool    pool;
+    private final Configuration  snapshot;
+    private final IndexBitSet    currentRecommendation;
 
     /**
      * Construct a {@code BcTuner} object.
@@ -44,7 +45,7 @@ public class BcTuner {
     public BcTuner(Configuration snapshot, StaticIndexSet hotSet) {
         this.snapshot               = snapshot;
         this.hotSet                 = hotSet;
-        this.pool                   = new BcIndexPool(this.hotSet);
+        this.pool                   = new BcIndexPool(snapshot,this.hotSet);
         this.currentRecommendation  = new IndexBitSet();
     }
 
@@ -56,7 +57,7 @@ public class BcTuner {
         double maxBenefit = 0;
 
         for (Index idx : hotSet) {
-            BcIndexInfo stats = pool.get(idx.getId());
+            BcIndexInfo stats = pool.get(snapshot.getOrdinalPosition(idx));
             if (stats.state == BcIndexInfo.State.HYPOTHETICAL) {
                 double benefit = stats.benefit(idx.getCreationCost());
                 if (benefit >= 0 && (indexToCreate == null || benefit > maxBenefit)) {
@@ -77,7 +78,7 @@ public class BcTuner {
         double minResidual = 0;
 
         for (Index idx : hotSet) {
-            BcIndexInfo stats = pool.get(idx.getId());
+            BcIndexInfo stats = pool.get(snapshot.getOrdinalPosition(idx));
             if (stats.state == BcIndexInfo.State.MATERIALIZED) {
                 double residual = stats.residual(idx.getCreationCost());
                 if (residual <= 0 && (indexToDrop == null || residual < minResidual)) {
@@ -96,8 +97,8 @@ public class BcTuner {
     public IndexBitSet getRecommendation() {
         IndexBitSet bs = new IndexBitSet();
         for (Index index : hotSet) {
-            if (pool.get(index.getId()).state == BcIndexInfo.State.MATERIALIZED){
-                bs.set(index.getId());
+            if (pool.get(snapshot.getOrdinalPosition(index)).state == BcIndexInfo.State.MATERIALIZED){
+                bs.set(snapshot.getOrdinalPosition(index));
             }
         }
         return bs;
@@ -131,7 +132,7 @@ public class BcTuner {
         
         // update statistics
         for (Index idx : hotSet) {
-            int id = idx.getId();
+            int id = snapshot.getOrdinalPosition(idx);
             BcIndexInfo stats = pool.get(id);
             
             if (qinfo.origCost(id) != qinfo.newCost(id)) // kludge to check if the index was used
@@ -148,7 +149,7 @@ public class BcTuner {
             if (indexToDrop == null) 
                 break;
             
-            BcIndexInfo indexToDropStats = pool.get(indexToDrop.getId());
+            BcIndexInfo indexToDropStats = pool.get(snapshot.getOrdinalPosition(indexToDrop));
             
             // record the drop
             indexToDropStats.state = BcIndexInfo.State.HYPOTHETICAL;
@@ -168,7 +169,7 @@ public class BcTuner {
             for (Index ij : hotSet) {
                 if (ij == indexToDrop)
                     continue;
-                BcIndexInfo ijStats = pool.get(ij.getId());
+                BcIndexInfo ijStats = pool.get(snapshot.getOrdinalPosition(ij));
                 int useLevel = useLevel(indexToDrop, ij);
                 for (int level = 0; level <= useLevel; level++) {
                     double costO = ijStats.origCost(level);
@@ -187,7 +188,7 @@ public class BcTuner {
             if (indexToCreate == null) 
                 break;
             
-            BcIndexInfo indexToCreateStats = pool.get(indexToCreate.getId());
+            BcIndexInfo indexToCreateStats = pool.get(snapshot.getOrdinalPosition(indexToCreate));
             
             // record the create
             indexToCreateStats.state = BcIndexInfo.State.MATERIALIZED;
@@ -198,7 +199,7 @@ public class BcTuner {
             for (Index ij : hotSet) {
                 if (ij == indexToCreate)
                     continue;
-                BcIndexInfo ijStats = pool.get(ij.getId());
+                BcIndexInfo ijStats = pool.get(snapshot.getOrdinalPosition(ij));
                 int useLevel = useLevel(indexToCreate, ij);
                 double alpha = ij.getBytes() / indexToCreateSize;
                 for (int level = 0; level <= useLevel; level++) {

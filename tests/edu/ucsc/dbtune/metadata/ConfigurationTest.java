@@ -50,26 +50,21 @@ public class ConfigurationTest
         for(int i = 0; i < 1; i++) {
             catalog = new Catalog("catalog_" + i);
             for(int j = 0; j < 2; j++) {
-                Schema schema = new Schema("schema_" + j);
-                catalog.add(schema);
+                Schema schema = new Schema(catalog,"schema_" + j);
                 for(int k = 0; k < 3; k++) {
-                    Table table = new Table("table_" + k);
+                    Table table = new Table(schema,"table_" + k);
                     int l;
-                    schema.add(table);
                     for(l = 0; l < 4; l++) {
-                        Column column = new Column("column_" + l, l+1);
-                        table.add(column);
+                        Column column = new Column(table,"column_" + l, l+1);
 
                         Index index =
                             new Index(
                                 "index_" + l, Arrays.asList(column), SECONDARY,UNCLUSTERED, NON_UNIQUE);
-                        table.add(index);
                         allIndexes.add(index);
                     }
                     Index index =
                         new Index(
                             "index_" + l, table.getColumns(), PRIMARY, CLUSTERED, UNIQUE);
-                    table.add(index);
                     allIndexes.add(index);
                 }
             }

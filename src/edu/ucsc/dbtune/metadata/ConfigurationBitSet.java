@@ -17,8 +17,6 @@ package edu.ucsc.dbtune.metadata;
 
 import edu.ucsc.dbtune.util.IndexBitSet;
 
-import java.util.List;
-
 /**
  * A configuration that uses a bitset to efficiently operate on its contents.
  *
@@ -39,21 +37,7 @@ public class ConfigurationBitSet extends Configuration
      */
     public ConfigurationBitSet(Configuration other, IndexBitSet bitSet)
     {
-        this(other.getIndexes(),bitSet);
-    }
-
-    /**
-     * Constructs a configuration. The given list of indexes may include more indexes that are not in the configuration. The 
-     * indexes that are actually included are described by the given bitSet.
-     *
-     * @param indexes
-     *     list of indexes that are contained in the configuration
-     * @param bitSet
-     *     the bitset that represents which indexes are turned on.
-     */
-    public ConfigurationBitSet(List<Index> indexes, IndexBitSet bitSet)
-    {
-        super(indexes);
+        super(other.getIndexes());
         this.bitSet = bitSet;
     }
 
@@ -69,17 +53,6 @@ public class ConfigurationBitSet extends Configuration
     }
     
     /**
-     * The maximum id from the set of elements that is used to index the bitSet.
-     *
-     * @return
-     *     maximum id used to index the bitset
-     */
-    public int getMaxId()
-    {
-        return bitSet.length();
-    }
-    
-    /**
      * Adds an index to the configuration. If the index is already contained, the index is not added 
      * again.
      *
@@ -92,7 +65,7 @@ public class ConfigurationBitSet extends Configuration
         if(!this.contains(index))
         {
             _indexes.add(index);
-            bitSet.set(index.getId());
+            bitSet.set(_indexes.indexOf(index));
         }
     }
 
@@ -105,6 +78,6 @@ public class ConfigurationBitSet extends Configuration
     @Override
     public boolean contains(Index index)
     {
-        return bitSet.get(index.getId());
+        return bitSet.get(_indexes.indexOf(index));
     }
 }

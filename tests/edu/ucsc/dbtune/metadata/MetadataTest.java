@@ -32,6 +32,7 @@ import edu.ucsc.dbtune.metadata.Table;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import static edu.ucsc.dbtune.metadata.DatabaseObject.NON_ID;
 import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
 import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
 import static edu.ucsc.dbtune.metadata.Index.PRIMARY;
@@ -57,29 +58,24 @@ public class MetadataTest
             catalog = new Catalog("catalog_" + i);
             allObjects.add(catalog);
             for(int j = 0; j < 2; j++) {
-                Schema schema = new Schema("schema_" + j);
-                catalog.add(schema);
+                Schema schema = new Schema(catalog,"schema_" + j);
                 allObjects.add(schema);
                 for(int k = 0; k < 3; k++) {
-                    Table table = new Table("table_" + k);
+                    Table table = new Table(schema,"table_" + k);
                     int l;
-                    schema.add(table);
                     allObjects.add(table);
                     for(l = 0; l < 4; l++) {
-                        Column column = new Column("column_" + l, l+1);
-                        table.add(column);
+                        Column column = new Column(table,"column_" + l, l+1);
                         allObjects.add(column);
 
                         Index index =
                             new Index(
                                 "index_" + l, Arrays.asList(column), SECONDARY,UNCLUSTERED, NON_UNIQUE);
-                        table.add(index);
                         allObjects.add(index);
                     }
                     Index index =
                         new Index(
                             "index_" + l, table.getColumns(), PRIMARY, CLUSTERED, UNIQUE);
-                    table.add(index);
                     allObjects.add(index);
                 }
             }
@@ -146,7 +142,7 @@ public class MetadataTest
     public void testID() throws Exception
     {
         for(DatabaseObject dbo : allObjects) {
-            assertEquals(-1,dbo.getId());
+            assertEquals(NON_ID,dbo.getInternalID());
         }
     }
 

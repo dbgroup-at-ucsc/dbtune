@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.core.Supplier;
 
@@ -37,10 +38,12 @@ public class InteractionSelector {
      *      hotPartitions are out of sync!
      */
     public static IndexPartitions choosePartitions(
+            Configuration candidateSet,
             InteractionSelection arg,
             int partitionIterations)
     {
         return choosePartitions(
+                candidateSet,
                 arg.getNewHotSet(),
                 arg.getOldPartitions(),
                 arg.getDoiFunction(),
@@ -49,6 +52,7 @@ public class InteractionSelector {
     }
 
     static IndexPartitions choosePartitions(
+            Configuration      candidateSet,
             StaticIndexSet     newHotSet,
             IndexPartitions    oldPartitions,
             StatisticsFunction doiFunc,
@@ -56,11 +60,11 @@ public class InteractionSelector {
             int                   partitionIterations)
     {
         Random rand = new Random(50);
-        IndexPartitions bestPartitions = constructInitialGuess(newHotSet, oldPartitions);
+        IndexPartitions bestPartitions = constructInitialGuess(candidateSet,newHotSet, oldPartitions);
         double bestCost = partitionCost(bestPartitions, doiFunc);
 
         for (int attempts = 0; attempts < partitionIterations; attempts++) {
-            IndexPartitions currentPartitions = new IndexPartitions(newHotSet);
+            IndexPartitions currentPartitions = new IndexPartitions(candidateSet, newHotSet);
             while (true) {
                 double currentSubsetCount = currentPartitions.subsetCount();
                 double currentStateCount = currentPartitions.wfaStateCount();
@@ -131,11 +135,11 @@ public class InteractionSelector {
         return bestPartitions;
     }
 
-    private static IndexPartitions constructInitialGuess(StaticIndexSet newHotSet, IndexPartitions oldPartitions) {
+    private static IndexPartitions constructInitialGuess(Configuration conf, StaticIndexSet newHotSet, IndexPartitions oldPartitions) {
         IndexPartitions bestPartitions;
 
         // construct initial guess, which put indexes together that were previously together
-        bestPartitions = new IndexPartitions(newHotSet);
+        bestPartitions = new IndexPartitions(conf, newHotSet);
         for (int s = 0; s < oldPartitions.subsetCount(); s++) {
             IndexPartitions.Subset subset = oldPartitions.get(s);
             for (Index i1 : subset) {

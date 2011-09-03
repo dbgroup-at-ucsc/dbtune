@@ -20,9 +20,9 @@ package edu.ucsc.dbtune.advisor;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
-import edu.ucsc.dbtune.util.Instances;
 
 import java.util.Iterator;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -33,13 +33,13 @@ import java.util.Set;
  */
 public class DynamicIndexSet implements Iterable<Index> {
     private final Set<Index> delegate;
-    private final IndexBitSet ownedBitSet;
+    //private final IndexBitSet ownedBitSet;
 
     /**
      * construct a {@code DynamicIndexSet} object.
      */
     public DynamicIndexSet(){
-       this(Instances.<Index>newHashSet(), new IndexBitSet());
+       this(new HashSet<Index>());//, new IndexBitSet());
     }
 
     /**
@@ -51,9 +51,9 @@ public class DynamicIndexSet implements Iterable<Index> {
      *      ownedBitSet which will be used for further index processing given the
      *      indexes's {@code internalId}.
      */
-    DynamicIndexSet(Set<Index> delegate, IndexBitSet ownedBitSet){
+    DynamicIndexSet(Set<Index> delegate) { //, IndexBitSet ownedBitSet){
         this.delegate = delegate;
-        this.ownedBitSet = ownedBitSet;
+        //this.ownedBitSet = ownedBitSet;
     }
 
     /**
@@ -64,9 +64,11 @@ public class DynamicIndexSet implements Iterable<Index> {
     public void add(Index index){
         if(!delegate.contains(index)){
             delegate.add(index);
+            /*
             synchronized (delegate){
                 ownedBitSet.set(index.getId());
             }
+            */
         }
     }
 
@@ -76,7 +78,8 @@ public class DynamicIndexSet implements Iterable<Index> {
      */
     public IndexBitSet bitSet(){
         // need to clone since we modify it in place
-        return ownedBitSet.clone();
+        throw new RuntimeException("not implemented yet");
+        //return ownedBitSet.clone();
     }
 
     /**
@@ -90,7 +93,8 @@ public class DynamicIndexSet implements Iterable<Index> {
     public boolean contains(Index index){
         // before it was bs.get(index.getId()); => (Huascar) I think this is
         // broken.
-        return ownedBitSet.get(index.getId()) && delegate.contains(index);
+        //return ownedBitSet.get(index.getId()) && delegate.contains(index);
+        return delegate.contains(index);
     }
 
     /**
@@ -113,7 +117,7 @@ public class DynamicIndexSet implements Iterable<Index> {
     public void remove(Index index){
         if(delegate.contains(index)){
             delegate.remove(index);
-            ownedBitSet.clear(index.getId());
+            //ownedBitSet.clear(index.getId());
         }
     }
 
@@ -134,7 +138,6 @@ public class DynamicIndexSet implements Iterable<Index> {
     @Override
     public String toString() {
         return new ToStringBuilder<DynamicIndexSet>(this)
-               .add("delegate", delegate)
-               .add("ownedBitSet", ownedBitSet).toString();
+               .add("delegate", delegate).toString();
     }
 }

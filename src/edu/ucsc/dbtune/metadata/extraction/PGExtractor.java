@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.metadata.Column;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -92,15 +93,64 @@ public class PGExtractor extends GenericJDBCExtractor
             schema = schemaNamesToSchemas.get(schemaName);
 
             if(schema == null) {
-                schema = new Schema(schemaName);
+                schema = new Schema(catalog, schemaName);
                 schemaNamesToSchemas.put(schemaName,schema);
-                catalog.add(schema);
             }
         }
 
         rs.close();
     }
     
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void extractObjectIDs(Catalog catalog, Connection connection) throws SQLException
+    {
+        Statement stm;
+        ResultSet rs;
+        String    cmd;
+        int       position = 0;
+        int       counter = 0;
+
+        catalog.setInternalID(1);
+
+        for(Schema sch : catalog.getSchemas()) {
+
+            sch.setInternalID(counter++);
+
+            for(Table tbl : sch.getTables()) {
+
+                stm = connection.createStatement();
+
+                cmd = 
+                    " SELECT" +
+                    "    t.relfilenode," +
+                    "    s.nspname" +
+                    " FROM" +
+                    "    pg_class t," +
+                    "    pg_namespace s" +
+                    " WHERE" +
+                    "     t.relname = '" + tbl.getName() + "'" +
+                    " AND s.nspname = '" + sch.getName() + "'" +
+                    " AND t.relnamespace = s.oid";
+
+                rs = stm.executeQuery(cmd);
+
+                while (rs.next()) {
+                    tbl.setInternalID(rs.getInt("relfilenode"));
+                }
+
+                stm.close();
+
+                position = 0;
+                for(Column col : tbl.getColumns()) {
+                    col.setInternalID(position++);
+                }
+            }
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -129,7 +179,6 @@ public class PGExtractor extends GenericJDBCExtractor
                 stm = connection.createStatement();
                 cmd = 
                     " SELECT" +
-                    "    t.relname," +
                     "    t.relpages," +
                     "    t.reltuples" +
                     " FROM" +
@@ -153,7 +202,6 @@ public class PGExtractor extends GenericJDBCExtractor
                 stm = connection.createStatement();
                 cmd = 
                     " SELECT" +
-                    "   t.relname as tname," +
                     "   i.relname as iname," +
                     "   i.reltuples," +
                     "   i.relpages," +

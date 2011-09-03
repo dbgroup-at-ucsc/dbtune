@@ -24,38 +24,41 @@ import org.junit.Before;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Catalog;
 
 import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
 import static edu.ucsc.dbtune.metadata.Index.PRIMARY;
 import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
 import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 /**
  * Test for the Index class
  */
 public class IndexTest
 { 
-    List<Column> columns;
-    Table table;
+    private static List<Column> columns;
+    private static Table table;
 
     @Before
-    public void runBeforeEveryTest() throws Exception
+    public void setUp() throws Exception
     {
-        Column column;
+        Schema schema;
+        Catalog catalog;
 
         columns = new ArrayList<Column>();
-        table   = new Table( "test_table" );
+        catalog = new Catalog( "test_catalog" );
+        schema  = new Schema(catalog, "test_schema" );
+        table   = new Table(schema, "test_table" );
 
         for( int i = 0; i < 10; i++ ) 
         {
-            column = new Column( "col_" + i, INTEGER );
-
-            table.add( column );
-            columns.add( column );
+            columns.add(new Column(table, "col_" + i, INTEGER));
         }
     }
 
@@ -64,14 +67,14 @@ public class IndexTest
     {
         Index index;
 
-        index = new Index( "testi", table, PRIMARY, CLUSTERED, UNIQUE );
+        index = new Index(table, "testi", PRIMARY, CLUSTERED, UNIQUE);
 
-        assertEquals( table, index.getTable() );
+        assertThat(index.getTable(),is(table));
 
-        index = new Index( "other", columns, PRIMARY, CLUSTERED, UNIQUE );
+        index = new Index("other", columns, PRIMARY, CLUSTERED, UNIQUE);
 
-        assertEquals( table, index.getTable() );
-        assertEquals( table.getColumns().size(), index.size() );
+        assertThat(index.getTable(), is(table));
+        assertThat(index.size(), is(table.getColumns().size()));
     }
 
     @Test
@@ -82,8 +85,8 @@ public class IndexTest
         Index index3;
 
         index1 = new Index( "index1", columns, PRIMARY, CLUSTERED, UNIQUE );
-        index2 = new Index( "index1", columns, PRIMARY, CLUSTERED, UNIQUE );
-        index3 = new Index( "testi", table, PRIMARY, CLUSTERED, UNIQUE );
+        index2 = new Index( "index2", columns, PRIMARY, CLUSTERED, UNIQUE );
+        index3 = new Index( table, "testi", PRIMARY, CLUSTERED, UNIQUE );
 
         for( int i = 0; i < table.getColumns().size(); i++ )
         {
@@ -93,10 +96,10 @@ public class IndexTest
             }
         }
 
-        assertFalse( index1 == index2 );
-        assertFalse( index1.equals( index3 ) );
-        assertTrue( index1.equals( index2 ) );
-        assertTrue( index2.equals( index1 ) );
+        assertThat(index1, is(not(index2)));
+        assertThat(index2, is(not(index1)));
+        assertThat(index1, is(not(index3)));
+        assertThat(index2, is(not(index3)));
     }
 
     @Test
@@ -108,7 +111,7 @@ public class IndexTest
 
         index1 = new Index( "index1", columns, PRIMARY, CLUSTERED, UNIQUE );
         index2 = new Index( "index2", columns, PRIMARY, CLUSTERED, UNIQUE );
-        index3 = new Index( "testi", table, PRIMARY, CLUSTERED, UNIQUE );
+        index3 = new Index( table, "testi", PRIMARY, CLUSTERED, UNIQUE );
 
         for( int i = 0; i < table.getColumns().size(); i++ )
         {
@@ -118,24 +121,7 @@ public class IndexTest
             }
         }
 
-        assertFalse( index1.hashCode() == index3.hashCode() );
-        assertEquals( index1.hashCode(), index2.hashCode() );
-
-        index1.setClustered( false );
-
-        assertFalse( index1.hashCode() == index2.hashCode() );
-
-        index2.setClustered( false );
-
-        assertEquals( index1.hashCode(), index2.hashCode() );
-
-        index1.setId( 10 );
-        index2.setId( 11 );
-
-        assertFalse( index1.hashCode() == index2.hashCode() );
-
-        index2.setId( 10 );
-
-        assertEquals( index1.hashCode(), index2.hashCode() );
+        assertThat(index1.hashCode(), is(not(index3.hashCode())));
+        assertThat(index1.hashCode(), is(not(index2.hashCode())));
     }
 }

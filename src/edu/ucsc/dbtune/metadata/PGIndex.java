@@ -21,6 +21,7 @@ import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.io.Serializable;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -56,6 +57,8 @@ public class PGIndex extends Index
      *     {@link edu.ucsc.dbtune.metadata.Index}'s creation text.
      */
     public PGIndex(
+            Table table,
+            String name,
             int reloid,
             boolean isSync,
             List<Column> columns,
@@ -64,16 +67,15 @@ public class PGIndex extends Index
             double megabytes,
             double creationCost,
             String creationText
-    ) throws Exception {
-        super("", (Table) null, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+    ) throws SQLException {
+        super(table, name, SECONDARY, NON_UNIQUE, UNCLUSTERED);
 
-        this.id           = internalId;
+        this.internalID   = internalId;
         this.creationText = creationText;
         this.creationCost = creationCost;
         this.schema       = new PGIndexSchema(reloid, isSync, columns, isDescending);
         this.columns      = columns;
         this.bytes        = (long) megabytes * 1024 * 1024;
-        this.table        = getSchema().baseTable;
         this.descending   = getSchema().getDescending();
 
         if(isSync) {
@@ -81,29 +83,11 @@ public class PGIndex extends Index
         }
     }
 
-    public PGIndex(
-            int internalId,
-            double creationCost,
-            double megabytes,
-            String creationText
-    )  throws Exception {
-        super("", (Table) null, SECONDARY, NON_UNIQUE, UNCLUSTERED);
-        this.id           = internalId;
-        this.creationText = creationText;
-        this.creationCost = creationCost;
-        this.bytes        = (long) megabytes * 1024 * 1024;
-    }
-
     /**
      * @return a {@link PGIndexSchema} object related in some sort to this index.
      */
     public PGIndexSchema getSchema() {
         return schema;
-    }
-
-    @Override
-    public String toString() {
-        return "id: " + id + "; sql = " + creationText;
     }
 
     @Override
@@ -139,7 +123,8 @@ public class PGIndex extends Index
                 List<Column> columns,
                 List<Boolean> isDescending
                 ) {
-            this.baseTable = new Table(reloid);
+            this.baseTable = columns.get(0).getTable();
+            this.baseTable.setInternalID(reloid);
             this.isSync = isSync;
             this.columns = columns;
             this.isDescending = isDescending;
@@ -165,7 +150,7 @@ public class PGIndex extends Index
          */
         public PGIndexSchema consDuplicate() {
             final Table table = Objects.as(getBaseTable());
-            return new PGIndexSchema((int)table.getId(), isSync(), getColumns(), getDescending());
+            return new PGIndexSchema((int)table.getInternalID(), isSync(), getColumns(), getDescending());
         }
 
         @Override
@@ -185,7 +170,7 @@ public class PGIndex extends Index
         }
 
         public int getRelOID() {
-            return (int)baseTable.getId();
+            return (int)baseTable.getInternalID();
         }
 
         /**

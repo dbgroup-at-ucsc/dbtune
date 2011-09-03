@@ -66,13 +66,13 @@ public class IBGPrinterTest {
 
         // duplicate index
         final Index twin = mock(Index.class);
-        when(twin.getId()).thenReturn(1);
+        when(twin.getInternalID()).thenReturn(1);
         when(twin.getCreationCost()).thenReturn(22.3);
         when(twin.getBytes()).thenReturn(2000000000000l);
         when(twin.getTable()).thenReturn(table);
 
         final Index soleIndex = mock(Index.class);
-        when(soleIndex.getId()).thenReturn(1);
+        when(soleIndex.getInternalID()).thenReturn(1);
         when(soleIndex.getCreationCost()).thenReturn(22.3);
         when(twin.getBytes()).thenReturn(2000000000000l);
         when(soleIndex.getTable()).thenReturn(table);

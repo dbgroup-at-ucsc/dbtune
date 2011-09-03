@@ -18,7 +18,6 @@ package edu.ucsc.dbtune.metadata;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Checks;
-import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.HashFunction;
 import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -85,13 +84,10 @@ public class DB2Index extends Index
         hashCodeCache      = getMeta().hashCode();
     }
 
-XXX: will fix as part of issue #64
-     */
-
     private DB2Index(DB2IndexMetadata metadata, double creationCost) throws SQLException, Exception {
         super("",(Table)null,SECONDARY,NON_UNIQUE,UNCLUSTERED);
 
-        this.id           = this.getMeta().internalId;
+        this.internalID   = this.getMeta().internalId;
         this.bytes        = (long) this.getMeta().megabytes * 1024 * 1024;
         this.creationCost = creationCost;
         this.setMeta(metadata);
@@ -121,17 +117,21 @@ XXX: will fix as part of issue #64
         DB2IndexMetadata.DB2IndexSchema schema = new DB2IndexMetadata.DB2IndexSchema(dbName, tableName, tableCreator, colNames, descending,
                                                    uniqueRule, reverseScanOpt, indexType);
         this.setMeta(new DB2IndexMetadata(schema, internalId, indexName, indexOwner, indexExists, systemRequired, megabytes));
-        this.id           = this.getMeta().internalId;
+        this.internalID   = this.getMeta().internalId;
         this.bytes        = (long) this.getMeta().megabytes * 1024 * 1024;
         this.creationCost = creationCost;
         hashCodeCache     = getMeta().hashCode();
     }
 
-    public static class DB2IndexSet extends IndexSet {
-        private static final long serialVersionUID = IndexSet.serialVersionUID;
-    }
+XXX: will fix as part of issue #64
+     */
 
-    /**
+    public DB2Index(Table tbl) throws SQLException
+	{
+        super(tbl,"",SECONDARY,NON_UNIQUE,UNCLUSTERED);
+	}
+
+	/**
      * @return the name of table
      *      given by the index schema.
      */
@@ -706,12 +706,13 @@ XXX: will fix as part of issue #64
                 this.tableCreatorName = tableCreatorName;
                 this.columns = new java.util.ArrayList<Column>(colNames.size());
                 for (String name : colNames) 
-                    getColumns().add(new Column(name,SQLTypes.INT));// XXX: issue #53
+					// getColumns().add(new Column(name,SQLTypes.INT));// XXX: issue #64
+					throw new RuntimeException("bad");
                 this.descending = descending;
                 this.uniqueRule = uniqueRule;
                 this.reverseScan = reverseScan;
                 this.indexType = indexType;
-                this.table = new Table(this.dbName, this.tableCreatorName, this.tableName);
+				// this.table = new Table(this.tableName); // XXX
             }
 
 

@@ -124,7 +124,8 @@ public class PreparedSQLStatement
      * @param updateCosts
      *     for update statements, an array of incurred update costs, where each element corresponds 
      *     to an index contained in in {@link #getConfiguration}. The array should be indexed using 
-     *     each index id ({@link Index#getId}).
+     *     each index's ordinal position with respect to the configuration({@link 
+     *     Configuration#getOrdinalPosition}).
      * @param configuration
      *     configuration used when the statement was optimized
      * @param optimizationCount
@@ -170,11 +171,6 @@ public class PreparedSQLStatement
      * optimizer would have used the information contained in the given statement. Different 
      * implementations will determine how to create a new PreparedSQLStatement in a custom way, 
      * depending on which information is available to them.
-     * <p>
-     * The behavior of this method is implementation-dependent. In some, this may refer to the 
-     * number of times that the {@link #explain(SQLStatement, Configuration)} was invoked, whereas 
-     * in others it could refer to the number of times that internal structures where queried in 
-     * order to simulate an optimizer call.
      * <p>
      * In other words, the purpose of this method is to have it execute (a sort-of 'mini') what-if 
      * optimization using the original context that the optimizer used when it optimized the 
@@ -262,20 +258,26 @@ public class PreparedSQLStatement
      * @param index
      *      a {@link edu.ucsc.dbtune.metadata.Index} object.
      * @return
-     *      maintenance cost.
-     *      the execution cost of the statement.
+     *      maintenance cost for that this statement implies for the given index. 0 if the statement 
+     *      isn't an update, there are no update costs defined at all or the configuration assigned 
+     *      to the statement doesn't contain the given index.
      */
     public double getUpdateCost(Index index)
     {
-        if(!SQLCategory.DML.isSame(statement.getSQLCategory())) {
+        if(!SQLCategory.DML.isSame(statement.getSQLCategory()) ||
+            updateCosts == null ||
+            !configuration.contains(index))
+        {
             return 0.0;
         }
 
-        if(updateCosts == null) {
-            return 0.0;
+        int position = configuration.getIndexes().indexOf(index);
+
+        if(position == -1) {
+            throw new RuntimeException("Wrong position in configuration " + position);
         }
 
-        return updateCosts[index.getId()];
+        return updateCosts[position];
     }
 
     /**
@@ -294,7 +296,7 @@ public class PreparedSQLStatement
         double updateCost = 0.0;
 
         for(Index idx : indexes) {
-            updateCost += updateCosts[idx.getId()];
+            updateCost += getUpdateCost(idx);
         }
 
         return updateCost;
@@ -396,7 +398,7 @@ public class PreparedSQLStatement
         Configuration updatedConfiguration = new Configuration("conf");
 
         for(Index idx : getConfiguration()) {
-            if(updateCosts[idx.getId()] != 0) {
+            if(updateCosts[getConfiguration().getOrdinalPosition(idx)] != 0) {
                 updatedConfiguration.add(idx);
             }
         }
@@ -424,7 +426,7 @@ public class PreparedSQLStatement
      * PreparedSQLStatement} instance was produced. In some, this may refer to the number of times 
      * that the {@link Optimizer#explain(SQLStatement, Configuration)} was invoked, whereas in 
      * others it could refer to the number of times that internal structures of an {@link Optimizer} 
-     * or {@link PreparedSQLStatment} where queried in order to simulate an optimizer call.
+     * or {@link PreparedSQLStatement} where queried in order to simulate an optimizer call.
      *
      * @return
      *     the total count of performed what-if optimizations.

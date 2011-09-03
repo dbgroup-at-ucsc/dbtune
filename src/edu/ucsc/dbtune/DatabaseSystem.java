@@ -139,6 +139,28 @@ public class DatabaseSystem
     private Index createIndex(List<Column> cols, List<Boolean> descending, int type)
         throws SQLException
     {
+        // If needed, this method can later be refactored into a new class, like a ObjectCreator and 
+        // ObjectMaterializer. These would require a new implementation for each database object, 
+        // like a PGIndexCreator, PGIndexMaterializer, etc...
+        //
+        // if..
+        //    index = new PGIndexCreator(conn, cols,descending,type);
+        // else..
+        //    etc..
+
+
+        // if..
+        //    index = new DBMSIndex(cols,descending,type);
+        // else..
+        //    etc..
+        // 
+        // execute(index.getCreateStatement())
+        //
+        //
+        // private execute(String sql)
+        // {
+        //    con.createStatement().execute(sql);
+        // }
         throw new RuntimeException("not implemented yet");
     }
 

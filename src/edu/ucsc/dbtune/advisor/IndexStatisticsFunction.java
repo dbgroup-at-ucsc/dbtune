@@ -89,10 +89,12 @@ public class IndexStatisticsFunction implements StatisticsFunction {
 
     @Override
     public void addQuery(IBGPreparedSQLStatement queryInfo, DynamicIndexSet matSet) throws SQLException {
-        for (Index index : queryInfo.getConfiguration()) {
+        Configuration conf = queryInfo.getConfiguration();
+
+        for (Index index : conf) {
             final InteractionBank bank = queryInfo.getInteractionBank();
 
-            double bestBenefit = bank.bestBenefit(index.getId())
+            double bestBenefit = bank.bestBenefit(conf.getOrdinalPosition(index))
                                  - queryInfo.getUpdateCost(index);
             if (bestBenefit != 0) {
                 // add measurement, creating new window if necessary
@@ -111,13 +113,13 @@ public class IndexStatisticsFunction implements StatisticsFunction {
     private void calculateInteractionLevel(
             IBGPreparedSQLStatement queryInfo,
             DynamicIndexSet matSet,
-            Iterable<? extends Index> candSet
+            Configuration candSet
     ) throws SQLException {
         // not the most efficient double loop, but an ok compromise for now
         for (Index a : candSet) {
-            int id1 = a.getId();
+            int id1 = candSet.getOrdinalPosition(a);
             for (Index b : candSet) {
-                int id2 = b.getId();
+                int id2 = candSet.getOrdinalPosition(b);
                 if (id1 >= id2){
                     continue;
                 }
@@ -130,8 +132,8 @@ public class IndexStatisticsFunction implements StatisticsFunction {
             }
         }
 
-        Configuration conf = new ConfigurationBitSet(queryInfo.getConfiguration(), matSet.bitSet());
-        currentTimeStamp += queryInfo.explain(conf).getTotalCost();
+        Configuration bsConf = new ConfigurationBitSet(queryInfo.getConfiguration(), matSet.bitSet());
+        currentTimeStamp += queryInfo.explain(bsConf).getTotalCost();
     }
 
     private void clearIndexPairs(){        

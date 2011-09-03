@@ -75,7 +75,6 @@ public class DB2Optimizer extends Optimizer
 
         SQLCategory category     = null;
         double      updateCost   = 0.0;
-        int         count        = 0;
         int         explainCount; // should be equal to 1
         double      totalCost;
 
@@ -95,11 +94,6 @@ public class DB2Optimizer extends Optimizer
         if(SQLCategory.DML.isSame(category)){
             supplyValue(fetchExplainObjectUpdatedTable(), connection);
             updateCost   = supplyValue(fetchExplainOpUpdateCost(), connection);
-        }
-
-        for(Index idx : indexes) {
-            idx.getId();
-            count++;
         }
 
         CostLevel costLevel;
@@ -123,7 +117,7 @@ public class DB2Optimizer extends Optimizer
         submit(fetchExplainObjectCandidates(), connection, new IndexBitSet());
         sql.setSQLCategory(getStatementType(connection));
 
-        double[] updateCosts  = new double[count];
+        double[] updateCosts  = new double[indexes.size()];
         Arrays.fill(updateCosts, updateCost);
 
         return new PreparedSQLStatement(sql, totalCost, indexes, 1);
@@ -464,14 +458,14 @@ public class DB2Optimizer extends Optimizer
                             throw new SQLException("Could not get updated table: no rows");                    
                         }
 
-                        final String schemaName = rs.getString(1);
                         final String tableName  = rs.getString(2);
                         if(rs.next()){
                             throw new SQLException("Could not get updated table: too many rows");
                         }
 
-                        final String dbName = input.getParameterValue(String.class);
-                        return new Table(dbName, schemaName, tableName);
+                        // XXX: issue #64
+                        //return new Table(tableName);
+                        throw new RuntimeException("error");
                     } finally {
                         rs.close();
                         connection.commit();

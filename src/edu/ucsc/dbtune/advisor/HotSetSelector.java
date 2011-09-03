@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.MinQueue;
@@ -66,12 +67,12 @@ public class HotSetSelector {
         );
     }
 
-    static StaticIndexSet chooseHotSet(Iterable<? extends Index> candSet,
-                                                                 StaticIndexSet oldHotSet,
-                                                                 DynamicIndexSet requiredIndexSet,
-                                                                 StatisticsFunction benefitFunc,
-                                                                 int maxSize,
-                                                                 boolean debugOutput
+	static StaticIndexSet chooseHotSet(Configuration candSet,
+			StaticIndexSet oldHotSet,
+			DynamicIndexSet requiredIndexSet,
+			StatisticsFunction benefitFunc,
+			int maxSize,
+			boolean debugOutput
     ) {
         IndexBitSet emptyConfig = new IndexBitSet();
         
@@ -107,12 +108,12 @@ public class HotSetSelector {
         }
     }
     
-    static StaticIndexSet chooseHotSetGreedy(Iterable<? extends Index> candSet,
-                                                                       StaticIndexSet oldHotSet,
-                                                                       DynamicIndexSet requiredIndexSet,
-                                                                       StatisticsFunction benefitFunc,
-                                                                       int maxSize,
-                                                                       boolean debugOutput
+	static StaticIndexSet chooseHotSetGreedy(Configuration candSet,
+			StaticIndexSet oldHotSet,
+			DynamicIndexSet requiredIndexSet,
+			StatisticsFunction benefitFunc,
+			int maxSize,
+			boolean debugOutput
     ) {
         
         int numToChoose = maxSize - requiredIndexSet.size();
@@ -126,7 +127,7 @@ public class HotSetSelector {
             // add required indexes
             for (Index index : requiredIndexSet) {
                 list.add(index);
-                M.set(index.getId());
+                M.set(candSet.getOrdinalPosition(index));
             }
             
             // add top indexes
@@ -135,7 +136,7 @@ public class HotSetSelector {
                 double bestScore = Double.NEGATIVE_INFINITY;
                 
                 for (Index index : candSet) {
-                    if (M.get(index.getId()))
+                    if (M.get(candSet.getOrdinalPosition(index)))
                         continue;
                     
                     double penalty = oldHotSet.contains(index) ? 0 : index.getCreationCost();
@@ -149,13 +150,11 @@ public class HotSetSelector {
                     break;
                 else {
                     list.add(bestIndex);
-                    M.set(bestIndex.getId());
+                    M.set(candSet.getOrdinalPosition(bestIndex));
                 }
             }
 
             return new StaticIndexSet(list);
         }
     }
-
-
 }

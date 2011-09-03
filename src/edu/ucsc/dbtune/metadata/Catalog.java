@@ -15,39 +15,19 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.metadata;
 
-import java.util.List;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Abstraction of the dictionary used to save metadata. A catalog can be viewed as a container of Schema objects.
+ * Abstraction of the highest level entry in the metadata hierarchy. A catalog is a container of 
+ * Schema objects.
  *
  * @author Ivo Jimenez
  */
 public class Catalog extends DatabaseObject
 {
     protected List<Schema> _schemas;
-
-    /**
-     * default constructor
-     */
-    public Catalog()
-    {
-        super(-1);
-        _schemas = new ArrayList<Schema>();
-    }
-
-    /**
-     * copy constructor
-     *
-     * @param catalog
-     *     other catalog copied into a new one
-     */
-    public Catalog( Catalog catalog )
-    {
-        super(catalog);
-
-        _schemas = catalog._schemas;
-    }
 
     /**
      * Creates a new catalog with the given name
@@ -66,11 +46,15 @@ public class Catalog extends DatabaseObject
      *
      * @param schema
      *     new table to add
+     * @throws SQLException
+     *     if schema is already contained in the catalog
      */
-    public void add(Schema schema)
+    void add(Schema schema) throws SQLException
     {
+        if(_schemas.contains(schema))
+            throw new SQLException("Schema " + schema + " already in catalog");
+
         _schemas.add(schema);
-        schema.setCatalog(this);
     }
 
     /**
@@ -97,4 +81,34 @@ public class Catalog extends DatabaseObject
         return (Schema) DatabaseObject.findByName(new ArrayList<DatabaseObject>(_schemas),name);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if(!(other instanceof Catalog))
+            return false;
+
+        Catalog cat = (Catalog) other;
+
+        return name.equals(cat.name);
+
+        /*
+        for(Schema sch : _schemas)
+            if(!cat._schemas.contains(sch))
+                return false;
+
+        return true;
+        */
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return name.hashCode();
+    }
 }

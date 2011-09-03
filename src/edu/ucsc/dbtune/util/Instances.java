@@ -92,29 +92,6 @@ public class Instances {
         return new IndexBitSet();
     }
 
-    public static IndexBitSet newBitSet(Iterable<? extends Index> indexes){
-        final IndexBitSet idxset = newBitSet();
-        for(Index each : indexes){
-            idxset.set(each.getId());
-        }
-        return idxset;
-    }
-
-    /**
-     * returns a list containing indexes (from {@code indexes}) that are turned on in the given 
-     * {@code bitSet}.
-     */
-    public static List<Index> newIndexList(Iterable<? extends Index> indexes, IndexBitSet bitSet){
-        List<Index> list = new ArrayList<Index>();
-
-        for(Index idx : indexes){
-            if(bitSet.get(idx.getId())) {
-                list.add(idx);
-            }
-        }
-        return list;
-    }
-
     public static List<Index> newIndexList(Iterable<? extends Index> indexes){
         List<Index> list = new ArrayList<Index>();
 
@@ -139,5 +116,4 @@ public class Instances {
     public static <T> List<T> newList(int size){
         return new ArrayList<T>(size);
     }
-
 }

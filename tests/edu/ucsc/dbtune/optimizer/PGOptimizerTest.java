@@ -15,6 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
@@ -214,15 +215,13 @@ public class PGOptimizerTest {
             "   }                                              " +
             "]";
 
-        Schema sch = new Schema("test");
-        Table  tbl = new Table("tbl");
-        Column col = new Column("a", SQLTypes.INTEGER);
-        Index  idx = new Index("index_a",tbl,false,false,false);
+        Catalog cat = new Catalog("catalog");
+        Schema  sch = new Schema(cat,"test");
+        Table   tbl = new Table(sch,"tbl");
 
-        tbl.add(col);
-        idx.add(col);
-        tbl.add(idx);
-        sch.add(tbl);
+        new Column(tbl,"a", SQLTypes.INTEGER);
+        new Index(tbl,"index_a",false,false,false);
+
         sch.setBaseConfiguration(new Configuration(tbl.getIndexes()));
 
         SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan), sch);

@@ -22,14 +22,12 @@ import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.junit.Test;
 import org.junit.BeforeClass;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
 
 import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
 import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
@@ -38,42 +36,36 @@ import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
 import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
 import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
 
+import static org.hamcrest.Matchers.is;
+
 /**
  * Test for the Configuration class
  */
 public class ConfigurationBitSetTest
 {
     private static Catalog catalog;
-    private static List<Index> allIndexes = new ArrayList<Index>();
-    private static int id = 0;
+    private static Configuration allIndexes = new Configuration("all");
 
     @BeforeClass
     public static void setUp() throws Exception {
         for(int i = 0; i < 1; i++) {
             catalog = new Catalog("catalog_" + i);
             for(int j = 0; j < 2; j++) {
-                Schema schema = new Schema("schema_" + j);
-                catalog.add(schema);
+                Schema schema = new Schema(catalog,"schema_" + j);
                 for(int k = 0; k < 3; k++) {
-                    Table table = new Table("table_" + k);
-                    int l;
-                    schema.add(table);
-                    for(l = 0; l < 4; l++) {
-                        Column column = new Column("column_" + l, l+1);
-                        table.add(column);
+                    Table table = new Table(schema,"table_" + k);
+                    int count = 0;
+                    for(int l = 0; l < 4; l++) {
+                        Column column = new Column(table,"column_" + count++, l+1);
 
                         Index index =
                             new Index(
-                                "index_" + l, Arrays.asList(column), SECONDARY,UNCLUSTERED, NON_UNIQUE);
-                        index.setId(id++);
-                        table.add(index);
+                                "index_" + count++, Arrays.asList(column), SECONDARY,UNCLUSTERED, NON_UNIQUE);
                         allIndexes.add(index);
                     }
                     Index index =
                         new Index(
-                            "index_" + l, table.getColumns(), PRIMARY, CLUSTERED, UNIQUE);
-                    table.add(index);
-                    index.setId(id++);
+                            "index_" + count++, table.getColumns(), PRIMARY, CLUSTERED, UNIQUE);
                     allIndexes.add(index);
                 }
             }
@@ -84,12 +76,13 @@ public class ConfigurationBitSetTest
     public void basicUsage()
     {
         IndexBitSet bitSet = new IndexBitSet();
+
+        bitSet.set(0);
+        bitSet.set(allIndexes.size()-2);
+
         ConfigurationBitSet conf1 = new ConfigurationBitSet(allIndexes, bitSet);
 
-        bitSet.set(allIndexes.get(0).getId());
-        bitSet.set(allIndexes.get(allIndexes.size()-1).getId());
-
-        assertTrue(conf1.contains(allIndexes.get(0)));
-        assertTrue(conf1.contains(allIndexes.get(allIndexes.size()-1)));
+        assertThat(conf1.contains(allIndexes.getIndexes().get(0)), is(true));
+        assertThat(conf1.contains(allIndexes.getIndexes().get(allIndexes.size()-2)), is(true));
     }
 }

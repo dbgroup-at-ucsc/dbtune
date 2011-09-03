@@ -74,7 +74,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
                 continue;
             }
 
-            catalog.add(new Schema(schName));
+            new Schema(catalog,schName);
         }
 
         rs.close();
@@ -99,6 +99,12 @@ public class MySQLExtractor extends GenericJDBCExtractor
                 }
             }
         }
+    }
+
+    @Override
+    protected void extractObjectIDs(Catalog catalog, Connection connection) throws SQLException
+    {
+        // nothing yet
     }
 
     @Override

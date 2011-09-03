@@ -84,6 +84,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         extractTables(catalog, connection);
         extractColumns(catalog, connection);
         extractIndexes(catalog, connection);
+        extractObjectIDs(catalog, connection);
         extractBytes(catalog, connection);
         extractPages(catalog, connection);
         extractCardinality(catalog, connection);
@@ -160,7 +161,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                 rs = meta.getTables(sch.getName(), null, null, tableTypes);
 
             while (rs.next())
-                sch.add(new Table(rs.getString("table_name")));
+                new Table(sch, rs.getString("table_name"));
 
             rs.close();
         }
@@ -205,7 +206,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                     columnName = rs.getString("column_name");
                     type       = rs.getInt("data_type");
 
-                    table.add(new Column( columnName, type ));
+                    new Column(table, columnName, type);
                 }
 
                 rs.close();
@@ -283,10 +284,9 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
 
                             isUnique       = !rs.getBoolean("non_unique");
                             indexName      = rs.getString("index_name");
-                            index          = new Index(indexName, table, isPrimary, isClustered, isUnique);
+                            index          = new Index(table, indexName, isPrimary, isClustered, isUnique);
                             indexToColumns = new HashMap<Integer,Column>();
 
-                            table.add(index);
                             allIndexes.add(index);
                         }
 
@@ -311,6 +311,22 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
             sch.setBaseConfiguration(new Configuration(allIndexes));
         }
     }
+
+    /**
+     * Extracts the object ID of each {@link edu.ucsc.dbtune.metadata.DatabaseObject} contained in 
+     * the database. The JDBC specification doesn't provide a way of obtaining the internal object 
+     * identifiers, so this has to necessarily be a DBMS-dependent implementation.     
+     *
+     * @param catalog
+     *     catalog being populated
+     * @param connection
+     *     object used to obtain metadata for its associated database
+     * @throws SQLException
+     *     when an error occurs when communicating with the underlying DBMS
+     * @see edu.ucsc.dbtune.metadata.DatabaseObject#getId
+     */
+    protected abstract void extractObjectIDs(Catalog catalog, Connection connection)
+        throws SQLException;
 
     /**
      * Extracts the size in bytes of each {@link edu.ucsc.dbtune.metadata.DatabaseObject} contained 

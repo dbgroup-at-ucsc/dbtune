@@ -21,11 +21,19 @@ import java.util.List;
  * The abstraction of a database object. A database object is any data structure that stores 
  * information about objects contained in a database such as Tables, Views, Columns, etc.
  * <p>
- * Each containee should have a pointer to its container; each containee is "notified" (eg. a Column 
- * has method setTable() ) by its container. This means that the containee doesn't "notify" its 
- * container that will contain it, rather the container "notifies" the containee.
+ * An object is identified by its fully qualified name. For example, the identification of a column 
+ * {@code employee_id} contained in a {@code employee} table of the {@code company} schema of a 
+ * {@code enterpriseX} database would be {@code enterpriseX.company.employee.employee_id}, i.e. its 
+ * fully qualified name all the way up to the catalog: {@code catalog.schema.table.column}.
  * <p>
- * For an example of the above: see the {@link Table#add} method
+ * Besides this fully qualified identification, a specific DBMS may have additional ways of 
+ * internally identifying objects. For example, in Postgres a table also has a {@code oid} 
+ * associated to it.
+ * <p>
+ * With regards to containment, each containee should have a pointer to its container. Each 
+ * container is "notified" by its containee (in the containee's constructor) that it will now be a 
+ * child of it. For an example of this take a look at the implementation of the {@link Table} 
+ * constructor.
  *
  * @author Ivo Jimenez
  * @see Table#add
@@ -33,36 +41,28 @@ import java.util.List;
 public abstract class DatabaseObject
 {
     protected String name;
-    protected int    id; // -1 means UNASSIGNED id
+    protected int    internalID;
     protected long   cardinality;
     protected long   pages;
     protected long   bytes;
     protected double creationCost;
 
-    /**
-     * default constructor
-     */
-    public DatabaseObject(int  ID)
-    {
-        name         = null;
-        id           = ID;
-        cardinality  = 0;
-        pages        = 0;
-        bytes        = 0;
-        creationCost = 0.0;
-    }
-
+    public static final int NON_ID = -1;
+    
     /**
      * creates a dbobject with the given name constructor
      *
      * @param name
      *    name of the db object
      */
-    public DatabaseObject( String name )
+    public DatabaseObject(String name)
     {
-        this(-1);
-
-        this.name = name;
+        this.name         = name;
+        this.internalID   = NON_ID;
+        this.cardinality  = 0;
+        this.pages        = 0;
+        this.bytes        = 0;
+        this.creationCost = 0.0;
     }
 
     /**
@@ -71,12 +71,11 @@ public abstract class DatabaseObject
      * @param dbo
      *    other database object to be copied in the new one
      */
-    public DatabaseObject( DatabaseObject dbo )
+    public DatabaseObject(DatabaseObject dbo)
     {
-        this(dbo.id);
-
         name         = dbo.name;
         cardinality  = dbo.cardinality;
+        internalID   = dbo.internalID;
         pages        = dbo.pages;
         bytes        = dbo.bytes;
         creationCost = dbo.creationCost;
@@ -126,24 +125,28 @@ public abstract class DatabaseObject
     }
 
     /**
-     * Assigns the id of the database object.
+     * Assigns the internal ID of the object, which is used to identify the object inside the DBMS. 
+     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,   
+     * in some DB systems, this isn't used at all.
      *
      * @param id id of the database object
      */
-    public void setId(int id)
+    public void setInternalID(int id)
     {
-        this.id = id;
+        internalID = id;
     }
 
     /**
-     * Returns the id of the object.
+     * Returns the internal ID of the object, which is used to identify the object inside the DBMS. 
+     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,   
+     * in some DB systems, this isn't used at all.
      *
      * @return
-     *     long value representing the object's id; -1 if it hasn't been assigned
+     *     value representing the object's internal id; {@link NON_ID} if it hasn't been assigned
      */
-    public int getId()
+    public int getInternalID()
     {
-        return id;
+        return internalID;
     }
 
     /**
@@ -201,24 +204,6 @@ public abstract class DatabaseObject
     }
 
     /**
-     * Evaluates equality based on the internal id of the object
-     */
-    @Override
-    public boolean equals(Object other)
-    {
-        return (other instanceof DatabaseObject) && (((DatabaseObject)other).id == id);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode()
-    {
-        return (new Long(id)).hashCode();
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -232,6 +217,23 @@ public abstract class DatabaseObject
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public abstract boolean equals(Object other);
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public abstract int hashCode();
+
+    /*
+    public abstract void getHypotheticalCreateStatement();
+    public abstract void getMaterializeCreateStatement();
+    */
+
+    /**
      * Finds a database object that is contained in the given list whose name matches the given 
      * method argument.
      *
@@ -243,12 +245,26 @@ public abstract class DatabaseObject
     protected static DatabaseObject findByName( List<DatabaseObject> objects, String name )
     {
         for (DatabaseObject containee : objects)
-        {
             if (containee.getName().equals(name))
-            {
                 return containee;
-            }
-        }
+
+        return null;
+    }
+
+    /**
+     * Finds a database object that is contained in the given list whose internal ID matches the 
+     * given method argument.
+     *
+     * @param id
+     *     id of the object that is searched for in <code>this</code>
+     * @return
+     *     the reference to the object; {@code null} if not found.
+     */
+    protected static DatabaseObject findByInternalID(List<DatabaseObject> objects, int id)
+    {
+        for (DatabaseObject containee : objects)
+            if (containee.getInternalID() == id)
+                return containee;
 
         return null;
     }

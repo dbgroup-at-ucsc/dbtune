@@ -18,8 +18,8 @@
 
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.DB2Index;
-import edu.ucsc.dbtune.util.IndexSet;
 import edu.ucsc.dbtune.util.Files;
 
 import java.io.BufferedInputStream;
@@ -36,7 +36,6 @@ import java.util.regex.Pattern;
 
 import static edu.ucsc.dbtune.optimizer.DB2Optimizer.DB2Commands.clearAdviseIndex;
 import static edu.ucsc.dbtune.optimizer.DB2Optimizer.DB2Commands.readAdviseOnOneIndex;
-import static edu.ucsc.dbtune.metadata.DB2Index.DB2IndexSet;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 
@@ -140,8 +139,8 @@ public class DB2AdvisorCaller
             output    = processFile(stream, indexList);
         }
         
-        public IndexSet getCandidates(Connection conn) throws SQLException {
-            IndexSet candidateSet = new DB2IndexSet();
+        public Configuration getCandidates(Connection conn) throws SQLException {
+            Configuration candidateSet = new Configuration("");
             int id = 1;
             for (IndexInfo info : indexList) {
                 final DB2Index idx = supplyValue(
@@ -154,9 +153,6 @@ public class DB2AdvisorCaller
                 candidateSet.add(idx);
                 ++id;
             }
-            
-            // normalize the index candidates
-            candidateSet.normalize();
             
             return candidateSet;
         }

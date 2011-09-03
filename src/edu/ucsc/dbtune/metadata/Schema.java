@@ -15,8 +15,9 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.metadata;
 
-import java.util.List;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A schema is a container of database objects, regularly tables, indexes, views, etcetera.
@@ -31,13 +32,23 @@ public class Schema extends DatabaseObject
     protected Configuration _baseConfiguration;
 
     /**
-     * default constructor
+     * constructs a new schema whose name is given
+     *
+     * @param name
+     *     name of the schema
+     * @param catalog
+     *     catalog where the new schema will be contained
+     * @throws SQLException
+     *     if a schema with the given name is already contained in the catalog
      */
-    public Schema()
+    public Schema(Catalog catalog, String name) throws SQLException
     {
-        super(-1);
+        super(name);
 
         _tables  = new ArrayList<Table>();
+        _catalog = catalog;
+
+        _catalog.add(this);
     }
 
     /**
@@ -46,25 +57,12 @@ public class Schema extends DatabaseObject
      * @param other
      *     other schema being copied
      */
-    public Schema(Schema other)
+    protected Schema(Schema other)
     {
         super(other);
 
         _tables = other._tables;
         _baseConfiguration = other._baseConfiguration;
-    }
-
-    /**
-     * constructs a new schema whose name is given
-     *
-     * @param name
-     *     name of the schema
-     */
-    public Schema(String name)
-    {
-        super(name);
-
-        _tables = new ArrayList<Table>();
     }
 
     /**
@@ -83,11 +81,15 @@ public class Schema extends DatabaseObject
      *
      * @param table
      *     new table to add
+     * @throws SQLException
+     *     if table is already contained in the schema
      */
-    public void add(Table table)
+    void add(Table table) throws SQLException
     {
+        if(_tables.contains(table))
+            throw new SQLException("Table " + table + " already in table");
+
         _tables.add(table);
-        table.setSchema(this);
     }
 
     /**
@@ -99,17 +101,6 @@ public class Schema extends DatabaseObject
     public Catalog getCatalog()
     {
         return _catalog;
-    }
-
-    /**
-     * assigns the catalog where the schema is stored
-     *
-     * @param catalog
-     *     catalog that contains the schema
-     */
-    public void setCatalog(Catalog catalog)
-    {
-        _catalog = catalog;
     }
 
     /**
@@ -148,6 +139,19 @@ public class Schema extends DatabaseObject
     }
 
     /**
+     * Finds the table whose id matches the given argument.
+     *
+     * @param id
+     *     id of the object that is searched for in <code>this</code> schema.
+     * @return
+     *     the table that has the given name; {@code null} if not found
+     */
+    public Table findTable(int id)
+    {
+        return (Table) DatabaseObject.findByInternalID(new ArrayList<DatabaseObject>(_tables),id);
+    }
+
+    /**
      * Finds the index whose name matches the given argument.
      *
      * @param name
@@ -159,5 +163,48 @@ public class Schema extends DatabaseObject
     {
         return (Index) DatabaseObject.findByName(
                 new ArrayList<DatabaseObject>(_baseConfiguration.getIndexes()), name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if(!(other instanceof Schema))
+            return false;
+
+        Schema sch = (Schema) other;
+
+        return _catalog == sch._catalog && name.equals(sch.name);
+
+        /*
+        for(Table tbl : _tables)
+            if(!sch._tables.contains(tbl))
+                return false;
+        for(Index idx : _baseConfiguration)
+            if(!sch._baseConfiguration.contains(idx))
+                return false;
+
+        return true;
+        */
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return 31 * _catalog.hashCode() * name.hashCode();
+
+        /*
+        for(Table tbl : _tables)
+            hash += 31 * tbl.hashCode();
+        for(Index idx : _baseConfiguration)
+            hash += 31 * idx.hashCode();
+        return hash;
+        */
+
     }
 }

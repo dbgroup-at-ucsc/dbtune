@@ -15,9 +15,9 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.Table;
@@ -39,6 +39,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.List;
+import java.util.Random;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -106,17 +107,23 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes) throws SQLException {
+    public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes)
+        throws SQLException
+    {
         ResultSet rs;
         Statement stmt;
+        String[]  ohArray;
+        String[]  splitVals;
         String    explainSql;
         String    indexOverhead;
-        String[]  ohArray;
+        String    ohString;
         double[]  maintCost;
         double    totalCost;
+        double    overhead;
 
         explainSql = "EXPLAIN INDEXES " + explainIndexListString(indexes) + sql.getSQL();
         stmt       = connection.createStatement();
+        System.out.println("sql: " + explainSql);
         rs         = stmt.executeQuery(explainSql);
 
         if(!rs.next()) {
@@ -130,17 +137,17 @@ public class PGOptimizer extends Optimizer
 
         verifyOverheadArray(indexes.size(), ohArray);
 
-        for(int i = 0; i < indexes.size(); i++){
-
-            final String   ohString  = ohArray[i];
-            final String[] splitVals = ohString.split("=");
+        for(int position = 0; position < indexes.size(); position++)
+        {
+            ohString  = ohArray[position];
+            splitVals = ohString.split("=");
 
             Checks.checkAssertion(splitVals.length == 2, "We got an unexpected result in index_overhead.");
 
-            final int    id       = Integer.valueOf(splitVals[0]);
-            final double overhead = Double.valueOf(splitVals[1]);
+            position = Integer.valueOf(splitVals[0]);
+            overhead = Double.valueOf(splitVals[1]);
 
-            maintCost[id] = overhead;
+            maintCost[position] = overhead;
         }
 
         totalCost = Double.valueOf(rs.getString("qcost"));
@@ -217,36 +224,50 @@ public class PGOptimizer extends Optimizer
         final boolean   isSync = rs.getString("sync").charAt(0) == 'Y';
         final List<Column> columns = new ArrayList<Column>();
         final String columnsString = rs.getString("atts");
+        Table table = null;
+        Column col = null;
+
+        for(Schema sch : catalog.getSchemas()) {
+            table = sch.findTable(reloid);
+
+            if(table != null)
+                break;
+        }
+
+        if(table == null)
+            throw new SQLException("Can't find table with id " + reloid);
 
         if(columnsString.length() > 0){
             for (String attnum  : columnsString.split(" ")){
-                columns.add(new Column(Integer.valueOf(attnum)));
+                col = table.getColumns().get(Integer.valueOf(attnum));
+
+                if(col == null)
+                    throw new SQLException("Can't find column with position " + 
+                            Integer.valueOf(attnum) + " in table " + table);
+
+                columns.add(col);
             }
         }
 
         // descending
-        final List<Boolean> isDescending        = new ArrayList<Boolean>();
-        final String        descendingString    = rs.getString("desc");
-        if(descendingString.length() > 0){
-            for (String desc : rs.getString("desc").split(" ")){
+        final List<Boolean> isDescending     = new ArrayList<Boolean>();
+        final String        descendingString = rs.getString("desc");
+
+        if(descendingString.length() > 0)
+            for (String desc : rs.getString("desc").split(" "))
                 isDescending.add(desc.charAt(0) == 'Y');
-            }
-        }
 
-        final double        creationCost    = Double.valueOf(rs.getString("create_cost"));
-        final double        megabytes       = Double.valueOf(rs.getString("megabytes"));
-
-        final String indexName    = "sat_index_" + id;
+        final double creationCost = Double.valueOf(rs.getString("create_cost"));
+        final double megabytes    = Double.valueOf(rs.getString("megabytes"));
+        final String indexName    = "sat_index_" + new Random().nextInt(10000);
         final String creationText = updateCreationText(rs, isSync, indexName);
 
-        try {
-            candidateSet.add(
+        candidateSet.add(
                 new PGIndex(
+                    table,
+                    indexName,
                     reloid, isSync, columns, isDescending, id,
                     megabytes, creationCost, creationText) );
-        } catch(Exception ex) {
-            throw new SQLException(ex);
-        }
     }
 
     private String updateCreationText(ResultSet rs, boolean sync, String indexName) throws SQLException {
@@ -287,20 +308,21 @@ public class PGOptimizer extends Optimizer
      */
     private static String explainIndexListString(Iterable<? extends Index> indexes) {
         // It's important that this method generates the string in the same order that 
-        // Configuration.getIterator() produces the index list
+        // Configuration.iterator() produces the index list
         
         StringBuilder sb = new StringBuilder();
+        int position = 0;
 
         sb.append("( ");
 
         for (Index idx : indexes) {
-            sb.append(idx.getId()).append("(");
+            sb.append(position++).append("(");
             if (idx.getScanOption() == Index.SYNCHRONIZED) {
                 sb.append("synchronized ");
             }
 
             Table table = idx.getTable();
-            sb.append(table.getId());
+            sb.append(table.getInternalID());
 
             for (int i = 0; i < idx.size(); i++) {
                 sb.append(idx.getDescending().get(i) ? " desc" : " asc");

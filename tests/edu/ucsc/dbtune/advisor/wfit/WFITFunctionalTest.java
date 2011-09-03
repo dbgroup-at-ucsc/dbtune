@@ -84,6 +84,7 @@ public class WFITFunctionalTest
     @Test
     public void testWFIT() throws Exception
     {
+        /*
         IBGPreparedSQLStatement qinfo;
         Configuration pool;
         WFIT wfit;
@@ -143,6 +144,7 @@ public class WFITFunctionalTest
 
             q++;
         }
+        */
     }
 
     private static Configuration getCandidates(String workloadFilename)

@@ -174,12 +174,12 @@ public class IndexBenefitGraphConstructor {
         } else {
             stmt =
                 optimizer.explain(
-                    sql, new ConfigurationBitSet(configuration.getIndexes(), newNode.config));
+                    sql, new ConfigurationBitSet(configuration, newNode.config));
             totalCost = stmt.getTotalCost();
 
-            for(Index idx : configuration.getIndexes()) {
+            for(Index idx : configuration) {
                 if(stmt.isUsed(idx)) {
-                    usedBitSet.set(idx.getId());
+                    usedBitSet.set(configuration.getOrdinalPosition(idx));
                 }
             }
         }
@@ -268,7 +268,7 @@ public class IndexBenefitGraphConstructor {
     public static IndexBenefitGraph construct(Optimizer optimizer, SQLStatement sql, ConfigurationBitSet conf)
         throws SQLException
     {
-        InteractionLogger            logger      = new InteractionLogger(conf.getMaxId());
+        InteractionLogger            logger      = new InteractionLogger(conf.size());
         IndexBenefitGraphConstructor ibgCons     = new IndexBenefitGraphConstructor(optimizer, sql, conf);
         IBGAnalyzer                  ibgAnalyzer = new IBGAnalyzer(ibgCons);
 
@@ -298,7 +298,7 @@ public class IndexBenefitGraphConstructor {
 
         IndexBenefitGraph ibg = ibgCons.getIBG();
 
-        ibg.setMaxId(conf.getMaxId());
+        ibg.setMaxId(conf.size());
         ibg.setInteractionBank(logger.getInteractionBank());
         ibg.setOverhead(nStart - nStop / 1000000.0);
 

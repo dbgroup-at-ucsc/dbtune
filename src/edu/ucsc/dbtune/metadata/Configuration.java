@@ -33,24 +33,39 @@ public class Configuration implements Iterable<Index>
     protected String      name;
 
     /**
-     * @param indexes
-     *     list of indexes that comprise the configuration
+     * constructs an empty configuration with given name.
+     *
+     * @param name
+     *     name of the configuration
      */
-    public Configuration(Iterable<Index> indexes)
+    public Configuration(String name)
     {
-        this("");
-        for(Index idx : indexes) {
-            this._indexes.add(idx);
-        }
+        this(name,new ArrayList<Index>());
     }
 
     /**
+     * constructs a new configuration with the given list of indexes.
+     *
      * @param indexes
      *     list of indexes that comprise the configuration
      */
     public Configuration(List<Index> indexes)
     {
-        this((Iterable<Index>)indexes);
+        this("",indexes);
+    }
+
+    /**
+     * constructs a new configuration with given name and list of indexes.
+     *
+     * @param name
+     *     name of the configuration
+     * @param indexes
+     *     list of indexes that comprise the configuration
+     */
+    public Configuration(String name, List<Index> indexes)
+    {
+        this.name     = name;
+        this._indexes = new ArrayList<Index>(indexes);
     }
 
     /**
@@ -61,20 +76,7 @@ public class Configuration implements Iterable<Index>
      */
     public Configuration(Configuration other)
     {
-        this(other._indexes);
-        this.name = other.name;
-    }
-
-    /**
-     * constructs a new configuration with given name
-     *
-     * @param name
-     *     name of the configuration
-     */
-    public Configuration(String name)
-    {
-        this.name     = name;
-        this._indexes = new ArrayList<Index>();
+        this(other.name, other._indexes);
     }
 
     /**
@@ -152,6 +154,20 @@ public class Configuration implements Iterable<Index>
     }
 
     /**
+     * Returns the position of the index with respect to the set of indexes contained in the 
+     * configuration. The ordering is completely arbitrary and determined by the order in which the 
+     * {@link add} method is invoked or by the order in which indexes are contained in the list 
+     * given to the constructor.
+     *
+     * @param index
+     *     index whose position is retrieved
+     */
+    public int getOrdinalPosition(Index index)
+    {
+        return _indexes.indexOf(index);
+    }
+
+    /**
      * Returns the index that has the given id.
      *
      * @param id
@@ -159,10 +175,12 @@ public class Configuration implements Iterable<Index>
      * @return
      *     reference to index if found; {@code null} otherwise.
      */
+    @Deprecated
     public Index find(int id)
     {
+        // XXX: fix this
         for (Index idx : this) {
-            if (idx.getId() == id) {
+            if (idx.getInternalID() == id) {
                 return idx;
             }
         }

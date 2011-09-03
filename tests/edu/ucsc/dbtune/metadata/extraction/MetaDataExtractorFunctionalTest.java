@@ -31,12 +31,15 @@ import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.DatabaseSystem.newExtractor;
+import static edu.ucsc.dbtune.metadata.DatabaseObject.NON_ID;
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.hamcrest.CoreMatchers.is;
+
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 /**
  * Test for the metadata extraction functionality. This test assumes that the system on the backend 
@@ -104,6 +107,30 @@ public class MetaDataExtractorFunctionalTest
         sch = cat.findSchema("movies");
 
         assertThat(sch != null, is(true));
+    }
+
+    /**
+     * Tests ids aren't {@link DatabaseObject#NON_ID}, i.e. ids are correctly assigned
+     */
+    @Test
+    public void testIDs() throws Exception
+    {
+        assertThat(cat.getInternalID(), is(1));
+
+        for (Schema sch : cat.getSchemas())
+        {
+            assertThat(sch.getInternalID(), is(not(NON_ID)));
+
+            for (Table tbl : sch.getTables())
+            {
+                assertThat(tbl.getInternalID(), is(not(NON_ID)));
+
+                for (Column col : tbl.getColumns())
+                {
+                    assertThat(col.getInternalID(), is(not(NON_ID)));
+                }
+            }
+        }
     }
 
     /**

@@ -15,8 +15,9 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.metadata;
 
-import java.util.List;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Metadata for a table.
@@ -27,8 +28,6 @@ public class Table extends DatabaseObject
 {
     protected Schema schema;
     protected int    type;
-    private   String schemaName; // XXX: remove after fix of issue #64
-    private   String dbName;     // XXX: remove after fix of issue #64
 
     protected List<Column> _columns;
     protected List<Index>  _indexes;
@@ -39,59 +38,23 @@ public class Table extends DatabaseObject
     /**
      * Constructor
      *
-     * @param id
-     *     id of the table object
-     */
-    public Table( int id )
-    {
-        super( id );
-
-        dbName     = "";
-        schemaName = "";
-        type       = REGULAR;
-        _columns   = new ArrayList<Column>();
-        _indexes   = new ArrayList<Index>();
-    }
-
-    /**
-     * Constructs a table that corresponds to the given schema and database names.
-     *
-     * @param dbName
-     *      database name
-     * @param schemaName
-     *      schema name
-     * @param name
-     *      table name
-     * @deprecated
-     *      see issue #53
-     */
-    @Deprecated
-    public Table(String dbName, String schemaName, String name) {
-        // XXX: this constructor should be dropped when issue #64 is fixed
-        super(name);
-        this.dbName     = dbName;
-        this.schemaName = schemaName;
-        this.type       = REGULAR;
-        this._columns   = new ArrayList<Column>();
-        this._indexes   = new ArrayList<Index>();
-    }
-
-    /**
-     * Constructor
-     *
      * @param name
      *     name of the table
+     * @param schema
+     *     schema where the new table will be contained
+     * @throws SQLException
+     *     if a table with the given name is already contained in the schema
      */
-    public Table( String name )
+    public Table(Schema schema, String name) throws SQLException
     {
         super( name );
 
-        id         = -1;
-        dbName     = "";
-        schemaName = "";
-        type       = REGULAR;
-        _columns   = new ArrayList<Column>();
-        _indexes   = new ArrayList<Index>();
+        this.type     = REGULAR;
+        this._columns = new ArrayList<Column>();
+        this._indexes = new ArrayList<Index>();
+        this.schema   = schema;
+
+        schema.add(this);
     }
 
     /**
@@ -100,26 +63,25 @@ public class Table extends DatabaseObject
      * @param other
      *     object being copied
      */
-    public Table( Table other )
+    protected Table(Table other)
     {
-        super( other );
+        super(other);
 
-        _columns   = other._columns;
-        _indexes   = other._indexes;
-        type       = other.type;
-        dbName     = other.dbName;
-        schemaName = other.schemaName;
+        _columns = new ArrayList<Column>(other._columns);
+        _indexes = new ArrayList<Index>(other._indexes);
+        type     = other.type;
+        schema   = other.schema;
     }
 
     /**
-     * Assigns the schema that contains this table.
+     * Returns the schema that contains this table.
      *
-     * @param schema
+     * @return
      *     object that contains the table.
      */
-    public void setSchema( Schema schema )
+    public Schema getSchema()
     {
-        this.schema = schema;
+        return schema;
     }
 
     /**
@@ -129,12 +91,15 @@ public class Table extends DatabaseObject
      *
      * @param column
      *     new column being added to the table.
+     * @throws SQLException
+     *     if column is already contained in the table
      */
-    public void add( Column column )
+    void add(Column column) throws SQLException
     {
-        _columns.add( column );
+        if(_columns.contains(column))
+            throw new SQLException("Column " + column + " already in table");
 
-        column.setTable( this );
+        _columns.add( column );
     }
 
     /**
@@ -145,11 +110,13 @@ public class Table extends DatabaseObject
      * @param index
      *     new index being added to the table.
      */
-    public void add( Index index )
+    public void add(Index index) throws SQLException
     {
+        if(_indexes.contains(index))
+            throw new SQLException("Index " + index + " already in table");
+
         _indexes.add( index );
 
-        index.setTable( this );
         // XXX: determine whether or not the properties of an added index have to be checked. For
         //      instance, if an index is already contained and is CLUSTERED, no other index can be
         //      added that is also CLUSTERED. Similarly for PRIMARY/SECONDARY.
@@ -222,7 +189,7 @@ public class Table extends DatabaseObject
      * @return
      *     <code>true</code> if found; <code>false</code> otherwise
      */
-    public boolean contains( Index index )
+    public boolean contains(Index index)
     {
         return _indexes.contains(index);
     }
@@ -231,32 +198,45 @@ public class Table extends DatabaseObject
      * {@inheritDoc}
      */
     @Override
-    public int hashCode() {
-        // XXX: drop as part of issue #64
-        if(id != -1) {
-            return super.hashCode();
-        } else {
-            return 34 * dbName.hashCode() * schemaName.hashCode() * name.hashCode();
-        }
+    public boolean equals(Object other)
+    {
+        if(!(other instanceof Table))
+            return false;
+
+        Table tbl = (Table) other;
+
+        return schema.getCatalog() == tbl.schema.getCatalog() &&
+               schema == tbl.schema &&
+               //type == tbl.type &&
+               name.equals(tbl.name);
+
+        /*
+        for(Column col : _columns)
+            if(!tbl._columns.contains(col))
+                return false;
+        for(Index idx : _indexes)
+            if(!tbl._indexes.contains(idx))
+                return false;
+
+        return true;
+        */
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(Object o) {
-        // XXX: drop as part of issue #64
-        if (!(o instanceof Table))
-            return false;
+    public int hashCode()
+    {
+        return 31 * schema.getCatalog().hashCode() * schema.hashCode() * name.hashCode(); //type;
 
-        if(id != -1) {
-            return super.equals(o);
-        }
+        /*
+        for(Column col : _columns)
+            hash += col.hashCode();
+        for(Index idx : _indexes)
+            hash += idx.hashCode();
 
-        Table other = (Table) o;
-
-        return dbName.equals(other.dbName)
-               && schemaName.equals(other.schemaName)
-               && name.equals(other.name);
+        return hash;
+        */
     }
 }

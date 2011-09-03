@@ -46,7 +46,6 @@ public class Index extends DatabaseObject
     protected List<Boolean> descending;
     protected int           type;
     protected int           scanOption;
-    protected double        updateCost;
     protected boolean       unique;
     protected boolean       primary;
     protected boolean       clustered;
@@ -55,18 +54,21 @@ public class Index extends DatabaseObject
     /**
      * Creates an empty index.
      *
-     * @param name
-     *     name of the index
      * @param table
      *     table over which the index will be defined.
+     * @param name
+     *     name of the index
      * @param primary
      *     whether or not the index is primary
      * @param unique
      *     whether the index is unique or not.
      * @param clustered
      *     whether the corresponding table is clustered on this index
+     * @throws SQLException
+     *     if an index with the given name is already contained in the table
      */
-    public Index(String name, Table table, boolean primary, boolean unique, boolean clustered)
+    public Index(Table table, String name, boolean primary, boolean unique, boolean clustered)
+        throws SQLException
     {
         super(name);
 
@@ -78,7 +80,8 @@ public class Index extends DatabaseObject
         this.clustered  = clustered;
         this.descending = new ArrayList<Boolean>();
         this.scanOption = NON_REVERSIBLE;
-        this.updateCost = 0.0;
+
+        table.add(this);
     }
 
     /**
@@ -87,7 +90,7 @@ public class Index extends DatabaseObject
      * @param other
      *     other index being copied into the new one
      */
-    public Index(Index other)
+    protected Index(Index other)
     {
         super(other);
 
@@ -100,7 +103,24 @@ public class Index extends DatabaseObject
         this.materialized = other.materialized;
         this.descending   = other.descending;
         this.scanOption   = other.scanOption;
-        this.updateCost   = other.updateCost;
+    }
+
+    /**
+     * Creates an index with the given column, primary, uniqueness and clustering values. The name 
+     * of the index is defaulted to {@code column.getName()+"_index"}.
+     *
+     * @param column
+     *     column that will define the index
+     * @param primary
+     *     whether or not the index is primary
+     * @param clustered
+     *     whether the corresponding table is clustered on this index
+     */
+    public Index(Column column, boolean primary, boolean unique, boolean clustered)
+        throws SQLException
+    {
+        this(column.getTable(),column.getName()+"_index",primary,unique,clustered);
+        add(column);
     }
 
     /**
@@ -114,17 +134,17 @@ public class Index extends DatabaseObject
      *     whether or not the index is primary
      * @param clustered
      *     whether the corresponding table is clustered on this index
-     * @throws Exception
+     * @throws SQLException
      *     if column list empty or not all of the columns in the list correspond to the same table.
      */
     public Index(String name, List<Column> columns, boolean primary, boolean unique, boolean clustered)
-        throws Exception
+        throws SQLException
     {
         super(name);
 
         if (columns.size() == 0)
         {
-            throw new Exception("Column list should have at least one element");
+            throw new SQLException("Column list should have at least one element");
         }
 
         this.columns = new ArrayList<Column>();
@@ -136,7 +156,7 @@ public class Index extends DatabaseObject
         {
             if (this.table != columns.get(i).getTable())
             {
-                throw new Exception("Columns from different tables");
+                throw new SQLException("Columns from different tables");
             }
 
             this.columns.add(columns.get(i));
@@ -148,18 +168,8 @@ public class Index extends DatabaseObject
         this.clustered    = clustered;
         this.descending   = new ArrayList<Boolean>();
         this.scanOption   = NON_REVERSIBLE;
-        this.updateCost   = 0.0;
-    }
 
-    /**
-     * Assigns the table that contains this index.
-     *
-     * @param table
-     *     object that contains the index.
-     */
-    public void setTable(Table table)
-    {
-        this.table = table;
+        table.add(this);
     }
 
     /**
@@ -313,19 +323,19 @@ public class Index extends DatabaseObject
      *
      * @param column
      *     new column to be inserted to the sequence
+     * @throws SQLException
+     *     if column is already contained in the index
      */
     public void add(Column column) throws SQLException
     {
         if (table != column.getTable())
-        {
             throw new SQLException("Table " + table + " doesn't contain column " + column);
-        }
 
-        if (!contains(column))
-        {
-            columns.add(column);
-            descending.add(true);
-        }
+        if (contains(column))
+            throw new SQLException("Column " + column + " already in index");
+
+        columns.add(column);
+        descending.add(true);
     }
 
     /**
@@ -423,117 +433,67 @@ public class Index extends DatabaseObject
     }
 
     /**
-     * Returns the hash code value for this index. The hash code of a index is defined to be the sum 
-     * of the hash codes of the <code>Set<Column></code> object, plus the index type,uniqueness, 
-     * clustered and primary properties, as well as the name.
-     * 
-     * This ensures that s1.equals(s2) implies that s1.hashCode()==s2.hashCode() for any two index 
-     * objects s1 and s2, as required by the general contract of Object.hashCode()
-     *
-     * @return
-     *     integer representing the hashCode for the Index
-     */
-    @Override
-    public int hashCode()
-    {
-        int hash;
-
-        if (id != -1)
-        {
-            return 1 * 31 + (new Long(id)).hashCode();
-        }
-
-        hash = 1;
-
-        hash = hash * 31 + table.hashCode();
-
-        for (Column col : columns)
-        {
-            hash = hash * 31 + col.hashCode();
-        }
-
-        hash = hash *31 + (new Integer(type)).hashCode();
-        hash = hash *31 + (new Boolean(primary)).hashCode();
-        hash = hash *31 + (new Boolean(clustered)).hashCode();
-        hash = hash *31 + (new Boolean(unique)).hashCode();
-
-        return hash;
-    }
-
-    /**
-     * an Index object is equal to other if:
-     *   - both refer to the same Table
-     *   - both contain the same set of columns in the same order
-     *   - both are of the same type
-     *
-     * @param other
-     *     object that is compared to this one
-     * @return
-     *     true if equal, false if not
+     * {@inheritDoc}
      */
     @Override
     public boolean equals(Object other)
     {
-        if (this == other)
-        {
-            return true;
-        }
-
         if (!(other instanceof Index))
-        {
             return false;
-        }
 
         Index idx = (Index) other;
 
-        if (id != -1 && idx.getId() != -1)
-        {
-            return id == idx.getId();
-        }
+        return table.getSchema().getCatalog() == idx.table.getSchema().getCatalog() &&
+               table.getSchema() == idx.table.getSchema() &&
+               table == idx.table &&
+               name.equals(idx.getName());
 
-        if (name != idx.getName())
-        {
+                /*
+                size() != idx.size() ||
+                clustered != idx.isClustered() ||
+                primary != idx.isPrimary() ||
+                unique != idx.isUnique() ||
+                idx.getType() != type )
             return false;
-        }
 
-        if (clustered != idx.isClustered())
-        {
-            return false;
-        }
-
-        if (primary != idx.isPrimary())
-        {
-            return false;
-        }
-
-        if (unique != idx.isUnique())
-        {
-            return false;
-        }
-
-        if (table != idx.getTable())
-        {
-            return false;
-        }
-
-        if (idx.size() != columns.size()) 
-        {
-            return false;
-        }
-
-        if (idx.getType() != type)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < idx.size(); i++)
-        {
-            if (!idx.get(i).equals(columns.get(i)))
-            {
+        for(int i = 0; i < idx.size(); i++)
+            if(!idx.get(i).equals(columns.get(i)))
                 return false;
-            }
-        }
 
         return true;
+            */
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return
+            31 *
+            getTable().getSchema().getCatalog().hashCode() *
+            getTable().getSchema().hashCode() *
+            getTable().hashCode() *
+            getName().hashCode();
+        /*
+            (new Integer(type)).hashCode() *
+            (new Integer(scanOption)).hashCode() *
+            (new Boolean(primary)).hashCode() *
+            (new Boolean(clustered)).hashCode() *
+            (new Boolean(unique)).hashCode();
+
+        for (Column col : columns)
+        {
+            hash += hash * 31 + col.hashCode();
+        }
+
+        for (Boolean desc : descending)
+        {
+            hash += hash * 31 + (new Boolean(desc)).hashCode();
+        }
+
+        return hash;
+        */
     }
 }

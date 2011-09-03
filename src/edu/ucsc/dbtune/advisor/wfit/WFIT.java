@@ -75,7 +75,7 @@ public class WFIT extends Advisor
         this.partitionIterations = partitionIterations;
         this.ibgOptimizer        = new IBGOptimizer(optimizer); // XXX: check if optimizer is IBGOptimizer
         this.qinfos              = new ArrayList<IBGPreparedSQLStatement>();
-        this.wfa                 = new WorkFunctionAlgorithm(partitions, false);
+        this.wfa                 = new WorkFunctionAlgorithm(configuration,partitions,maxNumStates,maxNumIndexes);
         this.overheads           = new ArrayList<Double>();
         this.configurations      = new ArrayList<Configuration>();
     }
@@ -134,39 +134,34 @@ public class WFIT extends Advisor
     }
 
     private IndexPartitions getIndexPartitions(
-            Iterable<? extends Index>     candidateSet,
+            Configuration candidateSet,
             List<IBGPreparedSQLStatement> qinfos, 
-            int                 maxNumIndexes,
-            int                 maxNumStates,
-            int                 windowSize,
-            int                 partitionIterations )
+            int maxNumIndexes,
+            int maxNumStates,
+            int windowSize,
+            int partitionIterations )
     {
-        int maxId = 1024;
-        StaticIndexSet hotSet = getHotSet(candidateSet, qinfos, maxNumIndexes, windowSize, maxId);
-        InteractionSelection is;
+        StaticIndexSet hotSet = getHotSet(candidateSet, qinfos, maxNumIndexes, windowSize);
+        StatisticsFunction doiFunc = new TempDoiFunction(qinfos, candidateSet, windowSize);
 
-        StatisticsFunction doiFunc =
-            new TempDoiFunction(qinfos, candidateSet, windowSize,maxId);
-
-        is = 
+        InteractionSelection is = 
             new InteractionSelection(
-                    new IndexPartitions(hotSet),
+                    new IndexPartitions(candidateSet,hotSet),
                     doiFunc,
                     maxNumStates,
                     hotSet);
 
         IndexPartitions parts = 
-            InteractionSelector.choosePartitions(is, partitionIterations);
+            InteractionSelector.choosePartitions(candidateSet, is, partitionIterations);
 
         return parts;
     }
 
     private StaticIndexSet getHotSet(
-            Iterable<? extends Index>     candidateSet,
+            Configuration candidateSet,
             List<IBGPreparedSQLStatement> qinfos,
-            int                 maxNumIndexes,
-            int                 windowSize,
-            int                 maxId)
+            int maxNumIndexes,
+            int windowSize)
     {
         StatisticsFunction benefitFunc;
         HotsetSelection hs;
@@ -174,7 +169,7 @@ public class WFIT extends Advisor
         benefitFunc =
             new TempBenefitFunction(
                     qinfos,
-                    maxId,
+                    candidateSet,
                     windowSize);
 
         hs =
@@ -194,28 +189,28 @@ public class WFIT extends Advisor
     private class TempDoiFunction extends IndexStatisticsFunction
     {
         private InteractionBank bank;
+        private Configuration   conf;
 
         TempDoiFunction(
                 List<IBGPreparedSQLStatement> qinfos,
-                Iterable<? extends Index> candidateSet,
-                int indexStatisticsWindow,
-                int maxId)
+                Configuration candidateSet,
+                int indexStatisticsWindow )
         {
             super(indexStatisticsWindow);
 
-            bank = new InteractionBank(maxId);
+            bank = new InteractionBank(candidateSet.size());
+            conf = candidateSet;
 
             for (Index a : candidateSet) {
-                int id_a = a.getId();
+                int id_a = candidateSet.getOrdinalPosition(a);
                 for (Index b : candidateSet) {
-                    int id_b = b.getId();
+                    int id_b = candidateSet.getOrdinalPosition(b);
                     if (id_a < id_b) {
                         double doi = 0;
                         for (IBGPreparedSQLStatement qinfo : qinfos) {
-                            doi +=
-                                qinfo.getInteractionBank().interactionLevel(a.getId(), b.getId());
+                            doi += qinfo.getInteractionBank().interactionLevel(id_a,id_b);
                         }
-                        bank.assignInteraction(a.getId(), b.getId(), doi);
+                        bank.assignInteraction(id_a, id_b, doi);
                     }
                 }
             }
@@ -223,12 +218,15 @@ public class WFIT extends Advisor
 
         @Override
         public double doi(Index a, Index b) {
-            return bank.interactionLevel(a.getId(), b.getId());
+            int id_a = conf.getOrdinalPosition(a);
+            int id_b = conf.getOrdinalPosition(b);
+            return bank.interactionLevel(id_a, id_b);
         }
     }
 
     private class TempBenefitFunction extends IndexStatisticsFunction {
         List<IBGPreparedSQLStatement> qinfos;
+        Configuration candSet;
 
         IBGBestBenefitFinder finder = new IBGBestBenefitFinder();
         double[][]      bbCache;
@@ -239,11 +237,13 @@ public class WFIT extends Advisor
 
         TempBenefitFunction(
                 List<IBGPreparedSQLStatement> qinfos0,
-                int maxInternalId,
+                Configuration candidateSet,
                 int indexStatisticsWindow)
         {
             super(indexStatisticsWindow);
             qinfos = qinfos0;
+            candSet = candidateSet;
+            int maxInternalId = candSet.size();
 
             componentId = componentIds(qinfos0, maxInternalId);
 
@@ -264,7 +264,7 @@ public class WFIT extends Advisor
                 IndexBitSet[] parts =
                     qinfo.getInteractionBank().stablePartitioning(0);
                 for (Index index : qinfo.getConfiguration()) {
-                    int id = index.getId();
+                    int id = qinfo.getConfiguration().getOrdinalPosition(index);
                     componentId[q][id] = -id;
                     for (int p = 0; p < parts.length; p++) {
                         if (parts[p].get(id)) {
@@ -313,7 +313,7 @@ public class WFIT extends Advisor
 
         @Override
         public double benefit(Index a, IndexBitSet M) {
-            int id = a.getId();
+            int id = candSet.getOrdinalPosition(a);
             if (!M.equals(prevM)) {
                 diffM.set(M);
                 diffM.xor(prevM[id]);

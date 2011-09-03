@@ -34,9 +34,10 @@ import java.util.TreeMap;
 public class IndexPartitions {
     private static final int MAXIMUM_INDEX_COUNT = Integer.MAX_VALUE / 2;
 
-    private final int                 indexCount;
-    private       int                 stateCount;
-    private       SubsetList          subsets;
+    Configuration         conf;
+    private int           indexCount;
+    private int           stateCount;
+    private SubsetList    subsets;
 
     /**
      * construct an {@link IndexPartitions} object given a set of static indexes.
@@ -44,58 +45,18 @@ public class IndexPartitions {
      * @param indexes
      *      a {@link StaticIndexSet set of static indexes}.
      */
-    public IndexPartitions(StaticIndexSet indexes) {
+    public IndexPartitions(Configuration conf, StaticIndexSet indexes) {
         Checks.checkArgument(
                 indexes.size() <= MAXIMUM_INDEX_COUNT,
                 "Cannot create partitions for " + indexes.size() + "indexes"
                 );
 
-        indexCount  = indexes.size();
-        stateCount  = indexes.size() * 2;
-        subsets     = new SubsetList();
+        indexCount = indexes.size();
+        stateCount = indexes.size() *2;
+        subsets    = new SubsetList();
         for (Index index : indexes) {
-            subsets.add(new Subset(index));
+            subsets.add(new Subset(conf, index));
         }
-    }
-
-    /**
-     * construct an {@link IndexPartitions} object given a snapshot of candidate indexes
-     * and an array of partitions of indexes represented as bitsets.
-     *
-     * @param snapshot
-     *      a {@link Configuration} of candidate indexes.
-     * @param partitionBitSets
-     *     an array of partitions of indexes represented as bitsets.
-     */
-    public IndexPartitions(Configuration snapshot, IndexBitSet[] partitionBitSets) {
-        // create subsets
-        int indexCount0 = 0;
-        int stateCount0 = 0;
-        subsets = new SubsetList();
-        for (IndexBitSet eachBitSet : partitionBitSets) {
-            Subset subset = null;
-            for (int i = eachBitSet.nextSetBit(0); i >= 0; i = eachBitSet.nextSetBit(i+1)) {
-                Index idx = snapshot.find(i);
-                if (idx != null) {
-                    if (subset != null){
-                        subset = new Subset(subset, new Subset(idx));
-                    } else{
-                        subset = new Subset(idx);
-                    }
-                }
-            }
-            if (subset != null) {
-                subsets.add(subset);
-                indexCount0 += subset.size();
-                stateCount0 += subset.stateCount();
-            }
-        }
-
-        if (indexCount0 > MAXIMUM_INDEX_COUNT)
-            throw new IllegalArgumentException("Cannot create partitions for " + indexCount0 + "indexes");
-
-        indexCount = indexCount0;
-        stateCount = stateCount0;
     }
 
     /**
@@ -175,7 +136,7 @@ public class IndexPartitions {
 
         Subset subset1   = subsets.get(s1);
         Subset subset2   = subsets.get(s2);
-        Subset newSubset = new Subset(subset1, subset2);
+        Subset newSubset = new Subset(subset1, subset2, conf);
 
         // calculate & check new state count
         long oldStateCount = stateCount;
@@ -236,6 +197,7 @@ public class IndexPartitions {
     public static class Subset implements Iterable<Index> {
         private final int sumIndexIds;
         private final int minIndexIds;
+        private Configuration conf;
 
         private int[] indexIds;
 
@@ -247,10 +209,12 @@ public class IndexPartitions {
          * @param index
          *      the first index to be stored in the subset object.
          */
-        Subset(Index index) {
-            map.put(index.getId(), index);
-            indexIds = new int[] { index.getId() };
-            sumIndexIds = minIndexIds = index.getId();
+        Subset(Configuration conf, Index index) {
+            int id = conf.getOrdinalPosition(index);
+            map.put(id, index);
+            indexIds = new int[] { id };
+            sumIndexIds = minIndexIds = id;
+            this.conf = conf;
         }
 
         /**
@@ -260,17 +224,19 @@ public class IndexPartitions {
          * @param s2
          *      second subset.
          */
-        Subset(Subset s1, Subset s2) {
+        Subset(Subset s1, Subset s2, Configuration conf) {
+
             for (Index idx : s1)
-                map.put(idx.getId(), idx);
+                map.put(conf.getOrdinalPosition(idx), idx);
             for (Index idx : s2)
-                map.put(idx.getId(), idx);
+                map.put(conf.getOrdinalPosition(idx), idx);
 
             indexIds = new int[map.size()];
-            { int i = 0; for (Index idx : map.values()) indexIds[i++] = idx.getId(); }
+            { int i = 0; for (Index idx : map.values()) indexIds[i++] = conf.getOrdinalPosition(idx); }
 
             sumIndexIds = s1.sumIndexIds + s2.sumIndexIds;
             minIndexIds = Math.min(s1.minIndexIds, s2.minIndexIds);
+            this.conf = conf;
         }
 
         /**
@@ -281,7 +247,7 @@ public class IndexPartitions {
          *      {@code false} otherwise.
          */
         public final boolean contains(Index index) {
-            return map.containsKey(index.getId());
+            return map.containsKey(conf.getOrdinalPosition(index));
         }
 
         /**
@@ -359,7 +325,7 @@ public class IndexPartitions {
          */
         public IndexBitSet bitSet() {
             IndexBitSet bs = new IndexBitSet();
-            for (Index x : this) bs.set(x.getId());
+            for (Index x : this) bs.set(conf.getOrdinalPosition(x));
             return bs;
         }
 

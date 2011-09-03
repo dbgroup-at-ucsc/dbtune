@@ -15,6 +15,7 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.metadata.Index;
@@ -57,6 +58,14 @@ public class IBGOptimizer extends Optimizer
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setCatalog(Catalog catalog) {
+        delegate.setCatalog(catalog);
+    }
+
+    /**
      * estimate what-if optimization cost given a single sql statement.
      *
      * @param sql
@@ -76,15 +85,15 @@ public class IBGOptimizer extends Optimizer
         IndexBenefitGraph    ibg;
         IndexBitSet          bitSet;
 
-        bitSet  = new IndexBitSet();
-        stmt    = delegate.explain(sql, configuration);
+        bitSet = new IndexBitSet();
 
         for(Index idx : configuration) {
-            bitSet.set(idx.getId());
+            bitSet.set(configuration.getOrdinalPosition(idx));
         }
 
         bitConf = new ConfigurationBitSet(configuration, bitSet);
         ibg     = construct(delegate, sql, bitConf);
+        stmt    = delegate.explain(sql, configuration);
 
         return new IBGPreparedSQLStatement(stmt, bitConf, ibg, stmt.getOptimizationCount());
     }

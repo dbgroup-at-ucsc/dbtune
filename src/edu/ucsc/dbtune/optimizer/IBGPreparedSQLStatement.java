@@ -63,12 +63,11 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement
             int               optimizationCount,
             double            analysisTime )
     {
-        super(sql, 0.0, configuration);
+        super(sql, 0.0, configuration, optimizationCount);
 
-        this.ibg               = ibg;
-        this.bank              = bank;
-        this.optimizationCount = optimizationCount;
-        this.analysisTime   = analysisTime;
+        this.ibg          = ibg;
+        this.bank         = bank;
+        this.analysisTime = analysisTime;
     }
 
     /**

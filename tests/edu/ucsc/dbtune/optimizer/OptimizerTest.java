@@ -16,6 +16,7 @@
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
@@ -27,6 +28,9 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
+import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
+import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
 import static edu.ucsc.dbtune.DBTuneInstances.configureAny;
 import static edu.ucsc.dbtune.DBTuneInstances.getSupportedOptimizersIterator;
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
@@ -174,13 +178,21 @@ public class OptimizerTest
     {
         SQLStatement         sql;
         PreparedSQLStatement sqlp;
-        Configuration        conf = new Configuration("empty");
+        Column               col;
+        Configuration        conf;
+        Index                idx;
         double               cost1;
         double               cost2;
 
         sql   = new SQLStatement("select a from one_table.tbl where a = 5;");
-        sqlp  = opt.explain(sql);
-        cost1 = sqlp.getCost();
+        cost1 = opt.explain(sql).getCost();
+
+        col  = cat.findSchema("one_table").findTable("tbl").findColumn("a");
+        idx  = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        conf = new Configuration("one_index");
+
+        conf.add(idx);
+
         sqlp  = opt.explain(sql, conf);
         cost2 = sqlp.getCost();
 
@@ -188,7 +200,7 @@ public class OptimizerTest
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
         assertThat(sqlp.getCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
-        assertThat(cost1 == cost2, is(true));
+        assertThat(cost1 != cost2, is(true));
     }
 
     /**
