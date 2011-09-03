@@ -45,7 +45,7 @@ public Index createIndex(List<Column>, List<Boolean>, boolean, boolean);
     *  fix #3, #4 and #5 of mysqlpp project
  *  run existing Wfit and tests against MySQL
 
-## 103
+## 104
  * catalog
  * metadataextractor
  * optimizer queries

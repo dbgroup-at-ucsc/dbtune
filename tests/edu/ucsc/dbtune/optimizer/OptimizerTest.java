@@ -38,8 +38,10 @@ import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 import static org.junit.Assert.assertThat;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 
 /**
@@ -65,7 +67,7 @@ public class OptimizerTest
     public static void setUp() throws Exception
     {
         env = new Environment(configureAny());
-        // XXX: issue #103 setUp mock objects and complete all the empty test methods
+        // XXX: issue #104 setUp mock objects and complete all the empty test methods
     }
 
     /**
@@ -200,7 +202,9 @@ public class OptimizerTest
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
         assertThat(sqlp.getCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
-        assertThat(cost1 != cost2, is(true));
+        assertThat(cost1, is(not(cost2)));
+
+        col.getTable().remove(idx);
     }
 
     /**
@@ -242,19 +246,75 @@ public class OptimizerTest
     }
 
     /**
-     * Checks that, for each prepared statement that the given optimizer generates, the set of used 
-     * physical structures is correctly checked.
+     * Checks that the optimizer respects the monotonicity property:
+     *
+     *    For any index-sets X, Y and query q, if X ⊆ Y then cost(q, X) ≥ cost(q, Y )
      */
-    protected static void checkMonotonicity(Optimizer opt) throws Exception
+    protected static void checkMonotonicity(Catalog cat, Optimizer opt) throws Exception
     {
-        // XXX
+        SQLStatement         sql;
+        PreparedSQLStatement sqlp;
+        Column               col;
+        Configuration        conf;
+        Index                idx;
+        double               cost1;
+        double               cost2;
+
+        sql   = new SQLStatement("select a from one_table.tbl where a = 5;");
+        cost1 = opt.explain(sql).getCost();
+
+        col  = cat.findSchema("one_table").findTable("tbl").findColumn("a");
+        idx  = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        conf = new Configuration("one_index");
+
+        conf.add(idx);
+
+        sqlp  = opt.explain(sql, conf);
+        cost2 = sqlp.getCost();
+
+        assertThat(cost1, greaterThanOrEqualTo(cost2));
+
+        col.getTable().remove(idx);
     }
 
     /**
-     * Checks that the given optimizer complies with the sanity property
+     * Checks that the given optimizer complies with the sanity property:
+     *    
+     *    For any index-sets X, Y and query q, if used (q, Y) ⊆ X ⊆ Y then optplan(q, X) = 
+     *    optplan(q, Y)
      */
-    protected static void checkSanity(Optimizer opt) throws Exception
+    protected static void checkSanity(Catalog cat, Optimizer opt) throws Exception
     {
-        // XXX
+        SQLStatement         sql;
+        Column               colA;
+        Column               colB;
+        Configuration        conf;
+        Index                idxA;
+        Index                idxB;
+        double               cost1;
+        double               cost2;
+
+        sql  = new SQLStatement("select a from one_table.tbl where a = 5;");
+        colA = cat.findSchema("one_table").findTable("tbl").findColumn("a");
+        colB = cat.findSchema("one_table").findTable("tbl").findColumn("b");
+        idxA = new Index(colA,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        idxB = new Index(colB,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        conf = new Configuration("configuration");
+
+        conf.add(idxA);
+
+        cost1 = opt.explain(sql, conf).getCost();
+
+        conf.add(idxB);
+
+        cost2 = opt.explain(sql, conf).getCost();
+
+        assertThat(cost1, is(cost2));
+
+        // XXX: we should also check:
+        //   * the set of used indexes of each plan is the same
+        //   * the contents of the plan (the tree) are the same
+        colA.getTable().remove(idxA);
+        colA.getTable().remove(idxB);
     }
 }

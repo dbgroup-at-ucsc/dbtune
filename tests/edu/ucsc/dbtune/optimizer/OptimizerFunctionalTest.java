@@ -125,6 +125,15 @@ public class OptimizerFunctionalTest
     @Test
     public void testMonotonicity() throws Exception
     {
-        OptimizerTest.checkMonotonicity(opt);
+        OptimizerTest.checkMonotonicity(db.getCatalog(),opt);
+    }
+
+    /**
+     * @see OptimizerTest#checkSanity
+     */
+    @Test
+    public void testSanity() throws Exception
+    {
+        OptimizerTest.checkSanity(db.getCatalog(),opt);
     }
 }

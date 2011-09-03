@@ -103,9 +103,7 @@ public class Table extends DatabaseObject
     }
 
     /**
-     * Adds a index to the table. The position of the index in the table with respect to other 
-     * indexes is as if the table had. That is, if the table has n indexes, the new index will be 
-     * placed in the (n+1)th position.
+     * Adds an index to the table.
      *
      * @param index
      *     new index being added to the table.
@@ -115,11 +113,23 @@ public class Table extends DatabaseObject
         if(_indexes.contains(index))
             throw new SQLException("Index " + index + " already in table");
 
-        _indexes.add( index );
+        _indexes.add(index);
 
         // XXX: determine whether or not the properties of an added index have to be checked. For
         //      instance, if an index is already contained and is CLUSTERED, no other index can be
         //      added that is also CLUSTERED. Similarly for PRIMARY/SECONDARY.
+    }
+
+    /**
+     * Removes an index from the table.
+     *
+     * @param index
+     *     index being removed
+     */
+    public void remove(Index index) throws SQLException
+    {
+        _indexes.remove(index);
+        // XXX: determine whether or not we need to check the implications of the removal
     }
 
     /**

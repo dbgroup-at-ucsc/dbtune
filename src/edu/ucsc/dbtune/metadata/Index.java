@@ -472,10 +472,10 @@ public class Index extends DatabaseObject
     {
         return
             31 *
-            getTable().getSchema().getCatalog().hashCode() *
-            getTable().getSchema().hashCode() *
-            getTable().hashCode() *
-            getName().hashCode();
+            table.getSchema().getCatalog().hashCode() *
+            table.getSchema().hashCode() *
+            table.hashCode() *
+            name.hashCode();
         /*
             (new Integer(type)).hashCode() *
             (new Integer(scanOption)).hashCode() *
