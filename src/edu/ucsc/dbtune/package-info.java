@@ -46,7 +46,4 @@
  * Some phases are dependant on previous ones. For example, we can't recommend if we haven't created hypothetical 
  * configurations; we can't get hypothetical configurations if we haven't obtained metadata of a database; and so on.
  */
-@Generated(value={})
 package edu.ucsc.dbtune;
-
-import javax.annotation.Generated;

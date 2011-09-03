@@ -17,7 +17,4 @@
  * Definition of the {@link edu.ucsc.dbtune.metadata.extraction.MetadataExtractor}
  * and its implementations for the supported DBMS's.
  */
-@Generated(value={})
 package edu.ucsc.dbtune.metadata.extraction;
-
-import javax.annotation.Generated;

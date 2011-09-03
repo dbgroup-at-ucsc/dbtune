@@ -21,7 +21,4 @@
  * <p>
  * The information returned by an optimizer is represented by a {@link edu.ucsc.dbtune.optimizer.PreparedSQLStatement}.
  */
-@Generated(value={})
 package edu.ucsc.dbtune.optimizer;
-
-import javax.annotation.Generated;

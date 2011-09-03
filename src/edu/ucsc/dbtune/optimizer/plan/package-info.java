@@ -18,7 +18,4 @@
  * SQL statement. Each operator contained in a plan is represented by an instance of {@link 
  * edu.ucsc.dbtune.optimizer.plan.Operator}
  */
-@Generated(value={})
 package edu.ucsc.dbtune.optimizer.plan;
-
-import javax.annotation.Generated;

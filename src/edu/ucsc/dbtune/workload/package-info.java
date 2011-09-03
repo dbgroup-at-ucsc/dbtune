@@ -20,8 +20,4 @@
  * <p>
  * The {@link edu.ucsc.dbtune.workload.Workload} class facilitates the manipulation of SQL scripts.
  */
-@Generated(value={})
 package edu.ucsc.dbtune.workload;
-
-import javax.annotation.Generated;
-
