@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.core.optimizers.plan.SQLStatementPlan;
+import java.util.List;
 
 /**
  * An optimal query execution plan returned by the dbms's optimizer for
@@ -29,6 +30,11 @@ public interface OptimalPlan {
    * compute internal plan cost (subtract table access operations).
    */
   void computeInternalPlanCost();
+
+  /**
+   * @return an immutable list of subplans part of this optimal plan.
+   */
+  List<Subplan> getInternalPlans();
 
   /**
    * @return the cost of the first node in

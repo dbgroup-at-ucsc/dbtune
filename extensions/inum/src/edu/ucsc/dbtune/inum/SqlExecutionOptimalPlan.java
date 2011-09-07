@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import java.util.List;
 
@@ -24,23 +25,27 @@ public class SqlExecutionOptimalPlan implements OptimalPlan {
   }
 
   @Override public void computeInternalPlanCost() {
-    //tocode
+    //todo(Huascar) once the dbms changes are done
+  }
+
+  @Override public List<Subplan> getInternalPlans() {
+    return ImmutableList.copyOf(subplans);
   }
 
   @Override public double getTotalCost() {
-    return 0;  //tocode
+    return 0;  //todo(Huascar) once the dbms changes are done
   }
 
   @Override public double getAccessCost(String tableName) {
-    return 0;  //tocode
+    return 0; //todo(Huascar) once the dbms changes are done
   }
 
   @Override public double getInternalCost() {
-    return 0;  //tocode
+    return 0;  //todo(Huascar) once the dbms changes are done
   }
 
   @Override public boolean isDirty() {
-    return false;  //tocode
+    return false;  //todo(Huascar) once the dbms changes are done
   }
 
   @Override public boolean removeSubplan(Subplan subplan) {
@@ -48,7 +53,11 @@ public class SqlExecutionOptimalPlan implements OptimalPlan {
   }
 
   @Override public void setAccessCost(String tableName, double cost) {
-    //tocode
+    //todo(Huascar) once the dbms changes are done
+  }
+
+  @Override public String toString() {
+    return subplans.toString();
   }
 
   /**

@@ -3,8 +3,8 @@ package edu.ucsc.dbtune.inum;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.core.SharedFixtures;
 import edu.ucsc.dbtune.inum.InumInterestingOrdersExtractor.ColumnInformation;
-import java.sql.Connection;
 import java.util.Properties;
 import java.util.Set;
 import static org.hamcrest.CoreMatchers.is;
@@ -30,9 +30,9 @@ public class InterestingOrdersExtractorTest {
     assertThat(ios.isEmpty(), is(false));
   }
 
-  private static ColumnProperty configureProperty(){
+  private static ColumnProperty configureProperty() throws Exception {
     final ColumnProperty      prop       = Mockito.mock(ColumnProperty.class);
-    final DatabaseConnection  connection = configureDatabaseConnection();
+    final DatabaseConnection  connection = SharedFixtures.configureConnection();
     Mockito.when(prop.getDatabaseConnection()).thenReturn(connection);
     Mockito.doNothing().when(prop).refresh();
     final Set<ColumnInformation> info = populateColumnInformationSet();
@@ -71,12 +71,5 @@ public class InterestingOrdersExtractorTest {
     info.atttypid   = columnType;
     info.columnType = tip;
     return info;
-  }
-
-  private static DatabaseConnection configureDatabaseConnection(){
-    final DatabaseConnection mockConnection = Mockito.mock(DatabaseConnection.class);
-    Connection jdbcConnection = Mockito.mock(Connection.class);
-    Mockito.when(mockConnection.getJdbcConnection()).thenReturn(jdbcConnection);
-    return mockConnection;
   }
 }

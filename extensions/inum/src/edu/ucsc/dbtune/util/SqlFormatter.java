@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.util;
 
-import java.util.HashSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -11,13 +12,13 @@ import java.util.StringTokenizer;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class SqlFormatter {
-  private static final String WHITESPACE = " \n\r\f\t";
-  private static final Set<String> BEGIN_CLAUSES  = new HashSet<String>();
-  private static final Set<String> END_CLAUSES    = new HashSet<String>();
-  private static final Set<String> LOGICAL        = new HashSet<String>();
-  private static final Set<String> QUANTIFIERS    = new HashSet<String>();
-  private static final Set<String> DML            = new HashSet<String>();
-  private static final Set<String> MISC           = new HashSet<String>();
+  private static final String      WHITESPACE     = " \n\r\f\t";
+  private static final Set<String> BEGIN_CLAUSES  = Sets.newHashSet();
+  private static final Set<String> END_CLAUSES    = Sets.newHashSet();
+  private static final Set<String> LOGICAL        = Sets.newHashSet();
+  private static final Set<String> QUANTIFIERS    = Sets.newHashSet();
+  private static final Set<String> DML            = Sets.newHashSet();
+  private static final Set<String> MISC           = Sets.newHashSet();
 
   static {
 
@@ -70,8 +71,8 @@ public class SqlFormatter {
   boolean afterInsert = false;
   int inFunction = 0;
   int parensSinceSelect = 0;
-  private LinkedList<Integer> parenCounts = new LinkedList<Integer>();
-  private LinkedList<Boolean> afterByOrFromOrSelects = new LinkedList<Boolean>();
+  private LinkedList<Integer> parenCounts             = Lists.newLinkedList();
+  private LinkedList<Boolean> afterByOrFromOrSelects  = Lists.newLinkedList();
 
   int indent = 1;
 

@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
+import java.util.List;
+
 /**
  * A cached plan wraps a plan suggested by the optimizer and flips
  * the {@link OptimalPlan#isDirty() dirty flag} from dirty to not dirty (meaning
@@ -22,6 +24,10 @@ public class CachedSqlExecutionOptimalPlan implements OptimalPlan {
 
   @Override public void computeInternalPlanCost() {
     plan.computeInternalPlanCost();
+  }
+
+  @Override public List<Subplan> getInternalPlans() {
+    return plan.getInternalPlans();
   }
 
   @Override public double getTotalCost() {

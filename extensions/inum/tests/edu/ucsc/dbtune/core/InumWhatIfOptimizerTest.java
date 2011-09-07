@@ -1,7 +1,7 @@
-package edu.ucsc.dbtune.inum;
+package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.InumWhatIfOptimizer;
-import edu.ucsc.dbtune.core.InumWhatIfOptimizerImpl;
+import edu.ucsc.dbtune.inum.Inum;
+import edu.ucsc.dbtune.util.Objects;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -19,14 +19,20 @@ public class InumWhatIfOptimizerTest {
     assertThat(Double.compare(7.0, cost), equalTo(0));
   }
 
-  @Test public void testInvalidCostEstimationCall() throws Exception {
+  @Test public void testQueryCostEstimation_NonEmpty_HypotheticalIndexes() throws Exception {
+
+  }
+
+  @Test public void testStoppingInumDirectlyFromOptimizer() throws Exception {
     final InumWhatIfOptimizer optimizer = configureWhatIfOptimizer();
-    ((InumWhatIfOptimizerImpl)optimizer).endInum();
-    assertThat(((InumWhatIfOptimizerImpl)optimizer).getInum().isEnded(), is(true));
+    final InumWhatIfOptimizerImpl castOptimizer = Objects.cast(optimizer,
+        InumWhatIfOptimizerImpl.class);
+    castOptimizer.endInum();
+    assertThat(castOptimizer.getInum().isEnded(), is(true));
   }
 
   private static InumWhatIfOptimizer configureWhatIfOptimizer() throws Exception {
-    final Inum                inum      = InumTest.configureInum();
+    final Inum inum      = SharedFixtures.configureInum();
     return new InumWhatIfOptimizerImpl(inum);
   }
 }
