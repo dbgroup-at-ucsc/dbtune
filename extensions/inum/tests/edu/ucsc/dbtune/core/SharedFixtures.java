@@ -29,6 +29,10 @@ public final class SharedFixtures {
   public static DatabaseConnection configureConnection(DBIndex index) throws Exception {
     final Set<DBIndex> configuration = Sets.newHashSet();
     configuration.add(index);
+    return configureConnection(configuration);
+  }
+
+  public static DatabaseConnection configureConnection(Set<DBIndex> configuration) throws Exception {
     IndexExtractor extractor = Mockito.mock(IndexExtractor.class);
     Mockito.when(extractor.recommendIndexes(Mockito.anyString())).thenReturn(configuration);
     DatabaseConnection connection = Mockito.mock(DatabaseConnection.class);
@@ -41,7 +45,7 @@ public final class SharedFixtures {
   }
 
   public static DatabaseConnection configureConnection() throws Exception {
-    return configureConnection(configureIndex());
+    return configureConnection(configureConfiguration());
   }
 
   private static Connection configureJdbcConnection() throws Exception {
@@ -87,12 +91,16 @@ public final class SharedFixtures {
   }
 
   public static Inum configureInum() throws Exception {
-    final DBIndex                     index          = configureIndex(null);
-    final DatabaseConnection          connection     = configureConnection(index);
-    final InumSpace inumSpace      = configureInumSpace(index);
-    final Precomputation precomputation = configurePrecomputation(inumSpace);
-    final MatchingStrategy matchingLogic  = configureMatchingLogic(inumSpace);
-    final InterestingOrdersExtractor ioExtractor    = configureIOExtractor();
+    final Set<DBIndex>  configuration  = configureConfiguration();
+    return configureInum(configuration);
+  }
+
+  public static Inum configureInum(Set<DBIndex> configuration) throws Exception {
+    final DatabaseConnection          connection     = configureConnection(configuration);
+    final InumSpace                   inumSpace      = configureInumSpace(configuration);
+    final Precomputation              precomputation = configurePrecomputation(inumSpace);
+    final MatchingStrategy            matchingLogic  = configureMatchingLogic(inumSpace);
+    final InterestingOrdersExtractor  ioExtractor    = configureIOExtractor();
 
     return Inum.newInumInstance(connection, precomputation, matchingLogic, ioExtractor);
   }
@@ -110,16 +118,6 @@ public final class SharedFixtures {
 
     Mockito.when(extractor.extractInterestingOrders(Mockito.anyString())).thenReturn(indexes);
     return extractor;
-  }
-
-  public static InumSpace configureInumSpace(DBIndex index) throws Exception {
-    final InumSpace inumSpace = Mockito.mock(InumSpace.class);
-    final Set<OptimalPlan> plans = configureSingleOptimalPlan();
-    final Set<DBIndex> key = Sets.newHashSet();
-    key.add(index);
-    Mockito.when(inumSpace.getAllSavedOptimalPlans()).thenReturn(plans);
-    Mockito.when(inumSpace.save(key, plans)).thenReturn(plans);
-    return inumSpace;
   }
 
   public static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception {
@@ -178,5 +176,15 @@ public final class SharedFixtures {
     final Set<DBIndex> configurationOfOneIndex = Sets.newHashSet();
     configurationOfOneIndex.add(index);
     return configurationOfOneIndex;
+  }
+
+  public static InumWhatIfOptimizer configureWhatIfOptimizer() throws Exception {
+    final Inum inum      = configureInum();
+    return new InumWhatIfOptimizerImpl(inum);
+  }
+
+  public static InumWhatIfOptimizer configureWhatIfOptimizer(Set<DBIndex> configuration) throws Exception {
+    final Inum inum = configureInum(configuration);
+    return new InumWhatIfOptimizerImpl(inum);
   }
 }
