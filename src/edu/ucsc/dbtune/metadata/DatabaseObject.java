@@ -231,6 +231,8 @@ public abstract class DatabaseObject
     /*
     public abstract void getHypotheticalCreateStatement();
     public abstract void getMaterializeCreateStatement();
+    public abstract void getHypotheticalDropStatement();
+    public abstract void getMaterializeDropStatement();
     */
 
     /**

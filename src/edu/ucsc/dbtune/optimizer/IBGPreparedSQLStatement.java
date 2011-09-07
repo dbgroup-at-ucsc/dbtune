@@ -40,37 +40,6 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
     /**
-     * Constructs a prepared statement for the given statement.
-     *
-     * @param sql
-     *     corresponding statement
-     * @param configuration
-     *     configuration that the this new explained statement will be assigned to
-     * @param ibg
-     *     IBG that this new statement will use to execute what-if optimization calls
-     * @param bank
-     *     interaction bank used
-     * @param optimizationCount
-     *     number of optimization calls that were done to produce {@code other}
-     * @param analysisTime
-     *     time it took the optimizer to prepare the statement
-     */
-    public IBGPreparedSQLStatement(
-            SQLStatement      sql,
-            Configuration     configuration,
-            IndexBenefitGraph ibg,
-            InteractionBank   bank,
-            int               optimizationCount,
-            double            analysisTime )
-    {
-        super(sql, 0.0, configuration, optimizationCount);
-
-        this.ibg          = ibg;
-        this.bank         = bank;
-        this.analysisTime = analysisTime;
-    }
-
-    /**
      * Constructs a prepared statement out of another one and assigns the IBG-related information.
      *
      * @param other

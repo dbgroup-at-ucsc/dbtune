@@ -168,23 +168,19 @@ public class Configuration implements Iterable<Index>
     }
 
     /**
-     * Returns the index that has the given id.
+     * Returns the index that has the given ordinal position.
      *
-     * @param id
-     *     id of the index that is looked for
+     * @param position
+     *     ordinal position of the index that is looked for
      * @return
-     *     reference to index if found; {@code null} otherwise.
+     *     reference to index if found
+     * @throws ArrayIndexOutOfBoundsException
+     *     if the index is out of bounds with respect to the number of indexes contained in the 
+     *     configuration
      */
-    @Deprecated
-    public Index find(int id)
+    public Index getIndexAt(int position)
     {
-        // XXX: fix this
-        for (Index idx : this) {
-            if (idx.getInternalID() == id) {
-                return idx;
-            }
-        }
-        return null;
+        return _indexes.get(position);
     }
 
     /**

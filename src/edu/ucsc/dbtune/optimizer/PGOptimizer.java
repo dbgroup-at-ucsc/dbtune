@@ -24,7 +24,6 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -44,6 +43,8 @@ import java.util.Random;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
+import static edu.ucsc.dbtune.util.Strings.toDoubleArrayFromIndexed;
+import static edu.ucsc.dbtune.util.Strings.toIntegerArray;
 
 /**
  * The interface to the PostgreSQL optimizer.
@@ -110,58 +111,48 @@ public class PGOptimizer extends Optimizer
     public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes)
         throws SQLException
     {
-        ResultSet rs;
-        Statement stmt;
-        String[]  ohArray;
-        String[]  splitVals;
-        String    explainSql;
-        String    indexOverhead;
-        String    ohString;
-        double[]  maintCost;
-        double    totalCost;
-        double    overhead;
+        ResultSet        rs;
+        SQLStatementPlan sqlPlan;
+        Configuration    usedConf;
+        Statement        stmt;
+        String           xpln;
+        double[]         updateCost;
+        double           selectCost;
+        int[]            positions;
 
-        explainSql = "EXPLAIN INDEXES " + explainIndexListString(indexes) + sql.getSQL();
-        stmt       = connection.createStatement();
-        System.out.println("sql: " + explainSql);
-        rs         = stmt.executeQuery(explainSql);
+        xpln = "EXPLAIN INDEXES " + explainIndexListString(indexes) + " " + sql.getSQL();
+        stmt = connection.createStatement();
+        rs   = stmt.executeQuery(xpln);
 
-        if(!rs.next()) {
+        if(!rs.next())
             throw new SQLException("No result from EXPLAIN statement");
-        }
 
         sql.setSQLCategory(SQLCategory.from(rs.getString("category")));
-        indexOverhead = rs.getString("index_overhead");
-        ohArray       = indexOverhead.split(" ");
-        maintCost     = new double[indexes.size()];
 
-        verifyOverheadArray(indexes.size(), ohArray);
+        selectCost = Double.valueOf(rs.getString("qcost"));
 
-        for(int position = 0; position < indexes.size(); position++)
-        {
-            ohString  = ohArray[position];
-            splitVals = ohString.split("=");
-
-            Checks.checkAssertion(splitVals.length == 2, "We got an unexpected result in index_overhead.");
-
-            position = Integer.valueOf(splitVals[0]);
-            overhead = Double.valueOf(splitVals[1]);
-
-            maintCost[position] = overhead;
+        if(indexes.size() > 0) {
+            updateCost = toDoubleArrayFromIndexed(rs.getString("index_overhead").split(" "), "=");
+            positions  = toIntegerArray(rs.getString("indexes").split(" "));
+            usedConf   = getUsedConfiguration(indexes, positions);
+        } else {
+            usedConf   = new Configuration("empty");
+            updateCost = new double[0];
         }
 
-        totalCost = Double.valueOf(rs.getString("qcost"));
-
-        PreparedSQLStatement sqlStmt = new PreparedSQLStatement(sql,totalCost,maintCost,indexes,1);
-
-        if(obtainPlan) {
-            sqlStmt.setPlan(getPlan(connection,sql));
-        }
+        if(updateCost.length != indexes.size())
+            throw new SQLException(
+                updateCost.length + " update costs for " + indexes.size() + "indexes");
 
         rs.close();
         stmt.close();
 
-        return sqlStmt;
+        sqlPlan = null;
+
+        if(obtainPlan)
+            sqlPlan = getPlan(connection,sql);
+
+        return new PreparedSQLStatement(sql, sqlPlan, selectCost, updateCost, indexes, usedConf, 1);
     }
 
     /**
@@ -207,6 +198,15 @@ public class PGOptimizer extends Optimizer
         rs = st.executeQuery("SELECT version()");
 
         version = "0.0.0";
+
+        // sample output:
+        //
+        // test=# select version();
+        //
+        //                                           version
+        //  ------------------------------------------------------------------------------------------
+        //  PostgreSQL 8.3.0 on i686-pc-linux-gnu, compiled by GCC gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
+        //  (1 row)
 
         while(rs.next()) {
             version = rs.getString("version");
@@ -286,17 +286,25 @@ public class PGOptimizer extends Optimizer
         return creationText;
     }
 
-    private static void verifyOverheadArray(Integer cardinality, String[] ohArray) {
-        if(cardinality == 0){
-            // we expect ohArray to have one elt that is the empty string
-            // but don't complain if it's empty
-            if(ohArray.length != 0){
-                Checks.checkAssertion(ohArray.length == 1, "Too many elements in ohArray.");
-                Checks.checkAssertion(ohArray[0].length() == 0, "There is an unexpected element in ohArray.");
-            }
-        } else {
-            Checks.checkAssertion(cardinality == ohArray.length, "Wrong length of ohArray.");
-        }
+    /**
+     * Returns the set of indexes referred by the array of integers, where each element correspond 
+     * to the ordinal position of the {@link Index} contained in the configuration.
+     *
+     * @param configuration
+     *     referred configuration
+     * @param positions
+     *     integers referring to the ordinal position of {@link Index} objects contained in the 
+     *     configuration.
+     * @see Configuration#getOrdinalPosition
+     */
+    private static Configuration getUsedConfiguration(Configuration indexes, int[] positions)
+    {
+        Configuration conf = new Configuration("used_configuration");
+
+        for(int position : positions)
+            conf.add(indexes.getIndexAt(position));
+
+        return conf;
     }
 
     /**
@@ -306,7 +314,8 @@ public class PGOptimizer extends Optimizer
      *     a string containing the PG-dependent string representation of the given list, as the 
      *     EXPLAIN INDEXES statement expects it
      */
-    private static String explainIndexListString(Iterable<? extends Index> indexes) {
+    private static String explainIndexListString(Iterable<? extends Index> indexes)
+    {
         // It's important that this method generates the string in the same order that 
         // Configuration.iterator() produces the index list
         

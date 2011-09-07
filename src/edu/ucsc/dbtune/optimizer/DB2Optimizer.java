@@ -120,7 +120,7 @@ public class DB2Optimizer extends Optimizer
         double[] updateCosts  = new double[indexes.size()];
         Arrays.fill(updateCosts, updateCost);
 
-        return new PreparedSQLStatement(sql, totalCost, indexes, 1);
+        return new PreparedSQLStatement(sql, totalCost, indexes, new Configuration("none"), 1);
     }
 
     private SQLCategory getStatementType(Connection connection) throws SQLException {

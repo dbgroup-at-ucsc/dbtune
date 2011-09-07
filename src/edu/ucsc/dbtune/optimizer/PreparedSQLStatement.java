@@ -54,7 +54,7 @@ public class PreparedSQLStatement
     protected SQLStatementPlan plan;
 
     /** a list of indexes that are used by the optimized plan */
-    protected Configuration usedIndexes;
+    protected Configuration usedConfiguration;
 
     /**
      * For update statements, the cost that implies on each of the indexes containe in {@link 
@@ -85,30 +85,9 @@ public class PreparedSQLStatement
             SQLStatement sql,
             double cost,
             Configuration configuration,
+            Configuration usedConfiguration,
             int optimizationCount) {
-        this(sql, null, cost, null, configuration, optimizationCount);
-    }
-
-    /**
-     * construct a new {@code PreparedSQLStatement} for an update statement.
-     *
-     * @param sql
-     *      the statement
-     * @param cost
-     *      cost of SELECT shell.
-     * @param updateCosts
-     *      an array of incurred update costs, where each.
-     * @param configuration
-     *      configuration used to optimize the statement.
-     */
-    public PreparedSQLStatement(
-            SQLStatement sql,
-            double cost,
-            double[] updateCosts,
-            Configuration configuration,
-            int optimizationCount)
-    {
-        this(sql, null, cost, updateCosts, configuration, optimizationCount);
+        this(sql, null, cost, null, configuration, usedConfiguration, optimizationCount);
     }
 
     /**
@@ -117,7 +96,7 @@ public class PreparedSQLStatement
      * @param statement
      *     corresponding the statement
      * @param plan
-     *     the statement plan
+     *     the statement plan. Might be null.
      * @param cost
      *     the execution cost. For update statements, this cost corresponds only to the SELECT 
      *     shell, i.e. no update costs are considered
@@ -137,16 +116,17 @@ public class PreparedSQLStatement
             double cost,
             double[] updateCosts,
             Configuration configuration,
+            Configuration usedConfiguration,
             int optimizationCount)
     {
-        this.statement           = statement;
-        this.plan                = plan;
-        this.cost                = cost;
-        this.updateCosts         = updateCosts;
-        this.usedIndexes         = new Configuration("usedIndexes");
-        this.configuration       = configuration;
-        this.optimizationCount   = optimizationCount;
-        this.analysisTime        = 0.0;
+        this.statement         = statement;
+        this.plan              = plan;
+        this.cost              = cost;
+        this.updateCosts       = updateCosts;
+        this.configuration     = configuration;
+        this.usedConfiguration = usedConfiguration;
+        this.optimizationCount = optimizationCount;
+        this.analysisTime      = 0.0;
     }
 
     /**
@@ -157,12 +137,34 @@ public class PreparedSQLStatement
      */
     public PreparedSQLStatement(PreparedSQLStatement other)
     {
-        this.statement     = other.statement;
-        this.plan          = other.plan;
-        this.cost          = other.cost;
-        this.configuration = other.configuration;
-        this.updateCosts   = other.updateCosts;
-        this.usedIndexes   = other.usedIndexes;
+        this.statement         = other.statement;
+        this.plan              = other.plan;
+        this.cost              = other.cost;
+        this.configuration     = other.configuration;
+        this.updateCosts       = other.updateCosts;
+        this.usedConfiguration = other.usedConfiguration;
+    }
+
+    /**
+     * Assigns the cost of executing the statement.
+     *
+     * @param cost
+     *      the execution cost of the statement.
+     */
+    void setCost(double cost)
+    {
+        this.cost = cost;
+    }
+
+    /**
+     * Sets the configuration that the optimizer considered when it optimized the statement
+     *
+     * @param configuration
+     *     the list of indexes considered at optimization time.
+     */
+    void setConfiguration(Configuration configuration)
+    {
+        this.configuration = configuration;
     }
 
     /**
@@ -203,17 +205,6 @@ public class PreparedSQLStatement
     }
 
     /**
-     * Assigns the execution plan.
-     *
-     * @param plan
-     *     the plan
-     */
-    protected void setPlan(SQLStatementPlan plan)
-    {
-        this.plan = plan;
-    }
-
-    /**
      * Returns the cost of executing the statement. The cost returned is the cost that an optimizer 
      * estimated given the set of physical structures contained in {@link #getConfiguration}. For 
      * update statements, this cost doesn't correspond only to the SELECT shell, i.e. no update 
@@ -225,28 +216,6 @@ public class PreparedSQLStatement
     public double getCost()
     {
         return cost;
-    }
-
-    /**
-     * Assigns the cost of executing the statement.
-     *
-     * @param cost
-     *      the execution cost of the statement.
-     */
-    protected void setCost(double cost)
-    {
-        this.cost = cost;
-    }
-
-    /**
-     * Sets the configuration that the optimizer considered when it optimized the statement
-     *
-     * @param configuration
-     *     the list of indexes considered at optimization time.
-     */
-    protected void setConfiguration(Configuration configuration)
-    {
-        this.configuration = configuration;
     }
 
     /**
@@ -271,7 +240,7 @@ public class PreparedSQLStatement
             return 0.0;
         }
 
-        int position = configuration.getIndexes().indexOf(index);
+        int position = configuration.getOrdinalPosition(index);
 
         if(position == -1) {
             throw new RuntimeException("Wrong position in configuration " + position);
@@ -349,12 +318,13 @@ public class PreparedSQLStatement
      */
     public boolean isUsed(Index index)
     {
-        return usedIndexes.contains(index);
+        return usedConfiguration.contains(index);
     }
 
     /**
      * Returns the configuration that the optimizer considered when it optimized the statement. Note 
-     * that this is different from {@link #getUsedConfiguration}
+     * that this is different from {@link #getUsedConfiguration} and {@link 
+     * #getUpdatedConfiguration}.
      *
      * @return
      *     the list of indexes considered at optimization time.
@@ -366,7 +336,7 @@ public class PreparedSQLStatement
 
     /**
      * Returns the set of indexes that are used by the plan. Note that this is different from {@link 
-     * #getConfiguration} and, for update statements, from {@link #getUpdatedConfiguration}.
+     * #getConfiguration} and {@link #getUpdatedConfiguration}.
      *
      * @return
      *     the configuration that is used by the execution plan, i.e. the set of physical structures 

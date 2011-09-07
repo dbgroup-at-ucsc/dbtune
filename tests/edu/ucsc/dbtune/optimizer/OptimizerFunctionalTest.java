@@ -16,13 +16,8 @@
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
-import edu.ucsc.dbtune.workload.SQLCategory;
-import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.Connection;
 
@@ -33,12 +28,6 @@ import org.junit.Test;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
-
-import static org.junit.Assert.assertThat;
-
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.greaterThan;
 
 /**
  * Functional test for optimizer implementations. The optimizer being tested is specified by the 
@@ -53,7 +42,6 @@ import static org.hamcrest.Matchers.greaterThan;
  */
 public class OptimizerFunctionalTest
 {
-    // XXX: test with a workload, eg. tpc-ds
     public static DatabaseSystem db;
     public static Environment    env;
     public static Optimizer      opt;
@@ -106,6 +94,15 @@ public class OptimizerFunctionalTest
     public void testRecommendIndexes() throws Exception
     {
         OptimizerTest.checkRecommendIndexes(opt);
+    }
+
+    /**
+     * @see OptimizerTest#checkUsedIndexes
+     */
+    @Test
+    public void testUsedIndexes() throws Exception
+    {
+        OptimizerTest.checkUsedConfiguration(db.getCatalog(), opt);
     }
 
     /**

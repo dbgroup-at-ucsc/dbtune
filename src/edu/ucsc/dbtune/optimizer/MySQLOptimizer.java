@@ -35,25 +35,11 @@ public class MySQLOptimizer extends Optimizer
      *
      * @param connection
      *     JDBC connection used to communicate to a PostgreSQL system.
-     * @param catalog
-     *     can be null. A {@link Catalog} where metadata of an object referred by an operator is 
-     *     stored. If not null, it is used to bind operator references to actual metadata objects.
      * @throws SQLException
      *     if an error occurs while communicating to the server.
      */
-    public MySQLOptimizer(Connection connection, Catalog catalog) throws SQLException
-    {
-    }
-
-    /**
-     * Creates an optimizer that doesn't obtain execution plans.
-     *
-     * @param connection
-     *     JDBC connection
-     */
     public MySQLOptimizer(Connection connection) throws SQLException
     {
-        this(connection,null);
     }
 
     /**
