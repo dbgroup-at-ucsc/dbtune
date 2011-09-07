@@ -1,11 +1,11 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.caliper.internal.guava.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.inum.OptimalPlan.Subplan;
 import edu.ucsc.dbtune.inum.SqlExecutionOptimalPlan.InternalSubplan;
-import edu.ucsc.dbtune.inum.commons.Pair;
+import edu.ucsc.dbtune.util.Pair;
 import edu.ucsc.dbtune.util.Strings;
 import static java.util.Arrays.asList;
 import java.util.List;

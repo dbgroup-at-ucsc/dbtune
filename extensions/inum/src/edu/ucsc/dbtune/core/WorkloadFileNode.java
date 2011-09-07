@@ -1,8 +1,7 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.inum.commons.Pair;
+import edu.ucsc.dbtune.util.Pair;
 import java.io.File;
-import java.util.Map;
 
 /**
  * ...

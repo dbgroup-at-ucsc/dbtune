@@ -10,12 +10,12 @@ import Zql.ZQuery;
 import Zql.ZSelectItem;
 import Zql.ZUtils;
 import Zql.ZqlParser;
-import com.google.caliper.internal.guava.collect.ImmutableList;
-import com.google.caliper.internal.guava.collect.Maps;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
@@ -117,24 +117,6 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     else if (x== 1114)  { return "timestamp";       }
     else { System.out.println("Unknown type: " + x);}
     return "";
-  }
-
-  public static double getRelPages(String virtualTableName, DatabaseConnection connection) {
-    int size = 0;
-    final String sqlquery = "select relpages from pg_class where relname = '" + virtualTableName
-        + "'";
-    try {
-      final Statement statement = connection.getJdbcConnection().createStatement();
-      final ResultSet resultSet = statement.executeQuery(sqlquery);
-      if (resultSet == null) { return size; }
-      while (resultSet.next()) {
-        size = new Integer(resultSet.getString(1));
-      }
-    } catch (SQLException ex) {
-      Console.streaming().error("unable to execute query=" + sqlquery, ex);
-      throw new InumExecutionException("unable to execute query");
-    }
-    return size;
   }
 
   private static Collection<? extends DBIndex> interestingOrdersSpace(List<QueryRecord> records) {
@@ -592,7 +574,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     }
   }
 
-  // temporary placeholder for indexes in INUM. This will be changed with Ivo's new Index.
+  // todo(Huascar) temporary placeholder for indexes in INUM. This will be changed with Ivo's new Index.
   private static class IndexShell extends AbstractIndex {
     private final String      name;
     private final String      table;

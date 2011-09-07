@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.core;
 
 import com.google.common.collect.Maps;
-import edu.ucsc.dbtune.inum.commons.Pair;
+import edu.ucsc.dbtune.util.Pair;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Strings;
 import java.io.File;
