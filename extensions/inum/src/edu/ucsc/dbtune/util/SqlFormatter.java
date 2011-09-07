@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.core;
+package edu.ucsc.dbtune.util;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 /**
- * ...
+ * Nicely formats SQL statements.
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
