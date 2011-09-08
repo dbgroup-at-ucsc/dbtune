@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.util;
 
 import com.google.common.collect.Sets;
+import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.core.metadata.Index;
 import java.util.Set;
 
 /**
@@ -49,12 +51,21 @@ public class Combinations {
     return result;
 	}
 
-  public static <T> Set<Set<T>> findCombinations(Iterable<T> elements){
+  @Deprecated public static <T> Set<Set<T>> findCombinations(Iterable<T> elements){
     Set<Set<T>> result = Sets.newHashSet();
 
     final Set<T> source = Sets.newHashSet(elements);
     for (int i = 0; i <= source.size(); i++){
       result.addAll(findCombinations(elements, i));
+    }
+    return result;
+  }
+
+  public static Set<Set<Index>> findCombinations(Configuration elements){
+    Set<Set<Index>> result = Sets.newHashSet();
+    final Set<Index> source = Sets.newHashSet(elements.getIndexes());
+    for (int i = 0; i <= source.size(); i++){
+      result.addAll(findCombinations(elements.getIndexes(), i));
     }
     return result;
   }

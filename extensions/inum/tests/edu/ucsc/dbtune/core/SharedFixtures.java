@@ -2,6 +2,14 @@ package edu.ucsc.dbtune.core;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import static edu.ucsc.dbtune.core.SharedFixtures.NameGenerator.generateRandomName;
+import edu.ucsc.dbtune.core.metadata.Column;
+import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.core.metadata.Index;
+import static edu.ucsc.dbtune.core.metadata.Index.CLUSTERED;
+import static edu.ucsc.dbtune.core.metadata.Index.UNIQUE;
+import static edu.ucsc.dbtune.core.metadata.SQLTypes.INTEGER;
+import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.inum.IndexAccessCostEstimation;
 import edu.ucsc.dbtune.inum.InterestingOrdersExtractor;
 import edu.ucsc.dbtune.inum.Inum;
@@ -15,6 +23,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.mockito.Mockito;
 
@@ -171,11 +180,27 @@ public final class SharedFixtures {
     return new HashSet<OptimalPlan>(){{add(optimalPlan);}};
   }
 
-  public static Set<DBIndex> configureConfiguration() throws Exception {
+  @Deprecated public static Set<DBIndex> configureConfiguration() throws Exception {
     final DBIndex index = configureIndex();
     final Set<DBIndex> configurationOfOneIndex = Sets.newHashSet();
     configurationOfOneIndex.add(index);
     return configurationOfOneIndex;
+  }
+
+  public static Configuration configureConfiguration(Table table, int noIndexes, int noColsPerIndex) throws Exception {
+    final List<Column> cols = Lists.newArrayList();
+    final List<Index>  idxs = Lists.newArrayList();
+    for(int idx = 0; idx < noIndexes; idx++) {
+      for(int idx2 = 0; idx2 < noColsPerIndex; idx2 ++) {
+        final Column col = new Column(generateRandomName(), INTEGER );
+        col.setTable(table);
+        cols.add(col);
+      }
+      idxs.add(new Index(cols, idx == 0, CLUSTERED, UNIQUE));
+      cols.clear();
+    }
+
+    return new Configuration(idxs);
   }
 
   public static InumWhatIfOptimizer configureWhatIfOptimizer() throws Exception {
@@ -186,5 +211,52 @@ public final class SharedFixtures {
   public static InumWhatIfOptimizer configureWhatIfOptimizer(Set<DBIndex> configuration) throws Exception {
     final Inum inum = configureInum(configuration);
     return new InumWhatIfOptimizerImpl(inum);
+  }
+
+
+  static class CharacterFrequency {
+    char  character;
+    float frequency;
+    CharacterFrequency(char character, float frequency){
+      this.character = character;
+      this.frequency = frequency;
+    }
+  }
+
+  public static class NameGenerator {
+    static CharacterFrequency[] frequencies = new CharacterFrequency[]{
+         new CharacterFrequency('a', 0.8f),
+         new CharacterFrequency('c', 0.4f),
+         new CharacterFrequency('g', 0.2f),
+         new CharacterFrequency('t', 0.6f)
+    };
+
+    public static String generateRandomName(){
+      return generateName(frequencies.length);
+    }
+
+    public static String generateName(int noCharacters){
+      final StringBuilder name = new StringBuilder();
+      for(int idx = 0; idx < noCharacters; idx ++){
+        name.append(getRandomCharacter());
+      }
+      return name.toString();
+    }
+
+    private static char getRandomCharacter() {
+      final float v = (float) Math.random();
+
+      char  c = frequencies[0].character;
+      float f = frequencies[0].frequency;
+
+      for (CharacterFrequency eachCharFreq : frequencies) {
+        if (v < eachCharFreq.frequency && eachCharFreq.frequency < f) {
+          c = eachCharFreq.character;
+          f = eachCharFreq.frequency;
+        }
+      }
+
+      return c;
+    }
   }
 }

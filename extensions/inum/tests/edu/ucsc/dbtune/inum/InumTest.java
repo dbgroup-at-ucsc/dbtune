@@ -1,9 +1,16 @@
 package edu.ucsc.dbtune.inum;
 
+import com.google.caliper.internal.guava.collect.Lists;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.SharedFixtures;
+import edu.ucsc.dbtune.core.metadata.Column;
+import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.core.metadata.Index;
+import static edu.ucsc.dbtune.core.metadata.SQLTypes.INTEGER;
+import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.util.Combinations;
+import java.util.List;
 import java.util.Set;
 import org.hamcrest.CoreMatchers;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -26,14 +33,13 @@ public class InumTest {
   }
 
   @Test public void testCombinationGeneration() throws Exception {
-    final Set<DummyIndex> indexes = Sets.newHashSet();
-    for(int idx = 0; idx < 3; idx++){
-      indexes.add(new DummyIndex(SharedFixtures.configureIndex("create index " + idx)));
-    }
+    final Table        table   = new Table("persons");
+    final Configuration interestingOrders = SharedFixtures.configureConfiguration(table, 3, 3);
 
-    final Set<Set<DummyIndex>> combinations = Combinations.findCombinations(indexes);
+    final Set<Set<Index>> combinations = Combinations.findCombinations(interestingOrders);
     assertThat(combinations.size(), equalTo(8));
   }
+
 
   @Test (expected = InumExecutionException.class) public void testInumShutdown() throws Exception {
     final Inum inum = SharedFixtures.configureInum();
