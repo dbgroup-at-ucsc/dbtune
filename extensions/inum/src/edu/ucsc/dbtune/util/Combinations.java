@@ -1,8 +1,10 @@
 package edu.ucsc.dbtune.util;
 
+import com.google.caliper.internal.guava.collect.Lists;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.core.metadata.Index;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -61,12 +63,19 @@ public class Combinations {
     return result;
   }
 
-  public static Set<Set<Index>> findCombinations(Configuration elements){
-    Set<Set<Index>> result = Sets.newHashSet();
+  public static Set<Configuration> findCombinations(Configuration elements){
+    // todo(Huascar) too slow..not sorted...needs improvement...
+    Set<Set<Index>>  result = Sets.newHashSet();
     final Set<Index> source = Sets.newHashSet(elements.getIndexes());
     for (int i = 0; i <= source.size(); i++){
       result.addAll(findCombinations(elements.getIndexes(), i));
     }
-    return result;
+
+    final Set<Configuration> combinations = Sets.newHashSet();
+    for(Set<Index> each : result){
+      combinations.add(new Configuration(Lists.<Index>newArrayList(each)));
+    }
+
+    return combinations;
   }
 }

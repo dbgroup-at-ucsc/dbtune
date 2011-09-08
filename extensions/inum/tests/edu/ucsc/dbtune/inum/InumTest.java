@@ -1,16 +1,11 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.caliper.internal.guava.collect.Lists;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.SharedFixtures;
-import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.Configuration;
-import edu.ucsc.dbtune.core.metadata.Index;
-import static edu.ucsc.dbtune.core.metadata.SQLTypes.INTEGER;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.util.Combinations;
-import java.util.List;
 import java.util.Set;
 import org.hamcrest.CoreMatchers;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -36,7 +31,7 @@ public class InumTest {
     final Table        table   = new Table("persons");
     final Configuration interestingOrders = SharedFixtures.configureConfiguration(table, 3, 3);
 
-    final Set<Set<Index>> combinations = Combinations.findCombinations(interestingOrders);
+    final Set<Configuration> combinations = Combinations.findCombinations(interestingOrders);
     assertThat(combinations.size(), equalTo(8));
   }
 
