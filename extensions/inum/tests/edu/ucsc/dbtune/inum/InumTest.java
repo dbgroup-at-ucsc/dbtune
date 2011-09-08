@@ -42,17 +42,4 @@ public class InumTest {
     inum.estimateCost("lalala", Sets.<DBIndex>newHashSet());
     fail("if we reached this line...then test has failed");
   }
-
-  private static class DummyIndex implements
-      Comparable<DummyIndex> /*comparable? why? just because we want to be able to sort them....*/ {
-    private final DBIndex index;
-
-    DummyIndex(DBIndex index){
-      this.index = index;
-    }
-
-    @Override public int compareTo(DummyIndex comparableIndex) {
-      return index.creationText().compareTo(comparableIndex.index.creationText());
-    }
-  }
 }

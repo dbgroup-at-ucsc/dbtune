@@ -4,7 +4,6 @@ import com.google.caliper.internal.guava.collect.Lists;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.core.metadata.Index;
-import java.util.Collections;
 import java.util.Set;
 
 /**
