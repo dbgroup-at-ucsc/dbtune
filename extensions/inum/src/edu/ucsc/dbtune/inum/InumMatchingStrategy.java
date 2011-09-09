@@ -1,10 +1,11 @@
 package edu.ucsc.dbtune.inum;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.core.metadata.Index;
 import static java.lang.Double.compare;
 import java.util.Set;
 
@@ -24,37 +25,12 @@ public class InumMatchingStrategy implements MatchingStrategy {
     this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
   }
 
-  @Override public IndexAccessCostEstimation getIndexAccessCostEstimation() {
-    return accessCostEstimator;
-  }
-
   @Override
   public double derivesCost(String query, OptimalPlan optimalPlan,
-      Iterable<DBIndex> inputConfiguration) {
+      Configuration inputConfiguration) {
     // adding the cached cost + index access costs
     final double indexAccessCosts = getIndexAccessCostEstimation().estimateIndexAccessCost(query, inputConfiguration);
     return sumCachedCosts(optimalPlan) + indexAccessCosts;
-  }
-
-  private static double sumCachedCosts(OptimalPlan optimalPlan){
-    optimalPlan.computeInternalPlanCost();  // sum all subplans' costs.
-    return optimalPlan.getInternalCost();
-  }
-
-  @Override
-  public OptimalPlan matches(InumSpace inumSpace, Iterable<DBIndex> inputConfiguration) {
-    final Set<OptimalPlan> found = Sets.newHashSet();
-    // assuming there is a match, pick the one with the min cost.
-    final Set<DBIndex> key = Sets.newHashSet(inputConfiguration);
-    for(Set<DBIndex> match : inumSpace.getAllInterestingOrders()){
-      if(!Sets.intersection(match, key).isEmpty()){
-        final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(key);
-        found.addAll(optimalPlans);
-        break;
-      }
-    }
-
-    return findOneWithMinCost(found);
   }
 
   private static OptimalPlan findOneWithMinCost(Set<OptimalPlan> matches){
@@ -65,5 +41,55 @@ public class InumMatchingStrategy implements MatchingStrategy {
       }
     }
     return min;
+  }
+
+  @Override public IndexAccessCostEstimation getIndexAccessCostEstimation() {
+    return accessCostEstimator;
+  }
+
+  private static boolean intersects(Configuration first, Configuration second){
+    final Configuration c = new Configuration(Lists.<Index>newArrayList());
+    // todo(Ivo) how is the cardinality of the config tied to the # of indexes the config contains?
+    // they don't seem connected. For example..Initially, I wanted to write first.getCardinality() <
+    // second.getCardinality(), but this did not work since the cardinality was 0. Therefore, I ended
+    // up using first.getIndexes().size()....etc. If the intention was to update the cardinality of
+    // the configuration based on the # of stored indexes, then there is a bug in the configuration
+    // class.
+    if (first.getIndexes().size() < second.getIndexes().size()) {
+      for (Index x : first.getIndexes()) {
+        if (second.getIndexes().contains(x)) {
+          c.add(x);
+        }
+      }
+    } else {
+      for (Index x : second.getIndexes()) {
+        if (first.getIndexes().contains(x)) {
+          c.add(x);
+        }
+      }
+    }
+
+    return !c.getIndexes().isEmpty();
+  }
+
+  @Override
+  public OptimalPlan matches(InumSpace inumSpace, Configuration inputConfiguration) {
+    final Set<OptimalPlan> found = Sets.newHashSet();
+    // assuming there is a match, pick the one with the min cost.
+    final Configuration key = new Configuration(inputConfiguration);
+    for(Configuration match : inumSpace.getAllInterestingOrders()){
+      if(intersects(match, key)){
+        final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(key);
+        found.addAll(optimalPlans);
+        break;
+      }
+    }
+
+    return findOneWithMinCost(found);
+  }
+
+  private static double sumCachedCosts(OptimalPlan optimalPlan){
+    optimalPlan.computeInternalPlanCost();  // sum all subplans' costs.
+    return optimalPlan.getInternalCost();
   }
 }

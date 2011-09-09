@@ -1,9 +1,8 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.SharedFixtures;
-import java.util.Set;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import org.junit.After;
@@ -32,8 +31,8 @@ public class InumPrecomputationTest {
   }
 
   @Test public void testInumSpaceBuilding_SingleElement() throws Exception {
-    final Precomputation setup = new InumPrecomputation(mockConnection);
-    final Set<DBIndex> configurationOfOneIndex = SharedFixtures.configureConfiguration();
+    final Precomputation setup                   = new InumPrecomputation(mockConnection);
+    final Configuration  configurationOfOneIndex = SharedFixtures.configureConfiguration();
     setup.setup("Some query", configurationOfOneIndex);
 
     final InumSpace is = setup.getInumSpace();
@@ -44,7 +43,7 @@ public class InumPrecomputationTest {
 
   @Test public void testSkippingQuery() throws Exception {
     final Precomputation setup = new InumPrecomputation(mockConnection);
-    final Set<DBIndex> configurationOfOneIndex = SharedFixtures.configureConfiguration();
+    final Configuration configurationOfOneIndex = SharedFixtures.configureConfiguration();
     setup.setup("Some query", configurationOfOneIndex);
     assertThat(setup.skip("Some query"), is(true));
   }

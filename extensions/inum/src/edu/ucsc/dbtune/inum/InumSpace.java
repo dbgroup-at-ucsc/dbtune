@@ -1,13 +1,13 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import java.util.Set;
 
 /**
  * It represents the INUM Space or Cached Plans. This cache is
  * a {@code set} that contains, for each {@code query}, a number of
  * alternative execution plans. Each plan in the INUM Space is
- * optimal for one or more possible {@link Iterable<DBIndex> input}
+ * optimal for one or more possible {@link Configuration input}
  * configurations.
  *
  * The correctness of the INUM Space is guaranteed by these two
@@ -43,12 +43,12 @@ public interface InumSpace {
    * @return
    *    the set of cached optimal plans for the given key.
    */
-  Set<OptimalPlan> getOptimalPlans(Set<DBIndex> key);
+  Set<OptimalPlan> getOptimalPlans(Configuration key);
 
   /**
    * @return the set of interesting orders.
    */
-  Set<Set<DBIndex>> getAllInterestingOrders();
+  Set<Configuration> getAllInterestingOrders();
 
   /**
    * Get all the {@link OptimalPlan optimal plan}s from the
@@ -72,5 +72,5 @@ public interface InumSpace {
    *      a reference to the set of saved optimal plans, useful if you wish to hold a reference to
    *      the set for checking post-conditions or other purposes (e.g., logging).
    */
-  Set<OptimalPlan> save(Set<DBIndex> interestingOrders, Set<OptimalPlan> optimalPlans);
+  Set<OptimalPlan> save(Configuration interestingOrders, Set<OptimalPlan> optimalPlans);
 }

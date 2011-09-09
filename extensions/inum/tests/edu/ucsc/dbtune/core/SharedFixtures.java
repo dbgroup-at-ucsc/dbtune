@@ -17,7 +17,6 @@ import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.inum.MatchingStrategy;
 import edu.ucsc.dbtune.inum.OptimalPlan;
 import edu.ucsc.dbtune.inum.Precomputation;
-import edu.ucsc.dbtune.util.Strings;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,26 +34,13 @@ import org.mockito.Mockito;
 public final class SharedFixtures {
   private SharedFixtures(){}
 
-  public static DatabaseConnection configureConnection(DBIndex index) throws Exception {
-    final Set<DBIndex> configuration = Sets.newHashSet();
-    configuration.add(index);
-    return configureConnection(configuration);
-  }
-
-  public static DatabaseConnection configureConnection(Set<DBIndex> configuration) throws Exception {
-    IndexExtractor extractor = Mockito.mock(IndexExtractor.class);
-    Mockito.when(extractor.recommendIndexes(Mockito.anyString())).thenReturn(configuration);
+  public static DatabaseConnection configureConnection() throws Exception {
     DatabaseConnection connection = Mockito.mock(DatabaseConnection.class);
     Connection jdbcConnection = configureJdbcConnection();
-    Mockito.when(connection.getIndexExtractor()).thenReturn(extractor);
     Mockito.when(connection.getJdbcConnection()).thenReturn(jdbcConnection);
     Mockito.when(connection.isOpened()).thenReturn(true);
     Mockito.when(connection.isClosed()).thenReturn(false);
     return connection;
-  }
-
-  public static DatabaseConnection configureConnection() throws Exception {
-    return configureConnection(configureConfiguration());
   }
 
   private static Connection configureJdbcConnection() throws Exception {
@@ -86,55 +72,39 @@ public final class SharedFixtures {
     return Mockito.mock(ResultSet.class);
   }
 
-  public static DBIndex configureIndex(String text) {
-    DBIndex soleOne = Mockito.mock(DBIndex.class);
-    Mockito.when(soleOne.internalId()).thenReturn(1);
-    Mockito.when(soleOne.creationCost()).thenReturn(2.0);
-    if(!Strings.isEmpty(text)) Mockito.when(soleOne.creationText()).thenReturn(text);
-    Mockito.when(soleOne.columnCount()).thenReturn(1);
-    return soleOne;
-  }
-
-  public static DBIndex configureIndex() throws Exception {
-    return configureIndex(null);
-  }
-
   public static Inum configureInum() throws Exception {
-    final Set<DBIndex>  configuration  = configureConfiguration();
+    final Configuration  configuration  = configureConfiguration();
     return configureInum(configuration);
   }
 
-  public static Inum configureInum(Set<DBIndex> configuration) throws Exception {
-    final DatabaseConnection          connection     = configureConnection(configuration);
+  public static Inum configureInum(Configuration configuration) throws Exception {
+    final DatabaseConnection          connection     = configureConnection();
     final InumSpace                   inumSpace      = configureInumSpace(configuration);
     final Precomputation              precomputation = configurePrecomputation(inumSpace);
     final MatchingStrategy            matchingLogic  = configureMatchingLogic(inumSpace);
-    final InterestingOrdersExtractor  ioExtractor    = configureIOExtractor();
+    final InterestingOrdersExtractor  ioExtractor    = configureIOExtractor(configuration);
 
     return Inum.newInumInstance(connection, precomputation, matchingLogic, ioExtractor);
   }
 
-  public static InterestingOrdersExtractor configureIOExtractor(){
+  public static InterestingOrdersExtractor configureIOExtractor(Configuration configuration) throws Exception {
     final InterestingOrdersExtractor extractor = Mockito.mock(InterestingOrdersExtractor.class);
-    final DBIndex idx1 = configureIndex("1");
-    final DBIndex idx2 = configureIndex("2");
-    final DBIndex idx3 = configureIndex("3");
-
-    final Set<DBIndex> indexes = Sets.newHashSet();
-    indexes.add(idx1);
-    indexes.add(idx2);
-    indexes.add(idx3);
-
+    final Configuration indexes = new Configuration(configuration);
     Mockito.when(extractor.extractInterestingOrders(Mockito.anyString())).thenReturn(indexes);
     return extractor;
+  }
+
+  public static InterestingOrdersExtractor configureIOExtractor() throws Exception {
+    final Configuration indexes = configureConfiguration(new Table("test"), 3, 3);
+    return configureIOExtractor(indexes);
   }
 
   public static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception {
     final MatchingStrategy matchingLogic = Mockito.mock(MatchingStrategy.class);
     final OptimalPlan plan = Lists.newArrayList(inumSpace.getAllSavedOptimalPlans()).get(0);
-    Mockito.when(matchingLogic.matches(Mockito.eq(inumSpace), Mockito.anySetOf(DBIndex.class))).thenReturn(plan);
+    Mockito.when(matchingLogic.matches(Mockito.eq(inumSpace), Mockito.<Configuration>any())).thenReturn(plan);
     final double cost = plan.getTotalCost();
-    Mockito.when(matchingLogic.derivesCost(Mockito.anyString(), Mockito.eq(plan), Mockito.anySetOf(DBIndex.class))).thenReturn(cost);
+    Mockito.when(matchingLogic.derivesCost(Mockito.anyString(), Mockito.eq(plan), Mockito.<Configuration>any())).thenReturn(cost);
     return matchingLogic;
   }
 
@@ -142,7 +112,7 @@ public final class SharedFixtures {
     final Precomputation    setup     = Mockito.mock(Precomputation.class);
     Mockito.when(setup.getInumSpace()).thenReturn(inumSpace);
     final Set<OptimalPlan> plans = inumSpace.getAllSavedOptimalPlans();
-    Mockito.when(setup.setup(Mockito.anyString(), Mockito.anySetOf(DBIndex.class))).thenReturn(plans);
+    Mockito.when(setup.setup(Mockito.anyString(), Mockito.<Configuration>any())).thenReturn(plans);
 
     return setup;
   }
@@ -158,12 +128,12 @@ public final class SharedFixtures {
     return singleOne;
   }
 
-  public static InumSpace configureInumSpace(Set<DBIndex> key) throws Exception {
+  public static InumSpace configureInumSpace(Configuration key) throws Exception {
     final InumSpace inumSpace = Mockito.mock(InumSpace.class);
     final Set<OptimalPlan> plans = configureSingleOptimalPlan();
     Mockito.when(inumSpace.getAllSavedOptimalPlans()).thenReturn(plans);
     Mockito.when(inumSpace.save(key, plans)).thenReturn(plans);
-    final Set<Set<DBIndex>> ios = Sets.newHashSet();
+    final Set<Configuration> ios = Sets.newHashSet();
     ios.add(key);
     Mockito.when(inumSpace.getAllInterestingOrders()).thenReturn(ios);
     return inumSpace;
@@ -171,7 +141,7 @@ public final class SharedFixtures {
 
   public static IndexAccessCostEstimation configureEstimator() {
     final IndexAccessCostEstimation estimation = Mockito.mock(IndexAccessCostEstimation.class);
-    Mockito.when(estimation.estimateIndexAccessCost(Mockito.anyString(), Mockito.anySetOf(DBIndex.class))).thenReturn(10.0);
+    Mockito.when(estimation.estimateIndexAccessCost(Mockito.anyString(), Mockito.<Configuration>any())).thenReturn(10.0);
     return estimation;
   }
 
@@ -180,11 +150,8 @@ public final class SharedFixtures {
     return new HashSet<OptimalPlan>(){{add(optimalPlan);}};
   }
 
-  @Deprecated public static Set<DBIndex> configureConfiguration() throws Exception {
-    final DBIndex index = configureIndex();
-    final Set<DBIndex> configurationOfOneIndex = Sets.newHashSet();
-    configurationOfOneIndex.add(index);
-    return configurationOfOneIndex;
+  public static Configuration configureConfiguration() throws Exception {
+    return configureConfiguration(new Table("test"), 1, 2);
   }
 
   public static Configuration configureConfiguration(Table table, int noIndexes, int noColsPerIndex) throws Exception {
@@ -208,7 +175,7 @@ public final class SharedFixtures {
     return new InumWhatIfOptimizerImpl(inum);
   }
 
-  public static InumWhatIfOptimizer configureWhatIfOptimizer(Set<DBIndex> configuration) throws Exception {
+  public static InumWhatIfOptimizer configureWhatIfOptimizer(Configuration configuration) throws Exception {
     final Inum inum = configureInum(configuration);
     return new InumWhatIfOptimizerImpl(inum);
   }

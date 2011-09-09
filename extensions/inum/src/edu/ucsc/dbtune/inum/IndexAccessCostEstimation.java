@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 
 /**
  * Whenever the query cost for some input configuration needs to be evaluated,
@@ -24,5 +24,5 @@ public interface IndexAccessCostEstimation {
    * @return
    *    the cost of accessing the given index.
    */
-  double estimateIndexAccessCost(String query, Iterable<DBIndex> indexes);
+  double estimateIndexAccessCost(String query, Configuration indexes);
 }

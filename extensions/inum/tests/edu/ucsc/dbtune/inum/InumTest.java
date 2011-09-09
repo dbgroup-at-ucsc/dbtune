@@ -1,9 +1,9 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.core.DBIndex;
+import com.google.common.collect.Lists;
 import edu.ucsc.dbtune.core.SharedFixtures;
 import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.core.metadata.Index;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.util.Combinations;
 import java.util.Set;
@@ -39,7 +39,9 @@ public class InumTest {
   @Test (expected = InumExecutionException.class) public void testInumShutdown() throws Exception {
     final Inum inum = SharedFixtures.configureInum();
     inum.end();
-    inum.estimateCost("lalala", Sets.<DBIndex>newHashSet());
+    final Configuration emptyConfiguration = new Configuration(
+      Lists.<Index>newArrayList());
+    inum.estimateCost("lalala", emptyConfiguration);
     fail("if we reached this line...then test has failed");
   }
 }

@@ -3,8 +3,8 @@ package edu.ucsc.dbtune.inum;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.StopWatch;
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class Inum {
         new InumInterestingOrdersExtractor(nonNullConnection));
   }
 
-  public double estimateCost(String query, Iterable<DBIndex> inputConfiguration){
+  public double estimateCost(String query, Configuration inputConfiguration){
     final String errmsg = "INUM has not been started yet. Please call start(..) method.";
     if(isEnded()) throw new InumExecutionException(errmsg);
     if(!precomputation.skip(query)) {
@@ -84,7 +84,7 @@ public class Inum {
     precomputation.getInumSpace().clear();
   }
   
-  public Iterable<DBIndex> findInterestingOrders(String query){
+  public Configuration findInterestingOrders(String query){
     return ioExtractor.extractInterestingOrders(query);
   }
 

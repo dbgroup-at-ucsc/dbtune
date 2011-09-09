@@ -10,6 +10,9 @@ import java.util.List;
  * todo(Huascar) once Ivo's refactoring of the DBIndex is tested
  * then we could see how to get rid of this interface and use 
  * SQLStatementPlan....
+ *
+ * todo(Ivo) explain how we can integrate the SQLStatementPlan into this? OptimalPlan interface is
+ * pretty much different than SQLStatementPlan...both abstraction seems to server a different purpose.
  * 
  * In the meantime, this class can extend this {@link SQLStatementPlan}
  * by using aggregation rather than normal inheritance.

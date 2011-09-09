@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import java.util.Set;
 
 /**
@@ -23,7 +23,7 @@ public interface Precomputation {
    * representative configuration. The resulting {@link OptimalPlan}.
    *
    * The resulting optimal plan is saved in the {@link InumSpace INUM Space},
-   * by calling the {@link InumSpace#save(Set, Set)}  InumSpace#save(Set<DBIndex>, Set<OptimalPlan>)} method.
+   * by calling the {@link InumSpace#save(Configuration, Set)}  InumSpace#save(Set<DBIndex>, Set<OptimalPlan>)} method.
    * After successfully saving the plan, a reference to the optimal plans is returned to the
    * caller of this method.
    *
@@ -50,7 +50,7 @@ public interface Precomputation {
    *      a reference to the set of optimal plans, useful if you wish to hold a reference to
    *      the set for checking post-conditions or other purposes (e.g., logging).
    */
-  Set<OptimalPlan> setup(String query, Iterable<DBIndex> interestingOrders);
+  Set<OptimalPlan> setup(String query, Configuration interestingOrders);
 
   /**
    * checks whether the precomputation step should be skipped for a

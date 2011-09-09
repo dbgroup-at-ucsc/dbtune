@@ -1,9 +1,9 @@
 package edu.ucsc.dbtune.inum;
 
 import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.SharedFixtures;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.inum.InumInterestingOrdersExtractor.ColumnInformation;
 import java.util.Properties;
 import java.util.Set;
@@ -26,8 +26,8 @@ public class InterestingOrdersExtractorTest {
   @Test public void testExtractInterestingOrders() throws Exception {
     final ColumnProperty columnProperty = configureProperty();
     final InterestingOrdersExtractor extractor = new InumInterestingOrdersExtractor(columnProperty);
-    final Set<DBIndex> ios = extractor.extractInterestingOrders(SAMPLE_QUERY);
-    assertThat(ios.isEmpty(), is(false));
+    final Configuration ios = extractor.extractInterestingOrders(SAMPLE_QUERY);
+    assertThat(ios.getIndexes().isEmpty(), is(false));
   }
 
   private static ColumnProperty configureProperty() throws Exception {

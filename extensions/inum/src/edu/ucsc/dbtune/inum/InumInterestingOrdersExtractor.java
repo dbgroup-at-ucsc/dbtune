@@ -23,6 +23,11 @@ import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.DatabaseTable;
 import edu.ucsc.dbtune.core.metadata.AbstractIndex;
+import edu.ucsc.dbtune.core.metadata.Column;
+import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.core.metadata.SQLTypes;
+import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Objects;
 import java.io.ByteArrayInputStream;
@@ -30,7 +35,6 @@ import java.io.InputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -77,8 +81,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     this.properties = properties;
   }
 
-  @Override public Set<DBIndex> extractInterestingOrders(String singleQuery) {
-    final Set<DBIndex> result = Sets.newHashSet();
+  @Override public Configuration extractInterestingOrders(String singleQuery) {
     final Vector statements   = parseQuery(singleQuery);
 
     final List<QueryRecord> records = Lists.newArrayList();
@@ -100,8 +103,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       records.add(record);
     }
 
-    result.addAll(interestingOrdersSpace(records));
-    return result;
+    return new Configuration(interestingOrdersSpace(records));
   }
 
   public static String getColumnType(int x) {
@@ -119,34 +121,68 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     return "";
   }
 
-  private static Collection<? extends DBIndex> interestingOrdersSpace(List<QueryRecord> records) {
-    final Set<DBIndex> indexes = Sets.newHashSet();
+  private static List<Index> interestingOrdersSpace(List<QueryRecord> records) {
+    final Set<Index> indexes = Sets.newHashSet();
     int id = 0;
     //todo(Huascar) to code: if an index is already in the indexes list, then ignore it; don't store it more than once.
     for(QueryRecord each : records) {
       if(each.groupBy == null) continue;
-      for (String table : each.groupBy.keySet()) {
-        final IndexShell index = new IndexShell(id, "sat_index_" + id, table, Sets.newLinkedHashSet(each.groupBy.get(table)));
+      for (String tableName : each.groupBy.keySet()) {
+        final Table table = new Table(tableName);
+        final List<Column> cols = makeColumns(table,
+            Sets.newLinkedHashSet(each.groupBy.get(tableName)));
+        //todo(Ivo) how can we extract this information, e.g., primary, clustered, etc.?
+        final Index index = makeIndex(cols, false, false, false);
+        index.setName("sat_index_" + id);
         indexes.add(index);
         id++;
       }
 
       if(each.orderBy == null) continue;
-      for(String table : each.orderBy.keySet()){
-        final IndexShell index = new IndexShell(id, "sat_index_" + id, table, Sets.newLinkedHashSet(each.groupBy.get(table)));
+      for(String tableName : each.orderBy.keySet()){
+        final Table table = new Table(tableName);
+        final List<Column> cols = makeColumns(table,
+            Sets.newLinkedHashSet(each.orderBy.get(tableName)));
+        final Index index = makeIndex(cols, false, false, false);
+        index.setName("sat_index_" + id);
         indexes.add(index);
         id++;
       }
 
       if(each.interestingOrders == null) continue;
-      for(String table : each.interestingOrders.keySet()){
-        final IndexShell index = new IndexShell(id, "sat_index_" + id, table, Sets.newLinkedHashSet(each.groupBy.get(table)));
+      for(String tableName : each.interestingOrders.keySet()){
+        final Table table = new Table(tableName);
+        final List<Column> cols = makeColumns(table,
+            Sets.newLinkedHashSet(each.interestingOrders.get(tableName)));
+        final Index index = makeIndex(cols, false, false, false);
+        index.setName("sat_index_" + id);
         indexes.add(index);
         id++;
       }
 
     }
     return ImmutableList.copyOf(indexes);
+  }
+
+  private static Index makeIndex(List<Column> cols, boolean primary, boolean clustered, boolean unique){
+    try {
+      return new Index(cols, primary, unique, clustered);
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  private static List<Column> makeColumns(Table table, Set<String> cols){
+    final Set<Column> result = Sets.newHashSet();
+    for(String name : cols){
+      /*todo(Ivo) This usecase does not need to know the type of column; it just needs the name. Is there a way to bypass this sql type?
+      or do we really need to find a way to determine this type? */
+      final Column c = new Column(name, SQLTypes.VARCHAR); // VARCHAR is temp...see comment above.
+      c.setTable(table);
+      result.add(c);
+    }
+
+    return Lists.newArrayList(result);
   }
 
   private static Vector parseQuery(String query) throws InumExecutionException {

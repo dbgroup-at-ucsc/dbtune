@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.util.Objects;
-import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -20,7 +20,7 @@ public class InumWhatIfOptimizerTest {
   }
 
   @Test public void testQueryCostEstimation_NonEmpty_HypotheticalIndexes() throws Exception {
-    final Set<DBIndex>        hypotheticalIndexes = SharedFixtures.configureConfiguration();
+    final Configuration       hypotheticalIndexes = SharedFixtures.configureConfiguration();
     final InumWhatIfOptimizer optimizer           = SharedFixtures.configureWhatIfOptimizer(hypotheticalIndexes);
     double cost = optimizer.estimateCost("SELECT * FROM PERSONS;");
     assertThat(Double.compare(7.0, cost), equalTo(0));

@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import java.util.Set;
 
 /**
@@ -16,5 +17,5 @@ public interface InterestingOrdersExtractor {
    * @return
    *    a set of interesting orders.
    */
-  Set<DBIndex> extractInterestingOrders(String singleQuery);
+  Configuration extractInterestingOrders(String singleQuery);
 }

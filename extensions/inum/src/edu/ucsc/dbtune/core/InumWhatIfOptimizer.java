@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.inum.Inum;
 
 /**
@@ -17,7 +18,7 @@ import edu.ucsc.dbtune.inum.Inum;
  */
 public interface InumWhatIfOptimizer {
   /**
-   * estimate the cost of executing a given query; an empty set of
+   * estimate the cost of executing a given query; an empty list of
    * hypothetical indexes (a.k.a., empty configuration) is provided.
    *
    * @param query
@@ -25,7 +26,7 @@ public interface InumWhatIfOptimizer {
    * @return
    *    the estimated cost for executing a single query without using
    *    indexes.
-   * @see {@link #estimateCost(String, Iterable)}.
+   * @see {@link #estimateCost(String, Configuration)}.
    */
   double estimateCost(String query);
 
@@ -41,10 +42,10 @@ public interface InumWhatIfOptimizer {
    * @param query
    *    a single SQL query.
    * @param hypotheticalIndexes
-   *    a bag of hypothetical indexes.
+   *    a hypothetical indexes configuration.
    * @return
    *    the estimated cost for materializing a bag of hypothetical
    *    indexes.
    */
-  double estimateCost(String query, Iterable<DBIndex> hypotheticalIndexes);
+  double estimateCost(String query, Configuration hypotheticalIndexes);
 }

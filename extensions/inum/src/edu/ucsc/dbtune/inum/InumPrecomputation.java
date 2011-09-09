@@ -2,8 +2,8 @@ package edu.ucsc.dbtune.inum;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.core.DBIndex;
 import edu.ucsc.dbtune.core.DatabaseConnection;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Combinations;
 import edu.ucsc.dbtune.util.Strings;
@@ -43,7 +43,7 @@ public class InumPrecomputation implements Precomputation {
     return Preconditions.checkNotNull(inumSpace.get());
   }
 
-  @Override public Set<OptimalPlan> setup(String query, Iterable<DBIndex> interestingOrders) {
+  @Override public Set<OptimalPlan> setup(String query, Configuration interestingOrders) {
     if(inumSpace.get() == null) {
       inumSpace.set(new InMemoryInumSpace());
     }
@@ -51,8 +51,9 @@ public class InumPrecomputation implements Precomputation {
     addQuerytoListOfSeenQueries(query);
     // generate all possible interesting orders combinations that will be used
     // during the INUM's {@link Precomputation setup} phase.
-    final Set<Set<DBIndex>> allCombinationsOfInterestingOrders = Combinations.findCombinations(interestingOrders);
-    for(Set<DBIndex> eachIOs : allCombinationsOfInterestingOrders){
+    final Set<Configuration> allCombinationsOfInterestingOrders = Combinations.findCombinations(interestingOrders);
+    for(Configuration o /*o as in the JavaDoc*/
+        : allCombinationsOfInterestingOrders){
       final Set<OptimalPlan> optimalPlansPerInterestingOrder = Sets.newHashSet();
       // call optimizer given the workload and an input configuration
       //   get optimal plan as a String
@@ -63,13 +64,13 @@ public class InumPrecomputation implements Precomputation {
       final String queryExecutionPlan = getQueryExecutionPlan(   // get execution plan given the set of interesting orders.
           connection.getJdbcConnection(),
           query,
-          eachIOs
+          o
       );
       if(Strings.isEmpty(queryExecutionPlan)) continue;
       optimalPlansPerInterestingOrder.addAll(parser.parse(queryExecutionPlan));
 
       final Set<OptimalPlan> referenceToPlans = getInumSpace().save(
-          eachIOs,
+          o,
           optimalPlansPerInterestingOrder
       );
 
@@ -87,7 +88,7 @@ public class InumPrecomputation implements Precomputation {
 
   //todo(Huascar) to implement once the dbms changes are done
   private static String getQueryExecutionPlan(Connection connection, String query,
-      Iterable<DBIndex> interestingOrders){
+      Configuration interestingOrders){
     // example of a possible suggested plan
     return "Hash Join  (cost=174080.39..9364262539.50 rows=1 width=193)";   // we can have one or many query plans
   }

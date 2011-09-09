@@ -5,6 +5,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.core.DBIndex;
+import edu.ucsc.dbtune.core.metadata.Configuration;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,13 +17,13 @@ import java.util.Set;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InMemoryInumSpace implements InumSpace {
-  private final Map<Set<DBIndex>, Set<OptimalPlan>> cachedPlans;
-  InMemoryInumSpace(Map<Set<DBIndex>, Set<OptimalPlan>> cachedPlans){
+  private final Map<Configuration, Set<OptimalPlan>> cachedPlans;
+  InMemoryInumSpace(Map<Configuration, Set<OptimalPlan>> cachedPlans){
     this.cachedPlans = cachedPlans;
   }
 
   public InMemoryInumSpace(){
-    this(Maps.<Set<DBIndex>, Set<OptimalPlan>>newHashMap());
+    this(Maps.<Configuration, Set<OptimalPlan>>newHashMap());
   }
 
   @Override public void clear() {
@@ -31,11 +32,11 @@ public class InMemoryInumSpace implements InumSpace {
     }
   }
 
-  @Override public Set<OptimalPlan> getOptimalPlans(Set<DBIndex> key) {
+  @Override public Set<OptimalPlan> getOptimalPlans(Configuration key) {
     return cachedPlans.get(key);
   }
 
-  @Override public Set<Set<DBIndex>> getAllInterestingOrders() {
+  @Override public Set<Configuration> getAllInterestingOrders() {
     return ImmutableSet.copyOf(cachedPlans.keySet());
   }
 
@@ -47,7 +48,7 @@ public class InMemoryInumSpace implements InumSpace {
     return ImmutableSet.copyOf(allSavedOnes);
   }
 
-  @Override public Set<OptimalPlan> save(Set<DBIndex> interestingOrders, Set<OptimalPlan> optimalPlans) {
+  @Override public Set<OptimalPlan> save(Configuration interestingOrders, Set<OptimalPlan> optimalPlans) {
     if(!cachedPlans.containsKey(interestingOrders)){
       final Set<OptimalPlan> newBatchedOfPlans = Sets.newHashSet();
       for(OptimalPlan each : optimalPlans){
