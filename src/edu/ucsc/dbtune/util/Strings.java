@@ -122,11 +122,32 @@ public class Strings
         int[] intArray = new int[valArray.length];
 
         for(int i = 0; i < valArray.length; i++)
-        {
             intArray[i] = Integer.parseInt(valArray[i]);
-        }
 
         return intArray;
+    }
+
+    /**
+     * Treats each element from {@code valArray} as a {@link Boolean} and returns an array 
+     * containing them. The valid literal values are "Y" and "N".
+     *
+     * @param valArray
+     *     array of values containing a string representation of an integer each.
+     * @return
+     *     an array containing integers in the order they appear in the given array. That is, {@code 
+     *     valArray[0]} corresponds to the first integer in the array, {@code valArray[1]} to the 
+     *     second and so on.
+     * @throws NumberFormatException
+     *     if one string does not contain a parsable integer.
+     */
+    public static boolean[] toBooleanArray(String[] valArray)
+    {
+        boolean[] booleanArray = new boolean[valArray.length];
+
+        for(int i = 0; i < booleanArray.length; i++)
+            booleanArray[i] = Boolean.parseBoolean(valArray[i]);
+
+        return booleanArray;
     }
 
     /**
@@ -179,18 +200,6 @@ public class Strings
     }
 
     /**
-     * Obtain the string representation of an object.
-     * @param value
-     *      object of interest.
-     * @param <T>
-     *      type of the object of interest.
-     * @return a string representation of the object of interest.
-    public static <T> String str(T value){
-        return value.toString();
-    }
-     */
-
-    /**
      * Compares two strings representing software versions.
      *
      * @param v1
@@ -220,13 +229,13 @@ public class Strings
      * @return
      *     the normalized version of
      */
-    public static String normalizeVersion(String version, String separator, int maxWidth) {
+    public static String normalizeVersion(String version, String separator, int maxWidth)
+    {
         StringBuilder sb    = new StringBuilder();
         String[]      split = Pattern.compile(separator, Pattern.LITERAL).split(version);
 
-        for (String s : split) {
+        for (String s : split)
             sb.append(String.format("%" + maxWidth + 's', s));
-        }
 
         return sb.toString();
     }
@@ -241,17 +250,17 @@ public class Strings
      * @return true if the String contains the search String irrespective of
      * case or false if not or <code>null</code> string input
      */
-    public static boolean contains(String str, String searchStr) {
-        if (str == null || searchStr == null) {
+    public static boolean contains(String str, String searchStr)
+    {
+        if (str == null || searchStr == null)
             return false;
-        }
+
         int len = searchStr.length();
         int max = str.length() - len;
-        for (int i = 0; i <= max; i++) {
-            if (str.regionMatches(true, i, searchStr, 0, len)) {
+        for (int i = 0; i <= max; i++)
+            if (str.regionMatches(true, i, searchStr, 0, len))
                 return true;
-            }
-        }
+
         return false;
     }
 
@@ -265,11 +274,13 @@ public class Strings
      * @return true if the String contains the many search String irrespective of
      * case or false if not or <code>null</code> string input
      */
-    public static boolean containsAny(String str, String... searchStrs){
+    public static boolean containsAny(String str, String... searchStrs)
+    {
         boolean result = false;
-        for(String each : searchStrs){
+
+        for(String each : searchStrs)
             result |= contains(str, each);
-        }
+
         return result;
     }
 
@@ -279,7 +290,8 @@ public class Strings
      *      string to be checked.
      * @return true if the string is empty; false otherwise.
      */
-    public static boolean isEmpty(String str) {
+    public static boolean isEmpty(String str)
+    {
       return (null == str || str.length() == 0);
     }
 
@@ -289,7 +301,8 @@ public class Strings
      * @param right string
      * @return {@code true} if they are the same. {@code false} otherwise.
      */
-    public static boolean same(String left, String right){
+    public static boolean same(String left, String right)
+    {
         return left.equals(right) || left.equalsIgnoreCase(right);
     }
 
@@ -317,39 +330,46 @@ public class Strings
     }
 
 
-    public static String join(String delimiter, Object... objects) {
+    public static String join(String delimiter, Object... objects)
+    {
         return join(Arrays.asList(objects), delimiter);
     }
 
-    public static String join(Iterable<?> objects, String delimiter) {
+    public static String join(Iterable<?> objects, String delimiter)
+    {
         Iterator<?> i = objects.iterator();
-        if (!i.hasNext()) {
+
+        if (!i.hasNext())
             return "";
-        }
 
         StringBuilder result = new StringBuilder();
         result.append(i.next());
-        while(i.hasNext()) {
+
+        while(i.hasNext())
             result.append(delimiter).append(i.next());
-        }
+
         return result.toString();
     }
 
-    public static String[] objectsToStrings(Object[] objects) {
+    public static String[] objectsToStrings(Object[] objects)
+    {
         String[] result = new String[objects.length];
         int i = 0;
-        for (Object o : objects) {
+
+        for (Object o : objects)
             result[i++] = o.toString();
-        }
+
         return result;
     }
 
-    public static String[] objectsToStrings(Collection<?> objects) {
+    public static String[] objectsToStrings(Collection<?> objects)
+    {
         return objectsToStrings(objects.toArray());
     }
 
     // does not accept nulls
-    public static String[] splits(String text, char separator){
+    public static String[] splits(String text, char separator)
+    {
         final String string     = Checks.checkNotNull(text);
         final char   separ      = Checks.checkNotNull(separator);
         if(isEmpty(string)) return new String[0];

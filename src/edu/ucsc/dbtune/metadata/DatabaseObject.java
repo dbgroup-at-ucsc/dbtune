@@ -193,10 +193,21 @@ public abstract class DatabaseObject
     }
 
     /**
+     * Assigns the number of bytes that the object occupies in disk
+     *
+     * @param bytes
+     *     size in bytes
+     */
+    public void setBytes(long bytes)
+    {
+        this.bytes = bytes;
+    }
+
+    /**
      * Returns the number of bytes that the object occupies in disk
      *
      * @return
-     *     size in megabytes
+     *     size in bytes
      */
     public long getBytes()
     {
@@ -228,8 +239,14 @@ public abstract class DatabaseObject
     @Override
     public abstract int hashCode();
 
-    /*
-    public abstract void getHypotheticalCreateStatement();
+    /**
+     * Returns the string representation of the SQL statement that creates the hypothetical 
+     * structure inside the DBMS that represents this object.
+     *
+     * @return
+     *     the SQL statement
+    public abstract String getCreateHypotheticalStatement();
+    public abstract void getCreateHypotheticalStatement();
     public abstract void getMaterializeCreateStatement();
     public abstract void getHypotheticalDropStatement();
     public abstract void getMaterializeDropStatement();

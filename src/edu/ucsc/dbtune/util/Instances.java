@@ -102,6 +102,18 @@ public class Instances {
     }
 
     /**
+     */
+    public static List<Boolean> asList(boolean[] array)
+    {
+        Boolean[] bArray = new Boolean[array.length];
+
+        for(int i = 0; i < array.length; i++)
+            bArray[i] = array[i];
+
+        return Arrays.asList(bArray);
+    }
+
+    /**
      * Convenience method that creates a {@code List} object. One
      * use of this function is for saving on typing, and also to ensure
      * that typesafe Lists are created.

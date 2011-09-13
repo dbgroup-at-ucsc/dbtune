@@ -4,7 +4,6 @@ import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.advisor.bc.BcTuner;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.PGIndex;
 
 import org.junit.After;
 import org.junit.Before;

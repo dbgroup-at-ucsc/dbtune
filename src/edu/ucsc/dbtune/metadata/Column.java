@@ -159,15 +159,6 @@ public class Column extends DatabaseObject
             table.getSchema() == col.table.getSchema() &&
             table == col.table &&
             name.equals(col.name);
-        /*
-         * not needed for now
-            name.equals(col.name) &&
-            type == col.type &&
-            isNull == col.isNull &&
-            isDefault == col.isDefault &&
-            defaultValue == col.defaultValue &&
-            bytes == col.bytes;
-         */
     }
 
     /**
@@ -181,13 +172,5 @@ public class Column extends DatabaseObject
             table.getSchema().getCatalog().hashCode() * 
             table.getSchema().hashCode() * 
             table.getName().hashCode();
-        /*
-            name.hashCode() *
-            type *
-            (new Boolean(isNull)).hashCode() *
-            (new Boolean(isDefault)).hashCode() *
-            defaultValue.hashCode() *
-            (int) bytes;
-         */
     }
 }

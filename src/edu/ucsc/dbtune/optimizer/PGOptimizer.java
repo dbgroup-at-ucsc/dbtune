@@ -19,13 +19,12 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.SQLCategory;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -42,9 +41,15 @@ import java.util.Random;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
+import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
+import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
+import static edu.ucsc.dbtune.metadata.Index.SYNCHRONIZED;
+import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
+import static edu.ucsc.dbtune.util.Instances.asList;
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
-import static edu.ucsc.dbtune.util.Strings.toDoubleArrayFromIndexed;
+import static edu.ucsc.dbtune.util.Strings.toBooleanArray;
 import static edu.ucsc.dbtune.util.Strings.toIntegerArray;
+import static edu.ucsc.dbtune.util.Strings.toDoubleArrayFromIndexed;
 
 /**
  * The interface to the PostgreSQL optimizer.
@@ -157,16 +162,49 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public Configuration recommendIndexes(SQLStatement sql) throws SQLException {
-        Statement stmt = connection.createStatement();
-        ResultSet rs   = stmt.executeQuery("RECOMMEND INDEXES " + sql.getSQL());
-        int       id   = 0;
+    public Configuration recommendIndexes(SQLStatement sql) throws SQLException
+    {
+        List<Column> columns;
+        List<Index> indexes;
+        Statement stmt;
+        ResultSet rs;
+        Table     table;
+        Index     index;
+        boolean   isSync;
+        boolean[] isDesc;
+        int[]     positions;
+        String    indexName;
 
-        List<Index> indexes = new ArrayList<Index>();
+        indexes = new ArrayList<Index>();
+        stmt    = connection.createStatement();
+        rs      = stmt.executeQuery("RECOMMEND INDEXES " + sql.getSQL());
 
-        while(rs.next()){
-            touchIndexSchema(indexes, rs, id);
-            ++id;
+        while(rs.next()) {
+
+            table = null;
+
+            for(Schema sch : catalog.getSchemas())
+                if((table = sch.findTable(rs.getInt("reloid"))) != null )
+                    break;
+
+            if(table == null)
+                throw new SQLException("Can't find table with id " + rs.getInt("reloid"));
+
+            isSync    = rs.getString("sync").charAt(0) == 'Y';
+            positions = toIntegerArray(rs.getString("atts").split(" "));
+            isDesc    = toBooleanArray(rs.getString("desc").split(" "));
+            columns   = getReferencedColumns(table, positions);
+            indexName = "sat_index_" + new Random().nextInt(10000);
+
+            index = new Index(indexName, columns, asList(isDesc), SECONDARY, NON_UNIQUE, UNCLUSTERED);
+
+            if(isSync)
+                index.setScanOption(SYNCHRONIZED);
+
+            index.setCreationCost(rs.getDouble("create_cost"));
+            index.setBytes(rs.getLong("megabytes") * 1024 * 1024);
+
+            indexes.add(index);
         }
 
         rs.close();
@@ -187,7 +225,8 @@ public class PGOptimizer extends Optimizer
      *     if the underlying system is old enough such that it doesn't implement the {@code 
      *     version()} function; if another SQL error occurs while retrieving the system version.
      */
-    public static String getVersion(Connection connection) throws SQLException {
+    public static String getVersion(Connection connection) throws SQLException
+    {
         Statement st;
         ResultSet rs;
         String    version;
@@ -217,73 +256,6 @@ public class PGOptimizer extends Optimizer
         return version;
     }
 
-    private void touchIndexSchema(List<Index> candidateSet, ResultSet rs, int id) throws SQLException {
-        final int       reloid = Integer.valueOf(rs.getString("reloid"));
-        final boolean   isSync = rs.getString("sync").charAt(0) == 'Y';
-        final List<Column> columns = new ArrayList<Column>();
-        final String columnsString = rs.getString("atts");
-        Table table = null;
-        Column col = null;
-
-        for(Schema sch : catalog.getSchemas()) {
-            table = sch.findTable(reloid);
-
-            if(table != null)
-                break;
-        }
-
-        if(table == null)
-            throw new SQLException("Can't find table with id " + reloid);
-
-        if(columnsString.length() > 0){
-            for (String attnum  : columnsString.split(" ")){
-                col = table.getColumns().get(Integer.valueOf(attnum));
-
-                if(col == null)
-                    throw new SQLException("Can't find column with position " + 
-                            Integer.valueOf(attnum) + " in table " + table);
-
-                columns.add(col);
-            }
-        }
-
-        // descending
-        final List<Boolean> isDescending     = new ArrayList<Boolean>();
-        final String        descendingString = rs.getString("desc");
-
-        if(descendingString.length() > 0)
-            for (String desc : rs.getString("desc").split(" "))
-                isDescending.add(desc.charAt(0) == 'Y');
-
-        final double creationCost = Double.valueOf(rs.getString("create_cost"));
-        final double megabytes    = Double.valueOf(rs.getString("megabytes"));
-        final String indexName    = "sat_index_" + new Random().nextInt(10000);
-        final String creationText = updateCreationText(rs, isSync, indexName);
-
-        candidateSet.add(
-                new PGIndex(
-                    table,
-                    indexName,
-                    reloid, isSync, columns, isDescending, id,
-                    megabytes, creationCost, creationText) );
-    }
-
-    private String updateCreationText(ResultSet rs, boolean sync, String indexName) throws SQLException {
-        String creationText = rs.getString("create_text");
-        if (sync){
-            creationText = creationText.replace(
-                    "CREATE SYNCHRONIZED INDEX ?",
-                    "CREATE SYNCHRONIZED INDEX " + indexName
-                    );
-        } else {
-            creationText = creationText.replace(
-                    "CREATE INDEX ?",
-                    "CREATE INDEX " + indexName
-                    );
-        }
-        return creationText;
-    }
-
     /**
      * Returns the set of indexes referred by the array of integers, where each element correspond 
      * to the ordinal position of the {@link Index} contained in the configuration.
@@ -306,9 +278,40 @@ public class PGOptimizer extends Optimizer
     }
 
     /**
+     * Returns the set of columns referred by the array of integers, where each element correspond 
+     * to the ordinal position of the {@link Column} contained in the given table.
+     *
+     * @param table
+     *     referred table
+     * @param positions
+     *     integers referring to the ordinal position of {@link Column} objects contained in the 
+     *     configuration.
+     * @see Table#getColumns
+     */
+    private static List<Column> getReferencedColumns(Table table, int[] positions) throws SQLException
+    {
+        List<Column> columns = new ArrayList<Column>();
+
+        Column col;
+
+        for(int position : positions) {
+            col = table.getColumns().get(position);
+
+            if(col == null)
+                throw new SQLException("Can't find column with position " + position + " in table " + table);
+
+            columns.add(col);
+        }
+
+        return columns;
+    }
+
+    /**
      * Returns a string containing a comma-separated list of the given indexes.
      *
      * @param indexes
+     *     list of indexes
+     * @return
      *     a string containing the PG-dependent string representation of the given list, as the 
      *     EXPLAIN INDEXES statement expects it
      */

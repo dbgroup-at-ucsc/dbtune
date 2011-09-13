@@ -21,7 +21,6 @@ import edu.ucsc.dbtune.DBTuneInstances;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;

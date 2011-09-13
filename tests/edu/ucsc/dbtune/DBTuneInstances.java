@@ -1,12 +1,6 @@
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.metadata.PGIndex;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.spi.Environment;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -192,10 +186,6 @@ public class DBTuneInstances {
         } catch (Exception e) {
             throw new IllegalStateException("ERROR: unable to construct an IBGNode");
         }
-    }
-
-    public static Index newPGIndex(int indexId, int schemaId, List<Column> cols, List<Boolean> desc) throws Exception {
-        return new PGIndex(new Table(new Schema(new Catalog("catalog"),"schema"),"table"),"index_"+new Random().nextInt(),schemaId, true, cols, desc, indexId, 3.0, 4.5, "Create");
     }
 
     public static List<Boolean> generateDescVals(int howmany){

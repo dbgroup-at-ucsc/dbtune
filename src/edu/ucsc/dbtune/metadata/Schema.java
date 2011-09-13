@@ -177,17 +177,6 @@ public class Schema extends DatabaseObject
         Schema sch = (Schema) other;
 
         return _catalog == sch._catalog && name.equals(sch.name);
-
-        /*
-        for(Table tbl : _tables)
-            if(!sch._tables.contains(tbl))
-                return false;
-        for(Index idx : _baseConfiguration)
-            if(!sch._baseConfiguration.contains(idx))
-                return false;
-
-        return true;
-        */
     }
 
     /**
@@ -197,14 +186,5 @@ public class Schema extends DatabaseObject
     public int hashCode()
     {
         return 31 * _catalog.hashCode() * name.hashCode();
-
-        /*
-        for(Table tbl : _tables)
-            hash += 31 * tbl.hashCode();
-        for(Index idx : _baseConfiguration)
-            hash += 31 * idx.hashCode();
-        return hash;
-        */
-
     }
 }

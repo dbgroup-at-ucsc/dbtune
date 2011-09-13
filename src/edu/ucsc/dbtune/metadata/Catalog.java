@@ -93,14 +93,6 @@ public class Catalog extends DatabaseObject
         Catalog cat = (Catalog) other;
 
         return name.equals(cat.name);
-
-        /*
-        for(Schema sch : _schemas)
-            if(!cat._schemas.contains(sch))
-                return false;
-
-        return true;
-        */
     }
 
     /**

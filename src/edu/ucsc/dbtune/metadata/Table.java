@@ -217,19 +217,7 @@ public class Table extends DatabaseObject
 
         return schema.getCatalog() == tbl.schema.getCatalog() &&
                schema == tbl.schema &&
-               //type == tbl.type &&
                name.equals(tbl.name);
-
-        /*
-        for(Column col : _columns)
-            if(!tbl._columns.contains(col))
-                return false;
-        for(Index idx : _indexes)
-            if(!tbl._indexes.contains(idx))
-                return false;
-
-        return true;
-        */
     }
 
     /**
@@ -239,14 +227,5 @@ public class Table extends DatabaseObject
     public int hashCode()
     {
         return 31 * schema.getCatalog().hashCode() * schema.hashCode() * name.hashCode(); //type;
-
-        /*
-        for(Column col : _columns)
-            hash += col.hashCode();
-        for(Index idx : _indexes)
-            hash += idx.hashCode();
-
-        return hash;
-        */
     }
 }
