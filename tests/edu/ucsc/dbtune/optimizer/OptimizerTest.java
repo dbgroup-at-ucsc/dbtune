@@ -193,28 +193,42 @@ public class OptimizerTest
         double               cost1;
         double               cost2;
 
-        sql   = new SQLStatement("select a from one_table.tbl where a = 5;");
+        sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         sqlp  = opt.explain(sql);
         cost1 = sqlp.getCost();
 
         assertThat(sqlp, notNullValue());
-        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.SELECT), is(true));
         assertThat(sqlp.getCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
         conf  = new Configuration("empty");
         sqlp  = opt.explain(sql, conf);
         cost2 = sqlp.getCost();
+        
         assertThat(sqlp, notNullValue());
-        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.SELECT), is(true));
         assertThat(sqlp.getCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        assertThat(cost1 == cost2, is(true));
+        assertThat(cost1, is(cost2));
 
-        // XXX:
-        //  * getUpdateCost()
-        //  * getTotalCost()
+        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
+        sqlp = opt.explain(sql);
+
+        assertThat(sqlp, notNullValue());
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
+        assertThat(sqlp.getCost(), greaterThan(0.0));
+        assertThat(sqlp.getUpdateCost(), is(0.0));
+        assertThat(sqlp.getOptimizationCount(), is(1));
+
+        sqlp = opt.explain(sql,conf);
+
+        assertThat(sqlp, notNullValue());
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
+        assertThat(sqlp.getCost(), greaterThan(0.0));
+        assertThat(sqlp.getUpdateCost(), is(0.0));
+        assertThat(sqlp.getOptimizationCount(), is(1));
     }
 
     /**
@@ -226,35 +240,48 @@ public class OptimizerTest
         PreparedSQLStatement sqlp;
         Column               col;
         Configuration        conf;
-        Index                idx;
+        Index                idxa;
+        Index                idxb;
         double               cost1;
         double               cost2;
 
-        sql   = new SQLStatement("select a from one_table.tbl where a = 5;");
+        sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a > 0");
         cost1 = opt.explain(sql).getCost();
 
         col  = cat.findSchema("one_table").findTable("tbl").findColumn("a");
-        idx  = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        idxa = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
         conf = new Configuration("one_index");
 
-        conf.add(idx);
+        conf.add(idxa);
 
         sqlp  = opt.explain(sql, conf);
         cost2 = sqlp.getCost();
 
         assertThat(sqlp, notNullValue());
-        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.QUERY), is(true));
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.SELECT), is(true));
         assertThat(sqlp.getCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
         assertThat(cost1, is(not(cost2)));
 
-        // XXX:
-        //  * getUpdateCost()
-        //  * getTotalCost()
-        //  * getUpdateCost(Index)
-        //  * getUpdateCost(List <Index>)
-        //
-        col.getTable().remove(idx);
+        col  = cat.findSchema("one_table").findTable("tbl").findColumn("b");
+        idxb = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+
+        conf.add(idxb);
+
+        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
+        sqlp = opt.explain(sql, conf);
+
+        assertThat(sqlp.getCost(),      is(cost2));
+        assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getCost()));
+        assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getUpdateCost()));
+        assertThat(sqlp.getTotalCost(), is(sqlp.getCost() + sqlp.getUpdateCost()));
+
+        assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(conf.getIndexAt(0))));
+        assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(conf.getIndexAt(1))));
+        assertThat(sqlp.getUpdateCost(), is(sqlp.getUpdateCost(conf.getIndexes())));
+
+        col.getTable().remove(idxa);
+        col.getTable().remove(idxb);
     }
 
     /**
@@ -265,12 +292,12 @@ public class OptimizerTest
         SQLStatement  sql;
         Configuration rec;
         
-        sql = new SQLStatement("select a from one_table.tbl where a = 5;");
+        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         rec = opt.recommendIndexes(sql);
 
         assertThat(rec.isEmpty(), is(false));
 
-        sql = new SQLStatement("update one_table.tbl set a = -1 where a = 5;");
+        sql = new SQLStatement("UPDATE one_table.tbl SET a = -1 WHERE a = 5");
         rec = opt.recommendIndexes(sql);
 
         assertThat(rec.isEmpty(), is(false));
@@ -286,32 +313,59 @@ public class OptimizerTest
         PreparedSQLStatement sqlp;
         Column               col;
         Configuration        conf;
-        Index                idx;
+        Index                idxa;
+        Index                idxb;
         
         col  = cat.findSchema("one_table").findTable("tbl").findColumn("a");
-        idx  = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
-        conf = new Configuration("one_index");
+        idxa = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        conf = new Configuration("two_indexes");
+        col  = cat.findSchema("one_table").findTable("tbl").findColumn("b");
+        idxb = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
 
-        sql  = new SQLStatement("select a from one_table.tbl where a = 5;");
+        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         sqlp = opt.explain(sql, conf);
 
         assertThat(sqlp.getUsedConfiguration().size(), is(0));
-        assertThat(sqlp.getUsedConfiguration().contains(idx), is(false));
+        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(false));
 
-        conf.add(idx);
+        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
+        sqlp = opt.explain(sql, conf);
 
-        sql  = new SQLStatement("select a from one_table.tbl where a = 5;");
+        assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(false));
+        assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(false));
+
+        conf.add(idxa);
+
+        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         sqlp = opt.explain(sql, conf);
 
         assertThat(sqlp.getUsedConfiguration().size(), is(1));
-        assertThat(sqlp.getUsedConfiguration().contains(idx), is(true));
+        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
 
-        col.getTable().remove(idx);
+        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
+        sqlp = opt.explain(sql, conf);
 
-        // XXX:
-        //
-        //  * getUpdatedConfiguration()
-        //  * check that getUsedConfiguration() ⊆ getConfiguration()
+        assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(false));
+
+        conf.add(idxb);
+
+        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        sqlp = opt.explain(sql, conf);
+
+        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
+        assertThat(sqlp.getUsedConfiguration().contains(idxb), is(false));
+        assertThat(conf.contains(sqlp.getUsedConfiguration()), is(true));
+        assertThat(conf.size(), greaterThan(sqlp.getUsedConfiguration().size()));
+
+        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
+        sqlp = opt.explain(sql, conf);
+
+        assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(true));
+
+        col.getTable().remove(idxa);
+        col.getTable().remove(idxb);
     }
 
     /// XXX:
@@ -335,24 +389,21 @@ public class OptimizerTest
     protected static void checkMonotonicity(Catalog cat, Optimizer opt) throws Exception
     {
         SQLStatement         sql;
-        PreparedSQLStatement sqlp;
         Column               col;
         Configuration        conf;
         Index                idx;
         double               cost1;
         double               cost2;
 
-        sql   = new SQLStatement("select a from one_table.tbl where a = 5;");
-        cost1 = opt.explain(sql).getCost();
-
+        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         col  = cat.findSchema("one_table").findTable("tbl").findColumn("a");
         idx  = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
         conf = new Configuration("one_index");
 
         conf.add(idx);
 
-        sqlp  = opt.explain(sql, conf);
-        cost2 = sqlp.getCost();
+        cost1 = opt.explain(sql).getCost();
+        cost2 = opt.explain(sql, conf).getCost();
 
         assertThat(cost1, greaterThanOrEqualTo(cost2));
 
@@ -376,7 +427,7 @@ public class OptimizerTest
         double               cost1;
         double               cost2;
 
-        sql  = new SQLStatement("select a from one_table.tbl where a = 5;");
+        sql  = new SQLStatement("select a from one_table.tbl where a = 5");
         colA = cat.findSchema("one_table").findTable("tbl").findColumn("a");
         colB = cat.findSchema("one_table").findTable("tbl").findColumn("b");
         idxA = new Index(colA,SECONDARY,UNCLUSTERED,NON_UNIQUE);

@@ -91,7 +91,7 @@ public class DB2Optimizer extends Optimizer
         connection.createStatement().execute(sql.getSQL());
         submit(explainModeNo(), connection);
         category = supplyValue(fetchExplainStatementType(), connection);
-        if(SQLCategory.DML.isSame(category)){
+        if(SQLCategory.NOT_SELECT.isSame(category)){
             supplyValue(fetchExplainObjectUpdatedTable(), connection);
             updateCost   = supplyValue(fetchExplainOpUpdateCost(), connection);
         }

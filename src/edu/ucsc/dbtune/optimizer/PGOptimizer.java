@@ -115,14 +115,12 @@ public class PGOptimizer extends Optimizer
         SQLStatementPlan sqlPlan;
         Configuration    usedConf;
         Statement        stmt;
-        String           xpln;
         double[]         updateCost;
         double           selectCost;
         int[]            positions;
 
-        xpln = "EXPLAIN INDEXES " + explainIndexListString(indexes) + " " + sql.getSQL();
         stmt = connection.createStatement();
-        rs   = stmt.executeQuery(xpln);
+        rs   = stmt.executeQuery("EXPLAIN INDEXES " + toString(indexes) + " " + sql.getSQL());
 
         if(!rs.next())
             throw new SQLException("No result from EXPLAIN statement");
@@ -314,7 +312,7 @@ public class PGOptimizer extends Optimizer
      *     a string containing the PG-dependent string representation of the given list, as the 
      *     EXPLAIN INDEXES statement expects it
      */
-    private static String explainIndexListString(Iterable<? extends Index> indexes)
+    private static String toString(Iterable<? extends Index> indexes)
     {
         // It's important that this method generates the string in the same order that 
         // Configuration.iterator() produces the index list

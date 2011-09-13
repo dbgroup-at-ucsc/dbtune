@@ -25,6 +25,8 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.util.List;
 import java.sql.SQLException;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
+
 /**
  * Represents a SQL statement that has been optimized. Each {@code SQLStatement} object is tied to a 
  * {@link Configuration} corresponding to the physical design considered by the optimizer at the 
@@ -71,6 +73,9 @@ public class PreparedSQLStatement
     /** the time it took an optimizer to produce this statement */
     protected double analysisTime;
 
+    /** cached update cost */
+    protected double updateCost;
+
     /**
      * construct a new {@code PreparedSQLStatement} object.
      *
@@ -86,7 +91,9 @@ public class PreparedSQLStatement
             double cost,
             Configuration configuration,
             Configuration usedConfiguration,
-            int optimizationCount) {
+            int optimizationCount)
+        throws SQLException
+    {
         this(sql, null, cost, null, configuration, usedConfiguration, optimizationCount);
     }
 
@@ -109,6 +116,9 @@ public class PreparedSQLStatement
      *     configuration used when the statement was optimized
      * @param optimizationCount
      *     number of optimization calls done on to produce the statement
+     * @throws SQLException
+     *     if statement is of {@link SQLCategory.NOT_SELECT} category and the update array is null 
+     *     or its length doesn't correspond to the configuration size.
      */
     public PreparedSQLStatement(
             SQLStatement statement,
@@ -118,6 +128,7 @@ public class PreparedSQLStatement
             Configuration configuration,
             Configuration usedConfiguration,
             int optimizationCount)
+        throws SQLException
     {
         this.statement         = statement;
         this.plan              = plan;
@@ -127,6 +138,16 @@ public class PreparedSQLStatement
         this.usedConfiguration = usedConfiguration;
         this.optimizationCount = optimizationCount;
         this.analysisTime      = 0.0;
+
+        if(updateCosts == null)
+            throw new SQLException("Update cost array is null");
+
+        if(updateCosts.length != configuration.size())
+            throw new SQLException(
+                    "Incorrect update costs " + updateCosts.length +
+                    " for configuration of size" + configuration.size());
+
+        this.updateCost = getUpdateCost(getConfiguration().getIndexes());
     }
 
     /**
@@ -142,6 +163,7 @@ public class PreparedSQLStatement
         this.cost              = other.cost;
         this.configuration     = other.configuration;
         this.updateCosts       = other.updateCosts;
+        this.updateCost        = other.updateCost;
         this.usedConfiguration = other.usedConfiguration;
     }
 
@@ -207,8 +229,8 @@ public class PreparedSQLStatement
     /**
      * Returns the cost of executing the statement. The cost returned is the cost that an optimizer 
      * estimated given the set of physical structures contained in {@link #getConfiguration}. For 
-     * update statements, this cost doesn't correspond only to the SELECT shell, i.e. no update 
-     * costs are considered. In order
+     * update statements, this cost corresponds to the SELECT shell only, i.e. no update costs are 
+     * considered.
      *
      * @return
      *      the execution cost of the statement.
@@ -233,18 +255,13 @@ public class PreparedSQLStatement
      */
     public double getUpdateCost(Index index)
     {
-        if(!SQLCategory.DML.isSame(statement.getSQLCategory()) ||
-            updateCosts == null ||
-            !configuration.contains(index))
-        {
+        if(!configuration.contains(index) || !statement.getSQLCategory().isSame(UPDATE))
             return 0.0;
-        }
 
         int position = configuration.getOrdinalPosition(index);
 
-        if(position == -1) {
+        if(position == -1)
             throw new RuntimeException("Wrong position in configuration " + position);
-        }
 
         return updateCosts[position];
     }
@@ -264,9 +281,8 @@ public class PreparedSQLStatement
     {
         double updateCost = 0.0;
 
-        for(Index idx : indexes) {
+        for(Index idx : indexes)
             updateCost += getUpdateCost(idx);
-        }
 
         return updateCost;
     }
@@ -280,7 +296,7 @@ public class PreparedSQLStatement
      */
     public double getUpdateCost()
     {
-        return getUpdateCost(getConfiguration().getIndexes());
+        return updateCost;
     }
 
     /**
@@ -344,13 +360,11 @@ public class PreparedSQLStatement
      */
     public Configuration getUsedConfiguration()
     {
-        Configuration usedConfiguration = new Configuration("conf");
+        Configuration usedConfiguration = new Configuration("used_conf");
 
-        for(Index idx : getConfiguration()) {
-            if( isUsed(idx) ) {
+        for(Index idx : getConfiguration())
+            if( isUsed(idx) )
                 usedConfiguration.add(idx);
-            }
-        }
 
         return usedConfiguration;
     }
@@ -365,7 +379,7 @@ public class PreparedSQLStatement
      */
     public Configuration getUpdatedConfiguration()
     {
-        Configuration updatedConfiguration = new Configuration("conf");
+        Configuration updatedConfiguration = new Configuration("updated_conf");
 
         for(Index idx : getConfiguration()) {
             if(updateCosts[getConfiguration().getOrdinalPosition(idx)] != 0) {
