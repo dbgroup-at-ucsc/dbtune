@@ -33,7 +33,7 @@ public class SQLStatementPlanTest {
     @Test
     public void testBasicUsage() {
         Operator         root = new Operator("Root",20.67,2);
-        SQLStatementPlan plan = new SQLStatementPlan(new SQLStatement("select * from test",SQLCategory.QUERY),root);
+        SQLStatementPlan plan = new SQLStatementPlan(new SQLStatement("select * from test",SQLCategory.SELECT),root);
 
         assertThat(plan.size(), is(1));
 

@@ -25,15 +25,16 @@ import java.util.List;
  * @author Huascar Sanchez
  * @author Ivo Jimenez
  */
-public enum SQLCategory {
+public enum SQLCategory
+{
+    SELECT("S"),
+    INSERT("I"),
+    UPDATE("U"),
+    DELETE("D"),
     /**
-     * A DML statement, specifically {@code SELECT} statements
+     * Convenience element that represents all DML statements but {@link SELECT}
      */
-    QUERY("S"),
-    /**
-     * The rest of the DML statements (all but {@code SELECT})
-     */
-    DML("I", "U", "D", "M", "UC", "DC"),
+    NOT_SELECT("I", "U", "D", "M", "UC", "DC"),
     /**
      * Any other type
      */
@@ -48,21 +49,29 @@ public enum SQLCategory {
      * @param code
      *     one or more strings containing the codes of the category
      */
-    SQLCategory(String... code){
+    SQLCategory(String... code)
+    {
         this.code = Arrays.asList(code);
     }
 
     /**
-     * Compares another category against this one.
+     * Checks whether or not the given category is part of another. For aggregated categories (eg. 
+     * NOT_SELECT), a category defines broader categories.
      *
-     * @param that
-     *     other statement to compare against this
+     * @param category
+     *     the category that is checked against this one.
      * @return
-     *     {@code true} if the given category is the same as {@code this} one; {@code false} 
+     *     {@code true} if the category contains the given {@code category}; {@code false} 
      *     otherwise.
      */
-    public boolean isSame(SQLCategory that){
-        return this == that;
+    boolean contains(SQLCategory category)
+    {
+        for(String id : category.code) {
+            if(contains(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -73,7 +82,8 @@ public enum SQLCategory {
      * @return
      *     {@code true} if the category contains the given {@code code}; {@code false} otherwise.
      */
-    boolean contains(String code){
+    boolean contains(String code)
+    {
         return this.code.contains(code);
     }
 
@@ -86,13 +96,28 @@ public enum SQLCategory {
      *     the category whose one of its codes matches the given {@code code}; {@code OTHER} if no 
      *     category is found.
      */
-    public static SQLCategory from(String code){
+    public static SQLCategory from(String code)
+    {
         for(SQLCategory category : values()){
             if(category.contains(code)){
                 return category;
             }
         }
         return UNKNOWN;
+    }
+
+    /**
+     * Compares another category against this one.
+     *
+     * @param that
+     *     other statement to compare against this
+     * @return
+     *     {@code true} if the given category is the same as {@code this} one; {@code false} 
+     *     otherwise.
+     */
+    public boolean isSame(SQLCategory that)
+    {
+        return this == that || this.contains(that) || that.contains(this);
     }
 
     /**

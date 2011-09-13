@@ -58,9 +58,15 @@ public class Workload implements Iterable<SQLStatement>
             if(lineLow.startsWith("--")) {
                 continue;
             } else if(lineLow.startsWith("select") || lineLow.startsWith("with")) {
-                category = SQLCategory.QUERY;
+                category = SQLCategory.SELECT;
+            } else if(lineLow.startsWith("update")) {
+                category = SQLCategory.UPDATE;
+            } else if(lineLow.startsWith("insert")) {
+                category = SQLCategory.INSERT;
+            } else if(lineLow.startsWith("delete")) {
+                category = SQLCategory.DELETE;
             } else {
-                category = SQLCategory.DML;
+                category = SQLCategory.UNKNOWN;
             }
 
             if(line.endsWith(";")) {
