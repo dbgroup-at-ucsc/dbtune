@@ -18,22 +18,17 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.DatabaseColumn;
 import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.DatabaseTable;
-import edu.ucsc.dbtune.core.metadata.AbstractIndex;
 import edu.ucsc.dbtune.core.metadata.Column;
 import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.SQLTypes;
 import edu.ucsc.dbtune.core.metadata.Table;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.util.Strings;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class InumInterestingOrdersExtractor implements InterestingOrdersExtractor {
   private static final Set<String> AGGR_OPER;
   private static final String      BLANK;
-  private final ColumnProperty     properties;
+  private final ColumnPropertyLookup properties;
 
   static {
     BLANK     = "";
@@ -77,7 +72,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     this(ColumnsProperties.INSTANCE.load(Preconditions.checkNotNull(connection)));
   }
 
-  InumInterestingOrdersExtractor(ColumnProperty properties) {
+  InumInterestingOrdersExtractor(ColumnPropertyLookup properties) {
     this.properties = properties;
   }
 
@@ -103,16 +98,17 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       records.add(record);
     }
 
-    return new Configuration(interestingOrdersSpace(records));
+    return new Configuration(interestingOrdersSpace(records, properties));
   }
 
+  //todo(Ivo) are these types okay? They don't match to your types found in SQLTypes...
   public static String getColumnType(int x) {
     if (x == 23)        { return "integer";         }
     else if (x == 20)   { return "bigint";          }
     else if (x == 21)   { return "smallint";        }
     else if (x == 17)   { return "bytea";           }
     else if (x == 701)  { return "double precision";}
-    else if (x == 1043) { return "varchar";         }
+    else if (x == 1043) { return "varchar";         } // todo(Ivo) this is a bug..it should be 12
     else if (x == 1042) { return "character";       }
     else if (x == 1700) { return "numeric(8,2)";    }
     else if (x == 1082) { return "date";            }
@@ -121,7 +117,8 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     return "";
   }
 
-  private static List<Index> interestingOrdersSpace(List<QueryRecord> records) {
+  private static List<Index> interestingOrdersSpace(List<QueryRecord> records,
+      ColumnPropertyLookup properties) {
     final Set<Index> indexes = Sets.newHashSet();
     int id = 0;
     //todo(Huascar) to code: if an index is already in the indexes list, then ignore it; don't store it more than once.
@@ -130,8 +127,8 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       for (String tableName : each.groupBy.keySet()) {
         final Table table = new Table(tableName);
         final List<Column> cols = makeColumns(table,
-            Sets.newLinkedHashSet(each.groupBy.get(tableName)));
-        //todo(Ivo) how can we extract this information, e.g., primary, clustered, etc.?
+            Sets.newLinkedHashSet(each.groupBy.get(tableName)), properties);
+        //todo(Ivo) how can we extract this information, e.g., primary, clustered, etc.? Right now, I just gave them all false values.
         final Index index = makeIndex(cols, false, false, false);
         index.setName("sat_index_" + id);
         indexes.add(index);
@@ -142,7 +139,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       for(String tableName : each.orderBy.keySet()){
         final Table table = new Table(tableName);
         final List<Column> cols = makeColumns(table,
-            Sets.newLinkedHashSet(each.orderBy.get(tableName)));
+            Sets.newLinkedHashSet(each.orderBy.get(tableName)), properties);
         final Index index = makeIndex(cols, false, false, false);
         index.setName("sat_index_" + id);
         indexes.add(index);
@@ -153,7 +150,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       for(String tableName : each.interestingOrders.keySet()){
         final Table table = new Table(tableName);
         final List<Column> cols = makeColumns(table,
-            Sets.newLinkedHashSet(each.interestingOrders.get(tableName)));
+            Sets.newLinkedHashSet(each.interestingOrders.get(tableName)), properties);
         final Index index = makeIndex(cols, false, false, false);
         index.setName("sat_index_" + id);
         indexes.add(index);
@@ -172,12 +169,12 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     }
   }
 
-  private static List<Column> makeColumns(Table table, Set<String> cols){
+  private static List<Column> makeColumns(Table table, Set<String> cols,
+      ColumnPropertyLookup properties){
     final Set<Column> result = Sets.newHashSet();
     for(String name : cols){
-      /*todo(Ivo) This usecase does not need to know the type of column; it just needs the name. Is there a way to bypass this sql type?
-      or do we really need to find a way to determine this type? */
-      final Column c = new Column(name, SQLTypes.VARCHAR); // VARCHAR is temp...see comment above.
+      final int type = properties.getColumnDataType(table.getName(), name);
+      final Column c = new Column(name, type);
       c.setTable(table);
       result.add(c);
     }
@@ -210,9 +207,9 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     private final Set<String> orderByColumns;
     private final Set<String> whereColumns;
 
-    private static final AtomicReference<ColumnProperty> PROPS = new AtomicReference<ColumnProperty>();
+    private static final AtomicReference<ColumnPropertyLookup> PROPS = new AtomicReference<ColumnPropertyLookup>();
 
-    ColumnsExtractor(ZQuery query, ColumnProperty property) {
+    ColumnsExtractor(ZQuery query, ColumnPropertyLookup property) {
       PROPS.set(Preconditions.checkNotNull(property));
       this.query      = query;
       allColumns      = Sets.newHashSet();
@@ -518,7 +515,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
 
   }
   // todo(Huascar) convert this to interface.
-  public enum ColumnsProperties implements ColumnProperty {
+  public enum ColumnsProperties implements ColumnPropertyLookup {
     INSTANCE;
 
     final Map<String, Set<ColumnInformation>> stringToSetOfColumnInfo;
@@ -608,60 +605,13 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       }
       return columns;
     }
-  }
 
-  // todo(Huascar) temporary placeholder for indexes in INUM. This will be changed with Ivo's new Index.
-  private static class IndexShell extends AbstractIndex {
-    private final String      name;
-    private final String      table;
-    private final Set<String> columns;
-
-    IndexShell(int internalId, String name, String table, Set<String> columns) {
-      super(internalId, "", 0, 0);
-      this.name = name;
-      this.table = table;
-      this.columns = columns;
-    }
-    
-    public String getIndexName(){
-      return name;
-    }
-    
-    public String getTableName(){
-      return table;
-    }
-    
-    public Set<String> getUsedColumns(){
-      return ImmutableSet.copyOf(columns);
-    }
-
-    @Override public int hashCode() {
-      return Objects.hashCode(getTableName(), columns);
-    }
-
-    @Override public boolean equals(Object o) {
-      if(o instanceof IndexShell){
-        final IndexShell other = (IndexShell) o;
-        return Objects.equals(getTableName(), other.getTableName())
-            && Objects.equals(columns, other.columns);
+    // todo(Huascar) this is slow...must be improved.
+    @Override public int getColumnDataType(String tableName, String columnName) {
+      for(ColumnInformation each : stringToSetOfColumnInfo.get(tableName)) {
+        if(Strings.same(each.columnName, columnName)) return each.atttypid;
       }
-      return false;
-    }
-
-    @Override public DatabaseTable baseTable() {
-      throw new UnsupportedOperationException("to be implemented");
-    }
-
-    @Override public int columnCount() {
-      throw new UnsupportedOperationException("to be implemented");
-    }
-
-    @Override public DBIndex consDuplicate(int id) throws SQLException {
-      throw new UnsupportedOperationException("to be implemented");
-    }
-
-    @Override public DatabaseColumn getColumn(int idx) {
-      throw new UnsupportedOperationException("to be implemented");
+      return -1;
     }
   }
 

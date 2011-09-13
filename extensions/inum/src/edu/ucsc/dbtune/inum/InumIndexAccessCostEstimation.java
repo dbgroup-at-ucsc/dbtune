@@ -3,8 +3,6 @@ package edu.ucsc.dbtune.inum;
 import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.spi.core.Console;
-import java.sql.Connection;
 import java.util.Set;
 
 /**
@@ -13,22 +11,24 @@ import java.util.Set;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation {
-  private final DatabaseConnection connection;
-  private final OptimalPlansParser parser;
+  private final OptimalPlanProvider provider;
+  private final OptimalPlansParser  parser;
 
-  InumIndexAccessCostEstimation(DatabaseConnection connection, OptimalPlansParser parser){
-    this.connection = connection;
+  InumIndexAccessCostEstimation(OptimalPlanProvider provider,
+      OptimalPlansParser parser){
+    this.provider   = provider;
     this.parser     = parser;
   }
 
   public InumIndexAccessCostEstimation(DatabaseConnection connection){
-    this(connection, new InumOptimalPlansParser());
+    this(new SqlExecutionPlanProvider(connection), new InumOptimalPlansParser());
   }
 
   @Override public double estimateIndexAccessCost(String query, Configuration indexes) {
     // this method will call the optimizer and then get the index access cost
     // per index in the Iterable<DBIndex> object.
-    final OptimalPlan singlePlan = singlePlan(getSqlExecutionPlan(connection.getJdbcConnection(), query, indexes));
+    final String      optPlan    = provider.getSqlExecutionPlan(query, indexes);
+    final OptimalPlan singlePlan = singlePlan(optPlan);
     double sumOfIndexAccessCosts = 0.0;
     for(Index each : indexes.getIndexes() ){
       sumOfIndexAccessCosts +=  singlePlan.getAccessCost(each.getTable().getName());
@@ -47,10 +47,4 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
 
     return  plan;
   }
-  private static String getSqlExecutionPlan(Connection jdbcConnection, String query,
-      Configuration indexes) {
-    Console.streaming().info(String.format("%s, %s, %s", jdbcConnection, query, indexes));
-    return "Hash Join  (cost=174080.39..9364262539.50 rows=1 width=193)";
-  }
-
 }

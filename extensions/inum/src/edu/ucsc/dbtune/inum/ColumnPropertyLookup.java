@@ -11,7 +11,7 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface ColumnProperty {
+public interface ColumnPropertyLookup {
   /**
    * Obtain {@link ColumnInformation column information} of a given
    * {@code reloid}.
@@ -20,6 +20,16 @@ public interface ColumnProperty {
    * @return a set of column information objects matching a {@code reloid}.
    */
   Set<ColumnInformation> getColumnInformation(int reloid);
+
+  /**
+   * Get the type of column we are dealing with.
+   * @param tableName
+   *    name of the table where the column is.
+   * @param columnName
+   *    name of the column we are interested.
+   * @return the type of the column. -1 if not found.
+   */
+  int getColumnDataType(String tableName, String columnName);
 
   /**
    * @return a live {@link DatabaseConnection db connection}.
@@ -42,7 +52,7 @@ public interface ColumnProperty {
   Properties getProperties();
 
   /**
-   * refresh the property values held by this {@link ColumnProperty object}.
+   * refresh the property values held by this {@link ColumnPropertyLookup object}.
    */
   void refresh();
 }

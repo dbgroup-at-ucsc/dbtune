@@ -24,14 +24,14 @@ public class InterestingOrdersExtractorTest {
       + "ORDER BY supplier_city DESC, supplier_state ASC;";
 
   @Test public void testExtractInterestingOrders() throws Exception {
-    final ColumnProperty columnProperty = configureProperty();
+    final ColumnPropertyLookup columnProperty = configureProperty();
     final InterestingOrdersExtractor extractor = new InumInterestingOrdersExtractor(columnProperty);
     final Configuration ios = extractor.extractInterestingOrders(SAMPLE_QUERY);
     assertThat(ios.getIndexes().isEmpty(), is(false));
   }
 
-  private static ColumnProperty configureProperty() throws Exception {
-    final ColumnProperty      prop       = Mockito.mock(ColumnProperty.class);
+  private static ColumnPropertyLookup configureProperty() throws Exception {
+    final ColumnPropertyLookup prop       = Mockito.mock(ColumnPropertyLookup.class);
     final DatabaseConnection  connection = SharedFixtures.configureConnection();
     Mockito.when(prop.getDatabaseConnection()).thenReturn(connection);
     Mockito.doNothing().when(prop).refresh();
@@ -41,13 +41,15 @@ public class InterestingOrdersExtractorTest {
     Mockito.when(prop.getProperty(Mockito.eq("supplier_state".toUpperCase()))).thenReturn("suppliers".toUpperCase());
     Mockito.when(prop.getProperty(Mockito.eq("supplier_name".toUpperCase()))).thenReturn("suppliers".toUpperCase());
     Mockito.when(prop.getProperties()).thenReturn(populateProperties("suppliers", info));
+    Mockito.when(prop.getColumnDataType(Mockito.eq("suppliers"), Mockito.eq("supplier_city".toUpperCase()))).thenReturn(12);
+    Mockito.when(prop.getColumnDataType(Mockito.eq("suppliers"), Mockito.eq("supplier_state".toUpperCase()))).thenReturn(12);
     return prop;
   }
 
   private static Set<ColumnInformation> populateColumnInformationSet(){
     return Sets.newHashSet(
-        singleColumnInformation("supplier_city", 1, 1043),
-        singleColumnInformation("supplier_state", 2, 1043)
+        singleColumnInformation("supplier_city", 1, 12),
+        singleColumnInformation("supplier_state", 2, 12)
     );
   }
 

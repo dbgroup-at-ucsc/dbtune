@@ -7,9 +7,7 @@ import edu.ucsc.dbtune.core.metadata.Configuration;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Combinations;
 import edu.ucsc.dbtune.util.Strings;
-import java.sql.Connection;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Default implementation of Inum's {@link Precomputation precomputation} step.
@@ -17,19 +15,21 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InumPrecomputation implements Precomputation {
-  private final DatabaseConnection          connection;
+  private final OptimalPlanProvider         provider;
   private final OptimalPlansParser          parser;
-  private final AtomicReference<InumSpace>  inumSpace;
+  private final InumSpace                   inumSpace;
   private final Set<String>                 seenWorkloads;
 
-  InumPrecomputation(DatabaseConnection connection, OptimalPlansParser parser){
-    this.connection     = connection;
-    this.parser         = parser;
-    this.inumSpace      = new AtomicReference<InumSpace>();
-    this.seenWorkloads  = Sets.newHashSet();
+  InumPrecomputation(InumSpace inumSpace,
+      OptimalPlanProvider provider, OptimalPlansParser parser){
+    this.provider         = provider;
+    this.parser           = parser;
+    this.inumSpace        = inumSpace;
+    this.seenWorkloads    = Sets.newHashSet();
   }
+
   public InumPrecomputation(DatabaseConnection connection){
-    this(connection, new InumOptimalPlansParser());
+    this(new InMemoryInumSpace(), new SqlExecutionPlanProvider(connection), new InumOptimalPlansParser());
   }
 
   private void addQuerytoListOfSeenQueries(String query){
@@ -40,14 +40,10 @@ public class InumPrecomputation implements Precomputation {
   }
 
   @Override public InumSpace getInumSpace() {
-    return Preconditions.checkNotNull(inumSpace.get());
+    return inumSpace;
   }
 
   @Override public Set<OptimalPlan> setup(String query, Configuration interestingOrders) {
-    if(inumSpace.get() == null) {
-      inumSpace.set(new InMemoryInumSpace());
-    }
-
     addQuerytoListOfSeenQueries(query);
     // generate all possible interesting orders combinations that will be used
     // during the INUM's {@link Precomputation setup} phase.
@@ -61,11 +57,7 @@ public class InumPrecomputation implements Precomputation {
       //   add all returned plans to optimalPlans
       //   save plans in InumSpace indexed by interesting order.
       // return a reference to the set of optimal plans
-      final String queryExecutionPlan = getQueryExecutionPlan(   // get execution plan given the set of interesting orders.
-          connection.getJdbcConnection(),
-          query,
-          o
-      );
+      final String queryExecutionPlan = provider.getSqlExecutionPlan(query, o);
       if(Strings.isEmpty(queryExecutionPlan)) continue;
       optimalPlansPerInterestingOrder.addAll(parser.parse(queryExecutionPlan));
 
@@ -84,13 +76,6 @@ public class InumPrecomputation implements Precomputation {
     }
 
     return getInumSpace().getAllSavedOptimalPlans();
-  }
-
-  //todo(Huascar) to implement once the dbms changes are done
-  private static String getQueryExecutionPlan(Connection connection, String query,
-      Configuration interestingOrders){
-    // example of a possible suggested plan
-    return "Hash Join  (cost=174080.39..9364262539.50 rows=1 width=193)";   // we can have one or many query plans
   }
 
 

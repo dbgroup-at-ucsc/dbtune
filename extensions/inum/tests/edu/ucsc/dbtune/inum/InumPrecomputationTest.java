@@ -7,7 +7,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import org.junit.After;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,13 +20,6 @@ public class InumPrecomputationTest {
 
   @Before public void setUp() throws Exception {
     mockConnection = SharedFixtures.configureConnection();
-  }
-
-  @Test (expected = NullPointerException.class)
-  public void testInumSpaceNotYetCreated() throws Exception {
-    final Precomputation setup = new InumPrecomputation(mockConnection);
-    setup.getInumSpace();
-    fail("Test has failed if we got to this point.");
   }
 
   @Test public void testInumSpaceBuilding_SingleElement() throws Exception {
