@@ -453,6 +453,23 @@ public class Index extends DatabaseObject
     }
 
     /**
+     * Returns the descending value for the given column
+     *
+     * @return
+     *     <code>true</code> the column is descending; <code>false</code> if ascending
+     * @throws SQLException
+     *     if the column isn't contained in the index
+     */
+    public boolean isDescending(Column column) throws SQLException
+    {
+        try {
+            return descending.get(columns.indexOf(column));
+        } catch (IndexOutOfBoundsException ex) {
+            throw new SQLException(ex);
+        }
+    }
+
+    /**
      * @return create index statement.
      */
     public String getCreateStatement() {

@@ -132,7 +132,7 @@ public class PGOptimizer extends Optimizer
 
         sql.setSQLCategory(SQLCategory.from(rs.getString("category")));
 
-        selectCost = Double.valueOf(rs.getString("qcost"));
+        selectCost = rs.getDouble("qcost");
 
         if(indexes.size() > 0) {
             updateCost = toDoubleArrayFromIndexed(rs.getString("index_overhead").split(" "), "=");
