@@ -22,7 +22,7 @@ import java.util.Properties
  * This class provides a scala mirror of the core.metadata.Configuration class
  */
 class Configuration(c:CoreConfiguration) extends CoreConfiguration(c) {
-  var indexes:List[Index] = Index.asScalaIndex(c.getIndexes())
+  var indexes:List[Index] = Index.asScalaIndex(c.toList())
 
   override def toString = indexes.toString
 }

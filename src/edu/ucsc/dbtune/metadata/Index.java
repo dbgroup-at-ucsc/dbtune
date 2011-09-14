@@ -108,7 +108,8 @@ public class Index extends DatabaseObject
 
     /**
      * Creates an index with the given column, primary, uniqueness and clustering values. The name 
-     * of the index is defaulted to {@code column.getName()+"_index"}.
+     * of the index is defaulted to {@code column.getName()+"_index"}. The column is taken as being 
+     * in descending order.
      *
      * @param column
      *     column that will define the index
@@ -345,15 +346,17 @@ public class Index extends DatabaseObject
     }
 
     /**
-     * adds a new column to the index. If the column is already contained it does nothing, i.e.  
-     * repetitions aren't allowed
+     * adds a new column to the index with the given order. If the column is already contained it 
+     * does nothing, i.e. repetitions aren't allowed
      *
      * @param column
      *     new column to be inserted to the sequence
+     * @param descending
+     *     {@code true} if the column is in descending order. {@code false} if ascending.
      * @throws SQLException
      *     if column is already contained in the index
      */
-    public void add(Column column) throws SQLException
+    public void add(Column column, Boolean descending) throws SQLException
     {
         if (table != column.getTable())
             throw new SQLException("Table " + table + " doesn't contain column " + column);
@@ -362,7 +365,21 @@ public class Index extends DatabaseObject
             throw new SQLException("Column " + column + " already in index");
 
         columns.add(column);
-        descending.add(true);
+        this.descending.add(descending);
+    }
+
+    /**
+     * adds a new column to the index in descending order. If the column is already contained it 
+     * does nothing, i.e.  repetitions aren't allowed
+     *
+     * @param column
+     *     new column to be inserted to the sequence
+     * @throws SQLException
+     *     if column is already contained in the index
+     */
+    public void add(Column column) throws SQLException
+    {
+        add(column,true);
     }
 
     /**
@@ -411,23 +428,9 @@ public class Index extends DatabaseObject
     public Column get(int i)
     {
         if (i < columns.size())
-        {
             return columns.get(i);
-        }
         else
-        {
             return null;
-        }
-    }
-    public Column getColumn(int i) {
-        if (i < columns.size())
-        {
-            return columns.get(i);
-        }
-        else
-        {
-            return null;
-        }
     }
 
     /**

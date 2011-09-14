@@ -25,7 +25,6 @@ import edu.ucsc.dbtune.util.IndexBitSet;
 public class ConfigurationBitSet extends Configuration
 {
     protected IndexBitSet bitSet;
-    protected int         maxId;
 
     /**
      * Constructs a configuration.
@@ -37,7 +36,7 @@ public class ConfigurationBitSet extends Configuration
      */
     public ConfigurationBitSet(Configuration other, IndexBitSet bitSet)
     {
-        super(other.getIndexes());
+        super(other.toList());
         this.bitSet = bitSet;
     }
 

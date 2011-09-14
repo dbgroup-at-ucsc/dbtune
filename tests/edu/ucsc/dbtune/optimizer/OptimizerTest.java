@@ -278,7 +278,7 @@ public class OptimizerTest
 
         assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(conf.getIndexAt(0))));
         assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(conf.getIndexAt(1))));
-        assertThat(sqlp.getUpdateCost(), is(sqlp.getUpdateCost(conf.getIndexes())));
+        assertThat(sqlp.getUpdateCost(), is(sqlp.getUpdateCost(conf.toList())));
 
         col.getTable().remove(idxa);
         col.getTable().remove(idxb);

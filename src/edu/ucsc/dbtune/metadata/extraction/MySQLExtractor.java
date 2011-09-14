@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.metadata.Column;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -38,6 +39,8 @@ import java.sql.SQLException;
  */
 public class MySQLExtractor extends GenericJDBCExtractor
 {
+    int idCounter=1;
+
     /**
      * {@inheritDoc}
      */
@@ -45,6 +48,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
     protected void extractCatalog(Catalog catalog, Connection connection) throws SQLException
     {
         catalog.setName("mysql");
+        catalog.setInternalID(idCounter++);
     }
 
     /**
@@ -74,7 +78,9 @@ public class MySQLExtractor extends GenericJDBCExtractor
                 continue;
             }
 
-            new Schema(catalog,schName);
+            Schema sch = new Schema(catalog,schName);
+
+            sch.setInternalID(idCounter++);
         }
 
         rs.close();
@@ -92,10 +98,15 @@ public class MySQLExtractor extends GenericJDBCExtractor
 
         for(Schema sch : catalog.getSchemas()) {
             for(Table tbl : sch.getTables()) {
+                tbl.setInternalID(idCounter++);
                 for(Index idx : tbl.getIndexes()) {
                     if(idx.getName().equals("PRIMARY")) {
                         idx.setName(tbl.getName() + "_pkey");
+                        idx.setInternalID(idCounter++);
                     }
+                }
+                for(Column col : tbl.getColumns()) {
+                    col.setInternalID(idCounter++);
                 }
             }
         }

@@ -165,7 +165,6 @@ XXX: will fix as part of issue #64
                && ((DB2Index) obj).getMeta().equals(getMeta());
     }
 
-    @Override
     public Column getColumn(int i) {
         //noinspection RedundantTypeArguments
         return getMeta().schema.getColumns().get(i);

@@ -20,7 +20,6 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
-import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
 
@@ -109,7 +108,7 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement
     {
         optimizationCount++;
 
-        if(!getConfiguration().getIndexes().containsAll(configuration.getIndexes())) {
+        if(!getConfiguration().toList().containsAll(configuration.toList())) {
             throw new SQLException("Configuration " + configuration +
                     " not contained in statement's" + getConfiguration());
         }

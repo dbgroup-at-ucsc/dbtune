@@ -162,7 +162,7 @@ public class Schema extends DatabaseObject
     public Index findIndex(String name)
     {
         return (Index) DatabaseObject.findByName(
-                new ArrayList<DatabaseObject>(_baseConfiguration.getIndexes()), name);
+                new ArrayList<DatabaseObject>(_baseConfiguration.toList()), name);
     }
 
     /**

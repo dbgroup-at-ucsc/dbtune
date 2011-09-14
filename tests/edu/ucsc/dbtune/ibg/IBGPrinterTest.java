@@ -83,7 +83,7 @@ public class IBGPrinterTest {
 
         final Configuration candidatePool = (Configuration) mock(Configuration.class);
 
-        when(candidatePool.getIndexes()).thenReturn(list);
+        when(candidatePool.toList()).thenReturn(list);
         final Connection connection = mock(Connection.class);
         final Statement statement  = mock(Statement.class);
         final ResultSet resultSet  = mock(ResultSet.class);

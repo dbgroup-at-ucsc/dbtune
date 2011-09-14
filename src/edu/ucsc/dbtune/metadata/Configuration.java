@@ -98,7 +98,7 @@ public class Configuration implements Iterable<Index>
      * @return
      *     List of Index objects
      */
-    public List<Index> getIndexes()
+    public List<Index> toList()
     {
         return new ArrayList<Index>(_indexes);
     }
@@ -177,6 +177,7 @@ public class Configuration implements Iterable<Index>
      * @throws ArrayIndexOutOfBoundsException
      *     if the index is out of bounds with respect to the number of indexes contained in the 
      *     configuration
+     * @see getOrdinalPosition
      */
     public Index getIndexAt(int position)
     {

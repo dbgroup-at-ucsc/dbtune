@@ -147,7 +147,7 @@ public class PreparedSQLStatement
                     "Incorrect update costs " + updateCosts.length +
                     " for configuration of size" + configuration.size());
 
-        this.updateCost = getUpdateCost(getConfiguration().getIndexes());
+        this.updateCost = getUpdateCost(getConfiguration().toList());
     }
 
     /**

@@ -336,7 +336,7 @@ public class WorkFunctionAlgorithm
             conf = new ConfigurationBitSet(qinfos.get(q).getConfiguration(), state);
             stmt = qinfos.get(q).explain(conf);
             cost += stmt.getCost();
-            cost += stmt.getUpdateCost(stmt.getUsedConfiguration().getIndexes());
+            cost += stmt.getUpdateCost(stmt.getUsedConfiguration().toList());
             cost += transitionCost(qinfos.get(q).getConfiguration(), prevState, state);
 
             prevState = state;

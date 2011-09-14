@@ -82,7 +82,7 @@ public class ConfigurationBitSetTest
 
         ConfigurationBitSet conf1 = new ConfigurationBitSet(allIndexes, bitSet);
 
-        assertThat(conf1.contains(allIndexes.getIndexes().get(0)), is(true));
-        assertThat(conf1.contains(allIndexes.getIndexes().get(allIndexes.size()-2)), is(true));
+        assertThat(conf1.contains(allIndexes.getIndexAt(0)), is(true));
+        assertThat(conf1.contains(allIndexes.getIndexAt(allIndexes.size()-2)), is(true));
     }
 }

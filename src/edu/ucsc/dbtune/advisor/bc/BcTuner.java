@@ -107,7 +107,7 @@ public class BcTuner
     private int inferUseLevel(Index i1, Index i2, boolean prefix) {
         if (prefix) {
             return 2;
-        } else if (i1.getColumn(0).equals(i2.getColumn(0))) {
+        } else if (i1.get(0).equals(i2.get(0))) {
             return 1;
         } else {
             return 0;
@@ -271,14 +271,14 @@ public class BcTuner
         @Override
         public ColumnChecker get() {
             for (int j2 = 0; j2 < n2; j2++){
-                Column col2 = i2.getColumn(j2);
+                Column col2 = i2.get(j2);
                 /* check for col2 in the same position */
-                if (i1.getColumn(j2).equals(col2)) continue;
+                if (i1.get(j2).equals(col2)) continue;
 
                 /* it's not in the same position */
                 prefix = false;
                 for (int j1 = 0; j1 < n1; j1++) {
-                    if (i1.getColumn(j1).equals(col2)) {
+                    if (i1.get(j1).equals(col2)) {
                         break;
                     } else if (j1 == n1 -1) {
                         return this;
