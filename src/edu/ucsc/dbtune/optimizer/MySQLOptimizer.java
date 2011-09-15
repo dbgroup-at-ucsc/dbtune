@@ -19,7 +19,9 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -27,6 +29,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 
 /**
  * The interface to the MySQL optimizer.
@@ -36,7 +39,6 @@ import java.sql.Statement;
 public class MySQLOptimizer extends Optimizer
 {
     private Connection connection;
-    private boolean    obtainPlan;
 
     /**
      * Creates a new optimizer for MySQL.
@@ -49,41 +51,34 @@ public class MySQLOptimizer extends Optimizer
     public MySQLOptimizer(Connection connection) throws SQLException
     {
         this.connection = connection;
-        this.obtainPlan = false;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes) throws SQLException
+    public PreparedSQLStatement explain(SQLStatement sql, Configuration configuration) throws SQLException
     {
-        ResultSet        rs;
-        SQLStatementPlan sqlPlan;
-        Configuration    usedConf = null;
-        Statement        stmt;
-        double[]         updateCost = null;
-        double           selectCost = 0.0;
+        // XXX: issue #9 (mysqlpp project)
+        if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT))
+            throw new SQLException("Can't explain " + sql.getSQLCategory() + " statements");
 
-        create(indexes, connection);
+        SQLStatementPlan plan;
+        Configuration    used;
+        double           cost;
 
-        stmt = connection.createStatement();
-        rs   = stmt.executeQuery("EXPLAIN EXTENDED " + sql.getSQL());
+        create(configuration, connection);
 
-        if(!rs.next())
-            throw new SQLException("No result from EXPLAIN statement");
+        plan = getPlan(sql);
+        used = new Configuration("used_configuration", plan.getIndexes());
+        cost = getCost();
 
-        rs.close();
-        stmt.close();
+        drop(configuration, connection);
 
-        sqlPlan = null;
-
-        if(obtainPlan)
-            sqlPlan = getPlan(connection,sql);
-
-        drop(indexes, connection);
-
-        return new PreparedSQLStatement(sql, sqlPlan, selectCost, updateCost, indexes, usedConf, 1);
+        return new PreparedSQLStatement(
+                sql, plan, cost,
+                Arrays.copyOf(new double[0], configuration.size()),
+                configuration, used, 1);
     }
 
     /**
@@ -96,27 +91,84 @@ public class MySQLOptimizer extends Optimizer
     }
 
     /**
-     * Returns the plan for the given statement
+     * Returns the plan for the given statement.
      *
-     * @param connection
-     *     connection to the DBMS
-     * @param sql
-     *     statement whose plan is retrieved
+     * @param rs
+     *     should contain the result from EXPLAIN
      * @return
-     *     an execution plan for the given statement
+     *     an execution plan
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    protected SQLStatementPlan getPlan(Connection connection, SQLStatement sql)
+    protected SQLStatementPlan getPlan(SQLStatement sql)
         throws SQLException
     {
-        throw new SQLException("Not implemented yet");
+        // XXX: issue #105 - populate plan with correctly; height=2 plan is temporary
+        SQLStatementPlan plan;
+        Statement        stmt;
+        ResultSet        rs;
+        Operator         operator;
+        Index            index;
+        String           name;
+
+        stmt = connection.createStatement();
+        rs   = stmt.executeQuery("EXPLAIN " + sql.getSQL());
+        plan = new SQLStatementPlan(sql, new Operator("root", 0.0, 0));
+
+        while(rs.next()) {
+            name = rs.getString("key");
+
+            if(name == null)
+                continue;
+
+            operator = new Operator(rs.getString("table"), rs.getLong("rows"), 0);
+            index    = catalog.findIndex(name);
+            
+            if(index == null)
+                throw new SQLException("Can't find index " + name);
+
+            operator.add(index);
+            plan.setChild(plan.getRootOperator(), operator);
+        }
+
+        rs.close();
+        stmt.close();
+
+        return plan;
+    }
+
+    /**
+     * Returns the cost of the statement that has been just explained.
+     *
+     * @return
+     *     the cost of the plan
+     * @throws SQLException
+     *     if something goes wrong while talking to the DBMS
+     */
+    protected double getCost()
+        throws SQLException
+    {
+        Statement stmt = connection.createStatement();
+        ResultSet rs   = stmt.executeQuery("SHOW STATUS LIKE 'last_query_cost'");
+
+        if(!rs.next())
+            throw new SQLException("No result from SHOW STATUS statement");
+
+        double cost = rs.getDouble("value");
+
+        rs.close();
+        stmt.close();
+        
+        return cost;
     }
 
     /**
      * Creates the given configuration as a set of hypothetical indexes in the database.
      *
-     * @param indexes
+     * @param configuration
+     *     configuration being created
+     * @param connection
+     *     connection used to communicate with the DBMS
      * @throws SQLException
      *      if an error occurs while communicating with the DBMS
      */
@@ -132,20 +184,22 @@ public class MySQLOptimizer extends Optimizer
     /**
      * Drops the given configuration as a set of hypothetical indexes in the database.
      *
-     * @param indexes
+     * @param configuration
+     *     configuration being dropped
+     * @param connection
+     *     connection used to communicate with the DBMS
      * @throws SQLException
-     *      if an error occurs while communicating with the DBMS
+     *     if an error occurs while communicating with the DBMS
      */
     private static void drop(Configuration configuration, Connection connection) throws SQLException
     {
         for(Index index : configuration) {
             Statement stmt = connection.createStatement();
             stmt = connection.createStatement();
-            stmt.execute("DROP INDEX " + index + " on " + index.getTable());
+            stmt.execute("DROP INDEX " + index + " on " + index.getTable().getSchema() + "." + index.getTable());
             stmt.close();
         }
     }
-
     /**
      * Returns a string representation of the given index.
      *
@@ -161,6 +215,8 @@ public class MySQLOptimizer extends Optimizer
 
         sb.append(index.getName());
         sb.append(" on ");
+        sb.append(index.getTable().getSchema().getName());
+        sb.append(".");
         sb.append(index.getTable().getName());
         sb.append(" (");
 
@@ -171,12 +227,12 @@ public class MySQLOptimizer extends Optimizer
                 sb.append(",");
 
             sb.append(col.getName());
-            sb.append(index.isDescending(col) ? " DESC" : " ASC");
+            // not supported. Can be specified but it'll be ignored
+            // sb.append(index.isDescending(col) ? " DESC" : " ASC");
         }
 
-        sb.append(" )");
+        sb.append(")");
 
         return sb.toString();
     }
-
 }

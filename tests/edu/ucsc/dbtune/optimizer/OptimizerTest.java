@@ -245,7 +245,7 @@ public class OptimizerTest
         double               cost1;
         double               cost2;
 
-        sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a > 0");
+        sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         cost1 = opt.explain(sql).getCost();
 
         col  = cat.findSchema("one_table").findTable("tbl").findColumn("a");
@@ -268,7 +268,7 @@ public class OptimizerTest
 
         conf.add(idxb);
 
-        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
+        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
 
         assertThat(sqlp.getCost(),      is(cost2));
