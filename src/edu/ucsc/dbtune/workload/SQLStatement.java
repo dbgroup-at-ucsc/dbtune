@@ -15,6 +15,8 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.workload;
 
+import java.sql.SQLException;
+
 /**
  * Represents a SQL statement. Each {@code SQLStatement} object is tied to a {@code String} object 
  * that contains the actual literal contents of the SQL statement.
@@ -30,13 +32,17 @@ public class SQLStatement
     private String sql;
 
     /**
-     * Constructs a {@code SQLStatement} with unknown category
+     * Constructs a {@code SQLStatement}. The constructor tries to infer the category of the 
+     * statement using the {@link SQLCategory#from} method.
      *
      * @param sql
      *      a sql statement.
+     * @throws SQLException
+     *     if no category can't be extracted from the given string.
+     * @see SQLCategory#from
      */
-    public SQLStatement(String sql) {
-        this(sql, SQLCategory.UNKNOWN);
+    public SQLStatement(String sql) throws SQLException {
+        this(sql, SQLCategory.from(sql));
     }
 
     /**
@@ -50,17 +56,6 @@ public class SQLStatement
     public SQLStatement(String sql, SQLCategory category) {
         this.category = category;
         this.sql      = sql;
-    }
-
-    /**
-     * Assigns the category of statement.
-     *
-     * @param category
-     *     a sql category.
-     * @see SQLCategory
-     */
-    public void setSQLCategory(SQLCategory category) {
-        this.category = category;
     }
 
     /**

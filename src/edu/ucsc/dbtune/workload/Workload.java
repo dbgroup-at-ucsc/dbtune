@@ -19,6 +19,7 @@ import java.io.Reader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.Iterable;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -40,12 +41,15 @@ public class Workload implements Iterable<SQLStatement>
      * @param workloadStream
      *     stream that provides the set of SQL statements. One statement per line is assumed; 
      *     single-line comments only.
+     * @throws IOException
+     *     if an error occurs while retrieving information from the given reader
+     * @throws SQLException
+     *     if a statement can't get a category assigned to it
      */
-    public Workload(Reader workloadStream) throws IOException {
+    public Workload(Reader workloadStream) throws IOException,SQLException {
         BufferedReader reader;
         String         line;
         String         lineLow;
-        SQLCategory    category;
 
         sqls   = new ArrayList<SQLStatement>();
         reader = new BufferedReader(workloadStream);
@@ -57,22 +61,12 @@ public class Workload implements Iterable<SQLStatement>
 
             if(lineLow.startsWith("--")) {
                 continue;
-            } else if(lineLow.startsWith("select") || lineLow.startsWith("with")) {
-                category = SQLCategory.SELECT;
-            } else if(lineLow.startsWith("update")) {
-                category = SQLCategory.UPDATE;
-            } else if(lineLow.startsWith("insert")) {
-                category = SQLCategory.INSERT;
-            } else if(lineLow.startsWith("delete")) {
-                category = SQLCategory.DELETE;
-            } else {
-                category = SQLCategory.UNKNOWN;
             }
 
             if(line.endsWith(";")) {
-                sqls.add(new SQLStatement(line.substring(0, line.length()-1),category));
+                sqls.add(new SQLStatement(line.substring(0, line.length()-1)));
             } else {
-                sqls.add(new SQLStatement(line,category));
+                sqls.add(new SQLStatement(line));
             }
         }
     }

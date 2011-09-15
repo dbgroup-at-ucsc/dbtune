@@ -115,7 +115,10 @@ public class DB2Optimizer extends Optimizer
         );
 
         submit(fetchExplainObjectCandidates(), connection, new IndexBitSet());
-        sql.setSQLCategory(getStatementType(connection));
+        if(!sql.getSQLCategory().isSame(getStatementType(connection)))
+            throw new SQLException(
+                    sql.getSQLCategory() + " not the same to " + 
+                    getStatementType(connection));
 
         double[] updateCosts  = new double[indexes.size()];
         Arrays.fill(updateCosts, updateCost);

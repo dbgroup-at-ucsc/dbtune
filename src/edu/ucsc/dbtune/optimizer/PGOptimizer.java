@@ -130,7 +130,10 @@ public class PGOptimizer extends Optimizer
         if(!rs.next())
             throw new SQLException("No result from EXPLAIN statement");
 
-        sql.setSQLCategory(SQLCategory.from(rs.getString("category")));
+        if(!sql.getSQLCategory().isSame(SQLCategory.from(rs.getString("category"))))
+            throw new SQLException(
+                    sql.getSQLCategory() + " not the same to " + 
+                    SQLCategory.from(rs.getString("category")));
 
         selectCost = rs.getDouble("qcost");
 
@@ -446,27 +449,15 @@ public class PGOptimizer extends Optimizer
         SQLStatementPlan plan;
         Operator         root;
         BufferedReader   breader;
-        StringReader     sreader;
-        String           line;
-        String           sql;
 
-        // get the SQL since we need it to instantiate SQLStatement objects
         breader = new BufferedReader(reader);
-        sql     = "";
-
-        while((line = breader.readLine()) != null) {
-            sql += line + "\n";
-        }
-
-        // then create a string reader to pass it down to the JSON mapper
-        sreader = new StringReader(sql);
         mapper  = new ObjectMapper();
 
         @SuppressWarnings("unchecked")
-        List<Map<String,Object>> planData = mapper.readValue(sreader, List.class);
+        List<Map<String,Object>> planData = mapper.readValue(breader, List.class);
 
         if(planData == null) {
-            return new SQLStatementPlan(new SQLStatement(sql, SQLCategory.UNKNOWN), new Operator());
+            return new SQLStatementPlan(new Operator());
         }
 
         if(planData.size() > 1) {
@@ -477,7 +468,7 @@ public class PGOptimizer extends Optimizer
         Map<String,Object> rootData = (Map<String,Object>) planData.get(0).get("Plan");
 
         root = extractNode(rootData, schema);
-        plan = new SQLStatementPlan(new SQLStatement(sql,SQLCategory.UNKNOWN), root);
+        plan = new SQLStatementPlan(root);
 
         extractChildNodes(plan, root, rootData, schema);
 

@@ -26,7 +26,8 @@ import java.util.ArrayList;
 /**
  * Represents a plan for SQL statements of a RDBMS.
  */
-public class SQLStatementPlan extends Tree<Operator> {
+public class SQLStatementPlan extends Tree<Operator>
+{
     /** to keep a register of inserted operators */
     private int globalId = 1;
 
@@ -39,7 +40,24 @@ public class SQLStatementPlan extends Tree<Operator> {
      * @param root
      *     root of the plan
      */
-    public SQLStatementPlan(SQLStatement sql, Operator root) {
+    public SQLStatementPlan(Operator root)
+    {
+        super(root);
+
+        this.sql = null;
+        elements.clear();
+        root.setId(globalId++);
+        elements.put(root,this.root);
+    }
+
+    /**
+     * Creates a SQL statement plan with one (given root) node.
+     *
+     * @param root
+     *     root of the plan
+     */
+    public SQLStatementPlan(SQLStatement sql, Operator root)
+    {
         super(root);
 
         this.sql = sql;
@@ -54,7 +72,8 @@ public class SQLStatementPlan extends Tree<Operator> {
      * @return
      *     statement from which this plan was obtained
      */
-    public SQLStatement getStatement() {
+    public SQLStatement getStatement()
+    {
         return sql;
     }
 
@@ -64,7 +83,8 @@ public class SQLStatementPlan extends Tree<Operator> {
      * @param sql
      *     statement from which this plan was obtained
      */
-    public void setStatement(SQLStatement sql) {
+    public void setStatement(SQLStatement sql)
+    {
         this.sql = sql;
     }
 
@@ -74,7 +94,8 @@ public class SQLStatementPlan extends Tree<Operator> {
      * @return
      *     root node of the plan
      */
-    public Operator getRootOperator() {
+    public Operator getRootOperator()
+    {
         return super.getRootElement();
     }
 
@@ -85,7 +106,8 @@ public class SQLStatementPlan extends Tree<Operator> {
      * @return
      *     list of objects referenced by one or more operators in the plan.
      */
-    public List<DatabaseObject> getDatabaseObjects() {
+    public List<DatabaseObject> getDatabaseObjects()
+    {
         List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
 
         for(Operator op : toList()) {
@@ -101,7 +123,8 @@ public class SQLStatementPlan extends Tree<Operator> {
      * @return
      *     list of indexes referenced by the operators in the plan.
      */
-    public List<Index> getIndexes() {
+    public List<Index> getIndexes()
+    {
         List<Index> indexes = new ArrayList<Index>();
 
         for(DatabaseObject ob : getDatabaseObjects()) {
