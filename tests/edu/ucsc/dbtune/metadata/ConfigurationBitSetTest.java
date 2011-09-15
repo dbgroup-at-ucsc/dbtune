@@ -52,9 +52,9 @@ public class ConfigurationBitSetTest
             catalog = new Catalog("catalog_" + i);
             for(int j = 0; j < 2; j++) {
                 Schema schema = new Schema(catalog,"schema_" + j);
+                int count = 0;
                 for(int k = 0; k < 3; k++) {
                     Table table = new Table(schema,"table_" + k);
-                    int count = 0;
                     for(int l = 0; l < 4; l++) {
                         Column column = new Column(table,"column_" + count++, l+1);
 

@@ -47,7 +47,7 @@ public class Table extends DatabaseObject
      */
     public Table(Schema schema, String name) throws SQLException
     {
-        super( name );
+        super(name);
 
         this.type     = REGULAR;
         this._columns = new ArrayList<Column>();
@@ -99,7 +99,7 @@ public class Table extends DatabaseObject
         if(_columns.contains(column))
             throw new SQLException("Column " + column + " already in table");
 
-        _columns.add( column );
+        _columns.add(column);
     }
 
     /**
@@ -128,6 +128,7 @@ public class Table extends DatabaseObject
      */
     public void remove(Index index) throws SQLException
     {
+        schema.remove(index);
         _indexes.remove(index);
         // XXX: determine whether or not we need to check the implications of the removal
     }
@@ -162,7 +163,7 @@ public class Table extends DatabaseObject
      */
     public Column findColumn(String name)
     {
-        return (Column) DatabaseObject.findByName(new ArrayList<DatabaseObject>(_columns),name);
+        return (Column) findByName(new ArrayList<DatabaseObject>(_columns),name);
     }
 
     /**
@@ -175,7 +176,7 @@ public class Table extends DatabaseObject
      */
     public Index findIndex(String name)
     {
-        return (Index) DatabaseObject.findByName(new ArrayList<DatabaseObject>(_indexes),name);
+        return (Index) findByName(new ArrayList<DatabaseObject>(_indexes),name);
     }
 
     /**

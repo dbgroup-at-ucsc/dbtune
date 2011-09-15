@@ -40,6 +40,7 @@ import static org.junit.Assert.fail;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 /**
  * Test for the metadata extraction functionality. This test assumes that the system on the backend 
@@ -102,7 +103,7 @@ public class MetaDataExtractorFunctionalTest
     @Test
     public void testSchemaExists() throws Exception
     {
-        assertThat(cat.getSchemas().size() > 1, is(true));
+        assertThat(cat.getSchemas().size() > 0, is(true));
 
         sch = cat.findSchema("movies");
 
@@ -439,42 +440,35 @@ public class MetaDataExtractorFunctionalTest
 
             if (Strings.same(tbl.getName(), USERS))
             {
-                expectedSize = 2;
-                assertThat(tbl.findIndex("users_pkey") != null, is(true));
+                expectedSize = 1;
                 assertThat(tbl.findIndex("users_userid_email") != null, is(true));
             }
             else if (Strings.same(tbl.getName(), CREDITCARDS))
             {
-                expectedSize = 2;
-                assertThat(tbl.findIndex("creditcards_pkey") != null, is(true));
+                expectedSize = 1;
                 assertThat(tbl.findIndex("creditcards_creditnum_userid_credittype") != null, is(true));
             }
             else if (Strings.same(tbl.getName(), MOVIES))
             {
-                expectedSize = 2;
-                assertThat(tbl.findIndex("movies_pkey") != null, is(true));
+                expectedSize = 1;
                 assertThat(tbl.findIndex("movies_moiveid_title_yearofr") != null, is(true));
             }
             else if (Strings.same(tbl.getName(), GENRES))
             {
-                expectedSize = 1;
-                assertThat(tbl.findIndex("genres_pkey") != null, is(true));
+                expectedSize = 0;
             }
             else if (Strings.same(tbl.getName(), ACTORS))
             {
-                expectedSize = 2;
-                assertThat(tbl.findIndex("actors_pkey") != null, is(true));
+                expectedSize = 1;
                 assertThat(tbl.findIndex("actors_afirstname_alastname_dateofb") != null, is(true));
             }
             else if (Strings.same(tbl.getName(), CASTS))
             {
-                expectedSize = 1;
-                assertThat(tbl.findIndex("casts_pkey") != null, is(true));
+                expectedSize = 0;
             }
             else if (Strings.same(tbl.getName(), QUEUE))
             {
-                expectedSize = 2;
-                assertThat(tbl.findIndex("queue_pkey") != null, is(true));
+                expectedSize = 1;
                 assertThat(tbl.findIndex("queue_times") != null, is(true));
             }
             else if (Strings.same(tbl.getName(), RATINGS))
@@ -486,7 +480,7 @@ public class MetaDataExtractorFunctionalTest
                 fail("Unexpected table " + tbl.getName());
             }
 
-            assertThat(indexes.size() >= expectedSize, is(true));
+            assertThat(indexes.size(), greaterThanOrEqualTo(expectedSize));
         }
     }
 

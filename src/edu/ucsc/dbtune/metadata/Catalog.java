@@ -78,7 +78,29 @@ public class Catalog extends DatabaseObject
      */
     public Schema findSchema(String name)
     {
-        return (Schema) DatabaseObject.findByName(new ArrayList<DatabaseObject>(_schemas),name);
+        return (Schema) findByName(new ArrayList<DatabaseObject>(_schemas),name);
+    }
+
+    /**
+     * Finds the index whose name matches the given argument.
+     *
+     * @param name
+     *     name of the index that is searched for in <code>this</code> catalog.
+     * @return
+     *     the schema that has the given name; {@code null} if not found
+     */
+    public Index findIndex(String name)
+    {
+        Index idx = null;
+
+        for(Schema s : _schemas) {
+            idx = (Index) findByName(new ArrayList<DatabaseObject>(s.getIndexes()),name);
+
+            if(idx != null)
+                break;
+        }
+            
+        return idx;
     }
 
     /**

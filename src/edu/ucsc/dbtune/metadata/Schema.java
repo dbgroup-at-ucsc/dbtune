@@ -27,9 +27,8 @@ import java.util.List;
 public class Schema extends DatabaseObject
 {
     protected List<Table> _tables;
-
-    protected Catalog       _catalog;
-    protected Configuration _baseConfiguration;
+    protected List<Index> _indexes;
+    protected Catalog     _catalog;
 
     /**
      * constructs a new schema whose name is given
@@ -46,6 +45,7 @@ public class Schema extends DatabaseObject
         super(name);
 
         _tables  = new ArrayList<Table>();
+        _indexes = new ArrayList<Index>();
         _catalog = catalog;
 
         _catalog.add(this);
@@ -61,19 +61,31 @@ public class Schema extends DatabaseObject
     {
         super(other);
 
-        _tables = other._tables;
-        _baseConfiguration = other._baseConfiguration;
+        _catalog = other._catalog;
+        _tables  = other._tables;
+        _indexes = other._indexes;
     }
 
     /**
-     * returns the list of _tables that the schema contains
+     * returns the list of tables that the schema contains
      *
      * @return
-     *     List of Table objects
+     *     list of table objects
      */
     public List<Table> getTables()
     {
         return new ArrayList<Table>(_tables);
+    }
+
+    /**
+     * returns the list of indexes that the schema contains
+     *
+     * @return
+     *     list of indexes
+     */
+    public List<Index> getIndexes()
+    {
+        return new ArrayList<Index>(_indexes);
     }
 
     /**
@@ -87,9 +99,36 @@ public class Schema extends DatabaseObject
     void add(Table table) throws SQLException
     {
         if(_tables.contains(table))
-            throw new SQLException("Table " + table + " already in table");
+            throw new SQLException("Table " + table + " already in schema");
 
         _tables.add(table);
+    }
+
+    /**
+     * adds an index to the schema
+     *
+     * @param index
+     *     new index to add
+     * @throws SQLException
+     *     if index is already contained in the schema
+     */
+    void add(Index index) throws SQLException
+    {
+        if(_indexes.contains(index))
+            throw new SQLException("Index " + index + " already in schema");
+
+        _indexes.add(index);
+    }
+
+    /**
+     * removes an index from the schema
+     *
+     * @param index
+     *     index to remove
+     */
+    void remove(Index index) throws SQLException
+    {
+        _indexes.remove(index);
     }
 
     /**
@@ -104,17 +143,6 @@ public class Schema extends DatabaseObject
     }
 
     /**
-     * Assigns the schema's base configuration
-     *
-     * @param baseConfiguration
-     *     configuration corresponding to the schema
-     */
-    public void setBaseConfiguration( Configuration baseConfiguration )
-    {
-        _baseConfiguration = baseConfiguration;
-    }
-
-    /**
      * Returns the schema's base configuration
      *
      * @return
@@ -122,7 +150,13 @@ public class Schema extends DatabaseObject
      */
     public Configuration getBaseConfiguration()
     {
-        return _baseConfiguration;
+        List<Index> indexes = new ArrayList<Index>();
+
+        for(Index idx : _indexes)
+            if(idx.isMaterialized())
+                indexes.add(idx);
+
+        return new Configuration(indexes);
     }
 
     /**
@@ -135,7 +169,7 @@ public class Schema extends DatabaseObject
      */
     public Table findTable(String name)
     {
-        return (Table) DatabaseObject.findByName(new ArrayList<DatabaseObject>(_tables),name);
+        return (Table) findByName(new ArrayList<DatabaseObject>(_tables),name);
     }
 
     /**
@@ -148,7 +182,7 @@ public class Schema extends DatabaseObject
      */
     public Table findTable(int id)
     {
-        return (Table) DatabaseObject.findByInternalID(new ArrayList<DatabaseObject>(_tables),id);
+        return (Table) findByInternalID(new ArrayList<DatabaseObject>(_tables),id);
     }
 
     /**
@@ -161,8 +195,7 @@ public class Schema extends DatabaseObject
      */
     public Index findIndex(String name)
     {
-        return (Index) DatabaseObject.findByName(
-                new ArrayList<DatabaseObject>(_baseConfiguration.toList()), name);
+        return (Index) findByName(new ArrayList<DatabaseObject>(_indexes), name);
     }
 
     /**

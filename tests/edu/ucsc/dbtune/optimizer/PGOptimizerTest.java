@@ -222,8 +222,6 @@ public class PGOptimizerTest {
         new Column(tbl,"a", SQLTypes.INTEGER);
         new Index(tbl,"index_a",false,false,false);
 
-        sch.setBaseConfiguration(new Configuration(tbl.getIndexes()));
-
         SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan), sch);
         Operator         root = plan.getRootOperator();
 

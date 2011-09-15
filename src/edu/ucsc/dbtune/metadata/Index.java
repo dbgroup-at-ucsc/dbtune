@@ -41,7 +41,10 @@ public class Index extends DatabaseObject
     public static final boolean UNCLUSTERED    = false;
     public static final boolean UNIQUE         = true;
     public static final boolean NON_UNIQUE     = false;
+    public static final boolean ASCENDING      = true;
+    public static final boolean DESCENDING     = false;
 
+    protected Schema        schema;
     protected Table         table;
     protected List<Column>  columns;
     protected List<Boolean> descending;
@@ -66,14 +69,20 @@ public class Index extends DatabaseObject
      * @param clustered
      *     whether the corresponding table is clustered on this index
      * @throws SQLException
-     *     if an index with the given name is already contained in the table
+     *     if schema already contains an index with the defaulted name
      */
-    public Index(Table table, String name, boolean primary, boolean unique, boolean clustered)
+    public Index(
+            Table table, 
+            String name, 
+            boolean primary,
+            boolean unique, 
+            boolean clustered)
         throws SQLException
     {
         super(name);
 
         this.table      = table;
+        this.schema     = table.getSchema();
         this.type       = UNKNOWN;
         this.primary    = primary;
         this.unique     = unique;
@@ -82,7 +91,8 @@ public class Index extends DatabaseObject
         this.descending = new ArrayList<Boolean>();
         this.scanOption = NON_REVERSIBLE;
 
-        table.add(this);
+        this.schema.add(this);
+        this.table.add(this);
     }
 
     /**
@@ -96,6 +106,7 @@ public class Index extends DatabaseObject
         super(other);
 
         this.table        = other.table;
+        this.schema       = other.schema;
         this.columns      = other.columns;
         this.type         = other.type;
         this.unique       = other.unique;
@@ -117,11 +128,14 @@ public class Index extends DatabaseObject
      *     whether or not the index is primary
      * @param clustered
      *     whether the corresponding table is clustered on this index
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the defaulted name; if not 
+     *     all of the columns in the list correspond to the same table.
      */
     public Index(Column column, boolean primary, boolean unique, boolean clustered)
         throws SQLException
     {
-        this(column.getTable(),column.getName()+"_index",primary,unique,clustered);
+        this(column.getTable(), column.getName()+"_index", primary, unique, clustered);
         add(column);
     }
 
@@ -137,7 +151,8 @@ public class Index extends DatabaseObject
      * @param clustered
      *     whether the corresponding table is clustered on this index
      * @throws SQLException
-     *     if column list empty or not all of the columns in the list correspond to the same table.
+     *     if column list empty; if schema already contains an index with the given name; if not all 
+     *     of the columns in the list correspond to the same table.
      */
     public Index(String name, List<Column> columns, boolean primary, boolean unique, boolean clustered)
         throws SQLException
@@ -159,9 +174,16 @@ public class Index extends DatabaseObject
      * @param clustered
      *     whether the corresponding table is clustered on this index
      * @throws SQLException
-     *     if column list empty or not all of the columns in the list correspond to the same table.
+     *     if column list empty; if schema already contains an index with the given name; if not all 
+     *     of the columns in the list correspond to the same table.
      */
-    public Index(String name, List<Column> columns, List<Boolean> descending, boolean primary, boolean unique, boolean clustered)
+    public Index(
+            String name,
+            List<Column> columns,
+            List<Boolean> descending,
+            boolean primary,
+            boolean unique,
+            boolean clustered)
         throws SQLException
     {
         super(name);
@@ -169,15 +191,16 @@ public class Index extends DatabaseObject
         if (columns.size() == 0)
             throw new SQLException("Column list should have at least one element");
 
-        this.columns    = new ArrayList<Column>();
         this.table      = columns.get(0).getTable();
+        this.schema     = columns.get(0).getTable().getSchema();
         this.descending = new ArrayList<Boolean>();
+        this.columns    = new ArrayList<Column>();
 
         this.columns.add(columns.get(0));
 
         for (int i = 1; i < columns.size(); i++)
         {
-            if (this.table != columns.get(i).getTable())
+            if (table != columns.get(i).getTable())
                 throw new SQLException("Columns from different tables");
 
             this.columns.add(columns.get(i));
@@ -186,9 +209,9 @@ public class Index extends DatabaseObject
                 continue;
             
             if(descending.get(i))
-                this.descending.set(i, true);
+                this.descending.set(i, DESCENDING);
             else
-                this.descending.set(i, false);
+                this.descending.set(i, ASCENDING);
         }
 
         this.type         = UNKNOWN;
@@ -197,7 +220,8 @@ public class Index extends DatabaseObject
         this.clustered    = clustered;
         this.scanOption   = NON_REVERSIBLE;
 
-        table.add(this);
+        this.table.add(this);
+        this.schema.add(this);
     }
 
     /**
@@ -369,8 +393,8 @@ public class Index extends DatabaseObject
     }
 
     /**
-     * adds a new column to the index in descending order. If the column is already contained it 
-     * does nothing, i.e.  repetitions aren't allowed
+     * adds a new column to the index in ascending order. If the column is already contained it does 
+     * nothing, i.e.  repetitions aren't allowed
      *
      * @param column
      *     new column to be inserted to the sequence
@@ -379,7 +403,7 @@ public class Index extends DatabaseObject
      */
     public void add(Column column) throws SQLException
     {
-        add(column,true);
+        add(column,ASCENDING);
     }
 
     /**
@@ -491,8 +515,7 @@ public class Index extends DatabaseObject
         Index idx = (Index) other;
 
         return table.getSchema().getCatalog() == idx.table.getSchema().getCatalog() &&
-               table.getSchema() == idx.table.getSchema() &&
-               table == idx.table &&
+               schema == idx.schema &&
                name.equals(idx.getName());
     }
 
@@ -505,8 +528,7 @@ public class Index extends DatabaseObject
         return
             31 *
             table.getSchema().getCatalog().hashCode() *
-            table.getSchema().hashCode() *
-            table.hashCode() *
+            schema.hashCode() *
             name.hashCode();
     }
 }

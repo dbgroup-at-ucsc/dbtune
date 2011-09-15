@@ -60,22 +60,22 @@ public class MetadataTest
             for(int j = 0; j < 2; j++) {
                 Schema schema = new Schema(catalog,"schema_" + j);
                 allObjects.add(schema);
+                int counter = 0;
                 for(int k = 0; k < 3; k++) {
                     Table table = new Table(schema,"table_" + k);
-                    int l;
                     allObjects.add(table);
-                    for(l = 0; l < 4; l++) {
-                        Column column = new Column(table,"column_" + l, l+1);
+                    for(int l = 0; l < 4; l++) {
+                        Column column = new Column(table,"column_" + counter++, l+1);
                         allObjects.add(column);
 
                         Index index =
                             new Index(
-                                "index_" + l, Arrays.asList(column), SECONDARY,UNCLUSTERED, NON_UNIQUE);
+                                "index_" + counter++, Arrays.asList(column), SECONDARY,UNCLUSTERED, NON_UNIQUE);
                         allObjects.add(index);
                     }
                     Index index =
                         new Index(
-                            "index_" + l, table.getColumns(), PRIMARY, CLUSTERED, UNIQUE);
+                            "index_" + counter++, table.getColumns(), PRIMARY, CLUSTERED, UNIQUE);
                     allObjects.add(index);
                 }
             }
@@ -107,6 +107,7 @@ public class MetadataTest
         for(int j = 0; j < 2; j++) {
             Schema schema = catalog.getSchemas().get(j);
             assertEquals(schema, catalog.findSchema("schema_"+j));
+            int counter = 0;
             for(int k = 0; k < 3; k++) {
                 Table table = schema.getTables().get(k);
                 int l;
@@ -114,11 +115,11 @@ public class MetadataTest
                 for(l = 0; l < 4; l++) {
                     Column column = table.getColumns().get(l);
                     Index index = table.getIndexes().get(l);
-                    assertEquals(column, table.findColumn("column_"+l));
-                    assertEquals(index, table.findIndex("index_"+l));
+                    assertEquals(column, table.findColumn("column_"+counter++));
+                    assertEquals(index, table.findIndex("index_"+counter++));
                 }
                 Index index = table.getIndexes().get(l);
-                assertEquals(index, table.findIndex("index_"+l));
+                assertEquals(index, table.findIndex("index_"+counter++));
             }
         }
     }
