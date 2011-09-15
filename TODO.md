@@ -8,6 +8,8 @@ No need to roll our own. Also, we should define a policy of when and how to use 
 
 Things that the current test doesn't check:
 
+ *  check base configuration (materialized set)
+ *  primary keys
  *  foreign keys constraints
  *  unique constraints
  *  not null constraints
@@ -16,41 +18,10 @@ Things that the current test doesn't check:
  *  `getByte()` for each db object
  *  number of pages
 
-## 64
-
-Define the following dbms-agnostic interface
-
-```
-public Index createIndex(List<Column>, List<Boolean>, boolean, boolean);
-```
-
-## 72
-
- *  take a look at Querulous' [`ApachePoolingDatabase`][querulous_dbcp] class to get an idea on how to implement this
-
 ## 74
 
- *  add more methods to `IndexTest`; create `PGIndexTest` and `DB2IndexTest` classes to test use cases from everywhere 
-    `DBIndex`, `DB2Index` and `PGIndex` is used (mainly `PGCommands` and `DB2Commands`)
  *  test stuff assumed in the CLI
  *  think of any other based on our intuition: how is metadata gonna be used besides the above?
-
-## 101
-
- *  fix #52
- *  fix #74
- *  fix #64
- *  implement explain(SQLStatement)
- *  implement explain(SQLStatement,Configuration)
-    *  fix #3, #4 and #5 of mysqlpp project
- *  run existing Wfit and tests against MySQL
-
-## 104
- * catalog
- * metadataextractor
- * optimizer queries
- * queries
-
 
 # refs
 

@@ -14,12 +14,12 @@ CREATE TABLE users (
 );
 
 CREATE TABLE creditcards (
-    userid      INTEGER,
+    userid     INTEGER,
     creditnum   BIGINT,
     credittype  VARCHAR(16),
     expdate     DATE,
     PRIMARY KEY (userid),
-    FOREIGN KEY (userid) REFERENCES users
+    FOREIGN KEY (userid) REFERENCES users(userid)
 );
 
 CREATE TABLE movies (
@@ -35,7 +35,7 @@ CREATE TABLE genres (
     mgenre      VARCHAR(20),
     movieid     INTEGER,
     PRIMARY KEY (mgenre, movieid),
-    FOREIGN KEY (movieid) REFERENCES movies
+    FOREIGN KEY (movieid) REFERENCES movies(movieid)
 );
 
 CREATE TABLE actors (
@@ -50,8 +50,8 @@ CREATE TABLE casts (
     aid         INTEGER,
     movieid     INTEGER,
     PRIMARY KEY (aid, movieid),
-    FOREIGN KEY (aid) REFERENCES actors,
-    FOREIGN KEY (movieid) REFERENCES movies
+    FOREIGN KEY (aid) REFERENCES actors(aid),
+    FOREIGN KEY (movieid) REFERENCES movies(movieid)
 );
 
 CREATE TABLE queue (
@@ -60,8 +60,8 @@ CREATE TABLE queue (
     position    INTEGER, 
     times       timestamp,
     PRIMARY KEY (times, movieid, userid),
-    FOREIGN KEY (movieid) REFERENCES movies,
-    FOREIGN KEY (userid) REFERENCES users
+    FOREIGN KEY (movieid) REFERENCES movies(movieid),
+    FOREIGN KEY (userid) REFERENCES users(userid)
 );
 
 CREATE TABLE ratings (
@@ -69,8 +69,8 @@ CREATE TABLE ratings (
     movieid     INTEGER,
     rate        INTEGER,
     review      VARCHAR(256) NOT NULL,
-    FOREIGN KEY (userid) REFERENCES users, 
-    FOREIGN KEY (movieid) REFERENCES movies
+    FOREIGN KEY (userid) REFERENCES users(userid), 
+    FOREIGN KEY (movieid) REFERENCES movies(movieid)
 );
 
 INSERT INTO users(userid, email, password, ufirstname, ulastname) VALUES (1,'john.doe@unknown.com', '123456','john','doe');
