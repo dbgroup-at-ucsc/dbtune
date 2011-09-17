@@ -38,7 +38,6 @@
     <scalac srcdir="${src.folder}" destdir="${build.dir}/classes" addParams="-make:changed" >
       <classpath refid="compile.classpath"/>
       <include name="**/*.scala" />
-      <exclude name="**/*init.scala" />
     </scalac>
   </target>
 
@@ -55,7 +54,6 @@
         <pathelement location="${build.dir}/classes"/>
       </classpath>
       <include name="**/*.scala" />
-      <exclude name="**/*init.scala" />
     </scalac>
   </target>
 
@@ -102,7 +100,7 @@
     </junit>
   </target>
 
-  <target name="test.one" depends="test.compile,argument-checking" description="Run One Unit Test.">
+  <target name="one" depends="test.compile,argument-checking" description="Run One Unit Test.">
     <echo message="Running test ${class}"/>
     <mkdir dir="${build.dir}/${junit.dir}"/>
     <junit printsummary="no" haltonerror="yes" haltonfailure="yes" showoutput="no" fork="yes">
@@ -130,7 +128,7 @@
     <fail message="Class ${class} doesn't exist" unless="class.present" />
   </target>
 
-  <target name="source.jar" description="Create a .jar file with sources">
+  <target name="jar.source" description="Create a .jar file with sources">
     <mkdir dir="${build.dir}"/>
     <zip destfile="${build.dir}/${project}-${version}-src.jar" >
       <fileset dir="${src.folder}"/>

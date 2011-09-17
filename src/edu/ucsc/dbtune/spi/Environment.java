@@ -50,19 +50,38 @@ public class Environment {
     private final Configuration configuration;
 
     /**
+     * Creates an environment object from the given filename.
+     *
+     * @param propertiesFilename
+     *     name of file containing properties
+     */
+    public Environment(String propertiesFilename) throws IOException {
+        this(new PropertiesConfiguration(propertiesFilename));
+    }
+
+    /**
      * Creates an environment object from the given set of properties.
      *
      * @param properties
-     *     properties to be accessed through the this object.
+     *     properties to be accessed through this object.
      */
     public Environment(Properties properties) {
         this(new PropertiesConfiguration(properties));
     }
 
+    /**
+     * Creates an environment object from the default configuration file.
+     */
     public Environment() throws IOException {
         this(new PropertiesConfiguration(System.getProperty("user.dir") + "/config/" + FILE));
     }
 
+    /**
+     * Creates an environment object with the given configuration.
+     *
+     * @param configuration
+     *     configuration to be accessed through this object.
+     */
     Environment(Configuration configuration){
         this.configuration = configuration;
     }
