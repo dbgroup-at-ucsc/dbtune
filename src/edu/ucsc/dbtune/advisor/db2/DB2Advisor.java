@@ -1,40 +1,19 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
-package edu.ucsc.dbtune.advisor;
-
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.util.Files;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static edu.ucsc.dbtune.spi.core.Functions.submit;
-import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
+/* **************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                         *
+ *                                                                              *
+ *   Licensed under the Apache License, Version 2.0 (the "License");            *
+ *   you may not use this file except in compliance with the License.           *
+ *   You may obtain a copy of the License at                                    *
+ *                                                                              *
+ *       http://www.apache.org/licenses/LICENSE-2.0                             *
+ *                                                                              *
+ *   Unless required by applicable law or agreed to in writing, software        *
+ *   distributed under the License is distributed on an "AS IS" BASIS,          *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+ *   See the License for the specific language governing permissions and        *
+ *   limitations under the License.                                             *
+ * **************************************************************************** */
+package edu.ucsc.dbtune.advisor.db2;
 
 /**
  * Generates a recommendation according to the db2advis program
@@ -57,8 +36,9 @@ import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
  * We don't create an output xml file ... just read the db2advis output directly 
  */
 //todo(Huascar) make it a stateful object rather than leaving it like a util class.
-public class DB2AdvisorCaller
+public class DB2Advisor
 {
+    /*
     private static final Pattern INDEX_HEADER_PATTERN    = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
     private static final Pattern INDEX_STATEMENT_PATTERN = Pattern.compile("^\\s*CREATE.+(IDX\\d*)\\\"");
     private static final Pattern START_INDEXES_PATTERN   = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
@@ -105,7 +85,6 @@ public class DB2AdvisorCaller
     {
         throw new RuntimeException("not implemented yet"); // will fix later
 
-        /*
         final String db   = Environment.getInstance().getDatabaseName();
         final String pw   = Environment.getInstance().getPassword();
         final String user = Environment.getInstance().getUsername();
@@ -116,8 +95,6 @@ public class DB2AdvisorCaller
                +" -i "+inFile
                +" -l "+budget
                +" -m I -f -k OFF";
-        */
-        
     }
     
     public static class FileInfo {
@@ -191,4 +168,5 @@ public class DB2AdvisorCaller
             megabytes = m;
         }
     }
+    */
 }

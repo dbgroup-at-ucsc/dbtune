@@ -28,8 +28,8 @@ public class HotSetSelector {
     private HotSetSelector(){}
 
     /**
-	 * Choose a hot set (i.e., a {@link StaticIndexSet}) that will be used for reorganizing 
-	 * candidates part of a {@code snapshot}.
+     * Choose a hot set (i.e., a {@link StaticIndexSet}) that will be used for reorganizing 
+     * candidates part of a {@code snapshot}.
      *
      * @param arg
      *      a hot {@link HotsetSelection selection var} which contains specific values that will
@@ -37,13 +37,13 @@ public class HotSetSelector {
      * @return
      *      a hot set (i.e., a {@link StaticIndexSet}) 
      */
-	public static Configuration choose(
+    public static Configuration choose(
             Configuration candSet,
-			Configuration oldHotSet,
-			Configuration requiredIndexSet,
-			IndexStatisticsFunction benefitFunc,
-			int maxSize,
-			boolean debugOutput
+            Configuration oldHotSet,
+            Configuration requiredIndexSet,
+            IndexStatisticsFunction benefitFunc,
+            int maxSize,
+            boolean debugOutput
     ) {
         IndexBitSet emptyConfig = new IndexBitSet();
         
@@ -88,13 +88,13 @@ public class HotSetSelector {
      * @return
      *      a hot set (i.e., a {@link StaticIndexSet})
      */
-	public static Configuration chooseGreedy(
+    public static Configuration chooseGreedy(
             Configuration candSet,
-			Configuration oldHotSet,
-			Configuration requiredIndexSet,
-			IndexStatisticsFunction benefitFunc,
-			int maxSize,
-			boolean debugOutput
+            Configuration oldHotSet,
+            Configuration requiredIndexSet,
+            IndexStatisticsFunction benefitFunc,
+            int maxSize,
+            boolean debugOutput
     ) {
         
         int numToChoose = maxSize - requiredIndexSet.size();

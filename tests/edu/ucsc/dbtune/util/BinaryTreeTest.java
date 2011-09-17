@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.spi;
+package edu.ucsc.dbtune.util;
 
 import org.junit.Test;
 
@@ -21,8 +21,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-import static edu.ucsc.dbtune.spi.BinaryTree.LEFT;
-import static edu.ucsc.dbtune.spi.BinaryTree.RIGHT;
+import static edu.ucsc.dbtune.util.BinaryTree.LEFT;
+import static edu.ucsc.dbtune.util.BinaryTree.RIGHT;
 
 /**
  * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)

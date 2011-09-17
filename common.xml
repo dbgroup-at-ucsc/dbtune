@@ -59,8 +59,8 @@
     </scalac>
   </target>
 
-  <target name="test" depends="test.compile" description="Execute Unit tests.">
-    <echo message="Executing  ${project} unit tests"/>
+  <target name="unit" depends="test.compile" description="Execute Unit tests.">
+    <echo message="Executing unit tests"/>
     <mkdir dir="${build.dir}/${junit.dir}"/>
     <junit printsummary="yes"
          haltonerror="yes"
@@ -82,7 +82,7 @@
   </target>
 
   <target name="functional" depends="test.compile" description="Execute Functional tests.">
-    <echo message="Executing ${project} functional tests"/>
+    <echo message="Executing functional tests"/>
     <mkdir dir="${build.dir}/${junit.dir}"/>
     <junit printsummary="yes"
          haltonerror="yes"
@@ -103,7 +103,7 @@
   </target>
 
   <target name="test.one" depends="test.compile,argument-checking" description="Run One Unit Test.">
-    <echo message="Running test ${class} from ${project}"/>
+    <echo message="Running test ${class}"/>
     <mkdir dir="${build.dir}/${junit.dir}"/>
     <junit printsummary="no" haltonerror="yes" haltonfailure="yes" showoutput="no" fork="yes">
       <classpath>
@@ -117,7 +117,7 @@
   </target>
 
   <target name="jar" depends="compile">
-    <echo message="Generating jar for ${project}"/>
+    <echo message="Generating jar"/>
     <mkdir dir="${build.dir}/dist" />
     <jar destfile="${build.dir}/dist/dbtune-${version}.jar" basedir="${build.dir}/classes" />
   </target>

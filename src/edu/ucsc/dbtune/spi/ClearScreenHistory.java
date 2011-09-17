@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.spi.core;
+package edu.ucsc.dbtune.spi;
 
 import java.io.PrintStream;
 

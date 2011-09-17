@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.spi.Console;
 
 import java.sql.Connection;
 

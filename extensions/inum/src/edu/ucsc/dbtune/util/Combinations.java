@@ -50,7 +50,7 @@ public class Combinations {
     }
 
     return result;
-	}
+    }
 
   @Deprecated public static <T> Set<Set<T>> findCombinations(Iterable<T> elements){
     Set<Set<T>> result = Sets.newHashSet();

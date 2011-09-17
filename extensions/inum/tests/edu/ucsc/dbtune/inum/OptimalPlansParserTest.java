@@ -2,7 +2,7 @@ package edu.ucsc.dbtune.inum;
 
 import com.google.common.collect.*;
 import edu.ucsc.dbtune.inum.OptimalPlan.Subplan;
-import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.spi.Console;
 import edu.ucsc.dbtune.util.Strings;
 import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;

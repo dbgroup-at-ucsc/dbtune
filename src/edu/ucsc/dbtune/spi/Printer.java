@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.spi.core;
+package edu.ucsc.dbtune.spi;
 
 /**
  * It emits what commands have spitted out.

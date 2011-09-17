@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.spi.Console;
 import edu.ucsc.dbtune.util.Strings;
 
 import java.io.IOException;

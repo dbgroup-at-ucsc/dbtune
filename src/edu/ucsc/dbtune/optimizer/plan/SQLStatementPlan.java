@@ -17,7 +17,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.spi.Tree;
+import edu.ucsc.dbtune.util.Tree;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.util.List;

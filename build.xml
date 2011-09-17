@@ -24,8 +24,8 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="test">
-    <ant dir="." antfile="common.xml" target="test">
+  <target name="unit">
+    <ant dir="." antfile="common.xml" target="unit">
       <property name="base.dir" value="${base.dir}" />
       <reference refid="compile.classpath" />
     </ant>
@@ -60,8 +60,8 @@
       <property name="project" value="${extension}" />
     </ant>
   </target>
-  <target name="test.all" depends="test.compile.all">
-    <ant dir="." antfile="common.xml" target="test">
+  <target name="unit.all" depends="test.compile.all">
+    <ant dir="." antfile="common.xml" target="unit">
       <property name="base.dir" value="${base.dir}" />
       <property name="build.dir" value="${build.dir}" />
       <reference refid="compile.classpath" />
@@ -81,7 +81,7 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="test.dbtune" depends="test.all,functional.all"/>
+  <target name="test" depends="unit.all,functional.all"/>
 
   <!-- packaging -->
   <target name="jar">

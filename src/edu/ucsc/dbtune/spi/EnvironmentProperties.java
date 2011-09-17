@@ -102,14 +102,6 @@ public class EnvironmentProperties
      * IBG optimizer
      */
     public static final String IBG = "ibg";
-    /**
-     * Factor used to obtain the overhead of an optimization cost estimation (an "optimizer call" 
-     * overhead), based on the start and end time of the. The overhead is obtained by:
-     * <code>
-     * overhead[q] = (startTime - endTime) / OVERHEAD_FACTOR
-     * </code>
-     */
-    public static final String OVERHEAD_FACTOR = "overhead.factor";
 
 
 

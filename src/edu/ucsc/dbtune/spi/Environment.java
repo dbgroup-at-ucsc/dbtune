@@ -15,8 +15,6 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.spi;
 
-import edu.ucsc.dbtune.spi.core.Console;
-
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
@@ -28,7 +26,6 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.OVERHEAD_FACTOR;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.URL;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
@@ -146,16 +143,6 @@ public class Environment {
     public int getMaxNumStates() throws NumberFormatException {
         String numOfStates = asString(configuration.getProperty(MAX_NUM_STATES));
         return Integer.valueOf(numOfStates);
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#OVERHEAD_FACTOR}
-     * @throws NumberFormatException
-     *      unable to return the overhead factor due to the stated reason.
-     */
-    public float getOverheadFactor() throws NumberFormatException {
-        String overheadFactor = asString(configuration.getProperty(OVERHEAD_FACTOR));
-        return Float.valueOf(overheadFactor);
     }
 
     /**
@@ -319,7 +306,6 @@ public class Environment {
                 lastModified = file.lastModified();
                 loadPropertiesFromFile();
               } catch (IOException e) {
-                Console.streaming().error("unable to load properties" + e);
                 throw new RuntimeException(e);
               }
             }

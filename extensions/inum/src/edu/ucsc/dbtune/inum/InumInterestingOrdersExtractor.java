@@ -24,7 +24,7 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.spi.Console;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.util.Strings;
 import java.io.ByteArrayInputStream;
@@ -80,7 +80,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
 
   @Override public Configuration extractInterestingOrders(String singleQuery) {
     @SuppressWarnings("rawtypes")
-	final Vector statements   = parseQuery(singleQuery);
+    final Vector statements   = parseQuery(singleQuery);
 
     final List<QueryRecord> records = Lists.newArrayList();
     for (Object statement : statements) {
