@@ -1,32 +1,38 @@
 <?xml version="1.0"?>
-
-<project name="dbtune-inum" basedir="." default="jar">
-
-  <import file="../../common.xml"/>
-
+<project name="dbtune-inum">
+  <property file="build.properties"/>
   <path id="compile.classpath">
     <fileset dir="${lib.dir}" includes="*.jar"/>
-  	<fileset dir="${ext.lib.dir}" includes="*.jar"/>
+    <fileset dir="../../${lib.dir}" includes="*.jar"/>
     <pathelement path="../../build/classes"/>
   </path>
-
-  <!-- Scala support. These tasks will be overriden by their appropriate implementation
-       in the extension/<new-extension>/build.xml.
-       Currently, inum does not need scala, but who knows! maybe in the future will
-       be a different case.
-  -->
-  <target name="init"/>
-  <target name="scala.compile" depends="init, test.compile" />
-  <target name="scala.test.compile" depends="scala.compile" />
-  <target name="scala.test" depends="scala.test.compile"/>
-  <target name="scala.test.functional" depends="scala.test.compile" />
-  <!-- end of Scala support definition -->
-
-  <target name="jar" depends="jar.withdeps" description="Build jar.">
-    <jar destfile="${build.dir}/${ant.project.name}-${version}.jar">
-      <zipfileset src="${build.dir}/${ant.project.name}-with-deps.jar"
-          excludes="edu/ucsc/satuning/**"/>
-    </jar>
+  <target name="compile">
+    <ant dir="../../" antfile="common.xml" target="compile">
+      <property name="base.dir" value="${basedir}" />
+      <reference refid="compile.classpath" />
+    </ant>
   </target>
-
+  <target name="test.compile">
+    <ant dir="../../" antfile="common.xml" target="test.compile">
+      <property name="base.dir" value="${basedir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="test">
+    <ant dir="../../" antfile="common.xml" target="test">
+      <property name="base.dir" value="${basedir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="functional">
+    <ant dir="../../" antfile="common.xml" target="functional">
+      <property name="base.dir" value="${basedir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="clean">
+    <ant dir="../../" antfile="common.xml" target="clean">
+      <property name="base.dir" value="${basedir}" />
+    </ant>
+  </target>
 </project>

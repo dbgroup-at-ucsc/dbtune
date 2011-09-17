@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.SharedFixtures;
-import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.SharedFixtures;
+import edu.ucsc.dbtune.metadata.Configuration;
 import java.util.Set;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

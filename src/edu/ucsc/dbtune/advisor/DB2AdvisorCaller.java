@@ -19,7 +19,6 @@
 package edu.ucsc.dbtune.advisor;
 
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.DB2Index;
 import edu.ucsc.dbtune.util.Files;
 
 import java.io.BufferedInputStream;
@@ -34,8 +33,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static edu.ucsc.dbtune.optimizer.DB2Optimizer.DB2Commands.clearAdviseIndex;
-import static edu.ucsc.dbtune.optimizer.DB2Optimizer.DB2Commands.readAdviseOnOneIndex;
 import static edu.ucsc.dbtune.spi.core.Functions.submit;
 import static edu.ucsc.dbtune.spi.core.Functions.supplyValue;
 
@@ -68,11 +65,6 @@ public class DB2AdvisorCaller
     private static final Pattern END_INDEXES_PATTERN     = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
 
     public static FileInfo createAdvisorFile(Connection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException {
-        submit(
-                // executes "DELETE FROM advise_index"
-                clearAdviseIndex(), conn
-        );
-
         final String cmd = getCmd(advisorPath, budget, workloadFile, false);
         final String cleanCmd = getCmd(advisorPath, budget, workloadFile, true);
 
@@ -140,21 +132,7 @@ public class DB2AdvisorCaller
         }
         
         public Configuration getCandidates(Connection conn) throws SQLException {
-            Configuration candidateSet = new Configuration("");
-            int id = 1;
-            for (IndexInfo info : indexList) {
-                final DB2Index idx = supplyValue(
-                        readAdviseOnOneIndex(),
-                        conn,
-                        info.name,
-                        id,
-                        info.megabytes
-                );
-                candidateSet.add(idx);
-                ++id;
-            }
-            
-            return candidateSet;
+            throw new SQLException("not implemented yet");
         }
         
         public int getMegabytes() {

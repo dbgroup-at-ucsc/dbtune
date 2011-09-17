@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Configuration;
 import java.util.Set;
 
 /**

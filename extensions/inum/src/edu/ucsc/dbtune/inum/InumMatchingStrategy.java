@@ -1,13 +1,16 @@
 package edu.ucsc.dbtune.inum;
 
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Configuration;
-import edu.ucsc.dbtune.core.metadata.Index;
-import static java.lang.Double.compare;
+
+import java.sql.Connection;
 import java.util.Set;
+
+import static java.lang.Double.compare;
 
 /**
  * Default implementation of Inum's {@link MatchingStrategy}
@@ -21,7 +24,7 @@ public class InumMatchingStrategy implements MatchingStrategy {
     this.accessCostEstimator = accessCostEstimator;
   }
 
-  public InumMatchingStrategy(DatabaseConnection connection){
+  public InumMatchingStrategy(Connection connection){
     this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
   }
 
@@ -52,24 +55,24 @@ public class InumMatchingStrategy implements MatchingStrategy {
     // todo(Ivo) how is the cardinality of the config tied to the # of indexes the config contains?
     // they don't seem connected. For example..Initially, I wanted to write first.getCardinality() <
     // second.getCardinality(), but this did not work since the cardinality was 0. Therefore, I ended
-    // up using first.getIndexes().size()....etc. If the intention was to update the cardinality of
+    // up using first.toList().size()....etc. If the intention was to update the cardinality of
     // the configuration based on the # of stored indexes, then there is a bug in the configuration
     // class.
-    if (first.getIndexes().size() < second.getIndexes().size()) {
-      for (Index x : first.getIndexes()) {
-        if (second.getIndexes().contains(x)) {
+    if (first.toList().size() < second.toList().size()) {
+      for (Index x : first.toList()) {
+        if (second.toList().contains(x)) {
           c.add(x);
         }
       }
     } else {
-      for (Index x : second.getIndexes()) {
-        if (first.getIndexes().contains(x)) {
+      for (Index x : second.toList()) {
+        if (first.toList().contains(x)) {
           c.add(x);
         }
       }
     }
 
-    return !c.getIndexes().isEmpty();
+    return !c.toList().isEmpty();
   }
 
   @Override

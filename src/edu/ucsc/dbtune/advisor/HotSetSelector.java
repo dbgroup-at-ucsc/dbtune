@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.advisor;
 
+import edu.ucsc.dbtune.advisor.interactions.IndexStatisticsFunction;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -36,41 +37,11 @@ public class HotSetSelector {
      * @return
      *      a hot set (i.e., a {@link StaticIndexSet}) 
      */
-    public static StaticIndexSet chooseHotSet(HotsetSelection arg){
-        return chooseHotSet(
-                arg.getCandidateSet(),
-                arg.getOldHotSet(),
-                arg.getRequiredIndexSet(),
-                arg.getBenefitFunction(),
-                arg.getMaxSize(),
-                arg.isDebugOutputEnabled()
-        );
-    }
-
-    /**
-     * choose a hot set (i.e., a {@link StaticIndexSet}), greedily, that will be used during offline
-     * analysis.
-     * @param arg
-     *      a hot {@link HotsetSelection selection var} which contains specific values that will
-     *      be utilized during the greedy hot set selection process.
-     * @return
-     *      a hot set (i.e., a {@link StaticIndexSet})
-     */
-    public static StaticIndexSet chooseHotSetGreedy(HotsetSelection arg){
-        return chooseHotSetGreedy(
-                arg.getCandidateSet(),
-                arg.getOldHotSet(),
-                arg.getRequiredIndexSet(),
-                arg.getBenefitFunction(),
-                arg.getMaxSize(),
-                arg.isDebugOutputEnabled()
-        );
-    }
-
-	static StaticIndexSet chooseHotSet(Configuration candSet,
-			StaticIndexSet oldHotSet,
-			DynamicIndexSet requiredIndexSet,
-			StatisticsFunction benefitFunc,
+	public static Configuration choose(
+            Configuration candSet,
+			Configuration oldHotSet,
+			Configuration requiredIndexSet,
+			IndexStatisticsFunction benefitFunc,
 			int maxSize,
 			boolean debugOutput
     ) {
@@ -78,7 +49,7 @@ public class HotSetSelector {
         
         int numToChoose = maxSize - requiredIndexSet.size();
         if (numToChoose <= 0) {
-            return new StaticIndexSet(requiredIndexSet);
+            return new Configuration(requiredIndexSet);
         }
         else {
             MinQueue<Index> topSet = new MinQueue<Index>(numToChoose);
@@ -104,21 +75,31 @@ public class HotSetSelector {
             while (topSet.size() > 0)
                 list.add(topSet.deleteMin());
 
-            return new StaticIndexSet(list);
+            return new Configuration(list);
         }
     }
     
-	static StaticIndexSet chooseHotSetGreedy(Configuration candSet,
-			StaticIndexSet oldHotSet,
-			DynamicIndexSet requiredIndexSet,
-			StatisticsFunction benefitFunc,
+    /**
+     * choose a hot set (i.e., a {@link StaticIndexSet}), greedily, that will be used during offline
+     * analysis.
+     * @param arg
+     *      a hot {@link HotsetSelection selection var} which contains specific values that will
+     *      be utilized during the greedy hot set selection process.
+     * @return
+     *      a hot set (i.e., a {@link StaticIndexSet})
+     */
+	public static Configuration chooseGreedy(
+            Configuration candSet,
+			Configuration oldHotSet,
+			Configuration requiredIndexSet,
+			IndexStatisticsFunction benefitFunc,
 			int maxSize,
 			boolean debugOutput
     ) {
         
         int numToChoose = maxSize - requiredIndexSet.size();
         if (numToChoose <= 0) {
-            return new StaticIndexSet(requiredIndexSet);
+            return new Configuration(requiredIndexSet);
         }
         else {
             java.util.ArrayList<Index> list = new java.util.ArrayList<Index>();
@@ -154,7 +135,7 @@ public class HotSetSelector {
                 }
             }
 
-            return new StaticIndexSet(list);
+            return new Configuration(list);
         }
     }
 }

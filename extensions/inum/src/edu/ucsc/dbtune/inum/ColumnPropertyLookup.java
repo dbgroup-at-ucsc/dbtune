@@ -1,7 +1,8 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.DatabaseConnection;
 import edu.ucsc.dbtune.inum.InumInterestingOrdersExtractor.ColumnInformation;
+
+import java.sql.Connection;
 import java.util.Properties;
 import java.util.Set;
 
@@ -35,7 +36,7 @@ public interface ColumnPropertyLookup {
    * @return a live {@link DatabaseConnection db connection}.
    * @throws IllegalStateException if the returning database connection is closed.
    */
-  DatabaseConnection getDatabaseConnection();
+  Connection getDatabaseConnection();
 
   /**
    * Obtain a property value for a given key.

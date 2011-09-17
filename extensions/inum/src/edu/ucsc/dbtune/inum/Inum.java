@@ -1,13 +1,15 @@
 package edu.ucsc.dbtune.inum;
 
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.spi.core.Console;
+import edu.ucsc.dbtune.util.StopWatch;
+
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Configuration;
-import edu.ucsc.dbtune.spi.core.Console;
-import edu.ucsc.dbtune.util.StopWatch;
+
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -18,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class Inum {
-  private final DatabaseConnection          connection;
+  private final Connection          connection;
   private final Precomputation              precomputation;
   private final MatchingStrategy            matchingLogic;
   private final InterestingOrdersExtractor  ioExtractor;
@@ -31,7 +33,7 @@ public class Inum {
     QUERIES = ImmutableSet.copyOf(workloadDirectory.accept(loader));
   }
 
-  private Inum(DatabaseConnection connection, Precomputation precomputation,
+  private Inum(Connection connection, Precomputation precomputation,
       MatchingStrategy matchingLogic, InterestingOrdersExtractor extractor){
     this.connection     = connection;
     this.precomputation = precomputation;
@@ -40,10 +42,10 @@ public class Inum {
     this.isStarted      = new AtomicBoolean(false);
   }
 
-  public static Inum newInumInstance(DatabaseConnection connection,
+  public static Inum newInumInstance(Connection connection,
       Precomputation precomputation,
       MatchingStrategy matchingLogic, InterestingOrdersExtractor extractor){
-    final DatabaseConnection         nonNullConnection                = Preconditions.checkNotNull(connection);
+    final Connection         nonNullConnection                = Preconditions.checkNotNull(connection);
     final Precomputation             nonNullPrecomputation            = Preconditions.checkNotNull(precomputation);
     final MatchingStrategy           nonNullMatchingLogic             = Preconditions.checkNotNull(matchingLogic);
     final InterestingOrdersExtractor nonNullInteresingOrdersExtractor = Preconditions.checkNotNull(extractor);
@@ -51,8 +53,8 @@ public class Inum {
     return new Inum(nonNullConnection, nonNullPrecomputation, nonNullMatchingLogic, nonNullInteresingOrdersExtractor);
   }
 
-  public static Inum newInumInstance(DatabaseConnection connection){
-    final DatabaseConnection nonNullConnection = Preconditions.checkNotNull(connection);
+  public static Inum newInumInstance(Connection connection){
+    final Connection nonNullConnection = Preconditions.checkNotNull(connection);
     return newInumInstance(
         nonNullConnection,
         new InumPrecomputation(nonNullConnection),
@@ -93,7 +95,7 @@ public class Inum {
     return precomputation.getInumSpace();
   }
   
-  public DatabaseConnection getDatabaseConnection(){
+  public Connection getConnection(){
     return connection;
   }
   
@@ -135,9 +137,14 @@ public class Inum {
   }
 
   @Override public String toString() {
+      
+    try {
     return Objects.toStringHelper(this)
         .add("started?", isStarted() ? "Yes" : "No")
-        .add("opened DB connection?", getDatabaseConnection().isOpened() ? "Yes" : "No")
+        .add("opened DB connection?", getConnection().isClosed() ? "Yes" : "No")
     .toString();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

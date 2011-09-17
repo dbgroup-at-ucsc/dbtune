@@ -15,7 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.advisor.wfit;
 
-import edu.ucsc.dbtune.advisor.IndexPartitions;
+import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;

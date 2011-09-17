@@ -15,13 +15,8 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.advisor.bc;
 
-import edu.ucsc.dbtune.advisor.BenefitInfoInput;
-import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
-import edu.ucsc.dbtune.spi.core.Supplier;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -29,20 +24,21 @@ import java.sql.SQLException;
 
 public class BcTuner
 {
-    private final StaticIndexSet hotSet;
+    private final Configuration   hotSet;
     private final BcIndexPool    pool;
     private final Configuration  snapshot;
     private final IndexBitSet    currentRecommendation;
 
     /**
      * Construct a {@code BcTuner} object.
+     *
      * @param snapshot
      *      a {@code snapshot} of the {@link edu.ucsc.dbtune.metadata.Configuration} candidate pool 
      *      of indexes.
      * @param hotSet
      *      a {@code hotSet} of indexes.
      */
-    public BcTuner(Configuration snapshot, StaticIndexSet hotSet) {
+    public BcTuner(Configuration snapshot, Configuration hotSet) {
         this.snapshot               = snapshot;
         this.hotSet                 = hotSet;
         this.pool                   = new BcIndexPool(snapshot,this.hotSet);
@@ -104,6 +100,7 @@ public class BcTuner
         return bs;
     }
 
+    /**
     private int inferUseLevel(Index i1, Index i2, boolean prefix) {
         if (prefix) {
             return 2;
@@ -114,21 +111,14 @@ public class BcTuner
         }
     }
 
-    /**
      * Process a {@code profiled query} with the whole purpose determining its benefit info. This
      * includes the updating of indexes' statistics.
      * @param profiledQuery
      *      a {@code profiled query} object.
      * @throws SQLException
      *      an unexpected error occurred.
-     */
     public void processQuery(IBGPreparedSQLStatement profiledQuery) throws SQLException {
-        final BenefitInfoInput input = new BenefitInfoInput.StrictBuilder(snapshot)
-                .hotSet(hotSet)
-                .recommendedIndexes(currentRecommendation)
-                .profiledQuery(profiledQuery)
-            .get();
-        BcBenefitInfo qinfo = BcBenefitInfo.makeBcBenefitInfo(input);
+        BcBenefitInfo qinfo = new BcBenefitInfo(snapshot,hotSet,currentRecommendation,profiledQuery)
         
         // update statistics
         for (Index idx : hotSet) {
@@ -213,27 +203,27 @@ public class BcTuner
     }
     
     private int useLevel(Index i1, Index i2) {
-        /* Shortcut if different relations */
+        // Shortcut if different relations
         if (!i1.getTable().equals(i2.getTable()))
             return -1;
         
         int n1 = i1.size();
         int n2 = i2.size();
         
-        /* Shortcut if I1 has fewer columns than I2 */
+        // Shortcut if I1 has fewer columns than I2
         if (n1 < n2){
             return -1;
         }
         
-        /* Set isPrefix true until we find a counterexample */      
+        // Set isPrefix true until we find a counterexample
         ColumnChecker columnChecker = new ColumnChecker(i1, i2, n1, n2).get();
         boolean isPrefix = columnChecker.isPrefix();
 
 
-        /* Now we know that I1 contains the columns of I2 */
+        // Now we know that I1 contains the columns of I2
         return inferUseLevel(i1, i2, isPrefix);
     }
-
+     */
 
     @Override
     public String toString() {
@@ -243,50 +233,5 @@ public class BcTuner
                .add("indexPool", pool)
                .add("currentRecommendation", currentRecommendation)
            .toString();
-    }
-
-    /**
-     * This class checks that I1 contains the columns of I2, and if so, it will
-     * set isPrefix to false if it finds one of I2's columns in a different 
-     * position within I1
-     */    
-    private static class ColumnChecker implements Supplier<ColumnChecker> {
-        private Index       i1;
-        private Index       i2;
-        private int     n1;
-        private int     n2;
-        private boolean prefix;
-
-        public ColumnChecker(Index i1, Index i2, int n1, int n2) {
-            this.i1 = i1;
-            this.i2 = i2;
-            this.n1 = n1;
-            this.n2 = n2;
-        }
-
-        public boolean isPrefix() {
-            return prefix;
-        }
-
-        @Override
-        public ColumnChecker get() {
-            for (int j2 = 0; j2 < n2; j2++){
-                Column col2 = i2.get(j2);
-                /* check for col2 in the same position */
-                if (i1.get(j2).equals(col2)) continue;
-
-                /* it's not in the same position */
-                prefix = false;
-                for (int j1 = 0; j1 < n1; j1++) {
-                    if (i1.get(j1).equals(col2)) {
-                        break;
-                    } else if (j1 == n1 -1) {
-                        return this;
-                    }
-                }
-            }
-
-            return this;
-        }
     }
 }

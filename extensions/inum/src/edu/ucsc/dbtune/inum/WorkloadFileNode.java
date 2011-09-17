@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.util.Strings;
 import java.io.File;
 
 /**

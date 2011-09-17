@@ -18,7 +18,6 @@
 
 package edu.ucsc.dbtune.advisor.bc;
 
-import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Instances;
@@ -35,7 +34,7 @@ public class BcIndexPool {
      * @param hotSet
      *      a hot set of indexes.
      */
-    public BcIndexPool(Configuration conf, StaticIndexSet hotSet) {
+    public BcIndexPool(Configuration conf, Configuration hotSet) {
         map = Instances.newHashMap(hotSet.size());
         for (Index idx : hotSet) {
             map.put(conf.getOrdinalPosition(idx), new BcIndexInfo());

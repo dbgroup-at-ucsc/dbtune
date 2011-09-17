@@ -96,28 +96,6 @@ public class Index extends DatabaseObject
     }
 
     /**
-     * Copy constructor
-     *
-     * @param other
-     *     other index being copied into the new one
-     */
-    protected Index(Index other)
-    {
-        super(other);
-
-        this.table        = other.table;
-        this.schema       = other.schema;
-        this.columns      = other.columns;
-        this.type         = other.type;
-        this.unique       = other.unique;
-        this.primary      = other.primary;
-        this.clustered    = other.clustered;
-        this.materialized = other.materialized;
-        this.descending   = other.descending;
-        this.scanOption   = other.scanOption;
-    }
-
-    /**
      * Creates an index with the given column, primary, uniqueness and clustering values. The name 
      * of the index is defaulted to {@code column.getName()+"_index"}. The column is taken as being 
      * in descending order.
@@ -222,6 +200,28 @@ public class Index extends DatabaseObject
 
         this.table.add(this);
         this.schema.add(this);
+    }
+
+    /**
+     * Copy constructor
+     *
+     * @param other
+     *     other index being copied into the new one
+     */
+    protected Index(Index other)
+    {
+        super(other);
+
+        this.table        = other.table;
+        this.schema       = other.schema;
+        this.columns      = other.columns;
+        this.type         = other.type;
+        this.unique       = other.unique;
+        this.primary      = other.primary;
+        this.clustered    = other.clustered;
+        this.materialized = other.materialized;
+        this.descending   = other.descending;
+        this.scanOption   = other.scanOption;
     }
 
     /**

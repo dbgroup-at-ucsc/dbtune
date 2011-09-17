@@ -16,7 +16,6 @@
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.extraction.MetadataExtractor;
 import edu.ucsc.dbtune.metadata.extraction.DB2Extractor;
@@ -122,46 +121,6 @@ public class DatabaseSystem
      */
     public Connection getConnection() throws SQLException {
         return connection;
-    }
-
-    /**
-     * Creates an index of the appropriate type.
-     *
-     * @param cols
-     *     columns contained in the new index to be used
-     * @param descending
-     *     DESCENDING/ASCENDING indicator for each column
-     * @param type
-     *     the index type
-     * @throws SQLException
-     *     if something wrong occurs during the creation
-     */
-    private Index createIndex(List<Column> cols, List<Boolean> descending, int type)
-        throws SQLException
-    {
-        // If needed, this method can later be refactored into a new class, like a ObjectCreator and 
-        // ObjectMaterializer. These would require a new implementation for each database object, 
-        // like a PGIndexCreator, PGIndexMaterializer, etc...
-        //
-        // if..
-        //    index = new PGIndexCreator(conn, cols,descending,type);
-        // else..
-        //    etc..
-
-
-        // if..
-        //    index = new DBMSIndex(cols,descending,type);
-        // else..
-        //    etc..
-        // 
-        // execute(index.getCreateStatement())
-        //
-        //
-        // private execute(String sql)
-        // {
-        //    con.createStatement().execute(sql);
-        // }
-        throw new RuntimeException("not implemented yet");
     }
 
     /**

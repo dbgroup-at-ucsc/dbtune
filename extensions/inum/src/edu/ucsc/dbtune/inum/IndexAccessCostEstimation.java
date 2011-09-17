@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Configuration;
 
 /**
  * Whenever the query cost for some input configuration needs to be evaluated,

@@ -1,10 +1,12 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Strings;
+
 import java.io.IOException;
 import java.util.Set;
+
+import com.google.common.collect.Sets;
 
 /**
  * Visitor that loads all workload files that will be used during

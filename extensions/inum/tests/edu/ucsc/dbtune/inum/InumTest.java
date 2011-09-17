@@ -1,18 +1,24 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.collect.Lists;
-import edu.ucsc.dbtune.core.SharedFixtures;
-import edu.ucsc.dbtune.core.metadata.Configuration;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.core.metadata.Table;
+import edu.ucsc.dbtune.SharedFixtures;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.util.Combinations;
+
+import com.google.common.collect.Lists;
+
 import java.util.Set;
-import org.hamcrest.CoreMatchers;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+
+import org.junit.Test;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import org.junit.Test;
 
 /**
  * Test the {@link Inum} class.
@@ -23,12 +29,12 @@ public class InumTest {
   @Test public void testInumSpaceGeneration() throws Exception {
     final Inum inum = SharedFixtures.configureInum();
     inum.start();
-    assertThat(inum.getInumSpace(), CoreMatchers.<Object>notNullValue());
+    assertThat(inum.getInumSpace(), notNullValue());
     assertThat(inum.getInumSpace().getAllSavedOptimalPlans().isEmpty(), is(false));
   }
 
   @Test public void testCombinationGeneration() throws Exception {
-    final Table        table   = new Table("persons");
+    final Table        table   = new Table(new Schema( new Catalog("persons_db"), "persons_sch"), "persons");
     final Configuration interestingOrders = SharedFixtures.configureConfiguration(table, 3, 3);
 
     final Set<Configuration> combinations = Combinations.findCombinations(interestingOrders);

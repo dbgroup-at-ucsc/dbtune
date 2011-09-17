@@ -1,8 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.metadata.Configuration;
-import java.util.Set;
+import edu.ucsc.dbtune.metadata.Configuration;
 
 /**
  * It extracts interesting orders from a query.

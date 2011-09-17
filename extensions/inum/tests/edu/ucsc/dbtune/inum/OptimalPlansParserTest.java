@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.caliper.internal.guava.collect.Lists;
+import com.google.common.collect.*;
 import edu.ucsc.dbtune.inum.OptimalPlan.Subplan;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Strings;

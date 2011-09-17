@@ -1,14 +1,14 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.SharedFixtures;
-import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.SharedFixtures;
+import edu.ucsc.dbtune.metadata.Configuration;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import org.junit.After;
 import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
+import java.sql.Connection;
 
 /**
  * Tests the default implementation of {@link Precomputation} type.
@@ -16,7 +16,7 @@ import org.junit.Test;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InumPrecomputationTest {
-  private DatabaseConnection mockConnection;
+  private Connection mockConnection;
 
   @Before public void setUp() throws Exception {
     mockConnection = SharedFixtures.configureConnection();

@@ -1,7 +1,8 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.optimizers.SQLStatement;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 import java.util.Set;
 
 /**
@@ -16,7 +17,7 @@ public interface WorkloadDescriptor {
   double getBestInternalPlanCost();
   double[] getCandidateCosts();
   double getEmptyCost();
-  DBIndex getInterestingOrders();
+  Index getInterestingOrders();
   SQLStatement getSqlStatement();
   Set<String> getUsedTableNames();
 }

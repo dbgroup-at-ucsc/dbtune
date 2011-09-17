@@ -15,11 +15,9 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.workload.SQLCategory;

@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.advisor.wfit;
 
-import edu.ucsc.dbtune.advisor.IndexPartitions;
+import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
 import edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm.TotalWorkValues;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.Checks;

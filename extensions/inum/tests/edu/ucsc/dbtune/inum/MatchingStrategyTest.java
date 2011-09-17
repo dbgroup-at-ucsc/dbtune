@@ -1,13 +1,16 @@
 package edu.ucsc.dbtune.inum;
 
+import edu.ucsc.dbtune.SharedFixtures;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+
 import com.google.common.collect.Lists;
-import edu.ucsc.dbtune.core.SharedFixtures;
-import edu.ucsc.dbtune.core.metadata.Configuration;
-import edu.ucsc.dbtune.core.metadata.Index;
-import org.hamcrest.CoreMatchers;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+
 import org.junit.Test;
+
+import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 
 /**
  * Tests Inum's {@link MatchingStrategy matching logic}
@@ -20,7 +23,7 @@ public class MatchingStrategyTest {
     final Configuration    input         = SharedFixtures.configureConfiguration();
     final InumSpace        inumSpace     = SharedFixtures.configureInumSpace(input);
     final OptimalPlan      plan          = matchingLogic.matches(inumSpace, input);
-    assertThat(plan, CoreMatchers.<Object>notNullValue());
+    assertThat(plan, notNullValue());
   }
 
   @Test public void testDeriveCost() throws Exception {

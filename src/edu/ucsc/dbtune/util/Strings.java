@@ -15,14 +15,8 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.util;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -67,45 +61,43 @@ public class Strings
          }
      }
 
-    /**
-     * performs some rudimentary trimming of some text that is assumed
-     * to contain an sql statement.
-     * 
-     * Given an input string, let L be the text before the first \n or \r,
-     * with any whitespace removed from the beginning or end.
-     * If L starts with "--", the empty string is returned. 
-     * Otherwise, L is returned.
-     * 
-     * Less formally, return the empty string if the first line is empty or
-     * only contains a comment. Otherwise, return the first line, trimmed,
-     * with no terminating semicolon.
-     * @param sql
-     *      sql query to be trimmed.
-     * @return
-     *      a trimmed sql query.
-     */
-    public static String trimSqlStatement(String sql)
-    {
-        String firstLine;
-        {
-            int crPos = sql.indexOf('\r');
-            int lfPos = sql.indexOf('\n');
-            int firstLineLength = 
-                (crPos >= 0)
-                ? ((lfPos >= 0) ? Math.min(crPos, lfPos) : crPos)
-                : ((lfPos >= 0) ? lfPos : sql.length());
-            while (sql.charAt(firstLineLength-1) == ';')
-                --firstLineLength;
-            firstLine = sql.substring(0, firstLineLength);
-        }
-        
-        if (firstLine.charAt(0) == '-' && firstLine.charAt(1) == '-')
-            return "";
-        else
-            return firstLine;
-    }
-    return list;
-  }
+     /**
+      * performs some rudimentary trimming of some text that is assumed
+      * to contain an sql statement.
+      * 
+      * Given an input string, let L be the text before the first \n or \r,
+      * with any whitespace removed from the beginning or end.
+      * If L starts with "--", the empty string is returned. 
+      * Otherwise, L is returned.
+      * 
+      * Less formally, return the empty string if the first line is empty or
+      * only contains a comment. Otherwise, return the first line, trimmed,
+      * with no terminating semicolon.
+      * @param sql
+      *      sql query to be trimmed.
+      * @return
+      *      a trimmed sql query.
+      */
+     public static String trimSqlStatement(String sql)
+     {
+         String firstLine;
+         {
+             int crPos = sql.indexOf('\r');
+             int lfPos = sql.indexOf('\n');
+             int firstLineLength = 
+                 (crPos >= 0)
+                 ? ((lfPos >= 0) ? Math.min(crPos, lfPos) : crPos)
+                 : ((lfPos >= 0) ? lfPos : sql.length());
+             while (sql.charAt(firstLineLength-1) == ';')
+                 --firstLineLength;
+             firstLine = sql.substring(0, firstLineLength);
+         }
+
+         if (firstLine.charAt(0) == '-' && firstLine.charAt(1) == '-')
+             return "";
+         else
+             return firstLine;
+     }
 
     /**
      * Treats each element from {@code valArray} as a {@link Double} and returns an array containing 
@@ -309,40 +301,16 @@ public class Strings
         return left.equals(right) || left.equalsIgnoreCase(right);
     }
 
-    public static String readStream(IterableFileReader reader) throws IOException {
-        StringBuilder result = new StringBuilder();
-        final IterableFileReader linesInFile = Checks.checkNotNull(reader);
-        for(String each : linesInFile){
-            result.append(each);
-            result.append('\n');
-        }
-        return result.toString();
+    /**
+     * Obtain the string representation of an object.
+     *
+     * @param value object of interest.
+     * @param <T> type of the object of interest.
+     * @return a string representation of the object of interest.
+     */
+    public static <T> String str(T value) {
+        return value == null ? "" : value.toString();
     }
-
-    public static String readFile(File f) throws IOException {
-        return readStream(new IterableFileReader(f));
-    }
-
-  /**
-   * Obtain the string representation of an object.
-   *
-   * @param value object of interest.
-   * @param <T> type of the object of interest.
-   * @return a string representation of the object of interest.
-   */
-  public static <T> String str(T value) {
-    return value == null ? "" : value.toString();
-  }
-
-    public static List<String> readFileLines(File f) throws IOException {
-        List<String> list = new ArrayList<String>();
-        final IterableFileReader linesInFile = new IterableFileReader(f);
-        for(String each : linesInFile){
-            list.add(each);
-        }
-        return list;
-    }
-
 
     public static String join(String delimiter, Object... objects)
     {
@@ -393,13 +361,13 @@ public class Strings
         boolean foundMatch  = false;
         while(idx < string.length()){
             if(string.charAt(idx) == separ){
-              if(foundMatch){
-                  // once the word is added, reset the value of foundMatch
-                  foundMatch = !(words.add(string.substring(start, idx)));
-              }
+                if(foundMatch){
+                    // once the word is added, reset the value of foundMatch
+                    foundMatch = !(words.add(string.substring(start, idx)));
+                }
 
-              start = ++idx;
-              continue;
+                start = ++idx;
+                continue;
             }
 
             foundMatch = true;
@@ -410,77 +378,53 @@ public class Strings
         return words.toArray(new String[words.size()]);
     }
 
-    /**
-     * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
-     * @see <p>http://www.gotobject.com</p>
-     */
-    public static class IterableFileReader implements Iterable<String> {
-        private BufferedReader reader;
-        public IterableFileReader(InputStream is, String encoding) {
-            reader = null;
-            try {
-                reader = new BufferedReader(new InputStreamReader(is, encoding));
-            } catch (UnsupportedEncodingException e) {
-                unableToOpenFile(e);
-            }
-        }
-
-        public IterableFileReader(File file) throws IOException {
-            this(new FileInputStream(file), "UTF-8");
-        }
-
-        public String next() {
-          return line;
-        }
-
-        public void remove() {
-          throw new UnsupportedOperationException("remove operation is not supported");
-        }
-      };
+    // Taken from http://weblogs.java.net/blog/pat/archive/2004/10/stupid_scanner_1.html
+    public static String wholeContentAsSingleLine(File f) throws IOException {
+        return new Scanner(f).useDelimiter("\\A").next().replaceAll("\\s+", " ");
     }
 
     public static void formatIdentifier(String str, StringBuilder sbuf) {
-         int strlen = str.length();
-         boolean simple;
-    
-         if (!Character.isLetter(str.charAt(0)))
-             simple = false;
-         else {
-             simple = true;
-             for (int i = 0; i < strlen; i++) {
-                 char c = str.charAt(i);
-                 if (c != '_' && !Character.isLetterOrDigit(c)) {
-                     simple = false;
-                     break;
-                 }
-             }
-         }
-    
-         if (simple)
-             sbuf.append(str);
-         else {
-             sbuf.append('"');
-             for (int i = 0; i < strlen; i++) {
-                 char c = str.charAt(i);
-                 sbuf.append(c);
-                 if (c == '"')
-                     sbuf.append('"');
-             }
-             sbuf.append('"');
-         }
-     }
+        int strlen = str.length();
+        boolean simple;
+
+        if (!Character.isLetter(str.charAt(0)))
+            simple = false;
+        else {
+            simple = true;
+            for (int i = 0; i < strlen; i++) {
+                char c = str.charAt(i);
+                if (c != '_' && !Character.isLetterOrDigit(c)) {
+                    simple = false;
+                    break;
+                }
+            }
+        }
+
+        if (simple)
+            sbuf.append(str);
+        else {
+            sbuf.append('"');
+            for (int i = 0; i < strlen; i++) {
+                char c = str.charAt(i);
+                sbuf.append(c);
+                if (c == '"')
+                    sbuf.append('"');
+            }
+            sbuf.append('"');
+        }
+    }
 
     public static void formatStringLiteral(String str, StringBuilder sbuf) {
-         int strlen = str.length();
-    
-         sbuf.append('\'');
-         for (int i = 0; i < strlen; i++) {
-             char c = str.charAt(i);
-             if (c == '\'')
-                 sbuf.append("''");
-             else
-                 sbuf.append(c);
-         }
-         sbuf.append('\'');
-     }
+        int strlen = str.length();
+
+        sbuf.append('\'');
+        for (int i = 0; i < strlen; i++) {
+            char c = str.charAt(i);
+            if (c == '\'')
+                sbuf.append("''");
+            else
+                sbuf.append(c);
+        }
+        sbuf.append('\'');
+    }
 }

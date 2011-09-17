@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.inum.Inum;
 
 /**

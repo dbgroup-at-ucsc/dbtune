@@ -1,99 +1,33 @@
 <?xml version="1.0"?>
-<project name="dbtune-ml" basedir="." default="jar">
-  <import file="../../common.xml"/>
-
+<project name="dbtune-ml" basedir=".">
+  <property file="build.properties"/>
   <path id="compile.classpath">
     <fileset dir="${lib.dir}" includes="*.jar"/>
-  	<fileset dir="${ext.lib.dir}" includes="*.jar"/>
+    <fileset dir="../../${lib.dir}" includes="*.jar"/>
     <pathelement path="../../build/classes"/>
   </path>
-
-  <target name="init">
-    <taskdef resource="scala/tools/ant/antlib.xml">
-      <classpath refid="compile.classpath"/>
-    </taskdef>
+  <target name="compile">
+    <ant dir="../../" antfile="common.xml" target="scala.compile">
+      <property name="base.dir" value="${basedir}" />
+      <reference refid="compile.classpath" />
+    </ant>
   </target>
-
-  <target name="scala.compile" depends="init, test.compile" description="Compile Scala source.">
-    <scalac srcdir="${src.dir}"
-         destdir="${build.dir}/classes"
-         classpathref="compile.classpath"
-         addParams="-make:changed" >
-      <include name="**/*.scala" />
-        <!-- todo (anybody) place all packages that should be excluded in a property in build.properties,
-             then replace all the hardcoded instances of this property with the new value
-             in the build.
-        -->
-      <exclude name="edu/ucsc/dbtune/ml/init.scala, edu/ucsc/satuning/**/*" />
-    </scalac>
-    <copy toDir="${build.dir}/classes">
-      <fileset dir="${src.dir}" excludes="**/*.java,**/*init.scala,edu/ucsc/satuning/**/*"/>
-    </copy>
+  <target name="test.compile">
+    <ant dir="../../" antfile="common.xml" target="scala.test.compile">
+      <property name="base.dir" value="${basedir}" />
+      <reference refid="compile.classpath" />
+    </ant>
   </target>
-
-  <target name="scala.test.compile" depends="scala.compile" description="Compile Scala test source">
-    <scalac srcdir="${src.dir}"
-         destdir="${build.dir}/tests"
-         classpathref="compile.classpath"
-         addParams="-make:changed" >
-      <include name="**/*Test.scala" />
-      <exclude name="edu/ucsc/dbtune/ml/init.scala, edu/ucsc/satuning/**/*" />
-    </scalac>
-    <copy toDir="${build.dir}/tests">
-      <fileset dir="${test.dir}" excludes="**/*.java,**/*init.scala,edu/ucsc/satuning/**/*"/>
-    </copy>
+  <target name="clean">
+    <ant dir="../../" antfile="common.xml" target="clean">
+      <property name="base.dir" value="${basedir}" />
+      <reference refid="compile.classpath" />
+    </ant>
   </target>
-
-  <target name="scala.test"
-      depends="scala.test.compile"
-      description="Execute Scala Unit tests.">
-    <echo message="Executing Scala Unit tests"/>
-    <junit printsummary="yes"
-         haltonerror="yes"
-         haltonfailure="yes"
-         fork="yes">
-        <classpath>
-          <path refid="compile.classpath"/>
-          <pathelement location="${build.dir}/classes"/>
-          <pathelement location="${build.dir}/tests"/>
-        </classpath>
-        <batchtest fork="yes"
-                   todir="${build.dir}/${junit.out.dir}">
-          <fileset dir="${test.dir}" excludes="edu/ucsc/satuning/**/*">
-            <include name="**/*Test.class"/>
-            <exclude name="**/AllTests.java,**/*init.scala,**/*$*.class"/>
-          </fileset>
-        </batchtest>
-    </junit>
-  </target>
-
-  <target name="scala.test.functional"
-      depends="scala.test.compile"
-      description="Execute Scala Functional tests.">
-    <echo message="Executing Scala Functional tests"/>
-    <junit printsummary="yes"
-         haltonerror="yes"
-         haltonfailure="yes"
-         fork="yes">
-        <classpath>
-          <path refid="compile.classpath"/>
-          <pathelement location="${build.dir}/classes"/>
-          <pathelement location="${build.dir}/tests"/>
-        </classpath>
-        <batchtest fork="yes"
-                   todir="${build.dir}/${junit.out.dir}">
-          <fileset dir="${test.dir}" excludes="edu/ucsc/satuning/**/*">
-            <include name="**/*TestFunctional.scala"/>
-            <exclude name="**/AllTests.java,**/*init.scala"/>
-          </fileset>
-        </batchtest>
-    </junit>
-  </target>
-
-  <target name="jar" depends="jar.withdeps" description="Build jar.">
-    <jar destfile="${build.dir}/${ant.project.name}-${version}.jar">
-      <zipfileset src="${build.dir}/${ant.project.name}-with-deps.jar"
-          excludes="edu/ucsc/satuning/**"/>
-    </jar>
+  <target name="test.one">
+    <ant dir="../../" antfile="common.xml" target="test.one">
+      <property name="base.dir" value="${basedir}" />
+      <reference refid="compile.classpath" />
+    </ant>
   </target>
 </project>

@@ -18,8 +18,6 @@
 
 package edu.ucsc.dbtune.advisor.bc;
 
-import edu.ucsc.dbtune.advisor.BenefitInfoInput;
-import edu.ucsc.dbtune.advisor.StaticIndexSet;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -46,35 +44,15 @@ public class BcBenefitInfo {
         this.profiledQuery  = profiledQuery;
     }
 
-    /**
-     * construct a new {@code BcBenefitInfo} given some {@code benefitInfo input}, which consist of
-     * a {@code db connection, a snapshot of indexes, a hotset, an indexes configuration, and a
-     * profiled query}.
-     * @param arg
-     *      a {@link BenefitInfoInput} object.
-     * @return
-     *      a new {@link BcBenefitInfo} object.
-     * @throws SQLException
-     *      unexpected error has occurred.
-     */
-    public static BcBenefitInfo makeBcBenefitInfo(BenefitInfoInput arg) throws SQLException {
-        return genBcBenefitInfo(
-                arg.getConfiguration(),
-                arg.getHotSet(),
-                arg.getRecommendedIndexes(),
-                arg.getProfiledQuery()
-        );
-    }
-    
     static BcBenefitInfo genBcBenefitInfo(
             Configuration snapshot,
-            StaticIndexSet hotSet,
+            Configuration hotSet,
             IndexBitSet config,
             PreparedSQLStatement profiledQuery )
         throws SQLException
     {
         /*
-        // XXX:
+        // XXX: issue #99
         // estimateCost(
         //    String sql, IndexBitSet configuration, IndexBitSet used, Index profiledIndex)
         // 

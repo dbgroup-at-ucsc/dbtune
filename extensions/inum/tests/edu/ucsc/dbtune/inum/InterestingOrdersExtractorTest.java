@@ -1,10 +1,10 @@
 package edu.ucsc.dbtune.inum;
 
 import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.SharedFixtures;
-import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.SharedFixtures;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.inum.InumInterestingOrdersExtractor.ColumnInformation;
+import java.sql.Connection;
 import java.util.Properties;
 import java.util.Set;
 import static org.hamcrest.CoreMatchers.is;
@@ -27,12 +27,12 @@ public class InterestingOrdersExtractorTest {
     final ColumnPropertyLookup columnProperty = configureProperty();
     final InterestingOrdersExtractor extractor = new InumInterestingOrdersExtractor(columnProperty);
     final Configuration ios = extractor.extractInterestingOrders(SAMPLE_QUERY);
-    assertThat(ios.getIndexes().isEmpty(), is(false));
+    assertThat(ios.toList().isEmpty(), is(false));
   }
 
   private static ColumnPropertyLookup configureProperty() throws Exception {
     final ColumnPropertyLookup prop       = Mockito.mock(ColumnPropertyLookup.class);
-    final DatabaseConnection  connection = SharedFixtures.configureConnection();
+    final Connection  connection = SharedFixtures.configureConnection();
     Mockito.when(prop.getDatabaseConnection()).thenReturn(connection);
     Mockito.doNothing().when(prop).refresh();
     final Set<ColumnInformation> info = populateColumnInformationSet();

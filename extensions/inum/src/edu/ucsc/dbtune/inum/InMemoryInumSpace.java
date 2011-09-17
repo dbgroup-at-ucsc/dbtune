@@ -1,13 +1,14 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.caliper.internal.guava.collect.Maps;
+import edu.ucsc.dbtune.metadata.Configuration;
+
+import java.util.Map;
+import java.util.Set;
+
+import com.google.common.collect.Maps;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.core.DBIndex;
-import edu.ucsc.dbtune.core.metadata.Configuration;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * An in-memory inum space. In-memory means that you will have

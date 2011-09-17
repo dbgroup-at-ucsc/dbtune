@@ -1,11 +1,14 @@
 package edu.ucsc.dbtune.core;
 
+import edu.ucsc.dbtune.inum.Inum;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.StopWatch;
+
+import java.sql.Connection;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import edu.ucsc.dbtune.core.metadata.Configuration;
-import edu.ucsc.dbtune.core.metadata.Index;
-import edu.ucsc.dbtune.inum.Inum;
-import edu.ucsc.dbtune.util.StopWatch;
 
 /**
  * default implementation of {@link InumWhatIfOptimizer} type.
@@ -23,7 +26,7 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    * @param connection
    *    a live database connection to postgres
    */
-  public InumWhatIfOptimizerImpl(DatabaseConnection connection){
+  public InumWhatIfOptimizerImpl(Connection connection){
     this(Inum.newInumInstance(Preconditions.checkNotNull(connection)));
   }
 

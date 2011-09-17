@@ -1,85 +1,103 @@
 <?xml version="1.0"?>
-
 <project name="dbtune" default="compile">
-  <!-- common definitions are stored in common.xml. -->
-  <import file="common.xml"/>
-
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+    <classpath>
+      <pathelement location="${lib.dir}/ant-contrib-1.0b3.jar"/>
+    </classpath>
+  </taskdef>
+  <property file="build.properties"/>
   <path id="compile.classpath">
     <fileset dir="${lib.dir}" includes="*.jar"/>
+    <fileset dir="extensions/" includes="**/*.jar"/>
   </path>
 
-  <target name="jar" depends="compile">
-    <mkdir dir="${build.dir}/dist" />
-    <jar destfile="${build.dir}/dist/dbtune-${version}.jar" basedir="${build.dir}/classes" excludes="edu/ucsc/satuning/**" />
+  <!-- core -->
+  <target name="compile">
+    <ant dir="." antfile="common.xml" target="compile">
+      <property name="base.dir" value="${base.dir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="test.compile">
+    <ant dir="." antfile="common.xml" target="test.compile">
+      <property name="base.dir" value="${base.dir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="test">
+    <ant dir="." antfile="common.xml" target="test">
+      <property name="base.dir" value="${base.dir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="functional">
+    <ant dir="." antfile="common.xml" target="functional">
+      <property name="base.dir" value="${base.dir}" />
+      <reference refid="compile.classpath" />
+    </ant>
   </target>
 
-  <!-- Scala support. These tasks will be overriden by their appropriate implementation
-       in the extension/<new-extension>/build.xml
-  -->
-  <target name="init"/>
-  <target name="scala.compile" depends="init, test.compile" />
-  <target name="scala.test.compile" depends="scala.compile" />
-  <target name="scala.test" depends="scala.test.compile"/>
-  <target name="scala.test.functional" depends="scala.test.compile" />
-  <!-- end of Scala support definition -->
+  <!-- extensions -->
+  <target name="compile.all" depends="compile">
+    <foreach list="${extensions}" param="extension" target="compile.extension"/>
+  </target>
+  <target name="compile.extension">
+    <ant dir="extensions/${extension}" antfile="build.xml" target="compile">
+      <property name="base.dir" value="${base.dir}" />
+      <property name="src.dir" value="${src.dir}" />
+      <property name="build.dir" value="${build.dir}" />
+      <property name="project" value="${extension}" />
+    </ant>
+  </target>
+  <target name="test.compile.all" depends="compile.all">
+    <foreach list="${extensions}" param="extension" target="test.compile.extension"/>
+  </target>
+  <target name="test.compile.extension" depends="test.compile">
+    <ant dir="extensions/${extension}" antfile="build.xml" target="test.compile">
+      <property name="base.dir" value="${base.dir}" />
+      <property name="src.dir" value="${src.dir}" />
+      <property name="build.dir" value="${build.dir}" />
+      <property name="project" value="${extension}" />
+    </ant>
+  </target>
+  <target name="test.all" depends="test.compile.all">
+    <ant dir="." antfile="common.xml" target="test">
+      <property name="base.dir" value="${base.dir}" />
+      <property name="build.dir" value="${build.dir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="functional.all" depends="test.compile.all">
+    <ant dir="." antfile="common.xml" target="functional">
+      <property name="base.dir" value="${base.dir}" />
+      <property name="build.dir" value="${build.dir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="test.one" depends="test.compile.all">
+    <ant dir="." antfile="common.xml" target="test.one">
+      <property name="base.dir" value="${base.dir}" />
+      <property name="build.dir" value="${build.dir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="test.dbtune" depends="test.all,functional.all"/>
 
-  <!-- new extensions? modify the *dist* target following the *hints*
-       below:
-  -->
-  <target name="dist" depends="distjars, javadoc"
-       description="Build entire distribution.">
-    <ant antfile="extensions/cli/build.xml"  target="distjars" inheritAll="false"/>
-    <ant antfile="extensions/ml/build.xml"   target="distjars" inheritAll="false"/>
-    <ant antfile="extensions/inum/build.xml" target="distjars" inheritAll="false"/>
-    <!-- 1. reference the new extension's build file. e.g.,
-     <ant antfile="extensions/<new-extension>/build.xml" target="distjars" inheritAll="false"/>
-    -->
-
-    <copy toDir="${build.dir}/dist">
-      <fileset dir="extensions/cli/build" includes="*.jar" excludes="*-with-deps.jar"/>
-      <fileset dir="extensions/cli/lib"   includes="*.jar" excludes="*-with-deps.jar"/>
-    </copy>
-    <copy toDir="${build.dir}/dist">
-      <fileset dir="extensions/ml/build" includes="*.jar" excludes="*-with-deps.jar"/>
-      <fileset dir="extensions/ml/lib"   includes="*.jar" excludes="*-with-deps.jar"/>
-    </copy>
-    <copy toDir="${build.dir}/dist">
-      <fileset dir="extensions/inum/build" includes="*.jar" excludes="*-with-deps.jar"/>
-      <fileset dir="extensions/inum/lib"   includes="*.jar" excludes="*-with-deps.jar"/>
-    </copy>
-
-    <!-- 2. copy the extensions' generated files to the main *dist* folder. e.g.,
-    <copy toDir="${build.dir}/dist">
-      <fileset dir="extensions/<new-extension>/build" includes="*.jar" excludes="*-with-deps.jar"/>
-      <fileset dir="extensions/<new-extension>/lib"   includes="*.jar" excludes="*-with-deps.jar"/>
-    </copy>
-
-    Note: from now on, each extension will have its own *lib* and *build* folders. The content
-    in those folders will be copied to the right location when calling *dist* command. If the
-    extension is not using any library, then you don't need the following line:
-    *<fileset dir="extensions/<new-extension>/lib"   includes="*.jar" excludes="*-with-deps.jar"/>*
-    -->
-
-    <copy toDir="${build.dir}/dist" file="LICENSE"/>
-    <copy toDir="${build.dir}/dist">
-      <fileset dir="${lib.dir}"
-        includes="*.jar"/>
-    </copy>
-    <copy toDir="${build.dir}/dist">
-      <fileset dir="${build.dir}" includes="javadoc/**/*"/>
-    </copy>
-
-    <zip destfile="${build.dir}/dbtune-${version}.zip">
-      <zipfileset dir="${build.dir}/dist" prefix="${project.name}-${version}" excludes="*-src.jar"/>
-    </zip>
-    <zip destfile="${build.dir}/${project.name}-${version}-src.zip">
-      <zipfileset dir="." prefix="${project.name}-${version}-src"
-          excludes="build/**,www/**/*,**/.svn/**,**/.git/**,.git*,classes/**,.settings/**, edu/ucsc/satuning/**
-          bin/**,latest-api-diffs/**,latest-javadoc/**,.classpath,.project, pgtests/**, resources/**, .project*"/>
-
-    </zip>
+  <!-- packaging -->
+  <target name="jar">
+    <ant dir="." antfile="common.xml" target="jar" />
+  </target>
+  <target name="javadoc">
+    <ant dir="." antfile="common.xml" target="javadoc" />
+  </target>
+  <target name="source.jar">
+    <ant dir="." antfile="common.xml" target="javadoc" />
+  </target>
+  <target name="clean">
+    <ant dir="." antfile="common.xml" target="clean" />
   </target>
 
+  <!--
   <target name="test.dist"
       depends="jar, test.compile-with-deps"
       description="Execute Unit tests against distribution jar.">
@@ -114,80 +132,5 @@
         </syspropertyset>
     </junit>
   </target>
-
-  <target name="javadoc"
-          description="Generate Javadocs.">
-      <mkdir dir="${build.dir}/javadoc"/>
-      <javadoc sourcepath="${src.dir}"
-               packagenames="*"
-               excludepackagenames="tests, edu.ucsc.satuning.*"
-               destdir="${build.dir}/javadoc"
-               author="true"
-               maxmemory="512M"
-               protected="true" windowtitle="${project.name}-${version} API">
-          <sourcepath>
-            <pathelement location="${src.dir}"/>
-            <pathelement location="${cli.src.dir}"/>
-            <pathelement location="${ml.src.dir}"/>
-            <pathelement location="${inum.src.dir}"/>
-    <!-- 3. add the location of the extension's src directory (${<new-extension>.src.dir}) to
-            the sourcepath. This variable should be defined in *build.properties* before adding
-            it here. for example:
-            *in build.properties*
-              <new-extension>.src.dir = extensions/<new-extension>/src
-            then *in build.xml*
-              <pathelement location="${<new-extension>.src.dir}"/>
-    -->
-          </sourcepath>
-          <classpath refid="compile.classpath"/>
-        </javadoc>
-    </target>
-
-  <target name="unit.test.all" depends="test">
-    <ant antfile="extensions/cli/build.xml"  target="test" inheritAll="false" />
-    <ant antfile="extensions/ml/build.xml"   target="test" inheritAll="false" />
-    <ant antfile="extensions/inum/build.xml" target="test" inheritAll="false" />
-    <!-- 4. reference the new extension's test command. e.g.,
-     <ant antfile="extensions/<new-extension>/build.xml" target="test" inheritAll="false" />
-    -->
-  </target>
-
-  <target name="functional.test.all" depends="test">
-    <ant antfile="extensions/cli/build.xml"  target="test.functional" inheritAll="false" />
-    <ant antfile="extensions/ml/build.xml"   target="test.functional" inheritAll="false" />
-    <ant antfile="extensions/inum/build.xml" target="test.functional" inheritAll="false" />
-    <!-- 5. reference the new extension's functional test command. This step can be skipped if
-            the extension does not have any functional test. In the case it has one or more, then
-            reference it here:
-     <ant antfile="extensions/<new-extension>/build.xml" target="test.functional" inheritAll="false" />
-    -->
-  </target>
-
-
-  <target name="test.dbtune"
-      depends="unit.test.all, functional.test.all, scalacode"
-      description="Run *all* tests (both unit and functional tests)."/>
-
-  <target name="compile.all"
-      depends="clean.all, compile"
-      description="Compile available files.">
-    <ant dir="extensions/cli"  antfile="build.xml" target="compile" inheritAll="false"/>
-    <ant dir="extensions/ml"   antfile="build.xml" target="compile" inheritAll="false"/>
-    <ant dir="extensions/inum" antfile="build.xml" target="compile" inheritAll="false"/>
-    <!-- 6. reference the new extension's compile command. e.g.,
-     <ant antfile="extensions/<new-extension>/build.xml" target="compile" inheritAll="false" />
-    -->      
-  </target>
-
-  <target name="clean.all"
-      depends="clean"
-      description="Remove generated files.">
-    <ant dir="extensions/cli"  antfile="build.xml" target="clean"/>
-    <ant dir="extensions/ml"   antfile="build.xml" target="clean"/>
-    <ant dir="extensions/inum" antfile="build.xml" target="clean"/>
-    <!-- 7. reference the new extension's compile command. e.g.,
-     <ant antfile="extensions/<new-extension>/build.xml" target="clean" inheritAll="false" />
-    -->      
-  </target>
-
+  -->
 </project>

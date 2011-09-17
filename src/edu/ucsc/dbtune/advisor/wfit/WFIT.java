@@ -16,28 +16,20 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import edu.ucsc.dbtune.advisor.Advisor;
-import edu.ucsc.dbtune.advisor.DynamicIndexSet;
-import edu.ucsc.dbtune.advisor.HotSetSelector;
-import edu.ucsc.dbtune.advisor.HotsetSelection;
-import edu.ucsc.dbtune.advisor.IndexPartitions;
-import edu.ucsc.dbtune.advisor.IndexStatisticsFunction;
-import edu.ucsc.dbtune.advisor.InteractionSelection;
-import edu.ucsc.dbtune.advisor.InteractionSelector;
-import edu.ucsc.dbtune.advisor.StaticIndexSet;
-import edu.ucsc.dbtune.advisor.StatisticsFunction;
-import edu.ucsc.dbtune.ibg.IBGBestBenefitFinder;
-import edu.ucsc.dbtune.ibg.InteractionBank;
+import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
+import edu.ucsc.dbtune.advisor.interactions.IndexStatisticsFunction;
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
-import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.SQLException;
+
+import static edu.ucsc.dbtune.advisor.HotSetSelector.chooseGreedy;
+import static edu.ucsc.dbtune.advisor.interactions.InteractionSelector.choosePartitions;
 
 /**
  * WFIT
@@ -141,195 +133,21 @@ public class WFIT extends Advisor
             int windowSize,
             int partitionIterations )
     {
-        StaticIndexSet hotSet = getHotSet(candidateSet, qinfos, maxNumIndexes, windowSize);
-        StatisticsFunction doiFunc = new TempDoiFunction(qinfos, candidateSet, windowSize);
+        IndexStatisticsFunction benefitFunc = new IndexStatisticsFunction(windowSize);
 
-        InteractionSelection is = 
-            new InteractionSelection(
-                    new IndexPartitions(candidateSet,hotSet),
-                    doiFunc,
-                    maxNumStates,
-                    hotSet);
-
-        IndexPartitions parts = 
-            InteractionSelector.choosePartitions(candidateSet, is, partitionIterations);
-
-        return parts;
-    }
-
-    private StaticIndexSet getHotSet(
-            Configuration candidateSet,
-            List<IBGPreparedSQLStatement> qinfos,
-            int maxNumIndexes,
-            int windowSize)
-    {
-        StatisticsFunction benefitFunc;
-        HotsetSelection hs;
-
-        benefitFunc =
-            new TempBenefitFunction(
-                    qinfos,
+        Configuration hotSet  =
+            chooseGreedy(
                     candidateSet,
-                    windowSize);
+                    new Configuration("old"),
+                    new Configuration("required"),
+                    benefitFunc, maxNumIndexes, false);
 
-        hs =
-            new HotsetSelection(
-                    candidateSet,
-                    new StaticIndexSet(),
-                    new DynamicIndexSet(),
-                    benefitFunc,
-                    maxNumIndexes,
-                    false);
-
-        StaticIndexSet hotSet = HotSetSelector.chooseHotSetGreedy(hs);
-
-        return hotSet;
-    }
-
-    private class TempDoiFunction extends IndexStatisticsFunction
-    {
-        private InteractionBank bank;
-        private Configuration   conf;
-
-        TempDoiFunction(
-                List<IBGPreparedSQLStatement> qinfos,
-                Configuration candidateSet,
-                int indexStatisticsWindow )
-        {
-            super(indexStatisticsWindow);
-
-            bank = new InteractionBank(candidateSet.size());
-            conf = candidateSet;
-
-            for (Index a : candidateSet) {
-                int id_a = candidateSet.getOrdinalPosition(a);
-                for (Index b : candidateSet) {
-                    int id_b = candidateSet.getOrdinalPosition(b);
-                    if (id_a < id_b) {
-                        double doi = 0;
-                        for (IBGPreparedSQLStatement qinfo : qinfos) {
-                            doi += qinfo.getInteractionBank().interactionLevel(id_a,id_b);
-                        }
-                        bank.assignInteraction(id_a, id_b, doi);
-                    }
-                }
-            }
-        }
-
-        @Override
-        public double doi(Index a, Index b) {
-            int id_a = conf.getOrdinalPosition(a);
-            int id_b = conf.getOrdinalPosition(b);
-            return bank.interactionLevel(id_a, id_b);
-        }
-    }
-
-    private class TempBenefitFunction extends IndexStatisticsFunction {
-        List<IBGPreparedSQLStatement> qinfos;
-        Configuration candSet;
-
-        IBGBestBenefitFinder finder = new IBGBestBenefitFinder();
-        double[][]      bbCache;
-        double[]        bbSumCache;
-        int[][]         componentId;
-        IndexBitSet[]   prevM;
-        IndexBitSet     diffM;
-
-        TempBenefitFunction(
-                List<IBGPreparedSQLStatement> qinfos0,
-                Configuration candidateSet,
-                int indexStatisticsWindow)
-        {
-            super(indexStatisticsWindow);
-            qinfos = qinfos0;
-            candSet = candidateSet;
-            int maxInternalId = candSet.size();
-
-            componentId = componentIds(qinfos0, maxInternalId);
-
-            bbCache = new double[maxInternalId+1][qinfos0.size()];
-            bbSumCache = new double[maxInternalId+1];
-            prevM = new IndexBitSet[maxInternalId+1];
-            for (int i = 0; i <= maxInternalId; i++) {
-                prevM[i] = new IndexBitSet();
-                reinit(i, prevM[i]);
-            }
-            diffM = new IndexBitSet(); // temp bit set
-        }
-
-        private int[][] componentIds(List<IBGPreparedSQLStatement> qinfos, int maxInternalId) {
-            int[][] componentId = new int[qinfos.size()][maxInternalId+1];
-            int q = 0;
-            for (IBGPreparedSQLStatement qinfo : qinfos) {
-                IndexBitSet[] parts =
-                    qinfo.getInteractionBank().stablePartitioning(0);
-                for (Index index : qinfo.getConfiguration()) {
-                    int id = qinfo.getConfiguration().getOrdinalPosition(index);
-                    componentId[q][id] = -id;
-                    for (int p = 0; p < parts.length; p++) {
-                        if (parts[p].get(id)) {
-                            componentId[q][id] = p;
-                            break;
-                        }
-                    }
-                }
-                ++q;
-            }
-            return componentId;
-        }
-
-        private void reinit(int id, IndexBitSet M) {
-            int q = 0;
-            double ben = 0;
-            double cache[] = bbCache[id];
-            for (IBGPreparedSQLStatement qinfo : qinfos) {
-                double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
-                cache[q] = bb;
-                ben += bb;
-                ++q;
-            }
-            bbSumCache[id] = ben;
-            prevM[id].set(M); 
-        }
-
-        private void reinitIncremental(int id, IndexBitSet M, int b) {
-            int q = 0;
-            double ben = 0;
-            double cache[] = bbCache[id];
-            for (IBGPreparedSQLStatement qinfo : qinfos) {
-                if (componentId[q][id] == componentId[q][b]) {
-                    // interaction, recompute
-                    double bb = finder.bestBenefit(qinfo.getIndexBenefitGraph(), id, M);
-                    cache[q] = bb;
-                    ben += bb;
-                }
-                else 
-                    ben += cache[q];
-                ++q;
-            }
-            prevM[id].set(M);
-            bbSumCache[id] = ben;
-        }
-
-        @Override
-        public double benefit(Index a, IndexBitSet M) {
-            int id = candSet.getOrdinalPosition(a);
-            if (!M.equals(prevM)) {
-                diffM.set(M);
-                diffM.xor(prevM[id]);
-                if (diffM.cardinality() == 1) {
-                    reinitIncremental(id, M, diffM.nextSetBit(0));
-                }
-                else {
-                    reinit(id, M);
-                }
-            }
-            return bbSumCache[id];
-        }
-
-        @Override
-        public double doi(Index a, Index b) {
-            throw new RuntimeException("Not implemented");
-        }
+        return choosePartitions(
+                candidateSet,
+                hotSet,
+                getPartitions(),
+                benefitFunc,
+                maxNumStates,
+                partitionIterations);
     }
 }

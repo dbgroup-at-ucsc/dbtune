@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Configuration;
 
 /**
  * Helper interface for getting an execution plan that spans a range of internal plans.

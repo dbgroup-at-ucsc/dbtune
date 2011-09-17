@@ -1,12 +1,14 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.spi.core.Console;
 import edu.ucsc.dbtune.util.Combinations;
 import edu.ucsc.dbtune.util.Strings;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
+
+import java.sql.Connection;
 import java.util.Set;
 
 /**
@@ -28,7 +30,7 @@ public class InumPrecomputation implements Precomputation {
     this.seenWorkloads    = Sets.newHashSet();
   }
 
-  public InumPrecomputation(DatabaseConnection connection){
+  public InumPrecomputation(Connection connection){
     this(new InMemoryInumSpace(), new SqlExecutionPlanProvider(connection), new InumOptimalPlansParser());
   }
 

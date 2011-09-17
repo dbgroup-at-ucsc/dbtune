@@ -1,8 +1,9 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.core.DatabaseConnection;
-import edu.ucsc.dbtune.core.metadata.Configuration;
-import edu.ucsc.dbtune.core.metadata.Index;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+
+import java.sql.Connection;
 import java.util.Set;
 
 /**
@@ -20,7 +21,7 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
     this.parser     = parser;
   }
 
-  public InumIndexAccessCostEstimation(DatabaseConnection connection){
+  public InumIndexAccessCostEstimation(Connection connection){
     this(new SqlExecutionPlanProvider(connection), new InumOptimalPlansParser());
   }
 
@@ -30,7 +31,7 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
     final String      optPlan    = provider.getSqlExecutionPlan(query, indexes);
     final OptimalPlan singlePlan = singlePlan(optPlan);
     double sumOfIndexAccessCosts = 0.0;
-    for(Index each : indexes.getIndexes() ){
+    for(Index each : indexes.toList() ){
       sumOfIndexAccessCosts +=  singlePlan.getAccessCost(each.getTable().getName());
     }
     return sumOfIndexAccessCosts;
