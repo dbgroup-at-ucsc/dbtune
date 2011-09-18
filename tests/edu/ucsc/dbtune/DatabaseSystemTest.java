@@ -96,47 +96,47 @@ public class DatabaseSystemTest
         when(DriverManager.getConnection(anyString(), anyString(), anyString())).thenReturn(con);
 
         // check DB2
-        env = new Environment(configureDBMSOptimizer(configureDB2()));
+        env = configureDBMSOptimizer(configureDB2());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         assertThat(DatabaseSystem.newOptimizer(env,con) instanceof DB2Optimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
 
         // check MySQL
-        env = new Environment(configureDBMSOptimizer(configureMySQL()));
+        env = configureDBMSOptimizer(configureMySQL());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         assertThat(DatabaseSystem.newOptimizer(env,con) instanceof MySQLOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
 
         // check PostgreSQL
-        env = new Environment(configureDBMSOptimizer(configurePG()));
+        env = configureDBMSOptimizer(configurePG());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         assertThat(DatabaseSystem.newOptimizer(env,con) instanceof PGOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof PGExtractor, is(true));
         
         // check IBG
-        env = new Environment(configureIBGOptimizer(configureDB2()));
+        env = configureIBGOptimizer(configureDB2());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         assertThat(DatabaseSystem.newOptimizer(env,con) instanceof IBGOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
 
-        env = new Environment(configureIBGOptimizer(configureMySQL()));
+        env = configureIBGOptimizer(configureMySQL());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         assertThat(DatabaseSystem.newOptimizer(env,con) instanceof IBGOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
 
-        env = new Environment(configureIBGOptimizer(configurePG()));
+        env = configureIBGOptimizer(configurePG());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         assertThat(DatabaseSystem.newOptimizer(env,con) instanceof IBGOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof PGExtractor, is(true));
 
         // check INUM
-        env = new Environment(configureINUMOptimizer(configureDB2()));
+        env = configureINUMOptimizer(configureDB2());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         try {
@@ -147,7 +147,7 @@ public class DatabaseSystemTest
         }
         assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
 
-        env = new Environment(configureINUMOptimizer(configureMySQL()));
+        env = configureINUMOptimizer(configureMySQL());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         try {
@@ -158,7 +158,7 @@ public class DatabaseSystemTest
         }
         assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
 
-        env = new Environment(configureINUMOptimizer(configurePG()));
+        env = configureINUMOptimizer(configurePG());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         try {
@@ -180,7 +180,7 @@ public class DatabaseSystemTest
         Catalog           cat = mock(Catalog.class);
         MetadataExtractor ext = mock(MetadataExtractor.class);
         Optimizer         opt = makeOptimizerMock();
-        Environment       env = new Environment(configurePG());
+        Environment       env = configurePG();
 
         when(ext.extract(con)).thenReturn(cat);
 

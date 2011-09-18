@@ -18,7 +18,7 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="test.compile">
+  <target name="test.compile" depends="compile">
     <ant dir="." antfile="common.xml" target="test.compile">
       <property name="base.dir" value="${base.dir}" />
       <reference refid="compile.classpath" />
@@ -49,7 +49,7 @@
       <property name="project" value="${extension}" />
     </ant>
   </target>
-  <target name="test.compile.all" depends="compile.all">
+  <target name="test.compile.all" depends="compile.all,test.compile">
     <foreach list="${extensions}" param="extension" target="test.compile.extension"/>
   </target>
   <target name="test.compile.extension" depends="test.compile">

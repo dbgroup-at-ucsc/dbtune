@@ -15,6 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.spi;
 
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.DB2;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
@@ -22,24 +23,25 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM_CACHE_DEPLOYMENT_DIR;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_URL;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.MYSQL;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.URL;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.PG;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
-import static edu.ucsc.dbtune.util.Objects.cast;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashMap;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * @author Huascar A. Sanchez
@@ -47,7 +49,24 @@ import java.util.Set;
  */
 public class Environment {
 
-    private final Configuration configuration;
+    private final Properties configuration;
+
+    private static final List<String> supportedVendors;
+    private static final List<String> supportedOptimizers;
+
+    static {
+        supportedVendors = new ArrayList<String>();
+
+        supportedVendors.add(DB2);
+        supportedVendors.add(MYSQL);
+        supportedVendors.add(PG);
+
+        supportedOptimizers = new ArrayList<String>();
+
+        supportedOptimizers.add(DBMS);
+        supportedOptimizers.add(IBG);
+        supportedOptimizers.add(INUM);
+    }
 
     /**
      * Creates an environment object from the given filename.
@@ -56,7 +75,27 @@ public class Environment {
      *     name of file containing properties
      */
     public Environment(String propertiesFilename) throws IOException {
-        this(new PropertiesConfiguration(propertiesFilename));
+        configuration = new Properties();
+        configuration.load(new FileInputStream(propertiesFilename));
+    }
+
+    /**
+     * Copy constructor
+     */
+    public Environment(Environment other) {
+        configuration = new Properties(other.configuration);
+    }
+
+    /**
+     * Assigns a property.
+     *
+     * @param property
+     *     name of the property
+     * @param value
+     *     value of the property
+     */
+    public void setProperty(String property, String value) {
+        configuration.setProperty(property,value);
     }
 
     /**
@@ -66,91 +105,104 @@ public class Environment {
      *     properties to be accessed through this object.
      */
     public Environment(Properties properties) {
-        this(new PropertiesConfiguration(properties));
+        configuration = new Properties(properties);
     }
 
     /**
      * Creates an environment object from the default configuration file.
      */
     public Environment() throws IOException {
-        this(new PropertiesConfiguration(System.getProperty("user.dir") + "/config/" + FILE));
-    }
-
-    /**
-     * Creates an environment object with the given configuration.
-     *
-     * @param configuration
-     *     configuration to be accessed through this object.
-     */
-    Environment(Configuration configuration){
-        this.configuration = configuration;
-    }
-
-
-    private static String asString(Object obj){
-      return cast(obj, String.class);
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#URL}
-     */
-    public String getDatabaseUrl(){
-        return asString(configuration.getProperty(URL));
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#JDBC_DRIVER}
-     */
-    public String getJDBCDriver(){
-        return asString(configuration.getProperty(JDBC_DRIVER));
+        this(System.getProperty("user.dir") + "/config/" + FILE);
     }
 
     /**
      * @return {@link EnvironmentProperties#USERNAME}
      */
-    public String getUsername(){
-        return asString(configuration.getProperty(USERNAME));
+    public String getUsername() {
+        return configuration.getProperty(USERNAME);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#PASSWORD}
+     */
+    public String getPassword() {
+        return configuration.getProperty(PASSWORD);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#JDBC_URL}
+     */
+    public String getJdbcURL() {
+        return configuration.getProperty(JDBC_URL);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#JDBC_DRIVER}
+     */
+    public String getJdbcDriver() {
+        return configuration.getProperty(JDBC_DRIVER);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#JDBC_DRIVER}
+     */
+    public String getVendor() {
+        return configuration.getProperty(JDBC_DRIVER);
     }
 
     /**
      * @return {@link EnvironmentProperties#OPTIMIZER}
      */
     public String getOptimizer() throws IllegalArgumentException {
-        String opt = asString(configuration.getProperty(OPTIMIZER));
+        String opt = configuration.getProperty(OPTIMIZER);
 
-        if(!opt.equals(INUM) && !opt.equals(IBG) && !opt.equals(DBMS)) {
+        if(!getSupportedOptimizers().contains(opt))
             throw new IllegalArgumentException("Bad optimizer option " + opt);
-        }
 
         return opt;
-    }
-
-    /**
-     * @return {}EnvironmentProperties#PASSWORD
-     */
-    public String getPassword(){
-        return asString(configuration.getProperty(PASSWORD));
     }
 
     /**
      * @return {@link EnvironmentProperties#INUM_CACHE_DEPLOYMENT_DIR}
      */
     public String getInumCacheDeploymentDir(){
-        return asString(configuration.getProperty(INUM_CACHE_DEPLOYMENT_DIR));
+        return configuration.getProperty(INUM_CACHE_DEPLOYMENT_DIR);
     }
 
     /**
      * @return {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}
      */
     public String getWorkloadsFoldername(){
-        return asString(configuration.getProperty(WORKLOADS_FOLDERNAME));
+        return configuration.getProperty(WORKLOADS_FOLDERNAME);
+    }
+
+    /**
+     * Returns the list of supported DBMS vendors.
+     *
+     * @return
+     *     list of DBMS vendors that the API supports
+     */
+    public static List<String> getSupportedVendors()
+    {
+        return supportedVendors;
+    }
+
+    /**
+     * Returns the list of supported optimizers.
+     *
+     * @return
+     *     list of optimizers that the API supports
+     */
+    public static List<String> getSupportedOptimizers()
+    {
+        return supportedOptimizers;
     }
 
     /**
      * @return {@link EnvironmentProperties#MAX_NUM_INDEXES}
      */
     public int getMaxNumIndexes(){
-        String maxSize = asString(configuration.getProperty(MAX_NUM_INDEXES));
+        String maxSize = configuration.getProperty(MAX_NUM_INDEXES);
         return Integer.valueOf(maxSize);
     }
 
@@ -160,7 +212,7 @@ public class Environment {
      *      unable to return the max num of states due to the stated reason.
      */
     public int getMaxNumStates() throws NumberFormatException {
-        String numOfStates = asString(configuration.getProperty(MAX_NUM_STATES));
+        String numOfStates = configuration.getProperty(MAX_NUM_STATES);
         return Integer.valueOf(numOfStates);
     }
 
@@ -170,7 +222,7 @@ public class Environment {
      *      unable to return the overhead factor due to the stated reason.
      */
     public int getNumPartitionIterations() throws NumberFormatException {
-        String numPartitionIterations = asString(configuration.getProperty(NUM_PARTITION_ITERATIONS));
+        String numPartitionIterations = configuration.getProperty(NUM_PARTITION_ITERATIONS);
         return Integer.valueOf(numPartitionIterations);
     }
 
@@ -180,7 +232,7 @@ public class Environment {
      *      unable to return the overhead factor due to the stated reason.
      */
     public int getIndexStatisticsWindow() throws NumberFormatException {
-        String indexStatisticsWindow = asString(configuration.getProperty(INDEX_STATISTICS_WINDOW));
+        String indexStatisticsWindow = configuration.getProperty(INDEX_STATISTICS_WINDOW);
         return Integer.valueOf(indexStatisticsWindow);
     }
 
@@ -214,33 +266,32 @@ public class Environment {
     }
 
     /**
-     * Returns all the properties defined in the {@code Environment} class as a {@link Properties} 
+     * Extracts the driver name by inspecting the {@link EnvironmentProperties#JDBC_URL} property 
+     * and assigns it to {@link EnvironmentProperties#JDBC_DRIVER} on the given {@link Environment} 
      * object.
-     * <p>
-     * Note that the {@code Properties} object returned by this method, unlike the other getters of 
-     * the class, is not thread safe.
      *
-     * @return {@code Properties} object containing all the settings contained in the class
+     * @param env
+     *     object where the {@link EnvironmentProperties#JDBC_DRIVER} is assigned after it's 
+     *     extracted
+     * @return {@link Environment#getVendor}
      */
-    public Properties getAll(){
-        Properties properties = new Properties();
+    public static void extractDriver(Environment env) throws SQLException {
+        String driver;
 
-        for ( Entry<String, Object> property : configuration.getAllProperties() ) {
-            properties.setProperty( property.getKey(), property.getValue().toString() );
-        }
+        if(env.getJdbcURL().contains("db2"))
+            driver = DB2;
+        else if(env.getJdbcURL().contains("mysql"))
+            driver = MYSQL;
+        else if(env.getJdbcURL().contains("postgres"))
+            driver = PG;
+        else
+            throw new SQLException("Can't extract driver from " + env.getJdbcURL());
 
-        return properties;
+        env.setProperty(JDBC_DRIVER, driver);
     }
 
-    static interface Configuration {
-       Object getProperty(String propertyName);
-       Set<Entry<String,Object>> getAllProperties();
-    }
-
-    static abstract class AbstractConfiguration implements Configuration {
-        private final Map<String, Object> properties = new HashMap<String, Object>();
-
-        AbstractConfiguration(){}
+    static abstract class Configuration {
+        private final Properties properties = new Properties();
 
         /**
          * This method should be overridden to check whether the
@@ -253,41 +304,41 @@ public class Environment {
         
         protected boolean isDefaultsMode(){ return false; }
 
-        @Override
-        public Object getProperty(String propertyName) {
+        public String getProperty(String propertyName) {
             checkForPropertyChanges();
             synchronized (properties){
-                return !isDefaultsMode() ? properties.get(propertyName) : getDefaults().getProperty(propertyName);
+                return !isDefaultsMode() ? properties.getProperty(propertyName) : getDefaults().getProperty(propertyName);
             }
         }
 
-        @Override
-        public Set<Entry<String, Object>> getAllProperties() {
+        public Properties getAllProperties() {
             synchronized (properties){
-                return properties.entrySet();
+                return new Properties(properties);
             }
         }
 
         /**
-       * setting a property.
-       *
-       * @param propertyName
-       *     name of property
-       * @param value
-       *    value of property.
-       */
-      protected final void setProperty(String propertyName, Object value) {
-        synchronized (properties) {
-          Object old = properties.get(propertyName);
-          if ((value != null && !value.equals(old))
-              || value == null && old != null) {
-            properties.put(propertyName, value);
-          }
+         * setting a property.
+         *
+         * @param propertyName
+         *     name of property
+         * @param value
+         *    value of property.
+         */
+        public final void setProperty(String propertyName, String value) {
+            System.out.println("setting " + propertyName + " to " + value);
+            synchronized (properties) {
+                Object old = properties.get(propertyName);
+                if ((value != null && !value.equals(old))
+                        || value == null && old != null) {
+                System.out.println("setted ");
+                    properties.put(propertyName, value);
+                }
+            }
         }
-      }
     }
 
-    static class PropertiesConfiguration extends AbstractConfiguration {
+    static class PropertiesConfiguration extends Configuration {
         private File       file;
         private Properties defaults;
         private long       lastModified = 0;
@@ -348,7 +399,7 @@ public class Environment {
 
         private void setAllProperties(Properties properties) {
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                setProperty(asString(entry.getKey()), entry.getValue());
+                setProperty((String)entry.getKey(), (String) entry.getValue());
             }
         }
     }

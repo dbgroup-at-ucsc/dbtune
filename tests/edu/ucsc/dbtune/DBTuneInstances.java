@@ -14,7 +14,8 @@ import java.util.Properties;
 import java.util.Random;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.DatabaseSystem.getSupportedOptimizers;
+import static edu.ucsc.dbtune.spi.Environment.getSupportedOptimizers;
+import static edu.ucsc.dbtune.spi.Environment.extractDriver;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.*;
 
 /**
@@ -22,8 +23,7 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.*;
  * @author Ivo Jimenez
  */
 public class DBTuneInstances {
-    protected static final String DB_DB      = "jdbc:unknown://nothing.com";
-    protected static final String DB_URL     = "superDB";
+    protected static final String DB_URL     = "nothing.com";
     protected static final String DB_USR     = "neo";
     protected static final String DB_SCH     = "superSchema";
     protected static final String DB_PWD     = "password";
@@ -38,11 +38,16 @@ public class DBTuneInstances {
     /**
      * Returns a configuration for DB2
      */
-    public static Properties configureDB2()
+    public static Environment configureDB2()
     {
-        Properties cfg = new Properties(configureGeneric());
+        Environment cfg = new Environment(configureUser());
 
-        cfg.setProperty(JDBC_DRIVER, DB2);
+        cfg.setProperty(JDBC_URL, "jdbc:db2://" + DB_URL );
+        try{
+            extractDriver(cfg);
+        } catch(SQLException ex) {
+            throw new RuntimeException(ex);
+        }
 
         return cfg;
     }
@@ -50,11 +55,16 @@ public class DBTuneInstances {
     /**
      * Returns a configuration for an inexistent DBMS
      */
-    public static Properties configureInexistentDBMS()
+    public static Environment configureInexistentDBMS()
     {
-        Properties cfg = new Properties(configureGeneric());
+        Environment cfg = new Environment(configureUser());
 
-        cfg.setProperty(JDBC_DRIVER, "edu.ucsc.dbtune.superduperdbms");
+        cfg.setProperty(JDBC_URL, "jdbc:superdbms//" + DB_URL);
+        try{
+            extractDriver(cfg);
+        } catch(SQLException ex) {
+            throw new RuntimeException(ex);
+        }
 
         return cfg;
     }
@@ -62,11 +72,16 @@ public class DBTuneInstances {
     /**
      * Returns a configuration for postgres
      */
-    public static Properties configureMySQL()
+    public static Environment configureMySQL()
     {
-        Properties cfg = new Properties(configureGeneric());
+        Environment cfg = new Environment(configureUser());
 
-        cfg.setProperty(JDBC_DRIVER, MYSQL);
+        cfg.setProperty(JDBC_URL, "jdbc:mysql://" + DB_URL );
+        try{
+            extractDriver(cfg);
+        } catch(SQLException ex) {
+            throw new RuntimeException(ex);
+        }
 
         return cfg;
     }
@@ -74,11 +89,16 @@ public class DBTuneInstances {
     /**
      * Returns a configuration for postgres
      */
-    public static Properties configurePG()
+    public static Environment configurePG()
     {
-        Properties cfg = new Properties(configureGeneric());
+        Environment cfg = new Environment(configureUser());
 
-        cfg.setProperty(JDBC_DRIVER, PG);
+        cfg.setProperty(JDBC_URL, "jdbc:postgresql://" + DB_URL );
+        try{
+            extractDriver(cfg);
+        } catch(SQLException ex) {
+            throw new RuntimeException(ex);
+        }
 
         return cfg;
     }
@@ -86,11 +106,10 @@ public class DBTuneInstances {
     /**
      * Returns a configuration with generic connectivity settings
      */
-    public static Properties configureGeneric()
+    public static Properties configureUser()
     {
         Properties cfg = new Properties();
 
-        cfg.setProperty(URL,      DB_URL);
         cfg.setProperty(USERNAME, DB_USR);
         cfg.setProperty(PASSWORD, DB_PWD);
 
@@ -100,7 +119,7 @@ public class DBTuneInstances {
     /**
      * Returns a configuration with random dbms properties
      */
-    public static Properties configureAny()
+    public static Environment configureAny()
     {
         switch(new Random().nextInt(3))
         {
@@ -111,14 +130,14 @@ public class DBTuneInstances {
         case 2:
             return configurePG();
         default:
-            return configureGeneric();
+            return configurePG();
         }
     }
 
     /**
      * Returns a configuration with generic connectivity settings
      */
-    public static Properties configureDBMSOptimizer(Properties cfg)
+    public static Environment configureDBMSOptimizer(Environment cfg)
     {
         cfg.setProperty(OPTIMIZER, DBMS);
         return cfg;
@@ -127,7 +146,7 @@ public class DBTuneInstances {
     /**
      * Returns a configuration with generic connectivity settings
      */
-    public static Properties configureIBGOptimizer(Properties cfg)
+    public static Environment configureIBGOptimizer(Environment cfg)
     {
         cfg.setProperty(OPTIMIZER, IBG);
         return cfg;
@@ -136,7 +155,7 @@ public class DBTuneInstances {
     /**
      * Returns a configuration with generic connectivity settings
      */
-    public static Properties configureINUMOptimizer(Properties cfg)
+    public static Environment configureINUMOptimizer(Environment cfg)
     {
         cfg.setProperty(OPTIMIZER, INUM);
         return cfg;
@@ -157,13 +176,13 @@ public class DBTuneInstances {
         throws SQLException
     {
         List<Optimizer> opts;
-        Properties      conf;
+        Environment     conf;
 
         opts = new ArrayList<Optimizer>();
 
         for(String optId : getSupportedOptimizers()) {
 
-            conf = env.getAll();
+            conf = new Environment(env);
 
             conf.setProperty(OPTIMIZER,optId);
 

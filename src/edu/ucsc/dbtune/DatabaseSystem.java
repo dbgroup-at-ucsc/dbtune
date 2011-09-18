@@ -31,9 +31,8 @@ import edu.ucsc.dbtune.spi.Environment;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
-import java.util.ArrayList;
-import java.util.List;
 
+import static edu.ucsc.dbtune.spi.Environment.extractDriver;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MYSQL;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PG;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.DB2;
@@ -132,7 +131,7 @@ public class DatabaseSystem
      */
     public static Connection newConnection(Environment env) throws SQLException
     {
-        String url = env.getDatabaseUrl();
+        String url = env.getJdbcURL();
         String usr = env.getUsername();
         String pwd = env.getPassword();
         
@@ -149,15 +148,16 @@ public class DatabaseSystem
     {
         MetadataExtractor extractor = null;
 
-        if(env.getJDBCDriver().equals(MYSQL)) {
+        validate(env);
+
+        if(env.getVendor().equals(MYSQL))
             extractor = new MySQLExtractor();
-        } else if(env.getJDBCDriver().equals(DB2)) {
+        else if(env.getVendor().equals(DB2))
             extractor = new DB2Extractor();
-        } else if(env.getJDBCDriver().equals(PG)) {
+        else if(env.getVendor().equals(PG))
             extractor = new PGExtractor();
-        } else {
-            throw new SQLException("Unsupported driver " + env.getJDBCDriver());
-        }
+        else
+            throw new SQLException("Unable to create an extractor for " + env.getVendor());
 
         return extractor;
     }
@@ -173,41 +173,43 @@ public class DatabaseSystem
     {
         Optimizer optimizer;
 
-        if(env.getJDBCDriver().equals(MYSQL)) {
-            optimizer = new MySQLOptimizer(con);
-        } else if(env.getJDBCDriver().equals(DB2)) {
-            optimizer = new DB2Optimizer(con);
-        } else if(env.getJDBCDriver().equals(PG)) {
-            optimizer = new PGOptimizer(con);
-        } else {
-            throw new SQLException("Unsupported driver " + env.getJDBCDriver());
-        }
+        validate(env);
 
-        if(env.getOptimizer().equals(DBMS)) {
+        if(env.getVendor().equals(MYSQL))
+            optimizer = new MySQLOptimizer(con);
+        else if(env.getVendor().equals(DB2))
+            optimizer = new DB2Optimizer(con);
+        else if(env.getVendor().equals(PG))
+            optimizer = new PGOptimizer(con);
+        else
+            throw new SQLException("Unable to create an optimizer interface for " + env.getVendor());
+
+        if(env.getOptimizer().equals(DBMS))
             return optimizer;
-        } else if(env.getOptimizer().equals(IBG)) {
+        else if(env.getOptimizer().equals(IBG))
             return new IBGOptimizer(optimizer);
-        } else if(env.getOptimizer().equals(INUM)) {
+        else if(env.getOptimizer().equals(INUM))
             throw new SQLException("INUMOptimizer doesn't exist yet");
-        } else {
-            throw new SQLException("unknown optimizer option: " + env.getOptimizer());
-        }
+        else
+            throw new SQLException("Unknown optimizer option: " + env.getOptimizer());
     }
 
     /**
-     * Returns the list of supported optimizers.
+     * Validates an {@link Environment} to be used by this class.
      *
-     * @return
-     *     list of optimizers that the API supports
+     * @throws SQLException
+     *     if {@link Environment#getVendor()}, {@link Environment#getJdbcURL}, {@link 
+     *     Environment#getOptimizer} are null.
      */
-    public static List<String> getSupportedOptimizers()
+    private static void validate(Environment env) throws SQLException
     {
-        List<String> supported = new ArrayList<String>();
+        if(env.getJdbcURL() != null)
+            extractDriver(env);
 
-        supported.add(DBMS);
-        supported.add(IBG);
-
-        return supported;
+        if(env.getVendor() == null || env.getJdbcURL() == null ||
+           env.getJdbcDriver() == null || env.getOptimizer() == null ||
+           env.getUsername() == null || env.getPassword() == null )
+            throw new SQLException("Missing a property");
     }
 
     /**
@@ -254,8 +256,10 @@ public class DatabaseSystem
             MetadataExtractor extractor;
             DatabaseSystem    db;
 
+            validate(env);
+
             try {
-                Class.forName(env.getJDBCDriver());
+                Class.forName(env.getJdbcDriver());
             } catch(Exception e) {
                 throw new SQLException(e);
             }

@@ -59,7 +59,7 @@ public class EnvironmentProperties
     /**
      * JDBC connection url.
      */
-    public static final String URL = "url";
+    public static final String JDBC_URL = "jdbc.url";
 
 
 
@@ -84,8 +84,8 @@ public class EnvironmentProperties
 
     // XXX: Note to devs
     // 
-    // if a new type of optimizer is added, the DatabaseSystem.getAvailableOptimizers() method 
-    // should be updated accordingly.
+    // if a new type of optimizer is added, the EnvironmentProperties.getSupportedOptimizers() 
+    // method should be updated accordingly.
     /**
      * Type of optimizer to use
      */
@@ -123,14 +123,6 @@ public class EnvironmentProperties
     *  contain any sub-folders.
     */
     public static final String INUM_CACHE_DEPLOYMENT_DIR = "cache.deployment.dir";
-
-    /**
-     * Name of a previously defined workload. This is used to uniquely identify a workload inside 
-     * the {@code WORKLOADS_FOLDERNAME}.
-     *
-     * @see #WORKLOADS_FOLDERNAME
-     */
-    public static final String WORKLOAD_NAME = "workload.name";
 
     /**
      * Specifies an upper bound on the number of indexes that are monitored by an instance of WFA 
