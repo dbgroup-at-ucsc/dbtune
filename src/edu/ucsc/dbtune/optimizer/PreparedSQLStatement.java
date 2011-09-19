@@ -117,7 +117,7 @@ public class PreparedSQLStatement
      * @param optimizationCount
      *     number of optimization calls done on to produce the statement
      * @throws SQLException
-     *     if statement is of {@link SQLCategory.NOT_SELECT} category and the update array is null 
+     *     if statement is of {@link SQLCategory#NOT_SELECT} category and the update array is null 
      *     or its length doesn't correspond to the configuration size.
      */
     public PreparedSQLStatement(

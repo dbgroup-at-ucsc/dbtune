@@ -22,10 +22,10 @@ import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.sql.SQLException;
 
@@ -36,47 +36,27 @@ import java.sql.SQLException;
 public class IndexStatisticsFunction {
     private int indexStatisticsWindow;
 
-    private double      currentTimeStamp;
-    private DBIndexPair tempPair;
-    private DoiFunction doi;
+    private Map<IndexPair, MeasurementWindow> doiWindows;
+    private Map<Index, MeasurementWindow>     benefitWindows;
+    private double          currentTimeStamp;
+    private IndexPair       tempPair;
+    private DoiFunction     doi;
     private BenefitFunction benefit;
-
-    private final Map<DBIndexPair, MeasurementWindow>    doiWindows;
-    private final Map<Index, MeasurementWindow>        benefitWindows;
-
-    /**
-     * Construct an {@code IndexStatistics} object.
-     */
-    public IndexStatisticsFunction(int indexStatisticsWindow){
-        this(
-            DBIndexPair.                              emptyPair(),
-            Instances.<DBIndexPair,MeasurementWindow> newHashMap(),
-            Instances.<Index,MeasurementWindow>       newHashMap(),
-            indexStatisticsWindow);
-    }
 
     /**
      * Construct an {@code IndexStatistics} object. This object collects measurements that
-     * correspond to either doi or benefit measurements at some point in time (i.e.,
-     * {@link MeasurementWindow measurement window}).
-     * @param indexPair
-     *      a pair of {@link Index indexes} used for lookups.
-     * @param doiWindows
-     *      a map of {@link DBIndexPair indexes pair} to {@link MeasurementWindow window}.
-     * @param benefitWindows
-     *      a map of {@link Index index} to {@link MeasurementWindow window}.
+     * correspond to either doi or benefit measurements at some point in time.
+     *
+     * @param indexStatisticsWindowSize
+     *      window size
      */
-    public IndexStatisticsFunction(
-            DBIndexPair indexPair,
-            Map<DBIndexPair, MeasurementWindow> doiWindows,
-            Map<Index, MeasurementWindow> benefitWindows,
-            int indexStatisticsWindow
-    ){
-        this.tempPair              = indexPair;
-        this.doiWindows            = doiWindows;
-        this.benefitWindows        = benefitWindows;
+    public IndexStatisticsFunction(int indexStatisticsWindowSize)
+    {
+        this.tempPair              = IndexPair.emptyPair();
+        this.doiWindows            = new HashMap<IndexPair,MeasurementWindow>();
+        this.benefitWindows        = new HashMap<Index,MeasurementWindow>();
         this.currentTimeStamp      = 0;
-        this.indexStatisticsWindow = indexStatisticsWindow;
+        this.indexStatisticsWindow = indexStatisticsWindowSize;
         this.doi                   = new DoiFunction(new IndexStatisticsFunction(indexStatisticsWindow));
         this.benefit               = new BenefitFunction(new IndexStatisticsFunction(indexStatisticsWindow));
     }
@@ -167,7 +147,7 @@ public class IndexStatisticsFunction {
      * encountered such that timestamps[i] == -1. The number of measurements is
      * indicated by the field numMeasurements.
      */
-    static class MeasurementWindow {
+    public static class MeasurementWindow {
         private int size;
 
         double[] measurements = new double[size];
@@ -282,21 +262,21 @@ public class IndexStatisticsFunction {
         }
     }
 
-    static class DBIndexPair {
+    static class IndexPair {
         Index a;
         Index b;
 
-        DBIndexPair(Index a, Index b) {
+        IndexPair(Index a, Index b) {
             this.a = a;
             this.b = b;
         }
 
-        static DBIndexPair emptyPair(){
+        static IndexPair emptyPair(){
             return of(null, null);
         }
 
-        static DBIndexPair of(Index a, Index b){
-            return new DBIndexPair(a, b);
+        static IndexPair of(Index a, Index b){
+            return new IndexPair(a, b);
         }
 
         @Override
@@ -307,22 +287,21 @@ public class IndexStatisticsFunction {
 
         @Override
         public boolean equals(Object other) {
-            if (!(other instanceof DBIndexPair)){
+            if (!(other instanceof IndexPair)){
                 return false;
             }
 
-            final DBIndexPair pair = (DBIndexPair) other;
+            final IndexPair pair = (IndexPair) other;
             return (a.equals(pair.a) && b.equals(pair.b))
                 || (a.equals(pair.b) && b.equals(pair.a));
         }
 
         @Override
         public String toString() {
-            return new ToStringBuilder<DBIndexPair>(this)
+            return new ToStringBuilder<IndexPair>(this)
                    .add("left", a)
                    .add("right", b)
                    .toString();
         }
     }
-
 }

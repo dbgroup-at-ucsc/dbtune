@@ -273,7 +273,6 @@ public class Environment {
      * @param env
      *     object where the {@link EnvironmentProperties#JDBC_DRIVER} is assigned after it's 
      *     extracted
-     * @return {@link Environment#getVendor}
      */
     public static void extractDriver(Environment env) throws SQLException {
         String driver;

@@ -158,7 +158,7 @@ public class Strings
      * </code>
      * the {@code separator} string is used to separate the index from the value on each element 
      * contained in {@code valArray}. The elements can be in any order as long as the number of ALL 
-     * of them don't have an index bigger than {@valArray.length}. For example:
+     * of them don't have an index bigger than {@code valArray.length}. For example:
      *
      * @param valArray
      *     array of strings where each is of the form {@code idx<separator>double}.

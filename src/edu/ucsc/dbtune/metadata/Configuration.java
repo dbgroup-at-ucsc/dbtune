@@ -156,7 +156,7 @@ public class Configuration implements Iterable<Index>
     /**
      * Returns the position of the index with respect to the set of indexes contained in the 
      * configuration. The ordering is completely arbitrary and determined by the order in which the 
-     * {@link add} method is invoked or by the order in which indexes are contained in the list 
+     * {@link #add} method is invoked or by the order in which indexes are contained in the list 
      * given to the constructor.
      *
      * @param index
@@ -177,7 +177,7 @@ public class Configuration implements Iterable<Index>
      * @throws ArrayIndexOutOfBoundsException
      *     if the index is out of bounds with respect to the number of indexes contained in the 
      *     configuration
-     * @see getOrdinalPosition
+     * @see #getOrdinalPosition
      */
     public Index getIndexAt(int position)
     {

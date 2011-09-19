@@ -19,7 +19,7 @@
     </javac>
   </target>
 
-  <target name="test.compile" depends="compile" description="Compile test source.">
+  <target name="compile.test" depends="compile" description="Compile test source.">
     <echo message="Compiling ${project} tests"/>
     <mkdir dir="${build.dir}/tests"/>
     <javac srcdir="${test.folder}" debug="on" destdir="${build.dir}/tests" includeantruntime="false">
@@ -41,7 +41,7 @@
     </scalac>
   </target>
 
-  <target name="scala.test.compile" description="Compile Scala test source">
+  <target name="scala.compile.test" description="Compile Scala test source">
     <taskdef resource="scala/tools/ant/antlib.xml">
       <classpath>
         <pathelement location="${lib.folder}/scala-library-2.8.1.jar"/>
@@ -57,7 +57,7 @@
     </scalac>
   </target>
 
-  <target name="unit" depends="test.compile" description="Execute Unit tests.">
+  <target name="unit" depends="compile.test" description="Execute Unit tests.">
     <echo message="Executing unit tests"/>
     <mkdir dir="${build.dir}/${junit.dir}"/>
     <junit printsummary="yes"
@@ -79,7 +79,7 @@
     </junit>
   </target>
 
-  <target name="functional" depends="test.compile" description="Execute Functional tests.">
+  <target name="functional" depends="compile.test" description="Execute Functional tests.">
     <echo message="Executing functional tests"/>
     <mkdir dir="${build.dir}/${junit.dir}"/>
     <junit printsummary="yes"
@@ -100,7 +100,7 @@
     </junit>
   </target>
 
-  <target name="one" depends="test.compile,argument-checking" description="Run One Unit Test.">
+  <target name="one" depends="compile.test,argument-checking" description="Run One Unit Test.">
     <echo message="Running test ${class}"/>
     <mkdir dir="${build.dir}/${junit.dir}"/>
     <junit printsummary="no" haltonerror="yes" haltonfailure="yes" showoutput="no" fork="yes">

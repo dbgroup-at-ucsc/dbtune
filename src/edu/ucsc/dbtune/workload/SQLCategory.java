@@ -33,7 +33,7 @@ public enum SQLCategory
     UPDATE("U"),
     DELETE("D"),
     /**
-     * Convenience element that represents all DML statements but {@link SELECT}
+     * Convenience element that represents all DML statements but {@link #SELECT}
      */
     NOT_SELECT("I", "U", "D");
 

@@ -12,8 +12,8 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="test.compile">
-    <ant dir="../../" antfile="common.xml" target="scala.test.compile">
+  <target name="compile.test">
+    <ant dir="../../" antfile="common.xml" target="scala.compile.test">
       <property name="base.dir" value="${basedir}" />
       <reference refid="compile.classpath" />
     </ant>

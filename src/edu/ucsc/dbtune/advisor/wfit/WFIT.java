@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.sql.SQLException;
 
-import static edu.ucsc.dbtune.advisor.HotSetSelector.chooseGreedy;
+import static edu.ucsc.dbtune.advisor.wfit.HotSetSelector.chooseGreedy;
 import static edu.ucsc.dbtune.advisor.interactions.InteractionSelector.choosePartitions;
 
 /**

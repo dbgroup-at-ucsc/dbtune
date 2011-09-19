@@ -18,8 +18,8 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="test.compile" depends="compile">
-    <ant dir="." antfile="common.xml" target="test.compile">
+  <target name="compile.test" depends="compile">
+    <ant dir="." antfile="common.xml" target="compile.test">
       <property name="base.dir" value="${base.dir}" />
       <reference refid="compile.classpath" />
     </ant>
@@ -49,32 +49,32 @@
       <property name="project" value="${extension}" />
     </ant>
   </target>
-  <target name="test.compile.all" depends="compile.all,test.compile">
-    <foreach list="${extensions}" param="extension" target="test.compile.extension"/>
+  <target name="compile.test.all" depends="compile.all,compile.test">
+    <foreach list="${extensions}" param="extension" target="compile.test.extension"/>
   </target>
-  <target name="test.compile.extension" depends="test.compile">
-    <ant dir="extensions/${extension}" antfile="build.xml" target="test.compile">
+  <target name="compile.test.extension" depends="compile.test">
+    <ant dir="extensions/${extension}" antfile="build.xml" target="compile.test">
       <property name="base.dir" value="${base.dir}" />
       <property name="src.dir" value="${src.dir}" />
       <property name="build.dir" value="${build.dir}" />
       <property name="project" value="${extension}" />
     </ant>
   </target>
-  <target name="unit.all" depends="test.compile.all">
+  <target name="unit.all" depends="compile.test.all">
     <ant dir="." antfile="common.xml" target="unit">
       <property name="base.dir" value="${base.dir}" />
       <property name="build.dir" value="${build.dir}" />
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="functional.all" depends="test.compile.all">
+  <target name="functional.all" depends="compile.test.all">
     <ant dir="." antfile="common.xml" target="functional">
       <property name="base.dir" value="${base.dir}" />
       <property name="build.dir" value="${build.dir}" />
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="one" depends="test.compile.all">
+  <target name="one" depends="compile.test.all">
     <ant dir="." antfile="common.xml" target="one">
       <property name="base.dir" value="${base.dir}" />
       <property name="build.dir" value="${build.dir}" />
@@ -88,7 +88,9 @@
     <ant dir="." antfile="common.xml" target="jar" />
   </target>
   <target name="javadoc">
-    <ant dir="." antfile="common.xml" target="javadoc" />
+    <ant dir="." antfile="common.xml" target="javadoc">
+      <reference refid="compile.classpath" />
+    </ant>
   </target>
   <target name="jar.source">
     <ant dir="." antfile="common.xml" target="jar.source" />
@@ -99,7 +101,7 @@
 
   <!--
   <target name="test.dist"
-      depends="jar, test.compile-with-deps"
+      depends="jar, compile.test-with-deps"
       description="Execute Unit tests against distribution jar.">
     <junit printsummary="yes"
          haltonerror="yes"

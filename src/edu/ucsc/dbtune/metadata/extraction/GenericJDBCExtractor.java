@@ -315,7 +315,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
      *     object used to obtain metadata for its associated database
      * @throws SQLException
      *     when an error occurs when communicating with the underlying DBMS
-     * @see edu.ucsc.dbtune.metadata.DatabaseObject#getId
+     * @see edu.ucsc.dbtune.metadata.DatabaseObject#getInternalID
      */
     protected abstract void extractObjectIDs(Catalog catalog, Connection connection)
         throws SQLException;

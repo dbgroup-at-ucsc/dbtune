@@ -38,10 +38,12 @@ public class IndexPartitions
     private SubsetList    subsets;
 
     /**
-     * construct an {@link IndexPartitions} object given a set of static indexes.
+     * construct an {@link IndexPartitions} object given a set of indexes.
      *
+     * @param conf
+     *      configuration from where {@code indexes} are taken.
      * @param indexes
-     *      a {@link StaticIndexSet set of static indexes}.
+     *      a {@link Configuration} set indexes to be partitioned.
      */
     public IndexPartitions(Configuration conf, Configuration indexes) {
         indexCount = indexes.size();

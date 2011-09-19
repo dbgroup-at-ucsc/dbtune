@@ -16,7 +16,7 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.advisor;
+package edu.ucsc.dbtune.advisor.wfit;
 
 import edu.ucsc.dbtune.advisor.interactions.IndexStatisticsFunction;
 import edu.ucsc.dbtune.metadata.Configuration;
@@ -24,18 +24,16 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.MinQueue;
 
-public class HotSetSelector {
+public class HotSetSelector
+{
     private HotSetSelector(){}
 
     /**
-     * Choose a hot set (i.e., a {@link StaticIndexSet}) that will be used for reorganizing 
+     * Choose a hot set (i.e., a {@link Configuration}) that will be used for reorganizing 
      * candidates part of a {@code snapshot}.
      *
-     * @param arg
-     *      a hot {@link HotsetSelection selection var} which contains specific values that will
-     *      be utilized during the hot set selection process.
      * @return
-     *      a hot set (i.e., a {@link StaticIndexSet}) 
+     *      a hot set (i.e., a {@link Configuration}) 
      */
     public static Configuration choose(
             Configuration candSet,
@@ -80,13 +78,11 @@ public class HotSetSelector {
     }
     
     /**
-     * choose a hot set (i.e., a {@link StaticIndexSet}), greedily, that will be used during offline
+     * choose a hot set (i.e., a {@link Configuration}), greedily, that will be used during offline
      * analysis.
-     * @param arg
-     *      a hot {@link HotsetSelection selection var} which contains specific values that will
-     *      be utilized during the greedy hot set selection process.
+     *
      * @return
-     *      a hot set (i.e., a {@link StaticIndexSet})
+     *      a hot set (i.e., a {@link Configuration})
      */
     public static Configuration chooseGreedy(
             Configuration candSet,

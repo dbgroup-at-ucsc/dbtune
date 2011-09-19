@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.util;
 
-import edu.ucsc.dbtune.spi.EnvironmentProperties;
-
 /**
  * monitor execution time.
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
@@ -42,10 +40,11 @@ public class StopWatch {
 
     /**
      * normalize elapsed time.
+     *
      * @param elapsedtime
-     *   now time - start time.
+     *      now time - start time.
      * @param overheadFactor
-     *      {@link EnvironmentProperties#OVERHEAD_FACTOR}
+     *      factor
      * @return
      *      the execution time's overhead.
      */

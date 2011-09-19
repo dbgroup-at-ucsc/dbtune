@@ -142,7 +142,7 @@ public abstract class DatabaseObject
      * in some DB systems, this isn't used at all.
      *
      * @return
-     *     value representing the object's internal id; {@link NON_ID} if it hasn't been assigned
+     *     value representing the object's internal id; {@link #NON_ID} if it hasn't been assigned
      */
     public int getInternalID()
     {

@@ -20,8 +20,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
-import java.sql.SQLException;
-
 public class BcTuner
 {
     private final Configuration   hotSet;
@@ -100,7 +98,7 @@ public class BcTuner
         return bs;
     }
 
-    /**
+    /*
     private int inferUseLevel(Index i1, Index i2, boolean prefix) {
         if (prefix) {
             return 2;

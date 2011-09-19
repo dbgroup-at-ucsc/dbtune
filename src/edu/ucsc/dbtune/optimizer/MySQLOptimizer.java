@@ -91,8 +91,8 @@ public class MySQLOptimizer extends Optimizer
     /**
      * Returns the plan for the given statement.
      *
-     * @param rs
-     *     should contain the result from EXPLAIN
+     * @param sql
+     *     statement which the plan is obtained for
      * @return
      *     an execution plan
      * @throws SQLException
