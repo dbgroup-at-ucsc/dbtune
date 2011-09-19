@@ -42,6 +42,18 @@ public class Catalog extends DatabaseObject
     }
 
     /**
+     * Copy constructor
+     *
+     * @param other
+     *     other catalog object
+     */
+    public Catalog(Catalog other)
+    {
+        super(other);
+        _schemas = other._schemas;
+    }
+
+    /**
      * adds a schema to a catalog
      *
      * @param schema

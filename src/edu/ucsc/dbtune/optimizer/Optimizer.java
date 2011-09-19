@@ -29,7 +29,21 @@ public abstract class Optimizer
     protected Catalog catalog;
 
     /**
-     * perform an optimization call for a single SQL statement.
+     * perform an optimization call for a SQL statement.
+     *
+     * @param sql
+     *      SQL statement
+     * @return
+     *      an {@link PreparedSQLStatement} object describing the results of an optimization call.
+     * @throws SQLException
+     *      if an error occurs while retrieving the plan
+     */
+    public PreparedSQLStatement explain(String sql) throws SQLException {
+        return explain(new SQLStatement(sql), new Configuration("empty"));
+    }
+
+    /**
+     * perform an optimization call for a SQL statement.
      *
      * @param sql
      *      SQL statement
@@ -55,9 +69,42 @@ public abstract class Optimizer
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
+    public PreparedSQLStatement explain(String sql, Configuration configuration)
+        throws SQLException
+    {
+        return explain(new SQLStatement(sql), configuration);
+    }
+    
+    /**
+     * estimate what-if optimization plan of a statement using the given configuration.
+     *
+     * @param sql
+     *     sql statement
+     * @param configuration
+     *     physical configuration the optimizer should consider when preparing the statement
+     * @return
+     *     an {@link PreparedSQLStatement} object describing the results of a what-if optimization 
+     *     call.
+     * @throws java.sql.SQLException
+     *     unable to estimate cost for the stated reasons.
+     */
     public abstract PreparedSQLStatement explain(SQLStatement sql, Configuration configuration)
         throws SQLException;
     
+    /**
+     * Given a sql statement, it recommends indexes to make it run faster.
+     *
+     * @param sql
+     *      SQL statement
+     * @return
+     *      a list of indexes that would improve the statement's performance
+     * @throws SQLException
+     *      if an error occurs while retrieving the plan
+     */
+    public Configuration recommendIndexes(String sql) throws SQLException {
+        return recommendIndexes(new SQLStatement(sql));
+    }
+
     /**
      * Given a sql statement, it recommends indexes to make it run faster.
      *

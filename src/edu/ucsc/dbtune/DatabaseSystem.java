@@ -31,6 +31,7 @@ import edu.ucsc.dbtune.spi.Environment;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
+import java.util.Properties;
 
 import static edu.ucsc.dbtune.spi.Environment.extractDriver;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.MYSQL;
@@ -210,6 +211,20 @@ public class DatabaseSystem
            env.getJdbcDriver() == null || env.getOptimizer() == null ||
            env.getUsername() == null || env.getPassword() == null )
             throw new SQLException("Missing a property");
+    }
+
+    /**
+     * Creates a database system instance with the given properties. This effectively acts as a 
+     * factory method that takes the description of a system along with connectivity information and 
+     * creates a {@link Connection}, {@link Catalog} and {@link Optimizer} objects of the 
+     * corresponding type, with the appropriate members. 
+     *
+     * @param properties
+     *     used to access the properties of the system
+     */
+    public static DatabaseSystem newDatabaseSystem(Properties properties) throws SQLException
+    {
+        return Factory.newDatabaseSystem(new Environment(properties));
     }
 
     /**

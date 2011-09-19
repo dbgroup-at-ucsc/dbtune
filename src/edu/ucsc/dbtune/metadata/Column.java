@@ -67,8 +67,10 @@ public class Column extends DatabaseObject
      */
     protected Column(Column other) throws SQLException
     {
-        this(other.table, other.name, other.type);
+        super(other);
 
+        this.table        = other.table;
+        this.type         = other.type;
         this.isNull       = other.isNull;
         this.isDefault    = other.isDefault;
         this.defaultValue = other.defaultValue;

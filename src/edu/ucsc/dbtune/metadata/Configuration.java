@@ -30,7 +30,7 @@ import java.util.Iterator;
 public class Configuration implements Iterable<Index>
 {
     protected List<Index> _indexes;
-    protected String      name;
+    protected String      _name;
 
     /**
      * constructs an empty configuration with given name.
@@ -64,7 +64,7 @@ public class Configuration implements Iterable<Index>
      */
     public Configuration(String name, List<Index> indexes)
     {
-        this.name     = name;
+        this._name     = name;
         this._indexes = new ArrayList<Index>(indexes);
     }
 
@@ -76,7 +76,7 @@ public class Configuration implements Iterable<Index>
      */
     public Configuration(Configuration other)
     {
-        this(other.name, other._indexes);
+        this(other._name, other._indexes);
     }
 
     /**
@@ -201,10 +201,10 @@ public class Configuration implements Iterable<Index>
     {
         String str;
         
-        if (name == null) {
+        if (_name == null) {
             str = "";
         } else {
-            str = name;
+            str = _name;
         }
 
         for(Index idx : this) {
