@@ -81,7 +81,7 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="test" depends="unit.all,functional.all"/>
+  <target name="test" depends="clean,unit.all,functional.all"/>
 
   <!-- packaging -->
   <target name="jar">

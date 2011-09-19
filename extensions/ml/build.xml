@@ -24,10 +24,4 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="test.one">
-    <ant dir="../../" antfile="common.xml" target="test.one">
-      <property name="base.dir" value="${basedir}" />
-      <reference refid="compile.classpath" />
-    </ant>
-  </target>
 </project>

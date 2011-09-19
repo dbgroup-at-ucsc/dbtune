@@ -18,26 +18,26 @@ package edu.ucsc.dbtune.cli.metadata
 import scala.collection.mutable.Buffer
 import scala.collection.JavaConversions._
 
-/** This class provides a mirror for the core.metadata.Table class
-  */
-class Table(t:CoreTable) extends CoreTable(t) {
-  var columns:List[Column] = Column.asScalaColumn(t.getColumns)
-  var indexes:List[Index]  = Index.asScalaIndex(t.getIndexes)
+/** This class provides a mirror for the core.metadata.Schema class
+ */
+class Schema(s:CoreSchema) extends CoreSchema(s) {
+  var tables:List[Table] = Table.asScalaTable(s.getTables)
+  var indexes:List[Index] = Index.asScalaIndex(s.getIndexes)
 }
 
-object Table {
-  /** Creates a list of table objects
+object Schema {
+  /** Creates a list of schema objects
     *
-    * @param javaTableList
+    * @param javaSchemaList
     *    url containig the information about the host and database to connect to
     */
-  def asScalaTable( coreTables:java.util.List[CoreTable] ) : List[Table] =   {
-    var cliTables = List[Table]()
+  def asScalaSchema( coreSchemas:java.util.List[CoreSchema] ) : List[Schema] =   {
+    var cliSchemas = List[Schema]()
 
-    for (x <- asScalaBuffer(coreTables)) {
-      cliTables ::= new Table(x)
+    for (x <- asScalaBuffer(coreSchemas)) {
+      cliSchemas ::= new Schema(x)
     }
 
-    return cliTables
+    return cliSchemas
   }
 }

@@ -16,8 +16,6 @@
  ******************************************************************************/
 package edu.ucsc.dbtune.cli.metadata
 
-import java.util.Properties
-
 /**
  * This class provides a scala mirror of the core.metadata.Configuration class
  */

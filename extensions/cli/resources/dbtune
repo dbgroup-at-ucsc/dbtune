@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# Depends on having scala on the PATH. See http://www.scala-lang.org/downloads
+# for more
+scala \
+  -cp build/classes:lib/postgresql-9.0-801.jdbc4.jar:lib/mysql-5.1.17.jar \
+  -i  extensions/cli/resources/init.scala
+  #-cp lib/dbtune-0.1.jar:lib/postgresql-9.0-801.jdbc4.jar:lib/mysql-5.1.17.jar \
+  #-i  init.scala
