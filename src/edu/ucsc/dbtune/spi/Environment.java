@@ -16,11 +16,8 @@
 package edu.ucsc.dbtune.spi;
 
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.DB2;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM_CACHE_DEPLOYMENT_DIR;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_URL;
@@ -31,6 +28,7 @@ import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.PG;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
 import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
 
@@ -38,9 +36,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Map;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -50,23 +46,6 @@ import java.util.Properties;
 public class Environment {
 
     private final Properties configuration;
-
-    private static final List<String> supportedVendors;
-    private static final List<String> supportedOptimizers;
-
-    static {
-        supportedVendors = new ArrayList<String>();
-
-        supportedVendors.add(DB2);
-        supportedVendors.add(MYSQL);
-        supportedVendors.add(PG);
-
-        supportedOptimizers = new ArrayList<String>();
-
-        supportedOptimizers.add(DBMS);
-        supportedOptimizers.add(IBG);
-        supportedOptimizers.add(INUM);
-    }
 
     /**
      * Creates an environment object from the given filename.
@@ -112,7 +91,7 @@ public class Environment {
      * Creates an environment object from the default configuration file.
      */
     public Environment() throws IOException {
-        this(System.getProperty("user.dir") + "/config/" + FILE);
+        this(FILE);
     }
 
     /**
@@ -156,7 +135,7 @@ public class Environment {
     public String getOptimizer() throws IllegalArgumentException {
         String opt = configuration.getProperty(OPTIMIZER);
 
-        if(!getSupportedOptimizers().contains(opt))
+        if(!SUPPORTED_OPTIMIZERS.contains(opt))
             throw new IllegalArgumentException("Bad optimizer option " + opt);
 
         return opt;
@@ -174,28 +153,6 @@ public class Environment {
      */
     public String getWorkloadsFoldername(){
         return configuration.getProperty(WORKLOADS_FOLDERNAME);
-    }
-
-    /**
-     * Returns the list of supported DBMS vendors.
-     *
-     * @return
-     *     list of DBMS vendors that the API supports
-     */
-    public static List<String> getSupportedVendors()
-    {
-        return supportedVendors;
-    }
-
-    /**
-     * Returns the list of supported optimizers.
-     *
-     * @return
-     *     list of optimizers that the API supports
-     */
-    public static List<String> getSupportedOptimizers()
-    {
-        return supportedOptimizers;
     }
 
     /**

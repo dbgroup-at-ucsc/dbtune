@@ -1,4 +1,8 @@
 <?xml version="1.0"?>
+<!--
+   **Note to devs**: If this file is modified, the core-how-to-build Wiki entry must be updated 
+   accordingly.
+-->
 <project name="dbtune" default="compile">
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
     <classpath>

@@ -15,6 +15,9 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.spi;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Set of properties used in the DBTune API. They are used to introspect the environment where the 
  * API is running. The {@code FILE} field indicates where the settings are supposed to be read from.
@@ -44,7 +47,7 @@ public class EnvironmentProperties
     /**
      * Name of the configuration properties file.
      */
-    public static final String FILE = "dbtune.cfg";
+    public static final String FILE = System.getProperty("user.dir") + "/config/dbtune.cfg";
 
 
 
@@ -79,13 +82,25 @@ public class EnvironmentProperties
      * PG driver class path
      */
     public static final String PG = "org.postgresql.Driver";
+    /**
+     * List of vendors that the API supports
+     */
+    public static final List<String> SUPPORTED_VENDORS;
+
+    static {
+        SUPPORTED_VENDORS = new ArrayList<String>();
+
+        SUPPORTED_VENDORS.add(DB2);
+        SUPPORTED_VENDORS.add(MYSQL);
+        SUPPORTED_VENDORS.add(PG);
+    }
 
 
 
     // XXX: Note to devs
     // 
-    // if a new type of optimizer is added, the EnvironmentProperties.getSupportedOptimizers() 
-    // method should be updated accordingly.
+    // if a new type of optimizer is added, the Wiki entry core-configuration-file should be updated 
+    // accordingly.
     /**
      * Type of optimizer to use
      */
@@ -102,7 +117,18 @@ public class EnvironmentProperties
      * IBG optimizer
      */
     public static final String IBG = "ibg";
+    /**
+     * List of supported optimizers
+     */
+    public static final List<String> SUPPORTED_OPTIMIZERS;
 
+    static {
+        SUPPORTED_OPTIMIZERS = new ArrayList<String>();
+
+        SUPPORTED_OPTIMIZERS.add(DBMS);
+        SUPPORTED_OPTIMIZERS.add(IBG);
+        SUPPORTED_OPTIMIZERS.add(INUM);
+    }
 
 
     /**

@@ -14,9 +14,15 @@ import java.util.Properties;
 import java.util.Random;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.spi.Environment.getSupportedOptimizers;
 import static edu.ucsc.dbtune.spi.Environment.extractDriver;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.*;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_URL;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
+import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
 
 /**
  * @author Huascar A. Sanchez
@@ -170,7 +176,7 @@ public class DBTuneInstances {
      * have been mocked appropriately. Failure to comply with this will cause unexpected results 
      * like having resources being hanged (when connections aren't properly closed).
      *
-     * @see DatabaseSystem#getSupportedOptimizers
+     * @see EnvironmentProperties#SUPPORTED_OPTIMIZERS
      */
     public static Iterable<Optimizer> getSupportedOptimizersIterator(Environment env)
         throws SQLException
@@ -180,7 +186,7 @@ public class DBTuneInstances {
 
         opts = new ArrayList<Optimizer>();
 
-        for(String optId : getSupportedOptimizers()) {
+        for(String optId : SUPPORTED_OPTIMIZERS) {
 
             conf = new Environment(env);
 
