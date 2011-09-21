@@ -133,6 +133,17 @@
       </javadoc>
   </target>
 
+  <target name="dist" description="Package distribution.">
+    <copy toDir="${bld.dir}/${bin.dir}" flatten="true" overwrite="true">
+      <fileset dir="." includes="**/${bin.dir}/*"/>
+    </copy>
+    <chmod perm="755" dir="${bld.dir}" includes="**/${bin.dir}/*"/>
+    <tar destfile="${bld.dir}/${project}-${version}.zip"
+         compression="gzip"
+         basedir="${bld.dir}/"
+         excludes="classes/,classes/**,tests/,tests/**,junit.output,junit.output/**" />
+  </target>
+
   <target name="clean" description="Remove generated files.">
     <delete dir="${bld.dir}"/>
   </target>

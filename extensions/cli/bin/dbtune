@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# Depends on having scala on the PATH. See http://www.scala-lang.org/downloads
+LIBS=`find ../ -name 'lib' -type d`
+INIT=`find ../ -name 'init.scala' -type f`
+DBTUNE=`find ../ -name 'dbtune*.jar' -type f`
+PG=`find $LIBS -name 'postgres*.jar'`
+MYSQL=`find $LIBS -name 'mysql*.jar'`
+scala -cp $DBTUNE:$PG:$MYSQL -i  $INIT

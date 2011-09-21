@@ -92,19 +92,13 @@
     </ant>
   </target>
   <target name="dist" depends="clean,jar,javadoc" description="Package distribution.">
-    <zip destfile="${bld.dir}/${project}-${version}.zip"
-         basedir="${bld.dir}/"
-         excludes="classes/,classes/**,tests/,tests/**,junit.output,junit.output/**" />
+    <ant dir="." antfile="common.xml" target="dist" />
   </target>
   <target name="dist.deps" depends="clean,jar,javadoc" description="Package distribution.">
-    <mkdir dir="${bld.dir}/lib/"/>
-    <copy toDir="${bld.dir}/lib/" flatten="true">
+    <copy toDir="${bld.dir}/lib/" flatten="true" overwrite="true">
       <fileset dir="${lib.dir}" includes="*.jar"/>
       <fileset dir="extensions/" includes="**/*.jar"/>
     </copy>
-    <zip destfile="${bld.dir}/${project}-${version}-with-deps.zip"
-         basedir="${bld.dir}/"
-         excludes="classes/,classes/**,tests/,tests/**,junit.output,junit.output/**" >
-    </zip>
+    <ant dir="." antfile="common.xml" target="dist" />
   </target>
 </project>
