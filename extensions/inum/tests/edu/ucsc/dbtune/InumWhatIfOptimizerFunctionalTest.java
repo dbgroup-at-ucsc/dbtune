@@ -15,7 +15,7 @@ import org.junit.Test;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumWhatIfOptimizerTestFunctional {
+public class InumWhatIfOptimizerFunctionalTest {
   static Connection       CONNECTION;
   static final Environment        ENV;
   static final String             WORKLOAD_PATH;

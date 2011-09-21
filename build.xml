@@ -3,7 +3,7 @@
    **Note to devs**: If this file is modified, the core-how-to-build Wiki entry must be updated 
    accordingly.
 -->
-<project name="dbtune" default="compile">
+<project name="${project}" default="compile">
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
     <classpath>
       <pathelement location="${lib.dir}/ant-contrib-1.0b3.jar"/>
@@ -12,31 +12,27 @@
   <property file="build.properties"/>
   <path id="compile.classpath">
     <fileset dir="${lib.dir}" includes="*.jar"/>
-    <fileset dir="extensions/" includes="**/*.jar"/>
+    <fileset dir="${ext.dir}" includes="**/*.jar"/>
   </path>
 
   <!-- core -->
   <target name="compile">
     <ant dir="." antfile="common.xml" target="compile">
-      <property name="base.dir" value="${base.dir}" />
       <reference refid="compile.classpath" />
     </ant>
   </target>
   <target name="compile.test" depends="compile">
     <ant dir="." antfile="common.xml" target="compile.test">
-      <property name="base.dir" value="${base.dir}" />
       <reference refid="compile.classpath" />
     </ant>
   </target>
   <target name="unit">
     <ant dir="." antfile="common.xml" target="unit">
-      <property name="base.dir" value="${base.dir}" />
       <reference refid="compile.classpath" />
     </ant>
   </target>
   <target name="functional">
     <ant dir="." antfile="common.xml" target="functional">
-      <property name="base.dir" value="${base.dir}" />
       <reference refid="compile.classpath" />
     </ant>
   </target>
@@ -46,49 +42,45 @@
     <foreach list="${extensions}" param="extension" target="compile.extension"/>
   </target>
   <target name="compile.extension">
-    <ant dir="extensions/${extension}" antfile="build.xml" target="compile">
-      <property name="base.dir" value="${base.dir}" />
-      <property name="src.dir" value="${src.dir}" />
-      <property name="build.dir" value="${build.dir}" />
+    <ant dir="${ext.dir}/${extension}" antfile="build.xml" target="compile">
+      <property name="src.dir" value="${ext.dir}/${extension}/${src.dir}" />
+      <property name="bld.dir" value="${bld.dir}" />
       <property name="project" value="${extension}" />
     </ant>
   </target>
   <target name="compile.test.all" depends="compile.all,compile.test">
     <foreach list="${extensions}" param="extension" target="compile.test.extension"/>
   </target>
-  <target name="compile.test.extension" depends="compile.test">
-    <ant dir="extensions/${extension}" antfile="build.xml" target="compile.test">
-      <property name="base.dir" value="${base.dir}" />
-      <property name="src.dir" value="${src.dir}" />
-      <property name="build.dir" value="${build.dir}" />
+  <target name="compile.test.extension">
+    <ant dir="${ext.dir}/${extension}" antfile="build.xml" target="compile.test">
+      <property name="src.dir" value="${ext.dir}/${extension}/${src.dir}" />
+      <property name="tst.dir" value="${ext.dir}/${extension}/${tst.dir}" />
+      <property name="bld.dir" value="${bld.dir}" />
       <property name="project" value="${extension}" />
     </ant>
   </target>
   <target name="unit.all" depends="compile.test.all">
     <ant dir="." antfile="common.xml" target="unit">
-      <property name="base.dir" value="${base.dir}" />
-      <property name="build.dir" value="${build.dir}" />
+      <property name="bld.dir" value="${bld.dir}" />
       <reference refid="compile.classpath" />
     </ant>
   </target>
   <target name="functional.all" depends="compile.test.all">
     <ant dir="." antfile="common.xml" target="functional">
-      <property name="base.dir" value="${base.dir}" />
-      <property name="build.dir" value="${build.dir}" />
+      <property name="bld.dir" value="${bld.dir}" />
       <reference refid="compile.classpath" />
     </ant>
   </target>
   <target name="one" depends="compile.test.all">
     <ant dir="." antfile="common.xml" target="one">
-      <property name="base.dir" value="${base.dir}" />
-      <property name="build.dir" value="${build.dir}" />
+      <property name="bld.dir" value="${bld.dir}" />
       <reference refid="compile.classpath" />
     </ant>
   </target>
   <target name="test" depends="clean,unit.all,functional.all"/>
 
   <!-- packaging -->
-  <target name="jar">
+  <target name="jar" depends="compile.all">
     <ant dir="." antfile="common.xml" target="jar" />
   </target>
   <target name="javadoc">
@@ -104,39 +96,25 @@
   </target>
 
   <!--
-  <target name="test.dist"
-      depends="jar, compile.test-with-deps"
-      description="Execute Unit tests against distribution jar.">
-    <junit printsummary="yes"
-         haltonerror="yes"
-         haltonfailure="yes"
-         fork="yes">
+  <target name="dist" depends="jar, javadoc" description="Build entire distribution.">
+    <copy toDir="${bld.dir}/dist">
+      <fileset dir="${lib.dir}" includes="*.jar"/>
+      <fileset dir="extensions/" includes="**/*.jar"/>
+    </copy>
+    <zip destfile="${bld.dir}/dbtune-${version}.zip">
+      <zipfileset dir="${bld.dir}/dist" prefix="${project}-${version}" excludes="*-src.jar"/>
+    </zip>
+    <zip destfile="${bld.dir}/${project}-${version}-src.zip">
+      <zipfileset dir="."
+                  prefix="${project}-${version}-src"
+                  excludes="build/**, www/**/*, **/.svn/**, **/.git/**, .git*,classes/**,
+                            .settings/**, bin/**, latest-api-diffs/**, latest-javadoc/**,
+                            .classpath, .project, pgtests/**, resources/**, .project*"/>
 
-        <classpath>
-            <pathelement location="${build.dir}/dbtune-${version}-tests.jar"/>
-            <pathelement location="${build.dir}/dist/dbtune-${version}.jar"/>
-            <pathelement location="lib/caliper-0.0.jar"/>
-            <pathelement location="lib/junit-4.9b2.jar"/>
-            <pathelement location="lib/mockito-all-1.8.5.jar"/>
-            <pathelement location="lib/postgresql-9.0-801.jdbc4.jar"/>
-            <pathelement location="lib/scala-compiler-2.8.1.jar"/>
-            <pathelement location="lib/scala-library-2.8.1.jar"/>
-            <pathelement location="lib/guava.jar"/>
-        </classpath>
-        <batchtest fork="yes"
-                   todir="${build.dir}/${junit.out.dir}">
-          <fileset dir="${test.dir}">
-            <include name="${unit.test.pat}"/>
-            <exclude name="**/AllTests.java"/>
-          </fileset>
-        </batchtest>
-        <syspropertyset>
-            <propertyref name="dbtune.custom.loader"/>
-            <propertyref name="version"/>
-            <propertyref name="build.dir"/>
-            <propertyref name="lib.dir"/>
-        </syspropertyset>
-    </junit>
+    </zip>
+  </target>
+
+  <target name="test.dist">
   </target>
   -->
 </project>
