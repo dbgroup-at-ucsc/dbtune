@@ -4,16 +4,19 @@
    accordingly.
 -->
 <project name="${project}" default="compile">
+  <property file="build.properties"/>
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
     <classpath>
       <pathelement location="${lib.dir}/ant-contrib-1.0b3.jar"/>
     </classpath>
   </taskdef>
-  <property file="build.properties"/>
   <path id="compile.classpath">
     <fileset dir="${lib.dir}" includes="*.jar"/>
     <fileset dir="${ext.dir}" includes="**/*.jar"/>
   </path>
+  <target name="clean">
+    <ant dir="." antfile="common.xml" target="clean" />
+  </target>
 
   <!-- core -->
   <target name="compile">
@@ -88,33 +91,20 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="jar.source">
-    <ant dir="." antfile="common.xml" target="jar.source" />
+  <target name="dist" depends="clean,jar,javadoc" description="Package distribution.">
+    <zip destfile="${bld.dir}/${project}-${version}.zip"
+         basedir="${bld.dir}/"
+         excludes="classes/,classes/**,tests/,tests/**,junit.output,junit.output/**" />
   </target>
-  <target name="clean">
-    <ant dir="." antfile="common.xml" target="clean" />
-  </target>
-
-  <!--
-  <target name="dist" depends="jar, javadoc" description="Build entire distribution.">
-    <copy toDir="${bld.dir}/dist">
+  <target name="dist.deps" depends="clean,jar,javadoc" description="Package distribution.">
+    <mkdir dir="${bld.dir}/lib/"/>
+    <copy toDir="${bld.dir}/lib/" flatten="true">
       <fileset dir="${lib.dir}" includes="*.jar"/>
       <fileset dir="extensions/" includes="**/*.jar"/>
     </copy>
-    <zip destfile="${bld.dir}/dbtune-${version}.zip">
-      <zipfileset dir="${bld.dir}/dist" prefix="${project}-${version}" excludes="*-src.jar"/>
-    </zip>
-    <zip destfile="${bld.dir}/${project}-${version}-src.zip">
-      <zipfileset dir="."
-                  prefix="${project}-${version}-src"
-                  excludes="build/**, www/**/*, **/.svn/**, **/.git/**, .git*,classes/**,
-                            .settings/**, bin/**, latest-api-diffs/**, latest-javadoc/**,
-                            .classpath, .project, pgtests/**, resources/**, .project*"/>
-
+    <zip destfile="${bld.dir}/${project}-${version}-with-deps.zip"
+         basedir="${bld.dir}/"
+         excludes="classes/,classes/**,tests/,tests/**,junit.output,junit.output/**" >
     </zip>
   </target>
-
-  <target name="test.dist">
-  </target>
-  -->
 </project>

@@ -106,8 +106,7 @@
 
   <target name="jar" description="Generates a JAR file">
     <echo message="Generating jar"/>
-    <mkdir dir="${bld.dir}/dist" />
-    <jar destfile="${bld.dir}/dist/dbtune-${version}.jar" basedir="${bld.dir}/classes" />
+    <jar destfile="${bld.dir}/${project}-${version}.jar" basedir="${bld.dir}/classes" />
   </target>
 
   <target name="argument-checking" >
@@ -116,13 +115,6 @@
           classpath="${bld.dir}/tests/"
           property="class.present" />
     <fail message="Class ${class} doesn't exist" unless="class.present" />
-  </target>
-
-  <target name="jar.source" description="Create a .jar file with sources">
-    <mkdir dir="${bld.dir}"/>
-    <zip destfile="${bld.dir}/${project}-${version}-src.jar" >
-      <fileset dir="${src.dir}"/>
-    </zip>
   </target>
 
   <target name="javadoc" description="Generate Javadocs.">
