@@ -194,7 +194,9 @@ public class MySQLOptimizer extends Optimizer
         for(Index index : configuration) {
             Statement stmt = connection.createStatement();
             stmt = connection.createStatement();
-            stmt.execute("DROP INDEX " + index + " on " + index.getTable().getSchema() + "." + index.getTable());
+            stmt.execute("DROP INDEX " + index.getName() +
+                         " on " + index.getTable().getSchema().getName() +
+                         "." + index.getTable().getName());
             stmt.close();
         }
     }

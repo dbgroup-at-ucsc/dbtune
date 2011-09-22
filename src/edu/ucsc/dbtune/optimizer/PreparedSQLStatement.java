@@ -430,9 +430,12 @@ public class PreparedSQLStatement
         sb.append("Cost: " + getCost() + "\n");
 
         sb.append("All:\n");
+
         if(getConfiguration().size() > 0)
             sb.append(getConfiguration());
+
         sb.append("Used:\n");
+
         if(getUsedConfiguration().size() > 0)
             sb.append(getUsedConfiguration());
 

@@ -562,7 +562,7 @@ public class Index extends DatabaseObject
         StringBuilder sb    = new StringBuilder();
         boolean       first = true;
 
-        sb.append(getName() + " ON " + getTable() + "(");
+        sb.append(getName() + " ON " + schema.getName() + "." + getTable().getName() + "(");
 
         for (Column col : columns) {
             if (!first)

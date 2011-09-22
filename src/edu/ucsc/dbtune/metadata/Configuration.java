@@ -199,17 +199,12 @@ public class Configuration implements Iterable<Index>
     @Override
     public String toString()
     {
-        String str;
+        StringBuilder str = new StringBuilder();
         
-        if (_name == null) {
-            str = "";
-        } else {
-            str = "  " + _name;
+        for(Index idx : this) {
+            str.append("    " + idx + "\n");
         }
 
-        for(Index idx : this) {
-            str += "\n    " + idx;
-        }
-        return str;
+        return str.toString();
     }
 }
