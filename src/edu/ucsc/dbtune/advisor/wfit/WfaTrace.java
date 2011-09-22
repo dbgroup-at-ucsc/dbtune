@@ -1,5 +1,4 @@
-/*
- * ****************************************************************************
+/* ************************************************************************** *
  *   Copyright 2010 University of California Santa Cruz                       *
  *                                                                            *
  *   Licensed under the Apache License, Version 2.0 (the "License");          *
@@ -13,15 +12,12 @@
  *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
+ * ************************************************************************** */
 package edu.ucsc.dbtune.advisor.wfit;
 
 import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
 import edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm.TotalWorkValues;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
-import edu.ucsc.dbtune.util.Checks;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -115,7 +111,9 @@ public class WfaTrace {
                 }
             }
 
-            Checks.checkAssertion(bestSuccessor >= 0, "could not determine best final state");
+            if(bestSuccessor < 0)
+                throw new RuntimeException("could not determine best final state");
+
             partSchedule[queryCount].clear();
             WorkFunctionAlgorithm.setStateBits(indexIds, bestSuccessor, partSchedule[queryCount]);
             

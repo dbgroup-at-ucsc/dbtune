@@ -352,18 +352,16 @@ public class Strings
     // does not accept nulls
     public static String[] splits(String text, char separator)
     {
-        final String string     = Checks.checkNotNull(text);
-        final char   separ      = Checks.checkNotNull(separator);
-        if(isEmpty(string)) return new String[0];
+        if(isEmpty(text)) return new String[0];
         final List<String> words = Instances.newLinkedList();
         int     idx         = 0;
         int     start       = 0;
         boolean foundMatch  = false;
-        while(idx < string.length()){
-            if(string.charAt(idx) == separ){
+        while(idx < text.length()){
+            if(text.charAt(idx) == separator){
                 if(foundMatch){
                     // once the word is added, reset the value of foundMatch
-                    foundMatch = !(words.add(string.substring(start, idx)));
+                    foundMatch = !(words.add(text.substring(start, idx)));
                 }
 
                 start = ++idx;
@@ -374,7 +372,7 @@ public class Strings
             idx++;
         }
 
-        if(foundMatch) words.add(string.substring(start, idx));
+        if(foundMatch) words.add(text.substring(start, idx));
         return words.toArray(new String[words.size()]);
     }
 
