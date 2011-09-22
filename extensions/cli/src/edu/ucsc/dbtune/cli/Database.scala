@@ -15,10 +15,11 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.cli
 
-import edu.ucsc.dbtune.DatabaseSystem
-import edu.ucsc.dbtune.cli.metadata.Configuration
 import edu.ucsc.dbtune.cli.metadata.CoreCatalog
 import edu.ucsc.dbtune.cli.metadata.Schema
+
+import edu.ucsc.dbtune.DatabaseSystem
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.spi.Environment
 
@@ -45,7 +46,7 @@ class Database(dbms:DatabaseSystem) extends CoreCatalog(dbms.getCatalog) {
     *   a configuration
     */
   def recommend(sql:String) : Configuration =  {
-    new Configuration(dbms.getOptimizer.recommendIndexes(sql))
+    dbms.getOptimizer.recommendIndexes(sql)
   }
   
   /** Explains a SQL statement

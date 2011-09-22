@@ -288,7 +288,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                         column     = table.findColumn(columnName);
 
                         if (column == null)
-                            throw new SQLException("Column " + columnName + " not in " + table);
+                            throw new SQLException("Column " + columnName + " not in " + table.getName());
 
                         indexToColumns.put(rs.getInt("ordinal_position"), column);
                     }
@@ -410,7 +410,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                     " SELECT " +
                     "   count(*) " +
                     " FROM " +
-                        sch + "." + tbl;
+                        sch.getName() + "." + tbl.getName();
 
                 rs = stm.executeQuery(cmd);
 
@@ -459,7 +459,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                         " SELECT " +
                         "   count(DISTINCT " + col.getName() + ") " +
                         " FROM " +
-                        sch + "." + tbl;
+                        sch.getName() + "." + tbl.getName();
 
                     rs = stm.executeQuery(cmd);
 
@@ -513,7 +513,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         for(Index idx : tbl.getIndexes()) {
 
             if(idx.size() == 0)
-                throw new SQLException("no columns in index "+idx);
+                throw new SQLException("no columns in index "+idx.getName());
 
             if(idx.size() == 1) {
                 idx.setCardinality(idx.getColumns().get(0).getCardinality());
@@ -531,7 +531,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
 
             cmd +=
                 " FROM " +
-                    sch + "." + tbl +
+                    sch.getName() + "." + tbl.getName() +
                 " GROUP BY ";
 
             for(Column col : idx.getColumns())

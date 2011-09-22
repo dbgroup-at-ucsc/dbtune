@@ -16,7 +16,6 @@
 package edu.ucsc.dbtune.metadata;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import java.sql.SQLException;
@@ -79,20 +78,7 @@ public class Index extends DatabaseObject
             boolean clustered)
         throws SQLException
     {
-        super(name);
-
-        this.table      = table;
-        this.schema     = table.getSchema();
-        this.type       = UNKNOWN;
-        this.primary    = primary;
-        this.unique     = unique;
-        this.columns    = new ArrayList<Column>();
-        this.clustered  = clustered;
-        this.descending = new ArrayList<Boolean>();
-        this.scanOption = NON_REVERSIBLE;
-
-        this.schema.add(this);
-        this.table.add(this);
+        this(table,name,new ArrayList<Column>(), new ArrayList<Boolean>(),primary,unique,clustered);
     }
 
     /**
@@ -118,7 +104,8 @@ public class Index extends DatabaseObject
     }
 
     /**
-     * Creates an index from the given columns, primary, uniqueness and clustering values.
+     * Creates an index from the given columns, primary, uniqueness and clustering values. Columns
+     * are taken as ordered in ascending order.
      *
      * @param name
      *     name of the index
@@ -135,7 +122,7 @@ public class Index extends DatabaseObject
     public Index(String name, List<Column> columns, boolean primary, boolean unique, boolean clustered)
         throws SQLException
     {
-        this(name,columns,Arrays.asList(new Boolean[columns.size()]),primary,unique,clustered);
+        this(null,name,columns,null,primary,unique,clustered);
     }
     /**
      * Creates an index from the given columns, primary, uniqueness and clustering values.
@@ -164,39 +151,73 @@ public class Index extends DatabaseObject
             boolean clustered)
         throws SQLException
     {
+        this(null,name,columns,descending,primary,unique,clustered);
+    }
+
+    /**
+     * Creates an index from the given columns, primary, uniqueness and clustering values.
+     *
+     * @param name
+     *     name of the index
+     * @param columns
+     *     columns that will define the index
+     * @param descending
+     *     indicates whether or not the corresponding column is sorted in ascending or descending 
+     *     order.
+     * @param primary
+     *     whether or not the index is primary
+     * @param clustered
+     *     whether the corresponding table is clustered on this index
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the given name; if not all 
+     *     of the columns in the list correspond to the same table.
+     */
+    Index(
+            Table table,
+            String name,
+            List<Column> columns,
+            List<Boolean> descending,
+            boolean primary,
+            boolean unique,
+            boolean clustered)
+        throws SQLException
+    {
         super(name);
 
-        if (columns.size() == 0)
+        if(table == null && columns.size() == 0)
             throw new SQLException("Column list should have at least one element");
 
-        this.table      = columns.get(0).getTable();
-        this.schema     = columns.get(0).getTable().getSchema();
+        if(table == null)
+            this.table = columns.get(0).getTable();
+        else
+            this.table = table;
+
         this.descending = new ArrayList<Boolean>();
-        this.columns    = new ArrayList<Column>();
 
-        this.columns.add(columns.get(0));
+        if (descending == null)
+            for(int i = 0; i < columns.size(); i++)
+                this.descending.add(ASCENDING);
+        else if (descending.size() != columns.size())
+            throw new SQLException("Incorrect number of descending values");
+        else
+            this.descending = new ArrayList<Boolean>(descending);
 
-        for (int i = 1; i < columns.size(); i++)
-        {
-            if (table != columns.get(i).getTable())
+        this.schema  = this.table.getSchema();
+        this.columns = new ArrayList<Column>();
+
+        for (int i = 0; i < columns.size(); i++) {
+
+            if (this.table != columns.get(i).getTable())
                 throw new SQLException("Columns from different tables");
 
             this.columns.add(columns.get(i));
-
-            if(descending.get(i) == null)
-                continue;
-            
-            if(descending.get(i))
-                this.descending.set(i, DESCENDING);
-            else
-                this.descending.set(i, ASCENDING);
         }
 
-        this.type         = UNKNOWN;
-        this.primary      = primary;
-        this.unique       = unique;
-        this.clustered    = clustered;
-        this.scanOption   = NON_REVERSIBLE;
+        this.type       = UNKNOWN;
+        this.primary    = primary;
+        this.unique     = unique;
+        this.clustered  = clustered;
+        this.scanOption = NON_REVERSIBLE;
 
         this.table.add(this);
         this.schema.add(this);
@@ -530,5 +551,28 @@ public class Index extends DatabaseObject
             table.getSchema().getCatalog().hashCode() *
             schema.hashCode() *
             name.hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        StringBuilder sb    = new StringBuilder();
+        boolean       first = true;
+
+        sb.append(getName() + " ON " + getTable() + "(");
+
+        for (Column col : columns) {
+            if (!first)
+                sb.append(", ");
+            else
+                first = false;
+            sb.append(col);
+        }
+        sb.append(")");
+
+        return sb.toString();
     }
 }

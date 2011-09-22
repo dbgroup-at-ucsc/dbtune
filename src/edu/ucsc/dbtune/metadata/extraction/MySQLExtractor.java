@@ -162,7 +162,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
                 column     = table.findColumn(columnName);
 
                 if (column == null)
-                    throw new SQLException("Column " + columnName + " not in " + table);
+                    throw new SQLException("Column " + columnName + " not in " + table.getName());
 
                 indexToColumns.put(rs.getInt("ordinal_position"), column);
             }

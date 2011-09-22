@@ -229,4 +229,13 @@ public class Table extends DatabaseObject
     {
         return 31 * schema.getCatalog().hashCode() * schema.hashCode() * name.hashCode(); //type;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        return getSchema() + "." + getName();
+    }
 }

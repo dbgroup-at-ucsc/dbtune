@@ -204,11 +204,11 @@ public class Configuration implements Iterable<Index>
         if (_name == null) {
             str = "";
         } else {
-            str = _name;
+            str = "  " + _name;
         }
 
         for(Index idx : this) {
-            str += "\n  " + idx;
+            str += "\n    " + idx;
         }
         return str;
     }

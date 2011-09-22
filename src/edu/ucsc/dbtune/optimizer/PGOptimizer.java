@@ -298,7 +298,7 @@ public class PGOptimizer extends Optimizer
         Column col;
 
         for(int position : positions) {
-            col = table.getColumns().get(position);
+            col = table.getColumns().get(position-1);
 
             if(col == null)
                 throw new SQLException("Can't find column with position " + position + " in table " + table);
@@ -318,7 +318,7 @@ public class PGOptimizer extends Optimizer
      *     a string containing the PG-dependent string representation of the given list, as the 
      *     EXPLAIN INDEXES statement expects it
      */
-    private static String toString(Iterable<? extends Index> indexes)
+    private static String toString(Configuration indexes)
     {
         // It's important that this method generates the string in the same order that 
         // Configuration.iterator() produces the index list

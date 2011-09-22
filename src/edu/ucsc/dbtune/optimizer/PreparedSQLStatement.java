@@ -20,7 +20,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.List;
 import java.sql.SQLException;
@@ -424,12 +423,19 @@ public class PreparedSQLStatement
      * {@inheritDoc}
      */
     @Override
-    public String toString() {
-        return new ToStringBuilder<PreparedSQLStatement>(this)
-               .add("statement", getStatement())
-               .add("cost", getCost())
-               .add("totalCost", getTotalCost())
-               .add("updateCost", getUpdateCost())
-               .toString();
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Cost: " + getCost() + "\n");
+
+        sb.append("All:\n");
+        if(getConfiguration().size() > 0)
+            sb.append(getConfiguration());
+        sb.append("Used:\n");
+        if(getUsedConfiguration().size() > 0)
+            sb.append(getUsedConfiguration());
+
+        return sb.toString();
     }
 }
