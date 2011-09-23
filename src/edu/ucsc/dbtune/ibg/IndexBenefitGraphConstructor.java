@@ -15,6 +15,7 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.ibg;
 
+import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;

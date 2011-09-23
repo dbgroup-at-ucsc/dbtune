@@ -16,8 +16,9 @@
  *  ****************************************************************************
  */
 
-package edu.ucsc.dbtune.ibg;
+package edu.ucsc.dbtune.advisor.interactions;
 
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class InteractionLogger {

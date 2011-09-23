@@ -17,7 +17,6 @@
  */
 package edu.ucsc.dbtune.advisor.interactions;
 
-import edu.ucsc.dbtune.ibg.InteractionBank;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;

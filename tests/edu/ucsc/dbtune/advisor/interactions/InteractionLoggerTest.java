@@ -1,6 +1,9 @@
-package edu.ucsc.dbtune.ibg;
+package edu.ucsc.dbtune.advisor.interactions;
 
 import org.junit.Test;
+
+import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
+import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;

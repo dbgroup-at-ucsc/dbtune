@@ -18,6 +18,7 @@
 
 package edu.ucsc.dbtune.ibg;
 
+import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
