@@ -20,10 +20,10 @@ package edu.ucsc.dbtune.advisor.bc;
 
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.Map;
+import java.util.HashMap;
 
 public class BcIndexPool {
     Map<Integer, BcIndexInfo> map;
@@ -35,7 +35,7 @@ public class BcIndexPool {
      *      a hot set of indexes.
      */
     public BcIndexPool(Configuration conf, Configuration hotSet) {
-        map = Instances.newHashMap(hotSet.size());
+        map = new HashMap<Integer, BcIndexInfo>(hotSet.size());
         for (Index idx : hotSet) {
             map.put(conf.getOrdinalPosition(idx), new BcIndexInfo());
         }

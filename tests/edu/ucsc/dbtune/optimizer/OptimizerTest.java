@@ -21,7 +21,7 @@ import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.spi.Environment;
+import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 

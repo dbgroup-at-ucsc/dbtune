@@ -19,7 +19,6 @@ import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.Objects;
 
 import java.io.InputStream;
@@ -332,7 +331,7 @@ public class DBTuneMocks
     }
 
     static class MockPreparedStatement extends MockStatement implements PreparedStatement {
-        final AtomicReference<String> sql = Instances.newAtomicReference();
+        final AtomicReference<String> sql = new AtomicReference<String>();
         MockPreparedStatement(ResultSet resultSet){
             super(resultSet);
         }

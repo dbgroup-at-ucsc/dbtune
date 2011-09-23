@@ -13,24 +13,24 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.spi;
+package edu.ucsc.dbtune.util;
 
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.DB2;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.FILE;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM_CACHE_DEPLOYMENT_DIR;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_DRIVER;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_URL;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_INDEXES;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.MAX_NUM_STATES;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.MYSQL;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.PG;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.WORKLOADS_FOLDERNAME;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.DB2;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.FILE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_CACHE_DEPLOYMENT_DIR;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_DRIVER;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_URL;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.MAX_NUM_INDEXES;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.MAX_NUM_STATES;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.MYSQL;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.WORKLOADS_FOLDERNAME;
 
 import java.io.File;
 import java.io.FileInputStream;

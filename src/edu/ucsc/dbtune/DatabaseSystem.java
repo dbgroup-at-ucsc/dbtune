@@ -26,20 +26,20 @@ import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.MySQLOptimizer;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
-import edu.ucsc.dbtune.spi.Environment;
+import edu.ucsc.dbtune.util.Environment;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.util.Properties;
 
-import static edu.ucsc.dbtune.spi.Environment.extractDriver;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.MYSQL;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.PG;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.DB2;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
+import static edu.ucsc.dbtune.util.Environment.extractDriver;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.DB2;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.DBMS;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.MYSQL;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
 
 /**
  * Represents a DBMS system. The class `DatabaseSystem` represents a DBMS and it's the main entry 

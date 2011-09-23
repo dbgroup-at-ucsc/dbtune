@@ -45,9 +45,8 @@ import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
 import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
 import static edu.ucsc.dbtune.metadata.Index.SYNCHRONIZED;
 import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
-import static edu.ucsc.dbtune.util.Instances.asList;
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
-import static edu.ucsc.dbtune.util.Strings.toBooleanArray;
+import static edu.ucsc.dbtune.util.Strings.toBooleanList;
 import static edu.ucsc.dbtune.util.Strings.toIntegerArray;
 import static edu.ucsc.dbtune.util.Strings.toDoubleArrayFromIndexed;
 
@@ -169,12 +168,12 @@ public class PGOptimizer extends Optimizer
     {
         List<Column> columns;
         List<Index> indexes;
+        List<Boolean> isDesc;
         Statement stmt;
         ResultSet rs;
         Table     table;
         Index     index;
         boolean   isSync;
-        boolean[] isDesc;
         int[]     positions;
         String    indexName;
 
@@ -195,11 +194,11 @@ public class PGOptimizer extends Optimizer
 
             isSync    = rs.getString("sync").charAt(0) == 'Y';
             positions = toIntegerArray(rs.getString("atts").split(" "));
-            isDesc    = toBooleanArray(rs.getString("desc").split(" "));
+            isDesc    = toBooleanList(rs.getString("desc").split(" "));
             columns   = getReferencedColumns(table, positions);
             indexName = "sat_index_" + new Random().nextInt(10000);
 
-            index = new Index(indexName, columns, asList(isDesc), SECONDARY, NON_UNIQUE, UNCLUSTERED);
+            index = new Index(indexName, columns, isDesc, SECONDARY, NON_UNIQUE, UNCLUSTERED);
 
             if(isSync)
                 index.setScanOption(SYNCHRONIZED);

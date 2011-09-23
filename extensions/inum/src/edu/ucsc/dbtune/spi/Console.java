@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.spi;
 
-import edu.ucsc.dbtune.util.Instances;
-
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -56,7 +55,7 @@ public abstract class Console implements Printer {
      */
     public void catchError(Throwable cause){
         if(cachedErrors == null) {
-            cachedErrors = Instances.newList();
+            cachedErrors = new ArrayList<String>();
         }
 
         cachedErrors.add(cause.getLocalizedMessage());

@@ -20,7 +20,7 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.spi.Environment;
+import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Strings;
 
 import java.sql.Connection;

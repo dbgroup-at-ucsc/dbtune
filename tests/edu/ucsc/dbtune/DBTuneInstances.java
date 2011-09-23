@@ -2,9 +2,8 @@ package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.spi.Environment;
+import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Instances;
 
 import java.lang.reflect.Constructor;
 import java.sql.SQLException;
@@ -14,15 +13,15 @@ import java.util.Properties;
 import java.util.Random;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.spi.Environment.extractDriver;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.IBG;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.INUM;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_URL;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
-import static edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME;
+import static edu.ucsc.dbtune.util.Environment.extractDriver;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.DBMS;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_URL;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
 
 /**
  * @author Huascar A. Sanchez
@@ -214,7 +213,7 @@ public class DBTuneInstances {
     }
 
     public static List<Boolean> generateDescVals(int howmany){
-        final List<Boolean> cols = Instances.newList();
+        final List<Boolean> cols = new ArrayList<Boolean>();
         for(int idx = 0; idx < howmany; idx++){
             cols.add(true);
         }

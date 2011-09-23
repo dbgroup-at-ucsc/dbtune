@@ -19,14 +19,14 @@ import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
 import edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm.TotalWorkValues;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.Instances;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class WfaTrace {
-    private List<TotalWorkValues>   wfValues    = Instances.newList();
-    private List<Double>            sumNullCost = Instances.newList();
+    private List<TotalWorkValues>   wfValues    = new ArrayList<TotalWorkValues>();
+    private List<Double>            sumNullCost = new ArrayList<Double>();
 
     /**
      * Construct a {@link WorkFunctionAlgorithm}'s work trace from this {@code algorithm}'s

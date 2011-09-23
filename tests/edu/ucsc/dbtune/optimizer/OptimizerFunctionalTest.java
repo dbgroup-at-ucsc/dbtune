@@ -17,7 +17,7 @@ package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.spi.Environment;
+import edu.ucsc.dbtune.util.Environment;
 
 import java.sql.Connection;
 

@@ -18,8 +18,10 @@ package edu.ucsc.dbtune.util;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -135,14 +137,32 @@ public class Strings
      * @throws NumberFormatException
      *     if one string does not contain a parsable integer.
      */
-    public static boolean[] toBooleanArray(String[] valArray)
+    public static Boolean[] toBooleanArray(String[] valArray)
     {
-        boolean[] booleanArray = new boolean[valArray.length];
+        return (Boolean[])toBooleanList(valArray).toArray();
+    }
 
-        for(int i = 0; i < booleanArray.length; i++)
-            booleanArray[i] = Boolean.parseBoolean(valArray[i]);
+    /**
+     * Treats each element from {@code valArray} as a {@link Boolean} and returns a list containing 
+     * them. The valid literal values are "Y" and "N".
+     *
+     * @param valArray
+     *     array of values containing a string representation of an integer each.
+     * @return
+     *     a list containing integers in the order they appear in the given array. That is, {@code 
+     *     valArray[0]} corresponds to the first integer in the array, {@code valArray[1]} to the 
+     *     second and so on.
+     * @throws NumberFormatException
+     *     if one string does not contain a parsable integer.
+     */
+    public static List<Boolean> toBooleanList(String[] valArray)
+    {
+        List<Boolean> booleanList = new ArrayList<Boolean>();
 
-        return booleanArray;
+        for(int i = 0; i < valArray.length; i++)
+            booleanList.add(Boolean.parseBoolean(valArray[i]));
+
+        return booleanList;
     }
 
     /**
@@ -353,7 +373,7 @@ public class Strings
     public static String[] splits(String text, char separator)
     {
         if(isEmpty(text)) return new String[0];
-        final List<String> words = Instances.newLinkedList();
+        final List<String> words = new LinkedList<String>();
         int     idx         = 0;
         int     start       = 0;
         boolean foundMatch  = false;

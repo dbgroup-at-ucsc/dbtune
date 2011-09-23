@@ -2,7 +2,7 @@ package edu.ucsc.dbtune;
 
 import com.google.common.io.Files;
 
-import edu.ucsc.dbtune.spi.Environment;
+import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.spi.Console;
 import java.io.File;
 import java.sql.Connection;

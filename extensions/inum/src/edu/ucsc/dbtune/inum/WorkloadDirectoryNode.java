@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.spi.Environment;
+import edu.ucsc.dbtune.util.Environment;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Set;

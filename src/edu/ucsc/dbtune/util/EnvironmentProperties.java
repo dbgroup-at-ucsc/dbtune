@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and      *
  *   limitations under the License.                                           *
  * ************************************************************************** */
-package edu.ucsc.dbtune.spi;
+package edu.ucsc.dbtune.util;
 
 import java.util.ArrayList;
 import java.util.List;

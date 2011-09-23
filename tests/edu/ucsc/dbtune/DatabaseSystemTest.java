@@ -25,7 +25,7 @@ import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.MySQLOptimizer;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
-import edu.ucsc.dbtune.spi.Environment;
+import edu.ucsc.dbtune.util.Environment;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

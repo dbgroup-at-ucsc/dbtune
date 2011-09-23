@@ -21,17 +21,17 @@ import edu.ucsc.dbtune.cli.metadata.Schema
 import edu.ucsc.dbtune.DatabaseSystem
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.spi.Environment
+import edu.ucsc.dbtune.util.Environment
 
 import java.util.Properties
 
 import edu.ucsc.dbtune.cli.metadata.Schema._
 import edu.ucsc.dbtune.DatabaseSystem._
-import edu.ucsc.dbtune.spi.EnvironmentProperties.DBMS
-import edu.ucsc.dbtune.spi.EnvironmentProperties.JDBC_URL
-import edu.ucsc.dbtune.spi.EnvironmentProperties.USERNAME
-import edu.ucsc.dbtune.spi.EnvironmentProperties.OPTIMIZER
-import edu.ucsc.dbtune.spi.EnvironmentProperties.PASSWORD
+import edu.ucsc.dbtune.util.EnvironmentProperties.DBMS
+import edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_URL
+import edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME
+import edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER
+import edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD
 
 /** This class provides a hub for most of the operations that a user can execute through the CLI 
   */
