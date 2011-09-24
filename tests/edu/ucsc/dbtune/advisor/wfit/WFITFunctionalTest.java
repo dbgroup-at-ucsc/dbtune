@@ -19,7 +19,7 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.wfit.WFIT;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -84,8 +84,7 @@ public class WFITFunctionalTest
     @Test
     public void testWFIT() throws Exception
     {
-        /*
-        IBGPreparedSQLStatement qinfo;
+        PreparedSQLStatement qinfo;
         Configuration pool;
         WFIT wfit;
         Workload workload;
@@ -114,7 +113,7 @@ public class WFITFunctionalTest
         for (SQLStatement sql : workload) {
             wfit.process(sql);
 
-            assertThat(wfit.getPartitions().subsetCount(), is(1));
+            //assertThat(wfit.getPartitions().subsetCount(), is(1));
 
             configuration = wfit.getRecommendation();
 
@@ -127,7 +126,7 @@ public class WFITFunctionalTest
 
             assertThat(qinfo.getConfiguration().size(), is(1));
 
-            assertThat(qinfo.getOptimizationCount(), is(3));
+            assertThat(qinfo.getOptimizationCount(), is(1));
 
             if(q < 5) {
                 assertThat(configuration.size(), is(0));
@@ -144,7 +143,6 @@ public class WFITFunctionalTest
 
             q++;
         }
-        */
     }
 
     private static Configuration getCandidates(String workloadFilename)
@@ -160,9 +158,9 @@ public class WFITFunctionalTest
         for(SQLStatement sql : wl) {
             candidateSet = db.getOptimizer().recommendIndexes(sql);
 
-            for (Index index : candidateSet) {
-                pool.add(index);
-            }
+            for (Index index : candidateSet)
+                if (!pool.containsContent(index))
+                    pool.add(index);
         }
 
         return pool;

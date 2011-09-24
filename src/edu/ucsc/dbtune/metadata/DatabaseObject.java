@@ -228,6 +228,15 @@ public abstract class DatabaseObject
     }
 
     /**
+     * Compares another object against this one and determines if they're equal or not. Note that 
+     * this is different from {@link #equals}.
+     *
+     * @return
+     *     {@code true} if contents of given object are equal to this; {@code false} otherwise.
+     */
+    public abstract boolean equalsContent(Object other);
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -238,19 +247,6 @@ public abstract class DatabaseObject
      */
     @Override
     public abstract int hashCode();
-
-    /**
-     * Returns the string representation of the SQL statement that creates the hypothetical 
-     * structure inside the DBMS that represents this object.
-     *
-     * @return
-     *     the SQL statement
-    public abstract String getCreateHypotheticalStatement();
-    public abstract void getCreateHypotheticalStatement();
-    public abstract void getMaterializeCreateStatement();
-    public abstract void getHypotheticalDropStatement();
-    public abstract void getMaterializeDropStatement();
-    */
 
     /**
      * Finds a database object that is contained in the given list whose name matches the given 

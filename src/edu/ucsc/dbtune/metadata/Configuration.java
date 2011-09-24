@@ -137,6 +137,22 @@ public class Configuration implements Iterable<Index>
     }
 
     /**
+     * checks if a given index is contained in the configuration. The comparison is done using the 
+     * {@link DatabaseObject#equalsContent} method.
+     *
+     * @param index
+     *     index that is looked for as part of this configuration
+     */
+    public boolean containsContent(Index index)
+    {
+        for (Index idx : _indexes)
+            if (idx.equalsContent(index))
+                return true;
+
+        return false;
+    }
+
+    /**
      * Whether the given configuration is contained in this one.
      *
      * @return
@@ -182,6 +198,23 @@ public class Configuration implements Iterable<Index>
     public Index getIndexAt(int position)
     {
         return _indexes.get(position);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof Configuration))
+            return false;
+
+        Configuration conf = (Configuration) other;
+
+        if (_indexes.containsAll(conf._indexes) && conf._indexes.containsAll(_indexes))
+            return true;
+
+        return false;
     }
 
     /**

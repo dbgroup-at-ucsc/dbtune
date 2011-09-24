@@ -15,6 +15,9 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.util;
 
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -330,6 +333,32 @@ public class Strings
      */
     public static <T> String str(T value) {
         return value == null ? "" : value.toString();
+    }
+
+    /**
+     * Returns a string containing the name of an index based on the contents of the index.
+     *
+     * @param indexes
+     *     list of indexes
+     * @return
+     *     a string containing the PG-dependent string representation of the given list, as the 
+     *     EXPLAIN INDEXES statement expects it
+     */
+    public static String getName(Index index)
+    {
+        StringBuilder str = new StringBuilder();
+        boolean first = true;
+
+        for (Column col : index) {
+            if (first)
+                first = false;
+            else
+                str.append("_");
+
+            str.append(col.getName());
+        }
+        str.append("_index");
+        return str.toString();
     }
 
     public static String join(String delimiter, Object... objects)

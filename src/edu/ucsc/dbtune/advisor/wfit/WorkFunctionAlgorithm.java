@@ -25,8 +25,11 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.sql.SQLException;
 
 /**
@@ -41,7 +44,6 @@ import java.sql.SQLException;
  */
 public class WorkFunctionAlgorithm 
 {
-    private WfaTrace        trace;
     private TotalWorkValues wf;
     private SubMachineArray submachines;
     private Workspace       workspace;
@@ -60,7 +62,7 @@ public class WorkFunctionAlgorithm
      * @param maxNumIndexes
      *      maximum number of indexes to consider per each state (partition)
      */
-    public WorkFunctionAlgorithm(Configuration allIndexes, IndexPartitions parts, int maxNumStates, int maxNumIndexes)
+    public WorkFunctionAlgorithm(Configuration allIndexes, int maxNumStates, int maxNumIndexes)
     {
         this.maxNumOfIndexes = maxNumIndexes;
         this.allIndexes      = allIndexes;
@@ -68,8 +70,9 @@ public class WorkFunctionAlgorithm
         this.wf              = new TotalWorkValues(maxNumStates,maxNumIndexes);
         this.submachines     = new SubMachineArray(0);
 
-        if (parts != null)
-            repartition(parts);
+        IndexPartitions parts = new IndexPartitions(allIndexes);
+
+        repartition(parts);
     }
 
     /**
@@ -173,7 +176,7 @@ public class WorkFunctionAlgorithm
         int newSubsetCount = newPartitions.subsetCount();
         int oldSubsetCount = submachines.length;
         SubMachineArray submachines2 = new SubMachineArray(newSubsetCount);
-        IndexBitSet overlappingSubsets = new IndexBitSet();
+        BitSet overlappingSubsets = new BitSet();
         
         // get the set of previously hot indexes
         IndexBitSet oldHotSet = new IndexBitSet();
@@ -187,7 +190,7 @@ public class WorkFunctionAlgorithm
         workspace.wf2.reallocate(newPartitions);
         
         for (int newSubsetNum = 0; newSubsetNum < newSubsetCount; newSubsetNum++) {
-            IndexPartitions.Subset newSubset = newPartitions.get(newSubsetNum);
+            Set<Index> newSubset = new HashSet<Index>(newPartitions.get(newSubsetNum));
             
             // translate old recommendation into a new one.
             IndexBitSet recBitSet = new IndexBitSet();
@@ -206,7 +209,7 @@ public class WorkFunctionAlgorithm
             // find overlapping subsets (required to recompute work function)
             overlappingSubsets.clear();
             for (int oldSubsetNum = 0; oldSubsetNum < submachines.length; oldSubsetNum++) {
-                if (newSubset.overlaps(submachines.get(oldSubsetNum).subset)) {
+                if (newSubset.retainAll(submachines.get(oldSubsetNum).subset)) {
                     overlappingSubsets.set(oldSubsetNum);
                 }
             }
@@ -286,7 +289,7 @@ public class WorkFunctionAlgorithm
         return transition;
     }
 
-    private static double transitionCost(IndexPartitions.Subset subset, int x, int y) {
+    private static double transitionCost(Set<Index> subset, int x, int y) {
         double transition = 0;
         int i = 0;
         for (Index index : subset) {
@@ -344,13 +347,6 @@ public class WorkFunctionAlgorithm
         return cost;
     }
 
-    /**
-     * @return the {@link WorkFunctionAlgorithm}'s work trace.
-     */
-    public WfaTrace getTrace() {
-        return trace;
-    }
-    
     private static class CostVector {
         private double[] vector;
         private int cap;
@@ -424,7 +420,7 @@ public class WorkFunctionAlgorithm
     }
     
     private static class SubMachine implements Iterable<Index> {
-        private IndexPartitions.Subset subset;
+        private Set<Index> subset;
         private int subsetNum;
         private int numIndexes;
         private int numStates;
@@ -433,7 +429,7 @@ public class WorkFunctionAlgorithm
         private Configuration candidateSet;
         private int[] indexIds;
         
-        SubMachine(Configuration candidateSet, IndexPartitions.Subset subset, int subsetNum, int state, IndexBitSet bitSet) {
+        SubMachine(Configuration candidateSet, Set<Index> subset, int subsetNum, int state, IndexBitSet bitSet) {
             this.subset         = subset;
             this.subsetNum      = subsetNum;
             this.numIndexes     = subset.size();
@@ -648,7 +644,7 @@ public class WorkFunctionAlgorithm
         }
 
         void reallocate(IndexPartitions newPartitions) {
-            int newValueCount = newPartitions.wfaStateCount();
+            int newValueCount = 1 << newPartitions.indexCount();
             if (newValueCount > values.length) {
                 values = new double[newValueCount];
                 predecessor = new int[newValueCount];

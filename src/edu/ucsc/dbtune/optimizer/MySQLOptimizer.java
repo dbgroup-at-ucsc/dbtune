@@ -74,7 +74,7 @@ public class MySQLOptimizer extends Optimizer
         drop(configuration, connection);
 
         return new PreparedSQLStatement(
-                sql, plan, cost,
+                sql, plan, this, cost,
                 Arrays.copyOf(new double[0], configuration.size()),
                 configuration, used, 1);
     }

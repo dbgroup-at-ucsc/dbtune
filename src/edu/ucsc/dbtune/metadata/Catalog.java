@@ -133,6 +133,15 @@ public class Catalog extends DatabaseObject
      * {@inheritDoc}
      */
     @Override
+    public boolean equalsContent(Object other)
+    {
+        throw new RuntimeException("not implemented yet");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int hashCode()
     {
         return name.hashCode();

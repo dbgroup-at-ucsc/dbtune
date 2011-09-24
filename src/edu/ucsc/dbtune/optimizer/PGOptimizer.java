@@ -119,6 +119,8 @@ public class PGOptimizer extends Optimizer
         SQLStatementPlan sqlPlan;
         Configuration    usedConf;
         Statement        stmt;
+        String           indexPositions;
+        String           indexOverhead;
         double[]         updateCost;
         double           selectCost;
         int[]            positions;
@@ -134,12 +136,20 @@ public class PGOptimizer extends Optimizer
                     sql.getSQLCategory() + " not the same to " + 
                     SQLCategory.from(rs.getString("category")));
 
-        selectCost = rs.getDouble("qcost");
+        selectCost     = rs.getDouble("qcost");
+        indexPositions = rs.getString("indexes").trim();
+        indexOverhead  = rs.getString("index_overhead").trim();
 
         if(indexes.size() > 0) {
-            updateCost = toDoubleArrayFromIndexed(rs.getString("index_overhead").split(" "), "=");
-            positions  = toIntegerArray(rs.getString("indexes").split(" "));
-            usedConf   = getUsedConfiguration(indexes, positions);
+            updateCost = toDoubleArrayFromIndexed(indexOverhead.split(" "), "=");
+
+            if (!indexPositions.equals(""))
+                positions = toIntegerArray(indexPositions.split(" "));
+            else
+                positions = new int[0];
+
+            usedConf = getUsedConfiguration(indexes, positions);
+
         } else {
             usedConf   = new Configuration("empty");
             updateCost = new double[0];
@@ -157,7 +167,7 @@ public class PGOptimizer extends Optimizer
         if(obtainPlan)
             sqlPlan = getPlan(connection,sql);
 
-        return new PreparedSQLStatement(sql, sqlPlan, selectCost, updateCost, indexes, usedConf, 1);
+        return new PreparedSQLStatement(sql, sqlPlan, this, selectCost, updateCost, indexes, usedConf, 1);
     }
 
     /**

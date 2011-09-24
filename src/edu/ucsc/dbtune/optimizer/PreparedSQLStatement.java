@@ -88,12 +88,13 @@ public class PreparedSQLStatement
     public PreparedSQLStatement(
             SQLStatement sql,
             double cost,
+            Optimizer optimizer,
             Configuration configuration,
             Configuration usedConfiguration,
             int optimizationCount)
         throws SQLException
     {
-        this(sql, null, cost, null, configuration, usedConfiguration, optimizationCount);
+        this(sql, null, optimizer, cost, null, configuration, usedConfiguration, optimizationCount);
     }
 
     /**
@@ -122,6 +123,7 @@ public class PreparedSQLStatement
     public PreparedSQLStatement(
             SQLStatement statement,
             SQLStatementPlan plan,
+            Optimizer optimizer,
             double cost,
             double[] updateCosts,
             Configuration configuration,
@@ -134,6 +136,7 @@ public class PreparedSQLStatement
         this.cost              = cost;
         this.updateCosts       = updateCosts;
         this.configuration     = configuration;
+        this.optimizer         = optimizer;
         this.usedConfiguration = usedConfiguration;
         this.optimizationCount = optimizationCount;
         this.analysisTime      = 0.0;
@@ -157,10 +160,11 @@ public class PreparedSQLStatement
      */
     public PreparedSQLStatement(PreparedSQLStatement other)
     {
-        this.statement         = other.statement;
-        this.plan              = other.plan;
-        this.cost              = other.cost;
         this.configuration     = other.configuration;
+        this.cost              = other.cost;
+        this.optimizer         = other.optimizer;
+        this.plan              = other.plan;
+        this.statement         = other.statement;
         this.updateCosts       = other.updateCosts;
         this.updateCost        = other.updateCost;
         this.usedConfiguration = other.usedConfiguration;
@@ -197,18 +201,16 @@ public class PreparedSQLStatement
      * <p>
      * In other words, the purpose of this method is to have it execute (a sort-of 'mini') what-if 
      * optimization using the original context that the optimizer used when it optimized the 
-     * statement, the information contained in {@link #getConfiguration}) among them. For example:
-     * <p>
-     * XXX: write example
+     * statement, the information contained in {@link #getConfiguration}) among them.
      * <p>
      * This base implementation does a 'naive' what-if optimization by comparing the given 
      * configuration against the one contained in {@code statement}, proceeding in the following 
      * way:
      * <ul>
-     * <li> If {@link #getUsedConfiguration} is contained in the given {@code configuration}, it 
-     * produces a new statement identical.
-     * <li> If not, then the statement is explained again but using the optimizer, with {@code 
-     * configuration} as the new configuration.
+     * <li> If {@link #getUsedConfiguration} is exactly equal to the given {@code configuration}, it 
+     * produces a new statement identical to {@code this}.
+     * <li> If not, then the statement is explained again, with {@code configuration} as the new 
+     * configuration.
      * </ul>
      *
      * @param configuration
@@ -222,7 +224,10 @@ public class PreparedSQLStatement
     public PreparedSQLStatement explain(Configuration configuration)
         throws SQLException
     {
-        throw new SQLException("Not implemented yet");
+        if (configuration == getUsedConfiguration())
+            return new PreparedSQLStatement(this);
+        else
+            return optimizer.explain(statement, configuration);
     }
 
     /**

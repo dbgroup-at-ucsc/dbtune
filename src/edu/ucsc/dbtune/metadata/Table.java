@@ -225,6 +225,15 @@ public class Table extends DatabaseObject
      * {@inheritDoc}
      */
     @Override
+    public boolean equalsContent(Object other)
+    {
+        throw new RuntimeException("not implemented yet");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int hashCode()
     {
         return 31 * schema.getCatalog().hashCode() * schema.hashCode() * name.hashCode(); //type;

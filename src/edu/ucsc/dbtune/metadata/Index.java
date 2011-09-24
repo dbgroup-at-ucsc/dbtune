@@ -16,6 +16,7 @@
 package edu.ucsc.dbtune.metadata;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import java.sql.SQLException;
@@ -25,7 +26,7 @@ import java.sql.SQLException;
  *
  * @author Ivo Jimenez
  */
-public class Index extends DatabaseObject
+public class Index extends DatabaseObject implements Iterable<Column>
 {
     public static final int     UNKNOWN        = 0;
     public static final int     B_TREE         = 1;
@@ -518,10 +519,44 @@ public class Index extends DatabaseObject
     }
 
     /**
-     * @return create index statement.
+     * {@inheritDoc}
      */
-    public String getCreateStatement() {
-        throw new RuntimeException("Not implemented here");
+    @Override
+    public boolean equalsContent(Object other)
+    {
+        if (!(other instanceof Index))
+            return false;
+
+        Index idx = (Index) other;
+
+        if (columns.size() != idx.columns.size())
+            return false;
+
+        for (int i = 0; i < idx.size(); i++) {
+            if (columns.get(i) != idx.columns.get(i))
+                return false;
+
+            if (descending.get(i) != idx.descending.get(i))
+                return false;
+        }
+
+        if (type != idx.type ||
+                unique != idx.unique ||
+                primary != idx.primary ||
+                clustered != idx.clustered ||
+                materialized != idx.materialized ||
+                scanOption != idx.scanOption)
+            return false;
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Iterator<Column> iterator() {
+        return columns.iterator();
     }
 
     /**

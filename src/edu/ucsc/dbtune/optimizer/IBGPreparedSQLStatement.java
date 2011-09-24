@@ -15,7 +15,6 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.metadata.Configuration;
@@ -34,7 +33,6 @@ import java.sql.SQLException;
 public class IBGPreparedSQLStatement extends PreparedSQLStatement
 {
     private IndexBenefitGraph ibg;
-    private InteractionBank   bank;
 
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
@@ -60,7 +58,6 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement
 
         this.ibg               = ibg;
         this.configuration     = configuration;
-        this.bank              = ibg.getInteractionBank();
         this.optimizationCount = optimizationCount;
         this.analysisTime      = ibg.getOverhead();
     }
@@ -73,7 +70,6 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement
         super(other);
 
         this.ibg               = other.ibg;
-        this.bank              = other.ibg.getInteractionBank();
         this.optimizationCount = other.optimizationCount;
         this.analysisTime      = other.ibg.getOverhead();
     }
@@ -83,14 +79,6 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement
      */
     public IndexBenefitGraph getIndexBenefitGraph(){
         return ibg;
-    }
-
-    /**
-     * @return an {@link InteractionBank} instance
-     *      which will be used in the cost calculation of this query.
-     */
-    public InteractionBank getInteractionBank(){
-        return bank;
     }
 
     /**

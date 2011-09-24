@@ -1,40 +1,33 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
+/* **************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                         *
+ *                                                                              *
+ *   Licensed under the Apache License, Version 2.0 (the "License");            *
+ *   you may not use this file except in compliance with the License.           *
+ *   You may obtain a copy of the License at                                    *
+ *                                                                              *
+ *       http://www.apache.org/licenses/LICENSE-2.0                             *
+ *                                                                              *
+ *   Unless required by applicable law or agreed to in writing, software        *
+ *   distributed under the License is distributed on an "AS IS" BASIS,          *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+ *   See the License for the specific language governing permissions and        *
+ *   limitations under the License.                                             *
+ * **************************************************************************** */
 package edu.ucsc.dbtune.advisor.interactions;
 
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.sql.SQLException;
 
 /**
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
  */
 public class IndexStatisticsFunction {
-    private int indexStatisticsWindow;
-
     private Map<IndexPair, MeasurementWindow> doiWindows;
     private Map<Index, MeasurementWindow>     benefitWindows;
     private double          currentTimeStamp;
@@ -55,11 +48,11 @@ public class IndexStatisticsFunction {
         this.doiWindows            = new HashMap<IndexPair,MeasurementWindow>();
         this.benefitWindows        = new HashMap<Index,MeasurementWindow>();
         this.currentTimeStamp      = 0;
-        this.indexStatisticsWindow = indexStatisticsWindowSize;
-        this.doi                   = new DoiFunction(new IndexStatisticsFunction(indexStatisticsWindow));
-        this.benefit               = new BenefitFunction(new IndexStatisticsFunction(indexStatisticsWindow));
+        this.doi                   = new DoiFunction(this);
+        this.benefit               = new BenefitFunction(this);
     }
 
+    /*
     public void addQuery(IBGPreparedSQLStatement queryInfo, Configuration matSet) throws SQLException {
         Configuration conf = queryInfo.getConfiguration();
 
@@ -108,14 +101,6 @@ public class IndexStatisticsFunction {
         currentTimeStamp += queryInfo.explain(bsConf).getTotalCost();
     }
 
-    private void clearIndexPairs(){        
-        tempPair.a = null; tempPair.b = null;
-    }
-
-    private void updateIndexPairs(Index a, Index b){
-        tempPair.a = a; tempPair.b = b;
-    }
-
     private void addsMeasurement(Index a, Index b, double doi) {
         // add measurement, creating new window if necessary
         updateIndexPairs(a, b);
@@ -126,6 +111,15 @@ public class IndexStatisticsFunction {
         }
         doiwin.put(doi, currentTimeStamp);
         clearIndexPairs();
+    }
+    */
+
+    private void clearIndexPairs(){        
+        tempPair.a = null; tempPair.b = null;
+    }
+
+    private void updateIndexPairs(Index a, Index b){
+        tempPair.a = a; tempPair.b = b;
     }
 
     public double doi(Index a, Index b) {
