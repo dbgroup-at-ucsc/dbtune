@@ -16,6 +16,7 @@
 package edu.ucsc.dbtune.metadata;
 
 import java.sql.SQLException;
+
 import static edu.ucsc.dbtune.metadata.SQLTypes.isValidType;
 
 /**
@@ -25,38 +26,48 @@ import static edu.ucsc.dbtune.metadata.SQLTypes.isValidType;
  */
 public class Column extends DatabaseObject
 {
-    Table   table;
     int     type;
     boolean isNull;
     boolean isDefault;
     String  defaultValue;
 
     /**
+     * Creates a column with the given name.
+     *
+     * @param table
+     *     table where the new column will be contained
+     * @param name
+     *     name assigned to the column.
+     * @throws SQLException
+     *     if a column with the given name is already contained in the table
+     */
+    public Column(Table table, String name) throws SQLException
+    {
+        this(table,name,SQLTypes.UNKNOWN);
+    }
+
+    /**
      * Creates a column with the given name and type. The type should be one of the values defined 
      * in SQLTypes.
      *
+     * @param table
+     *     table where the new column will be contained
      * @param name
      *     name assigned to the column.
      * @param type
      *     data type
-     * @param table
-     *     table where the new column will be contained
      * @throws SQLException
      *     if a column with the given name is already contained in the table
      */
     public Column(Table table, String name, int type) throws SQLException
     {
-        super(name);
+        super(table, name);
 
-        this.table        = null;
         this.isNull       = true;
         this.isDefault    = true;
         this.defaultValue = "";
-        this.table        = table;
 
         setDataType(type);
-
-        table.add(this);
     }
 
     /**
@@ -69,7 +80,6 @@ public class Column extends DatabaseObject
     {
         super(other);
 
-        this.table        = other.table;
         this.type         = other.type;
         this.isNull       = other.isNull;
         this.isDefault    = other.isDefault;
@@ -88,17 +98,6 @@ public class Column extends DatabaseObject
             throw new RuntimeException("Invalid data type " + type);
 
         this.type = type;
-    }
-
-    /**
-     * Returns the table that contains this column.
-     *
-     * @return
-     *     table containing the column
-     */
-    public Table getTable()
-    {
-        return table;
     }
 
     /**
@@ -135,32 +134,34 @@ public class Column extends DatabaseObject
     }
 
     /**
-     * Returns the one-based position of the column with respect to its containing table.
+     * Returns the table that contains this column. Convenience method that accomplishes what {@link 
+     * #getContainer} does but without requiring the user to cast. In other words, the following is 
+     * true {@code getTable() == (Table)getContainer()}.
      *
      * @return
-     *     the ordinal position of this column
+     *     the schema that contains this object
      */
-    public int getOrdinalPosition()
+    public Table getTable()
     {
-        return table._columns.indexOf(this) + 1;
+        return (Table) container;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(Object other)
+    public DatabaseObject newContainee(String name) throws SQLException
     {
-        if (!(other instanceof Column))
-            return false;
+        throw new SQLException("Column can't contain objects");
+    }
 
-        Column col = (Column) other;
-
-        return
-            table.getSchema().getCatalog() == col.table.getSchema().getCatalog() &&
-            table.getSchema() == col.table.getSchema() &&
-            table == col.table &&
-            name.equals(col.name);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isValid(DatabaseObject dbo)
+    {
+        return false;
     }
 
     /**
@@ -170,18 +171,5 @@ public class Column extends DatabaseObject
     public boolean equalsContent(Object other)
     {
         throw new RuntimeException("not implemented yet");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode()
-    {
-        return 
-            31 * 
-            table.getSchema().getCatalog().hashCode() * 
-            table.getSchema().hashCode() * 
-            table.getName().hashCode();
     }
 }

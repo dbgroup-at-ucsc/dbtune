@@ -15,17 +15,14 @@
  * ************************************************************************** */
 package edu.ucsc.dbtune.cli
 
-import edu.ucsc.dbtune.cli.metadata.CoreCatalog
-import edu.ucsc.dbtune.cli.metadata.Schema
-
 import edu.ucsc.dbtune.DatabaseSystem
 import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.Environment
 
 import java.util.Properties
 
-import edu.ucsc.dbtune.cli.metadata.Schema._
 import edu.ucsc.dbtune.DatabaseSystem._
 import edu.ucsc.dbtune.util.EnvironmentProperties.DBMS
 import edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_URL
@@ -35,9 +32,28 @@ import edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD
 
 /** This class provides a hub for most of the operations that a user can execute through the CLI 
   */
-class Database(dbms:DatabaseSystem) extends CoreCatalog(dbms.getCatalog) {
-  var schemas:List[Schema] = asScalaSchema(dbms.getCatalog.getSchemas)
+class Database(dbms:DatabaseSystem) extends Catalog(dbms.getCatalog) {
 
+  /** Creates a configuration containing the given set of indexes. Index names are expected to be 
+   * fully qualified, otherwise an exception will be thrown. The indexes are created as {@link 
+   * Index.SECONDARY}, {@link Index.UNCLUSTERED} and {@link NON_UNIQUE}.
+    *
+    * @param indexIds
+    *   sql statement
+    * @return
+    *   a configuration
+    * @throw SQLException
+    *   if one of the indexes isn't found in the system's catalog
+    * @see edu.ucsc.dbtune.metadata
+  def configuration(indexNames:String*) : Configuration =  {
+    var conf = new Configuration("")
+
+    for (indexName <- indexNames) {
+      conf.add(dbms.getCatalog.findIndex(indexName))
+    }
+  }
+    */
+  
   /** Recommends indexes for the given SQL statement
     *
     * @param sql
@@ -82,6 +98,9 @@ class Database(dbms:DatabaseSystem) extends CoreCatalog(dbms.getCatalog) {
 
 object Database
 {
+  /** Singleton */
+  //var INSTANCE = None
+
   /** Creates to  Database containing the metadata information about a DB.
     *
     * @param url
@@ -102,6 +121,50 @@ object Database
     properties.setProperty(JDBC_URL,  url)
     properties.setProperty(OPTIMIZER, DBMS)
 
-    return new Database(newDatabaseSystem(properties))
+    new Database(newDatabaseSystem(properties))
+
+    //Database.INSTANCE = new Database(newDatabaseSystem(properties))
+  }
+
+  /** Recommends indexes for the given SQL statement
+    *
+    * @param sql
+    *   sql statement
+    * @return
+    *   a configuration
+    */
+  def recommend(sql:String) /*: Configuration*/ =  {
+    //INSTANCE.recommend(sql)
+  }
+  
+  /** Explains a SQL statement
+    *
+    * @param sql
+    *   sql statement
+    * @return
+    *   a configuration
+    */
+  def explain(sql:String) /*: PreparedSQLStatement*/ =  {
+    //INSTANCE.explain(sql)
+  }
+  
+  /** Explains a SQL statement
+    *
+    * @param sql
+    *   sql statement
+    * @param conf
+    *   configuration to be used
+    * @return
+    *   a configuration
+    */
+  def explain(sql:String, conf:Configuration) /*: PreparedSQLStatement */ =  {
+    //INSTANCE.getOptimizer.explain(sql, conf)
+  }
+  
+  /** Closes the connection to the DBMS
+    */
+  def close() =  {
+    //INSTANCE.getConnection.close
+    //INSTANCE = None
   }
 }

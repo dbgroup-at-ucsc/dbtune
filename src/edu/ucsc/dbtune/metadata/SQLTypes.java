@@ -51,6 +51,8 @@ public class SQLTypes
     public static final int WCHAR                 = 636;
     public static final int DATETIME              = 637;
 
+    static final int UNKNOWN = -1;
+
     /**
      * Returns the String representation of a type cod
      *
@@ -59,82 +61,47 @@ public class SQLTypes
      */
     public static String codeToName( int type )
     {
-    if( type == SQLTypes.BIGINT )
-    {
-        return "BIGINT";
-    }
-    else if( type == SQLTypes.CHAR )
-        {
-        return "CHAR";
-    }
-        else if( type == SQLTypes.VARCHAR )
-        {
-        return "VARCHAR";
-    }
-        else if( type == SQLTypes.DATE )
-        {
-        return "DATE";
-    }
-        else if( type == SQLTypes.DECIMAL )
-        {
-        return "DECIMAL";
-    }
-        else if( type == SQLTypes.DOUBLE ){
-        return "DOUBLE";
-    }
-        else if( type == SQLTypes.FLOAT )
-        {
-        return "FLOAT";
-    }
-        else if( type == SQLTypes.INTEGER )
-        {
-        return "INTEGER";
-    }
-        else if( type == SQLTypes.NUMERIC )
-        {
-        return "NUMERIC";
-    }
-        else if( type == SQLTypes.REAL )
-        {
-        return "REAL";
-    }
-        else if( type == SQLTypes.SMALLINT )
-        {
-        return "SMALLINT";
-    }
-        else if( type == SQLTypes.TIME )
-        {
-        return "TIME";
-    }
-        else if( type == SQLTypes.TIMESTAMP )
-        {
-        return "TIMESTAMP";
-    }
-        else if( type == SQLTypes.TINYINT )
-        {
-        return "TINYINT";
-    }
-        else if( type == SQLTypes.PICTURE )
-        {
-        return "PICTURE";
-    }
-        else if( type == SQLTypes.NCHAR )
-        {
-        return "NCHAR";
-    }
-        else if( type == SQLTypes.LARGEINT )
-        {
-        return "LARGEINT";
-    }
-        else if( type == SQLTypes.INTERVAL )
-        {
-        return "INTERVAL";
-    }
-        else if( type == SQLTypes.DATETIME )
-        {
-        return "DATETIME";
-    }
-    return "NO TYPE";
+        if( type == BIGINT )
+            return "BIGINT";
+        else if( type == CHAR )
+            return "CHAR";
+        else if( type == VARCHAR )
+            return "VARCHAR";
+        else if( type == DATE )
+            return "DATE";
+        else if( type == DECIMAL )
+            return "DECIMAL";
+        else if( type == DOUBLE )
+            return "DOUBLE";
+        else if( type == FLOAT )
+            return "FLOAT";
+        else if( type == INTEGER )
+            return "INTEGER";
+        else if( type == NUMERIC )
+            return "NUMERIC";
+        else if( type == REAL )
+            return "REAL";
+        else if( type == SMALLINT )
+            return "SMALLINT";
+        else if( type == TIME )
+            return "TIME";
+        else if( type == TIMESTAMP )
+            return "TIMESTAMP";
+        else if( type == TINYINT )
+            return "TINYINT";
+        else if( type == PICTURE )
+            return "PICTURE";
+        else if( type == NCHAR )
+            return "NCHAR";
+        else if( type == LARGEINT )
+            return "LARGEINT";
+        else if( type == INTERVAL )
+            return "INTERVAL";
+        else if( type == DATETIME )
+            return "DATETIME";
+        else if( type == UNKNOWN )
+            return "UNKNOWN";
+        return "NO TYPE";
     }
 
     /**
@@ -146,37 +113,29 @@ public class SQLTypes
      */
     public static int getSize( int type )
     {
-    if( type == SQLTypes.TINYINT )
-        {
-        return 1;
-    }
-        else if( type == SQLTypes.CHAR )
-        {
-        return 1;
-    }
-        else if( type == SQLTypes.SMALLINT )
-        {
-        return 2;
-    }
-        else if( type == SQLTypes.INTEGER
-        || type == SQLTypes.TIME
-        || type == SQLTypes.DATE
-        || type == SQLTypes.DATETIME
-        || type == SQLTypes.REAL )
-    {
-        return 4;
-    }
-        else if( type == SQLTypes.TIMESTAMP
-        || type == SQLTypes.BIGINT
-        || type == SQLTypes.DOUBLE
-        || type == SQLTypes.LARGEINT )
-    {
-        return 8;
-    }
+        if( type == UNKNOWN)
+            return -1;
+        if( type == TINYINT )
+            return 1;
+        else if( type == CHAR )
+            return 1;
+        else if( type == SMALLINT )
+            return 2;
+        else if( type == INTEGER
+                || type == TIME
+                || type == DATE
+                || type == DATETIME
+                || type == REAL )
+            return 4;
+        else if( type == TIMESTAMP
+                || type == BIGINT
+                || type == DOUBLE
+                || type == LARGEINT )
+            return 8;
 
-    // NUMERIC, DECIMAL, FLOAT, CHARACTER, NCHAR, PICTURE, INTERVAL and VARCHAR
-    // are set manually, so we can't have a way of knowing its size
-    return -1;
+        // NUMERIC, DECIMAL, FLOAT, CHARACTER, NCHAR, PICTURE, INTERVAL and VARCHAR
+        // are set manually, so we can't have a way of knowing its size
+        return -1;
     }
 
 
@@ -189,99 +148,61 @@ public class SQLTypes
      */
     public static int nameToCode( String type )
     {
-    if( type.equals( "BIGINT" ) )
-        {
-        return SQLTypes.BIGINT;
-    }
+        if( type.equals( "BIGINT" ) )
+            return BIGINT;
         else if( type.equals( "CHAR" ) || type.equals( "CHARACTER" ) )
-        {
-        return SQLTypes.CHAR;
-    }
+            return CHAR;
         else if( type.equals( "DATETIME" ) )
-        {
-        return SQLTypes.DATETIME;
-    }
+            return DATETIME;
         else if( type.equals( "DATE" ) )
-        {
-        return SQLTypes.DATE;
-    }
+            return DATE;
         else if( type.equals( "DECIMAL" ) )
-        {
-        return SQLTypes.DECIMAL;
-    }
+            return DECIMAL;
         else if( type.equals( "DOUBLE" ) )
-        {
-        return SQLTypes.DOUBLE;
-    }
+            return DOUBLE;
         else if( type.equals( "FLOAT" ) )
-        {
-        return SQLTypes.FLOAT;
-    }
+            return FLOAT;
         else if( type.equals( "INT" ) ||
-         type.equals( "SIGNED INT" ) ||
-         type.equals( "UNSIGNED INT" ) ||
-         type.equals( "INTEGER" ) )
-    {
-        return SQLTypes.INTEGER;
-    }
+                type.equals( "SIGNED INT" ) ||
+                type.equals( "UNSIGNED INT" ) ||
+                type.equals( "INTEGER" ) )
+            return INTEGER;
         else if( type.equals( "NUMERIC" ) ||
-         type.equals( "SIGNED NUMERIC" ) ||
-         type.equals( "UNSIGNED NUMERIC" ) )
-    {
-        return SQLTypes.NUMERIC;
-    }
+                type.equals( "SIGNED NUMERIC" ) ||
+                type.equals( "UNSIGNED NUMERIC" ) )
+            return NUMERIC;
         else if( type.equals( "REAL" ) )
-        {
-        return SQLTypes.REAL;
-    }
+            return REAL;
         else if( type.equals( "SMALLINT" ) ||
-         type.equals( "SIGNED SMALLINT" ) ||
-         type.equals( "UNSIGNED SMALLINT" ) )
-    {
-        return SQLTypes.SMALLINT;
-    }
+                type.equals( "SIGNED SMALLINT" ) ||
+                type.equals( "UNSIGNED SMALLINT" ) )
+            return SMALLINT;
         else if( type.equals( "TIME" ) )
-        {
-        return SQLTypes.TIME;
-    }
+            return TIME;
         else if( type.equals( "TIMESTAMP" ) )
-        {
-        return SQLTypes.TIMESTAMP;
-    }
+            return TIMESTAMP;
         else if( type.equals( "TINYINT" ) ||
-         type.equals( "SIGNED TINYINT" ) ||
-         type.equals( "UNSIGNED TINYINT" ) )
-    {
-        return SQLTypes.TINYINT;
-    }
+                type.equals( "SIGNED TINYINT" ) ||
+                type.equals( "UNSIGNED TINYINT" ) )
+            return TINYINT;
         else if( type.equals( "VARCHAR" ) )
-        {
-        return SQLTypes.VARCHAR;
-    }
+            return VARCHAR;
         else if( type.equals( "TIME" ) )
-        {
-        return SQLTypes.TIME;
-    }
+            return TIME;
         else if( type.equals( "PICTURE" ) )
-        {
-        return SQLTypes.PICTURE;
-    }
+            return PICTURE;
         else if( type.equals( "NCHAR" ) )
-        {
-        return SQLTypes.NCHAR;
-    }
+            return NCHAR;
         else if( type.equals( "LARGEINT" ) ||
-         type.equals( "SIGNED LARGEINT" ) ||
-         type.equals( "UNSIGNED LARGEINT" ) )
-    {
-        return SQLTypes.LARGEINT;
-    }
+                type.equals( "SIGNED LARGEINT" ) ||
+                type.equals( "UNSIGNED LARGEINT" ) )
+            return LARGEINT;
         else if( type.equals( "INTERVAL" ) )
-        {
-        return SQLTypes.NCHAR;
-    }
+            return NCHAR;
+        else if( type.equals( "UNKNOWN" ) )
+            return UNKNOWN;
 
-    return -1;
+        return -1;
     }
 
     /**
@@ -296,25 +217,26 @@ public class SQLTypes
     {
     switch( type )
         {
-        case SQLTypes.TIME:
-        case SQLTypes.TIMESTAMP:
-        case SQLTypes.DATE:
-        case SQLTypes.PICTURE:
-        case SQLTypes.INTERVAL:
-        case SQLTypes.VARCHAR:
-        case SQLTypes.CHAR:
-        case SQLTypes.NCHAR:
+        case TIME:
+        case TIMESTAMP:
+        case DATE:
+        case PICTURE:
+        case INTERVAL:
+        case VARCHAR:
+        case CHAR:
+        case NCHAR:
+        case UNKNOWN:
         return false;
-        case SQLTypes.INTEGER:
-        case SQLTypes.BIGINT:
-        case SQLTypes.DECIMAL:
-        case SQLTypes.DOUBLE:
-        case SQLTypes.FLOAT:
-        case SQLTypes.NUMERIC:
-        case SQLTypes.REAL:
-        case SQLTypes.SMALLINT:
-        case SQLTypes.TINYINT:
-        case SQLTypes.LARGEINT:
+        case INTEGER:
+        case BIGINT:
+        case DECIMAL:
+        case DOUBLE:
+        case FLOAT:
+        case NUMERIC:
+        case REAL:
+        case SMALLINT:
+        case TINYINT:
+        case LARGEINT:
         return true;
         default:
         return false;
@@ -332,26 +254,27 @@ public class SQLTypes
     {
     switch( type )
         {
-        case SQLTypes.TIME:
-        case SQLTypes.TIMESTAMP:
-        case SQLTypes.DATE:
-        case SQLTypes.DATETIME:
+        case TIME:
+        case TIMESTAMP:
+        case DATE:
+        case DATETIME:
         return true;
-        case SQLTypes.PICTURE:
-        case SQLTypes.VARCHAR:
-        case SQLTypes.CHAR:
-        case SQLTypes.NCHAR:
-        case SQLTypes.INTERVAL:
-        case SQLTypes.INTEGER:
-        case SQLTypes.BIGINT:
-        case SQLTypes.DECIMAL:
-        case SQLTypes.DOUBLE:
-        case SQLTypes.FLOAT:
-        case SQLTypes.NUMERIC:
-        case SQLTypes.REAL:
-        case SQLTypes.SMALLINT:
-        case SQLTypes.TINYINT:
-        case SQLTypes.LARGEINT:
+        case PICTURE:
+        case VARCHAR:
+        case CHAR:
+        case NCHAR:
+        case INTERVAL:
+        case INTEGER:
+        case BIGINT:
+        case DECIMAL:
+        case DOUBLE:
+        case FLOAT:
+        case NUMERIC:
+        case REAL:
+        case SMALLINT:
+        case TINYINT:
+        case LARGEINT:
+        case UNKNOWN:
         default:
         return false;
     }
@@ -368,26 +291,27 @@ public class SQLTypes
     {
     switch( type )
         {
-        case SQLTypes.VARCHAR:
-        case SQLTypes.CHAR:
-        case SQLTypes.NCHAR:
-        case SQLTypes.PICTURE:
+        case VARCHAR:
+        case CHAR:
+        case NCHAR:
+        case PICTURE:
         return true;
-        case SQLTypes.TIME:
-        case SQLTypes.TIMESTAMP:
-        case SQLTypes.DATE:
-        case SQLTypes.DATETIME:
-        case SQLTypes.INTERVAL:
-        case SQLTypes.INTEGER:
-        case SQLTypes.BIGINT:
-        case SQLTypes.DECIMAL:
-        case SQLTypes.DOUBLE:
-        case SQLTypes.FLOAT:
-        case SQLTypes.NUMERIC:
-        case SQLTypes.REAL:
-        case SQLTypes.SMALLINT:
-        case SQLTypes.TINYINT:
-        case SQLTypes.LARGEINT:
+        case TIME:
+        case TIMESTAMP:
+        case DATE:
+        case DATETIME:
+        case INTERVAL:
+        case INTEGER:
+        case BIGINT:
+        case DECIMAL:
+        case DOUBLE:
+        case FLOAT:
+        case NUMERIC:
+        case REAL:
+        case SMALLINT:
+        case TINYINT:
+        case LARGEINT:
+        case UNKNOWN:
         default:
         return false;
     }
@@ -407,26 +331,27 @@ public class SQLTypes
     {
         switch( type )
         {
-            case SQLTypes.VARCHAR:
-            case SQLTypes.CHAR:
-            case SQLTypes.NCHAR:
-            case SQLTypes.WCHAR:
-            case SQLTypes.PICTURE:
-            case SQLTypes.TIME:
-            case SQLTypes.TIMESTAMP:
-            case SQLTypes.DATE:
-            case SQLTypes.DATETIME:
-            case SQLTypes.INTERVAL:
-            case SQLTypes.INTEGER:
-            case SQLTypes.BIGINT:
-            case SQLTypes.DECIMAL:
-            case SQLTypes.DOUBLE:
-            case SQLTypes.FLOAT:
-            case SQLTypes.NUMERIC:
-            case SQLTypes.REAL:
-            case SQLTypes.SMALLINT:
-            case SQLTypes.TINYINT:
-            case SQLTypes.LARGEINT:
+            case VARCHAR:
+            case CHAR:
+            case NCHAR:
+            case WCHAR:
+            case PICTURE:
+            case TIME:
+            case TIMESTAMP:
+            case DATE:
+            case DATETIME:
+            case INTERVAL:
+            case INTEGER:
+            case BIGINT:
+            case DECIMAL:
+            case DOUBLE:
+            case FLOAT:
+            case NUMERIC:
+            case REAL:
+            case SMALLINT:
+            case TINYINT:
+            case LARGEINT:
+            case UNKNOWN:
                 return true;
             default:
                 return false;

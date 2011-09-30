@@ -29,12 +29,12 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="unit">
+  <target name="unit" depends="compile.test">
     <ant dir="." antfile="common.xml" target="unit">
       <reference refid="compile.classpath" />
     </ant>
   </target>
-  <target name="functional">
+  <target name="functional" depends="compile.test">
     <ant dir="." antfile="common.xml" target="functional">
       <reference refid="compile.classpath" />
     </ant>
@@ -42,7 +42,7 @@
 
   <!-- extensions -->
   <target name="compile.all" depends="compile">
-    <foreach list="${extensions}" param="extension" target="compile.extension"/>
+    <foreach list="${ext.lst}" param="extension" target="compile.extension"/>
   </target>
   <target name="compile.extension">
     <ant dir="${ext.dir}/${extension}" antfile="build.xml" target="compile">
@@ -52,7 +52,7 @@
     </ant>
   </target>
   <target name="compile.test.all" depends="compile.all,compile.test">
-    <foreach list="${extensions}" param="extension" target="compile.test.extension"/>
+    <foreach list="${ext.lst}" param="extension" target="compile.test.extension"/>
   </target>
   <target name="compile.test.extension">
     <ant dir="${ext.dir}/${extension}" antfile="build.xml" target="compile.test">

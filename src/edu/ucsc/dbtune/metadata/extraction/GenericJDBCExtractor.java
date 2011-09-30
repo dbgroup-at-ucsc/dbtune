@@ -149,7 +149,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
 
         String[] tableTypes = {"TABLE"};
 
-        for (Schema sch : catalog.getSchemas()) {
+        for (Schema sch : catalog) {
 
             if (!swappedTerms)
                 rs = meta.getTables(null, sch.getName(), null, tableTypes);
@@ -189,9 +189,9 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         if (meta == null)
             throw new SQLException("Connection " + connection + " doesn't handle JDBC metadata");
 
-        for(Schema sch : catalog.getSchemas()) {
+        for(Schema sch : catalog.schemas()) {
 
-            for(Table table : sch.getTables()) {
+            for(Table table : sch.tables()) {
 
                 if(!swappedTerms)
                     rs = meta.getColumns(null, sch.getName(), table.getName(), "%");
@@ -242,8 +242,8 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         if (meta == null)
             throw new SQLException("Connection " + connection + " doesn't handle JDBC metadata");
 
-        for(Schema sch : catalog.getSchemas()) {
-            for(Table table : sch.getTables()) {
+        for(Schema sch : catalog.schemas()) {
+            for(Table table : sch.tables()) {
 
                 indexToColumns = new HashMap<Integer,Column>();
                 indexName      = "";
@@ -277,7 +277,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
 
                             isUnique  = !rs.getBoolean("non_unique");
                             indexName = rs.getString("index_name");
-                            index     = new Index(table, indexName, isPrimary, isClustered, isUnique);
+                            index     = new Index(sch, indexName, isPrimary, isClustered, isUnique);
 
                             indexToColumns = new HashMap<Integer,Column>();
 
@@ -403,8 +403,8 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         ResultSet rs;
         String    cmd;
 
-        for(Schema sch : catalog.getSchemas()) {
-            for(Table tbl : sch.getTables()) {
+        for(Schema sch : catalog.schemas()) {
+            for(Table tbl : sch.tables()) {
                 stm = connection.createStatement();
                 cmd =
                     " SELECT " +
@@ -451,15 +451,15 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         ResultSet rs;
         String    cmd;
 
-        for(Schema sch : catalog.getSchemas()) {
-            for(Table tbl : sch.getTables()) {
-                for(Column col : tbl.getColumns()) {
+        for(Schema sch : catalog.schemas()) {
+            for(Table tbl : sch.tables()) {
+                for(Column col : tbl) {
                     stm = connection.createStatement();
                     cmd =
                         " SELECT " +
                         "   count(DISTINCT " + col.getName() + ") " +
                         " FROM " +
-                        sch.getName() + "." + tbl.getName();
+                            sch.getName() + "." + tbl.getName();
 
                     rs = stm.executeQuery(cmd);
 
@@ -507,46 +507,53 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         Statement stm;
         ResultSet rs;
         String    cmd;
+        Table     table;
 
-        for(Schema sch : catalog.getSchemas()) {
-        for(Table tbl : sch.getTables()) {
-        for(Index idx : tbl.getIndexes()) {
+        for(Schema sch : catalog.schemas()) {
 
-            if(idx.size() == 0)
-                throw new SQLException("no columns in index "+idx.getName());
+            for(Index  idx : sch.indexes()) {
 
-            if(idx.size() == 1) {
-                idx.setCardinality(idx.getColumns().get(0).getCardinality());
-                continue;
+                if(idx.size() == 0)
+                    throw new SQLException("no columns in index "+idx.getName());
+
+                if(idx.size() == 1) {
+                    idx.setCardinality(idx.at(0).getCardinality());
+                    continue;
+                }
+
+                cmd =
+                    " SELECT " +
+                    "   count(*),";
+
+                table = null;
+
+                for (Column col : idx.columns())
+                {
+                    if (table == null)
+                        table = col.getTable();
+
+                    cmd += col.getName() + ", ";
+                }
+
+                cmd = cmd.substring(0,cmd.length()-2);
+
+                cmd +=
+                    " FROM " +
+                        table.getFullyQualifiedName() +
+                    " GROUP BY ";
+
+                for(Column col : idx.columns())
+                    cmd += col.getName() + ", ";
+
+                cmd = cmd.substring(0,cmd.length()-2);
+                stm = connection.createStatement();
+                rs  = stm.executeQuery(cmd);
+
+                while (rs.next())
+                    idx.setCardinality(rs.getLong(1));
+
+                stm.close();
             }
-
-            cmd =
-                " SELECT " +
-                "   count(*),";
-
-            for(Column col : idx.getColumns())
-                cmd += col.getName() + ", ";
-
-            cmd = cmd.substring(0,cmd.length()-2);
-
-            cmd +=
-                " FROM " +
-                    sch.getName() + "." + tbl.getName() +
-                " GROUP BY ";
-
-            for(Column col : idx.getColumns())
-                cmd += col.getName() + ", ";
-
-            cmd = cmd.substring(0,cmd.length()-2);
-            stm = connection.createStatement();
-            rs  = stm.executeQuery(cmd);
-
-            while (rs.next())
-                idx.setCardinality(rs.getLong(1));
-
-            stm.close();
-        }
-        }
         }
     }
 }

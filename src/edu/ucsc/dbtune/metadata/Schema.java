@@ -26,10 +26,6 @@ import java.util.List;
  */
 public class Schema extends DatabaseObject
 {
-    protected List<Table> _tables;
-    protected List<Index> _indexes;
-    protected Catalog     _catalog;
-
     /**
      * constructs a new schema whose name is given
      *
@@ -42,13 +38,7 @@ public class Schema extends DatabaseObject
      */
     public Schema(Catalog catalog, String name) throws SQLException
     {
-        super(name);
-
-        _tables  = new ArrayList<Table>();
-        _indexes = new ArrayList<Index>();
-        _catalog = catalog;
-
-        _catalog.add(this);
+        super(catalog, name);
     }
 
     /**
@@ -60,86 +50,6 @@ public class Schema extends DatabaseObject
     protected Schema(Schema other)
     {
         super(other);
-
-        _catalog = other._catalog;
-        _tables  = other._tables;
-        _indexes = other._indexes;
-    }
-
-    /**
-     * returns the list of tables that the schema contains
-     *
-     * @return
-     *     list of table objects
-     */
-    public List<Table> getTables()
-    {
-        return new ArrayList<Table>(_tables);
-    }
-
-    /**
-     * returns the list of indexes that the schema contains
-     *
-     * @return
-     *     list of indexes
-     */
-    public List<Index> getIndexes()
-    {
-        return new ArrayList<Index>(_indexes);
-    }
-
-    /**
-     * adds a table to the schema
-     *
-     * @param table
-     *     new table to add
-     * @throws SQLException
-     *     if table is already contained in the schema
-     */
-    void add(Table table) throws SQLException
-    {
-        if(_tables.contains(table))
-            throw new SQLException("Table " + table + " already in schema");
-
-        _tables.add(table);
-    }
-
-    /**
-     * adds an index to the schema
-     *
-     * @param index
-     *     new index to add
-     * @throws SQLException
-     *     if index is already contained in the schema
-     */
-    void add(Index index) throws SQLException
-    {
-        if(_indexes.contains(index))
-            throw new SQLException("Index " + index + " already in schema");
-
-        _indexes.add(index);
-    }
-
-    /**
-     * removes an index from the schema
-     *
-     * @param index
-     *     index to remove
-     */
-    void remove(Index index) throws SQLException
-    {
-        _indexes.remove(index);
-    }
-
-    /**
-     * returns the catalog where the schema is stored
-     *
-     * @return
-     *     the Catalog object
-     */
-    public Catalog getCatalog()
-    {
-        return _catalog;
     }
 
     /**
@@ -152,15 +62,39 @@ public class Schema extends DatabaseObject
     {
         List<Index> indexes = new ArrayList<Index>();
 
-        for(Index idx : _indexes)
-            if(idx.isMaterialized())
-                indexes.add(idx);
+        for(DatabaseObject dbo : containees)
+        {
+            Index index;
+
+            if(dbo instanceof Index)
+                index = (Index) dbo;
+            else
+                continue;
+
+            if(index.isMaterialized())
+                indexes.add(index);
+        }
 
         return new Configuration(indexes);
     }
 
     /**
-     * Finds the table whose name matches the given argument.
+     * Returns the catalog that contains the schema. Convenience method that accomplishes what 
+     * {@link #getContainer} does but without requiring the user to cast. In other words, the 
+     * following is true {@code getCatalog() == (Catalog)getContainer()}.
+     *
+     * @return
+     *     the catalog that contains this object
+     */
+    public Catalog getCatalog()
+    {
+        return (Catalog) container;
+    }
+
+    /**
+     * Finds the table whose name matches the given argument. Convenience method that accomplishes 
+     * what {@link #find} does but without requiring the user to cast. In other words, the following 
+     * is true {@code findTable("name") == (Table)find("name")}.
      *
      * @param name
      *     name of the object that is searched for in <code>this</code> schema.
@@ -169,7 +103,7 @@ public class Schema extends DatabaseObject
      */
     public Table findTable(String name)
     {
-        return (Table) findByName(new ArrayList<DatabaseObject>(_tables),name);
+        return (Table) find(name);
     }
 
     /**
@@ -182,11 +116,13 @@ public class Schema extends DatabaseObject
      */
     public Table findTable(int id)
     {
-        return (Table) findByInternalID(new ArrayList<DatabaseObject>(_tables),id);
+        return (Table) find(id);
     }
 
     /**
-     * Finds the index whose name matches the given argument.
+     * Finds the index whose name matches the given argument. Convenience method that accomplishes 
+     * what {@link #find} does but without requiring the user to cast. In other words, the following 
+     * is true {@code findIndex("name") == (Index)find("name")}.
      *
      * @param name
      *     name of the object that is searched for in <code>this</code> schema.
@@ -195,21 +131,66 @@ public class Schema extends DatabaseObject
      */
     public Index findIndex(String name)
     {
-        return (Index) findByName(new ArrayList<DatabaseObject>(_indexes), name);
+        return (Index) find(name);
+    }
+
+    /**
+     * Returns an iterator of indexes.
+     *
+     * @return
+     *     an iterator over the indexes defined for the schema
+     */
+    public Iterable<Index> indexes()
+    {
+        List<Index> list = new ArrayList<Index>();
+
+        for (DatabaseObject dbo : containees)
+        {
+            if (dbo instanceof Index)
+                list.add((Index)dbo);
+        }
+
+        return list;
+    }
+
+    /**
+     * Returns an iterator of indexes.
+     *
+     * @return
+     *     an iterator over the indexes defined for the schema
+     */
+    public Iterable<Table> tables()
+    {
+        List<Table> list = new ArrayList<Table>();
+
+        for (DatabaseObject dbo : containees)
+        {
+            if (dbo instanceof Table)
+                list.add((Table)dbo);
+        }
+
+        return list;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(Object other)
+    public DatabaseObject newContainee(String name) throws SQLException
     {
-        if(!(other instanceof Schema))
-            return false;
+        return new Index(this,name);
+    }
 
-        Schema sch = (Schema) other;
-
-        return _catalog == sch._catalog && name.equals(sch.name);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isValid(DatabaseObject containee)
+    {
+        return containee instanceof Table || containee instanceof Index;
+        // XXX: determine whether or not the properties of an added index have to be checked. For
+        //      instance, if an index is already contained and is CLUSTERED, no other index can be
+        //      added that is also CLUSTERED. Similarly for PRIMARY/SECONDARY.
     }
 
     /**
@@ -219,14 +200,5 @@ public class Schema extends DatabaseObject
     public boolean equalsContent(Object other)
     {
         throw new RuntimeException("not implemented yet");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode()
-    {
-        return 31 * _catalog.hashCode() * name.hashCode();
     }
 }

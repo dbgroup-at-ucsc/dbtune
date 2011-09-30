@@ -195,7 +195,7 @@ public class PGOptimizer extends Optimizer
 
             table = null;
 
-            for(Schema sch : catalog.getSchemas())
+            for(Schema sch : catalog)
                 if((table = sch.findTable(rs.getInt("reloid"))) != null )
                     break;
 
@@ -307,7 +307,7 @@ public class PGOptimizer extends Optimizer
         Column col;
 
         for(int position : positions) {
-            col = table.getColumns().get(position-1);
+            col = (Column)table.at(position-1);
 
             if(col == null)
                 throw new SQLException("Can't find column with position " + position + " in table " + table);
@@ -327,7 +327,7 @@ public class PGOptimizer extends Optimizer
      *     a string containing the PG-dependent string representation of the given list, as the 
      *     EXPLAIN INDEXES statement expects it
      */
-    private static String toString(Configuration indexes)
+    private static String toString(Configuration indexes) throws SQLException
     {
         // It's important that this method generates the string in the same order that 
         // Configuration.iterator() produces the index list
@@ -343,13 +343,11 @@ public class PGOptimizer extends Optimizer
                 sb.append("synchronized ");
             }
 
-            Table table = idx.getTable();
-            sb.append(table.getInternalID());
+            sb.append(idx.getTable().getInternalID());
 
-            for (int i = 0; i < idx.size(); i++) {
-                sb.append(idx.getDescending().get(i) ? " desc" : " asc");
-                final List<Column> cols = idx.getColumns();
-                sb.append(" ").append(cols.get(i).getOrdinalPosition());
+            for (Column col : idx.columns()) {
+                sb.append(idx.isDescending(col) ? " desc" : " asc");
+                sb.append(" ").append(col.getOrdinalPosition());
             }
             sb.append(") ");
         }

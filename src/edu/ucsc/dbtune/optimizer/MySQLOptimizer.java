@@ -195,8 +195,7 @@ public class MySQLOptimizer extends Optimizer
             Statement stmt = connection.createStatement();
             stmt = connection.createStatement();
             stmt.execute("DROP INDEX " + index.getName() +
-                         " on " + index.getTable().getSchema().getName() +
-                         "." + index.getTable().getName());
+                         " on " + index.getTable().getFullyQualifiedName());
             stmt.close();
         }
     }
@@ -215,12 +214,10 @@ public class MySQLOptimizer extends Optimizer
 
         sb.append(index.getName());
         sb.append(" on ");
-        sb.append(index.getTable().getSchema().getName());
-        sb.append(".");
-        sb.append(index.getTable().getName());
+        sb.append(index.getTable().getFullyQualifiedName());
         sb.append(" (");
 
-        for(Column col : index.getColumns()) {
+        for(Column col : index.columns()) {
             if(first)
                 first = false;
             else

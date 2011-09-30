@@ -109,74 +109,74 @@ public class MySQLExtractor extends GenericJDBCExtractor
 
         meta = connection.getMetaData();
 
-        for(Schema sch : catalog.getSchemas()) {
-        for(Table table : sch.getTables()) {
+        for(Schema sch : catalog) {
+            for(Table table : sch.tables()) {
 
-            table.setInternalID(idCounter++);
+                table.setInternalID(idCounter++);
 
-            indexToColumns   = new HashMap<Integer,Column>();
-            currentIndexName = "";
-            index            = null;
+                indexToColumns   = new HashMap<Integer,Column>();
+                currentIndexName = "";
+                index            = null;
 
-            rs = meta.getIndexInfo(sch.getName(), null, table.getName(), false, true);
+                rs = meta.getIndexInfo(sch.getName(), null, table.getName(), false, true);
 
-            while (rs.next()) {
-                type          = rs.getShort("type");
-                nextIndexName = rs.getString("index_name");
+                while (rs.next()) {
+                    type          = rs.getShort("type");
+                    nextIndexName = rs.getString("index_name");
 
-                if(nextIndexName.equals("PRIMARY"))
-                    nextIndexName = table + "_pkey";
+                    if(nextIndexName.equals("PRIMARY"))
+                        nextIndexName = table + "_pkey";
 
-                if(!currentIndexName.equals(nextIndexName)) {
+                    if(!currentIndexName.equals(nextIndexName)) {
 
-                    if(index != null)
-                        for (int i = 0; i < indexToColumns.size(); i++)
-                            index.add(indexToColumns.get(i+1));
+                        if(index != null)
+                            for (int i = 0; i < indexToColumns.size(); i++)
+                                index.add(indexToColumns.get(i+1));
 
-                    type = rs.getShort("type");
+                        type = rs.getShort("type");
 
-                    if (type == DatabaseMetaData.tableIndexClustered)
-                        isClustered = true;
-                    else
-                        isClustered = false;
+                        if (type == DatabaseMetaData.tableIndexClustered)
+                            isClustered = true;
+                        else
+                            isClustered = false;
 
-                    isUnique         = !rs.getBoolean("non_unique");
-                    currentIndexName = rs.getString("index_name");
+                        isUnique         = !rs.getBoolean("non_unique");
+                        currentIndexName = rs.getString("index_name");
 
-                    if(currentIndexName.equals("PRIMARY")) {
-                        currentIndexName = table + "_pkey";
-                        isPrimary        = true;
-                    } else {
-                        isPrimary = false;
+                        if(currentIndexName.equals("PRIMARY")) {
+                            currentIndexName = table + "_pkey";
+                            isPrimary        = true;
+                        } else {
+                            isPrimary = false;
+                        }
+
+                        index = new Index(sch, currentIndexName, isPrimary, isClustered, isUnique);
+
+                        indexToColumns = new HashMap<Integer,Column>();
+
+                        index.setMaterialized(true);
+                        index.setInternalID(idCounter++);
                     }
 
-                    index = new Index(table, currentIndexName, isPrimary, isClustered, isUnique);
+                    columnName = rs.getString("column_name");
+                    column     = table.findColumn(columnName);
 
-                    indexToColumns = new HashMap<Integer,Column>();
+                    if (column == null)
+                        throw new SQLException("Column " + columnName + " not in " + table.getName());
 
-                    index.setMaterialized(true);
-                    index.setInternalID(idCounter++);
+                    indexToColumns.put(rs.getInt("ordinal_position"), column);
                 }
 
-                columnName = rs.getString("column_name");
-                column     = table.findColumn(columnName);
+                // add the columns of the last index
+                if(index != null)
+                    for (int i = 0; i < indexToColumns.size(); i++)
+                        index.add(indexToColumns.get(i+1));
 
-                if (column == null)
-                    throw new SQLException("Column " + columnName + " not in " + table.getName());
+                rs.close();
 
-                indexToColumns.put(rs.getInt("ordinal_position"), column);
+                for(Column col : table)
+                    col.setInternalID(idCounter++);
             }
-
-            // add the columns of the last index
-            if(index != null)
-                for (int i = 0; i < indexToColumns.size(); i++)
-                    index.add(indexToColumns.get(i+1));
-
-            rs.close();
-
-            for(Column col : table.getColumns())
-                col.setInternalID(idCounter++);
-        }
         }
     }
 

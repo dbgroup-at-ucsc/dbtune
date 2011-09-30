@@ -4,6 +4,13 @@
 
 No need to roll our own. Also, we should define a policy of when and how to use logging to avoid polluting the code.
 
+## 36
+
+ *  DefaultStack with ArrayDeque
+ *  DefaultQueue with ArrayDeque
+ *  DefaultConcurrentQueue with ConcurrentLinkedQueue
+ *  DefaultBlockingQueue with java.util.concurrent.ArrayBlockingQueue
+
 ## 52
 
 Things that the current test doesn't check:

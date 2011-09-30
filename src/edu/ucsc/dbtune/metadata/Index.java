@@ -15,6 +15,8 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.metadata;
 
+import edu.ucsc.dbtune.util.Objects;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -44,9 +46,6 @@ public class Index extends DatabaseObject implements Iterable<Column>
     public static final boolean ASCENDING      = true;
     public static final boolean DESCENDING     = false;
 
-    protected Schema        schema;
-    protected Table         table;
-    protected List<Column>  columns;
     protected List<Boolean> descending;
     protected int           type;
     protected int           scanOption;
@@ -56,10 +55,26 @@ public class Index extends DatabaseObject implements Iterable<Column>
     protected boolean       materialized;
 
     /**
-     * Creates an empty index.
+     * Creates an empty index. The index is assumed to be {@link SECONDARY}, {@link NON_UNIQUE} and 
+     * {@link UNCLUSTERED}
      *
      * @param table
-     *     table over which the index will be defined.
+     *     schema where the index will be contained.
+     * @param name
+     *     name of the index
+     * @throws SQLException
+     *     if schema already contains an index with the defaulted name
+     */
+    public Index(Schema schema, String name) throws SQLException
+    {
+        this(schema,name,new ArrayList<Column>(), new ArrayList<Boolean>(),SECONDARY,NON_UNIQUE,UNCLUSTERED);
+    }
+
+    /**
+     * Creates an empty index.
+     *
+     * @param schema
+     *     schema where the index will be contained.
      * @param name
      *     name of the index
      * @param primary
@@ -72,14 +87,48 @@ public class Index extends DatabaseObject implements Iterable<Column>
      *     if schema already contains an index with the defaulted name
      */
     public Index(
-            Table table, 
+            Schema schema, 
             String name, 
             boolean primary,
             boolean unique, 
             boolean clustered)
         throws SQLException
     {
-        this(table,name,new ArrayList<Column>(), new ArrayList<Boolean>(),primary,unique,clustered);
+        this(schema,name,new ArrayList<Column>(), new ArrayList<Boolean>(),primary,unique,clustered);
+    }
+
+    /**
+     * Creates an index containing the given column. The name of the index is defaulted to {@code 
+     * column.getName()+"_index"}. The column is taken as being in descending order. The index is 
+     * assumed to be {@link SECONDARY}, {@link NON_UNIQUE} and {@link UNCLUSTERED}
+     *
+     * @param column
+     *     column that will define the index
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the defaulted name; if not 
+     *     all of the columns in the list correspond to the same table.
+     */
+    public Index(Column column)
+        throws SQLException
+    {
+        this(column, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+    }
+
+    /**
+     * Creates an index containing the given column. The column is taken as being in descending 
+     * order. The index is assumed to be {@link SECONDARY}, {@link NON_UNIQUE} and {@link 
+     * UNCLUSTERED}
+     *
+     * @param column
+     *     column that will define the index
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the defaulted name; if not 
+     *     all of the columns in the list correspond to the same table.
+     */
+    public Index(String name, Column column)
+        throws SQLException
+    {
+        this(name, column, SECONDARY, NON_UNIQUE, UNCLUSTERED);
     }
 
     /**
@@ -91,6 +140,8 @@ public class Index extends DatabaseObject implements Iterable<Column>
      *     column that will define the index
      * @param primary
      *     whether or not the index is primary
+     * @param unique
+     *     whether the index is unique or not.
      * @param clustered
      *     whether the corresponding table is clustered on this index
      * @throws SQLException
@@ -100,8 +151,33 @@ public class Index extends DatabaseObject implements Iterable<Column>
     public Index(Column column, boolean primary, boolean unique, boolean clustered)
         throws SQLException
     {
-        this(column.getTable(), column.getName()+"_index", primary, unique, clustered);
+        this(column.getName()+"_index", column, primary, unique, clustered);
+    }
+
+    /**
+     * Creates an index with the given name, column, primary, uniqueness and clustering values. The 
+     * column is taken as being in ascending order.
+     *
+     * @param name
+     *     name of the index
+     * @param column
+     *     column that will define the index
+     * @param primary
+     *     whether or not the index is primary
+     * @param unique
+     *     whether the index is unique or not.
+     * @param clustered
+     *     whether the corresponding table is clustered on this index
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the defaulted name; if not 
+     *     all of the columns in the list correspond to the same table.
+     */
+    public Index(String name, Column column, boolean primary, boolean unique, boolean clustered)
+        throws SQLException
+    {
+        this((Schema)column.getContainer().getContainer(), name, primary, unique, clustered);
         add(column);
+        descending.add(ASCENDING);
     }
 
     /**
@@ -158,6 +234,8 @@ public class Index extends DatabaseObject implements Iterable<Column>
     /**
      * Creates an index from the given columns, primary, uniqueness and clustering values.
      *
+     * @param schema
+     *     schema where the index will be contained.
      * @param name
      *     name of the index
      * @param columns
@@ -174,7 +252,7 @@ public class Index extends DatabaseObject implements Iterable<Column>
      *     of the columns in the list correspond to the same table.
      */
     Index(
-            Table table,
+            Schema schema,
             String name,
             List<Column> columns,
             List<Boolean> descending,
@@ -185,13 +263,16 @@ public class Index extends DatabaseObject implements Iterable<Column>
     {
         super(name);
 
-        if(table == null && columns.size() == 0)
+        if(schema == null && columns.size() == 0)
             throw new SQLException("Column list should have at least one element");
 
-        if(table == null)
-            this.table = columns.get(0).getTable();
-        else
-            this.table = table;
+        Table table = null;
+
+        if(schema == null) {
+            table     = (Table) columns.get(0).container;
+            schema    = (Schema) table.container;
+            container = schema;
+        }
 
         this.descending = new ArrayList<Boolean>();
 
@@ -203,15 +284,14 @@ public class Index extends DatabaseObject implements Iterable<Column>
         else
             this.descending = new ArrayList<Boolean>(descending);
 
-        this.schema  = this.table.getSchema();
-        this.columns = new ArrayList<Column>();
-
         for (int i = 0; i < columns.size(); i++) {
+            if (table == null)
+                table = (Table) columns.get(i).container;
 
-            if (this.table != columns.get(i).getTable())
+            if (table != columns.get(i).container)
                 throw new SQLException("Columns from different tables");
 
-            this.columns.add(columns.get(i));
+            add(columns.get(i));
         }
 
         this.type       = UNKNOWN;
@@ -219,9 +299,9 @@ public class Index extends DatabaseObject implements Iterable<Column>
         this.unique     = unique;
         this.clustered  = clustered;
         this.scanOption = NON_REVERSIBLE;
+        this.container  = schema;
 
-        this.table.add(this);
-        this.schema.add(this);
+        container.add(this);
     }
 
     /**
@@ -234,9 +314,6 @@ public class Index extends DatabaseObject implements Iterable<Column>
     {
         super(other);
 
-        this.table        = other.table;
-        this.schema       = other.schema;
-        this.columns      = other.columns;
         this.type         = other.type;
         this.unique       = other.unique;
         this.primary      = other.primary;
@@ -254,7 +331,7 @@ public class Index extends DatabaseObject implements Iterable<Column>
      */
     public void setType(int type)
     {
-        switch( type )
+        switch(type)
         {
             case UNKNOWN:
             case B_TREE:
@@ -392,6 +469,33 @@ public class Index extends DatabaseObject implements Iterable<Column>
     }
 
     /**
+     * Returns the schema that contains this index. Convenience method that accomplishes what {@link 
+     * #getContainer} does but without requiring the user to cast. In other words, the following is 
+     * true {@code getSchema() == (Schema) getContainer()}.
+     *
+     * @return
+     *     the schema that contains this object
+     */
+    public Schema getSchema()
+    {
+        return (Schema) container;
+    }
+
+    /**
+     * Returns the table on which the index is defined.
+     *
+     * @return
+     *     the table that this index refers to.
+     */
+    public Table getTable()
+    {
+        if(containees.size() > 0)
+            return (Table) containees.get(0).getContainer();
+        else
+            throw new RuntimeException("No columns on index");
+    }
+
+    /**
      * adds a new column to the index with the given order. If the column is already contained it 
      * does nothing, i.e. repetitions aren't allowed
      *
@@ -404,13 +508,11 @@ public class Index extends DatabaseObject implements Iterable<Column>
      */
     public void add(Column column, Boolean descending) throws SQLException
     {
-        if (table != column.getTable())
-            throw new SQLException("Table " + table + " doesn't contain column " + column);
+        if (containees.size() != 0 && containees.get(0).getContainer() != column.container)
+            throw new SQLException("Table " + column.getContainer().getName() +
+                                   " doesn't correspond to " + containees.get(0).getContainer());
 
-        if (contains(column))
-            throw new SQLException("Column " + column + " already in index");
-
-        columns.add(column);
+        super.add(column);
         this.descending.add(descending);
     }
 
@@ -429,79 +531,6 @@ public class Index extends DatabaseObject implements Iterable<Column>
     }
 
     /**
-     * Whether or not the given column is contained
-     *
-     * @param column
-     *     object that is searched for in <code>this</code>
-     * @return
-     *     <code>true</code> if found; <code>false</code> otherwise
-     */
-    public boolean contains(Column column)
-    {
-        return columns.contains(column);
-    }
-
-    /**
-     * Returns the list of columns that are inside the index.
-     *
-     * @return columns within index
-     */
-    public List<Column> getColumns()
-    {
-        return new ArrayList<Column>(columns);
-    }
-
-    /**
-     * returns the number of columns contained in the index
-     *
-     * @return
-     *     number of columns
-     */
-    public int size()
-    {
-        return columns.size();
-    }
-
-    /**
-     * returns the element contained at the position given
-     *
-     * @param  i
-     *     index of the column to be retrieved
-     * @return
-     *     the corresponding column metadata if the index is a valid index; <code>null</code> 
-     *     otherwise
-     */
-    public Column get(int i)
-    {
-        if (i < columns.size())
-            return columns.get(i);
-        else
-            return null;
-    }
-
-    /**
-     * Returns the corresponding table object.
-     *
-     * @return
-     *      table that contains this index
-     */
-    public Table getTable()
-    {
-        return table;
-    }
-
-    /**
-     * Returns the list of descending values of the index
-     *
-     * @return
-     *     <code>true</code> if descending; <code>false</code> if ascending
-     */
-    public List<Boolean> getDescending()
-    {
-        return descending;
-    }
-
-    /**
      * Returns the descending value for the given column
      *
      * @return
@@ -512,10 +541,19 @@ public class Index extends DatabaseObject implements Iterable<Column>
     public boolean isDescending(Column column) throws SQLException
     {
         try {
-            return descending.get(columns.indexOf(column));
+            return descending.get(containees.indexOf(column));
         } catch (IndexOutOfBoundsException ex) {
             throw new SQLException(ex);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DatabaseObject newContainee(String name) throws SQLException
+    {
+        throw new SQLException("Can't instantiate columns like this");
     }
 
     /**
@@ -529,11 +567,11 @@ public class Index extends DatabaseObject implements Iterable<Column>
 
         Index idx = (Index) other;
 
-        if (columns.size() != idx.columns.size())
+        if (containees.size() != idx.containees.size())
             return false;
 
         for (int i = 0; i < idx.size(); i++) {
-            if (columns.get(i) != idx.columns.get(i))
+            if (containees.get(i) != idx.containees.get(i))
                 return false;
 
             if (descending.get(i) != idx.descending.get(i))
@@ -556,58 +594,21 @@ public class Index extends DatabaseObject implements Iterable<Column>
      */
     @Override
     public Iterator<Column> iterator() {
-        return columns.iterator();
+        return Objects.<Iterator<Column>>as(containees.iterator());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Iterable<Column> columns() {
+        return Objects.<Iterable<Column>>as(containees);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(Object other)
-    {
-        if (!(other instanceof Index))
-            return false;
-
-        Index idx = (Index) other;
-
-        return table.getSchema().getCatalog() == idx.table.getSchema().getCatalog() &&
-               schema == idx.schema &&
-               name.equals(idx.getName());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode()
-    {
-        return
-            31 *
-            table.getSchema().getCatalog().hashCode() *
-            schema.hashCode() *
-            name.hashCode();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String toString()
-    {
-        StringBuilder sb    = new StringBuilder();
-        boolean       first = true;
-
-        sb.append(getName() + " ON " + schema.getName() + "." + getTable().getName() + "(");
-
-        for (Column col : columns) {
-            if (!first)
-                sb.append(", ");
-            else
-                first = false;
-            sb.append(col);
-        }
-        sb.append(")");
-
-        return sb.toString();
+    public boolean isValid(DatabaseObject dbo) {
+        return dbo instanceof Column;
     }
 }

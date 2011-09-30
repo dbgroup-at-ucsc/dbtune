@@ -115,11 +115,11 @@ public class PGExtractor extends GenericJDBCExtractor
 
         catalog.setInternalID(1);
 
-        for(Schema sch : catalog.getSchemas()) {
+        for(Schema sch : catalog) {
 
             sch.setInternalID(counter++);
 
-            for(Table tbl : sch.getTables()) {
+            for(Table tbl : sch.tables()) {
 
                 stm = connection.createStatement();
 
@@ -144,9 +144,13 @@ public class PGExtractor extends GenericJDBCExtractor
                 stm.close();
 
                 position = 0;
-                for(Column col : tbl.getColumns()) {
+                for(Column col : tbl) {
                     col.setInternalID(position++);
                 }
+            }
+
+            for(Index index : sch.indexes()) {
+                index.setInternalID(counter++);
             }
         }
     }
@@ -173,8 +177,8 @@ public class PGExtractor extends GenericJDBCExtractor
         String    cmd;
         String    name;
 
-        for(Schema schema : catalog.getSchemas()) {
-            for(Table table : schema.getTables()) {
+        for(Schema schema : catalog) {
+            for(Table table : schema.tables()) {
 
                 stm = connection.createStatement();
                 cmd = 
@@ -228,7 +232,7 @@ public class PGExtractor extends GenericJDBCExtractor
                 while (rs.next())
                 {
                     name  = rs.getString("iname");
-                    index = table.findIndex(name);
+                    index = schema.findIndex(name);
 
                     if (index == null)
                     {
