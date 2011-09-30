@@ -15,60 +15,29 @@
  * *************************************************************************** */
 package edu.ucsc.dbtune.metadata;
 
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.metadata.Table;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import org.junit.Test;
 import org.junit.BeforeClass;
 
-import static org.junit.Assert.assertTrue;
+import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 
-import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
-import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
-import static edu.ucsc.dbtune.metadata.Index.PRIMARY;
-import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
-import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
-import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test for the Configuration class
  */
 public class ConfigurationTest
 {
-    private static Catalog catalog;
     private static List<Index> allIndexes = new ArrayList<Index>();
 
     @BeforeClass
     public static void setUp() throws Exception {
-        for(int i = 0; i < 1; i++) {
-            catalog = new Catalog("catalog_" + i);
-            for(int j = 0; j < 2; j++) {
-                Schema schema = new Schema(catalog,"schema_" + j);
-                int counter = 0;
-                for(int k = 0; k < 3; k++) {
-                    Table table = new Table(schema,"table_" + k);
-                    for(int l = 0; l < 4; l++) {
-                        Column column = new Column(table,"column_" + counter++, l+1);
-
-                        Index index =
-                            new Index(
-                                "index_" + counter++, Arrays.asList(column), SECONDARY,UNCLUSTERED, NON_UNIQUE);
-                        allIndexes.add(index);
-                    }
-                    Index index =
-                        new Index(
-                            "index_" + counter++, table.getColumns(), PRIMARY, CLUSTERED, UNIQUE);
-                    allIndexes.add(index);
-                }
-            }
-        }
+        for(Index index : configureCatalog().<Schema>findByName("schema_0").indexes())
+            allIndexes.add(index);
     }
 
     @Test

@@ -1,11 +1,13 @@
 package edu.ucsc.dbtune;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.util.IndexBitSet;
 
-import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -197,26 +199,26 @@ public class DBTuneInstances {
         return opts;
     }
 
-    public static IndexBenefitGraph.IBGNode makeRandomIBGNode()
+    /**
+     * Creates a catalog with 2 schemas, 3 tables per schema and 4 columns and 4 indexes per table
+     */
+    public static Catalog configureCatalog() throws SQLException
     {
-        return makeIBGNode(new Random().nextInt());
-    }
+        Catalog catalog = new Catalog("catalog_0");
 
-    public static IndexBenefitGraph.IBGNode makeIBGNode(int id){
-        try {
-            final Constructor<IndexBenefitGraph.IBGNode> c = IndexBenefitGraph.IBGNode.class.getDeclaredConstructor(IndexBitSet.class, int.class);
-            c.setAccessible(true);
-            return c.newInstance(new IndexBitSet(), id);
-        } catch (Exception e) {
-            throw new IllegalStateException("ERROR: unable to construct an IBGNode");
-        }
-    }
+        for(int j = 0; j < 2; j++) {
+            Schema schema = new Schema(catalog,"schema_" + j);
+            int counter = 0;
+            for(int k = 0; k < 3; k++) {
+                Table table = new Table(schema,"table_" + k);
+                for(int l = 0; l < 4; l++) {
+                    Column column = new Column(table,"column_" + l, l+1);
 
-    public static List<Boolean> generateDescVals(int howmany){
-        final List<Boolean> cols = new ArrayList<Boolean>();
-        for(int idx = 0; idx < howmany; idx++){
-            cols.add(true);
+                    new Index(table.getName() + "_index_" + counter++, column);
+                }
+            }
         }
-        return cols;
+
+        return catalog;
     }
 }

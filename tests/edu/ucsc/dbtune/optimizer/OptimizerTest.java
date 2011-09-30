@@ -248,9 +248,8 @@ public class OptimizerTest
         sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         cost1 = opt.explain(sql).getCost();
 
-        col  = cat.findSchema("one_table").findTable("tbl").findColumn("a");
-        idxa = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
-        conf = new Configuration("one_index");
+        idxa = new Index(cat.<Column>findByName("one_table.tbl.a"));
+        conf = new Configuration("conf");
 
         conf.add(idxa);
 
@@ -263,7 +262,7 @@ public class OptimizerTest
         assertThat(sqlp.getOptimizationCount(), is(1));
         assertThat(cost1, is(not(cost2)));
 
-        col  = cat.findSchema("one_table").findTable("tbl").findColumn("b");
+        col  = cat.<Column>findByName("one_table.tbl.b");
         idxb = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
 
         conf.add(idxb);
@@ -280,8 +279,8 @@ public class OptimizerTest
         assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(conf.getIndexAt(1))));
         assertThat(sqlp.getUpdateCost(), is(sqlp.getUpdateCost(conf.toList())));
 
-        col.getTable().remove(idxa);
-        col.getTable().remove(idxb);
+        idxa.getSchema().remove(idxa);
+        idxb.getSchema().remove(idxb);
     }
 
     /**
@@ -316,10 +315,10 @@ public class OptimizerTest
         Index                idxa;
         Index                idxb;
         
-        col  = cat.findSchema("one_table").findTable("tbl").findColumn("a");
+        col  = cat.<Column>findByName("one_table.tbl.a");
         idxa = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
         conf = new Configuration("two_indexes");
-        col  = cat.findSchema("one_table").findTable("tbl").findColumn("b");
+        col  = cat.<Column>findByName("one_table.tbl.b");
         idxb = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
 
         sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
@@ -364,8 +363,8 @@ public class OptimizerTest
         assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(true));
         assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(true));
 
-        col.getTable().remove(idxa);
-        col.getTable().remove(idxb);
+        idxa.getSchema().remove(idxa);
+        idxb.getSchema().remove(idxb);
     }
 
     /// XXX:
@@ -396,7 +395,7 @@ public class OptimizerTest
         double               cost2;
 
         sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
-        col  = cat.findSchema("one_table").findTable("tbl").findColumn("a");
+        col  = cat.<Column>findByName("one_table.tbl.a");
         idx  = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
         conf = new Configuration("one_index");
 
@@ -407,7 +406,7 @@ public class OptimizerTest
 
         assertThat(cost1, greaterThanOrEqualTo(cost2));
 
-        col.getTable().remove(idx);
+        idx.getSchema().remove(idx);
     }
 
     /**
@@ -428,10 +427,10 @@ public class OptimizerTest
         double               cost2;
 
         sql  = new SQLStatement("select a from one_table.tbl where a = 5");
-        colA = cat.findSchema("one_table").findTable("tbl").findColumn("a");
-        colB = cat.findSchema("one_table").findTable("tbl").findColumn("b");
-        idxA = new Index(colA,SECONDARY,UNCLUSTERED,NON_UNIQUE);
-        idxB = new Index(colB,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        colA = cat.<Column>findByName("one_table.tbl.a");
+        colB = cat.<Column>findByName("one_table.tbl.b");
+        idxA = new Index(colA);
+        idxB = new Index(colB);
         conf = new Configuration("configuration");
 
         conf.add(idxA);
@@ -447,7 +446,7 @@ public class OptimizerTest
         // XXX: we should also check:
         //   * the set of used indexes of each plan is the same
         //   * the contents of the plan (the tree) are the same
-        colA.getTable().remove(idxA);
-        colA.getTable().remove(idxB);
+        idxA.getSchema().remove(idxA);
+        idxB.getSchema().remove(idxB);
     }
 }

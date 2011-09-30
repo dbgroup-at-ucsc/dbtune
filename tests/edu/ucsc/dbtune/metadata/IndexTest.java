@@ -44,13 +44,12 @@ public class IndexTest
 { 
     private static List<Column> columns;
     private static Table table;
+    private static Schema schema;
+    private static Catalog catalog;
 
     @Before
     public void setUp() throws Exception
     {
-        Schema schema;
-        Catalog catalog;
-
         columns = new ArrayList<Column>();
         catalog = new Catalog( "test_catalog" );
         schema  = new Schema(catalog, "test_schema" );
@@ -67,14 +66,14 @@ public class IndexTest
     {
         Index index;
 
-        index = new Index(table, "testi", PRIMARY, CLUSTERED, UNIQUE);
+        index = new Index(schema, "testi", PRIMARY, CLUSTERED, UNIQUE);
 
-        assertThat(index.getTable(),is(table));
+        assertThat(index.getContainer(),is((DatabaseObject)schema));
 
         index = new Index("other", columns, PRIMARY, CLUSTERED, UNIQUE);
 
-        assertThat(index.getTable(), is(table));
-        assertThat(index.size(), is(table.getColumns().size()));
+        assertThat(index.getContainer(), is((DatabaseObject)schema));
+        assertThat(index.size(), is(table.size()));
     }
 
     @Test
@@ -86,14 +85,16 @@ public class IndexTest
 
         index1 = new Index( "index1", columns, PRIMARY, CLUSTERED, UNIQUE );
         index2 = new Index( "index2", columns, PRIMARY, CLUSTERED, UNIQUE );
-        index3 = new Index( table, "testi", PRIMARY, CLUSTERED, UNIQUE );
+        index3 = new Index( schema, "testi", PRIMARY, CLUSTERED, UNIQUE );
 
-        for( int i = 0; i < table.getColumns().size(); i++ )
+        int i = 0;
+        for( Column col : table.columns() )
         {
             if( i % 2 == 0 )
             {
-                index3.add( table.getColumns().get(i) );
+                index3.add( col );
             }
+            i++;
         }
 
         assertThat(index1, is(not(index2)));
@@ -111,15 +112,18 @@ public class IndexTest
 
         index1 = new Index( "index1", columns, PRIMARY, CLUSTERED, UNIQUE );
         index2 = new Index( "index2", columns, PRIMARY, CLUSTERED, UNIQUE );
-        index3 = new Index( table, "testi", PRIMARY, CLUSTERED, UNIQUE );
+        index3 = new Index( schema, "testi", PRIMARY, CLUSTERED, UNIQUE );
 
-        for( int i = 0; i < table.getColumns().size(); i++ )
+        int i = 0;
+        for( Column col : table.columns() )
         {
             if( i % 2 == 0 )
             {
-                index3.add( table.getColumns().get(i) );
+                index3.add( col );
             }
+            i++;
         }
+
 
         assertThat(index1.hashCode(), is(not(index3.hashCode())));
         assertThat(index1.hashCode(), is(not(index2.hashCode())));

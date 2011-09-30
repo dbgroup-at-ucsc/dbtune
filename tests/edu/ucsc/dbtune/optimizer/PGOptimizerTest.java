@@ -220,7 +220,7 @@ public class PGOptimizerTest {
         Table   tbl = new Table(sch,"tbl");
 
         new Column(tbl,"a", SQLTypes.INTEGER);
-        new Index(tbl,"index_a",false,false,false);
+        new Index(sch,"index_a",false,false,false);
 
         SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan), sch);
         Operator         root = plan.getRootOperator();
