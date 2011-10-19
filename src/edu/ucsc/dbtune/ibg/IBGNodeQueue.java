@@ -21,7 +21,6 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.DefaultQueue;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGNodeQueue {
     private final DefaultQueue<Object> queue;
@@ -117,12 +116,5 @@ public class IBGNodeQueue {
         } else {
             return (IBGNode) obj;
         }
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IBGNodeQueue>(this)
-               .add("queue", queue)
-               .toString();
     }
 }

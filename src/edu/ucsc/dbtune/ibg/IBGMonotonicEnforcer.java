@@ -20,7 +20,6 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGMonotonicEnforcer {
     private final IndexBitSet visited;
@@ -82,16 +81,6 @@ public class IBGMonotonicEnforcer {
         }   
     }
 
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IBGMonotonicEnforcer>(this)
-               .add("visited indexes", visited)
-               .add("pending queue", pending)
-               .add("subsearch space", sub)
-               .toString();
-    }
-
     /**
      * a Subsearch space in the {@link IndexBenefitGraph}.
      */
@@ -121,14 +110,6 @@ public class IBGMonotonicEnforcer {
                 else if (node.isExpanded()) 
                     pending.addChildren(node.firstChild());
             }       
-        }
-
-        @Override
-        public String toString() {
-            return new ToStringBuilder<SubSearch>(this)
-                   .add("visited indexes", visited)
-                   .add("pending stack", pending)
-                   .toString();
         }
     }
 }

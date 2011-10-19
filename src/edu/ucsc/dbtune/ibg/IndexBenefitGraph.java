@@ -36,6 +36,12 @@ public class IndexBenefitGraph {
 	/* true if the index is used somewhere in the graph */
 	private final IndexBitSet isUsed;
 	
+    /**
+     * Used indexes.
+     * Don't access until isExpanded() returns true
+     */
+    private volatile IndexBitSet usedIndexes;
+
 	/*
 	 * Creates an IBG which is in a state ready for building.
 	 * Specifically, the rootNode is physically constructed, but it is not
@@ -67,7 +73,7 @@ public class IndexBenefitGraph {
 	/*
 	 * A node of the IBG
 	 */
-	public static class IBGNode {
+    public class IBGNode {
         /* Configuration that this node is about */
         public final IndexBitSet config;
 		
@@ -111,6 +117,7 @@ public class IndexBenefitGraph {
 			// volatile assignments must be ordered with "state" assigned last
 			cost = cost0;
 			firstChild = firstChild0;
+            addUsedIndexes(usedIndexes);
 		}
 		
 		/*
@@ -172,7 +179,17 @@ public class IndexBenefitGraph {
 		public void setCost(double cost0) {
 			cost = cost0;
 		}
-	}
+
+        /**
+         * Return the used indexes from this node.
+         * @return The {@link IndexBitSet} denoting the used indexes
+         */
+        public final IndexBitSet getUsedIndexes() {
+          assert(isExpanded());
+          return usedIndexes;
+        }
+
+    }
 	
 	protected static class IBGChild {
 		final int usedIndex; // the internalID of the used index on this edge

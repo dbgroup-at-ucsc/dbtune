@@ -21,7 +21,6 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.DefaultStack;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGNodeStack {
     private final DefaultStack<Object> stack;
@@ -97,12 +96,5 @@ public class IBGNodeStack {
             stack.pop();
             return (IBGNode) obj;
         }
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IBGNodeStack>(this)
-               .add("stack", stack)
-               .toString();
     }
 }

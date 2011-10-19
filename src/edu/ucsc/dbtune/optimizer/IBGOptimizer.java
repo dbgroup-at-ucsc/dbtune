@@ -17,11 +17,12 @@ package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.workload.SQLStatement;
+
+import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
+import edu.ucsc.dbtune.metadata.Index;
 
 import java.sql.SQLException;
 
@@ -37,7 +38,6 @@ import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
  */
 public class IBGOptimizer implements Optimizer
 {
-	
     /**
      * The {@link Optimizer} that the {@link IBGOptimizer} uses for actual what-if calls.
      */
@@ -96,7 +96,7 @@ public class IBGOptimizer implements Optimizer
      * @return The index benefit graph
      * @throws SQLException
      */
-    IndexBenefitGraph buildIBG(SQLStatement sql, Configuration universe)
+    IndexBenefitGraph buildIBG(SQLStatement sql, ConfigurationBitSet universe)
     	throws SQLException
     {
         ConfigurationBitSet  bitConf;
@@ -109,6 +109,7 @@ public class IBGOptimizer implements Optimizer
         }
 
         bitConf = new ConfigurationBitSet(universe, bitSet);
+
         return construct(delegate, sql, bitConf);
     }
     

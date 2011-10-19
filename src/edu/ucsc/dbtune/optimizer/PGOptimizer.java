@@ -167,7 +167,8 @@ public class PGOptimizer extends AbstractOptimizer
         if(obtainPlan)
             sqlPlan = getPlan(connection,sql);
 
-        return new ExplainedSQLStatement(sql, sqlPlan, this, selectCost, updateCost, indexes, usedConf, 1);
+        return new ExplainedSQLStatement(
+                sql, sqlPlan, this, selectCost, updateCost, indexes, usedConf, 1);
     }
 
     /**

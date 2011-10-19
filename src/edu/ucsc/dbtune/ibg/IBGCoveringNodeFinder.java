@@ -22,7 +22,6 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class IBGCoveringNodeFinder {
     private final IndexBitSet visited;
@@ -234,13 +233,5 @@ public class IBGCoveringNodeFinder {
           pending.addChildren(node.firstChild());
       }
         }
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IBGCoveringNodeFinder>(this)
-               .add("visited nodes", visited)
-               .add("pending nodes", pending)
-               .toString();
     }
 }
