@@ -1,21 +1,18 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
+/* **************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                         *
+ *                                                                              *
+ *   Licensed under the Apache License, Version 2.0 (the "License");            *
+ *   you may not use this file except in compliance with the License.           *
+ *   You may obtain a copy of the License at                                    *
+ *                                                                              *
+ *       http://www.apache.org/licenses/LICENSE-2.0                             *
+ *                                                                              *
+ *   Unless required by applicable law or agreed to in writing, software        *
+ *   distributed under the License is distributed on an "AS IS" BASIS,          *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+ *   See the License for the specific language governing permissions and        *
+ *   limitations under the License.                                             *
+ * **************************************************************************** */
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -32,16 +29,12 @@ public class IndexBenefitGraph {
 	 */
 	private final IBGNode rootNode;
 	private double emptyCost;
-	
-	/* true if the index is used somewhere in the graph */
-	private final IndexBitSet isUsed;
-	
-    /**
-     * Used indexes.
-     * Don't access until isExpanded() returns true
-     */
-    private volatile IndexBitSet usedIndexes;
 
+    /* true if the index is used somewhere in the graph */
+    private final IndexBitSet isUsed;
+
+    private static IBGCoveringNodeFinder FINDER = new IBGCoveringNodeFinder();
+	
 	/*
 	 * Creates an IBG which is in a state ready for building.
 	 * Specifically, the rootNode is physically constructed, but it is not
@@ -51,11 +44,11 @@ public class IndexBenefitGraph {
 	 * is set, and may be accessed through emptyCost()
 	 * 
 	 * Nodes are built by calling buildNode() until it returns false.
-	 */
+     */
 	public IndexBenefitGraph(IBGNode rootNode0, double emptyCost0, IndexBitSet isUsed0) {
-		rootNode = rootNode0;
+		rootNode  = rootNode0;
 		emptyCost = emptyCost0;
-		isUsed = isUsed0;
+		isUsed    = isUsed0;
 	}
 
 	public final double emptyCost() {
@@ -66,14 +59,18 @@ public class IndexBenefitGraph {
 		return rootNode;
 	}
 
+	public final IBGNode find(IndexBitSet bitSet) {
+        return FINDER.findFast(rootNode(),bitSet,null);
+    }
+
 	public final boolean isUsed(int i) {
 		return isUsed.get(i);
-	}
+    }
 	
 	/*
 	 * A node of the IBG
 	 */
-    public class IBGNode {
+    public static class IBGNode {
         /* Configuration that this node is about */
         public final IndexBitSet config;
 		
@@ -95,6 +92,12 @@ public class IndexBenefitGraph {
 		 */
 		private volatile IBGChild firstChild;
 		
+        /**
+         * Used indexes.
+         * Don't access until isExpanded() returns true
+         */
+        private volatile IndexBitSet usedIndexes;
+
 		IBGNode(IndexBitSet config0, int id0) {
 			config = config0;
 			id = id0;

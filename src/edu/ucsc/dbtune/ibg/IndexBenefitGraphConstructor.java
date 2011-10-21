@@ -521,7 +521,7 @@ public class IndexBenefitGraphConstructor {
      * @param conf
      *     configuration to take into account
      */
-    private void initializeIBG(
+    private void initializeConstruction(
             SQLStatement sql0,
             ConfigurationBitSet conf)
         throws SQLException
@@ -555,7 +555,12 @@ public class IndexBenefitGraphConstructor {
         throws SQLException
     {
         ThreadIBGAnalysis ibgAnalysis = new ThreadIBGAnalysis();
-        // XXX: new ThreadIBGAnalysis(configuration); // <-- hide the interaction bank in here
+        // XXX: hide the interaction bank in here, something like:
+        //
+        //   new ThreadIBGAnalysis(configuration);
+        //
+        // which internally will create an InteractionLogger. At the end, we'll pass the ibgAnalysis 
+        // to the IBG constructor (since it will have the interaction bank in it)
         
 		Thread ibgAnalysisThread = new Thread(ibgAnalysis);
 		ibgAnalysisThread.setName("IBG Analysis");
@@ -576,17 +581,19 @@ public class IndexBenefitGraphConstructor {
         ibgAnalysis.waitUntilDone();
         //long nStop = System.nanoTime();
 
-        //System.out.println("Analysis: " + ((nStop - nStart) / 1000000000.0));
+        //ProfiledQuery<I> qinfo =
+        //  new ProfiledQuery(
+        //    sql,
+        //    explainInfo,
+        //    indexes,
+        //    ibgCons.getIBG(),
+        //    logger.getInteractionBank(),
+        //    conn.whatifCount(),
+        //    ((nStop - nStart) / 1000000.0));
 
-        //System.out.println("IBG has " + nodeCount() + " nodes");
+		IndexBenefitGraph ibg =
+            new IndexBenefitGraph(rootNode, emptyCost, isUsed); //, ibgAnalysis);
 
-        //ProfiledQuery<I> qinfo = new ProfiledQuery(sql, explainInfo, indexes, ibgCons.getIBG(), logger.getInteractionBank(), conn.whatifCount(), ((nStop - nStart) / 1000000.0));
-		IndexBenefitGraph ibg = new IndexBenefitGraph(rootNode, emptyCost, isUsed);
-        // XXX:
-        //  - ibg.setConfiguration(configuration);
-        //  - ibg.setUsedConfiguration(getUsedConfiguration());
-
-        // XXX: pass the ibgAnalysis to the IBG (since it will have the interaction bank in it)
         return ibg;
     }
 
@@ -617,7 +624,7 @@ public class IndexBenefitGraphConstructor {
         //
         // the above should hold EVERYWHERE in the edu.ucsc.dbtune.ibg package, otherwise we're in 
         // trouble.
-        ibgConstructor.initializeIBG(sql,conf);
+        ibgConstructor.initializeConstruction(sql,conf);
 
         return ibgConstructor.constructIBG(conf);
     }

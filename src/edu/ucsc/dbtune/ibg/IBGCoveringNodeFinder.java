@@ -23,7 +23,8 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
-public class IBGCoveringNodeFinder {
+public class IBGCoveringNodeFinder
+{
     private final IndexBitSet visited;
     private final IBGNodeStack  pending;
 
@@ -50,14 +51,14 @@ public class IBGCoveringNodeFinder {
     }
 
     public class FindResult {
-    	public final ConfigurationBitSet usedConfiguration;
-    	
-    	public final double cost;
-    	
-    	public FindResult(ConfigurationBitSet usedConfiguration, double cost) {
-    		this.usedConfiguration 	= usedConfiguration;
-    		this.cost				= cost;
-    	}
+        public final ConfigurationBitSet usedConfiguration;
+        
+        public final double cost;
+        
+        public FindResult(ConfigurationBitSet usedConfiguration, double cost) {
+            this.usedConfiguration  = usedConfiguration;
+            this.cost               = cost;
+        }
     }
     
     /**
@@ -69,24 +70,24 @@ public class IBGCoveringNodeFinder {
      * @return
      *      the cost of a particular indexes configuration.
      */
-    public final FindResult find(IndexBenefitGraph ibg, ConfigurationBitSet config) {
+    public final FindResult find(IndexBenefitGraph ibg, ConfigurationBitSet config)
+    {
         if (config.isEmpty()) {
             return new FindResult(null,ibg.emptyCost());
-    } else {
-      final IBGNode foundNode = findFast(ibg.rootNode(), config.getBitSet(), null);
-      if (foundNode != null) {
-    	  // Obtain used indexes
-    	  IndexBitSet usedBitSet = new IndexBitSet();
-    	  foundNode.addUsedIndexes(usedBitSet);
-    	  // Create the corresponding configuration
-    	  ConfigurationBitSet usedConfiguration = new ConfigurationBitSet(config,usedBitSet);
-    	  return new FindResult(usedConfiguration,  foundNode.cost());
-      } else {
-    	  return new FindResult(null,ZERO_COST);
-      }
+        } else {
+            final IBGNode foundNode = findFast(ibg.rootNode(), config.getBitSet(), null);
+            if (foundNode != null) {
+                // Obtain used indexes
+                IndexBitSet usedBitSet = new IndexBitSet();
+                foundNode.addUsedIndexes(usedBitSet);
+                // Create the corresponding configuration
+                ConfigurationBitSet usedConfiguration = new ConfigurationBitSet(config,usedBitSet);
+                return new FindResult(usedConfiguration,  foundNode.cost());
+            } else {
+                return new FindResult(null,ZERO_COST);
+            }
+        }
     }
-    }
-
  
     /**
      * find the cost of a particular indexes configuration in multiple graphs.
@@ -126,7 +127,7 @@ public class IBGCoveringNodeFinder {
         while (true) {
             // stop if an unexpanded node is found
             if (!currentNode.isExpanded()){
-            	return null;
+                return null;
             }
             
             IBGChild ch = currentNode.firstChild();

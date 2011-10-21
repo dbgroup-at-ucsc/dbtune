@@ -15,21 +15,16 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
-import java.sql.SQLException;
-
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder.FindResult;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import java.sql.SQLException;
-import java.util.List;
 
 /**
  * Prepared statements that are produced by the {@link IBGOptimizer}.
@@ -60,10 +55,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
      *      The SQL statement that corresponds to this prepared statement
      * 
      */
-    public IBGPreparedSQLStatement(
-            IBGOptimizer optimizer,
-            SQLStatement sql
-            )
+    public IBGPreparedSQLStatement(IBGOptimizer optimizer, SQLStatement sql)
     {
         this(optimizer,sql,null,null);
     }
@@ -84,8 +76,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             IBGOptimizer         optimizer,
             SQLStatement         sql,
             IndexBenefitGraph    ibg,
-            Configuration        universe
-            )
+            Configuration        universe)
     {
         super(optimizer,sql);
         this.ibg        = ibg;
@@ -98,29 +89,33 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
     public IBGPreparedSQLStatement(IBGPreparedSQLStatement other)
     {
         super(other);
-    
-        this.ibg      = other.ibg;
-        this.universe = other.universe;
+
+        this.ibg = other.ibg;
     }
 
     /**
      * @return an {@link IndexBenefitGraph} of this query.
      */
-    public IndexBenefitGraph getIndexBenefitGraph(){
+    public IndexBenefitGraph getIndexBenefitGraph()
+    {
         return ibg;
     }
 
+
     @Override
-    public Optimizer getOptimizer() {
+    public Optimizer getOptimizer()
+    {
         return optimizer;
     }
 
     @Override
-    public SQLStatement getSQLStatement() {
+    public SQLStatement getSQLStatement()
+    {
         return sql;
     }
 
-    public Configuration getUniverse() {
+    public Configuration getUniverse()
+    {
         return universe;
     }
 
@@ -156,11 +151,6 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             throw new SQLException("Configuration " + configuration +
                     " not contained in statement's" + getUniverse());
         }
-
-        if (configuration.isEmpty()) {
-            double cost = getIndexBenefitGraph().emptyCost();
-            return new ExplainedSQLStatement( getSQLStatement(), cost, optimizer, configuration, new Configuration("Empty"), 0);
-        } 
 
         ConfigurationBitSet configurationBitSet = null;
 
