@@ -1,11 +1,13 @@
 package edu.ucsc.dbtune.core;
 
 import edu.ucsc.dbtune.inum.Inum;
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.StopWatch;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -26,8 +28,9 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    * @param connection
    *    a live database connection to postgres
    */
-  public InumWhatIfOptimizerImpl(Connection connection){
-    this(Inum.newInumInstance(Preconditions.checkNotNull(connection)));
+  public InumWhatIfOptimizerImpl(Catalog catalog, Connection connection)
+  {
+    this(Inum.newInumInstance(catalog, Preconditions.checkNotNull(connection)));
   }
 
   /**
@@ -49,12 +52,14 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   }
 
 
-  @Override public double estimateCost(String query) {
+  @Override
+  public double estimateCost(String query) throws SQLException {
     if(getInum().isEnded()) { startInum(); }
     return estimateCost(query, EMPTY_CONFIGURATION);
   }
 
-  @Override public double estimateCost(String query, Configuration hypotheticalIndexes) {
+  @Override public double estimateCost(String query, Configuration 
+          hypotheticalIndexes) throws SQLException  {
     if(getInum().isEnded()) { startInum(); }
     return getInum().estimateCost(query, hypotheticalIndexes);
   }
@@ -69,7 +74,7 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
   /**
    * start INUM.
    */
-  public void startInum(){
+  public void startInum() throws SQLException {
     final StopWatch inumStarting = new StopWatch();
     getInum().start();
     inumStarting.resetAndLog("inum starting took ");

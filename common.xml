@@ -28,10 +28,10 @@
       </classpath>
     </taskdef>
     <echo message="Compiling ${project}"/>
-    <fsc srcdir="${src.dir}" destdir="${bld.dir}/classes" addParams="-make:changed" >
+    <scalac srcdir="${src.dir}" destdir="${bld.dir}/classes" addParams="-make:changed" >
       <classpath refid="compile.classpath"/>
       <include name="**/*.scala" />
-    </fsc>
+    </scalac>
   </target>
 
   <target name="scala.compile.test" description="Compile Scala test source">
@@ -41,13 +41,13 @@
       </classpath>
     </taskdef>
     <echo message="Compiling ${project} tests"/>
-    <fsc srcdir="${tst.dir}" destdir="${bld.dir}/tests" addParams="-make:changed" >
+    <scalac srcdir="${tst.dir}" destdir="${bld.dir}/tests" addParams="-make:changed" >
       <classpath>
         <path refid="compile.classpath"/>
         <pathelement location="${bld.dir}/classes"/>
       </classpath>
       <include name="**/*.scala" />
-    </fsc>
+    </scalac>
   </target>
 
   <target name="unit" description="Execute Unit tests.">

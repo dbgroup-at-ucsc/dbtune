@@ -1,16 +1,24 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.collect.Sets;
+import edu.ucsc.dbtune.DBTuneInstances;
 import edu.ucsc.dbtune.SharedFixtures;
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.inum.InumInterestingOrdersExtractor.ColumnInformation;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.SQLTypes;
+
 import java.sql.Connection;
 import java.util.Properties;
 import java.util.Set;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+
+import com.google.common.collect.Sets;
+
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import static edu.ucsc.dbtune.metadata.SQLTypes.INT;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * Tests the {@link InterestingOrdersExtractor} interface.
@@ -18,14 +26,15 @@ import org.mockito.Mockito;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InterestingOrdersExtractorTest {
-  private static final String SAMPLE_QUERY = "SELECT supplier_city, supplier_state\n"
-      + "FROM suppliers\n"
-      + "WHERE supplier_name = 'IBM'\n"
-      + "ORDER BY supplier_city DESC, supplier_state ASC;";
+  private static final String SAMPLE_QUERY = "SELECT column_1, column_2\n"
+      + "FROM schema_1.table_1\n"
+      + "WHERE column_1 = 'IBM'\n"
+      + "ORDER BY column_1 DESC, column_2 ASC;";
 
   @Test public void testExtractInterestingOrders() throws Exception {
-    final ColumnPropertyLookup columnProperty = configureProperty();
-    final InterestingOrdersExtractor extractor = new InumInterestingOrdersExtractor(columnProperty);
+    final Catalog                    catalog        = DBTuneInstances.configureCatalog();
+    final ColumnPropertyLookup       columnProperty = configureProperty();
+    final InterestingOrdersExtractor extractor      = new InumInterestingOrdersExtractor(catalog, columnProperty);
     final Configuration ios = extractor.extractInterestingOrders(SAMPLE_QUERY);
     assertThat(ios.toList().isEmpty(), is(false));
   }
@@ -37,19 +46,19 @@ public class InterestingOrdersExtractorTest {
     Mockito.doNothing().when(prop).refresh();
     final Set<ColumnInformation> info = populateColumnInformationSet();
     Mockito.when(prop.getColumnInformation(Mockito.anyInt())).thenReturn(info);
-    Mockito.when(prop.getProperty(Mockito.eq("supplier_city".toUpperCase()))).thenReturn("suppliers".toUpperCase());
-    Mockito.when(prop.getProperty(Mockito.eq("supplier_state".toUpperCase()))).thenReturn("suppliers".toUpperCase());
-    Mockito.when(prop.getProperty(Mockito.eq("supplier_name".toUpperCase()))).thenReturn("suppliers".toUpperCase());
-    Mockito.when(prop.getProperties()).thenReturn(populateProperties("suppliers", info));
-    Mockito.when(prop.getColumnDataType(Mockito.eq("suppliers"), Mockito.eq("supplier_city".toUpperCase()))).thenReturn(12);
-    Mockito.when(prop.getColumnDataType(Mockito.eq("suppliers"), Mockito.eq("supplier_state".toUpperCase()))).thenReturn(12);
+    Mockito.when(prop.getProperty(Mockito.eq("column_1".toUpperCase()))).thenReturn("schema_1.table_1".toUpperCase());
+    Mockito.when(prop.getProperty(Mockito.eq("column_2".toUpperCase()))).thenReturn("schema_1.table_1".toUpperCase());
+    Mockito.when(prop.getProperty(Mockito.eq("column_3".toUpperCase()))).thenReturn("schema_1.table_1".toUpperCase());
+    Mockito.when(prop.getProperties()).thenReturn(populateProperties("schema_1.table_1", info));
+    Mockito.when(prop.getColumnDataType(Mockito.eq("schema_1.table_1"), Mockito.eq("column_1".toUpperCase()))).thenReturn(INT);
+    Mockito.when(prop.getColumnDataType(Mockito.eq("schema_1.table_1"), Mockito.eq("column_2".toUpperCase()))).thenReturn(INT);
     return prop;
   }
 
   private static Set<ColumnInformation> populateColumnInformationSet(){
     return Sets.newHashSet(
-        singleColumnInformation("supplier_city", 1, 12),
-        singleColumnInformation("supplier_state", 2, 12)
+        singleColumnInformation("column_1", 1, INT),
+        singleColumnInformation("column_2", 2, INT)
     );
   }
 
@@ -66,7 +75,7 @@ public class InterestingOrdersExtractorTest {
     info.columnName = colName;
     info.attnum     = attnum;
 
-    final String tip      = InumInterestingOrdersExtractor.getColumnType(columnType);
+    final String tip      = SQLTypes.codeToName(columnType);
     final String nullable = "f";
 
     info.isNullable = nullable.compareTo("f") == 0;

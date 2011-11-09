@@ -1,21 +1,8 @@
 package edu.ucsc.dbtune;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
+import edu.ucsc.dbtune.DBTuneInstances;
 import edu.ucsc.dbtune.core.InumWhatIfOptimizer;
 import edu.ucsc.dbtune.core.InumWhatIfOptimizerImpl;
-
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Schema;
-import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
-import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
-import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
-import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
-import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
-import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.inum.IndexAccessCostEstimation;
 import edu.ucsc.dbtune.inum.InterestingOrdersExtractor;
 import edu.ucsc.dbtune.inum.Inum;
@@ -23,6 +10,13 @@ import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.inum.MatchingStrategy;
 import edu.ucsc.dbtune.inum.OptimalPlan;
 import edu.ucsc.dbtune.inum.Precomputation;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,7 +24,16 @@ import java.sql.Statement;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
 import org.mockito.Mockito;
+
+import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
+import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
+import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
+import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
 
 /**
  * Contains a set of tests fixtures that can be shared among all inum tests.
@@ -80,13 +83,15 @@ public final class SharedFixtures {
   }
 
   public static Inum configureInum(Configuration configuration) throws Exception {
+    final Catalog                     catalog        = DBTuneInstances.configureCatalog();
     final Connection                  connection     = configureConnection();
     final InumSpace                   inumSpace      = configureInumSpace(configuration);
     final Precomputation              precomputation = configurePrecomputation(inumSpace);
     final MatchingStrategy            matchingLogic  = configureMatchingLogic(inumSpace);
     final InterestingOrdersExtractor  ioExtractor    = configureIOExtractor(configuration);
 
-    return Inum.newInumInstance(connection, precomputation, matchingLogic, ioExtractor);
+    return Inum.newInumInstance(
+            catalog, connection, precomputation, matchingLogic, ioExtractor);
   }
 
   public static InterestingOrdersExtractor configureIOExtractor(Configuration configuration) throws Exception {
@@ -160,12 +165,14 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
   public static Configuration configureConfiguration(Table table, int noIndexes, int noColsPerIndex) throws Exception {
     final List<Column> cols = Lists.newArrayList();
     final List<Index>  idxs = Lists.newArrayList();
+    int i =0;
     for(int idx = 0; idx < noIndexes; idx++) {
       for(int idx2 = 0; idx2 < noColsPerIndex; idx2 ++) {
         final Column col = new Column(table, generateRandomName(), INTEGER );
         cols.add(col);
       }
-      idxs.add(new Index("name", cols, idx == 0, CLUSTERED, UNIQUE));
+      idxs.add(new Index("idx_"+i, cols, idx == 0, CLUSTERED, UNIQUE));
+      i++;
       cols.clear();
     }
 

@@ -3,6 +3,8 @@ package edu.ucsc.dbtune.core;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.inum.Inum;
 
+import java.sql.SQLException;
+
 /**
  * The (IN)dex (U)sage (M)odel (INUM) What-if optimizer.
  *
@@ -28,7 +30,8 @@ public interface InumWhatIfOptimizer {
    *    indexes.
    * @see {@link #estimateCost(String, Configuration)}.
    */
-  double estimateCost(String query);
+  double estimateCost(String query)
+      throws SQLException;
 
   /**
    * estimate the cost involved in materializing a bag of hypothetical
@@ -47,5 +50,6 @@ public interface InumWhatIfOptimizer {
    *    the estimated cost for materializing a bag of hypothetical
    *    indexes.
    */
-  double estimateCost(String query, Configuration hypotheticalIndexes);
+  double estimateCost(String query, Configuration hypotheticalIndexes)
+      throws SQLException;
 }

@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.metadata.Configuration;
+import java.sql.SQLException;
 
 /**
  * It extracts interesting orders from a query.
@@ -15,5 +16,6 @@ public interface InterestingOrdersExtractor {
    * @return
    *    a set of interesting orders.
    */
-  Configuration extractInterestingOrders(String singleQuery);
+  Configuration extractInterestingOrders(String singleQuery)
+         throws SQLException;
 }
