@@ -2,14 +2,12 @@ package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.spi.Console;
 import edu.ucsc.dbtune.util.StopWatch;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Set;
@@ -27,7 +25,6 @@ public class Inum {
   private final MatchingStrategy           matchingLogic;
   private final InterestingOrdersExtractor ioExtractor;
   private final AtomicBoolean              isStarted;
-  private final Catalog                    catalog;
 
   private static final Set<String> QUERIES;
   static {
@@ -37,13 +34,11 @@ public class Inum {
   }
 
   private Inum(
-          Catalog catalog,
-          Connection connection,
-          Precomputation precomputation,
-          MatchingStrategy matchingLogic,
-          InterestingOrdersExtractor extractor)
+      Connection connection,
+      Precomputation precomputation,
+      MatchingStrategy matchingLogic,
+      InterestingOrdersExtractor extractor)
   {
-    this.catalog        = catalog;
     this.connection     = connection;
     this.precomputation = precomputation;
     this.matchingLogic  = matchingLogic;
@@ -52,29 +47,28 @@ public class Inum {
   }
 
   public static Inum newInumInstance(
-          Catalog catalog,
-          Connection connection,
-          Precomputation precomputation,
-          MatchingStrategy matchingLogic,
-          InterestingOrdersExtractor extractor)
+      Connection connection,
+      Precomputation precomputation,
+      MatchingStrategy matchingLogic,
+      InterestingOrdersExtractor extractor)
   {
     final Connection                 nonNullConnection                = Preconditions.checkNotNull(connection);
     final Precomputation             nonNullPrecomputation            = Preconditions.checkNotNull(precomputation);
     final MatchingStrategy           nonNullMatchingLogic             = Preconditions.checkNotNull(matchingLogic);
     final InterestingOrdersExtractor nonNullInteresingOrdersExtractor = Preconditions.checkNotNull(extractor);
 
-    return new Inum(catalog, nonNullConnection, nonNullPrecomputation, 
+    return new Inum(nonNullConnection, nonNullPrecomputation,
             nonNullMatchingLogic, nonNullInteresingOrdersExtractor);
   }
 
   public static Inum newInumInstance(Catalog catalog, Connection connection){
     final Connection nonNullConnection = Preconditions.checkNotNull(connection);
+    final Catalog    nonNullCatalog    = Preconditions.checkNotNull(catalog);
     return newInumInstance(
-        catalog,
         nonNullConnection,
         new InumPrecomputation(nonNullConnection),
         new InumMatchingStrategy(nonNullConnection),
-        new InumInterestingOrdersExtractor(catalog, nonNullConnection));
+        new InumInterestingOrdersExtractor(nonNullCatalog, nonNullConnection));
   }
 
   public double estimateCost(String query, Configuration inputConfiguration) 
@@ -88,13 +82,13 @@ public class Inum {
       );
     }
 
-    final InumSpace   cachedPlans       = precomputation.getInumSpace();
-    final OptimalPlan singleOptimalPlan = matchingLogic.matches(
+    final InumSpace        cachedPlans         = precomputation.getInumSpace();
+    final Set<OptimalPlan> matchedOptimalPlans = matchingLogic.matches(
         cachedPlans,
         inputConfiguration
     );
 
-    return matchingLogic.derivesCost(query, singleOptimalPlan, inputConfiguration);
+    return matchingLogic.derivesCost(query, matchedOptimalPlans, inputConfiguration);
   }
 
   public void end()   {
@@ -126,23 +120,21 @@ public class Inum {
   /**
    * INUM setup will load any representative workload found in the inum workload
    * directory.
+   * @throws SQLException if unable to build the inum space.
    */
   public void start() throws SQLException {
-    try {
-      start(QUERIES);
-    } catch (IOException e) {
-      Console.streaming().error("unable to load workload", e);
-    }
+    start(QUERIES);
   }
 
   /**
    * INUM will get prepopulated first with representative workloads and configurations.
+   *
    * @param input
    *    a list of representative workloads.
-   * @throws IOException
-   *    if unable to parse the input.
+   * @throws SQLException
+   *    if unable to build inum space.
    */
-  public void start(Set<String> input) throws IOException,SQLException {
+  public void start(Set<String> input) throws SQLException {
     isStarted.set(true);
 
     final StopWatch timing = new StopWatch();
@@ -153,7 +145,6 @@ public class Inum {
   }
 
   @Override public String toString() {
-      
     try {
     return Objects.toStringHelper(this)
         .add("started?", isStarted() ? "Yes" : "No")

@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune;
 
-import edu.ucsc.dbtune.DBTuneInstances;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
 import edu.ucsc.dbtune.core.InumWhatIfOptimizer;
 import edu.ucsc.dbtune.core.InumWhatIfOptimizerImpl;
 import edu.ucsc.dbtune.inum.IndexAccessCostEstimation;
@@ -14,9 +16,11 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
+import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
+import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
+import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,16 +28,7 @@ import java.sql.Statement;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 import org.mockito.Mockito;
-
-import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
-import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
-import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
-import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
 
 /**
  * Contains a set of tests fixtures that can be shared among all inum tests.
@@ -44,8 +39,7 @@ public final class SharedFixtures {
   private SharedFixtures(){}
 
   public static Connection configureConnection() throws Exception {
-    Connection connection = configureJdbcConnection();
-    return connection;
+    return configureJdbcConnection();
   }
 
   private static Connection configureJdbcConnection() throws Exception {
@@ -83,7 +77,6 @@ public final class SharedFixtures {
   }
 
   public static Inum configureInum(Configuration configuration) throws Exception {
-    final Catalog                     catalog        = DBTuneInstances.configureCatalog();
     final Connection                  connection     = configureConnection();
     final InumSpace                   inumSpace      = configureInumSpace(configuration);
     final Precomputation              precomputation = configurePrecomputation(inumSpace);
@@ -91,7 +84,7 @@ public final class SharedFixtures {
     final InterestingOrdersExtractor  ioExtractor    = configureIOExtractor(configuration);
 
     return Inum.newInumInstance(
-            catalog, connection, precomputation, matchingLogic, ioExtractor);
+        connection, precomputation, matchingLogic, ioExtractor);
   }
 
   public static InterestingOrdersExtractor configureIOExtractor(Configuration configuration) throws Exception {
@@ -108,10 +101,10 @@ public final class SharedFixtures {
 
   public static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception {
     final MatchingStrategy matchingLogic = Mockito.mock(MatchingStrategy.class);
-    final OptimalPlan plan = Lists.newArrayList(inumSpace.getAllSavedOptimalPlans()).get(0);
-    Mockito.when(matchingLogic.matches(Mockito.eq(inumSpace), Mockito.<Configuration>any())).thenReturn(plan);
-    final double cost = plan.getTotalCost();
-    Mockito.when(matchingLogic.derivesCost(Mockito.anyString(), Mockito.eq(plan), Mockito.<Configuration>any())).thenReturn(cost);
+    final Set<OptimalPlan> plans         = inumSpace.getAllSavedOptimalPlans();
+    Mockito.when(matchingLogic.matches(Mockito.eq(inumSpace), Mockito.<Configuration>any())).thenReturn(plans);
+    final double cost = Lists.newArrayList(plans).get(0).getTotalCost();
+    Mockito.when(matchingLogic.derivesCost(Mockito.anyString(), Mockito.eq(plans), Mockito.<Configuration>any())).thenReturn(cost);
     return matchingLogic;
   }
 
@@ -140,6 +133,7 @@ public final class SharedFixtures {
     final Set<OptimalPlan> plans = configureSingleOptimalPlan();
     Mockito.when(inumSpace.getAllSavedOptimalPlans()).thenReturn(plans);
     Mockito.when(inumSpace.save(key, plans)).thenReturn(plans);
+    Mockito.when(inumSpace.getOptimalPlans(Mockito.<Configuration>any())).thenReturn(plans);
     final Set<Configuration> ios = Sets.newHashSet();
     ios.add(key);
     Mockito.when(inumSpace.getAllInterestingOrders()).thenReturn(ios);

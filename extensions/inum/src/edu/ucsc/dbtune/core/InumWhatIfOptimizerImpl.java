@@ -25,11 +25,12 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
 
   /**
    * construct a new {@code InumWhatIfOptimizer} object.
+   * @param catalog
+   *    a container of schema objects.
    * @param connection
    *    a live database connection to postgres
    */
-  public InumWhatIfOptimizerImpl(Catalog catalog, Connection connection)
-  {
+  public InumWhatIfOptimizerImpl(Catalog catalog, Connection connection){
     this(Inum.newInumInstance(catalog, Preconditions.checkNotNull(connection)));
   }
 
@@ -44,7 +45,7 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
 
   /**
    * shut down INUM. This method may be called when the main component of the dbtune API
-   * request a closing of their {@link DatabaseConnection} object. Once this db connection is
+   * request a closing of their {@link Connection} object. Once this db connection is
    * closed, there is not need to keep INUM 'on' too.
    */
   public void endInum(){
@@ -73,6 +74,8 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
 
   /**
    * start INUM.
+   * @throws SQLException
+   *    if unable to build inum space.
    */
   public void startInum() throws SQLException {
     final StopWatch inumStarting = new StopWatch();

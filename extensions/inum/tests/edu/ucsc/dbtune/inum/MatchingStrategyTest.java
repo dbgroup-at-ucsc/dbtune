@@ -6,6 +6,7 @@ import edu.ucsc.dbtune.metadata.Index;
 
 import com.google.common.collect.Lists;
 
+import java.util.Set;
 import org.junit.Test;
 
 import static org.junit.Assert.assertThat;
@@ -22,8 +23,9 @@ public class MatchingStrategyTest {
     final MatchingStrategy matchingLogic = new InumMatchingStrategy(SharedFixtures.configureConnection());
     final Configuration    input         = SharedFixtures.configureConfiguration();
     final InumSpace        inumSpace     = SharedFixtures.configureInumSpace(input);
-    final OptimalPlan      plan          = matchingLogic.matches(inumSpace, input);
+    final Set<OptimalPlan> plan          = matchingLogic.matches(inumSpace, input);
     assertThat(plan, notNullValue());
+    assertThat(plan.size(), is(1));
   }
 
   @Test public void testDeriveCost() throws Exception {
@@ -36,9 +38,9 @@ public class MatchingStrategyTest {
     };
     final Configuration    input         = SharedFixtures.configureConfiguration();
     final InumSpace        inumSpace     = SharedFixtures.configureInumSpace(input);
-    final OptimalPlan      plan          = matchingLogic.matches(inumSpace, input);
+    final Set<OptimalPlan> plan          = matchingLogic.matches(inumSpace, input);
     final double           cost          = matchingLogic.derivesCost("lalalalaSql", plan, input);
-    assertThat(Double.compare(10.0, cost), is(0));
+    assertThat(Double.compare(11.0, cost), is(0));
   }
 
   @Test public void testIndexAccessCostEstimation() throws Exception {

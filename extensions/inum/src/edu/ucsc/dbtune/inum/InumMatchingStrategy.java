@@ -28,22 +28,33 @@ public class InumMatchingStrategy implements MatchingStrategy {
     this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
   }
 
-  @Override
-  public double derivesCost(String query, OptimalPlan optimalPlan,
+  @Override public double derivesCost(String query, Set<OptimalPlan> optimalPlans,
       Configuration inputConfiguration) {
     // adding the cached cost + index access costs
     final double indexAccessCosts = getIndexAccessCostEstimation().estimateIndexAccessCost(query, inputConfiguration);
-    return sumCachedCosts(optimalPlan) + indexAccessCosts;
+    final double derivedCost      = findOneWithMinCost(optimalPlans, indexAccessCosts);
+    Preconditions.checkArgument(compare(derivedCost, 0.0) > 0, "invalid execution cost. It cannot be negative or zero.");
+    return derivedCost;
   }
 
-  private static OptimalPlan findOneWithMinCost(Set<OptimalPlan> matches){
-    OptimalPlan min = new SqlExecutionOptimalPlan();
+  private static double findOneWithMinCost(Set<OptimalPlan> matches, double indexAccessCost){
+    OptimalPlan min = null;
+    double derivedCost = 0.0;
     for(OptimalPlan each : matches){
-      if(compare(min.getTotalCost(), each.getTotalCost()) < 0) {
-        min = each;
+      if(null == min) { // base case
+        min         = each;
+        derivedCost = sumCachedCosts(each) + indexAccessCost;
+        continue;
+      }
+
+      final double first  = sumCachedCosts(min)  + indexAccessCost;
+      final double second = sumCachedCosts(each) + indexAccessCost;
+      if(compare(second, first) < 0/*check if second is less than first*/) {
+        min         = each;
+        derivedCost = second;
       }
     }
-    return min;
+    return derivedCost;
   }
 
   @Override public IndexAccessCostEstimation getIndexAccessCostEstimation() {
@@ -52,13 +63,7 @@ public class InumMatchingStrategy implements MatchingStrategy {
 
   private static boolean intersects(Configuration first, Configuration second){
     final Configuration c = new Configuration(Lists.<Index>newArrayList());
-    // todo(Ivo) how is the cardinality of the config tied to the # of indexes the config contains?
-    // they don't seem connected. For example..Initially, I wanted to write first.getCardinality() <
-    // second.getCardinality(), but this did not work since the cardinality was 0. Therefore, I ended
-    // up using first.toList().size()....etc. If the intention was to update the cardinality of
-    // the configuration based on the # of stored indexes, then there is a bug in the configuration
-    // class.
-    if (first.toList().size() < second.toList().size()) {
+    if (first.size() < second.size()) {
       for (Index x : first.toList()) {
         if (second.toList().contains(x)) {
           c.add(x);
@@ -75,8 +80,7 @@ public class InumMatchingStrategy implements MatchingStrategy {
     return !c.toList().isEmpty();
   }
 
-  @Override
-  public OptimalPlan matches(InumSpace inumSpace, Configuration inputConfiguration) {
+  @Override public Set<OptimalPlan> matches(InumSpace inumSpace, Configuration inputConfiguration) {
     final Set<OptimalPlan> found = Sets.newHashSet();
     // assuming there is a match, pick the one with the min cost.
     final Configuration key = new Configuration(inputConfiguration);
@@ -88,7 +92,7 @@ public class InumMatchingStrategy implements MatchingStrategy {
       }
     }
 
-    return findOneWithMinCost(found);
+    return found;
   }
 
   private static double sumCachedCosts(OptimalPlan optimalPlan){

@@ -11,11 +11,10 @@ import java.sql.SQLException;
 public interface InterestingOrdersExtractor {
   /**
    * extracts the interesting orders of a single query.
-   * @param singleQuery
-   *    single SQL query.
-   * @return
-   *    a set of interesting orders.
+   *
+   * @param singleQuery single SQL query.
+   * @return a set of interesting orders.
+   * @throws SQLException if unable to extract interesting orders.
    */
-  Configuration extractInterestingOrders(String singleQuery)
-         throws SQLException;
+  Configuration extractInterestingOrders(String singleQuery) throws SQLException;
 }
