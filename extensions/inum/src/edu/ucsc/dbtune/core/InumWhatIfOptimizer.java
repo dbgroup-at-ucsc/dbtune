@@ -1,8 +1,7 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.inum.Inum;
-
+import edu.ucsc.dbtune.metadata.Configuration;
 import java.sql.SQLException;
 
 /**
@@ -29,6 +28,8 @@ public interface InumWhatIfOptimizer {
    *    the estimated cost for executing a single query without using
    *    indexes.
    * @see {@link #estimateCost(String, Configuration)}.
+   * @throws SQLException
+   *    if unable to estimate cost.
    */
   double estimateCost(String query)
       throws SQLException;
@@ -49,6 +50,8 @@ public interface InumWhatIfOptimizer {
    * @return
    *    the estimated cost for materializing a bag of hypothetical
    *    indexes.
+   * @throws SQLException
+   *    if unable to estimate cost.
    */
   double estimateCost(String query, Configuration hypotheticalIndexes)
       throws SQLException;

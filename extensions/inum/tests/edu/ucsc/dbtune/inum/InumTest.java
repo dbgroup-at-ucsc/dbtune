@@ -33,11 +33,11 @@ public class InumTest {
     assertThat(inum.getInumSpace().getAllSavedOptimalPlans().isEmpty(), is(false));
   }
 
-  @Test public void testCombinationGeneration() throws Exception {
+  @Test public void testCrossProductGeneration() throws Exception {
     final Table        table   = new Table(new Schema( new Catalog("persons_db"), "persons_sch"), "persons");
     final Configuration interestingOrders = SharedFixtures.configureConfiguration(table, 3, 3);
 
-    final Set<Configuration> combinations = Combinations.findCombinations(interestingOrders);
+    final Set<Configuration> combinations = Combinations.findCrossProduct(interestingOrders);
     assertThat(combinations.size(), equalTo(8));
   }
 

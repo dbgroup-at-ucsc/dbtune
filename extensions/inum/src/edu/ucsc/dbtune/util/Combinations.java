@@ -27,20 +27,20 @@ public class Combinations {
    * @return
    *    a list of all combinations for the given elements.
    */
-  public static <T> Set<Set<T>> findCombinations(Iterable<T> elements, int n){
+  public static <T> Set<Set<T>> findCrossProduct(Iterable<T> elements, int n){
     final Set<Set<T>> result = Sets.newHashSet();
     if(n == 0) {
       result.add(Sets.<T>newHashSet());
       return result;
     }
 
-    final Set<Set<T>> combinations = findCombinations(elements, n - 1);
+    final Set<Set<T>> crossProducts = findCrossProduct(elements, n - 1);
 
-    for (Set<T> combination: combinations){
+    for (Set<T> crossproduct: crossProducts){
       for (T element: elements){
-        if (combination.contains(element)) { continue; }
+        if (crossproduct.contains(element)) { continue; }
         final Set<T> list = Sets.newHashSet();
-        list.addAll(combination);
+        list.addAll(crossproduct);
         if (list.contains(element))        { continue; }
         list.add(element);
 
@@ -52,22 +52,11 @@ public class Combinations {
     return result;
     }
 
-  @Deprecated public static <T> Set<Set<T>> findCombinations(Iterable<T> elements){
-    Set<Set<T>> result = Sets.newHashSet();
-
-    final Set<T> source = Sets.newHashSet(elements);
-    for (int i = 0; i <= source.size(); i++){
-      result.addAll(findCombinations(elements, i));
-    }
-    return result;
-  }
-
-  public static Set<Configuration> findCombinations(Configuration elements){
-    // todo(Huascar) too slow..not sorted...needs improvement...
+  public static Set<Configuration> findCrossProduct(Configuration elements){
     Set<Set<Index>>  result = Sets.newHashSet();
     final Set<Index> source = Sets.newHashSet(elements.toList());
     for (int i = 0; i <= source.size(); i++){
-      result.addAll(findCombinations(elements.toList(), i));
+      result.addAll(findCrossProduct(elements.toList(), i));
     }
 
     final Set<Configuration> combinations = Sets.newHashSet();

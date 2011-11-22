@@ -47,11 +47,11 @@ public class InumPrecomputation implements Precomputation {
 
   @Override public Set<OptimalPlan> setup(String query, Configuration interestingOrders) {
     addQuerytoListOfSeenQueries(query);
-    // generate all possible interesting orders combinations that will be used
+    // generate all possible interesting orders combinations (atomic) that will be used
     // during the INUM's {@link Precomputation setup} phase.
-    final Set<Configuration> allCombinationsOfInterestingOrders = Combinations.findCombinations(interestingOrders);
+    final Set<Configuration> allAtomicCombOfInterestingOrders = Combinations.findCrossProduct(interestingOrders);
     for(Configuration o /*o as in the JavaDoc*/
-        : allCombinationsOfInterestingOrders){
+        : allAtomicCombOfInterestingOrders){
       final Set<OptimalPlan> optimalPlansPerInterestingOrder = Sets.newHashSet();
       // call optimizer given the workload and an input configuration
       //   get optimal plan as a String

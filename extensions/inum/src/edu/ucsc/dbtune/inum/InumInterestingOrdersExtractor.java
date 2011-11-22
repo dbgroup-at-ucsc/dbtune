@@ -301,7 +301,8 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       groupByColumns.addAll(groupByColumn);
       groupByColumn = Sets.newLinkedHashSet();
 
-      // todo(huascar) not sure why this has to be done twice (see above loop)....there must be something required by ZQL library.
+      // todo(huascar) not sure why this has to be done twice (see above loop)....
+      // there must be something required by ZQL library.
       for (Object eachGroupBy : groupBy.getGroupBy()) {
         final ZExp o = (ZExp) eachGroupBy;
         processExpression(o, groupByColumn, allColumns, groupByColumn);
