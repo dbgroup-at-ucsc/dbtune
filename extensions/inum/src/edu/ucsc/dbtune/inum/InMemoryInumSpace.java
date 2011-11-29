@@ -73,4 +73,14 @@ public class InMemoryInumSpace implements InumSpace {
         .add("cached plans", getAllSavedOptimalPlans())
     .toString();
   }
+  
+  /**
+   * Return the set of template plans   
+   * 
+   * @return 
+   * 	The set of template plans
+   */
+  @Override public Set<InumStatementPlan> getTemplatePlans(){
+	  throw new RuntimeException("NOT IMPLEMENTED YET");
+  }
 }

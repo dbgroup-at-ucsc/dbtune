@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import java.util.Set;
 
 /**
@@ -64,6 +65,14 @@ public interface InumSpace
    */
   Set<OptimalPlan> getAllSavedOptimalPlans();
 
+  /**
+   * Return the set of template plans   
+   * 
+   * @return 
+   * 	The set of template plans
+   */
+  Set<InumStatementPlan> getTemplatePlans();
+  
   /**
    * Save a set of optimal plans per query in the INUM Space.
    *
