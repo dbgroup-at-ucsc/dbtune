@@ -1,16 +1,15 @@
-package edu.ucsc.dbtune.bip;
+package edu.ucsc.dbtune.bip.interactions;
 
 import java.util.*; 
 import java.sql.SQLException;
 
-import edu.ucsc.dbtune.SharedFixtures;
+import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.inum.InumSpace;
-import edu.ucsc.dbtune.inum.InMemoryInumSpace;
-import edu.ucsc.dbtune.inum.Inum;
-
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.inum.OptimalPlan;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.inum.InumStatementPlan;
+
 
 /**
  * It serves as the entry point to the computation of index interaction
@@ -18,77 +17,121 @@ import edu.ucsc.dbtune.inum.InumStatementPlan;
  * @author tqtrung@ucsc.edu.sc (Quoc Trung Tran)
  *
  */
-public class BIP {
+public class InteractionBIP {		
+	
+	private ArrayList<ArrayList<Index>> resultInteractIndexes;
+	/**
+	 * Given a workload and a set of candidate indexes, derive pair of indexes that interact
+	 * 
+	 * @param workoadName
+	 * 		The given workload name
+	 * @throws Exception
+	 */
+	public void run(String workoadName) throws Exception{
 		
-	private static ArrayList<String> listQuery;
-	private static ArrayList<QueryDescPlan> listQueryDesc;
-	private static ArrayList<Index> candidateIndexes;
-	private static Inum inum;
-
-	public void run(){
-	
-	}
-	
-	public static void main(String[] args) throws Exception{
-		CPlex cplex = new CPlex();
-		try{
-			// TODO: check where is @confiureInum()
-			inum = SharedFixtures.configureInum();
-		} catch (Exception e){
-			
-		}
-	    inum.start();
+		ArrayList<String> listQuery = new ArrayList<String>();	
+		ArrayList<InumSpace> listInumSpaces = new ArrayList<InumSpace>();		 
+		ArrayList<Index> candidateIndexes = new ArrayList<Index>(); 
 		
 		String query;
 		// TODO:  Read query from the workload into @listQuery
+		// Derive the @candidateIndexes
 		
 		/**
 		 *  Interact with INUM to obtain query descriptor
 		 *  Each template plan including: internal cost, all possible access cost
 		 * 	The access cost is computed once?
 		 */ 
-		for (Iterator<String> iterQuery = listQuery.iterator(); iterQuery.hasNext(); ){
+		for (Iterator<String> iterQuery = listQuery.iterator(); iterQuery.hasNext(); )
+		{		
 			query = iterQuery.next();
-			listQueryDesc.add(generatePlanDescription(query));
+			listInumSpaces.add(populateInumSpace(query));
 		}
 		
-		// Optimize (reduce the number of call to INUM)?
-		for (Iterator<QueryDescPlan> iterDesc = listQueryDesc.iterator(); iterDesc.hasNext();){
-			candidateIndexes = new ArrayList<Index>();
-			
-			
-			// TODO: generate @candidateIndexes
-			cplex.run(iterDesc.next(), candidateIndexes);
-		}
 		
-		inum.end();
+		for (Iterator<InumSpace> iterInum = listInumSpaces.iterator(); iterInum.hasNext();)
+		{			
+			runOneQuery(iterInum.next(), candidateIndexes);			
+		}		
+		
 	}
+	
+	/**
+	 * This method will be integrated into @run() later 
+	 * 
+	 * @param listInumSpaces
+	 * 		The list of INUM spaces, derived from the given workload
+	 * @param  candidateIndexes
+	 * 		The list of candidate indexes derived from the given workload
+	 * 
+	 * @throws Exception
+	 */
+	public void run(List<InumSpace> listInumSpaces, List <Index> candidateIndexes) throws Exception{
+		// Each INUM space corresponds to one query
+		resultInteractIndexes = new ArrayList<ArrayList <Index> >();
+		for (Iterator<InumSpace> iterInum = listInumSpaces.iterator(); iterInum.hasNext();)
+		{			
+			runOneQuery(iterInum.next(), candidateIndexes);			
+		}
+		
+		System.out.println("In run(), the list of final interacted indexes: ====");	
+		for (Iterator<ArrayList<Index>> iter = resultInteractIndexes.iterator(); iter.hasNext(); )
+		{	
+			System.out.println(" Pair of interacting indexes: ");
+			for (Iterator<Index> iterIndex = iter.next().iterator(); iterIndex.hasNext(); )
+			{
+				System.out.println(" ----- " + iterIndex.next().getName());
+			}			
+		}
+	}
+	/**
+	 * Given a particular query inum space (corresponding to one query), derive
+	 * pair of indexes that interact with each other
+	 * 
+	 * @param space
+	 * 		The given Inum space
+	 * 
+	 * @param candidateIndexes
+	 * 		The given list of candidate indexes
+	 * 
+	 * @return void
+	 * 
+	 */
+	public void runOneQuery(InumSpace space, List<Index> candidateIndexes)
+	{
+		// 1. Generate query descriptor
+		QueryPlanDesc desc =  new QueryPlanDesc(); 			
+		desc.generateQueryPlanDesc(space, candidateIndexes);
+		
+		// 2. Call cplex
+		IIPCPlex cplex = new IIPCPlex();
+		ArrayList<ArrayList<Index>> interactIndexes = cplex.run(desc);
+		
+		for (Iterator<ArrayList<Index>> iter = interactIndexes.iterator(); iter.hasNext(); )
+		{
+			ArrayList<Index> pairIndexes = iter.next();
+			resultInteractIndexes.add(pairIndexes);
+			System.out.println(" Pair of interacting indexes: ");
+			for (Iterator<Index> iterIndex = pairIndexes.iterator(); iterIndex.hasNext(); )
+			{
+				System.out.println(" ----- " + iterIndex.next().getName());
+			}			
+		}
+				
+	}
+	
+		
 	
 	/**
 	 * Interact with INUM to get the INUM's search space 
 	 * @param query
 	 * 		A SQL query
 	 * @return
-	 * 	    A query plan descriptor, including information about (internal plan + access costs)
+	 * 	    Inum space including template plans
 	 */
-	public static QueryDescPlan generatePlanDescription(String query){
-		QueryDescPlan desc = new QueryDescPlan();
-		
-		// TODO: communicate with INUM to populate the information 
-		// into @space		
-		InumSpace space = inum.getInumSpace();
-		
-		Set<InumStatementPlan> optimalPlans = space.getTemplatePlans();
-		
-		for (InumStatementPlan plan : optimalPlans){
-			
-		}
-		
-		
-		
-		return desc;
+	public InumSpace populateInumSpace(String query){
+		// TODO: interact with INUM to get the INUM space and Schema 
+		throw new RuntimeException("NOT IMPLEMENTED YET");
 	}
-	
-	
 		
 }
