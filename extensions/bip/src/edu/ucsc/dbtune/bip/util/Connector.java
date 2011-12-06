@@ -1,6 +1,7 @@
-package edu.ucsc.dbtune.bip;
+package edu.ucsc.dbtune.bip.util;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 
 public class Connector {	
  
@@ -15,7 +16,7 @@ public class Connector {
 	 * @return
 	 * 		The output string
 	 */	
-	public static String join(String connector, ArrayList<String> listElement){
+	public static String join(String connector, List<String> listElement){
 		
 		Iterator<String> iterator = listElement.iterator();
 		String result = "";
@@ -23,9 +24,9 @@ public class Connector {
 		
 		while(iterator.hasNext()){
 			if (is_first == false){
-				result.concat(connector);
+				result = result.concat(connector);
 			}
-			result.concat(iterator.next().toString());
+			result = result.concat(iterator.next().toString());
 			is_first = false;
 		}
 		

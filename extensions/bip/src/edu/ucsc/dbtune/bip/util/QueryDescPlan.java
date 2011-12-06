@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.bip;
+package edu.ucsc.dbtune.bip.util;
 
 
 public class QueryDescPlan {

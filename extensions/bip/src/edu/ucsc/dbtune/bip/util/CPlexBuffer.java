@@ -1,5 +1,7 @@
-package edu.ucsc.dbtune.bip;
+package edu.ucsc.dbtune.bip.util;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -25,7 +27,7 @@ public class CPlexBuffer {
         bin.println();
         bin.println("Binary");
         obj.println("minimize");
-        obj.print("obj: 1");
+        obj.print("obj: ");
     }
 
     public void close() {
@@ -47,5 +49,29 @@ public class CPlexBuffer {
     public PrintWriter getBin() {
         return bin;
     }
+    
+    /**
+	 * Concatenate the contents from multiple input files into an output file:
+	 *    Placing row by row in each input file into the output one
+	 * 
+	 * @param target
+	 * 	    The name of the output file
+	 * @param files
+	 * 		The array of strings representing the name of the input files
+	 * @throws IOException
+	 */
+	public static void concat(String target, String... files) throws IOException {
+        PrintWriter writer = new PrintWriter(new FileWriter(target));
+        for (int i = 0; i < files.length; i++) {
+            String file = files[i];
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String line = null;
+            while((line = reader.readLine()) != null) {
+                writer.println(line);
+            }
+            reader.close();
+        }
+        writer.close();
+	}
 }
 
