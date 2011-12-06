@@ -1,11 +1,13 @@
 package edu.ucsc.dbtune.inum;
 
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 
 public class InumStatementPlan extends SQLStatementPlan {
 
@@ -34,4 +36,26 @@ public class InumStatementPlan extends SQLStatementPlan {
 	public double getInternalCost() {
 		 throw new RuntimeException("NOT IMPLEMENTED YET");
 	}
+	
+	/**
+     * Return the list of tables referenced by the statement
+     *
+     * @return
+     *     the list of referenced tables
+     */
+    public List<Table> getReferencedTables()
+    {
+        throw new RuntimeException("NOT IMPLEMENTED YET");
+    }
+    
+    /**
+     * Return the size of the given index
+     * @param index
+     * 		The given index
+     * @return
+     * 		Index size
+     */
+    public double getMaterializedIndexSize(Index index) {
+    	throw new RuntimeException("NOT IMPLEMENTED YET");
+    }
 }

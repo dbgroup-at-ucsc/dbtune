@@ -236,19 +236,38 @@ public final class DBTuneInstances
 
     /**
      * Creates a catalog with 2 schemas, 3 tables per schema and 4 columns and 4 indexes per table
-     */
+     */    
     public static Catalog configureCatalog() throws SQLException
+    {
+        return configureCatalog (2, 3, 4);
+    }
+    
+
+    /**
+     * Create a catalog with the specified characteristics of Schema information
+     * 
+     * @param numSchema
+     * 		Number of schema
+     * @param numTables
+     * 		Number of relations in each schema
+     * @param numIndexes
+     * 		Number of indexes (equivalent to number of columns) in each relation per schema
+     * @return
+     * 		Catalog instance
+     * 
+     * @throws SQLException
+     */
+    public static Catalog configureCatalog(int numSchema, int numTables, int numIndexes) throws SQLException
     {
         Catalog catalog = new Catalog("catalog_0");
 
-        for (int j = 0; j < 2; j++) {
+        for(int j = 0; j < numSchema; j++) {
             Schema schema = new Schema(catalog,"schema_" + j);
             int counter = 0;
-            for (int k = 0; k < 3; k++) {
+            for(int k = 0; k < numTables; k++) {
                 Table table = new Table(schema,"table_" + k);
-                for (int l = 0; l < 4; l++) {
+                for(int l = 0; l < numIndexes; l++) {
                     Column column = new Column(table,"column_" + l, l+1);
-
                     new Index(table.getName() + "_index_" + counter++, column);
                 }
             }
@@ -256,6 +275,7 @@ public final class DBTuneInstances
 
         return catalog;
     }
+
 
     /**
      * Creates the IBG that is used as sample in {@link IndexBenefitGraph}.
