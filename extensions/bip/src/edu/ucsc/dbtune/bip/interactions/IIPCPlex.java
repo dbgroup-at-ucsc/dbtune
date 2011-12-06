@@ -28,7 +28,7 @@ public class IIPCPlex {
 	private IIPLinGenerator genIIP; 
 	private Environment environment = Environment.getInstance();
 	
-	public static HashMap cachedInteractIndexName = new HashMap<String, Integer>();	
+	public static HashMap<String,Integer> cachedInteractIndexName = new HashMap<String, Integer>();	
 	public static final Pattern patternIndexVariable = Pattern.compile("s*");
 		
 	

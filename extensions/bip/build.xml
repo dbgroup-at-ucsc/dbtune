@@ -13,6 +13,7 @@
   <target name="compile.test">
     <ant dir="../../" antfile="common.xml" target="compile.test">
       <reference refid="compile.classpath" />
+      <sysproperty name="java.library.path" value="lib/"/>
     </ant>
   </target>
 </project>
