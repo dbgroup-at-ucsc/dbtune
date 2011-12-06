@@ -16,6 +16,7 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.WORKLOADS_FOLDERNAME;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.TEMP_DIR;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -394,5 +395,12 @@ public class Environment
                 throw new IllegalStateException(e);
             }
         }
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#TEMP_DIR}
+     */
+    public String getTempDir(){
+        return configuration.getProperty(TEMP_DIR);
     }
 }

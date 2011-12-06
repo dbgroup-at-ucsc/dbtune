@@ -25,6 +25,7 @@
     <echo message="Compiling ${project} tests"/>
     <mkdir dir="${bld.dir}/junit.output"/>
     <mkdir dir="${bld.dir}/tests"/>
+    <mkdir dir="${bld.dir}/temp"/>
     <javac srcdir="${tst.dir}" debug="on" destdir="${bld.dir}/tests" includeantruntime="false">
       <classpath path="${bld.dir}/classes"/>
       <classpath refid="compile.classpath"/>

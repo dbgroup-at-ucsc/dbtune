@@ -138,6 +138,10 @@ public class EnvironmentProperties
      */
     public static final String INUM_CACHE_DEPLOYMENT_DIR = "cache.deployment.dir";
 
+    /**
+     *  Folder for storing temporary file that will be deleted eventually
+     */
+    public static final String TEMP_DIR = "temp.dir";
 
 
     /**
