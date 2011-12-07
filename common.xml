@@ -1,6 +1,16 @@
 <?xml version="1.0"?>
 <project name="common">
   <path id="compile.classpath" />
+  <!-- TODO simplify this file by just having one task for each, i.e.:
+        * compile
+        * scalacompile
+        * junit
+        * checkstyle
+
+       instead of having compile, compile.test we just recieve parameters
+       for the task in this case, the name of the srcdir and destdir.
+       Similarly for the remaining tasks.
+  -->
 
   <target name="compile" description="Compile Java source.">
     <echo message="Compiling ${project}"/>
@@ -125,6 +135,13 @@
         </sourcepath>
         <classpath refid="compile.classpath"/>
       </javadoc>
+  </target>
+
+  <target name="checkstyle" description="Runs checkstyle on all the source files">
+    <checkstyle config="${cfg.dir}/checkstyle.xml">
+      <fileset dir="${src.dir}" includes="**/*.java"/>       
+      <formatter type="plain"/>
+    </checkstyle>
   </target>
 
   <target name="dist" description="Package distribution.">
