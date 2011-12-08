@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 public class IBGAnalyzer {
@@ -61,7 +61,7 @@ public class IBGAnalyzer {
         this.nodeQueue      = nodeQueue;
         this.revisitQueue   = revisitQueue;
         allUsedIndexes      = new IndexBitSet();
-        rootBitSet          = ibgCons.rootNode().config.clone();
+        rootBitSet          = ibgCons.rootNode().getConfiguration().clone();
         visitedNodes        = new IndexBitSet();
 
         // seed the queue with the root node
@@ -115,11 +115,11 @@ public class IBGAnalyzer {
                 return StepStatus.DONE;
             }
 
-            if (visitedNodes.get(node.id))
+            if (visitedNodes.get(node.getID()))
                 continue;
 
             if (analyzeNode(node, logger)) {
-                visitedNodes.set(node.id);
+                visitedNodes.set(node.getID());
                 nodeQueue.addChildren(node.firstChild());
             }
             else {
@@ -157,7 +157,7 @@ public class IBGAnalyzer {
      * Return true if the analysis was successful
      */
     private boolean analyzeNode(IBGNode node, InteractionLogger logger) {
-        IndexBitSet bitset_Y = node.config;
+        IndexBitSet bitset_Y = node.getConfiguration();
 
         // get the used set
         usedBitSet.clear();

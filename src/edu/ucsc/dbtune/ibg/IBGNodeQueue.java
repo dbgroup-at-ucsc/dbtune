@@ -18,8 +18,8 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IBGNode.IBGChild;
+import edu.ucsc.dbtune.ibg.IBGNode;
 import edu.ucsc.dbtune.util.DefaultQueue;
 
 public class IBGNodeQueue {

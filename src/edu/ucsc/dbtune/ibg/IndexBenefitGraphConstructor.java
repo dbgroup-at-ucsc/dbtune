@@ -16,8 +16,8 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
@@ -36,7 +36,8 @@ import java.util.HashSet;
  * @author Huascar Sanchez
  * @author Ivo Jimenez
  */
-public class IndexBenefitGraphConstructor {
+public class IndexBenefitGraphConstructor
+{
 	/* 
 	 * Parameters of the construction.
 	 */
@@ -143,8 +144,10 @@ public class IndexBenefitGraphConstructor {
     }
 
 	/*
-	 * Expands one node of the IBG. Returns true if a node was expanded, or false if there are no unexpanded nodes.
-	 * This function is not safe to be called from more than one thread.
+     * Expands one node of the IBG. Returns true if a node was expanded, or false if there are no 
+     * unexpanded nodes.
+     *
+     * This function is not safe to be called from more than one thread.
 	 */
 	public boolean buildNode() throws SQLException {
 		IBGNode newNode, coveringNode;
@@ -158,7 +161,7 @@ public class IndexBenefitGraphConstructor {
 		
 		// get cost and used set (stored into usedBitSet)
 		usedBitSet.clear();
-		coveringNode = coveringNodeFinder.find(rootNode, newNode.config);
+        coveringNode = coveringNodeFinder.find(rootNode, newNode.getConfiguration());
 		if (coveringNode != null)
         {
 			totalCost = coveringNode.cost();
@@ -167,13 +170,13 @@ public class IndexBenefitGraphConstructor {
 		else
         {
             // Translation from Karl's framework to DBTune:
-            //   - transform newNode.config to a Configuration object
+            //   - transform newNode.getConfiguration() to a Configuration object
             //   - call the optimizer on it
             //   - turn on the elements in usedBitSet object according to getUsedConfiguration()
             Configuration newNodeConf = new Configuration("from_bitset");
 
             for (Index idx : configuration)
-                if (newNode.config.get(configuration.getOrdinalPosition(idx)))
+                if (newNode.getConfiguration().get(configuration.getOrdinalPosition(idx)))
                     newNodeConf.add(idx);
 
             optCount++;
@@ -195,7 +198,7 @@ public class IndexBenefitGraphConstructor {
 		// in order of construction.
 		IBGChild firstChild = null;
 		IBGChild lastChild = null;
-		childBitSet.set(newNode.config);
+		childBitSet.set(newNode.getConfiguration());
 		for (int u = usedBitSet.nextSetBit(0); u >= 0; u = usedBitSet.nextSetBit(u+1)) {
 			childBitSet.clear(u);
 			IBGNode childNode = find(queue, childBitSet);
@@ -231,7 +234,7 @@ public class IndexBenefitGraphConstructor {
 	private static IBGNode find(DefaultQueue<IBGNode> queue, IndexBitSet config) {
 		for (int i = 0; i < queue.count(); i++) {
 			IBGNode node = queue.fetch(i);
-			if (node.config.equals(config))
+			if (node.getConfiguration().equals(config))
 				return node;
 		}
 		return null;
@@ -537,7 +540,7 @@ public class IndexBenefitGraphConstructor {
         childBitSet   = new IndexBitSet();
         isUsed        = new IndexBitSet();
         candidateSet  = pool.getSnapshot();
-        rootConfig    = candidateSet.bitSet(); // set up the root node, and initialize the queue
+        rootConfig    = candidateSet.bitSet();
         queue         = new DefaultQueue<IBGNode>();
         rootNode      = new IBGNode(rootConfig, nodeCount++);
         emptyCost     = optimizer.explain(sql).getCost();
@@ -581,15 +584,17 @@ public class IndexBenefitGraphConstructor {
         ibgAnalysis.waitUntilDone();
         //long nStop = System.nanoTime();
 
-        //ProfiledQuery<I> qinfo =
-        //  new ProfiledQuery(
-        //    sql,
-        //    explainInfo,
-        //    indexes,
-        //    ibgCons.getIBG(),
-        //    logger.getInteractionBank(),
-        //    conn.whatifCount(),
-        //    ((nStop - nStart) / 1000000.0));
+        // we leave this just for historical reasons, i.e. to see what was 
+        // happening before (in Karl's framework).
+        // ProfiledQuery<I> qinfo =
+        //   new ProfiledQuery(
+        //     sql,
+        //     explainInfo,
+        //     indexes,
+        //     ibgCons.getIBG(),
+        //     logger.getInteractionBank(),
+        //     conn.whatifCount(),
+        //     ((nStop - nStart) / 1000000.0));
 
 		IndexBenefitGraph ibg =
             new IndexBenefitGraph(rootNode, emptyCost, isUsed); //, ibgAnalysis);

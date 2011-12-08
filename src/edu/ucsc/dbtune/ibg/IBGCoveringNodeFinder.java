@@ -1,21 +1,18 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
+/* **************************************************************************** *
+ *   Copyright 2010 University of California Santa Cruz                         *
+ *                                                                              *
+ *   Licensed under the Apache License, Version 2.0 (the "License");            *
+ *   you may not use this file except in compliance with the License.           *
+ *   You may obtain a copy of the License at                                    *
+ *                                                                              *
+ *       http://www.apache.org/licenses/LICENSE-2.0                             *
+ *                                                                              *
+ *   Unless required by applicable law or agreed to in writing, software        *
+ *   distributed under the License is distributed on an "AS IS" BASIS,          *
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+ *   See the License for the specific language governing permissions and        *
+ *   limitations under the License.                                             *
+ * **************************************************************************** */
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
@@ -101,8 +98,13 @@ public class IBGCoveringNodeFinder
     public final double findCost(IndexBenefitGraph[] ibgs, ConfigurationBitSet config) {
         double cost = 0;
         for (IndexBenefitGraph ibg : ibgs){
+<<<<<<< HEAD
             cost += find(ibg, config).cost;
     }
+=======
+            cost += findCost(ibg, config);
+        }
+>>>>>>> issue #120 Taking IBGNode class out of IndexBenefitGraph
         return cost;
     }
 
@@ -122,14 +124,18 @@ public class IBGCoveringNodeFinder
      */
     public IBGNode findFast(IBGNode rootNode, IndexBitSet config, IBGNode guess) {
         visited.clear(); // not using it, but clear it anyway?
-        
-        IBGNode currentNode = (guess != null && config.subsetOf(guess.config)) ? guess : rootNode;
+
+        IBGNode currentNode = (guess != null && config.subsetOf(guess.getConfiguration())) ? guess : rootNode;
         while (true) {
             // stop if an unexpanded node is found
             if (!currentNode.isExpanded()){
                 return null;
             }
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> issue #120 Taking IBGNode class out of IndexBenefitGraph
             IBGChild ch = currentNode.firstChild();
             while (true) {
                 if (ch == null) {
@@ -157,35 +163,35 @@ public class IBGCoveringNodeFinder
     public IBGNode find(IBGNode rootNode, IndexBitSet config) {
         visited.clear();
         pending.reset();
-        
+
         pending.addNode(rootNode);
         while (pending.hasNext()) {
             IBGNode node = pending.next();
-            
-            if (visited.get(node.id)) {
-        continue;
-      }
-            visited.set(node.id);
-            
+
+            if (visited.get(node.getID())) {
+                continue;
+            }
+            visited.set(node.getID());
+
             // skip unexpanded nodes
             if (!node.isExpanded()){
-        continue;
-      }
-            
+                continue;
+            }
+
             // prune non-supersets
-            if (!config.subsetOf(node.config)){
-        continue;
-      }
-            
+            if (!config.subsetOf(node.getConfiguration())){
+                continue;
+            }
+
             // return if we have found covering node
             if (node.usedSetIsSubsetOf(config)){
-        return node;
-      }
-            
+                return node;
+            }
+
             // this node has children that might be covering nodes... continue on
             pending.addChildren(node.firstChild());
         }
-        
+
         return null;
     }
 
@@ -195,28 +201,28 @@ public class IBGCoveringNodeFinder
             assert(configs[i] != null);
             outNodes[i] = null;
         }
-        
+
         visited.clear();
         pending.reset();
-        
+
         pending.addNode(rootNode);
         while (pending.hasNext()) {
             IBGNode node = pending.next();
-            
-            if (visited.get(node.id)) {
-          continue;
-      }
-            visited.set(node.id);
-            
+
+            if (visited.get(node.getID())) {
+                continue;
+            }
+            visited.set(node.getID());
+
             if (!node.isExpanded()){
-        continue;
-      }
+                continue;
+            }
 
             boolean missingCoveringNode = false;
             boolean supersetOfMissing = false;
             for (int i = 0; i < configCount; i++) {
                 if (outNodes[i] == null) {
-                    boolean subset = configs[i].subsetOf(node.config);
+                    boolean subset = configs[i].subsetOf(node.getConfiguration());
                     boolean containsUsed = node.usedSetIsSubsetOf(configs[i]);
                     if (subset && containsUsed) {
                         outNodes[i] = node;
@@ -228,11 +234,11 @@ public class IBGCoveringNodeFinder
             }
 
             if (!missingCoveringNode){
-          return;
-      }
+                return;
+            }
             if (supersetOfMissing){
-          pending.addChildren(node.firstChild());
-      }
+                pending.addChildren(node.firstChild());
+            }
         }
     }
 }

@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 public class IBGBestBenefitFinder {
@@ -37,12 +37,12 @@ public class IBGBestBenefitFinder {
 		while (pending.hasNext()) {
 			IBGNode Y = pending.next();
 
-			if (visited.get(Y.id)) 
-				continue;
-			visited.set(Y.id);
+            if (visited.get(Y.getID()))
+                continue;
+            visited.set(Y.getID());
 
-			if (!Y.config.get(indexId) && M.subsetOf(Y.config)) {
-				bitset_Ya.set(Y.config);
+            if (!Y.getConfiguration().get(indexId) && M.subsetOf(Y.getConfiguration())) {
+				bitset_Ya.set(Y.getConfiguration());
 				bitset_Ya.set(indexId);
 				IBGNode Ya = finder.findFast(ibg.rootNode(), bitset_Ya, null);
 				double value = Y.cost() - Ya.cost();

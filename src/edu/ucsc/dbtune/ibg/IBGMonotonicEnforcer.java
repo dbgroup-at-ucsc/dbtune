@@ -18,7 +18,7 @@
 
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 public class IBGMonotonicEnforcer {
@@ -61,13 +61,13 @@ public class IBGMonotonicEnforcer {
         while (pending.hasNext()) {
             IBGNode node = pending.next();
             
-            if (visited.get(node.id)){
+            if (visited.get(node.getID())){
                 continue;
             }
             
-            visited.set(node.id);
+            visited.set(node.getID());
             
-            sub.fixSubsets(ibg, node.config, node.cost());
+            sub.fixSubsets(ibg, node.getConfiguration(), node.cost());
             
             if (node.isExpanded()) {
                 if (node.firstChild() == null) {
@@ -96,13 +96,13 @@ public class IBGMonotonicEnforcer {
             while (pending.hasNext()) {
                 IBGNode node = pending.next();
                 
-                if (visited.get(node.id)){
+                if (visited.get(node.getID())){
                     continue;
                 }
 
-                visited.set(node.id);
+                visited.set(node.getID());
                 
-                if (node.config.subsetOf(config) && !node.config.equals(config)) {
+                if (node.getConfiguration().subsetOf(config) && !node.getConfiguration().equals(config)) {
                     if (node.cost() < cost) {
                         node.setCost(cost);
                     }
