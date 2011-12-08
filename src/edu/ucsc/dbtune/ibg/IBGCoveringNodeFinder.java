@@ -15,7 +15,7 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
@@ -95,16 +95,12 @@ public class IBGCoveringNodeFinder
      * @return
      *      the cost of a particular indexes configuration.
      */
-    public final double findCost(IndexBenefitGraph[] ibgs, ConfigurationBitSet config) {
+    public final double findCost(IndexBenefitGraph[] ibgs, ConfigurationBitSet config)
+    {
         double cost = 0;
-        for (IndexBenefitGraph ibg : ibgs){
-<<<<<<< HEAD
+        for (IndexBenefitGraph ibg : ibgs) {
             cost += find(ibg, config).cost;
-    }
-=======
-            cost += findCost(ibg, config);
         }
->>>>>>> issue #120 Taking IBGNode class out of IndexBenefitGraph
         return cost;
     }
 
@@ -131,11 +127,6 @@ public class IBGCoveringNodeFinder
             if (!currentNode.isExpanded()){
                 return null;
             }
-<<<<<<< HEAD
-            
-=======
-
->>>>>>> issue #120 Taking IBGNode class out of IndexBenefitGraph
             IBGChild ch = currentNode.firstChild();
             while (true) {
                 if (ch == null) {

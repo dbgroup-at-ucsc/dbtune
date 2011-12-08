@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
-import edu.ucsc.dbtune.ibg.IBGNode;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 public class IBGAnalyzer {

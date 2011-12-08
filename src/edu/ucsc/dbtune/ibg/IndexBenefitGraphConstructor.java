@@ -17,7 +17,6 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
@@ -97,7 +96,7 @@ public class IndexBenefitGraphConstructor
 
         // set up the root node, and initialize the queue
         IndexBitSet rootConfig = configuration.getBitSet();
-        rootNode = new IBGNode(rootConfig, nodeCount++);
+        rootNode = new IndexBenefitGraph.IBGNode(rootConfig, nodeCount++);
 
         emptyCost = optimizer.explain(this.sql).getCost();
 
@@ -196,8 +195,8 @@ public class IndexBenefitGraphConstructor
 		// We make sure to keep the child list in the same order as the nodeQueue, so that
 		// analysis and construction can move in lock step. This is done by keeping both
 		// in order of construction.
-		IBGChild firstChild = null;
-		IBGChild lastChild = null;
+        IBGNode.IBGChild firstChild = null;
+        IBGNode.IBGChild lastChild = null;
 		childBitSet.set(newNode.getConfiguration());
 		for (int u = usedBitSet.nextSetBit(0); u >= 0; u = usedBitSet.nextSetBit(u+1)) {
 			childBitSet.clear(u);
@@ -209,7 +208,9 @@ public class IndexBenefitGraphConstructor
 			}
 			childBitSet.set(u);
 			
-			IBGChild child = new IBGChild(childNode, u);
+            IndexBenefitGraph.IBGNode.IBGChild child =
+                new IndexBenefitGraph.IBGNode.IBGChild(childNode, u);
+
 			if (firstChild == null) {
 				firstChild = lastChild = child;
 			}

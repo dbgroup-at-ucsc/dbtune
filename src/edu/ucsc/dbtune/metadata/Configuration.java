@@ -44,6 +44,20 @@ public class Configuration implements Iterable<Index>
     }
 
     /**
+     * constructs a new configuration with the given iterable set of indexes.
+     *
+     * @param indexes
+     *     an iterable set of indexes that comprise the configuration
+     */
+    public Configuration(Iterable<Index> indexes)
+    {
+        this("", new ArrayList<Index>());
+
+        for (Index idx : indexes)
+            add(idx);
+    }
+
+    /**
      * constructs a new configuration with the given list of indexes.
      *
      * @param indexes
@@ -64,7 +78,7 @@ public class Configuration implements Iterable<Index>
      */
     public Configuration(String name, List<Index> indexes)
     {
-        this._name     = name;
+        this._name    = name;
         this._indexes = new ArrayList<Index>(indexes);
     }
 

@@ -21,19 +21,18 @@ package edu.ucsc.dbtune.util;
 import java.util.BitSet;
 
 /**
- * The structure used to represent an index configuration. Semantically, every {@code IndexBitSet} is tied to a {@link 
- * java.util.Collection} (instantiated with {@link edu.ucsc.dbtune.metadata.Index}. Thus, the user of this class is 
- * responsible of maintaining this {@code List<DBIndex> <-> IndexBitSet} mapping.
+ * The structure used to represent an index configuration. Semantically, every {@code IndexBitSet} 
+ * is tied to a {@link java.util.Collection} (instantiated with {@link 
+ * edu.ucsc.dbtune.metadata.Index}. Thus, the user of this class is responsible of maintaining this 
+ * {@code List<DBIndex> <-> IndexBitSet} mapping.
  * <p>
  * Example:
  * <code>
- * List<DBIndex> pool = getCandidatePool();
+ * List<DBIndex> conf = getCandidatePool();
  * IndexBitSet   bs   = new IndexBitSet();
  * 
- * for (I index : pool) {
- *     if (pool.get(index.internalId()).state == State.RECOMMENDED){
- *         bs.set(index.internalId());
- *     }
+ * for (Index i : conf) {
+ *     bs.set(conf.indexOf(i));
  * }
  * </code>
  * <p>
@@ -44,7 +43,8 @@ import java.util.BitSet;
  * <p>
  * Alkis: This documentation is inconsistent with the usage of {@code IndexBitSet} in {@link ConfigurationBitSet}.  
  */
-public class IndexBitSet extends BitSet {
+public class IndexBitSet extends BitSet
+{
     private static final long serialVersionUID = 1L;
     
     private static final BitSet t = new BitSet();
@@ -72,5 +72,4 @@ public class IndexBitSet extends BitSet {
             return (t.equals(this));
         }
     }
-    
 }

@@ -83,7 +83,7 @@ public class IndexBenefitGraph
      *
      * @author Karl Schnaitter
      */
-    public class IBGNode
+    public static class IBGNode
     {
         /** Configuration that this node is about */
         public final IndexBitSet config;
@@ -109,7 +109,7 @@ public class IndexBenefitGraph
          */
         private volatile IndexBitSet usedIndexes;
 
-        IBGNode(IndexBitSet config0, int id0)
+        public IBGNode(IndexBitSet config0, int id0)
         {
             config     = config0;
             id         = id0;
@@ -237,7 +237,7 @@ public class IndexBenefitGraph
             return usedIndexes;
         }
 
-        public class IBGChild
+        public static class IBGChild
         {
             final int usedIndex; // the internalID of the used index on this edge
             final IBGNode node; // the actual child node
