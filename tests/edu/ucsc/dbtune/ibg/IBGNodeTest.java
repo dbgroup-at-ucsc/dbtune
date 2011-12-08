@@ -15,6 +15,7 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.ibg;
 
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class IBGNodeTest
     private static IndexBitSet node2ibs;
 
     /**
-     * Creates the following tree:
+     * Creates the following ibg:
      *
      *    (*a*,*b*,c):20
      *    /         \
