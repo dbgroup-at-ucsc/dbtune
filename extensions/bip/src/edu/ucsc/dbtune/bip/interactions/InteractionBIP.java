@@ -13,7 +13,6 @@ import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment; 
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
-import edu.ucsc.dbtune.bip.sim.MatIndex;
 import edu.ucsc.dbtune.bip.util.BIPAgent;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
@@ -210,7 +209,7 @@ public class InteractionBIP
 		
 		for (int i = 0; i < vars.length; i++) {
 			IloNumVar var = vars[i];
-            double coef = (Double) mapVarCoef.get(var.getName());           
+            double coef = mapVarCoef.get(var.getName());           
             listCoef[i] = coef;
 		}
 		return listCoef;		
@@ -323,7 +322,7 @@ public class InteractionBIP
 	private boolean checkInCache(Index indexc, Index indexd)
 	{
 		String key = indexc.getName() + "+" + indexd.getName();
-		if (IIPCPlex.cachedInteractIndexName.get(key) != null){
+		if (cachedInteractIndexName.get(key) != null){
 			return true;
 		}
 				
@@ -342,9 +341,9 @@ public class InteractionBIP
 	private void addToCache(Index indexc, Index indexd)
 	{
 		String combinedName = indexc.getName() + "+" + indexd.getName();		
-		IIPCPlex.cachedInteractIndexName.put(combinedName, 1);
+		cachedInteractIndexName.put(combinedName, 1);
 		combinedName = indexd.getName() + "+" + indexc.getName();		
-		IIPCPlex.cachedInteractIndexName.put(combinedName, 1);
+		cachedInteractIndexName.put(combinedName, 1);
 	}	
 }
  
