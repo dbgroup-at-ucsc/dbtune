@@ -11,8 +11,14 @@
     <!-- Checks that property files contain the same keys. -->
     <module name="Translation"/>
 
-    <module name="TreeWalker">
+    <!-- checks that each file contains the license header -->
+    <module name="Header">
+        <property name="header"
+        value="// Copyright (c) 2010-2012, Regents of the University of California.\n// All rights reserved. Licensed under the BSD License (see LICENSE)" />
+    </module>
+        
 
+    <module name="TreeWalker">
         <!-- Javadoc for class/interface must be present/valid. -->
         <!-- Require author to be present.                      -->
         <module name="JavadocType">
