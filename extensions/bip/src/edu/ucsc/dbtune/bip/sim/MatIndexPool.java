@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.bip.sim;
 
 import edu.ucsc.dbtune.bip.sim.MatIndex;
+import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.metadata.Index;
 
 import java.util.ArrayList;

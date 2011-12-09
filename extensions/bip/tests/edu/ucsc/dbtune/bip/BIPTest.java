@@ -27,6 +27,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
+import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 import edu.ucsc.dbtune.bip.sim.MatIndex;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
 import edu.ucsc.dbtune.bip.util.*;
@@ -62,6 +63,7 @@ public class BIPTest
 	private static Schema sch;
 	private static int numRels = 2;
 	private static int numIndexes;
+	
 	private static double[] internalCostPlan1 = {140, 100, 160};
 	private static double[] accessCostPlan1 = {10, 30, 20, 50, 80, 5, 90, 10, 20, 40, 30, 80};
 	private static double[] sizeIndexPlan1 = {100, 80, 120, 150};
@@ -70,9 +72,9 @@ public class BIPTest
 	private static double[] accessCostPlan2 = {20, 45, 30, 70, 80, 15, 90, 20};
 	private static List<Index> candidateIndexes; 	
 	private static int[] numPlans = {3, 2};
-	private static int numQ = 2;
+	private static int numQ = 1;
 	private static Environment environment = Environment.getInstance();
-	
+	private static BIPAgent agent;
 	
 	static {
 		try {
@@ -156,6 +158,7 @@ public class BIPTest
 
     }
     
+    
     @Test
     public void testPlanDescriptionGeneration() throws Exception
     {    	    
@@ -207,28 +210,25 @@ public class BIPTest
     {
     	try {
     		InteractionBIP bip = new InteractionBIP();
+    		/*
     		String file = environment.getTempDir() + "/test.wl";;
     		Reader reader = new BufferedReader(new FileReader(file));
     		Workload W = new Workload(reader);
-    		// create a workload
-    		System.out.println("IN test, Number of queries: " + numQ + " number of candidate indexes: " + candidateIndexes.size());
-    		for (int q = 0; q < numQ; q++){
-    			System.out.println(" statement: " + W.get(q).getSQL()); 
-    			//when(bip.populateInumSpace(W.get(q))).thenReturn(listInum.get(q));
-    		}
+    		*/
+    		agent = mock(BIPAgent.class);
+    		when(agent.populateInumSpace()).thenReturn(listInum);    		
     		double delta = 0.4;
-    		Configuration C = new Configuration(candidateIndexes);
-    		bip.getInteractionIndexes(listInum, C, delta);
-    		//bip.getInteractionIndexes(W, C, delta);
+    		Configuration C = new Configuration(candidateIndexes);    		
+    		List<IndexInteraction> listInteractions = bip.getInteractionIndexes(agent, C, delta);
+    		System.out.println(bip.printListInteraction(listInteractions));
     	} catch (SqlException e){
     		System.out.println(" error " + e.getMessage());
     	}
     }
-   
-        
-    /*
+    
+    
     @Test
-    public void testSim() throws Exception
+    public void testScheduling() throws Exception
     {
     	System.out.println("IN test, Number of candidate indexes: " + candidateIndexes.size());
     	
@@ -242,17 +242,13 @@ public class BIPTest
     		B.add(new Double((w+1) * space));
     	}
     	
-    	// Case 1: set Sinit = {table scan indexes}
-    	Sinit.add(candidateIndexes.get(2));
-    	Sinit.add(candidateIndexes.get(5));
+    	// Case 1: set Sinit = {}    	
     	Smat = candidateIndexes;
-    	
-    	List<MatIndex> listIndex = sim.schedule(Sinit, Smat, listInum, W, B);
-    	String schedule = sim.printSchedule(listIndex, W);
-    	System.out.println(schedule);
-    	
+    	agent = mock(BIPAgent.class);
+		when(agent.populateInumSpace()).thenReturn(listInum);
+    	List<MatIndex> listIndex = sim.schedule(Sinit, Smat, agent, W, B);
+    	String strSchedule = sim.printSchedule(listIndex, W);
+    	System.out.println(strSchedule);
     }
-	*/
-    
 }
 

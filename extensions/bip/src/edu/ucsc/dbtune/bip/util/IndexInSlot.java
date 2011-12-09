@@ -1,6 +1,5 @@
-package edu.ucsc.dbtune.bip.sim;
+package edu.ucsc.dbtune.bip.util;
 
-import edu.ucsc.dbtune.bip.util.HashCodeUtil;
 
 public class IndexInSlot 
 {
@@ -58,5 +57,4 @@ public class IndexInSlot
 		
 		return fHashCode;
 	}
-	
 }
