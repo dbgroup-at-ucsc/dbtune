@@ -2,15 +2,15 @@ package edu.ucsc.dbtune.bip.sim;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.Connector;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 
-public class SimLinGenerator {
+
+public class SimLinGenerator 
+{
 	public static final int  VAR_Y = 0;
 	public static final int  VAR_X = 1;
 	public static final int  VAR_S = 2;
@@ -23,13 +23,14 @@ public class SimLinGenerator {
 	private String[] strHeaderVariable = {"y", "x", "s", "present", "create", "drop"};
 	private List<String> listCwq;
 	private List<String> listVar;
-	private List<QueryPlanDesc> listQueryPlan;
+	private List<SimQueryPlanDesc> listQueryPlan;
 	private int W;
 	private List<Double> B;
 	private int numConstraints;
 	
 	
-	SimLinGenerator(String prefix, List<QueryPlanDesc> listQueryPlan, int W, List<Double> B){		
+	SimLinGenerator(String prefix, List<SimQueryPlanDesc> listQueryPlan, int W, List<Double> B)
+	{		
 		this.listQueryPlan = listQueryPlan;
 		this.W = W;
 		this.B = B;
@@ -37,12 +38,10 @@ public class SimLinGenerator {
 		listCwq = new ArrayList<String>();	
 		listVar = new ArrayList<String>();
 		
-		try 
-		{
+		try {
 			this.buf = new CPlexBuffer(prefix);
 		}
-		catch (IOException e)
-		{
+		catch (IOException e) {
 			System.out.println(" Error in opening files " + e.toString());			
 		}
 	}
@@ -64,7 +63,8 @@ public class SimLinGenerator {
 	 * 
 	 * @throws IOException
 	 */
-	public void build(LogListener listener) throws IOException {
+	public void build(LogListener listener) throws IOException 
+	{
     	listener.onLogEvent(LogListener.BIP, "Building IIP program...");
     	numConstraints = 0;
     	
@@ -106,17 +106,14 @@ public class SimLinGenerator {
 		String var, element;
 		String Cwq;
 		
-		for (q = 0; q < listQueryPlan.size(); q++)
-		{
-			QueryPlanDesc desc = listQueryPlan.get(q);
+		for (q = 0; q < listQueryPlan.size(); q++) {
+			SimQueryPlanDesc desc = listQueryPlan.get(q);
 			 
-			for (w = 0; w < W; w++)
-			{
+			for (w = 0; w < W; w++) {
 				// Internal plan
 				linList.clear();
 			
-				for (k = 0; k < desc.getNumPlans(); k++)
-				{
+				for (k = 0; k < desc.getNumPlans(); k++) {
 					var = constructVariableName(VAR_Y, w, q, k, 0, 0);
 					element = Double.toString(desc.getInternalPlanCost(k)) + var;
 					linList.add(element);				
@@ -126,12 +123,9 @@ public class SimLinGenerator {
 						
 				// Index access cost
 				linList.clear();			
-				for (k = 0; k < desc.getNumPlans(); k++)
-				{				
-					for (i = 0; i < desc.getNumRels(); i++)
-					{	
-						for (a = 0; a < desc.getNumIndexEachSlot(i); a++)
-						{
+				for (k = 0; k < desc.getNumPlans(); k++) {				
+					for (i = 0; i < desc.getNumSlots(); i++) {	
+						for (a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
 							var = constructVariableName(VAR_X, w, q, k, i, a);
 							element = Double.toString(desc.getIndexAccessCost(k, i, a)) + var;
 							linList.add(element);						
@@ -154,31 +148,26 @@ public class SimLinGenerator {
 		List<String> linList = new ArrayList<String>();
 		int w, q, k, i, a, ga;
 		String var_y, var_x, var_s;		
-		QueryPlanDesc desc = new QueryPlanDesc();
+		SimQueryPlanDesc desc = new SimQueryPlanDesc();
 		
-		for (q = 0; q < listQueryPlan.size(); q++)
-		{
+		for (q = 0; q < listQueryPlan.size(); q++) {
 			desc = listQueryPlan.get(q);
-			for (w = 0; w < W; w++)
-			{
+			for (w = 0; w < W; w++) {
 				linList.clear();
 				// (1) \sum_{k \in [1, Kq]}y^{theta}_k = 1
-				for (k = 0; k < desc.getNumPlans(); k++)
-				{
+				for (k = 0; k < desc.getNumPlans(); k++) {
 					linList.add(constructVariableName(VAR_Y, w, q, k, 0, 0));
 				}
 				buf.getCons().println("atomic_16_" + numConstraints + ": " + Connector.join(" + ", linList) + " = 1");
 				numConstraints++;
 			
 				// (2) \sum_{a \in S_i} x(theta, k, i, a) = y(theta, k)
-				for (k = 0; k < desc.getNumPlans(); k++)
-				{
+				for (k = 0; k < desc.getNumPlans(); k++) {
 					var_y = constructVariableName(VAR_Y, w, q, k, 0, 0);
-					for (i = 0; i < desc.getNumRels(); i++)
-					{
+					
+					for (i = 0; i < desc.getNumSlots(); i++) {
 						linList.clear();
-						for (a = 0; a < desc.getNumIndexEachSlot(i); a++)
-						{
+						for (a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
 							var_x = constructVariableName(VAR_X, w, q, k, i, a);
 							linList.add(var_x);
 							IndexInSlot iis = new IndexInSlot(q,i,a);
@@ -222,11 +211,9 @@ public class SimLinGenerator {
 		String var;
 		
 		// for TYPE_CREATE index
-		for (int idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosDropIndexType(); idx++)
-		{
+		for (int idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosDropIndexType(); idx++) {
 			linList.clear();
-			for (int w = 0; w < W; w++)
-			{
+			for (int w = 0; w < W; w++) {
 				var = constructVariableName(VAR_CREATE, w, idx, 0, 0, 0);
 				listVar.add(var);
 				linList.add(var);
@@ -238,11 +225,9 @@ public class SimLinGenerator {
 		}
 		
 		// for TYPE_DROP index
-		for (int idx = MatIndexPool.getStartPosDropIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++)
-		{
+		for (int idx = MatIndexPool.getStartPosDropIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++) {
 			linList.clear();
-			for (int w = 0; w < W; w++)
-			{
+			for (int w = 0; w < W; w++) {
 				var = constructVariableName(VAR_DROP, w, idx, 0, 0, 0);
 				listVar.add(var);
 				linList.add(var);
@@ -276,15 +261,13 @@ public class SimLinGenerator {
 		String var_present = "", var_mat = "", var_s;
 		
 		// for TYPE_CREATE index
-		for (int idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosDropIndexType(); idx++)
-		{	
-			for (int w = 0; w < W; w++)
-			{
+		for (int idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosDropIndexType(); idx++) {
+			
+			for (int w = 0; w < W; w++) {
 				var_present = constructVariableName(VAR_PRESENT, w, idx, 0, 0, 0);
 				listVar.add(var_present);
 				linList.clear();
-				for (int j = 0; j <= w; j++)
-				{
+				for (int j = 0; j <= w; j++) {
 					var_mat = constructVariableName(VAR_CREATE, j, idx, 0, 0, 0);
 					linList.add(var_mat);
 				}
@@ -298,16 +281,13 @@ public class SimLinGenerator {
 		}
 		
 		// for TYPE_DROP index
-		for (int idx = MatIndexPool.getStartPosDropIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++)
-		{
+		for (int idx = MatIndexPool.getStartPosDropIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++) {
 			
-			for (int w = 0; w < W; w++)
-			{
+			for (int w = 0; w < W; w++) {
 				var_present = this.constructVariableName(VAR_PRESENT, w, idx, 0, 0, 0);
 				listVar.add(var_present);
 				linList.clear();
-				for (int j = 0; j <= w; j++)
-				{
+				for (int j = 0; j <= w; j++) {
 					var_mat = constructVariableName(VAR_DROP, j, idx, 0, 0, 0);
 					linList.add(var_mat);
 				}
@@ -320,10 +300,9 @@ public class SimLinGenerator {
 		}
 		
 		// s(w,ai) <= present(w,i)
-		for (int idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++)
-		{	
-			for (int w = 0; w < W; w++)
-			{
+		for (int idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++) {
+			
+			for (int w = 0; w < W; w++) {
 				var_present = constructVariableName(VAR_PRESENT, w, idx, 0, 0, 0);
 				var_s = constructVariableName(VAR_S, w, idx, 0, 0, 0);
 				buf.getCons().println("index_present_" + numConstraints  
@@ -346,20 +325,18 @@ public class SimLinGenerator {
 		
 		// Take into account the size of indexes in Sremain
 		space = 0.0;
-		for (idx = MatIndexPool.getStartPosRemainIndexType(); idx < MatIndexPool.totalIndex; idx++)
-		{	
+		for (idx = MatIndexPool.getStartPosRemainIndexType(); idx < MatIndexPool.totalIndex; idx++) {	
 			sizeindx = MatIndexPool.getMatIndex(idx).getMatSize();
 			space += sizeindx;
 		}
 		spaceRemain = space;		
 		
 		// for TYPE_CREATE and DROP index
-		for (w = 0; w < W; w++)
-		{
+		for (w = 0; w < W; w++) {
+			
 			space = B.get(w) - spaceRemain;
 			linList.clear();
-			for (idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++)
-			{
+			for (idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++) {
 				var_present = this.constructVariableName(VAR_PRESENT, w, idx, 0, 0, 0);
 				sizeindx = MatIndexPool.getMatIndex(idx).getMatSize();
 				linList.add(Double.toString(sizeindx) + var_present);
@@ -391,21 +368,18 @@ public class SimLinGenerator {
 		String lineVars = "";
 		int countVar = 0;
 		
-		for (Iterator<String> iter = listVar.iterator(); iter.hasNext(); )
-		{
-			lineVars += iter.next();
+		for (String var : listVar) {
+			lineVars += var;
 			lineVars += " ";
 			countVar++;
-			if (countVar >= 10)
-			{
+			if (countVar >= 10) {
 				countVar = 0;
 				buf.getBin().println(lineVars);
 				lineVars = "";					
 			}
 		}
 		
-		if (countVar > 0)
-		{
+		if (countVar > 0) {
 			buf.getBin().println(lineVars);
 		}		
 	}
@@ -435,7 +409,8 @@ public class SimLinGenerator {
 	 * @return
 	 *  	The variable name
 	 */
-	private String constructVariableName(int typeVariable, int window, int queryId, int k, int i, int a){
+	private String constructVariableName(int typeVariable, int window, int queryId, int k, int i, int a)
+	{
 		String result = "";
 		result = result.concat(strHeaderVariable[typeVariable]);
 		result = result.concat("(");
@@ -444,12 +419,11 @@ public class SimLinGenerator {
 		
 		nameComponent.add(Integer.toString(window));
 		nameComponent.add(Integer.toString(queryId));
-		if (typeVariable == VAR_X || typeVariable == VAR_Y)
-		{
+		if (typeVariable == VAR_X || typeVariable == VAR_Y) {
 			nameComponent.add(Integer.toString(k));
 		}
-		if (typeVariable == VAR_X)
-		{
+		
+		if (typeVariable == VAR_X) {
 			nameComponent.add(Integer.toString(i));
 			nameComponent.add(Integer.toString(a));
 		}
@@ -462,33 +436,27 @@ public class SimLinGenerator {
 	
 	public static int getVarType(String name)
 	{
-		if (name.contains("y("))
-		{
+		if (name.contains("y(")) {
 			return VAR_Y;
 		}
 		
-		if (name.contains("x("))
-		{
+		if (name.contains("x(")) {
 			return VAR_X;
 		}
 		
-		if (name.contains("s("))
-		{
+		if (name.contains("s(")) {
 			return VAR_S;
 		}
 		
-		if (name.contains("create("))
-		{
+		if (name.contains("create(")) {
 			return VAR_CREATE;
 		}
 		
-		if (name.contains("drop("))
-		{
+		if (name.contains("drop(")) {
 			return VAR_DROP;
 		}
 		
-		if (name.contains("present("))
-		{
+		if (name.contains("present(")) {
 			return VAR_PRESENT;
 		}
 		return VAR_DEFAULT;		
@@ -507,8 +475,7 @@ public class SimLinGenerator {
 	{
 		int type = getVarType(name);
 		MatIndex index = null;
-		if (type == VAR_CREATE || type == VAR_CREATE)
-		{ 
+		if (type == VAR_CREATE || type == VAR_CREATE) { 
 			int openBracket, comma;
 			openBracket = name.indexOf("(");
 			comma = name.indexOf(",");

@@ -24,7 +24,11 @@ public class InumStatementPlan extends SQLStatementPlan {
 	   *    The access cost
 	   */
 	public double getAccessCost(Index index) {
-		  throw new RuntimeException("NOT IMPLEMENTED YET");
+		throw new RuntimeException("NOT IMPLEMENTED YET");
+	}
+	
+	public double getFullTableScanCost(Table table) {
+		throw new RuntimeException("NOT IMPLEMENTED YET");
 	}
 	
 	/**

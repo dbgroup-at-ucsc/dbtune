@@ -6,15 +6,15 @@ import java.util.*;
 import ilog.concert.*;
 import ilog.cplex.*;
 
-import edu.ucsc.dbtune.metadata.Index;
+
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.bip.interactions.IIPLinGenerator;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 
-public class SimCPlex {
+
+public class SimCPlex 
+{
 	private IloCplex cplex;	
 	private Environment environment = Environment.getInstance();
 	private SimLinGenerator genSim;
@@ -23,7 +23,7 @@ public class SimCPlex {
 
 	
 	/**
-	 * Find pairs of indexes from the pool of candidate indexes that interact with each other
+	 * Find an optimal materialization schedule plan
 	 * 
 	 * @param desc
 	 *     Query plan description including (internal plan, access costs) derived from INUM	 
@@ -35,8 +35,8 @@ public class SimCPlex {
 	 * @return
 	 * 		The set of materialized indexes with marking the time window when this index is created/dropped
 	 */
-	public List<MatIndex> run(List<QueryPlanDesc> listQueryPlan, int W, List<Double> B)  {
-		
+	public List<MatIndex> findIndexSchedule(List<SimQueryPlanDesc> listQueryPlan, int W, List<Double> B)  
+	{	
 		LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
                 //To change body of implemented methods use File | Settings | File Templates.
@@ -64,7 +64,7 @@ public class SimCPlex {
         }	
         
 		
-	//  Load the corresponding CPLEX problem from the corresponding text file
+	    //Load the corresponding CPLEX problem from the corresponding text file
         try {		        
             cplex = new IloCplex(); 
                       
@@ -74,13 +74,11 @@ public class SimCPlex {
             
             // Solve the model and record the solution into @listIndex 
             // if one was found
-            if (cplex.solve()) 
-            {				               
+            if (cplex.solve()) {				               
                listIndex = getMaterializeSchedule();
                System.out.println(" In CPlex, objective function value: " + cplex.getObjValue());
             } 
-            else 
-            {
+            else {
             	System.out.println(" INFEASIBLE soltuion ");
             }
         }
@@ -109,11 +107,9 @@ public class SimCPlex {
 			for (int i = 0; i < vars.length; i++) 
 			{
 				IloNumVar var = vars[i];
-				if (cplex.getValue(var) == 1)
-				{
+				if (cplex.getValue(var) == 1) {
 					MatIndex index = SimLinGenerator.deriveMatIndex(var.getName());
-					if (index != null)
-					{
+					if (index != null) {
 						listIndex.add(index);
 					}
 				}
@@ -136,7 +132,8 @@ public class SimCPlex {
 	 * @return
 	 * 	    The matrix of @cplex	  
 	 */	
-	public IloLPMatrix getMatrix(IloCplex cplex) throws IloException {
+	public IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
+	{
         Iterator iter = cplex.getModel().iterator();
         while (iter.hasNext()) {
             Object o = iter.next();

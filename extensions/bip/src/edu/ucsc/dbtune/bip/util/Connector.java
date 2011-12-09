@@ -1,10 +1,9 @@
 package edu.ucsc.dbtune.bip.util;
 
-import java.util.Iterator;
 import java.util.List;
 
-public class Connector {	
- 
+public class Connector
+{
 	/**
 	 * Concatenate input strings using the given connector to return one output string.
 	 * Eg: join("+", (("a"), ("bc")) = "a + bc"
@@ -16,17 +15,16 @@ public class Connector {
 	 * @return
 	 * 		The output string
 	 */	
-	public static String join(String connector, List<String> listElement){
-		
-		Iterator<String> iterator = listElement.iterator();
+	public static String join(String connector, List<String> listElement)
+	{	
 		String result = "";
 		boolean is_first = true;
 		
-		while(iterator.hasNext()){
+		for (String var : listElement) {			
 			if (is_first == false){
 				result = result.concat(connector);
 			}
-			result = result.concat(iterator.next().toString());
+			result = result.concat(var);
 			is_first = false;
 		}
 		

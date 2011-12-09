@@ -10,7 +10,8 @@ import edu.ucsc.dbtune.metadata.Index;
  *
  */
 
-public class MatIndex {
+public class MatIndex 
+{
 	public static final int INDEX_TYPE_CREATE = 1000;
 	public static final int INDEX_TYPE_DROP = 1001;
 	public static final int INDEX_TYPE_REMAIN = 1002;

@@ -2,9 +2,9 @@ package edu.ucsc.dbtune.bip.sim;
 
 import edu.ucsc.dbtune.bip.util.HashCodeUtil;
 
-public class IndexInSlot {
+public class IndexInSlot 
+{
 	private int q, i, a;
-	private static final int SEED = 23;
 	private int fHashCode;
 	
 	public IndexInSlot(int _q, int _i, int _a)
@@ -31,14 +31,14 @@ public class IndexInSlot {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(Object obj) 
+	{
 		if (!(obj instanceof IndexInSlot))
             return false;
 
         IndexInSlot idx = (IndexInSlot) obj;
         
-        if (q != idx.q || i != idx.i || a != idx.a)
-        {
+        if (q != idx.q || i != idx.i || a != idx.a) {
         	return false;
         }
         
@@ -46,9 +46,9 @@ public class IndexInSlot {
 	}
 
 	@Override
-	public int hashCode() {
-		if (fHashCode == 0)
-		{
+	public int hashCode() 
+	{
+		if (fHashCode == 0) {
 			int result = HashCodeUtil.SEED;
 			result = HashCodeUtil.hash(result, q);
 			result = HashCodeUtil.hash(result, i);
@@ -57,8 +57,6 @@ public class IndexInSlot {
 		}
 		
 		return fHashCode;
-		
 	}
-	
 	
 }

@@ -1,32 +1,52 @@
 package edu.ucsc.dbtune.bip.util;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import edu.ucsc.dbtune.bip.sim.MatIndex;
-import edu.ucsc.dbtune.bip.sim.MatIndexPool;
 import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.inum.InumStatementPlan;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
 
-public class QueryPlanDesc {
+public class QueryPlanDesc 
+{	
+	/**
+	 * The number of template plans for this query 
+	 */
+	protected int Kq; 
+	/**
+	 * The number of relations (also referred to as slots) used in the query
+	 */
+	protected int n; 
+	/**
+	 * The total number of candidate indexes 
+	 */
+	protected int numIndexes; 
+	/**
+	 * The number of indexes in each slot
+	 */
+	protected List<Integer> S; 
+	/**
+	 * The cost of internal plans
+	 */
+	protected List<Double> beta; 
+	/**
+	 * The index access costs
+	 */
+	protected List< List< List <Double> > > gamma;	 
+	/**
+	 * List of indexes in each slot
+	 */
+	protected List< List< Index> > listIndexesEachSlot;
 	
-	private int Kq; // number of template plans	
-	private int n; // number of relations used in the query
-	private int numIndex; // number of candidate indexes
-	private ArrayList<Integer> S; // size of each slot		
-	private ArrayList<Double> beta; // internal plan cost
-	private ArrayList< ArrayList< ArrayList <Double> > > gamma;	 
-	// access cost gamma[k][i][a]
-	// sort in the increasing order of their value	
-	private ArrayList< ArrayList< Index> > candidateIndexes;
 	
-	
-	// Number of template plans
+	/**
+	 * Number of template plans	 
+	 */
 	public int getNumPlans()
 	{
 		return Kq;
@@ -36,37 +56,46 @@ public class QueryPlanDesc {
 		this.Kq = Kq;
 	}
 	
-	// Number of relations in the query schema
-	public int getNumRels()
+	/**
+	 * Number of relations in the query schema 
+	 */
+	public int getNumSlots()
 	{
 		return n;
 	}
-	public void setNumRels(int n)
+	
+	public void setNumSlots(int n)
 	{
 		this.n = n;
 	}
 	
-	// Number of candidate indexes
+	/**
+	 *  Number of candidate indexes
+	 */
 	public int getNumCandidateIndexes()
 	{
-		return numIndex;
+		return numIndexes;
 	}
 	public void setNumCandidateIndexes(int numIndex)
 	{
-		this.numIndex = numIndex;
+		this.numIndexes = numIndex;
 	}
 	
-	// Number of candidate indexes at each slot
-	public int getNumIndexEachSlot(int i)
+	/**
+	 * Number of candidate indexes at each slot 
+	 */
+	public int getNumIndexesEachSlot(int i)
 	{
 		return S.get(i);
 	}
-	public void setNumIndexEachSlot(ArrayList<Integer> S)
+	public void setNumIndexesEachSlot(List<Integer> S)
 	{
 		this.S = S;		
 	}
 	
-	// internal plan cost
+	/**
+	 * The internal plan cost 
+	 */
 	public double getInternalPlanCost(int i)
 	{
 		return beta.get(i);
@@ -76,14 +105,15 @@ public class QueryPlanDesc {
 		this.beta = beta;		
 	}
 	
-	
-	// index access cost
+	/**
+	 * Index access cost
+	 */
 	public double getIndexAccessCost(int k, int i, int a)
 	{
 		return gamma.get(k).get(i).get(a);
 	}
 	
-	public void setIndexAccessCost(ArrayList< ArrayList< ArrayList <Double> > > gamma)
+	public void setIndexAccessCost(List< List< List <Double> > > gamma)
 	{
 		this.gamma = gamma;
 	}
@@ -99,16 +129,16 @@ public class QueryPlanDesc {
 	 */
 	public Index getIndex(int i, int a)
 	{
-		return candidateIndexes.get(i).get(a);
+		return listIndexesEachSlot.get(i).get(a);
 	}
 	
-	public void setCandidateIndexes(ArrayList<ArrayList<Index>> candidateIndexes)
+	public void setCandidateIndexes(List<List<Index>> candidateIndexes)
 	{
-		this.candidateIndexes = candidateIndexes;
+		listIndexesEachSlot = candidateIndexes;
 	}
 
 	/**
-	 * Populate query plan description (like number of template plans, internal cost, 
+	 * Populate query plan description  number of template plans, internal cost, 
 	 * index access cost, etc. )
 	 * 
 	 * @param inum
@@ -116,110 +146,90 @@ public class QueryPlanDesc {
 	 * 
 	 * @param globaCandidateIndexes
 	 * 		The given list of candidate indexes (globally)	
+	 * 
+	 * {\b Note}: There does not contain the empty index (table scan) in {@code globalCandidateIndexes}
+	 * @throws SQLException 
 	 */	
-	public void generateQueryPlanDesc(InumSpace inum, List<Index> globalCandidateIndexes)
+	public void generateQueryPlanDesc(InumSpace inum, List<Index> globalCandidateIndexes) throws SQLException
 	{
-		int i, a, numIndexEachSlot;
-		String relName;
-		
 		S = new ArrayList<Integer>();
 		beta = new ArrayList<Double>();
-		gamma = new ArrayList< ArrayList< ArrayList< Double> >>(); 
-		candidateIndexes = new ArrayList< ArrayList<Index> >();		
+		gamma = new ArrayList<List<List<Double>>>(); 
+		listIndexesEachSlot = new ArrayList<List<Index>>();
 		Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
-		ArrayList<String> listRelName = new ArrayList<String>(); 
 		
 		// TODO: replace with the new interface ----------------------
 		List<Table> listTables = new ArrayList<Table>();   
-		for (InumStatementPlan plan : templatePlans)
-		{
+		for (InumStatementPlan plan : templatePlans) {
 			listTables = plan.getReferencedTables();
 		}
 		// ------------------------------------------------------------
-		// Number of relations
+		
+		// 1. Set up the number of slots & number of indexes in each slot
 		n = 0;
-		for (Iterator<Table> iter = listTables.iterator(); iter.hasNext(); )		
-		{	
-			listRelName.add(iter.next().getName()); 			
-			n++;			
-		}
-				 
-		// Number of indexes in each slot
-		numIndex = 0;				
-		for (i = 0; i < n; i++)
-		{
-			relName = listRelName.get(i);
-			numIndexEachSlot = 0;
-			ArrayList<Index> listIndex = new ArrayList<Index>();
+		numIndexes = 0;		
+		for (Table table : listTables) {
+			String relName = table.getName();
+			int numIndexEachSlot = 0;
+			List<Index> listIndex = new ArrayList<Index>();
 			
-			for (Iterator<Index> iter = globalCandidateIndexes.iterator(); iter.hasNext(); )			
-			{					
-				Index index = iter.next();
-				if (index.getName().contains(relName))
-				{
+			for (Index index : globalCandidateIndexes) {
+				if (index.getName().contains(relName)) {
 					numIndexEachSlot++;
+					numIndexes++;
 					listIndex.add(index);
-					numIndex++;
 				}
 			}
+			
+			/**
+			 * Check if a full table scan index has been created before
+			 * If not, create a new one 
+			 */
+			boolean isIndexFullScanExist = false;
+			for (Index index : table.getSchema().indexes()) {
+				String indexName = index.getName();
+				if (indexName.indexOf(relName) != -1 && 
+					indexName.indexOf(IndexFullTableScan.FULL_TABLE_SCAN_SUFFIX) != -1)
+				{
+					listIndex.add(index);
+					isIndexFullScanExist = true;
+					break;
+				}
+			}
+			if (isIndexFullScanExist == false){
+				IndexFullTableScan scanIdx = new IndexFullTableScan(table);
+				listIndex.add(scanIdx);
+			}
+			numIndexEachSlot++;
+			numIndexes++;
+			
 			S.add(new Integer(numIndexEachSlot));
-			candidateIndexes.add(listIndex);			 
+			listIndexesEachSlot.add(listIndex);
+			n++;			
 		}
 		
 		Kq = 0;
-		double sizeMatIndex = 0.0;
-		for (InumStatementPlan plan : templatePlans)
-		{
+		for (InumStatementPlan plan : templatePlans) {
 			beta.add(new Double(plan.getInternalCost()));
-			ArrayList< ArrayList<Double> > gammaPlan = new ArrayList< ArrayList<Double> >(); 
-			for (i = 0; i < n; i++)
-			{
-				relName = listRelName.get(i);				
-				ArrayList<Double> gammaRel = new ArrayList<Double>(); 
+			List<List<Double>> gammaPlan = new ArrayList<List<Double>>();
+			
+			for (int i = 0; i < n; i++) {
+				List<Double> gammaRel = new ArrayList<Double>(); 
 				 
-				for (a = 0; a < getNumIndexEachSlot(i); a++)
-				{
+				for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
 					Index index = getIndex(i, a);
-					gammaRel.add(new Double(plan.getAccessCost(index)));
-					
-					// update materialize index
-					// MIGHT BE WRONG for @IIP
-					Object found = MatIndexPool.getMatIndex(index);
-					if (found != null)
-					{
-						sizeMatIndex = plan.getMaterializedIndexSize(index);
-						MatIndex matIdx = (MatIndex) found;
-						matIdx.setMatSize(sizeMatIndex);
+					// Full table scan index 
+					if (a == getNumIndexesEachSlot(i) - 1){						
+						gammaRel.add(new Double(plan.getFullTableScanCost(listTables.get(i))));
+					} else {
+						gammaRel.add(new Double(plan.getAccessCost(index)));
 					}
 				}		
-				
 				gammaPlan.add(gammaRel);							
 			}
 			
 			gamma.add(gammaPlan);
 			Kq++;
 		}
-		
-	}
-
-	
-	/**
-	 * Return the global position of the given index at position a in the slot i (i.e., S[i])
-	 * @param index
-	 * 		The position of relation S[index]
-	 * @param a
-	 * 		The position of the given index in S[index]
-	 * 
-	 * @return 
-	 * 		Global index 
-	 */
-	public int globalIndex(int index, int a){
-		int result = 0, i;
-		for (i = 0; i < index; i++){
-			result += S.get(i);
-		}
-		
-		result += a;		
-		return result;
-	}
+	}	
 }

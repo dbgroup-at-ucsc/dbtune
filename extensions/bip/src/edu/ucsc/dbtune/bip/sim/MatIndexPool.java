@@ -13,10 +13,11 @@ import java.util.Map;
  * @author tqtrung
  *
  */
-public class MatIndexPool {
+public class MatIndexPool 
+{
 	private static List<MatIndex> listIndex = new ArrayList<MatIndex>();	
-	private static Map mapPosIndexGlobal = new HashMap<IndexInSlot, Integer>();
-	private static Map mapNameIndexGlobal = new HashMap<String, Integer>();
+	private static Map<IndexInSlot, Integer> mapPosIndexGlobal = new HashMap<IndexInSlot, Integer>();
+	private static Map<String, Integer> mapNameIndexGlobal = new HashMap<String, Integer>();
 	public static int startCreate, startDrop, startRemain, totalIndex;	
 	public static final int IDX_NOT_EXIST = -1;
 	
@@ -53,8 +54,7 @@ public class MatIndexPool {
 	public static int getIndexGlobalId(IndexInSlot iis)
 	{
 		Object found = mapPosIndexGlobal.get(iis);
-		if (found == null)
-		{
+		if (found == null) {
 			return IDX_NOT_EXIST;
 		}
 		
@@ -109,8 +109,7 @@ public class MatIndexPool {
 	public static MatIndex getMatIndex(String name)
 	{
 		int id = getIndexGlobalId(name);
-		if (id == IDX_NOT_EXIST)
-		{
+		if (id == IDX_NOT_EXIST) {
 			return null;
 		}
 		return listIndex.get(id);
@@ -119,8 +118,7 @@ public class MatIndexPool {
 	public static MatIndex getMatIndex(Index index)
 	{
 		int id = getIndexGlobalId(index.getName());
-		if (id == IDX_NOT_EXIST)
-		{
+		if (id == IDX_NOT_EXIST) {
 			return null;
 		}
 		return getMatIndex(id);

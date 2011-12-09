@@ -13,10 +13,12 @@ import java.io.IOException;
  * Time: 6:04:53 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CPlexBuffer {
+public class CPlexBuffer 
+{
     private PrintWriter obj, cons, bin;
 
-    public CPlexBuffer(String prefix) throws IOException {
+    public CPlexBuffer(String prefix) throws IOException 
+    {
         obj  = new PrintWriter(new FileWriter(prefix+".obj"));
         cons = new PrintWriter(new FileWriter(prefix+".cons"));
         bin  = new PrintWriter(new FileWriter(prefix+".bin"));
@@ -30,7 +32,8 @@ public class CPlexBuffer {
         obj.print("obj: ");
     }
 
-    public void close() {
+    public void close() 
+    {
         bin.println("End");
         obj.close();
         cons.close();
@@ -38,15 +41,18 @@ public class CPlexBuffer {
     }
 
 
-    public PrintWriter getObj() {
+    public PrintWriter getObj() 
+    {
         return obj;
     }
 
-    public PrintWriter getCons() {
+    public PrintWriter getCons() 
+    {
         return cons;
     }
 
-    public PrintWriter getBin() {
+    public PrintWriter getBin() 
+    {
         return bin;
     }
     

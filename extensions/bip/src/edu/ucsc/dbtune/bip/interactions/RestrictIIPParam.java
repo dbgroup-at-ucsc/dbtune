@@ -18,13 +18,13 @@ package edu.ucsc.dbtune.bip.interactions;
  * @author tqtrung@soe.ucsc.edu (Quoc Trung Tran) 
  *
  */
-public class RestrictIIPParam {
+public class RestrictIIPParam 
+{
 	private double delta;		
 	private int ic, id; 
 	private int pos_c, pos_d;
 	
-	RestrictIIPParam(double delta, int ic, int id, int pos_c, int pos_d)
-	{
+	RestrictIIPParam(double delta, int ic, int id, int pos_c, int pos_d) {
 		this.delta = delta;
 		this.ic = ic;
 		this.id = id;
@@ -33,62 +33,61 @@ public class RestrictIIPParam {
 		this.pos_d = pos_d;
 	}
 	
-	// Delta to determine index interaction
-	public double getDelta()
-	{
+	/**
+	 * Threshold value to determine index interaction
+	 */
+	public double getDelta() {
 		return delta;
 	}
 	
-	public void setDelta(double delta)
-	{
+	public void setDelta(double delta) {
 		this.delta = delta;
 	}
 
 	
-	// Position of relation containing @c index
-	public int getPosRelContainC()
-	{
+	/**
+	 * Position of relation (or slot) containing @c index
+	 */
+	public int getPosRelContainC() {
 		return ic;
 	}
 	
-	public void setPosRelContainC(int ic)
-	{
+	public void setPosRelContainC(int ic) {
 		this.ic = ic;
 	}
 	
-	// Position of index @d 
-	public int getPosRelContainD()
-	{
+	/**
+	 * Position of relation (or slot) containing index @d
+	 */
+	public int getPosRelContainD() {
 		return id;
 	}
 	
-	public void setPosRelContainD(int id)
-	{
+	public void setPosRelContainD(int id) {
 		this.id = id;
 	}
 	
 	
-	// Position of relation containing @d index
-	public int getLocalPosIndexC()
-	{
+	/**
+	 * Position of index @c in the corresponding slot
+	 */
+	public int getLocalPosIndexC() {
 		return pos_c;
 	}
 	
-	public void setLocalPosIndexC(int pos_c)
-	{
+	public void setLocalPosIndexC(int pos_c) {
 		this.pos_c  = pos_c;
 	}
 	
 	
-	// Position of relation containing @d index
-	public int getLocalPosIndexD()
-	{
+	/**
+	 * Position of index @d in the corresponding slot
+	 */
+	public int getLocalPosIndexD() {
 		return pos_d;
 	}
 	
-	public void setLocalPosIndexD(int pos_d)
-	{
+	public void setLocalPosIndexD(int pos_d) {
 		this.pos_d  = pos_d;
 	}
-	
 }

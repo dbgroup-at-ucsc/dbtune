@@ -9,8 +9,8 @@ import ilog.cplex.*;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment; 
+import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.LogListener;
 
 
@@ -21,7 +21,8 @@ import edu.ucsc.dbtune.bip.util.LogListener;
  * 		The pair of indexes c and d must be relevant to the given input query q (?)   
  */
 
-public class IIPCPlex {
+public class IIPCPlex 
+{
 	private IloCplex cplex;
 	private IloLPMatrix matrix;
 	private IloNumVar [] vars;
@@ -31,58 +32,42 @@ public class IIPCPlex {
 	public static HashMap<String,Integer> cachedInteractIndexName = new HashMap<String, Integer>();	
 	public static final Pattern patternIndexVariable = Pattern.compile("s*");
 		
-	
 	/**
 	 * Find pairs of indexes from the pool of candidate indexes that interact with each other
 	 * 
 	 * @param desc
-	 *     Query plan description including (internal plan, access costs) derived from INUM	 * 	   
+	 *     Query plan description including (internal plan, access costs) derived from INUM	  	   
 	 * 
 	 * @return
 	 * 		The set of pairs of indexes that interact 
 	 */
-	public ArrayList< ArrayList<Index> > run(QueryPlanDesc desc)  {
-		
+	public List<IndexInteraction> findInteractions(IIPQueryPlanDesc desc, double delta)  
+	{	
 		LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
                 //To change body of implemented methods use File | Settings | File Templates.
             }
         };
         
-        ArrayList< ArrayList<Index> > interactIndexes = new ArrayList< ArrayList<Index> >();        
+        List<IndexInteraction> interactIndexes = new ArrayList<IndexInteraction>();        
 		String workloadName = environment.getTempDir() + "/testwl";			
 		String cplexFile = "", binFile = "", consFile = "", objFile = "";		
-		int ic, pos_c, id, pos_d;
-		double delta = 0.1;
 		
-		for (ic = 0; ic < desc.getNumRels(); ic++)
-		{
-			for (pos_c = 0; pos_c < desc.getNumIndexEachSlot(ic); pos_c++)
-			{
+		for (int ic = 0; ic < desc.getNumSlots(); ic++)	{
+			// Note: the last index in each slot is a full table scan
+			for (int pos_c = 0; pos_c < desc.getNumIndexesEachSlot(ic) - 1; pos_c++){
 				Index indexc = desc.getIndex(ic, pos_c);
-				for (id = ic; id < desc.getNumRels(); id++)
-				{
-					for (pos_d = 0; pos_d < desc.getNumIndexEachSlot(id); pos_d++)
-					{
-						/*
-						cont = (ic == 0 && pos_c == 0 && id == 1 && pos_d == 1);
-						if (cont == false){
-							continue;
-						}
-						*/
-						// avoid repeating pair of indexes that have been investigated						
-						if (ic == id && pos_c >= pos_d)
-						{	
+				
+				for (int id = ic; id < desc.getNumSlots(); id++) {
+					for (int pos_d = 0; pos_d < desc.getNumIndexesEachSlot(id) - 1; pos_d++){
+						if (ic == id && pos_c >= pos_d) {	
 							continue;
 						}
 						 
 						Index indexd = desc.getIndex(id, pos_d);
 						
 						// check if pair of interact indexes have been cached
-						if (checkInCache(indexc, indexd) == true)
-						{
-							System.out.println("TTTTTTTTTTIN Cplex, in cache: " + indexc.getName()
-												+ " and " + indexd.getName());
+						if (checkInCache(indexc, indexd) == true){
 							continue;
 						}
 						
@@ -95,9 +80,6 @@ public class IIPCPlex {
 							
 							// Build BIP for a particular (c,d, @desc)
 							genIIP.build(listener); 
-							System.out.println("In CPlex, number of variables " + genIIP.getTotalVar()
-												+ " number of constraints: " + genIIP.getTotalConstraints());
-						
 							cplexFile = workloadName + ".lp";
 							binFile = workloadName + ".bin";
 							consFile = workloadName + ".cons";
@@ -125,20 +107,16 @@ public class IIPCPlex {
 				            // if one was found
 				            if (cplex.solve()) {				               
 				               // Add pair of index interaction into the result
-				               ArrayList<Index> pairIndex = new ArrayList<Index>();
-				               pairIndex.add(indexc);
-				               pairIndex.add(indexd);
-				               interactIndexes.add(pairIndex);				               
+				               IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd);
+				               interactIndexes.add(pairIndexes);				               
 				               addToCache(indexc, indexd);
 				               
 				               System.out.println(" INTERACT (the FIRST interaction constraint): "
 				            		   + indexc.getName()
 				            		   + " and " + indexd.getName());
-				               
 				               printDetailedInteraction();
 				            }
-				            else 
-				            {   
+				            else {   
 				            	// Remove constraint the first constraint on index interaction (13)
 				            	// Add the alternative constraint (12)				            		
 				            	int last_row_id = matrix.getNrows() - 1;
@@ -147,12 +125,9 @@ public class IIPCPlex {
 				            	  
 				            	double[] objvals = alternativeConstraintIndexInteraction();				            	
 				            	cplex.addLe(cplex.scalProd(objvals, vars), 0);				            	
-				            	if (cplex.solve())
-				            	{
-				            		ArrayList<Index> pairIndex = new ArrayList<Index>();
-						            pairIndex.add(indexc);
-						            pairIndex.add(indexd);
-						            interactIndexes.add(pairIndex);
+				            	if (cplex.solve()) {
+				            		IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd); 
+						            interactIndexes.add(pairIndexes);
 						            addToCache(indexc, indexd); 
 						            
 						            System.out.println(" INTERACT (the SECOND interaction constraint): "
@@ -160,9 +135,7 @@ public class IIPCPlex {
 						            		    + " and " + indexd.getName());
 						               
 						             printDetailedInteraction();
-				            	} 
-				            	else 
-				            	{
+				            	} else {
 				            		System.out.println("NO INTERACTION");
 				            	}
 				            	
@@ -174,8 +147,7 @@ public class IIPCPlex {
 				         }
 				         
 					}					
-				}					
-				
+				}	
 			}
 		}
 		
@@ -190,16 +162,14 @@ public class IIPCPlex {
 	 * @return  
 	 * 		An array of coefficient corresponding variables of the BIP matrix
 	 */
-	private double[] alternativeConstraintIndexInteraction(){
-		HashMap<String,Double> mapVarCoef = genIIP.buildIndexInteractionConstraint2();
+	private double[] alternativeConstraintIndexInteraction()
+	{
+		Map<String,Double> mapVarCoef = genIIP.buildIndexInteractionConstraint2();
 		double[] listCoef = new double[vars.length];
 		
-		IloNumVar var;
-		int i;
-		Double coef;
-		for (i = 0; i < vars.length; i++) {
-            var = vars[i];
-            coef = (Double) mapVarCoef.get(var.getName());           
+		for (int i = 0; i < vars.length; i++) {
+			IloNumVar var = vars[i];
+            double coef = (Double) mapVarCoef.get(var.getName());           
             listCoef[i] = coef;
 		}
 		return listCoef;		
@@ -210,34 +180,21 @@ public class IIPCPlex {
 	 */
 	private void printDetailedInteraction()
 	{
-		int i, type;		
-		HashMap<String, Double> mapVarVal = new HashMap<String, Double>(); 
-		try
-		{
-			for (i = 0; i < vars.length; i++) 
-			{
+		Map<String, Double> mapVarVal = new HashMap<String, Double>(); 
+		try {
+			for (int i = 0; i < vars.length; i++) {
 	            IloNumVar var = vars[i];
-	            type = IIPLinGenerator.getVarType(var.getName());
+	            int type = IIPLinGenerator.getVarType(var.getName());
 	            
 	            if (type == IIPLinGenerator.VAR_S || type == IIPLinGenerator.VAR_X
 	            	|| type == IIPLinGenerator.VAR_Y || type == IIPLinGenerator.VAR_U)
-	            {
-	            	
-	            	if (cplex.getValue(var) > 0)
-	            	{
-	            		/*
-	            		System.out.println(" Variable " + var.getName() + " value: " 
-	            				+ cplex.getValue(var));
-	            		*/
-	            	}
-	            	
+	            {	
 	            	mapVarVal.put(var.getName(), new Double(cplex.getValue(var)));
 	            }
 	            
 	        }
 		}
-		catch (Exception e)
-		{
+		catch (Exception e) {
 			System.out.println(" CPLEX error: " + e.getMessage());
 		}
 		
@@ -251,7 +208,8 @@ public class IIPCPlex {
 	 * @return 
 	 * 		An array of IloNumVar representing index variables
 	 */
-	private IloNumVar[] getCostAndIndexVariables() throws IloException {
+	private IloNumVar[] getCostAndIndexVariables() throws IloException 
+	{
         ArrayList<IloNumVar> variables = new ArrayList<IloNumVar>();
         int i;
         // @vars: list of variables in the problem definitions
@@ -259,8 +217,7 @@ public class IIPCPlex {
 	    // Both @vars and @matrix have been extracted in @run method,
         // after the model from the file is loaded
         
-        for (i = 0; i < vars.length; i++) 
-        {
+        for (i = 0; i < vars.length; i++) {
             IloNumVar var = vars[i];
             if(patternIndexVariable.matcher(var.getName()).matches()) {
                 variables.add(var);
@@ -278,7 +235,8 @@ public class IIPCPlex {
 	 * @return
 	 * 	    The matrix of @cplex	  
 	 */	
-	public IloLPMatrix getMatrix(IloCplex cplex) throws IloException {
+	public IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
+	{
         Iterator iter = cplex.getModel().iterator();
         while (iter.hasNext()) {
             Object o = iter.next();
@@ -325,6 +283,5 @@ public class IIPCPlex {
 		IIPCPlex.cachedInteractIndexName.put(combinedName, 1);
 		combinedName = indexd.getName() + "+" + indexc.getName();		
 		IIPCPlex.cachedInteractIndexName.put(combinedName, 1);
-	}
-		
+	}	
 }
