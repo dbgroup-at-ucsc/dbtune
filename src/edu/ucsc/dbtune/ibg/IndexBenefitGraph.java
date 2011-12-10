@@ -214,7 +214,7 @@ public class IndexBenefitGraph
         /**
          * Set the cost and list of children (one for each used index).
          */
-        protected final void expand(double cost0, IBGChild firstChild0)
+        public final void expand(double cost0, IBGChild firstChild0)
         {
             assert(!isExpanded());
             assert(cost0 >= 0);
@@ -303,12 +303,12 @@ public class IndexBenefitGraph
 
         public static class IBGChild
         {
-            final int usedIndex; // the internalID of the used index on this edge
-            final IBGNode node; // the actual child node
-            IBGChild next = null;
+            public final int usedIndex; // the internalID of the used index on this edge
+            public final IBGNode node; // the actual child node
+            public IBGChild next = null;
 
             // next pointer is initially null
-            IBGChild(IBGNode node0, int usedIndex0)
+            public IBGChild(IBGNode node0, int usedIndex0)
             {
                 node = node0;
                 usedIndex = usedIndex0;
