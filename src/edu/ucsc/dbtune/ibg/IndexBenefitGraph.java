@@ -18,9 +18,43 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
+ * An Index Benefit Graph (IBG) was introduced by Frank et al.. An IBG enables a space-efficient 
+ * encoding of the properties of optimal query plans when the optimizer is well behaved.
+ * <p>
+ * For a specific query $q$ is a DAG over subsets of S. Each node represents an index-set $Y ⊆ S$ 
+ * and records $used_q(Y)$ and $cost_q(Y)$. The nodes and edges of the IBG are defined inductively 
+ * as follows: The IBG contains the node $S$; For each node $Y$ and each used index $a ∈ used_q(Y)$, 
+ * the IBG contains the node $Y=Y−{a}$ and the directed $edge(Y,Y)$.
+ * <p>
+ * An example of an IBG looks like the following:
+ * <code>
+ *       *a*,b,c,*d*:20
+ *       /          \
+ *    *a*,*b*,c:45  *b*,c,d:50
+ *    /       \         \
+ *  a,c:80  *b*,c:50  *c*,*d*:65
+ *               |   /     |
+ *              c:80     d:80
+ * </code>
+ * <p>
+ * One interesting observation is that $bcd$ and $bc$ differ by index $d$, yet no edge exists 
+ * between them because $d \in used_q(bcd)$. Also, notice that $bcd \triangleright bc$ and hence the 
+ * two nodes are somewhat redundant with respect to information on optimal plans (but they are 
+ * needed to complete the graph)
+ * <p>
+ * Because the IBG nodes only have one child per used index, the size of an IBG for a particular 
+ * index-set can vary drastically. Some interesting ways to measure the size of an IBG are the 
+ * number of nodes, the maximum children per node (i.e. fan-out), and the maximum path length (i.e. 
+ * height). In the worst case, $used(Y) = Y$ for each node $Y$ and this results in a node for each 
+ * subset of $S$, a fanout of $|S|$, and a height of $|S|$. However, in practice the optimizer may 
+ * not use every index in $Y$ (especially if $Y$ is large), in which case the IBG can be much 
+ * smaller. Indeed, The sample IBG given above contains only 8 of the 16 possible subsets, a fan-out 
+ * of 2, and a height of 3.
  *
  * @author Karl Schnaitter
  * @author Ivo Jimenez
+ * @see <a href="http://portal.acm.org/citation.cfm?id=1687766">
+ *     Index interactions in physical design tuning: modeling, analysis, and applications</a>
  */
 public class IndexBenefitGraph
 {
@@ -36,43 +70,73 @@ public class IndexBenefitGraph
      */
     private double emptyCost;
 
-    /** true if the index is used somewhere in the graph */
+    /** a bit is set if the corresponding index is used somewhere in the graph */
     private final IndexBitSet isUsed;
 
+    /** used to find nodes given */
     private static IBGCoveringNodeFinder FINDER = new IBGCoveringNodeFinder();
     
     /**
-     * Creates an IBG which is in a state ready for building. Specifically, the rootNode is 
-     * physically constructed, but it is not expanded, so its cost and used set have not been 
-     * determined.
-     * 
-     * In the initial state, the cost of the workload under the empty configuration
-     * is set, and may be accessed through emptyCost()
-     * 
-     * Nodes are built by calling buildNode() until it returns false.
+     * Creates an IBG with the given root node, cost and usedSet.
+     *
+     * @param rootNode
+     *     root node of the IBG
+     * @param emptyCost
+     *     cost associated to the empty configuration
+     * @param isUsed
+     *     bit array associated with the used configuration ibg-wise.
      */
-    public IndexBenefitGraph(IBGNode rootNode0, double emptyCost0, IndexBitSet isUsed0)
+    public IndexBenefitGraph(IBGNode rootNode, double emptyCost, IndexBitSet isUsed)
     {
-        rootNode  = rootNode0;
-        emptyCost = emptyCost0;
-        isUsed    = isUsed0;
-    }
+        this.rootNode  = rootNode;
+        this.emptyCost = emptyCost;
+        this.isUsed    = isUsed;
+	}
 
+    /**
+     * Returns the cost associated to the empty configuration.
+     *
+     * @return
+     *     the empty cost
+     */
     public final double emptyCost()
     {
         return emptyCost;
-    }
-    
+	}
+	
+    /**
+     * Returns the root node of the ibg.
+     *
+     * @return
+     *     the empty cost
+     */
     public final IBGNode rootNode()
     {
         return rootNode;
     }
 
+    /**
+     * Finds the node corresponding to the given bitset.
+     *
+     * @param bitSet
+     *     the configuration for which a node is being looked for
+     * @return
+     *     the corresponding node if found; {@code null} otherwise
+     */
     public final IBGNode find(IndexBitSet bitSet)
     {
         return FINDER.findFast(rootNode(),bitSet,null);
     }
 
+    /**
+     * Whether or not the position of an index (in the underlaying bit array) corresponds to an 
+     * index that is used by some node of the graph.
+     *
+     * @param position
+     *     the position of an index in the underlaying bitset.
+     * @return
+     *     {@code true} if the corresponding index is used; {@code false} otherwise.
+     */
     public final boolean isUsed(int i)
     {
         return isUsed.get(i);
@@ -251,8 +315,13 @@ public class IndexBenefitGraph
             }
         }
     }
-
-    // only used by MonotonicEnforcer
+	
+    /**
+     * Assigns the value of the empty cost. Only used by {@link MonotonicEnforcer}.
+     *
+     * @param cost
+     *     the cost of the empty node.
+     */
     void setEmptyCost(double cost)
     {
         emptyCost = cost;

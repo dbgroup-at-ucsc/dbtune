@@ -41,7 +41,7 @@ import java.sql.SQLException;
  *
  * @see <a 
  * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
- *     "On-line Index Selection for Physical Database Tuning"</a>
+ *     On-line Index Selection for Physical Database Tuning</a>
  */
 public class WorkFunctionAlgorithm 
 {
