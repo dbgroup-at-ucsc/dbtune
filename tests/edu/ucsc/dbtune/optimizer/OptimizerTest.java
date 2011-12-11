@@ -19,8 +19,7 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -32,9 +31,6 @@ import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
 import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
 import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
 import static edu.ucsc.dbtune.DBTuneInstances.configureAny;
-import static edu.ucsc.dbtune.DBTuneInstances.getSupportedOptimizersIterator;
-import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
-
 import static org.junit.Assert.assertThat;
 
 import static org.hamcrest.Matchers.is;
@@ -188,7 +184,7 @@ public class OptimizerTest
     protected static void checkExplain(Optimizer opt) throws Exception
     {
         SQLStatement         sql;
-        PreparedSQLStatement sqlp;
+        ExplainedSQLStatement sqlp;
         Configuration        conf;
         double               cost1;
         double               cost2;
@@ -237,7 +233,7 @@ public class OptimizerTest
     protected static void checkWhatIfExplain(Catalog cat, Optimizer opt) throws Exception
     {
         SQLStatement         sql;
-        PreparedSQLStatement sqlp;
+        ExplainedSQLStatement sqlp;
         Column               col;
         Configuration        conf;
         Index                idxa;
@@ -309,7 +305,7 @@ public class OptimizerTest
     protected static void checkUsedConfiguration(Catalog cat, Optimizer opt) throws Exception
     {
         SQLStatement         sql;
-        PreparedSQLStatement sqlp;
+        ExplainedSQLStatement sqlp;
         Column               col;
         Configuration        conf;
         Index                idxa;

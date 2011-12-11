@@ -26,6 +26,14 @@ public class ConfigurationBitSet extends Configuration
 {
     protected IndexBitSet bitSet;
 
+    public ConfigurationBitSet(Configuration configuration)
+    {
+    	super("");
+    	for(Index index:configuration) {
+    		add(index);
+    	}
+    }
+    
     /**
      * Constructs a configuration.
      *

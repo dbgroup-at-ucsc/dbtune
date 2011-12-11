@@ -34,7 +34,7 @@ import java.util.Arrays;
  *
  * @author Ivo Jimenez
  */
-public class MySQLOptimizer extends Optimizer
+public class MySQLOptimizer extends AbstractOptimizer
 {
     private Connection connection;
 
@@ -55,7 +55,7 @@ public class MySQLOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(SQLStatement sql, Configuration configuration) throws SQLException
+    public ExplainedSQLStatement explain(SQLStatement sql, Configuration configuration) throws SQLException
     {
         // XXX: issue #9 (mysqlpp project)
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT))
@@ -73,7 +73,7 @@ public class MySQLOptimizer extends Optimizer
 
         drop(configuration, connection);
 
-        return new PreparedSQLStatement(
+        return new ExplainedSQLStatement(
                 sql, plan, this, cost,
                 Arrays.copyOf(new double[0], configuration.size()),
                 configuration, used, 1);

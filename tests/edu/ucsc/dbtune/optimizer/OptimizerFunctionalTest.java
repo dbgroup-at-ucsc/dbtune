@@ -16,7 +16,6 @@
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 
 import java.sql.Connection;
@@ -27,7 +26,6 @@ import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
-import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
 /**
  * Functional test for optimizer implementations. The optimizer being tested is specified by the 

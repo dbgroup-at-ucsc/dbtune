@@ -20,6 +20,7 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -49,6 +50,17 @@ public class IBGCoveringNodeFinder {
         this.pending = pending;
     }
 
+    public class FindResult {
+    	public final ConfigurationBitSet usedConfiguration;
+    	
+    	public final double cost;
+    	
+    	public FindResult(ConfigurationBitSet usedConfiguration, double cost) {
+    		this.usedConfiguration 	= usedConfiguration;
+    		this.cost				= cost;
+    	}
+    }
+    
     /**
      * find the cost of a particular indexes configuration.
      * @param ibg
@@ -58,15 +70,25 @@ public class IBGCoveringNodeFinder {
      * @return
      *      the cost of a particular indexes configuration.
      */
-    public final double findCost(IndexBenefitGraph ibg, IndexBitSet config) {
+    public final FindResult find(IndexBenefitGraph ibg, ConfigurationBitSet config) {
         if (config.isEmpty()) {
-            return ibg.emptyCost();
+            return new FindResult(null,ibg.emptyCost());
     } else {
-      final IBGNode foundNode = findFast(ibg.rootNode(), config, null);
-            return foundNode != null ? foundNode.cost() : ZERO_COST;
+      final IBGNode foundNode = findFast(ibg.rootNode(), config.getBitSet(), null);
+      if (foundNode != null) {
+    	  // Obtain used indexes
+    	  IndexBitSet usedBitSet = new IndexBitSet();
+    	  foundNode.addUsedIndexes(usedBitSet);
+    	  // Create the corresponding configuration
+    	  ConfigurationBitSet usedConfiguration = new ConfigurationBitSet(config,usedBitSet);
+    	  return new FindResult(usedConfiguration,  foundNode.cost());
+      } else {
+    	  return new FindResult(null,ZERO_COST);
+      }
     }
     }
 
+ 
     /**
      * find the cost of a particular indexes configuration in multiple graphs.
      * @param ibgs
@@ -76,10 +98,10 @@ public class IBGCoveringNodeFinder {
      * @return
      *      the cost of a particular indexes configuration.
      */
-    public final double findCost(IndexBenefitGraph[] ibgs, IndexBitSet config) {
+    public final double findCost(IndexBenefitGraph[] ibgs, ConfigurationBitSet config) {
         double cost = 0;
         for (IndexBenefitGraph ibg : ibgs){
-            cost += findCost(ibg, config);
+            cost += find(ibg, config).cost;
     }
         return cost;
     }
@@ -96,7 +118,7 @@ public class IBGCoveringNodeFinder {
      *      a guessed {@link IBGNode}.
      * @return
      *     an found {@link IBGNode node}. <strong>IMPORTANT</strong>: this method may return
-     *     {@code null}.
+     *     {@code null} if the covering node is in an unexpanded part of the IBG.
      */
     public IBGNode findFast(IBGNode rootNode, IndexBitSet config, IBGNode guess) {
         visited.clear(); // not using it, but clear it anyway?
@@ -105,8 +127,8 @@ public class IBGCoveringNodeFinder {
         while (true) {
             // stop if an unexpanded node is found
             if (!currentNode.isExpanded()){
-        return null;
-      }
+            	return null;
+            }
             
             IBGChild ch = currentNode.firstChild();
             while (true) {

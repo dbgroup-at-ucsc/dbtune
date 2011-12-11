@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
@@ -84,16 +85,18 @@ public class WorkFunctionAlgorithm
      *
      * @param qinfo
      *    a {@link PreparedSQLStatement} query.
+     * @param configuration
+     * 	   a {@link Configuration} that represents the set of all indexes that are 
      * @see #getRecommendation()
      */
-    public void newTask(PreparedSQLStatement qinfo) throws SQLException
+    public void newTask(PreparedSQLStatement qinfo, Configuration configuration) throws SQLException
     {
       workspace.tempBitSet.clear(); // just to be safe
 
       Configuration conf;
       double queryCost;
 
-      for(Index idx : qinfo.getConfiguration()) {
+      for(Index idx : configuration) {
           allIndexes.add(idx);
       }
 
@@ -103,7 +106,7 @@ public class WorkFunctionAlgorithm
           for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
             // this will explicitly set each index in the array to 1 or 0
             setStateBits(subm.indexIds, stateNum, workspace.tempBitSet);
-            conf = new ConfigurationBitSet(qinfo.getConfiguration(), workspace.tempBitSet);
+            conf = new ConfigurationBitSet(configuration, workspace.tempBitSet);
             queryCost = qinfo.explain(conf).getTotalCost();
             workspace.tempCostVector.set(stateNum, queryCost);
           }
@@ -145,7 +148,7 @@ public class WorkFunctionAlgorithm
     }
 
     /**
-     * This method along with method {@link #newTask(PreparedSQLStatement)} corresponds to algorithm {@code chooseCands} from 
+     * This method along with method {@link #newTask(ExplainedSQLStatement)} corresponds to algorithm {@code chooseCands} from 
      * Schnaitter's thesis, which is described in page in page 169 (Figure 6.5).
      *
      * @return a list of recommended {@link Index indexes}.
@@ -322,29 +325,39 @@ public class WorkFunctionAlgorithm
             IndexPartitions parts, IndexBitSet[] schedule )
         throws SQLException
     {
-        double cost = 0;
-        IndexBitSet prevState = new IndexBitSet();
-        Configuration conf;
-        PreparedSQLStatement stmt;
+    	throw new SQLException("This method needs to be reimplemented -- see issue #122");
 
+    	/**
+    	double cost = 0;
+        
+        // This makes the assumption that the starting state is the empty state
+        IndexBitSet prevState = new IndexBitSet();
+        
         for (int q = 0; q < queryCount; q++) {
             IndexBitSet state = schedule[q];
+            Configuration configuration = new ConfigurationBitSet(candidateSet, state);
             //if (parts != null)
             //
             // parts.theoreticalCost is just invoking a explain() on the qinfo, that is, the else is 
             // doing the same that the if. Commenting until this gets clarified.
+            // Alkis: The partitions are approximate and not precise. Note that the explain
+            // called in {@link #theoreticalCost()} is on the subset of the recommendation
+            // corresponding to the partition, whereas the following explain is on the
+            // whole recommendation.
             //
             //    cost += parts.theoreticalCost(qinfos.get(q), state, subset);
             //else
-            conf = new ConfigurationBitSet(qinfos.get(q).getConfiguration(), state);
-            stmt = qinfos.get(q).explain(conf);
+            // Alkis I rewrote the following parts so that they correspond to something
+            // sane. I am not sure what was the intended meaning of the previous code.
+            ExplainedSQLStatement stmt = qinfos.get(q).explain(configuration);    
             cost += stmt.getCost();
             cost += stmt.getUpdateCost(stmt.getUsedConfiguration().toList());
-            cost += transitionCost(qinfos.get(q).getConfiguration(), prevState, state);
+            cost += transitionCost(candidateSet, prevState, state);
 
             prevState = state;
         }
         return cost;
+        **/
     }
 
     private static class CostVector {

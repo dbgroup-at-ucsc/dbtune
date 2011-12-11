@@ -15,12 +15,16 @@
  * **************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
+import java.sql.SQLException;
+
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
+import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder.FindResult;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
-
-import java.sql.SQLException;
+import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * Prepared statements that are produced by the {@link IBGOptimizer}.
@@ -29,37 +33,60 @@ import java.sql.SQLException;
  * @author Karl Schnaitter
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
+ * @author Neoklis Polyzotis
  */
-public class IBGPreparedSQLStatement extends PreparedSQLStatement
+public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
 {
+	/** The {@link IndexBenefitGraph} used by this prepared statement */
     private IndexBenefitGraph ibg;
 
+	/** The universe of indexes from which actual explains will occur */
+	private Configuration universe;
+
+	/**
+	 * The node finder for covering IBG nodes.
+	 */
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
 
     /**
-     * Constructs a prepared statement out of another one and assigns the IBG-related information.
-     *
-     * @param other
-     *     an existing prepared statement
-     * @param configuration
-     *     configuration that the this new explained statement will be assigned to
-     * @param ibg
-     *     IBG that this new statement will use to execute what-if optimization calls
-     * @param optimizationCount
-     *     number of optimization calls that were done to produce {@code other}
+     * Constructcs a prepared statement.
+     *  
+     * @param optimizer 
+     * 		The optimizer that created this statement
+     * @param sql
+     * 		The SQL statement that corresponds to this prepared statement
+     * 
      */
     public IBGPreparedSQLStatement(
-            PreparedSQLStatement other,
-            Configuration        configuration,
-            IndexBenefitGraph    ibg,
-            int                  optimizationCount)
+    		IBGOptimizer optimizer,
+    		SQLStatement sql
+    		)
     {
-        super(other);
-
-        this.ibg               = ibg;
-        this.configuration     = configuration;
-        this.optimizationCount = optimizationCount;
-        this.analysisTime      = ibg.getOverhead();
+    	this(optimizer,sql,null,null);
+    }
+    
+    /**
+     * Constructs a prepared statement.
+     *
+     * @param optimizer
+     *     The optimizer that created this statement
+     * @param sql
+     *     The SQL statement that corresponds to this prepared statement
+     * @param ibg
+     *     IBG that this new statement will use to execute what-if optimization calls
+     * @param universe
+     * 		The set of all indexes of interest
+     */    
+    public IBGPreparedSQLStatement(
+            IBGOptimizer 		 optimizer,
+            SQLStatement 		 sql,
+            IndexBenefitGraph 	 ibg,
+            Configuration 		 universe
+            )
+    {
+    	super(optimizer,sql);
+        this.ibg        = ibg;
+        this.universe	= universe;
     }
 
     /**
@@ -68,10 +95,9 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement
     public IBGPreparedSQLStatement(IBGPreparedSQLStatement other)
     {
         super(other);
-
-        this.ibg               = other.ibg;
-        this.optimizationCount = other.optimizationCount;
-        this.analysisTime      = other.ibg.getOverhead();
+    	
+    	this.ibg 		= other.ibg;
+        this.universe	= other.universe;
     }
 
     /**
@@ -81,42 +107,64 @@ public class IBGPreparedSQLStatement extends PreparedSQLStatement
         return ibg;
     }
 
-    /**
-     * Uses the IBG to calculate obtain a new PreparedSQLStatement.
-     *
-     * @param configuration
-     *      the configuration considered to estimate the cost of the new statement. This can (or 
-     *      not) be the same as {@link #getConfiguration}.
-     * @return
-     *      a new statement
-     * @throws SQLException
-     *      if it's not possible to do what-if optimization on the given configuration
-     */
-    public PreparedSQLStatement explain(Configuration configuration) throws SQLException
-    {
-        optimizationCount++;
 
-        if(!getConfiguration().toList().containsAll(configuration.toList())) {
+	@Override
+	public Optimizer getOptimizer() {
+		return optimizer;
+	}
+
+	@Override
+	public SQLStatement getSQLStatement() {
+		return sql;
+	}
+
+	public Configuration getUniverse() {
+		return universe;
+	}
+
+	@Override
+	public ExplainedSQLStatement explain(Configuration configuration) throws SQLException {
+        if (ibg==null) {
+        	// Time to build the IBG
+        	int oldOptimizationCount = optimizer.getWhatIfCount();
+        	ibg = ((IBGOptimizer)optimizer).buildIBG(sql, configuration);
+        	int optimizationCount = optimizer.getWhatIfCount() - oldOptimizationCount;
+        	
+        	universe = new Configuration(configuration);
+        	IBGNode rootNode = ibg.rootNode();
+        	
+        	return new ExplainedSQLStatement( getSQLStatement(), rootNode.cost(), optimizer, universe, new ConfigurationBitSet(universe,rootNode.getUsedIndexes()),optimizationCount);
+        }
+		
+		if(!getUniverse().contains(configuration)) {
             throw new SQLException("Configuration " + configuration +
-                    " not contained in statement's" + getConfiguration());
+                    " not contained in statement's" + getUniverse());
         }
 
-        IBGPreparedSQLStatement newStatement = new IBGPreparedSQLStatement(this);
+        if (configuration.isEmpty()) 
+        {
+        	double cost = getIndexBenefitGraph().emptyCost();
+        	return new ExplainedSQLStatement( getSQLStatement(), cost, optimizer, configuration, new Configuration("Empty"), 0);
+        } 
 
-        newStatement.setConfiguration(configuration);
-
-        if(!configuration.isEmpty()) {
-            newStatement.setCost(getIndexBenefitGraph().emptyCost());
-            return newStatement;
+        ConfigurationBitSet configurationBitSet = null;
+        if ( configuration instanceof ConfigurationBitSet )
+        {
+        	configurationBitSet = Objects.as(configuration);
+        }
+        else 
+        {
+        	configurationBitSet = new ConfigurationBitSet(configuration);
+        }
+        
+        FindResult result = NODE_FINDER.find(getIndexBenefitGraph(),configurationBitSet);
+        if (result == null) { // This is the case where the IBG is incomplete
+            throw new SQLException("IBG construction has not completed yet");
+        	
+        }
+        else {
+        	return new ExplainedSQLStatement( getSQLStatement(), result.cost, optimizer, configuration, result.usedConfiguration, 0);
         }
 
-        if(configuration instanceof ConfigurationBitSet) {
-            ConfigurationBitSet conf = (ConfigurationBitSet) configuration;
-            newStatement.setCost(NODE_FINDER.findCost(getIndexBenefitGraph(),conf.getBitSet()));
-        } else {
-            throw new SQLException("can't recommend");
-        }
-
-        return newStatement;
-    }
+	}
 }

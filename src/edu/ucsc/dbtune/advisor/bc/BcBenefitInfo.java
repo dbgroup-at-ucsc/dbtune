@@ -19,7 +19,7 @@
 package edu.ucsc.dbtune.advisor.bc;
 
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
@@ -31,11 +31,11 @@ public class BcBenefitInfo {
     private final double[]              newCosts;
     private final int[]                 reqLevels;
     private final double[]              overheads;
-    private final PreparedSQLStatement  profiledQuery;
+    private final ExplainedSQLStatement  profiledQuery;
 
     private BcBenefitInfo(double[] origCosts, double[] newCosts,
                           int[] reqLevels, double[] overheads,
-                          PreparedSQLStatement profiledQuery
+                          ExplainedSQLStatement profiledQuery
     ) {
         this.origCosts      = origCosts;
         this.newCosts       = newCosts;
@@ -48,7 +48,7 @@ public class BcBenefitInfo {
             Configuration snapshot,
             Configuration hotSet,
             IndexBitSet config,
-            PreparedSQLStatement profiledQuery )
+            ExplainedSQLStatement profiledQuery )
         throws SQLException
     {
         /*
@@ -140,9 +140,9 @@ public class BcBenefitInfo {
     }
 
     /**
-     * @return the {@link PreparedSQLStatement} used in this {@code BcBenefitInfo} object.
+     * @return the {@link ExplainedSQLStatement} used in this {@code BcBenefitInfo} object.
      */
-    public PreparedSQLStatement getProfiledQuery(){
+    public ExplainedSQLStatement getProfiledQuery(){
         return profiledQuery;
     }
 

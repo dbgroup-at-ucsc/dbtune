@@ -55,7 +55,7 @@ import static edu.ucsc.dbtune.util.Strings.toDoubleArrayFromIndexed;
  *
  * @author Ivo Jimenez
  */
-public class PGOptimizer extends Optimizer
+public class PGOptimizer extends AbstractOptimizer
 {
     private Connection connection;
     private Schema     schema;
@@ -112,7 +112,7 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes)
+    public ExplainedSQLStatement explain(SQLStatement sql, Configuration indexes)
         throws SQLException
     {
         ResultSet        rs;
@@ -167,7 +167,7 @@ public class PGOptimizer extends Optimizer
         if(obtainPlan)
             sqlPlan = getPlan(connection,sql);
 
-        return new PreparedSQLStatement(sql, sqlPlan, this, selectCost, updateCost, indexes, usedConf, 1);
+        return new ExplainedSQLStatement(sql, sqlPlan, this, selectCost, updateCost, indexes, usedConf, 1);
     }
 
     /**

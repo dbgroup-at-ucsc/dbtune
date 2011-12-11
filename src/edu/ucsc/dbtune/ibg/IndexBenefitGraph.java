@@ -160,6 +160,12 @@ public class IndexBenefitGraph implements Serializable {
          * don't access until isExpanded() returns true
          */
         private volatile IBGChild firstChild;
+        
+        /**
+         * Used indexes.
+         * Don't access until isExpanded() returns true
+         */
+        private volatile IndexBitSet usedIndexes;
 
         /**
          * construct a new {@link IBGNode} object given an index configuration and
@@ -194,6 +200,16 @@ public class IndexBenefitGraph implements Serializable {
             // volatile assignments must be ordered with "state" assigned last
             this.cost = cost;
             this.firstChild = firstChild;
+            addUsedIndexes(usedIndexes);
+        }
+        
+        /**
+         * Return the used indexes from this node.
+         * @return The {@link IndexBitSet} denoting the used indexes
+         */
+        public final IndexBitSet getUsedIndexes() {
+        	assert(isExpanded());
+        	return usedIndexes;
         }
         
         /**

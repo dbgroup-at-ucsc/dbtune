@@ -40,6 +40,9 @@ import java.util.BitSet;
  * In the example, the relation between {@code pool} and {@code bs} is maintained through the {@code 
  * index.internalId()} mechanism. If pool is modified, then {@code bs} should be modified 
  * accordingly.
+ * 
+ * <p>
+ * Alkis: This documentation is inconsistent with the usage of {@code IndexBitSet} in {@link ConfigurationBitSet}.  
  */
 public class IndexBitSet extends BitSet {
     private static final long serialVersionUID = 1L;

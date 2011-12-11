@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.wfit.WFIT;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -124,9 +125,13 @@ public class WFITFunctionalTest
             //System.out.println("\n" + qinfo.getOptimizationCount());
             //System.out.println("\n" + configuration);
 
-            assertThat(qinfo.getConfiguration().size(), is(1));
+            // Alkis: I am not sure what this check does. An SQL statement processed by WFIT
+            // should not have a configuration associated with it.
+            // assertThat(qinfo.getConfiguration().size(), is(1));
 
-            assertThat(qinfo.getOptimizationCount(), is(1));
+            // Alkis: Same here -- the optimization count can be 1
+            // only if there the single index is not useful for the query
+            // assertThat(qinfo.getOptimizationCount(), is(1));
 
             if(q < 5) {
                 assertThat(configuration.size(), is(0));

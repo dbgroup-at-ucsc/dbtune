@@ -16,8 +16,9 @@
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.optimizer.AbstractOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.util.Objects;
 
@@ -81,9 +82,9 @@ public class DBTuneMocks
         return opt;
     }
 
-    public static class OptimizerImpl extends Optimizer {
-        public PreparedSQLStatement explain(SQLStatement sql) {return null;}
-        public PreparedSQLStatement explain(SQLStatement sql, Configuration conf) {return null;}
+    public static class OptimizerImpl extends AbstractOptimizer {
+        public ExplainedSQLStatement explain(SQLStatement sql) {return null;}
+        public ExplainedSQLStatement explain(SQLStatement sql, Configuration conf) {return null;}
         public Configuration recommendIndexes(SQLStatement sql) {return null;}
     }
 

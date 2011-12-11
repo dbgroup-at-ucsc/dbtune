@@ -18,7 +18,7 @@ package edu.ucsc.dbtune.cli
 import edu.ucsc.dbtune.DatabaseSystem
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.util.Environment
 
 import java.util.Properties
@@ -72,7 +72,7 @@ class Database(dbms:DatabaseSystem) extends Catalog(dbms.getCatalog) {
     * @return
     *   a configuration
     */
-  def explain(sql:String) : PreparedSQLStatement =  {
+  def explain(sql:String) : ExplainedSQLStatement =  {
     dbms.getOptimizer.explain(sql)
   }
   
@@ -85,7 +85,7 @@ class Database(dbms:DatabaseSystem) extends Catalog(dbms.getCatalog) {
     * @return
     *   a configuration
     */
-  def explain(sql:String, conf:Configuration) : PreparedSQLStatement =  {
+  def explain(sql:String, conf:Configuration) : ExplainedSQLStatement =  {
     dbms.getOptimizer.explain(sql, conf)
   }
   

@@ -20,8 +20,8 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.DefaultQueue;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -157,7 +157,7 @@ public class IndexBenefitGraphConstructor {
      */
     public boolean buildNode() throws SQLException {
         IBGNode newNode, coveringNode;
-        PreparedSQLStatement stmt;
+        ExplainedSQLStatement stmt;
         double totalCost;
 
         if (queue.isEmpty()) {

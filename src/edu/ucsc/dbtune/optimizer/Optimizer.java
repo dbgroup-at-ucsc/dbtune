@@ -1,32 +1,29 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied  *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
+
+import java.sql.SQLException;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-import java.sql.SQLException;
-
 /**
- * Represents an optimizer of a DBMS system.
+ * The interface for a query what-if optimizer.
+ * 
+ * @author alkis
+ *
  */
-public abstract class Optimizer
-{
-    protected Catalog catalog;
+public interface Optimizer {
+    /**
+     * perform an optimization call for a SQL statement.
+     *
+     * @param sql
+     *      SQL statement
+     * @return
+     *      an {@link ExplainedSQLStatement} object describing the results of an optimization call.
+     * @throws SQLException
+     *      if an error occurs while retrieving the plan
+     */
+    public ExplainedSQLStatement explain(String sql) throws SQLException;
 
     /**
      * perform an optimization call for a SQL statement.
@@ -34,46 +31,11 @@ public abstract class Optimizer
      * @param sql
      *      SQL statement
      * @return
-     *      an {@link PreparedSQLStatement} object describing the results of an optimization call.
+     *      an {@link ExplainedSQLStatement} object describing the results of an optimization call.
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public PreparedSQLStatement explain(String sql) throws SQLException {
-        return explain(new SQLStatement(sql), new Configuration("empty"));
-    }
-
-    /**
-     * perform an optimization call for a SQL statement.
-     *
-     * @param sql
-     *      SQL statement
-     * @return
-     *      an {@link PreparedSQLStatement} object describing the results of an optimization call.
-     * @throws SQLException
-     *      if an error occurs while retrieving the plan
-     */
-    public PreparedSQLStatement explain(SQLStatement sql) throws SQLException {
-        return explain(sql, new Configuration("empty"));
-    }
-
-    /**
-     * estimate what-if optimization plan of a statement using the given configuration.
-     *
-     * @param sql
-     *     sql statement
-     * @param configuration
-     *     physical configuration the optimizer should consider when preparing the statement
-     * @return
-     *     an {@link PreparedSQLStatement} object describing the results of a what-if optimization 
-     *     call.
-     * @throws java.sql.SQLException
-     *     unable to estimate cost for the stated reasons.
-     */
-    public PreparedSQLStatement explain(String sql, Configuration configuration)
-        throws SQLException
-    {
-        return explain(new SQLStatement(sql), configuration);
-    }
+    public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException;
     
     /**
      * estimate what-if optimization plan of a statement using the given configuration.
@@ -83,12 +45,28 @@ public abstract class Optimizer
      * @param configuration
      *     physical configuration the optimizer should consider when preparing the statement
      * @return
-     *     an {@link PreparedSQLStatement} object describing the results of a what-if optimization 
+     *     an {@link ExplainedSQLStatement} object describing the results of a what-if optimization 
      *     call.
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
-    public abstract PreparedSQLStatement explain(SQLStatement sql, Configuration configuration)
+    public ExplainedSQLStatement explain(String sql, Configuration configuration)
+        throws SQLException;
+    
+    /**
+     * estimate what-if optimization plan of a statement using the given configuration.
+     *
+     * @param sql
+     *     sql statement
+     * @param configuration
+     *     physical configuration the optimizer should consider when preparing the statement
+     * @return
+     *     an {@link ExplainedSQLStatement} object describing the results of a what-if optimization 
+     *     call.
+     * @throws java.sql.SQLException
+     *     unable to estimate cost for the stated reasons.
+     */
+    public ExplainedSQLStatement explain(SQLStatement sql, Configuration configuration)
         throws SQLException;
     
     /**
@@ -101,9 +79,7 @@ public abstract class Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public Configuration recommendIndexes(String sql) throws SQLException {
-        return recommendIndexes(new SQLStatement(sql));
-    }
+    public Configuration recommendIndexes(String sql) throws SQLException;
 
     /**
      * Given a sql statement, it recommends indexes to make it run faster.
@@ -115,16 +91,21 @@ public abstract class Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public abstract Configuration recommendIndexes(SQLStatement sql) throws SQLException;
-
+    public Configuration recommendIndexes(SQLStatement sql) throws SQLException;
+    
     /**
-     * Assigns the catalog that should be used to bind metadata to prepared statements.
-     *
-     * @param catalog
-     *     metadata to be used when binding database objects.
+     * Return the count of actual what-if calls made to the DBMS optimizer.
+     * 
+     * @return
      */
-    public void setCatalog(Catalog catalog)
-    {
-        this.catalog = catalog;
-    }
+    public int getWhatIfCount();
+    
+    /**
+     * Set the catalog for this optimizer.
+     * @param catalog
+     */
+    public void setCatalog(Catalog catalog);
+
+	PreparedSQLStatement prepareExplain(SQLStatement sql)
+			throws SQLException;
 }

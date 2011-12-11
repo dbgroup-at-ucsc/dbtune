@@ -28,7 +28,7 @@ import java.sql.Connection;
  * @author Huascar Sanchez
  * @author Ivo Jimenez
  */
-public class DB2Optimizer extends Optimizer
+public class DB2Optimizer extends AbstractOptimizer
 {
     /**
      * Creates a DB2 optimizer with the given information.
@@ -43,7 +43,7 @@ public class DB2Optimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes) throws SQLException {
+    public ExplainedSQLStatement explain(SQLStatement sql, Configuration indexes) throws SQLException {
         throw new SQLException("not implemented yet");
     }
 
