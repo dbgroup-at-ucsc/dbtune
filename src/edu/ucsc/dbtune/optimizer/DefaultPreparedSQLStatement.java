@@ -16,53 +16,53 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 public class DefaultPreparedSQLStatement implements PreparedSQLStatement
 {
 
-	/**
-	 * Constructs a default prepared statement.
-	 * @param optimizer The optimizer that created this statement
-	 * @param sql The sql statement
-	 */
-	public DefaultPreparedSQLStatement(Optimizer optimizer, SQLStatement sql)
-	{
-		this.optimizer 	= optimizer;
-		this.sql		= sql;
-	}
-	
-	/**
-	 * Constructs a {@link DefaultPreparedSQLStatement} out af another {@link PreparedSQLStatement}
-	 * @param other The existing {@link PreparedSQLStatement}
-	 */
-	public DefaultPreparedSQLStatement(PreparedSQLStatement other)
+    /**
+     * Constructs a default prepared statement.
+     * @param optimizer The optimizer that created this statement
+     * @param sql The sql statement
+     */
+    public DefaultPreparedSQLStatement(Optimizer optimizer, SQLStatement sql)
+    {
+        this.optimizer  = optimizer;
+        this.sql        = sql;
+    }
+    
+    /**
+     * Constructs a {@link DefaultPreparedSQLStatement} out af another {@link PreparedSQLStatement}
+     * @param other The existing {@link PreparedSQLStatement}
+     */
+    public DefaultPreparedSQLStatement(PreparedSQLStatement other)
 {
-		this.optimizer 	= 	other.getOptimizer();
-		this.sql		= 	other.getSQLStatement();
-	}
+        this.optimizer  =   other.getOptimizer();
+        this.sql        =   other.getSQLStatement();
+    }
 
-	/**
-	 * The optimizer that created this statement
-	 */
-	protected final Optimizer optimizer;
-	
-	/**
-	 * The SQL statement corresponding to the prepared statement
-	 */
-	protected final SQLStatement sql;
+    /**
+     * The optimizer that created this statement
+     */
+    protected final Optimizer optimizer;
+    
+    /**
+     * The SQL statement corresponding to the prepared statement
+     */
+    protected final SQLStatement sql;
 
-	@Override
-	public Optimizer getOptimizer()
+    @Override
+    public Optimizer getOptimizer()
 {
-		return optimizer;
-	}
+        return optimizer;
+    }
 
-	@Override
-	public SQLStatement getSQLStatement()
+    @Override
+    public SQLStatement getSQLStatement()
 {
-		return sql;
-	}
+        return sql;
+    }
 
-	@Override
-	public ExplainedSQLStatement explain(Configuration configuration)
-			throws SQLException {
-		return optimizer.explain(sql, configuration);
-	}
+    @Override
+    public ExplainedSQLStatement explain(Configuration configuration)
+            throws SQLException {
+        return optimizer.explain(sql, configuration);
+    }
 
 }

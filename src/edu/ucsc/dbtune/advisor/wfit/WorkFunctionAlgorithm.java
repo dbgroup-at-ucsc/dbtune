@@ -71,7 +71,7 @@ public class WorkFunctionAlgorithm
      * @param qinfo
      *    a {@link PreparedSQLStatement} query.
      * @param configuration
-     * 	   a {@link Configuration} that represents the set of all indexes that are 
+     *     a {@link Configuration} that represents the set of all indexes that are 
      * @see #getRecommendation()
      */
     public void newTask(PreparedSQLStatement qinfo, Configuration configuration) throws SQLException
@@ -317,10 +317,10 @@ public class WorkFunctionAlgorithm
             IndexPartitions parts, IndexBitSet[] schedule )
         throws SQLException
     {
-    	throw new SQLException("This method needs to be reimplemented -- see issue #122");
+        throw new SQLException("This method needs to be reimplemented -- see issue #122");
 
-    	/**
-    	double cost = 0;
+        /**
+        double cost = 0;
         
         // This makes the assumption that the starting state is the empty state
         IndexBitSet prevState = new IndexBitSet();

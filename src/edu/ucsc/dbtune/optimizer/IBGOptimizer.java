@@ -84,7 +84,7 @@ public class IBGOptimizer implements Optimizer
      * @throws SQLException
      */
     IndexBenefitGraph buildIBG(SQLStatement sql, Configuration universe)
-    	throws SQLException
+        throws SQLException
     {
         ConfigurationBitSet  bitConf;
         IndexBitSet          bitSet;
@@ -102,38 +102,38 @@ public class IBGOptimizer implements Optimizer
     
     @Override
     public PreparedSQLStatement prepareExplain(SQLStatement sql) 
-    	throws SQLException
-    {	
+        throws SQLException
+    {   
         return new IBGPreparedSQLStatement(this, sql, null,null);
     }
 
-	@Override
-	public ExplainedSQLStatement explain(String sql) throws SQLException
+    @Override
+    public ExplainedSQLStatement explain(String sql) throws SQLException
 {
-		return delegate.explain(sql);
-	}
+        return delegate.explain(sql);
+    }
 
-	@Override
-	public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException
+    @Override
+    public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException
 {
-		return delegate.explain(sql);
-	}
+        return delegate.explain(sql);
+    }
 
-	@Override
-	public ExplainedSQLStatement explain(String sql, Configuration configuration)
-			throws SQLException {
-		return delegate.explain(sql,configuration);
-	}
+    @Override
+    public ExplainedSQLStatement explain(String sql, Configuration configuration)
+            throws SQLException {
+        return delegate.explain(sql,configuration);
+    }
 
-	@Override
-	public Configuration recommendIndexes(String sql) throws SQLException
+    @Override
+    public Configuration recommendIndexes(String sql) throws SQLException
 {
-		return delegate.recommendIndexes(sql);
-	}
+        return delegate.recommendIndexes(sql);
+    }
 
-	@Override
-	public int getWhatIfCount()
+    @Override
+    public int getWhatIfCount()
 {
-		return delegate.getWhatIfCount();
-	}
+        return delegate.getWhatIfCount();
+    }
 }

@@ -4,9 +4,13 @@ import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * bc.
+ *
+ */
 public class BcIndexPool
 {
     Map<Integer, BcIndexInfo> map;

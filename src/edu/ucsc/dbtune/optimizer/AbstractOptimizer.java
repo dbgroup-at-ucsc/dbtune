@@ -124,13 +124,13 @@ public abstract class AbstractOptimizer implements Optimizer
     
     public int getWhatIfCount() 
     {
-    	return whatIfCount;
+        return whatIfCount;
     }
     
     @Override
     public PreparedSQLStatement prepareExplain(SQLStatement sql)
-    	throws SQLException
+        throws SQLException
     {
-    	return new DefaultPreparedSQLStatement(this,sql);
+        return new DefaultPreparedSQLStatement(this,sql);
     }
 }

@@ -13,10 +13,10 @@ public class ConfigurationBitSet extends Configuration
 
     public ConfigurationBitSet(Configuration configuration)
     {
-    	super("");
-    	for (Index index:configuration) {
-    		add(index);
-    	}
+        super("");
+        for (Index index:configuration) {
+            add(index);
+        }
     }
     
     /**

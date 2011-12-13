@@ -112,8 +112,12 @@ public class DatabaseSystem
     /**
      * Creates and opens a connection to the DBMS. The caller is responsible for closing it.
      *
+     * @param env
+     *      the environment object.
      * @return
      *      a connection
+     * @throws SQLException
+     *      if an error occurs while creating the connection.
      * @see Connection
      */
     public static Connection newConnection(Environment env) throws SQLException
@@ -122,7 +126,7 @@ public class DatabaseSystem
         String usr = env.getUsername();
         String pwd = env.getPassword();
         
-        return DriverManager.getConnection(url,usr,pwd);
+        return DriverManager.getConnection(url, usr, pwd);
     }
 
     /**
@@ -169,7 +173,8 @@ public class DatabaseSystem
         else if (env.getVendor().equals(PG))
             optimizer = new PGOptimizer(con);
         else
-            throw new SQLException("Unable to create an optimizer interface for " + env.getVendor());
+            throw new SQLException("Unable to create an optimizer interface for " + 
+                    env.getVendor());
 
         if (env.getOptimizer().equals(DBMS))
             return optimizer;
@@ -184,6 +189,8 @@ public class DatabaseSystem
     /**
      * Validates an {@link Environment} to be used by this class.
      *
+     * @param env
+     *     the environment object.
      * @throws SQLException
      *     if {@link Environment#getVendor()}, {@link Environment#getJdbcURL}, {@link 
      *     Environment#getOptimizer} are null.
@@ -194,8 +201,8 @@ public class DatabaseSystem
             extractDriver(env);
 
         if (env.getVendor() == null || env.getJdbcURL() == null ||
-           env.getJdbcDriver() == null || env.getOptimizer() == null ||
-           env.getUsername() == null || env.getPassword() == null )
+                env.getJdbcDriver() == null || env.getOptimizer() == null ||
+                env.getUsername() == null || env.getPassword() == null)
             throw new SQLException("Missing a property");
     }
 
@@ -236,8 +243,8 @@ public class DatabaseSystem
     }
 
     /**
-     * Class defined just to aid in testing. This class shouldn't be used by any client, only by {@code 
-     * edu.ucsc.dbtune.DatabaseSystemTest}
+     * Class defined just to aid in testing. This class shouldn't be used by any client, only by 
+     * {@code edu.ucsc.dbtune.DatabaseSystemTest}
      */
     protected static class Factory
     {

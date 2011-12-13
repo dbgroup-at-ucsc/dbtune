@@ -67,7 +67,7 @@ public class IBGCoveringNodeFinder
                 foundNode.addUsedIndexes(usedBitSet);
                 // Create the corresponding configuration
                 ConfigurationBitSet usedConfiguration = new ConfigurationBitSet(config,usedBitSet);
-                return new FindResult(usedConfiguration,  foundNode.cost());
+                return new FindResult(usedConfiguration, foundNode.cost());
             } else {
                 return new FindResult(null,ZERO_COST);
             }

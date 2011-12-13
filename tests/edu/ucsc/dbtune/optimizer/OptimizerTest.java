@@ -251,7 +251,7 @@ public class OptimizerTest
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
 
-        assertThat(sqlp.getCost(),      is(cost2));
+        assertThat(sqlp.getCost(),     is(cost2));
         assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getCost()));
         assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getUpdateCost()));
         assertThat(sqlp.getTotalCost(), is(sqlp.getCost() + sqlp.getUpdateCost()));

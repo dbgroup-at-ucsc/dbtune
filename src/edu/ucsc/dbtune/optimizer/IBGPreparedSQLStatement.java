@@ -76,7 +76,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
         super(other);
 
         this.ibg = other.ibg;
-        this.universe	= other.universe;
+        this.universe   = other.universe;
     }
 
     /**
@@ -139,8 +139,8 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
         }
 
         if (configuration.isEmpty()) {
-        	double cost = getIndexBenefitGraph().emptyCost();
-        	return new ExplainedSQLStatement( getSQLStatement(), cost, optimizer, configuration, new Configuration("Empty"), 0);
+            double cost = getIndexBenefitGraph().emptyCost();
+            return new ExplainedSQLStatement( getSQLStatement(), cost, optimizer, configuration, new Configuration("Empty"), 0);
         } 
 
         ConfigurationBitSet configurationBitSet = null;

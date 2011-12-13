@@ -72,25 +72,25 @@ public class WorkloadTest
         assertThat(wl.get(8).getSQLCategory(), is(SELECT));
         assertThat(wl.get(9).getSQLCategory(), is(DELETE));
 
-        assertThat(wl.get(0).getSQLCategory().isSame(SELECT),     is(true));
-        assertThat(wl.get(0).getSQLCategory().isSame(DELETE),     is(false));
-        assertThat(wl.get(0).getSQLCategory().isSame(INSERT),     is(false));
-        assertThat(wl.get(0).getSQLCategory().isSame(UPDATE),     is(false));
+        assertThat(wl.get(0).getSQLCategory().isSame(SELECT),    is(true));
+        assertThat(wl.get(0).getSQLCategory().isSame(DELETE),    is(false));
+        assertThat(wl.get(0).getSQLCategory().isSame(INSERT),    is(false));
+        assertThat(wl.get(0).getSQLCategory().isSame(UPDATE),    is(false));
         assertThat(wl.get(0).getSQLCategory().isSame(NOT_SELECT), is(false));
-        assertThat(wl.get(1).getSQLCategory().isSame(UPDATE),     is(true));
-        assertThat(wl.get(1).getSQLCategory().isSame(SELECT),     is(false));
-        assertThat(wl.get(1).getSQLCategory().isSame(INSERT),     is(false));
-        assertThat(wl.get(1).getSQLCategory().isSame(DELETE),     is(false));
+        assertThat(wl.get(1).getSQLCategory().isSame(UPDATE),    is(true));
+        assertThat(wl.get(1).getSQLCategory().isSame(SELECT),    is(false));
+        assertThat(wl.get(1).getSQLCategory().isSame(INSERT),    is(false));
+        assertThat(wl.get(1).getSQLCategory().isSame(DELETE),    is(false));
         assertThat(wl.get(1).getSQLCategory().isSame(NOT_SELECT), is(true));
-        assertThat(wl.get(3).getSQLCategory().isSame(INSERT),     is(true));
-        assertThat(wl.get(3).getSQLCategory().isSame(SELECT),     is(false));
-        assertThat(wl.get(3).getSQLCategory().isSame(DELETE),     is(false));
-        assertThat(wl.get(3).getSQLCategory().isSame(UPDATE),     is(false));
+        assertThat(wl.get(3).getSQLCategory().isSame(INSERT),    is(true));
+        assertThat(wl.get(3).getSQLCategory().isSame(SELECT),    is(false));
+        assertThat(wl.get(3).getSQLCategory().isSame(DELETE),    is(false));
+        assertThat(wl.get(3).getSQLCategory().isSame(UPDATE),    is(false));
         assertThat(wl.get(3).getSQLCategory().isSame(NOT_SELECT), is(true));
-        assertThat(wl.get(4).getSQLCategory().isSame(DELETE),     is(true));
-        assertThat(wl.get(4).getSQLCategory().isSame(SELECT),     is(false));
-        assertThat(wl.get(4).getSQLCategory().isSame(INSERT),     is(false));
-        assertThat(wl.get(4).getSQLCategory().isSame(UPDATE),     is(false));
+        assertThat(wl.get(4).getSQLCategory().isSame(DELETE),    is(true));
+        assertThat(wl.get(4).getSQLCategory().isSame(SELECT),    is(false));
+        assertThat(wl.get(4).getSQLCategory().isSame(INSERT),    is(false));
+        assertThat(wl.get(4).getSQLCategory().isSame(UPDATE),    is(false));
         assertThat(wl.get(3).getSQLCategory().isSame(NOT_SELECT), is(true));
     }
 }

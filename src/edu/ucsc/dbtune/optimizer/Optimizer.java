@@ -107,6 +107,6 @@ public interface Optimizer
      */
     public void setCatalog(Catalog catalog);
 
-	PreparedSQLStatement prepareExplain(SQLStatement sql)
-			throws SQLException;
+    PreparedSQLStatement prepareExplain(SQLStatement sql)
+            throws SQLException;
 }

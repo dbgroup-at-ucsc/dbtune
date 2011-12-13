@@ -49,10 +49,10 @@ public class InteractionBank
      */
     public final double interactionLevel(int id1, int id2)
     {
-        //		if (id1 >= indexCount || id2 >= indexCount)
-        //			return 0;
+        //      if (id1 >= indexCount || id2 >= indexCount)
+        //          return 0;
 
-        assert (id1 != id2);	
+        assert (id1 != id2);    
         if (id1 < id2) 
             return lowerBounds[id2][id1];
         else
@@ -64,8 +64,8 @@ public class InteractionBank
      */
     public final double bestBenefit(int id)
     {
-        //		if (id > indexCount)
-        //			return 0;
+        //      if (id > indexCount)
+        //          return 0;
         return bestBenefit[id];
     }
 

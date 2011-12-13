@@ -14,26 +14,26 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public interface PreparedSQLStatement
 {
-	
-	/**
-	 * Get the {@link Optimizer} object associated with the statement.
-	 * 
-	 * @return the {@link Optimizer} object.
-	 */
-	public Optimizer getOptimizer();
-	
-	/**
-	 * Get the {@link SQLStatement} associated with this prepared statement.
-	 * @return The {@link SQLStatement} associated with this object.
-	 */
-	public SQLStatement getSQLStatement();
-	
-	/**
-	 * Compute a concrete explained plan from a prepared explained plan, for a given configuration.
-	 * 
-	 * @param conf The configuration.
-	 * @return A concrete explained plan that has the cost of the optimal plan under the configuration.
-	 * @throws SQLException 
-	 */
-	public ExplainedSQLStatement explain(Configuration conf) throws SQLException;
+    
+    /**
+     * Get the {@link Optimizer} object associated with the statement.
+     * 
+     * @return the {@link Optimizer} object.
+     */
+    public Optimizer getOptimizer();
+    
+    /**
+     * Get the {@link SQLStatement} associated with this prepared statement.
+     * @return The {@link SQLStatement} associated with this object.
+     */
+    public SQLStatement getSQLStatement();
+    
+    /**
+     * Compute a concrete explained plan from a prepared explained plan, for a given configuration.
+     * 
+     * @param conf The configuration.
+     * @return A concrete explained plan that has the cost of the optimal plan under the configuration.
+     * @throws SQLException 
+     */
+    public ExplainedSQLStatement explain(Configuration conf) throws SQLException;
 }

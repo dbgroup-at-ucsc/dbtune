@@ -35,47 +35,47 @@ import java.util.HashSet;
  */
 public class IndexBenefitGraphConstructor
 {
-	/* 
-	 * Parameters of the construction.
-	 */
+    /* 
+     * Parameters of the construction.
+     */
     protected SQLStatement sql;
     protected ConfigurationBitSet configuration;
     protected final Optimizer optimizer;
     protected CandidatePool.Snapshot candidateSet;
 
     /* Counter for assigning unique node IDs */
-	private int nodeCount;
+    private int nodeCount;
 
     /* number of optimization calls done on the underlaying delegate optimizer */
     private int optCount;
 
-	/* Temporary bit sets allocated once to allow reuse... only used in BuildNode */ 
-	private IndexBitSet usedBitSet;
-	private IndexBitSet childBitSet;
-	
-	/*
-	 * The primary information stored by the graph
-	 * 
-	 * Every node in the graph is a descendant of rootNode. We also keep the
-	 * cost of the workload under the empty configuration, stored in emptyCost.
-	 */
-	private IBGNode rootNode;
+    /* Temporary bit sets allocated once to allow reuse... only used in BuildNode */ 
+    private IndexBitSet usedBitSet;
+    private IndexBitSet childBitSet;
+    
+    /*
+     * The primary information stored by the graph
+     * 
+     * Every node in the graph is a descendant of rootNode. We also keep the
+     * cost of the workload under the empty configuration, stored in emptyCost.
+     */
+    private IBGNode rootNode;
 
     /* cost without indexes */
-	private double emptyCost;
-	
-	/* The queue of pending nodes to expand */
-	DefaultQueue<IBGNode> queue;
-	
-	/* A monitor for waiting on a node expansion */
-	private final Object nodeExpansionMonitor = new Object();
+    private double emptyCost;
+    
+    /* The queue of pending nodes to expand */
+    DefaultQueue<IBGNode> queue;
+    
+    /* A monitor for waiting on a node expansion */
+    private final Object nodeExpansionMonitor = new Object();
 
-	/* An object that allows for covering node searches */
-	private final IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
-	
-	/* true if the index is used somewhere in the graph */
-	private IndexBitSet isUsed;
-	
+    /* An object that allows for covering node searches */
+    private final IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
+    
+    /* true if the index is used somewhere in the graph */
+    private IndexBitSet isUsed;
+    
     /**
      * Creates an IBG constructor that uses the given optimizer to execute optimization calls.
      *
@@ -87,7 +87,7 @@ public class IndexBenefitGraphConstructor
      *      a set of candidate indexes.
      * @throws java.sql.SQLException
      *      an unexpected error has occurred.
-	 */
+     */
     public IndexBenefitGraphConstructor(
             Optimizer optimizer,
             SQLStatement sql,
@@ -107,30 +107,30 @@ public class IndexBenefitGraphConstructor
         // initialize the queue
         queue.add(rootNode);
     }
-	
+    
     /**
      * @return cost of the workload under the empty configuration, stored in emptyCost.
      */
-	public final double emptyCost()
+    public final double emptyCost()
 {
-		return emptyCost;
-	}
-	
+        return emptyCost;
+    }
+    
     /**
      * @return the {@link IBGNode root node}.
      */
-	public final IBGNode rootNode()
+    public final IBGNode rootNode()
 {
-		return rootNode;
-	}
-	
+        return rootNode;
+    }
+    
     /**
      * @return the number of nodes that were constructed.
      */
-	public final int nodeCount()
+    public final int nodeCount()
 {
-		return nodeCount;
-	}
+        return nodeCount;
+    }
 
     /**
      * @param i
@@ -139,19 +139,19 @@ public class IndexBenefitGraphConstructor
      */
     public final boolean isUsed(int i)
     {
-		return isUsed.get(i);
-	}
-	
-	public final Configuration candidateSet()
+        return isUsed.get(i);
+    }
+    
+    public final Configuration candidateSet()
 {
-		return configuration;
-	}
+        return configuration;
+    }
 
-	/*
-	 * Wait for a specific node to be expanded
+    /*
+     * Wait for a specific node to be expanded
      * @param node
      *      a node to be expanded.
-	 */
+     */
     public final void waitUntilExpanded(IBGNode node)
     {
         synchronized (nodeExpansionMonitor) {
@@ -169,24 +169,24 @@ public class IndexBenefitGraphConstructor
      * unexpanded nodes.
      *
      * This function is not safe to be called from more than one thread.
-	 */
-	public boolean buildNode() throws SQLException
+     */
+    public boolean buildNode() throws SQLException
 {
-		IBGNode newNode, coveringNode;
+        IBGNode newNode, coveringNode;
         ExplainedSQLStatement stmt;
-		double totalCost;
+        double totalCost;
 
-		if (queue.isEmpty())
-			return false;
-		
-		newNode = queue.remove();
-		
-		// get cost and used set (stored into usedBitSet)
-		usedBitSet.clear();
+        if (queue.isEmpty())
+            return false;
+        
+        newNode = queue.remove();
+        
+        // get cost and used set (stored into usedBitSet)
+        usedBitSet.clear();
         coveringNode = coveringNodeFinder.find(rootNode, newNode.getConfiguration());
         if (coveringNode != null) {
-			totalCost = coveringNode.cost();
-			coveringNode.addUsedIndexes(usedBitSet);
+            totalCost = coveringNode.cost();
+            coveringNode.addUsedIndexes(usedBitSet);
         } else {
             stmt =
                 optimizer.explain(
@@ -199,67 +199,67 @@ public class IndexBenefitGraphConstructor
                 }
             }
         }
-		
-		// create the child list
-		// if any IBGNode did not exist yet, add it to the queue
-		// We make sure to keep the child list in the same order as the nodeQueue, so that
-		// analysis and construction can move in lock step. This is done by keeping both
-		// in order of construction.
+        
+        // create the child list
+        // if any IBGNode did not exist yet, add it to the queue
+        // We make sure to keep the child list in the same order as the nodeQueue, so that
+        // analysis and construction can move in lock step. This is done by keeping both
+        // in order of construction.
         IBGNode.IBGChild firstChild = null;
         IBGNode.IBGChild lastChild = null;
-		childBitSet.set(newNode.getConfiguration());
-		for (int u = usedBitSet.nextSetBit(0); u >= 0; u = usedBitSet.nextSetBit(u+1)) {
-			childBitSet.clear(u);
-			IBGNode childNode = find(queue, childBitSet);
-			if (childNode == null) {
-				isUsed.set(u);
-				childNode = new IBGNode(childBitSet.clone(), nodeCount++);
-				queue.add(childNode);
-			}
-			childBitSet.set(u);
-			
+        childBitSet.set(newNode.getConfiguration());
+        for (int u = usedBitSet.nextSetBit(0); u >= 0; u = usedBitSet.nextSetBit(u+1)) {
+            childBitSet.clear(u);
+            IBGNode childNode = find(queue, childBitSet);
+            if (childNode == null) {
+                isUsed.set(u);
+                childNode = new IBGNode(childBitSet.clone(), nodeCount++);
+                queue.add(childNode);
+            }
+            childBitSet.set(u);
+            
             IBGNode.IBGChild child = new IBGNode.IBGChild(childNode, u);
 
-			if (firstChild == null) {
-				firstChild = lastChild = child;
-			}
-			else {
-				lastChild.next = child;
-				lastChild = child;
-			}
-		}
-		
-		// Expand the node and notify waiting threads
-		synchronized (nodeExpansionMonitor) {
-			newNode.expand(totalCost, firstChild);
-			nodeExpansionMonitor.notifyAll();
-		}
-		
-		return !queue.isEmpty();
-	}
-	
-	/*
-	 * Auxiliary method for buildNodes
-	 */
-	private static IBGNode find(DefaultQueue<IBGNode> queue, IndexBitSet config)
+            if (firstChild == null) {
+                firstChild = lastChild = child;
+            }
+            else {
+                lastChild.next = child;
+                lastChild = child;
+            }
+        }
+        
+        // Expand the node and notify waiting threads
+        synchronized (nodeExpansionMonitor) {
+            newNode.expand(totalCost, firstChild);
+            nodeExpansionMonitor.notifyAll();
+        }
+        
+        return !queue.isEmpty();
+    }
+    
+    /*
+     * Auxiliary method for buildNodes
+     */
+    private static IBGNode find(DefaultQueue<IBGNode> queue, IndexBitSet config)
 {
-		for (int i = 0; i < queue.count(); i++) {
-			IBGNode node = queue.fetch(i);
-			if (node.getConfiguration().equals(config))
-				return node;
-		}
-		return null;
-	}
+        for (int i = 0; i < queue.count(); i++) {
+            IBGNode node = queue.fetch(i);
+            if (node.getConfiguration().equals(config))
+                return node;
+        }
+        return null;
+    }
 
-	public void setEmptyCost(double cost)
+    public void setEmptyCost(double cost)
 {
-		emptyCost = cost;
-	}
+        emptyCost = cost;
+    }
 
     public final int getOptimizationCount()
     {
-		return optCount;
-	}
+        return optCount;
+    }
 
 
     public static class CandidatePool
@@ -613,13 +613,13 @@ public class IndexBenefitGraphConstructor
         // which internally will create an InteractionLogger. At the end, we'll pass the ibgAnalysis 
         // to the IBG constructor (since it will have the interaction bank in it)
         
-		Thread ibgAnalysisThread = new Thread(ibgAnalysis);
-		ibgAnalysisThread.setName("IBG Analysis");
-		ibgAnalysisThread.start();
+        Thread ibgAnalysisThread = new Thread(ibgAnalysis);
+        ibgAnalysisThread.setName("IBG Analysis");
+        ibgAnalysisThread.start();
         ThreadIBGConstruction ibgConstruction = new ThreadIBGConstruction();
-		Thread ibgContructionThread = new Thread(ibgConstruction);
-		ibgContructionThread.setName("IBG Construction");
-		ibgContructionThread.start();
+        Thread ibgContructionThread = new Thread(ibgConstruction);
+        ibgContructionThread.setName("IBG Construction");
+        ibgContructionThread.start();
 
         InteractionLogger logger = new InteractionLogger(configuration);
 
@@ -644,7 +644,7 @@ public class IndexBenefitGraphConstructor
         //     conn.whatifCount(),
         //     ((nStop - nStart) / 1000000.0));
 
-		IndexBenefitGraph ibg =
+        IndexBenefitGraph ibg =
             new IndexBenefitGraph(rootNode, emptyCost, isUsed); //, ibgAnalysis);
 
         return ibg;

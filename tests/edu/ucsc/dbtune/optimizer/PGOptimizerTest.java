@@ -76,49 +76,49 @@ public class PGOptimizerTest
             "[                                                 " +
             "   {                                              " +
             "     \"Plan\": {                                  " +
-            "       \"Node Type\": \"Hash Join\",              " +
-            "       \"Join Type\": \"Inner\",                  " +
-            "       \"Startup Cost\": 280.00,                  " +
-            "       \"Total Cost\": 375510.00,                 " +
-            "       \"Plan Rows\": 25005000,                   " +
-            "       \"Plan Width\": 32,                        " +
-            "       \"Hash Cond\": \"(t1.a = t2.a)\",          " +
+            "       \"Node Type\": \"Hash Join\",             " +
+            "       \"Join Type\": \"Inner\",                 " +
+            "       \"Startup Cost\": 280.00,                 " +
+            "       \"Total Cost\": 375510.00,                " +
+            "       \"Plan Rows\": 25005000,                  " +
+            "       \"Plan Width\": 32,                       " +
+            "       \"Hash Cond\": \"(t1.a = t2.a)\",         " +
             "       \"Plans\": [                               " +
             "         {                                        " +
-            "           \"Node Type\": \"Seq Scan\",           " +
-            "           \"Parent Relationship\": \"Outer\",    " +
-            "           \"Relation Name\": \"tbl\",            " +
-            "           \"Alias\": \"t1\",                     " +
-            "           \"Startup Cost\": 0.00,                " +
-            "           \"Total Cost\": 155.00,                " +
-            "           \"Plan Rows\": 10000,                  " +
+            "           \"Node Type\": \"Seq Scan\",          " +
+            "           \"Parent Relationship\": \"Outer\",   " +
+            "           \"Relation Name\": \"tbl\",           " +
+            "           \"Alias\": \"t1\",                    " +
+            "           \"Startup Cost\": 0.00,               " +
+            "           \"Total Cost\": 155.00,               " +
+            "           \"Plan Rows\": 10000,                 " +
             "           \"Plan Width\": 16                     " +
-            "         },                                       " +
+            "         },                                      " +
             "         {                                        " +
-            "           \"Node Type\": \"Hash\",               " +
-            "           \"Parent Relationship\": \"Inner\",    " +
-            "           \"Startup Cost\": 155.00,              " +
-            "           \"Total Cost\": 155.00,                " +
-            "           \"Plan Rows\": 184,                    " +
-            "           \"Plan Width\": 16,                    " +
+            "           \"Node Type\": \"Hash\",              " +
+            "           \"Parent Relationship\": \"Inner\",   " +
+            "           \"Startup Cost\": 155.00,             " +
+            "           \"Total Cost\": 155.00,               " +
+            "           \"Plan Rows\": 184,                   " +
+            "           \"Plan Width\": 16,                   " +
             "           \"Plans\": [                           " +
             "             {                                    " +
-            "               \"Node Type\": \"Seq Scan\",       " +
+            "               \"Node Type\": \"Seq Scan\",      " +
             "               \"Parent Relationship\": \"Outer\"," +
-            "               \"Relation Name\": \"tbl\",        " +
-            "               \"Alias\": \"t2\",                 " +
-            "               \"Startup Cost\": 0.00,            " +
-            "               \"Total Cost\": 155.00,            " +
-            "               \"Plan Rows\": 10000,              " +
+            "               \"Relation Name\": \"tbl\",       " +
+            "               \"Alias\": \"t2\",                " +
+            "               \"Startup Cost\": 0.00,           " +
+            "               \"Total Cost\": 155.00,           " +
+            "               \"Plan Rows\": 10000,             " +
             "               \"Plan Width\": 16                 " +
             "             }                                    " +
             "           ]                                      " +
-            "         },                                       " +
+            "         },                                      " +
             "         {                                        " +
-            "           \"Node Type\": \"Index Scan\",         " +
-            "           \"Startup Cost\": 0.00,                " +
-            "           \"Total Cost\": 1778.00,               " +
-            "           \"Plan Rows\": 28437,                  " +
+            "           \"Node Type\": \"Index Scan\",        " +
+            "           \"Startup Cost\": 0.00,               " +
+            "           \"Total Cost\": 1778.00,              " +
+            "           \"Plan Rows\": 28437,                 " +
             "           \"Plan Width\": 180                    " +
             "         }                                        " +
             "       ]                                          " +
@@ -133,41 +133,41 @@ public class PGOptimizerTest
 
         // check root
         assertEquals("Hash Join", root.getName());
-        assertEquals(25005000,    root.getCardinality());
-        assertEquals(375510.00,   root.getAccumulatedCost(), 0.01);
-        assertEquals(3,           plan.getChildren(root).size());
+        assertEquals(25005000,   root.getCardinality());
+        assertEquals(375510.00,  root.getAccumulatedCost(), 0.01);
+        assertEquals(3,          plan.getChildren(root).size());
 
         // check first child
         Operator child1 = plan.getChildren(root).get(0);
         assertEquals("Seq Scan", child1.getName());
-        assertEquals(10000,      child1.getCardinality());
-        assertEquals(155.00,     child1.getAccumulatedCost(), 0.0);
-        assertEquals(155.00,     child1.getCost(), 0.01);
-        assertEquals(0,          plan.getChildren(child1).size());
+        assertEquals(10000,     child1.getCardinality());
+        assertEquals(155.00,    child1.getAccumulatedCost(), 0.0);
+        assertEquals(155.00,    child1.getCost(), 0.01);
+        assertEquals(0,         plan.getChildren(child1).size());
         
         // check second child
         Operator child2 = plan.getChildren(root).get(1);
         assertEquals("Hash", child2.getName());
-        assertEquals(184,    child2.getCardinality());
+        assertEquals(184,   child2.getCardinality());
         assertEquals(155.00, child2.getAccumulatedCost(), 0.0);
-        assertEquals(0.0,    child2.getCost(), 0.01);
-        assertEquals(1,      plan.getChildren(child2).size());
+        assertEquals(0.0,   child2.getCost(), 0.01);
+        assertEquals(1,     plan.getChildren(child2).size());
         
         // check child of second child
         Operator child3 = plan.getChildren(child2).get(0);
         assertEquals("Seq Scan", child3.getName());
-        assertEquals(10000,      child3.getCardinality());
-        assertEquals(155.00,     child3.getAccumulatedCost(), 0.0);
-        assertEquals(155.00,     child3.getCost(), 0.01);
-        assertEquals(0,          plan.getChildren(child3).size());
+        assertEquals(10000,     child3.getCardinality());
+        assertEquals(155.00,    child3.getAccumulatedCost(), 0.0);
+        assertEquals(155.00,    child3.getCost(), 0.01);
+        assertEquals(0,         plan.getChildren(child3).size());
         
         // check third child
         Operator child4 = plan.getChildren(root).get(2);
         assertEquals("Index Scan", child4.getName());
-        assertEquals(28437,        child4.getCardinality());
-        assertEquals(1778.00,      child4.getAccumulatedCost(), 0.0);
-        assertEquals(1778.00,      child4.getCost(), 0.01);
-        assertEquals(0,            plan.getChildren(child4).size());
+        assertEquals(28437,       child4.getCardinality());
+        assertEquals(1778.00,     child4.getAccumulatedCost(), 0.0);
+        assertEquals(1778.00,     child4.getCost(), 0.01);
+        assertEquals(0,           plan.getChildren(child4).size());
         
     }
 
@@ -182,21 +182,21 @@ public class PGOptimizerTest
             "[                                                 " +
             "   {                                              " +
             "     \"Plan\": {                                  " +
-            "       \"Node Type\": \"Nested Loop\",            " +
-            "       \"Total Cost\": 375510.00,                 " +
-            "       \"Plan Rows\": 25005000,                   " +
+            "       \"Node Type\": \"Nested Loop\",           " +
+            "       \"Total Cost\": 375510.00,                " +
+            "       \"Plan Rows\": 25005000,                  " +
             "       \"Plans\": [                               " +
             "         {                                        " +
-            "           \"Node Type\": \"Seq Scan\",           " +
-            "           \"Relation Name\": \"tbl\",            " +
-            "           \"Alias\": \"t1\",                     " +
-            "           \"Total Cost\": 155.00,                " +
+            "           \"Node Type\": \"Seq Scan\",          " +
+            "           \"Relation Name\": \"tbl\",           " +
+            "           \"Alias\": \"t1\",                    " +
+            "           \"Total Cost\": 155.00,               " +
             "           \"Plan Rows\": 10000                   " +
-            "         },                                       " +
+            "         },                                      " +
             "         {                                        " +
-            "           \"Node Type\": \"Index Scan\",         " +
-            "           \"Index Name\": \"index_a\",           " +
-            "           \"Total Cost\": 1778.00,               " +
+            "           \"Node Type\": \"Index Scan\",        " +
+            "           \"Index Name\": \"index_a\",          " +
+            "           \"Total Cost\": 1778.00,              " +
             "           \"Plan Rows\": 28437                   " +
             "         }                                        " +
             "       ]                                          " +

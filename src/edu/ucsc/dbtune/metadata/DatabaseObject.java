@@ -142,7 +142,7 @@ public abstract class DatabaseObject
 
     /**
      * Assigns the internal ID of the object, which is used to identify the object inside the DBMS. 
-     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,   
+     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,  
      * in some DB systems, this isn't used at all.
      *
      * @param id id of the database object
@@ -154,7 +154,7 @@ public abstract class DatabaseObject
 
     /**
      * Returns the internal ID of the object, which is used to identify the object inside the DBMS. 
-     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,   
+     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,  
      * in some DB systems, this isn't used at all.
      *
      * @return

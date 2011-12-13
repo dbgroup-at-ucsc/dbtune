@@ -20,10 +20,10 @@ public class BinaryTreeTest
         BinaryTree<String> tree = new BinaryTree<String>("F");
 
         assertThat(tree.getRootElement(), is("F"));
-        assertThat(tree.contains("F"),    is(true));
-        assertThat(tree.contains("B"),    is(false));
-        assertThat(tree.contains("G"),    is(false));
-        assertThat(tree.size(),           is(1));
+        assertThat(tree.contains("F"),   is(true));
+        assertThat(tree.contains("B"),   is(false));
+        assertThat(tree.contains("G"),   is(false));
+        assertThat(tree.size(),          is(1));
 
         tree.setChild("F", "B", LEFT);
 
@@ -31,7 +31,7 @@ public class BinaryTreeTest
 
         tree.setChild("F", "G", RIGHT);
 
-        assertThat(tree.size(),        is(3));
+        assertThat(tree.size(),       is(3));
         assertThat(tree.contains("B"), is(true));
         assertThat(tree.contains("G"), is(true));
 
