@@ -81,7 +81,7 @@ public class WorkFunctionAlgorithm
       Configuration conf;
       double queryCost;
 
-      for(Index idx : configuration) {
+      for (Index idx : configuration) {
           allIndexes.add(idx);
       }
 

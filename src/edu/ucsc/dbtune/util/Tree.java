@@ -51,13 +51,13 @@ public class Tree<T extends Comparable<? super T>>
     public List<T> getChildren(T value) throws NoSuchElementException {
         Entry<T> entry = find(value, root);
 
-        if(entry == null) {
+        if (entry == null) {
             throw new NoSuchElementException( value + " is not a member");
         }
 
         List<T> children = new ArrayList<T>();
 
-        for(Entry<T> e : entry.children) {
+        for (Entry<T> e : entry.children) {
             children.add(valueOf(e));
         }
 
@@ -115,13 +115,13 @@ public class Tree<T extends Comparable<? super T>>
         Entry<T> parentEntry;
         Entry<T> childEntry;
 
-        if(elements.get(childValue) != null) {
+        if (elements.get(childValue) != null) {
             throw new IllegalArgumentException("Child value already in tree");
         }
 
         parentEntry = elements.get(parentValue);
 
-        if( parentEntry == null ) {
+        if ( parentEntry == null ) {
             throw new NoSuchElementException(parentValue + " not in tree");
         }
 
@@ -162,10 +162,10 @@ public class Tree<T extends Comparable<? super T>>
         } else {
             Entry<T> found;
 
-            for(Entry<T> e : entry.children) {
+            for (Entry<T> e : entry.children) {
                 found = find(value, e);
 
-                if(found != null) {
+                if (found != null) {
                     return found;
                 }
             }
@@ -189,7 +189,7 @@ public class Tree<T extends Comparable<? super T>>
         if (entry != null) {
             str += padding + entry.element + "\n";
 
-            for(Entry<T> e : entry.children) {
+            for (Entry<T> e : entry.children) {
                 str += toString(e, padding + padding );
             }
         }

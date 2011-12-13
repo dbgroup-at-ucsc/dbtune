@@ -54,7 +54,7 @@ public class DefaultQueue<E> {
     }
     
     public void clear() {
-        while(!isEmpty()){
+        while (!isEmpty()){
             remove();
         }
     }
@@ -77,7 +77,7 @@ public class DefaultQueue<E> {
 
     public boolean isEmpty() {
         final boolean empty = count == 0;
-        if(empty) first = 0;
+        if (empty) first = 0;
         return empty;
     }
     

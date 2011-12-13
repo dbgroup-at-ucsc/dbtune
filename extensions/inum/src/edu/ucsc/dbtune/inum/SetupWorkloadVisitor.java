@@ -27,11 +27,11 @@ public class SetupWorkloadVisitor implements WorkloadVisitor {
 
   @Override public Set<String> visit(WorkloadDirectoryNode directoryNode) {
     final Set<String> workload = Sets.newHashSet();
-    for(WorkloadNode<?> each : directoryNode.getChildren()){
-      if(isWorkloadFile(each)){
+    for (WorkloadNode<?> each : directoryNode.getChildren()){
+      if (isWorkloadFile(each)){
         final String content = ((WorkloadFileNode)each).accept(this);
-        if(Strings.isEmpty(content)) continue;
-        if(!workload.contains(content)){
+        if (Strings.isEmpty(content)) continue;
+        if (!workload.contains(content)){
           workload.add(content);
         }
       }

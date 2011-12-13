@@ -36,7 +36,7 @@ public class InumPrecomputation implements Precomputation {
 
   private void addQuerytoListOfSeenQueries(String query){
     Preconditions.checkArgument(!Strings.isEmpty(query));
-    if(!seenWorkloads.contains(query)){
+    if (!seenWorkloads.contains(query)){
       seenWorkloads.add(query);
     }
   }
@@ -50,7 +50,7 @@ public class InumPrecomputation implements Precomputation {
     // generate all possible interesting orders combinations (atomic) that will be used
     // during the INUM's {@link Precomputation setup} phase.
     final Set<Configuration> allAtomicCombOfInterestingOrders = Combinations.findCrossProduct(interestingOrders);
-    for(Configuration o /*o as in the JavaDoc*/
+    for (Configuration o /*o as in the JavaDoc*/
         : allAtomicCombOfInterestingOrders){
       final Set<OptimalPlan> optimalPlansPerInterestingOrder = Sets.newHashSet();
       // call optimizer given the workload and an input configuration
@@ -60,7 +60,7 @@ public class InumPrecomputation implements Precomputation {
       //   save plans in InumSpace indexed by interesting order.
       // return a reference to the set of optimal plans
       final String queryExecutionPlan = provider.getSqlExecutionPlan(query, o);
-      if(Strings.isEmpty(queryExecutionPlan)) continue;
+      if (Strings.isEmpty(queryExecutionPlan)) continue;
       optimalPlansPerInterestingOrder.addAll(parser.parse(queryExecutionPlan));
 
       final Set<OptimalPlan> referenceToPlans = getInumSpace().save(

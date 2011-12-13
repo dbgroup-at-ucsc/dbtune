@@ -118,13 +118,13 @@ public class WFITFunctionalTest
             // only if there the single index is not useful for the query
             // assertThat(qinfo.getOptimizationCount(), is(1));
 
-            if(q < 5) {
+            if (q < 5) {
                 //assertThat(configuration.size(), is(0));
                 //assertThat(configuration.isEmpty(), is(true));
-            } else if(q == 5) {
+            } else if (q == 5) {
                 //assertThat(configuration.size(), is(1));
                 //assertThat(configuration.isEmpty(), is(false));
-            } else if(q == 6) {
+            } else if (q == 6) {
                 //assertThat(configuration.size(), is(0));
                 //assertThat(configuration.isEmpty(), is(true));
             } else {
@@ -145,7 +145,7 @@ public class WFITFunctionalTest
         wl   = new Workload(new FileReader(workloadFilename));
         pool = new Configuration("conf");
 
-        for(SQLStatement sql : wl) {
+        for (SQLStatement sql : wl) {
             candidateSet = db.getOptimizer().recommendIndexes(sql);
 
             for (Index index : candidateSet)

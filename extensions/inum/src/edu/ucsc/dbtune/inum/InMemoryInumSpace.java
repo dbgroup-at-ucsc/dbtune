@@ -43,24 +43,24 @@ public class InMemoryInumSpace implements InumSpace {
 
   @Override public Set<OptimalPlan> getAllSavedOptimalPlans() {
     final Set<OptimalPlan> allSavedOnes = Sets.newHashSet();
-    for(Set<OptimalPlan> each : cachedPlans.values()){
+    for (Set<OptimalPlan> each : cachedPlans.values()){
       allSavedOnes.addAll(each);
     }
     return ImmutableSet.copyOf(allSavedOnes);
   }
 
   @Override public Set<OptimalPlan> save(Configuration interestingOrders, Set<OptimalPlan> optimalPlans) {
-    if(!cachedPlans.containsKey(interestingOrders)){
+    if (!cachedPlans.containsKey(interestingOrders)){
       final Set<OptimalPlan> newBatchedOfPlans = Sets.newHashSet();
-      for(OptimalPlan each : optimalPlans){
+      for (OptimalPlan each : optimalPlans){
         newBatchedOfPlans.add(new CachedSqlExecutionOptimalPlan(each));
       }
 
       cachedPlans.put(interestingOrders, newBatchedOfPlans);
     } else {
-      for(OptimalPlan each : optimalPlans){
+      for (OptimalPlan each : optimalPlans){
         final CachedSqlExecutionOptimalPlan cp = new CachedSqlExecutionOptimalPlan(each);
-        if(!cachedPlans.get(interestingOrders).contains(cp)){
+        if (!cachedPlans.get(interestingOrders).contains(cp)){
            cachedPlans.get(interestingOrders).add(cp);
         }
       }

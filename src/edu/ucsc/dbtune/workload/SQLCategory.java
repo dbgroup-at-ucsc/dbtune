@@ -48,8 +48,8 @@ public enum SQLCategory
      */
     boolean contains(SQLCategory category)
     {
-        for(String id : category.code) {
-            if(contains(id)) {
+        for (String id : category.code) {
+            if (contains(id)) {
                 return true;
             }
         }
@@ -82,20 +82,20 @@ public enum SQLCategory
      */
     public static SQLCategory from(String codeOrSQL) throws SQLException
     {
-        if(codeOrSQL.length() == 1)
-            for(SQLCategory category : values())
-                if(category.contains(codeOrSQL))
+        if (codeOrSQL.length() == 1)
+            for (SQLCategory category : values())
+                if (category.contains(codeOrSQL))
                     return category;
 
         String sql = codeOrSQL.trim().toLowerCase();
 
-        if(sql.startsWith("select") || sql.startsWith("with")) {
+        if (sql.startsWith("select") || sql.startsWith("with")) {
             return SQLCategory.SELECT;
-        } else if(sql.startsWith("update")) {
+        } else if (sql.startsWith("update")) {
             return SQLCategory.UPDATE;
-        } else if(sql.startsWith("insert")) {
+        } else if (sql.startsWith("insert")) {
             return SQLCategory.INSERT;
-        } else if(sql.startsWith("delete")) {
+        } else if (sql.startsWith("delete")) {
             return SQLCategory.DELETE;
         } else {
             throw new SQLException("Can't determine category for " + codeOrSQL);
@@ -121,13 +121,13 @@ public enum SQLCategory
      */
     @Override
     public String toString() {
-        if(this.isSame(SELECT)) {
+        if (this.isSame(SELECT)) {
             return "SELECT";
-        } else if(this.isSame(SELECT)) {
+        } else if (this.isSame(SELECT)) {
             return "UPDATE";
-        } else if(this.isSame(SELECT)) {
+        } else if (this.isSame(SELECT)) {
             return "INSERT";
-        } else if(this.isSame(SELECT)) {
+        } else if (this.isSame(SELECT)) {
             return "DELETE";
         } else {
             return "UNKNOWN";

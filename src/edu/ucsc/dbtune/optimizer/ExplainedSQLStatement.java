@@ -120,10 +120,10 @@ public class ExplainedSQLStatement
         this.optimizationCount = optimizationCount;
         this.analysisTime      = 0.0;
 
-        if(updateCosts == null)
+        if (updateCosts == null)
             throw new SQLException("Update cost array is null");
 
-        if(updateCosts.length != configuration.size())
+        if (updateCosts.length != configuration.size())
             throw new SQLException(
                     "Incorrect update costs " + updateCosts.length +
                     " for configuration of size" + configuration.size());
@@ -238,12 +238,12 @@ public class ExplainedSQLStatement
      */
     public double getUpdateCost(Index index)
     {
-        if(!configuration.contains(index) || !statement.getSQLCategory().isSame(UPDATE))
+        if (!configuration.contains(index) || !statement.getSQLCategory().isSame(UPDATE))
             return 0.0;
 
         int position = configuration.getOrdinalPosition(index);
 
-        if(position == -1)
+        if (position == -1)
             throw new RuntimeException("Wrong position in configuration " + position);
 
         return updateCosts[position];
@@ -264,7 +264,7 @@ public class ExplainedSQLStatement
     {
         double updateCost = 0.0;
 
-        for(Index idx : indexes)
+        for (Index idx : indexes)
             updateCost += getUpdateCost(idx);
 
         return updateCost;
@@ -345,8 +345,8 @@ public class ExplainedSQLStatement
     {
         Configuration usedConfiguration = new Configuration("used_conf");
 
-        for(Index idx : getConfiguration())
-            if( isUsed(idx) )
+        for (Index idx : getConfiguration())
+            if ( isUsed(idx) )
                 usedConfiguration.add(idx);
 
         return usedConfiguration;
@@ -364,8 +364,8 @@ public class ExplainedSQLStatement
     {
         Configuration updatedConfiguration = new Configuration("updated_conf");
 
-        for(Index idx : getConfiguration()) {
-            if(updateCosts[getConfiguration().getOrdinalPosition(idx)] != 0) {
+        for (Index idx : getConfiguration()) {
+            if (updateCosts[getConfiguration().getOrdinalPosition(idx)] != 0) {
                 updatedConfiguration.add(idx);
             }
         }
@@ -415,12 +415,12 @@ public class ExplainedSQLStatement
 
         sb.append("All:\n");
 
-        if(getConfiguration().size() > 0)
+        if (getConfiguration().size() > 0)
             sb.append(getConfiguration());
 
         sb.append("Used:\n");
 
-        if(getUsedConfiguration().size() > 0)
+        if (getUsedConfiguration().size() > 0)
             sb.append(getUsedConfiguration());
 
         return sb.toString();

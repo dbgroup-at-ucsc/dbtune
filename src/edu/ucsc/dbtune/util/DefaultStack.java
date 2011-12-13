@@ -13,7 +13,7 @@ public class DefaultStack<E> {
     }
     
     public final void popAll() {
-        while(!isEmpty()){
+        while (!isEmpty()){
             pop();
         }
     }

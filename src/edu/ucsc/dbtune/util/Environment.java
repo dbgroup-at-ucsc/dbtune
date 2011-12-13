@@ -120,7 +120,7 @@ public class Environment {
     public String getOptimizer() throws IllegalArgumentException {
         String opt = configuration.getProperty(OPTIMIZER);
 
-        if(!SUPPORTED_OPTIMIZERS.contains(opt))
+        if (!SUPPORTED_OPTIMIZERS.contains(opt))
             throw new IllegalArgumentException("Bad optimizer option " + opt);
 
         return opt;
@@ -219,11 +219,11 @@ public class Environment {
     public static void extractDriver(Environment env) throws SQLException {
         String driver;
 
-        if(env.getJdbcURL().contains("db2"))
+        if (env.getJdbcURL().contains("db2"))
             driver = DB2;
-        else if(env.getJdbcURL().contains("mysql"))
+        else if (env.getJdbcURL().contains("mysql"))
             driver = MYSQL;
-        else if(env.getJdbcURL().contains("postgres"))
+        else if (env.getJdbcURL().contains("postgres"))
             driver = PG;
         else
             throw new SQLException("Can't extract driver from " + env.getJdbcURL());
@@ -299,7 +299,7 @@ public class Environment {
 
             this.file = new File(filename);
 
-            if(!file.exists()) {
+            if (!file.exists()) {
                 throw new IOException("File " + filename + " doesn't exist");
             }
 

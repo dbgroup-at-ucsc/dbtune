@@ -56,7 +56,7 @@ public class DBTuneInstances
         cfg.setProperty(JDBC_URL, "jdbc:db2://" + DB_URL );
         try{
             extractDriver(cfg);
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
 
@@ -73,7 +73,7 @@ public class DBTuneInstances
         cfg.setProperty(JDBC_URL, "jdbc:superdbms//" + DB_URL);
         try{
             extractDriver(cfg);
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
 
@@ -90,7 +90,7 @@ public class DBTuneInstances
         cfg.setProperty(JDBC_URL, "jdbc:mysql://" + DB_URL );
         try{
             extractDriver(cfg);
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
 
@@ -107,7 +107,7 @@ public class DBTuneInstances
         cfg.setProperty(JDBC_URL, "jdbc:postgresql://" + DB_URL );
         try{
             extractDriver(cfg);
-        } catch(SQLException ex) {
+        } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
 
@@ -191,7 +191,7 @@ public class DBTuneInstances
 
         opts = new ArrayList<Optimizer>();
 
-        for(String optId : SUPPORTED_OPTIMIZERS) {
+        for (String optId : SUPPORTED_OPTIMIZERS) {
 
             conf = new Environment(env);
 
@@ -210,12 +210,12 @@ public class DBTuneInstances
     {
         Catalog catalog = new Catalog("catalog_0");
 
-        for(int j = 0; j < 2; j++) {
+        for (int j = 0; j < 2; j++) {
             Schema schema = new Schema(catalog,"schema_" + j);
             int counter = 0;
-            for(int k = 0; k < 3; k++) {
+            for (int k = 0; k < 3; k++) {
                 Table table = new Table(schema,"table_" + k);
-                for(int l = 0; l < 4; l++) {
+                for (int l = 0; l < 4; l++) {
                     Column column = new Column(table,"column_" + l, l+1);
 
                     new Index(table.getName() + "_index_" + counter++, column);

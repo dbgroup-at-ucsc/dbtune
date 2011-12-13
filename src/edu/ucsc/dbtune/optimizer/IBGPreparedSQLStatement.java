@@ -133,7 +133,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
                     new ConfigurationBitSet(universe,rootNode.getUsedIndexes()),optimizationCount);
         }
         
-        if(!getUniverse().contains(configuration)) {
+        if (!getUniverse().contains(configuration)) {
             throw new SQLException("Configuration " + configuration +
                     " not contained in statement's" + getUniverse());
         }

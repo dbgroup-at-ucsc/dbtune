@@ -248,12 +248,12 @@ public class Index extends DatabaseObject implements Iterable<Column>
     {
         super(name);
 
-        if(schema == null && columns.size() == 0)
+        if (schema == null && columns.size() == 0)
             throw new SQLException("Column list should have at least one element");
 
         Table table = null;
 
-        if(schema == null) {
+        if (schema == null) {
             table     = (Table) columns.get(0).container;
             schema    = (Schema) table.container;
             container = schema;
@@ -262,7 +262,7 @@ public class Index extends DatabaseObject implements Iterable<Column>
         this.descending = new ArrayList<Boolean>();
 
         if (descending == null)
-            for(int i = 0; i < columns.size(); i++)
+            for (int i = 0; i < columns.size(); i++)
                 this.descending.add(ASCENDING);
         else if (descending.size() != columns.size())
             throw new SQLException("Incorrect number of descending values");
@@ -474,7 +474,7 @@ public class Index extends DatabaseObject implements Iterable<Column>
      */
     public Table getTable()
     {
-        if(containees.size() > 0)
+        if (containees.size() > 0)
             return (Table) containees.get(0).getContainer();
         else
             throw new RuntimeException("No columns on index");

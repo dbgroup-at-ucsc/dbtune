@@ -36,14 +36,14 @@ public class BinaryTreeTest {
         try {
             tree.setChild("B", "G", LEFT);
             fail("No exception caught");
-        } catch(IllegalArgumentException ex) {
+        } catch (IllegalArgumentException ex) {
             assertThat(ex.getMessage(), is("Child value already in tree"));
         }
 
         try {
             tree.setChild("F", "C", LEFT);
             fail("No exception caught");
-        } catch(IllegalArgumentException ex) {
+        } catch (IllegalArgumentException ex) {
             assertThat(ex.getMessage(), is("Parent already has child"));
         }
     }

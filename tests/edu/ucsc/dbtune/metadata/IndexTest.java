@@ -40,7 +40,7 @@ public class IndexTest
         schema  = new Schema(catalog, "test_schema" );
         table   = new Table(schema, "test_table" );
 
-        for( int i = 0; i < 10; i++ ) 
+        for ( int i = 0; i < 10; i++ ) 
         {
             columns.add(new Column(table, "col_" + i, INTEGER));
         }
@@ -73,9 +73,9 @@ public class IndexTest
         index3 = new Index( schema, "testi", PRIMARY, CLUSTERED, UNIQUE );
 
         int i = 0;
-        for( Column col : table.columns() )
+        for ( Column col : table.columns() )
         {
-            if( i % 2 == 0 )
+            if ( i % 2 == 0 )
             {
                 index3.add( col );
             }
@@ -100,9 +100,9 @@ public class IndexTest
         index3 = new Index( schema, "testi", PRIMARY, CLUSTERED, UNIQUE );
 
         int i = 0;
-        for( Column col : table.columns() )
+        for ( Column col : table.columns() )
         {
-            if( i % 2 == 0 )
+            if ( i % 2 == 0 )
             {
                 index3.add( col );
             }

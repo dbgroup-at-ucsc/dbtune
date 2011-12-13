@@ -35,7 +35,7 @@ public class Objects {
      */
     public static int hashCode(Object... objects){
       int result = HashCodeUtil.SEED;
-      for(Object each : objects){
+      for (Object each : objects){
          result = HashCodeUtil.hash(result, each); 
       }
       return result;
@@ -103,7 +103,7 @@ public class Objects {
             // Neal isn't sure why getRawType() returns Type instead of Class, but suspects some pathological case related
             // to nested classes exists.
             final Type rawType = parameterizedType.getRawType();
-            if(!(rawType instanceof Class)){
+            if (!(rawType instanceof Class)){
               throw new ClassCastException();
             }
 

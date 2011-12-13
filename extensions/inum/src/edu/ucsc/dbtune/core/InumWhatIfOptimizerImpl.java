@@ -49,19 +49,19 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    * closed, there is not need to keep INUM 'on' too.
    */
   public void endInum(){
-    if(getInum().isStarted()) getInum().end();
+    if (getInum().isStarted()) getInum().end();
   }
 
 
   @Override
   public double estimateCost(String query) throws SQLException {
-    if(getInum().isEnded()) { startInum(); }
+    if (getInum().isEnded()) { startInum(); }
     return estimateCost(query, EMPTY_CONFIGURATION);
   }
 
   @Override public double estimateCost(String query, Configuration 
           hypotheticalIndexes) throws SQLException  {
-    if(getInum().isEnded()) { startInum(); }
+    if (getInum().isEnded()) { startInum(); }
     return getInum().estimateCost(query, hypotheticalIndexes);
   }
 

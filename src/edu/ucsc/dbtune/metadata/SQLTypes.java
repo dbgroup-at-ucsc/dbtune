@@ -46,45 +46,45 @@ public class SQLTypes
      */
     public static String codeToName( int type )
     {
-        if( type == BIGINT )
+        if ( type == BIGINT )
             return "BIGINT";
-        else if( type == CHAR )
+        else if ( type == CHAR )
             return "CHAR";
-        else if( type == VARCHAR )
+        else if ( type == VARCHAR )
             return "VARCHAR";
-        else if( type == DATE )
+        else if ( type == DATE )
             return "DATE";
-        else if( type == DECIMAL )
+        else if ( type == DECIMAL )
             return "DECIMAL";
-        else if( type == DOUBLE )
+        else if ( type == DOUBLE )
             return "DOUBLE";
-        else if( type == FLOAT )
+        else if ( type == FLOAT )
             return "FLOAT";
-        else if( type == INTEGER )
+        else if ( type == INTEGER )
             return "INTEGER";
-        else if( type == NUMERIC )
+        else if ( type == NUMERIC )
             return "NUMERIC";
-        else if( type == REAL )
+        else if ( type == REAL )
             return "REAL";
-        else if( type == SMALLINT )
+        else if ( type == SMALLINT )
             return "SMALLINT";
-        else if( type == TIME )
+        else if ( type == TIME )
             return "TIME";
-        else if( type == TIMESTAMP )
+        else if ( type == TIMESTAMP )
             return "TIMESTAMP";
-        else if( type == TINYINT )
+        else if ( type == TINYINT )
             return "TINYINT";
-        else if( type == PICTURE )
+        else if ( type == PICTURE )
             return "PICTURE";
-        else if( type == NCHAR )
+        else if ( type == NCHAR )
             return "NCHAR";
-        else if( type == LARGEINT )
+        else if ( type == LARGEINT )
             return "LARGEINT";
-        else if( type == INTERVAL )
+        else if ( type == INTERVAL )
             return "INTERVAL";
-        else if( type == DATETIME )
+        else if ( type == DATETIME )
             return "DATETIME";
-        else if( type == UNKNOWN )
+        else if ( type == UNKNOWN )
             return "UNKNOWN";
         return "NO TYPE";
     }
@@ -98,21 +98,21 @@ public class SQLTypes
      */
     public static int getSize( int type )
     {
-        if( type == UNKNOWN)
+        if ( type == UNKNOWN)
             return -1;
-        if( type == TINYINT )
+        if ( type == TINYINT )
             return 1;
-        else if( type == CHAR )
+        else if ( type == CHAR )
             return 1;
-        else if( type == SMALLINT )
+        else if ( type == SMALLINT )
             return 2;
-        else if( type == INTEGER
+        else if ( type == INTEGER
                 || type == TIME
                 || type == DATE
                 || type == DATETIME
                 || type == REAL )
             return 4;
-        else if( type == TIMESTAMP
+        else if ( type == TIMESTAMP
                 || type == BIGINT
                 || type == DOUBLE
                 || type == LARGEINT )
@@ -133,58 +133,58 @@ public class SQLTypes
      */
     public static int nameToCode( String type )
     {
-        if( type.equals( "BIGINT" ) )
+        if ( type.equals( "BIGINT" ) )
             return BIGINT;
-        else if( type.equals( "CHAR" ) || type.equals( "CHARACTER" ) )
+        else if ( type.equals( "CHAR" ) || type.equals( "CHARACTER" ) )
             return CHAR;
-        else if( type.equals( "DATETIME" ) )
+        else if ( type.equals( "DATETIME" ) )
             return DATETIME;
-        else if( type.equals( "DATE" ) )
+        else if ( type.equals( "DATE" ) )
             return DATE;
-        else if( type.equals( "DECIMAL" ) )
+        else if ( type.equals( "DECIMAL" ) )
             return DECIMAL;
-        else if( type.equals( "DOUBLE" ) )
+        else if ( type.equals( "DOUBLE" ) )
             return DOUBLE;
-        else if( type.equals( "FLOAT" ) )
+        else if ( type.equals( "FLOAT" ) )
             return FLOAT;
-        else if( type.equals( "INT" ) ||
+        else if ( type.equals( "INT" ) ||
                 type.equals( "SIGNED INT" ) ||
                 type.equals( "UNSIGNED INT" ) ||
                 type.equals( "INTEGER" ) )
             return INTEGER;
-        else if( type.equals( "NUMERIC" ) ||
+        else if ( type.equals( "NUMERIC" ) ||
                 type.equals( "SIGNED NUMERIC" ) ||
                 type.equals( "UNSIGNED NUMERIC" ) )
             return NUMERIC;
-        else if( type.equals( "REAL" ) )
+        else if ( type.equals( "REAL" ) )
             return REAL;
-        else if( type.equals( "SMALLINT" ) ||
+        else if ( type.equals( "SMALLINT" ) ||
                 type.equals( "SIGNED SMALLINT" ) ||
                 type.equals( "UNSIGNED SMALLINT" ) )
             return SMALLINT;
-        else if( type.equals( "TIME" ) )
+        else if ( type.equals( "TIME" ) )
             return TIME;
-        else if( type.equals( "TIMESTAMP" ) )
+        else if ( type.equals( "TIMESTAMP" ) )
             return TIMESTAMP;
-        else if( type.equals( "TINYINT" ) ||
+        else if ( type.equals( "TINYINT" ) ||
                 type.equals( "SIGNED TINYINT" ) ||
                 type.equals( "UNSIGNED TINYINT" ) )
             return TINYINT;
-        else if( type.equals( "VARCHAR" ) )
+        else if ( type.equals( "VARCHAR" ) )
             return VARCHAR;
-        else if( type.equals( "TIME" ) )
+        else if ( type.equals( "TIME" ) )
             return TIME;
-        else if( type.equals( "PICTURE" ) )
+        else if ( type.equals( "PICTURE" ) )
             return PICTURE;
-        else if( type.equals( "NCHAR" ) )
+        else if ( type.equals( "NCHAR" ) )
             return NCHAR;
-        else if( type.equals( "LARGEINT" ) ||
+        else if ( type.equals( "LARGEINT" ) ||
                 type.equals( "SIGNED LARGEINT" ) ||
                 type.equals( "UNSIGNED LARGEINT" ) )
             return LARGEINT;
-        else if( type.equals( "INTERVAL" ) )
+        else if ( type.equals( "INTERVAL" ) )
             return NCHAR;
-        else if( type.equals( "UNKNOWN" ) )
+        else if ( type.equals( "UNKNOWN" ) )
             return UNKNOWN;
 
         return -1;

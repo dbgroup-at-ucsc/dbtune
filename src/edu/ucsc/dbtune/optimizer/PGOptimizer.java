@@ -66,12 +66,12 @@ public class PGOptimizer extends AbstractOptimizer
         this.schema     = schema;
         this.connection = connection;
 
-        if(schema == null) {
+        if (schema == null) {
             obtainPlan = true;
         } else {
             String version = getVersion(connection);
 
-            if(compareVersion("9.0.0", version) > 0) {
+            if (compareVersion("9.0.0", version) > 0) {
                 throw new UnsupportedOperationException(
                         "PostgreSQL version " + version + " doesn't produce formatted EXPLAIN plans");
             }
@@ -113,10 +113,10 @@ public class PGOptimizer extends AbstractOptimizer
         stmt = connection.createStatement();
         rs   = stmt.executeQuery("EXPLAIN INDEXES " + toString(indexes) + " " + sql.getSQL());
 
-        if(!rs.next())
+        if (!rs.next())
             throw new SQLException("No result from EXPLAIN statement");
 
-        if(!sql.getSQLCategory().isSame(SQLCategory.from(rs.getString("category"))))
+        if (!sql.getSQLCategory().isSame(SQLCategory.from(rs.getString("category"))))
             throw new SQLException(
                     sql.getSQLCategory() + " not the same to " + 
                     SQLCategory.from(rs.getString("category")));
@@ -125,7 +125,7 @@ public class PGOptimizer extends AbstractOptimizer
         indexPositions = rs.getString("indexes").trim();
         indexOverhead  = rs.getString("index_overhead").trim();
 
-        if(indexes.size() > 0) {
+        if (indexes.size() > 0) {
             updateCost = toDoubleArrayFromIndexed(indexOverhead.split(" "), "=");
 
             if (!indexPositions.equals(""))
@@ -140,7 +140,7 @@ public class PGOptimizer extends AbstractOptimizer
             updateCost = new double[0];
         }
 
-        if(updateCost.length != indexes.size())
+        if (updateCost.length != indexes.size())
             throw new SQLException(
                 updateCost.length + " update costs for " + indexes.size() + "indexes");
 
@@ -149,7 +149,7 @@ public class PGOptimizer extends AbstractOptimizer
 
         sqlPlan = null;
 
-        if(obtainPlan)
+        if (obtainPlan)
             sqlPlan = getPlan(connection,sql);
 
         return new ExplainedSQLStatement(
@@ -177,15 +177,15 @@ public class PGOptimizer extends AbstractOptimizer
         stmt    = connection.createStatement();
         rs      = stmt.executeQuery("RECOMMEND INDEXES " + sql.getSQL());
 
-        while(rs.next()) {
+        while (rs.next()) {
 
             table = null;
 
-            for(Schema sch : catalog)
-                if((table = sch.findTable(rs.getInt("reloid"))) != null )
+            for (Schema sch : catalog)
+                if ((table = sch.findTable(rs.getInt("reloid"))) != null )
                     break;
 
-            if(table == null)
+            if (table == null)
                 throw new SQLException("Can't find table with id " + rs.getInt("reloid"));
 
             isSync    = rs.getString("sync").charAt(0) == 'Y';
@@ -196,7 +196,7 @@ public class PGOptimizer extends AbstractOptimizer
 
             index = new Index(indexName, columns, isDesc, SECONDARY, NON_UNIQUE, UNCLUSTERED);
 
-            if(isSync)
+            if (isSync)
                 index.setScanOption(SYNCHRONIZED);
 
             index.setCreationCost(rs.getDouble("create_cost"));
@@ -243,7 +243,7 @@ public class PGOptimizer extends AbstractOptimizer
         //  PostgreSQL 8.3.0 on i686-pc-linux-gnu, compiled by GCC gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
         //  (1 row)
 
-        while(rs.next()) {
+        while (rs.next()) {
             version = rs.getString("version");
             version = version.substring(11,version.indexOf(" on "));
         }
@@ -269,7 +269,7 @@ public class PGOptimizer extends AbstractOptimizer
     {
         Configuration conf = new Configuration("used_configuration");
 
-        for(int position : positions)
+        for (int position : positions)
             conf.add(indexes.getIndexAt(position));
 
         return conf;
@@ -292,10 +292,10 @@ public class PGOptimizer extends AbstractOptimizer
 
         Column col;
 
-        for(int position : positions) {
+        for (int position : positions) {
             col = (Column)table.at(position-1);
 
-            if(col == null)
+            if (col == null)
                 throw new SQLException("Can't find column with position " + position + " in table " + table);
 
             columns.add(col);
@@ -362,7 +362,7 @@ public class PGOptimizer extends AbstractOptimizer
         SQLStatementPlan plan    = null;
         int              cnt     = 0;
 
-        while(rs.next()) {
+        while (rs.next()) {
             try {
                 plan = parseJSON(new StringReader(rs.getString(1)), schema);
                 cnt++;
@@ -371,7 +371,7 @@ public class PGOptimizer extends AbstractOptimizer
             }
         }
 
-        if(cnt != 1) {
+        if (cnt != 1) {
             throw new SQLException("Something wrong happened, got " + cnt + " plan(s)");
         }
 
@@ -449,11 +449,11 @@ public class PGOptimizer extends AbstractOptimizer
         @SuppressWarnings("unchecked")
         List<Map<String,Object>> planData = mapper.readValue(breader, List.class);
 
-        if(planData == null) {
+        if (planData == null) {
             return new SQLStatementPlan(new Operator());
         }
 
-        if(planData.size() > 1) {
+        if (planData.size() > 1) {
             throw new SQLException("More than one root node");
         }
 
@@ -498,14 +498,14 @@ public class PGOptimizer extends AbstractOptimizer
 
         parent.setCost(parent.getAccumulatedCost());
 
-        if(childrenData == null || childrenData.size() == 0) {
+        if (childrenData == null || childrenData.size() == 0) {
             return;
         }
 
         Operator child;
         double   childrenCost = 0.0;
 
-        for(Map<String,Object> childData : childrenData) {
+        for (Map<String,Object> childData : childrenData) {
             child         = extractNode(childData, schema);
             childrenCost += child.getAccumulatedCost();
 
@@ -555,22 +555,22 @@ public class PGOptimizer extends AbstractOptimizer
         accCost     = nodeData.get("Total Cost");
         cardinality = nodeData.get("Plan Rows");
 
-        if(type == null || accCost == null || cardinality == null) {
+        if (type == null || accCost == null || cardinality == null) {
             throw new SQLException("Type, cost or cardinality is (are) null");
         }
 
         operator = new Operator((String) type, (Double) accCost, ((Number) cardinality).longValue());
 
-        if( schema == null ) {
+        if ( schema == null ) {
             return operator;
         }
 
         dbObjectName = nodeData.get("Relation Name");
 
-        if(dbObjectName != null) {
+        if (dbObjectName != null) {
             dbObject = schema.findTable((String)dbObjectName);
 
-            if(dbObject == null) {
+            if (dbObject == null) {
                 throw new SQLException("Table " + dbObjectName + " not found in schema");
             }
 
@@ -579,10 +579,10 @@ public class PGOptimizer extends AbstractOptimizer
 
         dbObjectName = nodeData.get("Index Name");
 
-        if(dbObjectName != null) {
+        if (dbObjectName != null) {
             dbObject = schema.findIndex((String)dbObjectName);
 
-            if(dbObject == null) {
+            if (dbObject == null) {
                 throw new SQLException("Index " + dbObjectName + " not found in schema");
             }
 

@@ -62,7 +62,7 @@ public class InumWhatIfOptimizerFunctionalTest {
     final File    outputdir    = new File(DESTINATION);
     final File    twinWorkload = new File(WORKLOAD_IN_USE);
 
-    if(outputdir.mkdirs())  { Console.streaming().info(outputdir.toString() + " has been created.");}
+    if (outputdir.mkdirs())  { Console.streaming().info(outputdir.toString() + " has been created.");}
     else                    { Console.streaming().info(outputdir.toString() + " already exists.");}
 
 
@@ -70,8 +70,8 @@ public class InumWhatIfOptimizerFunctionalTest {
   }
 
   @AfterClass public static void tearDown() throws Exception {
-    if(CONNECTION != null) {
-      if(!CONNECTION.isClosed()){
+    if (CONNECTION != null) {
+      if (!CONNECTION.isClosed()){
         CONNECTION.close();
       }
 

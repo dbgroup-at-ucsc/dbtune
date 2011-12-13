@@ -71,13 +71,13 @@ public class PGExtractor extends GenericJDBCExtractor
         {
             schemaName = rs.getString("TABLE_SCHEM");
 
-            if(schemaName == null) {
+            if (schemaName == null) {
                 schemaName = "default";
             }
 
             schema = schemaNamesToSchemas.get(schemaName);
 
-            if(schema == null) {
+            if (schema == null) {
                 schema = new Schema(catalog, schemaName);
                 schemaNamesToSchemas.put(schemaName,schema);
             }
@@ -100,11 +100,11 @@ public class PGExtractor extends GenericJDBCExtractor
 
         catalog.setInternalID(1);
 
-        for(Schema sch : catalog) {
+        for (Schema sch : catalog) {
 
             sch.setInternalID(counter++);
 
-            for(Table tbl : sch.tables()) {
+            for (Table tbl : sch.tables()) {
 
                 stm = connection.createStatement();
 
@@ -129,12 +129,12 @@ public class PGExtractor extends GenericJDBCExtractor
                 stm.close();
 
                 position = 0;
-                for(Column col : tbl) {
+                for (Column col : tbl) {
                     col.setInternalID(position++);
                 }
             }
 
-            for(Index index : sch.indexes()) {
+            for (Index index : sch.indexes()) {
                 index.setInternalID(counter++);
             }
         }
@@ -162,8 +162,8 @@ public class PGExtractor extends GenericJDBCExtractor
         String    cmd;
         String    name;
 
-        for(Schema schema : catalog) {
-            for(Table table : schema.tables()) {
+        for (Schema schema : catalog) {
+            for (Table table : schema.tables()) {
 
                 stm = connection.createStatement();
                 cmd = 

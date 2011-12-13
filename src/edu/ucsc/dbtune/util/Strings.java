@@ -106,7 +106,7 @@ public class Strings
     {
         int[] intArray = new int[valArray.length];
 
-        for(int i = 0; i < valArray.length; i++)
+        for (int i = 0; i < valArray.length; i++)
             intArray[i] = Integer.parseInt(valArray[i]);
 
         return intArray;
@@ -147,7 +147,7 @@ public class Strings
     {
         List<Boolean> booleanList = new ArrayList<Boolean>();
 
-        for(int i = 0; i < valArray.length; i++)
+        for (int i = 0; i < valArray.length; i++)
             booleanList.add(Boolean.parseBoolean(valArray[i]));
 
         return booleanList;
@@ -186,11 +186,11 @@ public class Strings
 
         dblArray = new double[valArray.length];
 
-        for(int i = 0, position; i < valArray.length; i++)
+        for (int i = 0, position; i < valArray.length; i++)
         {
             splitVal = valArray[i].split("=");
 
-            if(splitVal.length != 2)
+            if (splitVal.length != 2)
                 throw new RuntimeException("Getting length " + splitVal.length + " expecting 2"); 
 
             position = Integer.valueOf(splitVal[0]);
@@ -281,7 +281,7 @@ public class Strings
     {
         boolean result = false;
 
-        for(String each : searchStrs)
+        for (String each : searchStrs)
             result |= contains(str, each);
 
         return result;
@@ -361,7 +361,7 @@ public class Strings
         StringBuilder result = new StringBuilder();
         result.append(i.next());
 
-        while(i.hasNext())
+        while (i.hasNext())
             result.append(delimiter).append(i.next());
 
         return result.toString();
@@ -386,14 +386,14 @@ public class Strings
     // does not accept nulls
     public static String[] splits(String text, char separator)
     {
-        if(isEmpty(text)) return new String[0];
+        if (isEmpty(text)) return new String[0];
         final List<String> words = new LinkedList<String>();
         int     idx         = 0;
         int     start       = 0;
         boolean foundMatch  = false;
-        while(idx < text.length()){
-            if(text.charAt(idx) == separator){
-                if(foundMatch){
+        while (idx < text.length()){
+            if (text.charAt(idx) == separator){
+                if (foundMatch){
                     // once the word is added, reset the value of foundMatch
                     foundMatch = !(words.add(text.substring(start, idx)));
                 }
@@ -406,7 +406,7 @@ public class Strings
             idx++;
         }
 
-        if(foundMatch) words.add(text.substring(start, idx));
+        if (foundMatch) words.add(text.substring(start, idx));
         return words.toArray(new String[words.size()]);
     }
 

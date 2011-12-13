@@ -40,8 +40,8 @@ public class InumMatchingStrategy implements MatchingStrategy {
   private static double findOneWithMinCost(Set<OptimalPlan> matches, double indexAccessCost){
     OptimalPlan min = null;
     double derivedCost = 0.0;
-    for(OptimalPlan each : matches){
-      if(null == min) { // base case
+    for (OptimalPlan each : matches){
+      if (null == min) { // base case
         min         = each;
         derivedCost = sumCachedCosts(each) + indexAccessCost;
         continue;
@@ -49,7 +49,7 @@ public class InumMatchingStrategy implements MatchingStrategy {
 
       final double first  = sumCachedCosts(min)  + indexAccessCost;
       final double second = sumCachedCosts(each) + indexAccessCost;
-      if(compare(second, first) < 0/*check if second is less than first*/) {
+      if (compare(second, first) < 0/*check if second is less than first*/) {
         min         = each;
         derivedCost = second;
       }
@@ -84,8 +84,8 @@ public class InumMatchingStrategy implements MatchingStrategy {
     final Set<OptimalPlan> found = Sets.newHashSet();
     // assuming there is a match, pick the one with the min cost.
     final Configuration key = new Configuration(inputConfiguration);
-    for(Configuration match : inumSpace.getAllInterestingOrders()){
-      if(intersects(match, key)){
+    for (Configuration match : inumSpace.getAllInterestingOrders()){
+      if (intersects(match, key)){
         final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(key);
         found.addAll(optimalPlans);
         break;

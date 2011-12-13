@@ -86,7 +86,7 @@ public class Configuration implements Iterable<Index>
      */
     public void add(Index index)
     {
-        if(!_indexes.contains(index)) {
+        if (!_indexes.contains(index)) {
             _indexes.add(index);
         }
     }
@@ -160,8 +160,8 @@ public class Configuration implements Iterable<Index>
      */
     public boolean contains(Configuration configuration)
     {
-        for(Index idx : configuration) {
-            if(!contains(idx)) {
+        for (Index idx : configuration) {
+            if (!contains(idx)) {
                 return false;
             }
         }
@@ -233,7 +233,7 @@ public class Configuration implements Iterable<Index>
     {
         StringBuilder str = new StringBuilder();
         
-        for(Index idx : this) {
+        for (Index idx : this) {
             str.append("    " + idx + "\n");
         }
 

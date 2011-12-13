@@ -47,16 +47,16 @@ public class Schema extends DatabaseObject
     {
         List<Index> indexes = new ArrayList<Index>();
 
-        for(DatabaseObject dbo : containees)
+        for (DatabaseObject dbo : containees)
         {
             Index index;
 
-            if(dbo instanceof Index)
+            if (dbo instanceof Index)
                 index = (Index) dbo;
             else
                 continue;
 
-            if(index.isMaterialized())
+            if (index.isMaterialized())
                 indexes.add(index);
         }
 

@@ -58,11 +58,11 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
      */
     public Entry<T> setChild(T parentValue, T childValue, int leftOrRight) {
 
-        if(leftOrRight != LEFT && leftOrRight != RIGHT) {
+        if (leftOrRight != LEFT && leftOrRight != RIGHT) {
             throw new IllegalArgumentException( leftOrRight + " not a valid child position");
         }
 
-        if(elements.get(childValue) != null) {
+        if (elements.get(childValue) != null) {
             throw new IllegalArgumentException("Child value already in tree");
         }
 
@@ -71,19 +71,19 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
 
         parentEntry = elements.get(parentValue);
 
-        if( parentEntry == null ) {
+        if ( parentEntry == null ) {
             throw new NoSuchElementException(parentValue + " not in tree");
         }
 
         childEntry = null;
 
-        if( leftOrRight == LEFT && parentEntry.children.size() > 0) {
+        if ( leftOrRight == LEFT && parentEntry.children.size() > 0) {
             childEntry = parentEntry.children.get(0);
-        } else if(leftOrRight == RIGHT && parentEntry.children.size() > 1) {
+        } else if (leftOrRight == RIGHT && parentEntry.children.size() > 1) {
             childEntry = parentEntry.children.get(1);
         }
 
-        if(childEntry != null) {
+        if (childEntry != null) {
             throw new IllegalArgumentException("Parent already has child");
         }
 
@@ -96,7 +96,7 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
     public Entry<T> setChild(T parentValue, T childValue) {
         Entry<T> parentEntry = elements.get(parentValue);
 
-        if(parentEntry.children.size() > 1) {
+        if (parentEntry.children.size() > 1) {
             throw new IllegalArgumentException("Parent already has child at given sub-tree");
         }
 
@@ -118,13 +118,13 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
     protected Entry<T> find(T value, Entry<T> entry) {
         while (entry != null) {
             if (value.compareTo(entry.element) < 0) {
-                if(entry.children.size() > 0) {
+                if (entry.children.size() > 0) {
                     entry = entry.children.get(0);
                 } else {
                     entry = null;
                 }
             } else if (value.compareTo(entry.element) > 0) {
-                if(entry.children.size() > 1) {
+                if (entry.children.size() > 1) {
                     entry = entry.children.get(1);
                 } else {
                     entry = null;

@@ -21,7 +21,7 @@ public class ConfigurationTest
 
     @BeforeClass
     public static void setUp() throws Exception {
-        for(Index index : configureCatalog().<Schema>findByName("schema_0").indexes())
+        for (Index index : configureCatalog().<Schema>findByName("schema_0").indexes())
             allIndexes.add(index);
     }
 
@@ -29,7 +29,7 @@ public class ConfigurationTest
     public void testPopulatingConfiguration() throws Exception {
         Configuration conf1 = new Configuration(allIndexes);
 
-        for(Index idx : allIndexes) {
+        for (Index idx : allIndexes) {
             assertTrue(conf1.contains(idx));
         }
     }

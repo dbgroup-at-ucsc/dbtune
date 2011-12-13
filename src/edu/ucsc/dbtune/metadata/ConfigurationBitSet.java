@@ -14,7 +14,7 @@ public class ConfigurationBitSet extends Configuration
     public ConfigurationBitSet(Configuration configuration)
     {
     	super("");
-    	for(Index index:configuration) {
+    	for (Index index:configuration) {
     		add(index);
     	}
     }
@@ -54,7 +54,7 @@ public class ConfigurationBitSet extends Configuration
     @Override
     public void add(Index index)
     {
-        if(!this.contains(index))
+        if (!this.contains(index))
         {
             _indexes.add(index);
             bitSet.set(_indexes.indexOf(index));

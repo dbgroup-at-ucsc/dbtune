@@ -882,12 +882,12 @@ public class DBTuneMocks
 
         @Override
         public boolean next() throws SQLException {
-            if(oneNoOneYes.get()){
-                if(oneNoOneYesCounter.get() == 1) return false;
+            if (oneNoOneYes.get()){
+                if (oneNoOneYesCounter.get() == 1) return false;
                 oneNoOneYesCounter.incrementAndGet();
                 return oneNoOneYes.get();
             } else {
-                if(nextCounter.get() == 3){
+                if (nextCounter.get() == 3){
                     nextCounter.set(0);
                     return false;
                 }
@@ -907,16 +907,16 @@ public class DBTuneMocks
 
         @Override
         public String getString(int columnIndex) throws SQLException {
-            if(columnIndex > 1){
-                if(columnIndex == 6){
+            if (columnIndex > 1){
+                if (columnIndex == 6){
                     return "U";
                 }
 
-                if(columnIndex == 8){
+                if (columnIndex == 8){
                     return "Y";
                 }
 
-                if(columnIndex == 9){
+                if (columnIndex == 9){
                     return "REG";
                 }
                 return "+A-B+C";
@@ -943,7 +943,7 @@ public class DBTuneMocks
         public int getInt(int columnIndex) throws SQLException {
             if (withCounter) {
                 counterforGetInt.incrementAndGet();
-                if(counterforGetInt.get() == 2){
+                if (counterforGetInt.get() == 2){
                     counterforGetInt.set(1);
                 }
             }
@@ -1007,15 +1007,15 @@ public class DBTuneMocks
 
         @Override
         public String getString(String columnLabel) throws SQLException {
-            if(columnLabel.equalsIgnoreCase("index_overhead")) return "0=1.1 1=2.0 2=3.0";
-            if(columnLabel.equalsIgnoreCase("desc")) return "Y N Y N N Y";
-            if(columnLabel.equalsIgnoreCase("reloid")) return Integer.valueOf(123456).toString();
-            if(columnLabel.equalsIgnoreCase("sync")) return "Y";
-            if(columnLabel.equalsIgnoreCase("atts")) return "1 2 3 4 5 6";
-            if(columnLabel.equalsIgnoreCase("qcost")) return Double.valueOf(1.0).toString();
-            if(columnLabel.equalsIgnoreCase("indexes")) return Integer.valueOf(31).toString();
-            if(columnLabel.equalsIgnoreCase("create_cost")) return Double.valueOf(1.0).toString();
-            if(columnLabel.equalsIgnoreCase("megabytes")) return Double.valueOf(1.0).toString();
+            if (columnLabel.equalsIgnoreCase("index_overhead")) return "0=1.1 1=2.0 2=3.0";
+            if (columnLabel.equalsIgnoreCase("desc")) return "Y N Y N N Y";
+            if (columnLabel.equalsIgnoreCase("reloid")) return Integer.valueOf(123456).toString();
+            if (columnLabel.equalsIgnoreCase("sync")) return "Y";
+            if (columnLabel.equalsIgnoreCase("atts")) return "1 2 3 4 5 6";
+            if (columnLabel.equalsIgnoreCase("qcost")) return Double.valueOf(1.0).toString();
+            if (columnLabel.equalsIgnoreCase("indexes")) return Integer.valueOf(31).toString();
+            if (columnLabel.equalsIgnoreCase("create_cost")) return Double.valueOf(1.0).toString();
+            if (columnLabel.equalsIgnoreCase("megabytes")) return Double.valueOf(1.0).toString();
             return DBTuneInstances.DB_SCH;
         }
 

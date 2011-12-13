@@ -75,16 +75,16 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
     final String        current     = ("->  " + queryExecutionPlan).replaceAll("\\r|\\n", "");
 
     final Matcher matcher     = Pattern.compile("\\->").matcher(current);
-    while(matcher.find()){
+    while (matcher.find()){
       int end          = matcher.end();
       int nextPosition = current.indexOf("->", end);
       int counter      = 0;
       String relevantText;
-      if(nextPosition != NOT_FOUND){
+      if (nextPosition != NOT_FOUND){
         relevantText = current.substring(end + 2, nextPosition);
-        for(int idx = (relevantText.length() - 1) ; idx > 0; idx--) {
+        for (int idx = (relevantText.length() - 1) ; idx > 0; idx--) {
           final boolean isWhiteSpace = Character.isWhitespace(relevantText.charAt(idx));
-          if(isWhiteSpace) { counter++; }
+          if (isWhiteSpace) { counter++; }
           else             { break;     }
           parents.add(counter);
         }
@@ -93,7 +93,7 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
         relevantText = current.substring(end + 2);
       }
 
-      if(!Strings.isEmpty(relevantText)){
+      if (!Strings.isEmpty(relevantText)){
         parsedlines.add(relevantText);
       }
     }
@@ -101,7 +101,7 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
     parents.add(0, ROOT);
 
     // parse parents and actual plans
-    for(int rowId = 0; rowId < parsedlines.size(); rowId++){
+    for (int rowId = 0; rowId < parsedlines.size(); rowId++){
       final String each          = parsedlines.get(rowId);
       int posOpenParenthesis     = each.indexOf("(");
       int posCost                = each.indexOf("cost=");
@@ -116,12 +116,12 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
       final double costWholeOperation = Double.valueOf(each.substring(posDoubleDot + 2, posSpaceAfterDoubleDot));
       final long   rows               = Long.valueOf(each.substring(posRows + 5, posSpaceAfterRows));
       int   parent = ROOT;
-      if(rowId == 0){
+      if (rowId == 0){
         parent = ROOT;
       } else {
         final int len = parents.get(rowId);
-        for(int j = rowId; j >= 0; j--){
-          if(parents.get(j) < len || parents.get(j) < 0) {
+        for (int j = rowId; j >= 0; j--){
+          if (parents.get(j) < len || parents.get(j) < 0) {
             parent = j;
             break;
           }
@@ -145,8 +145,8 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
   }
 
   private static String findOperator(String name){
-    for(Pair<String, String> each : OPERATORS_MAPPINGS){
-      if(Strings.contains(name, each.getLeft())){
+    for (Pair<String, String> each : OPERATORS_MAPPINGS){
+      if (Strings.contains(name, each.getLeft())){
         return each.getRight();
       }
     }

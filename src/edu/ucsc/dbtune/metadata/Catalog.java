@@ -136,10 +136,10 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
 
         DatabaseObject dbo = null;
 
-        for(Schema s : this) {
+        for (Schema s : this) {
             dbo = s.find(name);
 
-            if(dbo != null)
+            if (dbo != null)
                 break;
         }
 

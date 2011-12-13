@@ -392,10 +392,10 @@ public abstract class DatabaseObject
      */
     final void add(DatabaseObject dbo) throws SQLException
     {
-        if(containees.contains(dbo))
+        if (containees.contains(dbo))
             throw new SQLException("Object " + dbo.getName() + " already in " + getName());
 
-        if(!isValid(dbo))
+        if (!isValid(dbo))
             throw new SQLException("Object " + dbo.getName() + " with type " + dbo.getClass() + " not valid in " + getName());
 
         containees.add(dbo);
@@ -481,7 +481,7 @@ public abstract class DatabaseObject
     @Override
     public boolean equals(Object other)
     {
-        if(!(other instanceof DatabaseObject))
+        if (!(other instanceof DatabaseObject))
             return false;
         DatabaseObject dbo = (DatabaseObject) other;
 

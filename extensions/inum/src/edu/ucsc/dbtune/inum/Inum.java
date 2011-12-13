@@ -74,8 +74,8 @@ public class Inum {
   public double estimateCost(String query, Configuration inputConfiguration) 
       throws SQLException {
     final String errmsg = "INUM has not been started yet. Please call start(..) method.";
-    if(isEnded()) throw new InumExecutionException(errmsg);
-    if(!precomputation.skip(query)) {
+    if (isEnded()) throw new InumExecutionException(errmsg);
+    if (!precomputation.skip(query)) {
       precomputation.setup(
           query, 
           findInterestingOrders(query)
@@ -138,7 +138,7 @@ public class Inum {
     isStarted.set(true);
 
     final StopWatch timing = new StopWatch();
-    for(String eachQuery : input){
+    for (String eachQuery : input){
       precomputation.setup(eachQuery, findInterestingOrders(eachQuery));
     }
     timing.resetAndLog("precomputation took ");

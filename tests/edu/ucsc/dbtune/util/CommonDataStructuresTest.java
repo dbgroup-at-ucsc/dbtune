@@ -15,7 +15,7 @@ public class CommonDataStructuresTest {
         populateQueue(queue, 1000);
 
         assertSame("first element is 0", queue.fetch(0), 0);
-        while(!queue.isEmpty()){
+        while (!queue.isEmpty()){
             queue.remove();
         }
         assertTrue("Queue is empty", queue.isEmpty());
@@ -58,13 +58,13 @@ public class CommonDataStructuresTest {
     }
 
     private static void populateStack(DefaultStack<Integer> stack, int size){
-        for(int idx = 0; idx < size; idx++){
+        for (int idx = 0; idx < size; idx++){
             stack.push(idx);
         }
     }
 
     private static void populateQueue(DefaultQueue<Integer> stack, int size){
-        for(int idx = 0; idx < size; idx++){
+        for (int idx = 0; idx < size; idx++){
             stack.add(idx);
         }
     }    

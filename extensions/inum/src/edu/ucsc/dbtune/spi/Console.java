@@ -54,7 +54,7 @@ public abstract class Console implements Printer {
      *   exception that was fired.
      */
     public void catchError(Throwable cause){
-        if(cachedErrors == null) {
+        if (cachedErrors == null) {
             cachedErrors = new ArrayList<String>();
         }
 

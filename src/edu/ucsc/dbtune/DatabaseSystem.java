@@ -136,11 +136,11 @@ public class DatabaseSystem
 
         validate(env);
 
-        if(env.getVendor().equals(MYSQL))
+        if (env.getVendor().equals(MYSQL))
             extractor = new MySQLExtractor();
-        else if(env.getVendor().equals(DB2))
+        else if (env.getVendor().equals(DB2))
             extractor = new DB2Extractor();
-        else if(env.getVendor().equals(PG))
+        else if (env.getVendor().equals(PG))
             extractor = new PGExtractor();
         else
             throw new SQLException("Unable to create an extractor for " + env.getVendor());
@@ -161,20 +161,20 @@ public class DatabaseSystem
 
         validate(env);
 
-        if(env.getVendor().equals(MYSQL))
+        if (env.getVendor().equals(MYSQL))
             optimizer = new MySQLOptimizer(con);
-        else if(env.getVendor().equals(DB2))
+        else if (env.getVendor().equals(DB2))
             optimizer = new DB2Optimizer(con);
-        else if(env.getVendor().equals(PG))
+        else if (env.getVendor().equals(PG))
             optimizer = new PGOptimizer(con);
         else
             throw new SQLException("Unable to create an optimizer interface for " + env.getVendor());
 
-        if(env.getOptimizer().equals(DBMS))
+        if (env.getOptimizer().equals(DBMS))
             return optimizer;
-        else if(env.getOptimizer().equals(IBG))
+        else if (env.getOptimizer().equals(IBG))
             return new IBGOptimizer(optimizer);
-        else if(env.getOptimizer().equals(INUM))
+        else if (env.getOptimizer().equals(INUM))
             throw new SQLException("INUMOptimizer doesn't exist yet");
         else
             throw new SQLException("Unknown optimizer option: " + env.getOptimizer());
@@ -189,10 +189,10 @@ public class DatabaseSystem
      */
     private static void validate(Environment env) throws SQLException
     {
-        if(env.getJdbcURL() != null)
+        if (env.getJdbcURL() != null)
             extractDriver(env);
 
-        if(env.getVendor() == null || env.getJdbcURL() == null ||
+        if (env.getVendor() == null || env.getJdbcURL() == null ||
            env.getJdbcDriver() == null || env.getOptimizer() == null ||
            env.getUsername() == null || env.getPassword() == null )
             throw new SQLException("Missing a property");
@@ -260,7 +260,7 @@ public class DatabaseSystem
 
             try {
                 Class.forName(env.getJdbcDriver());
-            } catch(Exception e) {
+            } catch (Exception e) {
                 throw new SQLException(e);
             }
 

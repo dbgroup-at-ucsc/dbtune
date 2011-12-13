@@ -127,7 +127,7 @@ public class DatabaseSystemTest
         try {
             Optimizer opt = DatabaseSystem.newOptimizer(env,con);
             fail("Optimizer " + opt + " shouldn't be returned");
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             // nice;
         }
         assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
@@ -138,7 +138,7 @@ public class DatabaseSystemTest
         try {
             Optimizer opt = DatabaseSystem.newOptimizer(env,con);
             fail("Optimizer " + opt + " shouldn't be returned");
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             // nice;
         }
         assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
@@ -149,7 +149,7 @@ public class DatabaseSystemTest
         try {
             Optimizer opt = DatabaseSystem.newOptimizer(env,con);
             fail("Optimizer " + opt + " shouldn't be returned");
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             // nice;
         }
         assertThat(DatabaseSystem.newExtractor(env) instanceof PGExtractor, is(true));

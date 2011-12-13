@@ -64,7 +64,7 @@ public class InterestingOrdersExtractorTest {
 
   private static Properties populateProperties(String tableName, Set<ColumnInformation> columnInformationSet) {
     final Properties properties = new Properties();
-    for(ColumnInformation each : columnInformationSet){
+    for (ColumnInformation each : columnInformationSet){
       properties.setProperty(each.columnName.toUpperCase(), tableName);
     }
     return properties;

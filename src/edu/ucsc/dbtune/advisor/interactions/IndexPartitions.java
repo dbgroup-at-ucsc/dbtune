@@ -27,7 +27,7 @@ public class IndexPartitions
         subsets    = new ArrayList<Set<Index>>();
         set        = new HashSet<Index>();
 
-        for(Index idx : conf)
+        for (Index idx : conf)
             set.add(idx);
 
         subsets.add(set);

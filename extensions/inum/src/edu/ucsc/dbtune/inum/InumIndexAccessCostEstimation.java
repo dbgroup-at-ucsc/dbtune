@@ -31,7 +31,7 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
     final String      optPlan    = provider.getSqlExecutionPlan(query, indexes);
     final OptimalPlan singlePlan = singlePlan(optPlan);
     double sumOfIndexAccessCosts = 0.0;
-    for(Index each : indexes.toList() ){
+    for (Index each : indexes.toList() ){
       sumOfIndexAccessCosts +=  singlePlan.getAccessCost(each.getTable().getName());
     }
     return sumOfIndexAccessCosts;
@@ -41,8 +41,8 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
     // the assumption is that we will get one plan.....
     final Set<OptimalPlan> plans = parser.parse(returnedPlan);
     OptimalPlan plan = null;
-    for(OptimalPlan each : plans){
-      if(plan == null) { plan = each; }
+    for (OptimalPlan each : plans){
+      if (plan == null) { plan = each; }
       else             { break;       }
     }
 

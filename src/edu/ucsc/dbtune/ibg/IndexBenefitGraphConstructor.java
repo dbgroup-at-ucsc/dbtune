@@ -187,8 +187,8 @@ public class IndexBenefitGraphConstructor
                     sql, new ConfigurationBitSet(configuration, newNode.config));
             totalCost = stmt.getTotalCost();
 
-            for(Index idx : configuration) {
-                if(stmt.isUsed(idx)) {
+            for (Index idx : configuration) {
+                if (stmt.isUsed(idx)) {
                     usedBitSet.set(configuration.getOrdinalPosition(idx));
                 }
             }

@@ -21,7 +21,7 @@ public class OptimalPlansParserTest {
     final Set<OptimalPlan> optimalPlans = new InumOptimalPlansParser().parse(EXECUTION_PLAN);
     assertThat(!optimalPlans.isEmpty(), is(true));
     final OptimalPlan plan = getSingleOptimalPlan(optimalPlans);
-    for(Subplan each : plan.getInternalPlans()){
+    for (Subplan each : plan.getInternalPlans()){
       Console.streaming().info("About to test " + Strings.str(each));
       assertThat(each.getRowId(), equalTo(0));
       assertThat(each.getParentId(), equalTo(-1));

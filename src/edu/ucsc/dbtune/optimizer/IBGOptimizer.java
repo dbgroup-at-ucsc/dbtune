@@ -88,7 +88,7 @@ public class IBGOptimizer implements Optimizer
 
         bitSet = new IndexBitSet();
 
-        for(Index idx : universe) {
+        for (Index idx : universe) {
             bitSet.set(universe.getOrdinalPosition(idx));
         }
 

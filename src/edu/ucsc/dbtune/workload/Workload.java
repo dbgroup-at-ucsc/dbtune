@@ -39,16 +39,16 @@ public class Workload implements Iterable<SQLStatement>
         sqls   = new ArrayList<SQLStatement>();
         reader = new BufferedReader(workloadStream);
 
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
 
             line    = line.trim();
             lineLow = line.toLowerCase();
 
-            if(lineLow.startsWith("--")) {
+            if (lineLow.startsWith("--")) {
                 continue;
             }
 
-            if(line.endsWith(";")) {
+            if (line.endsWith(";")) {
                 sqls.add(new SQLStatement(line.substring(0, line.length()-1)));
             } else {
                 sqls.add(new SQLStatement(line));

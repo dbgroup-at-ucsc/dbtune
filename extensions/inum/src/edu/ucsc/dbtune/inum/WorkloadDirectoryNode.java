@@ -31,15 +31,15 @@ public class WorkloadDirectoryNode implements WorkloadNode <Set<String>> {
   public Set<WorkloadNode<?>> getChildren(){
     final File[] files = getDirectory().listFiles(new OnlyDirectoriesOrSqlFiles());
     final Set<WorkloadNode<?>> workload = Sets.newHashSet();
-    for(File each : files){
-      if(each.isDirectory()){
+    for (File each : files){
+      if (each.isDirectory()){
         final WorkloadDirectoryNode directory = new WorkloadDirectoryNode(each);
-        if(!workload.contains(directory)){
+        if (!workload.contains(directory)){
           workload.add(directory);
         }
       } else {
         final WorkloadFileNode node = new WorkloadFileNode(each);
-        if(!workload.contains(node)){
+        if (!workload.contains(node)){
           workload.add(node);
         }
       }

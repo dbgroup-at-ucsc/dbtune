@@ -160,8 +160,8 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     final List<Column> cols = Lists.newArrayList();
     final List<Index>  idxs = Lists.newArrayList();
     int i =0;
-    for(int idx = 0; idx < noIndexes; idx++) {
-      for(int idx2 = 0; idx2 < noColsPerIndex; idx2 ++) {
+    for (int idx = 0; idx < noIndexes; idx++) {
+      for (int idx2 = 0; idx2 < noColsPerIndex; idx2 ++) {
         final Column col = new Column(table, generateRandomName(), INTEGER );
         cols.add(col);
       }
@@ -207,7 +207,7 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
 
     public static String generateName(int noCharacters){
       final StringBuilder name = new StringBuilder();
-      for(int idx = 0; idx < noCharacters; idx ++){
+      for (int idx = 0; idx < noCharacters; idx ++){
         name.append(getRandomCharacter());
       }
       return name.toString();

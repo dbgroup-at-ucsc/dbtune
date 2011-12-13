@@ -68,7 +68,7 @@ public class OptimizerTest
     public void testExplain() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkUsedExplain(opt);
         }
         */
@@ -81,7 +81,7 @@ public class OptimizerTest
     public void testWhatIfExplain() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkWhatIfExplain(opt);
         }
         */
@@ -94,7 +94,7 @@ public class OptimizerTest
     public void testRecommendIndexes() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkRecommendIndexes(opt);
         }
         */
@@ -110,7 +110,7 @@ public class OptimizerTest
     public void testUsedConfiguration() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkUsedConfiguration(opt);
         }
         */
@@ -125,7 +125,7 @@ public class OptimizerTest
     public void testIsWellBehaved() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkIsWellBehaved(opt);
         }
         */
@@ -140,7 +140,7 @@ public class OptimizerTest
     public void testMonotonicity() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkMonotonicity(opt);
         }
         */
@@ -155,7 +155,7 @@ public class OptimizerTest
     public void testSanity() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkSanity(opt);
         }
         */

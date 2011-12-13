@@ -58,7 +58,7 @@ public class PGOptimizerTest {
         XXX: this should be implemented using a JDBC mock
         try {
             optimizer = new PGOptimizer(connection);
-        } catch(UnsupportedOperationException ex) {
+        } catch (UnsupportedOperationException ex) {
             fail("Getting exception when we shouldn't. Are we connecting to postgres-9.0 or greater?");
         }
         */

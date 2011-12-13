@@ -259,7 +259,7 @@ public class MetadataTest
     @Test
     public void testID() throws Exception
     {
-        for(DatabaseObject dbo : catalog.getAll()) {
+        for (DatabaseObject dbo : catalog.getAll()) {
             assertThat(dbo.getInternalID(),is(NON_ID));
         }
     }

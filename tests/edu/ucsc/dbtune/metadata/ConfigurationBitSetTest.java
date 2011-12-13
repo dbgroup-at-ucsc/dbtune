@@ -22,7 +22,7 @@ public class ConfigurationBitSetTest
 
     @BeforeClass
     public static void setUp() throws Exception {
-        for(Index index : configureCatalog().<Schema>findByName("schema_0").indexes())
+        for (Index index : configureCatalog().<Schema>findByName("schema_0").indexes())
             allIndexes.add(index);
     }
 

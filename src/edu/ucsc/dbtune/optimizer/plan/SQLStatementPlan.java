@@ -95,7 +95,7 @@ public class SQLStatementPlan extends Tree<Operator>
     {
         List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
 
-        for(Operator op : toList()) {
+        for (Operator op : toList()) {
             objects.addAll(op.getDatabaseObjects());
         }
 
@@ -112,8 +112,8 @@ public class SQLStatementPlan extends Tree<Operator>
     {
         List<Index> indexes = new ArrayList<Index>();
 
-        for(DatabaseObject ob : getDatabaseObjects()) {
-            if(ob instanceof Index) {
+        for (DatabaseObject ob : getDatabaseObjects()) {
+            if (ob instanceof Index) {
                 indexes.add((Index) ob);
             }
         }

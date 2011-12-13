@@ -178,7 +178,7 @@ public class Operator implements Comparable<Operator>
            "; accCost: " + accumulatedCost +
            "; cardinality: " + cardinality);
 
-        for(DatabaseObject obj : objects) {
+        for (DatabaseObject obj : objects) {
            str.append("; " + obj.getClass().getName() + ": " + obj);
         }
 

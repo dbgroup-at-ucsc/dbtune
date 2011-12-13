@@ -29,7 +29,7 @@ public class Combinations {
    */
   public static <T> Set<Set<T>> findCrossProduct(Iterable<T> elements, int n){
     final Set<Set<T>> result = Sets.newHashSet();
-    if(n == 0) {
+    if (n == 0) {
       result.add(Sets.<T>newHashSet());
       return result;
     }
@@ -60,7 +60,7 @@ public class Combinations {
     }
 
     final Set<Configuration> combinations = Sets.newHashSet();
-    for(Set<Index> each : result){
+    for (Set<Index> each : result){
       combinations.add(new Configuration(Lists.<Index>newArrayList(each)));
     }
 

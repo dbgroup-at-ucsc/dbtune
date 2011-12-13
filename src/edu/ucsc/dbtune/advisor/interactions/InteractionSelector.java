@@ -89,7 +89,7 @@ public class InteractionSelector {
                         }
                     }
                 }
-            } // end of while(true)
+            } // end of while (true)
 
             // currentPartitions is our new candidate, now compare it
             double currentCost = partitionCost(currentPartitions, doiFunc);

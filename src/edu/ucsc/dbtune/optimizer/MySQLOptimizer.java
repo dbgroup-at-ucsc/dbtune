@@ -98,16 +98,16 @@ public class MySQLOptimizer extends AbstractOptimizer
         rs   = stmt.executeQuery("EXPLAIN " + sql.getSQL());
         plan = new SQLStatementPlan(sql, new Operator("root", 0.0, 0));
 
-        while(rs.next()) {
+        while (rs.next()) {
             name = rs.getString("key");
 
-            if(name == null)
+            if (name == null)
                 continue;
 
             operator = new Operator(rs.getString("table"), rs.getLong("rows"), 0);
             index    = catalog.findIndex(name);
             
-            if(index == null)
+            if (index == null)
                 throw new SQLException("Can't find index " + name);
 
             operator.add(index);
@@ -134,7 +134,7 @@ public class MySQLOptimizer extends AbstractOptimizer
         Statement stmt = connection.createStatement();
         ResultSet rs   = stmt.executeQuery("SHOW STATUS LIKE 'last_query_cost'");
 
-        if(!rs.next())
+        if (!rs.next())
             throw new SQLException("No result from SHOW STATUS statement");
 
         double cost = rs.getDouble("value");
@@ -157,7 +157,7 @@ public class MySQLOptimizer extends AbstractOptimizer
      */
     private static void create(Configuration configuration, Connection connection) throws SQLException
     {
-        for(Index index : configuration) {
+        for (Index index : configuration) {
             Statement stmt = connection.createStatement();
             stmt.execute("CREATE HYPOTHETICAL INDEX " + toString(index));
             stmt.close();
@@ -176,7 +176,7 @@ public class MySQLOptimizer extends AbstractOptimizer
      */
     private static void drop(Configuration configuration, Connection connection) throws SQLException
     {
-        for(Index index : configuration) {
+        for (Index index : configuration) {
             Statement stmt = connection.createStatement();
             stmt = connection.createStatement();
             stmt.execute("DROP INDEX " + index.getName() +
@@ -202,8 +202,8 @@ public class MySQLOptimizer extends AbstractOptimizer
         sb.append(index.getTable().getFullyQualifiedName());
         sb.append(" (");
 
-        for(Column col : index.columns()) {
-            if(first)
+        for (Column col : index.columns()) {
+            if (first)
                 first = false;
             else
                 sb.append(",");
