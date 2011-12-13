@@ -1,7 +1,8 @@
 /**
  * <i>DBTune</i>'s root package. Currently, we only support PostgreSQL and DB2.
  * <p>
- * The principal public APIs in this package is {@link edu.ucsc.dbtune.DatabaseSystem}, the object that DBTune uses to 
+ * The principal public APIs in this package is
+ {@link edu.ucsc.dbtune.DatabaseSystem}, the object that DBTune uses to 
  * provide the abstractions that are needed in order to deal with physical design tuning.
  * <p>
  * The main use case is:

@@ -19,7 +19,8 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
      * @param root
      *     root of the tree
      */
-    public BinaryTree( T root ) {
+    public BinaryTree( T root )
+    {
         super(root);
     }
 
@@ -56,7 +57,8 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
      *     BinaryTree#RIGHT}; if {@code childValue} is already in the tree; if {@code parentValue} 
      *     already has a child in the given position (left or right).
      */
-    public Entry<T> setChild(T parentValue, T childValue, int leftOrRight) {
+    public Entry<T> setChild(T parentValue, T childValue, int leftOrRight)
+    {
 
         if (leftOrRight != LEFT && leftOrRight != RIGHT) {
             throw new IllegalArgumentException( leftOrRight + " not a valid child position");
@@ -93,7 +95,8 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
     /**
      * {@inheritDoc}
      */
-    public Entry<T> setChild(T parentValue, T childValue) {
+    public Entry<T> setChild(T parentValue, T childValue)
+    {
         Entry<T> parentEntry = elements.get(parentValue);
 
         if (parentEntry.children.size() > 1) {
@@ -115,7 +118,8 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
      *     the value if found; null, otherwise
      */
     @Override
-    protected Entry<T> find(T value, Entry<T> entry) {
+    protected Entry<T> find(T value, Entry<T> entry)
+    {
         while (entry != null) {
             if (value.compareTo(entry.element) < 0) {
                 if (entry.children.size() > 0) {

@@ -10,60 +10,73 @@ import java.util.List;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class SqlExecutionOptimalPlan implements OptimalPlan {
+public class SqlExecutionOptimalPlan implements OptimalPlan
+{
   private final List<Subplan> subplans;
   SqlExecutionOptimalPlan(List<Subplan> subplans){
     this.subplans = subplans;
   }
 
-  public SqlExecutionOptimalPlan(){
+  public SqlExecutionOptimalPlan()
+  {
     this(Lists.<Subplan>newArrayList());
   }
 
-  @Override public boolean addSubplan(Subplan subplan) {
+  @Override public boolean addSubplan(Subplan subplan)
+ {
     return !subplans.contains(subplan) && subplans.add(subplan);
   }
 
-  @Override public void computeInternalPlanCost() {
+  @Override public void computeInternalPlanCost()
+ {
     //todo(Huascar) once the dbms changes are done
   }
 
-  @Override public List<Subplan> getInternalPlans() {
+  @Override public List<Subplan> getInternalPlans()
+ {
     return ImmutableList.copyOf(subplans);
   }
 
-  @Override public double getTotalCost() {
+  @Override public double getTotalCost()
+ {
     return 0;  //todo(Huascar) once the dbms changes are done
   }
 
-  @Override public double getAccessCost(String tableName) {
+  @Override public double getAccessCost(String tableName)
+ {
     return 0; //todo(Huascar) once the dbms changes are done
   }
 
-  @Override public double getInternalCost() {
+  @Override public double getInternalCost()
+ {
     return 0;  //todo(Huascar) once the dbms changes are done
   }
 
-  @Override public boolean isDirty() {
+  @Override public boolean isDirty()
+ {
     return false;  //todo(Huascar) once the dbms changes are done
   }
 
-  @Override public boolean removeSubplan(Subplan subplan) {
+  @Override public boolean removeSubplan(Subplan subplan)
+ {
     return subplans.contains(subplan) && subplans.remove(subplan);
   }
 
-  @Override public void setAccessCost(String tableName, double cost) {
+  @Override public void setAccessCost(String tableName, double cost)
+ {
     //todo(Huascar) once the dbms changes are done
   }
 
-  @Override public String toString() {
+  @Override public String toString()
+ {
     return subplans.toString();
   }
 
   /**
    * Default implementation of {@link Subplan} interface.
    */
-  public static class InternalSubplan implements Subplan {
+  public static class InternalSubplan implements Subplan
+  {
     private final int     rowId;
     private final int     parentId;
     private final String  target;
@@ -83,35 +96,43 @@ public class SqlExecutionOptimalPlan implements OptimalPlan {
       this.cardinality  = cardinality;
     }
 
-    @Override public int getRowId() {
+    @Override public int getRowId()
+ {
       return rowId;
     }
 
-    @Override public int getParentId() {
+    @Override public int getParentId()
+ {
       return parentId;
     }
 
-    @Override public String getOperator() {
+    @Override public String getOperator()
+ {
       return operator;
     }
 
-    @Override public String getTarget() {
+    @Override public String getTarget()
+ {
       return target;
     }
 
-    @Override public double getCost() {
+    @Override public double getCost()
+ {
       return cost;
     }
 
-    @Override public double getInitCost() {
+    @Override public double getInitCost()
+ {
       return initCost;
     }
 
-    @Override public long getCardinality() {
+    @Override public long getCardinality()
+ {
       return cardinality;
     }
 
-    @Override public String toString() {
+    @Override public String toString()
+ {
       return Objects.toStringHelper(this)
           .add("rowId", getRowId())
           .add("parentId", getParentId())

@@ -19,7 +19,8 @@ import java.util.List;
  * 
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface OptimalPlan {
+public interface OptimalPlan
+{
   /**
    * Adds a subplan.
    * @param subplan

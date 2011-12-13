@@ -34,7 +34,8 @@ public class IBGOptimizer implements Optimizer
      * @param optimizer
      *      a DBMS-specific implementation of an {@link Optimizer} type.
      */
-    public IBGOptimizer(Optimizer optimizer) {
+    public IBGOptimizer(Optimizer optimizer)
+    {
         this.delegate = optimizer;
     }
 
@@ -42,7 +43,8 @@ public class IBGOptimizer implements Optimizer
      * {@inheritDoc}
      */
     @Override
-    public Configuration recommendIndexes(SQLStatement sql) throws SQLException {
+    public Configuration recommendIndexes(SQLStatement sql) throws SQLException
+    {
         return delegate.recommendIndexes(sql);
     }
 
@@ -50,7 +52,8 @@ public class IBGOptimizer implements Optimizer
      * {@inheritDoc}
      */
     @Override
-    public void setCatalog(Catalog catalog) {
+    public void setCatalog(Catalog catalog)
+    {
         delegate.setCatalog(catalog);
     }
 
@@ -105,12 +108,14 @@ public class IBGOptimizer implements Optimizer
     }
 
 	@Override
-	public ExplainedSQLStatement explain(String sql) throws SQLException {
+	public ExplainedSQLStatement explain(String sql) throws SQLException
+{
 		return delegate.explain(sql);
 	}
 
 	@Override
-	public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException {
+	public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException
+{
 		return delegate.explain(sql);
 	}
 
@@ -121,12 +126,14 @@ public class IBGOptimizer implements Optimizer
 	}
 
 	@Override
-	public Configuration recommendIndexes(String sql) throws SQLException {
+	public Configuration recommendIndexes(String sql) throws SQLException
+{
 		return delegate.recommendIndexes(sql);
 	}
 
 	@Override
-	public int getWhatIfCount() {
+	public int getWhatIfCount()
+{
 		return delegate.getWhatIfCount();
 	}
 }

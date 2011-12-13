@@ -20,7 +20,8 @@ public class IndexPartitions
      * @param configuration
      *      a configuration to be partitioned.
      */
-    public IndexPartitions(Configuration conf) {
+    public IndexPartitions(Configuration conf)
+    {
         Set<Index> set;
 
         indexCount = conf.size();
@@ -41,14 +42,16 @@ public class IndexPartitions
      * @return
      *      a {@code subset} of indexes
      */
-    public final Set<Index> get(int i) {
+    public final Set<Index> get(int i)
+    {
         return subsets.get(i);
     }
 
     /**
      * @return the number indexes in this {@code index partitions} object.
      */
-    public int indexCount() {
+    public int indexCount()
+    {
         return indexCount;
     }
 
@@ -60,14 +63,16 @@ public class IndexPartitions
      * @param i2
      *      second index object.
      */
-    public final void merge(Index i1, Index i2) {
+    public final void merge(Index i1, Index i2)
+    {
         Set<Index> s1 = whichSubset(i1);
         Set<Index> s2 = whichSubset(i2);
         merge(s1, s2);
     }
 
 
-    private Set<Index> whichSubset(Index index) {
+    private Set<Index> whichSubset(Index index)
+    {
         for (int i = 0; i < subsets.size(); i++) {
             if (subsets.get(i).contains(index))
                 return subsets.get(i);
@@ -103,7 +108,8 @@ public class IndexPartitions
     /**
      * @return the number of indexes' subsets stored in this {@code index partitions} object.
      */
-    public int subsetCount() {
+    public int subsetCount()
+    {
         return subsets.size();
     }
 }

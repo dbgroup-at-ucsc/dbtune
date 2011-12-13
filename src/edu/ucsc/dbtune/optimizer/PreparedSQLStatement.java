@@ -12,7 +12,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  * @author alkis
  *
  */
-public interface PreparedSQLStatement {
+public interface PreparedSQLStatement
+{
 	
 	/**
 	 * Get the {@link Optimizer} object associated with the statement.

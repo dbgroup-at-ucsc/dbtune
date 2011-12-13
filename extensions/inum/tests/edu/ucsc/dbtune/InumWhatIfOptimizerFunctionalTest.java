@@ -15,7 +15,8 @@ import org.junit.Test;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumWhatIfOptimizerFunctionalTest {
+public class InumWhatIfOptimizerFunctionalTest
+{
   static Connection       CONNECTION;
   static final Environment        ENV;
   static final String             WORKLOAD_PATH;
@@ -30,7 +31,8 @@ public class InumWhatIfOptimizerFunctionalTest {
 
   }
 
-  @Test public void testUseInumToEstimateCostOfWorload_WithHypotheticalIndexes() throws Exception {
+  @Test public void testUseInumToEstimateCostOfWorload_WithHypotheticalIndexes() throws Exception
+ {
     //final InumWhatIfOptimizer optimizer = new InumWhatIfOptimizerImpl(CONNECTION);
     //final String              workload  = WORKLOAD_IN_USE;
     //todo(Huuascar) uncomment this out once the dbms changes are complete.
@@ -39,7 +41,8 @@ public class InumWhatIfOptimizerFunctionalTest {
   }
 
         /*
-  private static Iterable<Index> configureCandidates() {
+  private static Iterable<Index> configureCandidates()
+  {
     final IndexExtractor extractor = CONNECTION.getIndexExtractor();
     final File workloadFile = new File(WORKLOAD_IN_USE);
     try {
@@ -58,7 +61,8 @@ public class InumWhatIfOptimizerFunctionalTest {
   }
       */
 
-  @BeforeClass public static void setUp() throws Exception {
+  @BeforeClass public static void setUp() throws Exception
+ {
     final File    outputdir    = new File(DESTINATION);
     final File    twinWorkload = new File(WORKLOAD_IN_USE);
 
@@ -69,7 +73,8 @@ public class InumWhatIfOptimizerFunctionalTest {
     Files.copy(new File(WORKLOAD_PATH), twinWorkload);
   }
 
-  @AfterClass public static void tearDown() throws Exception {
+  @AfterClass public static void tearDown() throws Exception
+ {
     if (CONNECTION != null) {
       if (!CONNECTION.isClosed()){
         CONNECTION.close();

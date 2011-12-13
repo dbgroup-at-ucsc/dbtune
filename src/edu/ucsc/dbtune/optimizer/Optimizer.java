@@ -12,7 +12,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  * @author alkis
  *
  */
-public interface Optimizer {
+public interface Optimizer
+{
     /**
      * perform an optimization call for a SQL statement.
      *

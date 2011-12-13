@@ -4,14 +4,16 @@ package edu.ucsc.dbtune.util;
  * monitor execution time.
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class StopWatch {
+public class StopWatch
+{
     private long start = System.nanoTime();
 
     /**
      * @return
      *      returns elapsed time in nanoseconds then resets the watch.
      */
-    public long nanoseconds() {
+    public long nanoseconds()
+    {
         long now = System.nanoTime();
         try {
           return now - start;
@@ -25,7 +27,8 @@ public class StopWatch {
      * @return
      *   returns elapsed time in milliseconds then resets the watch.
      */
-    public double milliseconds(){
+    public double milliseconds()
+    {
         return normalize(nanoseconds(), 1000000.0);
     }
 
@@ -34,7 +37,8 @@ public class StopWatch {
      * @return
      *      the time (in nanoseconds) that has passed; no reset is performed.
      */
-    public long elapsedtime(){
+    public long elapsedtime()
+    {
         return System.nanoTime() - start;
     }
 
@@ -48,7 +52,8 @@ public class StopWatch {
      * @return
      *      the execution time's overhead.
      */
-    public static double normalize(double elapsedtime, double overheadFactor){
+    public static double normalize(double elapsedtime, double overheadFactor)
+    {
         return elapsedtime / overheadFactor;
     }
 
@@ -57,7 +62,8 @@ public class StopWatch {
      * @param label
      *      message label.
      */
-    public void resetAndLog(String label) {
+    public void resetAndLog(String label)
+    {
         milliseconds();
     }
 }

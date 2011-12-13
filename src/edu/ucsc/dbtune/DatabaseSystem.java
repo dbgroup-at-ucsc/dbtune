@@ -104,7 +104,8 @@ public class DatabaseSystem
      *      a connection
      * @see Connection
      */
-    public Connection getConnection() throws SQLException {
+    public Connection getConnection() throws SQLException
+    {
         return connection;
     }
 

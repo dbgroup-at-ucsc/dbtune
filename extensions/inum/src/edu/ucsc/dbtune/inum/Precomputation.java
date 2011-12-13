@@ -11,7 +11,8 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface Precomputation {
+public interface Precomputation
+{
   /**
    * @return the populated or empty {@link InumSpace INUM Space}.
    */

@@ -31,7 +31,8 @@ public class Operator implements Comparable<Operator>
     /**
      * creates an empty operator ({@code name="empty"}. This can be used to represent empty plans.
      */
-    public Operator() {
+    public Operator()
+    {
         this("empty", 0.0, 0);
     }
 
@@ -45,7 +46,8 @@ public class Operator implements Comparable<Operator>
      * @param cardinality
      *     number of rows produced by the operator
      */
-    public Operator(String name, double accumulatedCost, long cardinality) {
+    public Operator(String name, double accumulatedCost, long cardinality)
+    {
         this.id              = 0;
         this.name            = name;
         this.cost            = 0.0;
@@ -71,7 +73,8 @@ public class Operator implements Comparable<Operator>
      * @param dbObject
      *     the object that this operator is processing
      */
-    public void add(DatabaseObject dbObject) {
+    public void add(DatabaseObject dbObject)
+    {
         objects.add(dbObject);
     }
 
@@ -81,7 +84,8 @@ public class Operator implements Comparable<Operator>
      * @return
      *     list of objects that are referenced by the operator
      */
-    public List<DatabaseObject> getDatabaseObjects() {
+    public List<DatabaseObject> getDatabaseObjects()
+    {
         return new ArrayList<DatabaseObject>(objects);
     }
 
@@ -91,7 +95,8 @@ public class Operator implements Comparable<Operator>
      * @return
      *     operator id
      */
-    public int getId() {
+    public int getId()
+    {
         return id;
     }
 
@@ -101,7 +106,8 @@ public class Operator implements Comparable<Operator>
      * @param id
      *     operator id
      */
-    public void setId(int id) {
+    public void setId(int id)
+    {
         this.id = id;
     }
 
@@ -111,7 +117,8 @@ public class Operator implements Comparable<Operator>
      * @return
      *     the value corresponding to the accumulated cost of the operator
      */
-    public double getAccumulatedCost() {
+    public double getAccumulatedCost()
+    {
         return accumulatedCost;
     }
 
@@ -121,7 +128,8 @@ public class Operator implements Comparable<Operator>
      * @param cost
      *     the value corresponding to the cost of the operator
      */
-    public void setCost(double cost) {
+    public void setCost(double cost)
+    {
         this.cost = cost;
     }
 
@@ -131,7 +139,8 @@ public class Operator implements Comparable<Operator>
      * @return
      *     the value corresponding to the cost of the operator
      */
-    public double getCost() {
+    public double getCost()
+    {
         return cost;
     }
 
@@ -141,7 +150,8 @@ public class Operator implements Comparable<Operator>
      * @return
      *     cardinality of the operator
      */
-    public long getCardinality() {
+    public long getCardinality()
+    {
         return cardinality;
     }
 
@@ -151,7 +161,8 @@ public class Operator implements Comparable<Operator>
      * @return
      *     name of operator
      */
-    public String getName() {
+    public String getName()
+    {
         return name;
     }
 
@@ -168,7 +179,8 @@ public class Operator implements Comparable<Operator>
      * {@inheritDoc}
      */
     @Override
-    public String toString() {
+    public String toString()
+    {
         StringBuilder str = new StringBuilder();
 
         str.append(

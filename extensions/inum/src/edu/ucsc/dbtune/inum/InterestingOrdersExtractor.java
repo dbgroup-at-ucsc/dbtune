@@ -8,7 +8,8 @@ import java.sql.SQLException;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface InterestingOrdersExtractor {
+public interface InterestingOrdersExtractor
+{
   /**
    * extracts the interesting orders of a single query.
    *

@@ -8,8 +8,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class SQLScriptExecuter {
-    private SQLScriptExecuter(){
+public class SQLScriptExecuter
+{
+    private SQLScriptExecuter()
+    {
         // this is a utility class.
     }
 

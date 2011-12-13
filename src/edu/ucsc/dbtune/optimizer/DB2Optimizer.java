@@ -21,14 +21,16 @@ public class DB2Optimizer extends AbstractOptimizer
      * @param connection
      *     a live connection to DB2
      */
-    public DB2Optimizer(Connection connection){
+    public DB2Optimizer(Connection connection)
+    {
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ExplainedSQLStatement explain(SQLStatement sql, Configuration indexes) throws SQLException {
+    public ExplainedSQLStatement explain(SQLStatement sql, Configuration indexes) throws SQLException
+    {
         throw new SQLException("not implemented yet");
     }
 

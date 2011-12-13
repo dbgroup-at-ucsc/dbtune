@@ -25,7 +25,8 @@ public class EnvironmentProperties
     /**
      * Never invoked
      */
-    private EnvironmentProperties(){}
+    private EnvironmentProperties()
+    {}
 
 
 

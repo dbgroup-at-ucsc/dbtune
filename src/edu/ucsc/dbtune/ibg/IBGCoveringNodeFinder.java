@@ -16,7 +16,8 @@ public class IBGCoveringNodeFinder
      * construct a new {@link IBGCoveringNodeFinder} object; assuming some default values for
      * its private members.
      */
-    public IBGCoveringNodeFinder(){
+    public IBGCoveringNodeFinder()
+    {
         this(new IndexBitSet(), new IBGNodeStack());
     }
 
@@ -32,12 +33,14 @@ public class IBGCoveringNodeFinder
         this.pending = pending;
     }
 
-    public class FindResult {
+    public class FindResult
+    {
         public final ConfigurationBitSet usedConfiguration;
         
         public final double cost;
         
-        public FindResult(ConfigurationBitSet usedConfiguration, double cost) {
+        public FindResult(ConfigurationBitSet usedConfiguration, double cost)
+        {
             this.usedConfiguration  = usedConfiguration;
             this.cost               = cost;
         }
@@ -103,7 +106,8 @@ public class IBGCoveringNodeFinder
      *     an found {@link IBGNode node}. <strong>IMPORTANT</strong>: this method may return
      *     {@code null} if the covering node is in an unexpanded part of the IBG.
      */
-    public IBGNode findFast(IBGNode rootNode, IndexBitSet config, IBGNode guess) {
+    public IBGNode findFast(IBGNode rootNode, IndexBitSet config, IBGNode guess)
+    {
         visited.clear(); // not using it, but clear it anyway?
 
         IBGNode currentNode = (guess != null && config.subsetOf(guess.getConfiguration())) ? guess : rootNode;
@@ -136,7 +140,8 @@ public class IBGCoveringNodeFinder
      * @return
      *      found node in the graph.
      */
-    public IBGNode find(IBGNode rootNode, IndexBitSet config) {
+    public IBGNode find(IBGNode rootNode, IndexBitSet config)
+    {
         visited.clear();
         pending.reset();
 
@@ -172,7 +177,8 @@ public class IBGCoveringNodeFinder
     }
 
     // todo(Huascar) what's the purpose of this method?
-    public void find(IBGNode rootNode, IndexBitSet[] configs, int configCount, IBGNode[] outNodes) {
+    public void find(IBGNode rootNode, IndexBitSet[] configs, int configCount, IBGNode[] outNodes)
+    {
         for (int i = 0; i < configCount; i++) {
             assert(configs[i] != null);
             outNodes[i] = null;

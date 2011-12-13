@@ -15,14 +15,17 @@ import java.sql.Connection;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumPrecomputationTest {
+public class InumPrecomputationTest
+{
   private Connection mockConnection;
 
-  @Before public void setUp() throws Exception {
+  @Before public void setUp() throws Exception
+ {
     mockConnection = SharedFixtures.configureConnection();
   }
 
-  @Test public void testInumSpaceBuilding_SingleElement() throws Exception {
+  @Test public void testInumSpaceBuilding_SingleElement() throws Exception
+ {
     final Precomputation setup                   = new InumPrecomputation(mockConnection);
     final Configuration  configurationOfOneIndex = SharedFixtures.configureConfiguration();
     setup.setup("Some query", configurationOfOneIndex);
@@ -33,14 +36,16 @@ public class InumPrecomputationTest {
     assertThat(size, equalTo(expectedSize));
   }
 
-  @Test public void testSkippingQuery() throws Exception {
+  @Test public void testSkippingQuery() throws Exception
+ {
     final Precomputation setup = new InumPrecomputation(mockConnection);
     final Configuration configurationOfOneIndex = SharedFixtures.configureConfiguration();
     setup.setup("Some query", configurationOfOneIndex);
     assertThat(setup.skip("Some query"), is(true));
   }
 
-  @After public void tearDown() throws Exception {
+  @After public void tearDown() throws Exception
+ {
     mockConnection = null;
   }
 }

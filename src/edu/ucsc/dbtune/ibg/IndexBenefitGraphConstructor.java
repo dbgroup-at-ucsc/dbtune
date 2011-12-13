@@ -111,21 +111,24 @@ public class IndexBenefitGraphConstructor
     /**
      * @return cost of the workload under the empty configuration, stored in emptyCost.
      */
-	public final double emptyCost() {
+	public final double emptyCost()
+{
 		return emptyCost;
 	}
 	
     /**
      * @return the {@link IBGNode root node}.
      */
-	public final IBGNode rootNode() {
+	public final IBGNode rootNode()
+{
 		return rootNode;
 	}
 	
     /**
      * @return the number of nodes that were constructed.
      */
-	public final int nodeCount() {
+	public final int nodeCount()
+{
 		return nodeCount;
 	}
 
@@ -134,11 +137,13 @@ public class IndexBenefitGraphConstructor
      *      position of index in the bit set of used indexes.
      * @return {@code true} if the node is a used node.
      */
-    public final boolean isUsed(int i) {
+    public final boolean isUsed(int i)
+    {
 		return isUsed.get(i);
 	}
 	
-	public final Configuration candidateSet() {
+	public final Configuration candidateSet()
+{
 		return configuration;
 	}
 
@@ -165,7 +170,8 @@ public class IndexBenefitGraphConstructor
      *
      * This function is not safe to be called from more than one thread.
 	 */
-	public boolean buildNode() throws SQLException {
+	public boolean buildNode() throws SQLException
+{
 		IBGNode newNode, coveringNode;
         ExplainedSQLStatement stmt;
 		double totalCost;
@@ -235,7 +241,8 @@ public class IndexBenefitGraphConstructor
 	/*
 	 * Auxiliary method for buildNodes
 	 */
-	private static IBGNode find(DefaultQueue<IBGNode> queue, IndexBitSet config) {
+	private static IBGNode find(DefaultQueue<IBGNode> queue, IndexBitSet config)
+{
 		for (int i = 0; i < queue.count(); i++) {
 			IBGNode node = queue.fetch(i);
 			if (node.getConfiguration().equals(config))
@@ -244,7 +251,8 @@ public class IndexBenefitGraphConstructor
 		return null;
 	}
 
-	public void setEmptyCost(double cost) {
+	public void setEmptyCost(double cost)
+{
 		emptyCost = cost;
 	}
 
@@ -262,14 +270,16 @@ public class IndexBenefitGraphConstructor
         HashSet<Index> indexSet;
         int size;
 
-        public CandidatePool(Configuration conf) {
+        public CandidatePool(Configuration conf)
+        {
             firstNode = null;
             indexSet = new HashSet<Index>();
             size = -1;
             configuration = conf;
         }
 
-        public final void addIndex(Index index) throws SQLException {
+        public final void addIndex(Index index) throws SQLException
+        {
             if (!indexSet.contains(index)) {
                 ++size;
 
@@ -278,28 +288,34 @@ public class IndexBenefitGraphConstructor
             }
         }
 
-        public void addIndexes(Iterable<Index> newIndexes) throws SQLException {
+        public void addIndexes(Iterable<Index> newIndexes) throws SQLException
+        {
             for (Index index : newIndexes)
                 addIndex(index);
         }
 
-        public final boolean isEmpty() {
+        public final boolean isEmpty()
+        {
             return firstNode == null;
         }
 
-        public final boolean contains(Index index) {
+        public final boolean contains(Index index)
+        {
             return indexSet.contains(index);
         }
 
-        public Snapshot getSnapshot() {
+        public Snapshot getSnapshot()
+        {
             return new Snapshot(configuration, firstNode);
         }
 
-        public java.util.Iterator<Index> iterator() {
+        public java.util.Iterator<Index> iterator()
+        {
             return new Iterator<Index>(firstNode);
         }
 
-        private class Node {
+        private class Node
+        {
             Index index;
             Node next;
 
@@ -312,30 +328,36 @@ public class IndexBenefitGraphConstructor
         /*
          * A snapshot of the candidate set (immutable set of indexes)
          */
-        public static class Snapshot implements Iterable<Index> {
+        public static class Snapshot implements Iterable<Index>
+        {
             /* serializable fields */
             int maxId;
             Node first;
             IndexBitSet bs;
 
-            protected Snapshot() { }
+            protected Snapshot()
+            { }
 
-            private Snapshot(Configuration conf, Node first0) {
+            private Snapshot(Configuration conf, Node first0)
+            {
                 maxId = (first0 == null) ? -1 : conf.getOrdinalPosition(first0.index);
                 first = first0;
                 bs = new IndexBitSet();
                 bs.set(0, maxId+1);
             }
 
-            public java.util.Iterator<Index> iterator() {
+            public java.util.Iterator<Index> iterator()
+            {
                 return new Iterator<Index>(first);
             }
 
-            public int size() {
+            public int size()
+            {
                 return maxId;
             }
 
-            public IndexBitSet bitSet() {
+            public IndexBitSet bitSet()
+            {
                 return bs; // no need to clone -- this set is immutable
             }
         }
@@ -343,18 +365,21 @@ public class IndexBenefitGraphConstructor
         /*
          * Iterator for a snapshot of the candidate set
          */
-        private static class Iterator<I> implements java.util.Iterator<Index> {
+        private static class Iterator<I> implements java.util.Iterator<Index>
+        {
             Node next;
 
             Iterator(Node start) {
                 next = start;
             }
 
-            public boolean hasNext() {
+            public boolean hasNext()
+            {
                 return next != null;
             }
 
-            public Index next() {
+            public Index next()
+            {
                 if (next == null)
                     throw new java.util.NoSuchElementException();
                 Index current = next.index;
@@ -362,25 +387,30 @@ public class IndexBenefitGraphConstructor
                 return current;
             }
 
-            public void remove() {
+            public void remove()
+            {
                 throw new UnsupportedOperationException();
             }
         }
     }
 
-    public static class ThreadIBGAnalysis implements Runnable {
+    public static class ThreadIBGAnalysis implements Runnable
+    {
         private IBGAnalyzer analyzer = null;
         private InteractionLogger logger = null;
 
         private Object taskMonitor = new Object();
         private State state = State.IDLE;
 
-        private enum State { IDLE, PENDING, DONE };
+        private enum State
+        { IDLE, PENDING, DONE };
 
-        public ThreadIBGAnalysis() {
+        public ThreadIBGAnalysis()
+        {
         }
 
-        public void run() {
+        public void run()
+        {
             while (true) {
                 synchronized (taskMonitor) {
                     while (state != State.PENDING) {
@@ -422,7 +452,8 @@ public class IndexBenefitGraphConstructor
         /*
          * tell the analysis thread to start analyzing, and return immediately
          */
-        public void startAnalysis(IBGAnalyzer analyzer0, InteractionLogger logger0) {
+        public void startAnalysis(IBGAnalyzer analyzer0, InteractionLogger logger0)
+        {
             synchronized (taskMonitor) {
                 if (state == State.PENDING) {
                     throw new RuntimeException("unexpected state in IBG startAnalysis");
@@ -435,7 +466,8 @@ public class IndexBenefitGraphConstructor
             }
         }
 
-        public void waitUntilDone() {
+        public void waitUntilDone()
+        {
             synchronized (taskMonitor) {
                 while (state == State.PENDING) {
                     try {
@@ -451,18 +483,22 @@ public class IndexBenefitGraphConstructor
     }
 
 
-    public static class ThreadIBGConstruction implements Runnable {
+    public static class ThreadIBGConstruction implements Runnable
+    {
         private IndexBenefitGraphConstructor ibgCons = null;
 
         private Object taskMonitor = new Object();
         private State state = State.IDLE;
 
-        private enum State { IDLE, PENDING, DONE };
+        private enum State
+        { IDLE, PENDING, DONE };
 
-        public ThreadIBGConstruction() {
+        public ThreadIBGConstruction()
+        {
         }
 
-        public void run() {
+        public void run()
+        {
             while (true) {
                 synchronized (taskMonitor) {
                     while (state != State.PENDING) {
@@ -493,7 +529,8 @@ public class IndexBenefitGraphConstructor
         /*
          * tells the construction thread to start constructing an IBG, and returns immediately
          */
-        public void startConstruction(IndexBenefitGraphConstructor ibgCons0) {
+        public void startConstruction(IndexBenefitGraphConstructor ibgCons0)
+        {
             synchronized (taskMonitor) {
                 if (state == State.PENDING) {
                     throw new RuntimeException("unexpected state in IBG startConstruction");
@@ -505,7 +542,8 @@ public class IndexBenefitGraphConstructor
             }
         }
 
-        public void waitUntilDone() {
+        public void waitUntilDone()
+        {
             synchronized (taskMonitor) {
                 while (state == State.PENDING) {
                     try {

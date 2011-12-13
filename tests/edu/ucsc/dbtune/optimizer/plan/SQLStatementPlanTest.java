@@ -13,10 +13,12 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Ivo Jimenez
  */
-public class SQLStatementPlanTest {
+public class SQLStatementPlanTest
+{
 
     @Test
-    public void testBasicUsage() {
+    public void testBasicUsage()
+    {
         Operator         root = new Operator("Root",20.67,2);
         SQLStatementPlan plan = new SQLStatementPlan(new SQLStatement("select * from test",SQLCategory.SELECT),root);
 

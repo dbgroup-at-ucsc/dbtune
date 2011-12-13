@@ -4,7 +4,8 @@ import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
-public class IBGAnalyzer {
+public class IBGAnalyzer
+{
     // the IBG we are currently exploring
     protected final IndexBenefitGraphConstructor ibgCons;
 
@@ -37,7 +38,8 @@ public class IBGAnalyzer {
      * @param revisitQueue
      *      a given {@link IBGNodeQueue} object which contains IBG node that will be revisited.
      */
-    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue revisitQueue){
+    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue revisitQueue)
+    {
         // initialize fields
         this.ibgCons        = ibgCons;
         this.nodeQueue      = nodeQueue;
@@ -55,7 +57,8 @@ public class IBGAnalyzer {
      * @param ibgCons
      *      a given {@link IndexBenefitGraphConstructor} object.
      */
-    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons) {
+    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons)
+    {
         this(ibgCons, new IBGNodeQueue(), new IBGNodeQueue());
     }
 
@@ -70,7 +73,8 @@ public class IBGAnalyzer {
      * @return either {@link StepStatus#BLOCKED}, {@link StepStatus#DONE}, or
      *      {@link StepStatus#SUCCESS}.
      */
-    public final StepStatus analysisStep(InteractionLogger logger, boolean wait) {
+    public final StepStatus analysisStep(InteractionLogger logger, boolean wait)
+    {
         // we might need to go through several nodes to find one that we haven't visited yet
         while (true) {
             IBGNode node;
@@ -138,7 +142,8 @@ public class IBGAnalyzer {
     /*
      * Return true if the analysis was successful
      */
-    private boolean analyzeNode(IBGNode node, InteractionLogger logger) {
+    private boolean analyzeNode(IBGNode node, InteractionLogger logger)
+    {
         IndexBitSet bitset_Y = node.getConfiguration();
 
         // get the used set
@@ -240,7 +245,8 @@ public class IBGAnalyzer {
      *
      *     | C - C_a - C_b + C_ab |
      */
-    private static double interactionLevel(double empty, double a, double b, double ab) {
+    private static double interactionLevel(double empty, double a, double b, double ab)
+    {
         return Math.abs(empty - a - b + ab);
     }
 
@@ -250,7 +256,8 @@ public class IBGAnalyzer {
      * 
      * Return true if there might be some work left to do for this analysis
      */
-    public enum StepStatus {
+    public enum StepStatus
+    {
         /**
          * there was no expanded node to analyze, and there is an unexpanded node
          */

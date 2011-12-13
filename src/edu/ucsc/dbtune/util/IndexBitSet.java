@@ -33,22 +33,26 @@ public class IndexBitSet extends BitSet
     
     private static final BitSet t = new BitSet();
     
-    public IndexBitSet() {
+    public IndexBitSet()
+    {
         super();
     }
 
     @Override
-    public IndexBitSet clone() {
+    public IndexBitSet clone()
+    {
         return (IndexBitSet) super.clone();
     }
     
-    public final void set(IndexBitSet other) {
+    public final void set(IndexBitSet other)
+    {
         clear();
         or(other);
     }
     
     // probably better in average case
-    public final boolean subsetOf(IndexBitSet b) {
+    public final boolean subsetOf(IndexBitSet b)
+    {
         synchronized (t) {
             t.clear();
             t.or(this);

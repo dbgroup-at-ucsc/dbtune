@@ -11,7 +11,8 @@ import java.util.StringTokenizer;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class SqlFormatter {
+public class SqlFormatter
+{
   private static final String      WHITESPACE     = " \n\r\f\t";
   private static final Set<String> BEGIN_CLAUSES  = Sets.newHashSet();
   private static final Set<String> END_CLAUSES    = Sets.newHashSet();
@@ -82,7 +83,8 @@ public class SqlFormatter {
   String token;
   String lcToken;
 
-  public SqlFormatter(String sql) {
+  public SqlFormatter(String sql)
+  {
     tokens = new StringTokenizer(
         sql,
         "()+*/-=<>'`\"[]," + WHITESPACE,
@@ -90,17 +92,20 @@ public class SqlFormatter {
     );
   }
 
-  public SqlFormatter setInitialString(String initial) {
+  public SqlFormatter setInitialString(String initial)
+  {
     this.initial = initial;
     return this;
   }
 
-  public SqlFormatter setIndentString(String indent) {
+  public SqlFormatter setIndentString(String indent)
+  {
     this.indentString = indent;
     return this;
   }
 
-  public String format() {
+  public String format()
+  {
 
     result.append(initial);
 
@@ -160,7 +165,8 @@ public class SqlFormatter {
     return result.toString();
   }
 
-  private void commaAfterOn() {
+  private void commaAfterOn()
+  {
     out();
     indent--;
     newline();
@@ -168,19 +174,22 @@ public class SqlFormatter {
     afterByOrSetOrFromOrSelect = true;
   }
 
-  private void commaAfterByOrFromOrSelect() {
+  private void commaAfterByOrFromOrSelect()
+  {
     out();
     newline();
   }
 
-  private void logical() {
+  private void logical()
+  {
     if ("end".equals(lcToken)) { indent--; }
     newline();
     out();
     beginLine = false;
   }
 
-  private void on() {
+  private void on()
+  {
     indent++;
     afterOn = true;
     newline();
@@ -188,7 +197,8 @@ public class SqlFormatter {
     beginLine = false;
   }
 
-  private void misc() {
+  private void misc()
+  {
     out();
     if ("between".equals(lcToken)) {
       afterBetween = true;
@@ -204,13 +214,15 @@ public class SqlFormatter {
     }
   }
 
-  private void white() {
+  private void white()
+  {
     if (!beginLine) {
       result.append(" ");
     }
   }
 
-  private void updateOrInsertOrDelete() {
+  private void updateOrInsertOrDelete()
+  {
     out();
     indent++;
     beginLine = false;
@@ -218,7 +230,8 @@ public class SqlFormatter {
     if ("insert".equals(lcToken)) { afterInsert = true; }
   }
 
-  private void select() {
+  private void select()
+  {
     out();
     indent++;
     newline();
@@ -228,11 +241,13 @@ public class SqlFormatter {
     afterByOrSetOrFromOrSelect = true;
   }
 
-  private void out() {
+  private void out()
+  {
     result.append(token);
   }
 
-  private void endNewClause() {
+  private void endNewClause()
+  {
     if (!afterBeginBeforeEnd) {
       indent--;
       if (afterOn) {
@@ -250,7 +265,8 @@ public class SqlFormatter {
         || "from".equals(lcToken);
   }
 
-  private void beginNewClause() {
+  private void beginNewClause()
+  {
     if (!afterBeginBeforeEnd) {
       if (afterOn) {
         indent--;
@@ -264,7 +280,8 @@ public class SqlFormatter {
     afterBeginBeforeEnd = true;
   }
 
-  private void values() {
+  private void values()
+  {
     indent--;
     newline();
     out();
@@ -273,7 +290,8 @@ public class SqlFormatter {
     afterValues = true;
   }
 
-  private void closeParen() {
+  private void closeParen()
+  {
     parensSinceSelect--;
     if (parensSinceSelect < 0) {
       indent--;
@@ -293,7 +311,8 @@ public class SqlFormatter {
     beginLine = false;
   }
 
-  private void openParen() {
+  private void openParen()
+  {
     if (isFunctionName(lastToken) || inFunction > 0) {
       inFunction++;
     }
@@ -311,7 +330,8 @@ public class SqlFormatter {
     parensSinceSelect++;
   }
 
-  private static boolean isFunctionName(String tok) {
+  private static boolean isFunctionName(String tok)
+  {
     final char begin = tok.charAt(0);
     final boolean isIdentifier = Character.isJavaIdentifierStart(begin) || '"' == begin;
     return isIdentifier &&
@@ -322,11 +342,13 @@ public class SqlFormatter {
         !MISC.contains(tok);
   }
 
-  private static boolean isWhitespace(String token) {
+  private static boolean isWhitespace(String token)
+  {
     return WHITESPACE.contains(token);
   }
 
-  private void newline() {
+  private void newline()
+  {
     result.append("\n");
     for (int i = 0; i < indent; i++) {
       result.append(indentString);

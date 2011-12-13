@@ -8,9 +8,11 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class CommonDataStructuresTest {
+public class CommonDataStructuresTest
+{
     @Test
-    public void testBasicScenarioOfQueue() throws Exception {
+    public void testBasicScenarioOfQueue() throws Exception
+    {
         final DefaultQueue<Integer> queue = new DefaultQueue<Integer>();
         populateQueue(queue, 1000);
 
@@ -29,7 +31,8 @@ public class CommonDataStructuresTest {
     }
 
     @Test
-    public void testQueueReplaceElements() throws Exception {
+    public void testQueueReplaceElements() throws Exception
+    {
         final DefaultQueue<Integer> queue = new DefaultQueue<Integer>();
         populateQueue(queue, 10);
         queue.replace(4, 55);
@@ -39,7 +42,8 @@ public class CommonDataStructuresTest {
     }
 
     @Test
-    public void testStackSwappingElements() throws Exception {
+    public void testStackSwappingElements() throws Exception
+    {
         final DefaultStack<Integer> stack = new DefaultStack<Integer>();
         populateStack(stack, 10);
         stack.swap(99);
@@ -47,7 +51,8 @@ public class CommonDataStructuresTest {
     }
 
     @Test
-    public void testStackExhaustively() throws Exception {
+    public void testStackExhaustively() throws Exception
+    {
         final DefaultStack<Integer> stack = new DefaultStack<Integer>();
         populateStack(stack, 1000);
         stack.swap(101);
@@ -57,13 +62,15 @@ public class CommonDataStructuresTest {
         assertTrue("the stack should be emoty", stack.isEmpty());
     }
 
-    private static void populateStack(DefaultStack<Integer> stack, int size){
+    private static void populateStack(DefaultStack<Integer> stack, int size)
+    {
         for (int idx = 0; idx < size; idx++){
             stack.push(idx);
         }
     }
 
-    private static void populateQueue(DefaultQueue<Integer> stack, int size){
+    private static void populateQueue(DefaultQueue<Integer> stack, int size)
+    {
         for (int idx = 0; idx < size; idx++){
             stack.add(idx);
         }

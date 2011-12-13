@@ -13,7 +13,8 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface MatchingStrategy {
+public interface MatchingStrategy
+{
   /**
    * @return the index cost estimation {@link IndexAccessCostEstimation algorithm}.
    */

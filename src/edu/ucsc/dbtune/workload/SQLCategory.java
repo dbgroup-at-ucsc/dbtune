@@ -120,7 +120,8 @@ public enum SQLCategory
      * {@inheritDoc}
      */
     @Override
-    public String toString() {
+    public String toString()
+    {
         if (this.isSame(SELECT)) {
             return "SELECT";
         } else if (this.isSame(SELECT)) {

@@ -16,7 +16,8 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumPrecomputation implements Precomputation {
+public class InumPrecomputation implements Precomputation
+{
   private final OptimalPlanProvider         provider;
   private final OptimalPlansParser          parser;
   private final InumSpace                   inumSpace;
@@ -30,22 +31,26 @@ public class InumPrecomputation implements Precomputation {
     this.seenWorkloads    = Sets.newHashSet();
   }
 
-  public InumPrecomputation(Connection connection){
+  public InumPrecomputation(Connection connection)
+  {
     this(new InMemoryInumSpace(), new SqlExecutionPlanProvider(connection), new InumOptimalPlansParser());
   }
 
-  private void addQuerytoListOfSeenQueries(String query){
+  private void addQuerytoListOfSeenQueries(String query)
+  {
     Preconditions.checkArgument(!Strings.isEmpty(query));
     if (!seenWorkloads.contains(query)){
       seenWorkloads.add(query);
     }
   }
 
-  @Override public InumSpace getInumSpace() {
+  @Override public InumSpace getInumSpace()
+ {
     return inumSpace;
   }
 
-  @Override public Set<OptimalPlan> setup(String query, Configuration interestingOrders) {
+  @Override public Set<OptimalPlan> setup(String query, Configuration interestingOrders)
+ {
     addQuerytoListOfSeenQueries(query);
     // generate all possible interesting orders combinations (atomic) that will be used
     // during the INUM's {@link Precomputation setup} phase.
@@ -81,7 +86,8 @@ public class InumPrecomputation implements Precomputation {
   }
 
 
-  @Override public boolean skip(String query) {
+  @Override public boolean skip(String query)
+ {
     return seenWorkloads.contains(query);
   }
 }

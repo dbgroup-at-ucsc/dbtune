@@ -112,7 +112,8 @@ public class WorkFunctionAlgorithm
         }
     }
 
-    private static void clearStateBits(int[] ids, IndexBitSet bitSet) {
+    private static void clearStateBits(int[] ids, IndexBitSet bitSet)
+    {
         for (int id : ids) bitSet.clear(id);
     }
 
@@ -124,7 +125,8 @@ public class WorkFunctionAlgorithm
      * @param isPositive
      *      value of vote given to an index object.
      */
-    public void vote(Index index, boolean isPositive) {
+    public void vote(Index index, boolean isPositive)
+    {
         for (SubMachine subm : submachines) {
             if (subm.subset.contains(index)){
                 subm.vote(wf, index, isPositive);
@@ -138,7 +140,8 @@ public class WorkFunctionAlgorithm
      *
      * @return a list of recommended {@link Index indexes}.
      */
-    public List<Index> getRecommendation() {
+    public List<Index> getRecommendation()
+    {
         ArrayList<Index> rec = new ArrayList<Index>(maxNumOfIndexes);
         for (SubMachine subm : submachines) {
             for (Index index : subm.subset) {
@@ -160,7 +163,8 @@ public class WorkFunctionAlgorithm
      * @param newPartitions
      *      a {@link IndexPartitions} object.
      */
-    public void repartition(IndexPartitions newPartitions) {
+    public void repartition(IndexPartitions newPartitions)
+    {
         int newSubsetCount = newPartitions.subsetCount();
         int oldSubsetCount = submachines.length;
         SubMachineArray submachines2 = new SubMachineArray(newSubsetCount);
@@ -257,7 +261,8 @@ public class WorkFunctionAlgorithm
             bitSet.set(ids[i], 0 != (stateNum & (1 << i)));
     }
 
-    private boolean isRecommended(Index idx) {
+    private boolean isRecommended(Index idx)
+    {
         // not sure which submachine has the index, so check them all
         for (SubMachine subm : submachines) {
             if (subm.currentBitSet.get(allIndexes.getOrdinalPosition(idx))){
@@ -267,7 +272,8 @@ public class WorkFunctionAlgorithm
         return false;
     }
     
-    public static double transitionCost(Configuration candidateSet, IndexBitSet x, IndexBitSet y) {
+    public static double transitionCost(Configuration candidateSet, IndexBitSet x, IndexBitSet y)
+    {
         double transition = 0;
         for (Index index : candidateSet) {
             int id = candidateSet.getOrdinalPosition(index);
@@ -277,7 +283,8 @@ public class WorkFunctionAlgorithm
         return transition;
     }
 
-    private static double transitionCost(Set<Index> subset, int x, int y) {
+    private static double transitionCost(Set<Index> subset, int x, int y)
+    {
         double transition = 0;
         int i = 0;
         for (Index index : subset) {
@@ -345,7 +352,8 @@ public class WorkFunctionAlgorithm
         **/
     }
 
-    private static class CostVector {
+    private static class CostVector
+    {
         private double[] vector;
         private int cap;
 
@@ -374,7 +382,8 @@ public class WorkFunctionAlgorithm
         }
 
         @Override
-        public String toString() {
+        public String toString()
+        {
             return new ToStringBuilder<CostVector>(this)
                    .add("vector", Arrays.toString(vector))
                    .add("cap", cap)
@@ -383,11 +392,13 @@ public class WorkFunctionAlgorithm
     }
     
     
-    private static class SubMachineArray implements Iterable<SubMachine> {
+    private static class SubMachineArray implements Iterable<SubMachine>
+    {
         public final int length;
         private final List<SubMachine> arr;
         
-        public SubMachineArray(int len0) {
+        public SubMachineArray(int len0)
+        {
             this.length = len0;
             arr = new ArrayList<SubMachine>(len0);
             for (int i = 0; i < len0; i++){
@@ -395,21 +406,25 @@ public class WorkFunctionAlgorithm
             }
         }
 
-        public SubMachine get(int i) {
+        public SubMachine get(int i)
+        {
             return arr.get(i);
         }
         
-        public void set(int i, SubMachine subm) {
+        public void set(int i, SubMachine subm)
+        {
             arr.set(i, subm);
         }
 
         @Override
-        public Iterator<SubMachine> iterator() {
+        public Iterator<SubMachine> iterator()
+        {
             return arr.iterator();
         }
 
         @Override
-        public String toString() {
+        public String toString()
+        {
             return new ToStringBuilder<SubMachineArray>(this)
                    .add("arr", arr.toString())
                    .add("length", length)
@@ -417,7 +432,8 @@ public class WorkFunctionAlgorithm
         }
     }
     
-    private static class SubMachine implements Iterable<Index> {
+    private static class SubMachine implements Iterable<Index>
+    {
         private Set<Index> subset;
         private int subsetNum;
         private int numIndexes;
@@ -450,7 +466,8 @@ public class WorkFunctionAlgorithm
          * @return
          *      position of id in indexIds if exists, else -1
          */
-        public int indexPos(int id) {
+        public int indexPos(int id)
+        {
             for (int i = 0; i < numIndexes; i++)
                 if (indexIds[i] == id)
                     return i;
@@ -468,7 +485,8 @@ public class WorkFunctionAlgorithm
          * @param isPositive
          *      a positive ({@code true} value) or negative({@code false} value) vote.
          */
-        public void vote(TotalWorkValues wf, Index index, boolean isPositive) {
+        public void vote(TotalWorkValues wf, Index index, boolean isPositive)
+        {
             // find the position in indexIds
             int indexIdsPos;
             int stateMask;
@@ -576,12 +594,14 @@ public class WorkFunctionAlgorithm
         }
 
         @Override
-        public Iterator<Index> iterator() {
+        public Iterator<Index> iterator()
+        {
             return subset.iterator();
         }
 
         @Override
-        public String toString() {
+        public String toString()
+        {
             return new ToStringBuilder<SubMachine>(this)
                    .add("subsetNum",subsetNum)
                    .add("numIndexes",numIndexes)
@@ -597,7 +617,8 @@ public class WorkFunctionAlgorithm
     /**
      * wraps the {@link WorkFunctionAlgorithm}'s total work values.
      */
-    public static class TotalWorkValues {
+    public static class TotalWorkValues
+    {
         double[] values;
         int[] predecessor;
         int[] subsetStart;
@@ -682,7 +703,8 @@ public class WorkFunctionAlgorithm
         }
 
         @Override
-        public String toString() {
+        public String toString()
+        {
             return new ToStringBuilder<TotalWorkValues>(this)
                    .add("values", Arrays.toString(values))
                    .add("predecessor", Arrays.toString(predecessor))
@@ -694,7 +716,8 @@ public class WorkFunctionAlgorithm
     /**
      * WorkFunctionAlgorithm's workspace.
      */
-    private static class Workspace {
+    private static class Workspace
+    {
         TotalWorkValues wf2;
         CostVector      tempCostVector;
         IndexBitSet     tempBitSet;

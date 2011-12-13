@@ -12,7 +12,8 @@ import edu.ucsc.dbtune.metadata.Configuration;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface IndexAccessCostEstimation {
+public interface IndexAccessCostEstimation
+{
   /**
    * Estimate the cost of accessing the index in an input configuration.
    * Computing only the individual index access costs is much faster than

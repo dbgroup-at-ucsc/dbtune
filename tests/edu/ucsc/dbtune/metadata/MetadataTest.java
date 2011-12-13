@@ -31,7 +31,8 @@ public class MetadataTest
      * Creates catalogs that are used by all the tests
      */
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() throws Exception
+    {
         catalog  = configureCatalog();
     }
 

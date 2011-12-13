@@ -13,7 +13,8 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface WorkloadDescriptor {
+public interface WorkloadDescriptor
+{
   double getBestInternalPlanCost();
   double[] getCandidateCosts();
   double getEmptyCost();

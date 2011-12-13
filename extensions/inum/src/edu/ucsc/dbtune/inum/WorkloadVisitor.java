@@ -7,7 +7,8 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface WorkloadVisitor {
+public interface WorkloadVisitor
+{
   String visit(WorkloadFileNode fileNode);
   Set<String> visit(WorkloadDirectoryNode directoryNode);
 }

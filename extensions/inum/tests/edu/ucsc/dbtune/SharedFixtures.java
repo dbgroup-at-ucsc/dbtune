@@ -35,14 +35,18 @@ import org.mockito.Mockito;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public final class SharedFixtures {
-  private SharedFixtures(){}
+public final class SharedFixtures
+{
+  private SharedFixtures()
+  {}
 
-  public static Connection configureConnection() throws Exception {
+  public static Connection configureConnection() throws Exception
+  {
     return configureJdbcConnection();
   }
 
-  private static Connection configureJdbcConnection() throws Exception {
+  private static Connection configureJdbcConnection() throws Exception
+  {
     final Connection jdbcConnection = Mockito.mock(Connection.class);
     final Statement  statement      = configureStatement();
     final PreparedStatement preparedStatement = configurePrepareStatement();
@@ -51,7 +55,8 @@ public final class SharedFixtures {
     return jdbcConnection;
   }
 
-  private static Statement configureStatement() throws Exception {
+  private static Statement configureStatement() throws Exception
+  {
     final Statement statement = Mockito.mock(Statement.class);
     Mockito.when(statement.execute(Mockito.anyString())).thenReturn(true);
     final ResultSet mockResultSet = configureResultSet();
@@ -59,7 +64,8 @@ public final class SharedFixtures {
     return statement;
   }
 
-  private static PreparedStatement configurePrepareStatement() throws Exception {
+  private static PreparedStatement configurePrepareStatement() throws Exception
+  {
     final PreparedStatement preparedStatement = Mockito.mock(PreparedStatement.class);
     Mockito.when(preparedStatement.execute(Mockito.anyString())).thenReturn(true);
     final ResultSet mockResultSet = configureResultSet();
@@ -67,16 +73,19 @@ public final class SharedFixtures {
     return preparedStatement;
   }
 
-  private static ResultSet configureResultSet() throws Exception {
+  private static ResultSet configureResultSet() throws Exception
+  {
     return Mockito.mock(ResultSet.class);
   }
 
-  public static Inum configureInum() throws Exception {
+  public static Inum configureInum() throws Exception
+  {
     final Configuration  configuration  = configureConfiguration();
     return configureInum(configuration);
   }
 
-  public static Inum configureInum(Configuration configuration) throws Exception {
+  public static Inum configureInum(Configuration configuration) throws Exception
+  {
     final Connection                  connection     = configureConnection();
     final InumSpace                   inumSpace      = configureInumSpace(configuration);
     final Precomputation              precomputation = configurePrecomputation(inumSpace);
@@ -87,19 +96,22 @@ public final class SharedFixtures {
         connection, precomputation, matchingLogic, ioExtractor);
   }
 
-  public static InterestingOrdersExtractor configureIOExtractor(Configuration configuration) throws Exception {
+  public static InterestingOrdersExtractor configureIOExtractor(Configuration configuration) throws Exception
+  {
     final InterestingOrdersExtractor extractor = Mockito.mock(InterestingOrdersExtractor.class);
     final Configuration indexes = new Configuration(configuration);
     Mockito.when(extractor.extractInterestingOrders(Mockito.anyString())).thenReturn(indexes);
     return extractor;
   }
 
-  public static InterestingOrdersExtractor configureIOExtractor() throws Exception {
+  public static InterestingOrdersExtractor configureIOExtractor() throws Exception
+  {
     final Configuration indexes = configureConfiguration(new Table(new Schema(new Catalog("testc"), "tests"),"test"), 3, 3);
     return configureIOExtractor(indexes);
   }
 
-  public static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception {
+  public static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception
+  {
     final MatchingStrategy matchingLogic = Mockito.mock(MatchingStrategy.class);
     final Set<OptimalPlan> plans         = inumSpace.getAllSavedOptimalPlans();
     Mockito.when(matchingLogic.matches(Mockito.eq(inumSpace), Mockito.<Configuration>any())).thenReturn(plans);
@@ -108,7 +120,8 @@ public final class SharedFixtures {
     return matchingLogic;
   }
 
-  public static Precomputation configurePrecomputation(InumSpace inumSpace) throws Exception {
+  public static Precomputation configurePrecomputation(InumSpace inumSpace) throws Exception
+  {
     final Precomputation    setup     = Mockito.mock(Precomputation.class);
     Mockito.when(setup.getInumSpace()).thenReturn(inumSpace);
     final Set<OptimalPlan> plans = inumSpace.getAllSavedOptimalPlans();
@@ -117,7 +130,8 @@ public final class SharedFixtures {
     return setup;
   }
 
-  public static Set<OptimalPlan> configureSingleOptimalPlan() throws Exception {
+  public static Set<OptimalPlan> configureSingleOptimalPlan() throws Exception
+  {
     final Set<OptimalPlan> singleOne = Sets.newHashSet();
     final OptimalPlan opp = Mockito.mock(OptimalPlan.class);
     Mockito.when(opp.getAccessCost(Mockito.anyString())).thenReturn(2.0);
@@ -128,7 +142,8 @@ public final class SharedFixtures {
     return singleOne;
   }
 
-  public static InumSpace configureInumSpace(Configuration key) throws Exception {
+  public static InumSpace configureInumSpace(Configuration key) throws Exception
+  {
     final InumSpace inumSpace = Mockito.mock(InumSpace.class);
     final Set<OptimalPlan> plans = configureSingleOptimalPlan();
     Mockito.when(inumSpace.getAllSavedOptimalPlans()).thenReturn(plans);
@@ -140,23 +155,27 @@ public final class SharedFixtures {
     return inumSpace;
   }
 
-  public static IndexAccessCostEstimation configureEstimator() {
+  public static IndexAccessCostEstimation configureEstimator()
+  {
     final IndexAccessCostEstimation estimation = Mockito.mock(IndexAccessCostEstimation.class);
     Mockito.when(estimation.estimateIndexAccessCost(Mockito.anyString(), Mockito.<Configuration>any())).thenReturn(10.0);
     return estimation;
   }
 
   @SuppressWarnings("serial")
-public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
+public static Set<OptimalPlan> configureOptimalPlans() throws Exception
+{
     final OptimalPlan optimalPlan = Mockito.mock(OptimalPlan.class);
     return new HashSet<OptimalPlan>(){{add(optimalPlan);}};
   }
 
-  public static Configuration configureConfiguration() throws Exception {
+  public static Configuration configureConfiguration() throws Exception
+  {
     return configureConfiguration(new Table(new Schema(new Catalog("testc"), "tests"),"test"), 1, 2);
   }
 
-  public static Configuration configureConfiguration(Table table, int noIndexes, int noColsPerIndex) throws Exception {
+  public static Configuration configureConfiguration(Table table, int noIndexes, int noColsPerIndex) throws Exception
+  {
     final List<Column> cols = Lists.newArrayList();
     final List<Index>  idxs = Lists.newArrayList();
     int i =0;
@@ -173,12 +192,14 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     return new Configuration(idxs);
   }
 
-  public static InumWhatIfOptimizer configureWhatIfOptimizer() throws Exception {
+  public static InumWhatIfOptimizer configureWhatIfOptimizer() throws Exception
+  {
     final Inum inum      = configureInum();
     return new InumWhatIfOptimizerImpl(inum);
   }
 
-  public static InumWhatIfOptimizer configureWhatIfOptimizer(Configuration configuration) throws Exception {
+  public static InumWhatIfOptimizer configureWhatIfOptimizer(Configuration configuration) throws Exception
+  {
     final Inum inum = configureInum(configuration);
     return new InumWhatIfOptimizerImpl(inum);
   }
@@ -193,7 +214,8 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     }
   }
 
-  public static class NameGenerator {
+  public static class NameGenerator
+  {
     static CharacterFrequency[] frequencies = new CharacterFrequency[]{
          new CharacterFrequency('a', 0.8f),
          new CharacterFrequency('c', 0.4f),
@@ -201,11 +223,13 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
          new CharacterFrequency('t', 0.6f)
     };
 
-    public static String generateRandomName(){
+    public static String generateRandomName()
+    {
       return generateName(frequencies.length);
     }
 
-    public static String generateName(int noCharacters){
+    public static String generateName(int noCharacters)
+    {
       final StringBuilder name = new StringBuilder();
       for (int idx = 0; idx < noCharacters; idx ++){
         name.append(getRandomCharacter());
@@ -213,7 +237,8 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
       return name.toString();
     }
 
-    private static char getRandomCharacter() {
+    private static char getRandomCharacter()
+    {
       final float v = (float) Math.random();
 
       char  c = frequencies[0].character;

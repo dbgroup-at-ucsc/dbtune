@@ -13,7 +13,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  * @author alkis
  *
  */
-public class DefaultPreparedSQLStatement implements PreparedSQLStatement {
+public class DefaultPreparedSQLStatement implements PreparedSQLStatement
+{
 
 	/**
 	 * Constructs a default prepared statement.
@@ -30,7 +31,8 @@ public class DefaultPreparedSQLStatement implements PreparedSQLStatement {
 	 * Constructs a {@link DefaultPreparedSQLStatement} out af another {@link PreparedSQLStatement}
 	 * @param other The existing {@link PreparedSQLStatement}
 	 */
-	public DefaultPreparedSQLStatement(PreparedSQLStatement other) {
+	public DefaultPreparedSQLStatement(PreparedSQLStatement other)
+{
 		this.optimizer 	= 	other.getOptimizer();
 		this.sql		= 	other.getSQLStatement();
 	}
@@ -46,12 +48,14 @@ public class DefaultPreparedSQLStatement implements PreparedSQLStatement {
 	protected final SQLStatement sql;
 
 	@Override
-	public Optimizer getOptimizer() {
+	public Optimizer getOptimizer()
+{
 		return optimizer;
 	}
 
 	@Override
-	public SQLStatement getSQLStatement() {
+	public SQLStatement getSQLStatement()
+{
 		return sql;
 	}
 

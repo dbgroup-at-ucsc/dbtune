@@ -25,7 +25,8 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)
  */
-public class PGOptimizerTest {
+public class PGOptimizerTest
+{
     //private static Environment environment;
     //private static Connection  connection;
     //private static PGOptimizer optimizer;
@@ -53,7 +54,8 @@ public class PGOptimizerTest {
      * Checks that the code is verifying the PostgreSQL version correctly.
      */
     @Test
-    public void testConstructor() throws Exception {
+    public void testConstructor() throws Exception
+    {
         /*
         XXX: this should be implemented using a JDBC mock
         try {
@@ -68,7 +70,8 @@ public class PGOptimizerTest {
      * Checks that JSON-to-plan conversion is done correctly.
      */
     @Test
-    public void testJSONToPlanConversion() throws Exception {
+    public void testJSONToPlanConversion() throws Exception
+    {
         String jsonPlan =
             "[                                                 " +
             "   {                                              " +
@@ -173,7 +176,8 @@ public class PGOptimizerTest {
      * corresponding operators
      */
     @Test
-    public void testBoundConversion() throws Exception {
+    public void testBoundConversion() throws Exception
+    {
         String jsonPlan =
             "[                                                 " +
             "   {                                              " +
@@ -231,7 +235,8 @@ public class PGOptimizerTest {
      * Checks that the class can execute an explain statement and return a plan.
      */
     @Test
-    public void testPlanExtraction() throws Exception {
+    public void testPlanExtraction() throws Exception
+    {
         /*
         XXX: this should be implemented using a JDBC mock
 

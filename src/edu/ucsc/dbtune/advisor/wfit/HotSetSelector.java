@@ -8,7 +8,8 @@ import edu.ucsc.dbtune.util.MinQueue;
 
 public class HotSetSelector
 {
-    private HotSetSelector(){}
+    private HotSetSelector()
+    {}
 
     /**
      * Choose a hot set (i.e., a {@link Configuration}) that will be used for reorganizing 

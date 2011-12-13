@@ -6,24 +6,29 @@ import java.util.Map;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class ToStringBuilder<T> {
+public class ToStringBuilder<T>
+{
     // Linked hash map ensures ordering.
     private final Map<String, Object> map = new LinkedHashMap<String, Object>();
     private final String name;
 
-    public ToStringBuilder(String name) {
+    public ToStringBuilder(String name)
+    {
         this.name = name;
     }
 
-    public ToStringBuilder(T instance){
+    public ToStringBuilder(T instance)
+    {
         this(Objects.<Class<T>>as(instance.getClass()));
     }
 
-    public ToStringBuilder(Class<T> type) {
+    public ToStringBuilder(Class<T> type)
+    {
         this(type.getSimpleName());
     }
 
-    public ToStringBuilder<T> add(String name, Object value) {
+    public ToStringBuilder<T> add(String name, Object value)
+    {
         if (map.put(name, value) != null) {
             throw new RuntimeException("Duplicate names: " + name);
         }
@@ -31,7 +36,8 @@ public class ToStringBuilder<T> {
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return name + map.toString().replace('{', '[').replace('}', ']');
     }
 }

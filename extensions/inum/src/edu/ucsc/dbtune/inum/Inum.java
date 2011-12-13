@@ -19,7 +19,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class Inum {
+public class Inum
+{
   private final Connection                 connection;
   private final Precomputation             precomputation;
   private final MatchingStrategy           matchingLogic;
@@ -61,7 +62,8 @@ public class Inum {
             nonNullMatchingLogic, nonNullInteresingOrdersExtractor);
   }
 
-  public static Inum newInumInstance(Catalog catalog, Connection connection){
+  public static Inum newInumInstance(Catalog catalog, Connection connection)
+  {
     final Connection nonNullConnection = Preconditions.checkNotNull(connection);
     final Catalog    nonNullCatalog    = Preconditions.checkNotNull(catalog);
     return newInumInstance(
@@ -91,29 +93,35 @@ public class Inum {
     return matchingLogic.derivesCost(query, matchedOptimalPlans, inputConfiguration);
   }
 
-  public void end()   {
+  public void end()  
+  {
     isStarted.set(false);
     precomputation.getInumSpace().clear();
   }
   
-  public Configuration findInterestingOrders(String query) throws SQLException{
+  public Configuration findInterestingOrders(String query) throws SQLException
+  {
     return ioExtractor.extractInterestingOrders(query);
   }
 
 
-  public InumSpace getInumSpace(){
+  public InumSpace getInumSpace()
+  {
     return precomputation.getInumSpace();
   }
   
-  public Connection getConnection(){
+  public Connection getConnection()
+  {
     return connection;
   }
   
-  public boolean isEnded(){
+  public boolean isEnded()
+  {
     return !isStarted();
   }
   
-  public boolean isStarted(){
+  public boolean isStarted()
+  {
     return isStarted.get();
   }
 
@@ -122,7 +130,8 @@ public class Inum {
    * directory.
    * @throws SQLException if unable to build the inum space.
    */
-  public void start() throws SQLException {
+  public void start() throws SQLException
+  {
     start(QUERIES);
   }
 
@@ -134,7 +143,8 @@ public class Inum {
    * @throws SQLException
    *    if unable to build inum space.
    */
-  public void start(Set<String> input) throws SQLException {
+  public void start(Set<String> input) throws SQLException
+  {
     isStarted.set(true);
 
     final StopWatch timing = new StopWatch();
@@ -144,7 +154,8 @@ public class Inum {
     timing.resetAndLog("precomputation took ");
   }
 
-  @Override public String toString() {
+  @Override public String toString()
+ {
     try {
     return Objects.toStringHelper(this)
         .add("started?", isStarted() ? "Yes" : "No")

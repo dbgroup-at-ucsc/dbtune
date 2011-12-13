@@ -12,7 +12,8 @@ import java.util.Map;
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
  */
-public class IndexStatisticsFunction {
+public class IndexStatisticsFunction
+{
     private Map<IndexPair, MeasurementWindow> doiWindows;
     private Map<Index, MeasurementWindow>     benefitWindows;
     private double          currentTimeStamp;
@@ -38,7 +39,8 @@ public class IndexStatisticsFunction {
     }
 
     /*
-    public void addQuery(IBGPreparedSQLStatement queryInfo, Configuration matSet) throws SQLException {
+    public void addQuery(IBGPreparedSQLStatement queryInfo, Configuration matSet) throws SQLException
+    {
         Configuration conf = queryInfo.getConfiguration();
 
         for (Index index : conf) {
@@ -86,7 +88,8 @@ public class IndexStatisticsFunction {
         currentTimeStamp += queryInfo.explain(bsConf).getTotalCost();
     }
 
-    private void addsMeasurement(Index a, Index b, double doi) {
+    private void addsMeasurement(Index a, Index b, double doi)
+    {
         // add measurement, creating new window if necessary
         updateIndexPairs(a, b);
         MeasurementWindow doiwin = doiWindows.get(tempPair);
@@ -99,19 +102,23 @@ public class IndexStatisticsFunction {
     }
     */
 
-    private void clearIndexPairs(){        
+    private void clearIndexPairs()
+    {        
         tempPair.a = null; tempPair.b = null;
     }
 
-    private void updateIndexPairs(Index a, Index b){
+    private void updateIndexPairs(Index a, Index b)
+    {
         tempPair.a = a; tempPair.b = b;
     }
 
-    public double doi(Index a, Index b) {
+    public double doi(Index a, Index b)
+    {
         return doi.apply(a, b) ;
     }
 
-    public double benefit(Index a, IndexBitSet m) {
+    public double benefit(Index a, IndexBitSet m)
+    {
         return benefit.apply(a, m);
     }
 
@@ -125,7 +132,8 @@ public class IndexStatisticsFunction {
      * encountered such that timestamps[i] == -1. The number of measurements is
      * indicated by the field numMeasurements.
      */
-    public static class MeasurementWindow {
+    public static class MeasurementWindow
+    {
         private int size;
 
         double[] measurements = new double[size];
@@ -188,7 +196,8 @@ public class IndexStatisticsFunction {
         }
 
         @Override
-        public String toString() {
+        public String toString()
+        {
             return new ToStringBuilder<MeasurementWindow>(this)
                    .add("measurements", Arrays.toString(measurements))
                    .add("timestamps", Arrays.toString(timestamps))
@@ -199,14 +208,16 @@ public class IndexStatisticsFunction {
     }
 
 
-    private static class DoiFunction {
+    private static class DoiFunction
+    {
         private final IndexStatisticsFunction statistics;
 
         DoiFunction(IndexStatisticsFunction statistics){
             this.statistics = statistics;
         }
 
-        public double apply(Index a, Index b) {
+        public double apply(Index a, Index b)
+        {
             if (statistics.currentTimeStamp == 0)
                 return 0;
 
@@ -221,14 +232,17 @@ public class IndexStatisticsFunction {
         }
     }
 
-    private static class BenefitFunction {
+    private static class BenefitFunction
+    {
         private final IndexStatisticsFunction statistics;
 
-        public BenefitFunction(IndexStatisticsFunction statistics){
+        public BenefitFunction(IndexStatisticsFunction statistics)
+        {
             this.statistics = statistics;
         }
 
-        public double apply(Index arg, IndexBitSet m) {
+        public double apply(Index arg, IndexBitSet m)
+        {
             if (statistics.currentTimeStamp == 0)
                 return 0;
             final MeasurementWindow window = statistics.benefitWindows.get(arg);
@@ -258,13 +272,15 @@ public class IndexStatisticsFunction {
         }
 
         @Override
-        public int hashCode() {
+        public int hashCode()
+        {
             return a.hashCode() + b.hashCode();
         }
 
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(Object other)
+        {
             if (!(other instanceof IndexPair)){
                 return false;
             }
@@ -275,7 +291,8 @@ public class IndexStatisticsFunction {
         }
 
         @Override
-        public String toString() {
+        public String toString()
+        {
             return new ToStringBuilder<IndexPair>(this)
                    .add("left", a)
                    .add("right", b)

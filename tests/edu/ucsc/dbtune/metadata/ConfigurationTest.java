@@ -20,13 +20,15 @@ public class ConfigurationTest
     private static List<Index> allIndexes = new ArrayList<Index>();
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() throws Exception
+    {
         for (Index index : configureCatalog().<Schema>findByName("schema_0").indexes())
             allIndexes.add(index);
     }
 
     @Test
-    public void testPopulatingConfiguration() throws Exception {
+    public void testPopulatingConfiguration() throws Exception
+    {
         Configuration conf1 = new Configuration(allIndexes);
 
         for (Index idx : allIndexes) {

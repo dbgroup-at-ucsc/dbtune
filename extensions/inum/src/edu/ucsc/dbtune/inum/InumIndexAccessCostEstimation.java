@@ -11,7 +11,8 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation {
+public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation
+{
   private final OptimalPlanProvider provider;
   private final OptimalPlansParser  parser;
 
@@ -21,11 +22,13 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
     this.parser     = parser;
   }
 
-  public InumIndexAccessCostEstimation(Connection connection){
+  public InumIndexAccessCostEstimation(Connection connection)
+  {
     this(new SqlExecutionPlanProvider(connection), new InumOptimalPlansParser());
   }
 
-  @Override public double estimateIndexAccessCost(String query, Configuration indexes) {
+  @Override public double estimateIndexAccessCost(String query, Configuration indexes)
+ {
     // this method will call the optimizer and then get the index access cost
     // per index in the Iterable<DBIndex> object.
     final String      optPlan    = provider.getSqlExecutionPlan(query, indexes);
@@ -37,7 +40,8 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
     return sumOfIndexAccessCosts;
   }
 
-  private OptimalPlan singlePlan(String returnedPlan){
+  private OptimalPlan singlePlan(String returnedPlan)
+  {
     // the assumption is that we will get one plan.....
     final Set<OptimalPlan> plans = parser.parse(returnedPlan);
     OptimalPlan plan = null;

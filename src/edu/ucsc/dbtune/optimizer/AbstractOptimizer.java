@@ -29,7 +29,8 @@ public abstract class AbstractOptimizer implements Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public ExplainedSQLStatement explain(String sql) throws SQLException {
+    public ExplainedSQLStatement explain(String sql) throws SQLException
+    {
         return explain(new SQLStatement(sql), new Configuration("empty"));
     }
 
@@ -43,7 +44,8 @@ public abstract class AbstractOptimizer implements Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException {
+    public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException
+    {
         return explain(sql, new Configuration("empty"));
     }
 
@@ -92,7 +94,8 @@ public abstract class AbstractOptimizer implements Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public Configuration recommendIndexes(String sql) throws SQLException {
+    public Configuration recommendIndexes(String sql) throws SQLException
+    {
         return recommendIndexes(new SQLStatement(sql));
     }
 

@@ -17,7 +17,8 @@ import java.sql.SQLException;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface InumWhatIfOptimizer {
+public interface InumWhatIfOptimizer
+{
   /**
    * estimate the cost of executing a given query; an empty list of
    * hypothetical indexes (a.k.a., empty configuration) is provided.

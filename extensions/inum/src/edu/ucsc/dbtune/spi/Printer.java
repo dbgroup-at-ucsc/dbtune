@@ -4,7 +4,8 @@ package edu.ucsc.dbtune.spi;
  * It emits what commands have spitted out.
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public interface Printer {
+public interface Printer
+{
     /**
      * appends '.' on the screen.
      */

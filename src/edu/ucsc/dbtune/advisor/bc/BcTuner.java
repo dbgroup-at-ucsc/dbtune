@@ -21,7 +21,8 @@ public class BcTuner
      * @param hotSet
      *      a {@code hotSet} of indexes.
      */
-    public BcTuner(Configuration snapshot, Configuration hotSet) {
+    public BcTuner(Configuration snapshot, Configuration hotSet)
+    {
         this.snapshot               = snapshot;
         this.hotSet                 = hotSet;
         this.pool                   = new BcIndexPool(snapshot,this.hotSet);
@@ -31,7 +32,8 @@ public class BcTuner
     /**
      * @return the {@code index} to create.
      */
-    public Index chooseIndexToCreate() {
+    public Index chooseIndexToCreate()
+    {
         Index indexToCreate = null;
         double maxBenefit = 0;
 
@@ -52,7 +54,8 @@ public class BcTuner
     /**
      * @return the {@code index} to drop.
      */
-    public Index chooseIndexToDrop() {
+    public Index chooseIndexToDrop()
+    {
         Index indexToDrop = null;
         double minResidual = 0;
 
@@ -73,7 +76,8 @@ public class BcTuner
     /**
      * @return the recommended indexes configuration.
      */
-    public IndexBitSet getRecommendation() {
+    public IndexBitSet getRecommendation()
+    {
         IndexBitSet bs = new IndexBitSet();
         for (Index index : hotSet) {
             if (pool.get(snapshot.getOrdinalPosition(index)).state == BcIndexInfo.State.MATERIALIZED){
@@ -84,7 +88,8 @@ public class BcTuner
     }
 
     /*
-    private int inferUseLevel(Index i1, Index i2, boolean prefix) {
+    private int inferUseLevel(Index i1, Index i2, boolean prefix)
+    {
         if (prefix) {
             return 2;
         } else if (i1.get(0).equals(i2.get(0))) {
@@ -100,7 +105,8 @@ public class BcTuner
      *      a {@code profiled query} object.
      * @throws SQLException
      *      an unexpected error occurred.
-    public void processQuery(IBGPreparedSQLStatement profiledQuery) throws SQLException {
+    public void processQuery(IBGPreparedSQLStatement profiledQuery) throws SQLException
+    {
         BcBenefitInfo qinfo = new BcBenefitInfo(snapshot,hotSet,currentRecommendation,profiledQuery)
         
         // update statistics
@@ -185,7 +191,8 @@ public class BcTuner
         } // done creating indices
     }
     
-    private int useLevel(Index i1, Index i2) {
+    private int useLevel(Index i1, Index i2)
+    {
         // Shortcut if different relations
         if (!i1.getTable().equals(i2.getTable()))
             return -1;
@@ -209,7 +216,8 @@ public class BcTuner
      */
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return new ToStringBuilder<BcTuner>(this)
                .add("snapshot", snapshot)
                .add("hotSet", hotSet)

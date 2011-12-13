@@ -7,21 +7,26 @@ import java.io.File;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class WorkloadFileNode implements WorkloadNode<String> {
+public class WorkloadFileNode implements WorkloadNode<String>
+{
   private final File file;
-  public WorkloadFileNode(File file){
+  public WorkloadFileNode(File file)
+  {
     this.file = file;
   }
 
-  @Override public String accept(WorkloadVisitor visitor) {
+  @Override public String accept(WorkloadVisitor visitor)
+ {
     return visitor.visit(this);
   }
 
-  public File getFile() {
+  public File getFile()
+  {
     return file;
   }
 
-  @Override public String toString() {
+  @Override public String toString()
+ {
     return String.format("%s", getFile().getName());
   }
 }

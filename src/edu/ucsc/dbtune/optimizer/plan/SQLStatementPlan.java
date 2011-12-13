@@ -125,7 +125,8 @@ public class SQLStatementPlan extends Tree<Operator>
      * {@inheritDoc}
      */
     @Override
-    public Entry<Operator> setChild(Operator parentValue, Operator childValue) {
+    public Entry<Operator> setChild(Operator parentValue, Operator childValue)
+    {
         Entry<Operator> e;
 
         childValue.setId(globalId++);

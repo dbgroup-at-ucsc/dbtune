@@ -44,7 +44,8 @@ public class DBTuneInstances
     /**
      * Utility class
      */
-    private DBTuneInstances(){}
+    private DBTuneInstances()
+    {}
 
     /**
      * Returns a configuration for DB2

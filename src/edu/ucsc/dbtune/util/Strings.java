@@ -21,7 +21,8 @@ import java.util.regex.Pattern;
 public class Strings
 {
     /** utility class */
-    private Strings(){}
+    private Strings()
+    {}
 
     /**
      * performs some rudimentary trimming of some text that is assumed
@@ -212,7 +213,8 @@ public class Strings
      * @return
      *     0 if equal; negative if {@code v1} less than {@code v2}; positive otherwise.
      */
-    public static int compareVersion(String v1, String v2) {
+    public static int compareVersion(String v1, String v2)
+    {
         String s1 = normalizeVersion(v1,".",6);
         String s2 = normalizeVersion(v2,".",6);
 
@@ -316,7 +318,8 @@ public class Strings
      * @param <T> type of the object of interest.
      * @return a string representation of the object of interest.
      */
-    public static <T> String str(T value) {
+    public static <T> String str(T value)
+    {
         return value == null ? "" : value.toString();
     }
 
@@ -411,11 +414,13 @@ public class Strings
     }
 
     // Taken from http://weblogs.java.net/blog/pat/archive/2004/10/stupid_scanner_1.html
-    public static String wholeContentAsSingleLine(File f) throws IOException {
+    public static String wholeContentAsSingleLine(File f) throws IOException
+    {
         return new Scanner(f).useDelimiter("\\A").next().replaceAll("\\s+", " ");
     }
 
-    public static void formatIdentifier(String str, StringBuilder sbuf) {
+    public static void formatIdentifier(String str, StringBuilder sbuf)
+    {
         int strlen = str.length();
         boolean simple;
 
@@ -446,7 +451,8 @@ public class Strings
         }
     }
 
-    public static void formatStringLiteral(String str, StringBuilder sbuf) {
+    public static void formatStringLiteral(String str, StringBuilder sbuf)
+    {
         int strlen = str.length();
 
         sbuf.append('\'');

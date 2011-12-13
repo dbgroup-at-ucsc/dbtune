@@ -22,7 +22,8 @@ public class PlanComparator
      * @return
      *     list of {@code Index} objects that are in {@code plan1} but not in {@code plan2}.
      */
-    public static List<Index> difference(SQLStatementPlan plan1, SQLStatementPlan plan2) {
+    public static List<Index> difference(SQLStatementPlan plan1, SQLStatementPlan plan2)
+    {
         Set<Index> set1 = new HashSet<Index>(plan1.getIndexes());
 
         set1.removeAll(plan2.getIndexes());

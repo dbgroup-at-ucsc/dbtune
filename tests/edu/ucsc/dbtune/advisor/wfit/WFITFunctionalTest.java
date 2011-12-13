@@ -59,7 +59,8 @@ public class WFITFunctionalTest
     }
 
     @AfterClass
-    public static void tearDown() throws Exception{
+    public static void tearDown() throws Exception
+    {
         db.getConnection().close();
     }
 

@@ -26,7 +26,8 @@ public class SQLStatement
      *     if no category can't be extracted from the given string.
      * @see SQLCategory#from
      */
-    public SQLStatement(String sql) throws SQLException {
+    public SQLStatement(String sql) throws SQLException
+    {
         this(sql, SQLCategory.from(sql));
     }
 
@@ -38,7 +39,8 @@ public class SQLStatement
      * @param sql
      *      a sql statement.
      */
-    public SQLStatement(String sql, SQLCategory category) {
+    public SQLStatement(String sql, SQLCategory category)
+    {
         this.category = category;
         this.sql      = sql;
     }
@@ -50,7 +52,8 @@ public class SQLStatement
      *     a sql category.
      * @see SQLCategory
      */
-    public SQLCategory getSQLCategory() {
+    public SQLCategory getSQLCategory()
+    {
         return category;
     }
 
@@ -60,7 +63,8 @@ public class SQLStatement
      * @return
      *     a string containing the SQL statement that was optimized.
      */
-    public String getSQL() {
+    public String getSQL()
+    {
         return sql;
     }
 
@@ -68,7 +72,8 @@ public class SQLStatement
      * {@inheritDoc}
      */
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "[ category=" + category +
                " text=\"" + sql + "\"]";
     }

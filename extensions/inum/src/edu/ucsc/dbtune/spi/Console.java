@@ -9,7 +9,8 @@ import java.util.Map;
 /**
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public abstract class Console implements Printer {
+public abstract class Console implements Printer
+{
     private boolean useColor;
     private boolean ansi;
     private boolean verbose;
@@ -20,13 +21,15 @@ public abstract class Console implements Printer {
     protected ClearScreenHistory.Mark currentStreamMark;
     protected List<String> cachedErrors;
 
-    private Console() {}
+    private Console()
+    {}
 
     /**
      * @return
      *      a new Console that prints output as it's emitted.
      */
-    public static Console streaming(){
+    public static Console streaming()
+    {
         return Installer.STREAMING;
     }
 
@@ -34,7 +37,8 @@ public abstract class Console implements Printer {
      * @return
      *      a new Console that buffers output, only printing when a result is found.
      */
-    public static Console multiplexing(){
+    public static Console multiplexing()
+    {
         return Installer.MULTIPLEXING;
     }
 
@@ -43,7 +47,8 @@ public abstract class Console implements Printer {
      * @param name
      *      name of action
      */
-    public void action(String name) {}
+    public void action(String name)
+    {}
 
     /**
      * collects exceptions that have been thrown within a method block.
@@ -53,7 +58,8 @@ public abstract class Console implements Printer {
      * @param cause
      *   exception that was fired.
      */
-    public void catchError(Throwable cause){
+    public void catchError(Throwable cause)
+    {
         if (cachedErrors == null) {
             cachedErrors = new ArrayList<String>();
         }
@@ -70,19 +76,22 @@ public abstract class Console implements Printer {
      * @return
      *      colored message.
      */
-    protected String colorString(String message, Color color) {
+    protected String colorString(String message, Color color)
+    {
         return useColor ? ("\u001b[" + color.getCode() + ";1m" + message + "\u001b[0m") : message;
     }
 
 
     @Override
-    public synchronized void error(String message, Throwable throwable) {
+    public synchronized void error(String message, Throwable throwable)
+    {
         newLine();
         out.println(colorString("Error: " + message, Color.ERROR));
         throwable.printStackTrace(System.out);
     }
 
-    public void error(String message){
+    public void error(String message)
+    {
         newLine();
         out.println(colorString("Error: " + message, Color.ERROR));
     }
@@ -92,10 +101,12 @@ public abstract class Console implements Printer {
      * @param outcomeName
      *      outcome name
      */
-    protected void flushBufferedOutput(String outcomeName) {}
+    protected void flushBufferedOutput(String outcomeName)
+    {}
 
     @Override
-    public synchronized void info(String message) {
+    public synchronized void info(String message)
+    {
         newLine();
         out.println(colorString("Info: " + message, Color.INFO));
     }
@@ -106,7 +117,8 @@ public abstract class Console implements Printer {
      *      message to be displayed on screen.
      * @return message in splitted form.
      */
-    private String[] messageToLines(String message) {
+    private String[] messageToLines(String message)
+    {
         // pass Integer.MAX_VALUE so split doesn't trim trailing empty strings.
         return message.split("\r\n|\r|\n", Integer.MAX_VALUE);
     }
@@ -114,7 +126,8 @@ public abstract class Console implements Printer {
     /**
      * inserts a linebreak if necessary.
      */
-    protected void newLine() {
+    protected void newLine()
+    {
         currentStreamMark = null;
 
         if (currentLine == CurrentLine.VERBOSE && !verbose && ansi) {
@@ -135,14 +148,16 @@ public abstract class Console implements Printer {
      * @param name
      *      name of outcome
      */
-    public void outcome(String name) {}
+    public void outcome(String name)
+    {}
 
     /**
      * sets the desired indent when printing on the screen.
      * @param indent
      *      desired indent.
      */
-    public void setIndent(String indent) {
+    public void setIndent(String indent)
+    {
         this.indent = indent;
     }
 
@@ -162,7 +177,8 @@ public abstract class Console implements Printer {
      * @param streamedOutput
      *      streamed output
      */
-    public synchronized void streamOutput(CharSequence streamedOutput) {
+    public synchronized void streamOutput(CharSequence streamedOutput)
+    {
         if (streamedOutput.length() == 0) {
             return;
         }
@@ -202,7 +218,8 @@ public abstract class Console implements Printer {
      * @param failColor
      *      error messages color
      */
-    public void setUseColor(int infoColor, int warnColor, int failColor) {
+    public void setUseColor(int infoColor, int warnColor, int failColor)
+    {
         enableColor();
         Color.INFO.setCode(infoColor);
         Color.WARN.setCode(warnColor);
@@ -213,14 +230,16 @@ public abstract class Console implements Printer {
     /**
      * disable colored output.
      */
-    public void disableColor(){
+    public void disableColor()
+    {
         this.useColor = false;
     }
 
     /**
      * enable colored output.
      */
-    public void enableColor(){
+    public void enableColor()
+    {
         this.useColor = true;
     }
 
@@ -229,7 +248,8 @@ public abstract class Console implements Printer {
      * @param ansi
      *    a flag that indicates if we are using ANSI escape sequences.
      */
-    public void setAnsi(boolean ansi) {
+    public void setAnsi(boolean ansi)
+    {
         this.ansi = ansi;
     }
 
@@ -238,17 +258,20 @@ public abstract class Console implements Printer {
      * @param verbose
      *    a flag that indicates if we are printing verbose messages on the screen.
      */
-    public void setVerbose(boolean verbose) {
+    public void setVerbose(boolean verbose)
+    {
         this.verbose = verbose;
     }
 
     @Override
-    public synchronized void dot() {
+    public synchronized void dot()
+    {
         out.print(colorString(".", Color.ERROR));
     }
 
     @Override
-    public synchronized void verbose(String message) {
+    public synchronized void verbose(String message)
+    {
         /*
          * terminal does't support overwriting output, so don't print
          * verbose message unless requested.
@@ -272,19 +295,22 @@ public abstract class Console implements Printer {
     }
 
     @Override
-    public synchronized void warn(String message) {
+    public synchronized void warn(String message)
+    {
         warn(message, Collections.<String>emptyList());
     }
 
 
     @Override
-    public void log(String message) {
+    public void log(String message)
+    {
         newLine();
         out.println(colorString(message, Color.LOG));
     }
 
     @Override
-    public void skip() {
+    public void skip()
+    {
         currentLine = CurrentLine.NAME;
         newLine();
     }
@@ -296,7 +322,8 @@ public abstract class Console implements Printer {
      * @param list
      *      a list of strings to put afterwards message.
      */
-    public synchronized void warn(String message, List<String> list) {
+    public synchronized void warn(String message, List<String> list)
+    {
         newLine();
         out.println(colorString("Warning: " + message, Color.WARN));
         for (String item : list) {
@@ -310,7 +337,8 @@ public abstract class Console implements Printer {
      * @param message
      *      text to be displayed on screen.
      */
-    public synchronized void warnAll(String message){
+    public synchronized void warnAll(String message)
+    {
         warn(message, cachedErrors);
     }
 
@@ -347,16 +375,19 @@ public abstract class Console implements Printer {
     /**
      * messages's colors.
      */
-    private enum Color {
+    private enum Color
+    {
         INFO, ERROR, WARN, LOG;
 
         int code = 0;
 
-        public int getCode() {
+        public int getCode()
+        {
             return code;
         }
 
-        public void setCode(int code) {
+        public void setCode(int code)
+        {
             this.code = code;
         }
     }
@@ -376,7 +407,8 @@ public abstract class Console implements Printer {
         }
 
         @Override
-        public synchronized void action(String name) {
+        public synchronized void action(String name)
+        {
             newLine();
             out.print(colorString("Action: " + name, Color.LOG));
             currentName = name;
@@ -387,7 +419,8 @@ public abstract class Console implements Printer {
          * Prints the beginning of the named outcome.
          */
         @Override
-        public synchronized void outcome(String name) {
+        public synchronized void outcome(String name)
+        {
             // if the outcome and action names are the same, omit the outcome name
             if (name.equals(currentName)) {
                 return;
@@ -400,7 +433,8 @@ public abstract class Console implements Printer {
         }
 
         @Override
-        public synchronized void streamOutput(String outcomeName, String output) {
+        public synchronized void streamOutput(String outcomeName, String output)
+        {
             streamOutput(output);
         }
     }
@@ -420,7 +454,8 @@ public abstract class Console implements Printer {
         }
 
         @Override
-        public synchronized void streamOutput(String outcomeName, String output) {
+        public synchronized void streamOutput(String outcomeName, String output)
+        {
             StringBuilder buffer = bufferedOutputByOutcome.get(outcomeName);
             if (buffer == null) {
                 buffer = new StringBuilder();
@@ -431,7 +466,8 @@ public abstract class Console implements Printer {
         }
 
         @Override
-        protected synchronized void flushBufferedOutput(String outcomeName) {
+        protected synchronized void flushBufferedOutput(String outcomeName)
+        {
             newLine();
             out.print(indent + outcomeName);
             currentLine = CurrentLine.NAME;

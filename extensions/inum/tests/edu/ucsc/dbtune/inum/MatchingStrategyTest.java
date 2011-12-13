@@ -18,8 +18,10 @@ import static org.hamcrest.CoreMatchers.notNullValue;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class MatchingStrategyTest {
-  @Test public void testMatchingLogic() throws Exception {
+public class MatchingStrategyTest
+{
+  @Test public void testMatchingLogic() throws Exception
+ {
     final MatchingStrategy matchingLogic = new InumMatchingStrategy(SharedFixtures.configureConnection());
     final Configuration    input         = SharedFixtures.configureConfiguration();
     final InumSpace        inumSpace     = SharedFixtures.configureInumSpace(input);
@@ -28,11 +30,13 @@ public class MatchingStrategyTest {
     assertThat(plan.size(), is(1));
   }
 
-  @Test public void testDeriveCost() throws Exception {
+  @Test public void testDeriveCost() throws Exception
+ {
     final IndexAccessCostEstimation estimation    = SharedFixtures.configureEstimator();
 
     final MatchingStrategy matchingLogic = new InumMatchingStrategy(SharedFixtures.configureConnection()) {
-      @Override public IndexAccessCostEstimation getIndexAccessCostEstimation() {
+      @Override public IndexAccessCostEstimation getIndexAccessCostEstimation()
+ {
         return estimation;
       }
     };
@@ -43,7 +47,8 @@ public class MatchingStrategyTest {
     assertThat(Double.compare(11.0, cost), is(0));
   }
 
-  @Test public void testIndexAccessCostEstimation() throws Exception {
+  @Test public void testIndexAccessCostEstimation() throws Exception
+ {
     final IndexAccessCostEstimation estimation    = new InumIndexAccessCostEstimation(SharedFixtures.configureConnection());
     final double cost = estimation.estimateIndexAccessCost("lalala", new Configuration(
         Lists.<Index>newArrayList()));

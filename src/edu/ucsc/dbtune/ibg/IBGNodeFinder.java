@@ -21,7 +21,8 @@ class IBGNodeFinder
      *      found node in the graph. <strong>IMPORTANT</strong>: this method
      *      may return {@code null}.
      */
-    public IBGNode find(IBGNode rootNode, IndexBitSet config) {
+    public IBGNode find(IBGNode rootNode, IndexBitSet config)
+    {
         visited.clear();
         pending.reset();
         

@@ -9,6 +9,7 @@ import edu.ucsc.dbtune.metadata.Configuration;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface OptimalPlanProvider {
+public interface OptimalPlanProvider
+{
   String getSqlExecutionPlan(String sql, Configuration inputConfiguration);
 }

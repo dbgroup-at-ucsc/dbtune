@@ -17,14 +17,16 @@ import static java.lang.Double.compare;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumMatchingStrategy implements MatchingStrategy {
+public class InumMatchingStrategy implements MatchingStrategy
+{
   private final IndexAccessCostEstimation accessCostEstimator;
 
   InumMatchingStrategy(IndexAccessCostEstimation accessCostEstimator){
     this.accessCostEstimator = accessCostEstimator;
   }
 
-  public InumMatchingStrategy(Connection connection){
+  public InumMatchingStrategy(Connection connection)
+  {
     this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
   }
 
@@ -37,7 +39,8 @@ public class InumMatchingStrategy implements MatchingStrategy {
     return derivedCost;
   }
 
-  private static double findOneWithMinCost(Set<OptimalPlan> matches, double indexAccessCost){
+  private static double findOneWithMinCost(Set<OptimalPlan> matches, double indexAccessCost)
+  {
     OptimalPlan min = null;
     double derivedCost = 0.0;
     for (OptimalPlan each : matches){
@@ -57,11 +60,13 @@ public class InumMatchingStrategy implements MatchingStrategy {
     return derivedCost;
   }
 
-  @Override public IndexAccessCostEstimation getIndexAccessCostEstimation() {
+  @Override public IndexAccessCostEstimation getIndexAccessCostEstimation()
+ {
     return accessCostEstimator;
   }
 
-  private static boolean intersects(Configuration first, Configuration second){
+  private static boolean intersects(Configuration first, Configuration second)
+  {
     final Configuration c = new Configuration(Lists.<Index>newArrayList());
     if (first.size() < second.size()) {
       for (Index x : first.toList()) {
@@ -80,7 +85,8 @@ public class InumMatchingStrategy implements MatchingStrategy {
     return !c.toList().isEmpty();
   }
 
-  @Override public Set<OptimalPlan> matches(InumSpace inumSpace, Configuration inputConfiguration) {
+  @Override public Set<OptimalPlan> matches(InumSpace inumSpace, Configuration inputConfiguration)
+ {
     final Set<OptimalPlan> found = Sets.newHashSet();
     // assuming there is a match, pick the one with the min cost.
     final Configuration key = new Configuration(inputConfiguration);
@@ -95,7 +101,8 @@ public class InumMatchingStrategy implements MatchingStrategy {
     return found;
   }
 
-  private static double sumCachedCosts(OptimalPlan optimalPlan){
+  private static double sumCachedCosts(OptimalPlan optimalPlan)
+  {
     optimalPlan.computeInternalPlanCost();  // sum all subplans' costs.
     return optimalPlan.getInternalCost();
   }

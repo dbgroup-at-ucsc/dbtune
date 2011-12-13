@@ -8,7 +8,8 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface OptimalPlansParser {
+public interface OptimalPlansParser
+{
   /**
    * parses the returned optimal plans in a String form. These plans are then turned into
    * a set of optimalplan objects.

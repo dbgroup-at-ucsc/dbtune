@@ -3,13 +3,15 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
-public class IBGBestBenefitFinder {
+public class IBGBestBenefitFinder
+{
 	private final IndexBitSet visited = new IndexBitSet();
 	private final IndexBitSet bitset_Ya = new IndexBitSet();
 	private final IBGNodeQueue pending = new IBGNodeQueue();
 	private final IBGCoveringNodeFinder finder = new IBGCoveringNodeFinder();
 	
-	public double bestBenefit(IndexBenefitGraph ibg, int indexId, IndexBitSet M) {
+	public double bestBenefit(IndexBenefitGraph ibg, int indexId, IndexBitSet M)
+{
 		visited.clear();
 		pending.reset();
 		

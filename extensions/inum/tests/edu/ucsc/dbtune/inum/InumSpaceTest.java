@@ -12,8 +12,10 @@ import org.junit.Test;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumSpaceTest {
-  @Test public void testPopulateInumSpace() throws Exception {
+public class InumSpaceTest
+{
+  @Test public void testPopulateInumSpace() throws Exception
+ {
     final InumSpace     space = new InMemoryInumSpace();
     final Configuration key   = SharedFixtures.configureConfiguration();
     final Set<OptimalPlan> plans = space.save(key, SharedFixtures.configureOptimalPlans());
@@ -21,7 +23,8 @@ public class InumSpaceTest {
     assertThat(!space.getAllSavedOptimalPlans().isEmpty(), is(true));
   }
 
-  @Test public void testClearingInumSpace() throws Exception {
+  @Test public void testClearingInumSpace() throws Exception
+ {
     final InumSpace     space = new InMemoryInumSpace();
     final Configuration key   = SharedFixtures.configureConfiguration();
     final Set<OptimalPlan> plans = space.save(key, SharedFixtures.configureOptimalPlans());
@@ -30,7 +33,8 @@ public class InumSpaceTest {
     assertThat(space.getAllSavedOptimalPlans().isEmpty(), is(true));
   }
 
-  @Test public void testRetrievalOfOptimalPlansPerKey() throws Exception {
+  @Test public void testRetrievalOfOptimalPlansPerKey() throws Exception
+ {
     final InumSpace     space = new InMemoryInumSpace();
     final Configuration key   = SharedFixtures.configureConfiguration();
     space.save(key, SharedFixtures.configureOptimalPlans());

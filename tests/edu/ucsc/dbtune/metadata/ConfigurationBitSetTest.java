@@ -21,7 +21,8 @@ public class ConfigurationBitSetTest
     private static Configuration allIndexes = new Configuration("all");
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() throws Exception
+    {
         for (Index index : configureCatalog().<Schema>findByName("schema_0").indexes())
             allIndexes.add(index);
     }

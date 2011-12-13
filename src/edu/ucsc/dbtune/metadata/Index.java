@@ -578,14 +578,16 @@ public class Index extends DatabaseObject implements Iterable<Column>
      * {@inheritDoc}
      */
     @Override
-    public Iterator<Column> iterator() {
+    public Iterator<Column> iterator()
+    {
         return Objects.<Iterator<Column>>as(containees.iterator());
     }
 
     /**
      * {@inheritDoc}
      */
-    public Iterable<Column> columns() {
+    public Iterable<Column> columns()
+    {
         return Objects.<Iterable<Column>>as(containees);
     }
 
@@ -593,7 +595,8 @@ public class Index extends DatabaseObject implements Iterable<Column>
      * {@inheritDoc}
      */
     @Override
-    public boolean isValid(DatabaseObject dbo) {
+    public boolean isValid(DatabaseObject dbo)
+    {
         return dbo instanceof Column;
     }
 }

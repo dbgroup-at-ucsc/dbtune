@@ -31,7 +31,8 @@ public class Workload implements Iterable<SQLStatement>
      * @throws SQLException
      *     if a statement can't get a category assigned to it
      */
-    public Workload(Reader workloadStream) throws IOException,SQLException {
+    public Workload(Reader workloadStream) throws IOException,SQLException
+    {
         BufferedReader reader;
         String         line;
         String         lineLow;
@@ -62,7 +63,8 @@ public class Workload implements Iterable<SQLStatement>
      * @param i
      *     index of the SQL statement retrieved
      */
-    public SQLStatement get(int i) {
+    public SQLStatement get(int i)
+    {
         return sqls.get(i);
     }
 
@@ -70,7 +72,8 @@ public class Workload implements Iterable<SQLStatement>
      * {@inheritDoc}
      */
     @Override
-    public Iterator<SQLStatement> iterator() {
+    public Iterator<SQLStatement> iterator()
+    {
         return sqls.iterator();
     }
 

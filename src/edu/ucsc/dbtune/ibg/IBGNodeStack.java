@@ -11,7 +11,8 @@ public class IBGNodeStack
     /**
      * construct a new {@link IBGNodeStack} object.
      */
-    public IBGNodeStack(){
+    public IBGNodeStack()
+    {
         this(new DefaultStack<Object>());
     }
 

@@ -25,13 +25,15 @@ import static org.junit.Assert.assertThat;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InterestingOrdersExtractorTest {
+public class InterestingOrdersExtractorTest
+{
   private static final String SAMPLE_QUERY = "SELECT column_1, column_2\n"
       + "FROM schema_1.table_1\n"
       + "WHERE column_1 = 'IBM'\n"
       + "ORDER BY column_1 DESC, column_2 ASC;";
 
-  @Test public void testExtractInterestingOrders() throws Exception {
+  @Test public void testExtractInterestingOrders() throws Exception
+ {
     final Catalog                    catalog        = DBTuneInstances.configureCatalog();
     final ColumnPropertyLookup       columnProperty = configureProperty();
     final InterestingOrdersExtractor extractor      = new InumInterestingOrdersExtractor(catalog, columnProperty);
@@ -39,7 +41,8 @@ public class InterestingOrdersExtractorTest {
     assertThat(ios.toList().isEmpty(), is(false));
   }
 
-  private static ColumnPropertyLookup configureProperty() throws Exception {
+  private static ColumnPropertyLookup configureProperty() throws Exception
+  {
     final ColumnPropertyLookup prop       = Mockito.mock(ColumnPropertyLookup.class);
     final Connection  connection = SharedFixtures.configureConnection();
     Mockito.when(prop.getDatabaseConnection()).thenReturn(connection);
@@ -55,14 +58,16 @@ public class InterestingOrdersExtractorTest {
     return prop;
   }
 
-  private static Set<ColumnInformation> populateColumnInformationSet(){
+  private static Set<ColumnInformation> populateColumnInformationSet()
+  {
     return Sets.newHashSet(
         singleColumnInformation("column_1", 1, INT),
         singleColumnInformation("column_2", 2, INT)
     );
   }
 
-  private static Properties populateProperties(String tableName, Set<ColumnInformation> columnInformationSet) {
+  private static Properties populateProperties(String tableName, Set<ColumnInformation> columnInformationSet)
+  {
     final Properties properties = new Properties();
     for (ColumnInformation each : columnInformationSet){
       properties.setProperty(each.columnName.toUpperCase(), tableName);
@@ -70,7 +75,8 @@ public class InterestingOrdersExtractorTest {
     return properties;
   }
 
-  private static ColumnInformation singleColumnInformation(String colName, int attnum, int columnType){
+  private static ColumnInformation singleColumnInformation(String colName, int attnum, int columnType)
+  {
     final ColumnInformation info = new ColumnInformation();
     info.columnName = colName;
     info.attnum     = attnum;

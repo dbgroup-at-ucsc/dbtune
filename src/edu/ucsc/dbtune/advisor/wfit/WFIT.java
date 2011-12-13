@@ -13,7 +13,8 @@ import java.sql.SQLException;
 /**
  * WFIT
  */
-public class WFIT extends Advisor {
+public class WFIT extends Advisor
+{
 	List<PreparedSQLStatement> qinfos;
 	List<Double> overheads;
 	List<Configuration> configurations;
@@ -55,7 +56,8 @@ public class WFIT extends Advisor {
 	 *             if the given statement can't be processed
 	 */
 	@Override
-	public void process(SQLStatement sql) throws SQLException {
+	public void process(SQLStatement sql) throws SQLException
+{
 		PreparedSQLStatement qinfo;
 
 		qinfo = optimizer.prepareExplain(sql);
@@ -82,7 +84,8 @@ public class WFIT extends Advisor {
 	 *             if the given statement can't be processed
 	 */
 	@Override
-	public Configuration getRecommendation() throws SQLException {
+	public Configuration getRecommendation() throws SQLException
+{
 		if (qinfos.size() == 0) {
 			return new Configuration("");
 		}
@@ -90,11 +93,13 @@ public class WFIT extends Advisor {
 		return configurations.get(qinfos.size() - 1);
 	}
 
-	public PreparedSQLStatement getStatement(int i) {
+	public PreparedSQLStatement getStatement(int i)
+{
 		return qinfos.get(i);
 	}
 	/*
-	 * public IndexPartitions getPartitions() { return partitions; }
+	 * public IndexPartitions getPartitions()
+ { return partitions; }
 	 * 
 	 * private IndexPartitions getIndexPartitions( Configuration candidateSet,
 	 * List<ExplainedSQLStatement> qinfos, int maxNumIndexes, int maxNumStates,

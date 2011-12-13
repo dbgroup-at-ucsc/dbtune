@@ -10,8 +10,10 @@ import java.util.Arrays;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class Objects {
-    private Objects(){}
+public class Objects
+{
+    private Objects()
+    {}
     
     /**
      * check if two objects are equal.
@@ -22,7 +24,8 @@ public class Objects {
      * @return
      *      {@code true} if equal. {@code false} otherwise.
      */
-    public static boolean equals(Object o1, Object o2) {
+    public static boolean equals(Object o1, Object o2)
+    {
         return o1 == o2 || !(o1 == null || o2 == null) && o1.equals(o2);
     }
 
@@ -33,7 +36,8 @@ public class Objects {
      * @return
      *      hashcode.
      */
-    public static int hashCode(Object... objects){
+    public static int hashCode(Object... objects)
+    {
       int result = HashCodeUtil.SEED;
       for (Object each : objects){
          result = HashCodeUtil.hash(result, each); 
@@ -56,16 +60,19 @@ public class Objects {
      * @return
      *      E or cast object.
      */
-    public static <T, E extends T> E cast(T me, Class<? extends E> to){
+    public static <T, E extends T> E cast(T me, Class<? extends E> to)
+    {
         return !to.isPrimitive() ? to.cast(me) : Objects.<E>as(me);
     }
 
     @SuppressWarnings({"unchecked"})
-    public static <T> T as(Object obj){
+    public static <T> T as(Object obj)
+    {
         return (T) obj;
     }
 
-    public static <T> Class<T> discoverClass(T instance){
+    public static <T> Class<T> discoverClass(T instance)
+    {
         return as(instance.getClass());
     }
 
@@ -81,7 +88,8 @@ public class Objects {
      * @return
      *      {@code true} if both classes are in the same club.
      */
-    public static boolean inTheClub(Class<?> owner, Class<?> applicant){
+    public static boolean inTheClub(Class<?> owner, Class<?> applicant)
+    {
         return ((owner.isAssignableFrom(applicant)) || (owner == applicant) || (applicant.isInstance(owner)));
     }
 
@@ -92,7 +100,8 @@ public class Objects {
      * @return
      *      raw type in the form of a class.
      */
-    public static Class<?> raw(Type type){
+    public static Class<?> raw(Type type)
+    {
         if (type instanceof Class<?>) {
             // type is a normal class.
             return (Class<?>) type;
@@ -127,7 +136,8 @@ public class Objects {
   *
   * Example use case:
   * <pre>
-  *  public int hashCode(){
+  *  public int hashCode()
+  {
   *    int result = HashCodeUtil.SEED;
   *    //collect the contributions of various fields
   *    result = HashCodeUtil.hash(result, fPrimitive);
@@ -139,7 +149,8 @@ public class Objects {
    *
    * @see <a href="http://www.javapractices.com/topic/TopicAction.do?Id=28">JavaPractices</a>
   */
-  private static final class HashCodeUtil {
+  private static final class HashCodeUtil
+  {
   
     /**
     * An initial value for a <code>hashCode</code>, to which is added contributions
@@ -151,7 +162,8 @@ public class Objects {
   
     private static final int ODD_PRIME_NUMBER = 37;
   
-    private static int firstTerm( int aSeed ){
+    private static int firstTerm( int aSeed )
+    {
       return ODD_PRIME_NUMBER * aSeed;
     }
   
@@ -159,7 +171,8 @@ public class Objects {
     * booleans.
     */
     @SuppressWarnings("unused")
-    public static int hash( int aSeed, boolean aBoolean ) {
+    public static int hash( int aSeed, boolean aBoolean )
+    {
       return firstTerm( aSeed ) + ( aBoolean ? 1 : 0 );
     }
   
@@ -167,14 +180,16 @@ public class Objects {
     * chars.
     */
     @SuppressWarnings("unused")
-    public static int hash( int aSeed, char aChar ) {
+    public static int hash( int aSeed, char aChar )
+    {
       return firstTerm( aSeed ) + (int)aChar;
     }
   
     /**
     * ints.
     */
-    public static int hash( int aSeed , int aInt ) {
+    public static int hash( int aSeed , int aInt )
+    {
       /*
       * Implementation Note
       * Note that byte and short are handled by this method, through
@@ -186,7 +201,8 @@ public class Objects {
     /**
     * longs.
     */
-    public static int hash( int aSeed , long aLong ) {
+    public static int hash( int aSeed , long aLong )
+    {
       return firstTerm(aSeed)  + (int)( aLong ^ (aLong >>> 32) );
     }
   
@@ -194,7 +210,8 @@ public class Objects {
     * floats.
     */
     @SuppressWarnings("unused")
-    public static int hash( int aSeed , float aFloat ) {
+    public static int hash( int aSeed , float aFloat )
+    {
       return hash( aSeed, Float.floatToIntBits(aFloat) );
     }
   
@@ -202,7 +219,8 @@ public class Objects {
     * doubles.
     */
     @SuppressWarnings("unused")
-    public static int hash( int aSeed , double aDouble ) {
+    public static int hash( int aSeed , double aDouble )
+    {
       return hash( aSeed, Double.doubleToLongBits(aDouble) );
     }
   
@@ -212,7 +230,8 @@ public class Objects {
     * If <code>aObject</code> is an array, then each element may be a primitive
     * or a possibly-null object.
     */
-    public static int hash( int aSeed , Object aObject ) {
+    public static int hash( int aSeed , Object aObject )
+    {
       int result = aSeed;
       if ( aObject == null) {
         result = hash(result, 0);
@@ -229,7 +248,8 @@ public class Objects {
       return result;
     }
   
-    private static boolean isArray(Object anObject){
+    private static boolean isArray(Object anObject)
+    {
       return anObject.getClass().isArray();
     }
   }   

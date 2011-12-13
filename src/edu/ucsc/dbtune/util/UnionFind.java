@@ -1,20 +1,23 @@
 package edu.ucsc.dbtune.util;
 
-public class UnionFind {
+public class UnionFind
+{
     private int eltCount;
     private Elt[] elts;
     
     /*
      * A union-find structure for eltCount0 elements
      */
-    public UnionFind(int eltCount0) {
+    public UnionFind(int eltCount0)
+    {
         eltCount = eltCount0;
         elts = new Elt[eltCount0];
         for (int i = 0; i < eltCount0; i++)
             elts[i] = new Elt(i);
     }
     
-    public final void clear() {
+    public final void clear()
+    {
         for (int i = 0; i < eltCount; i++)
             elts[i].reset(i);
     }
@@ -24,7 +27,8 @@ public class UnionFind {
      * It will not print sets that are disjoint from the filter.
      * Other sets might be printed.
      */
-    public void print(IndexBitSet filter) {
+    public void print(IndexBitSet filter)
+    {
         Elt[] tempElts = flip();
         
         for (int e = 0; e < eltCount; e++) {
@@ -45,7 +49,8 @@ public class UnionFind {
      * output array will store that partition starting at position e and
      * following parent pointers from there.
      */
-    private Elt[] flip() {
+    private Elt[] flip()
+    {
         Elt[] tempElts = new Elt[eltCount];
         
         // create list roots
@@ -71,7 +76,8 @@ public class UnionFind {
         return tempElts;
     }
     
-    public final void union(int e1, int e2) {
+    public final void union(int e1, int e2)
+    {
         assert(0 <= e1 && e1 < eltCount);
         assert(0 <= e2 && e2 < eltCount);
         
@@ -91,7 +97,8 @@ public class UnionFind {
         }
     }
     
-    public final int find(int e) {
+    public final int find(int e)
+    {
         assert(0 <= e && e < eltCount);
         
         int rep = e;
@@ -110,7 +117,8 @@ public class UnionFind {
     }
 
     // return the partitioning of elements 
-    public IndexBitSet[] sets() {
+    public IndexBitSet[] sets()
+    {
         int setCount = numSets();
         IndexBitSet[] sets = new IndexBitSet[setCount];
         for (int i = 0; i < setCount; i++)
@@ -137,7 +145,8 @@ public class UnionFind {
         return sets;
     }
     
-    private class Elt {
+    private class Elt
+    {
         int parent;
         int rank;
         
@@ -152,7 +161,8 @@ public class UnionFind {
         }
     }
 
-    public final int numSets() {
+    public final int numSets()
+    {
         int setCount;
         
         // count the sets we'll need and initialize them

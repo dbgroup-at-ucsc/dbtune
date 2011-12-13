@@ -8,7 +8,8 @@ import edu.ucsc.dbtune.util.ToStringBuilder;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-public class BcBenefitInfo {
+public class BcBenefitInfo
+{
     private final double[]              origCosts;
     private final double[]              newCosts;
     private final int[]                 reqLevels;
@@ -87,7 +88,8 @@ public class BcBenefitInfo {
      *      index's id
      * @return the new cost of an index.
      */
-    public double newCost(int id) {
+    public double newCost(int id)
+    {
         return newCosts[id];
     }
 
@@ -97,7 +99,8 @@ public class BcBenefitInfo {
      *      index's id
      * @return the original cost of an index.
      */
-    public double origCost(int id) {
+    public double origCost(int id)
+    {
         return origCosts[id];
     }
 
@@ -107,7 +110,8 @@ public class BcBenefitInfo {
      *      index's id
      * @return the required level of an index.
      */
-    public int reqLevel(int id) {
+    public int reqLevel(int id)
+    {
         return reqLevels[id];
     }
 
@@ -117,19 +121,22 @@ public class BcBenefitInfo {
      *      index's id
      * @return the overhead of an index.
      */
-    public double overhead(int id) {
+    public double overhead(int id)
+    {
         return overheads[id];
     }
 
     /**
      * @return the {@link ExplainedSQLStatement} used in this {@code BcBenefitInfo} object.
      */
-    public ExplainedSQLStatement getProfiledQuery(){
+    public ExplainedSQLStatement getProfiledQuery()
+    {
         return profiledQuery;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return new ToStringBuilder<BcBenefitInfo>(this)
                .add("origCosts", Arrays.toString(origCosts))
                .add("newCosts", Arrays.toString(newCosts))

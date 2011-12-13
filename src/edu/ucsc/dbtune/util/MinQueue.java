@@ -1,19 +1,22 @@
 package edu.ucsc.dbtune.util;
 
-public class MinQueue<E> {
+public class MinQueue<E>
+{
     private double[] priorities;
     private Object[] elements;
     private int size;
     
     /* make an empty heap, with a fixed capacity */
-    public MinQueue(int cap) {
+    public MinQueue(int cap)
+    {
         priorities = new double[cap+1];
         elements = new Object[cap+1];
         size = 0;
     }
     
     /* make a heap for the given elements, which begin with priority zero */
-    public MinQueue(E[] array) {
+    public MinQueue(E[] array)
+    {
         size = array.length;
         priorities = new double[size+1];
         elements = new Object[size+1];
@@ -21,27 +24,33 @@ public class MinQueue<E> {
             elements[i+1] = array[i];
     }
     
-    private final int parent(int i) {
+    private final int parent(int i)
+    {
         return i / 2;
     }
     
-    private final int right(int i) {
+    private final int right(int i)
+    {
         return 1 + i * 2;
     }
     
-    private final int left(int i) {
+    private final int left(int i)
+    {
         return i * 2;
     }
     
-    private final void set(int i, double priority, Object elt) {
+    private final void set(int i, double priority, Object elt)
+    {
         priorities[i] = priority;
         elements[i] = elt;
     }
     
     @SuppressWarnings("unchecked")
-    private final E getElement(int i) { return (E) elements[i]; }
+    private final E getElement(int i)
+    { return (E) elements[i]; }
     
-    public void insertKey(E elt, double priority) {
+    public void insertKey(E elt, double priority)
+    {
         int i;
         
         assert(priority <= Double.MAX_VALUE);
@@ -63,7 +72,8 @@ public class MinQueue<E> {
         set(i, priority, elt);
     }
     
-    public E deleteMin() {
+    public E deleteMin()
+    {
         E minElement;
         int i, last;
         
@@ -109,25 +119,29 @@ public class MinQueue<E> {
         return minElement;
     }
 
-    public final E peekMin() {
+    public final E peekMin()
+    {
         if (size == 0)
             return null;
         else 
             return getElement(1);
     }
 
-    public final double minPriority() {
+    public final double minPriority()
+    {
         if (size == 0)
             return Double.POSITIVE_INFINITY;
         else 
             return priorities[1];
     }
         
-    public final int size() {
+    public final int size()
+    {
         return size;
     }
     
-    public final void clear() {
+    public final void clear()
+    {
         size = 0;
     }
 }

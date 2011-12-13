@@ -3,7 +3,8 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
-public class IBGMonotonicEnforcer {
+public class IBGMonotonicEnforcer
+{
     private final IndexBitSet visited;
     private final IBGNodeQueue  pending;
     private final SubSearch     sub;
@@ -11,7 +12,8 @@ public class IBGMonotonicEnforcer {
     /**
      * construct an {@link IBGMonotonicEnforcer} object.
      */
-    public IBGMonotonicEnforcer(){
+    public IBGMonotonicEnforcer()
+    {
         this(new IndexBitSet(), new IBGNodeQueue(), new SubSearch());
     }
 
@@ -35,7 +37,8 @@ public class IBGMonotonicEnforcer {
      * @param ibg
      *      the {@link IndexBenefitGraph} to be fixed.
      */
-    public void fix(IndexBenefitGraph ibg) {
+    public void fix(IndexBenefitGraph ibg)
+    {
         visited.clear();
         pending.reset();
         
@@ -66,11 +69,13 @@ public class IBGMonotonicEnforcer {
     /**
      * a Subsearch space in the {@link IndexBenefitGraph}.
      */
-    private static class SubSearch {
+    private static class SubSearch
+    {
         private final IndexBitSet visited = new IndexBitSet();
         private final IBGNodeStack pending = new IBGNodeStack();
         
-        private void fixSubsets(IndexBenefitGraph ibg, IndexBitSet config, double cost) {
+        private void fixSubsets(IndexBenefitGraph ibg, IndexBitSet config, double cost)
+        {
             visited.clear();
             pending.reset();
             

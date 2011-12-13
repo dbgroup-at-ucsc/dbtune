@@ -9,7 +9,8 @@ import org.junit.Test;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class SQLFormatterTest {
+public class SQLFormatterTest
+{
   private static final String FORMATTED_SHORT_QUERY = "\n"
       + "    Select\n"
       + "        * \n"
@@ -18,7 +19,8 @@ public class SQLFormatterTest {
       + "    where\n"
       + "        lala.ID == 1;";
 
-  @Test public void testShortQueryFormat() throws Exception {
+  @Test public void testShortQueryFormat() throws Exception
+ {
     final String shortQuery = "Select * from lala where lala.ID == 1;";
     final SqlFormatter formatter = new SqlFormatter(shortQuery);
     final String formatted = formatter.format();

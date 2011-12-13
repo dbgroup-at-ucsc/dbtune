@@ -2,11 +2,13 @@ package edu.ucsc.dbtune.advisor.bc;
 
 import edu.ucsc.dbtune.metadata.Index;
 
-public class BcIndexInfo {
+public class BcIndexInfo
+{
     /*
      * State of the index, materialized or not
      */
-    public enum State { MATERIALIZED, HYPOTHETICAL }
+    public enum State
+    { MATERIALIZED, HYPOTHETICAL }
     State state = State.HYPOTHETICAL;
     
     /* 
@@ -74,19 +76,24 @@ public class BcIndexInfo {
         deltaMax = delta;
     }
 
-    public double origCost(int level) { return origCost[level]; }
-    public double newCost(int level) { return newCost[level]; }
+    public double origCost(int level)
+    { return origCost[level]; }
+    public double newCost(int level)
+    { return newCost[level]; }
 
 
-    public double residual(double creationCost) {
+    public double residual(double creationCost)
+    {
         return creationCost - (deltaMax - delta);
     }
     
-    public double benefit(double creationCost) {
+    public double benefit(double creationCost)
+    {
         return (delta - deltaMin) - creationCost;
     }
     
-    public String toString(Index idx) {
+    public String toString(Index idx)
+    {
         return "   DELTA = " + delta + "\n" +
                "         = " + origCost[0] + " - " + newCost[0] + "\n" +
                "         = " + origCost[1] + " - " + newCost[1] + "\n" +

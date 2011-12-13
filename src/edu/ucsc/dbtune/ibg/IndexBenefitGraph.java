@@ -215,7 +215,8 @@ public class IndexBenefitGraph
          * Return the used indexes from this node.
          * @return The {@link IndexBitSet} denoting the used indexes
          */
-        public final IndexBitSet getUsedIndexes() {
+        public final IndexBitSet getUsedIndexes()
+        {
             assert(isExpanded());
             return usedIndexes;
         }

@@ -12,9 +12,11 @@ import static edu.ucsc.dbtune.util.BinaryTree.RIGHT;
 /**
  * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)
  */
-public class BinaryTreeTest {
+public class BinaryTreeTest
+{
     @Test
-    public void testBasicUsage() {
+    public void testBasicUsage()
+    {
         BinaryTree<String> tree = new BinaryTree<String>("F");
 
         assertThat(tree.getRootElement(), is("F"));

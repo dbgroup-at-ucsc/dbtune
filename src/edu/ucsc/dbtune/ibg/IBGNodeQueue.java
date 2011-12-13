@@ -4,13 +4,15 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.DefaultQueue;
 
-public class IBGNodeQueue {
+public class IBGNodeQueue
+{
     private final DefaultQueue<Object> queue;
 
     /**
      * construct a new {@link IBGNodeQueue} object.
      */
-    public IBGNodeQueue(){
+    public IBGNodeQueue()
+    {
         this(new DefaultQueue<Object>());
     }
 
@@ -86,7 +88,8 @@ public class IBGNodeQueue {
     /**
      * @return the top node in queue without removing it from the queue.
      */
-    public IBGNode peek() {
+    public IBGNode peek()
+    {
         if (queue.isEmpty()){
             return null;
         }

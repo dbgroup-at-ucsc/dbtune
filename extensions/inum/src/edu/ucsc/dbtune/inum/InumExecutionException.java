@@ -6,8 +6,10 @@ package edu.ucsc.dbtune.inum;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 @SuppressWarnings("serial")
-public class InumExecutionException extends RuntimeException {
-  public InumExecutionException(String s) {
+public class InumExecutionException extends RuntimeException
+{
+  public InumExecutionException(String s)
+  {
     super(s);
   }
 }
