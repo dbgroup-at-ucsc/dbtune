@@ -17,7 +17,6 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.metadata.Index;
@@ -44,6 +43,8 @@ import java.util.HashSet;
  * @author Karl Schnaitter
  * @author Huascar Sanchez
  * @author Ivo Jimenez
+ * @author Ivo Jimenez
+ *
  * @see <a href="http://portal.acm.org/citation.cfm?id=1687766">
  *     Index interactions in physical design tuning: modeling, analysis, and applications</a>
  */
@@ -52,10 +53,10 @@ public class IndexBenefitGraphConstructor
 	/* 
 	 * Parameters of the construction.
 	 */
-    protected final Optimizer optimizer;
-	protected SQLStatement sql;
-	protected CandidatePool.Snapshot candidateSet;
+    protected SQLStatement sql;
     protected ConfigurationBitSet configuration;
+    protected final Optimizer optimizer;
+    protected CandidatePool.Snapshot candidateSet;
 
     /* Counter for assigning unique node IDs */
 	private int nodeCount;
@@ -94,7 +95,13 @@ public class IndexBenefitGraphConstructor
      * Creates an IBG constructor that uses the given optimizer to execute optimization calls.
      *
      * @param optimizer
-     *     optimizer delegate that is being used.
+     *     optimizer delegate that is being used
+     * @param sql
+     *     statement the IBG is being built for
+     * @param conf
+     *      a set of candidate indexes.
+     * @throws java.sql.SQLException
+     *      an unexpected error has occurred.
 	 */
     public IndexBenefitGraphConstructor(
             Optimizer optimizer,
@@ -116,23 +123,33 @@ public class IndexBenefitGraphConstructor
         queue.add(rootNode);
     }
 	
+    /**
+     * @return cost of the workload under the empty configuration, stored in emptyCost.
+     */
 	public final double emptyCost() {
 		return emptyCost;
 	}
 	
+    /**
+     * @return the {@link IBGNode root node}.
+     */
 	public final IBGNode rootNode() {
 		return rootNode;
 	}
 	
+    /**
+     * @return the number of nodes that were constructed.
+     */
 	public final int nodeCount() {
 		return nodeCount;
 	}
 
-	public final int getOptimizationCount() {
-		return optCount;
-	}
-
-	public final boolean isUsed(int i) {
+    /**
+     * @param i
+     *      position of index in the bit set of used indexes.
+     * @return {@code true} if the node is a used node.
+     */
+    public final boolean isUsed(int i) {
 		return isUsed.get(i);
 	}
 	
@@ -142,6 +159,8 @@ public class IndexBenefitGraphConstructor
 
 	/*
 	 * Wait for a specific node to be expanded
+     * @param node
+     *      a node to be expanded.
 	 */
     public final void waitUntilExpanded(IBGNode node)
     {
@@ -150,6 +169,7 @@ public class IndexBenefitGraphConstructor
                 try {
                     nodeExpansionMonitor.wait();
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
         }
     }
@@ -162,7 +182,7 @@ public class IndexBenefitGraphConstructor
 	 */
 	public boolean buildNode() throws SQLException {
 		IBGNode newNode, coveringNode;
-        ExplainedSQLStatement sqlP; // may be useful to store the prepared statement to use it later
+        ExplainedSQLStatement stmt;
 		double totalCost;
 
 		if (queue.isEmpty())
@@ -173,34 +193,21 @@ public class IndexBenefitGraphConstructor
 		// get cost and used set (stored into usedBitSet)
 		usedBitSet.clear();
         coveringNode = coveringNodeFinder.find(rootNode, newNode.getConfiguration());
-		if (coveringNode != null)
-        {
+        if (coveringNode != null) {
 			totalCost = coveringNode.cost();
 			coveringNode.addUsedIndexes(usedBitSet);
-		}
-		else
-        {
-            // Translation from Karl's framework to DBTune:
-            //   - transform newNode.getConfiguration() to a Configuration object
-            //   - call the optimizer on it
-            //   - turn on the elements in usedBitSet object according to getUsedConfiguration()
-            Configuration newNodeConf = new Configuration("from_bitset");
+        } else {
+            stmt =
+                optimizer.explain(
+                    sql, new ConfigurationBitSet(configuration, newNode.config));
+            totalCost = stmt.getTotalCost();
 
-            for (Index idx : configuration)
-                if (newNode.getConfiguration().get(configuration.getOrdinalPosition(idx)))
-                    newNodeConf.add(idx);
-
-            optCount++;
-            sqlP = optimizer.explain(sql, newNodeConf);
-
-            // XXX: we may want to keep track of the PreparedSQLStatement for each of the 
-            // corresponding optimization calls
-
-            totalCost = sqlP.getCost();
-
-            for (Index idx : sqlP.getUsedConfiguration())
-                usedBitSet.set(configuration.getOrdinalPosition(idx));
-		}
+            for(Index idx : configuration) {
+                if(stmt.isUsed(idx)) {
+                    usedBitSet.set(configuration.getOrdinalPosition(idx));
+                }
+            }
+        }
 		
 		// create the child list
 		// if any IBGNode did not exist yet, add it to the queue
@@ -220,8 +227,7 @@ public class IndexBenefitGraphConstructor
 			}
 			childBitSet.set(u);
 			
-            IndexBenefitGraph.IBGNode.IBGChild child =
-                new IndexBenefitGraph.IBGNode.IBGChild(childNode, u);
+            IBGNode.IBGChild child = new IBGNode.IBGChild(childNode, u);
 
 			if (firstChild == null) {
 				firstChild = lastChild = child;
@@ -256,6 +262,12 @@ public class IndexBenefitGraphConstructor
 	public void setEmptyCost(double cost) {
 		emptyCost = cost;
 	}
+
+    public final int getOptimizationCount()
+    {
+		return optCount;
+	}
+
 
     public static class CandidatePool
     {

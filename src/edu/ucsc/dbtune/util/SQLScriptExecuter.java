@@ -36,6 +36,10 @@ public class SQLScriptExecuter {
      *     the connection to use for the script
      * @param filename
      *     the path to the SQL script
+     * @param before
+     *      set autocommit(before) executing the query.
+     * @param after
+     *      set autocommit(after)  executing the query.
      * @throws SQLException
      *     if any SQL errors occur
      * @throws IOException

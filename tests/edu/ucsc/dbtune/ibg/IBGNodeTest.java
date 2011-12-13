@@ -258,8 +258,6 @@ public class IBGNodeTest
         assertThat(child5.node,is(tmpchild5.node));
         assertThat(child6.node,is(tmpchild6.node));
         assertThat(child7.node,is(tmpchild7.node));
-        if (child8 == null) System.out.println("child8 is null");
-        if (tmpchild8 == null) System.out.println("tmpchild8 is null");
         assertThat(child8.node,is(tmpchild8.node));
 
         // "leafs"

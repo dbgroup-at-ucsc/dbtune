@@ -31,8 +31,10 @@ import java.util.BitSet;
  * List<DBIndex> conf = getCandidatePool();
  * IndexBitSet   bs   = new IndexBitSet();
  * 
- * for (Index i : conf) {
- *     bs.set(conf.indexOf(i));
+ * for (I index : pool) {
+ *     if (pool.get(index.internalId()).state == State.RECOMMENDED){
+ *         bs.set(index.internalId());
+ *     }
  * }
  * </code>
  * <p>

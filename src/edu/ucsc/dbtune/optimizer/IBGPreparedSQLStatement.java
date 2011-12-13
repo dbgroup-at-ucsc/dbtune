@@ -91,6 +91,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
         super(other);
 
         this.ibg = other.ibg;
+        this.universe	= other.universe;
     }
 
     /**
@@ -136,7 +137,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
         if (ibg==null) {
             // Time to build the IBG
             int oldOptimizationCount = optimizer.getWhatIfCount();
-            ibg = ((IBGOptimizer)optimizer).buildIBG(sql, new ConfigurationBitSet(configuration));
+            ibg = ((IBGOptimizer)optimizer).buildIBG(sql, configuration);
             int optimizationCount = optimizer.getWhatIfCount() - oldOptimizationCount;
             
             universe = new Configuration(configuration);
@@ -152,6 +153,11 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
                     " not contained in statement's" + getUniverse());
         }
 
+        if (configuration.isEmpty()) {
+        	double cost = getIndexBenefitGraph().emptyCost();
+        	return new ExplainedSQLStatement( getSQLStatement(), cost, optimizer, configuration, new Configuration("Empty"), 0);
+        } 
+
         ConfigurationBitSet configurationBitSet = null;
 
         if (configuration instanceof ConfigurationBitSet ) {
@@ -162,9 +168,8 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
         
         FindResult result = NODE_FINDER.find(getIndexBenefitGraph(),configurationBitSet);
 
-        if (result == null) { // This is the case where the IBG is incomplete
+        if (result == null) // This is the case where the IBG is incomplete
             throw new SQLException("IBG construction has not completed yet");
-        }
             
         return new ExplainedSQLStatement(
                 getSQLStatement(),

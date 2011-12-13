@@ -91,7 +91,7 @@ public class IndexBenefitGraph
         this.rootNode  = rootNode;
         this.emptyCost = emptyCost;
         this.isUsed    = isUsed;
-	}
+    }
 
     /**
      * Returns the cost associated to the empty configuration.
@@ -102,8 +102,8 @@ public class IndexBenefitGraph
     public final double emptyCost()
     {
         return emptyCost;
-	}
-	
+    }
+    
     /**
      * Returns the root node of the ibg.
      *
@@ -179,6 +179,7 @@ public class IndexBenefitGraph
             id         = id0;
             cost       = -1.0;
             firstChild = null;
+            usedIndexes= new IndexBitSet();
         }
 
         /**
@@ -223,6 +224,15 @@ public class IndexBenefitGraph
             cost = cost0;
             firstChild = firstChild0;
             addUsedIndexes(usedIndexes);
+        }
+
+        /**
+         * Return the used indexes from this node.
+         * @return The {@link IndexBitSet} denoting the used indexes
+         */
+        public final IndexBitSet getUsedIndexes() {
+            assert(isExpanded());
+            return usedIndexes;
         }
 
         /**
@@ -292,15 +302,6 @@ public class IndexBenefitGraph
             cost = cost0;
         }
 
-        /**
-         * Return the used indexes from this node.
-         * @return The {@link IndexBitSet} denoting the used indexes
-         */
-        public final IndexBitSet getUsedIndexes() {
-            assert(isExpanded());
-            return usedIndexes;
-        }
-
         public static class IBGChild
         {
             public final int usedIndex; // the internalID of the used index on this edge
@@ -313,9 +314,88 @@ public class IndexBenefitGraph
                 node = node0;
                 usedIndex = usedIndex0;
             }
+
+            /**
+             * Compares childs. Two childs are equal if they have the same usedIndex node and next.
+             *
+             * @param other
+             *      other object being compared against this
+             */
+            @Override
+            public boolean equals(Object other)
+            {
+                if (other == this)
+                    return true;
+
+                if (!(other instanceof IBGChild))
+                    return false;
+
+                IBGChild ibgchild = (IBGChild) other;
+
+                if (ibgchild.usedIndex == usedIndex && ibgchild.node.id == node.id)
+                    return true;
+
+                return false;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public String toString()
+            {
+                String str = "idx:" + usedIndex + "-to-node:" + node.id;
+
+                for (IBGChild ch = next; ch != null; ch = ch.next)
+                    str += "|idx:" + ch.usedIndex + "-to-node:" + ch.node.id;
+
+                return str;
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean equals(Object other)
+        {
+            if (this == other)
+                return true;
+
+            if (!(other instanceof IBGNode))
+                return false;
+
+            IBGNode o = (IBGNode) other;
+
+            if (!config.equals(o.config) || cost != o.cost )
+                return false;
+
+            if (id != o.id)
+                return false;
+
+            IBGChild ch;
+            IBGChild cho;
+
+            for (ch = firstChild, cho = o.firstChild; ch != null; ch = ch.next, cho = cho.next)
+                if (cho == null || !cho.equals(ch))
+                    return false;
+
+            if (cho != null)
+                return false;
+
+            return true;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String toString()
+        {
+            return "ID: " + id + "; config: " + config + "; cost: " + cost + "; edges: " + firstChild;
         }
     }
-	
+    
     /**
      * Assigns the value of the empty cost. Only used by {@link MonotonicEnforcer}.
      *
