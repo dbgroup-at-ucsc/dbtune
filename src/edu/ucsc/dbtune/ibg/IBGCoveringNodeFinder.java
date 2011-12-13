@@ -53,7 +53,8 @@ public class IBGCoveringNodeFinder
      * @param config
      *      an indexes configuration.
      * @return
-     *      the cost of a particular indexes configuration.
+     *      the cost of a particular indexes configuration. The return result is {@code null} if 
+     *      the IBG is incomplete and no suitable covering node is found.
      */
     public final FindResult find(IndexBenefitGraph ibg, ConfigurationBitSet config)
     {
@@ -69,7 +70,7 @@ public class IBGCoveringNodeFinder
                 ConfigurationBitSet usedConfiguration = new ConfigurationBitSet(config,usedBitSet);
                 return new FindResult(usedConfiguration, foundNode.cost());
             } else {
-                return new FindResult(null,ZERO_COST);
+                return null;
             }
         }
     }
