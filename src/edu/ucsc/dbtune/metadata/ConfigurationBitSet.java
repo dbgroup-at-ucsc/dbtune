@@ -56,8 +56,8 @@ public class ConfigurationBitSet extends Configuration
     {
         if (!this.contains(index))
         {
-            _indexes.add(index);
-            bitSet.set(_indexes.indexOf(index));
+            indexes.add(index);
+            bitSet.set(indexes.indexOf(index));
         }
     }
 
@@ -70,6 +70,6 @@ public class ConfigurationBitSet extends Configuration
     @Override
     public boolean contains(Index index)
     {
-        return bitSet.get(_indexes.indexOf(index));
+        return bitSet.get(indexes.indexOf(index));
     }
 }

@@ -1,40 +1,26 @@
-/* **************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                         *
- *                                                                              *
- *   Licensed under the Apache License, Version 2.0 (the "License");            *
- *   you may not use this file except in compliance with the License.           *
- *   You may obtain a copy of the License at                                    *
- *                                                                              *
- *       http://www.apache.org/licenses/LICENSE-2.0                             *
- *                                                                              *
- *   Unless required by applicable law or agreed to in writing, software        *
- *   distributed under the License is distributed on an "AS IS" BASIS,         *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
- *   See the License for the specific language governing permissions and        *
- *   limitations under the License.                                             *
- * **************************************************************************** */
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
-import org.junit.Test;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureIndexBenefitGraph;
 
-import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThat;
 
 /**
- * Tests of IBG nodes
+ * Tests of IBG nodes.
  *
  * @author Ivo Jimenez
  */
 public class IBGNodeTest
 {
+    // CHECKSTYLE:OFF
     private static IndexBenefitGraph ibg;
     private static IBGNode           root;
     private static IBGNode           node1;
@@ -77,18 +63,13 @@ public class IBGNodeTest
     private static IndexBitSet       used5;
     private static IndexBitSet       used6;
     private static IndexBitSet       used7;
+    // CHECKSTYLE:ON
 
     /**
-     * Creates the following ibg:
-     *
-     *    (*a*,*b*,c):45
-     *    /         \
-     * (a,c):80    (*b*,c):50
-     *               |
-     *              (c):80
+     * Creates the IBG under test.
      */
     @BeforeClass
-    public static void setUp() throws Exception
+    public static void setUp()
     {
         rootibs = new IndexBitSet();
         empty   = new IndexBitSet();
@@ -163,11 +144,11 @@ public class IBGNodeTest
         tmpchild7 = new IBGNode.IBGChild(node6, 3);
         tmpchild8 = new IBGNode.IBGChild(node7, 2);
 
-        root.expand(0,tmpchild1);
-        tmpchild1.node.expand(0,tmpchild3);
-        tmpchild2.node.expand(0,tmpchild5);
-        tmpchild4.node.expand(0,tmpchild6);
-        tmpchild5.node.expand(0,tmpchild7);
+        root.expand(0, tmpchild1);
+        tmpchild1.node.expand(0, tmpchild3);
+        tmpchild2.node.expand(0, tmpchild5);
+        tmpchild4.node.expand(0, tmpchild6);
+        tmpchild5.node.expand(0, tmpchild7);
 
         tmpchild1.next = tmpchild2;
         tmpchild3.next = tmpchild4;
@@ -193,10 +174,10 @@ public class IBGNodeTest
     }
 
     /**
-     * Checks that the constructor operates appropriately
+     * Checks that the constructor operates appropriately.
      */
     @Test
-    public void testConstructor() throws Exception
+    public void testConstructor()
     {
         IndexBitSet ibs = new IndexBitSet();
         IBGNode node    = new IBGNode(ibs, 10);
@@ -208,67 +189,79 @@ public class IBGNodeTest
         assertThat(node.firstChild(), is(nullValue()));
     }
 
+    /**
+     * Checks that the {@link IBGNode#expand} method works correctly.
+     */
     @Test
-    public void testExpansion() throws Exception
+    public void testExpansion()
     {
         assertThat(ibg.rootNode().isExpanded(), is(true));
-        assertThat(node1.isExpanded(),is(true));
-        assertThat(node2.isExpanded(),is(true));
-        assertThat(node3.isExpanded(),is(true));
-        assertThat(node4.isExpanded(),is(true));
-        assertThat(node5.isExpanded(),is(true));
-        assertThat(node6.isExpanded(),is(true));
-        assertThat(node7.isExpanded(),is(true));
+        assertThat(node1.isExpanded(), is(true));
+        assertThat(node2.isExpanded(), is(true));
+        assertThat(node3.isExpanded(), is(true));
+        assertThat(node4.isExpanded(), is(true));
+        assertThat(node5.isExpanded(), is(true));
+        assertThat(node6.isExpanded(), is(true));
+        assertThat(node7.isExpanded(), is(true));
     }
 
+    /**
+     * Checks that the {@link IBGNode#expand} method works correctly.
+     */
     @Test
-    public void testInternalBitSet() throws Exception
+    public void testInternalBitSet()
     {
         assertThat(ibg.rootNode().getConfiguration(), is(rootibs));
-        assertThat(node1.getConfiguration(),is(ibs1));
-        assertThat(node2.getConfiguration(),is(ibs2));
-        assertThat(node3.getConfiguration(),is(ibs3));
-        assertThat(node4.getConfiguration(),is(ibs4));
-        assertThat(node5.getConfiguration(),is(ibs5));
-        assertThat(node6.getConfiguration(),is(ibs6));
-        assertThat(node7.getConfiguration(),is(ibs7));
+        assertThat(node1.getConfiguration(), is(ibs1));
+        assertThat(node2.getConfiguration(), is(ibs2));
+        assertThat(node3.getConfiguration(), is(ibs3));
+        assertThat(node4.getConfiguration(), is(ibs4));
+        assertThat(node5.getConfiguration(), is(ibs5));
+        assertThat(node6.getConfiguration(), is(ibs6));
+        assertThat(node7.getConfiguration(), is(ibs7));
     }
 
+    /**
+     */
     @Test
-    public void testCostAssignment() throws Exception
+    public void testCostAssignment()
     {
         assertThat(ibg.rootNode().cost(), is(20.0));
-        assertThat(node1.cost(),is(45.0));
-        assertThat(node2.cost(),is(50.0));
-        assertThat(node3.cost(),is(80.0));
-        assertThat(node4.cost(),is(50.0));
-        assertThat(node5.cost(),is(65.0));
-        assertThat(node6.cost(),is(80.0));
-        assertThat(node7.cost(),is(80.0));
+        assertThat(node1.cost(), is(45.0));
+        assertThat(node2.cost(), is(50.0));
+        assertThat(node3.cost(), is(80.0));
+        assertThat(node4.cost(), is(50.0));
+        assertThat(node5.cost(), is(65.0));
+        assertThat(node6.cost(), is(80.0));
+        assertThat(node7.cost(), is(80.0));
     }
 
+    /**
+     */
     @Test
-    public void testStructure() throws Exception
+    public void testStructure()
     {
-        assertThat(ibg.rootNode(),is(root));
-        assertThat(child1.node,is(tmpchild1.node));
-        assertThat(child2.node,is(tmpchild2.node));
-        assertThat(child3.node,is(tmpchild3.node));
-        assertThat(child4.node,is(tmpchild4.node));
-        assertThat(child5.node,is(tmpchild5.node));
-        assertThat(child6.node,is(tmpchild6.node));
-        assertThat(child7.node,is(tmpchild7.node));
-        assertThat(child8.node,is(tmpchild8.node));
+        assertThat(ibg.rootNode(), is(root));
+        assertThat(child1.node, is(tmpchild1.node));
+        assertThat(child2.node, is(tmpchild2.node));
+        assertThat(child3.node, is(tmpchild3.node));
+        assertThat(child4.node, is(tmpchild4.node));
+        assertThat(child5.node, is(tmpchild5.node));
+        assertThat(child6.node, is(tmpchild6.node));
+        assertThat(child7.node, is(tmpchild7.node));
+        assertThat(child8.node, is(tmpchild8.node));
 
         // "leafs"
-        assertThat(child3.node.firstChild(),is(nullValue()));
-        assertThat(child6.node.firstChild(),is(nullValue()));
-        assertThat(child7.node.firstChild(),is(nullValue()));
-        assertThat(child8.node.firstChild(),is(nullValue()));
+        assertThat(child3.node.firstChild(), is(nullValue()));
+        assertThat(child6.node.firstChild(), is(nullValue()));
+        assertThat(child7.node.firstChild(), is(nullValue()));
+        assertThat(child8.node.firstChild(), is(nullValue()));
     }
 
+    /**
+     */
     @Test
-    public void testEdges() throws Exception
+    public void testEdges()
     {
         assertThat(child1.usedIndex, is(3));
         assertThat(child2.usedIndex, is(0));
@@ -280,54 +273,58 @@ public class IBGNodeTest
         assertThat(child8.usedIndex, is(2));
     }
 
+    /**
+     */
     @Test
-    public void testUsedAndClearIndexes() throws Exception
+    public void testUsedAndClearIndexes()
     {
         IndexBitSet ibs = new IndexBitSet();
 
         root.addUsedIndexes(ibs);
-        assertThat(ibs,is(usedr));
+        assertThat(ibs, is(usedr));
         root.clearUsedIndexes(ibs);
-        assertThat(ibs,is(empty));
+        assertThat(ibs, is(empty));
 
         node1.addUsedIndexes(ibs);
-        assertThat(ibs,is(used1));
+        assertThat(ibs, is(used1));
         node1.clearUsedIndexes(ibs);
-        assertThat(ibs,is(empty));
+        assertThat(ibs, is(empty));
 
         node2.addUsedIndexes(ibs);
-        assertThat(ibs,is(used2));
+        assertThat(ibs, is(used2));
         node2.clearUsedIndexes(ibs);
-        assertThat(ibs,is(empty));
+        assertThat(ibs, is(empty));
 
         node3.addUsedIndexes(ibs);
-        assertThat(ibs,is(used3));
+        assertThat(ibs, is(used3));
         node3.clearUsedIndexes(ibs);
-        assertThat(ibs,is(empty));
+        assertThat(ibs, is(empty));
 
         node4.addUsedIndexes(ibs);
-        assertThat(ibs,is(used4));
+        assertThat(ibs, is(used4));
         node4.clearUsedIndexes(ibs);
-        assertThat(ibs,is(empty));
+        assertThat(ibs, is(empty));
 
         node5.addUsedIndexes(ibs);
-        assertThat(ibs,is(used5));
+        assertThat(ibs, is(used5));
         node5.clearUsedIndexes(ibs);
-        assertThat(ibs,is(empty));
+        assertThat(ibs, is(empty));
 
         node6.addUsedIndexes(ibs);
-        assertThat(ibs,is(used6));
+        assertThat(ibs, is(used6));
         node6.clearUsedIndexes(ibs);
-        assertThat(ibs,is(empty));
+        assertThat(ibs, is(empty));
 
         node7.addUsedIndexes(ibs);
-        assertThat(ibs,is(used7));
+        assertThat(ibs, is(used7));
         node7.clearUsedIndexes(ibs);
-        assertThat(ibs,is(empty));
+        assertThat(ibs, is(empty));
     }
 
+    /**
+     */
     @Test
-    public void testContainment() throws Exception
+    public void testContainment()
     {
         assertThat(root.usedSetIsSubsetOf(rootibs), is(true));
         assertThat(node1.usedSetIsSubsetOf(rootibs), is(true));
