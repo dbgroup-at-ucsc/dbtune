@@ -11,7 +11,8 @@
     <!-- Checks that property files contain the same keys. -->
     <module name="Translation"/>
 
-    <module name="FileTabCharacter"/>
+    <!-- Allow supression of check by using the comment // CHECKSTYLE:OFF|ON -->
+    <module name="SuppressionCommentFilter"/>
 
     <module name="TreeWalker">
         <!-- Javadoc for class/interface must be present/valid. -->
@@ -20,13 +21,20 @@
            <property name="authorFormat" value="\S"/>
         </module>
 
+	<module name="TabCharacterCheck"/>
+
         <!-- Javadoc for methods must be present/valid. -->
         <module name="JavadocMethod">
           <property name="allowUndeclaredRTE" value="true"/>
         </module>
 
         <!-- Javadoc for class variables must be present/valid. -->
-        <module name="JavadocVariable"/>
+	<module name="JavadocVariable">
+	  <property name="excludeScope" value="protected"/>
+	  <property name="excludeScope" value="private"/>
+	</module>
+
+	<module name="FileContentsHolder"/>
 
         <!-- Javadoc must be well-formed. -->
         <module name="JavadocStyle"/>
@@ -79,9 +87,9 @@
           <property name="separated" value="true"/>
         </module>
 
-        <!-- Lines should be maximum of 100 characters -->
+        <!-- Lines should be maximum of 101 characters -->
                                 <module name="LineLength">
-                                  <property name="max" value="100"/>
+                                  <property name="max" value="101"/>
                                 </module>
 
         <!--  -->
@@ -366,7 +374,9 @@
         <module name="UnnecessaryParentheses"/>
 
         <!-- Make sure only static finals are public -->
-        <module name="VisibilityModifier"/>
+        <module name="VisibilityModifier">
+	    <property name="protectedAllowed" value="true"/>
+	</module>
 
         <!-- Class with private constructor must be final -->
         <module name="FinalClass"/>
@@ -410,7 +420,6 @@
 
         <!-- Avoid trailing comments -->
         <module name="TrailingComment"/>
-
     </module>
 
 </module>

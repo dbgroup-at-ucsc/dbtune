@@ -1,9 +1,12 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.util.DefaultQueue;
 
+/**
+ * @author Karl Schnaitter
+ */
 public class IBGNodeQueue
 {
     private final DefaultQueue<Object> queue;
@@ -22,34 +25,41 @@ public class IBGNodeQueue
      * @param queue
      *      a queue of values that will populate the {@link IBGNodeQueue} object.
      */
-    IBGNodeQueue(DefaultQueue<Object> queue){
+    IBGNodeQueue(DefaultQueue<Object> queue)
+    {
         this.queue = queue;
     }
 
     /**
-     * add child and all siblings (following next pointers) to the queue
+     * add child and all siblings (following next pointers) to the queue.
+     *
      * @param ch
      *      new child node.
      */
-    final void addChildren(IBGChild ch) {
+    final void addChildren(IBGChild ch)
+    {
         if (ch != null) queue.add(ch);
     }
 
     /**
-     * add a single node to the queue
+     * add a single node to the queue.
+     *
      * @param node
      *      new node to be added.
      */
-    final void addNode(IBGNode node) {
+    final void addNode(IBGNode node)
+    {
         queue.add(node);
     }
 
     /**
-     * test if the queue has something remaining
+     * test if the queue has something remaining.
+     *
      * @return
      *      {@code true} if the queue has something remaining.
      */
-    final boolean hasNext() {
+    final boolean hasNext()
+    {
         return !queue.isEmpty();
     }
 
@@ -57,7 +67,8 @@ public class IBGNodeQueue
     /**
      * remove all queued nodes.
      */
-    final void reset() {
+    final void clear()
+    {
         queue.clear();
     }
 
@@ -65,20 +76,23 @@ public class IBGNodeQueue
     /**
      * @return the next node, or return null if none
      */
-    final IBGNode next() {
-        if (queue.isEmpty()){
+    final IBGNode next()
+    {
+        if (queue.isEmpty()) {
             return null;
         }
         
         Object obj = queue.peek();
         if (obj instanceof IBGChild) {
-            IBGChild child = (IBGChild) obj ;
-            if (child.next != null){
-                queue.replace(0, child.next);
+            IBGChild child = (IBGChild) obj;
+
+            if (child.getNext() != null) {
+                queue.replace(0, child.getNext());
             } else {
                 queue.remove();
             }
-            return child.node;
+
+            return child.getNode();
         } else {
             queue.remove();
             return (IBGNode) obj;
@@ -90,14 +104,15 @@ public class IBGNodeQueue
      */
     public IBGNode peek()
     {
-        if (queue.isEmpty()){
+        if (queue.isEmpty()) {
             return null;
         }
         
         Object obj = queue.peek();
+
         if (obj instanceof IBGChild) {
-            IBGChild child = (IBGChild) obj ;
-            return child.node;
+            IBGChild child = (IBGChild) obj;
+            return child.getNode();
         } else {
             return (IBGNode) obj;
         }

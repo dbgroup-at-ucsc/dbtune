@@ -112,23 +112,23 @@ public class IndexBenefitGraphConstructor
      * @return cost of the workload under the empty configuration, stored in emptyCost.
      */
     public final double emptyCost()
-{
+    {
         return emptyCost;
     }
-    
+
     /**
      * @return the {@link IBGNode root node}.
      */
     public final IBGNode rootNode()
-{
+    {
         return rootNode;
     }
-    
+
     /**
      * @return the number of nodes that were constructed.
      */
     public final int nodeCount()
-{
+    {
         return nodeCount;
     }
 
@@ -141,9 +141,9 @@ public class IndexBenefitGraphConstructor
     {
         return isUsed.get(i);
     }
-    
+
     public final Configuration candidateSet()
-{
+    {
         return configuration;
     }
 
@@ -171,16 +171,16 @@ public class IndexBenefitGraphConstructor
      * This function is not safe to be called from more than one thread.
      */
     public boolean buildNode() throws SQLException
-{
+    {
         IBGNode newNode, coveringNode;
         ExplainedSQLStatement stmt;
         double totalCost;
 
         if (queue.isEmpty())
             return false;
-        
+
         newNode = queue.remove();
-        
+
         // get cost and used set (stored into usedBitSet)
         usedBitSet.clear();
         coveringNode = coveringNodeFinder.find(rootNode, newNode.getConfiguration());
@@ -190,7 +190,7 @@ public class IndexBenefitGraphConstructor
         } else {
             stmt =
                 optimizer.explain(
-                    sql, new ConfigurationBitSet(configuration, newNode.config));
+                        sql, new ConfigurationBitSet(configuration, newNode.getConfiguration()));
             totalCost = stmt.getTotalCost();
 
             for (Index idx : configuration) {
@@ -199,7 +199,7 @@ public class IndexBenefitGraphConstructor
                 }
             }
         }
-        
+
         // create the child list
         // if any IBGNode did not exist yet, add it to the queue
         // We make sure to keep the child list in the same order as the nodeQueue, so that
@@ -217,32 +217,32 @@ public class IndexBenefitGraphConstructor
                 queue.add(childNode);
             }
             childBitSet.set(u);
-            
+
             IBGNode.IBGChild child = new IBGNode.IBGChild(childNode, u);
 
             if (firstChild == null) {
                 firstChild = lastChild = child;
             }
             else {
-                lastChild.next = child;
+                lastChild.setNext(child);
                 lastChild = child;
             }
         }
-        
+
         // Expand the node and notify waiting threads
         synchronized (nodeExpansionMonitor) {
             newNode.expand(totalCost, firstChild);
             nodeExpansionMonitor.notifyAll();
         }
-        
+
         return !queue.isEmpty();
     }
-    
+
     /*
      * Auxiliary method for buildNodes
      */
     private static IBGNode find(DefaultQueue<IBGNode> queue, IndexBitSet config)
-{
+    {
         for (int i = 0; i < queue.count(); i++) {
             IBGNode node = queue.fetch(i);
             if (node.getConfiguration().equals(config))
@@ -252,7 +252,7 @@ public class IndexBenefitGraphConstructor
     }
 
     public void setEmptyCost(double cost)
-{
+    {
         emptyCost = cost;
     }
 
@@ -576,79 +576,79 @@ public class IndexBenefitGraphConstructor
             SQLStatement sql0,
             ConfigurationBitSet conf)
         throws SQLException
-    {
-        IndexBitSet rootConfig;
-        CandidatePool pool = new CandidatePool(conf);
+        {
+            IndexBitSet rootConfig;
+            CandidatePool pool = new CandidatePool(conf);
 
-        sql           = sql0;
-        configuration = conf;
-        optCount      = 0;
-        nodeCount     = 0;
-        usedBitSet    = new IndexBitSet();
-        childBitSet   = new IndexBitSet();
-        isUsed        = new IndexBitSet();
-        candidateSet  = pool.getSnapshot();
-        rootConfig    = candidateSet.bitSet();
-        queue         = new DefaultQueue<IBGNode>();
-        rootNode      = new IBGNode(rootConfig, nodeCount++);
-        emptyCost     = optimizer.explain(sql).getCost();
+            sql           = sql0;
+            configuration = conf;
+            optCount      = 0;
+            nodeCount     = 0;
+            usedBitSet    = new IndexBitSet();
+            childBitSet   = new IndexBitSet();
+            isUsed        = new IndexBitSet();
+            candidateSet  = pool.getSnapshot();
+            rootConfig    = candidateSet.bitSet();
+            queue         = new DefaultQueue<IBGNode>();
+            rootNode      = new IBGNode(rootConfig, nodeCount++);
+            emptyCost     = optimizer.explain(sql).getCost();
 
-        optCount++;
+            optCount++;
 
-        // initialize the queue
-        queue.add(rootNode);
-    }
+            // initialize the queue
+            queue.add(rootNode);
+        }
 
     /**
      * Construct an IBG.
      */
     public IndexBenefitGraph constructIBG(Configuration configuration)
         throws SQLException
-    {
-        ThreadIBGAnalysis ibgAnalysis = new ThreadIBGAnalysis();
-        // XXX: hide the interaction bank in here, something like:
-        //
-        //   new ThreadIBGAnalysis(configuration);
-        //
-        // which internally will create an InteractionLogger. At the end, we'll pass the ibgAnalysis 
-        // to the IBG constructor (since it will have the interaction bank in it)
-        
-        Thread ibgAnalysisThread = new Thread(ibgAnalysis);
-        ibgAnalysisThread.setName("IBG Analysis");
-        ibgAnalysisThread.start();
-        ThreadIBGConstruction ibgConstruction = new ThreadIBGConstruction();
-        Thread ibgContructionThread = new Thread(ibgConstruction);
-        ibgContructionThread.setName("IBG Construction");
-        ibgContructionThread.start();
+        {
+            ThreadIBGAnalysis ibgAnalysis = new ThreadIBGAnalysis();
+            // XXX: hide the interaction bank in here, something like:
+            //
+            //   new ThreadIBGAnalysis(configuration);
+            //
+            // which internally will create an InteractionLogger. At the end, we'll pass the ibgAnalysis 
+            // to the IBG constructor (since it will have the interaction bank in it)
 
-        InteractionLogger logger = new InteractionLogger(configuration);
+            Thread ibgAnalysisThread = new Thread(ibgAnalysis);
+            ibgAnalysisThread.setName("IBG Analysis");
+            ibgAnalysisThread.start();
+            ThreadIBGConstruction ibgConstruction = new ThreadIBGConstruction();
+            Thread ibgContructionThread = new Thread(ibgConstruction);
+            ibgContructionThread.setName("IBG Construction");
+            ibgContructionThread.start();
 
-        IBGAnalyzer ibgAnalyzer = new IBGAnalyzer(this);
+            InteractionLogger logger = new InteractionLogger(configuration);
 
-        ibgConstruction.startConstruction(this);
-        ibgConstruction.waitUntilDone();
-        ibgAnalysis.startAnalysis(ibgAnalyzer, logger);
-        //long nStart = System.nanoTime();
-        ibgAnalysis.waitUntilDone();
-        //long nStop = System.nanoTime();
+            IBGAnalyzer ibgAnalyzer = new IBGAnalyzer(this);
 
-        // we leave this just for historical reasons, i.e. to see what was 
-        // happening before (in Karl's framework).
-        // ProfiledQuery<I> qinfo =
-        //   new ProfiledQuery(
-        //     sql,
-        //     explainInfo,
-        //     indexes,
-        //     ibgCons.getIBG(),
-        //     logger.getInteractionBank(),
-        //     conn.whatifCount(),
-        //     ((nStop - nStart) / 1000000.0));
+            ibgConstruction.startConstruction(this);
+            ibgConstruction.waitUntilDone();
+            ibgAnalysis.startAnalysis(ibgAnalyzer, logger);
+            //long nStart = System.nanoTime();
+            ibgAnalysis.waitUntilDone();
+            //long nStop = System.nanoTime();
 
-        IndexBenefitGraph ibg =
-            new IndexBenefitGraph(rootNode, emptyCost, isUsed); //, ibgAnalysis);
+            // we leave this just for historical reasons, i.e. to see what was 
+            // happening before (in Karl's framework).
+            // ProfiledQuery<I> qinfo =
+            //   new ProfiledQuery(
+            //     sql,
+            //     explainInfo,
+            //     indexes,
+            //     ibgCons.getIBG(),
+            //     logger.getInteractionBank(),
+            //     conn.whatifCount(),
+            //     ((nStop - nStart) / 1000000.0));
 
-        return ibg;
-    }
+            IndexBenefitGraph ibg =
+                new IndexBenefitGraph(rootNode, emptyCost, isUsed); //, ibgAnalysis);
+
+            return ibg;
+        }
 
     /**
      * Construct an IBG from the given parameters.
@@ -663,22 +663,22 @@ public class IndexBenefitGraphConstructor
             SQLStatement sql,
             ConfigurationBitSet conf)
         throws SQLException
-    {
-        IndexBenefitGraphConstructor ibgConstructor =
-            new IndexBenefitGraphConstructor(delegate,sql,conf);
-        // XXX: there's a correspondence between the ordinal position of an index (with respect to a 
-        // Configuration object) and bitSet-based operations done throughout the edu.ucsc.dbtune.ibg 
-        // package, including construction and what-if optimization done on top of an IBG. Inside 
-        // the IBG package, when bitSet.set(i) is stated, this is making a reference to the i-th 
-        // index contained in a Configuration object (where 0 - first index; 1 - second index; 
-        // etc.). For a given index idx, the following should be true:
-        //
-        //    bitSet.set(i) == conf.getOrdinalPosition(idx)
-        //
-        // the above should hold EVERYWHERE in the edu.ucsc.dbtune.ibg package, otherwise we're in 
-        // trouble.
-        ibgConstructor.initializeConstruction(sql,conf);
+        {
+            IndexBenefitGraphConstructor ibgConstructor =
+                new IndexBenefitGraphConstructor(delegate,sql,conf);
+            // XXX: there's a correspondence between the ordinal position of an index (with respect to a 
+            // Configuration object) and bitSet-based operations done throughout the edu.ucsc.dbtune.ibg 
+            // package, including construction and what-if optimization done on top of an IBG. Inside 
+            // the IBG package, when bitSet.set(i) is stated, this is making a reference to the i-th 
+            // index contained in a Configuration object (where 0 - first index; 1 - second index; 
+            // etc.). For a given index idx, the following should be true:
+            //
+            //    bitSet.set(i) == conf.getOrdinalPosition(idx)
+            //
+            // the above should hold EVERYWHERE in the edu.ucsc.dbtune.ibg package, otherwise we're in 
+            // trouble.
+            ibgConstructor.initializeConstruction(sql,conf);
 
-        return ibgConstructor.constructIBG(conf);
-    }
+            return ibgConstructor.constructIBG(conf);
+        }
 }

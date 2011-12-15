@@ -69,7 +69,7 @@ public class IBGNodeTest
      * Creates the IBG under test.
      */
     @BeforeClass
-    public static void setUp()
+    public static void beforeClass()
     {
         rootibs = new IndexBitSet();
         empty   = new IndexBitSet();
@@ -92,13 +92,13 @@ public class IBGNodeTest
         ibg    = configureIndexBenefitGraph();
 
         child1 = ibg.rootNode().firstChild();
-        child2 = child1.next;
-        child3 = child1.node.firstChild();
-        child4 = child3.next;
-        child5 = child2.node.firstChild();
-        child6 = child4.node.firstChild();
-        child7 = child5.node.firstChild();
-        child8 = child7.next;
+        child2 = child1.getNext();
+        child3 = child1.getNode().firstChild();
+        child4 = child3.getNext();
+        child5 = child2.getNode().firstChild();
+        child6 = child4.getNode().firstChild();
+        child7 = child5.getNode().firstChild();
+        child8 = child7.getNext();
 
         rootibs.set(0);
         rootibs.set(1);
@@ -145,14 +145,14 @@ public class IBGNodeTest
         tmpchild8 = new IBGNode.IBGChild(node7, 2);
 
         root.expand(0, tmpchild1);
-        tmpchild1.node.expand(0, tmpchild3);
-        tmpchild2.node.expand(0, tmpchild5);
-        tmpchild4.node.expand(0, tmpchild6);
-        tmpchild5.node.expand(0, tmpchild7);
+        tmpchild1.getNode().expand(0, tmpchild3);
+        tmpchild2.getNode().expand(0, tmpchild5);
+        tmpchild4.getNode().expand(0, tmpchild6);
+        tmpchild5.getNode().expand(0, tmpchild7);
 
-        tmpchild1.next = tmpchild2;
-        tmpchild3.next = tmpchild4;
-        tmpchild7.next = tmpchild8;
+        tmpchild1.setNext(tmpchild2);
+        tmpchild3.setNext(tmpchild4);
+        tmpchild7.setNext(tmpchild8);
 
         root.setCost(20);
         node1.setCost(45);
@@ -242,20 +242,20 @@ public class IBGNodeTest
     public void testStructure()
     {
         assertThat(ibg.rootNode(), is(root));
-        assertThat(child1.node, is(tmpchild1.node));
-        assertThat(child2.node, is(tmpchild2.node));
-        assertThat(child3.node, is(tmpchild3.node));
-        assertThat(child4.node, is(tmpchild4.node));
-        assertThat(child5.node, is(tmpchild5.node));
-        assertThat(child6.node, is(tmpchild6.node));
-        assertThat(child7.node, is(tmpchild7.node));
-        assertThat(child8.node, is(tmpchild8.node));
+        assertThat(child1.getNode(), is(tmpchild1.getNode()));
+        assertThat(child2.getNode(), is(tmpchild2.getNode()));
+        assertThat(child3.getNode(), is(tmpchild3.getNode()));
+        assertThat(child4.getNode(), is(tmpchild4.getNode()));
+        assertThat(child5.getNode(), is(tmpchild5.getNode()));
+        assertThat(child6.getNode(), is(tmpchild6.getNode()));
+        assertThat(child7.getNode(), is(tmpchild7.getNode()));
+        assertThat(child8.getNode(), is(tmpchild8.getNode()));
 
         // "leafs"
-        assertThat(child3.node.firstChild(), is(nullValue()));
-        assertThat(child6.node.firstChild(), is(nullValue()));
-        assertThat(child7.node.firstChild(), is(nullValue()));
-        assertThat(child8.node.firstChild(), is(nullValue()));
+        assertThat(child3.getNode().firstChild(), is(nullValue()));
+        assertThat(child6.getNode().firstChild(), is(nullValue()));
+        assertThat(child7.getNode().firstChild(), is(nullValue()));
+        assertThat(child8.getNode().firstChild(), is(nullValue()));
     }
 
     /**
@@ -263,14 +263,14 @@ public class IBGNodeTest
     @Test
     public void testEdges()
     {
-        assertThat(child1.usedIndex, is(3));
-        assertThat(child2.usedIndex, is(0));
-        assertThat(child3.usedIndex, is(1));
-        assertThat(child4.usedIndex, is(0));
-        assertThat(child5.usedIndex, is(1));
-        assertThat(child6.usedIndex, is(1));
-        assertThat(child7.usedIndex, is(3));
-        assertThat(child8.usedIndex, is(2));
+        assertThat(child1.getUsedIndex(), is(3));
+        assertThat(child2.getUsedIndex(), is(0));
+        assertThat(child3.getUsedIndex(), is(1));
+        assertThat(child4.getUsedIndex(), is(0));
+        assertThat(child5.getUsedIndex(), is(1));
+        assertThat(child6.getUsedIndex(), is(1));
+        assertThat(child7.getUsedIndex(), is(3));
+        assertThat(child8.getUsedIndex(), is(2));
     }
 
     /**

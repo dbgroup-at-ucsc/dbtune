@@ -311,14 +311,14 @@ public class DBTuneInstances
         child8 = new IBGNode.IBGChild(node7, 2);
 
         root.expand(0, child1);
-        child1.node.expand(0, child3);
-        child2.node.expand(0, child5);
-        child4.node.expand(0, child6);
-        child5.node.expand(0, child7);
+        child1.getNode().expand(0, child3);
+        child2.getNode().expand(0, child5);
+        child4.getNode().expand(0, child6);
+        child5.getNode().expand(0, child7);
 
-        child1.next = child2;
-        child3.next = child4;
-        child7.next = child8;
+        child1.setNext(child2);
+        child3.setNext(child4);
+        child7.setNext(child8);
 
         root.setCost(20);
         node1.setCost(45);

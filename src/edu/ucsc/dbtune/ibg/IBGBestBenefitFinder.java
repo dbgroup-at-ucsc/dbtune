@@ -13,7 +13,7 @@ public class IBGBestBenefitFinder
     public double bestBenefit(IndexBenefitGraph ibg, int indexId, IndexBitSet M)
 {
         visited.clear();
-        pending.reset();
+        pending.clear();
         
         double bestValue = 0;
         

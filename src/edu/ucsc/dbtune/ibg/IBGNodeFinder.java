@@ -4,7 +4,9 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
- * IBGNodeFinder -- does a search for a particular node in the graph
+ * Does a search for a particular node in the graph.
+ *
+ * @author Karl Schnaitter
  */
 class IBGNodeFinder
 {
@@ -13,20 +15,21 @@ class IBGNodeFinder
 
     /**
      * finds a particular node in the graph.
+     *
      * @param rootNode
      *      {@link IndexBenefitGraph}'s root.
      * @param config
      *      indexes configuration.
      * @return
-     *      found node in the graph. <strong>IMPORTANT</strong>: this method
-     *      may return {@code null}.
+     *      found node in the graph. <strong>IMPORTANT</strong>: may return {@code null}.
      */
     public IBGNode find(IBGNode rootNode, IndexBitSet config)
     {
         visited.clear();
-        pending.reset();
+        pending.clear();
         
         pending.addNode(rootNode);
+
         while (pending.hasNext()) {
             IBGNode node = pending.next();
             

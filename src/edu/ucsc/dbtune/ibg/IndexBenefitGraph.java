@@ -14,12 +14,12 @@ import edu.ucsc.dbtune.util.IndexBitSet;
  * An example of an IBG looks like the following:
  * <code>
  *       *a*,b,c,*d*:20
- *       /          \
- *    *a*,*b*,c:45  *b*,c,d:50
- *    /       \         \
- *  a,c:80  *b*,c:50  *c*,*d*:65
- *               |   /     |
- *              c:80     d:80
+ *       /           \
+ *    *a*,*b*,c:45   *b*,c,d:50
+ *    /       \          \
+ *  a,c:80  *b*,c:50   *c*,*d*:65
+ *                |    /    |
+ *                c:80     d:80
  * </code>
  * <p>
  * One interesting observation is that $bcd$ and $bc$ differ by index $d$, yet no edge exists 
@@ -43,6 +43,9 @@ import edu.ucsc.dbtune.util.IndexBitSet;
  */
 public class IndexBenefitGraph
 {
+    /** used to find nodes given. */
+    private static IBGCoveringNodeFinder finder = new IBGCoveringNodeFinder();
+    
     /**
      * The primary information stored by the graph.
      * 
@@ -51,16 +54,12 @@ public class IndexBenefitGraph
      */
     private final IBGNode rootNode;
 
-    /**
-     */
+    /** cost of the empty configuration. */
     private double emptyCost;
 
-    /** a bit is set if the corresponding index is used somewhere in the graph */
+    /** a bit is set if the corresponding index is used somewhere in the graph. */
     private final IndexBitSet isUsed;
 
-    /** used to find nodes given */
-    private static IBGCoveringNodeFinder FINDER = new IBGCoveringNodeFinder();
-    
     /**
      * Creates an IBG with the given root node, cost and usedSet.
      *
@@ -110,7 +109,7 @@ public class IndexBenefitGraph
      */
     public final IBGNode find(IndexBitSet bitSet)
     {
-        return FINDER.findFast(rootNode(),bitSet,null);
+        return finder.findFast(rootNode(), bitSet, null);
     }
 
     /**
@@ -122,23 +121,23 @@ public class IndexBenefitGraph
      * @return
      *     {@code true} if the corresponding index is used; {@code false} otherwise.
      */
-    public final boolean isUsed(int i)
+    public final boolean isUsed(int position)
     {
-        return isUsed.get(i);
+        return isUsed.get(position);
     }
 
     /**
-     * A node of the IBG
+     * A node of the IBG.
      *
      * @author Karl Schnaitter
      */
     public static class IBGNode
     {
-        /** Configuration that this node is about */
-        public final IndexBitSet config;
+        /** Configuration that this node is about. */
+        private final IndexBitSet config;
 
-        /** id for the node that is unique within the enclosing IBG */
-        public final int id;
+        /** id for the node that is unique within the enclosing IBG. */
+        private final int id;
 
         /**
          * cost with the given configuration don't access until isExpanded() returns 
@@ -158,13 +157,19 @@ public class IndexBenefitGraph
          */
         private volatile IndexBitSet usedIndexes;
 
+        /**
+         * @param config0
+         *     configuration
+         * @param id0
+         *     id of the node
+         */
         public IBGNode(IndexBitSet config0, int id0)
         {
-            config     = config0;
-            id         = id0;
-            cost       = -1.0;
-            firstChild = null;
-            usedIndexes= new IndexBitSet();
+            config      = config0;
+            id          = id0;
+            cost        = -1.0;
+            firstChild  = null;
+            usedIndexes = new IndexBitSet();
         }
 
         /**
@@ -190,7 +195,10 @@ public class IndexBenefitGraph
         }
 
         /**
-         * Check if it has children/cost yet
+         * Check if it has children/cost yet.
+         *
+         * @return
+         *     whether or not the node is expanded.
          */
         protected final boolean isExpanded()
         {
@@ -199,11 +207,16 @@ public class IndexBenefitGraph
 
         /**
          * Set the cost and list of children (one for each used index).
+         *
+         * @param cost0
+         *     the cost assigned to the node.
+         * @param firstChild0
+         *     the first child in the list of childs
          */
         public final void expand(double cost0, IBGChild firstChild0)
         {
-            assert(!isExpanded());
-            assert(cost0 >= 0);
+            assert !isExpanded();
+            assert cost0 >= 0;
 
             // volatile assignments must be ordered with "state" assigned last
             cost = cost0;
@@ -217,54 +230,75 @@ public class IndexBenefitGraph
          */
         public final IndexBitSet getUsedIndexes()
         {
-            assert(isExpanded());
+            assert isExpanded();
             return usedIndexes;
         }
 
         /**
-         * Get the cost
+         * Get the cost.
+         *
+         * @return
+         *     the cost associated to the node
          */
         public final double cost()
         {
-            assert(isExpanded());
+            assert isExpanded();
             return cost;
         }
 
         /**
-         * Get the head of the child list
+         * Get the head of the child list.
+         *
+         * @return
+         *      the first child in the linked list
          */
         protected final IBGChild firstChild()
         {
-            assert(isExpanded());
+            assert isExpanded();
             return firstChild; 
         }
 
         /**
-         * Add each of the used indexes in this node to the given IndexBitSet
+         * Add each of the used indexes in this node to the given IndexBitSet.
+         *
+         * @param other
+         *      other configuration
          */
-        public final void addUsedIndexes(IndexBitSet bs)
+        public final void addUsedIndexes(IndexBitSet other)
         {
-            assert(isExpanded());
+            assert isExpanded();
+
             for (IBGChild ch = firstChild; ch != null; ch = ch.next)
-                bs.set(ch.usedIndex);
+                other.set(ch.usedIndex);
         }
 
         /**
-         * Remove each of the used indexes in this node from the given IndexBitSet
+         * Remove each of the used indexes in this node from the given IndexBitSet.
+         *
+         * @param other
+         *      other configuration
          */
-        public void clearUsedIndexes(IndexBitSet bs)
+        public void clearUsedIndexes(IndexBitSet other)
         {
-            assert(isExpanded());
+            assert isExpanded();
+
             for (IBGChild ch = firstChild; ch != null; ch = ch.next)
-                bs.clear(ch.usedIndex);
+                other.clear(ch.usedIndex);
         }
 
         /**
-         * return true if each of the used indexes are in the given IndexBitSet
+         * return true if each of the used indexes are in the given IndexBitSet.
+         *
+         * @param other
+         *      other configuration
+         * @return
+         *      {@code true} if each of the used indexes are in the given configuration; {@code 
+         *      false} otherwise.
          */
         public boolean usedSetIsSubsetOf(IndexBitSet other)
         {
-            assert(isExpanded());
+            assert isExpanded();
+
             for (IBGChild ch = firstChild; ch != null; ch = ch.next)
                 if (!other.get(ch.usedIndex))
                     return false;
@@ -272,29 +306,53 @@ public class IndexBenefitGraph
         }
 
         /**
-         * return true if the i is in the used set
+         * return true if the given id of an index is in the used set.
+         *
+         * @param id
+         *     the id of an index.
+         * @return
+         *      {@code true} if the given id is in the used set; {@code false} otherwise.
          */
         public boolean usedSetContains(int id)
         {
-            assert(isExpanded());
+            assert isExpanded();
+
             for (IBGChild ch = firstChild; ch != null; ch = ch.next)
                 if (id == ch.usedIndex)
                     return true;
             return false;
         }
 
+        /**
+         * Assigns the cost.
+         *
+         * @param cost0
+         *     cost of the node.
+         */
         public void setCost(double cost0)
         {
             cost = cost0;
         }
 
+        /**
+         */
         public static class IBGChild
         {
-            public final int usedIndex; // the internalID of the used index on this edge
-            public final IBGNode node; // the actual child node
-            public IBGChild next = null;
+            /** the internal id of the index assigned to the edge of this child. */
+            private final int usedIndex;
 
-            // next pointer is initially null
+            /** the actual child node. */
+            private final IBGNode node;
+
+            /** the next child in the linked list. */
+            private IBGChild next;
+
+            /**
+             * @param node0
+             *     node corresponding to the child
+             * @param usedIndex0
+             *     index used on the edge
+             */
             public IBGChild(IBGNode node0, int usedIndex0)
             {
                 node = node0;
@@ -302,10 +360,7 @@ public class IndexBenefitGraph
             }
 
             /**
-             * Compares childs. Two childs are equal if they have the same usedIndex node and next.
-             *
-             * @param other
-             *      other object being compared against this
+             * {@inheritDoc}
              */
             @Override
             public boolean equals(Object other)
@@ -322,6 +377,55 @@ public class IndexBenefitGraph
                     return true;
 
                 return false;
+            }
+
+            /**
+             * Gets the usedIndex for this instance.
+             *
+             * @return The usedIndex.
+             */
+            public int getUsedIndex()
+            {
+                return this.usedIndex;
+            }
+
+            /**
+             * Gets the node for this instance.
+             *
+             * @return The node.
+             */
+            public IBGNode getNode()
+            {
+                return this.node;
+            }
+
+            /**
+             * Sets the next for this instance.
+             *
+             * @param next The next.
+             */
+            public void setNext(IBGChild next)
+            {
+                this.next = next;
+            }
+
+            /**
+             * Gets the next for this instance.
+             *
+             * @return The next.
+             */
+            public IBGChild getNext()
+            {
+                return this.next;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public int hashCode()
+            {
+                return node.hashCode();
             }
 
             /**
@@ -353,7 +457,7 @@ public class IndexBenefitGraph
 
             IBGNode o = (IBGNode) other;
 
-            if (!config.equals(o.config) || cost != o.cost )
+            if (!config.equals(o.config) || cost != o.cost)
                 return false;
 
             if (id != o.id)
@@ -376,9 +480,19 @@ public class IndexBenefitGraph
          * {@inheritDoc}
          */
         @Override
+        public int hashCode()
+        {
+            return config.hashCode();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
         public String toString()
         {
-            return "ID: " + id + "; config: " + config + "; cost: " + cost + "; edges: " + firstChild;
+            return "ID: " + id + "; config: " + config + "; cost: " + cost + "; edges: " + 
+                firstChild;
         }
     }
     

@@ -1,19 +1,15 @@
-// ------------------------------------------------------------------------ //
-//     Copyright (c) 2010-2012, Regents of the University of California     //
-//       All rights reserved. Licensed under the Modified BSD License       //
-// ------------------------------------------------------------------------ //
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
-import org.junit.Test;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureIndexBenefitGraph;
 
-import static org.junit.Assert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * Tests for the {@link IndexBenefitGraph} as a data structure.
@@ -28,13 +24,15 @@ public class IndexBenefitGraphTest
      * configures the {@link IndexBenefitGraph} under test.
      */
     @BeforeClass
-    public static void setUp() throws Exception
+    public static void beforeClass()
     {
         ibg = configureIndexBenefitGraph();
     }
 
+    /**
+     */
     @Test
-    public void testBasic() throws Exception
+    public void testBasic()
     {
         IndexBitSet bs = new IndexBitSet();
 

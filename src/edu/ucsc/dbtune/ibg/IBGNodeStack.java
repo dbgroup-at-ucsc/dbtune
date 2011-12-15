@@ -4,6 +4,11 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.util.DefaultStack;
 
+/**
+ * A stack of ibg nodes.
+ *
+ * @author Karl Schnaitter
+ */
 public class IBGNodeStack
 {
     private final DefaultStack<Object> stack;
@@ -19,19 +24,23 @@ public class IBGNodeStack
     /**
      * construct a new {@link IBGNodeStack} object given an initial {@link DefaultStack Stack}
      * of values.
+     *
      * @param stack
      *      a stack of values that will populate the {@link IBGNodeStack} object.
      */
-    IBGNodeStack(DefaultStack<Object> stack){
+    IBGNodeStack(DefaultStack<Object> stack)
+    {
         this.stack = stack;
     }
 
     /**
-     * add child and all siblings (following next pointers) to the stack
+     * add child and all siblings (following next pointers) to the stack.
+     *
      * @param ch
      *      new child to be added.
      */
-    final void addChildren(IBGChild ch) {
+    final void addChildren(IBGChild ch)
+    {
         if (ch != null) stack.push(ch);
     }
 
@@ -40,42 +49,48 @@ public class IBGNodeStack
      * @param node
      *      node to be added to the stack.
      */
-    final void addNode(IBGNode node) {
+    final void addNode(IBGNode node)
+    {
         stack.push(node);
     }
 
     /**
-     * test if the stack has something remaining
+     * test if the stack has something remaining.
+     *
      * @return
      *      {@code true} if the stack has something remaining.
      */
-    final boolean hasNext() {
+    final boolean hasNext()
+    {
         return !stack.isEmpty();
     }
 
     /**
      * remove all stack nodes.
      */
-    final void reset() {
+    final void clear()
+    {
         stack.popAll();
     }
 
     /**
      * @return the next node, or return null if none
      */
-    final IBGNode next() {
+    final IBGNode next()
+    {
         if (stack.isEmpty()) return null;
         
         Object obj = stack.peek();
         if (obj instanceof IBGChild) {
             IBGChild child = (IBGChild) stack.peek();
-            if (child.next != null) {
-                stack.swap(child.next);
+
+            if (child.getNext() != null) {
+                stack.swap(child.getNext());
             } else {
                 stack.pop();
             }
 
-            return child.node;
+            return child.getNode();
         } else {
             stack.pop();
             return (IBGNode) obj;

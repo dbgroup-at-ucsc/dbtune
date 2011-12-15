@@ -40,7 +40,7 @@ public class IBGMonotonicEnforcer
     public void fix(IndexBenefitGraph ibg)
     {
         visited.clear();
-        pending.reset();
+        pending.clear();
         
         pending.addNode(ibg.rootNode());
         while (pending.hasNext()) {
@@ -77,7 +77,7 @@ public class IBGMonotonicEnforcer
         private void fixSubsets(IndexBenefitGraph ibg, IndexBitSet config, double cost)
         {
             visited.clear();
-            pending.reset();
+            pending.clear();
             
             pending.addNode(ibg.rootNode());
             while (pending.hasNext()) {

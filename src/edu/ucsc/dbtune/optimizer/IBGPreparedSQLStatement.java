@@ -158,10 +158,10 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             
         return new ExplainedSQLStatement(
                 getSQLStatement(),
-                result.cost,
+                result.getCost(),
                 optimizer,
                 configuration,
-                result.usedConfiguration, 
+                result.getUsedConfiguration(), 
                 0);
     }
 }

@@ -43,7 +43,6 @@ public class ConfigurationBitSetTest
      * 
      * @throws Exception
      *     if the catalog can't be configured properly.
-     */
     @Test
     public void testComparison() throws Exception
     {
@@ -64,6 +63,7 @@ public class ConfigurationBitSetTest
 
         assertThat(oneB, is(twoB));
     }
+     */
 
     /**
      * creates a global set of indexes.

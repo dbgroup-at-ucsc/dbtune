@@ -1,16 +1,17 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
+/**
+ * @author Karl Schnaitter
+ */
 public class IBGCoveringNodeFinder
 {
     private final IndexBitSet visited;
     private final IBGNodeStack  pending;
-
-    private static final double ZERO_COST = 0.0;
 
     /**
      * construct a new {@link IBGCoveringNodeFinder} object; assuming some default values for
@@ -22,27 +23,62 @@ public class IBGCoveringNodeFinder
     }
 
     /**
-     * construct a new {@link IBGCoveringNodeFinder} object given some
-     * {@link edu.ucsc.dbtune.util.IndexBitSet visited nodes} and a {@link IBGNodeStack pending stack} of
+     * construct a new {@link IBGCoveringNodeFinder} object given some {@link 
+     * edu.ucsc.dbtune.util.IndexBitSet visited nodes} and a {@link IBGNodeStack pending stack} of
      * nodes.
+     *
      * @param visited visited nodes
      * @param pending pending stack of nodes.
      */
-    IBGCoveringNodeFinder(IndexBitSet visited, IBGNodeStack pending){
+    IBGCoveringNodeFinder(IndexBitSet visited, IBGNodeStack pending)
+    {
         this.visited = visited;
         this.pending = pending;
     }
 
+    /**
+     * The result of a {@link IBGCoveringNodeFinder#find} invokation.
+     *
+     * @author Alkis Polyzotis
+     */
     public class FindResult
     {
-        public final ConfigurationBitSet usedConfiguration;
+        private final ConfigurationBitSet usedConfiguration;
         
-        public final double cost;
+        private final double cost;
         
-        public FindResult(ConfigurationBitSet usedConfiguration, double cost)
+        /**
+         * constructs a result.
+         *
+         * @param usedConfiguration
+         *      the configuration
+         * @param cost
+         *      the cost
+         */
+        FindResult(ConfigurationBitSet usedConfiguration, double cost)
         {
             this.usedConfiguration  = usedConfiguration;
             this.cost               = cost;
+        }
+
+        /**
+         * Gets the usedConfiguration for this instance.
+         *
+         * @return The usedConfiguration.
+         */
+        public ConfigurationBitSet getUsedConfiguration()
+        {
+            return this.usedConfiguration;
+        }
+
+        /**
+         * Gets the cost for this instance.
+         *
+         * @return The cost.
+         */
+        public double getCost()
+        {
+            return this.cost;
         }
     }
     
@@ -59,18 +95,19 @@ public class IBGCoveringNodeFinder
     public final FindResult find(IndexBenefitGraph ibg, ConfigurationBitSet config)
     {
         if (config.isEmpty()) {
-            return new FindResult(null,ibg.emptyCost());
+            return new FindResult(null, ibg.emptyCost());
         } else {
             final IBGNode foundNode = findFast(ibg.rootNode(), config.getBitSet(), null);
+
             if (foundNode != null) {
                 // Obtain used indexes
                 IndexBitSet usedBitSet = new IndexBitSet();
                 foundNode.addUsedIndexes(usedBitSet);
                 // Create the corresponding configuration
-                ConfigurationBitSet usedConfiguration = new ConfigurationBitSet(config,usedBitSet);
+                ConfigurationBitSet usedConfiguration = new ConfigurationBitSet(config, usedBitSet);
                 return new FindResult(usedConfiguration, foundNode.cost());
             } else {
-                return null;
+                return new FindResult(null, 0.0);
             }
         }
     }
@@ -109,23 +146,25 @@ public class IBGCoveringNodeFinder
      */
     public IBGNode findFast(IBGNode rootNode, IndexBitSet config, IBGNode guess)
     {
-        visited.clear(); // not using it, but clear it anyway?
+        visited.clear();
 
-        IBGNode currentNode = (guess != null && config.subsetOf(guess.getConfiguration())) ? guess : rootNode;
+        IBGNode currentNode =
+            (guess != null && config.subsetOf(guess.getConfiguration())) ? guess : rootNode;
+
         while (true) {
             // stop if an unexpanded node is found
-            if (!currentNode.isExpanded()){
+            if (!currentNode.isExpanded()) {
                 return null;
             }
             IBGChild ch = currentNode.firstChild();
             while (true) {
                 if (ch == null) {
                     return currentNode;
-                } else if (!config.get(ch.usedIndex)) {
-                    currentNode = ch.node; 
+                } else if (!config.get(ch.getUsedIndex())) {
+                    currentNode = ch.getNode();
                     break;
                 } else {
-                    ch = ch.next;
+                    ch = ch.getNext();
                 }
             }
         }
@@ -144,7 +183,7 @@ public class IBGCoveringNodeFinder
     public IBGNode find(IBGNode rootNode, IndexBitSet config)
     {
         visited.clear();
-        pending.reset();
+        pending.clear();
 
         pending.addNode(rootNode);
         while (pending.hasNext()) {
@@ -156,17 +195,17 @@ public class IBGCoveringNodeFinder
             visited.set(node.getID());
 
             // skip unexpanded nodes
-            if (!node.isExpanded()){
+            if (!node.isExpanded()) {
                 continue;
             }
 
             // prune non-supersets
-            if (!config.subsetOf(node.getConfiguration())){
+            if (!config.subsetOf(node.getConfiguration())) {
                 continue;
             }
 
             // return if we have found covering node
-            if (node.usedSetIsSubsetOf(config)){
+            if (node.usedSetIsSubsetOf(config)) {
                 return node;
             }
 
@@ -177,16 +216,17 @@ public class IBGCoveringNodeFinder
         return null;
     }
 
-    // todo(Huascar) what's the purpose of this method?
+    /**
+     *
     public void find(IBGNode rootNode, IndexBitSet[] configs, int configCount, IBGNode[] outNodes)
     {
         for (int i = 0; i < configCount; i++) {
-            assert(configs[i] != null);
+            assert configs[i] != null;
             outNodes[i] = null;
         }
 
         visited.clear();
-        pending.reset();
+        pending.clear();
 
         pending.addNode(rootNode);
         while (pending.hasNext()) {
@@ -197,7 +237,7 @@ public class IBGCoveringNodeFinder
             }
             visited.set(node.getID());
 
-            if (!node.isExpanded()){
+            if (!node.isExpanded()) {
                 continue;
             }
 
@@ -216,12 +256,14 @@ public class IBGCoveringNodeFinder
                 }
             }
 
-            if (!missingCoveringNode){
+            if (!missingCoveringNode) {
                 return;
             }
-            if (supersetOfMissing){
+
+            if (supersetOfMissing) {
                 pending.addChildren(node.firstChild());
             }
         }
     }
+     */
 }
