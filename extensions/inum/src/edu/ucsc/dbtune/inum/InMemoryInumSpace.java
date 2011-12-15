@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Configuration;
-
 import java.util.Map;
 import java.util.Set;
 
@@ -18,55 +16,56 @@ import com.google.common.collect.Sets;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InMemoryInumSpace implements InumSpace {
-  private final Map<Configuration, Set<OptimalPlan>> cachedPlans;
-  InMemoryInumSpace(Map<Configuration, Set<OptimalPlan>> cachedPlans){
-    this.cachedPlans = cachedPlans;
+  private final Map<Key, Set<OptimalPlan>> keyToOptimalPlans;
+
+  InMemoryInumSpace(Map<Key, Set<OptimalPlan>> cachedPlans){
+    this.keyToOptimalPlans = cachedPlans;
   }
 
   public InMemoryInumSpace(){
-    this(Maps.<Configuration, Set<OptimalPlan>>newHashMap());
+    this(Maps.<Key, Set<OptimalPlan>>newHashMap());
   }
 
   @Override public void clear() {
-    synchronized (cachedPlans){
-      cachedPlans.clear();
+    synchronized (keyToOptimalPlans){
+      keyToOptimalPlans.clear();
     }
   }
 
-  @Override public Set<OptimalPlan> getOptimalPlans(Configuration key) {
-    return cachedPlans.get(key);
+  @Override public Set<OptimalPlan> getOptimalPlans(Key key) {
+    return keyToOptimalPlans.get(key);
   }
 
-  @Override public Set<Configuration> getAllInterestingOrders() {
-    return ImmutableSet.copyOf(cachedPlans.keySet());
+  @Override public Set<Key> keySet() {
+    return ImmutableSet.copyOf(keyToOptimalPlans.keySet());
   }
 
   @Override public Set<OptimalPlan> getAllSavedOptimalPlans() {
     final Set<OptimalPlan> allSavedOnes = Sets.newHashSet();
-    for(Set<OptimalPlan> each : cachedPlans.values()){
+    for(Set<OptimalPlan> each : keyToOptimalPlans.values()){
       allSavedOnes.addAll(each);
     }
     return ImmutableSet.copyOf(allSavedOnes);
   }
 
-  @Override public Set<OptimalPlan> save(Configuration interestingOrders, Set<OptimalPlan> optimalPlans) {
-    if(!cachedPlans.containsKey(interestingOrders)){
+  @Override public InumSpace save(Key key, Set<OptimalPlan> optimalPlans) {
+    if(!keyToOptimalPlans.containsKey(key)){
       final Set<OptimalPlan> newBatchedOfPlans = Sets.newHashSet();
       for(OptimalPlan each : optimalPlans){
         newBatchedOfPlans.add(new CachedSqlExecutionOptimalPlan(each));
       }
 
-      cachedPlans.put(interestingOrders, newBatchedOfPlans);
+      keyToOptimalPlans.put(key, newBatchedOfPlans);
     } else {
       for(OptimalPlan each : optimalPlans){
         final CachedSqlExecutionOptimalPlan cp = new CachedSqlExecutionOptimalPlan(each);
-        if(!cachedPlans.get(interestingOrders).contains(cp)){
-           cachedPlans.get(interestingOrders).add(cp);
+        if(!keyToOptimalPlans.get(key).contains(cp)){
+           keyToOptimalPlans.get(key).add(cp);
         }
       }
     }
 
-    return getOptimalPlans(interestingOrders);
+    return this;
   }
 
   @Override public String toString() {

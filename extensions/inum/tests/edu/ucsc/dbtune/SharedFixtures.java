@@ -9,6 +9,7 @@ import edu.ucsc.dbtune.inum.IndexAccessCostEstimation;
 import edu.ucsc.dbtune.inum.InterestingOrdersExtractor;
 import edu.ucsc.dbtune.inum.Inum;
 import edu.ucsc.dbtune.inum.InumSpace;
+import edu.ucsc.dbtune.inum.Key;
 import edu.ucsc.dbtune.inum.MatchingStrategy;
 import edu.ucsc.dbtune.inum.OptimalPlan;
 import edu.ucsc.dbtune.inum.Precomputation;
@@ -73,12 +74,12 @@ public final class SharedFixtures {
 
   public static Inum configureInum() throws Exception {
     final Configuration  configuration  = configureConfiguration();
-    return configureInum(configuration);
+    return configureInum("SELECT * FROM TABLE1;", configuration);
   }
 
-  public static Inum configureInum(Configuration configuration) throws Exception {
+  public static Inum configureInum(String sql, Configuration configuration) throws Exception {
     final Connection                  connection     = configureConnection();
-    final InumSpace                   inumSpace      = configureInumSpace(configuration);
+    final InumSpace                   inumSpace      = configureInumSpace(sql, configuration);
     final Precomputation              precomputation = configurePrecomputation(inumSpace);
     final MatchingStrategy            matchingLogic  = configureMatchingLogic(inumSpace);
     final InterestingOrdersExtractor  ioExtractor    = configureIOExtractor(configuration);
@@ -102,17 +103,17 @@ public final class SharedFixtures {
   public static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception {
     final MatchingStrategy matchingLogic = Mockito.mock(MatchingStrategy.class);
     final Set<OptimalPlan> plans         = inumSpace.getAllSavedOptimalPlans();
-    Mockito.when(matchingLogic.matches(Mockito.eq(inumSpace), Mockito.<Configuration>any())).thenReturn(plans);
+    Mockito.when(matchingLogic.matches(Mockito.anyString(), Mockito.<Configuration>any(), Mockito.eq(inumSpace))).thenReturn(plans);
     final double cost = Lists.newArrayList(plans).get(0).getTotalCost();
-    Mockito.when(matchingLogic.derivesCost(Mockito.anyString(), Mockito.eq(plans), Mockito.<Configuration>any())).thenReturn(cost);
+    Mockito.when(matchingLogic.estimateCost(Mockito.anyString(), Mockito.<Configuration>any(),
+        Mockito.eq(inumSpace))).thenReturn(cost);
     return matchingLogic;
   }
 
   public static Precomputation configurePrecomputation(InumSpace inumSpace) throws Exception {
     final Precomputation    setup     = Mockito.mock(Precomputation.class);
     Mockito.when(setup.getInumSpace()).thenReturn(inumSpace);
-    final Set<OptimalPlan> plans = inumSpace.getAllSavedOptimalPlans();
-    Mockito.when(setup.setup(Mockito.anyString(), Mockito.<Configuration>any())).thenReturn(plans);
+    Mockito.when(setup.setup(Mockito.anyString(), Mockito.<Configuration>any())).thenReturn(inumSpace);
 
     return setup;
   }
@@ -128,15 +129,16 @@ public final class SharedFixtures {
     return singleOne;
   }
 
-  public static InumSpace configureInumSpace(Configuration key) throws Exception {
+  public static InumSpace configureInumSpace(String sql, Configuration config) throws Exception {
     final InumSpace inumSpace = Mockito.mock(InumSpace.class);
     final Set<OptimalPlan> plans = configureSingleOptimalPlan();
     Mockito.when(inumSpace.getAllSavedOptimalPlans()).thenReturn(plans);
-    Mockito.when(inumSpace.save(key, plans)).thenReturn(plans);
-    Mockito.when(inumSpace.getOptimalPlans(Mockito.<Configuration>any())).thenReturn(plans);
-    final Set<Configuration> ios = Sets.newHashSet();
+    final Key key = new Key(sql, config);
+    Mockito.when(inumSpace.save(key, plans)).thenReturn(inumSpace);
+    Mockito.when(inumSpace.getOptimalPlans(Mockito.<Key>any())).thenReturn(plans);
+    final Set<Key> ios = Sets.newHashSet();
     ios.add(key);
-    Mockito.when(inumSpace.getAllInterestingOrders()).thenReturn(ios);
+    Mockito.when(inumSpace.keySet()).thenReturn(ios);
     return inumSpace;
   }
 
@@ -179,7 +181,7 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
   }
 
   public static InumWhatIfOptimizer configureWhatIfOptimizer(Configuration configuration) throws Exception {
-    final Inum inum = configureInum(configuration);
+    final Inum inum = configureInum("", configuration);
     return new InumWhatIfOptimizerImpl(inum);
   }
 

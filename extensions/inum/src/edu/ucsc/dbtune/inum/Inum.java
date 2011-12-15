@@ -1,13 +1,11 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.util.StopWatch;
-
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.util.StopWatch;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Set;
@@ -82,13 +80,7 @@ public class Inum {
       );
     }
 
-    final InumSpace        cachedPlans         = precomputation.getInumSpace();
-    final Set<OptimalPlan> matchedOptimalPlans = matchingLogic.matches(
-        cachedPlans,
-        inputConfiguration
-    );
-
-    return matchingLogic.derivesCost(query, matchedOptimalPlans, inputConfiguration);
+    return matchingLogic.estimateCost(query, inputConfiguration, precomputation.getInumSpace());
   }
 
   public void end()   {

@@ -1,16 +1,11 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
-
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
+import edu.ucsc.dbtune.metadata.Configuration;
+import static java.lang.Double.compare;
 import java.sql.Connection;
 import java.util.Set;
-
-import static java.lang.Double.compare;
 
 /**
  * Default implementation of Inum's {@link MatchingStrategy}
@@ -28,11 +23,15 @@ public class InumMatchingStrategy implements MatchingStrategy {
     this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
   }
 
-  @Override public double derivesCost(String query, Set<OptimalPlan> optimalPlans,
-      Configuration inputConfiguration) {
+  @Override public double estimateCost(String query, Configuration inputConfiguration,
+      InumSpace inumSpace) {
+    // matched optimal plans for "query" ...
+    final Set<OptimalPlan> matchedOptimalPlans = matches(
+        query, inputConfiguration, inumSpace
+    );
     // adding the cached cost + index access costs
     final double indexAccessCosts = getIndexAccessCostEstimation().estimateIndexAccessCost(query, inputConfiguration);
-    final double derivedCost      = findOneWithMinCost(optimalPlans, indexAccessCosts);
+    final double derivedCost      = findOneWithMinCost(matchedOptimalPlans, indexAccessCosts);
     Preconditions.checkArgument(compare(derivedCost, 0.0) > 0, "invalid execution cost. It cannot be negative or zero.");
     return derivedCost;
   }
@@ -61,37 +60,19 @@ public class InumMatchingStrategy implements MatchingStrategy {
     return accessCostEstimator;
   }
 
-  private static boolean intersects(Configuration first, Configuration second){
-    final Configuration c = new Configuration(Lists.<Index>newArrayList());
-    if (first.size() < second.size()) {
-      for (Index x : first.toList()) {
-        if (second.toList().contains(x)) {
-          c.add(x);
-        }
-      }
-    } else {
-      for (Index x : second.toList()) {
-        if (first.toList().contains(x)) {
-          c.add(x);
-        }
-      }
-    }
-
-    return !c.toList().isEmpty();
-  }
-
-  @Override public Set<OptimalPlan> matches(InumSpace inumSpace, Configuration inputConfiguration) {
+  @Override public Set<OptimalPlan> matches(String sql, Configuration inputConfiguration,
+      InumSpace inumSpace) {
     final Set<OptimalPlan> found = Sets.newHashSet();
-    // assuming there is a match, pick the one with the min cost.
-    final Configuration key = new Configuration(inputConfiguration);
-    for(Configuration match : inumSpace.getAllInterestingOrders()){
-      if(intersects(match, key)){
-        final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(key);
+    // assuming there is a match, later methods will pick the optimal plan with the min cost.
+    final Configuration copy      = new Configuration(inputConfiguration);  // defensive copy of configuration
+    final Key           targetKey = new Key(sql, copy);
+    for(Key eachKey : inumSpace.keySet()){
+      if(eachKey.equals/* means (same SQL and intersects indexes)*/(targetKey)) {
+        final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(eachKey);
         found.addAll(optimalPlans);
         break;
       }
     }
-
     return found;
   }
 

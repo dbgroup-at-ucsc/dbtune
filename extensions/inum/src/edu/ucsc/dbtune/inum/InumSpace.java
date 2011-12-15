@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.workload.SQLStatement;
 import java.util.Set;
 
 /**
@@ -32,23 +33,26 @@ public interface InumSpace {
   /**
    * clears the Inum space (cached plans). This will help the garbage collector to dispose the objects
    * found in this cache appropriately.
+   * Note: this method is intended to be used when running experiments requiring the flushing of the
+   * InumSpace object.
    */
   void clear();
 
   /**
    * get the set of optimal plans for the given key.
-   *
+
    * @param key
-   *    index or interesting orders.
+   *    a key object consisting of a SQL query and a configuration made of interesting orders.
    * @return
    *    the set of cached optimal plans for the given key.
    */
-  Set<OptimalPlan> getOptimalPlans(Configuration key);
+  Set<OptimalPlan> getOptimalPlans(Key key);
 
   /**
-   * @return the set of interesting orders.
+   * @return
+   *    the set of {@link InumSpace}'s keys.
    */
-  Set<Configuration> getAllInterestingOrders();
+  Set<Key> keySet();
 
   /**
    * Get all the {@link OptimalPlan optimal plan}s from the
@@ -62,8 +66,9 @@ public interface InumSpace {
   /**
    * Save a set of optimal plans per query in the INUM Space.
    *
-   * @param interestingOrders
-   *      a single combination of interesting orders.
+   *
+   * @param key
+   *      a key consisting of a SQL query and a configuration made of interesting orders.
    * @param optimalPlans
    *      a set of optimal plans to be saved in the {@link InumSpace INUM Space}.
    *      {@link OptimalPlan Plans} that haven't been saved in the {@link InumSpace INUM Space}
@@ -72,5 +77,5 @@ public interface InumSpace {
    *      a reference to the set of saved optimal plans, useful if you wish to hold a reference to
    *      the set for checking post-conditions or other purposes (e.g., logging).
    */
-  Set<OptimalPlan> save(Configuration interestingOrders, Set<OptimalPlan> optimalPlans);
+  InumSpace save(Key key, Set<OptimalPlan> optimalPlans);
 }

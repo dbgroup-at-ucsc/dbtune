@@ -25,27 +25,30 @@ public interface MatchingStrategy {
    *
    * @param query
    *    single query.
-   * @param optimalPlan
-   *    the corresponding {@link OptimalPlan optimal plan} for a given input configuration.
    * @param inputConfiguration
    *    the input configuration be evaluated.
+   * @param inumSpace
+   *    the set of optimal plans maintained by INUM.
    * @return
    *    the query cost obtained by adding the cached cost in the {@link OptimalPlan optimal plan}
    *    to the index access costs computed on-the-fly.
    */
-  double derivesCost(String query, Set<OptimalPlan> optimalPlan, Configuration inputConfiguration);
+  double estimateCost(String query, Configuration inputConfiguration, InumSpace inumSpace);
 
   /**
    * it matches the input configuration to its corresponding optimal plan.  If the input matches
    * more than one optimal plan, then pick the optimal plan with min cost.
    *
-   * @param inumSpace
-   *    the space containing all cached optimal plans.
+   *
+   * @param sql
+   *    single SQL query.
    * @param inputConfiguration
    *    an input configuration for which we will find its optimal plan.
+   * @param inumSpace
+   *    the space containing all cached optimal plans.
    * @return
    *    the matched {@link OptimalPlan optimal plan} for the given input
    *    configuration.
    */
-  Set<OptimalPlan> matches(InumSpace inumSpace, Configuration inputConfiguration);
+  Set<OptimalPlan> matches(String sql, Configuration inputConfiguration, InumSpace inumSpace);
 }

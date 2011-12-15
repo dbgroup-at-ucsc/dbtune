@@ -23,7 +23,7 @@ public interface Precomputation {
    * representative configuration. The resulting {@link OptimalPlan}.
    *
    * The resulting optimal plan is saved in the {@link InumSpace INUM Space},
-   * by calling the {@link InumSpace#save(Configuration, Set)}  InumSpace#save(Set<DBIndex>, Set<OptimalPlan>)} method.
+   * by calling the {@link InumSpace#save(Key, Set)}  InumSpace#save(Set<DBIndex>, Set<OptimalPlan>)} method.
    * After successfully saving the plan, a reference to the optimal plans is returned to the
    * caller of this method.
    *
@@ -38,6 +38,7 @@ public interface Precomputation {
    * {@code MHJ} plan. Thus, to compute the INUM space it is sufficient to invoke the optimizer once
    * for each member {@code o in O}.&quot;
    *
+   *
    * @param query
    *      single query. This query will be parsed so that its interesting orders are extracted.
    *      These interesting orders will be inputs of {@link MatchingStrategy matching logic}. The
@@ -47,10 +48,10 @@ public interface Precomputation {
    *      a representative configuration. The representative configuration could contain
    *      any set of indexes satisfying the non-join or non-interesting orders.
    * @return
-   *      a reference to the set of optimal plans, useful if you wish to hold a reference to
-   *      the set for checking post-conditions or other purposes (e.g., logging).
+   *      a reference to the updated {@link InumSpace inumSpace} object, useful if you wish to hold a reference to
+   *      the {@link InumSpace} object for checking post-conditions or other purposes (e.g., logging).
    */
-  Set<OptimalPlan> setup(String query, Configuration interestingOrders);
+  InumSpace setup(String query, Configuration interestingOrders);
 
   /**
    * checks whether the precomputation step should be skipped for a
