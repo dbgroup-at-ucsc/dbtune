@@ -283,7 +283,7 @@ public class IndexBenefitGraph
             assert isExpanded();
 
             for (IBGChild ch = firstChild; ch != null; ch = ch.next)
-                other.clear(ch.usedIndex);
+                other.remove(ch.usedIndex);
         }
 
         /**

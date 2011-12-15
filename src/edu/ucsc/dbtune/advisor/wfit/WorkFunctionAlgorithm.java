@@ -114,7 +114,7 @@ public class WorkFunctionAlgorithm
 
     private static void clearStateBits(int[] ids, IndexBitSet bitSet)
     {
-        for (int id : ids) bitSet.clear(id);
+        for (int id : ids) bitSet.remove(id);
     }
 
     /**
@@ -257,8 +257,14 @@ public class WorkFunctionAlgorithm
      *      an index configuration.
      */
     static void setStateBits(int[] ids, int stateNum, IndexBitSet bitSet) {
-        for (int i = 0; i < ids.length; i++)
-            bitSet.set(ids[i], 0 != (stateNum & (1 << i)));
+        for (int i = 0; i < ids.length; i++) {
+            if (0 != (stateNum & (1 << i)))
+                bitSet.set(ids[i]);
+            else
+                bitSet.clear(ids[i]);
+                
+                    
+        }
     }
 
     private boolean isRecommended(Index idx)
@@ -506,7 +512,7 @@ public class WorkFunctionAlgorithm
                 currentState |= stateMask;
             }
             else {
-                currentBitSet.clear(candidateSet.getOrdinalPosition(index));
+                currentBitSet.remove(candidateSet.getOrdinalPosition(index));
                 currentState ^= stateMask;
             }
             

@@ -38,7 +38,7 @@ public class IndexBitSetTest
         for (Index idx : conf)
             assertThat(bs.get(conf.getOrdinalPosition(idx)), is(true));
 
-        IndexBitSet other = bs.clone();
+        IndexBitSet other = new IndexBitSet(bs);
 
         assertThat(bs, is(other));
 

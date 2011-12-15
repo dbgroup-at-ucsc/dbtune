@@ -45,7 +45,7 @@ public class IBGAnalyzer
         this.nodeQueue      = nodeQueue;
         this.revisitQueue   = revisitQueue;
         allUsedIndexes      = new IndexBitSet();
-        rootBitSet          = ibgCons.rootNode().getConfiguration().clone();
+        rootBitSet          = new IndexBitSet(ibgCons.rootNode().getConfiguration());
         visitedNodes        = new IndexBitSet();
 
         // seed the queue with the root node
@@ -159,7 +159,7 @@ public class IBGAnalyzer
         candidatesBitSet.and(allUsedIndexes);
 
         boolean retval = true; // set false on first failure
-        for (int a = candidatesBitSet.nextSetBit(0); a >= 0; a = candidatesBitSet.nextSetBit(a+1)) {
+        for (int a = 0; a < candidatesBitSet.size(); a++) {
             IBGNode Y;
             double costY;
 
@@ -176,14 +176,14 @@ public class IBGAnalyzer
             else
                 logger.assignBenefit(a, costY - YaSimple.cost());
 
-            for (int b = candidatesBitSet.nextSetBit(a+1); b >= 0; b = candidatesBitSet.nextSetBit(b+1)) {
+            for (int b = a+1; b < candidatesBitSet.size(); b++) {
                 IBGNode Ya, Yab, YbPlus, YbMinus;
                 double costYa, costYab;
 
                 // fetch Ya and Yab
                 bitset_Ya.set(bitset_Y);
                 bitset_Ya.set(a);
-                bitset_Ya.clear(b);
+                bitset_Ya.remove(b);
 
                 bitset_Yab.set(bitset_Y);
                 bitset_Yab.set(a);
@@ -208,11 +208,11 @@ public class IBGAnalyzer
                 Y.addUsedIndexes(bitset_YbMinus);
                 Ya.addUsedIndexes(bitset_YbMinus);
                 Yab.addUsedIndexes(bitset_YbMinus);
-                bitset_YbMinus.clear(a);
+                bitset_YbMinus.remove(a);
                 bitset_YbMinus.set(b);
 
                 bitset_YbPlus.set(bitset_Y);
-                bitset_YbPlus.clear(a);
+                bitset_YbPlus.remove(a);
                 bitset_YbPlus.set(b);
 
                 YbPlus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YbPlus, Yab);

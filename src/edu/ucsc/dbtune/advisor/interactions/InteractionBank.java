@@ -4,6 +4,7 @@ import java.util.BitSet;
 
 import edu.ucsc.dbtune.metadata.Configuration;
 
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.UnionFind;
 
 public class InteractionBank
@@ -69,7 +70,7 @@ public class InteractionBank
         return bestBenefit[id];
     }
 
-    public final BitSet[] stablePartitioning(double threshold)
+    public final IndexBitSet[] stablePartitioning(double threshold)
     {
         UnionFind uf = new UnionFind(indexCount);
         for (int a = 0; a < indexCount; a++) 
