@@ -1,18 +1,3 @@
-/* **************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                         *
- *                                                                              *
- *   Licensed under the Apache License, Version 2.0 (the "License");            *
- *   you may not use this file except in compliance with the License.           *
- *   You may obtain a copy of the License at                                    *
- *                                                                              *
- *       http://www.apache.org/licenses/LICENSE-2.0                             *
- *                                                                              *
- *   Unless required by applicable law or agreed to in writing, software        *
- *   distributed under the License is distributed on an "AS IS" BASIS,          *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
- *   See the License for the specific language governing permissions and        *
- *   limitations under the License.                                             *
- * **************************************************************************** */
 package edu.ucsc.dbtune.workload;
 
 import java.sql.SQLException;
@@ -63,8 +48,8 @@ public enum SQLCategory
      */
     boolean contains(SQLCategory category)
     {
-        for(String id : category.code) {
-            if(contains(id)) {
+        for (String id : category.code) {
+            if (contains(id)) {
                 return true;
             }
         }
@@ -97,20 +82,20 @@ public enum SQLCategory
      */
     public static SQLCategory from(String codeOrSQL) throws SQLException
     {
-        if(codeOrSQL.length() == 1)
-            for(SQLCategory category : values())
-                if(category.contains(codeOrSQL))
+        if (codeOrSQL.length() == 1)
+            for (SQLCategory category : values())
+                if (category.contains(codeOrSQL))
                     return category;
 
         String sql = codeOrSQL.trim().toLowerCase();
 
-        if(sql.startsWith("select") || sql.startsWith("with")) {
+        if (sql.startsWith("select") || sql.startsWith("with")) {
             return SQLCategory.SELECT;
-        } else if(sql.startsWith("update")) {
+        } else if (sql.startsWith("update")) {
             return SQLCategory.UPDATE;
-        } else if(sql.startsWith("insert")) {
+        } else if (sql.startsWith("insert")) {
             return SQLCategory.INSERT;
-        } else if(sql.startsWith("delete")) {
+        } else if (sql.startsWith("delete")) {
             return SQLCategory.DELETE;
         } else {
             throw new SQLException("Can't determine category for " + codeOrSQL);
@@ -135,14 +120,15 @@ public enum SQLCategory
      * {@inheritDoc}
      */
     @Override
-    public String toString() {
-        if(this.isSame(SELECT)) {
+    public String toString()
+    {
+        if (this.isSame(SELECT)) {
             return "SELECT";
-        } else if(this.isSame(SELECT)) {
+        } else if (this.isSame(SELECT)) {
             return "UPDATE";
-        } else if(this.isSame(SELECT)) {
+        } else if (this.isSame(SELECT)) {
             return "INSERT";
-        } else if(this.isSame(SELECT)) {
+        } else if (this.isSame(SELECT)) {
             return "DELETE";
         } else {
             return "UNKNOWN";

@@ -11,7 +11,8 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation {
+public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation
+{
   private final OptimalPlanProvider provider;
   private final OptimalPlansParser  parser;
 
@@ -21,28 +22,31 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
     this.parser     = parser;
   }
 
-  public InumIndexAccessCostEstimation(Connection connection){
+  public InumIndexAccessCostEstimation(Connection connection)
+  {
     this(new SqlExecutionPlanProvider(connection), new InumOptimalPlansParser());
   }
 
-  @Override public double estimateIndexAccessCost(String query, Configuration indexes) {
+  @Override public double estimateIndexAccessCost(String query, Configuration indexes)
+ {
     // this method will call the optimizer and then get the index access cost
     // per index in the Iterable<DBIndex> object.
     final String      optPlan    = provider.getSqlExecutionPlan(query, indexes);
     final OptimalPlan singlePlan = singlePlan(optPlan);
     double sumOfIndexAccessCosts = 0.0;
-    for(Index each : indexes.toList() ){
+    for (Index each : indexes.toList() ){
       sumOfIndexAccessCosts +=  singlePlan.getAccessCost(each.getTable().getName());
     }
     return sumOfIndexAccessCosts;
   }
 
-  private OptimalPlan singlePlan(String returnedPlan){
+  private OptimalPlan singlePlan(String returnedPlan)
+  {
     // the assumption is that we will get one plan.....
     final Set<OptimalPlan> plans = parser.parse(returnedPlan);
     OptimalPlan plan = null;
-    for(OptimalPlan each : plans){
-      if(plan == null) { plan = each; }
+    for (OptimalPlan each : plans){
+      if (plan == null) { plan = each; }
       else             { break;       }
     }
 

@@ -9,17 +9,21 @@ import edu.ucsc.dbtune.util.Environment;
 /**
  * @author huascar.sanchez@gmail.com (Huascar A. Sanchez)
  */
-public class EnvironmentTest {
+public class EnvironmentTest
+{
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws Exception
+    {
         Environment.getInstance();
     }
 
     @Test
-    public void testReading() throws Exception {
+    public void testReading() throws Exception
+    {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() throws Exception
+    {
     }
 }

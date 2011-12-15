@@ -1,18 +1,3 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune.util;
 
 import java.util.ArrayList;
@@ -36,7 +21,8 @@ public class Tree<T extends Comparable<? super T>>
      * @param root
      *     the root of the tree
      */
-    public Tree( T root ) {
+    public Tree( T root )
+    {
         this.root     = new Entry<T>(root);
         this.elements = new HashMap<T,Entry<T>>();
         this.size     = 1;
@@ -50,7 +36,8 @@ public class Tree<T extends Comparable<? super T>>
      * @return
      *     element at the root
      */
-    public T getRootElement() {
+    public T getRootElement()
+    {
         return root.element;
     }
 
@@ -63,16 +50,17 @@ public class Tree<T extends Comparable<? super T>>
      * @throws NoSuchElementException
      *     if {@code value} isn't a member of the tree
      */
-    public List<T> getChildren(T value) throws NoSuchElementException {
+    public List<T> getChildren(T value) throws NoSuchElementException
+    {
         Entry<T> entry = find(value, root);
 
-        if(entry == null) {
+        if (entry == null) {
             throw new NoSuchElementException( value + " is not a member");
         }
 
         List<T> children = new ArrayList<T>();
 
-        for(Entry<T> e : entry.children) {
+        for (Entry<T> e : entry.children) {
             children.add(valueOf(e));
         }
 
@@ -86,7 +74,8 @@ public class Tree<T extends Comparable<? super T>>
      * @return
      *     list containing the elements in the tree
      */
-    public List<T> toList() {
+    public List<T> toList()
+    {
         return new ArrayList<T>(elements.keySet());
     }
 
@@ -98,7 +87,8 @@ public class Tree<T extends Comparable<? super T>>
      * @return
      *     {@code true} if the element is contained; {@code false} otherwise.
      */
-    public boolean contains(T value) {
+    public boolean contains(T value)
+    {
         return valueOf(find(value, root)) != null;
     }
 
@@ -110,7 +100,8 @@ public class Tree<T extends Comparable<? super T>>
      * @return
      *     the corresponding element; {@code null} if entry is {@code null}
      */
-    private T valueOf(Entry<T> entry) {
+    private T valueOf(Entry<T> entry)
+    {
         return entry == null ? null : entry.element;
     }
 
@@ -126,17 +117,18 @@ public class Tree<T extends Comparable<? super T>>
      * @throws IllegalArgumentException
      *     if {@code childValue} is already in the tree.
      */
-    public Entry<T> setChild(T parentValue, T childValue) {
+    public Entry<T> setChild(T parentValue, T childValue)
+    {
         Entry<T> parentEntry;
         Entry<T> childEntry;
 
-        if(elements.get(childValue) != null) {
+        if (elements.get(childValue) != null) {
             throw new IllegalArgumentException("Child value already in tree");
         }
 
         parentEntry = elements.get(parentValue);
 
-        if( parentEntry == null ) {
+        if ( parentEntry == null ) {
             throw new NoSuchElementException(parentValue + " not in tree");
         }
 
@@ -156,7 +148,8 @@ public class Tree<T extends Comparable<? super T>>
      *
      * @return size of the tree.
      */
-    public int size() {
+    public int size()
+    {
         return size;
     }
 
@@ -171,16 +164,17 @@ public class Tree<T extends Comparable<? super T>>
      * @return
      *     the corresponding entry if found; null, otherwise
      */
-    protected Entry<T> find(T value, Entry<T> entry) {
+    protected Entry<T> find(T value, Entry<T> entry)
+    {
         if (value.compareTo(entry.element) == 0) {
             return entry;
         } else {
             Entry<T> found;
 
-            for(Entry<T> e : entry.children) {
+            for (Entry<T> e : entry.children) {
                 found = find(value, e);
 
-                if(found != null) {
+                if (found != null) {
                     return found;
                 }
             }
@@ -198,13 +192,14 @@ public class Tree<T extends Comparable<? super T>>
      * @return
      *     string representation of the sub-tree
      */
-    private String toString(Entry<T> entry, String padding) {
+    private String toString(Entry<T> entry, String padding)
+    {
         String str = "";
 
         if (entry != null) {
             str += padding + entry.element + "\n";
 
-            for(Entry<T> e : entry.children) {
+            for (Entry<T> e : entry.children) {
                 str += toString(e, padding + padding );
             }
         }

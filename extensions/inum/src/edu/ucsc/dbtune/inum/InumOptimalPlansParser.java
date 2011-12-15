@@ -18,7 +18,8 @@ import java.util.regex.Pattern;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumOptimalPlansParser implements OptimalPlansParser {
+public class InumOptimalPlansParser implements OptimalPlansParser
+{
   private static final int NOT_FOUND = -1;
   private static final int ROOT      = -1;
 
@@ -62,12 +63,14 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
     );
   }
 
-  @Override public Set<OptimalPlan> parse(String returnedStatement) {
+  @Override public Set<OptimalPlan> parse(String returnedStatement)
+ {
     return buildPlans(returnedStatement);
   }
 
   // parsing plan suggested by optimizer
-  private static Set<OptimalPlan> buildPlans(String queryExecutionPlan){
+  private static Set<OptimalPlan> buildPlans(String queryExecutionPlan)
+  {
     final Set<OptimalPlan> suggestedPlans = Sets.newHashSet();
     final OptimalPlan   optimalPlan = new SqlExecutionOptimalPlan();
     final List<String>  parsedlines = Lists.newArrayList();
@@ -75,16 +78,16 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
     final String        current     = ("->  " + queryExecutionPlan).replaceAll("\\r|\\n", "");
 
     final Matcher matcher     = Pattern.compile("\\->").matcher(current);
-    while(matcher.find()){
+    while (matcher.find()){
       int end          = matcher.end();
       int nextPosition = current.indexOf("->", end);
       int counter      = 0;
       String relevantText;
-      if(nextPosition != NOT_FOUND){
+      if (nextPosition != NOT_FOUND){
         relevantText = current.substring(end + 2, nextPosition);
-        for(int idx = (relevantText.length() - 1) ; idx > 0; idx--) {
+        for (int idx = (relevantText.length() - 1) ; idx > 0; idx--) {
           final boolean isWhiteSpace = Character.isWhitespace(relevantText.charAt(idx));
-          if(isWhiteSpace) { counter++; }
+          if (isWhiteSpace) { counter++; }
           else             { break;     }
           parents.add(counter);
         }
@@ -93,7 +96,7 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
         relevantText = current.substring(end + 2);
       }
 
-      if(!Strings.isEmpty(relevantText)){
+      if (!Strings.isEmpty(relevantText)){
         parsedlines.add(relevantText);
       }
     }
@@ -101,7 +104,7 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
     parents.add(0, ROOT);
 
     // parse parents and actual plans
-    for(int rowId = 0; rowId < parsedlines.size(); rowId++){
+    for (int rowId = 0; rowId < parsedlines.size(); rowId++){
       final String each          = parsedlines.get(rowId);
       int posOpenParenthesis     = each.indexOf("(");
       int posCost                = each.indexOf("cost=");
@@ -116,12 +119,12 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
       final double costWholeOperation = Double.valueOf(each.substring(posDoubleDot + 2, posSpaceAfterDoubleDot));
       final long   rows               = Long.valueOf(each.substring(posRows + 5, posSpaceAfterRows));
       int   parent = ROOT;
-      if(rowId == 0){
+      if (rowId == 0){
         parent = ROOT;
       } else {
         final int len = parents.get(rowId);
-        for(int j = rowId; j >= 0; j--){
-          if(parents.get(j) < len || parents.get(j) < 0) {
+        for (int j = rowId; j >= 0; j--){
+          if (parents.get(j) < len || parents.get(j) < 0) {
             parent = j;
             break;
           }
@@ -144,16 +147,18 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
     return suggestedPlans;
   }
 
-  private static String findOperator(String name){
-    for(Pair<String, String> each : OPERATORS_MAPPINGS){
-      if(Strings.contains(name, each.getLeft())){
+  private static String findOperator(String name)
+  {
+    for (Pair<String, String> each : OPERATORS_MAPPINGS){
+      if (Strings.contains(name, each.getLeft())){
         return each.getRight();
       }
     }
     return "UNKNOWN TYPE in " + name;
   }
 
-  private static String findTarget(String nodeName, String prim){
+  private static String findTarget(String nodeName, String prim)
+  {
       String result = "";
       if (nodeName.equals("IXSCAN")) {//IndexScan: " using %s"
           int x = prim.indexOf(" using ");

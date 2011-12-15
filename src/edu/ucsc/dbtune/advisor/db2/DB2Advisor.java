@@ -1,18 +1,3 @@
-/* **************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                         *
- *                                                                              *
- *   Licensed under the Apache License, Version 2.0 (the "License");            *
- *   you may not use this file except in compliance with the License.           *
- *   You may obtain a copy of the License at                                    *
- *                                                                              *
- *       http://www.apache.org/licenses/LICENSE-2.0                             *
- *                                                                              *
- *   Unless required by applicable law or agreed to in writing, software        *
- *   distributed under the License is distributed on an "AS IS" BASIS,          *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
- *   See the License for the specific language governing permissions and        *
- *   limitations under the License.                                             *
- * **************************************************************************** */
 package edu.ucsc.dbtune.advisor.db2;
 
 /**
@@ -44,7 +29,8 @@ public class DB2Advisor
     private static final Pattern START_INDEXES_PATTERN   = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
     private static final Pattern END_INDEXES_PATTERN     = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
 
-    public static FileInfo createAdvisorFile(Connection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException {
+    public static FileInfo createAdvisorFile(Connection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException
+    {
         final String cmd = getCmd(advisorPath, budget, workloadFile, false);
         final String cleanCmd = getCmd(advisorPath, budget, workloadFile, true);
 
@@ -97,22 +83,26 @@ public class DB2Advisor
                +" -m I -f -k OFF";
     }
     
-    public static class FileInfo {
+    public static class FileInfo
+    {
         List<IndexInfo> indexList;
         
         @SuppressWarnings("unused")
         private String output;
         
-        private FileInfo(InputStream stream) throws IOException, SQLException {
+        private FileInfo(InputStream stream) throws IOException, SQLException
+        {
             indexList = new ArrayList<IndexInfo>();
             output    = processFile(stream, indexList);
         }
         
-        public Configuration getCandidates(Connection conn) throws SQLException {
+        public Configuration getCandidates(Connection conn) throws SQLException
+        {
             throw new SQLException("not implemented yet");
         }
         
-        public int getMegabytes() {
+        public int getMegabytes()
+        {
             double total = 0;
             for (IndexInfo info : indexList) 
                 total += info.megabytes;
@@ -120,7 +110,8 @@ public class DB2Advisor
             return (int) Math.round(total);
         }
         
-        private static String processFile(InputStream stream, List<IndexInfo> indexList) throws IOException, SQLException { 
+        private static String processFile(InputStream stream, List<IndexInfo> indexList) throws IOException, SQLException
+        { 
             List<String> lines = Files.getLines(stream); // splits the file into individual lines
             Iterator<String> iter   = lines.iterator();
             Matcher headerMatcher   = INDEX_HEADER_PATTERN.matcher("");
@@ -159,7 +150,8 @@ public class DB2Advisor
         }
     }
     
-    private static class IndexInfo {
+    private static class IndexInfo
+    {
         String name;
         double megabytes;
         

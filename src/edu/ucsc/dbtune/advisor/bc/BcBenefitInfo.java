@@ -1,41 +1,24 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
 package edu.ucsc.dbtune.advisor.bc;
 
 import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.sql.SQLException;
 import java.util.Arrays;
 
-public class BcBenefitInfo {
+public class BcBenefitInfo
+{
     private final double[]              origCosts;
     private final double[]              newCosts;
     private final int[]                 reqLevels;
     private final double[]              overheads;
-    private final PreparedSQLStatement  profiledQuery;
+    private final ExplainedSQLStatement  profiledQuery;
 
     private BcBenefitInfo(double[] origCosts, double[] newCosts,
                           int[] reqLevels, double[] overheads,
-                          PreparedSQLStatement profiledQuery
+                          ExplainedSQLStatement profiledQuery
     ) {
         this.origCosts      = origCosts;
         this.newCosts       = newCosts;
@@ -48,7 +31,7 @@ public class BcBenefitInfo {
             Configuration snapshot,
             Configuration hotSet,
             IndexBitSet config,
-            PreparedSQLStatement profiledQuery )
+            ExplainedSQLStatement profiledQuery )
         throws SQLException
     {
         /*
@@ -105,7 +88,8 @@ public class BcBenefitInfo {
      *      index's id
      * @return the new cost of an index.
      */
-    public double newCost(int id) {
+    public double newCost(int id)
+    {
         return newCosts[id];
     }
 
@@ -115,7 +99,8 @@ public class BcBenefitInfo {
      *      index's id
      * @return the original cost of an index.
      */
-    public double origCost(int id) {
+    public double origCost(int id)
+    {
         return origCosts[id];
     }
 
@@ -125,7 +110,8 @@ public class BcBenefitInfo {
      *      index's id
      * @return the required level of an index.
      */
-    public int reqLevel(int id) {
+    public int reqLevel(int id)
+    {
         return reqLevels[id];
     }
 
@@ -135,19 +121,22 @@ public class BcBenefitInfo {
      *      index's id
      * @return the overhead of an index.
      */
-    public double overhead(int id) {
+    public double overhead(int id)
+    {
         return overheads[id];
     }
 
     /**
-     * @return the {@link PreparedSQLStatement} used in this {@code BcBenefitInfo} object.
+     * @return the {@link ExplainedSQLStatement} used in this {@code BcBenefitInfo} object.
      */
-    public PreparedSQLStatement getProfiledQuery(){
+    public ExplainedSQLStatement getProfiledQuery()
+    {
         return profiledQuery;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return new ToStringBuilder<BcBenefitInfo>(this)
                .add("origCosts", Arrays.toString(origCosts))
                .add("newCosts", Arrays.toString(newCosts))

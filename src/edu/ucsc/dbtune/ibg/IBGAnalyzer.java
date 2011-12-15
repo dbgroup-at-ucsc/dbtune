@@ -1,28 +1,11 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
-public class IBGAnalyzer {
+public class IBGAnalyzer
+{
     // the IBG we are currently exploring
     protected final IndexBenefitGraphConstructor ibgCons;
 
@@ -55,13 +38,14 @@ public class IBGAnalyzer {
      * @param revisitQueue
      *      a given {@link IBGNodeQueue} object which contains IBG node that will be revisited.
      */
-    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue revisitQueue){
+    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue revisitQueue)
+    {
         // initialize fields
         this.ibgCons        = ibgCons;
         this.nodeQueue      = nodeQueue;
         this.revisitQueue   = revisitQueue;
         allUsedIndexes      = new IndexBitSet();
-        rootBitSet          = ibgCons.rootNode().config.clone();
+        rootBitSet          = ibgCons.rootNode().getConfiguration().clone();
         visitedNodes        = new IndexBitSet();
 
         // seed the queue with the root node
@@ -73,7 +57,8 @@ public class IBGAnalyzer {
      * @param ibgCons
      *      a given {@link IndexBenefitGraphConstructor} object.
      */
-    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons) {
+    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons)
+    {
         this(ibgCons, new IBGNodeQueue(), new IBGNodeQueue());
     }
 
@@ -88,7 +73,8 @@ public class IBGAnalyzer {
      * @return either {@link StepStatus#BLOCKED}, {@link StepStatus#DONE}, or
      *      {@link StepStatus#SUCCESS}.
      */
-    public final StepStatus analysisStep(InteractionLogger logger, boolean wait) {
+    public final StepStatus analysisStep(InteractionLogger logger, boolean wait)
+    {
         // we might need to go through several nodes to find one that we haven't visited yet
         while (true) {
             IBGNode node;
@@ -115,11 +101,11 @@ public class IBGAnalyzer {
                 return StepStatus.DONE;
             }
 
-            if (visitedNodes.get(node.id))
+            if (visitedNodes.get(node.getID()))
                 continue;
 
             if (analyzeNode(node, logger)) {
-                visitedNodes.set(node.id);
+                visitedNodes.set(node.getID());
                 nodeQueue.addChildren(node.firstChild());
             }
             else {
@@ -156,8 +142,9 @@ public class IBGAnalyzer {
     /*
      * Return true if the analysis was successful
      */
-    private boolean analyzeNode(IBGNode node, InteractionLogger logger) {
-        IndexBitSet bitset_Y = node.config;
+    private boolean analyzeNode(IBGNode node, InteractionLogger logger)
+    {
+        IndexBitSet bitset_Y = node.getConfiguration();
 
         // get the used set
         usedBitSet.clear();
@@ -258,7 +245,8 @@ public class IBGAnalyzer {
      *
      *     | C - C_a - C_b + C_ab |
      */
-    private static double interactionLevel(double empty, double a, double b, double ab) {
+    private static double interactionLevel(double empty, double a, double b, double ab)
+    {
         return Math.abs(empty - a - b + ab);
     }
 
@@ -268,7 +256,8 @@ public class IBGAnalyzer {
      * 
      * Return true if there might be some work left to do for this analysis
      */
-    public enum StepStatus {
+    public enum StepStatus
+    {
         /**
          * there was no expanded node to analyze, and there is an unexpanded node
          */

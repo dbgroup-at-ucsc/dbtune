@@ -1,15 +1,14 @@
 <?xml version="1.0"?>
 <!--
-   **Note to devs**: If this file is modified, the core-how-to-build Wiki entry must be updated 
-   accordingly.
+   **Note to devs**: If this file is modified, the 'core-how-to-build' Wiki 
+   entry must be updated accordingly.
 -->
 <project name="${project}" default="compile">
   <property file="build.properties"/>
-  <taskdef resource="net/sf/antcontrib/antcontrib.properties">
-    <classpath>
-      <pathelement location="${lib.dir}/ant-contrib-1.0b3.jar"/>
-    </classpath>
-  </taskdef>
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties"
+           classpath="${lib.dir}/ant-contrib-1.0b3.jar"/>
+  <taskdef resource="checkstyletask.properties"
+           classpath="${lib.dir}/checkstyle-5.5-all.jar"/>
   <path id="compile.classpath">
     <fileset dir="${lib.dir}" includes="*.jar"/>
     <fileset dir="${ext.dir}" includes="**/*.jar"/>
@@ -19,7 +18,10 @@
   </target>
 
   <!-- core -->
-  <target name="compile">
+  <target name="checkstyle">
+    <ant dir="." antfile="common.xml" target="checkstyle"/>
+  </target>
+  <target name="compile" >
     <ant dir="." antfile="common.xml" target="compile">
       <reference refid="compile.classpath" />
     </ant>

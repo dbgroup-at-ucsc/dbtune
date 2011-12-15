@@ -14,9 +14,11 @@ import com.google.common.collect.Sets;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class SetupWorkloadVisitor implements WorkloadVisitor {
+public class SetupWorkloadVisitor implements WorkloadVisitor
+{
   private static final String NOTHING = "";
-  @Override public String visit(WorkloadFileNode fileNode) {
+  @Override public String visit(WorkloadFileNode fileNode)
+ {
     try {
       return Strings.wholeContentAsSingleLine(fileNode.getFile());
     } catch (IOException e) {
@@ -25,13 +27,14 @@ public class SetupWorkloadVisitor implements WorkloadVisitor {
     }
   }
 
-  @Override public Set<String> visit(WorkloadDirectoryNode directoryNode) {
+  @Override public Set<String> visit(WorkloadDirectoryNode directoryNode)
+ {
     final Set<String> workload = Sets.newHashSet();
-    for(WorkloadNode<?> each : directoryNode.getChildren()){
-      if(isWorkloadFile(each)){
+    for (WorkloadNode<?> each : directoryNode.getChildren()){
+      if (isWorkloadFile(each)){
         final String content = ((WorkloadFileNode)each).accept(this);
-        if(Strings.isEmpty(content)) continue;
-        if(!workload.contains(content)){
+        if (Strings.isEmpty(content)) continue;
+        if (!workload.contains(content)){
           workload.add(content);
         }
       }
@@ -39,7 +42,8 @@ public class SetupWorkloadVisitor implements WorkloadVisitor {
     return workload;
   }
 
-  private boolean isWorkloadFile(WorkloadNode<?> workload){
+  private boolean isWorkloadFile(WorkloadNode<?> workload)
+  {
     return (!Strings.contains(workload.toString(), "children"));
   }
 }

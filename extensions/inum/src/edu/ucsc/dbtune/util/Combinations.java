@@ -11,8 +11,10 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class Combinations {
-  private Combinations(){}
+public class Combinations
+{
+  private Combinations()
+  {}
 
   /**
    * recursively finds all possible combinations of interesting orders, given a length of the combination,
@@ -27,9 +29,10 @@ public class Combinations {
    * @return
    *    a list of all combinations for the given elements.
    */
-  public static <T> Set<Set<T>> findCrossProduct(Iterable<T> elements, int n){
+  public static <T> Set<Set<T>> findCrossProduct(Iterable<T> elements, int n)
+  {
     final Set<Set<T>> result = Sets.newHashSet();
-    if(n == 0) {
+    if (n == 0) {
       result.add(Sets.<T>newHashSet());
       return result;
     }
@@ -52,7 +55,8 @@ public class Combinations {
     return result;
     }
 
-  public static Set<Configuration> findCrossProduct(Configuration elements){
+  public static Set<Configuration> findCrossProduct(Configuration elements)
+  {
     Set<Set<Index>>  result = Sets.newHashSet();
     final Set<Index> source = Sets.newHashSet(elements.toList());
     for (int i = 0; i <= source.size(); i++){
@@ -60,7 +64,7 @@ public class Combinations {
     }
 
     final Set<Configuration> combinations = Sets.newHashSet();
-    for(Set<Index> each : result){
+    for (Set<Index> each : result){
       combinations.add(new Configuration(Lists.<Index>newArrayList(each)));
     }
 

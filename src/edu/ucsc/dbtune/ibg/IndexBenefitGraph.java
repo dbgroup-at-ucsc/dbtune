@@ -1,324 +1,395 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
-import java.io.Serializable;
-
-public class IndexBenefitGraph implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
-    /*
-     * The primary information stored by the graph
+/**
+ * An Index Benefit Graph (IBG) was introduced by Frank et al.. An IBG enables a space-efficient 
+ * encoding of the properties of optimal query plans when the optimizer is well behaved.
+ * <p>
+ * For a specific query $q$ is a DAG over subsets of S. Each node represents an index-set $Y ⊆ S$ 
+ * and records $used_q(Y)$ and $cost_q(Y)$. The nodes and edges of the IBG are defined inductively 
+ * as follows: The IBG contains the node $S$; For each node $Y$ and each used index $a ∈ used_q(Y)$, 
+ * the IBG contains the node $Y=Y−{a}$ and the directed $edge(Y,Y)$.
+ * <p>
+ * An example of an IBG looks like the following:
+ * <code>
+ *       *a*,b,c,*d*:20
+ *       /          \
+ *    *a*,*b*,c:45  *b*,c,d:50
+ *    /       \         \
+ *  a,c:80  *b*,c:50  *c*,*d*:65
+ *               |   /     |
+ *              c:80     d:80
+ * </code>
+ * <p>
+ * One interesting observation is that $bcd$ and $bc$ differ by index $d$, yet no edge exists 
+ * between them because $d \in used_q(bcd)$. Also, notice that $bcd \triangleright bc$ and hence the 
+ * two nodes are somewhat redundant with respect to information on optimal plans (but they are 
+ * needed to complete the graph)
+ * <p>
+ * Because the IBG nodes only have one child per used index, the size of an IBG for a particular 
+ * index-set can vary drastically. Some interesting ways to measure the size of an IBG are the 
+ * number of nodes, the maximum children per node (i.e. fan-out), and the maximum path length (i.e. 
+ * height). In the worst case, $used(Y) = Y$ for each node $Y$ and this results in a node for each 
+ * subset of $S$, a fanout of $|S|$, and a height of $|S|$. However, in practice the optimizer may 
+ * not use every index in $Y$ (especially if $Y$ is large), in which case the IBG can be much 
+ * smaller. Indeed, The sample IBG given above contains only 8 of the 16 possible subsets, a fan-out 
+ * of 2, and a height of 3.
+ *
+ * @author Karl Schnaitter
+ * @author Ivo Jimenez
+ * @see <a href="http://portal.acm.org/citation.cfm?id=1687766">
+ *     Index interactions in physical design tuning: modeling, analysis, and applications</a>
+ */
+public class IndexBenefitGraph
+{
+    /**
+     * The primary information stored by the graph.
      * 
      * Every node in the graph is a descendant of rootNode. We also keep the
-     * cost of the workload under the empty configuration, stored in emptyCost.
+     * cost of the query under the empty configuration, stored in emptyCost.
      */
     private final IBGNode rootNode;
+
+    /**
+     */
     private double emptyCost;
-    
-    /* true if the index is used somewhere in the graph */
+
+    /** a bit is set if the corresponding index is used somewhere in the graph */
     private final IndexBitSet isUsed;
 
-    protected InteractionBank bank;
-    protected int maxId;
-    protected double overhead;
+    /** used to find nodes given */
+    private static IBGCoveringNodeFinder FINDER = new IBGCoveringNodeFinder();
     
     /**
-     * Creates an IBG which is in a state ready for building.
-     * Specifically, the rootNode is physically constructed, but it is not
-     * expanded, so its cost and used set have not been determined.
-     * 
-     * In the initial state, the cost of the workload under the empty configuration
-     * is set, and may be accessed through emptyCost()
-     * 
-     * Nodes are built by calling buildNode() until it returns false.
+     * Creates an IBG with the given root node, cost and usedSet.
+     *
      * @param rootNode
-     *      the root of this graph.
+     *     root node of the IBG
      * @param emptyCost
-     *      initial cost of the workload under the empty configuration.
-     * @param usedSet
-     *      the set of used indexes.
+     *     cost associated to the empty configuration
+     * @param isUsed
+     *     bit array associated with the used configuration ibg-wise.
      */
-    public IndexBenefitGraph(IBGNode rootNode, double emptyCost, IndexBitSet usedSet) {
+    public IndexBenefitGraph(IBGNode rootNode, double emptyCost, IndexBitSet isUsed)
+    {
         this.rootNode  = rootNode;
         this.emptyCost = emptyCost;
-        this.isUsed    = usedSet;
+        this.isUsed    = isUsed;
     }
 
     /**
-     * @return initial cost of the workload under the empty configuration.
+     * Returns the cost associated to the empty configuration.
+     *
+     * @return
+     *     the empty cost
      */
-    public final double emptyCost() {
+    public final double emptyCost()
+    {
         return emptyCost;
     }
-
-    public InteractionBank getInteractionBank()
+    
+    /**
+     * Returns the root node of the ibg.
+     *
+     * @return
+     *     the empty cost
+     */
+    public final IBGNode rootNode()
     {
-        return bank;
-    }
-
-    public int maxId()
-    {
-        return maxId;
-    }
-
-    public void setInteractionBank(InteractionBank bank)
-    {
-        this.bank = bank;
-    }
-
-    public void setMaxId(int maxId)
-    {
-        this.maxId = maxId;
-    }
-
-    public void setOverhead(double overhead)
-    {
-        this.overhead = overhead;
-    }
-
-    public double getOverhead()
-    {
-        return overhead;
+        return rootNode;
     }
 
     /**
-     * indicate if an index is used at position i.
-      * @param i
-     *      position of an {@link IBGNode}.
+     * Finds the node corresponding to the given bitset.
+     *
+     * @param bitSet
+     *     the configuration for which a node is being looked for
      * @return
-     *      {@code true} if the index is used somewhere in the graph.
+     *     the corresponding node if found; {@code null} otherwise
      */
-    public final boolean isUsed(int i) {
+    public final IBGNode find(IndexBitSet bitSet)
+    {
+        return FINDER.findFast(rootNode(),bitSet,null);
+    }
+
+    /**
+     * Whether or not the position of an index (in the underlaying bit array) corresponds to an 
+     * index that is used by some node of the graph.
+     *
+     * @param position
+     *     the position of an index in the underlaying bitset.
+     * @return
+     *     {@code true} if the corresponding index is used; {@code false} otherwise.
+     */
+    public final boolean isUsed(int i)
+    {
         return isUsed.get(i);
     }
 
     /**
-     * @return an {@link IBGNode} instance.
-     */
-    public final IBGNode rootNode() {
-        return rootNode;
-    }
-
-    // only used by MonotonicEnforcer
-    public void setEmptyCost(double cost) {
-        emptyCost = cost;
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IndexBenefitGraph>(this)
-               .add("rootNode", rootNode())
-               .add("emptycost", emptyCost())
-               .add("isUsed bitset", isUsed)
-               .toString();
-    }
-
-    /**
      * A node of the IBG
+     *
+     * @author Karl Schnaitter
      */
-    public static class IBGNode  implements Serializable {
-        private static final long serialVersionUID = 1L;
-
-        /* Configuration that this node is about */
+    public static class IBGNode
+    {
+        /** Configuration that this node is about */
         public final IndexBitSet config;
-        
-        /* id for the node that is unique within the enclosing IBG */
+
+        /** id for the node that is unique within the enclosing IBG */
         public final int id;
-        
-        /* 
-         * cost with the given configuration 
-         * don't access until isExpanded() returns true
-         * 
-         * internally, this is used to determine if the node 
-         * is expanded... it is set to -1.0 until expanded
+
+        /**
+         * cost with the given configuration don't access until isExpanded() returns 
+         * true. Internally, this is used to determine if the node is expanded... it 
+         * is set to -1.0 until expanded
          */
         private volatile double cost;
 
-        /*
-         * Linked list of children
-         * don't access until isExpanded() returns true
+        /**
+         * Linked list of children. Note: don't access until isExpanded() returns true
          */
         private volatile IBGChild firstChild;
 
         /**
-         * construct a new {@link IBGNode} object given an index configuration and
-         * a unique number identifying this node.
-         * @param config index configuration.
-         * @param id node's id.
+         * Used indexes.
+         * Don't access until isExpanded() returns true
          */
-        public IBGNode(IndexBitSet config, int id) {
-            this.config = config;
-            this.id = id;
-            this.cost = -1.0;
-            this.firstChild = null;
+        private volatile IndexBitSet usedIndexes;
+
+        public IBGNode(IndexBitSet config0, int id0)
+        {
+            config     = config0;
+            id         = id0;
+            cost       = -1.0;
+            firstChild = null;
+            usedIndexes= new IndexBitSet();
         }
-        
+
+        /**
+         * Returns the configuration corresponding to the node.
+         *
+         * @return
+         *    the configuration corresponding to the node
+         */
+        public final IndexBitSet getConfiguration()
+        {
+            return config;
+        }
+
+        /**
+         * Returns the ID for the node (unique within the enclosing IBG).
+         *
+         * @return
+         *    the unique ID (with respect to the enclosing IBG) of the node.
+         */
+        public final int getID()
+        {
+            return id;
+        }
+
         /**
          * Check if it has children/cost yet
-         * @return {@code true} if the cost is greater or equal than zero.
          */
-        public final boolean isExpanded() { return cost >= 0; }
-        
+        protected final boolean isExpanded()
+        {
+            return cost >= 0;
+        }
+
         /**
          * Set the cost and list of children (one for each used index).
-         * @param cost
-         *      cost of child node.
-         * @param firstChild
-         *      first child node.
          */
-        public final void expand(double cost, IBGChild firstChild) {
+        public final void expand(double cost0, IBGChild firstChild0)
+        {
             assert(!isExpanded());
-            assert(cost >= 0);
+            assert(cost0 >= 0);
 
             // volatile assignments must be ordered with "state" assigned last
-            this.cost = cost;
-            this.firstChild = firstChild;
+            cost = cost0;
+            firstChild = firstChild0;
+            addUsedIndexes(usedIndexes);
         }
-        
+
         /**
-         * @return the cost of index node.
+         * Return the used indexes from this node.
+         * @return The {@link IndexBitSet} denoting the used indexes
          */
-        public final double cost() {
+        public final IndexBitSet getUsedIndexes()
+        {
+            assert(isExpanded());
+            return usedIndexes;
+        }
+
+        /**
+         * Get the cost
+         */
+        public final double cost()
+        {
             assert(isExpanded());
             return cost;
         }
-        
+
         /**
-         * @return the head of the child list
+         * Get the head of the child list
          */
-        public final IBGChild firstChild() {
+        protected final IBGChild firstChild()
+        {
             assert(isExpanded());
             return firstChild; 
         }
 
         /**
-         * Add each of the used indexes in this node to the given BitSet
-         * @param bs
-         *      nex used indexes set.
+         * Add each of the used indexes in this node to the given IndexBitSet
          */
-        public final void addUsedIndexes(IndexBitSet bs) {
+        public final void addUsedIndexes(IndexBitSet bs)
+        {
             assert(isExpanded());
-            for (IBGChild ch = firstChild; ch != null; ch = ch.next){
+            for (IBGChild ch = firstChild; ch != null; ch = ch.next)
                 bs.set(ch.usedIndex);
-            }
         }
-        
-        /**
-         * Remove each of the used indexes in this node from the given BitSet
-         * @param bs
-         *     nodes to be removed in the used indexes set.
-         */
-        public void clearUsedIndexes(IndexBitSet bs) {
-            assert(isExpanded());
-            for (IBGChild ch = firstChild; ch != null; ch = ch.next){
-          bs.clear(ch.usedIndex);
-      }
-        }
-        
-        /**
-         * determine if the used set is a subject of another subset.
-         * @param other
-         *      the other subset which will be checked if a subset of
-         *      the used set of indexes.
-         * @return {@code true} if each of the used indexes are in the given BitSet
-         */
-        public boolean usedSetIsSubsetOf(IndexBitSet other) {
-            assert(isExpanded());
-            for (IBGChild ch = firstChild; ch != null; ch = ch.next) {
-          if (!other.get(ch.usedIndex)){
-              return false;
-          }
 
-      }
+        /**
+         * Remove each of the used indexes in this node from the given IndexBitSet
+         */
+        public void clearUsedIndexes(IndexBitSet bs)
+        {
+            assert(isExpanded());
+            for (IBGChild ch = firstChild; ch != null; ch = ch.next)
+                bs.clear(ch.usedIndex);
+        }
+
+        /**
+         * return true if each of the used indexes are in the given IndexBitSet
+         */
+        public boolean usedSetIsSubsetOf(IndexBitSet other)
+        {
+            assert(isExpanded());
+            for (IBGChild ch = firstChild; ch != null; ch = ch.next)
+                if (!other.get(ch.usedIndex))
+                    return false;
             return true;
         }
-        
+
         /**
-         * checks if a given index is part of the used set of indexes.
-         * @param id id of the node to be found.
-         * @return {@code true} if the i is in the used set
+         * return true if the i is in the used set
          */
-        public boolean usedSetContains(int id) {
+        public boolean usedSetContains(int id)
+        {
             assert(isExpanded());
-            for (IBGChild ch = firstChild; ch != null; ch = ch.next){
-          if (id == ch.usedIndex){
-              return true;
-          }
-      }
+            for (IBGChild ch = firstChild; ch != null; ch = ch.next)
+                if (id == ch.usedIndex)
+                    return true;
             return false;
         }
 
-        /**
-         * sets the cost of workload.
-         * @param cost
-         *      cost of the workload
-         */
-        public void setCost(double cost) {
-            this.cost = cost;
+        public void setCost(double cost0)
+        {
+            cost = cost0;
         }
 
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IBGNode>(this)
-               .add("node's id", id)
-               .add("index configuration", config)
-               .add("cost", cost)
-               .add("first child", firstChild)
-               .toString();
-    }
-  }
+        public static class IBGChild
+        {
+            public final int usedIndex; // the internalID of the used index on this edge
+            public final IBGNode node; // the actual child node
+            public IBGChild next = null;
 
-    /**
-     *  Represents a child node in the Index Benefit Graph.
-     */
-    public static class IBGChild implements Serializable {
-        private static final long serialVersionUID = 1L;
-        
-        final int usedIndex; // the internalID of the used index on this edge
-        final IBGNode node;  // the actual child node
-        public IBGChild next = null;
+            // next pointer is initially null
+            public IBGChild(IBGNode node0, int usedIndex0)
+            {
+                node = node0;
+                usedIndex = usedIndex0;
+            }
 
-        /**
-         * construct a child node in the Index Benefit Graph.
-         * @param node ibg node
-         * @param usedIndex the id of the used index.
-         */
-        // next pointer is initially null
-        public IBGChild(IBGNode node, int usedIndex) {
-            this.node       = node;
-            this.usedIndex  = usedIndex;
+            /**
+             * Compares childs. Two childs are equal if they have the same usedIndex node and next.
+             *
+             * @param other
+             *      other object being compared against this
+             */
+            @Override
+            public boolean equals(Object other)
+            {
+                if (other == this)
+                    return true;
+
+                if (!(other instanceof IBGChild))
+                    return false;
+
+                IBGChild ibgchild = (IBGChild) other;
+
+                if (ibgchild.usedIndex == usedIndex && ibgchild.node.id == node.id)
+                    return true;
+
+                return false;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public String toString()
+            {
+                String str = "idx:" + usedIndex + "-to-node:" + node.id;
+
+                for (IBGChild ch = next; ch != null; ch = ch.next)
+                    str += "|idx:" + ch.usedIndex + "-to-node:" + ch.node.id;
+
+                return str;
+            }
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
-        public String toString() {
-            return new ToStringBuilder<IBGChild>(this)
-                   .add("usedIndex", usedIndex)
-                   .add("actual child node", node)
-                   .add("next node", next)
-                   .toString();
+        public boolean equals(Object other)
+        {
+            if (this == other)
+                return true;
+
+            if (!(other instanceof IBGNode))
+                return false;
+
+            IBGNode o = (IBGNode) other;
+
+            if (!config.equals(o.config) || cost != o.cost )
+                return false;
+
+            if (id != o.id)
+                return false;
+
+            IBGChild ch;
+            IBGChild cho;
+
+            for (ch = firstChild, cho = o.firstChild; ch != null; ch = ch.next, cho = cho.next)
+                if (cho == null || !cho.equals(ch))
+                    return false;
+
+            if (cho != null)
+                return false;
+
+            return true;
         }
-      }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String toString()
+        {
+            return "ID: " + id + "; config: " + config + "; cost: " + cost + "; edges: " + firstChild;
+        }
     }
-
-
+    
+    /**
+     * Assigns the value of the empty cost. Only used by {@link MonotonicEnforcer}.
+     *
+     * @param cost
+     *     the cost of the empty node.
+     */
+    void setEmptyCost(double cost)
+    {
+        emptyCost = cost;
+    }
+}

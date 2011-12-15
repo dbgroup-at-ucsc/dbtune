@@ -17,7 +17,8 @@ import com.google.common.collect.Lists;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
+public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer
+{
   private static final Configuration EMPTY_CONFIGURATION = new Configuration(
       Lists.<Index>newArrayList());
   private final Inum   inum;
@@ -30,7 +31,8 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    * @param connection
    *    a live database connection to postgres
    */
-  public InumWhatIfOptimizerImpl(Catalog catalog, Connection connection){
+  public InumWhatIfOptimizerImpl(Catalog catalog, Connection connection)
+  {
     this(Inum.newInumInstance(catalog, Preconditions.checkNotNull(connection)));
   }
 
@@ -39,7 +41,8 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    * @param inum
    *    a new instance of INUM.
    */
-  public InumWhatIfOptimizerImpl(Inum inum){
+  public InumWhatIfOptimizerImpl(Inum inum)
+  {
     this.inum = inum;
   }
 
@@ -48,27 +51,30 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    * request a closing of their {@link Connection} object. Once this db connection is
    * closed, there is not need to keep INUM 'on' too.
    */
-  public void endInum(){
-    if(getInum().isStarted()) getInum().end();
+  public void endInum()
+  {
+    if (getInum().isStarted()) getInum().end();
   }
 
 
   @Override
-  public double estimateCost(String query) throws SQLException {
-    if(getInum().isEnded()) { startInum(); }
+  public double estimateCost(String query) throws SQLException
+  {
+    if (getInum().isEnded()) { startInum(); }
     return estimateCost(query, EMPTY_CONFIGURATION);
   }
 
   @Override public double estimateCost(String query, Configuration 
           hypotheticalIndexes) throws SQLException  {
-    if(getInum().isEnded()) { startInum(); }
+    if (getInum().isEnded()) { startInum(); }
     return getInum().estimateCost(query, hypotheticalIndexes);
   }
 
   /**
    * @return the assigned {@link Inum} object.
    */
-  public Inum getInum(){
+  public Inum getInum()
+  {
     return inum;
   }
 
@@ -77,13 +83,15 @@ public class InumWhatIfOptimizerImpl implements InumWhatIfOptimizer {
    * @throws SQLException
    *    if unable to build inum space.
    */
-  public void startInum() throws SQLException {
+  public void startInum() throws SQLException
+  {
     final StopWatch inumStarting = new StopWatch();
     getInum().start();
     inumStarting.resetAndLog("inum starting took ");
   }
 
-  @Override public String toString() {
+  @Override public String toString()
+ {
     return String.format("Inum status = %s" + getInum().toString());
   }
 }

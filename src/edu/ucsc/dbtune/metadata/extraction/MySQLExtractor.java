@@ -1,18 +1,3 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune.metadata.extraction;
 
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -74,7 +59,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
 
             schName = rs.getString("table_cat");
 
-            if(schName.equals("information_schema") || schName.equals("mysql"))
+            if (schName.equals("information_schema") || schName.equals("mysql"))
                 continue;
 
             Schema sch = new Schema(catalog,schName);
@@ -109,8 +94,8 @@ public class MySQLExtractor extends GenericJDBCExtractor
 
         meta = connection.getMetaData();
 
-        for(Schema sch : catalog) {
-            for(Table table : sch.tables()) {
+        for (Schema sch : catalog) {
+            for (Table table : sch.tables()) {
 
                 table.setInternalID(idCounter++);
 
@@ -124,12 +109,12 @@ public class MySQLExtractor extends GenericJDBCExtractor
                     type          = rs.getShort("type");
                     nextIndexName = rs.getString("index_name");
 
-                    if(nextIndexName.equals("PRIMARY"))
+                    if (nextIndexName.equals("PRIMARY"))
                         nextIndexName = table + "_pkey";
 
-                    if(!currentIndexName.equals(nextIndexName)) {
+                    if (!currentIndexName.equals(nextIndexName)) {
 
-                        if(index != null)
+                        if (index != null)
                             for (int i = 0; i < indexToColumns.size(); i++)
                                 index.add(indexToColumns.get(i+1));
 
@@ -143,7 +128,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
                         isUnique         = !rs.getBoolean("non_unique");
                         currentIndexName = rs.getString("index_name");
 
-                        if(currentIndexName.equals("PRIMARY")) {
+                        if (currentIndexName.equals("PRIMARY")) {
                             currentIndexName = table + "_pkey";
                             isPrimary        = true;
                         } else {
@@ -168,13 +153,13 @@ public class MySQLExtractor extends GenericJDBCExtractor
                 }
 
                 // add the columns of the last index
-                if(index != null)
+                if (index != null)
                     for (int i = 0; i < indexToColumns.size(); i++)
                         index.add(indexToColumns.get(i+1));
 
                 rs.close();
 
-                for(Column col : table)
+                for (Column col : table)
                     col.setInternalID(idCounter++);
             }
         }

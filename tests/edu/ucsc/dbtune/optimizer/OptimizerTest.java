@@ -1,26 +1,10 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -32,9 +16,6 @@ import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
 import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
 import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
 import static edu.ucsc.dbtune.DBTuneInstances.configureAny;
-import static edu.ucsc.dbtune.DBTuneInstances.getSupportedOptimizersIterator;
-import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
-
 import static org.junit.Assert.assertThat;
 
 import static org.hamcrest.Matchers.is;
@@ -87,7 +68,7 @@ public class OptimizerTest
     public void testExplain() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkUsedExplain(opt);
         }
         */
@@ -100,7 +81,7 @@ public class OptimizerTest
     public void testWhatIfExplain() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkWhatIfExplain(opt);
         }
         */
@@ -113,7 +94,7 @@ public class OptimizerTest
     public void testRecommendIndexes() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkRecommendIndexes(opt);
         }
         */
@@ -129,7 +110,7 @@ public class OptimizerTest
     public void testUsedConfiguration() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkUsedConfiguration(opt);
         }
         */
@@ -144,7 +125,7 @@ public class OptimizerTest
     public void testIsWellBehaved() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkIsWellBehaved(opt);
         }
         */
@@ -159,7 +140,7 @@ public class OptimizerTest
     public void testMonotonicity() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkMonotonicity(opt);
         }
         */
@@ -174,7 +155,7 @@ public class OptimizerTest
     public void testSanity() throws Exception
     {
         /*
-        for(Optimizer opt : getSupportedOptimizersIterator(env)) {
+        for (Optimizer opt : getSupportedOptimizersIterator(env)) {
             checkSanity(opt);
         }
         */
@@ -188,7 +169,7 @@ public class OptimizerTest
     protected static void checkExplain(Optimizer opt) throws Exception
     {
         SQLStatement         sql;
-        PreparedSQLStatement sqlp;
+        ExplainedSQLStatement sqlp;
         Configuration        conf;
         double               cost1;
         double               cost2;
@@ -237,7 +218,7 @@ public class OptimizerTest
     protected static void checkWhatIfExplain(Catalog cat, Optimizer opt) throws Exception
     {
         SQLStatement         sql;
-        PreparedSQLStatement sqlp;
+        ExplainedSQLStatement sqlp;
         Column               col;
         Configuration        conf;
         Index                idxa;
@@ -270,7 +251,7 @@ public class OptimizerTest
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
 
-        assertThat(sqlp.getCost(),      is(cost2));
+        assertThat(sqlp.getCost(),     is(cost2));
         assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getCost()));
         assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getUpdateCost()));
         assertThat(sqlp.getTotalCost(), is(sqlp.getCost() + sqlp.getUpdateCost()));
@@ -309,7 +290,7 @@ public class OptimizerTest
     protected static void checkUsedConfiguration(Catalog cat, Optimizer opt) throws Exception
     {
         SQLStatement         sql;
-        PreparedSQLStatement sqlp;
+        ExplainedSQLStatement sqlp;
         Column               col;
         Configuration        conf;
         Index                idxa;

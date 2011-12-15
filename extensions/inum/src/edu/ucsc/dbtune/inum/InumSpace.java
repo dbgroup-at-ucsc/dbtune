@@ -29,7 +29,8 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public interface InumSpace {
+public interface InumSpace
+{
   /**
    * clears the Inum space (cached plans). This will help the garbage collector to dispose the objects
    * found in this cache appropriately.

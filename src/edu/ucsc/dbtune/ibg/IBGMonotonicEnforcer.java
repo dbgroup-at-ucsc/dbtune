@@ -1,28 +1,10 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
-public class IBGMonotonicEnforcer {
+public class IBGMonotonicEnforcer
+{
     private final IndexBitSet visited;
     private final IBGNodeQueue  pending;
     private final SubSearch     sub;
@@ -30,7 +12,8 @@ public class IBGMonotonicEnforcer {
     /**
      * construct an {@link IBGMonotonicEnforcer} object.
      */
-    public IBGMonotonicEnforcer(){
+    public IBGMonotonicEnforcer()
+    {
         this(new IndexBitSet(), new IBGNodeQueue(), new SubSearch());
     }
 
@@ -54,7 +37,8 @@ public class IBGMonotonicEnforcer {
      * @param ibg
      *      the {@link IndexBenefitGraph} to be fixed.
      */
-    public void fix(IndexBenefitGraph ibg) {
+    public void fix(IndexBenefitGraph ibg)
+    {
         visited.clear();
         pending.reset();
         
@@ -62,13 +46,13 @@ public class IBGMonotonicEnforcer {
         while (pending.hasNext()) {
             IBGNode node = pending.next();
             
-            if (visited.get(node.id)){
+            if (visited.get(node.getID())){
                 continue;
             }
             
-            visited.set(node.id);
+            visited.set(node.getID());
             
-            sub.fixSubsets(ibg, node.config, node.cost());
+            sub.fixSubsets(ibg, node.getConfiguration(), node.cost());
             
             if (node.isExpanded()) {
                 if (node.firstChild() == null) {
@@ -82,24 +66,16 @@ public class IBGMonotonicEnforcer {
         }   
     }
 
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IBGMonotonicEnforcer>(this)
-               .add("visited indexes", visited)
-               .add("pending queue", pending)
-               .add("subsearch space", sub)
-               .toString();
-    }
-
     /**
      * a Subsearch space in the {@link IndexBenefitGraph}.
      */
-    private static class SubSearch {
+    private static class SubSearch
+    {
         private final IndexBitSet visited = new IndexBitSet();
         private final IBGNodeStack pending = new IBGNodeStack();
         
-        private void fixSubsets(IndexBenefitGraph ibg, IndexBitSet config, double cost) {
+        private void fixSubsets(IndexBenefitGraph ibg, IndexBitSet config, double cost)
+        {
             visited.clear();
             pending.reset();
             
@@ -107,13 +83,13 @@ public class IBGMonotonicEnforcer {
             while (pending.hasNext()) {
                 IBGNode node = pending.next();
                 
-                if (visited.get(node.id)){
+                if (visited.get(node.getID())){
                     continue;
                 }
 
-                visited.set(node.id);
+                visited.set(node.getID());
                 
-                if (node.config.subsetOf(config) && !node.config.equals(config)) {
+                if (node.getConfiguration().subsetOf(config) && !node.getConfiguration().equals(config)) {
                     if (node.cost() < cost) {
                         node.setCost(cost);
                     }
@@ -121,14 +97,6 @@ public class IBGMonotonicEnforcer {
                 else if (node.isExpanded()) 
                     pending.addChildren(node.firstChild());
             }       
-        }
-
-        @Override
-        public String toString() {
-            return new ToStringBuilder<SubSearch>(this)
-                   .add("visited indexes", visited)
-                   .add("pending stack", pending)
-                   .toString();
         }
     }
 }

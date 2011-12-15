@@ -1,18 +1,3 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -119,15 +104,20 @@ public class DatabaseSystem
      *      a connection
      * @see Connection
      */
-    public Connection getConnection() throws SQLException {
+    public Connection getConnection() throws SQLException
+    {
         return connection;
     }
 
     /**
      * Creates and opens a connection to the DBMS. The caller is responsible for closing it.
      *
+     * @param env
+     *      the environment object.
      * @return
      *      a connection
+     * @throws SQLException
+     *      if an error occurs while creating the connection.
      * @see Connection
      */
     public static Connection newConnection(Environment env) throws SQLException
@@ -136,7 +126,7 @@ public class DatabaseSystem
         String usr = env.getUsername();
         String pwd = env.getPassword();
         
-        return DriverManager.getConnection(url,usr,pwd);
+        return DriverManager.getConnection(url, usr, pwd);
     }
 
     /**
@@ -151,11 +141,11 @@ public class DatabaseSystem
 
         validate(env);
 
-        if(env.getVendor().equals(MYSQL))
+        if (env.getVendor().equals(MYSQL))
             extractor = new MySQLExtractor();
-        else if(env.getVendor().equals(DB2))
+        else if (env.getVendor().equals(DB2))
             extractor = new DB2Extractor();
-        else if(env.getVendor().equals(PG))
+        else if (env.getVendor().equals(PG))
             extractor = new PGExtractor();
         else
             throw new SQLException("Unable to create an extractor for " + env.getVendor());
@@ -176,20 +166,21 @@ public class DatabaseSystem
 
         validate(env);
 
-        if(env.getVendor().equals(MYSQL))
+        if (env.getVendor().equals(MYSQL))
             optimizer = new MySQLOptimizer(con);
-        else if(env.getVendor().equals(DB2))
+        else if (env.getVendor().equals(DB2))
             optimizer = new DB2Optimizer(con);
-        else if(env.getVendor().equals(PG))
+        else if (env.getVendor().equals(PG))
             optimizer = new PGOptimizer(con);
         else
-            throw new SQLException("Unable to create an optimizer interface for " + env.getVendor());
+            throw new SQLException("Unable to create an optimizer interface for " + 
+                    env.getVendor());
 
-        if(env.getOptimizer().equals(DBMS))
+        if (env.getOptimizer().equals(DBMS))
             return optimizer;
-        else if(env.getOptimizer().equals(IBG))
+        else if (env.getOptimizer().equals(IBG))
             return new IBGOptimizer(optimizer);
-        else if(env.getOptimizer().equals(INUM))
+        else if (env.getOptimizer().equals(INUM))
             throw new SQLException("INUMOptimizer doesn't exist yet");
         else
             throw new SQLException("Unknown optimizer option: " + env.getOptimizer());
@@ -198,18 +189,20 @@ public class DatabaseSystem
     /**
      * Validates an {@link Environment} to be used by this class.
      *
+     * @param env
+     *     the environment object.
      * @throws SQLException
      *     if {@link Environment#getVendor()}, {@link Environment#getJdbcURL}, {@link 
      *     Environment#getOptimizer} are null.
      */
     private static void validate(Environment env) throws SQLException
     {
-        if(env.getJdbcURL() != null)
+        if (env.getJdbcURL() != null)
             extractDriver(env);
 
-        if(env.getVendor() == null || env.getJdbcURL() == null ||
-           env.getJdbcDriver() == null || env.getOptimizer() == null ||
-           env.getUsername() == null || env.getPassword() == null )
+        if (env.getVendor() == null || env.getJdbcURL() == null ||
+                env.getJdbcDriver() == null || env.getOptimizer() == null ||
+                env.getUsername() == null || env.getPassword() == null)
             throw new SQLException("Missing a property");
     }
 
@@ -250,8 +243,8 @@ public class DatabaseSystem
     }
 
     /**
-     * Class defined just to aid in testing. This class shouldn't be used by any client, only by {@code 
-     * edu.ucsc.dbtune.DatabaseSystemTest}
+     * Class defined just to aid in testing. This class shouldn't be used by any client, only by 
+     * {@code edu.ucsc.dbtune.DatabaseSystemTest}
      */
     protected static class Factory
     {
@@ -275,7 +268,7 @@ public class DatabaseSystem
 
             try {
                 Class.forName(env.getJdbcDriver());
-            } catch(Exception e) {
+            } catch (Exception e) {
                 throw new SQLException(e);
             }
 

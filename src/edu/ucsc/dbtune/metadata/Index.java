@@ -1,18 +1,3 @@
-/* **************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                         *
- *                                                                              *
- *   Licensed under the Apache License, Version 2.0 (the "License");            *
- *   you may not use this file except in compliance with the License.           *
- *   You may obtain a copy of the License at                                    *
- *                                                                              *
- *       http://www.apache.org/licenses/LICENSE-2.0                             *
- *                                                                              *
- *   Unless required by applicable law or agreed to in writing, software        *
- *   distributed under the License is distributed on an "AS IS" BASIS,          *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
- *   See the License for the specific language governing permissions and        *
- *   limitations under the License.                                             *
- * **************************************************************************** */
 package edu.ucsc.dbtune.metadata;
 
 import edu.ucsc.dbtune.util.Objects;
@@ -263,12 +248,12 @@ public class Index extends DatabaseObject implements Iterable<Column>
     {
         super(name);
 
-        if(schema == null && columns.size() == 0)
+        if (schema == null && columns.size() == 0)
             throw new SQLException("Column list should have at least one element");
 
         Table table = null;
 
-        if(schema == null) {
+        if (schema == null) {
             table     = (Table) columns.get(0).container;
             schema    = (Schema) table.container;
             container = schema;
@@ -277,7 +262,7 @@ public class Index extends DatabaseObject implements Iterable<Column>
         this.descending = new ArrayList<Boolean>();
 
         if (descending == null)
-            for(int i = 0; i < columns.size(); i++)
+            for (int i = 0; i < columns.size(); i++)
                 this.descending.add(ASCENDING);
         else if (descending.size() != columns.size())
             throw new SQLException("Incorrect number of descending values");
@@ -489,7 +474,7 @@ public class Index extends DatabaseObject implements Iterable<Column>
      */
     public Table getTable()
     {
-        if(containees.size() > 0)
+        if (containees.size() > 0)
             return (Table) containees.get(0).getContainer();
         else
             throw new RuntimeException("No columns on index");
@@ -593,14 +578,16 @@ public class Index extends DatabaseObject implements Iterable<Column>
      * {@inheritDoc}
      */
     @Override
-    public Iterator<Column> iterator() {
+    public Iterator<Column> iterator()
+    {
         return Objects.<Iterator<Column>>as(containees.iterator());
     }
 
     /**
      * {@inheritDoc}
      */
-    public Iterable<Column> columns() {
+    public Iterable<Column> columns()
+    {
         return Objects.<Iterable<Column>>as(containees);
     }
 
@@ -608,7 +595,8 @@ public class Index extends DatabaseObject implements Iterable<Column>
      * {@inheritDoc}
      */
     @Override
-    public boolean isValid(DatabaseObject dbo) {
+    public boolean isValid(DatabaseObject dbo)
+    {
         return dbo instanceof Column;
     }
 }

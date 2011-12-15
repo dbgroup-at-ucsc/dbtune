@@ -1,18 +1,3 @@
-/* *************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                        *
- *                                                                             *
- *   Licensed under the Apache License, Version 2.0 (the "License");           *
- *   you may not use this file except in compliance with the License.          *
- *   You may obtain a copy of the License at                                   *
- *                                                                             *
- *       http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                             *
- *   Unless required by applicable law or agreed to in writing, software       *
- *   distributed under the License is distributed on an "AS IS" BASIS,         *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  *
- *   See the License for the specific language governing permissions and       *
- *   limitations under the License.                                            *
- * *************************************************************************** */
 package edu.ucsc.dbtune.metadata;
 
 import java.util.List;
@@ -44,6 +29,20 @@ public class Configuration implements Iterable<Index>
     }
 
     /**
+     * constructs a new configuration with the given iterable set of indexes.
+     *
+     * @param indexes
+     *     an iterable set of indexes that comprise the configuration
+     */
+    public Configuration(Iterable<Index> indexes)
+    {
+        this("", new ArrayList<Index>());
+
+        for (Index idx : indexes)
+            add(idx);
+    }
+
+    /**
      * constructs a new configuration with the given list of indexes.
      *
      * @param indexes
@@ -64,7 +63,7 @@ public class Configuration implements Iterable<Index>
      */
     public Configuration(String name, List<Index> indexes)
     {
-        this._name     = name;
+        this._name    = name;
         this._indexes = new ArrayList<Index>(indexes);
     }
 
@@ -87,7 +86,7 @@ public class Configuration implements Iterable<Index>
      */
     public void add(Index index)
     {
-        if(!_indexes.contains(index)) {
+        if (!_indexes.contains(index)) {
             _indexes.add(index);
         }
     }
@@ -161,8 +160,8 @@ public class Configuration implements Iterable<Index>
      */
     public boolean contains(Configuration configuration)
     {
-        for(Index idx : configuration) {
-            if(!contains(idx)) {
+        for (Index idx : configuration) {
+            if (!contains(idx)) {
                 return false;
             }
         }
@@ -234,7 +233,7 @@ public class Configuration implements Iterable<Index>
     {
         StringBuilder str = new StringBuilder();
         
-        for(Index idx : this) {
+        for (Index idx : this) {
             str.append("    " + idx + "\n");
         }
 

@@ -1,18 +1,3 @@
-/* **************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                         *
- *                                                                              *
- *   Licensed under the Apache License, Version 2.0 (the "License");            *
- *   you may not use this file except in compliance with the License.           *
- *   You may obtain a copy of the License at                                    *
- *                                                                              *
- *       http://www.apache.org/licenses/LICENSE-2.0                             *
- *                                                                              *
- *   Unless required by applicable law or agreed to in writing, software        *
- *   distributed under the License is distributed on an "AS IS" BASIS,          *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
- *   See the License for the specific language governing permissions and        *
- *   limitations under the License.                                             *
- * **************************************************************************** */
 package edu.ucsc.dbtune.metadata;
 
 import java.util.ArrayList;
@@ -157,7 +142,7 @@ public abstract class DatabaseObject
 
     /**
      * Assigns the internal ID of the object, which is used to identify the object inside the DBMS. 
-     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,   
+     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,  
      * in some DB systems, this isn't used at all.
      *
      * @param id id of the database object
@@ -169,7 +154,7 @@ public abstract class DatabaseObject
 
     /**
      * Returns the internal ID of the object, which is used to identify the object inside the DBMS. 
-     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,   
+     * For some {@link DatabaseObject} implementations, this isn't used internally by a DBMS. Also,  
      * in some DB systems, this isn't used at all.
      *
      * @return
@@ -407,10 +392,10 @@ public abstract class DatabaseObject
      */
     final void add(DatabaseObject dbo) throws SQLException
     {
-        if(containees.contains(dbo))
+        if (containees.contains(dbo))
             throw new SQLException("Object " + dbo.getName() + " already in " + getName());
 
-        if(!isValid(dbo))
+        if (!isValid(dbo))
             throw new SQLException("Object " + dbo.getName() + " with type " + dbo.getClass() + " not valid in " + getName());
 
         containees.add(dbo);
@@ -496,7 +481,7 @@ public abstract class DatabaseObject
     @Override
     public boolean equals(Object other)
     {
-        if(!(other instanceof DatabaseObject))
+        if (!(other instanceof DatabaseObject))
             return false;
         DatabaseObject dbo = (DatabaseObject) other;
 

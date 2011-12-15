@@ -17,7 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class Inum {
+public class Inum
+{
   private final Connection                 connection;
   private final Precomputation             precomputation;
   private final MatchingStrategy           matchingLogic;
@@ -59,7 +60,8 @@ public class Inum {
             nonNullMatchingLogic, nonNullInteresingOrdersExtractor);
   }
 
-  public static Inum newInumInstance(Catalog catalog, Connection connection){
+  public static Inum newInumInstance(Catalog catalog, Connection connection)
+  {
     final Connection nonNullConnection = Preconditions.checkNotNull(connection);
     final Catalog    nonNullCatalog    = Preconditions.checkNotNull(catalog);
     return newInumInstance(
@@ -72,8 +74,8 @@ public class Inum {
   public double estimateCost(String query, Configuration inputConfiguration) 
       throws SQLException {
     final String errmsg = "INUM has not been started yet. Please call start(..) method.";
-    if(isEnded()) throw new InumExecutionException(errmsg);
-    if(!precomputation.skip(query)) {
+    if (isEnded()) throw new InumExecutionException(errmsg);
+    if (!precomputation.skip(query)) {
       precomputation.setup(
           query, 
           findInterestingOrders(query)
@@ -83,29 +85,35 @@ public class Inum {
     return matchingLogic.estimateCost(query, inputConfiguration, precomputation.getInumSpace());
   }
 
-  public void end()   {
+  public void end()  
+  {
     isStarted.set(false);
     precomputation.getInumSpace().clear();
   }
   
-  public Configuration findInterestingOrders(String query) throws SQLException{
+  public Configuration findInterestingOrders(String query) throws SQLException
+  {
     return ioExtractor.extractInterestingOrders(query);
   }
 
 
-  public InumSpace getInumSpace(){
+  public InumSpace getInumSpace()
+  {
     return precomputation.getInumSpace();
   }
   
-  public Connection getConnection(){
+  public Connection getConnection()
+  {
     return connection;
   }
   
-  public boolean isEnded(){
+  public boolean isEnded()
+  {
     return !isStarted();
   }
   
-  public boolean isStarted(){
+  public boolean isStarted()
+  {
     return isStarted.get();
   }
 
@@ -114,7 +122,8 @@ public class Inum {
    * directory.
    * @throws SQLException if unable to build the inum space.
    */
-  public void start() throws SQLException {
+  public void start() throws SQLException
+  {
     start(QUERIES);
   }
 
@@ -126,17 +135,19 @@ public class Inum {
    * @throws SQLException
    *    if unable to build inum space.
    */
-  public void start(Set<String> input) throws SQLException {
+  public void start(Set<String> input) throws SQLException
+  {
     isStarted.set(true);
 
     final StopWatch timing = new StopWatch();
-    for(String eachQuery : input){
+    for (String eachQuery : input){
       precomputation.setup(eachQuery, findInterestingOrders(eachQuery));
     }
     timing.resetAndLog("precomputation took ");
   }
 
-  @Override public String toString() {
+  @Override public String toString()
+ {
     try {
     return Objects.toStringHelper(this)
         .add("started?", isStarted() ? "Yes" : "No")

@@ -10,14 +10,17 @@ import java.sql.Connection;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class SqlExecutionPlanProvider implements OptimalPlanProvider {
+public class SqlExecutionPlanProvider implements OptimalPlanProvider
+{
   private final Connection connection;
 
-  public SqlExecutionPlanProvider(Connection connection) {
+  public SqlExecutionPlanProvider(Connection connection)
+  {
     this.connection = connection;
   }
 
-  @Override public String getSqlExecutionPlan(String sql, Configuration inputConfiguration) {
+  @Override public String getSqlExecutionPlan(String sql, Configuration inputConfiguration)
+ {
     // todo(Huascar) implement this
     // example of a possible suggested plan
     Console.streaming().info(String.format("%s, %s, %s", connection, sql, inputConfiguration));

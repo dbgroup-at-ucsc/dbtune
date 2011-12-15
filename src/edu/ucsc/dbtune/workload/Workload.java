@@ -1,18 +1,3 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied  *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune.workload;
 
 import java.io.Reader;
@@ -46,7 +31,8 @@ public class Workload implements Iterable<SQLStatement>
      * @throws SQLException
      *     if a statement can't get a category assigned to it
      */
-    public Workload(Reader workloadStream) throws IOException,SQLException {
+    public Workload(Reader workloadStream) throws IOException,SQLException
+    {
         BufferedReader reader;
         String         line;
         String         lineLow;
@@ -54,16 +40,16 @@ public class Workload implements Iterable<SQLStatement>
         sqls   = new ArrayList<SQLStatement>();
         reader = new BufferedReader(workloadStream);
 
-        while((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
 
             line    = line.trim();
             lineLow = line.toLowerCase();
 
-            if(lineLow.startsWith("--")) {
+            if (lineLow.startsWith("--")) {
                 continue;
             }
 
-            if(line.endsWith(";")) {
+            if (line.endsWith(";")) {
                 sqls.add(new SQLStatement(line.substring(0, line.length()-1)));
             } else {
                 sqls.add(new SQLStatement(line));
@@ -77,7 +63,8 @@ public class Workload implements Iterable<SQLStatement>
      * @param i
      *     index of the SQL statement retrieved
      */
-    public SQLStatement get(int i) {
+    public SQLStatement get(int i)
+    {
         return sqls.get(i);
     }
 
@@ -85,7 +72,8 @@ public class Workload implements Iterable<SQLStatement>
      * {@inheritDoc}
      */
     @Override
-    public Iterator<SQLStatement> iterator() {
+    public Iterator<SQLStatement> iterator()
+    {
         return sqls.iterator();
     }
 

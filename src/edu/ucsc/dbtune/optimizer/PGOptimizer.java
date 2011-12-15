@@ -1,18 +1,3 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied  *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.metadata.Column;
@@ -55,7 +40,7 @@ import static edu.ucsc.dbtune.util.Strings.toDoubleArrayFromIndexed;
  *
  * @author Ivo Jimenez
  */
-public class PGOptimizer extends Optimizer
+public class PGOptimizer extends AbstractOptimizer
 {
     private Connection connection;
     private Schema     schema;
@@ -81,12 +66,12 @@ public class PGOptimizer extends Optimizer
         this.schema     = schema;
         this.connection = connection;
 
-        if(schema == null) {
+        if (schema == null) {
             obtainPlan = true;
         } else {
             String version = getVersion(connection);
 
-            if(compareVersion("9.0.0", version) > 0) {
+            if (compareVersion("9.0.0", version) > 0) {
                 throw new UnsupportedOperationException(
                         "PostgreSQL version " + version + " doesn't produce formatted EXPLAIN plans");
             }
@@ -112,7 +97,7 @@ public class PGOptimizer extends Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement explain(SQLStatement sql, Configuration indexes)
+    public ExplainedSQLStatement explain(SQLStatement sql, Configuration indexes)
         throws SQLException
     {
         ResultSet        rs;
@@ -128,10 +113,10 @@ public class PGOptimizer extends Optimizer
         stmt = connection.createStatement();
         rs   = stmt.executeQuery("EXPLAIN INDEXES " + toString(indexes) + " " + sql.getSQL());
 
-        if(!rs.next())
+        if (!rs.next())
             throw new SQLException("No result from EXPLAIN statement");
 
-        if(!sql.getSQLCategory().isSame(SQLCategory.from(rs.getString("category"))))
+        if (!sql.getSQLCategory().isSame(SQLCategory.from(rs.getString("category"))))
             throw new SQLException(
                     sql.getSQLCategory() + " not the same to " + 
                     SQLCategory.from(rs.getString("category")));
@@ -140,7 +125,7 @@ public class PGOptimizer extends Optimizer
         indexPositions = rs.getString("indexes").trim();
         indexOverhead  = rs.getString("index_overhead").trim();
 
-        if(indexes.size() > 0) {
+        if (indexes.size() > 0) {
             updateCost = toDoubleArrayFromIndexed(indexOverhead.split(" "), "=");
 
             if (!indexPositions.equals(""))
@@ -155,7 +140,7 @@ public class PGOptimizer extends Optimizer
             updateCost = new double[0];
         }
 
-        if(updateCost.length != indexes.size())
+        if (updateCost.length != indexes.size())
             throw new SQLException(
                 updateCost.length + " update costs for " + indexes.size() + "indexes");
 
@@ -164,10 +149,11 @@ public class PGOptimizer extends Optimizer
 
         sqlPlan = null;
 
-        if(obtainPlan)
+        if (obtainPlan)
             sqlPlan = getPlan(connection,sql);
 
-        return new PreparedSQLStatement(sql, sqlPlan, this, selectCost, updateCost, indexes, usedConf, 1);
+        return new ExplainedSQLStatement(
+                sql, sqlPlan, this, selectCost, updateCost, indexes, usedConf, 1);
     }
 
     /**
@@ -191,15 +177,15 @@ public class PGOptimizer extends Optimizer
         stmt    = connection.createStatement();
         rs      = stmt.executeQuery("RECOMMEND INDEXES " + sql.getSQL());
 
-        while(rs.next()) {
+        while (rs.next()) {
 
             table = null;
 
-            for(Schema sch : catalog)
-                if((table = sch.findTable(rs.getInt("reloid"))) != null )
+            for (Schema sch : catalog)
+                if ((table = sch.findTable(rs.getInt("reloid"))) != null )
                     break;
 
-            if(table == null)
+            if (table == null)
                 throw new SQLException("Can't find table with id " + rs.getInt("reloid"));
 
             isSync    = rs.getString("sync").charAt(0) == 'Y';
@@ -210,7 +196,7 @@ public class PGOptimizer extends Optimizer
 
             index = new Index(indexName, columns, isDesc, SECONDARY, NON_UNIQUE, UNCLUSTERED);
 
-            if(isSync)
+            if (isSync)
                 index.setScanOption(SYNCHRONIZED);
 
             index.setCreationCost(rs.getDouble("create_cost"));
@@ -257,7 +243,7 @@ public class PGOptimizer extends Optimizer
         //  PostgreSQL 8.3.0 on i686-pc-linux-gnu, compiled by GCC gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
         //  (1 row)
 
-        while(rs.next()) {
+        while (rs.next()) {
             version = rs.getString("version");
             version = version.substring(11,version.indexOf(" on "));
         }
@@ -283,7 +269,7 @@ public class PGOptimizer extends Optimizer
     {
         Configuration conf = new Configuration("used_configuration");
 
-        for(int position : positions)
+        for (int position : positions)
             conf.add(indexes.getIndexAt(position));
 
         return conf;
@@ -306,10 +292,10 @@ public class PGOptimizer extends Optimizer
 
         Column col;
 
-        for(int position : positions) {
+        for (int position : positions) {
             col = (Column)table.at(position-1);
 
-            if(col == null)
+            if (col == null)
                 throw new SQLException("Can't find column with position " + position + " in table " + table);
 
             columns.add(col);
@@ -376,7 +362,7 @@ public class PGOptimizer extends Optimizer
         SQLStatementPlan plan    = null;
         int              cnt     = 0;
 
-        while(rs.next()) {
+        while (rs.next()) {
             try {
                 plan = parseJSON(new StringReader(rs.getString(1)), schema);
                 cnt++;
@@ -385,7 +371,7 @@ public class PGOptimizer extends Optimizer
             }
         }
 
-        if(cnt != 1) {
+        if (cnt != 1) {
             throw new SQLException("Something wrong happened, got " + cnt + " plan(s)");
         }
 
@@ -463,11 +449,11 @@ public class PGOptimizer extends Optimizer
         @SuppressWarnings("unchecked")
         List<Map<String,Object>> planData = mapper.readValue(breader, List.class);
 
-        if(planData == null) {
+        if (planData == null) {
             return new SQLStatementPlan(new Operator());
         }
 
-        if(planData.size() > 1) {
+        if (planData.size() > 1) {
             throw new SQLException("More than one root node");
         }
 
@@ -512,14 +498,14 @@ public class PGOptimizer extends Optimizer
 
         parent.setCost(parent.getAccumulatedCost());
 
-        if(childrenData == null || childrenData.size() == 0) {
+        if (childrenData == null || childrenData.size() == 0) {
             return;
         }
 
         Operator child;
         double   childrenCost = 0.0;
 
-        for(Map<String,Object> childData : childrenData) {
+        for (Map<String,Object> childData : childrenData) {
             child         = extractNode(childData, schema);
             childrenCost += child.getAccumulatedCost();
 
@@ -569,22 +555,22 @@ public class PGOptimizer extends Optimizer
         accCost     = nodeData.get("Total Cost");
         cardinality = nodeData.get("Plan Rows");
 
-        if(type == null || accCost == null || cardinality == null) {
+        if (type == null || accCost == null || cardinality == null) {
             throw new SQLException("Type, cost or cardinality is (are) null");
         }
 
         operator = new Operator((String) type, (Double) accCost, ((Number) cardinality).longValue());
 
-        if( schema == null ) {
+        if ( schema == null ) {
             return operator;
         }
 
         dbObjectName = nodeData.get("Relation Name");
 
-        if(dbObjectName != null) {
+        if (dbObjectName != null) {
             dbObject = schema.findTable((String)dbObjectName);
 
-            if(dbObject == null) {
+            if (dbObject == null) {
                 throw new SQLException("Table " + dbObjectName + " not found in schema");
             }
 
@@ -593,10 +579,10 @@ public class PGOptimizer extends Optimizer
 
         dbObjectName = nodeData.get("Index Name");
 
-        if(dbObjectName != null) {
+        if (dbObjectName != null) {
             dbObject = schema.findIndex((String)dbObjectName);
 
-            if(dbObject == null) {
+            if (dbObject == null) {
                 throw new SQLException("Index " + dbObjectName + " not found in schema");
             }
 

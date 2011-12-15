@@ -1,35 +1,18 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGChild;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.DefaultQueue;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
-public class IBGNodeQueue {
+public class IBGNodeQueue
+{
     private final DefaultQueue<Object> queue;
 
     /**
      * construct a new {@link IBGNodeQueue} object.
      */
-    public IBGNodeQueue(){
+    public IBGNodeQueue()
+    {
         this(new DefaultQueue<Object>());
     }
 
@@ -105,7 +88,8 @@ public class IBGNodeQueue {
     /**
      * @return the top node in queue without removing it from the queue.
      */
-    public IBGNode peek() {
+    public IBGNode peek()
+    {
         if (queue.isEmpty()){
             return null;
         }
@@ -117,12 +101,5 @@ public class IBGNodeQueue {
         } else {
             return (IBGNode) obj;
         }
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder<IBGNodeQueue>(this)
-               .add("queue", queue)
-               .toString();
     }
 }

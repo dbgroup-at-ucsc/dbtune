@@ -1,30 +1,14 @@
-/*
- * ****************************************************************************
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- *  ****************************************************************************
- */
-
 package edu.ucsc.dbtune.advisor.bc;
 
 import edu.ucsc.dbtune.metadata.Index;
 
-public class BcIndexInfo {
+public class BcIndexInfo
+{
     /*
      * State of the index, materialized or not
      */
-    public enum State { MATERIALIZED, HYPOTHETICAL }
+    public enum State
+    { MATERIALIZED, HYPOTHETICAL }
     State state = State.HYPOTHETICAL;
     
     /* 
@@ -92,19 +76,24 @@ public class BcIndexInfo {
         deltaMax = delta;
     }
 
-    public double origCost(int level) { return origCost[level]; }
-    public double newCost(int level) { return newCost[level]; }
+    public double origCost(int level)
+    { return origCost[level]; }
+    public double newCost(int level)
+    { return newCost[level]; }
 
 
-    public double residual(double creationCost) {
+    public double residual(double creationCost)
+    {
         return creationCost - (deltaMax - delta);
     }
     
-    public double benefit(double creationCost) {
+    public double benefit(double creationCost)
+    {
         return (delta - deltaMin) - creationCost;
     }
     
-    public String toString(Index idx) {
+    public String toString(Index idx)
+    {
         return "   DELTA = " + delta + "\n" +
                "         = " + origCost[0] + " - " + newCost[0] + "\n" +
                "         = " + origCost[1] + " - " + newCost[1] + "\n" +

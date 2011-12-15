@@ -2,13 +2,15 @@ package edu.ucsc.dbtune.util;
 
 import java.util.NoSuchElementException;
 
-public class DefaultConcurrentQueue<E> {
+public class DefaultConcurrentQueue<E>
+{
     private int cap;
     private Object[] arr;
     private int count;
     private int first;
     
-    public enum PutOption {
+    public enum PutOption
+    {
         // expand the capacity if it's full
         EXPAND {
             void handle(DefaultConcurrentQueue<?> queue) {
@@ -31,7 +33,8 @@ public class DefaultConcurrentQueue<E> {
         abstract void handle(DefaultConcurrentQueue<?> queue);
     }
     
-    public enum GetOption {
+    public enum GetOption
+    {
         // throw NoSuchElementException if it's empty
         THROW {
             void handle(DefaultConcurrentQueue<?> queue) {
@@ -48,13 +51,15 @@ public class DefaultConcurrentQueue<E> {
         abstract void handle(DefaultConcurrentQueue<?> queue);
     }
     
-    public DefaultConcurrentQueue(int capacity) {
+    public DefaultConcurrentQueue(int capacity)
+    {
         arr = new Object[capacity];
         cap = capacity;
         count = 0;
     }
 
-    public synchronized void put(E elt, PutOption option) {
+    public synchronized void put(E elt, PutOption option)
+    {
         if (count >= cap)
             option.handle(this);
 
@@ -66,7 +71,8 @@ public class DefaultConcurrentQueue<E> {
         notify();
     }
     
-    public synchronized E get(GetOption option) {
+    public synchronized E get(GetOption option)
+    {
         if (count == 0) 
             option.handle(this);
 
@@ -81,26 +87,31 @@ public class DefaultConcurrentQueue<E> {
     }
     
     @SuppressWarnings("unchecked")
-    private E peekInternal() {
+    private E peekInternal()
+    {
         return (E) arr[first]; 
     }
     
     @SuppressWarnings("unchecked")
-    private E peekInternal(int i) {
+    private E peekInternal(int i)
+    {
         return (E) arr[(first+i) % cap]; 
     }
 
-    private void pushInternal(E elt) {
+    private void pushInternal(E elt)
+    {
         arr[(first+count) % cap] = elt;
         ++count;
     }
     
-    private void popInternal() {
+    private void popInternal()
+    {
         first = (first+1) % cap;
         --count;
     }
     
-    private void expandInternal() {
+    private void expandInternal()
+    {
         int cap2 = cap*2;
         Object[] arr2 = new Object[cap2];
         for (int i = 0; i < count; i++)
@@ -110,7 +121,8 @@ public class DefaultConcurrentQueue<E> {
         arr = arr2;
     }
     
-    private void waitUntilFull() {
+    private void waitUntilFull()
+    {
         while (count >= cap) 
             try { wait(); } 
             catch (InterruptedException e) {
@@ -118,7 +130,8 @@ public class DefaultConcurrentQueue<E> {
             }
     }
     
-    private void waitUntilNonempty() {
+    private void waitUntilNonempty()
+    {
         while (count <= 0) 
             try { wait(); } 
             catch (InterruptedException e) {

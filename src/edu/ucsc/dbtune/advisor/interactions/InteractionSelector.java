@@ -1,18 +1,3 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied  *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune.advisor.interactions;
 
 import edu.ucsc.dbtune.metadata.Configuration;
@@ -21,8 +6,10 @@ import edu.ucsc.dbtune.metadata.Index;
 import java.util.Random;
 import java.util.Set;
 
-public class InteractionSelector {
-    private InteractionSelector(){}
+public class InteractionSelector
+{
+    private InteractionSelector()
+    {}
 
     /**
      * choose an index partitions object (i.e., a {@link IndexPartitions}) that will be used for 
@@ -104,7 +91,7 @@ public class InteractionSelector {
                         }
                     }
                 }
-            } // end of while(true)
+            } // end of while (true)
 
             // currentPartitions is our new candidate, now compare it
             double currentCost = partitionCost(currentPartitions, doiFunc);
@@ -179,27 +166,32 @@ public class InteractionSelector {
         private double size1;
         private Set<Index> subset2;
 
-        public InteractionWeightSupplier(IndexStatisticsFunction doiFunc, int maxNumStates) {
+        public InteractionWeightSupplier(IndexStatisticsFunction doiFunc, int maxNumStates)
+        {
             this.doiFunc        = doiFunc;
             this.maxNumStates   = maxNumStates;
         }
 
-        public InteractionWeightSupplier currentStateCount(double value){
+        public InteractionWeightSupplier currentStateCount(double value)
+        {
             currentStateCount = value;
             return this;
         }
 
-        public InteractionWeightSupplier totalWeightSingletons(double value){
+        public InteractionWeightSupplier totalWeightSingletons(double value)
+        {
             totalWeightSingletons = value;
             return this;
         }
 
-        public InteractionWeightSupplier totalWeightOthers(double value){
+        public InteractionWeightSupplier totalWeightOthers(double value)
+        {
             totalWeightOthers = value;
             return this;
         }
 
-        public InteractionWeightSupplier foundSingletonPair(boolean value){
+        public InteractionWeightSupplier foundSingletonPair(boolean value)
+        {
             foundSingletonPair = value;
             return this;
         }
@@ -215,19 +207,23 @@ public class InteractionSelector {
             return this;
         }
 
-        public double getTotalWeightSingletons() {
+        public double getTotalWeightSingletons()
+        {
             return totalWeightSingletons;
         }
 
-        public double getTotalWeightOthers() {
+        public double getTotalWeightOthers()
+        {
             return totalWeightOthers;
         }
 
-        public boolean isFoundSingletonPair() {
+        public boolean isFoundSingletonPair()
+        {
             return foundSingletonPair;
         }
 
-        public InteractionWeightSupplier get() {
+        public InteractionWeightSupplier get()
+        {
             double size2 = subset2.size();
             double weight = interactionWeight(subset1, subset2, doiFunc);
             if (weight == 0)
@@ -257,22 +253,26 @@ public class InteractionSelector {
         private double                    size1;
         private Set<Index> subset2;
 
-        public InteractionWeightAccumulator(IndexStatisticsFunction doiFunc, int maxNumStates) {
+        public InteractionWeightAccumulator(IndexStatisticsFunction doiFunc, int maxNumStates)
+        {
             this.doiFunc        = doiFunc;
             this.maxNumStates   = maxNumStates;
         }
 
-        public InteractionWeightAccumulator currentStateCount(double value){
+        public InteractionWeightAccumulator currentStateCount(double value)
+        {
             currentStateCount = value;
             return this;
         }
 
-        public InteractionWeightAccumulator foundSingletonPair(boolean value){
+        public InteractionWeightAccumulator foundSingletonPair(boolean value)
+        {
             foundSingletonPair = value;
             return this;
         }
 
-        public InteractionWeightAccumulator accumWeight(double value){
+        public InteractionWeightAccumulator accumWeight(double value)
+        {
             accumWeight = value;
             return this;
         }
@@ -288,11 +288,13 @@ public class InteractionSelector {
             return this;
         }
 
-        public double getAccumWeight() {
+        public double getAccumWeight()
+        {
             return accumWeight;
         }
 
-        public InteractionWeightAccumulator get() {
+        public InteractionWeightAccumulator get()
+        {
             double size2 = subset2.size();
             double weight = interactionWeight(subset1, subset2, doiFunc);
             if (weight == 0)

@@ -1,18 +1,3 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune.metadata.extraction;
 
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -189,11 +174,11 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         if (meta == null)
             throw new SQLException("Connection " + connection + " doesn't handle JDBC metadata");
 
-        for(Schema sch : catalog.schemas()) {
+        for (Schema sch : catalog.schemas()) {
 
-            for(Table table : sch.tables()) {
+            for (Table table : sch.tables()) {
 
-                if(!swappedTerms)
+                if (!swappedTerms)
                     rs = meta.getColumns(null, sch.getName(), table.getName(), "%");
                 else
                     rs = meta.getColumns(sch.getName(), null, table.getName(), "%");
@@ -242,14 +227,14 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         if (meta == null)
             throw new SQLException("Connection " + connection + " doesn't handle JDBC metadata");
 
-        for(Schema sch : catalog.schemas()) {
-            for(Table table : sch.tables()) {
+        for (Schema sch : catalog.schemas()) {
+            for (Table table : sch.tables()) {
 
                 indexToColumns = new HashMap<Integer,Column>();
                 indexName      = "";
                 index          = null;
 
-                if(!swappedTerms)
+                if (!swappedTerms)
                     rs = meta.getIndexInfo(null, sch.getName(), table.getName(), false, true);
                 else
                     rs = meta.getIndexInfo(sch.getName(), null, table.getName(), false, true);
@@ -257,14 +242,14 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                 while (rs.next()) {
                     type = rs.getShort("TYPE");
 
-                    if(type == DatabaseMetaData.tableIndexStatistic) {
+                    if (type == DatabaseMetaData.tableIndexStatistic) {
                         table.setPages( rs.getInt("pages") );
                         table.setCardinality( rs.getInt("cardinality") );
                     } else {
 
-                        if(!indexName.equals(rs.getString("index_name"))) {
+                        if (!indexName.equals(rs.getString("index_name"))) {
 
-                            if(index != null)
+                            if (index != null)
                                 for (int i = 0; i < indexToColumns.size(); i++)
                                     index.add(indexToColumns.get(i+1));
 
@@ -295,7 +280,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                 }
 
                 // add the columns of the last index
-                if(index != null)
+                if (index != null)
                     for (int i = 0; i < indexToColumns.size(); i++)
                         index.add(indexToColumns.get(i+1));
 
@@ -403,8 +388,8 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         ResultSet rs;
         String    cmd;
 
-        for(Schema sch : catalog.schemas()) {
-            for(Table tbl : sch.tables()) {
+        for (Schema sch : catalog.schemas()) {
+            for (Table tbl : sch.tables()) {
                 stm = connection.createStatement();
                 cmd =
                     " SELECT " +
@@ -451,9 +436,9 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         ResultSet rs;
         String    cmd;
 
-        for(Schema sch : catalog.schemas()) {
-            for(Table tbl : sch.tables()) {
-                for(Column col : tbl) {
+        for (Schema sch : catalog.schemas()) {
+            for (Table tbl : sch.tables()) {
+                for (Column col : tbl) {
                     stm = connection.createStatement();
                     cmd =
                         " SELECT " +
@@ -509,14 +494,14 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         String    cmd;
         Table     table;
 
-        for(Schema sch : catalog.schemas()) {
+        for (Schema sch : catalog.schemas()) {
 
-            for(Index  idx : sch.indexes()) {
+            for (Index  idx : sch.indexes()) {
 
-                if(idx.size() == 0)
+                if (idx.size() == 0)
                     throw new SQLException("no columns in index "+idx.getName());
 
-                if(idx.size() == 1) {
+                if (idx.size() == 1) {
                     idx.setCardinality(idx.at(0).getCardinality());
                     continue;
                 }
@@ -542,7 +527,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                         table.getFullyQualifiedName() +
                     " GROUP BY ";
 
-                for(Column col : idx.columns())
+                for (Column col : idx.columns())
                     cmd += col.getName() + ", ";
 
                 cmd = cmd.substring(0,cmd.length()-2);

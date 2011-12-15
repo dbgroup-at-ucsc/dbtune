@@ -1,18 +1,3 @@
-/* ************************************************************************** *
- *   Copyright 2010 University of California Santa Cruz                       *
- *                                                                            *
- *   Licensed under the Apache License, Version 2.0 (the "License");          *
- *   you may not use this file except in compliance with the License.         *
- *   You may obtain a copy of the License at                                  *
- *                                                                            *
- *       http://www.apache.org/licenses/LICENSE-2.0                           *
- *                                                                            *
- *   Unless required by applicable law or agreed to in writing, software      *
- *   distributed under the License is distributed on an "AS IS" BASIS,        *
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- *   See the License for the specific language governing permissions and      *
- *   limitations under the License.                                           *
- * ************************************************************************** */
 package edu.ucsc.dbtune.util;
 
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DB2;
@@ -43,7 +28,8 @@ import java.util.Properties;
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
  */
-public class Environment {
+public class Environment
+{
 
     private final Properties configuration;
 
@@ -53,7 +39,8 @@ public class Environment {
      * @param propertiesFilename
      *     name of file containing properties
      */
-    public Environment(String propertiesFilename) throws IOException {
+    public Environment(String propertiesFilename) throws IOException
+    {
         configuration = new Properties();
         configuration.load(new FileInputStream(propertiesFilename));
     }
@@ -61,7 +48,8 @@ public class Environment {
     /**
      * Copy constructor
      */
-    public Environment(Environment other) {
+    public Environment(Environment other)
+    {
         configuration = new Properties(other.configuration);
     }
 
@@ -73,7 +61,8 @@ public class Environment {
      * @param value
      *     value of the property
      */
-    public void setProperty(String property, String value) {
+    public void setProperty(String property, String value)
+    {
         configuration.setProperty(property,value);
     }
 
@@ -83,59 +72,67 @@ public class Environment {
      * @param properties
      *     properties to be accessed through this object.
      */
-    public Environment(Properties properties) {
+    public Environment(Properties properties)
+    {
         configuration = new Properties(properties);
     }
 
     /**
      * Creates an environment object from the default configuration file.
      */
-    public Environment() throws IOException {
+    public Environment() throws IOException
+    {
         this(FILE);
     }
 
     /**
      * @return {@link EnvironmentProperties#USERNAME}
      */
-    public String getUsername() {
+    public String getUsername()
+    {
         return configuration.getProperty(USERNAME);
     }
 
     /**
      * @return {@link EnvironmentProperties#PASSWORD}
      */
-    public String getPassword() {
+    public String getPassword()
+    {
         return configuration.getProperty(PASSWORD);
     }
 
     /**
      * @return {@link EnvironmentProperties#JDBC_URL}
      */
-    public String getJdbcURL() {
+    public String getJdbcURL()
+    {
         return configuration.getProperty(JDBC_URL);
     }
 
     /**
      * @return {@link EnvironmentProperties#JDBC_DRIVER}
      */
-    public String getJdbcDriver() {
+    public String getJdbcDriver()
+    {
         return configuration.getProperty(JDBC_DRIVER);
     }
 
     /**
      * @return {@link EnvironmentProperties#JDBC_DRIVER}
      */
-    public String getVendor() {
+    public String getVendor()
+    {
         return configuration.getProperty(JDBC_DRIVER);
     }
 
     /**
      * @return {@link EnvironmentProperties#OPTIMIZER}
      */
-    public String getOptimizer() throws IllegalArgumentException {
+    public String getOptimizer() throws IllegalArgumentException
+    {
         String opt = configuration.getProperty(OPTIMIZER);
 
-        if(!SUPPORTED_OPTIMIZERS.contains(opt))
+        if (!SUPPORTED_OPTIMIZERS.contains(opt))
             throw new IllegalArgumentException("Bad optimizer option " + opt);
 
         return opt;
@@ -144,21 +141,24 @@ public class Environment {
     /**
      * @return {@link EnvironmentProperties#INUM_CACHE_DEPLOYMENT_DIR}
      */
-    public String getInumCacheDeploymentDir(){
+    public String getInumCacheDeploymentDir()
+    {
         return configuration.getProperty(INUM_CACHE_DEPLOYMENT_DIR);
     }
 
     /**
      * @return {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}
      */
-    public String getWorkloadsFoldername(){
+    public String getWorkloadsFoldername()
+    {
         return configuration.getProperty(WORKLOADS_FOLDERNAME);
     }
 
     /**
      * @return {@link EnvironmentProperties#MAX_NUM_INDEXES}
      */
-    public int getMaxNumIndexes(){
+    public int getMaxNumIndexes()
+    {
         String maxSize = configuration.getProperty(MAX_NUM_INDEXES);
         return Integer.valueOf(maxSize);
     }
@@ -168,7 +168,8 @@ public class Environment {
      * @throws NumberFormatException
      *      unable to return the max num of states due to the stated reason.
      */
-    public int getMaxNumStates() throws NumberFormatException {
+    public int getMaxNumStates() throws NumberFormatException
+    {
         String numOfStates = configuration.getProperty(MAX_NUM_STATES);
         return Integer.valueOf(numOfStates);
     }
@@ -178,7 +179,8 @@ public class Environment {
      * @throws NumberFormatException
      *      unable to return the overhead factor due to the stated reason.
      */
-    public int getNumPartitionIterations() throws NumberFormatException {
+    public int getNumPartitionIterations() throws NumberFormatException
+    {
         String numPartitionIterations = configuration.getProperty(NUM_PARTITION_ITERATIONS);
         return Integer.valueOf(numPartitionIterations);
     }
@@ -188,7 +190,8 @@ public class Environment {
      * @throws NumberFormatException
      *      unable to return the overhead factor due to the stated reason.
      */
-    public int getIndexStatisticsWindow() throws NumberFormatException {
+    public int getIndexStatisticsWindow() throws NumberFormatException
+    {
         String indexStatisticsWindow = configuration.getProperty(INDEX_STATISTICS_WINDOW);
         return Integer.valueOf(indexStatisticsWindow);
     }
@@ -202,7 +205,8 @@ public class Environment {
      * @return
      *    {@code String} containing the path to the given script filename
      */
-    public String getScriptAtWorkloadsFolder(String scriptPath){
+    public String getScriptAtWorkloadsFolder(String scriptPath)
+    {
         return getWorkloadsFoldername() + scriptPath;
     }
 
@@ -218,7 +222,8 @@ public class Environment {
      *    {@code String} containing the path to the given script filename
      * @see #getWorkloadsFoldername
      */
-    public String getFilenameAtWorkloadFolder(String filename){
+    public String getFilenameAtWorkloadFolder(String filename)
+    {
         return getWorkloadsFoldername() + "/" + filename;
     }
 
@@ -231,14 +236,15 @@ public class Environment {
      *     object where the {@link EnvironmentProperties#JDBC_DRIVER} is assigned after it's 
      *     extracted
      */
-    public static void extractDriver(Environment env) throws SQLException {
+    public static void extractDriver(Environment env) throws SQLException
+    {
         String driver;
 
-        if(env.getJdbcURL().contains("db2"))
+        if (env.getJdbcURL().contains("db2"))
             driver = DB2;
-        else if(env.getJdbcURL().contains("mysql"))
+        else if (env.getJdbcURL().contains("mysql"))
             driver = MYSQL;
-        else if(env.getJdbcURL().contains("postgres"))
+        else if (env.getJdbcURL().contains("postgres"))
             driver = PG;
         else
             throw new SQLException("Can't extract driver from " + env.getJdbcURL());
@@ -258,16 +264,19 @@ public class Environment {
         
         protected abstract Properties getDefaults();
         
-        protected boolean isDefaultsMode(){ return false; }
+        protected boolean isDefaultsMode()
+        { return false; }
 
-        public String getProperty(String propertyName) {
+        public String getProperty(String propertyName)
+        {
             checkForPropertyChanges();
             synchronized (properties){
                 return !isDefaultsMode() ? properties.getProperty(propertyName) : getDefaults().getProperty(propertyName);
             }
         }
 
-        public Properties getAllProperties() {
+        public Properties getAllProperties()
+        {
             synchronized (properties){
                 return new Properties(properties);
             }
@@ -281,7 +290,8 @@ public class Environment {
          * @param value
          *    value of property.
          */
-        public final void setProperty(String propertyName, String value) {
+        public final void setProperty(String propertyName, String value)
+        {
             System.out.println("setting " + propertyName + " to " + value);
             synchronized (properties) {
                 Object old = properties.get(propertyName);
@@ -314,7 +324,7 @@ public class Environment {
 
             this.file = new File(filename);
 
-            if(!file.exists()) {
+            if (!file.exists()) {
                 throw new IOException("File " + filename + " doesn't exist");
             }
 
@@ -325,7 +335,8 @@ public class Environment {
         }
 
         @Override
-        protected void checkForPropertyChanges() {
+        protected void checkForPropertyChanges()
+        {
             if (lastModified != file.lastModified()) {
                 lastModified = file.lastModified();
               try {
@@ -338,22 +349,26 @@ public class Environment {
         }
 
         @Override
-        protected Properties getDefaults() {
+        protected Properties getDefaults()
+        {
             return defaults;
         }
 
         @Override
-        protected boolean isDefaultsMode() {
+        protected boolean isDefaultsMode()
+        {
             return useDefaults;
         }
 
-        private void loadPropertiesFromFile() throws IOException {
+        private void loadPropertiesFromFile() throws IOException
+        {
             Properties props = new Properties();
             props.load(new FileInputStream(file));
             setAllProperties(props);
         }
 
-        private void setAllProperties(Properties properties) {
+        private void setAllProperties(Properties properties)
+        {
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {
                 setProperty((String)entry.getKey(), (String) entry.getValue());
             }
@@ -363,7 +378,8 @@ public class Environment {
     /**
      * @return the environment singleton.
      */
-    public static Environment getInstance(){
+    public static Environment getInstance()
+    {
         return Installer.INSTANCE;
     }
 

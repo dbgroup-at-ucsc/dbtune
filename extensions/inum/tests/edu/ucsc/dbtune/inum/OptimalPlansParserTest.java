@@ -15,13 +15,15 @@ import org.junit.Test;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class OptimalPlansParserTest {
+public class OptimalPlansParserTest
+{
   private static final String EXECUTION_PLAN = "Hash Join  (cost=174080.39..9364262539.50 rows=1 width=193)";
-  @Test public void testParsingOptimalPlans() throws Exception {
+  @Test public void testParsingOptimalPlans() throws Exception
+ {
     final Set<OptimalPlan> optimalPlans = new InumOptimalPlansParser().parse(EXECUTION_PLAN);
     assertThat(!optimalPlans.isEmpty(), is(true));
     final OptimalPlan plan = getSingleOptimalPlan(optimalPlans);
-    for(Subplan each : plan.getInternalPlans()){
+    for (Subplan each : plan.getInternalPlans()){
       Console.streaming().info("About to test " + Strings.str(each));
       assertThat(each.getRowId(), equalTo(0));
       assertThat(each.getParentId(), equalTo(-1));
@@ -33,7 +35,8 @@ public class OptimalPlansParserTest {
     }
   }
 
-  private static OptimalPlan getSingleOptimalPlan(Set<OptimalPlan> plans){
+  private static OptimalPlan getSingleOptimalPlan(Set<OptimalPlan> plans)
+  {
     return Lists.newArrayList(plans).get(0);
   }
 

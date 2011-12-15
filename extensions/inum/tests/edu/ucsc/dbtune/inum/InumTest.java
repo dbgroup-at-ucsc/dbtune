@@ -25,15 +25,18 @@ import static org.junit.Assert.fail;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumTest {
-  @Test public void testInumSpaceGeneration() throws Exception {
+public class InumTest
+{
+  @Test public void testInumSpaceGeneration() throws Exception
+ {
     final Inum inum = SharedFixtures.configureInum();
     inum.start();
     assertThat(inum.getInumSpace(), notNullValue());
     assertThat(inum.getInumSpace().getAllSavedOptimalPlans().isEmpty(), is(false));
   }
 
-  @Test public void testCrossProductGeneration() throws Exception {
+  @Test public void testCrossProductGeneration() throws Exception
+ {
     final Table        table   = new Table(new Schema( new Catalog("persons_db"), "persons_sch"), "persons");
     final Configuration interestingOrders = SharedFixtures.configureConfiguration(table, 3, 3);
 
@@ -42,7 +45,8 @@ public class InumTest {
   }
 
 
-  @Test (expected = InumExecutionException.class) public void testInumShutdown() throws Exception {
+  @Test (expected = InumExecutionException.class) public void testInumShutdown() throws Exception
+ {
     final Inum inum = SharedFixtures.configureInum();
     inum.end();
     final Configuration emptyConfiguration = new Configuration(
