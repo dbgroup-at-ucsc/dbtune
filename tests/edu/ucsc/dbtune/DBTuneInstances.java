@@ -32,7 +32,7 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
  */
-public class DBTuneInstances
+public final class DBTuneInstances
 {
     protected static final String DB_URL     = "nothing.com";
     protected static final String DB_USR     = "neo";
@@ -42,20 +42,25 @@ public class DBTuneInstances
     protected static final String DB_CREATOR = "123";
 
     /**
-     * Utility class
+     * Utility class.
      */
     private DBTuneInstances()
-    {}
+    {
+    }
 
     /**
-     * Returns a configuration for DB2
+     * Returns a configuration for DB2.
+     *
+     * @return
+     *      a configured environment
      */
     public static Environment configureDB2()
     {
         Environment cfg = new Environment(configureUser());
 
         cfg.setProperty(JDBC_URL, "jdbc:db2://" + DB_URL );
-        try{
+
+        try {
             extractDriver(cfg);
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -65,14 +70,18 @@ public class DBTuneInstances
     }
 
     /**
-     * Returns a configuration for an inexistent DBMS
+     * Returns a configuration for an inexistent DBMS.
+     *
+     * @return
+     *      a configured environment
      */
     public static Environment configureInexistentDBMS()
     {
         Environment cfg = new Environment(configureUser());
 
         cfg.setProperty(JDBC_URL, "jdbc:superdbms//" + DB_URL);
-        try{
+
+        try {
             extractDriver(cfg);
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -82,14 +91,18 @@ public class DBTuneInstances
     }
 
     /**
-     * Returns a configuration for postgres
+     * Returns a configuration for postgres.
+     *
+     * @return
+     *      a configured environment
      */
     public static Environment configureMySQL()
     {
         Environment cfg = new Environment(configureUser());
 
-        cfg.setProperty(JDBC_URL, "jdbc:mysql://" + DB_URL );
-        try{
+        cfg.setProperty(JDBC_URL, "jdbc:mysql://" + DB_URL);
+
+        try {
             extractDriver(cfg);
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -99,14 +112,18 @@ public class DBTuneInstances
     }
 
     /**
-     * Returns a configuration for postgres
+     * Returns a configuration for postgres.
+     *
+     * @return
+     *      a configured environment
      */
     public static Environment configurePG()
     {
         Environment cfg = new Environment(configureUser());
 
-        cfg.setProperty(JDBC_URL, "jdbc:postgresql://" + DB_URL );
-        try{
+        cfg.setProperty(JDBC_URL, "jdbc:postgresql://" + DB_URL);
+
+        try {
             extractDriver(cfg);
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
@@ -116,7 +133,10 @@ public class DBTuneInstances
     }
 
     /**
-     * Returns a configuration with generic connectivity settings
+     * Returns a configuration with generic connectivity settings.
+     *
+     * @return
+     *      a configured environment
      */
     public static Properties configureUser()
     {
@@ -129,25 +149,30 @@ public class DBTuneInstances
     }
 
     /**
-     * Returns a configuration with random dbms properties
+     * Returns a configuration with random dbms properties.
+     *
+     * @return
+     *      a configured environment
      */
     public static Environment configureAny()
     {
-        switch(new Random().nextInt(3))
-        {
-        case 0:
-            return configureDB2();
-        case 1:
-            return configureMySQL();
-        case 2:
-            return configurePG();
-        default:
-            return configurePG();
+        switch(new Random().nextInt(3)) {
+            case 0:
+                return configureDB2();
+            case 1:
+                return configureMySQL();
+            case 2:
+                return configurePG();
+            default:
+                return configurePG();
         }
     }
 
     /**
-     * Returns a configuration with generic connectivity settings
+     * Returns a configuration with generic connectivity settings.
+     *
+     * @return
+     *      a configured environment
      */
     public static Environment configureDBMSOptimizer(Environment cfg)
     {
@@ -156,7 +181,10 @@ public class DBTuneInstances
     }
 
     /**
-     * Returns a configuration with generic connectivity settings
+     * Returns a configuration with generic connectivity settings.
+     *
+     * @return
+     *      a configured environment
      */
     public static Environment configureIBGOptimizer(Environment cfg)
     {
@@ -165,7 +193,10 @@ public class DBTuneInstances
     }
 
     /**
-     * Returns a configuration with generic connectivity settings
+     * Returns a configuration with generic connectivity settings.
+     *
+     * @return
+     *      a configured environment
      */
     public static Environment configureINUMOptimizer(Environment cfg)
     {
@@ -338,5 +369,91 @@ public class DBTuneInstances
         ibs.set(3);
 
         return new IndexBenefitGraph(root, 80, ibs);
+    }
+
+    /**
+     * @return
+     *     a list with all the subsets of the set (a,b,c,d), where the positions of the IndexBitSet 
+     *     objects are a=0, b=1, c=2, d=3
+     */
+    public static List<IndexBitSet> configurePowerSet()
+    {
+        List<IndexBitSet> list = new ArrayList<IndexBitSet>();
+        IndexBitSet e = new IndexBitSet();
+        IndexBitSet a = new IndexBitSet();
+        IndexBitSet b = new IndexBitSet();
+        IndexBitSet c = new IndexBitSet();
+        IndexBitSet d = new IndexBitSet();
+        IndexBitSet ab = new IndexBitSet();
+        IndexBitSet ac = new IndexBitSet();
+        IndexBitSet ad = new IndexBitSet();
+        IndexBitSet bc = new IndexBitSet();
+        IndexBitSet bd = new IndexBitSet();
+        IndexBitSet cd = new IndexBitSet();
+        IndexBitSet abc = new IndexBitSet();
+        IndexBitSet acd = new IndexBitSet();
+        IndexBitSet bcd = new IndexBitSet();
+        IndexBitSet abcd = new IndexBitSet();
+
+        a.set(0);
+
+        b.set(1);
+
+        c.set(2);
+
+        d.set(3);
+    
+        ab.set(0);
+        ab.set(1);
+
+        ac.set(0);
+        ac.set(2);
+
+        ad.set(0);
+        ad.set(3);
+
+        bc.set(1);
+        bc.set(2);
+
+        bd.set(1);
+        bd.set(3);
+
+        cd.set(2);
+        cd.set(3);
+
+        abc.set(0);
+        abc.set(1);
+        abc.set(2);
+
+        acd.set(0);
+        acd.set(2);
+        acd.set(3);
+
+        bcd.set(1);
+        bcd.set(2);
+        bcd.set(3);
+
+        abcd.set(0);
+        abcd.set(1);
+        abcd.set(2);
+        abcd.set(3);
+
+        list.add(e);
+        list.add(a);
+        list.add(b);
+        list.add(c);
+        list.add(d);
+        list.add(ab);
+        list.add(ac);
+        list.add(ad);
+        list.add(bc);
+        list.add(bd);
+        list.add(cd);
+        list.add(abc);
+        list.add(acd);
+        list.add(bcd);
+        list.add(abcd);
+
+        return list;
     }
 }

@@ -11,7 +11,7 @@ public class IBGBestBenefitFinder
     private final IBGCoveringNodeFinder finder = new IBGCoveringNodeFinder();
     
     public double bestBenefit(IndexBenefitGraph ibg, int indexId, IndexBitSet M)
-{
+    {
         visited.clear();
         pending.clear();
         
@@ -31,7 +31,6 @@ public class IBGBestBenefitFinder
                 IBGNode Ya = finder.findFast(ibg.rootNode(), bitset_Ya, null);
                 double value = Y.cost() - Ya.cost();
                 bestValue = Math.max(value, bestValue);
-                //printExpanded(ibg, node);
             }
             pending.addChildren(Y.firstChild());
         }

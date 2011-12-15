@@ -19,7 +19,7 @@ class IBGNodeFinder
      * @param rootNode
      *      {@link IndexBenefitGraph}'s root.
      * @param config
-     *      indexes configuration.
+     *      index configuration.
      * @return
      *      found node in the graph. <strong>IMPORTANT</strong>: may return {@code null}.
      */
@@ -33,24 +33,25 @@ class IBGNodeFinder
         while (pending.hasNext()) {
             IBGNode node = pending.next();
             
-            if (visited.get(node.getID())) {
+            if (visited.get(node.getID()))
                 continue;
-            }
+
             visited.set(node.getID());
             
-            // we can prune the search if the node does not contain all of config
-            if (!config.subsetOf(node.getConfiguration())) {
+            // skip unexpanded nodes
+            if (!node.isExpanded())
                 continue;
-            }
+
+            // we can prune the search if the node does not contain all of config
+            if (!config.subsetOf(node.getConfiguration()))
+                continue;
             
             // we can stop the search if the node matches exactly
-            if (node.getConfiguration().equals(config)) {
+            if (node.getConfiguration().equals(config))
                 return node;
-            }
             
-            if (node.isExpanded()) {
-                pending.addChildren(node.firstChild());
-            }
+            // this node has children that might be covering nodes...
+            pending.addChildren(node.firstChild());
         }   
         
         return null;

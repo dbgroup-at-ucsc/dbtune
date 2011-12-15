@@ -113,6 +113,16 @@ public class IBGNodeFinderTest
     {
         IBGNodeFinder finder = new IBGNodeFinder();
 
+        IndexBitSet superSet = new IndexBitSet();
+
+        superSet.set(0);
+        superSet.set(1);
+        superSet.set(2);
+        superSet.set(3);
+        superSet.set(4);
+
+        assertThat(finder.find(root, superSet), is(nullValue()));
+
         // not in the graph
         assertThat(finder.find(root, e), is(nullValue()));
         assertThat(finder.find(root, a), is(nullValue()));
