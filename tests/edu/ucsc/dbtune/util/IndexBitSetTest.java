@@ -49,7 +49,7 @@ public class IndexBitSetTest
         other.add(5);
         other.add(7);
 
-        assertThat(bs.contains(other), is(true));
+        assertThat(bs.containsAll(other), is(true));
 
         bs = new IndexBitSet();
 

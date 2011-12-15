@@ -26,7 +26,7 @@ public class IBGBestBenefitFinder
             visited.add(Y.getID());
 
             if (!Y.getConfiguration().contains(indexId) && 
-                    Y.getConfiguration().contains(Y.getConfiguration())) {
+                    Y.getConfiguration().containsAll(Y.getConfiguration())) {
                 bitset_Ya.clear();
                 bitset_Ya.addAll(Y.getConfiguration());
                 bitset_Ya.add(indexId);

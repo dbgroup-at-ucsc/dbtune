@@ -89,7 +89,7 @@ public class IBGMonotonicEnforcer
 
                 visited.add(node.getID());
                 
-                if (config.contains(node.getConfiguration()) && 
+                if (config.containsAll(node.getConfiguration()) && 
                         !node.getConfiguration().equals(config)) {
                     if (node.cost() < cost) {
                         node.setCost(cost);

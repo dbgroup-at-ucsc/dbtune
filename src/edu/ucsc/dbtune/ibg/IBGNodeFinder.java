@@ -43,7 +43,7 @@ class IBGNodeFinder
                 continue;
 
             // we can prune the search if the node does not contain all of config
-            if (!node.getConfiguration().contains(config))
+            if (!node.getConfiguration().containsAll(config))
                 continue;
             
             // we can stop the search if the node matches exactly
