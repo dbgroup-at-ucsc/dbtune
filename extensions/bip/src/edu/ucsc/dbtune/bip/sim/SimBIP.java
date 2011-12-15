@@ -95,19 +95,19 @@ public class SimBIP
 		List<Index> Sremain = new ArrayList<Index>();
 		
 		// create a hash map to speed up the performance
-		Map<String, Integer> mapNameIndexInit = new HashMap<String, Integer>();
-		Map<String, Integer> mapNameIndexMat = new HashMap<String, Integer>();
+		Map<Index, Integer> mapIndexInit = new HashMap<Index, Integer>();
+		Map<Index, Integer> mapIndexMat = new HashMap<Index, Integer>();
 		for (Index index : Sinit){
-			mapNameIndexInit.put(index.getName(), 1);
+			mapIndexInit.put(index, 1);
 		}
 		
 		for (Index index : Smat){ 
-			mapNameIndexMat.put(index.getName(), 1);
+			mapIndexMat.put(index, 1);
 		}		
 		
 		// 1. Computer Sremain and Sout
 		for (Index idxInit : Sinit) {	
-			if (mapNameIndexMat.containsKey(idxInit.getName()) == true) {
+			if (mapIndexMat.containsKey(idxInit) == true) {
 				Sremain.add(idxInit);
 			}
 			else {
@@ -116,7 +116,7 @@ public class SimBIP
 		}
 		
 		for (Index idxMat : Smat) {
-			if (mapNameIndexInit.containsKey(idxMat.getName()) == false) {
+			if (mapIndexInit.containsKey(idxMat) == false) {
 				Sin.add(idxMat); 
 			}
 		}
@@ -128,7 +128,7 @@ public class SimBIP
 		for (Index idx : Sin) {
 			MatIndex matIndex = new MatIndex(idx, globalId, MatIndex.INDEX_TYPE_CREATE);
 			MatIndexPool.addMatIndex(matIndex);			
-			MatIndexPool.mapNameIndexGlobalId(idx.getName(), globalId);			
+			MatIndexPool.mapIndexGlobalId(idx, globalId);			
 			globalId++; 
 		}
 		
@@ -136,7 +136,7 @@ public class SimBIP
 		for (Index idx : Sout) {
 			MatIndex matIndex = new MatIndex(idx, globalId, MatIndex.INDEX_TYPE_DROP);
 			MatIndexPool.addMatIndex(matIndex);
-			MatIndexPool.mapNameIndexGlobalId(idx.getName(), globalId);			
+			MatIndexPool.mapIndexGlobalId(idx, globalId);			
 			globalId++;
 		}
 		
@@ -144,7 +144,7 @@ public class SimBIP
 		for (Index idx: Sremain) {
 			MatIndex matIndex = new MatIndex(idx, globalId, MatIndex.INDEX_TYPE_REMAIN);
 			MatIndexPool.addMatIndex(matIndex);
-			MatIndexPool.mapNameIndexGlobalId(idx.getName(), globalId);			
+			MatIndexPool.mapIndexGlobalId(idx, globalId);			
 			globalId++;
 		}
 		MatIndexPool.setTotalIndex(globalId);
@@ -260,9 +260,11 @@ public class SimBIP
 	 * @return
 	 * 	    The matrix of @cplex	  
 	 */	
-	public IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
+    public IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
 	{
+        @SuppressWarnings("unchecked")
         Iterator iter = cplex.getModel().iterator();
+        
         while (iter.hasNext()) {
             Object o = iter.next();
             if (o instanceof IloLPMatrix) {

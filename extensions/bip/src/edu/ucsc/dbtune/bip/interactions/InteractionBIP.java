@@ -296,8 +296,10 @@ public class InteractionBIP
 	 * @return
 	 * 	    The matrix of @cplex	  
 	 */	
-	public IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
+	
+    public IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
 	{
+        @SuppressWarnings("unchecked")
         Iterator iter = cplex.getModel().iterator();
         while (iter.hasNext()) {
             Object o = iter.next();

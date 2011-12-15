@@ -14,6 +14,9 @@ public class SimQueryPlanDesc extends QueryPlanDesc
 {
 	/**
 	 * Supplement methods to the main method in super.generateQueryPlanDesc
+	 *     - Update materialized index size
+	 *     - Map index into their position in the ``global'' pool managed by {@code MatIndexPool}
+	 *     
 	 * @param inum
 	 * 		The Inum space	
 	 * @param globalCandidateIndexes
@@ -24,13 +27,14 @@ public class SimQueryPlanDesc extends QueryPlanDesc
 	{
 		double sizeMatIndex = 0.0;
 		Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
+		
 		// Add the full-table-scan index into the pool of @MatIndexPool
 		int globalId = MatIndexPool.getTotalIndex();
 		for (int i = 0; i < n; i++){
 			Index emptyIndex = getIndex(i, getNumIndexesEachSlot(i) - 1);
 			MatIndex matIndex = new MatIndex(emptyIndex, globalId, MatIndex.INDEX_TYPE_REMAIN);
 			MatIndexPool.addMatIndex(matIndex);
-			MatIndexPool.mapNameIndexGlobalId(emptyIndex.getName(), globalId);			
+			MatIndexPool.mapIndexGlobalId(emptyIndex, globalId);			
 			globalId++;
 		}
 		MatIndexPool.setTotalIndex(globalId);
@@ -42,7 +46,7 @@ public class SimQueryPlanDesc extends QueryPlanDesc
 			for (int i = 0; i < n; i++) {
 				for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
 					Index index = getIndex(i, a);
-					globalId = MatIndexPool.getIndexGlobalId(index.getName());
+					globalId = MatIndexPool.getIndexGlobalId(index);
 					IndexInSlot iis = new IndexInSlot(q,i,a);
 					MatIndexPool.mapPosIndexGlobalId(iis, globalId);
 					

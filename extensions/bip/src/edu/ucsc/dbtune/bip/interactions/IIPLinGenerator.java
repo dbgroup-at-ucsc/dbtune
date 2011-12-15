@@ -453,7 +453,8 @@ public class IIPLinGenerator
 						SortableIndexAcessCost sac = new SortableIndexAcessCost
 											(desc.getIndexAccessCost(t, i, p), p);
 						listSortedIndex.add(sac);						
-					}		
+					}					
+					// sort in the increasing order of the index access cost
 					Collections.sort(listSortedIndex);
 					linList.clear();
 					
@@ -603,14 +604,14 @@ public class IIPLinGenerator
 	{
 		String lineVars = "";
 		int countVar = 0;
-		int numVarOneLine = 10;
+		int NUM_VAR_PER_LINE = 10;
 		
 		for (List<String> listVar : varTheta) {
 			for (String var : listVar) {
 				lineVars += var;
 				lineVars += " ";
 				countVar++;
-				if (countVar >= numVarOneLine) {
+				if (countVar >= NUM_VAR_PER_LINE) {
 					countVar = 0;
 					buf.getBin().println(lineVars);
 					lineVars = "";					

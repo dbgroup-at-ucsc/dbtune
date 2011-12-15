@@ -18,7 +18,7 @@ public class MatIndexPool
 {
 	private static List<MatIndex> listIndex = new ArrayList<MatIndex>();	
 	private static Map<IndexInSlot, Integer> mapPosIndexGlobal = new HashMap<IndexInSlot, Integer>();
-	private static Map<String, Integer> mapNameIndexGlobal = new HashMap<String, Integer>();
+	private static Map<Index, Integer> mapIndexGlobal = new HashMap<Index, Integer>();
 	public static int startCreate, startDrop, startRemain, totalIndex;	
 	public static final int IDX_NOT_EXIST = -1;
 	
@@ -30,14 +30,14 @@ public class MatIndexPool
 		listIndex.add(index);
 	}
 
-	public static void mapNameIndexGlobalId(String name, int id)
+	public static void mapIndexGlobalId(Index index, int id)
 	{
-		mapNameIndexGlobal.put(name, new Integer(id));
+		mapIndexGlobal.put(index, new Integer(id));
 	}
 	
-	public static int getIndexGlobalId(String name)
+	public static int getIndexGlobalId(Index index)
 	{
-		Object found = mapNameIndexGlobal.get(name);
+		Object found = mapIndexGlobal.get(index);
 		if (found == null)
 		{
 			return IDX_NOT_EXIST;
@@ -107,21 +107,13 @@ public class MatIndexPool
 		return listIndex.get(id);
 	}
 	
-	public static MatIndex getMatIndex(String name)
+	public static MatIndex getMatIndex(Index index)
 	{
-		int id = getIndexGlobalId(name);
+		int id = getIndexGlobalId(index);
 		if (id == IDX_NOT_EXIST) {
 			return null;
 		}
 		return listIndex.get(id);
 	}
 	
-	public static MatIndex getMatIndex(Index index)
-	{
-		int id = getIndexGlobalId(index.getName());
-		if (id == IDX_NOT_EXIST) {
-			return null;
-		}
-		return getMatIndex(id);
-	}
 }

@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.bip.interactions;
 
 
-public class SortableIndexAcessCost implements Comparable 
+public class SortableIndexAcessCost implements Comparable<SortableIndexAcessCost>
 {
 	private double gamma;
 	private int pos;
@@ -40,15 +40,12 @@ public class SortableIndexAcessCost implements Comparable
 	
 
 	@Override
-	public int compareTo(Object o) 
-	{
-		if(!(o instanceof SortableIndexAcessCost)){
-            throw new ClassCastException("Invalid object");
-        }
-		
-		if (gamma < ((SortableIndexAcessCost)o).getIndexAccessCost()){
+	public int compareTo(SortableIndexAcessCost o) 
+	{		
+	    double objCost = o.getIndexAccessCost(); 
+		if (gamma < objCost){
 			return -1;
-		} else if (gamma == ((SortableIndexAcessCost)o).getIndexAccessCost()){
+		} else if (gamma == objCost){
 			return 0;
 		} else {
 			return 1;

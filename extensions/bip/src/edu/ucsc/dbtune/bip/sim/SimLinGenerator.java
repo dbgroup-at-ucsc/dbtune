@@ -12,16 +12,16 @@ import edu.ucsc.dbtune.bip.util.LogListener;
 
 public class SimLinGenerator 
 {
-	public static final int  VAR_Y = 0;
+    public static final int  VAR_Y = 0;
 	public static final int  VAR_X = 1;
 	public static final int  VAR_S = 2;
 	public static final int  VAR_PRESENT = 3;
 	public static final int  VAR_CREATE = 4;
 	public static final int  VAR_DROP = 5;
 	public static final int  VAR_DEFAULT = 100;
-	
+
 	private CPlexBuffer buf;
-	private String[] strHeaderVariable = {"y", "x", "s", "present", "create", "drop"};
+    private String[] strHeaderVariable = {"y", "x", "s", "present", "create", "drop"};
 	private List<String> listCwq;
 	private List<String> listVar;
 	private List<SimQueryPlanDesc> listQueryPlan;
@@ -30,7 +30,7 @@ public class SimLinGenerator
 	private int numConstraints;
 	
 	
-	SimLinGenerator(String prefix, List<SimQueryPlanDesc> listQueryPlan, int W, List<Double> B)
+	SimLinGenerator(final String prefix, final List<SimQueryPlanDesc> listQueryPlan, final int W, final List<Double> B)
 	{		
 		this.listQueryPlan = listQueryPlan;
 		this.W = W;
@@ -64,7 +64,7 @@ public class SimLinGenerator
 	 * 
 	 * @throws IOException
 	 */
-	public void build(LogListener listener) throws IOException 
+	public final void build(final LogListener listener) throws IOException 
 	{
     	listener.onLogEvent(LogListener.BIP, "Building IIP program...");
     	numConstraints = 0;
@@ -368,12 +368,13 @@ public class SimLinGenerator
 	{
 		String lineVars = "";
 		int countVar = 0;
+		int NUM_VAR_PER_LINE = 10;
 		
 		for (String var : listVar) {
 			lineVars += var;
 			lineVars += " ";
 			countVar++;
-			if (countVar >= 10) {
+			if (countVar >= NUM_VAR_PER_LINE) {
 				countVar = 0;
 				buf.getBin().println(lineVars);
 				lineVars = "";					
@@ -410,7 +411,7 @@ public class SimLinGenerator
 	 * @return
 	 *  	The variable name
 	 */
-	private String constructVariableName(int typeVariable, int window, int queryId, int k, int i, int a)
+	private String constructVariableName(final int typeVariable, final int window, final int queryId, final int k, final int i, final int a)
 	{
 		String result = "";
 		result = result.concat(strHeaderVariable[typeVariable]);
@@ -435,16 +436,16 @@ public class SimLinGenerator
 		return result;	
 	}
 	
-	public static int getVarType(String name)
+	public static int getVarType(final String name)
 	{
 		if (name.contains("y(")) {
 			return VAR_Y;
 		}
-		
+
 		if (name.contains("x(")) {
 			return VAR_X;
 		}
-		
+
 		if (name.contains("s(")) {
 			return VAR_S;
 		}

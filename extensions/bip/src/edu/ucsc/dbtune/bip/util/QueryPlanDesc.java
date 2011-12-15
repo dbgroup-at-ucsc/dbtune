@@ -146,7 +146,10 @@ public class QueryPlanDesc
 	 * @param globaCandidateIndexes
 	 * 		The given list of candidate indexes (globally)	
 	 * 
-	 * {\b Note}: There does not contain the empty index (table scan) in {@code globalCandidateIndexes}
+	 * {\b Note}: 
+	 *     - There does not contain the empty index (table scan) in {@code globalCandidateIndexes}
+	 *     - The index full table scan is always assigned the last position in the list of indexes
+	 *     at each slot
 	 * @throws SQLException 
 	 */	
 	public void generateQueryPlanDesc(InumSpace inum, List<Index> globalCandidateIndexes) throws SQLException
@@ -161,44 +164,27 @@ public class QueryPlanDesc
 		List<Table> listTables = new ArrayList<Table>();   
 		for (InumStatementPlan plan : templatePlans) {
 			listTables = plan.getReferencedTables();
+			break;
 		}
 		// ------------------------------------------------------------
 		
 		// 1. Set up the number of slots & number of indexes in each slot
 		n = 0;
 		numIndexes = 0;		
-		for (Table table : listTables) {
-			String relName = table.getName();
+		for (Table table : listTables) {			
 			int numIndexEachSlot = 0;
-			List<Index> listIndex = new ArrayList<Index>();
+			List<Index> listIndex = new ArrayList<Index>();			
 			
 			for (Index index : globalCandidateIndexes) {
-				if (index.getName().contains(relName)) {
+			    if (index.getTable().equals(table)){				
 					numIndexEachSlot++;
 					numIndexes++;
 					listIndex.add(index);
 				}
 			}
 			
-			/**
-			 * Check if a full table scan index has been created before
-			 * If not, create a new one 
-			 */
-			boolean isIndexFullScanExist = false;
-			for (Index index : table.getSchema().indexes()) {
-				String indexName = index.getName();
-				if (indexName.indexOf(relName) != -1 && 
-					indexName.indexOf(IndexFullTableScan.FULL_TABLE_SCAN_SUFFIX) != -1)
-				{
-					listIndex.add(index);
-					isIndexFullScanExist = true;
-					break;
-				}
-			}
-			if (isIndexFullScanExist == false){
-				IndexFullTableScan scanIdx = new IndexFullTableScan(table);
-				listIndex.add(scanIdx);
-			}
+			IndexFullTableScan scanIdx = new IndexFullTableScan(table);
+			listIndex.add(scanIdx);
 			numIndexEachSlot++;
 			numIndexes++;
 			
