@@ -92,7 +92,7 @@ public class IBGOptimizer implements Optimizer
         bitSet = new IndexBitSet();
 
         for (Index idx : universe) {
-            bitSet.set(universe.getOrdinalPosition(idx));
+            bitSet.add(universe.getOrdinalPosition(idx));
         }
 
         bitConf = new ConfigurationBitSet(universe, bitSet);

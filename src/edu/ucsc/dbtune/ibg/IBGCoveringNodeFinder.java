@@ -63,7 +63,7 @@ public class IBGCoveringNodeFinder
         visited.clear();
 
         IBGNode currentNode =
-            (guess != null && config.subsetOf(guess.getConfiguration())) ? guess : rootNode;
+            (guess != null && guess.getConfiguration().contains(config)) ? guess : rootNode;
 
         while (true) {
             // stop if an unexpanded node is found. An unexpanded node means that the IBG 
@@ -78,7 +78,7 @@ public class IBGCoveringNodeFinder
             while (true) {
                 if (ch == null) {
                     return currentNode;
-                } else if (!config.get(ch.getUsedIndex())) {
+                } else if (!config.contains(ch.getUsedIndex())) {
                     currentNode = ch.getNode();
                     break;
                 } else {
@@ -108,17 +108,17 @@ public class IBGCoveringNodeFinder
         while (pending.hasNext()) {
             IBGNode node = pending.next();
 
-            if (visited.get(node.getID()))
+            if (visited.contains(node.getID()))
                 continue;
 
-            visited.set(node.getID());
+            visited.add(node.getID());
 
             // skip unexpanded nodes
             if (!node.isExpanded())
                 continue;
 
             // we can prune the search if the node does not contain all of config
-            if (!config.subsetOf(node.getConfiguration()))
+            if (!node.getConfiguration().contains(config))
                 continue;
 
             // return if we have found covering node

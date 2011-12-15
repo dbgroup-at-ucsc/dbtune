@@ -32,7 +32,7 @@ public class UnionFind
         Elt[] tempElts = flip();
         
         for (int e = 0; e < eltCount; e++) {
-            if (filter.get(e) && elts[e].parent == e) {
+            if (filter.contains(e) && elts[e].parent == e) {
                 int i = e;
                 while (true) {
                     if (tempElts[i].parent == i)
@@ -132,7 +132,7 @@ public class UnionFind
             if (elts[e].parent == e) {
                 int i = e;
                 while (true) {
-                    sets[s].set(i);
+                    sets[s].add(i);
                     if (tempElts[i].parent == i)
                         break;
                     i = tempElts[i].parent;

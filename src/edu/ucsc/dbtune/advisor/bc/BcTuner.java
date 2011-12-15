@@ -81,7 +81,7 @@ public class BcTuner
         IndexBitSet bs = new IndexBitSet();
         for (Index index : hotSet) {
             if (pool.get(snapshot.getOrdinalPosition(index)).state == BcIndexInfo.State.MATERIALIZED){
-                bs.set(snapshot.getOrdinalPosition(index));
+                bs.add(snapshot.getOrdinalPosition(index));
             }
         }
         return bs;

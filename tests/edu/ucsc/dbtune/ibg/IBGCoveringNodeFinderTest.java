@@ -92,11 +92,11 @@ public class IBGCoveringNodeFinderTest
 
         IndexBitSet superSet = new IndexBitSet();
 
-        superSet.set(0);
-        superSet.set(1);
-        superSet.set(2);
-        superSet.set(3);
-        superSet.set(4);
+        superSet.add(0);
+        superSet.add(1);
+        superSet.add(2);
+        superSet.add(3);
+        superSet.add(4);
 
         assertThat(finder.find(root, superSet), is(nullValue()));
     }
@@ -109,9 +109,9 @@ public class IBGCoveringNodeFinderTest
         IBGCoveringNodeFinder finder = new IBGCoveringNodeFinder();
 
         assertThat(
-                !finder.find(root, e).getConfiguration().get(0) ||
-                !finder.find(root, e).getConfiguration().get(2) ||
-                !finder.find(root, e).getConfiguration().get(3), is(true));
+                !finder.find(root, e).getConfiguration().contains(0) ||
+                !finder.find(root, e).getConfiguration().contains(2) ||
+                !finder.find(root, e).getConfiguration().contains(3), is(true));
         assertThat(finder.find(root, e).cost(), is(80.0));
 
         assertThat(finder.find(root, a).getConfiguration(), is(ac));

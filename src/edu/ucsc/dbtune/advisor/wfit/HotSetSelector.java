@@ -87,7 +87,7 @@ public class HotSetSelector
             // add required indexes
             for (Index index : requiredIndexSet) {
                 list.add(index);
-                M.set(candSet.getOrdinalPosition(index));
+                M.add(candSet.getOrdinalPosition(index));
             }
             
             // add top indexes
@@ -96,7 +96,7 @@ public class HotSetSelector
                 double bestScore = Double.NEGATIVE_INFINITY;
                 
                 for (Index index : candSet) {
-                    if (M.get(candSet.getOrdinalPosition(index)))
+                    if (M.contains(candSet.getOrdinalPosition(index)))
                         continue;
                     
                     double penalty = oldHotSet.contains(index) ? 0 : index.getCreationCost();
@@ -110,7 +110,7 @@ public class HotSetSelector
                     break;
                 else {
                     list.add(bestIndex);
-                    M.set(candSet.getOrdinalPosition(bestIndex));
+                    M.add(candSet.getOrdinalPosition(bestIndex));
                 }
             }
 

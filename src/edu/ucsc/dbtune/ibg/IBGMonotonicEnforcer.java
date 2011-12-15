@@ -46,11 +46,11 @@ public class IBGMonotonicEnforcer
         while (pending.hasNext()) {
             IBGNode node = pending.next();
             
-            if (visited.get(node.getID())){
+            if (visited.contains(node.getID())){
                 continue;
             }
             
-            visited.set(node.getID());
+            visited.add(node.getID());
             
             sub.fixSubsets(ibg, node.getConfiguration(), node.cost());
             
@@ -83,13 +83,14 @@ public class IBGMonotonicEnforcer
             while (pending.hasNext()) {
                 IBGNode node = pending.next();
                 
-                if (visited.get(node.getID())){
+                if (visited.contains(node.getID())){
                     continue;
                 }
 
-                visited.set(node.getID());
+                visited.add(node.getID());
                 
-                if (node.getConfiguration().subsetOf(config) && !node.getConfiguration().equals(config)) {
+                if (config.contains(node.getConfiguration()) && 
+                        !node.getConfiguration().equals(config)) {
                     if (node.cost() < cost) {
                         node.setCost(cost);
                     }

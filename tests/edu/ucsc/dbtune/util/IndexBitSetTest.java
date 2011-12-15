@@ -33,10 +33,10 @@ public class IndexBitSetTest
         IndexBitSet   bs   = new IndexBitSet();
 
         for (Index idx : conf)
-            bs.set(conf.getOrdinalPosition(idx));
+            bs.add(conf.getOrdinalPosition(idx));
 
         for (Index idx : conf)
-            assertThat(bs.get(conf.getOrdinalPosition(idx)), is(true));
+            assertThat(bs.contains(conf.getOrdinalPosition(idx)), is(true));
 
         IndexBitSet other = new IndexBitSet(bs);
 
@@ -44,16 +44,16 @@ public class IndexBitSetTest
 
         other = new IndexBitSet();
 
-        other.set(1);
-        other.set(3);
-        other.set(5);
-        other.set(7);
+        other.add(1);
+        other.add(3);
+        other.add(5);
+        other.add(7);
 
-        assertThat(other.subsetOf(bs), is(true));
+        assertThat(bs.contains(other), is(true));
 
         bs = new IndexBitSet();
 
-        bs.set(other);
+        bs.addAll(other);
 
         assertThat(bs,is(other));
     }

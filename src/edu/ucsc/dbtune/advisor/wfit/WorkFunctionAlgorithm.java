@@ -145,7 +145,7 @@ public class WorkFunctionAlgorithm
         ArrayList<Index> rec = new ArrayList<Index>(maxNumOfIndexes);
         for (SubMachine subm : submachines) {
             for (Index index : subm.subset) {
-                if (subm.currentBitSet.get(allIndexes.getOrdinalPosition(index))){
+                if (subm.currentBitSet.contains(allIndexes.getOrdinalPosition(index))){
                     rec.add(index);
                 }                        
             }
@@ -174,7 +174,7 @@ public class WorkFunctionAlgorithm
         IndexBitSet oldHotSet = new IndexBitSet();
         for (SubMachine oldSubmachine : submachines) {
             for (int oldIndexId : oldSubmachine.indexIds) {
-                oldHotSet.set(oldIndexId);
+                oldHotSet.add(oldIndexId);
             }
         }
         
@@ -190,7 +190,7 @@ public class WorkFunctionAlgorithm
             int i = 0;
             for (Index index : newSubset) {
                 if (isRecommended(index)) {
-                    recBitSet.set(allIndexes.getOrdinalPosition(index));
+                    recBitSet.add(allIndexes.getOrdinalPosition(index));
                     recStateNum |= (1 << i);
                 }
                 ++i;
@@ -214,7 +214,7 @@ public class WorkFunctionAlgorithm
                 i = 0;
                 for (Index index : newSubmachine.subset) {
                     int mask = (1 << (i++));
-                    if (0 != (stateNum & mask) && !oldHotSet.get(allIndexes.getOrdinalPosition(index)))
+                    if (0 != (stateNum & mask) && !oldHotSet.contains(allIndexes.getOrdinalPosition(index)))
                         value += index.getCreationCost();
                 }
                 
@@ -259,9 +259,9 @@ public class WorkFunctionAlgorithm
     static void setStateBits(int[] ids, int stateNum, IndexBitSet bitSet) {
         for (int i = 0; i < ids.length; i++) {
             if (0 != (stateNum & (1 << i)))
-                bitSet.set(ids[i]);
+                bitSet.add(ids[i]);
             else
-                bitSet.clear(ids[i]);
+                bitSet.remove(ids[i]);
                 
                     
         }
@@ -271,7 +271,7 @@ public class WorkFunctionAlgorithm
     {
         // not sure which submachine has the index, so check them all
         for (SubMachine subm : submachines) {
-            if (subm.currentBitSet.get(allIndexes.getOrdinalPosition(idx))){
+            if (subm.currentBitSet.contains(allIndexes.getOrdinalPosition(idx))){
                 return true;
             }
         }
@@ -283,7 +283,7 @@ public class WorkFunctionAlgorithm
         double transition = 0;
         for (Index index : candidateSet) {
             int id = candidateSet.getOrdinalPosition(index);
-            if (y.get(id) && !x.get(id))
+            if (y.contains(id) && !x.contains(id))
                 transition += index.getCreationCost();
         }
         return transition;
@@ -508,7 +508,7 @@ public class WorkFunctionAlgorithm
                     
             // register the vote in the recommendation
             if (isPositive) {
-                currentBitSet.set(candidateSet.getOrdinalPosition(index));
+                currentBitSet.add(candidateSet.getOrdinalPosition(index));
                 currentState |= stateMask;
             }
             else {

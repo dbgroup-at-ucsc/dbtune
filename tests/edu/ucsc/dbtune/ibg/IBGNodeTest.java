@@ -100,31 +100,31 @@ public class IBGNodeTest
         child7 = child5.getNode().firstChild();
         child8 = child7.getNext();
 
-        rootibs.set(0);
-        rootibs.set(1);
-        rootibs.set(2);
-        rootibs.set(3);
+        rootibs.add(0);
+        rootibs.add(1);
+        rootibs.add(2);
+        rootibs.add(3);
 
-        ibs1.set(0);
-        ibs1.set(1);
-        ibs1.set(2);
+        ibs1.add(0);
+        ibs1.add(1);
+        ibs1.add(2);
 
-        ibs2.set(1);
-        ibs2.set(2);
-        ibs2.set(3);
+        ibs2.add(1);
+        ibs2.add(2);
+        ibs2.add(3);
 
-        ibs3.set(0);
-        ibs3.set(2);
+        ibs3.add(0);
+        ibs3.add(2);
 
-        ibs4.set(1);
-        ibs4.set(2);
+        ibs4.add(1);
+        ibs4.add(2);
 
-        ibs5.set(2);
-        ibs5.set(3);
+        ibs5.add(2);
+        ibs5.add(3);
 
-        ibs6.set(2);
+        ibs6.add(2);
 
-        ibs7.set(3);
+        ibs7.add(3);
 
         root  = new IBGNode(rootibs, 0);
         node1 = new IBGNode(ibs1, 1);
@@ -163,14 +163,14 @@ public class IBGNodeTest
         node6.setCost(80);
         node7.setCost(80);
 
-        usedr.set(0);
-        usedr.set(3);
-        used1.set(0);
-        used1.set(1);
-        used2.set(1);
-        used4.set(1);
-        used5.set(2);
-        used5.set(3);
+        usedr.add(0);
+        usedr.add(3);
+        used1.add(0);
+        used1.add(1);
+        used2.add(1);
+        used4.add(1);
+        used5.add(2);
+        used5.add(3);
     }
 
     /**

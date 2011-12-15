@@ -297,31 +297,31 @@ public final class DBTuneInstances
         ibs6    = new IndexBitSet();
         ibs7    = new IndexBitSet();
 
-        rootibs.set(0);
-        rootibs.set(1);
-        rootibs.set(2);
-        rootibs.set(3);
+        rootibs.add(0);
+        rootibs.add(1);
+        rootibs.add(2);
+        rootibs.add(3);
 
-        ibs1.set(0);
-        ibs1.set(1);
-        ibs1.set(2);
+        ibs1.add(0);
+        ibs1.add(1);
+        ibs1.add(2);
 
-        ibs2.set(1);
-        ibs2.set(2);
-        ibs2.set(3);
+        ibs2.add(1);
+        ibs2.add(2);
+        ibs2.add(3);
 
-        ibs3.set(0);
-        ibs3.set(2);
+        ibs3.add(0);
+        ibs3.add(2);
 
-        ibs4.set(1);
-        ibs4.set(2);
+        ibs4.add(1);
+        ibs4.add(2);
 
-        ibs5.set(2);
-        ibs5.set(3);
+        ibs5.add(2);
+        ibs5.add(3);
 
-        ibs6.set(2);
+        ibs6.add(2);
 
-        ibs7.set(3);
+        ibs7.add(3);
 
         root  = new IBGNode(rootibs, 0);
         node1 = new IBGNode(ibs1, 1);
@@ -363,10 +363,10 @@ public final class DBTuneInstances
         // all indexes in ibg
 
         IndexBitSet ibs = new IndexBitSet();
-        ibs.set(0);
-        ibs.set(1);
-        ibs.set(2);
-        ibs.set(3);
+        ibs.add(0);
+        ibs.add(1);
+        ibs.add(2);
+        ibs.add(3);
 
         return new IndexBenefitGraph(root, 80, ibs);
     }
@@ -395,48 +395,48 @@ public final class DBTuneInstances
         IndexBitSet bcd = new IndexBitSet();
         IndexBitSet abcd = new IndexBitSet();
 
-        a.set(0);
+        a.add(0);
 
-        b.set(1);
+        b.add(1);
 
-        c.set(2);
+        c.add(2);
 
-        d.set(3);
+        d.add(3);
     
-        ab.set(0);
-        ab.set(1);
+        ab.add(0);
+        ab.add(1);
 
-        ac.set(0);
-        ac.set(2);
+        ac.add(0);
+        ac.add(2);
 
-        ad.set(0);
-        ad.set(3);
+        ad.add(0);
+        ad.add(3);
 
-        bc.set(1);
-        bc.set(2);
+        bc.add(1);
+        bc.add(2);
 
-        bd.set(1);
-        bd.set(3);
+        bd.add(1);
+        bd.add(3);
 
-        cd.set(2);
-        cd.set(3);
+        cd.add(2);
+        cd.add(3);
 
-        abc.set(0);
-        abc.set(1);
-        abc.set(2);
+        abc.add(0);
+        abc.add(1);
+        abc.add(2);
 
-        acd.set(0);
-        acd.set(2);
-        acd.set(3);
+        acd.add(0);
+        acd.add(2);
+        acd.add(3);
 
-        bcd.set(1);
-        bcd.set(2);
-        bcd.set(3);
+        bcd.add(1);
+        bcd.add(2);
+        bcd.add(3);
 
-        abcd.set(0);
-        abcd.set(1);
-        abcd.set(2);
-        abcd.set(3);
+        abcd.add(0);
+        abcd.add(1);
+        abcd.add(2);
+        abcd.add(3);
 
         list.add(e);
         list.add(a);

@@ -139,7 +139,7 @@ public class IndexBenefitGraphConstructor
      */
     public final boolean isUsed(int i)
     {
-        return isUsed.get(i);
+        return isUsed.contains(i);
     }
 
     public final Configuration candidateSet()
@@ -195,7 +195,7 @@ public class IndexBenefitGraphConstructor
 
             for (Index idx : configuration) {
                 if (stmt.isUsed(idx)) {
-                    usedBitSet.set(configuration.getOrdinalPosition(idx));
+                    usedBitSet.add(configuration.getOrdinalPosition(idx));
                 }
             }
         }
@@ -207,16 +207,17 @@ public class IndexBenefitGraphConstructor
         // in order of construction.
         IBGNode.IBGChild firstChild = null;
         IBGNode.IBGChild lastChild = null;
-        childBitSet.set(newNode.getConfiguration());
+        childBitSet.clear();
+        childBitSet.addAll(newNode.getConfiguration());
         for (int u = 0; u < usedBitSet.size(); u++) {
             childBitSet.remove(u);
             IBGNode childNode = find(queue, childBitSet);
             if (childNode == null) {
-                isUsed.set(u);
+                isUsed.add(u);
                 childNode = new IBGNode(new IndexBitSet(childBitSet), nodeCount++);
                 queue.add(childNode);
             }
-            childBitSet.set(u);
+            childBitSet.add(u);
 
             IBGNode.IBGChild child = new IBGNode.IBGChild(childNode, u);
 
@@ -468,7 +469,7 @@ public class IndexBenefitGraphConstructor
                 bs = new IndexBitSet();
 
                 for (int i = 0; i < maxId+1; i++) {
-                    bs.set(i);
+                    bs.add(i);
                 }
             }
 

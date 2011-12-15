@@ -123,7 +123,7 @@ public class IndexBenefitGraph
      */
     public final boolean isUsed(int position)
     {
-        return isUsed.get(position);
+        return isUsed.contains(position);
     }
 
     /**
@@ -269,7 +269,7 @@ public class IndexBenefitGraph
             assert isExpanded();
 
             for (IBGChild ch = firstChild; ch != null; ch = ch.next)
-                other.set(ch.usedIndex);
+                other.add(ch.usedIndex);
         }
 
         /**
@@ -300,7 +300,7 @@ public class IndexBenefitGraph
             assert isExpanded();
 
             for (IBGChild ch = firstChild; ch != null; ch = ch.next)
-                if (!other.get(ch.usedIndex))
+                if (!other.contains(ch.usedIndex))
                     return false;
             return true;
         }

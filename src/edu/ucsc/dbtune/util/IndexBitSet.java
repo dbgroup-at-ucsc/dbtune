@@ -36,15 +36,39 @@ public class IndexBitSet
     }
 
     /**
-     * Removes all the indexes from the configuration.
+     * {@inheritDoc}
      */
     public void clear()
     {
         bitSet.clear();
     }
-
+    
     /**
-     * Removes the given index from the configuration.
+     * {@inheritDoc}
+     */
+    public void add(int id)
+    {
+        bitSet.set(id);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public int size()
+    {
+        return bitSet.length();
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public boolean contains(int id)
+    {
+        return bitSet.get(id);
+    }
+    
+    /**
+     * {@inheritDoc}
      */
     public void remove(int id)
     {
@@ -52,75 +76,39 @@ public class IndexBitSet
     }
     
     /**
-     * Adds an index to the configuration. If the index is already contained it's not added.
-     *
-     * @param id
-     *     new index to add
+     * {@inheritDoc}
      */
-    public void set(int id)
-    {
-        bitSet.set(id);
-    }
-    
-    public int size()
-    {
-        return bitSet.length();
-    }
-    
-    public boolean get(int id)
-    {
-        return bitSet.get(id);
-    }
-    
-    public void clear(int id)
-    {
-        bitSet.clear(id);
-    }
-    
-    public void andNot(IndexBitSet other)
+    public void removeAll(IndexBitSet other)
     {
         bitSet.andNot(other.bitSet);
     }
     
-    public void and(IndexBitSet other)
+    /**
+     * {@inheritDoc}
+     */
+    public void retainAll(IndexBitSet other)
     {
         bitSet.and(other.bitSet);
     }
     
     /**
-     * Adds an index to the configuration. If the index is already contained it's not added.
-     *
-     * @param from
-     *     new index to add
+     * {@inheritDoc}
      */
-    public void or(IndexBitSet other)
+    public final void addAll(IndexBitSet other)
     {
         bitSet.or(other.bitSet);
     }
     
     /**
-     * @param other
-     *      configuration added to this one
+     * {@inheritDoc}
      */
-    public final void set(IndexBitSet other)
-    {
-        bitSet.clear();
-        bitSet.or(other.bitSet);
-    }
-    
-    /**
-     * @param other
-     *      other configuration whose elements are compared against this one.
-     * @return
-     *      {@code true} if this configuration is a subset of other. {@code false} otherwise.
-     */
-    public final boolean subsetOf(IndexBitSet other)
+    public final boolean contains(IndexBitSet other)
     {
         synchronized (t) {
             t.clear();
-            t.or(bitSet);
-            t.and(other.bitSet);
-            return t.equals(bitSet);
+            t.or(other.bitSet);
+            t.and(bitSet);
+            return t.equals(other.bitSet);
         }
     }
 

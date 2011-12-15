@@ -37,10 +37,10 @@ public class IndexBenefitGraphTest
         IndexBitSet bs = new IndexBitSet();
 
         bs = new IndexBitSet();
-        bs.set(0);
-        bs.set(1);
-        bs.set(2);
-        bs.set(3);
+        bs.add(0);
+        bs.add(1);
+        bs.add(2);
+        bs.add(3);
 
         IBGNode root = new IBGNode(bs, 0);
 

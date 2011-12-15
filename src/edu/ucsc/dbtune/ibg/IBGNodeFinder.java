@@ -33,17 +33,17 @@ class IBGNodeFinder
         while (pending.hasNext()) {
             IBGNode node = pending.next();
             
-            if (visited.get(node.getID()))
+            if (visited.contains(node.getID()))
                 continue;
 
-            visited.set(node.getID());
+            visited.add(node.getID());
             
             // skip unexpanded nodes
             if (!node.isExpanded())
                 continue;
 
             // we can prune the search if the node does not contain all of config
-            if (!config.subsetOf(node.getConfiguration()))
+            if (!node.getConfiguration().contains(config))
                 continue;
             
             // we can stop the search if the node matches exactly

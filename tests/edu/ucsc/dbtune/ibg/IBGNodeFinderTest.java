@@ -62,48 +62,48 @@ public class IBGNodeFinderTest
         bcd = new IndexBitSet();
         abcd = new IndexBitSet();
 
-        a.set(0);
+        a.add(0);
 
-        b.set(1);
+        b.add(1);
 
-        c.set(2);
+        c.add(2);
 
-        d.set(3);
+        d.add(3);
     
-        ab.set(0);
-        ab.set(1);
+        ab.add(0);
+        ab.add(1);
 
-        ac.set(0);
-        ac.set(2);
+        ac.add(0);
+        ac.add(2);
 
-        ad.set(0);
-        ad.set(3);
+        ad.add(0);
+        ad.add(3);
 
-        bc.set(1);
-        bc.set(2);
+        bc.add(1);
+        bc.add(2);
 
-        bd.set(1);
-        bd.set(3);
+        bd.add(1);
+        bd.add(3);
 
-        cd.set(2);
-        cd.set(3);
+        cd.add(2);
+        cd.add(3);
 
-        abc.set(0);
-        abc.set(1);
-        abc.set(2);
+        abc.add(0);
+        abc.add(1);
+        abc.add(2);
 
-        acd.set(0);
-        acd.set(2);
-        acd.set(3);
+        acd.add(0);
+        acd.add(2);
+        acd.add(3);
 
-        bcd.set(1);
-        bcd.set(2);
-        bcd.set(3);
+        bcd.add(1);
+        bcd.add(2);
+        bcd.add(3);
 
-        abcd.set(0);
-        abcd.set(1);
-        abcd.set(2);
-        abcd.set(3);
+        abcd.add(0);
+        abcd.add(1);
+        abcd.add(2);
+        abcd.add(3);
     }
 
     /**
@@ -115,11 +115,11 @@ public class IBGNodeFinderTest
 
         IndexBitSet superSet = new IndexBitSet();
 
-        superSet.set(0);
-        superSet.set(1);
-        superSet.set(2);
-        superSet.set(3);
-        superSet.set(4);
+        superSet.add(0);
+        superSet.add(1);
+        superSet.add(2);
+        superSet.add(3);
+        superSet.add(4);
 
         assertThat(finder.find(root, superSet), is(nullValue()));
 

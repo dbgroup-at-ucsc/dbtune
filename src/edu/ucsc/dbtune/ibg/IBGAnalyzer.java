@@ -101,11 +101,11 @@ public class IBGAnalyzer
                 return StepStatus.DONE;
             }
 
-            if (visitedNodes.get(node.getID()))
+            if (visitedNodes.contains(node.getID()))
                 continue;
 
             if (analyzeNode(node, logger)) {
-                visitedNodes.set(node.getID());
+                visitedNodes.add(node.getID());
                 nodeQueue.addChildren(node.firstChild());
             }
             else {
@@ -151,12 +151,13 @@ public class IBGAnalyzer
         node.addUsedIndexes(usedBitSet);
 
         // store the used set
-        allUsedIndexes.or(usedBitSet);
+        allUsedIndexes.addAll(usedBitSet);
 
         // set up candidates
-        candidatesBitSet.set(rootBitSet);
-        candidatesBitSet.andNot(usedBitSet);
-        candidatesBitSet.and(allUsedIndexes);
+        candidatesBitSet.clear();
+        candidatesBitSet.addAll(rootBitSet);
+        candidatesBitSet.removeAll(usedBitSet);
+        candidatesBitSet.retainAll(allUsedIndexes);
 
         boolean retval = true; // set false on first failure
         for (int a = 0; a < candidatesBitSet.size(); a++) {
@@ -168,8 +169,9 @@ public class IBGAnalyzer
             costY = Y.cost();
 
             // fetch YaSimple
-            bitset_YaSimple.set(bitset_Y);
-            bitset_YaSimple.set(a);
+            bitset_YaSimple.clear();
+            bitset_YaSimple.addAll(bitset_Y);
+            bitset_YaSimple.add(a);
             IBGNode YaSimple = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YaSimple, null);
             if (YaSimple == null)
                 retval = false;
@@ -181,13 +183,15 @@ public class IBGAnalyzer
                 double costYa, costYab;
 
                 // fetch Ya and Yab
-                bitset_Ya.set(bitset_Y);
-                bitset_Ya.set(a);
+                bitset_Ya.clear();
+                bitset_Ya.addAll(bitset_Y);
+                bitset_Ya.add(a);
                 bitset_Ya.remove(b);
 
-                bitset_Yab.set(bitset_Y);
-                bitset_Yab.set(a);
-                bitset_Yab.set(b);
+                bitset_Yab.clear();
+                bitset_Yab.addAll(bitset_Y);
+                bitset_Yab.add(a);
+                bitset_Yab.add(b);
 
                 Yab = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_Yab, YaSimple);
                 Ya = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_Ya, Yab);
@@ -209,11 +213,12 @@ public class IBGAnalyzer
                 Ya.addUsedIndexes(bitset_YbMinus);
                 Yab.addUsedIndexes(bitset_YbMinus);
                 bitset_YbMinus.remove(a);
-                bitset_YbMinus.set(b);
+                bitset_YbMinus.add(b);
 
-                bitset_YbPlus.set(bitset_Y);
+                bitset_YbPlus.clear();
+                bitset_YbPlus.addAll(bitset_Y);
                 bitset_YbPlus.remove(a);
-                bitset_YbPlus.set(b);
+                bitset_YbPlus.add(b);
 
                 YbPlus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YbPlus, Yab);
                 YbMinus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YbMinus, YbPlus);

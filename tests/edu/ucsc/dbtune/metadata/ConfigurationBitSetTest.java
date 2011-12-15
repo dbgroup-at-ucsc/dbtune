@@ -28,8 +28,8 @@ public class ConfigurationBitSetTest
     {
         IndexBitSet bitSet = new IndexBitSet();
 
-        bitSet.set(0);
-        bitSet.set(allIndexes.size() - 2);
+        bitSet.add(0);
+        bitSet.add(allIndexes.size() - 2);
 
         ConfigurationBitSet conf1 = new ConfigurationBitSet(allIndexes, bitSet);
 
