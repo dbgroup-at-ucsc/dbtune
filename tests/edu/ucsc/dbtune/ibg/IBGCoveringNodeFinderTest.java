@@ -139,6 +139,28 @@ public class IBGCoveringNodeFinderTest
     @Test
     public void testFindFast()
     {
-        // XXX: do it as part of interactions
+        IBGCoveringNodeFinder finder = new IBGCoveringNodeFinder();
+
+        // check that a bad guess
+        assertThat(finder.findFast(root, a, finder.find(root, cd)).getConfiguration(), is(ac));
+
+        // check that a good guess
+        assertThat(finder.findFast(root, c, finder.find(root, cd)).getConfiguration(), is(c));
+
+        assertThat(finder.find(root, e), is(finder.findFast(root, e, null)));
+        assertThat(finder.find(root, a), is(finder.findFast(root, a, null)));
+        assertThat(finder.find(root, b), is(finder.findFast(root, b, null)));
+        assertThat(finder.find(root, c), is(finder.findFast(root, c, null)));
+        assertThat(finder.find(root, d), is(finder.findFast(root, d, null)));
+        assertThat(finder.find(root, ab), is(finder.findFast(root, ab, null)));
+        assertThat(finder.find(root, ac), is(finder.findFast(root, ac, null)));
+        assertThat(finder.find(root, ad), is(finder.findFast(root, ad, null)));
+        assertThat(finder.find(root, bc), is(finder.findFast(root, bc, null)));
+        assertThat(finder.find(root, bd), is(finder.findFast(root, bd, null)));
+        assertThat(finder.find(root, cd), is(finder.findFast(root, cd, null)));
+        assertThat(finder.find(root, abc), is(finder.findFast(root, abc, null)));
+        assertThat(finder.find(root, acd), is(finder.findFast(root, acd, null)));
+        assertThat(finder.find(root, bcd), is(finder.findFast(root, bcd, null)));
+        assertThat(finder.find(root, abcd), is(finder.findFast(root, abcd, null)));
     }
 }

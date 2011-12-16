@@ -17,6 +17,7 @@ import java.util.Set;
  * @author Karl Schnaitter
  * @author Ivo Jimenez
  */
+//public class IndexBitSet<E extends Identifiable> implements Set<Identifiable>
 public class IndexBitSet implements Set<Integer>
 {
     private static final BitSet t = new BitSet();
@@ -39,6 +40,30 @@ public class IndexBitSet implements Set<Integer>
     public IndexBitSet(IndexBitSet ibs)
     {
         bitSet = (BitSet) ibs.bitSet.clone();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean contains(int id)
+    {
+        return contains(new Integer(id));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public void remove(int id)
+    {
+        remove(new Integer(id));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Iterator<Integer> iterator()
+    {
+        throw new RuntimeException("not yet");
     }
 
     /**
@@ -211,24 +236,9 @@ public class IndexBitSet implements Set<Integer>
     /**
      * {@inheritDoc}
      */
-    public boolean contains(int id)
+    @Override
+    public String toString()
     {
-        return contains(new Integer(id));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    public void remove(int id)
-    {
-        remove(new Integer(id));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public Iterator<Integer> iterator()
-    {
-        throw new RuntimeException("not yet");
+        return bitSet.toString();
     }
 }

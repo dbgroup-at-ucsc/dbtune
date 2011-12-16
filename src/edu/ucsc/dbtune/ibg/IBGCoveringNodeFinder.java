@@ -14,7 +14,7 @@ public class IBGCoveringNodeFinder
     private final IBGNodeStack  pending = new IBGNodeStack();
 
     /**
-     * find the cost of a particular index configuration.
+     * find the cost of a particular index configuration in the given {@code ibg}.
      *
      * @param ibg
      *      an {@link IndexBenefitGraph} object.
@@ -45,25 +45,29 @@ public class IBGCoveringNodeFinder
     }
  
     /**
-     * Returns an IBG node which matches a {@code guess}ed node given that the guessed node's actual 
-     * configuration is a subset of the given used configuration.
+     * Returns an IBG node, assuming that a guessed node's actual configuration is a superset of the 
+     * given configuration. That is, if {@latex.inline config $\\triangleleft$ guessed}, the guessed 
+     * node is used as the root from which the search begins. If it isn't, {@code root} is used to 
+     * begin the search, which is equivalent to invoking {@code findFast(root, conf, null)} or 
+     * {@code find(root,conf)}.
      *
-     * @param rootNode
+     * @param root
      *      the {@code graph}'s root node.
-     * @param config
+     * @param conf
      *      an index configuration.
      * @param guess
-     *      a guessed {@link IBGNode}.
+     *      a guessed {@link IBGNode}. Might be null if the guessing is intended to begin at the 
+     *      root.
      * @return
      *     a found {@link IBGNode node}. <strong>IMPORTANT</strong>: this method may return
      *     {@code null} if the covering node is in an unexpanded part of the IBG.
      */
-    public IBGNode findFast(IBGNode rootNode, IndexBitSet config, IBGNode guess)
+    public IBGNode findFast(IBGNode root, IndexBitSet conf, IBGNode guess)
     {
         visited.clear();
 
         IBGNode currentNode =
-            (guess != null && guess.getConfiguration().containsAll(config)) ? guess : rootNode;
+            (guess != null && guess.getConfiguration().containsAll(conf)) ? guess : root;
 
         while (true) {
             // stop if an unexpanded node is found. An unexpanded node means that the IBG 
@@ -78,7 +82,7 @@ public class IBGCoveringNodeFinder
             while (true) {
                 if (ch == null) {
                     return currentNode;
-                } else if (!config.contains(ch.getUsedIndex())) {
+                } else if (!conf.contains(ch.getUsedIndex())) {
                     currentNode = ch.getNode();
                     break;
                 } else {
