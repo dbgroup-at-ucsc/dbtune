@@ -3,16 +3,20 @@ package edu.ucsc.dbtune.ibg;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
- * An Index Benefit Graph (IBG) was introduced by Frank et al.. An IBG enables a space-efficient 
+ * An Index Benefit Graph (IBG) was introduced by Frank et al. [1]. An IBG enables a space-efficient 
  * encoding of the properties of optimal query plans when the optimizer is well behaved.
  * <p>
- * For a specific query $q$ is a DAG over subsets of S. Each node represents an index-set $Y ⊆ S$ 
- * and records $used_q(Y)$ and $cost_q(Y)$. The nodes and edges of the IBG are defined inductively 
- * as follows: The IBG contains the node $S$; For each node $Y$ and each used index $a ∈ used_q(Y)$, 
- * the IBG contains the node $Y=Y−{a}$ and the directed $edge(Y,Y)$.
+ * For a specific query {@latex.inline $q$} is a DAG over subsets of {@latex.inline S}. Each node 
+ * represents an index-set {@latex.inline $Y \\subseteq S$} and records {@latex.inline $used_q(Y)$} 
+ * and {@latex.inline $cost_q(Y)$}. The nodes and edges of the IBG are defined inductively as 
+ * follows: The IBG contains the node {@latex.inline $S$}; For each node {@latex.inline $Y$} and 
+ * each used index {@latex.inline $a \\in used_q(Y)$}, the IBG contains the node {@latex.inline 
+ * $Y=Y−\\{a\\}$} and the directed {@latex.inline $edge(Y,Y)$}.
  * <p>
  * An example of an IBG looks like the following:
- * <code>
+ * <pre>
+ * {@code .
+ *
  *       *a*,b,c,*d*:20
  *       /           \
  *    *a*,*b*,c:45   *b*,c,d:50
@@ -20,26 +24,33 @@ import edu.ucsc.dbtune.util.IndexBitSet;
  *  a,c:80  *b*,c:50   *c*,*d*:65
  *                |    /    |
  *                c:80     d:80
- * </code>
+ * }
+ * </pre>
  * <p>
- * One interesting observation is that $bcd$ and $bc$ differ by index $d$, yet no edge exists 
- * between them because $d \in used_q(bcd)$. Also, notice that $bcd \triangleright bc$ and hence the 
- * two nodes are somewhat redundant with respect to information on optimal plans (but they are 
- * needed to complete the graph)
+ * One interesting observation is that {@latex.inline $bcd$} and {@latex.inline $bc$} differ by 
+ * index {@latex.inline $d$}, yet no edge exists between them because {@latex.inline $d \\in 
+ * used_q(bcd)$}. Also, notice that {@latex.inline $bcd \\triangleright bc$} and hence the two nodes 
+ * are somewhat redundant with respect to information on optimal plans (but they are needed to 
+ * complete the graph)
  * <p>
  * Because the IBG nodes only have one child per used index, the size of an IBG for a particular 
  * index-set can vary drastically. Some interesting ways to measure the size of an IBG are the 
  * number of nodes, the maximum children per node (i.e. fan-out), and the maximum path length (i.e. 
- * height). In the worst case, $used(Y) = Y$ for each node $Y$ and this results in a node for each 
- * subset of $S$, a fanout of $|S|$, and a height of $|S|$. However, in practice the optimizer may 
- * not use every index in $Y$ (especially if $Y$ is large), in which case the IBG can be much 
- * smaller. Indeed, The sample IBG given above contains only 8 of the 16 possible subsets, a fan-out 
- * of 2, and a height of 3.
+ * height). In the worst case, {@latex.inline $used(Y) = Y$} for each node {@latex.inline $Y$} and 
+ * this results in a node for each subset of {@latex.inline $S$}, a fanout of {@latex.inline $|S|$}, 
+ * and a height of {@latex.inline $|S|$}. However, in practice the optimizer may not use every index 
+ * in {@latex.inline $Y$} (especially if {@latex.inline $Y$} is large), in which case the IBG can be 
+ * much smaller. Indeed, The sample IBG given above contains only 8 of the 16 possible subsets, a 
+ * fan-out of 2, and a height of 3.
+ * <p>
+ * This version of an IBG is introduced in [2].
  *
  * @author Karl Schnaitter
  * @author Ivo Jimenez
+ * @see <a href="http://portal.acm.org/citation.cfm?id=649865">
+ *     [1] Adaptive and Automated Index Selection in RDBMS</a>
  * @see <a href="http://portal.acm.org/citation.cfm?id=1687766">
- *     Index interactions in physical design tuning: modeling, analysis, and applications</a>
+ *     [2] Index interactions in physical design tuning: modeling, analysis, and applications</a>
  */
 public class IndexBenefitGraph
 {

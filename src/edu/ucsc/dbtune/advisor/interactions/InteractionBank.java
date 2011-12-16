@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
-import java.util.BitSet;
-
 import edu.ucsc.dbtune.metadata.Configuration;
 
 import edu.ucsc.dbtune.util.IndexBitSet;

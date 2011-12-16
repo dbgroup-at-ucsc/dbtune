@@ -129,11 +129,28 @@
                destdir="${bld.dir}/javadoc"
                author="true"
                maxmemory="512M"
-               protected="true" windowtitle="${project}-${version} API">
+               protected="true"
+               version="true"
+               charset="UTF-8"
+               locale="en_US"
+               source="1.5"
+               linksource="yes"
+               breakiterator="yes"
+               use="yes"
+               windowtitle="${project}-${version} API">
         <sourcepath>
           <pathelement location="${src.dir}"/>
         </sourcepath>
         <classpath refid="compile.classpath"/>
+        <taglet name="latexlet.InlineBlockLaTeXlet">
+          <path refid="compile.classpath"/>
+        </taglet>
+        <taglet name="latexlet.BlockLaTeXlet">
+          <path refid="compile.classpath"/>
+        </taglet>
+        <taglet name="latexlet.InlineLaTeXlet">
+          <path refid="compile.classpath"/>
+        </taglet>
       </javadoc>
   </target>
 

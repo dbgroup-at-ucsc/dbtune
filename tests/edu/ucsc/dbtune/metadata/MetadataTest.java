@@ -247,6 +247,7 @@ public class MetadataTest
 
         try {
             Table t = catalog.<Table>create("schema_3.table_1");
+            assertThat(t.getFullyQualifiedName(), is("schema_3.table_1"));
             fail("catalog.<Table>create() should have thrown exception");
         } catch (ClassCastException ex) {
             assertThat(ex.getMessage(), is("edu.ucsc.dbtune.metadata.Index cannot be cast to edu.ucsc.dbtune.metadata.Table"));

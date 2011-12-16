@@ -4,6 +4,14 @@ import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
+/**
+ * This class implements the qINTERACT algorithm described in Schnaitter et. al. for computing the 
+ * degree of interaction for all the pairs {@latex.inline $a,b \\in S$}
+ *
+ * @author Karl Schnaitter
+ * @see <a href="http://portal.acm.org/citation.cfm?id=1687766">
+ *     Index interactions in physical design tuning: modeling, analysis, and applications</a>
+ */
 public class IBGAnalyzer
 {
     // the IBG we are currently exploring
@@ -29,8 +37,20 @@ public class IBGAnalyzer
     // keeps track of visited nodes
     private final IndexBitSet visitedNodes;
 
+    // All the following correspond to a bunch of structures that we keep around to
+    // avoid excessive garbage collection. These structures are only used in the
+    // analyzeNode() method.
+    private IndexBitSet candidatesBitSet = new IndexBitSet();
+    private IndexBitSet usedBitSet = new IndexBitSet();
+    private IndexBitSet bitsetYaSimple = new IndexBitSet();
+    private IndexBitSet bitsetYa = new IndexBitSet();
+    private IndexBitSet bitsetYbMinus = new IndexBitSet();
+    private IndexBitSet bitsetYbPlus = new IndexBitSet();
+    private IndexBitSet bitsetYab = new IndexBitSet();
+
     /**
      * construct an {@code IBGAnalyzer}.
+     *
      * @param ibgCons
      *      a given {@link IndexBenefitGraphConstructor} object.
      * @param nodeQueue
@@ -38,7 +58,8 @@ public class IBGAnalyzer
      * @param revisitQueue
      *      a given {@link IBGNodeQueue} object which contains IBG node that will be revisited.
      */
-    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue revisitQueue)
+    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue 
+            revisitQueue)
     {
         // initialize fields
         this.ibgCons        = ibgCons;
@@ -54,6 +75,7 @@ public class IBGAnalyzer
 
     /**
      * construct an {@code IBGAnalyzer}.
+     *
      * @param ibgCons
      *      a given {@link IndexBenefitGraphConstructor} object.
      */
@@ -64,6 +86,7 @@ public class IBGAnalyzer
 
     /**
      * traverses the {@link IndexBenefitGraph}.
+     *
      * @param logger
      *      a logger that keeps tracks of the visited nodes.
      * @param wait
@@ -118,33 +141,20 @@ public class IBGAnalyzer
     }
 
 
-    /*
-     * analysis a specific node in the {@link IndexBenefitGraph graph}.
+    /**
+     * Analyzes a specific node in the {@link IndexBenefitGraph graph}.
+     *
      * @param node
-     *      an {@link IBGNode node} in the graph.
+     *      the node being analyzed
      * @param logger
-     *      an {@link InteractionLogger graph logger}.
-     * @return {@code true} if the analysis was successful.
-     */
-    // We have a bunch of structures that we keep around to
-    // avoid excessive garbage collection. These structures are only used in
-    // analyzeNode().
-    //
-    private IndexBitSet candidatesBitSet = new IndexBitSet();
-    private IndexBitSet usedBitSet = new IndexBitSet();
-
-    private IndexBitSet bitset_YaSimple = new IndexBitSet();
-    private IndexBitSet bitset_Ya = new IndexBitSet();
-    private IndexBitSet bitset_YbMinus = new IndexBitSet();
-    private IndexBitSet bitset_YbPlus = new IndexBitSet();
-    private IndexBitSet bitset_Yab = new IndexBitSet();
-
-    /*
-     * Return true if the analysis was successful
+     *      the logger used to log interactions
+     * @return
+     *      whether or not the analyses completed. When the analysis doesn't complete it is due to 
+     *      the IBG not being completely expanded.
      */
     private boolean analyzeNode(IBGNode node, InteractionLogger logger)
     {
-        IndexBitSet bitset_Y = node.getConfiguration();
+        IndexBitSet bitsetY = node.getConfiguration();
 
         // get the used set
         usedBitSet.clear();
@@ -159,122 +169,139 @@ public class IBGAnalyzer
         candidatesBitSet.removeAll(usedBitSet);
         candidatesBitSet.retainAll(allUsedIndexes);
 
-        boolean retval = true; // set false on first failure
+        // set false on first failure
+        boolean retval = true;
+
         for (int a = 0; a < candidatesBitSet.size(); a++) {
-            IBGNode Y;
+            IBGNode y;
             double costY;
 
             // Y is just the current node
-            Y = node;
-            costY = Y.cost();
+            y = node;
+            costY = y.cost();
 
             // fetch YaSimple
-            bitset_YaSimple.clear();
-            bitset_YaSimple.addAll(bitset_Y);
-            bitset_YaSimple.add(a);
-            IBGNode YaSimple = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YaSimple, null);
-            if (YaSimple == null)
+            bitsetYaSimple.clear();
+            bitsetYaSimple.addAll(bitsetY);
+            bitsetYaSimple.add(a);
+
+            IBGNode yaSimple =
+                coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYaSimple, null);
+
+            if (yaSimple == null)
                 retval = false;
             else
-                logger.assignBenefit(a, costY - YaSimple.cost());
+                logger.assignBenefit(a, costY - yaSimple.cost());
 
-            for (int b = a+1; b < candidatesBitSet.size(); b++) {
-                IBGNode Ya, Yab, YbPlus, YbMinus;
-                double costYa, costYab;
+            for (int b = a + 1; b < candidatesBitSet.size(); b++) {
+                IBGNode ya;
+                IBGNode yab;
+                IBGNode ybPlus;
+                IBGNode ybMinus;
+                double costYa;
+                double costYab;
 
                 // fetch Ya and Yab
-                bitset_Ya.clear();
-                bitset_Ya.addAll(bitset_Y);
-                bitset_Ya.add(a);
-                bitset_Ya.remove(b);
+                bitsetYa.clear();
+                bitsetYa.addAll(bitsetY);
+                bitsetYa.add(a);
+                bitsetYa.remove(b);
 
-                bitset_Yab.clear();
-                bitset_Yab.addAll(bitset_Y);
-                bitset_Yab.add(a);
-                bitset_Yab.add(b);
+                bitsetYab.clear();
+                bitsetYab.addAll(bitsetY);
+                bitsetYab.add(a);
+                bitsetYab.add(b);
 
-                Yab = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_Yab, YaSimple);
-                Ya = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_Ya, Yab);
+                yab = coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYab, yaSimple);
+                ya = coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYa, yab);
 
-                if (Ya == null) {
+                if (ya == null) {
                     retval = false;
                     continue;
                 }
-                if (Yab == null) {
+                if (yab == null) {
                     retval = false;
                     continue;
                 }
-                costYa = Ya.cost();
-                costYab = Yab.cost();
+                costYa = ya.cost();
+                costYab = yab.cost();
 
                 // fetch YbMinus and YbPlus
-                bitset_YbMinus.clear();
-                Y.addUsedIndexes(bitset_YbMinus);
-                Ya.addUsedIndexes(bitset_YbMinus);
-                Yab.addUsedIndexes(bitset_YbMinus);
-                bitset_YbMinus.remove(a);
-                bitset_YbMinus.add(b);
+                bitsetYbMinus.clear();
+                y.addUsedIndexes(bitsetYbMinus);
+                ya.addUsedIndexes(bitsetYbMinus);
+                yab.addUsedIndexes(bitsetYbMinus);
+                bitsetYbMinus.remove(a);
+                bitsetYbMinus.add(b);
 
-                bitset_YbPlus.clear();
-                bitset_YbPlus.addAll(bitset_Y);
-                bitset_YbPlus.remove(a);
-                bitset_YbPlus.add(b);
+                bitsetYbPlus.clear();
+                bitsetYbPlus.addAll(bitsetY);
+                bitsetYbPlus.remove(a);
+                bitsetYbPlus.add(b);
 
-                YbPlus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YbPlus, Yab);
-                YbMinus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitset_YbMinus, YbPlus);
+                ybPlus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYbPlus, yab);
+                ybMinus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYbMinus, ybPlus);
 
                 // try to set lower bound based on Y, Ya, YbPlus, and Yab
-                if (YbPlus != null) {
-                    logger.assignInteraction(a, b, interactionLevel(costY, costYa, YbPlus.cost(), costYab));
-                }
-                else {
+                if (ybPlus != null)
+                    logger.assignInteraction(
+                            a, b, interactionLevel(costY, costYa, ybPlus.cost(), costYab));
+                else
                     retval = false;
-                }
 
                 // try to set lower bound based on Y, Ya, YbMinus, and Yab
-                if (YbMinus != null) {
-                    logger.assignInteraction(a, b, interactionLevel(costY, costYa, YbMinus.cost(), costYab));
-                }
-                else {
+                if (ybMinus != null)
+                    logger.assignInteraction(
+                            a, b, interactionLevel(costY, costYa, ybMinus.cost(), costYab));
+                else
                     retval = false;
-                }
             }
         }
 
         return retval;
     }
 
-
-    /*
-     * Compute the interaction level based on the four costs
+    /**
+     * Compute the interaction level based on the given four costs. This corresponds to:
      *
-     *     | C - C_a - C_b + C_ab |
+     * <code>
+     * $| C - C_a - C_b + C_ab |$
+     * </code>
+     *
+     * @param empty
+     *      the empty cost
+     * @param a
+     *      the cost of index a
+     * @param b
+     *      the cost of index b
+     * @param ab
+     *      the cost of index ab
+     * @return
+     *      the level of interaction for indexes associated with costs {@code a} and {@code b}.
      */
     private static double interactionLevel(double empty, double a, double b, double ab)
     {
         return Math.abs(empty - a - b + ab);
     }
 
-
     /**
-     * Perform one step of analysis
-     * 
-     * Return true if there might be some work left to do for this analysis
+     * Perform one step of analysis. Return true if there might be some work left to do for this 
+     * analysis
      */
     public enum StepStatus
     {
         /**
-         * there was no expanded node to analyze, and there is an unexpanded node
+         * there was no expanded node to analyze, and there is an unexpanded node.
          */
         BLOCKED,
 
         /**
-         * all nodes are analyzed
+         * all nodes are analyzed.
          */
         DONE,
 
         /**
-         * there was an expanded node to analyze
+         * there was an expanded node to analyze.
          */
         SUCCESS
     }
