@@ -15,15 +15,18 @@ import java.sql.SQLException;
 import java.util.HashSet;
 
 /**
- * An IBG is naturally constructed by a top-down process, starting from $S$ as the topmost node. For 
- * each node $Y$ in the IBG, the process performs a what-if optimization and, for each $a ∈ 
- * used_q(Y)$, adds $Y − {a}$ to the children of $Y$. Each child is built recursively unless it 
- * already exists, which may be checked by storing nodes in a hash table. Overall, constructing an 
- * IBG with $N$ nodes and fan-out $f$ requires $N$ what-if optimizations, $O(fN)$ operations on the 
- * hash table of index-sets, and $O(fN)$ other basic operations.
+ * An IBG is naturally constructed by a top-down process, starting from {@latex.inline $S$} as the 
+ * topmost node. For each node {@latex.inline $Y$} in the IBG, the process performs a what-if 
+ * optimization and, for each {@latex.inline $a \\in used_q(Y)$}, adds {@latex.inline $Y − {a}$} to 
+ * the children of {@latex.inline $Y$}. Each child is built recursively unless it already exists, 
+ * which may be checked by storing nodes in a hash table. Overall, constructing an IBG with 
+ * {@latex.inline $N$} nodes and fan-out {@latex.inline $f$} requires {@latex.inline $N$} what-if 
+ * optimizations, {@latex.inline $O(fN)$} operations on the hash table of index-sets, and 
+ * {@latex.inline $O(fN)$} other basic operations.
  *
- * The key property of the IBG is that it is sufficient to derive $cost_q(X)$ and $used_q(X)$ for 
- * any index-set $X ⊆ S$, even if $X$ is not represented directly in the IBG.
+ * The key property of the IBG is that it is sufficient to derive {@latex.inline $cost_q(X)$} and 
+ * {@latex.inline $used_q(X)$} for any index-set {@latex.inline $X \\subseteq S$}, even if 
+ * {@latex.inline $X$} is not represented directly in the IBG.
  *
  * @author Karl Schnaitter
  * @author Huascar Sanchez
