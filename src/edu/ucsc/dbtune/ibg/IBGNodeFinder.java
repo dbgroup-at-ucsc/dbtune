@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
@@ -23,7 +22,7 @@ class IBGNodeFinder
      * @return
      *      found node in the graph. <strong>IMPORTANT</strong>: may return {@code null}.
      */
-    public IBGNode find(IBGNode rootNode, IndexBitSet config)
+    public IndexBenefitGraph.Node find(IndexBenefitGraph.Node rootNode, IndexBitSet config)
     {
         visited.clear();
         pending.clear();
@@ -31,7 +30,7 @@ class IBGNodeFinder
         pending.addNode(rootNode);
 
         while (pending.hasNext()) {
-            IBGNode node = pending.next();
+            IndexBenefitGraph.Node node = pending.next();
             
             if (visited.contains(node.getID()))
                 continue;

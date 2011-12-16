@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.util.DefaultQueue;
 
 /**
@@ -36,7 +34,7 @@ public class IBGNodeQueue
      * @param ch
      *      new child node.
      */
-    final void addChildren(IBGChild ch)
+    final void addChildren(IndexBenefitGraph.Node.Child ch)
     {
         if (ch != null) queue.add(ch);
     }
@@ -47,7 +45,7 @@ public class IBGNodeQueue
      * @param node
      *      new node to be added.
      */
-    final void addNode(IBGNode node)
+    final void addNode(IndexBenefitGraph.Node node)
     {
         queue.add(node);
     }
@@ -76,15 +74,15 @@ public class IBGNodeQueue
     /**
      * @return the next node, or return null if none
      */
-    final IBGNode next()
+    final IndexBenefitGraph.Node next()
     {
         if (queue.isEmpty()) {
             return null;
         }
         
         Object obj = queue.peek();
-        if (obj instanceof IBGChild) {
-            IBGChild child = (IBGChild) obj;
+        if (obj instanceof IndexBenefitGraph.Node.Child) {
+            IndexBenefitGraph.Node.Child child = (IndexBenefitGraph.Node.Child) obj;
 
             if (child.getNext() != null) {
                 queue.replace(0, child.getNext());
@@ -95,14 +93,14 @@ public class IBGNodeQueue
             return child.getNode();
         } else {
             queue.remove();
-            return (IBGNode) obj;
+            return (IndexBenefitGraph.Node) obj;
         }
     }
 
     /**
      * @return the top node in queue without removing it from the queue.
      */
-    public IBGNode peek()
+    public IndexBenefitGraph.Node peek()
     {
         if (queue.isEmpty()) {
             return null;
@@ -110,11 +108,11 @@ public class IBGNodeQueue
         
         Object obj = queue.peek();
 
-        if (obj instanceof IBGChild) {
-            IBGChild child = (IBGChild) obj;
+        if (obj instanceof IndexBenefitGraph.Node.Child) {
+            IndexBenefitGraph.Node.Child child = (IndexBenefitGraph.Node.Child) obj;
             return child.getNode();
         } else {
-            return (IBGNode) obj;
+            return (IndexBenefitGraph.Node) obj;
         }
     }
 }

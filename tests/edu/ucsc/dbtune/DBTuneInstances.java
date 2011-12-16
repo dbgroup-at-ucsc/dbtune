@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
@@ -263,22 +263,22 @@ public final class DBTuneInstances
      */
     public static IndexBenefitGraph configureIndexBenefitGraph()
     {
-        IBGNode root;
-        IBGNode node1;
-        IBGNode node2;
-        IBGNode node3;
-        IBGNode node4;
-        IBGNode node5;
-        IBGNode node6;
-        IBGNode node7;
-        IBGNode.IBGChild child1;
-        IBGNode.IBGChild child2;
-        IBGNode.IBGChild child3;
-        IBGNode.IBGChild child4;
-        IBGNode.IBGChild child5;
-        IBGNode.IBGChild child6;
-        IBGNode.IBGChild child7;
-        IBGNode.IBGChild child8;
+        Node root;
+        Node node1;
+        Node node2;
+        Node node3;
+        Node node4;
+        Node node5;
+        Node node6;
+        Node node7;
+        Node.Child child1;
+        Node.Child child2;
+        Node.Child child3;
+        Node.Child child4;
+        Node.Child child5;
+        Node.Child child6;
+        Node.Child child7;
+        Node.Child child8;
         IndexBitSet rootibs;
         IndexBitSet ibs1;
         IndexBitSet ibs2;
@@ -323,23 +323,23 @@ public final class DBTuneInstances
 
         ibs7.add(3);
 
-        root  = new IBGNode(rootibs, 0);
-        node1 = new IBGNode(ibs1, 1);
-        node2 = new IBGNode(ibs2, 2);
-        node3 = new IBGNode(ibs3, 3);
-        node4 = new IBGNode(ibs4, 4);
-        node5 = new IBGNode(ibs5, 5);
-        node6 = new IBGNode(ibs6, 6);
-        node7 = new IBGNode(ibs7, 7);
+        root  = new Node(rootibs, 0);
+        node1 = new Node(ibs1, 1);
+        node2 = new Node(ibs2, 2);
+        node3 = new Node(ibs3, 3);
+        node4 = new Node(ibs4, 4);
+        node5 = new Node(ibs5, 5);
+        node6 = new Node(ibs6, 6);
+        node7 = new Node(ibs7, 7);
 
-        child1 = new IBGNode.IBGChild(node1, 3);
-        child2 = new IBGNode.IBGChild(node2, 0);
-        child3 = new IBGNode.IBGChild(node3, 1);
-        child4 = new IBGNode.IBGChild(node4, 0);
-        child5 = new IBGNode.IBGChild(node5, 1);
-        child6 = new IBGNode.IBGChild(node6, 1);
-        child7 = new IBGNode.IBGChild(node6, 3);
-        child8 = new IBGNode.IBGChild(node7, 2);
+        child1 = new Node.Child(node1, 3);
+        child2 = new Node.Child(node2, 0);
+        child3 = new Node.Child(node3, 1);
+        child4 = new Node.Child(node4, 0);
+        child5 = new Node.Child(node5, 1);
+        child6 = new Node.Child(node6, 1);
+        child7 = new Node.Child(node6, 3);
+        child8 = new Node.Child(node7, 2);
 
         root.expand(0, child1);
         child1.getNode().expand(0, child3);

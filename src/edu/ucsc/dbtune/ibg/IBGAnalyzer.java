@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
@@ -100,7 +100,7 @@ public class IBGAnalyzer
     {
         // we might need to go through several nodes to find one that we haven't visited yet
         while (true) {
-            IBGNode node;
+            Node node;
 
             if (nodeQueue.hasNext()) {
                 if (nodeQueue.peek().isExpanded()) {
@@ -152,7 +152,7 @@ public class IBGAnalyzer
      *      whether or not the analyses completed. When the analysis doesn't complete it is due to 
      *      the IBG not being completely expanded.
      */
-    private boolean analyzeNode(IBGNode node, InteractionLogger logger)
+    private boolean analyzeNode(Node node, InteractionLogger logger)
     {
         IndexBitSet bitsetY = node.getConfiguration();
 
@@ -173,7 +173,7 @@ public class IBGAnalyzer
         boolean retval = true;
 
         for (int a = 0; a < candidatesBitSet.size(); a++) {
-            IBGNode y;
+            Node y;
             double costY;
 
             // Y is just the current node
@@ -185,7 +185,7 @@ public class IBGAnalyzer
             bitsetYaSimple.addAll(bitsetY);
             bitsetYaSimple.add(a);
 
-            IBGNode yaSimple =
+            Node yaSimple =
                 coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYaSimple, null);
 
             if (yaSimple == null)
@@ -194,10 +194,10 @@ public class IBGAnalyzer
                 logger.assignBenefit(a, costY - yaSimple.cost());
 
             for (int b = a + 1; b < candidatesBitSet.size(); b++) {
-                IBGNode ya;
-                IBGNode yab;
-                IBGNode ybPlus;
-                IBGNode ybMinus;
+                Node ya;
+                Node yab;
+                Node ybPlus;
+                Node ybMinus;
                 double costYa;
                 double costYab;
 

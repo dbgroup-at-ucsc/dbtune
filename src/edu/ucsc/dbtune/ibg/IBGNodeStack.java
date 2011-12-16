@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.util.DefaultStack;
 
 /**
@@ -39,7 +37,7 @@ public class IBGNodeStack
      * @param ch
      *      new child to be added.
      */
-    final void addChildren(IBGChild ch)
+    final void addChildren(IndexBenefitGraph.Node.Child ch)
     {
         if (ch != null) stack.push(ch);
     }
@@ -49,7 +47,7 @@ public class IBGNodeStack
      * @param node
      *      node to be added to the stack.
      */
-    final void addNode(IBGNode node)
+    final void addNode(IndexBenefitGraph.Node node)
     {
         stack.push(node);
     }
@@ -76,13 +74,13 @@ public class IBGNodeStack
     /**
      * @return the next node, or return null if none
      */
-    final IBGNode next()
+    final IndexBenefitGraph.Node next()
     {
         if (stack.isEmpty()) return null;
         
         Object obj = stack.peek();
-        if (obj instanceof IBGChild) {
-            IBGChild child = (IBGChild) stack.peek();
+        if (obj instanceof IndexBenefitGraph.Node.Child) {
+            IndexBenefitGraph.Node.Child child = (IndexBenefitGraph.Node.Child) stack.peek();
 
             if (child.getNext() != null) {
                 stack.swap(child.getNext());
@@ -93,7 +91,7 @@ public class IBGNodeStack
             return child.getNode();
         } else {
             stack.pop();
-            return (IBGNode) obj;
+            return (IndexBenefitGraph.Node) obj;
         }
     }
 }

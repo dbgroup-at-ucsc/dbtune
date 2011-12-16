@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.optimizer;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder.FindResult;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.util.Objects;
@@ -126,7 +126,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             int optimizationCount = optimizer.getWhatIfCount() - oldOptimizationCount;
             
             universe = new Configuration(configuration);
-            IBGNode rootNode = ibg.rootNode();
+            Node rootNode = ibg.rootNode();
             
             return new ExplainedSQLStatement(
                     getSQLStatement(), rootNode.cost(), optimizer, universe,

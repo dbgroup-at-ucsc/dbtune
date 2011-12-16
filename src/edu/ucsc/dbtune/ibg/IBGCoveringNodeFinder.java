@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode.IBGChild;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
@@ -29,7 +27,7 @@ public class IBGCoveringNodeFinder
         if (config.isEmpty()) {
             return new FindResult(null, ibg.emptyCost());
         } else {
-            final IBGNode foundNode = findFast(ibg.rootNode(), config.getBitSet(), null);
+            final IndexBenefitGraph.Node foundNode = findFast(ibg.rootNode(), config.getBitSet(), null);
 
             if (foundNode != null) {
                 // Obtain used indexes
@@ -56,17 +54,17 @@ public class IBGCoveringNodeFinder
      * @param conf
      *      an index configuration.
      * @param guess
-     *      a guessed {@link IBGNode}. Might be null if the guessing is intended to begin at the 
+     *      a guessed {@link Node}. Might be null if the guessing is intended to begin at the 
      *      root.
      * @return
-     *     a found {@link IBGNode node}. <strong>IMPORTANT</strong>: this method may return
+     *     a found {@link Node node}. <strong>IMPORTANT</strong>: this method may return
      *     {@code null} if the covering node is in an unexpanded part of the IBG.
      */
-    public IBGNode findFast(IBGNode root, IndexBitSet conf, IBGNode guess)
+    public IndexBenefitGraph.Node findFast(IndexBenefitGraph.Node root, IndexBitSet conf, IndexBenefitGraph.Node guess)
     {
         visited.clear();
 
-        IBGNode currentNode =
+        IndexBenefitGraph.Node currentNode =
             (guess != null && guess.getConfiguration().containsAll(conf)) ? guess : root;
 
         while (true) {
@@ -77,7 +75,7 @@ public class IBGCoveringNodeFinder
                 return null;
             }
 
-            IBGChild ch = currentNode.firstChild();
+            IndexBenefitGraph.Node.Child ch = currentNode.firstChild();
 
             while (true) {
                 if (ch == null) {
@@ -102,7 +100,7 @@ public class IBGCoveringNodeFinder
      * @return
      *      found node in the graph. <strong>IMPORTANT</strong>: may return {@code null}.
      */
-    public IBGNode find(IBGNode rootNode, IndexBitSet config)
+    public IndexBenefitGraph.Node find(IndexBenefitGraph.Node rootNode, IndexBitSet config)
     {
         visited.clear();
         pending.clear();
@@ -110,7 +108,7 @@ public class IBGCoveringNodeFinder
         pending.addNode(rootNode);
 
         while (pending.hasNext()) {
-            IBGNode node = pending.next();
+            IndexBenefitGraph.Node node = pending.next();
 
             if (visited.contains(node.getID()))
                 continue;

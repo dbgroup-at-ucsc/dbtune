@@ -63,7 +63,7 @@ public class IndexBenefitGraph
      * Every node in the graph is a descendant of rootNode. We also keep the
      * cost of the query under the empty configuration, stored in emptyCost.
      */
-    private final IBGNode rootNode;
+    private final Node rootNode;
 
     /** cost of the empty configuration. */
     private double emptyCost;
@@ -81,7 +81,7 @@ public class IndexBenefitGraph
      * @param isUsed
      *     bit array associated with the used configuration ibg-wise.
      */
-    public IndexBenefitGraph(IBGNode rootNode, double emptyCost, IndexBitSet isUsed)
+    public IndexBenefitGraph(Node rootNode, double emptyCost, IndexBitSet isUsed)
     {
         this.rootNode  = rootNode;
         this.emptyCost = emptyCost;
@@ -105,7 +105,7 @@ public class IndexBenefitGraph
      * @return
      *     the empty cost
      */
-    public final IBGNode rootNode()
+    public final Node rootNode()
     {
         return rootNode;
     }
@@ -118,7 +118,7 @@ public class IndexBenefitGraph
      * @return
      *     the corresponding node if found; {@code null} otherwise
      */
-    public final IBGNode find(IndexBitSet bitSet)
+    public final Node find(IndexBitSet bitSet)
     {
         return finder.findFast(rootNode(), bitSet, null);
     }
@@ -142,7 +142,7 @@ public class IndexBenefitGraph
      *
      * @author Karl Schnaitter
      */
-    public static class IBGNode
+    public static class Node
     {
         /** Configuration that this node is about. */
         private final IndexBitSet config;
@@ -160,7 +160,7 @@ public class IndexBenefitGraph
         /**
          * Linked list of children. Note: don't access until isExpanded() returns true
          */
-        private volatile IBGChild firstChild;
+        private volatile Child firstChild;
 
         /**
          * Used indexes.
@@ -174,7 +174,7 @@ public class IndexBenefitGraph
          * @param id0
          *     id of the node
          */
-        public IBGNode(IndexBitSet config0, int id0)
+        public Node(IndexBitSet config0, int id0)
         {
             config      = config0;
             id          = id0;
@@ -224,7 +224,7 @@ public class IndexBenefitGraph
          * @param firstChild0
          *     the first child in the list of childs
          */
-        public final void expand(double cost0, IBGChild firstChild0)
+        public final void expand(double cost0, Child firstChild0)
         {
             assert !isExpanded();
             assert cost0 >= 0;
@@ -263,7 +263,7 @@ public class IndexBenefitGraph
          * @return
          *      the first child in the linked list
          */
-        protected final IBGChild firstChild()
+        protected final Child firstChild()
         {
             assert isExpanded();
             return firstChild; 
@@ -279,7 +279,7 @@ public class IndexBenefitGraph
         {
             assert isExpanded();
 
-            for (IBGChild ch = firstChild; ch != null; ch = ch.next)
+            for (Child ch = firstChild; ch != null; ch = ch.next)
                 other.add(ch.usedIndex);
         }
 
@@ -293,7 +293,7 @@ public class IndexBenefitGraph
         {
             assert isExpanded();
 
-            for (IBGChild ch = firstChild; ch != null; ch = ch.next)
+            for (Child ch = firstChild; ch != null; ch = ch.next)
                 other.remove(ch.usedIndex);
         }
 
@@ -310,7 +310,7 @@ public class IndexBenefitGraph
         {
             assert isExpanded();
 
-            for (IBGChild ch = firstChild; ch != null; ch = ch.next)
+            for (Child ch = firstChild; ch != null; ch = ch.next)
                 if (!other.contains(ch.usedIndex))
                     return false;
             return true;
@@ -328,7 +328,7 @@ public class IndexBenefitGraph
         {
             assert isExpanded();
 
-            for (IBGChild ch = firstChild; ch != null; ch = ch.next)
+            for (Child ch = firstChild; ch != null; ch = ch.next)
                 if (id == ch.usedIndex)
                     return true;
             return false;
@@ -347,16 +347,16 @@ public class IndexBenefitGraph
 
         /**
          */
-        public static class IBGChild
+        public static class Child
         {
             /** the internal id of the index assigned to the edge of this child. */
             private final int usedIndex;
 
             /** the actual child node. */
-            private final IBGNode node;
+            private final Node node;
 
             /** the next child in the linked list. */
-            private IBGChild next;
+            private Child next;
 
             /**
              * @param node0
@@ -364,7 +364,7 @@ public class IndexBenefitGraph
              * @param usedIndex0
              *     index used on the edge
              */
-            public IBGChild(IBGNode node0, int usedIndex0)
+            public Child(Node node0, int usedIndex0)
             {
                 node = node0;
                 usedIndex = usedIndex0;
@@ -379,10 +379,10 @@ public class IndexBenefitGraph
                 if (other == this)
                     return true;
 
-                if (!(other instanceof IBGChild))
+                if (!(other instanceof Child))
                     return false;
 
-                IBGChild ibgchild = (IBGChild) other;
+                Child ibgchild = (Child) other;
 
                 if (ibgchild.usedIndex == usedIndex && ibgchild.node.id == node.id)
                     return true;
@@ -405,7 +405,7 @@ public class IndexBenefitGraph
              *
              * @return The node.
              */
-            public IBGNode getNode()
+            public Node getNode()
             {
                 return this.node;
             }
@@ -415,7 +415,7 @@ public class IndexBenefitGraph
              *
              * @param next The next.
              */
-            public void setNext(IBGChild next)
+            public void setNext(Child next)
             {
                 this.next = next;
             }
@@ -425,7 +425,7 @@ public class IndexBenefitGraph
              *
              * @return The next.
              */
-            public IBGChild getNext()
+            public Child getNext()
             {
                 return this.next;
             }
@@ -447,7 +447,7 @@ public class IndexBenefitGraph
             {
                 String str = "idx:" + usedIndex + "-to-node:" + node.id;
 
-                for (IBGChild ch = next; ch != null; ch = ch.next)
+                for (Child ch = next; ch != null; ch = ch.next)
                     str += "|idx:" + ch.usedIndex + "-to-node:" + ch.node.id;
 
                 return str;
@@ -463,10 +463,10 @@ public class IndexBenefitGraph
             if (this == other)
                 return true;
 
-            if (!(other instanceof IBGNode))
+            if (!(other instanceof Node))
                 return false;
 
-            IBGNode o = (IBGNode) other;
+            Node o = (Node) other;
 
             if (!config.equals(o.config) || cost != o.cost)
                 return false;
@@ -474,8 +474,8 @@ public class IndexBenefitGraph
             if (id != o.id)
                 return false;
 
-            IBGChild ch;
-            IBGChild cho;
+            Child ch;
+            Child cho;
 
             for (ch = firstChild, cho = o.firstChild; ch != null; ch = ch.next, cho = cho.next)
                 if (cho == null || !cho.equals(ch))

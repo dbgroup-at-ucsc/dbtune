@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
 import edu.ucsc.dbtune.metadata.Index;
@@ -62,13 +61,13 @@ public class IndexBenefitGraphConstructor
      * Every node in the graph is a descendant of rootNode. We also keep the
      * cost of the workload under the empty configuration, stored in emptyCost.
      */
-    private IBGNode rootNode;
+    private IndexBenefitGraph.Node rootNode;
 
     /* cost without indexes */
     private double emptyCost;
 
     /* The queue of pending nodes to expand */
-    DefaultQueue<IBGNode> queue;
+    DefaultQueue<IndexBenefitGraph.Node> queue;
 
     /* A monitor for waiting on a node expansion */
     private final Object nodeExpansionMonitor = new Object();
@@ -103,7 +102,7 @@ public class IndexBenefitGraphConstructor
 
         // set up the root node, and initialize the queue
         IndexBitSet rootConfig = configuration.getBitSet();
-        rootNode = new IndexBenefitGraph.IBGNode(rootConfig, nodeCount++);
+        rootNode = new IndexBenefitGraph.Node(rootConfig, nodeCount++);
 
         emptyCost = optimizer.explain(this.sql).getCost();
 
@@ -120,9 +119,9 @@ public class IndexBenefitGraphConstructor
     }
 
     /**
-     * @return the {@link IBGNode root node}.
+     * @return the {@link Node root node}.
      */
-    public final IBGNode rootNode()
+    public final IndexBenefitGraph.Node rootNode()
     {
         return rootNode;
     }
@@ -155,7 +154,7 @@ public class IndexBenefitGraphConstructor
      * @param node
      *      a node to be expanded.
      */
-    public final void waitUntilExpanded(IBGNode node)
+    public final void waitUntilExpanded(IndexBenefitGraph.Node node)
     {
         synchronized (nodeExpansionMonitor) {
             while (!node.isExpanded())
@@ -175,7 +174,7 @@ public class IndexBenefitGraphConstructor
      */
     public boolean buildNode() throws SQLException
     {
-        IBGNode newNode, coveringNode;
+        IndexBenefitGraph.Node newNode, coveringNode;
         ExplainedSQLStatement stmt;
         double totalCost;
 
@@ -204,25 +203,25 @@ public class IndexBenefitGraphConstructor
         }
 
         // create the child list
-        // if any IBGNode did not exist yet, add it to the queue
+        // if any Node did not exist yet, add it to the queue
         // We make sure to keep the child list in the same order as the nodeQueue, so that
         // analysis and construction can move in lock step. This is done by keeping both
         // in order of construction.
-        IBGNode.IBGChild firstChild = null;
-        IBGNode.IBGChild lastChild = null;
+        IndexBenefitGraph.Node.Child firstChild = null;
+        IndexBenefitGraph.Node.Child lastChild = null;
         childBitSet.clear();
         childBitSet.addAll(newNode.getConfiguration());
         for (int u = 0; u < usedBitSet.size(); u++) {
             childBitSet.remove(u);
-            IBGNode childNode = find(queue, childBitSet);
+            IndexBenefitGraph.Node childNode = find(queue, childBitSet);
             if (childNode == null) {
                 isUsed.add(u);
-                childNode = new IBGNode(new IndexBitSet(childBitSet), nodeCount++);
+                childNode = new IndexBenefitGraph.Node(new IndexBitSet(childBitSet), nodeCount++);
                 queue.add(childNode);
             }
             childBitSet.add(u);
 
-            IBGNode.IBGChild child = new IBGNode.IBGChild(childNode, u);
+            IndexBenefitGraph.Node.Child child = new IndexBenefitGraph.Node.Child(childNode, u);
 
             if (firstChild == null) {
                 firstChild = lastChild = child;
@@ -245,10 +244,10 @@ public class IndexBenefitGraphConstructor
     /*
      * Auxiliary method for buildNodes
      */
-    private static IBGNode find(DefaultQueue<IBGNode> queue, IndexBitSet config)
+    private static IndexBenefitGraph.Node find(DefaultQueue<IndexBenefitGraph.Node> queue, IndexBitSet config)
     {
         for (int i = 0; i < queue.count(); i++) {
-            IBGNode node = queue.fetch(i);
+            IndexBenefitGraph.Node node = queue.fetch(i);
             if (node.getConfiguration().equals(config))
                 return node;
         }
@@ -297,8 +296,8 @@ public class IndexBenefitGraphConstructor
         isUsed        = new IndexBitSet();
         candidateSet  = pool.getSnapshot();
         rootConfig    = candidateSet.bitSet();
-        queue         = new DefaultQueue<IBGNode>();
-        rootNode      = new IBGNode(rootConfig, nodeCount++);
+        queue         = new DefaultQueue<IndexBenefitGraph.Node>();
+        rootNode      = new IndexBenefitGraph.Node(rootConfig, nodeCount++);
         emptyCost     = optimizer.explain(sql).getCost();
 
         optCount++;

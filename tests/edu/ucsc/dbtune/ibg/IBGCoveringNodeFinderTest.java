@@ -2,7 +2,7 @@ package edu.ucsc.dbtune.ibg;
 
 import java.util.List;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 import org.junit.BeforeClass;
@@ -23,7 +23,7 @@ import static org.junit.Assert.assertThat;
  */
 public class IBGCoveringNodeFinderTest
 {
-    private static IBGNode root;
+    private static Node root;
     private static IndexBitSet e;
     private static IndexBitSet a;
     private static IndexBitSet b;

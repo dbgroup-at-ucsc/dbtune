@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 import org.junit.BeforeClass;
@@ -22,30 +22,30 @@ public class IBGNodeTest
 {
     // CHECKSTYLE:OFF
     private static IndexBenefitGraph ibg;
-    private static IBGNode           root;
-    private static IBGNode           node1;
-    private static IBGNode           node2;
-    private static IBGNode           node3;
-    private static IBGNode           node4;
-    private static IBGNode           node5;
-    private static IBGNode           node6;
-    private static IBGNode           node7;
-    private static IBGNode.IBGChild  child1;
-    private static IBGNode.IBGChild  child2;
-    private static IBGNode.IBGChild  child3;
-    private static IBGNode.IBGChild  child4;
-    private static IBGNode.IBGChild  child5;
-    private static IBGNode.IBGChild  child6;
-    private static IBGNode.IBGChild  child7;
-    private static IBGNode.IBGChild  child8;
-    private static IBGNode.IBGChild  tmpchild1;
-    private static IBGNode.IBGChild  tmpchild2;
-    private static IBGNode.IBGChild  tmpchild3;
-    private static IBGNode.IBGChild  tmpchild4;
-    private static IBGNode.IBGChild  tmpchild5;
-    private static IBGNode.IBGChild  tmpchild6;
-    private static IBGNode.IBGChild  tmpchild7;
-    private static IBGNode.IBGChild  tmpchild8;
+    private static Node           root;
+    private static Node           node1;
+    private static Node           node2;
+    private static Node           node3;
+    private static Node           node4;
+    private static Node           node5;
+    private static Node           node6;
+    private static Node           node7;
+    private static Node.Child  child1;
+    private static Node.Child  child2;
+    private static Node.Child  child3;
+    private static Node.Child  child4;
+    private static Node.Child  child5;
+    private static Node.Child  child6;
+    private static Node.Child  child7;
+    private static Node.Child  child8;
+    private static Node.Child  tmpchild1;
+    private static Node.Child  tmpchild2;
+    private static Node.Child  tmpchild3;
+    private static Node.Child  tmpchild4;
+    private static Node.Child  tmpchild5;
+    private static Node.Child  tmpchild6;
+    private static Node.Child  tmpchild7;
+    private static Node.Child  tmpchild8;
     private static IndexBitSet       empty;
     private static IndexBitSet       rootibs;
     private static IndexBitSet       ibs1;
@@ -126,23 +126,23 @@ public class IBGNodeTest
 
         ibs7.add(3);
 
-        root  = new IBGNode(rootibs, 0);
-        node1 = new IBGNode(ibs1, 1);
-        node2 = new IBGNode(ibs2, 2);
-        node3 = new IBGNode(ibs3, 3);
-        node4 = new IBGNode(ibs4, 4);
-        node5 = new IBGNode(ibs5, 5);
-        node6 = new IBGNode(ibs6, 6);
-        node7 = new IBGNode(ibs7, 7);
+        root  = new Node(rootibs, 0);
+        node1 = new Node(ibs1, 1);
+        node2 = new Node(ibs2, 2);
+        node3 = new Node(ibs3, 3);
+        node4 = new Node(ibs4, 4);
+        node5 = new Node(ibs5, 5);
+        node6 = new Node(ibs6, 6);
+        node7 = new Node(ibs7, 7);
 
-        tmpchild1 = new IBGNode.IBGChild(node1, 3);
-        tmpchild2 = new IBGNode.IBGChild(node2, 0);
-        tmpchild3 = new IBGNode.IBGChild(node3, 1);
-        tmpchild4 = new IBGNode.IBGChild(node4, 0);
-        tmpchild5 = new IBGNode.IBGChild(node5, 1);
-        tmpchild6 = new IBGNode.IBGChild(node6, 1);
-        tmpchild7 = new IBGNode.IBGChild(node6, 3);
-        tmpchild8 = new IBGNode.IBGChild(node7, 2);
+        tmpchild1 = new Node.Child(node1, 3);
+        tmpchild2 = new Node.Child(node2, 0);
+        tmpchild3 = new Node.Child(node3, 1);
+        tmpchild4 = new Node.Child(node4, 0);
+        tmpchild5 = new Node.Child(node5, 1);
+        tmpchild6 = new Node.Child(node6, 1);
+        tmpchild7 = new Node.Child(node6, 3);
+        tmpchild8 = new Node.Child(node7, 2);
 
         root.expand(0, tmpchild1);
         tmpchild1.getNode().expand(0, tmpchild3);
@@ -180,7 +180,7 @@ public class IBGNodeTest
     public void testConstructor()
     {
         IndexBitSet ibs = new IndexBitSet();
-        IBGNode node    = new IBGNode(ibs, 10);
+        Node node    = new Node(ibs, 10);
 
         assertThat(node.getConfiguration(), is(ibs));
         assertThat(node.getID(), is(10));
@@ -190,7 +190,7 @@ public class IBGNodeTest
     }
 
     /**
-     * Checks that the {@link IBGNode#expand} method works correctly.
+     * Checks that the {@link Node#expand} method works correctly.
      */
     @Test
     public void testExpansion()
@@ -206,7 +206,7 @@ public class IBGNodeTest
     }
 
     /**
-     * Checks that the {@link IBGNode#expand} method works correctly.
+     * Checks that the {@link Node#expand} method works correctly.
      */
     @Test
     public void testInternalBitSet()

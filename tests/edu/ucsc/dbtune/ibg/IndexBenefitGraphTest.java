@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.IBGNode;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 import org.junit.BeforeClass;
@@ -42,7 +41,7 @@ public class IndexBenefitGraphTest
         bs.add(2);
         bs.add(3);
 
-        IBGNode root = new IBGNode(bs, 0);
+        IndexBenefitGraph.Node root = new IndexBenefitGraph.Node(bs, 0);
 
         assertThat(ibg.emptyCost(), is(80.0));
 
