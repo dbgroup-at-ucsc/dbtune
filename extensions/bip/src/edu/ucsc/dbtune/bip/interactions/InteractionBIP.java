@@ -51,7 +51,7 @@ public class InteractionBIP
 	 * 		List of pairs of interacting indexes
 	 * @throws SQLException 
 	 */
-	public List<IndexInteraction> getInteractionIndexes(BIPAgent agent, Configuration C, double delta) throws SQLException
+	public List<IndexInteraction> computeInteractionIndexes(BIPAgent agent, Configuration C, double delta) throws SQLException
 	{	
 		List<IndexInteraction> resultIndexInteraction = new ArrayList<IndexInteraction>();				 
 		List<Index> candidateIndexes = C.toList(); 
@@ -67,6 +67,8 @@ public class InteractionBIP
 			for (IndexInteraction pair : listInteraction){
 				resultIndexInteraction.add(pair);
 			}
+			
+			break; // to be remove
 		}
 		
 		return resultIndexInteraction;
@@ -95,15 +97,23 @@ public class InteractionBIP
 		
 		for (int ic = 0; ic < desc.getNumSlots(); ic++)	{
 			// Note: the last index in each slot is a full table scan
+		    // Don't need to consider indexes that belong to relations NOT referenced by the query
+		    if (desc.isReferenced(ic) == false){
+		        continue;
+		    }
+		    
 			for (int pos_c = 0; pos_c < desc.getNumIndexesEachSlot(ic) - 1; pos_c++){
 				Index indexc = desc.getIndex(ic, pos_c);
 				
 				for (int id = ic; id < desc.getNumSlots(); id++) {
+				    if (desc.isReferenced(id) == false){
+		                continue;
+		            }
+				    
 					for (int pos_d = 0; pos_d < desc.getNumIndexesEachSlot(id) - 1; pos_d++){
 						if (ic == id && pos_c >= pos_d) {	
 							continue;
-						}
-						 
+						}					
 						Index indexd = desc.getIndex(id, pos_d);
 						
 						// check if pair of interact indexes have been cached
@@ -209,7 +219,12 @@ public class InteractionBIP
 		
 		for (int i = 0; i < vars.length; i++) {
 			IloNumVar var = vars[i];
-            double coef = mapVarCoef.get(var.getName());           
+			Object found = mapVarCoef.get(var.getName());  
+			double coef = 0.0;
+			if (found != null) {
+			    coef = ((Double)found).doubleValue();
+			}
+                  
             listCoef[i] = coef;
 		}
 		return listCoef;		

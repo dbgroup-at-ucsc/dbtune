@@ -2,7 +2,9 @@ package edu.ucsc.dbtune.bip.util;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.inum.InumSpace;
@@ -42,6 +44,16 @@ public class QueryPlanDesc
 	 */
 	protected List< List< Index> > listIndexesEachSlot;
 	
+	/**
+	 * List of tables in the schema
+	 */
+	protected List<Table> listSchemaTables;
+	
+	
+	/**
+	 * List of position of slots referenced by the query
+	 */
+	protected Map<Integer, Integer> mapReferencedSlotID;
 	
 	/**
 	 * Number of template plans	 
@@ -161,9 +173,12 @@ public class QueryPlanDesc
 		Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
 		
 		// TODO: replace with the new interface ----------------------
-		List<Table> listTables = new ArrayList<Table>();   
+		// Note that list tables is derived from the schema
+		// @listSchemaTables and @listReferencedTable is different
+		List<Table> listReferencedTables = new ArrayList<Table>();   
 		for (InumStatementPlan plan : templatePlans) {
-			listTables = plan.getReferencedTables();
+		    listSchemaTables = plan.getSchemaTables();
+			listReferencedTables = plan.getReferencedTables();
 			break;
 		}
 		// ------------------------------------------------------------
@@ -171,7 +186,8 @@ public class QueryPlanDesc
 		// 1. Set up the number of slots & number of indexes in each slot
 		n = 0;
 		numIndexes = 0;		
-		for (Table table : listTables) {			
+		
+		for (Table table : listSchemaTables) {			
 			int numIndexEachSlot = 0;
 			List<Index> listIndex = new ArrayList<Index>();			
 			
@@ -193,6 +209,19 @@ public class QueryPlanDesc
 			n++;			
 		}
 		
+		Map<Table, Table> mapReferenceTable = new HashMap<Table, Table>();
+		for (Table referencedTable : listReferencedTables){
+            mapReferenceTable.put(referencedTable, referencedTable);
+        }
+		
+		mapReferencedSlotID = new HashMap<Integer, Integer>();
+		for (int i = 0; i < listSchemaTables.size(); i++){
+		    Object found = mapReferenceTable.get(listSchemaTables.get(i));
+            if (found != null){
+                mapReferencedSlotID.put(new Integer(i), new Integer(1));
+            }
+		}
+		
 		Kq = 0;
 		for (InumStatementPlan plan : templatePlans) {
 			beta.add(new Double(plan.getInternalCost()));
@@ -200,21 +229,48 @@ public class QueryPlanDesc
 			
 			for (int i = 0; i < n; i++) {
 				List<Double> gammaRel = new ArrayList<Double>(); 
-				 
-				for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
-					Index index = getIndex(i, a);
-					// Full table scan index 
-					if (a == getNumIndexesEachSlot(i) - 1){						
-						gammaRel.add(new Double(plan.getFullTableScanCost(listTables.get(i))));
-					} else {
-						gammaRel.add(new Double(plan.getAccessCost(index)));
-					}
-				}		
+				
+				// If the table is not reference then assigned gamma = 0
+				Object found = mapReferenceTable.get(listSchemaTables.get(i));
+				if (found == null){
+				    for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
+				        gammaRel.add(new Double(0.0));
+				    }
+				} else {
+				    Table table = (Table) found;
+    				for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
+    					Index index = getIndex(i, a);
+    					// Full table scan index 
+    					if (a == getNumIndexesEachSlot(i) - 1){						
+    						gammaRel.add(new Double(plan.getFullTableScanCost(table)));
+    					} else {
+    						gammaRel.add(new Double(plan.getAccessCost(index)));
+    					}
+    				}		
+				}
 				gammaPlan.add(gammaRel);							
 			}
 			
 			gamma.add(gammaPlan);
 			Kq++;
 		}
-	}	
+	}
+	
+	/**
+	 * Check if @idSlot is referenced by the query
+	 * 
+	 * @param idSlot
+	 *     The ID of the slot
+	 * @return
+	 *     {@code boolean}: true if idSlot is referenced by the query
+	 */
+	public boolean isReferenced(int idSlot)
+	{
+	    Object found = this.mapReferencedSlotID.get(new Integer(idSlot));
+	    if (found == null){
+	        return false;
+	    } else {
+	        return true;
+	    }
+	}
 }

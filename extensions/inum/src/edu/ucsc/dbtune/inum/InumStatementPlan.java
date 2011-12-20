@@ -53,6 +53,19 @@ public class InumStatementPlan extends SQLStatementPlan {
     }
     
     /**
+     * Return the list of tables in the schema
+     *
+     * @return
+     *     the list of referenced tables
+     *     
+     * {\bf Note } Need to move this method to appropriate place    
+     */
+    public List<Table> getSchemaTables()
+    {
+        throw new RuntimeException("NOT IMPLEMENTED YET");
+    }
+    
+    /**
      * Return the size of the given index
      * @param index
      * 		The given index
