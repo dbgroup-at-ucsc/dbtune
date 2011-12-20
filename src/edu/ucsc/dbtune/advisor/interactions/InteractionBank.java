@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.advisor.interactions;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 public class InteractionBank
 {
@@ -70,7 +70,7 @@ public class InteractionBank
         return bestBenefit[id];
     }
 
-    public final IndexBitSet<Index>[] stablePartitioning(double threshold)
+    public final BitArraySet<Index>[] stablePartitioning(double threshold)
     {
         //UnionFind uf = new UnionFind(indexCount);
         //for (int a = 0; a < indexCount; a++) 
@@ -78,6 +78,6 @@ public class InteractionBank
                 //if (lowerBounds[a][b] > threshold)
                     //uf.union(a,b);
         //return uf.sets();
-        return (IndexBitSet<Index>[]) null;
+        return (BitArraySet<Index>[]) null;
     }
 }

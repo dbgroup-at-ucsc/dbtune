@@ -45,7 +45,7 @@ public class IndexBitSetTest
     public void testBasicUsage() throws Exception
     {
         List<Index> conf = cat.schemas().get(0).indexes();
-        IndexBitSet<Index> bs = new IndexBitSet<Index>();
+        BitArraySet<Index> bs = new BitArraySet<Index>();
 
         for (Index idx : conf)
             bs.add(idx);
@@ -53,11 +53,11 @@ public class IndexBitSetTest
         for (Index idx : conf)
             assertThat(bs.contains(idx), is(true));
 
-        IndexBitSet<Index> other = new IndexBitSet<Index>(bs);
+        BitArraySet<Index> other = new BitArraySet<Index>(bs);
 
         assertThat(bs, is(other));
 
-        other = new IndexBitSet<Index>();
+        other = new BitArraySet<Index>();
 
         other.add(conf.get(1));
         other.add(conf.get(3));
@@ -66,7 +66,7 @@ public class IndexBitSetTest
 
         assertThat(bs.containsAll(other), is(true));
 
-        bs = new IndexBitSet<Index>();
+        bs = new BitArraySet<Index>();
 
         bs.addAll(other);
 
@@ -82,7 +82,7 @@ public class IndexBitSetTest
     {
         List<Index> conf = cat.schemas().get(0).indexes();
         Set<Index> conf1 = new HashSet<Index>(conf);
-        Set<Index> conf2 = new IndexBitSet<Index>(conf);
+        Set<Index> conf2 = new BitArraySet<Index>(conf);
 
         for (Index idx : conf) {
             assertThat(conf1.contains(idx), is(true));

@@ -14,7 +14,7 @@ import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.Environment.extractDriver;
@@ -283,25 +283,25 @@ public final class DBTuneInstances
         IndexBenefitGraph.Node.Child child6;
         IndexBenefitGraph.Node.Child child7;
         IndexBenefitGraph.Node.Child child8;
-        IndexBitSet<Index> rootibs;
-        IndexBitSet<Index> ibs;
-        IndexBitSet<Index> ibs1;
-        IndexBitSet<Index> ibs2;
-        IndexBitSet<Index> ibs3;
-        IndexBitSet<Index> ibs4;
-        IndexBitSet<Index> ibs5;
-        IndexBitSet<Index> ibs6;
-        IndexBitSet<Index> ibs7;
+        BitArraySet<Index> rootibs;
+        BitArraySet<Index> ibs;
+        BitArraySet<Index> ibs1;
+        BitArraySet<Index> ibs2;
+        BitArraySet<Index> ibs3;
+        BitArraySet<Index> ibs4;
+        BitArraySet<Index> ibs5;
+        BitArraySet<Index> ibs6;
+        BitArraySet<Index> ibs7;
 
-        rootibs = new IndexBitSet<Index>();
-        ibs     = new IndexBitSet<Index>();
-        ibs1    = new IndexBitSet<Index>();
-        ibs2    = new IndexBitSet<Index>();
-        ibs3    = new IndexBitSet<Index>();
-        ibs4    = new IndexBitSet<Index>();
-        ibs5    = new IndexBitSet<Index>();
-        ibs6    = new IndexBitSet<Index>();
-        ibs7    = new IndexBitSet<Index>();
+        rootibs = new BitArraySet<Index>();
+        ibs     = new BitArraySet<Index>();
+        ibs1    = new BitArraySet<Index>();
+        ibs2    = new BitArraySet<Index>();
+        ibs3    = new BitArraySet<Index>();
+        ibs4    = new BitArraySet<Index>();
+        ibs5    = new BitArraySet<Index>();
+        ibs6    = new BitArraySet<Index>();
+        ibs7    = new BitArraySet<Index>();
 
         rootibs.add(indexes.get(0));
         rootibs.add(indexes.get(1));
@@ -381,26 +381,26 @@ public final class DBTuneInstances
      *     a list with all the subsets of the set (a,b,c,d), where the positions of the IndexBitSet 
      *     objects are a=0, b=1, c=2, d=3
      */
-    public static List<IndexBitSet<Index>> configurePowerSet(Catalog cat) throws SQLException
+    public static List<BitArraySet<Index>> configurePowerSet(Catalog cat) throws SQLException
     {
-        List<IndexBitSet<Index>> list = new ArrayList<IndexBitSet<Index>>();
+        List<BitArraySet<Index>> list = new ArrayList<BitArraySet<Index>>();
         List<Index> indexes = cat.schemas().get(0).indexes();
 
-        IndexBitSet<Index> e = new IndexBitSet<Index>();
-        IndexBitSet<Index> a = new IndexBitSet<Index>();
-        IndexBitSet<Index> b = new IndexBitSet<Index>();
-        IndexBitSet<Index> c = new IndexBitSet<Index>();
-        IndexBitSet<Index> d = new IndexBitSet<Index>();
-        IndexBitSet<Index> ab = new IndexBitSet<Index>();
-        IndexBitSet<Index> ac = new IndexBitSet<Index>();
-        IndexBitSet<Index> ad = new IndexBitSet<Index>();
-        IndexBitSet<Index> bc = new IndexBitSet<Index>();
-        IndexBitSet<Index> bd = new IndexBitSet<Index>();
-        IndexBitSet<Index> cd = new IndexBitSet<Index>();
-        IndexBitSet<Index> abc = new IndexBitSet<Index>();
-        IndexBitSet<Index> acd = new IndexBitSet<Index>();
-        IndexBitSet<Index> bcd = new IndexBitSet<Index>();
-        IndexBitSet<Index> abcd = new IndexBitSet<Index>();
+        BitArraySet<Index> e = new BitArraySet<Index>();
+        BitArraySet<Index> a = new BitArraySet<Index>();
+        BitArraySet<Index> b = new BitArraySet<Index>();
+        BitArraySet<Index> c = new BitArraySet<Index>();
+        BitArraySet<Index> d = new BitArraySet<Index>();
+        BitArraySet<Index> ab = new BitArraySet<Index>();
+        BitArraySet<Index> ac = new BitArraySet<Index>();
+        BitArraySet<Index> ad = new BitArraySet<Index>();
+        BitArraySet<Index> bc = new BitArraySet<Index>();
+        BitArraySet<Index> bd = new BitArraySet<Index>();
+        BitArraySet<Index> cd = new BitArraySet<Index>();
+        BitArraySet<Index> abc = new BitArraySet<Index>();
+        BitArraySet<Index> acd = new BitArraySet<Index>();
+        BitArraySet<Index> bcd = new BitArraySet<Index>();
+        BitArraySet<Index> abcd = new BitArraySet<Index>();
 
         a.add(indexes.get(0));
 

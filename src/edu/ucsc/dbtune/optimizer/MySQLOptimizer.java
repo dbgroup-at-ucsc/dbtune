@@ -11,7 +11,7 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -55,7 +55,7 @@ public class MySQLOptimizer extends AbstractOptimizer
         create(configuration, connection);
 
         plan = getPlan(sql);
-        used = new IndexBitSet<Index>(plan.getIndexes());
+        used = new BitArraySet<Index>(plan.getIndexes());
         cost = getCost();
 
         drop(configuration, connection);

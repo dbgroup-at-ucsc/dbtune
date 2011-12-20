@@ -5,7 +5,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.interactions.IndexStatisticsFunction;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.MinQueue;
 
 public class HotSetSelector
@@ -28,7 +28,7 @@ public class HotSetSelector
             int maxSize,
             boolean debugOutput
     ) {
-        IndexBitSet<Index> emptyConfig = new IndexBitSet<Index>();
+        BitArraySet<Index> emptyConfig = new BitArraySet<Index>();
         
         int numToChoose = maxSize - requiredIndexSet.size();
         if (numToChoose <= 0) {
@@ -84,7 +84,7 @@ public class HotSetSelector
         }
         else {
             java.util.ArrayList<Index> list = new java.util.ArrayList<Index>();
-            IndexBitSet<Index> m = new IndexBitSet<Index>();
+            BitArraySet<Index> m = new BitArraySet<Index>();
             
             // add required indexes
             for (Index index : requiredIndexSet) {

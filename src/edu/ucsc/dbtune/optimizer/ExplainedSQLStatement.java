@@ -6,7 +6,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
@@ -311,7 +311,7 @@ public class ExplainedSQLStatement
      */
     public Set<Index> getUsedConfiguration()
     {
-        Set<Index> usedConfiguration = new IndexBitSet<Index>();
+        Set<Index> usedConfiguration = new BitArraySet<Index>();
 
         for (Index idx : getConfiguration())
             if (isUsed(idx))
@@ -330,7 +330,7 @@ public class ExplainedSQLStatement
      */
     public Set<Index> getUpdatedConfiguration()
     {
-        Set<Index> updatedConfiguration = new IndexBitSet<Index>();
+        Set<Index> updatedConfiguration = new BitArraySet<Index>();
 
         for (Map.Entry<Index, Double> e : updateCosts.entrySet())
             if (e.getValue() != 0)

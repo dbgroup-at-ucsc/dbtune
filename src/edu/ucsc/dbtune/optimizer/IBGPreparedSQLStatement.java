@@ -9,7 +9,7 @@ import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder.FindResult;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -28,7 +28,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
     private IndexBenefitGraph ibg;
 
     /** The universe of indexes from which actual explains will occur */
-    private IndexBitSet<Index> universe;
+    private BitArraySet<Index> universe;
 
     /** used to find nodes in the ibg */
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
@@ -63,7 +63,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             IBGOptimizer         optimizer,
             SQLStatement         sql,
             IndexBenefitGraph    ibg,
-            IndexBitSet<Index>   universe)
+            BitArraySet<Index>   universe)
     {
         super(optimizer,sql);
         this.ibg        = ibg;
@@ -102,7 +102,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
         return sql;
     }
 
-    public IndexBitSet<Index> getUniverse()
+    public BitArraySet<Index> getUniverse()
     {
         return universe;
     }
@@ -128,12 +128,12 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             ibg = ((IBGOptimizer)optimizer).buildIBG(sql, configuration);
             int optimizationCount = optimizer.getWhatIfCount() - oldOptimizationCount;
             
-            universe = new IndexBitSet<Index>(configuration);
+            universe = new BitArraySet<Index>(configuration);
             Node rootNode = ibg.rootNode();
             
             return new ExplainedSQLStatement(
                     getSQLStatement(), rootNode.cost(), optimizer, universe,
-                    new IndexBitSet<Index>(rootNode.getUsedIndexes()),optimizationCount);
+                    new BitArraySet<Index>(rootNode.getUsedIndexes()),optimizationCount);
         }
         
         if (!getUniverse().contains(configuration)) {

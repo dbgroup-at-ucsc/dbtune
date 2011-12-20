@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 
 import java.util.Arrays;
@@ -117,7 +117,7 @@ public class IndexStatisticsFunction
         return doi.apply(a, b) ;
     }
 
-    public double benefit(Index a, IndexBitSet m)
+    public double benefit(Index a, BitArraySet m)
     {
         return benefit.apply(a, m);
     }
@@ -241,7 +241,7 @@ public class IndexStatisticsFunction
             this.statistics = statistics;
         }
 
-        public double apply(Index arg, IndexBitSet m)
+        public double apply(Index arg, BitArraySet m)
         {
             if (statistics.currentTimeStamp == 0)
                 return 0;

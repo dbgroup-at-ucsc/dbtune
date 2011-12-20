@@ -20,7 +20,7 @@ import java.util.Set;
  * @author Karl Schnaitter
  * @author Ivo Jimenez
  */
-public class IndexBitSet<E extends Identifiable> implements Set<E>
+public class BitArraySet<E extends Identifiable> implements Set<E>
 {
     private static final BitSet t = new BitSet();
     private BitSet bitSet;
@@ -28,7 +28,7 @@ public class IndexBitSet<E extends Identifiable> implements Set<E>
     /**
      * Constructs an empty configuration.
      */
-    public IndexBitSet()
+    public BitArraySet()
     {
         bitSet = new BitSet();
     }
@@ -39,7 +39,7 @@ public class IndexBitSet<E extends Identifiable> implements Set<E>
      * @param ibs
      *      the bitSet being copied
      */
-    public IndexBitSet(IndexBitSet<E> ibs)
+    public BitArraySet(BitArraySet<E> ibs)
     {
         bitSet = (BitSet) ibs.bitSet.clone();
     }
@@ -50,7 +50,7 @@ public class IndexBitSet<E extends Identifiable> implements Set<E>
      * @param other
      *      a collection of objects
      */
-    public IndexBitSet(Collection<E> other)
+    public BitArraySet(Collection<E> other)
     {
         bitSet = new BitSet();
 
@@ -144,8 +144,8 @@ public class IndexBitSet<E extends Identifiable> implements Set<E>
     @Override
     public boolean removeAll(Collection<?> other)
     {
-        if (other instanceof IndexBitSet<?>)
-            bitSet.andNot(((IndexBitSet<?>) other).bitSet);
+        if (other instanceof BitArraySet<?>)
+            bitSet.andNot(((BitArraySet<?>) other).bitSet);
         else
             throw new RuntimeException("not of type IndexBitSet");
 
@@ -158,8 +158,8 @@ public class IndexBitSet<E extends Identifiable> implements Set<E>
     @Override
     public boolean retainAll(Collection<?> other)
     {
-        if (other instanceof IndexBitSet<?>)
-            bitSet.and(((IndexBitSet<?>) other).bitSet);
+        if (other instanceof BitArraySet<?>)
+            bitSet.and(((BitArraySet<?>) other).bitSet);
         else
             throw new RuntimeException("not of type IndexBitSet");
 
@@ -172,8 +172,8 @@ public class IndexBitSet<E extends Identifiable> implements Set<E>
     @Override
     public boolean addAll(Collection<? extends E> other)
     {
-        if (other instanceof IndexBitSet<?>)
-            bitSet.or(((IndexBitSet<?>) other).bitSet);
+        if (other instanceof BitArraySet<?>)
+            bitSet.or(((BitArraySet<?>) other).bitSet);
         else
             throw new RuntimeException("not of type IndexBitSet");
 
@@ -185,10 +185,10 @@ public class IndexBitSet<E extends Identifiable> implements Set<E>
      */
     public boolean containsAll(Collection<?> other)
     {
-        if (!(other instanceof IndexBitSet<?>))
+        if (!(other instanceof BitArraySet<?>))
             throw new RuntimeException("not of type IndexBitSet");
 
-        IndexBitSet<?> o = (IndexBitSet<?>) other;
+        BitArraySet<?> o = (BitArraySet<?>) other;
 
         synchronized (t) {
             t.clear();
@@ -207,10 +207,10 @@ public class IndexBitSet<E extends Identifiable> implements Set<E>
         if (this == other)
             return true;
     
-        if (!(other instanceof IndexBitSet<?>))
+        if (!(other instanceof BitArraySet<?>))
             return false;
     
-        IndexBitSet<?> o = (IndexBitSet<?>) other;
+        BitArraySet<?> o = (BitArraySet<?>) other;
 
         return bitSet.equals(o.bitSet);
     }

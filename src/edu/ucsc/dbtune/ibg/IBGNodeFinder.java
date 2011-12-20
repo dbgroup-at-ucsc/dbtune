@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
  * Does a search for a particular node in the graph.
@@ -10,8 +10,8 @@ import edu.ucsc.dbtune.util.IndexBitSet;
  */
 class IBGNodeFinder
 {
-    private final IndexBitSet<IndexBenefitGraph.Node> visited =
-        new IndexBitSet<IndexBenefitGraph.Node>();
+    private final BitArraySet<IndexBenefitGraph.Node> visited =
+        new BitArraySet<IndexBenefitGraph.Node>();
     private final IBGNodeStack  pending = new IBGNodeStack();
 
     /**
@@ -25,7 +25,7 @@ class IBGNodeFinder
      *      found node in the graph. <strong>IMPORTANT</strong>: may return {@code null}.
      */
     public IndexBenefitGraph.Node find(
-            IndexBenefitGraph.Node rootNode, IndexBitSet<Index> config)
+            IndexBenefitGraph.Node rootNode, BitArraySet<Index> config)
     {
         visited.clear();
         pending.clear();

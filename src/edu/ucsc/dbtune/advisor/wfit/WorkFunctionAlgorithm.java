@@ -12,7 +12,7 @@ import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
  * The foundation for WFIT. The general Work Function Algorithm is described in subsection 3.3 of 
@@ -86,7 +86,7 @@ public class WorkFunctionAlgorithm
           // preprocess cost into a vector
           for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
             // this will explicitly set each index in the array to 1 or 0
-            conf = new IndexBitSet<Index>(workspace.tempBitSet);
+            conf = new BitArraySet<Index>(workspace.tempBitSet);
             queryCost = qinfo.explain(conf).getTotalCost();
             workspace.tempCostVector.set(stateNum, queryCost);
           }
@@ -156,7 +156,7 @@ public class WorkFunctionAlgorithm
         BitSet overlappingSubsets = new BitSet();
         
         // get the set of previously hot indexes
-        IndexBitSet<Index> oldHotSet = new IndexBitSet<Index>();
+        BitArraySet<Index> oldHotSet = new BitArraySet<Index>();
         
         // prepare wf2 with new partitioning
         workspace.wf2.reallocate(newPartitions);
@@ -165,7 +165,7 @@ public class WorkFunctionAlgorithm
             Set<Index> newSubset = new HashSet<Index>(newPartitions.get(newSubsetNum));
             
             // translate old recommendation into a new one.
-            IndexBitSet<Index> recBitSet = new IndexBitSet<Index>();
+            BitArraySet<Index> recBitSet = new BitArraySet<Index>();
             int recStateNum = 0;
             int i = 0;
             for (Index index : newSubset) {
@@ -225,7 +225,7 @@ public class WorkFunctionAlgorithm
      * @param bitSet
      *      an index configuration.
      */
-    static void setStateBits(Index[] indexes, int stateNum, IndexBitSet<Index> bitSet) {
+    static void setStateBits(Index[] indexes, int stateNum, BitArraySet<Index> bitSet) {
         for (Index index : indexes) {
             if (0 != (stateNum & (1 << index.getId())))
                 bitSet.add(index);
@@ -286,7 +286,7 @@ public class WorkFunctionAlgorithm
      */
     public double getScheduleCost(Set<Index> candidateSet,
             int queryCount, List<PreparedSQLStatement> qinfos,
-            IndexPartitions parts, IndexBitSet<Index>[] schedule )
+            IndexPartitions parts, BitArraySet<Index>[] schedule )
         throws SQLException
     {
         throw new SQLException("This method needs to be reimplemented -- see issue #122");
@@ -393,11 +393,11 @@ public class WorkFunctionAlgorithm
         private int numIndexes;
         private int numStates;
         private int currentState;
-        private IndexBitSet<Index> currentBitSet;
+        private BitArraySet<Index> currentBitSet;
         private Index[] indexes;
         
         SubMachine(Set<Index> candidateSet, Set<Index> subset, int subsetNum, int state, 
-                IndexBitSet<Index> bitSet) {
+                BitArraySet<Index> bitSet) {
             this.subset         = subset;
             this.subsetNum      = subsetNum;
             this.numIndexes     = subset.size();
@@ -597,13 +597,13 @@ public class WorkFunctionAlgorithm
     {
         TotalWorkValues wf2;
         CostVector      tempCostVector;
-        IndexBitSet<Index>     tempBitSet;
+        BitArraySet<Index>     tempBitSet;
 
         public Workspace(int maxNumOfStates, int maxHotsize)
         {
             wf2            = new TotalWorkValues(maxNumOfStates,maxHotsize);
             tempCostVector = new CostVector(maxNumOfStates);
-            tempBitSet     = new IndexBitSet<Index>();
+            tempBitSet     = new BitArraySet<Index>();
         }
     }
 }

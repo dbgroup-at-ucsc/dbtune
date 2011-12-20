@@ -4,7 +4,7 @@ import java.util.List;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -44,10 +44,10 @@ public class IndexBenefitGraphTest
     @Test
     public void testBasic() throws Exception
     {
-        IndexBitSet<Index> bs = new IndexBitSet<Index>();
+        BitArraySet<Index> bs = new BitArraySet<Index>();
         List<Index> conf = cat.schemas().get(0).indexes();
 
-        bs = new IndexBitSet<Index>();
+        bs = new BitArraySet<Index>();
 
         bs.add(conf.get(0));
         bs.add(conf.get(1));

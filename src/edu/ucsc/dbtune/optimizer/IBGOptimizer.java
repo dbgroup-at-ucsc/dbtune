@@ -6,7 +6,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;

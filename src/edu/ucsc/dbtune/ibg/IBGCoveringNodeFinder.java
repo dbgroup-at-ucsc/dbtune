@@ -3,15 +3,15 @@ package edu.ucsc.dbtune.ibg;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
  * @author Karl Schnaitter
  */
 public class IBGCoveringNodeFinder
 {
-    private final IndexBitSet<IndexBenefitGraph.Node> visited =
-        new IndexBitSet<IndexBenefitGraph.Node>();
+    private final BitArraySet<IndexBenefitGraph.Node> visited =
+        new BitArraySet<IndexBenefitGraph.Node>();
     private final IBGNodeStack  pending = new IBGNodeStack();
 
     /**
@@ -34,10 +34,10 @@ public class IBGCoveringNodeFinder
 
             if (foundNode != null) {
                 // Obtain used indexes
-                IndexBitSet<Index> usedBitSet = new IndexBitSet<Index>();
+                BitArraySet<Index> usedBitSet = new BitArraySet<Index>();
                 foundNode.addUsedIndexes(usedBitSet);
                 // Create the corresponding configuration
-                IndexBitSet<Index> usedConfiguration = new IndexBitSet<Index>(usedBitSet);
+                BitArraySet<Index> usedConfiguration = new BitArraySet<Index>(usedBitSet);
                 return new FindResult(usedConfiguration, foundNode.cost());
             } else {
                 return new FindResult(null, 0.0);
@@ -108,7 +108,7 @@ public class IBGCoveringNodeFinder
      */
     public IndexBenefitGraph.Node find(
             IndexBenefitGraph.Node rootNode,
-            IndexBitSet<Index> config)
+            BitArraySet<Index> config)
     {
         visited.clear();
         pending.clear();

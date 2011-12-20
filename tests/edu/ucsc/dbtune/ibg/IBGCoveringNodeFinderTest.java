@@ -5,7 +5,7 @@ import java.util.List;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,21 +28,21 @@ public class IBGCoveringNodeFinderTest
 {
     private static Catalog cat;
     private static Node root;
-    private static IndexBitSet<Index> e;
-    private static IndexBitSet<Index> a;
-    private static IndexBitSet<Index> b;
-    private static IndexBitSet<Index> c;
-    private static IndexBitSet<Index> d;
-    private static IndexBitSet<Index> ab;
-    private static IndexBitSet<Index> ac;
-    private static IndexBitSet<Index> ad;
-    private static IndexBitSet<Index> bc;
-    private static IndexBitSet<Index> bd;
-    private static IndexBitSet<Index> cd;
-    private static IndexBitSet<Index> abc;
-    private static IndexBitSet<Index> acd;
-    private static IndexBitSet<Index> bcd;
-    private static IndexBitSet<Index> abcd;
+    private static BitArraySet<Index> e;
+    private static BitArraySet<Index> a;
+    private static BitArraySet<Index> b;
+    private static BitArraySet<Index> c;
+    private static BitArraySet<Index> d;
+    private static BitArraySet<Index> ab;
+    private static BitArraySet<Index> ac;
+    private static BitArraySet<Index> ad;
+    private static BitArraySet<Index> bc;
+    private static BitArraySet<Index> bd;
+    private static BitArraySet<Index> cd;
+    private static BitArraySet<Index> abc;
+    private static BitArraySet<Index> acd;
+    private static BitArraySet<Index> bcd;
+    private static BitArraySet<Index> abcd;
 
     /**
      * Setup for the test.
@@ -56,7 +56,7 @@ public class IBGCoveringNodeFinderTest
         cat = configureCatalog();
         root = configureIndexBenefitGraph(cat).rootNode();
 
-        List<IndexBitSet<Index>> list = configurePowerSet(cat);
+        List<BitArraySet<Index>> list = configurePowerSet(cat);
 
         e = list.get(0);
         a = list.get(1);
@@ -103,7 +103,7 @@ public class IBGCoveringNodeFinderTest
         assertThat(finder.find(root, bcd), is(notNullValue()));
         assertThat(finder.find(root, abcd), is(notNullValue()));
 
-        IndexBitSet<Index> superSet = new IndexBitSet<Index>();
+        BitArraySet<Index> superSet = new BitArraySet<Index>();
 
         superSet.add(conf.get(0));
         superSet.add(conf.get(1));

@@ -22,7 +22,7 @@ import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -146,7 +146,7 @@ public class PGOptimizer extends AbstractOptimizer
             usedConf = getUsedConfiguration(list, positions);
 
         } else {
-            usedConf   = new IndexBitSet<Index>();
+            usedConf   = new BitArraySet<Index>();
             updateCosts = new double[0];
         }
 
@@ -224,7 +224,7 @@ public class PGOptimizer extends AbstractOptimizer
         rs.close();
         stmt.close();
 
-        return new IndexBitSet<Index>(indexes);
+        return new BitArraySet<Index>(indexes);
     }
 
     /**
@@ -285,7 +285,7 @@ public class PGOptimizer extends AbstractOptimizer
      */
     private static Set<Index> getUsedConfiguration(List<Index> indexes, int[] positions)
     {
-        Set<Index> usedConf = new IndexBitSet<Index>();
+        Set<Index> usedConf = new BitArraySet<Index>();
 
         for (int position : positions)
             usedConf.add(indexes.get(position));

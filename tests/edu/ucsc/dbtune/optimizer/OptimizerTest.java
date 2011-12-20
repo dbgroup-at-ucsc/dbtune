@@ -7,7 +7,7 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -185,7 +185,7 @@ public class OptimizerTest
         assertThat(sqlp.getCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        conf  = new IndexBitSet<Index>();
+        conf  = new BitArraySet<Index>();
         sqlp  = opt.explain(sql, conf);
         cost2 = sqlp.getCost();
         
@@ -232,7 +232,7 @@ public class OptimizerTest
         cost1 = opt.explain(sql).getCost();
 
         idxa = new Index(cat.<Column>findByName("one_table.tbl.a"));
-        conf = new IndexBitSet<Index>();
+        conf = new BitArraySet<Index>();
 
         conf.add(idxa);
 
@@ -300,7 +300,7 @@ public class OptimizerTest
         
         col  = cat.<Column>findByName("one_table.tbl.a");
         idxa = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
-        conf = new IndexBitSet<Index>();
+        conf = new BitArraySet<Index>();
         col  = cat.<Column>findByName("one_table.tbl.b");
         idxb = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
 
@@ -380,7 +380,7 @@ public class OptimizerTest
         sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         col  = cat.<Column>findByName("one_table.tbl.a");
         idx  = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
-        conf = new IndexBitSet<Index>();
+        conf = new BitArraySet<Index>();
 
         conf.add(idx);
 
@@ -414,7 +414,7 @@ public class OptimizerTest
         colB = cat.<Column>findByName("one_table.tbl.b");
         idxA = new Index(colA);
         idxB = new Index(colB);
-        conf = new IndexBitSet<Index>();
+        conf = new BitArraySet<Index>();
 
         conf.add(idxA);
 

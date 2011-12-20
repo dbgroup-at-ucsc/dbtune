@@ -12,7 +12,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -145,7 +145,7 @@ public class WFITFunctionalTest
         Workload        wl;
         
         wl   = new Workload(new FileReader(workloadFilename));
-        pool = new IndexBitSet<Index>();
+        pool = new BitArraySet<Index>();
 
         for (SQLStatement sql : wl) {
             candidateSet = db.getOptimizer().recommendIndexes(sql);

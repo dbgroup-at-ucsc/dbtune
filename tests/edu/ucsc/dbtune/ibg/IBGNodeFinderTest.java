@@ -5,7 +5,7 @@ import java.util.List;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,21 +26,21 @@ import static org.junit.Assert.assertThat;
 public class IBGNodeFinderTest
 {
     private static Node root;
-    private static IndexBitSet<Index> e;
-    private static IndexBitSet<Index> a;
-    private static IndexBitSet<Index> b;
-    private static IndexBitSet<Index> c;
-    private static IndexBitSet<Index> d;
-    private static IndexBitSet<Index> ab;
-    private static IndexBitSet<Index> ac;
-    private static IndexBitSet<Index> ad;
-    private static IndexBitSet<Index> bc;
-    private static IndexBitSet<Index> bd;
-    private static IndexBitSet<Index> cd;
-    private static IndexBitSet<Index> abc;
-    private static IndexBitSet<Index> acd;
-    private static IndexBitSet<Index> bcd;
-    private static IndexBitSet<Index> abcd;
+    private static BitArraySet<Index> e;
+    private static BitArraySet<Index> a;
+    private static BitArraySet<Index> b;
+    private static BitArraySet<Index> c;
+    private static BitArraySet<Index> d;
+    private static BitArraySet<Index> ab;
+    private static BitArraySet<Index> ac;
+    private static BitArraySet<Index> ad;
+    private static BitArraySet<Index> bc;
+    private static BitArraySet<Index> bd;
+    private static BitArraySet<Index> cd;
+    private static BitArraySet<Index> abc;
+    private static BitArraySet<Index> acd;
+    private static BitArraySet<Index> bcd;
+    private static BitArraySet<Index> abcd;
 
     /**
      * Setup for the test.
@@ -55,21 +55,21 @@ public class IBGNodeFinderTest
         List<Index> indexes = cat.schemas().get(0).indexes();
         root = configureIndexBenefitGraph(cat).rootNode();
 
-        e = new IndexBitSet<Index>();
-        a = new IndexBitSet<Index>();
-        b = new IndexBitSet<Index>();
-        c = new IndexBitSet<Index>();
-        d = new IndexBitSet<Index>();
-        ab = new IndexBitSet<Index>();
-        ac = new IndexBitSet<Index>();
-        ad = new IndexBitSet<Index>();
-        bc = new IndexBitSet<Index>();
-        bd = new IndexBitSet<Index>();
-        cd = new IndexBitSet<Index>();
-        abc = new IndexBitSet<Index>();
-        acd = new IndexBitSet<Index>();
-        bcd = new IndexBitSet<Index>();
-        abcd = new IndexBitSet<Index>();
+        e = new BitArraySet<Index>();
+        a = new BitArraySet<Index>();
+        b = new BitArraySet<Index>();
+        c = new BitArraySet<Index>();
+        d = new BitArraySet<Index>();
+        ab = new BitArraySet<Index>();
+        ac = new BitArraySet<Index>();
+        ad = new BitArraySet<Index>();
+        bc = new BitArraySet<Index>();
+        bd = new BitArraySet<Index>();
+        cd = new BitArraySet<Index>();
+        abc = new BitArraySet<Index>();
+        acd = new BitArraySet<Index>();
+        bcd = new BitArraySet<Index>();
+        abcd = new BitArraySet<Index>();
 
         a.add(indexes.get(0));
 
@@ -126,7 +126,7 @@ public class IBGNodeFinderTest
 
         List<Index> conf = configureCatalog().schemas().get(0).indexes();
 
-        IndexBitSet<Index> superSet = new IndexBitSet<Index>();
+        BitArraySet<Index> superSet = new BitArraySet<Index>();
 
         superSet.add(conf.get(0));
         superSet.add(conf.get(1));

@@ -2,7 +2,7 @@ package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
  * This class implements the qINTERACT algorithm described in Schnaitter et. al. for computing the 
@@ -26,27 +26,27 @@ public class IBGAnalyzer
     // the set of all used indexes seen so far in the IBG
     // this is different from the bank, because that may have
     // used indexes from other IBG traversals
-    private final IndexBitSet<Index> allUsedIndexes;
+    private final BitArraySet<Index> allUsedIndexes;
 
     // graph traversal objects
     private IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
 
     // copy of the root bit set for convenience
-    private final IndexBitSet<Index> rootBitSet;
+    private final BitArraySet<Index> rootBitSet;
 
     // keeps track of visited nodes
-    private final IndexBitSet<IndexBenefitGraph.Node> visitedNodes;
+    private final BitArraySet<IndexBenefitGraph.Node> visitedNodes;
 
     // All the following correspond to a bunch of structures that we keep around to
     // avoid excessive garbage collection. These structures are only used in the
     // analyzeNode() method.
-    private IndexBitSet<Index> candidatesBitSet = new IndexBitSet<Index>();
-    private IndexBitSet<Index> usedBitSet = new IndexBitSet<Index>();
-    private IndexBitSet<Index> bitsetYaSimple = new IndexBitSet<Index>();
-    private IndexBitSet<Index> bitsetYa = new IndexBitSet<Index>();
-    private IndexBitSet<Index> bitsetYbMinus = new IndexBitSet<Index>();
-    private IndexBitSet<Index> bitsetYbPlus = new IndexBitSet<Index>();
-    private IndexBitSet<Index> bitsetYab = new IndexBitSet<Index>();
+    private BitArraySet<Index> candidatesBitSet = new BitArraySet<Index>();
+    private BitArraySet<Index> usedBitSet = new BitArraySet<Index>();
+    private BitArraySet<Index> bitsetYaSimple = new BitArraySet<Index>();
+    private BitArraySet<Index> bitsetYa = new BitArraySet<Index>();
+    private BitArraySet<Index> bitsetYbMinus = new BitArraySet<Index>();
+    private BitArraySet<Index> bitsetYbPlus = new BitArraySet<Index>();
+    private BitArraySet<Index> bitsetYab = new BitArraySet<Index>();
 
     /**
      * construct an {@code IBGAnalyzer}.
@@ -65,9 +65,9 @@ public class IBGAnalyzer
         this.ibgCons        = ibgCons;
         this.nodeQueue      = nodeQueue;
         this.revisitQueue   = revisitQueue;
-        allUsedIndexes      = new IndexBitSet<Index>();
-        rootBitSet          = new IndexBitSet<Index>(ibgCons.rootNode().getConfiguration());
-        visitedNodes        = new IndexBitSet<IndexBenefitGraph.Node>();
+        allUsedIndexes      = new BitArraySet<Index>();
+        rootBitSet          = new BitArraySet<Index>(ibgCons.rootNode().getConfiguration());
+        visitedNodes        = new BitArraySet<IndexBenefitGraph.Node>();
 
         // seed the queue with the root node
         nodeQueue.addNode(ibgCons.rootNode());
@@ -154,7 +154,7 @@ public class IBGAnalyzer
      */
     private boolean analyzeNode(IndexBenefitGraph.Node node, InteractionLogger logger)
     {
-        IndexBitSet<Index> bitsetY = node.getConfiguration();
+        BitArraySet<Index> bitsetY = node.getConfiguration();
 
         // get the used set
         usedBitSet.clear();

@@ -4,7 +4,7 @@ import java.util.List;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -50,23 +50,23 @@ public class IBGNodeTest
     private static IndexBenefitGraph.Node.Child tmpchild6;
     private static IndexBenefitGraph.Node.Child tmpchild7;
     private static IndexBenefitGraph.Node.Child tmpchild8;
-    private static IndexBitSet<Index> empty;
-    private static IndexBitSet<Index> rootibs;
-    private static IndexBitSet<Index> ibs1;
-    private static IndexBitSet<Index> ibs2;
-    private static IndexBitSet<Index> ibs3;
-    private static IndexBitSet<Index> ibs4;
-    private static IndexBitSet<Index> ibs5;
-    private static IndexBitSet<Index> ibs6;
-    private static IndexBitSet<Index> ibs7;
-    private static IndexBitSet<Index> usedr;
-    private static IndexBitSet<Index> used1;
-    private static IndexBitSet<Index> used2;
-    private static IndexBitSet<Index> used3;
-    private static IndexBitSet<Index> used4;
-    private static IndexBitSet<Index> used5;
-    private static IndexBitSet<Index> used6;
-    private static IndexBitSet<Index> used7;
+    private static BitArraySet<Index> empty;
+    private static BitArraySet<Index> rootibs;
+    private static BitArraySet<Index> ibs1;
+    private static BitArraySet<Index> ibs2;
+    private static BitArraySet<Index> ibs3;
+    private static BitArraySet<Index> ibs4;
+    private static BitArraySet<Index> ibs5;
+    private static BitArraySet<Index> ibs6;
+    private static BitArraySet<Index> ibs7;
+    private static BitArraySet<Index> usedr;
+    private static BitArraySet<Index> used1;
+    private static BitArraySet<Index> used2;
+    private static BitArraySet<Index> used3;
+    private static BitArraySet<Index> used4;
+    private static BitArraySet<Index> used5;
+    private static BitArraySet<Index> used6;
+    private static BitArraySet<Index> used7;
     private static List<Index> indexes;
 
     /**
@@ -77,15 +77,15 @@ public class IBGNodeTest
     {
         Catalog cat = configureCatalog();
         indexes = cat.schemas().get(0).indexes();
-        empty = new IndexBitSet<Index>();
-        rootibs = new IndexBitSet<Index>();
-        ibs1 = new IndexBitSet<Index>();
-        ibs2 = new IndexBitSet<Index>();
-        ibs3 = new IndexBitSet<Index>();
-        ibs4 = new IndexBitSet<Index>();
-        ibs5 = new IndexBitSet<Index>();
-        ibs6 = new IndexBitSet<Index>();
-        ibs7 = new IndexBitSet<Index>();
+        empty = new BitArraySet<Index>();
+        rootibs = new BitArraySet<Index>();
+        ibs1 = new BitArraySet<Index>();
+        ibs2 = new BitArraySet<Index>();
+        ibs3 = new BitArraySet<Index>();
+        ibs4 = new BitArraySet<Index>();
+        ibs5 = new BitArraySet<Index>();
+        ibs6 = new BitArraySet<Index>();
+        ibs7 = new BitArraySet<Index>();
 
         rootibs.add(indexes.get(0));
         rootibs.add(indexes.get(1));
@@ -161,14 +161,14 @@ public class IBGNodeTest
         node6.setCost(80);
         node7.setCost(80);
 
-        usedr = new IndexBitSet<Index>();
-        used1 = new IndexBitSet<Index>();
-        used2 = new IndexBitSet<Index>();
-        used3 = new IndexBitSet<Index>();
-        used4 = new IndexBitSet<Index>();
-        used5 = new IndexBitSet<Index>();
-        used6 = new IndexBitSet<Index>();
-        used7 = new IndexBitSet<Index>();
+        usedr = new BitArraySet<Index>();
+        used1 = new BitArraySet<Index>();
+        used2 = new BitArraySet<Index>();
+        used3 = new BitArraySet<Index>();
+        used4 = new BitArraySet<Index>();
+        used5 = new BitArraySet<Index>();
+        used6 = new BitArraySet<Index>();
+        used7 = new BitArraySet<Index>();
 
         usedr.add(indexes.get(0));
         usedr.add(indexes.get(3));
@@ -186,7 +186,7 @@ public class IBGNodeTest
     @Test
     public void testConstructor()
     {
-        IndexBitSet<Index> ibs = new IndexBitSet<Index>();
+        BitArraySet<Index> ibs = new BitArraySet<Index>();
         IndexBenefitGraph.Node node = new IndexBenefitGraph.Node(ibs, 10);
 
         assertThat(node.getConfiguration(), is(ibs));
@@ -285,7 +285,7 @@ public class IBGNodeTest
     @Test
     public void testUsedAndClearIndexes()
     {
-        IndexBitSet<Index> ibs = new IndexBitSet<Index>();
+        BitArraySet<Index> ibs = new BitArraySet<Index>();
 
         root.addUsedIndexes(ibs);
         assertThat(ibs, is(usedr));

@@ -8,7 +8,7 @@ import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.DefaultQueue;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -51,8 +51,8 @@ public class IndexBenefitGraphConstructor
     private int optCount;
 
     /* Temporary bit sets allocated once to allow reuse... only used in buildNode() */ 
-    private IndexBitSet<Index> usedBitSet;
-    private IndexBitSet<Index> childBitSet;
+    private BitArraySet<Index> usedBitSet;
+    private BitArraySet<Index> childBitSet;
 
     /*
      * The primary information stored by the graph
@@ -75,7 +75,7 @@ public class IndexBenefitGraphConstructor
     private final IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
 
     /* true if the index is used somewhere in the graph */
-    private IndexBitSet<Index> isUsed;
+    private BitArraySet<Index> isUsed;
 
     /**
      * Creates an IBG constructor that uses the given optimizer to execute optimization calls.
@@ -100,7 +100,7 @@ public class IndexBenefitGraphConstructor
         this.configuration = conf;
 
         // set up the root node, and initialize the queue
-        IndexBitSet<Index> rootConfig = new IndexBitSet<Index>(conf);
+        BitArraySet<Index> rootConfig = new BitArraySet<Index>(conf);
         rootNode = new IndexBenefitGraph.Node(rootConfig, nodeCount++);
 
         emptyCost = optimizer.explain(this.sql).getCost();
@@ -217,7 +217,7 @@ public class IndexBenefitGraphConstructor
             if (childNode == null) {
                 isUsed.add(u);
                 childNode =
-                    new IndexBenefitGraph.Node(new IndexBitSet<Index>(childBitSet), nodeCount++);
+                    new IndexBenefitGraph.Node(new BitArraySet<Index>(childBitSet), nodeCount++);
                 queue.add(childNode);
             }
             childBitSet.add(u);
@@ -286,18 +286,18 @@ public class IndexBenefitGraphConstructor
             Set<Index> conf)
         throws SQLException
     {
-        IndexBitSet<Index> rootConfig;
+        BitArraySet<Index> rootConfig;
         CandidatePool pool = new CandidatePool(conf);
 
         this.sql      = sql;
         configuration = conf;
         optCount      = 0;
         nodeCount     = 0;
-        usedBitSet    = new IndexBitSet<Index>();
-        childBitSet   = new IndexBitSet<Index>();
-        isUsed        = new IndexBitSet<Index>();
+        usedBitSet    = new BitArraySet<Index>();
+        childBitSet   = new BitArraySet<Index>();
+        isUsed        = new BitArraySet<Index>();
         candidateSet  = pool.getSnapshot();
-        rootConfig    = new IndexBitSet<Index>(candidateSet.set());
+        rootConfig    = new BitArraySet<Index>(candidateSet.set());
         queue         = new DefaultQueue<IndexBenefitGraph.Node>();
         rootNode      = new IndexBenefitGraph.Node(rootConfig, nodeCount++);
         emptyCost     = optimizer.explain(sql).getCost();
@@ -452,7 +452,7 @@ public class IndexBenefitGraphConstructor
             /* serializable fields */
             int maxId;
             Node first;
-            IndexBitSet<Index> bs;
+            BitArraySet<Index> bs;
 
             protected Snapshot()
             {
@@ -460,7 +460,7 @@ public class IndexBenefitGraphConstructor
 
             private Snapshot(Set<Index> conf, Node first0)
             {
-                bs = new IndexBitSet<Index>(conf);
+                bs = new BitArraySet<Index>(conf);
             }
 
             public java.util.Iterator<Index> iterator()
