@@ -1,7 +1,9 @@
 package edu.ucsc.dbtune.metadata;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import edu.ucsc.dbtune.util.Objects;
 
@@ -92,9 +94,12 @@ public class Table extends DatabaseObject implements Iterable<Column>
     {
         return Objects.<Iterator<Column>>as(containees.iterator());
     }
-    public Iterable<Column> columns()
+
+    /**
+     */
+    public List<Column> columns()
     {
-        return Objects.<Iterable<Column>>as(containees);
+        return new ArrayList<Column>(Objects.<List<Column>>as(containees));
     }
 
     /**

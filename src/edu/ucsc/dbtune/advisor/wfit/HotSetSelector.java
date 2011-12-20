@@ -1,7 +1,9 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.ucsc.dbtune.advisor.interactions.IndexStatisticsFunction;
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.MinQueue;
@@ -18,19 +20,19 @@ public class HotSetSelector
      * @return
      *      a hot set (i.e., a {@link Configuration}) 
      */
-    public static Configuration choose(
-            Configuration candSet,
-            Configuration oldHotSet,
-            Configuration requiredIndexSet,
+    public static Set<Index> choose(
+            Set<Index> candSet,
+            Set<Index> oldHotSet,
+            Set<Index> requiredIndexSet,
             IndexStatisticsFunction benefitFunc,
             int maxSize,
             boolean debugOutput
     ) {
-        IndexBitSet emptyConfig = new IndexBitSet();
+        IndexBitSet<Index> emptyConfig = new IndexBitSet<Index>();
         
         int numToChoose = maxSize - requiredIndexSet.size();
         if (numToChoose <= 0) {
-            return new Configuration(requiredIndexSet);
+            return new HashSet<Index>(requiredIndexSet);
         }
         else {
             MinQueue<Index> topSet = new MinQueue<Index>(numToChoose);
@@ -56,7 +58,7 @@ public class HotSetSelector
             while (topSet.size() > 0)
                 list.add(topSet.deleteMin());
 
-            return new Configuration(list);
+            return new HashSet<Index>(list);
         }
     }
     
@@ -67,10 +69,10 @@ public class HotSetSelector
      * @return
      *      a hot set (i.e., a {@link Configuration})
      */
-    public static Configuration chooseGreedy(
-            Configuration candSet,
-            Configuration oldHotSet,
-            Configuration requiredIndexSet,
+    public static Set<Index> chooseGreedy(
+            Set<Index> candSet,
+            Set<Index> oldHotSet,
+            Set<Index> requiredIndexSet,
             IndexStatisticsFunction benefitFunc,
             int maxSize,
             boolean debugOutput
@@ -78,16 +80,16 @@ public class HotSetSelector
         
         int numToChoose = maxSize - requiredIndexSet.size();
         if (numToChoose <= 0) {
-            return new Configuration(requiredIndexSet);
+            return new HashSet<Index>(requiredIndexSet);
         }
         else {
             java.util.ArrayList<Index> list = new java.util.ArrayList<Index>();
-            IndexBitSet M = new IndexBitSet();
+            IndexBitSet<Index> m = new IndexBitSet<Index>();
             
             // add required indexes
             for (Index index : requiredIndexSet) {
                 list.add(index);
-                M.add(candSet.getOrdinalPosition(index));
+                m.add(index);
             }
             
             // add top indexes
@@ -96,11 +98,11 @@ public class HotSetSelector
                 double bestScore = Double.NEGATIVE_INFINITY;
                 
                 for (Index index : candSet) {
-                    if (M.contains(candSet.getOrdinalPosition(index)))
+                    if (m.contains(index))
                         continue;
                     
                     double penalty = oldHotSet.contains(index) ? 0 : index.getCreationCost();
-                    double score = benefitFunc.benefit(index, M) - penalty;
+                    double score = benefitFunc.benefit(index, m) - penalty;
                     if (score > bestScore) {
                         bestIndex = index;
                         bestScore = score;
@@ -110,11 +112,11 @@ public class HotSetSelector
                     break;
                 else {
                     list.add(bestIndex);
-                    M.add(candSet.getOrdinalPosition(bestIndex));
+                    m.add(bestIndex);
                 }
             }
 
-            return new Configuration(list);
+            return new HashSet<Index>(list);
         }
     }
 }

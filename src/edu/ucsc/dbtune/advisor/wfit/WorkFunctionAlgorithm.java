@@ -1,22 +1,18 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
-import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
-import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.ToStringBuilder;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.sql.SQLException;
+
+import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
  * The foundation for WFIT. The general Work Function Algorithm is described in subsection 3.3 of 
@@ -33,7 +29,7 @@ public class WorkFunctionAlgorithm
     private TotalWorkValues wf;
     private SubMachineArray submachines;
     private Workspace       workspace;
-    private Configuration   allIndexes;
+    private Set<Index>      allIndexes;
     private int             maxNumOfIndexes;
 
     /**
@@ -48,7 +44,7 @@ public class WorkFunctionAlgorithm
      * @param maxNumIndexes
      *      maximum number of indexes to consider per each state (partition)
      */
-    public WorkFunctionAlgorithm(Configuration allIndexes, int maxNumStates, int maxNumIndexes)
+    public WorkFunctionAlgorithm(Set<Index> allIndexes, int maxNumStates, int maxNumIndexes)
     {
         this.maxNumOfIndexes = maxNumIndexes;
         this.allIndexes      = allIndexes;
@@ -74,11 +70,11 @@ public class WorkFunctionAlgorithm
      *     a {@link Configuration} that represents the set of all indexes that are 
      * @see #getRecommendation()
      */
-    public void newTask(PreparedSQLStatement qinfo, Configuration configuration) throws SQLException
+    public void newTask(PreparedSQLStatement qinfo, Set<Index> configuration) throws SQLException
     {
       workspace.tempBitSet.clear(); // just to be safe
 
-      Configuration conf;
+      Set<Index> conf;
       double queryCost;
 
       for (Index idx : configuration) {
@@ -90,17 +86,11 @@ public class WorkFunctionAlgorithm
           // preprocess cost into a vector
           for (int stateNum = 0; stateNum < subm.numStates; stateNum++) {
             // this will explicitly set each index in the array to 1 or 0
-            setStateBits(subm.indexIds, stateNum, workspace.tempBitSet);
-            conf = new ConfigurationBitSet(configuration, workspace.tempBitSet);
+            conf = new IndexBitSet<Index>(workspace.tempBitSet);
             queryCost = qinfo.explain(conf).getTotalCost();
             workspace.tempCostVector.set(stateNum, queryCost);
           }
 
-          // clear all indexes in the array
-          clearStateBits(subm.indexIds, workspace.tempBitSet);
-
-          // run the task through the submachine
-          subm.newTask(allIndexes, workspace.tempCostVector, wf, workspace.wf2);
         }
         
         // all submachines have assigned the new values into wf2
@@ -110,11 +100,6 @@ public class WorkFunctionAlgorithm
           wf = workspace.wf2;
           workspace.wf2 = wfTemp;
         }
-    }
-
-    private static void clearStateBits(int[] ids, IndexBitSet bitSet)
-    {
-        for (int id : ids) bitSet.remove(id);
     }
 
     /**
@@ -145,7 +130,7 @@ public class WorkFunctionAlgorithm
         ArrayList<Index> rec = new ArrayList<Index>(maxNumOfIndexes);
         for (SubMachine subm : submachines) {
             for (Index index : subm.subset) {
-                if (subm.currentBitSet.contains(allIndexes.getOrdinalPosition(index))){
+                if (subm.currentBitSet.contains(index)) {
                     rec.add(index);
                 }                        
             }
@@ -171,12 +156,7 @@ public class WorkFunctionAlgorithm
         BitSet overlappingSubsets = new BitSet();
         
         // get the set of previously hot indexes
-        IndexBitSet oldHotSet = new IndexBitSet();
-        for (SubMachine oldSubmachine : submachines) {
-            for (int oldIndexId : oldSubmachine.indexIds) {
-                oldHotSet.add(oldIndexId);
-            }
-        }
+        IndexBitSet<Index> oldHotSet = new IndexBitSet<Index>();
         
         // prepare wf2 with new partitioning
         workspace.wf2.reallocate(newPartitions);
@@ -185,12 +165,12 @@ public class WorkFunctionAlgorithm
             Set<Index> newSubset = new HashSet<Index>(newPartitions.get(newSubsetNum));
             
             // translate old recommendation into a new one.
-            IndexBitSet recBitSet = new IndexBitSet();
+            IndexBitSet<Index> recBitSet = new IndexBitSet<Index>();
             int recStateNum = 0;
             int i = 0;
             for (Index index : newSubset) {
                 if (isRecommended(index)) {
-                    recBitSet.add(allIndexes.getOrdinalPosition(index));
+                    recBitSet.add(index);
                     recStateNum |= (1 << i);
                 }
                 ++i;
@@ -214,24 +194,13 @@ public class WorkFunctionAlgorithm
                 i = 0;
                 for (Index index : newSubmachine.subset) {
                     int mask = (1 << (i++));
-                    if (0 != (stateNum & mask) && !oldHotSet.contains(allIndexes.getOrdinalPosition(index)))
+                    if (0 != (stateNum & mask) && !oldHotSet.contains(index))
                         value += index.getCreationCost();
                 }
                 
                 for (int oldSubsetNum = 0; oldSubsetNum < oldSubsetCount; oldSubsetNum++) {
                     if (!overlappingSubsets.get(oldSubsetNum))
                         continue;
-                    
-                    int[] oldIndexIds = submachines.get(oldSubsetNum).indexIds;
-                    int oldStateNum = 0;
-                    for (int i_old = 0; i_old < oldIndexIds.length; i_old++) {
-                        int i_new = newSubmachine.indexPos(oldIndexIds[i_old]);
-                        if (i_new < 0)
-                            continue;
-                        if ((stateNum & (1 << i_new)) != 0)
-                            oldStateNum |= (1 << i_old);
-                    }
-                    value += wf.get(oldSubsetNum, oldStateNum);
                 }
 
                 // we don't recompute the predecessor during repartitioning, but it is feasible
@@ -256,14 +225,12 @@ public class WorkFunctionAlgorithm
      * @param bitSet
      *      an index configuration.
      */
-    static void setStateBits(int[] ids, int stateNum, IndexBitSet bitSet) {
-        for (int i = 0; i < ids.length; i++) {
-            if (0 != (stateNum & (1 << i)))
-                bitSet.add(ids[i]);
+    static void setStateBits(Index[] indexes, int stateNum, IndexBitSet<Index> bitSet) {
+        for (Index index : indexes) {
+            if (0 != (stateNum & (1 << index.getId())))
+                bitSet.add(index);
             else
-                bitSet.remove(ids[i]);
-                
-                    
+                bitSet.remove(index);
         }
     }
 
@@ -271,19 +238,18 @@ public class WorkFunctionAlgorithm
     {
         // not sure which submachine has the index, so check them all
         for (SubMachine subm : submachines) {
-            if (subm.currentBitSet.contains(allIndexes.getOrdinalPosition(idx))){
+            if (subm.currentBitSet.contains(idx)) {
                 return true;
             }
         }
         return false;
     }
     
-    public static double transitionCost(Configuration candidateSet, IndexBitSet x, IndexBitSet y)
+    public static double transitionCost(Set<Index> candidateSet, Set<Index> x, Set<Index> y)
     {
         double transition = 0;
         for (Index index : candidateSet) {
-            int id = candidateSet.getOrdinalPosition(index);
-            if (y.contains(id) && !x.contains(id))
+            if (y.contains(index) && !x.contains(index))
                 transition += index.getCreationCost();
         }
         return transition;
@@ -318,9 +284,9 @@ public class WorkFunctionAlgorithm
      * @return
      *      a schedule cost over a set of candidate and queries.
      */
-    public double getScheduleCost(Configuration candidateSet,
+    public double getScheduleCost(Set<Index> candidateSet,
             int queryCount, List<PreparedSQLStatement> qinfos,
-            IndexPartitions parts, IndexBitSet[] schedule )
+            IndexPartitions parts, IndexBitSet<Index>[] schedule )
         throws SQLException
     {
         throw new SQLException("This method needs to be reimplemented -- see issue #122");
@@ -386,15 +352,6 @@ public class WorkFunctionAlgorithm
             vector = newVector;
             cap = newCap;
         }
-
-        @Override
-        public String toString()
-        {
-            return new ToStringBuilder<CostVector>(this)
-                   .add("vector", Arrays.toString(vector))
-                   .add("cap", cap)
-                   .toString();
-        }
     }
     
     
@@ -427,15 +384,6 @@ public class WorkFunctionAlgorithm
         {
             return arr.iterator();
         }
-
-        @Override
-        public String toString()
-        {
-            return new ToStringBuilder<SubMachineArray>(this)
-                   .add("arr", arr.toString())
-                   .add("length", length)
-                   .toString();
-        }
     }
     
     private static class SubMachine implements Iterable<Index>
@@ -445,41 +393,25 @@ public class WorkFunctionAlgorithm
         private int numIndexes;
         private int numStates;
         private int currentState;
-        private IndexBitSet currentBitSet;
-        private Configuration candidateSet;
-        private int[] indexIds;
+        private IndexBitSet<Index> currentBitSet;
+        private Index[] indexes;
         
-        SubMachine(Configuration candidateSet, Set<Index> subset, int subsetNum, int state, IndexBitSet bitSet) {
+        SubMachine(Set<Index> candidateSet, Set<Index> subset, int subsetNum, int state, 
+                IndexBitSet<Index> bitSet) {
             this.subset         = subset;
             this.subsetNum      = subsetNum;
             this.numIndexes     = subset.size();
             this.numStates      = 1 << numIndexes;
             this.currentState   = state;
             this.currentBitSet  = bitSet;
-            this.candidateSet   = candidateSet;
             
-            this.indexIds = new int[numIndexes];
+            this.indexes = new Index[numIndexes];
             int i = 0;
             for (Index index : subset) {
-                this.indexIds[i++] = candidateSet.getOrdinalPosition(index);
+                this.indexes[i++] = index;
             }
         }
         
-        /**
-         * Returns the position of an index given its internalIds.
-         * @param id
-         *      index's internalId.
-         * @return
-         *      position of id in indexIds if exists, else -1
-         */
-        public int indexPos(int id)
-        {
-            for (int i = 0; i < numIndexes; i++)
-                if (indexIds[i] == id)
-                    return i;
-            return -1;
-        }
-
         /**
          * process a positive or negative vote for the index and do the necessary bookkeeping in
          * the input workfunction, and update the current state.
@@ -493,43 +425,6 @@ public class WorkFunctionAlgorithm
          */
         public void vote(TotalWorkValues wf, Index index, boolean isPositive)
         {
-            // find the position in indexIds
-            int indexIdsPos;
-            int stateMask;
-            for (indexIdsPos = 0; indexIdsPos < numIndexes; indexIdsPos++) 
-                if (indexIds[indexIdsPos] == candidateSet.getOrdinalPosition(index))
-                    break;
-            if (indexIdsPos >= numIndexes) {
-                return;
-            }
-            
-            // integer with a 1 in the position of the index
-            stateMask = (1 << indexIdsPos);
-                    
-            // register the vote in the recommendation
-            if (isPositive) {
-                currentBitSet.add(candidateSet.getOrdinalPosition(index));
-                currentState |= stateMask;
-            }
-            else {
-                currentBitSet.remove(candidateSet.getOrdinalPosition(index));
-                currentState ^= stateMask;
-            }
-            
-            // register the vote in the work function
-            double minScore = wf.get(subsetNum, currentState) + index.getCreationCost();
-            for (int stateNum = 0; stateNum < numStates; stateNum++) {
-                boolean stateContainsIndex = stateMask == (stateMask & stateNum);
-                if (isPositive != stateContainsIndex) {
-                    // the state is not consistent
-                    // we require wf + trans >= minScore
-                    // equivalently, wf >= minScore - trans
-                    double minWorkFunction = minScore - transitionCost(subset, stateNum, currentState);
-                    if (wf.get(subsetNum, stateNum) < minWorkFunction) {
-                        wf.set(subsetNum, stateNum, minWorkFunction, wf.predecessor(subsetNum, stateNum));
-                    }
-                }
-            }
         }
 
         /**
@@ -544,7 +439,8 @@ public class WorkFunctionAlgorithm
          * @param wfNew
          *      {@code WorkFunctionAlgorithm}'s new total work values.
          */
-        void newTask(Configuration conf, CostVector cost, TotalWorkValues wfOld, TotalWorkValues wfNew) {
+        void newTask(Set<Index> conf, CostVector cost, TotalWorkValues wfOld, TotalWorkValues wfNew) 
+        {
             // compute new work function
             for (int newStateNum = 0; newStateNum < numStates; newStateNum++) {
                 // compute one value of the work function
@@ -596,27 +492,12 @@ public class WorkFunctionAlgorithm
                 throw new AssertionError("failed to compute best state");
             
             currentState = bestState;
-            setStateBits(indexIds, currentState, currentBitSet);
         }
 
         @Override
         public Iterator<Index> iterator()
         {
             return subset.iterator();
-        }
-
-        @Override
-        public String toString()
-        {
-            return new ToStringBuilder<SubMachine>(this)
-                   .add("subsetNum",subsetNum)
-                   .add("numIndexes",numIndexes)
-                   .add("numStates",numStates)
-                   .add("currentState",currentState)
-                   .add("currentBitSet",currentBitSet)
-                   .add("indexIds", Arrays.toString(indexIds))
-                   .add("subset", subset)
-                   .toString();
         }
     }
 
@@ -707,16 +588,6 @@ public class WorkFunctionAlgorithm
                 predecessor[i] = wf2.predecessor[i];
             }
         }
-
-        @Override
-        public String toString()
-        {
-            return new ToStringBuilder<TotalWorkValues>(this)
-                   .add("values", Arrays.toString(values))
-                   .add("predecessor", Arrays.toString(predecessor))
-                   .add("subsetStart", Arrays.toString(subsetStart))
-                   .toString();
-        }
     }
 
     /**
@@ -726,13 +597,13 @@ public class WorkFunctionAlgorithm
     {
         TotalWorkValues wf2;
         CostVector      tempCostVector;
-        IndexBitSet     tempBitSet;
+        IndexBitSet<Index>     tempBitSet;
 
         public Workspace(int maxNumOfStates, int maxHotsize)
         {
             wf2            = new TotalWorkValues(maxNumOfStates,maxHotsize);
             tempCostVector = new CostVector(maxNumOfStates);
-            tempBitSet     = new IndexBitSet();
+            tempBitSet     = new IndexBitSet<Index>();
         }
     }
 }

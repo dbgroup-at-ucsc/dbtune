@@ -1,13 +1,12 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
 
 public class IndexPartitions
 {
@@ -20,7 +19,7 @@ public class IndexPartitions
      * @param configuration
      *      a configuration to be partitioned.
      */
-    public IndexPartitions(Configuration conf)
+    public IndexPartitions(Set<Index> conf)
     {
         Set<Index> set;
 

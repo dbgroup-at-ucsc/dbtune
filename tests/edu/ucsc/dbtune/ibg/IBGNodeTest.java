@@ -1,11 +1,15 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
+import java.util.List;
+
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 import static edu.ucsc.dbtune.DBTuneInstances.configureIndexBenefitGraph;
 
 import static org.hamcrest.Matchers.is;
@@ -22,74 +26,103 @@ public class IBGNodeTest
 {
     // CHECKSTYLE:OFF
     private static IndexBenefitGraph ibg;
-    private static Node           root;
-    private static Node           node1;
-    private static Node           node2;
-    private static Node           node3;
-    private static Node           node4;
-    private static Node           node5;
-    private static Node           node6;
-    private static Node           node7;
-    private static Node.Child  child1;
-    private static Node.Child  child2;
-    private static Node.Child  child3;
-    private static Node.Child  child4;
-    private static Node.Child  child5;
-    private static Node.Child  child6;
-    private static Node.Child  child7;
-    private static Node.Child  child8;
-    private static Node.Child  tmpchild1;
-    private static Node.Child  tmpchild2;
-    private static Node.Child  tmpchild3;
-    private static Node.Child  tmpchild4;
-    private static Node.Child  tmpchild5;
-    private static Node.Child  tmpchild6;
-    private static Node.Child  tmpchild7;
-    private static Node.Child  tmpchild8;
-    private static IndexBitSet       empty;
-    private static IndexBitSet       rootibs;
-    private static IndexBitSet       ibs1;
-    private static IndexBitSet       ibs2;
-    private static IndexBitSet       ibs3;
-    private static IndexBitSet       ibs4;
-    private static IndexBitSet       ibs5;
-    private static IndexBitSet       ibs6;
-    private static IndexBitSet       ibs7;
-    private static IndexBitSet       usedr;
-    private static IndexBitSet       used1;
-    private static IndexBitSet       used2;
-    private static IndexBitSet       used3;
-    private static IndexBitSet       used4;
-    private static IndexBitSet       used5;
-    private static IndexBitSet       used6;
-    private static IndexBitSet       used7;
-    // CHECKSTYLE:ON
+    private static IndexBenefitGraph.Node root;
+    private static IndexBenefitGraph.Node node1;
+    private static IndexBenefitGraph.Node node2;
+    private static IndexBenefitGraph.Node node3;
+    private static IndexBenefitGraph.Node node4;
+    private static IndexBenefitGraph.Node node5;
+    private static IndexBenefitGraph.Node node6;
+    private static IndexBenefitGraph.Node node7;
+    private static IndexBenefitGraph.Node.Child child1;
+    private static IndexBenefitGraph.Node.Child child2;
+    private static IndexBenefitGraph.Node.Child child3;
+    private static IndexBenefitGraph.Node.Child child4;
+    private static IndexBenefitGraph.Node.Child child5;
+    private static IndexBenefitGraph.Node.Child child6;
+    private static IndexBenefitGraph.Node.Child child7;
+    private static IndexBenefitGraph.Node.Child child8;
+    private static IndexBenefitGraph.Node.Child tmpchild1;
+    private static IndexBenefitGraph.Node.Child tmpchild2;
+    private static IndexBenefitGraph.Node.Child tmpchild3;
+    private static IndexBenefitGraph.Node.Child tmpchild4;
+    private static IndexBenefitGraph.Node.Child tmpchild5;
+    private static IndexBenefitGraph.Node.Child tmpchild6;
+    private static IndexBenefitGraph.Node.Child tmpchild7;
+    private static IndexBenefitGraph.Node.Child tmpchild8;
+    private static IndexBitSet<Index> empty;
+    private static IndexBitSet<Index> rootibs;
+    private static IndexBitSet<Index> ibs1;
+    private static IndexBitSet<Index> ibs2;
+    private static IndexBitSet<Index> ibs3;
+    private static IndexBitSet<Index> ibs4;
+    private static IndexBitSet<Index> ibs5;
+    private static IndexBitSet<Index> ibs6;
+    private static IndexBitSet<Index> ibs7;
+    private static IndexBitSet<Index> usedr;
+    private static IndexBitSet<Index> used1;
+    private static IndexBitSet<Index> used2;
+    private static IndexBitSet<Index> used3;
+    private static IndexBitSet<Index> used4;
+    private static IndexBitSet<Index> used5;
+    private static IndexBitSet<Index> used6;
+    private static IndexBitSet<Index> used7;
+    private static List<Index> indexes;
 
     /**
      * Creates the IBG under test.
      */
     @BeforeClass
-    public static void beforeClass()
+    public static void beforeClass() throws Exception
     {
-        rootibs = new IndexBitSet();
-        empty   = new IndexBitSet();
-        ibs1    = new IndexBitSet();
-        ibs2    = new IndexBitSet();
-        ibs3    = new IndexBitSet();
-        ibs4    = new IndexBitSet();
-        ibs5    = new IndexBitSet();
-        ibs6    = new IndexBitSet();
-        ibs7    = new IndexBitSet();
-        usedr   = new IndexBitSet();
-        used1   = new IndexBitSet();
-        used2   = new IndexBitSet();
-        used3   = new IndexBitSet();
-        used4   = new IndexBitSet();
-        used5   = new IndexBitSet();
-        used6   = new IndexBitSet();
-        used7   = new IndexBitSet();
+        Catalog cat = configureCatalog();
+        indexes = cat.schemas().get(0).indexes();
+        empty = new IndexBitSet<Index>();
+        rootibs = new IndexBitSet<Index>();
+        ibs1 = new IndexBitSet<Index>();
+        ibs2 = new IndexBitSet<Index>();
+        ibs3 = new IndexBitSet<Index>();
+        ibs4 = new IndexBitSet<Index>();
+        ibs5 = new IndexBitSet<Index>();
+        ibs6 = new IndexBitSet<Index>();
+        ibs7 = new IndexBitSet<Index>();
 
-        ibg    = configureIndexBenefitGraph();
+        rootibs.add(indexes.get(0));
+        rootibs.add(indexes.get(1));
+        rootibs.add(indexes.get(2));
+        rootibs.add(indexes.get(3));
+
+        ibs1.add(indexes.get(0));
+        ibs1.add(indexes.get(1));
+        ibs1.add(indexes.get(2));
+
+        ibs2.add(indexes.get(1));
+        ibs2.add(indexes.get(2));
+        ibs2.add(indexes.get(3));
+
+        ibs3.add(indexes.get(0));
+        ibs3.add(indexes.get(2));
+
+        ibs4.add(indexes.get(1));
+        ibs4.add(indexes.get(2));
+
+        ibs5.add(indexes.get(2));
+        ibs5.add(indexes.get(3));
+
+        ibs6.add(indexes.get(2));
+
+        ibs7.add(indexes.get(3));
+
+        ibg = configureIndexBenefitGraph(cat);
+
+        root = new IndexBenefitGraph.Node(rootibs, 0);
+        node1 = new IndexBenefitGraph.Node(ibs1, 1);
+        node2 = new IndexBenefitGraph.Node(ibs2, 2);
+        node3 = new IndexBenefitGraph.Node(ibs3, 3);
+        node4 = new IndexBenefitGraph.Node(ibs4, 4);
+        node5 = new IndexBenefitGraph.Node(ibs5, 5);
+        node6 = new IndexBenefitGraph.Node(ibs6, 6);
+        node7 = new IndexBenefitGraph.Node(ibs7, 7);
 
         child1 = ibg.rootNode().firstChild();
         child2 = child1.getNext();
@@ -100,49 +133,14 @@ public class IBGNodeTest
         child7 = child5.getNode().firstChild();
         child8 = child7.getNext();
 
-        rootibs.add(0);
-        rootibs.add(1);
-        rootibs.add(2);
-        rootibs.add(3);
-
-        ibs1.add(0);
-        ibs1.add(1);
-        ibs1.add(2);
-
-        ibs2.add(1);
-        ibs2.add(2);
-        ibs2.add(3);
-
-        ibs3.add(0);
-        ibs3.add(2);
-
-        ibs4.add(1);
-        ibs4.add(2);
-
-        ibs5.add(2);
-        ibs5.add(3);
-
-        ibs6.add(2);
-
-        ibs7.add(3);
-
-        root  = new Node(rootibs, 0);
-        node1 = new Node(ibs1, 1);
-        node2 = new Node(ibs2, 2);
-        node3 = new Node(ibs3, 3);
-        node4 = new Node(ibs4, 4);
-        node5 = new Node(ibs5, 5);
-        node6 = new Node(ibs6, 6);
-        node7 = new Node(ibs7, 7);
-
-        tmpchild1 = new Node.Child(node1, 3);
-        tmpchild2 = new Node.Child(node2, 0);
-        tmpchild3 = new Node.Child(node3, 1);
-        tmpchild4 = new Node.Child(node4, 0);
-        tmpchild5 = new Node.Child(node5, 1);
-        tmpchild6 = new Node.Child(node6, 1);
-        tmpchild7 = new Node.Child(node6, 3);
-        tmpchild8 = new Node.Child(node7, 2);
+        tmpchild1 = new IndexBenefitGraph.Node.Child(node1, indexes.get(3));
+        tmpchild2 = new IndexBenefitGraph.Node.Child(node2, indexes.get(0));
+        tmpchild3 = new IndexBenefitGraph.Node.Child(node3, indexes.get(1));
+        tmpchild4 = new IndexBenefitGraph.Node.Child(node4, indexes.get(0));
+        tmpchild5 = new IndexBenefitGraph.Node.Child(node5, indexes.get(1));
+        tmpchild6 = new IndexBenefitGraph.Node.Child(node6, indexes.get(1));
+        tmpchild7 = new IndexBenefitGraph.Node.Child(node6, indexes.get(3));
+        tmpchild8 = new IndexBenefitGraph.Node.Child(node7, indexes.get(2));
 
         root.expand(0, tmpchild1);
         tmpchild1.getNode().expand(0, tmpchild3);
@@ -163,14 +161,23 @@ public class IBGNodeTest
         node6.setCost(80);
         node7.setCost(80);
 
-        usedr.add(0);
-        usedr.add(3);
-        used1.add(0);
-        used1.add(1);
-        used2.add(1);
-        used4.add(1);
-        used5.add(2);
-        used5.add(3);
+        usedr = new IndexBitSet<Index>();
+        used1 = new IndexBitSet<Index>();
+        used2 = new IndexBitSet<Index>();
+        used3 = new IndexBitSet<Index>();
+        used4 = new IndexBitSet<Index>();
+        used5 = new IndexBitSet<Index>();
+        used6 = new IndexBitSet<Index>();
+        used7 = new IndexBitSet<Index>();
+
+        usedr.add(indexes.get(0));
+        usedr.add(indexes.get(3));
+        used1.add(indexes.get(0));
+        used1.add(indexes.get(1));
+        used2.add(indexes.get(1));
+        used4.add(indexes.get(1));
+        used5.add(indexes.get(2));
+        used5.add(indexes.get(3));
     }
 
     /**
@@ -179,18 +186,18 @@ public class IBGNodeTest
     @Test
     public void testConstructor()
     {
-        IndexBitSet ibs = new IndexBitSet();
-        Node node    = new Node(ibs, 10);
+        IndexBitSet<Index> ibs = new IndexBitSet<Index>();
+        IndexBenefitGraph.Node node = new IndexBenefitGraph.Node(ibs, 10);
 
         assertThat(node.getConfiguration(), is(ibs));
-        assertThat(node.getID(), is(10));
+        assertThat(node.getId(), is(10));
         assertThat(node.cost(), lessThan(0.0));
         assertThat(node.isExpanded(), is(false));
         assertThat(node.firstChild(), is(nullValue()));
     }
 
     /**
-     * Checks that the {@link Node#expand} method works correctly.
+     * Checks that the {@link IndexBenefitGraph.Node#expand} method works correctly.
      */
     @Test
     public void testExpansion()
@@ -206,7 +213,7 @@ public class IBGNodeTest
     }
 
     /**
-     * Checks that the {@link Node#expand} method works correctly.
+     * Checks that the {@link IndexBenefitGraph.Node#expand} method works correctly.
      */
     @Test
     public void testInternalBitSet()
@@ -263,14 +270,14 @@ public class IBGNodeTest
     @Test
     public void testEdges()
     {
-        assertThat(child1.getUsedIndex(), is(3));
-        assertThat(child2.getUsedIndex(), is(0));
-        assertThat(child3.getUsedIndex(), is(1));
-        assertThat(child4.getUsedIndex(), is(0));
-        assertThat(child5.getUsedIndex(), is(1));
-        assertThat(child6.getUsedIndex(), is(1));
-        assertThat(child7.getUsedIndex(), is(3));
-        assertThat(child8.getUsedIndex(), is(2));
+        assertThat(child1.getUsedIndex(), is(indexes.get(3)));
+        assertThat(child2.getUsedIndex(), is(indexes.get(0)));
+        assertThat(child3.getUsedIndex(), is(indexes.get(1)));
+        assertThat(child4.getUsedIndex(), is(indexes.get(0)));
+        assertThat(child5.getUsedIndex(), is(indexes.get(1)));
+        assertThat(child6.getUsedIndex(), is(indexes.get(1)));
+        assertThat(child7.getUsedIndex(), is(indexes.get(3)));
+        assertThat(child8.getUsedIndex(), is(indexes.get(2)));
     }
 
     /**
@@ -278,7 +285,7 @@ public class IBGNodeTest
     @Test
     public void testUsedAndClearIndexes()
     {
-        IndexBitSet ibs = new IndexBitSet();
+        IndexBitSet<Index> ibs = new IndexBitSet<Index>();
 
         root.addUsedIndexes(ibs);
         assertThat(ibs, is(usedr));
@@ -398,44 +405,45 @@ public class IBGNodeTest
         assertThat(node6.usedSetIsSubsetOf(ibs7), is(true));
         assertThat(node7.usedSetIsSubsetOf(ibs7), is(true));
 
-        assertThat(root.usedSetContains(0), is(true));
-        assertThat(root.usedSetContains(1), is(false));
-        assertThat(root.usedSetContains(2), is(false));
-        assertThat(root.usedSetContains(3), is(true));
+        assertThat(root.usedSetContains(indexes.get(0)), is(true));
+        assertThat(root.usedSetContains(indexes.get(1)), is(false));
+        assertThat(root.usedSetContains(indexes.get(2)), is(false));
+        assertThat(root.usedSetContains(indexes.get(3)), is(true));
 
-        assertThat(node1.usedSetContains(0), is(true));
-        assertThat(node1.usedSetContains(1), is(true));
-        assertThat(node1.usedSetContains(2), is(false));
-        assertThat(node1.usedSetContains(3), is(false));
+        assertThat(node1.usedSetContains(indexes.get(0)), is(true));
+        assertThat(node1.usedSetContains(indexes.get(1)), is(true));
+        assertThat(node1.usedSetContains(indexes.get(2)), is(false));
+        assertThat(node1.usedSetContains(indexes.get(3)), is(false));
 
-        assertThat(node2.usedSetContains(0), is(false));
-        assertThat(node2.usedSetContains(1), is(true));
-        assertThat(node2.usedSetContains(2), is(false));
-        assertThat(node2.usedSetContains(3), is(false));
+        assertThat(node2.usedSetContains(indexes.get(0)), is(false));
+        assertThat(node2.usedSetContains(indexes.get(1)), is(true));
+        assertThat(node2.usedSetContains(indexes.get(2)), is(false));
+        assertThat(node2.usedSetContains(indexes.get(3)), is(false));
 
-        assertThat(node3.usedSetContains(0), is(false));
-        assertThat(node3.usedSetContains(1), is(false));
-        assertThat(node3.usedSetContains(2), is(false));
-        assertThat(node3.usedSetContains(3), is(false));
+        assertThat(node3.usedSetContains(indexes.get(0)), is(false));
+        assertThat(node3.usedSetContains(indexes.get(1)), is(false));
+        assertThat(node3.usedSetContains(indexes.get(2)), is(false));
+        assertThat(node3.usedSetContains(indexes.get(3)), is(false));
 
-        assertThat(node4.usedSetContains(0), is(false));
-        assertThat(node4.usedSetContains(1), is(true));
-        assertThat(node4.usedSetContains(2), is(false));
-        assertThat(node4.usedSetContains(3), is(false));
+        assertThat(node4.usedSetContains(indexes.get(0)), is(false));
+        assertThat(node4.usedSetContains(indexes.get(1)), is(true));
+        assertThat(node4.usedSetContains(indexes.get(2)), is(false));
+        assertThat(node4.usedSetContains(indexes.get(3)), is(false));
 
-        assertThat(node5.usedSetContains(0), is(false));
-        assertThat(node5.usedSetContains(1), is(false));
-        assertThat(node5.usedSetContains(2), is(true));
-        assertThat(node5.usedSetContains(3), is(true));
+        assertThat(node5.usedSetContains(indexes.get(0)), is(false));
+        assertThat(node5.usedSetContains(indexes.get(1)), is(false));
+        assertThat(node5.usedSetContains(indexes.get(2)), is(true));
+        assertThat(node5.usedSetContains(indexes.get(3)), is(true));
 
-        assertThat(node6.usedSetContains(0), is(false));
-        assertThat(node6.usedSetContains(1), is(false));
-        assertThat(node6.usedSetContains(2), is(false));
-        assertThat(node6.usedSetContains(3), is(false));
+        assertThat(node6.usedSetContains(indexes.get(0)), is(false));
+        assertThat(node6.usedSetContains(indexes.get(1)), is(false));
+        assertThat(node6.usedSetContains(indexes.get(2)), is(false));
+        assertThat(node6.usedSetContains(indexes.get(3)), is(false));
 
-        assertThat(node7.usedSetContains(0), is(false));
-        assertThat(node7.usedSetContains(1), is(false));
-        assertThat(node7.usedSetContains(2), is(false));
-        assertThat(node7.usedSetContains(3), is(false));
+        assertThat(node7.usedSetContains(indexes.get(0)), is(false));
+        assertThat(node7.usedSetContains(indexes.get(1)), is(false));
+        assertThat(node7.usedSetContains(indexes.get(2)), is(false));
+        assertThat(node7.usedSetContains(indexes.get(3)), is(false));
     }
+    // CHECKSTYLE:ON
 }

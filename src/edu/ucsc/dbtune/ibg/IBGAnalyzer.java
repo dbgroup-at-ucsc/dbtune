@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
@@ -26,27 +26,27 @@ public class IBGAnalyzer
     // the set of all used indexes seen so far in the IBG
     // this is different from the bank, because that may have
     // used indexes from other IBG traversals
-    private final IndexBitSet allUsedIndexes;
+    private final IndexBitSet<Index> allUsedIndexes;
 
     // graph traversal objects
     private IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
 
     // copy of the root bit set for convenience
-    private final IndexBitSet rootBitSet;
+    private final IndexBitSet<Index> rootBitSet;
 
     // keeps track of visited nodes
-    private final IndexBitSet visitedNodes;
+    private final IndexBitSet<IndexBenefitGraph.Node> visitedNodes;
 
     // All the following correspond to a bunch of structures that we keep around to
     // avoid excessive garbage collection. These structures are only used in the
     // analyzeNode() method.
-    private IndexBitSet candidatesBitSet = new IndexBitSet();
-    private IndexBitSet usedBitSet = new IndexBitSet();
-    private IndexBitSet bitsetYaSimple = new IndexBitSet();
-    private IndexBitSet bitsetYa = new IndexBitSet();
-    private IndexBitSet bitsetYbMinus = new IndexBitSet();
-    private IndexBitSet bitsetYbPlus = new IndexBitSet();
-    private IndexBitSet bitsetYab = new IndexBitSet();
+    private IndexBitSet<Index> candidatesBitSet = new IndexBitSet<Index>();
+    private IndexBitSet<Index> usedBitSet = new IndexBitSet<Index>();
+    private IndexBitSet<Index> bitsetYaSimple = new IndexBitSet<Index>();
+    private IndexBitSet<Index> bitsetYa = new IndexBitSet<Index>();
+    private IndexBitSet<Index> bitsetYbMinus = new IndexBitSet<Index>();
+    private IndexBitSet<Index> bitsetYbPlus = new IndexBitSet<Index>();
+    private IndexBitSet<Index> bitsetYab = new IndexBitSet<Index>();
 
     /**
      * construct an {@code IBGAnalyzer}.
@@ -65,9 +65,9 @@ public class IBGAnalyzer
         this.ibgCons        = ibgCons;
         this.nodeQueue      = nodeQueue;
         this.revisitQueue   = revisitQueue;
-        allUsedIndexes      = new IndexBitSet();
-        rootBitSet          = new IndexBitSet(ibgCons.rootNode().getConfiguration());
-        visitedNodes        = new IndexBitSet();
+        allUsedIndexes      = new IndexBitSet<Index>();
+        rootBitSet          = new IndexBitSet<Index>(ibgCons.rootNode().getConfiguration());
+        visitedNodes        = new IndexBitSet<IndexBenefitGraph.Node>();
 
         // seed the queue with the root node
         nodeQueue.addNode(ibgCons.rootNode());
@@ -100,7 +100,7 @@ public class IBGAnalyzer
     {
         // we might need to go through several nodes to find one that we haven't visited yet
         while (true) {
-            Node node;
+            IndexBenefitGraph.Node node;
 
             if (nodeQueue.hasNext()) {
                 if (nodeQueue.peek().isExpanded()) {
@@ -124,11 +124,11 @@ public class IBGAnalyzer
                 return StepStatus.DONE;
             }
 
-            if (visitedNodes.contains(node.getID()))
+            if (visitedNodes.contains(node))
                 continue;
 
             if (analyzeNode(node, logger)) {
-                visitedNodes.add(node.getID());
+                visitedNodes.add(node);
                 nodeQueue.addChildren(node.firstChild());
             }
             else {
@@ -152,9 +152,9 @@ public class IBGAnalyzer
      *      whether or not the analyses completed. When the analysis doesn't complete it is due to 
      *      the IBG not being completely expanded.
      */
-    private boolean analyzeNode(Node node, InteractionLogger logger)
+    private boolean analyzeNode(IndexBenefitGraph.Node node, InteractionLogger logger)
     {
-        IndexBitSet bitsetY = node.getConfiguration();
+        IndexBitSet<Index> bitsetY = node.getConfiguration();
 
         // get the used set
         usedBitSet.clear();
@@ -172,8 +172,8 @@ public class IBGAnalyzer
         // set false on first failure
         boolean retval = true;
 
-        for (int a = 0; a < candidatesBitSet.size(); a++) {
-            Node y;
+        for (Index a : candidatesBitSet) {
+            IndexBenefitGraph.Node y;
             double costY;
 
             // Y is just the current node
@@ -185,7 +185,7 @@ public class IBGAnalyzer
             bitsetYaSimple.addAll(bitsetY);
             bitsetYaSimple.add(a);
 
-            Node yaSimple =
+            IndexBenefitGraph.Node yaSimple =
                 coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYaSimple, null);
 
             if (yaSimple == null)
@@ -193,11 +193,11 @@ public class IBGAnalyzer
             else
                 logger.assignBenefit(a, costY - yaSimple.cost());
 
-            for (int b = a + 1; b < candidatesBitSet.size(); b++) {
-                Node ya;
-                Node yab;
-                Node ybPlus;
-                Node ybMinus;
+            for (Index b : candidatesBitSet) {
+                IndexBenefitGraph.Node ya;
+                IndexBenefitGraph.Node yab;
+                IndexBenefitGraph.Node ybPlus;
+                IndexBenefitGraph.Node ybMinus;
                 double costYa;
                 double costYab;
 

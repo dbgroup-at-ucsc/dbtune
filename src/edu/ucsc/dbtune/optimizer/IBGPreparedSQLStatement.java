@@ -1,15 +1,17 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder.FindResult;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.util.Objects;
 import edu.ucsc.dbtune.workload.SQLStatement;
-
-import java.sql.SQLException;
 
 /**
  * Prepared statements that are produced by the {@link IBGOptimizer}.
@@ -26,7 +28,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
     private IndexBenefitGraph ibg;
 
     /** The universe of indexes from which actual explains will occur */
-    private Configuration universe;
+    private IndexBitSet<Index> universe;
 
     /** used to find nodes in the ibg */
     private static final IBGCoveringNodeFinder NODE_FINDER = new IBGCoveringNodeFinder();
@@ -61,7 +63,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             IBGOptimizer         optimizer,
             SQLStatement         sql,
             IndexBenefitGraph    ibg,
-            Configuration        universe)
+            IndexBitSet<Index>   universe)
     {
         super(optimizer,sql);
         this.ibg        = ibg;
@@ -100,7 +102,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
         return sql;
     }
 
-    public Configuration getUniverse()
+    public IndexBitSet<Index> getUniverse()
     {
         return universe;
     }
@@ -117,7 +119,8 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
      *      if it's not possible to do what-if optimization on the given configuration
      */
     @Override
-    public ExplainedSQLStatement explain(Configuration configuration) throws SQLException
+    public ExplainedSQLStatement explain(Set<Index> configuration)
+        throws SQLException
     {
         if (ibg==null) {
             // Time to build the IBG
@@ -125,12 +128,12 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             ibg = ((IBGOptimizer)optimizer).buildIBG(sql, configuration);
             int optimizationCount = optimizer.getWhatIfCount() - oldOptimizationCount;
             
-            universe = new Configuration(configuration);
+            universe = new IndexBitSet<Index>(configuration);
             Node rootNode = ibg.rootNode();
             
             return new ExplainedSQLStatement(
                     getSQLStatement(), rootNode.cost(), optimizer, universe,
-                    new ConfigurationBitSet(universe,rootNode.getUsedIndexes()),optimizationCount);
+                    new IndexBitSet<Index>(rootNode.getUsedIndexes()),optimizationCount);
         }
         
         if (!getUniverse().contains(configuration)) {
@@ -140,18 +143,11 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
 
         if (configuration.isEmpty()) {
             double cost = getIndexBenefitGraph().emptyCost();
-            return new ExplainedSQLStatement( getSQLStatement(), cost, optimizer, configuration, new Configuration("Empty"), 0);
+            return new ExplainedSQLStatement(
+                    getSQLStatement(), cost, optimizer, configuration, new HashSet<Index>(), 0);
         } 
 
-        ConfigurationBitSet configurationBitSet = null;
-
-        if (configuration instanceof ConfigurationBitSet ) {
-            configurationBitSet = Objects.as(configuration);
-        } else {
-            configurationBitSet = new ConfigurationBitSet(configuration);
-        }
-        
-        FindResult result = NODE_FINDER.find(getIndexBenefitGraph(),configurationBitSet);
+        FindResult result = NODE_FINDER.find(getIndexBenefitGraph(), configuration);
 
         if (result == null) // This is the case where the IBG is incomplete
             throw new SQLException("IBG construction has not completed yet");

@@ -1,10 +1,15 @@
 package edu.ucsc.dbtune.ibg;
 
+import java.util.List;
+
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 import static edu.ucsc.dbtune.DBTuneInstances.configureIndexBenefitGraph;
 
 import static org.hamcrest.Matchers.is;
@@ -18,40 +23,42 @@ import static org.junit.Assert.assertThat;
 public class IndexBenefitGraphTest
 {
     private static IndexBenefitGraph ibg;
+    private static Catalog cat;
 
     /**
      * configures the {@link IndexBenefitGraph} under test.
+     * @throws Exception
+     *      if something goes wrong
      */
     @BeforeClass
-    public static void beforeClass()
+    public static void beforeClass() throws Exception
     {
-        ibg = configureIndexBenefitGraph();
+        cat = configureCatalog();
+        ibg = configureIndexBenefitGraph(cat);
     }
 
     /**
+     * @throws Exception
+     *      if something goes wrong
      */
     @Test
-    public void testBasic()
+    public void testBasic() throws Exception
     {
-        IndexBitSet bs = new IndexBitSet();
+        IndexBitSet<Index> bs = new IndexBitSet<Index>();
+        List<Index> conf = cat.schemas().get(0).indexes();
 
-        bs = new IndexBitSet();
-        bs.add(0);
-        bs.add(1);
-        bs.add(2);
-        bs.add(3);
+        bs = new IndexBitSet<Index>();
+
+        bs.add(conf.get(0));
+        bs.add(conf.get(1));
+        bs.add(conf.get(2));
+        bs.add(conf.get(3));
 
         IndexBenefitGraph.Node root = new IndexBenefitGraph.Node(bs, 0);
 
         assertThat(ibg.emptyCost(), is(80.0));
 
-        assertThat(ibg.isUsed(0), is(true));
-        assertThat(ibg.isUsed(1), is(true));
-        assertThat(ibg.isUsed(2), is(true));
-        assertThat(ibg.isUsed(3), is(true));
-        assertThat(ibg.isUsed(4), is(false));
-
-        assertThat(ibg.rootNode().getID(), is(root.getID()));
+        assertThat(ibg.rootNode().getId(), is(root.getId()));
         assertThat(ibg.rootNode().getConfiguration(), is(root.getConfiguration()));
         // Notes:
         //   * other IBGNode-related operations are covered in IBGNodeTest

@@ -1,14 +1,13 @@
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
-import edu.ucsc.dbtune.metadata.Index;
+import java.sql.SQLException;
+import java.util.Set;
+
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.workload.SQLStatement;
-
-import java.sql.SQLException;
 
 import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
 
@@ -43,7 +42,7 @@ public class IBGOptimizer implements Optimizer
      * {@inheritDoc}
      */
     @Override
-    public Configuration recommendIndexes(SQLStatement sql) throws SQLException
+    public Set<Index> recommendIndexes(SQLStatement sql) throws SQLException
     {
         return delegate.recommendIndexes(sql);
     }
@@ -69,10 +68,10 @@ public class IBGOptimizer implements Optimizer
      * @throws SQLException
      *      unable to estimate cost due to the stated reasons.
      */
-    public ExplainedSQLStatement explain(SQLStatement sql, Configuration configuration)
+    public ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration)
         throws SQLException
     {
-        return delegate.explain(sql,configuration);
+        return delegate.explain(sql, configuration);
     }
     
     /**
@@ -82,58 +81,49 @@ public class IBGOptimizer implements Optimizer
      * @param universe The configuration that comprises all indexes of interest
      * @return The index benefit graph
      * @throws SQLException
+     *      if theres an error
      */
-    IndexBenefitGraph buildIBG(SQLStatement sql, Configuration universe)
+    IndexBenefitGraph buildIBG(SQLStatement sql, Set<Index> universe)
         throws SQLException
     {
-        ConfigurationBitSet  bitConf;
-        IndexBitSet          bitSet;
-
-        bitSet = new IndexBitSet();
-
-        for (Index idx : universe) {
-            bitSet.add(universe.getOrdinalPosition(idx));
-        }
-
-        bitConf = new ConfigurationBitSet(universe, bitSet);
-
-        return construct(delegate, sql, bitConf);
+        return construct(delegate, sql, universe);
     }
     
     @Override
     public PreparedSQLStatement prepareExplain(SQLStatement sql) 
         throws SQLException
-    {   
-        return new IBGPreparedSQLStatement(this, sql, null,null);
+    {
+        return new IBGPreparedSQLStatement(this, sql, null, null);
     }
 
     @Override
     public ExplainedSQLStatement explain(String sql) throws SQLException
-{
+    {
         return delegate.explain(sql);
     }
 
     @Override
     public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException
-{
+    {
         return delegate.explain(sql);
     }
 
     @Override
-    public ExplainedSQLStatement explain(String sql, Configuration configuration)
-            throws SQLException {
-        return delegate.explain(sql,configuration);
+    public ExplainedSQLStatement explain(String sql, Set<Index> configuration)
+        throws SQLException
+    {
+        return delegate.explain(sql, configuration);
     }
 
     @Override
-    public Configuration recommendIndexes(String sql) throws SQLException
-{
+    public Set<Index> recommendIndexes(String sql) throws SQLException
+    {
         return delegate.recommendIndexes(sql);
     }
 
     @Override
     public int getWhatIfCount()
-{
+    {
         return delegate.getWhatIfCount();
     }
 }

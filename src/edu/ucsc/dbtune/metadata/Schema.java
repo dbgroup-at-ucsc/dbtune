@@ -2,7 +2,11 @@ package edu.ucsc.dbtune.metadata;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import edu.ucsc.dbtune.util.Objects;
 
 /**
  * A schema is a container of database objects, regularly tables, indexes, views, etcetera.
@@ -43,7 +47,7 @@ public class Schema extends DatabaseObject
      * @return
      *     configuration corresponding to the schema
      */
-    public Configuration getBaseConfiguration()
+    public Set<Index> getBaseConfiguration()
     {
         List<Index> indexes = new ArrayList<Index>();
 
@@ -60,7 +64,7 @@ public class Schema extends DatabaseObject
                 indexes.add(index);
         }
 
-        return new Configuration(indexes);
+        return new HashSet<Index>(indexes);
     }
 
     /**
@@ -125,14 +129,20 @@ public class Schema extends DatabaseObject
      * @return
      *     an iterator over the indexes defined for the schema
      */
-    public Iterable<Index> indexes()
+    public List<Index> indexes()
     {
         List<Index> list = new ArrayList<Index>();
 
         for (DatabaseObject dbo : containees)
         {
+            Index index;
+
             if (dbo instanceof Index)
-                list.add((Index)dbo);
+                index = (Index) dbo;
+            else
+                continue;
+
+            list.add(index);
         }
 
         return list;
@@ -150,8 +160,14 @@ public class Schema extends DatabaseObject
 
         for (DatabaseObject dbo : containees)
         {
+            Table table;
+
             if (dbo instanceof Table)
-                list.add((Table)dbo);
+                table = (Table) dbo;
+            else
+                continue;
+
+            list.add(table);
         }
 
         return list;

@@ -1,11 +1,13 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.util.Set;
+
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -168,11 +170,11 @@ public class OptimizerTest
      */
     protected static void checkExplain(Optimizer opt) throws Exception
     {
-        SQLStatement         sql;
+        SQLStatement sql;
         ExplainedSQLStatement sqlp;
-        Configuration        conf;
-        double               cost1;
-        double               cost2;
+        Set<Index> conf;
+        double cost1;
+        double cost2;
 
         sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         sqlp  = opt.explain(sql);
@@ -183,7 +185,7 @@ public class OptimizerTest
         assertThat(sqlp.getCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        conf  = new Configuration("empty");
+        conf  = new IndexBitSet<Index>();
         sqlp  = opt.explain(sql, conf);
         cost2 = sqlp.getCost();
         
@@ -217,20 +219,20 @@ public class OptimizerTest
      */
     protected static void checkWhatIfExplain(Catalog cat, Optimizer opt) throws Exception
     {
-        SQLStatement         sql;
+        SQLStatement sql;
         ExplainedSQLStatement sqlp;
-        Column               col;
-        Configuration        conf;
-        Index                idxa;
-        Index                idxb;
-        double               cost1;
-        double               cost2;
+        Column col;
+        Set<Index> conf;
+        Index idxa;
+        Index idxb;
+        double cost1;
+        double cost2;
 
         sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         cost1 = opt.explain(sql).getCost();
 
         idxa = new Index(cat.<Column>findByName("one_table.tbl.a"));
-        conf = new Configuration("conf");
+        conf = new IndexBitSet<Index>();
 
         conf.add(idxa);
 
@@ -251,14 +253,14 @@ public class OptimizerTest
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
 
-        assertThat(sqlp.getCost(),     is(cost2));
+        assertThat(sqlp.getCost(), is(cost2));
         assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getCost()));
         assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getUpdateCost()));
         assertThat(sqlp.getTotalCost(), is(sqlp.getCost() + sqlp.getUpdateCost()));
 
-        assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(conf.getIndexAt(0))));
-        assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(conf.getIndexAt(1))));
-        assertThat(sqlp.getUpdateCost(), is(sqlp.getUpdateCost(conf.toList())));
+        assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(idxa)));
+        assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(idxb)));
+        assertThat(sqlp.getUpdateCost(), is(sqlp.getUpdateCost(conf)));
 
         idxa.getSchema().remove(idxa);
         idxb.getSchema().remove(idxb);
@@ -269,8 +271,8 @@ public class OptimizerTest
      */
     protected static void checkRecommendIndexes(Optimizer opt) throws Exception
     {
-        SQLStatement  sql;
-        Configuration rec;
+        SQLStatement sql;
+        Set<Index> rec;
         
         sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         rec = opt.recommendIndexes(sql);
@@ -289,16 +291,16 @@ public class OptimizerTest
      */
     protected static void checkUsedConfiguration(Catalog cat, Optimizer opt) throws Exception
     {
-        SQLStatement         sql;
+        SQLStatement sql;
         ExplainedSQLStatement sqlp;
-        Column               col;
-        Configuration        conf;
-        Index                idxa;
-        Index                idxb;
+        Column col;
+        Set<Index> conf;
+        Index idxa;
+        Index idxb;
         
         col  = cat.<Column>findByName("one_table.tbl.a");
         idxa = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
-        conf = new Configuration("two_indexes");
+        conf = new IndexBitSet<Index>();
         col  = cat.<Column>findByName("one_table.tbl.b");
         idxb = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
 
@@ -368,17 +370,17 @@ public class OptimizerTest
      */
     protected static void checkMonotonicity(Catalog cat, Optimizer opt) throws Exception
     {
-        SQLStatement         sql;
-        Column               col;
-        Configuration        conf;
-        Index                idx;
-        double               cost1;
-        double               cost2;
+        SQLStatement sql;
+        Column col;
+        Set<Index> conf;
+        Index idx;
+        double cost1;
+        double cost2;
 
         sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         col  = cat.<Column>findByName("one_table.tbl.a");
         idx  = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
-        conf = new Configuration("one_index");
+        conf = new IndexBitSet<Index>();
 
         conf.add(idx);
 
@@ -398,21 +400,21 @@ public class OptimizerTest
      */
     protected static void checkSanity(Catalog cat, Optimizer opt) throws Exception
     {
-        SQLStatement         sql;
-        Column               colA;
-        Column               colB;
-        Configuration        conf;
-        Index                idxA;
-        Index                idxB;
-        double               cost1;
-        double               cost2;
+        SQLStatement sql;
+        Column colA;
+        Column colB;
+        Set<Index> conf;
+        Index idxA;
+        Index idxB;
+        double cost1;
+        double cost2;
 
         sql  = new SQLStatement("select a from one_table.tbl where a = 5");
         colA = cat.<Column>findByName("one_table.tbl.a");
         colB = cat.<Column>findByName("one_table.tbl.b");
         idxA = new Index(colA);
         idxB = new Index(colB);
-        conf = new Configuration("configuration");
+        conf = new IndexBitSet<Index>();
 
         conf.add(idxA);
 

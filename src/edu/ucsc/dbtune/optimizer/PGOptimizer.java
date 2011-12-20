@@ -1,28 +1,30 @@
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.DatabaseObject;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.optimizer.plan.Operator;
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.SQLCategory;
-
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.IOException;
-import java.io.BufferedReader;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.DatabaseObject;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.workload.SQLCategory;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -32,8 +34,8 @@ import static edu.ucsc.dbtune.metadata.Index.SYNCHRONIZED;
 import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
 import static edu.ucsc.dbtune.util.Strings.toBooleanList;
-import static edu.ucsc.dbtune.util.Strings.toIntegerArray;
 import static edu.ucsc.dbtune.util.Strings.toDoubleArrayFromIndexed;
+import static edu.ucsc.dbtune.util.Strings.toIntegerArray;
 
 /**
  * The interface to the PostgreSQL optimizer.
@@ -73,7 +75,7 @@ public class PGOptimizer extends AbstractOptimizer
 
             if (compareVersion("9.0.0", version) > 0) {
                 throw new UnsupportedOperationException(
-                        "PostgreSQL version " + version + " doesn't produce formatted EXPLAIN plans");
+                    "PostgreSQL version " + version + " doesn't produce formatted EXPLAIN plans");
             }
 
             obtainPlan = false;
@@ -84,11 +86,13 @@ public class PGOptimizer extends AbstractOptimizer
      * Creates an optimizer that doesn't obtain execution plans.
      *
      * @param connection
-     *     JDBC connection
+     *      JDBC connection
+     * @throws SQLException
+     *      if an error occurs
      */
     public PGOptimizer(Connection connection) throws SQLException
     {
-        this(connection,null);
+        this(connection, null);
 
         this.obtainPlan = false;
     }
@@ -97,21 +101,24 @@ public class PGOptimizer extends AbstractOptimizer
      * {@inheritDoc}
      */
     @Override
-    public ExplainedSQLStatement explain(SQLStatement sql, Configuration indexes)
+    public ExplainedSQLStatement explain(SQLStatement sql, Set<Index> indexes)
         throws SQLException
     {
-        ResultSet        rs;
-        SQLStatementPlan sqlPlan;
-        Configuration    usedConf;
-        Statement        stmt;
-        String           indexPositions;
-        String           indexOverhead;
-        double[]         updateCost;
-        double           selectCost;
-        int[]            positions;
+        ResultSet           rs;
+        SQLStatementPlan    sqlPlan;
+        Set<Index>          usedConf;
+        List<Index>         list;
+        Statement           stmt;
+        String              indexPositions;
+        String              indexOverhead;
+        Map<Index, Double>  updateCost;
+        double[]            updateCosts;
+        double              selectCost;
+        int[]               positions;
 
         stmt = connection.createStatement();
-        rs   = stmt.executeQuery("EXPLAIN INDEXES " + toString(indexes) + " " + sql.getSQL());
+        list = new ArrayList<Index>(indexes);
+        rs   = stmt.executeQuery("EXPLAIN INDEXES " + toString(list) + " " + sql.getSQL());
 
         if (!rs.next())
             throw new SQLException("No result from EXPLAIN statement");
@@ -125,32 +132,38 @@ public class PGOptimizer extends AbstractOptimizer
         indexPositions = rs.getString("indexes").trim();
         indexOverhead  = rs.getString("index_overhead").trim();
 
+        rs.close();
+        stmt.close();
+
         if (indexes.size() > 0) {
-            updateCost = toDoubleArrayFromIndexed(indexOverhead.split(" "), "=");
+            updateCosts = toDoubleArrayFromIndexed(indexOverhead.split(" "), "=");
 
             if (!indexPositions.equals(""))
                 positions = toIntegerArray(indexPositions.split(" "));
             else
                 positions = new int[0];
 
-            usedConf = getUsedConfiguration(indexes, positions);
+            usedConf = getUsedConfiguration(list, positions);
 
         } else {
-            usedConf   = new Configuration("empty");
-            updateCost = new double[0];
+            usedConf   = new IndexBitSet<Index>();
+            updateCosts = new double[0];
         }
 
-        if (updateCost.length != indexes.size())
+        if (updateCosts.length != indexes.size())
             throw new SQLException(
-                updateCost.length + " update costs for " + indexes.size() + "indexes");
+                updateCosts.length + " update costs for " + indexes.size() + "indexes");
 
-        rs.close();
-        stmt.close();
+        updateCost = new HashMap<Index, Double>();
+
+        for (int i = 0; i < updateCosts.length; i++) {
+            updateCost.put(list.get(0), updateCosts[i]);
+        }
 
         sqlPlan = null;
 
         if (obtainPlan)
-            sqlPlan = getPlan(connection,sql);
+            sqlPlan = getPlan(connection, sql);
 
         return new ExplainedSQLStatement(
                 sql, sqlPlan, this, selectCost, updateCost, indexes, usedConf, 1);
@@ -160,7 +173,7 @@ public class PGOptimizer extends AbstractOptimizer
      * {@inheritDoc}
      */
     @Override
-    public Configuration recommendIndexes(SQLStatement sql) throws SQLException
+    public Set<Index> recommendIndexes(SQLStatement sql) throws SQLException
     {
         List<Column> columns;
         List<Index> indexes;
@@ -181,9 +194,12 @@ public class PGOptimizer extends AbstractOptimizer
 
             table = null;
 
-            for (Schema sch : catalog)
-                if ((table = sch.findTable(rs.getInt("reloid"))) != null )
+            for (Schema sch : catalog) {
+                table = sch.findTable(rs.getInt("reloid"));
+
+                if (table != null)
                     break;
+            }
 
             if (table == null)
                 throw new SQLException("Can't find table with id " + rs.getInt("reloid"));
@@ -208,7 +224,7 @@ public class PGOptimizer extends AbstractOptimizer
         rs.close();
         stmt.close();
 
-        return new Configuration(indexes);
+        return new IndexBitSet<Index>(indexes);
     }
 
     /**
@@ -239,13 +255,13 @@ public class PGOptimizer extends AbstractOptimizer
         // test=# select version();
         //
         //                                           version
-        //  ------------------------------------------------------------------------------------------
+        //  ----------------------------------------------------------------------------------------
         //  PostgreSQL 8.3.0 on i686-pc-linux-gnu, compiled by GCC gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
         //  (1 row)
 
         while (rs.next()) {
             version = rs.getString("version");
-            version = version.substring(11,version.indexOf(" on "));
+            version = version.substring(11, version.indexOf(" on "));
         }
 
         rs.close();
@@ -258,21 +274,23 @@ public class PGOptimizer extends AbstractOptimizer
      * Returns the set of indexes referred by the array of integers, where each element correspond 
      * to the ordinal position of the {@link Index} contained in the configuration.
      *
-     * @param configuration
+     * @param indexes
      *     referred configuration
      * @param positions
      *     integers referring to the ordinal position of {@link Index} objects contained in the 
      *     configuration.
+     * @return
+     *      the referred index set
      * @see Configuration#getOrdinalPosition
      */
-    private static Configuration getUsedConfiguration(Configuration indexes, int[] positions)
+    private static Set<Index> getUsedConfiguration(List<Index> indexes, int[] positions)
     {
-        Configuration conf = new Configuration("used_configuration");
+        Set<Index> usedConf = new IndexBitSet<Index>();
 
         for (int position : positions)
-            conf.add(indexes.getIndexAt(position));
+            usedConf.add(indexes.get(position));
 
-        return conf;
+        return usedConf;
     }
 
     /**
@@ -284,19 +302,25 @@ public class PGOptimizer extends AbstractOptimizer
      * @param positions
      *     integers referring to the ordinal position of {@link Column} objects contained in the 
      *     configuration.
+     * @return
+     *      set of columns referred by the given array of integers
+     * @throws SQLException
+     *      if a column with an index can't be found
      * @see Table#getColumns
      */
-    private static List<Column> getReferencedColumns(Table table, int[] positions) throws SQLException
+    private static List<Column> getReferencedColumns(Table table, int[] positions)
+        throws SQLException
     {
         List<Column> columns = new ArrayList<Column>();
 
         Column col;
 
         for (int position : positions) {
-            col = (Column)table.at(position-1);
+            col = (Column) table.at(position - 1);
 
             if (col == null)
-                throw new SQLException("Can't find column with position " + position + " in table " + table);
+                throw new SQLException(
+                        "Can't find column with position " + position + " in table " + table);
 
             columns.add(col);
         }
@@ -312,8 +336,10 @@ public class PGOptimizer extends AbstractOptimizer
      * @return
      *     a string containing the PG-dependent string representation of the given list, as the 
      *     EXPLAIN INDEXES statement expects it
+     * @throws SQLException
+     *      if something goes wrong
      */
-    private static String toString(Configuration indexes) throws SQLException
+    private static String toString(List<Index> indexes) throws SQLException
     {
         // It's important that this method generates the string in the same order that 
         // Configuration.iterator() produces the index list
@@ -343,7 +369,7 @@ public class PGOptimizer extends AbstractOptimizer
     }
 
     /**
-     * Returns the plan for the given statement
+     * Returns the plan for the given statement.
      *
      * @param connection
      *     connection to the DBMS
@@ -354,7 +380,8 @@ public class PGOptimizer extends AbstractOptimizer
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    protected SQLStatementPlan getPlan(Connection connection, SQLStatement sql) throws SQLException
+    protected SQLStatementPlan getPlan(Connection connection, SQLStatement sql)
+        throws SQLException
     {
         String           explain = "EXPLAIN (COSTS true, FORMAT json) ";
         Statement        st      = connection.createStatement();
@@ -366,7 +393,7 @@ public class PGOptimizer extends AbstractOptimizer
             try {
                 plan = parseJSON(new StringReader(rs.getString(1)), schema);
                 cnt++;
-            } catch (Exception e) {
+            } catch (IOException e) {
                 throw new SQLException(e);
             }
         }
@@ -447,7 +474,7 @@ public class PGOptimizer extends AbstractOptimizer
         mapper  = new ObjectMapper();
 
         @SuppressWarnings("unchecked")
-        List<Map<String,Object>> planData = mapper.readValue(breader, List.class);
+        List<Map<String, Object>> planData = mapper.readValue(breader, List.class);
 
         if (planData == null) {
             return new SQLStatementPlan(new Operator());
@@ -458,7 +485,7 @@ public class PGOptimizer extends AbstractOptimizer
         }
 
         @SuppressWarnings("unchecked")
-        Map<String,Object> rootData = (Map<String,Object>) planData.get(0).get("Plan");
+        Map<String, Object> rootData = (Map<String, Object>) planData.get(0).get("Plan");
 
         root = extractNode(rootData, schema);
         plan = new SQLStatementPlan(root);
@@ -487,14 +514,15 @@ public class PGOptimizer extends AbstractOptimizer
      * @see <a href="http://wiki.fasterxml.com/JacksonDocumentation">Jackson Documentation</a>
      */
     protected static void extractChildNodes(
-            SQLStatementPlan   plan,
-            Operator           parent,
-            Map<String,Object> parentData,
-            Schema             schema )
+            SQLStatementPlan    plan,
+            Operator            parent,
+            Map<String, Object> parentData,
+            Schema              schema)
         throws SQLException
     {
         @SuppressWarnings("unchecked")
-        List<Map<String,Object>> childrenData = (List<Map<String,Object>>) parentData.get("Plans");
+        List<Map<String, Object>> childrenData =
+            (List<Map<String, Object>>) parentData.get("Plans");
 
         parent.setCost(parent.getAccumulatedCost());
 
@@ -505,7 +533,7 @@ public class PGOptimizer extends AbstractOptimizer
         Operator child;
         double   childrenCost = 0.0;
 
-        for (Map<String,Object> childData : childrenData) {
+        for (Map<String, Object> childData : childrenData) {
             child         = extractNode(childData, schema);
             childrenCost += child.getAccumulatedCost();
 
@@ -523,8 +551,9 @@ public class PGOptimizer extends AbstractOptimizer
      * The operator information that postgres' {@code EXPLAIN} produces contains at least:
      *
      * The complete list of attributes are explained <a 
-     * href="http://archives.postgresql.org/pgsql-hackers/2010-11/msg00214.php">here</a> and can be extracted from 
-     * PostgreSQL's source code, by looking to file {@code src/backend/commands/explain.c}
+     * href="http://archives.postgresql.org/pgsql-hackers/2010-11/msg00214.php">here</a> and can be 
+     * extracted from PostgreSQL's source code, by looking to file {@code 
+     * src/backend/commands/explain.c}
      *
      * If a schema object is given, the database objects that are referenced by a plan are bound to 
      * the operator.
@@ -541,7 +570,7 @@ public class PGOptimizer extends AbstractOptimizer
      *     planData} map are empty or @{code null}. Also, when {@code schema} isn't null and the 
      *     metadata corresponding to a database object referred in a node is not found.
      */
-    private static Operator extractNode(Map<String,Object> nodeData, Schema schema)
+    private static Operator extractNode(Map<String, Object> nodeData, Schema schema)
         throws SQLException
     {
         Object         type;
@@ -561,14 +590,14 @@ public class PGOptimizer extends AbstractOptimizer
 
         operator = new Operator((String) type, (Double) accCost, ((Number) cardinality).longValue());
 
-        if ( schema == null ) {
+        if (schema == null) {
             return operator;
         }
 
         dbObjectName = nodeData.get("Relation Name");
 
         if (dbObjectName != null) {
-            dbObject = schema.findTable((String)dbObjectName);
+            dbObject = schema.findTable((String) dbObjectName);
 
             if (dbObject == null) {
                 throw new SQLException("Table " + dbObjectName + " not found in schema");
@@ -580,7 +609,7 @@ public class PGOptimizer extends AbstractOptimizer
         dbObjectName = nodeData.get("Index Name");
 
         if (dbObjectName != null) {
-            dbObject = schema.findIndex((String)dbObjectName);
+            dbObject = schema.findIndex((String) dbObjectName);
 
             if (dbObject == null) {
                 throw new SQLException("Index " + dbObjectName + " not found in schema");

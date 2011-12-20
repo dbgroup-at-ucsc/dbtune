@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.ibg;
 
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
@@ -9,7 +10,8 @@ import edu.ucsc.dbtune.util.IndexBitSet;
  */
 class IBGNodeFinder
 {
-    private final IndexBitSet visited = new IndexBitSet();
+    private final IndexBitSet<IndexBenefitGraph.Node> visited =
+        new IndexBitSet<IndexBenefitGraph.Node>();
     private final IBGNodeStack  pending = new IBGNodeStack();
 
     /**
@@ -22,7 +24,8 @@ class IBGNodeFinder
      * @return
      *      found node in the graph. <strong>IMPORTANT</strong>: may return {@code null}.
      */
-    public IndexBenefitGraph.Node find(IndexBenefitGraph.Node rootNode, IndexBitSet config)
+    public IndexBenefitGraph.Node find(
+            IndexBenefitGraph.Node rootNode, IndexBitSet<Index> config)
     {
         visited.clear();
         pending.clear();
@@ -32,10 +35,10 @@ class IBGNodeFinder
         while (pending.hasNext()) {
             IndexBenefitGraph.Node node = pending.next();
             
-            if (visited.contains(node.getID()))
+            if (visited.contains(node))
                 continue;
 
-            visited.add(node.getID());
+            visited.add(node);
             
             // skip unexpanded nodes
             if (!node.isExpanded())

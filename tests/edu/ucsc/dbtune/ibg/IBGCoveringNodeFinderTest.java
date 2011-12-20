@@ -3,11 +3,14 @@ package edu.ucsc.dbtune.ibg;
 import java.util.List;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 import static edu.ucsc.dbtune.DBTuneInstances.configureIndexBenefitGraph;
 import static edu.ucsc.dbtune.DBTuneInstances.configurePowerSet;
 
@@ -23,32 +26,37 @@ import static org.junit.Assert.assertThat;
  */
 public class IBGCoveringNodeFinderTest
 {
+    private static Catalog cat;
     private static Node root;
-    private static IndexBitSet e;
-    private static IndexBitSet a;
-    private static IndexBitSet b;
-    private static IndexBitSet c;
-    private static IndexBitSet d;
-    private static IndexBitSet ab;
-    private static IndexBitSet ac;
-    private static IndexBitSet ad;
-    private static IndexBitSet bc;
-    private static IndexBitSet bd;
-    private static IndexBitSet cd;
-    private static IndexBitSet abc;
-    private static IndexBitSet acd;
-    private static IndexBitSet bcd;
-    private static IndexBitSet abcd;
+    private static IndexBitSet<Index> e;
+    private static IndexBitSet<Index> a;
+    private static IndexBitSet<Index> b;
+    private static IndexBitSet<Index> c;
+    private static IndexBitSet<Index> d;
+    private static IndexBitSet<Index> ab;
+    private static IndexBitSet<Index> ac;
+    private static IndexBitSet<Index> ad;
+    private static IndexBitSet<Index> bc;
+    private static IndexBitSet<Index> bd;
+    private static IndexBitSet<Index> cd;
+    private static IndexBitSet<Index> abc;
+    private static IndexBitSet<Index> acd;
+    private static IndexBitSet<Index> bcd;
+    private static IndexBitSet<Index> abcd;
 
     /**
      * Setup for the test.
+     *
+     * @throws Exception
+     *      if something goes wrong
      */
     @BeforeClass
-    public static void beforeClass()
+    public static void beforeClass() throws Exception
     {
-        root = configureIndexBenefitGraph().rootNode();
+        cat = configureCatalog();
+        root = configureIndexBenefitGraph(cat).rootNode();
 
-        List<IndexBitSet> list = configurePowerSet();
+        List<IndexBitSet<Index>> list = configurePowerSet(cat);
 
         e = list.get(0);
         a = list.get(1);
@@ -68,11 +76,16 @@ public class IBGCoveringNodeFinderTest
     }
 
     /**
+     *
+     * @throws Exception
+     *      if something goes wrong
      */
     @Test
-    public void testThatAllAreCovered()
+    public void testThatAllAreCovered() throws Exception
     {
         IBGCoveringNodeFinder finder = new IBGCoveringNodeFinder();
+
+        List<Index> conf = cat.schemas().get(0).indexes();
 
         assertThat(finder.find(root, e), is(notNullValue()));
         assertThat(finder.find(root, a), is(notNullValue()));
@@ -90,13 +103,13 @@ public class IBGCoveringNodeFinderTest
         assertThat(finder.find(root, bcd), is(notNullValue()));
         assertThat(finder.find(root, abcd), is(notNullValue()));
 
-        IndexBitSet superSet = new IndexBitSet();
+        IndexBitSet<Index> superSet = new IndexBitSet<Index>();
 
-        superSet.add(0);
-        superSet.add(1);
-        superSet.add(2);
-        superSet.add(3);
-        superSet.add(4);
+        superSet.add(conf.get(0));
+        superSet.add(conf.get(1));
+        superSet.add(conf.get(2));
+        superSet.add(conf.get(3));
+        superSet.add(conf.get(4));
 
         assertThat(finder.find(root, superSet), is(nullValue()));
     }
@@ -107,11 +120,12 @@ public class IBGCoveringNodeFinderTest
     public void testCoveringIsCorrect()
     {
         IBGCoveringNodeFinder finder = new IBGCoveringNodeFinder();
+        List<Index> conf = cat.schemas().get(0).indexes();
 
         assertThat(
-                !finder.find(root, e).getConfiguration().contains(0) ||
-                !finder.find(root, e).getConfiguration().contains(2) ||
-                !finder.find(root, e).getConfiguration().contains(3), is(true));
+                !finder.find(root, e).getConfiguration().contains(conf.get(0)) ||
+                !finder.find(root, e).getConfiguration().contains(conf.get(2)) ||
+                !finder.find(root, e).getConfiguration().contains(conf.get(3)), is(true));
         assertThat(finder.find(root, e).cost(), is(80.0));
 
         assertThat(finder.find(root, a).getConfiguration(), is(ac));

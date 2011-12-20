@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.metadata.ConfigurationBitSet;
+import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 /**
@@ -8,7 +10,8 @@ import edu.ucsc.dbtune.util.IndexBitSet;
  */
 public class IBGCoveringNodeFinder
 {
-    private final IndexBitSet visited = new IndexBitSet();
+    private final IndexBitSet<IndexBenefitGraph.Node> visited =
+        new IndexBitSet<IndexBenefitGraph.Node>();
     private final IBGNodeStack  pending = new IBGNodeStack();
 
     /**
@@ -22,19 +25,19 @@ public class IBGCoveringNodeFinder
      *      the cost of a particular index configuration. The return result is {@code null} if the 
      *      IBG is incomplete and no suitable covering node is found.
      */
-    public final FindResult find(IndexBenefitGraph ibg, ConfigurationBitSet config)
+    public final FindResult find(IndexBenefitGraph ibg, Set<Index> config)
     {
         if (config.isEmpty()) {
             return new FindResult(null, ibg.emptyCost());
         } else {
-            final IndexBenefitGraph.Node foundNode = findFast(ibg.rootNode(), config.getBitSet(), null);
+            final IndexBenefitGraph.Node foundNode = findFast(ibg.rootNode(), config, null);
 
             if (foundNode != null) {
                 // Obtain used indexes
-                IndexBitSet usedBitSet = new IndexBitSet();
+                IndexBitSet<Index> usedBitSet = new IndexBitSet<Index>();
                 foundNode.addUsedIndexes(usedBitSet);
                 // Create the corresponding configuration
-                ConfigurationBitSet usedConfiguration = new ConfigurationBitSet(config, usedBitSet);
+                IndexBitSet<Index> usedConfiguration = new IndexBitSet<Index>(usedBitSet);
                 return new FindResult(usedConfiguration, foundNode.cost());
             } else {
                 return new FindResult(null, 0.0);
@@ -60,7 +63,10 @@ public class IBGCoveringNodeFinder
      *     a found {@link Node node}. <strong>IMPORTANT</strong>: this method may return
      *     {@code null} if the covering node is in an unexpanded part of the IBG.
      */
-    public IndexBenefitGraph.Node findFast(IndexBenefitGraph.Node root, IndexBitSet conf, IndexBenefitGraph.Node guess)
+    public IndexBenefitGraph.Node findFast(
+            IndexBenefitGraph.Node root,
+            Set<Index> conf,
+            IndexBenefitGraph.Node guess)
     {
         visited.clear();
 
@@ -100,7 +106,9 @@ public class IBGCoveringNodeFinder
      * @return
      *      found node in the graph. <strong>IMPORTANT</strong>: may return {@code null}.
      */
-    public IndexBenefitGraph.Node find(IndexBenefitGraph.Node rootNode, IndexBitSet config)
+    public IndexBenefitGraph.Node find(
+            IndexBenefitGraph.Node rootNode,
+            IndexBitSet<Index> config)
     {
         visited.clear();
         pending.clear();
@@ -110,10 +118,10 @@ public class IBGCoveringNodeFinder
         while (pending.hasNext()) {
             IndexBenefitGraph.Node node = pending.next();
 
-            if (visited.contains(node.getID()))
+            if (visited.contains(node))
                 continue;
 
-            visited.add(node.getID());
+            visited.add(node);
 
             // skip unexpanded nodes
             if (!node.isExpanded())
@@ -141,7 +149,7 @@ public class IBGCoveringNodeFinder
      */
     public class FindResult
     {
-        private final ConfigurationBitSet usedConfiguration;
+        private final Set<Index> usedConfiguration;
         
         private final double cost;
         
@@ -153,7 +161,7 @@ public class IBGCoveringNodeFinder
          * @param cost
          *      the cost
          */
-        FindResult(ConfigurationBitSet usedConfiguration, double cost)
+        FindResult(Set<Index> usedConfiguration, double cost)
         {
             this.usedConfiguration  = usedConfiguration;
             this.cost               = cost;
@@ -164,7 +172,7 @@ public class IBGCoveringNodeFinder
          *
          * @return The usedConfiguration.
          */
-        public ConfigurationBitSet getUsedConfiguration()
+        public Set<Index> getUsedConfiguration()
         {
             return this.usedConfiguration;
         }

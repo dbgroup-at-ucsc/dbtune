@@ -1,15 +1,15 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
-
 import java.util.Random;
 import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
 
 public class InteractionSelector
 {
     private InteractionSelector()
-    {}
+    {
+    }
 
     /**
      * choose an index partitions object (i.e., a {@link IndexPartitions}) that will be used for 
@@ -20,15 +20,15 @@ public class InteractionSelector
      *      hotPartitions are out of sync!
      */
     public static IndexPartitions choosePartitions(
-            Configuration      candidateSet,
-            Configuration      hotSet,
+            Set<Index>      candidateSet,
+            Set<Index>      hotSet,
             IndexPartitions    oldPartitions,
             IndexStatisticsFunction doiFunc,
             int                   maxNumStates,
             int                   partitionIterations)
     {
         Random rand = new Random(50);
-        IndexPartitions bestPartitions = constructInitialGuess(candidateSet,hotSet, oldPartitions);
+        IndexPartitions bestPartitions = constructInitialGuess(candidateSet, hotSet, oldPartitions);
         double bestCost = partitionCost(bestPartitions, doiFunc);
 
         for (int attempts = 0; attempts < partitionIterations; attempts++) {
@@ -105,8 +105,8 @@ public class InteractionSelector
     }
 
     private static IndexPartitions constructInitialGuess(
-            Configuration conf, 
-            Configuration hotSet,
+            Set<Index> conf,
+            Set<Index> hotSet,
             IndexPartitions oldPartitions)
     {
         IndexPartitions bestPartitions;

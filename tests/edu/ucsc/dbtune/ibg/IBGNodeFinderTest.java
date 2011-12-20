@@ -1,12 +1,16 @@
 package edu.ucsc.dbtune.ibg;
 
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
+import java.util.List;
 
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 import static edu.ucsc.dbtune.DBTuneInstances.configureIndexBenefitGraph;
 
 import static org.hamcrest.Matchers.is;
@@ -22,104 +26,113 @@ import static org.junit.Assert.assertThat;
 public class IBGNodeFinderTest
 {
     private static Node root;
-    private static IndexBitSet e;
-    private static IndexBitSet a;
-    private static IndexBitSet b;
-    private static IndexBitSet c;
-    private static IndexBitSet d;
-    private static IndexBitSet ab;
-    private static IndexBitSet ac;
-    private static IndexBitSet ad;
-    private static IndexBitSet bc;
-    private static IndexBitSet bd;
-    private static IndexBitSet cd;
-    private static IndexBitSet abc;
-    private static IndexBitSet acd;
-    private static IndexBitSet bcd;
-    private static IndexBitSet abcd;
+    private static IndexBitSet<Index> e;
+    private static IndexBitSet<Index> a;
+    private static IndexBitSet<Index> b;
+    private static IndexBitSet<Index> c;
+    private static IndexBitSet<Index> d;
+    private static IndexBitSet<Index> ab;
+    private static IndexBitSet<Index> ac;
+    private static IndexBitSet<Index> ad;
+    private static IndexBitSet<Index> bc;
+    private static IndexBitSet<Index> bd;
+    private static IndexBitSet<Index> cd;
+    private static IndexBitSet<Index> abc;
+    private static IndexBitSet<Index> acd;
+    private static IndexBitSet<Index> bcd;
+    private static IndexBitSet<Index> abcd;
 
     /**
      * Setup for the test.
+     *
+     * @throws Exception
+     *      if something goes wrong
      */
     @BeforeClass
-    public static void beforeClass()
+    public static void beforeClass() throws Exception
     {
-        root = configureIndexBenefitGraph().rootNode();
+        Catalog cat = configureCatalog();
+        List<Index> indexes = cat.schemas().get(0).indexes();
+        root = configureIndexBenefitGraph(cat).rootNode();
 
-        e = new IndexBitSet();
-        a = new IndexBitSet();
-        b = new IndexBitSet();
-        c = new IndexBitSet();
-        d = new IndexBitSet();
-        ab = new IndexBitSet();
-        ac = new IndexBitSet();
-        ad = new IndexBitSet();
-        bc = new IndexBitSet();
-        bd = new IndexBitSet();
-        cd = new IndexBitSet();
-        abc = new IndexBitSet();
-        acd = new IndexBitSet();
-        bcd = new IndexBitSet();
-        abcd = new IndexBitSet();
+        e = new IndexBitSet<Index>();
+        a = new IndexBitSet<Index>();
+        b = new IndexBitSet<Index>();
+        c = new IndexBitSet<Index>();
+        d = new IndexBitSet<Index>();
+        ab = new IndexBitSet<Index>();
+        ac = new IndexBitSet<Index>();
+        ad = new IndexBitSet<Index>();
+        bc = new IndexBitSet<Index>();
+        bd = new IndexBitSet<Index>();
+        cd = new IndexBitSet<Index>();
+        abc = new IndexBitSet<Index>();
+        acd = new IndexBitSet<Index>();
+        bcd = new IndexBitSet<Index>();
+        abcd = new IndexBitSet<Index>();
 
-        a.add(0);
+        a.add(indexes.get(0));
 
-        b.add(1);
+        b.add(indexes.get(1));
 
-        c.add(2);
+        c.add(indexes.get(2));
 
-        d.add(3);
+        d.add(indexes.get(3));
     
-        ab.add(0);
-        ab.add(1);
+        ab.add(indexes.get(0));
+        ab.add(indexes.get(1));
 
-        ac.add(0);
-        ac.add(2);
+        ac.add(indexes.get(0));
+        ac.add(indexes.get(2));
 
-        ad.add(0);
-        ad.add(3);
+        ad.add(indexes.get(0));
+        ad.add(indexes.get(3));
 
-        bc.add(1);
-        bc.add(2);
+        bc.add(indexes.get(1));
+        bc.add(indexes.get(2));
 
-        bd.add(1);
-        bd.add(3);
+        bd.add(indexes.get(1));
+        bd.add(indexes.get(3));
 
-        cd.add(2);
-        cd.add(3);
+        cd.add(indexes.get(2));
+        cd.add(indexes.get(3));
 
-        abc.add(0);
-        abc.add(1);
-        abc.add(2);
+        abc.add(indexes.get(0));
+        abc.add(indexes.get(1));
+        abc.add(indexes.get(2));
 
-        acd.add(0);
-        acd.add(2);
-        acd.add(3);
+        acd.add(indexes.get(0));
+        acd.add(indexes.get(2));
+        acd.add(indexes.get(3));
 
-        bcd.add(1);
-        bcd.add(2);
-        bcd.add(3);
+        bcd.add(indexes.get(1));
+        bcd.add(indexes.get(2));
+        bcd.add(indexes.get(3));
 
-        abcd.add(0);
-        abcd.add(1);
-        abcd.add(2);
-        abcd.add(3);
+        abcd.add(indexes.get(0));
+        abcd.add(indexes.get(1));
+        abcd.add(indexes.get(2));
+        abcd.add(indexes.get(3));
     }
 
     /**
+     * @throws Exception
+     *      if something goes wrong
      */
     @Test
-    public void testBasic()
+    public void testBasic() throws Exception
     {
         IBGNodeFinder finder = new IBGNodeFinder();
 
-        IndexBitSet superSet = new IndexBitSet();
+        List<Index> conf = configureCatalog().schemas().get(0).indexes();
 
-        superSet.add(0);
-        superSet.add(1);
-        superSet.add(2);
-        superSet.add(3);
-        superSet.add(4);
+        IndexBitSet<Index> superSet = new IndexBitSet<Index>();
+
+        superSet.add(conf.get(0));
+        superSet.add(conf.get(1));
+        superSet.add(conf.get(2));
+        superSet.add(conf.get(3));
+        superSet.add(conf.get(4));
 
         assertThat(finder.find(root, superSet), is(nullValue()));
 

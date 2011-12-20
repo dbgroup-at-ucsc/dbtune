@@ -1,34 +1,34 @@
 package edu.ucsc.dbtune;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.extraction.DB2Extractor;
 import edu.ucsc.dbtune.metadata.extraction.MetadataExtractor;
 import edu.ucsc.dbtune.metadata.extraction.MySQLExtractor;
 import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
-import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.MySQLOptimizer;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.util.Environment;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
-import static edu.ucsc.dbtune.DBTuneMocks.makeOptimizerMock;
 import static edu.ucsc.dbtune.DBTuneInstances.configureDB2;
-import static edu.ucsc.dbtune.DBTuneInstances.configureMySQL;
-import static edu.ucsc.dbtune.DBTuneInstances.configurePG;
 import static edu.ucsc.dbtune.DBTuneInstances.configureDBMSOptimizer;
 import static edu.ucsc.dbtune.DBTuneInstances.configureIBGOptimizer;
 import static edu.ucsc.dbtune.DBTuneInstances.configureINUMOptimizer;
+import static edu.ucsc.dbtune.DBTuneInstances.configureMySQL;
+import static edu.ucsc.dbtune.DBTuneInstances.configurePG;
+
+import org.junit.runner.RunWith;
+ 
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -55,7 +55,7 @@ public class DatabaseSystemTest
         Connection        con = mock(Connection.class);
         Catalog           cat = mock(Catalog.class);
         MetadataExtractor ext = mock(MetadataExtractor.class);
-        Optimizer         opt = makeOptimizerMock();
+        Optimizer         opt = mock(Optimizer.class);
 
         when(ext.extract(con)).thenReturn(cat);
 
@@ -84,40 +84,40 @@ public class DatabaseSystemTest
         env = configureDBMSOptimizer(configureDB2());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
-        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof DB2Optimizer, is(true));
+        assertThat(DatabaseSystem.newOptimizer(env, con) instanceof DB2Optimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
 
         // check MySQL
         env = configureDBMSOptimizer(configureMySQL());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
-        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof MySQLOptimizer, is(true));
+        assertThat(DatabaseSystem.newOptimizer(env, con) instanceof MySQLOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
 
         // check PostgreSQL
         env = configureDBMSOptimizer(configurePG());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
-        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof PGOptimizer, is(true));
+        assertThat(DatabaseSystem.newOptimizer(env, con) instanceof PGOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof PGExtractor, is(true));
         
         // check IBG
         env = configureIBGOptimizer(configureDB2());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
-        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof IBGOptimizer, is(true));
+        assertThat(DatabaseSystem.newOptimizer(env, con) instanceof IBGOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
 
         env = configureIBGOptimizer(configureMySQL());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
-        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof IBGOptimizer, is(true));
+        assertThat(DatabaseSystem.newOptimizer(env, con) instanceof IBGOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
 
         env = configureIBGOptimizer(configurePG());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
-        assertThat(DatabaseSystem.newOptimizer(env,con) instanceof IBGOptimizer, is(true));
+        assertThat(DatabaseSystem.newOptimizer(env, con) instanceof IBGOptimizer, is(true));
         assertThat(DatabaseSystem.newExtractor(env) instanceof PGExtractor, is(true));
 
         // check INUM
@@ -125,7 +125,7 @@ public class DatabaseSystemTest
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
         try {
-            Optimizer opt = DatabaseSystem.newOptimizer(env,con);
+            Optimizer opt = DatabaseSystem.newOptimizer(env, con);
             fail("Optimizer " + opt + " shouldn't be returned");
         } catch (SQLException e) {
             // nice;
@@ -164,7 +164,7 @@ public class DatabaseSystemTest
         Connection        con = mock(Connection.class);
         Catalog           cat = mock(Catalog.class);
         MetadataExtractor ext = mock(MetadataExtractor.class);
-        Optimizer         opt = makeOptimizerMock();
+        Optimizer         opt = mock(Optimizer.class);
         Environment       env = configurePG();
 
         when(ext.extract(con)).thenReturn(cat);

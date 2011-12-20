@@ -1,19 +1,20 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
-import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.wfit.WFIT;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Set;
+
+import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.wfit.WFIT;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -71,14 +72,14 @@ public class WFITFunctionalTest
     @Test
     public void testWFIT() throws Exception
     {
-        PreparedSQLStatement qinfo;
-        Configuration pool;
+        //PreparedSQLStatement qinfo;
+        Set<Index> pool;
         WFIT wfit;
         Workload workload;
         String   workloadFile;
 
         FileReader    fileReader;
-        Configuration configuration;
+        //Set<Index> configuration;
         int           maxNumIndexes;
         int           maxNumStates;
         int           windowSize;
@@ -102,9 +103,9 @@ public class WFITFunctionalTest
 
             //assertThat(wfit.getPartitions().subsetCount(), is(1));
 
-            configuration = wfit.getRecommendation();
+            //configuration = wfit.getRecommendation();
 
-            qinfo = wfit.getStatement(q);
+            //qinfo = wfit.getStatement(q);
 
             //System.out.println("------\nq" + q + "\n" + qinfo);
             //System.out.println("\n" + qinfo.getConfiguration());
@@ -136,21 +137,21 @@ public class WFITFunctionalTest
         }
     }
 
-    private static Configuration getCandidates(String workloadFilename)
+    private static Set<Index> getCandidates(String workloadFilename)
         throws SQLException, IOException
     {
-        Configuration   pool;
+        Set<Index>   pool;
         Iterable<Index> candidateSet;
         Workload        wl;
         
         wl   = new Workload(new FileReader(workloadFilename));
-        pool = new Configuration("conf");
+        pool = new IndexBitSet<Index>();
 
         for (SQLStatement sql : wl) {
             candidateSet = db.getOptimizer().recommendIndexes(sql);
 
             for (Index index : candidateSet)
-                if (!pool.containsContent(index))
+                if (!pool.contains(index))
                     pool.add(index);
         }
 

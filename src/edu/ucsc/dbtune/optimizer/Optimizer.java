@@ -1,16 +1,17 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
+import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
- * The interface for a query what-if optimizer.
+ * The interface for a what-if optimizer.
  * 
- * @author alkis
- *
+ * @author Ivo Jimenez
+ * @author Alkis Polyzotis
  */
 public interface Optimizer
 {
@@ -24,7 +25,7 @@ public interface Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public ExplainedSQLStatement explain(String sql) throws SQLException;
+    ExplainedSQLStatement explain(String sql) throws SQLException;
 
     /**
      * perform an optimization call for a SQL statement.
@@ -36,7 +37,7 @@ public interface Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException;
+    ExplainedSQLStatement explain(SQLStatement sql) throws SQLException;
     
     /**
      * estimate what-if optimization plan of a statement using the given configuration.
@@ -51,7 +52,7 @@ public interface Optimizer
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
-    public ExplainedSQLStatement explain(String sql, Configuration configuration)
+    ExplainedSQLStatement explain(String sql, Set<Index> configuration)
         throws SQLException;
     
     /**
@@ -67,7 +68,7 @@ public interface Optimizer
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
-    public ExplainedSQLStatement explain(SQLStatement sql, Configuration configuration)
+    ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration)
         throws SQLException;
     
     /**
@@ -80,7 +81,7 @@ public interface Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public Configuration recommendIndexes(String sql) throws SQLException;
+    Set<Index> recommendIndexes(String sql) throws SQLException;
 
     /**
      * Given a sql statement, it recommends indexes to make it run faster.
@@ -92,21 +93,34 @@ public interface Optimizer
      * @throws SQLException
      *      if an error occurs while retrieving the plan
      */
-    public Configuration recommendIndexes(SQLStatement sql) throws SQLException;
+    Set<Index> recommendIndexes(SQLStatement sql) throws SQLException;
     
     /**
      * Return the count of actual what-if calls made to the DBMS optimizer.
      * 
      * @return
+     *      the number of what-if calls to the DBMS optimizer
      */
-    public int getWhatIfCount();
+    int getWhatIfCount();
     
     /**
      * Set the catalog for this optimizer.
+     *
      * @param catalog
+     *      the catalog from which the optimizer obtains metadata.
      */
-    public void setCatalog(Catalog catalog);
+    void setCatalog(Catalog catalog);
 
+    /**
+     * Generates a {@link PreparedSQLStatement}, given a {@code sql} object.
+     *
+     * @param sql
+     *      the statement being explained
+     * @throws SQLException
+     *      if an error occurs while explaining the statement
+     * @return
+     *      the prepared statement object
+     */
     PreparedSQLStatement prepareExplain(SQLStatement sql)
-            throws SQLException;
+        throws SQLException;
 }

@@ -1,9 +1,11 @@
 package edu.ucsc.dbtune.metadata;
 
-import edu.ucsc.dbtune.util.Objects;
-
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+
+import edu.ucsc.dbtune.util.Objects;
 
 /**
  * Abstraction of the highest level entry in the metadata hierarchy. A catalog is a container of 
@@ -14,7 +16,7 @@ import java.util.Iterator;
 public class Catalog extends DatabaseObject implements Iterable<Schema>
 {
     /**
-     * Creates a new catalog with the given name
+     * Creates a new catalog with the given name.
      *
      * @param name
      *     name of the catalog
@@ -25,7 +27,7 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
     }
 
     /**
-     * Copy constructor
+     * Copy constructor.
      *
      * @param other
      *     other catalog object
@@ -150,19 +152,23 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
     }
 
     /**
-     * returns the list of _schemas that the schema contains
+     * returns the list of schemas that the catalog contains.
      *
      * @return
-     *     List of Schema objects
+     *     list of Schema objects
      */
     @Override
     public Iterator<Schema> iterator()
     {
         return Objects.<Iterator<Schema>>as(containees.iterator());
     }
-    public Iterable<Schema> schemas()
+
+    /**
+     * returns the list of schemas that the catalog contains.
+     */
+    public List<Schema> schemas()
     {
-        return Objects.<Iterable<Schema>>as(containees);
+        return new ArrayList<Schema>(Objects.<List<Schema>>as(containees));
     }
 
     /**

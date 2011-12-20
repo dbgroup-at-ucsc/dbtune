@@ -2,7 +2,6 @@ package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLTypes;
 import edu.ucsc.dbtune.metadata.Schema;

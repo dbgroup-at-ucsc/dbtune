@@ -1,18 +1,17 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
-import edu.ucsc.dbtune.metadata.Configuration;
+import java.util.Set;
 
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.UnionFind;
 
 public class InteractionBank
 {
-
     public final int indexCount;
     private double[] bestBenefit;
     private double[][] lowerBounds; 
 
-    public InteractionBank(Configuration candidateSet)
+    public InteractionBank(Set<Index> candidateSet)
     {
         indexCount = candidateSet.size() + 1;
         bestBenefit = new double[indexCount];
@@ -24,8 +23,11 @@ public class InteractionBank
     /*
      * Assign interaction with an exact value
      */
-    public final void assignInteraction(int id1, int id2, double newValue)
+    public final void assignInteraction(Index i1, Index i2, double newValue)
     {
+        int id1 = i1.getId();
+        int id2 = i2.getId();
+
         assert (newValue >= 0);
         assert (id1 != id2);
 
@@ -38,9 +40,9 @@ public class InteractionBank
         lowerBounds[id1][id2] = Math.max(newValue, lowerBounds[id1][id2]);
     }
 
-    public void assignBenefit(int id, double newValue)
+    public void assignBenefit(Index i, double newValue)
     {
-        bestBenefit[id] = Math.max(newValue, bestBenefit[id]);
+        bestBenefit[i.getId()] = Math.max(newValue, bestBenefit[i.getId()]);
     }
 
     /*
@@ -68,13 +70,14 @@ public class InteractionBank
         return bestBenefit[id];
     }
 
-    public final IndexBitSet[] stablePartitioning(double threshold)
+    public final IndexBitSet<Index>[] stablePartitioning(double threshold)
     {
-        UnionFind uf = new UnionFind(indexCount);
-        for (int a = 0; a < indexCount; a++) 
-            for (int b = 0; b < a; b++) 
-                if (lowerBounds[a][b] > threshold)
-                    uf.union(a,b);
-        return uf.sets();
+        //UnionFind uf = new UnionFind(indexCount);
+        //for (int a = 0; a < indexCount; a++) 
+            //for (int b = 0; b < a; b++) 
+                //if (lowerBounds[a][b] > threshold)
+                    //uf.union(a,b);
+        //return uf.sets();
+        return (IndexBitSet<Index>[]) null;
     }
 }

@@ -2,11 +2,11 @@ package edu.ucsc.dbtune.metadata;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.ucsc.dbtune.util.IncrementallyIdentifiable;
 import edu.ucsc.dbtune.util.Objects;
 
 /**
@@ -14,8 +14,9 @@ import edu.ucsc.dbtune.util.Objects;
  *
  * @author Ivo Jimenez
  */
-public class Index extends DatabaseObject implements Iterable<Column>
+public class Index extends DatabaseObject implements Iterable<Column>, IncrementallyIdentifiable
 {
+    // CHECKSTYLE:OFF
     public static final int     UNKNOWN        = 0;
     public static final int     B_TREE         = 1;
     public static final int     BITMAP         = 2;
@@ -32,8 +33,9 @@ public class Index extends DatabaseObject implements Iterable<Column>
     public static final boolean ASCENDING      = true;
     public static final boolean DESCENDING     = false;
 
-    /** used to uniquely identify new instances of the class. */
+    /** used to uniquely identify each instances of the class. */
     static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
+    // CHECKSTYLE:ON
 
     protected List<Boolean> descending;
     protected int           type;
@@ -393,11 +395,9 @@ public class Index extends DatabaseObject implements Iterable<Column>
     }
 
     /**
-     * Gets the inMemoryID for this instance.
-     *
-     * @return The inMemoryID.
+     * {@inheritDoc}
      */
-    public int getInMemoryID()
+    public int getId()
     {
         return this.inMemoryID;
     }
@@ -617,9 +617,9 @@ public class Index extends DatabaseObject implements Iterable<Column>
     /**
      * {@inheritDoc}
      */
-    public Iterable<Column> columns()
+    public List<Column> columns()
     {
-        return Objects.<Iterable<Column>>as(containees);
+        return new ArrayList<Column>(Objects.<List<Column>>as(containees));
     }
 
     /**

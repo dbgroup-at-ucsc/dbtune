@@ -1,13 +1,13 @@
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.metadata.Configuration;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.Set;
+
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.workload.SQLCategory;
+import edu.ucsc.dbtune.util.IndexBitSet;
 import edu.ucsc.dbtune.workload.SQLStatement;
-
-import java.util.List;
-import java.sql.SQLException;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 
@@ -24,34 +24,34 @@ public class ExplainedSQLStatement
     /** statement corresponding to this explained statement, i.e. SQL statement that was explained */
     protected SQLStatement statement;
 
-    /** configuration that was used to optimize the statement */
-    protected Configuration configuration;
+    /** configuration that was used to optimize the statement. */
+    protected Set<Index> configuration;
 
-    /** cost assigned by an {@link Optimizer} */
+    /** cost assigned by an {@link Optimizer}. */
     protected double cost;
 
-    /** the optimized plan */
+    /** the optimized plan. */
     protected SQLStatementPlan plan;
 
-    /** a list of indexes that are used by the optimized plan */
-    protected Configuration usedConfiguration;
+    /** a list of indexes that are used by the optimized plan. */
+    protected Set<Index> usedConfiguration;
 
     /**
      * For update statements, the cost that implies on each of the indexes containe in {@link 
-     * #getConfiguration}
+     * #getConfiguration}.
      */
-    protected double[] updateCosts;
+    protected Map<Index, Double> updateCosts;
 
-    /** the optimizer that constructed the statement */
+    /** the optimizer that constructed the statement. */
     protected Optimizer optimizer;
 
-    /** number of optimization calls done to produce this statement */
+    /** number of optimization calls done to produce this statement. */
     protected int optimizationCount;
 
-    /** the time it took an optimizer to produce this statement */
+    /** the time it took an optimizer to produce this statement. */
     protected double analysisTime;
 
-    /** cached update cost */
+    /** cached update cost. */
     protected double updateCost;
 
     /**
@@ -61,15 +61,23 @@ public class ExplainedSQLStatement
      *      the statement
      * @param cost
      *      execution cost
+     * @param optimizer
+     *      optimizer that explained the statement
      * @param configuration
-     *      configuration used to optimize the statement.
+     *      configuration used to optimize the statement
+     * @param usedConfiguration
+     *      configuration that the generated execution plan uses
+     * @param optimizationCount
+     *      number of what-if optimization calls that were done to the DBMS
+     * @throws SQLException
+     *      if there is an error
      */
     public ExplainedSQLStatement(
             SQLStatement sql,
             double cost,
             Optimizer optimizer,
-            Configuration configuration,
-            Configuration usedConfiguration,
+            Set<Index> configuration,
+            Set<Index> usedConfiguration,
             int optimizationCount)
         throws SQLException
     {
@@ -86,13 +94,15 @@ public class ExplainedSQLStatement
      * @param cost
      *     the execution cost. For update statements, this cost corresponds only to the SELECT 
      *     shell, i.e. no update costs are considered
+     * @param optimizer
+     *      optimizer that explained the statement
      * @param updateCosts
-     *     for update statements, an array of incurred update costs, where each element corresponds 
-     *     to an index contained in in {@link #getConfiguration}. The array should be indexed using 
-     *     each index's ordinal position with respect to the configuration({@link 
-     *     Configuration#getOrdinalPosition}).
+     *     for update statements, a Map of incurred update costs, where each element corresponds to 
+     *     an index contained in {@link #getConfiguration}
      * @param configuration
      *     configuration used when the statement was optimized
+     * @param usedConfiguration
+     *      configuration that the generated execution plan uses
      * @param optimizationCount
      *     number of optimization calls done on to produce the statement
      * @throws SQLException
@@ -104,9 +114,9 @@ public class ExplainedSQLStatement
             SQLStatementPlan plan,
             Optimizer optimizer,
             double cost,
-            double[] updateCosts,
-            Configuration configuration,
-            Configuration usedConfiguration,
+            Map<Index, Double> updateCosts,
+            Set<Index> configuration,
+            Set<Index> usedConfiguration,
             int optimizationCount)
         throws SQLException
     {
@@ -120,19 +130,20 @@ public class ExplainedSQLStatement
         this.optimizationCount = optimizationCount;
         this.analysisTime      = 0.0;
 
-        if (updateCosts == null)
-            throw new SQLException("Update cost array is null");
-
-        if (updateCosts.length != configuration.size())
+        if (updateCosts.size() != configuration.size())
             throw new SQLException(
-                    "Incorrect update costs " + updateCosts.length +
+                    "Incorrect update costs " + updateCosts.size() +
                     " for configuration of size" + configuration.size());
 
-        this.updateCost = getUpdateCost(getConfiguration().toList());
+        if (!configuration.containsAll(updateCosts.keySet()))
+            throw new SQLException(
+                    "Not all indexes from configuration contained in update cost map");
+
+        this.updateCost = getUpdateCost(getConfiguration());
     }
 
     /**
-     * copy constructor
+     * copy constructor.
      *
      * @param other
      *      object being copied
@@ -161,53 +172,15 @@ public class ExplainedSQLStatement
     }
 
     /**
-     * Sets the configuration that the optimizer considered when it optimized the statement
+     * Sets the configuration that the optimizer considered when it optimized the statement.
      *
      * @param configuration
      *     the list of indexes considered at optimization time.
      */
-    void setConfiguration(Configuration configuration)
+    void setConfiguration(Set<Index> configuration)
     {
         this.configuration = configuration;
     }
-
-    /**
-     * Re-optimizes this statement, using the current context and the given the set of indexes. 
-     * Given a configuration this method tries to determine what would the cost be, as if the 
-     * optimizer would have used the information contained in the given statement. Different 
-     * implementations will determine how to create a new ExplainedSQLStatement in a custom way, 
-     * depending on which information is available to them.
-     * <p>
-     * In other words, the purpose of this method is to have it execute (a sort-of 'mini') what-if 
-     * optimization using the original context that the optimizer used when it optimized the 
-     * statement, the information contained in {@link #getConfiguration}) among them.
-     * <p>
-     * This base implementation does a 'naive' what-if optimization by comparing the given 
-     * configuration against the one contained in {@code statement}, proceeding in the following 
-     * way:
-     * <ul>
-     * <li> If {@link #getUsedConfiguration} is exactly equal to the given {@code configuration}, it 
-     * produces a new statement identical to {@code this}.
-     * <li> If not, then the statement is explained again, with {@code configuration} as the new 
-     * configuration.
-     * </ul>
-     *
-     * @param configuration
-     *      the configuration considered to estimate the cost of the new statement. This can (or 
-     *      not) be the same as {@link #getConfiguration}.
-     * @return
-     *      a new statement
-     * @throws SQLException
-     *      if it's not possible to do what-if optimization on the given configuration
-     */
-//    public ExplainedSQLStatement explain(Configuration configuration)
-//        throws SQLException
-//    {
-//        if (configuration == getUsedConfiguration())
-//            return new ExplainedSQLStatement(this);
-//        else
-//            return optimizer.explain(statement, configuration);
-//    }
 
     /**
      * Returns the cost of executing the statement. The cost returned is the cost that an optimizer 
@@ -241,12 +214,7 @@ public class ExplainedSQLStatement
         if (!configuration.contains(index) || !statement.getSQLCategory().isSame(UPDATE))
             return 0.0;
 
-        int position = configuration.getOrdinalPosition(index);
-
-        if (position == -1)
-            throw new RuntimeException("Wrong position in configuration " + position);
-
-        return updateCosts[position];
+        return updateCosts.get(index);
     }
 
     /**
@@ -260,7 +228,7 @@ public class ExplainedSQLStatement
      * @return
      *      aggregation of update costs of the given configuration.
      */
-    public double getUpdateCost(List<Index> indexes)
+    public double getUpdateCost(Set<Index> indexes)
     {
         double updateCost = 0.0;
 
@@ -328,7 +296,7 @@ public class ExplainedSQLStatement
      * @return
      *     the list of indexes considered at optimization time.
      */
-    public Configuration getConfiguration()
+    public Set<Index> getConfiguration()
     {
         return configuration;
     }
@@ -341,12 +309,12 @@ public class ExplainedSQLStatement
      *     the configuration that is used by the execution plan, i.e. the set of physical structures 
      *     that are read when calculating the answer of a statement.
      */
-    public Configuration getUsedConfiguration()
+    public Set<Index> getUsedConfiguration()
     {
-        Configuration usedConfiguration = new Configuration("used_conf");
+        Set<Index> usedConfiguration = new IndexBitSet<Index>();
 
         for (Index idx : getConfiguration())
-            if ( isUsed(idx) )
+            if (isUsed(idx))
                 usedConfiguration.add(idx);
 
         return usedConfiguration;
@@ -360,21 +328,19 @@ public class ExplainedSQLStatement
      *     the configuration that is used by the execution plan, i.e. the set of physical structures 
      *     that are read when calculating the answer of a statement.
      */
-    public Configuration getUpdatedConfiguration()
+    public Set<Index> getUpdatedConfiguration()
     {
-        Configuration updatedConfiguration = new Configuration("updated_conf");
+        Set<Index> updatedConfiguration = new IndexBitSet<Index>();
 
-        for (Index idx : getConfiguration()) {
-            if (updateCosts[getConfiguration().getOrdinalPosition(idx)] != 0) {
-                updatedConfiguration.add(idx);
-            }
-        }
+        for (Map.Entry<Index, Double> e : updateCosts.entrySet())
+            if (e.getValue() != 0)
+                updatedConfiguration.add(e.getKey());
 
         return updatedConfiguration;
     }
 
     /**
-     * Returns the time that an optimizer took to produce this statement
+     * Returns the time that an optimizer took to produce this statement.
      *
      * @return
      *     the analysis time.

@@ -1,18 +1,19 @@
 package edu.ucsc.dbtune.optimizer;
 
-import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.optimizer.plan.Operator;
-import edu.ucsc.dbtune.workload.SQLCategory;
-import edu.ucsc.dbtune.workload.SQLStatement;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
+import edu.ucsc.dbtune.util.IndexBitSet;
+import edu.ucsc.dbtune.workload.SQLCategory;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * The interface to the MySQL optimizer.
@@ -40,27 +41,28 @@ public class MySQLOptimizer extends AbstractOptimizer
      * {@inheritDoc}
      */
     @Override
-    public ExplainedSQLStatement explain(SQLStatement sql, Configuration configuration) throws SQLException
+    public ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration)
+        throws SQLException
     {
         // XXX: issue #9 (mysqlpp project)
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT))
             throw new SQLException("Can't explain " + sql.getSQLCategory() + " statements");
 
         SQLStatementPlan plan;
-        Configuration    used;
+        Set<Index>       used;
         double           cost;
 
         create(configuration, connection);
 
         plan = getPlan(sql);
-        used = new Configuration("used_configuration", plan.getIndexes());
+        used = new IndexBitSet<Index>(plan.getIndexes());
         cost = getCost();
 
         drop(configuration, connection);
 
         return new ExplainedSQLStatement(
                 sql, plan, this, cost,
-                Arrays.copyOf(new double[0], configuration.size()),
+                new HashMap<Index, Double>(),
                 configuration, used, 1);
     }
 
@@ -68,7 +70,7 @@ public class MySQLOptimizer extends AbstractOptimizer
      * {@inheritDoc}
      */
     @Override
-    public Configuration recommendIndexes(SQLStatement sql) throws SQLException
+    public Set<Index> recommendIndexes(SQLStatement sql) throws SQLException
     {
         throw new SQLException("Not implemented yet");
     }
@@ -155,7 +157,7 @@ public class MySQLOptimizer extends AbstractOptimizer
      * @throws SQLException
      *      if an error occurs while communicating with the DBMS
      */
-    private static void create(Configuration configuration, Connection connection) throws SQLException
+    private static void create(Set<Index> configuration, Connection connection) throws SQLException
     {
         for (Index index : configuration) {
             Statement stmt = connection.createStatement();
@@ -174,7 +176,7 @@ public class MySQLOptimizer extends AbstractOptimizer
      * @throws SQLException
      *     if an error occurs while communicating with the DBMS
      */
-    private static void drop(Configuration configuration, Connection connection) throws SQLException
+    private static void drop(Set<Index> configuration, Connection connection) throws SQLException
     {
         for (Index index : configuration) {
             Statement stmt = connection.createStatement();

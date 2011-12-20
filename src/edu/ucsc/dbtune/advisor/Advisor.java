@@ -1,12 +1,15 @@
 package edu.ucsc.dbtune.advisor;
 
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.workload.SQLStatement;
-
 import java.sql.SQLException;
+import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * Represents an advisor that recommends physical design modifications.
+ *
+ * @author Ivo Jimenez
  */
 public abstract class Advisor
 {
@@ -29,5 +32,5 @@ public abstract class Advisor
      * @throws SQLException
      *      if the given statement can't be processed
      */
-    public abstract Configuration getRecommendation() throws SQLException;
+    public abstract Set<Index> getRecommendation() throws SQLException;
 }

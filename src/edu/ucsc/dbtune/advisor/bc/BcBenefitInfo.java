@@ -1,12 +1,12 @@
 package edu.ucsc.dbtune.advisor.bc;
 
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
-import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.ToStringBuilder;
-
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class BcBenefitInfo
 {
@@ -28,9 +28,9 @@ public class BcBenefitInfo
     }
 
     static BcBenefitInfo genBcBenefitInfo(
-            Configuration snapshot,
-            Configuration hotSet,
-            IndexBitSet config,
+            Set<Index> snapshot,
+            Set<Index> hotSet,
+            Set<Index> config,
             ExplainedSQLStatement profiledQuery )
         throws SQLException
     {

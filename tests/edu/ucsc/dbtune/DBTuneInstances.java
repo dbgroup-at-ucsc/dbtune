@@ -1,7 +1,12 @@
 package edu.ucsc.dbtune;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.Random;
+
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
@@ -10,12 +15,6 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.IndexBitSet;
-
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Random;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.Environment.extractDriver;
@@ -260,86 +259,93 @@ public final class DBTuneInstances
 
     /**
      * Creates the IBG that is used as sample in {@link IndexBenefitGraph}.
+     *
+     *
      */
-    public static IndexBenefitGraph configureIndexBenefitGraph()
+    public static IndexBenefitGraph configureIndexBenefitGraph(Catalog cat)
+        throws SQLException
     {
-        Node root;
-        Node node1;
-        Node node2;
-        Node node3;
-        Node node4;
-        Node node5;
-        Node node6;
-        Node node7;
-        Node.Child child1;
-        Node.Child child2;
-        Node.Child child3;
-        Node.Child child4;
-        Node.Child child5;
-        Node.Child child6;
-        Node.Child child7;
-        Node.Child child8;
-        IndexBitSet rootibs;
-        IndexBitSet ibs1;
-        IndexBitSet ibs2;
-        IndexBitSet ibs3;
-        IndexBitSet ibs4;
-        IndexBitSet ibs5;
-        IndexBitSet ibs6;
-        IndexBitSet ibs7;
+        List<Index> indexes = cat.schemas().get(0).indexes();
 
-        rootibs = new IndexBitSet();
-        ibs1    = new IndexBitSet();
-        ibs2    = new IndexBitSet();
-        ibs3    = new IndexBitSet();
-        ibs4    = new IndexBitSet();
-        ibs5    = new IndexBitSet();
-        ibs6    = new IndexBitSet();
-        ibs7    = new IndexBitSet();
+        IndexBenefitGraph.Node root;
+        IndexBenefitGraph.Node node1;
+        IndexBenefitGraph.Node node2;
+        IndexBenefitGraph.Node node3;
+        IndexBenefitGraph.Node node4;
+        IndexBenefitGraph.Node node5;
+        IndexBenefitGraph.Node node6;
+        IndexBenefitGraph.Node node7;
+        IndexBenefitGraph.Node.Child child1;
+        IndexBenefitGraph.Node.Child child2;
+        IndexBenefitGraph.Node.Child child3;
+        IndexBenefitGraph.Node.Child child4;
+        IndexBenefitGraph.Node.Child child5;
+        IndexBenefitGraph.Node.Child child6;
+        IndexBenefitGraph.Node.Child child7;
+        IndexBenefitGraph.Node.Child child8;
+        IndexBitSet<Index> rootibs;
+        IndexBitSet<Index> ibs;
+        IndexBitSet<Index> ibs1;
+        IndexBitSet<Index> ibs2;
+        IndexBitSet<Index> ibs3;
+        IndexBitSet<Index> ibs4;
+        IndexBitSet<Index> ibs5;
+        IndexBitSet<Index> ibs6;
+        IndexBitSet<Index> ibs7;
 
-        rootibs.add(0);
-        rootibs.add(1);
-        rootibs.add(2);
-        rootibs.add(3);
+        rootibs = new IndexBitSet<Index>();
+        ibs     = new IndexBitSet<Index>();
+        ibs1    = new IndexBitSet<Index>();
+        ibs2    = new IndexBitSet<Index>();
+        ibs3    = new IndexBitSet<Index>();
+        ibs4    = new IndexBitSet<Index>();
+        ibs5    = new IndexBitSet<Index>();
+        ibs6    = new IndexBitSet<Index>();
+        ibs7    = new IndexBitSet<Index>();
 
-        ibs1.add(0);
-        ibs1.add(1);
-        ibs1.add(2);
+        rootibs.add(indexes.get(0));
+        rootibs.add(indexes.get(1));
+        rootibs.add(indexes.get(2));
+        rootibs.add(indexes.get(3));
 
-        ibs2.add(1);
-        ibs2.add(2);
-        ibs2.add(3);
+        ibs1.add(indexes.get(0));
+        ibs1.add(indexes.get(1));
+        ibs1.add(indexes.get(2));
 
-        ibs3.add(0);
-        ibs3.add(2);
+        ibs2.add(indexes.get(1));
+        ibs2.add(indexes.get(2));
+        ibs2.add(indexes.get(3));
 
-        ibs4.add(1);
-        ibs4.add(2);
+        ibs3.add(indexes.get(0));
+        ibs3.add(indexes.get(2));
 
-        ibs5.add(2);
-        ibs5.add(3);
+        ibs4.add(indexes.get(1));
+        ibs4.add(indexes.get(2));
 
-        ibs6.add(2);
+        ibs5.add(indexes.get(2));
+        ibs5.add(indexes.get(3));
 
-        ibs7.add(3);
+        ibs6.add(indexes.get(2));
 
-        root  = new Node(rootibs, 0);
-        node1 = new Node(ibs1, 1);
-        node2 = new Node(ibs2, 2);
-        node3 = new Node(ibs3, 3);
-        node4 = new Node(ibs4, 4);
-        node5 = new Node(ibs5, 5);
-        node6 = new Node(ibs6, 6);
-        node7 = new Node(ibs7, 7);
+        ibs7.add(indexes.get(3));
 
-        child1 = new Node.Child(node1, 3);
-        child2 = new Node.Child(node2, 0);
-        child3 = new Node.Child(node3, 1);
-        child4 = new Node.Child(node4, 0);
-        child5 = new Node.Child(node5, 1);
-        child6 = new Node.Child(node6, 1);
-        child7 = new Node.Child(node6, 3);
-        child8 = new Node.Child(node7, 2);
+        root  = new IndexBenefitGraph.Node(rootibs, 0);
+        node1 = new IndexBenefitGraph.Node(ibs1, 1);
+        node2 = new IndexBenefitGraph.Node(ibs2, 2);
+        node3 = new IndexBenefitGraph.Node(ibs3, 3);
+        node4 = new IndexBenefitGraph.Node(ibs4, 4);
+        node5 = new IndexBenefitGraph.Node(ibs5, 5);
+        node6 = new IndexBenefitGraph.Node(ibs6, 6);
+        node7 = new IndexBenefitGraph.Node(ibs7, 7);
+
+        child1 = new IndexBenefitGraph.Node.Child(node1, indexes.get(3));
+        child2 = new IndexBenefitGraph.Node.Child(node2, indexes.get(0));
+        child3 = new IndexBenefitGraph.Node.Child(node3, indexes.get(1));
+        child4 = new IndexBenefitGraph.Node.Child(node4, indexes.get(0));
+        child5 = new IndexBenefitGraph.Node.Child(node5, indexes.get(1));
+        child6 = new IndexBenefitGraph.Node.Child(node6, indexes.get(1));
+        child7 = new IndexBenefitGraph.Node.Child(node6, indexes.get(3));
+        child8 = new IndexBenefitGraph.Node.Child(node7, indexes.get(2));
 
         root.expand(0, child1);
         child1.getNode().expand(0, child3);
@@ -362,11 +368,10 @@ public final class DBTuneInstances
 
         // all indexes in ibg
 
-        IndexBitSet ibs = new IndexBitSet();
-        ibs.add(0);
-        ibs.add(1);
-        ibs.add(2);
-        ibs.add(3);
+        ibs.add(indexes.get(0));
+        ibs.add(indexes.get(1));
+        ibs.add(indexes.get(2));
+        ibs.add(indexes.get(3));
 
         return new IndexBenefitGraph(root, 80, ibs);
     }
@@ -376,67 +381,69 @@ public final class DBTuneInstances
      *     a list with all the subsets of the set (a,b,c,d), where the positions of the IndexBitSet 
      *     objects are a=0, b=1, c=2, d=3
      */
-    public static List<IndexBitSet> configurePowerSet()
+    public static List<IndexBitSet<Index>> configurePowerSet(Catalog cat) throws SQLException
     {
-        List<IndexBitSet> list = new ArrayList<IndexBitSet>();
-        IndexBitSet e = new IndexBitSet();
-        IndexBitSet a = new IndexBitSet();
-        IndexBitSet b = new IndexBitSet();
-        IndexBitSet c = new IndexBitSet();
-        IndexBitSet d = new IndexBitSet();
-        IndexBitSet ab = new IndexBitSet();
-        IndexBitSet ac = new IndexBitSet();
-        IndexBitSet ad = new IndexBitSet();
-        IndexBitSet bc = new IndexBitSet();
-        IndexBitSet bd = new IndexBitSet();
-        IndexBitSet cd = new IndexBitSet();
-        IndexBitSet abc = new IndexBitSet();
-        IndexBitSet acd = new IndexBitSet();
-        IndexBitSet bcd = new IndexBitSet();
-        IndexBitSet abcd = new IndexBitSet();
+        List<IndexBitSet<Index>> list = new ArrayList<IndexBitSet<Index>>();
+        List<Index> indexes = cat.schemas().get(0).indexes();
 
-        a.add(0);
+        IndexBitSet<Index> e = new IndexBitSet<Index>();
+        IndexBitSet<Index> a = new IndexBitSet<Index>();
+        IndexBitSet<Index> b = new IndexBitSet<Index>();
+        IndexBitSet<Index> c = new IndexBitSet<Index>();
+        IndexBitSet<Index> d = new IndexBitSet<Index>();
+        IndexBitSet<Index> ab = new IndexBitSet<Index>();
+        IndexBitSet<Index> ac = new IndexBitSet<Index>();
+        IndexBitSet<Index> ad = new IndexBitSet<Index>();
+        IndexBitSet<Index> bc = new IndexBitSet<Index>();
+        IndexBitSet<Index> bd = new IndexBitSet<Index>();
+        IndexBitSet<Index> cd = new IndexBitSet<Index>();
+        IndexBitSet<Index> abc = new IndexBitSet<Index>();
+        IndexBitSet<Index> acd = new IndexBitSet<Index>();
+        IndexBitSet<Index> bcd = new IndexBitSet<Index>();
+        IndexBitSet<Index> abcd = new IndexBitSet<Index>();
 
-        b.add(1);
+        a.add(indexes.get(0));
 
-        c.add(2);
+        b.add(indexes.get(1));
 
-        d.add(3);
+        c.add(indexes.get(2));
+
+        d.add(indexes.get(3));
     
-        ab.add(0);
-        ab.add(1);
+        ab.add(indexes.get(0));
+        ab.add(indexes.get(1));
 
-        ac.add(0);
-        ac.add(2);
+        ac.add(indexes.get(0));
+        ac.add(indexes.get(2));
 
-        ad.add(0);
-        ad.add(3);
+        ad.add(indexes.get(0));
+        ad.add(indexes.get(3));
 
-        bc.add(1);
-        bc.add(2);
+        bc.add(indexes.get(1));
+        bc.add(indexes.get(2));
 
-        bd.add(1);
-        bd.add(3);
+        bd.add(indexes.get(1));
+        bd.add(indexes.get(3));
 
-        cd.add(2);
-        cd.add(3);
+        cd.add(indexes.get(2));
+        cd.add(indexes.get(3));
 
-        abc.add(0);
-        abc.add(1);
-        abc.add(2);
+        abc.add(indexes.get(0));
+        abc.add(indexes.get(1));
+        abc.add(indexes.get(2));
 
-        acd.add(0);
-        acd.add(2);
-        acd.add(3);
+        acd.add(indexes.get(0));
+        acd.add(indexes.get(2));
+        acd.add(indexes.get(3));
 
-        bcd.add(1);
-        bcd.add(2);
-        bcd.add(3);
+        bcd.add(indexes.get(1));
+        bcd.add(indexes.get(2));
+        bcd.add(indexes.get(3));
 
-        abcd.add(0);
-        abcd.add(1);
-        abcd.add(2);
-        abcd.add(3);
+        abcd.add(indexes.get(0));
+        abcd.add(indexes.get(1));
+        abcd.add(indexes.get(2));
+        abcd.add(indexes.get(3));
 
         list.add(e);
         list.add(a);

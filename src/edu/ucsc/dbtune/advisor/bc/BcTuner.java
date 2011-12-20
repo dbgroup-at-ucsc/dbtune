@@ -1,16 +1,18 @@
 package edu.ucsc.dbtune.advisor.bc;
 
-import edu.ucsc.dbtune.metadata.Configuration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.IndexBitSet;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class BcTuner
 {
-    private final Configuration   hotSet;
-    private final BcIndexPool    pool;
-    private final Configuration  snapshot;
-    private final IndexBitSet    currentRecommendation;
+    private final Set<Index>   hotSet;
+    private final Map<Index, BcIndexInfo> pool;
+    //private final Set<Index>  snapshot;
+    //private final Set<Index> currentRecommendation;
 
     /**
      * Construct a {@code BcTuner} object.
@@ -21,12 +23,17 @@ public class BcTuner
      * @param hotSet
      *      a {@code hotSet} of indexes.
      */
-    public BcTuner(Configuration snapshot, Configuration hotSet)
+    public BcTuner(Set<Index> snapshot, Set<Index> hotSet)
     {
-        this.snapshot               = snapshot;
+        //this.snapshot               = snapshot;
         this.hotSet                 = hotSet;
-        this.pool                   = new BcIndexPool(snapshot,this.hotSet);
-        this.currentRecommendation  = new IndexBitSet();
+        //this.currentRecommendation  = new HashSet<Index>();
+
+        this.pool = new HashMap<Index, BcIndexInfo>(hotSet.size());
+
+        for (Index idx : snapshot) {
+            pool.put(idx, new BcIndexInfo());
+        }
     }
 
     /**
@@ -38,7 +45,7 @@ public class BcTuner
         double maxBenefit = 0;
 
         for (Index idx : hotSet) {
-            BcIndexInfo stats = pool.get(snapshot.getOrdinalPosition(idx));
+            BcIndexInfo stats = pool.get(idx);
             if (stats.state == BcIndexInfo.State.HYPOTHETICAL) {
                 double benefit = stats.benefit(idx.getCreationCost());
                 if (benefit >= 0 && (indexToCreate == null || benefit > maxBenefit)) {
@@ -60,7 +67,7 @@ public class BcTuner
         double minResidual = 0;
 
         for (Index idx : hotSet) {
-            BcIndexInfo stats = pool.get(snapshot.getOrdinalPosition(idx));
+            BcIndexInfo stats = pool.get(idx);
             if (stats.state == BcIndexInfo.State.MATERIALIZED) {
                 double residual = stats.residual(idx.getCreationCost());
                 if (residual <= 0 && (indexToDrop == null || residual < minResidual)) {
@@ -76,12 +83,12 @@ public class BcTuner
     /**
      * @return the recommended indexes configuration.
      */
-    public IndexBitSet getRecommendation()
+    public Set<Index> getRecommendation()
     {
-        IndexBitSet bs = new IndexBitSet();
+        Set<Index> bs = new HashSet<Index>();
         for (Index index : hotSet) {
-            if (pool.get(snapshot.getOrdinalPosition(index)).state == BcIndexInfo.State.MATERIALIZED){
-                bs.add(snapshot.getOrdinalPosition(index));
+            if (pool.get(index.getId()).state == BcIndexInfo.State.MATERIALIZED){
+                bs.add(index);
             }
         }
         return bs;
@@ -214,15 +221,4 @@ public class BcTuner
         return inferUseLevel(i1, i2, isPrefix);
     }
      */
-
-    @Override
-    public String toString()
-    {
-        return new ToStringBuilder<BcTuner>(this)
-               .add("snapshot", snapshot)
-               .add("hotSet", hotSet)
-               .add("indexPool", pool)
-               .add("currentRecommendation", currentRecommendation)
-           .toString();
-    }
 }
