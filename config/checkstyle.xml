@@ -391,9 +391,11 @@
         <module name="MutableException"/>
 
         <!-- Flag overly complex constructions -->
-        <module name="ClassFanOutComplexity"/>
+        <module name="ClassFanOutComplexity">
+          <property name="max" value="27"/>
+        </module>
         <module name="CyclomaticComplexity">
-          <property name="max" value="20"/>
+          <property name="max" value="27"/>
         </module>
         <module name="NPathComplexity"/>
 

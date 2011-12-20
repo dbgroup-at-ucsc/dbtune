@@ -6,19 +6,21 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * A configuration represents a set of physical structures over tables (and/or columns) that are 
- * used to improve the performance of DML statements in a database. A configuration is typically 
- * composed of a set of indexes, but can also contain materialized views (MV), partitions, 
- * denormalizations, etc.
- *
+ * This class implements the {@link Set} interface, backed by a bit array (actually a {@link BitSet} 
+ * instance). This class offers constant time performance for the basic operations (add, remove, 
+ * contains and size).
+ * <p>
+ * Iterating over this set requires time proportional to the sum of the number of set bits.
+ * <p>
  * <strong>Important</strong>: For efficiency reasons, all the optional operations from {@link Set} 
  * return true regardless of whether or not the set changed as the result of the operation.
  *
+ * @param <E>
+ *      an implementation of the {@link Identifiable} class.
  * @author Karl Schnaitter
  * @author Ivo Jimenez
  */
-//public class IndexBitSet<E extends Identifiable> implements Set<Identifiable>
-public class IndexBitSet implements Set<Integer>
+public class IndexBitSet<E extends Identifiable> implements Set<E>
 {
     private static final BitSet t = new BitSet();
     private BitSet bitSet;
@@ -37,33 +39,23 @@ public class IndexBitSet implements Set<Integer>
      * @param ibs
      *      the bitSet being copied
      */
-    public IndexBitSet(IndexBitSet ibs)
+    public IndexBitSet(IndexBitSet<E> ibs)
     {
         bitSet = (BitSet) ibs.bitSet.clone();
     }
 
     /**
-     * {@inheritDoc}
+     * Constructs a set containing the elements in the given collection.
+     *
+     * @param other
+     *      a collection of objects
      */
-    public boolean contains(int id)
+    public IndexBitSet(Collection<E> other)
     {
-        return contains(new Integer(id));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    public void remove(int id)
-    {
-        remove(new Integer(id));
-    }
+        bitSet = new BitSet();
 
-    /**
-     * {@inheritDoc}
-     */
-    public Iterator<Integer> iterator()
-    {
-        throw new RuntimeException("not yet");
+        for (E e : other)
+            add(e);
     }
 
     /**
@@ -88,7 +80,7 @@ public class IndexBitSet implements Set<Integer>
      * {@inheritDoc}
      */
     @Override
-    public Integer[] toArray()
+    public Identifiable[] toArray()
     {
         throw new RuntimeException("not yet");
     }
@@ -106,9 +98,9 @@ public class IndexBitSet implements Set<Integer>
      * {@inheritDoc}
      */
     @Override
-    public boolean add(Integer id)
+    public boolean add(E o)
     {
-        bitSet.set(id);
+        bitSet.set(o.getId());
         return true;
     }
     
@@ -127,10 +119,10 @@ public class IndexBitSet implements Set<Integer>
     @Override
     public boolean contains(Object o)
     {
-        if (!(o instanceof Integer))
-            return false;
+        if (!(o instanceof Identifiable))
+            throw new RuntimeException("Not of type Identifiable");
 
-        return bitSet.get((Integer) o);
+        return bitSet.get(((Identifiable) o).getId());
     }
     
     /**
@@ -139,11 +131,10 @@ public class IndexBitSet implements Set<Integer>
     @Override
     public boolean remove(Object o)
     {
-        if (o instanceof Integer)
-            bitSet.clear((Integer) o);
-        else
-            throw new RuntimeException("not of type Integer");
+        if (!(o instanceof Identifiable))
+            throw new RuntimeException("not of type Identifiable");
 
+        bitSet.clear(((Identifiable) o).getId());
         return true;
     }
     
@@ -153,8 +144,8 @@ public class IndexBitSet implements Set<Integer>
     @Override
     public boolean removeAll(Collection<?> other)
     {
-        if (other instanceof IndexBitSet)
-            bitSet.andNot(((IndexBitSet) other).bitSet);
+        if (other instanceof IndexBitSet<?>)
+            bitSet.andNot(((IndexBitSet<?>) other).bitSet);
         else
             throw new RuntimeException("not of type IndexBitSet");
 
@@ -167,8 +158,8 @@ public class IndexBitSet implements Set<Integer>
     @Override
     public boolean retainAll(Collection<?> other)
     {
-        if (other instanceof IndexBitSet)
-            bitSet.and(((IndexBitSet) other).bitSet);
+        if (other instanceof IndexBitSet<?>)
+            bitSet.and(((IndexBitSet<?>) other).bitSet);
         else
             throw new RuntimeException("not of type IndexBitSet");
 
@@ -179,10 +170,10 @@ public class IndexBitSet implements Set<Integer>
      * {@inheritDoc}
      */
     @Override
-    public boolean addAll(Collection<? extends Integer> other)
+    public boolean addAll(Collection<? extends E> other)
     {
-        if (other instanceof IndexBitSet)
-            bitSet.or(((IndexBitSet) other).bitSet);
+        if (other instanceof IndexBitSet<?>)
+            bitSet.or(((IndexBitSet<?>) other).bitSet);
         else
             throw new RuntimeException("not of type IndexBitSet");
 
@@ -194,10 +185,10 @@ public class IndexBitSet implements Set<Integer>
      */
     public boolean containsAll(Collection<?> other)
     {
-        if (!(other instanceof IndexBitSet))
+        if (!(other instanceof IndexBitSet<?>))
             throw new RuntimeException("not of type IndexBitSet");
 
-        IndexBitSet o = (IndexBitSet) other;
+        IndexBitSet<?> o = (IndexBitSet<?>) other;
 
         synchronized (t) {
             t.clear();
@@ -216,10 +207,10 @@ public class IndexBitSet implements Set<Integer>
         if (this == other)
             return true;
     
-        if (!(other instanceof IndexBitSet))
+        if (!(other instanceof IndexBitSet<?>))
             return false;
     
-        IndexBitSet o = (IndexBitSet) other;
+        IndexBitSet<?> o = (IndexBitSet<?>) other;
 
         return bitSet.equals(o.bitSet);
     }
@@ -240,5 +231,13 @@ public class IndexBitSet implements Set<Integer>
     public String toString()
     {
         return bitSet.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Iterator<E> iterator()
+    {
+        throw new RuntimeException("not yet");
     }
 }

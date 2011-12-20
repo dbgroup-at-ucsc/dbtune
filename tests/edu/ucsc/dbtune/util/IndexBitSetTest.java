@@ -1,10 +1,13 @@
 package edu.ucsc.dbtune.util;
 
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Index;
+
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
@@ -19,6 +22,19 @@ import static org.junit.Assert.assertThat;
  */
 public class IndexBitSetTest
 {
+    private static Catalog cat;
+
+    /**
+     * configures the {@link IndexBenefitGraph} under test.
+     * @throws Exception
+     *      if something goes wrong
+     */
+    @BeforeClass
+    public static void beforeClass() throws Exception
+    {
+        cat = configureCatalog();
+    }
+
     /**
      * Test that an index bitset is constructed correctly.
      * 
@@ -28,33 +44,63 @@ public class IndexBitSetTest
     @Test
     public void testBasicUsage() throws Exception
     {
-        Catalog       cat  = configureCatalog();
-        Configuration conf = new Configuration(((Schema) cat.at(0)).indexes());
-        IndexBitSet   bs   = new IndexBitSet();
+        List<Index> conf = cat.schemas().get(0).indexes();
+        IndexBitSet<Index> bs = new IndexBitSet<Index>();
 
         for (Index idx : conf)
-            bs.add(conf.getOrdinalPosition(idx));
+            bs.add(idx);
 
         for (Index idx : conf)
-            assertThat(bs.contains(conf.getOrdinalPosition(idx)), is(true));
+            assertThat(bs.contains(idx), is(true));
 
-        IndexBitSet other = new IndexBitSet(bs);
+        IndexBitSet<Index> other = new IndexBitSet<Index>(bs);
 
         assertThat(bs, is(other));
 
-        other = new IndexBitSet();
+        other = new IndexBitSet<Index>();
 
-        other.add(1);
-        other.add(3);
-        other.add(5);
-        other.add(7);
+        other.add(conf.get(1));
+        other.add(conf.get(3));
+        other.add(conf.get(5));
+        other.add(conf.get(7));
 
         assertThat(bs.containsAll(other), is(true));
 
-        bs = new IndexBitSet();
+        bs = new IndexBitSet<Index>();
 
         bs.addAll(other);
 
-        assertThat(bs,is(other));
+        assertThat(bs, is(other));
+    }
+
+    /**
+     * @throws Exception
+     *      if the catalog can't be configured
+     */
+    @Test
+    public void testAgainstOtherSetImplementation() throws Exception
+    {
+        List<Index> conf = cat.schemas().get(0).indexes();
+        Set<Index> conf1 = new HashSet<Index>(conf);
+        Set<Index> conf2 = new IndexBitSet<Index>(conf);
+
+        for (Index idx : conf) {
+            assertThat(conf1.contains(idx), is(true));
+        }
+
+        for (Index idx : conf) {
+            assertThat(conf2.contains(idx), is(true));
+        }
+
+        //assertThat(conf1, is(conf2));
+    }
+
+    /**
+     * @throws Exception
+     *      if the catalog can't be configured
+     */
+    @Test
+    public void testRemainingSetOperations() throws Exception
+    {
     }
 }
