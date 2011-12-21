@@ -35,7 +35,7 @@ public class Key {
   @Override public boolean equals(Object o) {
     if(!(o instanceof Key)) return false;
     final Key other = (Key)o;
-    return isMatch(other.sql, other.configuration);
+    return isCoveredBy(other.sql, other.configuration);
   }
 
   private static SQLStatement createStatement(String sql){
@@ -48,7 +48,7 @@ public class Key {
     }
   }
 
-  private boolean isMatch(SQLStatement sql, Configuration other){
+  private boolean isCoveredBy(SQLStatement sql, Configuration other){
     final boolean equalSQL    = Strings.same(this.sql.getSQL(), sql.getSQL());
     final boolean intersected = intersects(configuration, other);
     final boolean sameConfig  = configuration.equals(other);
@@ -72,8 +72,9 @@ public class Key {
         }
       }
     }
-
-    return !c.toList().isEmpty();
+    //  'first' is a subset of 'second' iff every member of 'first' is a member of 'second'
+    final boolean isEveryMemberInSecond = c.size() == first.size();
+    return !c.toList().isEmpty() && isEveryMemberInSecond;
   }
 
   @Override public String toString() {
