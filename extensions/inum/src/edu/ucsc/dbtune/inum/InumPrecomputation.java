@@ -61,7 +61,7 @@ public class InumPrecomputation implements Precomputation {
       if(Strings.isEmpty(queryExecutionPlan)) continue;
       optimalPlansPerInterestingOrder.addAll(parser.parse(queryExecutionPlan));
 
-      final Key key = new Key(query, o);
+      final QueryRecord key = new QueryRecord(query, o);
       getInumSpace().save(key, optimalPlansPerInterestingOrder);
 
       Console.streaming().info(

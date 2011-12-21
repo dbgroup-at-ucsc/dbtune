@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
 import com.google.common.collect.*;
-import edu.ucsc.dbtune.inum.OptimalPlan.Subplan;
 import edu.ucsc.dbtune.spi.Console;
 import edu.ucsc.dbtune.util.Strings;
 import java.util.Set;
@@ -23,7 +22,7 @@ public class OptimalPlansParserTest
     final Set<OptimalPlan> optimalPlans = new InumOptimalPlansParser().parse(EXECUTION_PLAN);
     assertThat(!optimalPlans.isEmpty(), is(true));
     final OptimalPlan plan = getSingleOptimalPlan(optimalPlans);
-    for (Subplan each : plan.getInternalPlans()){
+    for (PhysicalOperator each : plan.getInternalPlans()){
       Console.streaming().info("About to test " + Strings.str(each));
       assertThat(each.getRowId(), equalTo(0));
       assertThat(each.getParentId(), equalTo(-1));

@@ -65,8 +65,8 @@ public class InumMatchingStrategy implements MatchingStrategy {
     final Set<OptimalPlan> found = Sets.newHashSet();
     // assuming there is a match, later methods will pick the optimal plan with the min cost.
     final Configuration copy      = new Configuration(inputConfiguration);  // defensive copy of configuration
-    final Key           targetKey = new Key(sql, copy);
-    for(Key eachKey : inumSpace.keySet()){
+    final QueryRecord targetKey = new QueryRecord(sql, copy);
+    for(QueryRecord eachKey : inumSpace.keySet()){
       if(eachKey.equals/* means (same SQL and intersects indexes)*/(targetKey)) {
         final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(eachKey);
         found.addAll(optimalPlans);

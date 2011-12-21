@@ -17,7 +17,7 @@ public class InumSpaceTest {
     final InumSpace     space = new InMemoryInumSpace();
     final String        sql     = "Select * from Table1;";
     final Configuration config  = SharedFixtures.configureConfiguration();
-    final Key           key     = new Key(sql, config);
+    final QueryRecord key     = new QueryRecord(sql, config);
     final Set<OptimalPlan> plans = space.save(key, SharedFixtures.configureOptimalPlans()).getOptimalPlans(key);
     assertThat(!plans.isEmpty(), is(true));
     assertThat(!space.getAllSavedOptimalPlans().isEmpty(), is(true));
@@ -27,7 +27,7 @@ public class InumSpaceTest {
     final InumSpace     space   = new InMemoryInumSpace();
     final String        sql     = "Select * from Table1;";
     final Configuration config  = SharedFixtures.configureConfiguration();
-    final Key           key     = new Key(sql, config);
+    final QueryRecord key     = new QueryRecord(sql, config);
     final Set<OptimalPlan> plans = space.save(key, SharedFixtures.configureOptimalPlans()).getOptimalPlans(key);
     assertThat(!plans.isEmpty(), is(true));
     space.clear();
@@ -38,7 +38,7 @@ public class InumSpaceTest {
     final InumSpace     space     = new InMemoryInumSpace();
     final String        sql       = "Select * from Table1;";
     final Configuration config    = SharedFixtures.configureConfiguration();
-    final Key           key       = new Key(sql, config);
+    final QueryRecord key       = new QueryRecord(sql, config);
     space.save(key, SharedFixtures.configureOptimalPlans());
     final Set<OptimalPlan> found = space.getOptimalPlans(key);
     assertThat(!found.isEmpty(), is(true));

@@ -16,14 +16,14 @@ import com.google.common.collect.Sets;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InMemoryInumSpace implements InumSpace {
-  private final Map<Key, Set<OptimalPlan>> keyToOptimalPlans;
+  private final Map<QueryRecord, Set<OptimalPlan>> keyToOptimalPlans;
 
-  InMemoryInumSpace(Map<Key, Set<OptimalPlan>> cachedPlans){
+  InMemoryInumSpace(Map<QueryRecord, Set<OptimalPlan>> cachedPlans){
     this.keyToOptimalPlans = cachedPlans;
   }
 
   public InMemoryInumSpace(){
-    this(Maps.<Key, Set<OptimalPlan>>newHashMap());
+    this(Maps.<QueryRecord, Set<OptimalPlan>>newHashMap());
   }
 
   @Override public void clear() {
@@ -32,11 +32,11 @@ public class InMemoryInumSpace implements InumSpace {
     }
   }
 
-  @Override public Set<OptimalPlan> getOptimalPlans(Key key) {
+  @Override public Set<OptimalPlan> getOptimalPlans(QueryRecord key) {
     return keyToOptimalPlans.get(key);
   }
 
-  @Override public Set<Key> keySet() {
+  @Override public Set<QueryRecord> keySet() {
     return ImmutableSet.copyOf(keyToOptimalPlans.keySet());
   }
 
@@ -48,7 +48,7 @@ public class InMemoryInumSpace implements InumSpace {
     return ImmutableSet.copyOf(allSavedOnes);
   }
 
-  @Override public InumSpace save(Key key, Set<OptimalPlan> optimalPlans) {
+  @Override public InumSpace save(QueryRecord key, Set<OptimalPlan> optimalPlans) {
     if(!keyToOptimalPlans.containsKey(key)){
       final Set<OptimalPlan> newBatchedOfPlans = Sets.newHashSet();
       for(OptimalPlan each : optimalPlans){
