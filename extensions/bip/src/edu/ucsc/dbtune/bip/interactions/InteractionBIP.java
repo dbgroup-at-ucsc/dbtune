@@ -70,8 +70,6 @@ public class InteractionBIP
 			for (IndexInteraction pair : listInteraction){
 				resultIndexInteraction.add(pair);
 			}
-			
-			break; // to be remove
 		}
 		
 		return resultIndexInteraction;
