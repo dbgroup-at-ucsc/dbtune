@@ -23,7 +23,8 @@ public class SimQueryPlanDesc extends QueryPlanDesc
 	 * 		The global candidate indexes
 	 * @throws SQLException
 	 */
-	public void simGenerateQueryPlanDesc(InumSpace inum, List<Index> globalCandidateIndexes) throws SQLException
+    public void simGenerateQueryPlanDesc(InumSpace inum, List<Index> globalCandidateIndexes)
+        throws SQLException
 	{
 		double sizeMatIndex = 0.0;
 		Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();

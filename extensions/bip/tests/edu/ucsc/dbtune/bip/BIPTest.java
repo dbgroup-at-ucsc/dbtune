@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.bip;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -9,13 +11,10 @@ import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
 
-import com.ibm.db2.jcc.b.SqlException;
-
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.DBTuneInstances;
 import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.inum.InumStatementPlan;
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.metadata.Index; 
@@ -32,14 +31,11 @@ import static org.junit.Assert.assertThat;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-//import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-
 
 /**
  * Test for the BIPTest class
@@ -66,8 +62,8 @@ public class BIPTest
 	private static double[] sizeIndexPlan2 = {200, 120, 60, 70};
 	private static double[] internalCostPlan2 = {200, 150};
 	private static double[] accessCostPlan2 = {20, 45, 30, 70, 80, 15, 90, 20};
-	private static List<Index> candidateIndexes; 	
-	private static int[] numPlans = {3, 2};
+    private static List<Index> candidateIndexes;
+    private static int[] numPlans = {3, 2};
 	private static int numQ = 2;
 	private static Environment environment = Environment.getInstance();
 	private static BIPAgent agent;
@@ -78,7 +74,7 @@ public class BIPTest
 			cat = DBTuneInstances.configureCatalog(1, 3, 2);
 			sch = (Schema)cat.at(0);
 			listInum = new ArrayList<InumSpace>();
-			candidateIndexes = new ArrayList<Index>();
+            candidateIndexes = new ArrayList<Index>();
 			listSchemaTables = new ArrayList<Table>();
 			numCandidateIndexes = 0;
 			
@@ -176,19 +172,6 @@ public class BIPTest
 		}
 	}
 	
-    @Before
-    public void setUp() throws Exception
-    {
-    		
-    }
-    
-    @After
-    public void tearDown() throws Exception
-    {
-
-    }
-    
-    
     @Test
     public void testPlanDescriptionGeneration() throws Exception
     {    	    
@@ -226,10 +209,12 @@ public class BIPTest
     	    				}
     	    				else {
     		    				if (q == 0) {
-    		    					assertThat(desc.getIndexAccessCost(k, i, a), is(accessCostPlan1[p]));
+                                    assertThat(desc.getIndexAccessCost(k, i, a), 
+                                            is(accessCostPlan1[p]));
     		    				}
     		    				else if (q == 1) {
-    		    					assertThat(desc.getIndexAccessCost(k, i, a), is(accessCostPlan2[p]));
+                                    assertThat(desc.getIndexAccessCost(k, i, a), 
+                                            is(accessCostPlan2[p]));
     		    				}
     		    				p++;
     	    				}
@@ -253,10 +238,11 @@ public class BIPTest
     		agent = mock(BIPAgent.class);
     		when(agent.populateInumSpace()).thenReturn(listInum);    		
     		double delta = 0.4;
-    		Configuration C = new Configuration(candidateIndexes);    		
-    		List<IndexInteraction> listInteractions = bip.computeInteractionIndexes(agent, C, delta);
+            List<Index> C = new ArrayList<Index>(candidateIndexes);
+            List<IndexInteraction> listInteractions =
+                bip.computeInteractionIndexes(agent, C, delta);
     		System.out.println(bip.printListInteraction(listInteractions));
-    	} catch (SqlException e){
+    	} catch (SQLException e){
     		System.out.println(" error " + e.getMessage());
     	}
     }
@@ -268,8 +254,8 @@ public class BIPTest
     	System.out.println("IN test, Number of candidate indexes: " + candidateIndexes.size());
     	
     	SimBIP sim = new SimBIP();
-    	List<Index> Sinit = new ArrayList<Index>();
-    	List<Index> Smat = new ArrayList<Index>();
+        List<Index> Sinit = new ArrayList<Index>();
+        List<Index> Smat = new ArrayList<Index>();
     	int W = 4;
     	List<Double> B = new ArrayList<Double>();
     	double space = 140;
@@ -285,6 +271,4 @@ public class BIPTest
     	String strSchedule = sim.printSchedule(listIndex, W);
     	System.out.println(strSchedule);
     }
-    
 }
-

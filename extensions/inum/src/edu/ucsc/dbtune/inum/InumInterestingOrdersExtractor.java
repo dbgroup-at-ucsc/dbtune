@@ -2,7 +2,6 @@ package edu.ucsc.dbtune.inum;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.metadata.SQLTypes;
@@ -17,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -91,7 +91,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
   }
 
   @Override
-  public Configuration extractInterestingOrders(String singleQuery)
+  public Set<Index> extractInterestingOrders(String singleQuery)
       throws SQLException {
     @SuppressWarnings("rawtypes")
     Vector statements = parseQuery(singleQuery);
@@ -128,7 +128,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       }
     }
 
-    return new Configuration(ImmutableList.copyOf(indexes));
+    return new HashSet<Index>(ImmutableList.copyOf(indexes));
   }
 
   private static List<Column> findColumns(Table table, Set<String> names)

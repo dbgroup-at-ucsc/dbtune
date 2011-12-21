@@ -1,7 +1,8 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Configuration;
 import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
 
 /**
  * This represents the matching logic that determines the optimality
@@ -34,7 +35,7 @@ public interface MatchingStrategy
    *    the query cost obtained by adding the cached cost in the {@link OptimalPlan optimal plan}
    *    to the index access costs computed on-the-fly.
    */
-  double estimateCost(String query, Configuration inputConfiguration, InumSpace inumSpace);
+  double estimateCost(String query, Set<Index> inputConfiguration, InumSpace inumSpace);
 
   /**
    * it matches the input configuration to its corresponding optimal plan.  If the input matches
@@ -51,5 +52,5 @@ public interface MatchingStrategy
    *    the matched {@link OptimalPlan optimal plan} for the given input
    *    configuration.
    */
-  Set<OptimalPlan> matches(String sql, Configuration inputConfiguration, InumSpace inumSpace);
+  Set<OptimalPlan> matches(String sql, Set<Index> inputConfiguration, InumSpace inumSpace);
 }

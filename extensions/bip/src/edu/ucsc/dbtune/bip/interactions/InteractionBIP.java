@@ -1,15 +1,15 @@
 package edu.ucsc.dbtune.bip.interactions;
 
-import java.io.*;
+import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
-import ilog.concert.*;
-import ilog.cplex.*;
-
 import edu.ucsc.dbtune.inum.InumSpace;
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment; 
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
@@ -17,15 +17,17 @@ import edu.ucsc.dbtune.bip.util.BIPAgent;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
 
+import ilog.concert.IloException;
+import ilog.concert.IloLPMatrix;
+import ilog.concert.IloNumVar;
 
-/** 
- * The class is responsible for solving the RestrictIIP problem: 
- * 		For a particular query q, the IIP problem is to find 
- * 		pairs of indexes (c,d) that interact w.r.t. q; i.e., doi_q(c,d) >= delta.
+import ilog.cplex.IloCplex;
+
+/** The class is responsible for solving the RestrictIIP problem: For a particular query q, the IIP 
+ * problem is to find pairs of indexes (c,d) that interact w.r.t. q; i.e., doi_q(c,d) >= delta.
  * 		The pair of indexes c and d must be relevant to the given input query q (?)   
  */
-
-public class InteractionBIP 
+public class InteractionBIP
 {
 	private IloCplex cplex;
 	private IloLPMatrix matrix;
@@ -42,7 +44,7 @@ public class InteractionBIP
 	 *  
 	 * @param BIPAgent
 	 * 		The agent to contact with INUM and populate the INUM spaces
-	 * @param C
+     * @param candidateIndexes
 	 * 		The given set of candidate indexes
 	 * @param delta
 	 * 		The threshold to determine the interaction
@@ -51,11 +53,12 @@ public class InteractionBIP
 	 * 		List of pairs of interacting indexes
 	 * @throws SQLException 
 	 */
-	public List<IndexInteraction> computeInteractionIndexes(BIPAgent agent, Configuration C, double delta) throws SQLException
+    public List<IndexInteraction> computeInteractionIndexes(
+            BIPAgent agent, List<Index> candidateIndexes, double delta)
+        throws SQLException
 	{	
-		List<IndexInteraction> resultIndexInteraction = new ArrayList<IndexInteraction>();				 
-		List<Index> candidateIndexes = C.toList(); 
-		List<InumSpace> listInum = agent.populateInumSpace();
+        List<IndexInteraction> resultIndexInteraction = new ArrayList<IndexInteraction>();				 
+        List<InumSpace> listInum = agent.populateInumSpace();
 		
 		for (InumSpace inum : listInum){
 			IIPQueryPlanDesc desc =  new IIPQueryPlanDesc(); 		

@@ -1,8 +1,10 @@
 package edu.ucsc.dbtune.core;
 
-import edu.ucsc.dbtune.inum.Inum;
-import edu.ucsc.dbtune.metadata.Configuration;
 import java.sql.SQLException;
+import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.inum.Inum;
 
 /**
  * The (IN)dex (U)sage (M)odel (INUM) What-if optimizer.
@@ -54,6 +56,6 @@ public interface InumWhatIfOptimizer
    * @throws SQLException
    *    if unable to estimate cost.
    */
-  double estimateCost(String query, Configuration hypotheticalIndexes)
+  double estimateCost(String query, Set<Index> hypotheticalIndexes)
       throws SQLException;
 }

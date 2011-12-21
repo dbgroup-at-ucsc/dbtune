@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Configuration;
+import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
 
 /**
  * Helper interface for getting an execution plan that spans a range of internal plans.
@@ -11,5 +13,5 @@ import edu.ucsc.dbtune.metadata.Configuration;
  */
 public interface OptimalPlanProvider
 {
-  String getSqlExecutionPlan(String sql, Configuration inputConfiguration);
+  String getSqlExecutionPlan(String sql, Set<Index> inputConfiguration);
 }

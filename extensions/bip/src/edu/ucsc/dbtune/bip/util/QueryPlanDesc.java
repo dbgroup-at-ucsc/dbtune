@@ -12,7 +12,6 @@ import edu.ucsc.dbtune.inum.InumStatementPlan;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
-
 public class QueryPlanDesc 
 {	
 	/**

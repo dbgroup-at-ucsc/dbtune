@@ -13,7 +13,7 @@ public class IndexFullTableScan extends Index
 	public IndexFullTableScan(Table table) throws SQLException
     {
         super(table.getSchema(), "");
-        this.name = getInMemoryID() + FULL_TABLE_SCAN_SUFFIX;
+        this.name = getId() + FULL_TABLE_SCAN_SUFFIX;
         this.table = table;
     }
 	

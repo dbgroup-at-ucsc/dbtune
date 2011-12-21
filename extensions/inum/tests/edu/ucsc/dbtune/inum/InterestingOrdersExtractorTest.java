@@ -1,17 +1,17 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.DBTuneInstances;
-import edu.ucsc.dbtune.SharedFixtures;
-import edu.ucsc.dbtune.inum.InumInterestingOrdersExtractor.ColumnInformation;
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.SQLTypes;
+import com.google.common.collect.Sets;
 
 import java.sql.Connection;
 import java.util.Properties;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
+import edu.ucsc.dbtune.DBTuneInstances;
+import edu.ucsc.dbtune.SharedFixtures;
+import edu.ucsc.dbtune.inum.InumInterestingOrdersExtractor.ColumnInformation;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.SQLTypes;
 
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -37,8 +37,8 @@ public class InterestingOrdersExtractorTest
     final Catalog                    catalog        = DBTuneInstances.configureCatalog();
     final ColumnPropertyLookup       columnProperty = configureProperty();
     final InterestingOrdersExtractor extractor      = new InumInterestingOrdersExtractor(catalog, columnProperty);
-    final Configuration ios = extractor.extractInterestingOrders(SAMPLE_QUERY);
-    assertThat(ios.toList().isEmpty(), is(false));
+    final Set<Index> ios = extractor.extractInterestingOrders(SAMPLE_QUERY);
+    assertThat(ios.isEmpty(), is(false));
   }
 
   private static ColumnPropertyLookup configureProperty() throws Exception

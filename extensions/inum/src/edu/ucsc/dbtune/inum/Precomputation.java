@@ -1,7 +1,8 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Configuration;
 import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
 
 /**
  * Represents the set-up phase of the INUM. The precomputation step
@@ -52,7 +53,7 @@ public interface Precomputation
    *      a reference to the updated {@link InumSpace inumSpace} object, useful if you wish to hold a reference to
    *      the {@link InumSpace} object for checking post-conditions or other purposes (e.g., logging).
    */
-  InumSpace setup(String query, Configuration interestingOrders);
+  InumSpace setup(String query, Set<Index> interestingOrders);
 
   /**
    * checks whether the precomputation step should be skipped for a

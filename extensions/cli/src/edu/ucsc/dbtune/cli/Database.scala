@@ -1,12 +1,14 @@
 package edu.ucsc.dbtune.cli
 
 import edu.ucsc.dbtune.DatabaseSystem
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.util.Environment
 
+import java.util.HashSet
 import java.util.Properties
+import java.util.Set
 
 import edu.ucsc.dbtune.DatabaseSystem._
 import edu.ucsc.dbtune.util.EnvironmentProperties.DBMS
@@ -30,8 +32,8 @@ class Database(dbms:DatabaseSystem) extends Catalog(dbms.getCatalog) {
     * @throw SQLException
     *   if one of the indexes isn't found in the system's catalog
     * @see edu.ucsc.dbtune.metadata
-  def configuration(indexNames:String*) : Configuration =  {
-    var conf = new Configuration("")
+  def configuration(indexNames:String*) : Set[Index] =  {
+    var conf = new HashSet[Index]("")
 
     for (indexName <- indexNames) {
       conf.add(dbms.getCatalog.findIndex(indexName))
@@ -46,7 +48,7 @@ class Database(dbms:DatabaseSystem) extends Catalog(dbms.getCatalog) {
     * @return
     *   a configuration
     */
-  def recommend(sql:String) : Configuration =  {
+  def recommend(sql:String) : Set[Index] =  {
     dbms.getOptimizer.recommendIndexes(sql)
   }
   
@@ -70,7 +72,7 @@ class Database(dbms:DatabaseSystem) extends Catalog(dbms.getCatalog) {
     * @return
     *   a configuration
     */
-  def explain(sql:String, conf:Configuration) : ExplainedSQLStatement =  {
+  def explain(sql:String, conf:Set[Index]) : ExplainedSQLStatement =  {
     dbms.getOptimizer.explain(sql, conf)
   }
   
@@ -118,7 +120,7 @@ object Database
     * @return
     *   a configuration
     */
-  def recommend(sql:String) /*: Configuration*/ =  {
+  def recommend(sql:String) /*: Set[Index]*/ =  {
     //INSTANCE.recommend(sql)
   }
   
@@ -142,7 +144,7 @@ object Database
     * @return
     *   a configuration
     */
-  def explain(sql:String, conf:Configuration) /*: PreparedSQLStatement */ =  {
+  def explain(sql:String, conf:Set[Index]) /*: PreparedSQLStatement */ =  {
     //INSTANCE.getOptimizer.explain(sql, conf)
   }
   

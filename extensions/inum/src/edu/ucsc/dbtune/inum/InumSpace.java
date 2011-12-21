@@ -1,8 +1,5 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import java.util.Set;
 
 /**

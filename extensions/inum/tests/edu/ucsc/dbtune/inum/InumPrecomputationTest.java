@@ -1,14 +1,18 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.SharedFixtures;
-import edu.ucsc.dbtune.metadata.Configuration;
 import java.sql.Connection;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import java.util.Set;
+
+import edu.ucsc.dbtune.SharedFixtures;
+import edu.ucsc.dbtune.metadata.Index;
+
 import org.junit.After;
-import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * Tests the default implementation of {@link Precomputation} type.
@@ -27,7 +31,7 @@ public class InumPrecomputationTest
   @Test public void testInumSpaceBuilding_SingleElement() throws Exception
  {
     final Precomputation setup                   = new InumPrecomputation(mockConnection);
-    final Configuration  configurationOfOneIndex = SharedFixtures.configureConfiguration();
+    final Set<Index>  configurationOfOneIndex = SharedFixtures.configureConfiguration();
     setup.setup("SELECT * FROM test;", configurationOfOneIndex);
 
     final InumSpace is    = setup.getInumSpace();
@@ -39,7 +43,7 @@ public class InumPrecomputationTest
   @Test public void testSkippingQuery() throws Exception
  {
     final Precomputation setup = new InumPrecomputation(mockConnection);
-    final Configuration configurationOfOneIndex = SharedFixtures.configureConfiguration();
+    final Set<Index> configurationOfOneIndex = SharedFixtures.configureConfiguration();
     setup.setup("SELECT * FROM test;", configurationOfOneIndex);
     assertThat(setup.skip("SELECT * FROM test;"), is(true));
   }

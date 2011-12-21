@@ -15,6 +15,7 @@ import java.util.List;
  * @author Ivo Jimenez
  */
 public class Workload implements Iterable<SQLStatement>
+//public class WorkloadReader
 {
     private List<SQLStatement> sqls;
 

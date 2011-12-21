@@ -69,6 +69,7 @@
           <pathelement location="${bld.dir}/classes"/>
           <pathelement location="${bld.dir}/tests"/>
         </classpath>
+        <sysproperty key="java.library.path" path="${lib.dir}"/>
         <batchtest fork="yes" todir="${bld.dir}/junit.output">
           <fileset dir="${bld.dir}/tests" >
             <include name="**/*Test.class"/>
@@ -87,6 +88,7 @@
           <pathelement location="${bld.dir}/classes"/>
           <pathelement location="${bld.dir}/tests"/>
         </classpath>
+        <sysproperty key="java.library.path" path="${lib.dir}"/>
         <batchtest fork="yes" todir="${bld.dir}/junit.output">
           <fileset dir="${bld.dir}/tests" >
             <include name="**/*FunctionalTest.class"/>
@@ -104,6 +106,7 @@
         <pathelement location="${bld.dir}/classes"/>
         <pathelement location="${bld.dir}/tests"/>
       </classpath>
+      <sysproperty key="java.library.path" path="${lib.dir}"/>
       <test todir="${bld.dir}/junit.output" name="${class}"/>
       <formatter usefile="false" type="plain"/>
     </junit>

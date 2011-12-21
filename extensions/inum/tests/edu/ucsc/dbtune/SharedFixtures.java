@@ -2,7 +2,15 @@ package edu.ucsc.dbtune;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import edu.ucsc.dbtune.core.InumWhatIfOptimizer;
 import edu.ucsc.dbtune.core.InumWhatIfOptimizerImpl;
 import edu.ucsc.dbtune.inum.IndexAccessCostEstimation;
@@ -15,21 +23,16 @@ import edu.ucsc.dbtune.inum.OptimalPlan;
 import edu.ucsc.dbtune.inum.Precomputation;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
+
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
+import org.mockito.Mockito;
+
 import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
 import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
 import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.metadata.Table;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import org.mockito.Mockito;
+import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
 
 /**
  * Contains a set of tests fixtures that can be shared among all inum tests.
@@ -73,11 +76,11 @@ public final class SharedFixtures {
   }
 
   public static Inum configureInum() throws Exception {
-    final Configuration  configuration  = configureConfiguration();
+    final Set<Index> configuration = configureConfiguration();
     return configureInum("SELECT * FROM TABLE1;", configuration);
   }
 
-  public static Inum configureInum(String sql, Configuration configuration) throws Exception {
+  public static Inum configureInum(String sql, Set<Index> configuration) throws Exception {
     final Connection                  connection     = configureConnection();
     final InumSpace                   inumSpace      = configureInumSpace(sql, configuration);
     final Precomputation              precomputation = configurePrecomputation(inumSpace);
@@ -88,24 +91,27 @@ public final class SharedFixtures {
         connection, precomputation, matchingLogic, ioExtractor);
   }
 
-  public static InterestingOrdersExtractor configureIOExtractor(Configuration configuration) throws Exception {
+  public static InterestingOrdersExtractor configureIOExtractor(Set<Index> configuration) throws 
+      Exception {
     final InterestingOrdersExtractor extractor = Mockito.mock(InterestingOrdersExtractor.class);
-    final Configuration indexes = new Configuration(configuration);
+    final Set<Index> indexes = new HashSet<Index>(configuration);
     Mockito.when(extractor.extractInterestingOrders(Mockito.anyString())).thenReturn(indexes);
     return extractor;
   }
 
   public static InterestingOrdersExtractor configureIOExtractor() throws Exception {
-    final Configuration indexes = configureConfiguration(new Table(new Schema(new Catalog("testc"), "tests"),"test"), 3, 3);
+    final Set<Index> indexes = configureConfiguration(new Table(new Schema(new Catalog("testc"), 
+                    "tests"),"test"), 3, 3);
     return configureIOExtractor(indexes);
   }
 
   public static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception {
     final MatchingStrategy matchingLogic = Mockito.mock(MatchingStrategy.class);
     final Set<OptimalPlan> plans         = inumSpace.getAllSavedOptimalPlans();
-    Mockito.when(matchingLogic.matches(Mockito.anyString(), Mockito.<Configuration>any(), Mockito.eq(inumSpace))).thenReturn(plans);
+    Mockito.when(matchingLogic.matches(Mockito.anyString(), Mockito.<Set<Index>>any(), 
+                Mockito.eq(inumSpace))).thenReturn(plans);
     final double cost = Lists.newArrayList(plans).get(0).getTotalCost();
-    Mockito.when(matchingLogic.estimateCost(Mockito.anyString(), Mockito.<Configuration>any(),
+    Mockito.when(matchingLogic.estimateCost(Mockito.anyString(), Mockito.<Set<Index>>any(),
         Mockito.eq(inumSpace))).thenReturn(cost);
     return matchingLogic;
   }
@@ -113,7 +119,7 @@ public final class SharedFixtures {
   public static Precomputation configurePrecomputation(InumSpace inumSpace) throws Exception {
     final Precomputation    setup     = Mockito.mock(Precomputation.class);
     Mockito.when(setup.getInumSpace()).thenReturn(inumSpace);
-    Mockito.when(setup.setup(Mockito.anyString(), Mockito.<Configuration>any())).thenReturn(inumSpace);
+    Mockito.when(setup.setup(Mockito.anyString(), Mockito.<Set<Index>>any())).thenReturn(inumSpace);
 
     return setup;
   }
@@ -129,7 +135,7 @@ public final class SharedFixtures {
     return singleOne;
   }
 
-  public static InumSpace configureInumSpace(String sql, Configuration config) throws Exception {
+  public static InumSpace configureInumSpace(String sql, Set<Index> config) throws Exception {
     final InumSpace inumSpace = Mockito.mock(InumSpace.class);
     final Set<OptimalPlan> plans = configureSingleOptimalPlan();
     Mockito.when(inumSpace.getAllSavedOptimalPlans()).thenReturn(plans);
@@ -144,7 +150,8 @@ public final class SharedFixtures {
 
   public static IndexAccessCostEstimation configureEstimator() {
     final IndexAccessCostEstimation estimation = Mockito.mock(IndexAccessCostEstimation.class);
-    Mockito.when(estimation.estimateIndexAccessCost(Mockito.anyString(), Mockito.<Configuration>any())).thenReturn(10.0);
+    Mockito.when(estimation.estimateIndexAccessCost(Mockito.anyString(), 
+                Mockito.<Set<Index>>any())).thenReturn(10.0);
     return estimation;
   }
 
@@ -154,11 +161,12 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     return new HashSet<OptimalPlan>(){{add(optimalPlan);}};
   }
 
-  public static Configuration configureConfiguration() throws Exception {
+  public static Set<Index> configureConfiguration() throws Exception {
     return configureConfiguration(new Table(new Schema(new Catalog("testc"), "tests"),"test"), 1, 2);
   }
 
-  public static Configuration configureConfiguration(Table table, int noIndexes, int noColsPerIndex) throws Exception {
+  public static Set<Index> configureConfiguration(Table table, int noIndexes, int noColsPerIndex) 
+      throws Exception {
     final List<Column> cols = Lists.newArrayList();
     final List<Index>  idxs = Lists.newArrayList();
     int i =0;
@@ -172,7 +180,7 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
       cols.clear();
     }
 
-    return new Configuration(idxs);
+    return new HashSet<Index>(idxs);
   }
 
   public static InumWhatIfOptimizer configureWhatIfOptimizer() throws Exception {
@@ -180,7 +188,8 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     return new InumWhatIfOptimizerImpl(inum);
   }
 
-  public static InumWhatIfOptimizer configureWhatIfOptimizer(Configuration configuration) throws Exception {
+  public static InumWhatIfOptimizer configureWhatIfOptimizer(Set<Index> configuration) throws 
+      Exception {
     final Inum inum = configureInum("", configuration);
     return new InumWhatIfOptimizerImpl(inum);
   }

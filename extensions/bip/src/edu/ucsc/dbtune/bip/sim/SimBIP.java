@@ -9,9 +9,11 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.ucsc.dbtune.bip.util.BIPAgent;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
@@ -47,11 +49,11 @@ public class SimBIP
 	 * 		A sequence of index to be materialized (created/dropped) in the corresponding window time
 	 * @throws SQLException 
 	 */
-	public List<MatIndex> schedule(List<Index> Sinit, List<Index> Smat, BIPAgent agent, int W, 
-								   List<Double> B) throws SQLException
+    public List<MatIndex> schedule(List<Index> Sinit, List<Index> Smat, BIPAgent agent, int W, 
+            List<Double> B) throws SQLException
 	{
-		List<Index> candidateIndexes = new ArrayList<Index>();		
-		List<InumSpace> listInumSpace = agent.populateInumSpace();
+        List<Index> candidateIndexes = new ArrayList<Index>();
+        List<InumSpace> listInumSpace = agent.populateInumSpace();
 		
 		// 1. Derive Sin, Sout, Sremain
 		classifyTypeIndex(Sinit, Smat);
@@ -88,7 +90,7 @@ public class SimBIP
 	 * 		The materialized configuration
 	 * 
 	 */
-	private void classifyTypeIndex(List<Index> Sinit, List<Index> Smat)
+    private void classifyTypeIndex(List<Index> Sinit, List<Index> Smat)
 	{
 		List<Index> Sin = new ArrayList<Index>();
 		List<Index> Sout = new ArrayList<Index>();
