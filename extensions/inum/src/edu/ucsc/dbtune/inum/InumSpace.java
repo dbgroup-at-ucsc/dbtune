@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
+import edu.ucsc.dbtune.metadata.Configuration;
 import java.util.Set;
 
 /**
@@ -45,13 +46,13 @@ public interface InumSpace
    * @return
    *    the set of cached optimal plans for the given key.
    */
-  Set<OptimalPlan> getOptimalPlans(Key key);
+  Set<OptimalPlan> getOptimalPlans(QueryRecord key);
 
   /**
    * @return
    *    the set of {@link InumSpace}'s keys.
    */
-  Set<Key> keySet();
+  Set<QueryRecord> keySet();
 
   /**
    * Get all the {@link OptimalPlan optimal plan}s from the
@@ -84,5 +85,5 @@ public interface InumSpace
    *      a reference to the set of saved optimal plans, useful if you wish to hold a reference to
    *      the set for checking post-conditions or other purposes (e.g., logging).
    */
-  InumSpace save(Key key, Set<OptimalPlan> optimalPlans);
+  InumSpace save(QueryRecord key, Set<OptimalPlan> optimalPlans);
 }

@@ -1,147 +1,123 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.base.Objects;
+import com.google.caliper.internal.guava.collect.Maps;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import edu.ucsc.dbtune.metadata.Configuration;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Strings;
+import static java.lang.Double.compare;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The not yet cached Sql Execution Plan.
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class SqlExecutionOptimalPlan implements OptimalPlan
-{
-  private final List<Subplan> subplans;
-  SqlExecutionOptimalPlan(List<Subplan> subplans){
-    this.subplans = subplans;
+public abstract class SqlExecutionOptimalPlan implements OptimalPlan {
+  protected final List<PhysicalOperator> internalPlans;
+  protected final Map<String, Double>    tableNameToAccessCost;
+
+  protected double            internal;
+  private   PhysicalOperator  root;
+
+  SqlExecutionOptimalPlan(List<PhysicalOperator> internalPlans) {
+    this.internalPlans          = internalPlans;
+    this.internal               = Double.NaN;
+    this.tableNameToAccessCost  = Maps.newHashMap();
+    this.root                   = null;
   }
 
-  public SqlExecutionOptimalPlan()
-  {
-    this(Lists.<Subplan>newArrayList());
+  protected SqlExecutionOptimalPlan() {
+    this(Lists.<PhysicalOperator>newArrayList());
   }
 
-  @Override public boolean addSubplan(Subplan subplan)
- {
-    return !subplans.contains(subplan) && subplans.add(subplan);
+  @Override public boolean add(PhysicalOperator operator) {
+    return !internalPlans.contains(operator) && internalPlans.add(operator);
   }
 
-  @Override public void computeInternalPlanCost()
- {
-    //todo(Huascar) once the dbms changes are done
-  }
+  @Override public abstract void computeInternalPlanCost();
 
-  @Override public List<Subplan> getInternalPlans()
- {
-    return ImmutableList.copyOf(subplans);
-  }
+  @Override public void fixAccessCosts(Configuration configuration, QueryRecord queryRecord) {
+    double internal = getInternalCost();
+    for (String eachTableName : queryRecord.getUsedTablesNames()){
+      if(compare(getAccessCost(eachTableName.toUpperCase()), 0) <= 0/*check if second is less than first*/) {
+        // check if there is an index on it.
+        final Index idx = firstIndexForTable(eachTableName.toUpperCase(), configuration);
+        if(idx != null && idx.isMaterialized()){
+          double indexAccessCost = getAccessCost(idx.getName() /*should be idx's implemented-name*/);
+          if(compare(indexAccessCost, 0) >= 0){
+            setAccessCost(eachTableName.toUpperCase(), indexAccessCost);
+          }
+        }
+      }
 
-  @Override public double getTotalCost()
- {
-    return 0;  //todo(Huascar) once the dbms changes are done
-  }
-
-  @Override public double getAccessCost(String tableName)
- {
-    return 0; //todo(Huascar) once the dbms changes are done
-  }
-
-  @Override public double getInternalCost()
- {
-    return 0;  //todo(Huascar) once the dbms changes are done
-  }
-
-  @Override public boolean isDirty()
- {
-    return false;  //todo(Huascar) once the dbms changes are done
-  }
-
-  @Override public boolean removeSubplan(Subplan subplan)
- {
-    return subplans.contains(subplan) && subplans.remove(subplan);
-  }
-
-  @Override public void setAccessCost(String tableName, double cost)
- {
-    //todo(Huascar) once the dbms changes are done
-  }
-
-  @Override public String toString()
- {
-    return subplans.toString();
-  }
-
-  /**
-   * Default implementation of {@link Subplan} interface.
-   */
-  public static class InternalSubplan implements Subplan
-  {
-    private final int     rowId;
-    private final int     parentId;
-    private final String  target;
-    private final double  cost;
-    private final long    cardinality;
-    private final double  initCost;
-    private final String operator;
-
-    public InternalSubplan(int rowId, int parentId,
-        String operator, String target, double cost, double initCost, long cardinality){
-      this.rowId        = rowId;
-      this.parentId     = parentId;
-      this.target       = target;
-      this.operator     = operator;
-      this.cost         = cost;
-      this.initCost     = initCost;
-      this.cardinality  = cardinality;
+      internal -= getAccessCost(eachTableName.toUpperCase());
     }
 
-    @Override public int getRowId()
- {
-      return rowId;
-    }
+    setInternalCost(internal); // note: this was not included in the old implementation; however,
+    // from the old code, we can deduce that this previous method call was needed.
+  }
 
-    @Override public int getParentId()
- {
-      return parentId;
+  private static Index firstIndexForTable(String tablename, Configuration configuration){
+    for(Index each : configuration.toList()){
+      final String eachTablename = each.getTable().getName();
+      if(Strings.same(eachTablename, tablename)){
+        return each;
+      }
     }
+    return null; // null is allowed
+  }
 
-    @Override public String getOperator()
- {
-      return operator;
-    }
+  @Override public List<PhysicalOperator> getInternalPlans() {
+    return ImmutableList.copyOf(internalPlans);
+  }
 
-    @Override public String getTarget()
- {
-      return target;
-    }
+  @Override public double getAccessCost(String tableName) {
+    final String nonNullTablename = Preconditions.checkNotNull(tableName);
+    Double cost = tableNameToAccessCost.get(nonNullTablename);
+    final boolean nonNullCost = cost != null;
 
-    @Override public double getCost()
- {
-      return cost;
-    }
+    return nonNullCost ? cost
+        : ((cost = getAccessCost(nonNullTablename.toUpperCase())) != null ? cost : 0);
+  }
 
-    @Override public double getInitCost()
- {
-      return initCost;
-    }
+  @Override public double getInternalCost() {
+    return internal;
+  }
 
-    @Override public long getCardinality()
- {
-      return cardinality;
-    }
+  public PhysicalOperator getRoot(){
+    return root;
+  }
 
-    @Override public String toString()
- {
-      return Objects.toStringHelper(this)
-          .add("rowId", getRowId())
-          .add("parentId", getParentId())
-          .add("target", getTarget())
-          .add("operator", getOperator())
-          .add("wholeOperationCost", getCost())
-          .add("initCost", getInitCost())
-          .add("cardinality", getCardinality())
-      .toString();
-    }
+  @Override public double getTotalCost() {
+    return Preconditions.checkNotNull(getRoot()).getCost();
+  }
+
+  @Override public boolean isDirty() {
+    return false;
+  }
+
+  @Override public boolean remove(PhysicalOperator operator) {
+    return internalPlans.contains(operator) && internalPlans.remove(operator);
+  }
+
+  @Override public void setAccessCost(String tableName, double cost) {
+    final String nonNullTablename = Preconditions.checkNotNull(tableName);
+    tableNameToAccessCost.put(nonNullTablename.toUpperCase(), cost);
+  }
+
+  void setInternalCost(double cost){
+    this.internal = cost;
+  }
+
+  public void setRoot(PhysicalOperator operator){
+    this.root = Preconditions.checkNotNull(operator);
+  }
+
+  @Override public String toString() {
+    return internalPlans.toString();
   }
 }

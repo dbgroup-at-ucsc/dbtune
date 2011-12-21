@@ -2,15 +2,16 @@ package edu.ucsc.dbtune.inum;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-
-import java.util.HashSet;
-import java.util.Set;
-
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import edu.ucsc.dbtune.metadata.Configuration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.Console;
+import edu.ucsc.dbtune.util.ConfigurationUtils;
 import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import java.util.Set;
 
 /**
  * Inumspace key consisting of a SQL query and an index configuration.
@@ -18,16 +19,18 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class Key {
-  private final SQLStatement  sql;
-  private final Configuration configuration;
-  public Key(String sql, Configuration configuration) {
+public class QueryRecord {
+  private final SQLStatement          sql;
+  private final Configuration         configuration;
+  private final Set<String>           indexedTableNames; // these map to the tables part of the interesting orders in a SQL query
+  public QueryRecord(String sql, Configuration configuration) {
     this(createStatement(sql), configuration);
   }
 
-  public Key(SQLStatement sql, Configuration configuration){
-    this.sql           = sql;
-    this.configuration = configuration;
+  public QueryRecord(SQLStatement sql, Configuration configuration){
+    this.sql            = sql;
+    this.configuration  = configuration;
+    this.indexedTableNames = ConfigurationUtils.findUsedTables(this.configuration);
   }
 
   @Override public int hashCode() {
@@ -35,9 +38,13 @@ public class Key {
   }
 
   @Override public boolean equals(Object o) {
-    if(!(o instanceof Key)) return false;
-    final Key other = (Key)o;
+    if(!(o instanceof QueryRecord)) return false;
+    final QueryRecord other = (QueryRecord)o;
     return isCoveredBy(other.sql, other.configuration);
+  }
+
+  public Set<String> getUsedTablesNames(){
+    return ImmutableSet.copyOf(indexedTableNames);
   }
 
   private static SQLStatement createStatement(String sql){
@@ -82,11 +89,10 @@ public class Key {
     return !c.toList().isEmpty() && isEveryMemberInSecond;
   }
 
-    @Override
-    public String toString() {
-        return new ToStringBuilder<Key>(Key.class)
-            .add("sql", sql)
-            .add("configuration", configuration)
-            .toString();
-    }
+  @Override public String toString() {
+    return new ToStringBuilder<QueryRecord>(QueryRecord.class)
+        .add("sql", sql)
+        .add("configuration", configuration)
+        .toString();
+  }
 }

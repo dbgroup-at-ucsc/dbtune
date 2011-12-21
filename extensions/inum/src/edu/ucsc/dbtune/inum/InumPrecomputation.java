@@ -50,25 +50,8 @@ public class InumPrecomputation implements Precomputation
         return inumSpace;
     }
 
-    @Override public InumSpace setup(String query, Set<Index> interestingOrders)
-    {
-        addQuerytoListOfSeenQueries(query);
-        // generate all possible interesting orders combinations (atomic) that will be used
-        // during the INUM's {@link Precomputation setup} phase.
-        final Set<Set<Index>> allAtomicCombOfInterestingOrders = 
-            Combinations.findCrossProduct(interestingOrders);
-        for(Set<Index> o /*o as in the JavaDoc*/
-                : allAtomicCombOfInterestingOrders){
-            final Set<OptimalPlan> optimalPlansPerInterestingOrder = Sets.newHashSet();
-            // call optimizer given the workload and an input configuration
-            //   get optimal plan as a String
-            //   parse it and collect information needed to create a new instance of Optimal plan
-            //   add all returned plans to optimalPlans
-            //   save plans in InumSpace indexed by interesting order.
-            // return a reference to the set of optimal plans
-            final String queryExecutionPlan = provider.getSqlExecutionPlan(query, o);
-            if(Strings.isEmpty(queryExecutionPlan)) continue;
-            optimalPlansPerInterestingOrder.addAll(parser.parse(queryExecutionPlan));
+      final QueryRecord key = new QueryRecord(query, o);
+      getInumSpace().save(key, optimalPlansPerInterestingOrder);
 
             final Key key = new Key(query, o);
             getInumSpace().save(key, optimalPlansPerInterestingOrder);

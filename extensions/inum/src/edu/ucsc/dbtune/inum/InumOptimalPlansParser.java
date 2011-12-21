@@ -3,8 +3,8 @@ package edu.ucsc.dbtune.inum;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import edu.ucsc.dbtune.inum.OptimalPlan.Subplan;
-import edu.ucsc.dbtune.inum.SqlExecutionOptimalPlan.InternalSubplan;
+import edu.ucsc.dbtune.util.Environment;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
 import edu.ucsc.dbtune.util.Pair;
 import edu.ucsc.dbtune.util.Strings;
 import static java.util.Arrays.asList;
@@ -18,15 +18,15 @@ import java.util.regex.Pattern;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumOptimalPlansParser implements OptimalPlansParser
-{
+public class InumOptimalPlansParser implements OptimalPlansParser {
   private static final int NOT_FOUND = -1;
-  private static final int ROOT      = -1;
+  private static final int ROOT = -1;
 
   private static List<Pair<String, String>> OPERATORS_MAPPINGS;
+
   static {
-    @SuppressWarnings( {"unchecked"})
-    final List<Pair<String, String>> pairs =  asList(  /* this throws a warning */
+    @SuppressWarnings({"unchecked"})
+    final List<Pair<String, String>> pairs = asList(  /* this throws a warning */
         Pair.of("Result", "RESULT"),
         Pair.of("Append", "APPEND"),
         Pair.of("BitmapAnd", "BITMAP_AND"),
@@ -63,40 +63,32 @@ public class InumOptimalPlansParser implements OptimalPlansParser
     );
   }
 
-  @Override public Set<OptimalPlan> parse(String returnedStatement)
- {
-    return buildPlans(returnedStatement);
-  }
-
   // parsing plan suggested by optimizer
-  private static Set<OptimalPlan> buildPlans(String queryExecutionPlan)
-  {
+  private static Set<OptimalPlan> buildPlans(String queryExecutionPlan) {
     final Set<OptimalPlan> suggestedPlans = Sets.newHashSet();
-    final OptimalPlan   optimalPlan = new SqlExecutionOptimalPlan();
-    final List<String>  parsedlines = Lists.newArrayList();
-    final List<Integer> parents     = Lists.newArrayList();
-    final String        current     = ("->  " + queryExecutionPlan).replaceAll("\\r|\\n", "");
+    final OptimalPlan optimalPlan = isPG() ? new PostgresSqlExecutionPlan() : new DB2SqlExecutionPlan() ;
+    final List<String> parsedlines = Lists.newArrayList();
+    final List<Integer> parents = Lists.newArrayList();
+    final String current = ("->  " + queryExecutionPlan).replaceAll("\\r|\\n", "");
 
-    final Matcher matcher     = Pattern.compile("\\->").matcher(current);
-    while (matcher.find()){
-      int end          = matcher.end();
+    final Matcher matcher = Pattern.compile("\\->").matcher(current);
+    while (matcher.find()) {
+      int end = matcher.end();
       int nextPosition = current.indexOf("->", end);
-      int counter      = 0;
+      int counter = 0;
       String relevantText;
-      if (nextPosition != NOT_FOUND){
+      if (nextPosition != NOT_FOUND) {
         relevantText = current.substring(end + 2, nextPosition);
-        for (int idx = (relevantText.length() - 1) ; idx > 0; idx--) {
+        for (int idx = (relevantText.length() - 1); idx > 0; idx--) {
           final boolean isWhiteSpace = Character.isWhitespace(relevantText.charAt(idx));
-          if (isWhiteSpace) { counter++; }
-          else             { break;     }
+          if (isWhiteSpace) { counter++; } else { break; }
           parents.add(counter);
         }
-
       } else {
         relevantText = current.substring(end + 2);
       }
 
-      if (!Strings.isEmpty(relevantText)){
+      if (!Strings.isEmpty(relevantText)) {
         parsedlines.add(relevantText);
       }
     }
@@ -104,26 +96,27 @@ public class InumOptimalPlansParser implements OptimalPlansParser
     parents.add(0, ROOT);
 
     // parse parents and actual plans
-    for (int rowId = 0; rowId < parsedlines.size(); rowId++){
-      final String each          = parsedlines.get(rowId);
-      int posOpenParenthesis     = each.indexOf("(");
-      int posCost                = each.indexOf("cost=");
-      int posDoubleDot           = each.indexOf("..");
+    for (int rowId = 0; rowId < parsedlines.size(); rowId++) {
+      final String each = parsedlines.get(rowId);
+      int posOpenParenthesis = each.indexOf("(");
+      int posCost = each.indexOf("cost=");
+      int posDoubleDot = each.indexOf("..");
       int posSpaceAfterDoubleDot = each.indexOf(" ", posDoubleDot);
-      int posRows                = each.indexOf("rows=");
-      int posSpaceAfterRows      = each.indexOf(" ", posRows);
+      int posRows = each.indexOf("rows=");
+      int posSpaceAfterRows = each.indexOf(" ", posRows);
 
-      final String operator           = findOperator(each.substring(0, posOpenParenthesis - 1));
-      final String target             = findTarget(operator, each);
-      final double costFirstRow       = Double.valueOf(each.substring(posCost + 5, posDoubleDot));
-      final double costWholeOperation = Double.valueOf(each.substring(posDoubleDot + 2, posSpaceAfterDoubleDot));
-      final long   rows               = Long.valueOf(each.substring(posRows + 5, posSpaceAfterRows));
-      int   parent = ROOT;
-      if (rowId == 0){
+      final String operator = findOperator(each.substring(0, posOpenParenthesis - 1));
+      final String target = findTarget(operator, each);
+      final double costFirstRow = Double.valueOf(each.substring(posCost + 5, posDoubleDot));
+      final double costWholeOperation = Double
+          .valueOf(each.substring(posDoubleDot + 2, posSpaceAfterDoubleDot));
+      final long rows = Long.valueOf(each.substring(posRows + 5, posSpaceAfterRows));
+      int parent = ROOT;
+      if (rowId == 0) {
         parent = ROOT;
       } else {
         final int len = parents.get(rowId);
-        for (int j = rowId; j >= 0; j--){
+        for (int j = rowId; j >= 0; j--) {
           if (parents.get(j) < len || parents.get(j) < 0) {
             parent = j;
             break;
@@ -131,7 +124,7 @@ public class InumOptimalPlansParser implements OptimalPlansParser
         }
       }
 
-      final Subplan subplan = new InternalSubplan(
+      final PhysicalOperator subplan = new PhysicalOperatorImpl(
           rowId,
           parent,
           operator,
@@ -141,50 +134,58 @@ public class InumOptimalPlansParser implements OptimalPlansParser
           rows
       );
 
-      optimalPlan.addSubplan(subplan);
+      optimalPlan.add(subplan);
     }
     suggestedPlans.add(optimalPlan);
     return suggestedPlans;
   }
 
-  private static String findOperator(String name)
-  {
-    for (Pair<String, String> each : OPERATORS_MAPPINGS){
-      if (Strings.contains(name, each.getLeft())){
+  private static String findOperator(String name) {
+    for (Pair<String, String> each : OPERATORS_MAPPINGS) {
+      if (Strings.contains(name, each.getLeft())) {
         return each.getRight();
       }
     }
     return "UNKNOWN TYPE in " + name;
   }
 
-  private static String findTarget(String nodeName, String prim)
-  {
-      String result = "";
-      if (nodeName.equals("IXSCAN")) {//IndexScan: " using %s"
-          int x = prim.indexOf(" using ");
-          int y = prim.indexOf(" ", x + 7);
-          result = prim.substring(x + 7, y);
-      }
+  private static String findTarget(String nodeName, String prim) {
+    String result = "";
+    if ("IXSCAN".equals(nodeName)) {//IndexScan: " using %s"
+      int x = prim.indexOf(" using ");
+      int y = prim.indexOf(" ", x + 7);
+      result = prim.substring(x + 7, y);
+    }
 
-      if (nodeName.equals("TBSCAN") || nodeName.equals("BP_HSCAN") || nodeName.equals("TIDSCAN")) {
-          int x = prim.indexOf(" on ");//FUNCTION_SCAN,VALUES_SCAN
-          int y = prim.indexOf(" ", x + 4);
-          result = prim.substring(x + 4, y);
-      }
+    if ("TBSCAN".equals(nodeName) || "BP_HSCAN".equals(nodeName) || "TIDSCAN".equals(nodeName)) {
+      int x = prim.indexOf(" on ");//FUNCTION_SCAN,VALUES_SCAN
+      int y = prim.indexOf(" ", x + 4);
+      result = prim.substring(x + 4, y);
+    }
 
+    if ("BP_IXSCAN".equals(nodeName) || "FUNCTION_SCAN".equals(nodeName) || "VALUES_SCAN"
+        .equals(nodeName)) {
+      int x = prim.indexOf(" on ");
+      int y = prim.indexOf(" ", x + 4);
+      result = prim.substring(x + 4, y);
+    }
 
-      if (nodeName.equals("BP_IXSCAN") || nodeName.equals("FUNCTION_SCAN") || nodeName.equals("VALUES_SCAN")) {
-          int x = prim.indexOf(" on ");
-          int y = prim.indexOf(" ", x + 4);
-          result = prim.substring(x + 4, y);
-      }
+    if ("SUBQUERY_SCAN".equals(nodeName)) {
+      int x = prim.indexOf("Subquery Scan ");
+      int y = prim.indexOf(" ", x + 14);
+      result = prim.substring(x + 14, y);
+    }
 
-      if (nodeName.equals("SUBQUERY_SCAN")) {
-          int x = prim.indexOf("Subquery Scan ");
-          int y = prim.indexOf(" ", x + 14);
-          result = prim.substring(x + 14, y);
-      }
+    return result;
+  }
 
-      return result;
+  private static boolean isPG(){ /*this is the default vendor*/
+    final Environment env = Environment.getInstance();
+    final String vendor = env.getVendor();
+    return Strings.isEmpty(vendor) || Strings.same(env.getVendor(), PG);
+  }
+
+  @Override public Set<OptimalPlan> parse(String returnedStatement) {
+    return buildPlans(returnedStatement);
   }
 }
