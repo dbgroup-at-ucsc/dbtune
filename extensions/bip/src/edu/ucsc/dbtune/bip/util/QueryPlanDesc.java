@@ -11,6 +11,7 @@ import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.inum.InumStatementPlan;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class QueryPlanDesc 
 {	
@@ -53,6 +54,8 @@ public class QueryPlanDesc
 	 * List of position of slots referenced by the query
 	 */
 	protected Map<Integer, Integer> mapReferencedSlotID;
+	
+	protected InumSpace inum;
 	
 	/**
 	 * Number of template plans	 
@@ -151,9 +154,10 @@ public class QueryPlanDesc
 	 * Populate query plan description  number of template plans, internal cost, 
 	 * index access cost, etc. )
 	 * 
-	 * @param inum
-	 * 		Inum space corresponding to the given query
-	 * 
+	 * @param agent
+	 * 		The class to communicate with INUM to get InumSpace
+	 * @param stmt
+     *      A SQL statement
 	 * @param globaCandidateIndexes
 	 * 		The given list of candidate indexes (globally)	
 	 * 
@@ -163,20 +167,24 @@ public class QueryPlanDesc
 	 *     at each slot
 	 * @throws SQLException 
 	 */	
-	public void generateQueryPlanDesc(InumSpace inum, List<Index> globalCandidateIndexes) throws SQLException
+	public void generateQueryPlanDesc(BIPAgentPerSchema agent, SQLStatement stmt, 
+	                                  List<Index> globalCandidateIndexes) throws SQLException
 	{
 		S = new ArrayList<Integer>();
 		beta = new ArrayList<Double>();
 		gamma = new ArrayList<List<List<Double>>>(); 
 		listIndexesEachSlot = new ArrayList<List<Index>>();
-		Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
 		
+		this.inum = agent.populateInumSpace(stmt);
+		List<IndexFullTableScan> listFullTableScanIndexes = agent.getListFullTableScanIndexes();  
+		listSchemaTables = agent.getListSchemaTables();
+		Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
+					
 		// TODO: replace with the new interface ----------------------
 		// Note that list tables is derived from the schema
-		// @listSchemaTables and @listReferencedTable is different
+		// @listSchemaTables and @listReferencedTable is different		
 		List<Table> listReferencedTables = new ArrayList<Table>();   
 		for (InumStatementPlan plan : templatePlans) {
-		    listSchemaTables = plan.getSchemaTables();
 			listReferencedTables = plan.getReferencedTables();
 			break;
 		}
@@ -198,10 +206,15 @@ public class QueryPlanDesc
 				}
 			}
 			
-			IndexFullTableScan scanIdx = new IndexFullTableScan(table);
-			listIndex.add(scanIdx);
-			numIndexEachSlot++;
-			numIndexes++;
+			// find the full table scan index corresponding to the slot
+			for (IndexFullTableScan scanIdx : listFullTableScanIndexes) {
+			    if (scanIdx.getTable().equals(table) == true) {
+			        numIndexEachSlot++;
+                    numIndexes++;
+                    listIndex.add(scanIdx);
+                    break;
+			    }
+			}
 			
 			S.add(new Integer(numIndexEachSlot));
 			listIndexesEachSlot.add(listIndex);

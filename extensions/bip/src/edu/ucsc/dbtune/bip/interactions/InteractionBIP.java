@@ -9,13 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment; 
+import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
-import edu.ucsc.dbtune.bip.util.BIPAgent;
+import edu.ucsc.dbtune.bip.util.BIPAgentPerSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLPMatrix;
@@ -42,8 +43,8 @@ public class InteractionBIP
 	 * Find all pairs of indexes from the given configuration, {@code C}, that 
 	 * interact with each other
 	 *  
-	 * @param BIPAgent
-	 * 		The agent to contact with INUM and populate the INUM spaces
+	 * @param listWorkload
+	 * 		Each entry of this list is a list of SQL Statements that belong to a same schema
      * @param candidateIndexes
 	 * 		The given set of candidate indexes
 	 * @param delta
@@ -52,26 +53,32 @@ public class InteractionBIP
 	 * @return
 	 * 		List of pairs of interacting indexes
 	 * @throws SQLException 
+	 * 
+	 * {\b Note}: {@code listAgent} will be removed when this class is fully implemented
 	 */
-    public List<IndexInteraction> computeInteractionIndexes(
-            BIPAgent agent, List<Index> candidateIndexes, double delta)
-        throws SQLException
+    public List<IndexInteraction> computeInteractionIndexes(List<WorkloadPerSchema> listWorkload, List<BIPAgentPerSchema> listAgent,
+                                                            List<Index> candidateIndexes, double delta) throws SQLException
 	{	
-        List<IndexInteraction> resultIndexInteraction = new ArrayList<IndexInteraction>();				 
-        List<InumSpace> listInum = agent.populateInumSpace();
-		
-		for (InumSpace inum : listInum){
-			IIPQueryPlanDesc desc =  new IIPQueryPlanDesc(); 		
-			// Populate the information from {@code inum} into a global structure
-			// in {@code QueryPlanDesc} object
-			desc.generateQueryPlanDesc(inum, candidateIndexes);
-						
-			List<IndexInteraction> listInteraction = findInteractions(desc, delta);
-			for (IndexInteraction pair : listInteraction){
-				resultIndexInteraction.add(pair);
-			}
-		}
-		
+        List<IndexInteraction> resultIndexInteraction = new ArrayList<IndexInteraction>();	
+        int iAgent = 0;
+        
+        for (WorkloadPerSchema wl : listWorkload) {
+            //BIPAgentPerSchema agent = new BIPAgentPerSchema(wl.getSchema());
+            BIPAgentPerSchema agent = listAgent.get(iAgent++);
+            
+            for (Iterator<SQLStatement> iterStmt = wl.getWorkload().iterator(); iterStmt.hasNext(); ) {
+                IIPQueryPlanDesc desc =  new IIPQueryPlanDesc();    
+                
+                // Populate the INUM space for each statement
+                desc.generateQueryPlanDesc(agent, iterStmt.next(), candidateIndexes);
+                            
+                List<IndexInteraction> listInteraction = findInteractions(desc, delta);
+                for (IndexInteraction pair : listInteraction){
+                    resultIndexInteraction.add(pair);
+                }
+            }
+        }
+       	
 		return resultIndexInteraction;
 	}
 	
@@ -122,8 +129,8 @@ public class InteractionBIP
 							continue;
 						}
 						
-						System.out.println("*** Investigating pair of " + indexc.getName()
-											+ " vs. " + indexd.getName() + "****");
+						System.out.println("*** Investigating pair of " + indexc.getFullyQualifiedName()
+											+ " vs. " + indexd.getFullyQualifiedName() + "****");
 						RestrictIIPParam restrictIIP = new RestrictIIPParam(delta, ic, id, pos_c, pos_d);				
 						
 						try {														
@@ -163,8 +170,8 @@ public class InteractionBIP
 				               addToCache(indexc, indexd);
 				               
 				               System.out.println(" INTERACT (the FIRST interaction constraint): "
-				            		   + indexc.getName()
-				            		   + " and " + indexd.getName());
+				            		   + indexc.getFullyQualifiedName()	
+				            		   + " and " + indexd.getFullyQualifiedName());
 				               printDetailedInteraction();
 				            }
 				            else {   
@@ -182,8 +189,8 @@ public class InteractionBIP
 						            addToCache(indexc, indexd); 
 						            
 						            System.out.println(" INTERACT (the SECOND interaction constraint): "
-						            			+ indexc.getName()
-						            		    + " and " + indexd.getName());
+						            			+ indexc.getFullyQualifiedName()
+						            		    + " and " + indexd.getFullyQualifiedName());
 						               
 						             printDetailedInteraction();
 				            	} else {
@@ -272,7 +279,8 @@ public class InteractionBIP
 		String strInteractions = "";
 		strInteractions = "========= List of interactions ========\n";
 		for (IndexInteraction pair : listPairs){
-			strInteractions += (pair.getFirst().getName() + " ---- " + pair.getSecond().getName()
+			strInteractions += (pair.getFirst().getFullyQualifiedName() + " ---- " 
+			                    + pair.getSecond().getFullyQualifiedName()
 								 + " \n");
 		}
 		
@@ -339,7 +347,7 @@ public class InteractionBIP
 	 */
 	private boolean checkInCache(Index indexc, Index indexd)
 	{
-		String key = indexc.getName() + "+" + indexd.getName();
+		String key = indexc.getFullyQualifiedName() + "+" + indexd.getFullyQualifiedName();
 		if (cachedInteractIndexName.get(key) != null){
 			return true;
 		}
@@ -358,9 +366,9 @@ public class InteractionBIP
 	 */
 	private void addToCache(Index indexc, Index indexd)
 	{
-		String combinedName = indexc.getName() + "+" + indexd.getName();		
+		String combinedName = indexc.getFullyQualifiedName() + "+" + indexd.getFullyQualifiedName();		
 		cachedInteractIndexName.put(combinedName, 1);
-		combinedName = indexd.getName() + "+" + indexc.getName();		
+		combinedName = indexd.getFullyQualifiedName()+ "+" + indexc.getFullyQualifiedName();		
 		cachedInteractIndexName.put(combinedName, 1);
 	}	
 }
