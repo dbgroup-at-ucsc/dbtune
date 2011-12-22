@@ -4,16 +4,17 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
+
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 
 public class QueryPlanDescTest extends BIPTestConfiguration 
 {
     @Test
     public void testPlanDescriptionGeneration() throws Exception
-    {           
+    {   
         for (int q = 0; q < numQ; q++) {
             QueryPlanDesc desc = new  QueryPlanDesc();
-            desc.generateQueryPlanDesc(listInum.get(q), candidateIndexes);
+            desc.generateQueryPlanDesc(listAgent.get(q), listWorkload.get(q).getWorkload().get(0), candidateIndexes);
     
             assertThat(desc.getNumSlots(), is(numSchemaTables));
             assertThat(desc.getNumPlans(), is(numPlans[q]));

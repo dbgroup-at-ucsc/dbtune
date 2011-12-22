@@ -4,7 +4,12 @@ import java.sql.SQLException;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
-
+/**
+ * The class represents a special index: full table scan index per relation 
+ * 
+ * @author tqtrung
+ *
+ */
 public class IndexFullTableScan extends Index 
 {	
 	private Table table;

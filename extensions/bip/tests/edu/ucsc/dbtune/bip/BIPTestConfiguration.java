@@ -1,7 +1,11 @@
 package edu.ucsc.dbtune.bip;
 
-
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,6 +18,9 @@ import edu.ucsc.dbtune.inum.InumStatementPlan;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.metadata.Index; 
+import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -21,17 +28,18 @@ import static org.mockito.Mockito.when;
 public abstract class BIPTestConfiguration 
 {
     /**
-     * Test case with two queries
-     * Each query consists of three (resp. two) query plans, two relations, and two indexes per relation
-     *  
+     * Test case with two schemas:
+     *      + Each schema has three relations
+     *      + Each relation has two candidate indexes
+     *      
+     * Workload:
+     *      + Two queries, each query belongs to a different schema
+     *      + Each query involves two relations
+     *      + The first query has three plans (in the INUM space)
+     *      + The second query has two plans (in the INUM space)
      */ 
-    protected static List<InumSpace> listInum;
-    protected static InumSpace inum;
-    protected static Set<InumStatementPlan> templatePlans;
-    protected static List<Table> listSchemaTables;
     protected static Catalog cat;
-    protected static Schema sch;
-    protected static int numSchemaTables = 3;
+    protected static List<Schema> listSchema;
     protected static int numCandidateIndexes;
     
     protected static double[] internalCostPlan1 = {140, 100, 160};
@@ -43,53 +51,58 @@ public abstract class BIPTestConfiguration
     protected static List<Index> candidateIndexes;
     protected static int[] numPlans = {3, 2};
     protected static int numQ = 2;
-    protected static BIPAgent agent;
+    protected static int numSch = 2;
+    protected static int numSchemaTables = 3;
+    protected static Environment environment = Environment.getInstance();
+    protected static List<WorkloadPerSchema> listWorkload = new ArrayList<WorkloadPerSchema>(); 
+    protected static List<BIPAgentPerSchema> listAgent = new ArrayList<BIPAgentPerSchema>();
     
-    /**
-     * Initialize schema  & workload
-     *   - Schema: three relations, 2 indexes per relation
-     *   - Workload: two queries:
-     *      + The first query: references the first and second relation
-     *          ~ INUM space: three plans
-     *          ~ The associated costs are given in internalPlan, size, ... 1
-     *      + The second query: references the second and third relation
-     *          ~ INUM space: two plans
-     *          ~ The associated costs are given in internalPlan, size, ... 1
-     */
     static {
         try {
-            cat = DBTuneInstances.configureCatalog(1, 3, 2);
-            sch = (Schema)cat.at(0);
-            listInum = new ArrayList<InumSpace>();
-            candidateIndexes = new ArrayList<Index>();
-            listSchemaTables = new ArrayList<Table>();
-            numCandidateIndexes = 0;
+            cat = DBTuneInstances.configureCatalog(numSch, numSchemaTables, 2); 
+            listSchema = cat.schemas(); 
+            
+            // create two workloads, each corresponds to one schema and contains one query
+            for (int q = 0; q < 2; q++) {
+                
+                String workloadName = environment.getTempDir() + "/testwl" + q + ".wl";
+                PrintWriter writer = new PrintWriter(new FileWriter(workloadName));
+                String sql = "SELECT * FROM R";
+                writer.println(sql);
+                writer.close();
+                
+                BufferedReader reader = new BufferedReader(new FileReader(workloadName));
+                Workload wl = new Workload(reader);
+                WorkloadPerSchema ws = new WorkloadPerSchema(wl, listSchema.get(q));
+                listWorkload.add(ws);
+            }
             
             // list of candidate indexes
-            for (Index index : sch.indexes()) {
-                numCandidateIndexes++;
-                candidateIndexes.add(index);
+            candidateIndexes = new ArrayList<Index>();
+            numCandidateIndexes = 0;
+            for (Schema sch : listSchema) {
+                for (Index index : sch.indexes()) {
+                    numCandidateIndexes++;
+                    candidateIndexes.add(index);
+                }
             }
+            System.out.println("Number of candidate indexes " + numCandidateIndexes);
             
-            for (Table table : sch.tables()) {
-                listSchemaTables.add(table);
-            }
-            
-            
+           
             List< List<Index> > listIndexQueries = new ArrayList<List<Index>>();
-            List< List<Table> > listTableQueries = new ArrayList<List<Table>>();
-            
+            List< List<Table> > listTableQueries = new ArrayList<List<Table>>();            
             for (int q = 0; q < numQ; q++) {
                 int idxTable = 0;
                 List<Index> listIndex = new ArrayList<Index>();
                 List<Table> listTable = new ArrayList<Table>();
                 
-                for (Table table : sch.tables()) {
-                    // the first query: 1st and 2nd relation
+                for (Table table : listWorkload.get(q).getSchema().tables()) {
+                    // the first query: 1st and 2nd relations of the first schema
+                    // the second query: 2nd and 3rd relations of the second schema
                     if ( (q == 0 && idxTable <= 1) 
                        || (q == 1 && idxTable >= 1)){
                         listTable.add(table);
-                        for (Index index : sch.indexes()) {
+                        for (Index index : candidateIndexes) {
                             if (index.getTable().equals(table)){
                                 listIndex.add(index);
                             }
@@ -102,53 +115,67 @@ public abstract class BIPTestConfiguration
             }
                         
             for (int q = 0; q < numQ; q++) {
-                inum = mock(InumSpace.class);
-                templatePlans = new LinkedHashSet<InumStatementPlan>();
+                BIPAgentPerSchema agent = mock(BIPAgentPerSchema.class);
+                List<Table> listTables = new ArrayList<Table>();
+                List<IndexFullTableScan> listIndexFullTableScan = new ArrayList<IndexFullTableScan>();
+                for (Table table : listWorkload.get(q).getSchema().tables()) {
+                    listTables.add(table);
+                    IndexFullTableScan scanIdx = new IndexFullTableScan(table);
+                    listIndexFullTableScan.add(scanIdx);
+                }
+                when (agent.getListSchemaTables()).thenReturn(listTables);
+                when (agent.getListFullTableScanIndexes()).thenReturn(listIndexFullTableScan);
                 
-                int counter = 0;
-                System.out.println(" Query: " + q + " Number of template plans: " + numPlans[q]);
-                for (int k = 0; k < numPlans[q]; k++) {
-                    InumStatementPlan plan = mock(InumStatementPlan.class);
+                // run over each statement in the workload
+                for (Iterator<SQLStatement> iterStmt = listWorkload.get(q).getWorkload().iterator();
+                        iterStmt.hasNext(); ){
+                    SQLStatement stmt = iterStmt.next();
+                    InumSpace inum = mock(InumSpace.class);                    
+                    Set<InumStatementPlan> templatePlans = new LinkedHashSet<InumStatementPlan>();
+                
+                    int counter = 0;
+                    System.out.println(" Query: " + q + " Number of template plans: " + numPlans[q]);
+                    for (int k = 0; k < numPlans[q]; k++) {
+                        InumStatementPlan plan = mock(InumStatementPlan.class);
                     
-                    if (q == 0) {
-                        when(plan.getInternalCost()).thenReturn(internalCostPlan1[k]);
-                    }
-                    else if (q == 1) {
-                        when(plan.getInternalCost()).thenReturn(internalCostPlan2[k]);
-                    }
-                    int posIndexLocal = 0;
-                    for (Index index : listIndexQueries.get(q)) {   
-                        double val = 0.0, size = 0.0;
-                        
                         if (q == 0) {
-                            val = accessCostPlan1[counter];
-                            size = sizeIndexPlan1[posIndexLocal++];
+                            when(plan.getInternalCost()).thenReturn(internalCostPlan1[k]);
                         }
                         else if (q == 1) {
-                            val = accessCostPlan2[counter];
-                            size = sizeIndexPlan2[posIndexLocal++];
+                            when(plan.getInternalCost()).thenReturn(internalCostPlan2[k]);
                         }
-                        when (plan.getAccessCost(index)).thenReturn(val);
-                        when (plan.getMaterializedIndexSize(index)).thenReturn(size);
-                        counter++;
+                        int posIndexLocal = 0;
+                        for (Index index : listIndexQueries.get(q)) {   
+                            double val = 0.0, size = 0.0;
+                            
+                            if (q == 0) {
+                                val = accessCostPlan1[counter];
+                                size = sizeIndexPlan1[posIndexLocal++];
+                            }
+                            else if (q == 1) {
+                                val = accessCostPlan2[counter];
+                                size = sizeIndexPlan2[posIndexLocal++];
+                            }
+                            when (plan.getAccessCost(index)).thenReturn(val);
+                            when (plan.getMaterializedIndexSize(index)).thenReturn(size);
+                            counter++;
+                            
+                            System.out.println("In test, index: " + index.getFullyQualifiedName()
+                                                + " access cost: " + val + " size index: " + size);                 
+                        }
                         
-                        System.out.println("In test, index: " + index.getName() 
-                                            + " access cost: " + val + " size index: " + size);                 
+                        
+                        for (Table table : listTableQueries.get(q)) {
+                            when (plan.getFullTableScanCost(table)).thenReturn(100.0);
+                        }
+                        when (plan.getReferencedTables()).thenReturn(listTableQueries.get(q));    
+                        templatePlans.add(plan);               
                     }
                     
-                    
-                    for (Table table : listTableQueries.get(q)) {
-                        when (plan.getFullTableScanCost(table)).thenReturn(100.0);
-                    }
-                    when (plan.getReferencedTables()).thenReturn(listTableQueries.get(q));                  
-                    when (plan.getSchemaTables()).thenReturn(listSchemaTables);
-                    templatePlans.add(plan);               
+                    when(inum.getTemplatePlans()).thenReturn(templatePlans);
+                    when(agent.populateInumSpace(stmt)).thenReturn(inum);
                 }
-                System.out.println("Number of added template plans: " + templatePlans.size());
-                when(inum.getTemplatePlans()).thenReturn(templatePlans);
-                                
-                // Add @inum into @listInum
-                listInum.add(inum);
+                listAgent.add(agent);
             }
             
         }

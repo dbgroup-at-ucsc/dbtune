@@ -24,7 +24,8 @@ public class RestrictIIPParam
 	private int ic, id; 
 	private int pos_c, pos_d;
 	
-	RestrictIIPParam(double delta, int ic, int id, int pos_c, int pos_d) {
+	RestrictIIPParam(double delta, int ic, int id, int pos_c, int pos_d)
+	{
 		this.delta = delta;
 		this.ic = ic;
 		this.id = id;
@@ -36,11 +37,13 @@ public class RestrictIIPParam
 	/**
 	 * Threshold value to determine index interaction
 	 */
-	public double getDelta() {
+	public double getDelta() 
+	{
 		return delta;
 	}
 	
-	public void setDelta(double delta) {
+	public void setDelta(double delta) 
+	{
 		this.delta = delta;
 	}
 
@@ -48,22 +51,26 @@ public class RestrictIIPParam
 	/**
 	 * Position of relation (or slot) containing @c index
 	 */
-	public int getPosRelContainC() {
+	public int getPosRelContainC() 
+	{
 		return ic;
 	}
 	
-	public void setPosRelContainC(int ic) {
+	public void setPosRelContainC(int ic) 
+	{
 		this.ic = ic;
 	}
 	
 	/**
 	 * Position of relation (or slot) containing index @d
 	 */
-	public int getPosRelContainD() {
+	public int getPosRelContainD() 
+	{
 		return id;
 	}
 	
-	public void setPosRelContainD(int id) {
+	public void setPosRelContainD(int id) 
+	{
 		this.id = id;
 	}
 	
@@ -71,11 +78,13 @@ public class RestrictIIPParam
 	/**
 	 * Position of index @c in the corresponding slot
 	 */
-	public int getLocalPosIndexC() {
+	public int getLocalPosIndexC() 
+	{
 		return pos_c;
 	}
 	
-	public void setLocalPosIndexC(int pos_c) {
+	public void setLocalPosIndexC(int pos_c) 
+	{
 		this.pos_c  = pos_c;
 	}
 	
@@ -83,11 +92,13 @@ public class RestrictIIPParam
 	/**
 	 * Position of index @d in the corresponding slot
 	 */
-	public int getLocalPosIndexD() {
+	public int getLocalPosIndexD() 
+	{
 		return pos_d;
 	}
 	
-	public void setLocalPosIndexD(int pos_d) {
+	public void setLocalPosIndexD(int pos_d) 
+	{
 		this.pos_d  = pos_d;
 	}
 }
