@@ -9,18 +9,18 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import edu.ucsc.dbtune.bip.util.BIPAgent;
+import edu.ucsc.dbtune.bip.util.BIPAgentPerSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
+import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.inum.InumSpace;
+import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class SimBIP 
 {	
@@ -37,8 +37,8 @@ public class SimBIP
 	 * 		The initial configuration
 	 * @param Smat
 	 * 		The configuration to be materialized	
-	 * @param listInumSpace
-	 * 		Each Inum space corresponds to one query in the workload
+	 * @param listWorkload
+     *      Each entry of this list is a list of SQL Statements that belong to a same schema
 	 * @param W
 	 * 		The number of window time
 	 * @param B
@@ -48,15 +48,17 @@ public class SimBIP
 	 * @return
 	 * 		A sequence of index to be materialized (created/dropped) in the corresponding window time
 	 * @throws SQLException 
+	 * 
+	 * {\b Note}: {@code listAgent} will be removed when this class is fully implemented
 	 */
-    public List<MatIndex> schedule(List<Index> Sinit, List<Index> Smat, BIPAgent agent, int W, 
-            List<Double> B) throws SQLException
+    public List<MatIndex> schedule(List<Index> Sinit, List<Index> Smat, 
+                                   List<WorkloadPerSchema> listWorkload, List<BIPAgentPerSchema> listAgent,
+                                   int W, double B) throws SQLException
 	{
         List<Index> candidateIndexes = new ArrayList<Index>();
-        List<InumSpace> listInumSpace = agent.populateInumSpace();
-		
-		// 1. Derive Sin, Sout, Sremain
-		classifyTypeIndex(Sinit, Smat);
+      
+		// 1. Derive Sin, Sout, Sremain and store in @MatIndexPool
+		classifyTypeIndex(Sinit, Smat, listAgent);
 		
 		// 2.Derive candidate indexes
 		for (int idx = 0; idx < MatIndexPool.getTotalIndex(); idx++) {
@@ -66,18 +68,26 @@ public class SimBIP
 		
 		// 3. Derive the query plan description including internal cost, index access cost,
 		// index at each slot ... 
-		List<SimQueryPlanDesc> listQueryPlan = new ArrayList<SimQueryPlanDesc>();
-		for (InumSpace inum : listInumSpace){
-			SimQueryPlanDesc desc = new SimQueryPlanDesc(); 
-			desc.generateQueryPlanDesc(inum, candidateIndexes);
-			// Update @MatIndexPool and materialized size indexes
-			desc.simGenerateQueryPlanDesc(inum, candidateIndexes);
-			listQueryPlan.add(desc);
+		int iAgent = 0;
+		List<SimQueryPlanDesc> listQueryPlans = new ArrayList<SimQueryPlanDesc>();
+		for (WorkloadPerSchema wl : listWorkload) {
+		    //BIPAgentPerSchema agent = new BIPAgentPerSchema(wl.getSchema());
+		    // TODO: Change this line when the implementation of BIPAgentPerSchema is done
+		    BIPAgentPerSchema agent = listAgent.get(iAgent++);
+		    
+		    for (Iterator<SQLStatement> iterStmt = wl.getWorkload().iterator(); iterStmt.hasNext(); ) {
+		        SimQueryPlanDesc desc = new SimQueryPlanDesc(); 
+	            desc.generateQueryPlanDesc(agent, iterStmt.next(), candidateIndexes);
+	            // Update @MatIndexPool and materialized size indexes
+	            // Add @full table scan index into the pool of @MatIndexPool
+	            //desc.simGenerateQueryPlanDesc(inum, candidateIndexes);
+	            listQueryPlans.add(desc);
+		    }
 		}
 		
 		// 5. Formulate BIP and run the BIP to derive the final result 
 		// which is a list of materialized indexes		
-		return findIndexSchedule(listQueryPlan, W, B);
+		return findIndexSchedule(listQueryPlans, W, B);
 	}
 	
 	
@@ -85,12 +95,14 @@ public class SimBIP
 	 * Classify the index into one of the three types: INDEX_TYPE_CREATE, INDEX_TYPE_DROP, INDEX_TYPE_REMAIN
 	 * 
 	 * @param Sinit
-	 * 		The initial configuration
+	 *     The initial configuration
 	 * @param Smat
-	 * 		The materialized configuration
+	 *     The materialized configuration
+	 * @param listAgent
+	 *     The schemas relevant to statements in the workload    
 	 * 
 	 */
-    private void classifyTypeIndex(List<Index> Sinit, List<Index> Smat)
+    private void classifyTypeIndex(List<Index> Sinit, List<Index> Smat, List<BIPAgentPerSchema> listAgent)
 	{
 		List<Index> Sin = new ArrayList<Index>();
 		List<Index> Sout = new ArrayList<Index>();
@@ -149,6 +161,16 @@ public class SimBIP
 			MatIndexPool.mapIndexGlobalId(idx, globalId);			
 			globalId++;
 		}
+		
+		// Add the full table scan indexes into the pool also
+		for (BIPAgentPerSchema agent : listAgent) {
+		    for (IndexFullTableScan scanIdx : agent.getListFullTableScanIndexes()) {
+		        MatIndex matIndex = new MatIndex(scanIdx, globalId, MatIndex.INDEX_TYPE_REMAIN);
+	            MatIndexPool.addMatIndex(matIndex);
+	            MatIndexPool.mapIndexGlobalId(scanIdx, globalId);           
+	            globalId++;
+		    }
+		}
 		MatIndexPool.setTotalIndex(globalId);
 	}
 	
@@ -165,7 +187,7 @@ public class SimBIP
 	 * @return
 	 * 		The set of materialized indexes with marking the time window when this index is created/dropped
 	 */
-	public List<MatIndex> findIndexSchedule(List<SimQueryPlanDesc> listQueryPlan, int W, List<Double> B)  
+	public List<MatIndex> findIndexSchedule(List<SimQueryPlanDesc> listQueryPlans, int W, double B)  
 	{	
 		LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
@@ -177,7 +199,7 @@ public class SimBIP
         String workloadName = environment.getTempDir() + "/testwl";
         
         try {														
-			genSim = new SimLinGenerator(workloadName, listQueryPlan, W, B);
+			genSim = new SimLinGenerator(workloadName, listQueryPlans, W, B);
 			
 			// Build BIP for a particular (c,d, @desc)
 			genSim.build(listener); 
@@ -200,7 +222,6 @@ public class SimBIP
                       
             // Read model from file with name @cplexFile into cplex optimizer object
             cplex.importModel(cplexFile); 
-            
             
             // Solve the model and record the solution into @listIndex 
             // if one was found
@@ -303,7 +324,7 @@ public class SimBIP
 					{
 						strSchedule += " DROP ";
 					}
-					strSchedule += idx.getIndex().getName();
+					strSchedule += idx.getIndex().getFullyQualifiedName();
 					strSchedule += "\n";
 				}
 			}
