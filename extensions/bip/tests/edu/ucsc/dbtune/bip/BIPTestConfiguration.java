@@ -57,6 +57,9 @@ public abstract class BIPTestConfiguration
     protected static List<WorkloadPerSchema> listWorkload = new ArrayList<WorkloadPerSchema>(); 
     protected static List<BIPAgentPerSchema> listAgent = new ArrayList<BIPAgentPerSchema>();
     
+    protected static List< List<Index> > listIndexQueries = new ArrayList<List<Index>>();
+    protected static List< List<Table> > listTableQueries = new ArrayList<List<Table>>();            
+    
     static {
         try {
             cat = DBTuneInstances.configureCatalog(numSch, numSchemaTables, 2); 
@@ -64,7 +67,6 @@ public abstract class BIPTestConfiguration
             
             // create two workloads, each corresponds to one schema and contains one query
             for (int q = 0; q < 2; q++) {
-                
                 String workloadName = environment.getTempDir() + "/testwl" + q + ".wl";
                 PrintWriter writer = new PrintWriter(new FileWriter(workloadName));
                 String sql = "SELECT * FROM R";
@@ -87,10 +89,7 @@ public abstract class BIPTestConfiguration
                 }
             }
             System.out.println("Number of candidate indexes " + numCandidateIndexes);
-            
            
-            List< List<Index> > listIndexQueries = new ArrayList<List<Index>>();
-            List< List<Table> > listTableQueries = new ArrayList<List<Table>>();            
             for (int q = 0; q < numQ; q++) {
                 int idxTable = 0;
                 List<Index> listIndex = new ArrayList<Index>();

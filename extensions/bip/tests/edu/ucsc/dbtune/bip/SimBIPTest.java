@@ -2,15 +2,11 @@ package edu.ucsc.dbtune.bip;
 
 import java.util.ArrayList;
 import java.util.List;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import org.junit.Test;
 
 import edu.ucsc.dbtune.metadata.Index; 
 import edu.ucsc.dbtune.bip.sim.MatIndex;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
-import edu.ucsc.dbtune.bip.util.*;
 
 
 /**
@@ -20,7 +16,7 @@ import edu.ucsc.dbtune.bip.util.*;
  */
 public class SimBIPTest  extends BIPTestConfiguration
 {   
-    /*
+    
     @Test
     public void testScheduling() throws Exception
     {   
@@ -28,19 +24,18 @@ public class SimBIPTest  extends BIPTestConfiguration
         List<Index> Sinit = new ArrayList<Index>();
         List<Index> Smat = new ArrayList<Index>();
         int W = 4;
-        List<Double> B = new ArrayList<Double>();
-        double space = 140;
-        for (int w = 0; w < W; w++) {
-            B.add(new Double((w+1) * space));
+        double B = 300;
+     
+        // Sinit = \emptyset
+        // Smat = indexes relevant to the queries
+        for (List<Index> listIndexQuery : listIndexQueries) {
+            for (Index idx : listIndexQuery) {
+                Smat.add(idx);
+            }
         }
         
-        // Case 1: set Sinit = {}       
-        Smat = candidateIndexes;
-        agent = mock(BIPAgentPerSchema.class);
-        when(agent.populateInumSpace()).thenReturn(listInum);
-        List<MatIndex> listIndex = sim.schedule(Sinit, Smat, agent, W, B);
+        List<MatIndex> listIndex = sim.schedule(Sinit, Smat, listWorkload, listAgent, W, B);
         String strSchedule = sim.printSchedule(listIndex, W);
         System.out.println(strSchedule);
     }
-    */
 }

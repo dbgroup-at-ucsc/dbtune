@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.inum.InumStatementPlan;
@@ -49,14 +50,15 @@ public class QueryPlanDesc
 	 */
 	protected List<Table> listSchemaTables;
 	
-	
 	/**
-	 * List of position of slots referenced by the query
+	 * Useful for BIPs 
 	 */
 	protected Map<Integer, Integer> mapReferencedSlotID;
-	
 	protected InumSpace inum;
-	
+	protected int stmtID;
+	/** used to uniquely identify each instances of the class. */
+    static AtomicInteger STMT_ID = new AtomicInteger(0);
+    
 	/**
 	 * Number of template plans	 
 	 */
@@ -132,6 +134,13 @@ public class QueryPlanDesc
 	}
 	
 	/**
+	 * Statement ID
+	 */
+	public int getId()
+    {
+        return this.stmtID;
+    }
+	/**
 	 * Retrieve the index in the corresponding slot
 	 * @param i 
 	 * 		The position of the relation
@@ -167,7 +176,7 @@ public class QueryPlanDesc
 	 *     at each slot
 	 * @throws SQLException 
 	 */	
-	public void generateQueryPlanDesc(BIPAgentPerSchema agent, SQLStatement stmt, 
+	public void generateQueryPlanDesc(BIPAgentPerSchema agent, SQLStatement stmt,
 	                                  List<Index> globalCandidateIndexes) throws SQLException
 	{
 		S = new ArrayList<Integer>();
@@ -176,6 +185,7 @@ public class QueryPlanDesc
 		listIndexesEachSlot = new ArrayList<List<Index>>();
 		
 		this.inum = agent.populateInumSpace(stmt);
+		this.stmtID = QueryPlanDesc.STMT_ID.getAndIncrement();
 		List<IndexFullTableScan> listFullTableScanIndexes = agent.getListFullTableScanIndexes();  
 		listSchemaTables = agent.getListSchemaTables();
 		Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
