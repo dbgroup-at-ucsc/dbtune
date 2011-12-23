@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.ucsc.dbtune.bip.sim.MatIndexPool;
+import edu.ucsc.dbtune.bip.util.MatIndexPool;
 import edu.ucsc.dbtune.bip.util.MultiQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.BIPAgentPerSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
@@ -29,6 +29,7 @@ public class DivBIP
     private DivLinGenerator genDiv;
     private IloLPMatrix matrix;
     private IloNumVar [] vars;
+    private int Nreplicas, loadfactor;
     
     /** 
      * Divergent index tuning
@@ -51,15 +52,28 @@ public class DivBIP
      * 
      * {\b Note}: {@code listAgent} will be removed when this class is fully implemented
      */
-    public List<List<Index>> optimalDiv(List<WorkloadPerSchema> listWorkload, List<BIPAgentPerSchema> listAgent,
+    public List<List<MatIndex>> optimalDiv(List<WorkloadPerSchema> listWorkload, List<BIPAgentPerSchema> listAgent,
                                         List<Index> candidateIndexes, int Nreplicas, int loadfactor, double B) 
                                         throws SQLException
     {   
+        this.Nreplicas = Nreplicas;
+        this.loadfactor = loadfactor;
+        
         // Put all indexes in {@code candidateIndexes} into the pool of {@code MatIndexPool}
         for (Index idx: candidateIndexes) {
             int id = MatIndexPool.addMatIndex(idx, MatIndex.INDEX_TYPE_CREATE);          
             MatIndexPool.mapIndexToGlobalId(idx, id);
         }
+        MatIndexPool.setNumCandidateIndexes(candidateIndexes.size());
+        
+        // TODO: change this for loop after {@code listAgent} is removed
+        for (BIPAgentPerSchema agent : listAgent) {
+            for (Index scanIdx : agent.getListFullTableScanIndexes()) {
+                int id = MatIndexPool.addMatIndex(scanIdx, MatIndex.INDEX_TYPE_CREATE);          
+                MatIndexPool.mapIndexToGlobalId(scanIdx, id);
+            }
+        }
+        
         
         int iAgent = 0;
         List<MultiQueryPlanDesc> listQueryPlans = new ArrayList<MultiQueryPlanDesc>();
@@ -77,7 +91,28 @@ public class DivBIP
         
         // 5. Formulate BIP and run the BIP to derive the set of indexes materialized 
         // at each replica
-        return buildOptimalDivergentIndex(listQueryPlans, Nreplicas, loadfactor, B);
+        return buildOptimalDivergentIndex(listQueryPlans, this.Nreplicas, this.loadfactor, B);
+    }
+    
+    /**
+     * Convert the list of indexes at each replica into a string
+     * @param listIndexReplicas
+     *      A recommended configuration 
+     * @return
+     *      A string representing the recommended configuration in text
+     */
+    public String printRecommendedConfiguration(List<List<MatIndex>> listIndexReplicas) 
+    {
+        StringBuffer result = new StringBuffer(); 
+        int iReplica = 0;
+        for (List<MatIndex> indexEachReplica : listIndexReplicas) {
+            result.append("----The " + iReplica +"-th replica -----------\n");
+            for (MatIndex idx : indexEachReplica) {
+                result.append("----- Index: " + idx.getIndex().getFullyQualifiedName() + " Size: " + idx.getMatSize() + "\n");
+            }
+            iReplica++;
+        }
+        return result.toString();
     }
     
     /**
@@ -93,14 +128,14 @@ public class DivBIP
      * @return
      *      The set of materialized indexes with marking the time window when this index is created/dropped
      */
-    public List<List<Index>> buildOptimalDivergentIndex(List<MultiQueryPlanDesc> listQueryPlans, int Nreplicas, int loadfactor, double B)  
+    private List<List<MatIndex>> buildOptimalDivergentIndex(List<MultiQueryPlanDesc> listQueryPlans, int Nreplicas, int loadfactor, double B)  
     {   
         LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
                 //To change body of implemented methods use File | Settings | File Templates.
             }
         };
-        List<List<Index>> listIndexReplicas = new ArrayList<List<Index>>();
+        List<List<MatIndex>> listIndexReplicas = new ArrayList<List<MatIndex>>();
         String cplexFile = "", binFile = "", consFile = "", objFile = "";   
         String workloadName = environment.getTempDir() + "/testwl";
         
@@ -153,9 +188,13 @@ public class DivBIP
      * @return
      *      List of indexes to be materialized at each replica
      */
-    List<List<Index>> getListIndexEachReplica()
+    private List<List<MatIndex>> getListIndexEachReplica()
     {
-        List<List<Index>> listIndexReplicas = new ArrayList<List<Index>>();
+        List<List<MatIndex>> listIndexReplicas = new ArrayList<List<MatIndex>>();
+        for (int i = 0; i < Nreplicas; i++) {
+            List<MatIndex> listIndexEachReplica = new ArrayList<MatIndex>();
+            listIndexReplicas.add(listIndexEachReplica);
+        }
         
         // Iterate over variables s_{i,w}
         try {
@@ -169,7 +208,10 @@ public class DivBIP
                     MatIndex matIdx = DivLinGenerator.deriveMatIndex(var.getName());
                     
                     if (matIdx != null) {
-                        listIndexReplicas.get(matIdx.getReplicaID()).add(matIdx.getIndex());
+                        // DO NOT consider full table scan indexes
+                        if (matIdx.getId() < MatIndexPool.getNumCandidateIndexes()) {
+                            listIndexReplicas.get(matIdx.getReplicaID()).add(matIdx);
+                        }
                     }
                 }
             }
@@ -191,7 +233,7 @@ public class DivBIP
      * @return
      *      The matrix of @cplex      
      */ 
-    public IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
+    private IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
     {
         @SuppressWarnings("unchecked")
         Iterator iter = cplex.getModel().iterator();

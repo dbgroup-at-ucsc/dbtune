@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.ucsc.dbtune.bip.sim.MatIndexPool;
+import edu.ucsc.dbtune.bip.util.MatIndexPool;
 import edu.ucsc.dbtune.bip.util.MatIndex;
 import edu.ucsc.dbtune.bip.util.MultiQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.BIPVariableCreator;
@@ -93,11 +93,12 @@ public class DivLinGenerator
      * Build cost function of each query in each window w
      * Cqr = \sum_{k \in [1, Kq]} \beta_{qk} y(r,q,k) + 
      *      + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} x(r,q,k,i,a) \gamma_{q,k,i,a}
+     * {\b Note}: Add variables of type Y, X, S into the list of variables     
      */
     private void buildQueryCostReplica()
     {
         List<String> linList = new ArrayList<String>();
-        
+                
         for (MultiQueryPlanDesc desc : listQueryPlanDescs){
             int q = desc.getId();
             
@@ -127,6 +128,13 @@ public class DivLinGenerator
                 }       
                 Cwq = Cwq + " + " + Connector.join(" + ", linList);
                 listCrq.add(Cwq);
+            }
+        }
+        
+        for (int ga = 0; ga < MatIndexPool.getTotalIndex(); ga++) {
+            for (int r = 0; r < Nreplicas; r++) {
+                String var_s = varCreator.constructVariableName(BIPVariableCreator.VAR_S, r, ga, 0, 0, 0);
+                listVar.add(var_s);
             }
         }
     }
@@ -169,7 +177,7 @@ public class DivLinGenerator
                             IndexInSlot iis = new IndexInSlot(q,i,a);
                             int ga = MatIndexPool.getGlobalIdofIndexInSlot(iis);
                             String var_s = varCreator.constructVariableName(BIPVariableCreator.VAR_S, r, ga, 0, 0, 0);
-                        
+                            
                             // (3) s_a^{r} \geq x_{qkia}^{r}
                             buf.getCons().println("atomic_2c_" + numConstraints + ":" 
                                                 + var_x + " - " 
@@ -287,8 +295,8 @@ public class DivLinGenerator
             int openBracket, comma;
             openBracket = name.indexOf("(");
             comma = name.indexOf(",");
-            String strW = name.substring(openBracket + 1, comma);
-            int replicaID = Integer.parseInt(strW);
+            String strReplica = name.substring(openBracket + 1, comma);
+            int replicaID = Integer.parseInt(strReplica);
             String strId = name.substring(comma + 1, name.length() - 1);
             int idxID = Integer.parseInt(strId);
             index = MatIndexPool.getMatIndex(idxID);
