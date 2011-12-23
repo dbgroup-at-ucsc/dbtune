@@ -18,6 +18,7 @@ import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.MatIndex;
+import edu.ucsc.dbtune.bip.util.MatIndexPool;
 import edu.ucsc.dbtune.bip.util.MultiQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 import edu.ucsc.dbtune.metadata.Index;

@@ -10,6 +10,7 @@ import edu.ucsc.dbtune.bip.util.Connector;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.MatIndex;
+import edu.ucsc.dbtune.bip.util.MatIndexPool;
 import edu.ucsc.dbtune.bip.util.MultiQueryPlanDesc;
 
 public class SimLinGenerator 
@@ -198,6 +199,8 @@ public class SimLinGenerator
 	 * Build cost function of each query in each window w
 	 * Cqw = \sum_{k \in [1, Kq]} \beta_{qk} y(w,q,k) + 
 	 *      + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} x(w,q,k,i,a) \gamma_{q,k,i,a}
+	 *      
+	 *  {\b Note} Add index of type Y, X, and S into the list of variables    
 	 */
 	private void buildQueryCostWindow()
 	{
@@ -237,10 +240,19 @@ public class SimLinGenerator
 				listCwq.add(Cwq);
 			}
 		}
+		
+		for (int ga = 0; ga < MatIndexPool.getTotalIndex(); ga++) {
+            for (w = 0; w < W; w++) {
+                String var_s = varCreator.constructVariableName(BIPVariableCreator.VAR_S, w, ga, 0, 0, 0);
+                listVar.add(var_s);
+            }
+        }
 	}
 	
 	/**
 	 * Standard set of atomic constraint of INUM
+	 * 
+	 * {\b Note} Add variables of type S into the list of variables
 	 * 
 	 */
 	private void buildAtomicConstraints()
@@ -278,7 +290,7 @@ public class SimLinGenerator
 							IndexInSlot iis = new IndexInSlot(q,i,a);
 							ga = MatIndexPool.getGlobalIdofIndexInSlot(iis);
 							var_s = varCreator.constructVariableName(BIPVariableCreator.VAR_S, w, ga, 0, 0, 0);
-						
+							
 							// (3) s_a^{theta} \geq x_{kia}^{theta}
 							buf.getCons().println("atomic_14a_" + numConstraints + ":" 
 												+ var_x + " - " 
