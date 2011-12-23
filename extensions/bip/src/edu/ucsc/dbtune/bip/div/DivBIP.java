@@ -65,7 +65,7 @@ public class DivBIP
         List<MultiQueryPlanDesc> listQueryPlans = new ArrayList<MultiQueryPlanDesc>();
         for (WorkloadPerSchema wl : listWorkload) {
             //BIPAgentPerSchema agent = new BIPAgentPerSchema(wl.getSchema());
-            // TODO: Change this line when the implementation of BIPAgentPerSchema is done
+            //TODO: Change this line when the implementation of BIPAgentPerSchema is done
             BIPAgentPerSchema agent = listAgent.get(iAgent++);
             
             for (Iterator<SQLStatement> iterStmt = wl.getWorkload().iterator(); iterStmt.hasNext(); ) {
@@ -166,14 +166,12 @@ public class DivBIP
             {
                 IloNumVar var = vars[i];
                 if (cplex.getValue(var) == 1) {
-                    /*
-                    Index index = DivLinGenerator.deriveIndex(var.getName());
-                    if (index != null) {
-                        listIndex.add(index);
+                    MatIndex matIdx = DivLinGenerator.deriveMatIndex(var.getName());
+                    
+                    if (matIdx != null) {
+                        listIndexReplicas.get(matIdx.getReplicaID()).add(matIdx.getIndex());
                     }
-                    */
                 }
-                
             }
             
         }
@@ -207,5 +205,4 @@ public class DivBIP
         }
         return null;
     }
-    
 }

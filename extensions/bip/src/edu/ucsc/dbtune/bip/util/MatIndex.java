@@ -16,18 +16,18 @@ public class MatIndex
 	public static final int INDEX_TYPE_REMAIN = 1002;
 	
 	private Index index;
-	private int Id;
+	private int ID;
 	private int typeMatIndex;
 	private int matWindow;
-	private int replica;
+	private int replicaID;
 	private double sizeMatIndex;
 	
 	
-	public MatIndex(Index index, int Id, int type)	
+	public MatIndex(Index _index, int _ID, int _type)	
 	{
-		this.index = index;
-		this.Id = Id;
-		this.typeMatIndex = type;
+		this.index = _index;
+		this.ID = _ID;
+		this.typeMatIndex = _type;
 	}
 	
 	
@@ -48,12 +48,12 @@ public class MatIndex
 	
 	public void setId(int Id)
 	{
-		this.Id = Id;
+		this.ID = Id;
 	}
 	
 	public int getId()
 	{
-		return Id;
+		return ID;
 	}
 	
 	public void setTypeMatIndex(int type)
@@ -84,5 +84,15 @@ public class MatIndex
 	public double getMatSize()
 	{
 		return sizeMatIndex;
+	}
+	
+	public void setReplicaID(int _ID)
+	{
+	    this.replicaID = ID;
+	}
+	
+	public int getReplicaID()
+	{
+	    return this.replicaID;
 	}
 }
