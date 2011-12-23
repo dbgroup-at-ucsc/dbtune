@@ -5,7 +5,7 @@ import java.util.List;
 import org.junit.Test;
 
 import edu.ucsc.dbtune.metadata.Index; 
-import edu.ucsc.dbtune.bip.sim.MatIndex;
+import edu.ucsc.dbtune.bip.util.MatIndex;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
 
 

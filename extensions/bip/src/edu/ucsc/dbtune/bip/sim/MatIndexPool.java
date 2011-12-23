@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.bip.sim;
 
-import edu.ucsc.dbtune.bip.sim.MatIndex;
+import edu.ucsc.dbtune.bip.util.MatIndex;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The class stores all materialized indexes to be scheduled
@@ -19,27 +20,37 @@ public class MatIndexPool
 	private static List<MatIndex> listIndex = new ArrayList<MatIndex>();	
 	private static Map<IndexInSlot, Integer> mapPosIndexGlobal = new HashMap<IndexInSlot, Integer>();
 	private static Map<Index, Integer> mapIndexGlobal = new HashMap<Index, Integer>();
-	public static int startCreate, startDrop, startRemain, totalIndex;	
+	public static int startCreate, startDrop, startRemain;	
 	public static final int IDX_NOT_EXIST = -1;
+	public static AtomicInteger totalIndex = new AtomicInteger(0);
 	
 	/**
-	 * Get/Set methods
+	 * Add a materialize index and returns the ID
+	 * @param index
+	 *     A materialize index
+	 *     
+	 * @return
+	 *     A global ID managed by this pool
 	 */
-	public static void addMatIndex(MatIndex index)
+	public static int addMatIndex(Index index, int type)
 	{	
-		listIndex.add(index);
+	    int id = totalIndex.get();
+	    MatIndex matIndex = new MatIndex(index, id, type);
+		listIndex.add(matIndex);
+		totalIndex.getAndIncrement();
+		return id;
 	}
 
-	public static void mapIndexGlobalId(Index index, int id)
+	
+	public static void mapIndexToGlobalId(Index index, int id)
 	{
 		mapIndexGlobal.put(index, new Integer(id));
 	}
 	
-	public static int getIndexGlobalId(Index index)
+	public static int getGlobalIdofIndex(Index index)
 	{
 		Object found = mapIndexGlobal.get(index);
-		if (found == null)
-		{
+		if (found == null) {
 			return IDX_NOT_EXIST;
 		}
 		
@@ -47,12 +58,12 @@ public class MatIndexPool
 	}
 	
 	
-	public static void mapPosIndexGlobalId(IndexInSlot iis, int globalId)
+	public static void mapIndexInSlotToGlobalId(IndexInSlot iis, int globalId)
 	{
 		mapPosIndexGlobal.put(iis, new Integer(globalId));
 	}
 	
-	public static int getIndexGlobalId(IndexInSlot iis)
+	public static int getGlobalIdofIndexInSlot(IndexInSlot iis)
 	{
 		Object found = mapPosIndexGlobal.get(iis);
 		if (found == null) {
@@ -62,44 +73,40 @@ public class MatIndexPool
 		return (Integer)found;
 	}
 	
-	public static void setStartPosCreateIndexType(int start)
+	public static void setStartPosCreateType(int start)
 	{
 		startCreate = start;
 	}
 	
-	public static int getStartPosCreateIndexType()
+	public static int getStartPosCreateType()
 	{
 		return startCreate;
 	}
 	
-	public static void setStartPosDropIndexType(int start)
+	public static void setStartPosDropType(int start)
 	{
 		startDrop = start;
 	}
 	
-	public static int getStartPosDropIndexType()
+	public static int getStartPosDropType()
 	{
 		return startDrop;
 	}
 	
-	public static void setStartPosRemainIndexType(int start)
+	public static void setStartPosRemainType(int start)
 	{
 		startRemain = start;
 	}
 	
-	public  static int getStartPosRemainIndexType()
+	public  static int getStartPosRemainType()
 	{
 		return startRemain;
 	}
 	
-	public static void setTotalIndex(int total)
-	{
-		totalIndex = total;
-	}
 	
 	public static int getTotalIndex()
 	{
-		return totalIndex;
+		return totalIndex.get();
 	}
 	
 	public static MatIndex getMatIndex(int id)
@@ -109,7 +116,7 @@ public class MatIndexPool
 	
 	public static MatIndex getMatIndex(Index index)
 	{
-		int id = getIndexGlobalId(index);
+		int id = getGlobalIdofIndex(index);
 		if (id == IDX_NOT_EXIST) {
 			return null;
 		}

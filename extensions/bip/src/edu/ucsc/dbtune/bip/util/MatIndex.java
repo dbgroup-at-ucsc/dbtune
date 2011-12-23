@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.bip.sim;
+package edu.ucsc.dbtune.bip.util;
 
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -9,7 +9,6 @@ import edu.ucsc.dbtune.metadata.Index;
  * @author tqtrung
  *
  */
-
 public class MatIndex 
 {
 	public static final int INDEX_TYPE_CREATE = 1000;
@@ -20,12 +19,10 @@ public class MatIndex
 	private int Id;
 	private int typeMatIndex;
 	private int matWindow;
+	private int replica;
 	private double sizeMatIndex;
 	
-	/**
-	 * Constructor methods
-	 * 
-	 */
+	
 	public MatIndex(Index index, int Id, int type)	
 	{
 		this.index = index;
@@ -33,12 +30,9 @@ public class MatIndex
 		this.typeMatIndex = type;
 	}
 	
-	public MatIndex()
-	{
-		
-	}
 	
 	/**
+	 * 
 	 * Get / Set methods 
 	 * 
 	 */

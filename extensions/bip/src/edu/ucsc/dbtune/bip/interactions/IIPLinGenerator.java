@@ -672,7 +672,6 @@ public class IIPLinGenerator
 		return result;	
 	}
 	
-	
 	/**
 	 * 
 	 * @return (total number of variables used in this BIP problem)
