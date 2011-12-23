@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.bip.sim;
+package edu.ucsc.dbtune.bip.util;
 
 import edu.ucsc.dbtune.bip.util.MatIndex;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
@@ -21,8 +21,9 @@ public class MatIndexPool
 	private static Map<IndexInSlot, Integer> mapPosIndexGlobal = new HashMap<IndexInSlot, Integer>();
 	private static Map<Index, Integer> mapIndexGlobal = new HashMap<Index, Integer>();
 	public static int startCreate, startDrop, startRemain;	
-	public static final int IDX_NOT_EXIST = -1;
-	public static AtomicInteger totalIndex = new AtomicInteger(0);
+	private static int numCandidateIndexes;
+	private static final int IDX_NOT_EXIST = -1;
+	private static AtomicInteger totalIndex = new AtomicInteger(0);
 	
 	/**
 	 * Add a materialize index and returns the ID
@@ -121,6 +122,16 @@ public class MatIndexPool
 			return null;
 		}
 		return listIndex.get(id);
+	}
+	
+	public static void setNumCandidateIndexes(int num)
+	{
+	    numCandidateIndexes = num;
+	}
+	
+	public static int getNumCandidateIndexes()
+	{
+	    return numCandidateIndexes;
 	}
 	
 }

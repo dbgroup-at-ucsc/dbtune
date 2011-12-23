@@ -57,4 +57,9 @@ public class IndexInSlot
 		
 		return fHashCode;
 	}
+
+    @Override
+    public String toString() {
+        return "IndexInSlot [a=" + a + ", i=" + i + ", q=" + q + "]";
+    }
 }

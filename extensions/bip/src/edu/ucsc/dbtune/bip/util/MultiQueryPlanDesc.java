@@ -4,7 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
-import edu.ucsc.dbtune.bip.sim.MatIndexPool;
+import edu.ucsc.dbtune.bip.util.MatIndexPool;
 import edu.ucsc.dbtune.bip.util.BIPAgentPerSchema;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
@@ -52,6 +52,7 @@ public class MultiQueryPlanDesc extends QueryPlanDesc
 					} else {
 						sizeMatIndex = plan.getMaterializedIndexSize(index);
 					}
+					
 					MatIndexPool.getMatIndex(index).setMatSize(sizeMatIndex);
 				}							
 			}

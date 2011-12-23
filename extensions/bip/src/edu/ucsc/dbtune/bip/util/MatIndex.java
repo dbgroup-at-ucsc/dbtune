@@ -88,11 +88,17 @@ public class MatIndex
 	
 	public void setReplicaID(int _ID)
 	{
-	    this.replicaID = ID;
+	    this.replicaID = _ID;
 	}
 	
 	public int getReplicaID()
 	{
 	    return this.replicaID;
 	}
+
+
+    @Override
+    public String toString() {
+        return "MatIndex [index=" + index.getFullyQualifiedName() + ", replicaID=" + replicaID + "]";
+    }
 }

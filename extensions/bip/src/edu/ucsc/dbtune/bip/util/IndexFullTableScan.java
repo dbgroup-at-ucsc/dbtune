@@ -13,12 +13,12 @@ import edu.ucsc.dbtune.metadata.Table;
 public class IndexFullTableScan extends Index 
 {	
 	private Table table;
-	public static final String FULL_TABLE_SCAN_SUFFIX =  "_full_table_scan";
+	public static final String FULL_TABLE_SCAN_SUFFIX =  "full_table_scan";
 	
 	public IndexFullTableScan(Table table) throws SQLException
     {
         super(table.getSchema(), "");
-        this.name = getId() + FULL_TABLE_SCAN_SUFFIX;
+        this.name = getId() + "_" + table.getName() + "_" + FULL_TABLE_SCAN_SUFFIX;
         this.table = table;
     }
 	
