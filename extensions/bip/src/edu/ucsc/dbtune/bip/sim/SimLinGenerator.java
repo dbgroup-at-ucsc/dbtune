@@ -9,20 +9,21 @@ import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.Connector;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.LogListener;
-
+import edu.ucsc.dbtune.bip.util.MatIndex;
+import edu.ucsc.dbtune.bip.util.MultiQueryPlanDesc;
 
 public class SimLinGenerator 
 {
     private CPlexBuffer buf;
 	private List<String> listCwq;
 	private List<String> listVar;
-	private List<SimQueryPlanDesc> listQueryPlanDescs;
+	private List<MultiQueryPlanDesc> listQueryPlanDescs;
 	private int W;
 	private double B;
 	private int numConstraints;
 	private BIPVariableCreator varCreator;
 	
-	SimLinGenerator(final String prefix, final List<SimQueryPlanDesc> listQueryPlanDecs, final int W, final double B)
+	SimLinGenerator(final String prefix, final List<MultiQueryPlanDesc> listQueryPlanDecs, final int W, final double B)
 	{		
 		this.listQueryPlanDescs = listQueryPlanDecs;
 		this.W = W;
@@ -105,7 +106,7 @@ public class SimLinGenerator
         String var;
         
         // for TYPE_CREATE index
-        for (int idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosDropIndexType(); idx++) {
+        for (int idx = MatIndexPool.getStartPosCreateType(); idx < MatIndexPool.getStartPosDropType(); idx++) {
             linList.clear();
             for (int w = 0; w < W; w++) {
                 var = varCreator.constructVariableName(BIPVariableCreator.VAR_CREATE, w, idx, 0, 0, 0);
@@ -119,7 +120,7 @@ public class SimLinGenerator
         }
         
         // for TYPE_DROP index
-        for (int idx = MatIndexPool.getStartPosDropIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++) {
+        for (int idx = MatIndexPool.getStartPosDropType(); idx < MatIndexPool.getStartPosRemainType(); idx++) {
             linList.clear();
             for (int w = 0; w < W; w++) {
                 var = varCreator.constructVariableName(BIPVariableCreator.VAR_DROP, w, idx, 0, 0, 0);
@@ -155,7 +156,7 @@ public class SimLinGenerator
         String var_present = "", var_create = "";
         
         // for TYPE_CREATE index
-        for (int idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosDropIndexType(); idx++) {
+        for (int idx = MatIndexPool.getStartPosCreateType(); idx < MatIndexPool.getStartPosDropType(); idx++) {
             
             for (int w = 0; w < W; w++) {
                 var_present = varCreator.constructVariableName(BIPVariableCreator.VAR_PRESENT, w, idx, 0, 0, 0);
@@ -174,7 +175,7 @@ public class SimLinGenerator
         }
         
         // for TYPE_DROP index
-        for (int idx = MatIndexPool.getStartPosDropIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++) {
+        for (int idx = MatIndexPool.getStartPosDropType(); idx < MatIndexPool.getStartPosRemainType(); idx++) {
             for (int w = 0; w < W; w++) {
                 var_present = varCreator.constructVariableName(BIPVariableCreator.VAR_PRESENT, w, idx, 0, 0, 0);
                 listVar.add(var_present);
@@ -205,7 +206,7 @@ public class SimLinGenerator
 		String var, element;
 		String Cwq;
 		
-		for (SimQueryPlanDesc desc : listQueryPlanDescs){
+		for (MultiQueryPlanDesc desc : listQueryPlanDescs){
 		    q = desc.getId();
 		    
 			for (w = 0; w < W; w++) {
@@ -248,7 +249,7 @@ public class SimLinGenerator
 		int w, q, k, i, a, ga;
 		String var_y, var_x, var_s, var_present;		
 		
-		for (SimQueryPlanDesc desc : listQueryPlanDescs){
+		for (MultiQueryPlanDesc desc : listQueryPlanDescs){
             q = desc.getId();
 		
             for (w = 0; w < W; w++) {
@@ -265,12 +266,17 @@ public class SimLinGenerator
 					var_y = varCreator.constructVariableName(BIPVariableCreator.VAR_Y, w, q, k, 0, 0);
 					
 					for (i = 0; i < desc.getNumSlots(); i++) {
+					    
+					    if (desc.isReferenced(i) == false) {
+					        continue;
+					    }
+					    
 						linList.clear();
 						for (a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
 							var_x = varCreator.constructVariableName(BIPVariableCreator.VAR_X, w, q, k, i, a);
 							linList.add(var_x);
 							IndexInSlot iis = new IndexInSlot(q,i,a);
-							ga = MatIndexPool.getIndexGlobalId(iis);
+							ga = MatIndexPool.getGlobalIdofIndexInSlot(iis);
 							var_s = varCreator.constructVariableName(BIPVariableCreator.VAR_S, w, ga, 0, 0, 0);
 						
 							// (3) s_a^{theta} \geq x_{kia}^{theta}
@@ -291,7 +297,7 @@ public class SimLinGenerator
 		}
 		
 		// s(w,ai) <= present(w,i)
-        for (int idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosRemainIndexType(); idx++) {
+        for (int idx = MatIndexPool.getStartPosCreateType(); idx < MatIndexPool.getStartPosRemainType(); idx++) {
             for ( w = 0; w < W; w++) {
                 var_present = varCreator.constructVariableName(BIPVariableCreator.VAR_PRESENT, w, idx, 0, 0, 0);
                 var_s = varCreator.constructVariableName(BIPVariableCreator.VAR_S, w, idx, 0, 0, 0);
@@ -319,7 +325,7 @@ public class SimLinGenerator
 		// for TYPE_CREATE
 		for (w = 0; w < W; w++) {
 			linList.clear();
-			for (idx = MatIndexPool.getStartPosCreateIndexType(); idx < MatIndexPool.getStartPosDropIndexType(); idx++) {
+			for (idx = MatIndexPool.getStartPosCreateType(); idx < MatIndexPool.getStartPosDropType(); idx++) {
 				var_create = varCreator.constructVariableName(BIPVariableCreator.VAR_CREATE, w, idx, 0, 0, 0);
 				double sizeindx = MatIndexPool.getMatIndex(idx).getMatSize();
 				linList.add(Double.toString(sizeindx) + var_create);

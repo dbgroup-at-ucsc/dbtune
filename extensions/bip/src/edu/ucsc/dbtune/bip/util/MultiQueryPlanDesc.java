@@ -1,9 +1,10 @@
-package edu.ucsc.dbtune.bip.sim;
+package edu.ucsc.dbtune.bip.util;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
+import edu.ucsc.dbtune.bip.sim.MatIndexPool;
 import edu.ucsc.dbtune.bip.util.BIPAgentPerSchema;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
@@ -11,10 +12,13 @@ import edu.ucsc.dbtune.inum.InumStatementPlan;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-public class SimQueryPlanDesc extends QueryPlanDesc 
+public class MultiQueryPlanDesc extends QueryPlanDesc 
 {
 	/**
-	 * Supplement methods to the main method in super.generateQueryPlanDesc
+	 * This class is used when the BIP uses more than one statement at a time (e.g., SIM and DIV)
+	 * Note that Index interaction only formulates BIP for one query plan desc at a time
+	 * 
+	 * Supplement the super class with the following additional operations:
 	 *     - Update materialized index size
 	 *     - Map index into their position in the ``global'' pool managed by {@code MatIndexPool}
 	 *     
@@ -39,9 +43,9 @@ public class SimQueryPlanDesc extends QueryPlanDesc
 			for (int i = 0; i < n; i++) {
 				for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
 					Index index = getIndex(i, a);
-					int globalId = MatIndexPool.getIndexGlobalId(index);
+					int globalId = MatIndexPool.getGlobalIdofIndex(index);
 					IndexInSlot iis = new IndexInSlot(q,i,a);
-					MatIndexPool.mapPosIndexGlobalId(iis, globalId);
+					MatIndexPool.mapIndexInSlotToGlobalId(iis, globalId);
 					
 					if (a == getNumIndexesEachSlot(i) - 1){
 						sizeMatIndex = 0;

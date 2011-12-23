@@ -17,6 +17,8 @@ import edu.ucsc.dbtune.bip.util.BIPAgentPerSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.bip.util.MatIndex;
+import edu.ucsc.dbtune.bip.util.MultiQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
@@ -69,14 +71,14 @@ public class SimBIP
 		// 3. Derive the query plan description including internal cost, index access cost,
 		// index at each slot ... 
 		int iAgent = 0;
-		List<SimQueryPlanDesc> listQueryPlans = new ArrayList<SimQueryPlanDesc>();
+		List<MultiQueryPlanDesc> listQueryPlans = new ArrayList<MultiQueryPlanDesc>();
 		for (WorkloadPerSchema wl : listWorkload) {
 		    //BIPAgentPerSchema agent = new BIPAgentPerSchema(wl.getSchema());
 		    // TODO: Change this line when the implementation of BIPAgentPerSchema is done
 		    BIPAgentPerSchema agent = listAgent.get(iAgent++);
 		    
 		    for (Iterator<SQLStatement> iterStmt = wl.getWorkload().iterator(); iterStmt.hasNext(); ) {
-		        SimQueryPlanDesc desc = new SimQueryPlanDesc(); 
+		        MultiQueryPlanDesc desc = new MultiQueryPlanDesc(); 
 	            desc.generateQueryPlanDesc(agent, iterStmt.next(), candidateIndexes);
 	            // Update @MatIndexPool and materialized size indexes
 	            // Add @full table scan index into the pool of @MatIndexPool
@@ -137,41 +139,31 @@ public class SimBIP
 		
 		// 2. Store into@MatIndexPool
 		// in the order of @Sin, @Sout, and @Sremain
-		int globalId = 0;
-		MatIndexPool.setStartPosCreateIndexType(globalId);
+		MatIndexPool.setStartPosCreateType(MatIndexPool.getTotalIndex());
 		for (Index idx : Sin) {
-			MatIndex matIndex = new MatIndex(idx, globalId, MatIndex.INDEX_TYPE_CREATE);
-			MatIndexPool.addMatIndex(matIndex);			
-			MatIndexPool.mapIndexGlobalId(idx, globalId);			
-			globalId++; 
+			int id = MatIndexPool.addMatIndex(idx, MatIndex.INDEX_TYPE_CREATE);			
+			MatIndexPool.mapIndexToGlobalId(idx, id);
 		}
 		
-		MatIndexPool.setStartPosDropIndexType(globalId);
+		MatIndexPool.setStartPosDropType(MatIndexPool.getTotalIndex());
 		for (Index idx : Sout) {
-			MatIndex matIndex = new MatIndex(idx, globalId, MatIndex.INDEX_TYPE_DROP);
-			MatIndexPool.addMatIndex(matIndex);
-			MatIndexPool.mapIndexGlobalId(idx, globalId);			
-			globalId++;
+		    int id = MatIndexPool.addMatIndex(idx, MatIndex.INDEX_TYPE_DROP);          
+            MatIndexPool.mapIndexToGlobalId(idx, id);
 		}
 		
-		MatIndexPool.setStartPosRemainIndexType(globalId);
+		MatIndexPool.setStartPosRemainType(MatIndexPool.getTotalIndex());
 		for (Index idx: Sremain) {
-			MatIndex matIndex = new MatIndex(idx, globalId, MatIndex.INDEX_TYPE_REMAIN);
-			MatIndexPool.addMatIndex(matIndex);
-			MatIndexPool.mapIndexGlobalId(idx, globalId);			
-			globalId++;
+		    int id = MatIndexPool.addMatIndex(idx, MatIndex.INDEX_TYPE_REMAIN);          
+            MatIndexPool.mapIndexToGlobalId(idx, id);
 		}
 		
 		// Add the full table scan indexes into the pool also
 		for (BIPAgentPerSchema agent : listAgent) {
 		    for (IndexFullTableScan scanIdx : agent.getListFullTableScanIndexes()) {
-		        MatIndex matIndex = new MatIndex(scanIdx, globalId, MatIndex.INDEX_TYPE_REMAIN);
-	            MatIndexPool.addMatIndex(matIndex);
-	            MatIndexPool.mapIndexGlobalId(scanIdx, globalId);           
-	            globalId++;
+		        int id = MatIndexPool.addMatIndex(scanIdx, MatIndex.INDEX_TYPE_REMAIN);          
+	            MatIndexPool.mapIndexToGlobalId(scanIdx, id);
 		    }
 		}
-		MatIndexPool.setTotalIndex(globalId);
 	}
 	
 	/**
@@ -187,7 +179,7 @@ public class SimBIP
 	 * @return
 	 * 		The set of materialized indexes with marking the time window when this index is created/dropped
 	 */
-	public List<MatIndex> findIndexSchedule(List<SimQueryPlanDesc> listQueryPlans, int W, double B)  
+	public List<MatIndex> findIndexSchedule(List<MultiQueryPlanDesc> listQueryPlans, int W, double B)  
 	{	
 		LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
