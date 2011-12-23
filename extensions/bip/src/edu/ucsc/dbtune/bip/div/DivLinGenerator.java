@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.ucsc.dbtune.bip.sim.MatIndexPool;
+import edu.ucsc.dbtune.bip.util.MatIndex;
 import edu.ucsc.dbtune.bip.util.MultiQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.BIPVariableCreator;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
@@ -218,10 +219,9 @@ public class DivLinGenerator
     {
         List<String> linList = new ArrayList<String>();
         
-        // for TYPE_CREATE
         for (int r = 0; r < Nreplicas; r++) {
             linList.clear();
-            for (int idx = MatIndexPool.getStartPosCreateType(); idx < MatIndexPool.getStartPosDropType(); idx++) {
+            for (int idx = 0; idx < MatIndexPool.getTotalIndex(); idx++) {
                 String var_create = varCreator.constructVariableName(BIPVariableCreator.VAR_S, r, idx, 0, 0, 0);
                 double sizeindx = MatIndexPool.getMatIndex(idx).getMatSize();
                 linList.add(Double.toString(sizeindx) + var_create);
@@ -268,4 +268,33 @@ public class DivLinGenerator
         }       
     }
     
+    /**
+     * Each variable related to an index is in the form: s(replica, global id): 
+     *   + The replica is the string between the first '(' and the first ','
+     *   + The index id is after ',' and before the last character ')'
+     *   
+     * @param name
+     *      Variable name
+     * 
+     * @return
+     *      The corresponding @MatIndex with the value of replica
+     */
+    public static MatIndex deriveMatIndex(String name)
+    {
+        int type = BIPVariableCreator.getVarType(name);
+        MatIndex index = null;
+        if (type == BIPVariableCreator.VAR_S) { 
+            int openBracket, comma;
+            openBracket = name.indexOf("(");
+            comma = name.indexOf(",");
+            String strW = name.substring(openBracket + 1, comma);
+            int replicaID = Integer.parseInt(strW);
+            String strId = name.substring(comma + 1, name.length() - 1);
+            int idxID = Integer.parseInt(strId);
+            index = MatIndexPool.getMatIndex(idxID);
+            index.setReplicaID(replicaID);
+        }
+        
+        return index; 
+    }
 }
