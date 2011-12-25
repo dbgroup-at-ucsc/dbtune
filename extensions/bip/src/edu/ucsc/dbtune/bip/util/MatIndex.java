@@ -3,8 +3,11 @@ package edu.ucsc.dbtune.bip.util;
 import edu.ucsc.dbtune.metadata.Index;
 
 /**
- * This class stores information about an index to be created/dropped/remained in the system
- * for a scheduling materialization index
+ * This class augments information of an index class, such as
+ *    - Type of index: CREATE, DROP, REMAIN in the system
+ *    - Estimated size if it is materialized
+ *    - Time to materialize
+ *    - etc.
  * 
  * @author tqtrung
  *
@@ -15,18 +18,18 @@ public class MatIndex
 	public static final int INDEX_TYPE_DROP = 1001;
 	public static final int INDEX_TYPE_REMAIN = 1002;
 	
-	private Index index;
-	private int ID;
+	private int posInMatPool;
 	private int typeMatIndex;
 	private int matWindow;
 	private int replicaID;
 	private double sizeMatIndex;
-	
+	private Index index;
 	
 	public MatIndex(Index _index, int _ID, int _type)	
 	{
+	        
 		this.index = _index;
-		this.ID = _ID;
+		this.posInMatPool = _ID;
 		this.typeMatIndex = _type;
 	}
 	
@@ -48,12 +51,12 @@ public class MatIndex
 	
 	public void setId(int Id)
 	{
-		this.ID = Id;
+		this.posInMatPool = Id;
 	}
 	
 	public int getId()
 	{
-		return ID;
+		return posInMatPool;
 	}
 	
 	public void setTypeMatIndex(int type)

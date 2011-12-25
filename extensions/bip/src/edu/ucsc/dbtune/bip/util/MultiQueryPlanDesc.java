@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.bip.util.MatIndexPool;
-import edu.ucsc.dbtune.bip.util.BIPAgentPerSchema;
+import edu.ucsc.dbtune.bip.util.BIPPreparatorSchema;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.inum.InumStatementPlan;
@@ -28,7 +28,7 @@ public class MultiQueryPlanDesc extends QueryPlanDesc
 	 * 		The global candidate indexes
 	 * @throws SQLException
 	 */
-    public void generateQueryPlanDesc(BIPAgentPerSchema agent, SQLStatement stmt, 
+    public void generateQueryPlanDesc(BIPPreparatorSchema agent, SQLStatement stmt, 
                 List<Index> globalCandidateIndexes) throws SQLException
 	{
         super.generateQueryPlanDesc(agent, stmt, globalCandidateIndexes);

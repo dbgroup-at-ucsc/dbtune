@@ -176,7 +176,7 @@ public class QueryPlanDesc
 	 *     at each slot
 	 * @throws SQLException 
 	 */	
-	public void generateQueryPlanDesc(BIPAgentPerSchema agent, SQLStatement stmt,
+	public void generateQueryPlanDesc(BIPPreparatorSchema agent, SQLStatement stmt,
 	                                  List<Index> globalCandidateIndexes) throws SQLException
 	{
 		S = new ArrayList<Integer>();
@@ -278,6 +278,145 @@ public class QueryPlanDesc
 		}
 	}
 	
+	/**
+     * Populate query plan description  number of template plans, internal cost, 
+     * index access cost, etc. )
+     * 
+     * @param agent
+     *      The class to communicate with INUM to get InumSpace
+     * @param stmt
+     *      A SQL statement
+     * @param globaCandidateIndexes
+     *      The given list of candidate indexes (globally)  
+     * 
+     * {\b Note}: 
+     *     - There does not contain the empty index (table scan) in {@code globalCandidateIndexes}
+     *     - The index full table scan is always assigned the last position in the list of indexes
+     *     at each slot
+     * @throws SQLException 
+     */ 
+    public void generateQueryPlanDesc(BIPPreparatorSchema agent, SQLStatement stmt,
+                                      BIPIndexPool poolIndexes) throws SQLException
+    {
+        S = new ArrayList<Integer>();
+        beta = new ArrayList<Double>();
+        gamma = new ArrayList<List<List<Double>>>(); 
+        listIndexesEachSlot = new ArrayList<List<Index>>();
+        
+        this.inum = agent.populateInumSpace(stmt);
+        this.stmtID = QueryPlanDesc.STMT_ID.getAndIncrement();
+        List<IndexFullTableScan> listFullTableScanIndexes = agent.getListFullTableScanIndexes();  
+        listSchemaTables = agent.getListSchemaTables();
+        Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
+                    
+        // TODO: replace with the new interface ----------------------
+        // Note that list tables is derived from the schema
+        // @listSchemaTables and @listReferencedTable is different      
+        List<Table> listReferencedTables = new ArrayList<Table>();   
+        for (InumStatementPlan plan : templatePlans) {
+            listReferencedTables = plan.getReferencedTables();
+            break;
+        }
+        // ------------------------------------------------------------
+        
+        // 1. Set up the number of slots & number of indexes in each slot
+        n = 0;
+        numIndexes = 0;     
+        
+        for (Table table : listSchemaTables) {          
+            int numIndexEachSlot = 0;
+            List<Index> listIndex = new ArrayList<Index>();         
+            
+            for (Index index : poolIndexes.indexes()) {
+                if (index.getTable().equals(table)){                
+                    numIndexEachSlot++;
+                    numIndexes++;
+                    listIndex.add(index);
+                }
+            }
+            
+            // find the full table scan index corresponding to the slot
+            for (IndexFullTableScan scanIdx : listFullTableScanIndexes) {
+                if (scanIdx.getTable().equals(table) == true) {
+                    numIndexEachSlot++;
+                    numIndexes++;
+                    listIndex.add(scanIdx);
+                    break;
+                }
+            }
+            
+            S.add(new Integer(numIndexEachSlot));
+            listIndexesEachSlot.add(listIndex);
+            n++;            
+        }
+        
+        Map<Table, Table> mapReferenceTable = new HashMap<Table, Table>();
+        for (Table referencedTable : listReferencedTables){
+            mapReferenceTable.put(referencedTable, referencedTable);
+        }
+        
+        mapReferencedSlotID = new HashMap<Integer, Integer>();
+        for (int i = 0; i < listSchemaTables.size(); i++){
+            Object found = mapReferenceTable.get(listSchemaTables.get(i));
+            if (found != null){
+                mapReferencedSlotID.put(new Integer(i), new Integer(1));
+            }
+        }
+        
+        Kq = 0;
+        for (InumStatementPlan plan : templatePlans) {
+            beta.add(new Double(plan.getInternalCost()));
+            List<List<Double>> gammaPlan = new ArrayList<List<Double>>();
+            
+            for (int i = 0; i < n; i++) {
+                List<Double> gammaRel = new ArrayList<Double>(); 
+                
+                // If the table is not reference then assigned gamma = 0
+                Object found = mapReferenceTable.get(listSchemaTables.get(i));
+                if (found == null){
+                    for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
+                        gammaRel.add(new Double(0.0));
+                    }
+                } else {
+                    Table table = (Table) found;
+                    for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
+                        Index index = getIndex(i, a);
+                        // Full table scan index 
+                        if (a == getNumIndexesEachSlot(i) - 1){                     
+                            gammaRel.add(new Double(plan.getFullTableScanCost(table)));
+                        } else {
+                            gammaRel.add(new Double(plan.getAccessCost(index)));
+                        }
+                    }       
+                }
+                gammaPlan.add(gammaRel);                            
+            }
+            
+            gamma.add(gammaPlan);
+            Kq++;
+        }
+    }
+	
+    /**
+     * Map index in each slot to their identifiers in the pool
+     * @param poolIndex
+     */
+    public void mapIndexInSlotToPoolID(BIPIndexPool poolIndex)
+    {
+        // Update the materialized index size and create the mapping table
+        // from position in each slot into the global position
+        int q = getId();
+        for (int i = 0; i < n; i++) {
+            for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
+                Index index = getIndex(i, a);
+                IndexInSlot iis = new IndexInSlot(q,i,a);
+                poolIndex.mapIndexInSlot(iis, index);
+                System.out.println(" IN QueryPlanDesc, Map index in slot: " + iis + " index: " + index.getFullyQualifiedName()
+                        + " pool id: " + poolIndex.getPoolID(index));
+            }
+        }
+    }
+    
 	/**
 	 * Check if @idSlot is referenced by the query
 	 * 
