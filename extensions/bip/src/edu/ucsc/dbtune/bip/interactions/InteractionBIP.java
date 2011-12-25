@@ -7,15 +7,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
+
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment; 
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
-import edu.ucsc.dbtune.bip.util.BIPAgentPerSchema;
+import edu.ucsc.dbtune.bip.util.BIPIndexPool;
+import edu.ucsc.dbtune.bip.util.BIPPreparatorSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 
 import ilog.concert.IloException;
@@ -35,9 +37,8 @@ public class InteractionBIP
 	private IloNumVar [] vars;
 	private IIPLinGenerator genIIP; 
 	private Environment environment = Environment.getInstance();
-	
 	public static HashMap<String,Integer> cachedInteractIndexName = new HashMap<String, Integer>();	
-	public static final Pattern patternIndexVariable = Pattern.compile("s*");
+	
 		
 	/**
 	 * Find all pairs of indexes from the given configuration, {@code C}, that 
@@ -56,7 +57,7 @@ public class InteractionBIP
 	 * 
 	 * {\b Note}: {@code listAgent} will be removed when this class is fully implemented
 	 */
-    public List<IndexInteraction> computeInteractionIndexes(List<WorkloadPerSchema> listWorkload, List<BIPAgentPerSchema> listAgent,
+    public List<IndexInteraction> computeInteractionIndexes(List<WorkloadPerSchema> listWorkload, List<BIPPreparatorSchema> listAgent,
                                                             List<Index> candidateIndexes, double delta) throws SQLException
 	{	
         List<IndexInteraction> resultIndexInteraction = new ArrayList<IndexInteraction>();	
@@ -64,15 +65,30 @@ public class InteractionBIP
         
         for (WorkloadPerSchema wl : listWorkload) {
             //BIPAgentPerSchema agent = new BIPAgentPerSchema(wl.getSchema());
-            BIPAgentPerSchema agent = listAgent.get(iAgent++);
+            BIPPreparatorSchema agent = listAgent.get(iAgent++);
             
             for (Iterator<SQLStatement> iterStmt = wl.getWorkload().iterator(); iterStmt.hasNext(); ) {
-                IIPQueryPlanDesc desc =  new IIPQueryPlanDesc();    
+                // Formulate one BIP for each statement
+                BIPIndexPool poolIndexes = new BIPIndexPool();
+                // TODO: optimize later, add only indexes relevant to this statement into the pool
+                for (Index index : candidateIndexes) {
+                    poolIndexes.addIndex(index);
+                }
+                    
+                QueryPlanDesc desc =  new QueryPlanDesc();    
                 
                 // Populate the INUM space for each statement
+                // We do not add full table scans before populate from @desc
+                // so that the full table scan is ordered at the end of each slot 
                 desc.generateQueryPlanDesc(agent, iterStmt.next(), candidateIndexes);
-                            
-                List<IndexInteraction> listInteraction = findInteractions(desc, delta);
+                // Add full table scans into the pool
+                for (Index index : agent.getListFullTableScanIndexes()) {
+                    poolIndexes.addIndex(index);
+                }
+                // Map index in each slot to its pool ID
+                desc.mapIndexInSlotToPoolID(poolIndexes);
+                
+                List<IndexInteraction> listInteraction = findInteractions(poolIndexes, desc, delta);
                 for (IndexInteraction pair : listInteraction){
                     resultIndexInteraction.add(pair);
                 }
@@ -91,7 +107,7 @@ public class InteractionBIP
 	 * @return
 	 * 		The set of pairs of indexes that interact 
 	 */
-	public List<IndexInteraction> findInteractions(IIPQueryPlanDesc desc, double delta)  
+	public List<IndexInteraction> findInteractions(BIPIndexPool poolIndexes, QueryPlanDesc desc, double delta)  
 	{	
 		LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
@@ -117,24 +133,29 @@ public class InteractionBIP
 				    if (desc.isReferenced(id) == false){
 		                continue;
 		            }
-				    
 					for (int pos_d = 0; pos_d < desc.getNumIndexesEachSlot(id) - 1; pos_d++){
 						if (ic == id && pos_c >= pos_d) {	
 							continue;
-						}					
-						Index indexd = desc.getIndex(id, pos_d);
+						}		
+						/*
+						// TODO: remove this line
+	                    boolean cont = (ic == 0 && pos_c == 1 && id == 1 && pos_d == 1);
+	                    if (cont == false) {
+	                        continue;
+	                    }
+	                    */
 						
+						Index indexd = desc.getIndex(id, pos_d);						
 						// check if pair of interact indexes have been cached
 						if (checkInCache(indexc, indexd) == true){
 							continue;
-						}
-						
+						}						
 						System.out.println("*** Investigating pair of " + indexc.getFullyQualifiedName()
 											+ " vs. " + indexd.getFullyQualifiedName() + "****");
 						RestrictIIPParam restrictIIP = new RestrictIIPParam(delta, ic, id, pos_c, pos_d);				
 						
 						try {														
-							genIIP = new IIPLinGenerator(restrictIIP, desc, workloadName);
+							genIIP = new IIPLinGenerator(poolIndexes, restrictIIP, desc, workloadName);
 							
 							// Build BIP for a particular (c,d, @desc)
 							genIIP.build(listener); 
@@ -247,14 +268,7 @@ public class InteractionBIP
 		try {
 			for (int i = 0; i < vars.length; i++) {
 	            IloNumVar var = vars[i];
-	            int type = IIPLinGenerator.getVarType(var.getName());
-	            
-	            if (type == IIPLinGenerator.VAR_S || type == IIPLinGenerator.VAR_X
-	            	|| type == IIPLinGenerator.VAR_Y || type == IIPLinGenerator.VAR_U)
-	            {	
-	            	mapVarVal.put(var.getName(), new Double(cplex.getValue(var)));
-	            }
-	            
+	            mapVarVal.put(var.getName(), new Double(cplex.getValue(var)));
 	        }
 		}
 		catch (Exception e) {
@@ -287,30 +301,7 @@ public class InteractionBIP
 		return strInteractions;
 	}
 	
-	/**
-	 * Determine the cost and index variables (?)
-	 * 
-	 * @return 
-	 * 		An array of IloNumVar representing index variables
-	 */
-	private IloNumVar[] getCostAndIndexVariables() throws IloException 
-	{
-        ArrayList<IloNumVar> variables = new ArrayList<IloNumVar>();
-        int i;
-        // @vars: list of variables in the problem definitions
-        // @matrix: the linear programming matrix
-	    // Both @vars and @matrix have been extracted in @run method,
-        // after the model from the file is loaded
-        
-        for (i = 0; i < vars.length; i++) {
-            IloNumVar var = vars[i];
-            if(patternIndexVariable.matcher(var.getName()).matches()) {
-                variables.add(var);
-            }
-        }
-
-        return variables.toArray(new IloNumVar[variables.size()]);
-    }
+	
 
 	/**
 	 * Determine the matrix used in the BIP problem

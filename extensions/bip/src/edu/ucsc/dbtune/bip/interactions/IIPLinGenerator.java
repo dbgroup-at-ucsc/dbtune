@@ -1,6 +1,10 @@
 package edu.ucsc.dbtune.bip.interactions;
 
-import edu.ucsc.dbtune.bip.util.Connector;
+import edu.ucsc.dbtune.bip.util.BIPIndexPool;
+import edu.ucsc.dbtune.bip.util.BIPVariable;
+import edu.ucsc.dbtune.bip.util.IndexInSlot;
+import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
+import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 
@@ -15,42 +19,35 @@ import java.util.*;
  */
 public class IIPLinGenerator 
 {	
-	public static final int  VAR_Y = 0;
-	public static final int  VAR_X = 1;
-	public static final int  VAR_S = 2;
-	public static final int  VAR_U = 3;
-	public static final int  VAR_DEFAULT = 100;
-	
-	public static final int IND_EMPTY = 0;
-	public static final int IND_C = 1;
-	public static final int IND_D = 2;
-	public static final int IND_CD = 3;
-	
 	public static final int NUM_THETA = 4;
+	public static final int IND_EMPTY = 0;
+    public static final int IND_C = 1;
+    public static final int IND_D = 2;
+    public static final int IND_CD = 3;
 	
 	private CPlexBuffer buf;
 	private int theta; 
 	private int numConstraints;
-	
-	private String[] strTheta = {"empty", "c", "d", "cd"};
-	private String[] strHeaderVariable = {"y", "x", "s", "u"};
-	private String[] CTheta;
-
-	private List< List <String> > elementCTheta, varTheta;
-	private List< List <Integer> > countVarTheta; 
+	private List<String> CTheta;
+	private List<List<String>> elementCTheta;
+	private List<List<String>> varTheta;
 	private RestrictIIPParam restrictIIP;
-	private IIPQueryPlanDesc desc;
-	private int totalVar; 	
+	private QueryPlanDesc desc;
 	private List<List<Double>> coefVarTheta;
+	private IIPVariablePool poolVariables;
+	private BIPIndexPool poolIndexes;
 	
-	IIPLinGenerator(RestrictIIPParam restrictIIP, IIPQueryPlanDesc desc, String prefix)
+	
+	IIPLinGenerator(BIPIndexPool poolIndexes, RestrictIIPParam restrictIIP, QueryPlanDesc desc, String prefix)
 	{		
 		this.restrictIIP = restrictIIP;	
 		this.desc = desc;
-	
-		CTheta = new String[NUM_THETA];
-		elementCTheta = new ArrayList<List<String>>(); 		
+		this.poolIndexes = poolIndexes;
+		this.poolVariables = new IIPVariablePool();	
+		CTheta = new ArrayList<String>();
+		elementCTheta = new ArrayList<List<String>>(); 
 		varTheta = new ArrayList<List<String>>();
+		
 		try {
 			buf = new CPlexBuffer(prefix);
 		}
@@ -58,17 +55,9 @@ public class IIPLinGenerator
 			System.out.println(" Error in opening files " + e.toString());			
 		}
 		
-		numConstraints = 0;
-		
-		coefVarTheta = new ArrayList<List<Double>> ();	
-		countVarTheta = new ArrayList<List<Integer>>();		
+		numConstraints = 0;		
+		coefVarTheta = new ArrayList<List<Double>> ();				
 		for (theta = 0; theta < NUM_THETA; theta++) {
-			List <Integer> cVar = new ArrayList<Integer>();
-			for (int type = 0; type < strHeaderVariable.length; type++) {
-				cVar.add(new Integer (0));
-			}
-			countVarTheta.add(cVar);
-			
 			List <Double> coefV = new ArrayList<Double>();
 			coefVarTheta.add(coefV);
 		}
@@ -96,6 +85,9 @@ public class IIPLinGenerator
 	{
     	listener.onLogEvent(LogListener.BIP, "Building IIP program...");
     	
+    	// Construct all variable names
+    	constructVariables();
+    	
     	// Construct the formula of @C{theta} in (3)
     	buildCTheta();
     	
@@ -117,93 +109,113 @@ public class IIPLinGenerator
         listener.onLogEvent(LogListener.BIP, "Built IIP program");
     }
 	
+	/**
+	 * Add all variables into the pool of variables of this BIP formulation
+	 *  
+	 */
+	private void constructVariables()
+	{
+	    for (theta = IND_EMPTY; theta <= IND_CD; theta++) {   
+	        List<String> listVarTheta = new ArrayList<String>();
+	        // var y
+            for (int k = 0; k < desc.getNumPlans(); k++) {
+                BIPVariable var = poolVariables.createAndStoreBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0);
+                listVarTheta.add(var.getName());
+            }
+           
+            // var x
+            for (int k = 0; k < desc.getNumPlans(); k++) {              
+                for (int i = 0; i < desc.getNumSlots(); i++) {                  
+                    for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
+                        BIPVariable var = poolVariables.createAndStoreBIPVariable(theta, IIPVariablePool.VAR_X, k, i, a);
+                        listVarTheta.add(var.getName());
+                    }
+                }
+            }       
+            
+            // var s
+            for (int ga = 0; ga < this.poolIndexes.indexes().size(); ga++) {
+                BIPVariable var = poolVariables.createAndStoreBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0);
+                listVarTheta.add(var.getName());
+            }
+            
+            // var u
+            for (int t = 0; t < desc.getNumPlans(); t++) {
+                for (int i = 0; i < desc.getNumSlots(); i++) {
+                    for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
+                        BIPVariable var =  poolVariables.createAndStoreBIPVariable(theta, IIPVariablePool.VAR_U, t, i, a); 
+                        listVarTheta.add(var.getName());
+                    }
+                }
+            }
+            varTheta.add(listVarTheta);
+	    }
+	}
 	
 
 	/**
-	 * Construct the formula of C{theta} in (3) and add variables name into the corresponding list
+	 * Construct the formula of C{theta} in (3)
 	 * 
 	 * C(theta)=  sum_{k \in [1, Kq] } beta_k y_{k,theta}
 	 *		   + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} x_{kia, theta}
 	 *
 	 */
 	private void buildCTheta()
-	{
-		String ctheta, var, element;
-		List<String> linList = new ArrayList<String>();
-		ArrayList<String> varList;
-		int countX, countY;
-				
+	{			
 		for (theta = IND_EMPTY; theta <= IND_CD; theta++) {			
-			ctheta = "";
+			String ctheta = "";
 			List<String> linListElement = new ArrayList<String>();			
-			varList = new ArrayList<String>();
+			List<String> linList = new ArrayList<String>();
 			
-			// Internal plan
-			linList.clear();
-			
-			countY = 0;
 			for (int k = 0; k < desc.getNumPlans(); k++) {
-				var = constructVariableName(theta, VAR_Y, k, 0, 0);
-				element = Double.toString(desc.getInternalPlanCost(k)) + var;
+				String var = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName();
+				String element = Double.toString(desc.getInternalPlanCost(k)) + var;
 				linList.add(element);
 				linListElement.add(element);
-				varList.add(var);				
-				coefVarTheta.get(theta).add(new Double(desc.getInternalPlanCost(k)));					
-				countY++;
+				coefVarTheta.get(theta).add(new Double(desc.getInternalPlanCost(k)));	
 			}
-			ctheta  = Connector.join(" + ", linList);
-			countVarTheta.get(theta).set(VAR_Y, countY);
+			ctheta  = StringConcatenator.concatenate(" + ", linList);
 						
 			// Index access cost
 			linList.clear();
-			countX = 0;
 			for (int k = 0; k < desc.getNumPlans(); k++) {				
 				for (int i = 0; i < desc.getNumSlots(); i++) {					
 					for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
-						var = constructVariableName(theta, VAR_X, k, i, a);
-						countX++;
-						element = Double.toString(desc.getIndexAccessCost(k, i, a)) + var;
+						String var = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_X, k, i, a).getName();
+						String element = Double.toString(desc.getIndexAccessCost(k, i, a)) + var;
 						linList.add(element);
 						linListElement.add(element);
-						varList.add(var);
 						coefVarTheta.get(theta).add(new Double(desc.getIndexAccessCost(k, i, a)));
 					}
 				}
 			}		
-			ctheta = ctheta + " + " + Connector.join(" + ", linList);
-			countVarTheta.get(theta).set(VAR_X, countX);
+			ctheta = ctheta + " + " + StringConcatenator.concatenate(" + ", linList);
 			
 			// Record @ctheta, element of @ctheta, and @variables
-			CTheta[theta] = ctheta;			
+			CTheta.add(ctheta);			
 			elementCTheta.add(linListElement);
-			varTheta.add(varList);			
 		}
 	}
 		
 	/**
-	 * Atomic constraints (3) - (5)
+	 * Atomic constraints: (3) - (5)
 	 * 
 	 */
 	private void buildAtomicConstraints()
 	{	
-		List<String> linList = new ArrayList<String>();
-		String var_y, var_x, var_s;		
-		
-		/**
-		 * Constraint (3): atomic configuration for each C{theta} 
-		 */
+		// Constraint (3): atomic configuration for each C{theta} 
 		for (theta = IND_EMPTY; theta <= IND_CD; theta++) {
-			linList.clear();
+		    List<String> linList = new ArrayList<String>();
 			// (3a) \sum_{k \in [1, Kq]}y^{theta}_k = 1
 			for (int k = 0; k < desc.getNumPlans(); k++) {
-				linList.add(constructVariableName(theta, VAR_Y, k, 0, 0));
+				linList.add(poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName());
 			}
-			buf.getCons().println("atomic_3a_" + numConstraints + ": " + Connector.join(" + ", linList) + " = 1");
+			buf.getCons().println("atomic_3a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) + " = 1");
 			numConstraints++;
 			
 			// (3b) \sum_{a \in S+_i \cup I_{\emptyset}} x(theta, k, i, a) = y(theta, k)
 			for (int k = 0; k < desc.getNumPlans(); k++) {
-				var_y = constructVariableName(theta, VAR_Y, k, 0, 0);
+				String var_y = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName();
 				
 				for (int i = 0; i < desc.getNumSlots(); i++) {
 				    // -- not constraint on slot NOT referenced by the query 
@@ -213,11 +225,11 @@ public class IIPLinGenerator
 				    
 				    linList.clear();
 					for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
-						var_x = constructVariableName(theta, VAR_X, k, i, a);
+						String var_x = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_X, k, i, a).getName();
 						linList.add(var_x);
-						int ga = desc.globalIndex(i,a);
-						var_s = constructVariableName(theta, VAR_S, ga, 0, 0);
-						varTheta.get(theta).add(var_s);
+						IndexInSlot iis = new IndexInSlot(desc.getId(), i, a);
+						int ga = poolIndexes.getPoolID(iis);
+						String var_s = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName();
 						
 						// (4a) s_a^{theta} \geq x_{kia}^{theta}
 						buf.getCons().println("atomic_4a_" + numConstraints + ":" 
@@ -227,7 +239,7 @@ public class IIPLinGenerator
 						numConstraints++;
 					}
 					buf.getCons().println("atomic_3b_" + numConstraints  
-											+ ": " + Connector.join(" + ", linList) 
+											+ ": " + StringConcatenator.concatenate(" + ", linList) 
 											+ " - " + var_y
 											+ " = 0");
 					numConstraints++;
@@ -242,7 +254,7 @@ public class IIPLinGenerator
 		for (theta = IND_EMPTY; theta <= IND_CD; theta++) {
             
             for (int i = 0; i < desc.getNumSlots(); i++) {
-                linList.clear();
+                List<String> linList = new ArrayList<String>();
                 if ( (theta == IND_C && i == restrictIIP.getPosRelContainC()) 
                      || (theta == IND_D && i == restrictIIP.getPosRelContainD())
                      || (theta == IND_CD && (i == restrictIIP.getPosRelContainC() || i == restrictIIP.getPosRelContainD()))
@@ -256,33 +268,34 @@ public class IIPLinGenerator
                 // - it could be possible s^{theta}_{a} = 1 and s^{theta}_{full table scan} = 1
                 // - in this case full table scan is used instead of a for the optimal cost
                 for (int a = 0; a < desc.getNumIndexesEachSlot(i) - 1; a++) {
-                    int ga = desc.globalIndex(i,a);
-                    linList.add(constructVariableName(theta, VAR_S, ga, 0, a));      
+                    IndexInSlot iis = new IndexInSlot(desc.getId(), i, a);
+                    int ga = poolIndexes.getPoolID(iis);
+                    linList.add(poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());      
                 }
                 
                 buf.getCons().println("atomic_4b_" +  numConstraints + ":" 
-                        + Connector.join(" + ", linList) 
+                        + StringConcatenator.concatenate(" + ", linList) 
                         + " <= 1");
                 numConstraints++;
             }
         }
 		
-		for (theta = IND_C; theta <= IND_CD; theta++) 	{
-			
+		for (theta = IND_C; theta <= IND_CD; theta++) {			
 			if (theta == IND_D) { 
 				continue;
 			}
 			
-			linList.clear();
+			List<String> linList = new ArrayList<String>();
 			// not consider full table scan
 			for (int a = 0; a < desc.getNumIndexesEachSlot(restrictIIP.getPosRelContainC()) - 1; a++) {				
 				if (a != restrictIIP.getLocalPosIndexC()) {
-					int ga = desc.globalIndex(restrictIIP.getPosRelContainC(), a);
-					linList.add(constructVariableName(theta, VAR_S, ga, 0, a));
+				    IndexInSlot iis = new IndexInSlot(desc.getId(), restrictIIP.getPosRelContainC(), a);
+                    int ga = poolIndexes.getPoolID(iis);
+					linList.add(poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());
 				}
 			}
 			buf.getCons().println("atomic_4c_" +  numConstraints + ":" 
-								+ Connector.join(" + ", linList) 
+								+ StringConcatenator.concatenate(" + ", linList) 
 								+ " <= 1");
 			numConstraints++;
 		}
@@ -292,18 +305,18 @@ public class IIPLinGenerator
 		 * Constraint (6): exception of the relation containing index d 
 		 */
 		
-		for (theta = IND_D; theta <= IND_CD; theta++) {
-			
-			linList.clear();
+		for (theta = IND_D; theta <= IND_CD; theta++) {			
+		    List<String> linList = new ArrayList<String>();
 			// not consider full table scan			
 			for (int a = 0; a < desc.getNumIndexesEachSlot(restrictIIP.getPosRelContainD()) - 1; a++) {				
 				if (a != restrictIIP.getLocalPosIndexD()) {
-					int ga = desc.globalIndex(restrictIIP.getPosRelContainD(), a);
-					linList.add(constructVariableName(theta, VAR_S, ga, 0, a));
+				    IndexInSlot iis = new IndexInSlot(desc.getId(), restrictIIP.getPosRelContainD(), a);
+                    int ga = poolIndexes.getPoolID(iis);
+					linList.add(poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());
 				}
 			}
 			buf.getCons().println("atomic_4d_" + numConstraints + ":" 
-								+ Connector.join(" + ", linList) 
+								+ StringConcatenator.concatenate(" + ", linList) 
 								+ "  <= 1");
 			numConstraints++;
 		}
@@ -312,28 +325,23 @@ public class IIPLinGenerator
 		/**
 		 * Constraint (5): constraining for the indexes c and d not appear in Xstar
 		 */
-		
+		IndexInSlot iis = new IndexInSlot(desc.getId(), restrictIIP.getPosRelContainC(), restrictIIP.getLocalPosIndexC());
+        int ga = poolIndexes.getPoolID(iis);
 		buf.getCons().println("atomic_5_" + numConstraints + ":" 
-							+ constructVariableName(IND_EMPTY, VAR_S, 
-							desc.globalIndex(restrictIIP.getPosRelContainC(), restrictIIP.getLocalPosIndexC()), 0, 0)
-											+ " = 0 "); // For s^{empty}_c = 0
+							+ poolVariables.getBIPVariable(IND_EMPTY, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{empty}_c = 0		
 		numConstraints++;
 		buf.getCons().println("atomic_5_" + numConstraints + ":" 
-							+ constructVariableName(IND_EMPTY, VAR_S, 
-							desc.globalIndex(restrictIIP.getPosRelContainD(), restrictIIP.getLocalPosIndexD()), 0, 0)
-											+ " = 0 "); // For s^{empty}_d = 0
+                + poolVariables.getBIPVariable(IND_D, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{d}_c = 0  
 		numConstraints++;
+
+		iis = new IndexInSlot(desc.getId(), restrictIIP.getPosRelContainD(), restrictIIP.getLocalPosIndexD());
+        ga = poolIndexes.getPoolID(iis);
+		buf.getCons().println("atomic_5_" + numConstraints + ":" 
+							+ poolVariables.getBIPVariable(IND_EMPTY, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{empty}_d = 0
+		numConstraints++;		
 		buf.getCons().println("atomic_5_" + numConstraints + ":"
-							+ constructVariableName(IND_C, VAR_S, 
-							desc.globalIndex(restrictIIP.getPosRelContainD(), restrictIIP.getLocalPosIndexD()), 0, 0)
-											+ " = 0 "); // For s^{c}_d = 0
+							+ poolVariables.getBIPVariable(IND_C, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{c}_d = 0
 		numConstraints++;
-		buf.getCons().println("atomic_5_" + numConstraints + ":" 
-							+ constructVariableName(IND_D, VAR_S, 
-							desc.globalIndex(restrictIIP.getPosRelContainC(), restrictIIP.getLocalPosIndexC()), 0, 0)
-											+ " = 0 "); // For s^{d}_c = 0	
-		numConstraints++;
-		
 	}
 	
 	/**
@@ -342,26 +350,20 @@ public class IIPLinGenerator
 	 * 
 	 */
 	private void buildLocalOptimal()
-	{
-		String var_u;
-		List<String> linList = new ArrayList<String>();
-		
+	{	
 		for (theta = IND_EMPTY; theta <= IND_CD; theta++) {
-			
 			for (int t = 0; t < desc.getNumPlans(); t++) {
-				
-				linList.clear();			
+			    List<String> linList = new ArrayList<String>();		
 				for (int i = 0; i < desc.getNumSlots(); i++) {
 					for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
-						var_u = constructVariableName(theta, VAR_U, t, i, a);					
-						varTheta.get(theta).add(var_u);
+						String var_u = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_U, t, i, a).getName();		
 						linList.add(Double.toString(desc.getIndexAccessCost(t, i, a)) + var_u);						 						 
 					}
 				}
 				// Constraint (6b)
 				buf.getCons().println("optimal_6b_" + numConstraints + ":" 
-						+ CTheta[theta] + " - " 
-						+ Connector.join(" - ", linList) 		
+						+ CTheta.get(theta) + " - " 
+						+ StringConcatenator.concatenate(" - ", linList) 		
 						+ " <=  " + Double.toString(desc.getInternalPlanCost(t)));
 				numConstraints++;
 				
@@ -371,14 +373,11 @@ public class IIPLinGenerator
 		for (theta = IND_EMPTY; theta <= IND_CD; theta++) {			 
 			for (int t = 0; t < desc.getNumPlans(); t++) {							
 				for (int i = 0; i < desc.getNumSlots(); i++) {
-				    
 				    if (desc.isReferenced(i) == false) {
 				        continue;
 				    }
-				    
 					for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
-						
-						var_u = constructVariableName(theta, VAR_U, t, i, a);						
+						String var_u = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_U, t, i, a).getName();						
 						if ( (theta == IND_C && a == restrictIIP.getLocalPosIndexC() 
 								&& i == restrictIIP.getPosRelContainC())  
 							|| (theta == IND_D && a == restrictIIP.getLocalPosIndexD() 
@@ -414,16 +413,16 @@ public class IIPLinGenerator
 						else if (i != restrictIIP.getPosRelContainC() && i != restrictIIP.getPosRelContainD())
 						{							
 							// Constraint (7b): u^{theta}_{tia} <= sum_{theta}_{a}
-							int ga = desc.globalIndex(i, a);
-							
+							IndexInSlot iis = new IndexInSlot(desc.getId(), i, a);
+		                    int ga = poolIndexes.getPoolID(iis);
 							// does not constraint the full table scan index 
 							if (a  <  desc.getNumIndexesEachSlot(i) - 1) {
     							buf.getCons().println("optimal_9a_" + numConstraints + ":" 
     									+ var_u 
-    									+ " - " + constructVariableName(IND_EMPTY, VAR_S, ga, 0, 0)
-    									+ " - " + constructVariableName(IND_C, VAR_S, ga, 0, 0)
-    									+ " - " + constructVariableName(IND_D, VAR_S, ga, 0, 0)
-    									+ " - " + constructVariableName(IND_CD, VAR_S, ga, 0, 0)
+    									+ " - " + poolVariables.getBIPVariable(IND_EMPTY, IIPVariablePool.VAR_S, ga, 0, 0)
+    									+ " - " + poolVariables.getBIPVariable(IND_C, IIPVariablePool.VAR_S, ga, 0, 0)
+    									+ " - " + poolVariables.getBIPVariable(IND_D, IIPVariablePool.VAR_S, ga, 0, 0)
+    									+ " - " + poolVariables.getBIPVariable(IND_CD, IIPVariablePool.VAR_S, ga, 0, 0)
     									+ " <= 0 ");
 							}	
 							numConstraints++;
@@ -441,37 +440,33 @@ public class IIPLinGenerator
 	 */
 	private void buidOptimalConstraints()
 	{
-		
-		int theta, i, t, ga, p, thetainternal;
-		String var_u;
-		List<String> linList = new ArrayList<String>();
-		
 		// Constraint (7a), (8), (9)
-		for (theta = IND_EMPTY; theta <= IND_CD; theta++) {				
-			for (t = 0; t < desc.getNumPlans(); t++) {
-				for (i = 0; i < desc.getNumSlots(); i++) {
-				    
+		for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {				
+			for (int t = 0; t < desc.getNumPlans(); t++) {
+				for (int i = 0; i < desc.getNumSlots(); i++) {
 				    if (desc.isReferenced(i) == false) {
                         continue;
                     }
 				    // Sort index access cost
 					List<SortableIndexAcessCost> listSortedIndex  = new 
 											ArrayList<SortableIndexAcessCost> ();
-					for (p = 0; p < desc.getNumIndexesEachSlot(i); p++){
+					for (int p = 0; p < desc.getNumIndexesEachSlot(i); p++){
 						SortableIndexAcessCost sac = new SortableIndexAcessCost
 											(desc.getIndexAccessCost(t, i, p), p);
 						listSortedIndex.add(sac);						
 					}					
 					// sort in the increasing order of the index access cost
 					Collections.sort(listSortedIndex);
-					linList.clear();
+					List<String> linList = new ArrayList<String>();
 					
 					for (SortableIndexAcessCost sac : listSortedIndex){						
-						p = sac.getPosition();												
-						ga = desc.globalIndex(i, p);
-						var_u = constructVariableName(theta, VAR_U, t, i, p);
+						int p = sac.getPosition();	
+						IndexInSlot iis = new IndexInSlot(desc.getId(), i, p);
+                        int ga = poolIndexes.getPoolID(iis);
+						
+						String var_u = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_U, t, i, p).getName();
 						linList.add(var_u);
-						String LHS = Connector.join(" + ", linList);
+						String LHS = StringConcatenator.concatenate(" + ", linList);
 						
 						if ( i == restrictIIP.getPosRelContainC() && p == restrictIIP.getLocalPosIndexC()) {
 							// --- \sum >= 1
@@ -492,11 +487,11 @@ public class IIPLinGenerator
 							}
 						}
 						else {						
-							for (thetainternal = IND_EMPTY; thetainternal <= IND_CD; thetainternal++) {
+							for (int thetainternal = IND_EMPTY; thetainternal <= IND_CD; thetainternal++) {
 								// Constraint (8)
 								buf.getCons().println("optimal_8_" + numConstraints + ":" 
 										+ LHS + " - "
-										+ constructVariableName(thetainternal, VAR_S, ga, 0, 0)
+										+ poolVariables.getBIPVariable(thetainternal, IIPVariablePool.VAR_S, ga, 0, 0).getName()
 										+ " >= 0");
 								numConstraints++;
 							}
@@ -504,7 +499,7 @@ public class IIPLinGenerator
 					}	
 					// Constraint (7a) 
 					buf.getCons().println("optimal_7a_" + numConstraints + ":" 
-										+ Connector.join(" + ", linList) + " = 1");
+										+ StringConcatenator.concatenate(" + ", linList) + " = 1");
 					numConstraints++;
 				}
 				
@@ -530,12 +525,11 @@ public class IIPLinGenerator
 			listcd.add(Double.toString(realCoef) + element);			
 		}
 		
-		buf.getCons().println("interaction_10a:" + CTheta[IND_EMPTY] 
-		                      + " + " + Connector.join(" + ", listcd) 
-		                      + " -  " + Connector.join(" - ", elementCTheta.get(IND_C))
-		                      + " -  " + Connector.join(" - ", elementCTheta.get(IND_D))
+		buf.getCons().println("interaction_10a:" + CTheta.get(IND_EMPTY) 
+		                      + " + " + StringConcatenator.concatenate(" + ", listcd) 
+		                      + " -  " + StringConcatenator.concatenate(" - ", elementCTheta.get(IND_C))
+		                      + " -  " + StringConcatenator.concatenate(" - ", elementCTheta.get(IND_D))
 		                      + " <= 0");
-		                      
 	}
 	
 	
@@ -556,43 +550,35 @@ public class IIPLinGenerator
 	public Map<String, Double> buildIndexInteractionConstraint2()
 	{
 		Map<String,Double> mapVarCoef = new HashMap<String, Double>();
-		List<String> listVar = new ArrayList<String>(); 
-		int theta = 1, p;
-		double coef = 0.0, existingCoef;
+		
 		double deltaCD = restrictIIP.getDelta() - 1;		
-		List<Integer> totalXY = new ArrayList<Integer>();
 		
-		// Compute the total number of variables of type @y and @x
-		for (theta = IND_EMPTY; theta <= IND_CD; theta++) {
-			totalXY.add(new Integer(countVarTheta.get(theta).get(VAR_Y) 
-									+ countVarTheta.get(theta).get(VAR_X)));
-		}
 		
 		for (theta = IND_EMPTY; theta <= IND_CD; theta++) {
-			listVar = varTheta.get(theta);	
-			
-			for (p = 0; p < listVar.size(); p++) {
-				// Variables of types @u and @s have coef = 0
-				if (p >= totalXY.get(theta)){
-					coef = 0.0;
-				} else {
-					existingCoef = coefVarTheta.get(theta).get(p);
-					switch(theta) {
-						case IND_EMPTY:
-							coef = -existingCoef;
-							break;
-						case IND_C:
-							coef = existingCoef;
-							break;
-						case IND_D:
-							coef = existingCoef;
-							break;
-						case IND_CD:
-							coef = deltaCD * existingCoef;
-							break;
-					}
-				}	
-				mapVarCoef.put(listVar.get(p), new Double(coef));				
+		    List<String> listVar = varTheta.get(theta);	
+			for (int p = 0; p < listVar.size(); p++) {
+			    BIPVariable var = poolVariables.getVariable(listVar.get(p));
+			    double coef = 0.0;
+			    if (var.getType() == IIPVariablePool.VAR_X ||
+			        var.getType() == IIPVariablePool.VAR_Y){
+			        double existingCoef = coefVarTheta.get(theta).get(p);
+                    switch(theta) {
+                        case IND_EMPTY:
+                            coef = -existingCoef;
+                            break;
+                        case IND_C:
+                            coef = existingCoef;
+                            break;
+                        case IND_D:
+                            coef = existingCoef;
+                            break;
+                        case IND_CD:
+                            coef = deltaCD * existingCoef;
+                            break;
+                    }
+			    }
+				
+				mapVarCoef.put(var.getName(), new Double(coef));				
 			}			
 		}
 		
@@ -605,140 +591,37 @@ public class IIPLinGenerator
 	 * 
 	 */
 	private void binaryVariableConstraints()
-	{
-		String lineVars = "";
-		int countVar = 0;
+	{	
 		int NUM_VAR_PER_LINE = 10;
-		
-		for (List<String> listVar : varTheta) {
-			for (String var : listVar) {
-				lineVars += var;
-				lineVars += " ";
-				countVar++;
-				if (countVar >= NUM_VAR_PER_LINE) {
-					countVar = 0;
-					buf.getBin().println(lineVars);
-					lineVars = "";					
-				}
-			}
-		}
-		
-		if (countVar > 0) {
-			buf.getBin().println(lineVars);
-		}		
+		String strListVars = poolVariables.enumerateListVariables(NUM_VAR_PER_LINE);
+		buf.getBin().println(strListVars);
 	}
 	
-	
-	/**
-	 * 
-	 * Construct the variable name in the form: y(empty, k), x(c,k,i,a), s(d, a), or u(cd, k,i,a).
-	 *  
-	 * @param theta
-	 * 		The value of @theta in the set of {empty, c, d, cd}
-	 * @param typeVarible
-	 * 		The type of variable, the value is in the set {y, x, u, s}
-	 * @param k
-	 * 	 	The identifier of the corresponding template plan if @typeVariable = VAR_Y, VAR_X, VAR_U; 
-	 * 		Or the identifier of the index if @typeVariable = VAR_S
-	 * @param i 
-	 * 		The position of slot in the template plan
-	 * 		Only enable when @typeVariable = VAR_X, VAR_U
-	 * @param a 
-	 * 		The position of the index in the corresponding slot
-	 * 		Only enable when @typeVariable = VAR_X, VAR_U
-	 * 
-	 * @return
-	 *  	The variable name
-	 */
-	private String constructVariableName(int theta, int typeVariable, int k, int i, int a)
-	{
-		String result = "";
-		result = result.concat(strHeaderVariable[typeVariable]);
-		result = result.concat("(");
-		
-		List<String> nameComponent = new ArrayList<String>();
-		
-		nameComponent.add(strTheta[theta]);
-		nameComponent.add(Integer.toString(k));
-		
-		if (typeVariable == VAR_X || typeVariable == VAR_U) {			
-			nameComponent.add(Integer.toString(i));
-			nameComponent.add(Integer.toString(a));
-		}
-		
-		result = result.concat(Connector.join(",", nameComponent));
-		result = result.concat(")");
-				
-		return result;	
-	}
-	
-	/**
-	 * 
-	 * @return (total number of variables used in this BIP problem)
-	 */
-	public int getTotalVar()
-	{
-		return totalVar;
-	}
-	
-	/**
-	 * 
-	 * @return (total number of constraints formulated in this BIP problem)
-	 */
-	public int getTotalConstraints()
-	{
-		return numConstraints;
-	}
-		
-	public static int getVarType(String name)
-	{
-		if (name.contains("y(")) {
-			return VAR_Y;
-		}
-		
-		if (name.contains("x(")) {
-			return VAR_X;
-		}
-		
-		if (name.contains("s(")) {
-			return VAR_S;
-		}
-		
-		if (name.contains("u(")) {
-			return VAR_U;
-		}
-		
-		return VAR_DEFAULT;
-		
-	}
 	
 	/**
 	 * Compute the value of C{theta}
 	 * @param mapVarVal
 	 */
 	public void computeC(Map<String, Double> mapVarVal)
-	{
-		int theta, k, i, a;
-		String var;
-		double ctheta = 0.0, eleVar;
-		for (theta = IND_EMPTY; theta <= IND_CD; theta++) {						
-			ctheta = 0.0;		
-			for (k = 0; k < desc.getNumPlans(); k++) {
-				var = constructVariableName(theta, VAR_Y, k, 0, 0);
-				eleVar = mapVarVal.get(var);
+	{	
+		for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {						
+			double ctheta = 0.0;		
+			for (int k = 0; k < desc.getNumPlans(); k++) {
+				String var = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName();
+				double eleVar = mapVarVal.get(var);
 				ctheta += desc.getInternalPlanCost(k) * eleVar;				
 			}
 			
-			for (k = 0; k < desc.getNumPlans(); k++) {				
-				for (i = 0; i < desc.getNumSlots(); i++) {					
-					for (a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
-						var = constructVariableName(theta, VAR_X, k, i, a);
-						eleVar = mapVarVal.get(var);
+			for (int k = 0; k < desc.getNumPlans(); k++) {				
+				for (int i = 0; i < desc.getNumSlots(); i++) {					
+					for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
+						String var = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_X, k, i, a).getName();
+						double eleVar = mapVarVal.get(var);
 						ctheta += desc.getIndexAccessCost(k, i, a) * eleVar;
 					}
 				}
 			}		
-			System.out.println(" Ctehta " + theta + " : " + ctheta);
+			System.out.println(" Ctheta " + theta + " : " + ctheta);
 		}
 	}
 }

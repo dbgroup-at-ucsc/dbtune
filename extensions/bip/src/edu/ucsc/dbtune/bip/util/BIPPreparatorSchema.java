@@ -9,19 +9,20 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 
 /**
- * The class associated with one schema
+ * The class prepares for BIP formulation per schema
+ *      - Correspond to a specific schema (e.g., TPCH, TPCDS)       
  *      - Communicate with INUM to populate the space for each statement 
  *      - Generate the list of full table scan indexes associated with each relation in the schema
  * 
  * @author tqtrung
  *
  */
-public class BIPAgentPerSchema 
+public class BIPPreparatorSchema 
 {	
 	private Schema schema; 
 	private List<IndexFullTableScan> listFullTableScanIndexes;
 	
-	public BIPAgentPerSchema(Schema _schema) throws SQLException
+	public BIPPreparatorSchema(Schema _schema) throws SQLException
 	{   
 		this.schema = _schema;
 		
