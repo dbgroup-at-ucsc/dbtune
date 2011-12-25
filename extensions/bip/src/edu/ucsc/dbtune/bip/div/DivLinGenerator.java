@@ -2,40 +2,46 @@ package edu.ucsc.dbtune.bip.div;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import edu.ucsc.dbtune.bip.util.MatIndexPool;
-import edu.ucsc.dbtune.bip.util.MatIndex;
-import edu.ucsc.dbtune.bip.util.MultiQueryPlanDesc;
-import edu.ucsc.dbtune.bip.util.BIPVariableCreator;
+
+import edu.ucsc.dbtune.bip.sim.SimVariablePool;
+import edu.ucsc.dbtune.bip.util.BIPIndexPool;
+import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.Connector;
+import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.metadata.Index;
 
 public class DivLinGenerator 
 {
-    private CPlexBuffer buf;
-    private List<String> listCrq;
-    private List<String> listVar;
-    private List<MultiQueryPlanDesc> listQueryPlanDescs;
-    private int Nreplicas;
-    private int loadfactor;
-    private double B;
-    private int numConstraints;
-    private BIPVariableCreator varCreator;
+    protected CPlexBuffer buf;
+    protected List<String> listCrq;
+    protected List<QueryPlanDesc> listQueryPlanDescs;
+    protected int Nreplicas;
+    protected int loadfactor;
+    protected double B;
+    protected int numConstraints;
+    private DivVariablePool poolVariables;
+    private BIPIndexPool poolIndexes;
+ // Map variable of type CREATE or DROP to the indexes
+    private Map<String,Index> mapVarSToIndex;
     
     
-    DivLinGenerator(final String prefix, final List<MultiQueryPlanDesc> listQueryPlanDecs, 
+    DivLinGenerator(final String prefix, final BIPIndexPool poolIndexes, final List<QueryPlanDesc> listQueryPlanDecs, 
                     final int Nreplicas, final int loadfactor, final double B)
     {       
+        this.poolIndexes = poolIndexes;
         this.listQueryPlanDescs = listQueryPlanDecs;
         this.Nreplicas = Nreplicas;
         this.B = B;
         this.loadfactor = loadfactor;
-        this.varCreator = new BIPVariableCreator();     
-        listCrq = new ArrayList<String>();  
-        listVar = new ArrayList<String>();
+        this.listCrq = new ArrayList<String>();  
+        this.poolVariables = new DivVariablePool();
+        this.mapVarSToIndex = new HashMap<String, Index>();
         
         try {
             this.buf = new CPlexBuffer(prefix);
@@ -65,20 +71,23 @@ public class DivLinGenerator
         listener.onLogEvent(LogListener.BIP, "Building IIP program...");
         numConstraints = 0;
         
-        // 1. Construct the query cost at each replica
+        // 1. Add variables into list
+        constructVariables();
+        
+        // 2. Construct the query cost at each replica
         buildQueryCostReplica();
         
-        // 2. Atomic constraints
+        // 3. Atomic constraints
         buildAtomicConstraints();       
         
-        // 3. Top-m best cost 
+        // 4. Top-m best cost 
         buildTopmBestCostConstraints();
         
-        // 4. Space constraints
+        // 5. Space constraints
         buildSpaceConstraints();
         
         // 6. Optimal constraint
-        buildObjective();
+        buildObjectiveFunction();
         
         // 7. binary variables
         binaryVariableConstraints();
@@ -88,6 +97,37 @@ public class DivLinGenerator
         listener.onLogEvent(LogListener.BIP, "Built IIP program");
     }
     
+    /**
+     * Add all variables into the pool of variables of this BIP formulation
+     *  
+     */
+    protected void constructVariables()
+    {   
+        // for TYPE_Y, TYPE_X
+        for (QueryPlanDesc desc : listQueryPlanDescs){
+            int q = desc.getId();
+            for (int r = 0; r < Nreplicas; r++) {
+                for (int k = 0; k < desc.getNumPlans(); k++) {
+                    poolVariables.createAndStoreBIPVariable(SimVariablePool.VAR_Y, r, q, k, 0, 0);
+                }    
+                for (int k = 0; k < desc.getNumPlans(); k++) {              
+                    for (int i = 0; i < desc.getNumSlots(); i++) {  
+                        for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
+                            poolVariables.createAndStoreBIPVariable(SimVariablePool.VAR_X, r, q, k, i, a);
+                        }
+                    }
+                }       
+            }
+        }
+        
+        // for TYPE_S
+        for (int ga = 0; ga < poolIndexes.getTotalIndex(); ga++) {
+            for (int r = 0; r < Nreplicas; r++) {
+                DivVariable var = poolVariables.createAndStoreBIPVariable(SimVariablePool.VAR_S, r, ga, 0, 0, 0);
+                this.mapVarSToIndex.put(var.getName(), poolIndexes.indexes().get(ga));
+            }
+        }
+    }
     
     /**
      * Build cost function of each query in each window w
@@ -95,88 +135,96 @@ public class DivLinGenerator
      *      + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} x(r,q,k,i,a) \gamma_{q,k,i,a}
      * {\b Note}: Add variables of type Y, X, S into the list of variables     
      */
-    private void buildQueryCostReplica()
-    {
-        List<String> linList = new ArrayList<String>();
-                
-        for (MultiQueryPlanDesc desc : listQueryPlanDescs){
+    protected void buildQueryCostReplica()
+    {           
+        for (QueryPlanDesc desc : listQueryPlanDescs){
             int q = desc.getId();
             
             for (int r = 0; r < Nreplicas; r++) {
                 // Internal plan
-                linList.clear();
-            
+                List<String> linList = new ArrayList<String>();            
                 for (int k = 0; k < desc.getNumPlans(); k++) {
-                    String var = varCreator.constructVariableName(BIPVariableCreator.VAR_Y, r, q, k, 0, 0);
+                    String var = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
                     String element = Double.toString(desc.getInternalPlanCost(k)) + var;
-                    linList.add(element);               
-                    listVar.add(var);
+                    linList.add(element); 
                 }
-                String Cwq  = Connector.join(" + ", linList);          
+                String Cwq  = StringConcatenator.concatenate(" + ", linList);          
                         
                 // Index access cost
                 linList.clear();            
                 for (int k = 0; k < desc.getNumPlans(); k++) {              
                     for (int i = 0; i < desc.getNumSlots(); i++) {  
                         for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
-                            String var = varCreator.constructVariableName(BIPVariableCreator.VAR_X, r, q, k, i, a);
+                            String var = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, a).getName();
                             String element = Double.toString(desc.getIndexAccessCost(k, i, a)) + var;
-                            linList.add(element);                       
-                            listVar.add(var);
+                            linList.add(element);     
                         }
                     }
                 }       
-                Cwq = Cwq + " + " + Connector.join(" + ", linList);
+                Cwq = Cwq + " + " + StringConcatenator.concatenate(" + ", linList);
                 listCrq.add(Cwq);
-            }
-        }
-        
-        for (int ga = 0; ga < MatIndexPool.getTotalIndex(); ga++) {
-            for (int r = 0; r < Nreplicas; r++) {
-                String var_s = varCreator.constructVariableName(BIPVariableCreator.VAR_S, r, ga, 0, 0, 0);
-                listVar.add(var_s);
             }
         }
     }
     
     /**
      * Atomic configuration constraints:
-     *     - (2a) is different from the standard of INUM
-     * 
+     *     
      */
-    private void buildAtomicConstraints()
+    protected void buildAtomicConstraints()
     {
-        List<String> linList = new ArrayList<String>();
-        
-        for (MultiQueryPlanDesc desc : listQueryPlanDescs){
+        this.buildAtomicInternalPlanConstraints();
+        this.buildAtomicIndexAcessCostConstraints();
+    }
+    
+    /**
+     * Constraints on internal plans: different from INUM
+     */
+    protected void buildAtomicInternalPlanConstraints()
+    {   
+        for (QueryPlanDesc desc : listQueryPlanDescs){
             int q = desc.getId();
         
             for (int r = 0; r < Nreplicas; r++) {
-                linList.clear();
-                // (1) \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
+                List<String> linList = new ArrayList<String>();
+                // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
                 for (int k = 0; k < desc.getNumPlans(); k++) {
-                    linList.add(varCreator.constructVariableName(BIPVariableCreator.VAR_Y, r, q, k, 0, 0));
+                    linList.add(poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName());
                 }
-                buf.getCons().println("atomic_2a_" + numConstraints + ": " + Connector.join(" + ", linList) + " <= 1");
+                buf.getCons().println("atomic_2a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) + " <= 1");
                 numConstraints++;
-            
-                // (2) \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
+            }
+        }
+    }
+    
+    /**
+     * 
+     * Index access cost and the presence of an index constraint
+     * 
+     */
+    protected void buildAtomicIndexAcessCostConstraints()
+    {   
+        for (QueryPlanDesc desc : listQueryPlanDescs){
+            int q = desc.getId();
+        
+            for (int r = 0; r < Nreplicas; r++) {
+                List<String> linList = new ArrayList<String>();
+                
+                // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
                 for (int k = 0; k < desc.getNumPlans(); k++) {
-                    String var_y = varCreator.constructVariableName(BIPVariableCreator.VAR_Y, r, q, k, 0, 0);
+                    String var_y = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
                     
                     for (int i = 0; i < desc.getNumSlots(); i++) {
-                        
                         if (desc.isReferenced(i) == false) {
                             continue;
-                        }
-                        
+                        }                        
                         linList.clear();
                         for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
-                            String var_x = varCreator.constructVariableName(BIPVariableCreator.VAR_X, r, q, k, i, a);
+                            String var_x = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, a).getName();
                             linList.add(var_x);
                             IndexInSlot iis = new IndexInSlot(q,i,a);
-                            int ga = MatIndexPool.getGlobalIdofIndexInSlot(iis);
-                            String var_s = varCreator.constructVariableName(BIPVariableCreator.VAR_S, r, ga, 0, 0, 0);
+                            int ga = poolIndexes.getPoolID(iis);
+                            String var_s = poolVariables.getDivVariable(DivVariablePool.VAR_S, r, ga, 0, 0, 0).getName();
                             
                             // (3) s_a^{r} \geq x_{qkia}^{r}
                             buf.getCons().println("atomic_2c_" + numConstraints + ":" 
@@ -186,7 +234,7 @@ public class DivLinGenerator
                             numConstraints++;
                         }
                         buf.getCons().println("atomic_2b_" + numConstraints  
-                                            + ": " + Connector.join(" + ", linList) 
+                                            + ": " + StringConcatenator.concatenate(" + ", linList) 
                                             + " - " + var_y
                                             + " = 0");
                         numConstraints++;
@@ -196,25 +244,21 @@ public class DivLinGenerator
         }
     }
     
-    
     /**
      * Top-m best cost constraints
      * 
      */
-    private void buildTopmBestCostConstraints()
-    {
-        List<String> linList = new ArrayList<String>();
-        
-        for (MultiQueryPlanDesc desc : listQueryPlanDescs){
+    protected void buildTopmBestCostConstraints()
+    {   
+        for (QueryPlanDesc desc : listQueryPlanDescs){
             int q = desc.getId();
-        
-            linList.clear();
+            List<String> linList = new ArrayList<String>();
             for (int r = 0; r < Nreplicas; r++) {
                 for (int k = 0; k < desc.getNumPlans(); k++) {
-                    linList.add(varCreator.constructVariableName(BIPVariableCreator.VAR_Y, r, q, k, 0, 0));
+                    linList.add(poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName());
                 }
             }
-            buf.getCons().println("topm_3a_" + numConstraints + ": " + Connector.join(" + ", linList) + " = " + loadfactor);
+            buf.getCons().println("topm_3a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) + " = " + loadfactor);
             numConstraints++;
         }
     }
@@ -223,19 +267,17 @@ public class DivLinGenerator
      * Impose space constraint on the materialized indexes at all window times
      * 
      */
-    private void buildSpaceConstraints()
-    {
-        List<String> linList = new ArrayList<String>();
-        
+    protected void buildSpaceConstraints()
+    {   
         for (int r = 0; r < Nreplicas; r++) {
-            linList.clear();
-            for (int idx = 0; idx < MatIndexPool.getTotalIndex(); idx++) {
-                String var_create = varCreator.constructVariableName(BIPVariableCreator.VAR_S, r, idx, 0, 0, 0);
-                double sizeindx = MatIndexPool.getMatIndex(idx).getMatSize();
+            List<String> linList = new ArrayList<String>();
+            for (int idx = 0; idx < poolIndexes.getTotalIndex(); idx++) {
+                String var_create = poolVariables.getDivVariable(DivVariablePool.VAR_S, r, idx, 0, 0, 0).getName();
+                double sizeindx = poolIndexes.indexes().get(idx).getBytes();
                 linList.add(Double.toString(sizeindx) + var_create);
             }
             buf.getCons().println("space_constraint_4" + numConstraints  
-                    + " : " + Connector.join(" + ", linList)                    
+                    + " : " + StringConcatenator.concatenate(" + ", linList)                    
                     + " <= " + B);
             numConstraints++;               
         }
@@ -244,9 +286,9 @@ public class DivLinGenerator
     /**
      * The accumulated total cost function
      */
-    private void buildObjective()
+    protected void buildObjectiveFunction()
     {
-        buf.getObj().println(Connector.join(" + ", listCrq));
+        buf.getObj().println(StringConcatenator.concatenate(" + ", listCrq));
     }
     
     
@@ -254,55 +296,20 @@ public class DivLinGenerator
      * Constraints all variables to be binary ones
      * 
      */
-    private void binaryVariableConstraints()
+    protected void binaryVariableConstraints()
     {
-        String lineVars = "";
-        int countVar = 0;
         int NUM_VAR_PER_LINE = 10;
-        
-        for (String var : listVar) {
-            lineVars += var;
-            lineVars += " ";
-            countVar++;
-            if (countVar >= NUM_VAR_PER_LINE) {
-                countVar = 0;
-                buf.getBin().println(lineVars);
-                lineVars = "";                  
-            }
-        }
-        
-        if (countVar > 0) {
-            buf.getBin().println(lineVars);
-        }       
+        String strListVars = poolVariables.enumerateListVariables(NUM_VAR_PER_LINE);
+        buf.getBin().println(strListVars);     
     }
     
-    /**
-     * Each variable related to an index is in the form: s(replica, global id): 
-     *   + The replica is the string between the first '(' and the first ','
-     *   + The index id is after ',' and before the last character ')'
-     *   
-     * @param name
-     *      Variable name
-     * 
-     * @return
-     *      The corresponding @MatIndex with the value of replica
-     */
-    public static MatIndex deriveMatIndex(String name)
+    public DivVariable getVariable(String name)
     {
-        int type = BIPVariableCreator.getVarType(name);
-        MatIndex index = null;
-        if (type == BIPVariableCreator.VAR_S) { 
-            int openBracket, comma;
-            openBracket = name.indexOf("(");
-            comma = name.indexOf(",");
-            String strReplica = name.substring(openBracket + 1, comma);
-            int replicaID = Integer.parseInt(strReplica);
-            String strId = name.substring(comma + 1, name.length() - 1);
-            int idxID = Integer.parseInt(strId);
-            index = MatIndexPool.getMatIndex(idxID);
-            index.setReplicaID(replicaID);
-        }
-        
-        return index; 
+        return (DivVariable) this.poolVariables.getVariable(name);
+    }
+    
+    public Index getIndexOfVarS(String name)
+    {
+        return this.mapVarSToIndex.get(name);
     }
 }
