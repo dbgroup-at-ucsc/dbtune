@@ -282,7 +282,7 @@ public class QueryPlanDesc
      * Populate query plan description  number of template plans, internal cost, 
      * index access cost, etc. )
      * 
-     * @param agent
+     * @param preparator
      *      The class to communicate with INUM to get InumSpace
      * @param stmt
      *      A SQL statement
@@ -295,7 +295,7 @@ public class QueryPlanDesc
      *     at each slot
      * @throws SQLException 
      */ 
-    public void generateQueryPlanDesc(BIPPreparatorSchema agent, SQLStatement stmt,
+    public void generateQueryPlanDesc(BIPPreparatorSchema preparator, SQLStatement stmt,
                                       BIPIndexPool poolIndexes) throws SQLException
     {
         S = new ArrayList<Integer>();
@@ -303,10 +303,10 @@ public class QueryPlanDesc
         gamma = new ArrayList<List<List<Double>>>(); 
         listIndexesEachSlot = new ArrayList<List<Index>>();
         
-        this.inum = agent.populateInumSpace(stmt);
+        this.inum = preparator.populateInumSpace(stmt);
         this.stmtID = QueryPlanDesc.STMT_ID.getAndIncrement();
-        List<IndexFullTableScan> listFullTableScanIndexes = agent.getListFullTableScanIndexes();  
-        listSchemaTables = agent.getListSchemaTables();
+        List<IndexFullTableScan> listFullTableScanIndexes = preparator.getListFullTableScanIndexes();  
+        listSchemaTables = preparator.getListSchemaTables();
         Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
                     
         // TODO: replace with the new interface ----------------------

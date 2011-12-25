@@ -14,7 +14,7 @@ public class QueryPlanDescTest extends BIPTestConfiguration
     {   
         for (int q = 0; q < numQ; q++) {
             QueryPlanDesc desc = new  QueryPlanDesc();
-            desc.generateQueryPlanDesc(listAgent.get(q), listWorkload.get(q).getWorkload().get(0), candidateIndexes);
+            desc.generateQueryPlanDesc(listPreparators.get(q), listWorkload.get(q).getWorkload().get(0), candidateIndexes);
     
             assertThat(desc.getNumSlots(), is(numSchemaTables));
             assertThat(desc.getNumPlans(), is(numPlans[q]));
@@ -34,13 +34,10 @@ public class QueryPlanDescTest extends BIPTestConfiguration
             int p = 0;
             for (int k = 0; k < desc.getNumPlans(); k++) {
                 for (int i = 0; i < numSchemaTables; i++) {
-                    
                     for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++){
-                        
                         if ( (q == 0 && i <= 1) // the first query
                              || (q == 1 && i >= 1) // the second query 
                            ){
-                        
                             if (a == desc.getNumIndexesEachSlot(i) - 1) {
                                 assertThat(desc.getIndexAccessCost(k, i, a), is(100.0));
                             }

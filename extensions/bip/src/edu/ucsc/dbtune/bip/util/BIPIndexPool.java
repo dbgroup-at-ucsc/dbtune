@@ -58,6 +58,11 @@ public class BIPIndexPool
         this.mapIndexInSlotToPoolID.put(iis, new Integer(id));
     }
     
+    public int getTotalIndex()
+    {
+        return this.listIndexes.size();
+    }
+    
     /**
      * Returns an iterator of indexes.
      *
