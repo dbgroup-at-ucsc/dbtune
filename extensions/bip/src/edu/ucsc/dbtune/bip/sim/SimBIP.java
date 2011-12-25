@@ -13,17 +13,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import edu.ucsc.dbtune.bip.util.BIPAgentPerSchema;
+import edu.ucsc.dbtune.bip.util.BIPPreparatorSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.MatIndex;
-import edu.ucsc.dbtune.bip.util.MatIndexPool;
-import edu.ucsc.dbtune.bip.util.MultiQueryPlanDesc;
+import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.bip.sim.ScheduleIndexPool;
 
 public class SimBIP 
 {	
@@ -32,6 +30,8 @@ public class SimBIP
 	private SimLinGenerator genSim;
 	private IloLPMatrix matrix;
 	private IloNumVar [] vars;
+	private ScheduleIndexPool poolIndexes;
+	private int W;
 	
 	/**	
 	 * Scheduling materialization index
@@ -54,41 +54,46 @@ public class SimBIP
 	 * 
 	 * {\b Note}: {@code listAgent} will be removed when this class is fully implemented
 	 */
-    public List<MatIndex> schedule(List<Index> Sinit, List<Index> Smat, 
-                                   List<WorkloadPerSchema> listWorkload, List<BIPAgentPerSchema> listAgent,
+    public MaterializationSchedule schedule(List<Index> Sinit, List<Index> Smat, 
+                                   List<WorkloadPerSchema> listWorkload, List<BIPPreparatorSchema> listPreparators,
                                    int W, double B) throws SQLException
-	{
-        List<Index> candidateIndexes = new ArrayList<Index>();
+	{  
+        this.W = W;
+        poolIndexes = new ScheduleIndexPool();
       
-		// 1. Derive Sin, Sout, Sremain and store in @MatIndexPool
-		classifyTypeIndex(Sinit, Smat, listAgent);
+		// 1. Derive Sin, Sout, Sremain and store in {@code poolIndexes}
+		insertIndexesToPool(Sinit, Smat);
 		
-		// 2.Derive candidate indexes
-		for (int idx = 0; idx < MatIndexPool.getTotalIndex(); idx++) {
-			Index index = MatIndexPool.getMatIndex(idx).getIndex();
-			candidateIndexes.add(index);
-		}
-		
-		// 3. Derive the query plan description including internal cost, index access cost,
+		// 2. Derive the query plan description including internal cost, index access cost,
 		// index at each slot ... 
-		int iAgent = 0;
-		List<MultiQueryPlanDesc> listQueryPlans = new ArrayList<MultiQueryPlanDesc>();
+		int iPreparator = 0;
+		List<QueryPlanDesc> listQueryPlans = new ArrayList<QueryPlanDesc>();
+		
 		for (WorkloadPerSchema wl : listWorkload) {
-		    //BIPAgentPerSchema agent = new BIPAgentPerSchema(wl.getSchema());
+		    //BIPPreparatorSchema agent = new BIPPreparatorSchema(wl.getSchema());
 		    // TODO: Change this line when the implementation of BIPAgentPerSchema is done
-		    BIPAgentPerSchema agent = listAgent.get(iAgent++);
-		    
+		    BIPPreparatorSchema preparator = listPreparators.get(iPreparator++);
+            
 		    for (Iterator<SQLStatement> iterStmt = wl.getWorkload().iterator(); iterStmt.hasNext(); ) {
-		        MultiQueryPlanDesc desc = new MultiQueryPlanDesc(); 
-	            desc.generateQueryPlanDesc(agent, iterStmt.next(), candidateIndexes);
-	            // Update @MatIndexPool and materialized size indexes
-	            // Add @full table scan index into the pool of @MatIndexPool
-	            //desc.simGenerateQueryPlanDesc(inum, candidateIndexes);
+		        QueryPlanDesc desc =  new QueryPlanDesc();                    
+                // Populate the INUM space for each statement
+                // We do not add full table scans before populate from @desc
+                // so that the full table scan is placed at the end of each slot 
+                desc.generateQueryPlanDesc(preparator, iterStmt.next(), poolIndexes);
 	            listQueryPlans.add(desc);
 		    }
+		    // Add full table scans into the pool
+            for (Index index : preparator.getListFullTableScanIndexes()) {
+                poolIndexes.addIndex(index);
+            }
+            
+            // Map index in each slot to its pool ID
+            for (QueryPlanDesc desc : listQueryPlans) {
+                desc.mapIndexInSlotToPoolID(poolIndexes);
+            }
 		}
 		
-		// 5. Formulate BIP and run the BIP to derive the final result 
+		// Formulate BIP and run the BIP to derive the final result 
 		// which is a list of materialized indexes		
 		return findIndexSchedule(listQueryPlans, W, B);
 	}
@@ -101,11 +106,11 @@ public class SimBIP
 	 *     The initial configuration
 	 * @param Smat
 	 *     The materialized configuration
-	 * @param listAgent
+	 * @param listPreparators
 	 *     The schemas relevant to statements in the workload    
 	 * 
 	 */
-    private void classifyTypeIndex(List<Index> Sinit, List<Index> Smat, List<BIPAgentPerSchema> listAgent)
+    private void insertIndexesToPool(List<Index> Sinit, List<Index> Smat)
 	{
 		List<Index> Sin = new ArrayList<Index>();
 		List<Index> Sout = new ArrayList<Index>();
@@ -140,31 +145,18 @@ public class SimBIP
 		
 		// 2. Store into@MatIndexPool
 		// in the order of @Sin, @Sout, and @Sremain
-		MatIndexPool.setStartPosCreateType(MatIndexPool.getTotalIndex());
+		poolIndexes.setStartPosCreateIndex(poolIndexes.getTotalIndex());
 		for (Index idx : Sin) {
-			int id = MatIndexPool.addMatIndex(idx, MatIndex.INDEX_TYPE_CREATE);			
-			MatIndexPool.mapIndexToGlobalId(idx, id);
+		    poolIndexes.addIndex(idx);
 		}
-		
-		MatIndexPool.setStartPosDropType(MatIndexPool.getTotalIndex());
-		for (Index idx : Sout) {
-		    int id = MatIndexPool.addMatIndex(idx, MatIndex.INDEX_TYPE_DROP);          
-            MatIndexPool.mapIndexToGlobalId(idx, id);
-		}
-		
-		MatIndexPool.setStartPosRemainType(MatIndexPool.getTotalIndex());
-		for (Index idx: Sremain) {
-		    int id = MatIndexPool.addMatIndex(idx, MatIndex.INDEX_TYPE_REMAIN);          
-            MatIndexPool.mapIndexToGlobalId(idx, id);
-		}
-		
-		// Add the full table scan indexes into the pool also
-		for (BIPAgentPerSchema agent : listAgent) {
-		    for (IndexFullTableScan scanIdx : agent.getListFullTableScanIndexes()) {
-		        int id = MatIndexPool.addMatIndex(scanIdx, MatIndex.INDEX_TYPE_REMAIN);          
-	            MatIndexPool.mapIndexToGlobalId(scanIdx, id);
-		    }
-		}
+		poolIndexes.setStartPosDropIndex(poolIndexes.getTotalIndex());
+        for (Index idx : Sout) {
+            poolIndexes.addIndex(idx);
+        }
+        poolIndexes.setStartPosRemainIndex(poolIndexes.getTotalIndex());
+        for (Index idx : Sremain) {
+            poolIndexes.addIndex(idx);
+        }
 	}
 	
 	/**
@@ -180,19 +172,19 @@ public class SimBIP
 	 * @return
 	 * 		The set of materialized indexes with marking the time window when this index is created/dropped
 	 */
-	public List<MatIndex> findIndexSchedule(List<MultiQueryPlanDesc> listQueryPlans, int W, double B)  
+	public MaterializationSchedule findIndexSchedule(List<QueryPlanDesc> listQueryPlans, int W, double B)  
 	{	
 		LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
                 //To change body of implemented methods use File | Settings | File Templates.
             }
         };
-        List<MatIndex> listIndex = new ArrayList<MatIndex>();
+       
         String cplexFile = "", binFile = "", consFile = "", objFile = "";	
         String workloadName = environment.getTempDir() + "/testwl";
         
         try {														
-			genSim = new SimLinGenerator(workloadName, listQueryPlans, W, B);
+			genSim = new SimLinGenerator(workloadName, poolIndexes, listQueryPlans, W, B);
 			
 			// Build BIP for a particular (c,d, @desc)
 			genSim.build(listener); 
@@ -218,9 +210,9 @@ public class SimBIP
             
             // Solve the model and record the solution into @listIndex 
             // if one was found
-            if (cplex.solve()) {				               
-               listIndex = getMaterializeSchedule();
-               System.out.println(" In CPlex, objective function value: " + cplex.getObjValue());
+            if (cplex.solve()) {	
+                System.out.println("The objective function value: " + cplex.getObjValue());
+               return getMaterializeSchedule();
             } 
             else {
             	System.out.println(" INFEASIBLE soltuion ");
@@ -228,9 +220,9 @@ public class SimBIP
         }
         catch (IloException e) {
             System.err.println("Concert exception caught: " + e);
-         }
+        }
         
-        return listIndex;        
+        return null;
 	}
 	
 	/**
@@ -240,9 +232,10 @@ public class SimBIP
 	 * @return
 	 * 		List of materialized indexes
 	 */
-	private List<MatIndex> getMaterializeSchedule()
+	private MaterializationSchedule getMaterializeSchedule()
 	{ 
-		List<MatIndex> listIndex = new ArrayList<MatIndex>();
+	    MaterializationSchedule schedule = new MaterializationSchedule(this.W);
+		
 		// Iterate over variables create_{i,w} and drop_{i,w}
 		try {
 			matrix = getMatrix(cplex);
@@ -252,20 +245,20 @@ public class SimBIP
 			{
 				IloNumVar var = vars[i];
 				if (cplex.getValue(var) == 1) {
-					MatIndex index = SimLinGenerator.deriveMatIndex(var.getName());
-					if (index != null) {
-						listIndex.add(index);
-					}
+				    SimVariable simVar = this.genSim.getVariable(var.getName());
+				    if (simVar.getType() == SimVariablePool.VAR_CREATE 
+				        || simVar.getType() == SimVariablePool.VAR_DROP ) {
+				        schedule.addIndexWindow(genSim.getIndexOfVarCreateDrop(var.getName()), 
+				                                simVar.getWindow(), simVar.getType());
+				    }
 				}
-				
 			}
-			
 		}
 		catch (IloException e) {
 			System.err.println("Concert exception caught: " + e);
 	    }
 		
-		return listIndex;
+		return schedule;
 	}
 	
 	/**
@@ -290,39 +283,4 @@ public class SimBIP
         }
         return null;
     }
-	
-	/**
-	 * Print the detail of the schedule
-	 * 
-	 * @param listIndex
-	 * 		The list of materialized index
-	 * @param W
-	 * 		Number of window times
-	 * 
-	 * @return
-	 * 		The string contains a sequence of command to implement the scheduling index materialization
-	 * 
-	 */
-	public String printSchedule(List<MatIndex> listIndex, int W)
-	{
-		String strSchedule = "";
-		for (int w = 0; w < W; w++) {
-			strSchedule += "=== At window " + w + "-th:============\n";
-			for (MatIndex idx : listIndex) {
-				if (idx.getMatWindow() == w) {
-					if (idx.getTypeMatIndex() == MatIndex.INDEX_TYPE_CREATE) {
-						strSchedule += " CREATE: ";
-					}
-					else if (idx.getTypeMatIndex() == MatIndex.INDEX_TYPE_DROP)
-					{
-						strSchedule += " DROP ";
-					}
-					strSchedule += idx.getIndex().getFullyQualifiedName();
-					strSchedule += "\n";
-				}
-			}
-		}
-		
-		return strSchedule;
-	}
 }

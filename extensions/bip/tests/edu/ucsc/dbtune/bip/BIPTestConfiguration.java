@@ -44,10 +44,12 @@ public abstract class BIPTestConfiguration
     
     protected static double[] internalCostPlan1 = {140, 100, 160};
     protected static double[] accessCostPlan1 = {10, 30, 20, 50, 80, 5, 90, 10, 20, 40, 30, 80};
-    protected static double[] sizeIndexPlan1 = {100, 80, 120, 150};
-    protected static double[] sizeIndexPlan2 = {200, 120, 60, 70};
     protected static double[] internalCostPlan2 = {200, 150};
     protected static double[] accessCostPlan2 = {20, 45, 30, 70, 80, 15, 90, 20};
+    protected static long[] sizeIndexPlan1 = {100, 80, 120, 150};
+    protected static long[] sizeIndexPlan2 = {200, 120, 60, 70};
+    protected static double[] timeCreateIndexPlan1 = {100, 80, 120, 150};
+    protected static double[] timeCreateIndexPlan2 = {200, 120, 60, 70};
     protected static List<Index> candidateIndexes;
     protected static int[] numPlans = {3, 2};
     protected static int numQ = 2;
@@ -55,7 +57,7 @@ public abstract class BIPTestConfiguration
     protected static int numSchemaTables = 3;
     protected static Environment environment = Environment.getInstance();
     protected static List<WorkloadPerSchema> listWorkload = new ArrayList<WorkloadPerSchema>(); 
-    protected static List<BIPAgentPerSchema> listAgent = new ArrayList<BIPAgentPerSchema>();
+    protected static List<BIPPreparatorSchema> listPreparators = new ArrayList<BIPPreparatorSchema>();
     
     protected static List< List<Index> > listIndexQueries = new ArrayList<List<Index>>();
     protected static List< List<Table> > listTableQueries = new ArrayList<List<Table>>();            
@@ -92,6 +94,7 @@ public abstract class BIPTestConfiguration
            
             for (int q = 0; q < numQ; q++) {
                 int idxTable = 0;
+                int idxLocalIndex = 0;
                 List<Index> listIndex = new ArrayList<Index>();
                 List<Table> listTable = new ArrayList<Table>();
                 
@@ -103,6 +106,20 @@ public abstract class BIPTestConfiguration
                         listTable.add(table);
                         for (Index index : candidateIndexes) {
                             if (index.getTable().equals(table)){
+                                double time = 0.0;
+                                long size = 0;
+                                if (q == 0) {
+                                    size = sizeIndexPlan1[idxLocalIndex];
+                                    time = timeCreateIndexPlan1[idxLocalIndex];
+                                    idxLocalIndex++;
+                                } else if (q == 1) {
+                                    size = sizeIndexPlan2[idxLocalIndex];
+                                    time = timeCreateIndexPlan2[idxLocalIndex];
+                                    idxLocalIndex++;
+                                }
+                                index.setCreationCost(time);
+                                index.setBytes(size);
+                                
                                 listIndex.add(index);
                             }
                         }
@@ -114,7 +131,7 @@ public abstract class BIPTestConfiguration
             }
                         
             for (int q = 0; q < numQ; q++) {
-                BIPAgentPerSchema agent = mock(BIPAgentPerSchema.class);
+                BIPPreparatorSchema agent = mock(BIPPreparatorSchema.class);
                 List<Table> listTables = new ArrayList<Table>();
                 List<IndexFullTableScan> listIndexFullTableScan = new ArrayList<IndexFullTableScan>();
                 for (Table table : listWorkload.get(q).getSchema().tables()) {
@@ -143,26 +160,19 @@ public abstract class BIPTestConfiguration
                         else if (q == 1) {
                             when(plan.getInternalCost()).thenReturn(internalCostPlan2[k]);
                         }
-                        int posIndexLocal = 0;
+                       
                         for (Index index : listIndexQueries.get(q)) {   
-                            double val = 0.0, size = 0.0;
+                            double val = 0.0;
                             
                             if (q == 0) {
                                 val = accessCostPlan1[counter];
-                                size = sizeIndexPlan1[posIndexLocal++];
                             }
                             else if (q == 1) {
                                 val = accessCostPlan2[counter];
-                                size = sizeIndexPlan2[posIndexLocal++];
                             }
                             when (plan.getAccessCost(index)).thenReturn(val);
-                            when (plan.getMaterializedIndexSize(index)).thenReturn(size);
-                            counter++;
-                            
-                            System.out.println("In test, index: " + index.getFullyQualifiedName()
-                                                + " access cost: " + val + " size index: " + size);                 
+                            counter++;              
                         }
-                        
                         
                         for (Table table : listTableQueries.get(q)) {
                             when (plan.getFullTableScanCost(table)).thenReturn(100.0);
@@ -174,7 +184,7 @@ public abstract class BIPTestConfiguration
                     when(inum.getTemplatePlans()).thenReturn(templatePlans);
                     when(agent.populateInumSpace(stmt)).thenReturn(inum);
                 }
-                listAgent.add(agent);
+                listPreparators.add(agent);
             }
             
         }
