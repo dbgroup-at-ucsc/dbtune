@@ -11,12 +11,14 @@ import edu.ucsc.dbtune.bip.util.StringConcatenator;
 
 public class DivVariablePool extends BIPVariablePool 
 {
-    public static final int  VAR_Y = 0;
-    public static final int  VAR_X = 1;
-    public static final int  VAR_S = 2;
-    public static final int  VAR_DEPLOY = 3;
-    public static final int  VAR_DEFAULT = 100;    
-    private String[] strHeaderVariable = {"y", "x", "s", "deploy"};
+    public static final int VAR_Y = 0;
+    public static final int VAR_X = 1;
+    public static final int VAR_S = 2;
+    public static final int VAR_DEPLOY = 3;
+    public static final int VAR_DIV = 4;
+    public static final int VAR_MOD = 5;
+    public static final int VAR_DEFAULT = 100;    
+    private String[] strHeaderVariable = {"y", "x", "s", "deploy", "div", "mod"};
     private Map<DivVariableIndex, DivVariable> mapHighDimensionVar = new HashMap<DivVariableIndex, DivVariable>();
     
     /**

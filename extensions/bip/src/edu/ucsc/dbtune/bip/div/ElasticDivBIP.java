@@ -1,53 +1,46 @@
 package edu.ucsc.dbtune.bip.div;
 
 import ilog.concert.IloException;
-import ilog.concert.IloLPMatrix;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
+import java.util.Map;
 
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
-import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.BIPPreparatorSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
+import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-public class DivBIP 
-{  
-    protected IloCplex cplex; 
-    protected Environment environment = Environment.getInstance();
-    protected DivLinGenerator genDiv;
-    protected IloLPMatrix matrix;
-    protected IloNumVar [] vars;
-    protected int Nreplicas, loadfactor;
-    protected BIPIndexPool poolIndexes;
-    
-    
+public class ElasticDivBIP extends DivBIP 
+{ 
     /** 
-     * Divergent index tuning
+     * Shrink Replicas Divergent index tuning
      *     
      * @param listWorkload
      *      Each entry of this list is a list of SQL Statements that belong to a same schema
      * @param candidateIndexes
      *      List of candidate indexes (the same at each replica)
+     * @param mapIndexesReplicasInitialSetUp
+     *      The mapping of indexes materialized at each replica in the inital configuration     
      * @param Nreplicas
      *      The number of replicas
+     * @param Ndeploy
+     *      The number of replicas to deploy ( <= Nreplicas)     
      * @param loadfactor
      *      Load balancing factor
-     * @param B
-     *      The maximum space to be constrained all the materialized index at each replica
-     * 
+     * @param upperCdeploy
+     *      The maximum deployment cost
      * 
      * @return
      *      A set of indexes to be materialized at each replica
@@ -55,9 +48,12 @@ public class DivBIP
      * 
      * {\b Note}: {@code listPreparators} will be removed when this class is fully implemented
      */
-    public DivRecommendedConfiguration optimalDiv(List<WorkloadPerSchema> listWorkload, List<BIPPreparatorSchema> listPreparators,
-                                                  List<Index> candidateIndexes, int Nreplicas, int loadfactor, double B) 
-                                                  throws SQLException
+    public DivRecommendedConfiguration optimalShrinkReplicaDiv(List<WorkloadPerSchema> listWorkload, List<BIPPreparatorSchema> listPreparators,
+                                                               List<Index> candidateIndexes, 
+                                                               Map<Index, List<Integer>> mapIndexesReplicasInitialConfiguration,
+                                                               int Nreplicas, int Ndeploy,
+                                                               int loadfactor, double upperCdeploy) 
+                                                               throws SQLException
     {   
         this.Nreplicas = Nreplicas;
         this.loadfactor = loadfactor;
@@ -94,7 +90,8 @@ public class DivBIP
         
         // 5. Formulate BIP and run the BIP to derive the set of indexes materialized 
         // at each replica
-        return buildOptimalDivergentIndex(listQueryPlans, this.Nreplicas, this.loadfactor, B);
+        return buildOptimalShrinkReplicaDivergentIndex(listQueryPlans, mapIndexesReplicasInitialConfiguration, 
+                                                        Nreplicas, Ndeploy, loadfactor, upperCdeploy);
     }
     
     
@@ -104,18 +101,23 @@ public class DivBIP
      * Find an optimal divergen design
      * 
      * @param listQueryPlans
-     *     List of query plan descriptions including (internal plan, access costs) derived from INUM    
+     *     List of query plan descriptions including (internal plan, access costs) derived from INUM  
      * @param Nreplicas
-     *      The number of replicas to deploy
+     *      The number of replicas in the current system
+     * @param Ndeploy
+     *      The number of replicas to deploy (<= Nreplicas)
      * @param loadfactor
-     *      Load-balancing factor     
-     * @param B
-     *      The maximum space budget at each window time       
+     *      Load-balancing factor
+     * @param upperCdeploy
+     *      The maximum deployment cost     
      * 
      * @return
      *      The set of materialized indexes with marking the time window when this index is created/dropped
      */
-    private DivRecommendedConfiguration buildOptimalDivergentIndex(List<QueryPlanDesc> listQueryPlans, int Nreplicas, int loadfactor, double B)  
+    private DivRecommendedConfiguration buildOptimalShrinkReplicaDivergentIndex(List<QueryPlanDesc> listQueryPlans, 
+                                                    Map<Index, List<Integer>> mapIndexesReplicasInitialConfiguration,
+                                                                                int Nreplicas, 
+                                                                                int Ndeploy, int loadfactor, double upperCdeploy)  
     {   
         LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
@@ -127,7 +129,8 @@ public class DivBIP
         String workloadName = environment.getTempDir() + "/testwl";
         
         try {                                                       
-            genDiv = new DivLinGenerator(workloadName, poolIndexes, listQueryPlans, Nreplicas, loadfactor, B);
+            this.genDiv = new ElasticDivLinGenerator(workloadName, poolIndexes, listQueryPlans, mapIndexesReplicasInitialConfiguration, 
+                                                    Nreplicas, Ndeploy, loadfactor, upperCdeploy);
             
             // Build BIP for a particular (c,d, @desc)
             genDiv.build(listener); 
@@ -184,11 +187,27 @@ public class DivBIP
             matrix = getMatrix(cplex);
             vars = matrix.getNumVars();
             
+            // get deploy replicas first
+            Map<Integer, Integer> mapDeployedReplicas = new HashMap<Integer, Integer>();
+            for (int i = 0; i < vars.length; i++) {
+                IloNumVar var = vars[i];
+                if (cplex.getValue(var) == 1) {
+                    DivVariable divVar = genDiv.getVariable(var.getName());
+                    if (divVar.getType() == DivVariablePool.VAR_DEPLOY){
+                        mapDeployedReplicas.put(new Integer(divVar.getReplica()), new Integer(1));
+                    }
+                }
+            }
+            
             for (int i = 0; i < vars.length; i++) {
                 IloNumVar var = vars[i];
                 if (cplex.getValue(var) == 1) {
                     DivVariable divVar = genDiv.getVariable(var.getName());
                     if (divVar.getType() == DivVariablePool.VAR_S){
+                        // only the replicas that will be deployed
+                        if (mapDeployedReplicas.containsKey(new Integer(divVar.getReplica())) == false) {
+                            continue;
+                        }
                         Index index = genDiv.getIndexOfVarS(var.getName());
                         // only record the real indexes
                         if (index.getFullyQualifiedName().contains(IndexFullTableScan.FULL_TABLE_SCAN_SUFFIX) == false) {
@@ -203,28 +222,5 @@ public class DivBIP
         }
         
         return conf;
-    }
-    
-    /**
-     * Determine the matrix used in the BIP problem
-     * 
-     * @param cplex
-     *      The model of the BIP problem
-     * @return
-     *      The matrix of @cplex      
-     */ 
-    protected IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
-    {
-        @SuppressWarnings("unchecked")
-        Iterator iter = cplex.getModel().iterator();
-        
-        while (iter.hasNext()) {
-            Object o = iter.next();
-            if (o instanceof IloLPMatrix) {
-                IloLPMatrix matrix = (IloLPMatrix) o;
-                return matrix;
-            }
-        }
-        return null;
     }
 }

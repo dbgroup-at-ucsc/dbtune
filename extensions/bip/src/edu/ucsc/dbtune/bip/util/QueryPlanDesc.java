@@ -411,8 +411,6 @@ public class QueryPlanDesc
                 Index index = getIndex(i, a);
                 IndexInSlot iis = new IndexInSlot(q,i,a);
                 poolIndex.mapIndexInSlot(iis, index);
-                System.out.println(" IN QueryPlanDesc, Map index in slot: " + iis + " index: " + index.getFullyQualifiedName()
-                        + " pool id: " + poolIndex.getPoolID(index));
             }
         }
     }
