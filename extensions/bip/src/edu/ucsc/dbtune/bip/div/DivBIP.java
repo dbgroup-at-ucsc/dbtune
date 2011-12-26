@@ -155,7 +155,7 @@ public class DivBIP
             // if one was found
             if (cplex.solve()) {  
                 System.out.println("In DivBIP, objective value: " + cplex.getObjValue());
-                return getListIndexEachReplica();
+                return getRecommendedConfiguration();
             } 
             else {
                 System.out.println(" INFEASIBLE solution ");
@@ -175,7 +175,7 @@ public class DivBIP
      * @return
      *      List of indexes to be materialized at each replica
      */
-    private DivRecommendedConfiguration getListIndexEachReplica()
+    protected DivRecommendedConfiguration getRecommendedConfiguration()
     {
         DivRecommendedConfiguration conf = new DivRecommendedConfiguration(this.Nreplicas);
         
@@ -188,6 +188,7 @@ public class DivBIP
                 IloNumVar var = vars[i];
                 if (cplex.getValue(var) == 1) {
                     DivVariable divVar = genDiv.getVariable(var.getName());
+                    
                     if (divVar.getType() == DivVariablePool.VAR_S){
                         Index index = genDiv.getIndexOfVarS(var.getName());
                         // only record the real indexes
