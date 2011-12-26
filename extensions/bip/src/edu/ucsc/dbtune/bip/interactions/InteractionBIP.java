@@ -75,12 +75,11 @@ public class InteractionBIP
                     poolIndexes.addIndex(index);
                 }
                     
-                QueryPlanDesc desc =  new QueryPlanDesc();    
-                
+                QueryPlanDesc desc =  new QueryPlanDesc();                    
                 // Populate the INUM space for each statement
                 // We do not add full table scans before populate from @desc
                 // so that the full table scan is ordered at the end of each slot 
-                desc.generateQueryPlanDesc(agent, iterStmt.next(), candidateIndexes);
+                desc.generateQueryPlanDesc(agent, iterStmt.next(), poolIndexes);
                 // Add full table scans into the pool
                 for (Index index : agent.getListFullTableScanIndexes()) {
                     poolIndexes.addIndex(index);
