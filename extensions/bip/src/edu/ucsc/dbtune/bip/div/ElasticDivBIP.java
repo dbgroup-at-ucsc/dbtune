@@ -24,6 +24,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class ElasticDivBIP extends DivBIP 
 { 
+    private int inputNreplicas;
     /** 
      * Shrink Replicas Divergent index tuning
      *     
@@ -35,7 +36,7 @@ public class ElasticDivBIP extends DivBIP
      *      The mapping of indexes materialized at each replica in the inital configuration     
      * @param Nreplicas
      *      The number of replicas
-     * @param Ndeploy
+     * @param Ndeploys
      *      The number of replicas to deploy ( <= Nreplicas)     
      * @param loadfactor
      *      Load balancing factor
@@ -51,12 +52,18 @@ public class ElasticDivBIP extends DivBIP
     public DivRecommendedConfiguration optimalShrinkReplicaDiv(List<WorkloadPerSchema> listWorkload, List<BIPPreparatorSchema> listPreparators,
                                                                List<Index> candidateIndexes, 
                                                                Map<Index, List<Integer>> mapIndexesReplicasInitialConfiguration,
-                                                               int Nreplicas, int Ndeploy,
+                                                               int Nreplicas, int Ndeploys,
                                                                int loadfactor, double upperCdeploy) 
                                                                throws SQLException
     {   
         this.Nreplicas = Nreplicas;
         this.loadfactor = loadfactor;
+        this.inputNreplicas = Nreplicas;
+        if (Ndeploys > Nreplicas) {
+            // Expand replica cases
+            // swap between Nreplicas and Ndeploys
+            this.Nreplicas = Ndeploys;
+        } 
         this.poolIndexes = new BIPIndexPool();
         
         // Put all indexes in {@code candidateIndexes} into the pool of {@code MatIndexPool}
@@ -91,7 +98,7 @@ public class ElasticDivBIP extends DivBIP
         // 5. Formulate BIP and run the BIP to derive the set of indexes materialized 
         // at each replica
         return buildOptimalShrinkReplicaDivergentIndex(listQueryPlans, mapIndexesReplicasInitialConfiguration, 
-                                                        Nreplicas, Ndeploy, loadfactor, upperCdeploy);
+                                                        Nreplicas, Ndeploys, loadfactor, upperCdeploy);
     }
     
     
@@ -104,7 +111,7 @@ public class ElasticDivBIP extends DivBIP
      *     List of query plan descriptions including (internal plan, access costs) derived from INUM  
      * @param Nreplicas
      *      The number of replicas in the current system
-     * @param Ndeploy
+     * @param Ndeploys
      *      The number of replicas to deploy (<= Nreplicas)
      * @param loadfactor
      *      Load-balancing factor
@@ -117,7 +124,7 @@ public class ElasticDivBIP extends DivBIP
     private DivRecommendedConfiguration buildOptimalShrinkReplicaDivergentIndex(List<QueryPlanDesc> listQueryPlans, 
                                                     Map<Index, List<Integer>> mapIndexesReplicasInitialConfiguration,
                                                                                 int Nreplicas, 
-                                                                                int Ndeploy, int loadfactor, double upperCdeploy)  
+                                                                                int Ndeploys, int loadfactor, double upperCdeploy)  
     {   
         LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
@@ -130,7 +137,7 @@ public class ElasticDivBIP extends DivBIP
         
         try {                                                       
             this.genDiv = new ElasticDivLinGenerator(workloadName, poolIndexes, listQueryPlans, mapIndexesReplicasInitialConfiguration, 
-                                                    Nreplicas, Ndeploy, loadfactor, upperCdeploy);
+                                                    Nreplicas, Ndeploys, loadfactor, upperCdeploy);
             
             // Build BIP for a particular (c,d, @desc)
             genDiv.build(listener); 
@@ -158,7 +165,12 @@ public class ElasticDivBIP extends DivBIP
             // if one was found
             if (cplex.solve()) {  
                 System.out.println("In DivBIP, objective value: " + cplex.getObjValue());
-                return getListIndexEachReplica();
+                if (Ndeploys < Nreplicas) {
+                    // shrink replicas
+                    return getRecommendedConfigurationShrinkReplica();
+                } else {
+                    return getRecommendedConfiguration();
+                }
             } 
             else {
                 System.out.println(" INFEASIBLE solution ");
@@ -178,7 +190,7 @@ public class ElasticDivBIP extends DivBIP
      * @return
      *      List of indexes to be materialized at each replica
      */
-    private DivRecommendedConfiguration getListIndexEachReplica()
+    private DivRecommendedConfiguration getRecommendedConfigurationShrinkReplica()
     {
         DivRecommendedConfiguration conf = new DivRecommendedConfiguration(this.Nreplicas);
         

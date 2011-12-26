@@ -14,21 +14,37 @@ import edu.ucsc.dbtune.metadata.Index;
 
 public class ElasticDivLinGenerator extends DivLinGenerator 
 {
-    private int Ndeploy;
+    private int Ndeploys;
     private double upperCdeploy;
     private Map<String, Integer> mapVarDeployToReplica;
     private Map<Index, List<Integer>> mapIndexesReplicasInitialConfiguration;
     private String Cdeploy;
+    private boolean isExpand;
+    
+    // tricky: swap between Ndeploy and Nreplicas so that the source code changes minimally 
+    private int inputNdeploys, inputNreplicas;
     
     ElasticDivLinGenerator (String prefix, BIPIndexPool poolIndexes, List<QueryPlanDesc> listQueryPlanDecs, 
                             Map<Index, List<Integer>> mapIndexesReplicasInitialConfiguration,
-                            int Nreplicas, int Ndeploy, int loadfactor, double upperCdeploy) 
+                            int Nreplicas, int Ndeploys, int loadfactor, double upperCdeploy) 
     {                       
         super(prefix, poolIndexes, listQueryPlanDecs, Nreplicas, loadfactor, 0.0);
         this.mapIndexesReplicasInitialConfiguration = mapIndexesReplicasInitialConfiguration;
         this.upperCdeploy = upperCdeploy;
-        this.Ndeploy = Ndeploy;
+        this.Ndeploys = Ndeploys;
         mapVarDeployToReplica = new HashMap<String, Integer>();
+        
+        this.inputNdeploys = Ndeploys;
+        this.inputNreplicas = Nreplicas;
+        if (Ndeploys > Nreplicas) {
+            isExpand = true;
+            // Expand replica cases
+            // swap between Nreplicas and Ndeploys
+            this.Nreplicas = this.inputNdeploys;
+            this.Ndeploys = this.inputNreplicas;
+        } else {
+            isExpand = false;
+        }
     }
     
     /**
@@ -48,21 +64,31 @@ public class ElasticDivLinGenerator extends DivLinGenerator
      */
     public void build(final LogListener listener) throws IOException 
     {
-        listener.onLogEvent(LogListener.BIP, "Building shrink replicas DIV program...");
+        if (isExpand == true) {
+            listener.onLogEvent(LogListener.BIP, "Building expand replicas DIV program...");
+        } else {
+            listener.onLogEvent(LogListener.BIP, "Building shrink replicas DIV program...");
+        }
         numConstraints = 0;
         
         // 1. Add variables into list
-        constructVariablesShrinkReplicas();
+        constructVariablesElastic();
         
         // 2. Construct the query cost at each replica
         buildQueryCostReplica();
         
         // 3. Atomic constraints
-        buildAtomicInternalPlanShrinkReplicasConstraints();
+        if (isExpand == false) {
+            buildAtomicInternalPlanShrinkReplicasConstraints();
+        } else {
+            buildAtomicInternalPlanConstraints();
+        }
         buildAtomicIndexAcessCostConstraints();      
         
         // 4. Number of replicas constraint
-        buildNumReplicaConstraintShrinkReplica();
+        if (isExpand == false) {
+            buildNumReplicaConstraintShrinkReplica();
+        }
         
         // 5. Deployment cost
         buildDeployCostConstraints();
@@ -78,17 +104,24 @@ public class ElasticDivLinGenerator extends DivLinGenerator
         
         buf.close();
                 
-        listener.onLogEvent(LogListener.BIP, "Built shrink replicas DIV program");
+        if (isExpand == true) {
+            listener.onLogEvent(LogListener.BIP, "Built expand replicas DIV program");
+        } else {
+            listener.onLogEvent(LogListener.BIP, "Built shrink replicas DIV program");
+        }
     }
    
-    private void constructVariablesShrinkReplicas()
+    private void constructVariablesElastic()
     {
         super.constructVariables();
-        // for TYPE_DEPLOY
-        for (int r = 0; r < this.Nreplicas; r++) {
-           DivVariable var = poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_DEPLOY, r, 0, 0, 0, 0);
-           this.mapVarDeployToReplica.put(var.getName(), new Integer(r));
+        // for TYPE_DEPLOY for shrink replicas
+        if (this.isExpand == false) {
+            for (int r = 0; r < this.Nreplicas; r++) {
+               DivVariable var = poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_DEPLOY, r, 0, 0, 0, 0);
+               this.mapVarDeployToReplica.put(var.getName(), new Integer(r));
+            }
         }
+        
         // for div_a and mod_a
         for (int ga = 0; ga < poolIndexes.getTotalIndex(); ga++) {
             for (int r = 0; r < Nreplicas; r++) {
@@ -138,7 +171,7 @@ public class ElasticDivLinGenerator extends DivLinGenerator
             linList.add(var_deploy);
         }
         buf.getCons().println("num_replica_6_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) 
-                + " <= " + Ndeploy);
+                + " <= " + Ndeploys);
         numConstraints++;
     }
     
@@ -163,6 +196,8 @@ public class ElasticDivLinGenerator extends DivLinGenerator
                 }
             }
             
+            // TODO: optimize for expand  case, with new replica, don't need to impose the constraints
+            // on div_a and mod_a
             for (int r = 0; r < Nreplicas; r++) {
                 String div_a = poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_DIV, r, ga, 0, 0, 0).getName();
                 String mod_a = poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_MOD, r, ga, 0, 0, 0).getName();
@@ -177,11 +212,11 @@ public class ElasticDivLinGenerator extends DivLinGenerator
                 String LHS = "2" + div_a + " + " + mod_a + " - " + s_a; 
                 buf.getCons().println("deploy_cost_7_" + numConstraints + ": " + LHS + " = " + Integer.toString(RHS));
                 numConstraints++;
-                linList.add(Double.toString(index.getBytes()) + div_a);
+                linList.add(Double.toString(index.getCreationCost()) + div_a);
             }
         }
         Cdeploy = StringConcatenator.concatenate(" + ", linList); 
-        buf.getCons().println("atomic_deploy_csot_8" + numConstraints + ": " + Cdeploy
+        buf.getCons().println("atomic_deploy_cost_8" + numConstraints + ": " + Cdeploy
                 + " <= " + Double.toString(this.upperCdeploy));
     }
 }

@@ -76,7 +76,8 @@ public class DivLinGenerator
         buildQueryCostReplica();
         
         // 3. Atomic constraints
-        buildAtomicConstraints();       
+        buildAtomicInternalPlanConstraints();
+        buildAtomicIndexAcessCostConstraints();      
         
         // 4. Top-m best cost 
         buildTopmBestCostConstraints();
@@ -163,15 +164,7 @@ public class DivLinGenerator
         }
     }
     
-    /**
-     * Atomic configuration constraints:
-     *     
-     */
-    protected void buildAtomicConstraints()
-    {
-        this.buildAtomicInternalPlanConstraints();
-        this.buildAtomicIndexAcessCostConstraints();
-    }
+    
     
     /**
      * Constraints on internal plans: different from INUM
