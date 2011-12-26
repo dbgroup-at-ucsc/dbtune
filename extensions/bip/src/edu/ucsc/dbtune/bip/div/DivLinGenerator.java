@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-import edu.ucsc.dbtune.bip.sim.SimVariablePool;
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
@@ -25,10 +23,10 @@ public class DivLinGenerator
     protected int loadfactor;
     protected double B;
     protected int numConstraints;
-    private DivVariablePool poolVariables;
-    private BIPIndexPool poolIndexes;
- // Map variable of type CREATE or DROP to the indexes
-    private Map<String,Index> mapVarSToIndex;
+    protected DivVariablePool poolVariables;
+    protected BIPIndexPool poolIndexes;
+    // Map variable of type CREATE or DROP to the indexes
+    protected Map<String,Index> mapVarSToIndex;
     
     
     DivLinGenerator(final String prefix, final BIPIndexPool poolIndexes, final List<QueryPlanDesc> listQueryPlanDecs, 
@@ -66,9 +64,9 @@ public class DivLinGenerator
      * 
      * @throws IOException
      */
-    public final void build(final LogListener listener) throws IOException 
+    public void build(final LogListener listener) throws IOException 
     {
-        listener.onLogEvent(LogListener.BIP, "Building IIP program...");
+        listener.onLogEvent(LogListener.BIP, "Building DIV program...");
         numConstraints = 0;
         
         // 1. Add variables into list
@@ -94,7 +92,7 @@ public class DivLinGenerator
         
         buf.close();
                 
-        listener.onLogEvent(LogListener.BIP, "Built IIP program");
+        listener.onLogEvent(LogListener.BIP, "Built DIV program");
     }
     
     /**
@@ -108,12 +106,12 @@ public class DivLinGenerator
             int q = desc.getId();
             for (int r = 0; r < Nreplicas; r++) {
                 for (int k = 0; k < desc.getNumPlans(); k++) {
-                    poolVariables.createAndStoreBIPVariable(SimVariablePool.VAR_Y, r, q, k, 0, 0);
+                    poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0);
                 }    
                 for (int k = 0; k < desc.getNumPlans(); k++) {              
                     for (int i = 0; i < desc.getNumSlots(); i++) {  
                         for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
-                            poolVariables.createAndStoreBIPVariable(SimVariablePool.VAR_X, r, q, k, i, a);
+                            poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_X, r, q, k, i, a);
                         }
                     }
                 }       
@@ -123,7 +121,7 @@ public class DivLinGenerator
         // for TYPE_S
         for (int ga = 0; ga < poolIndexes.getTotalIndex(); ga++) {
             for (int r = 0; r < Nreplicas; r++) {
-                DivVariable var = poolVariables.createAndStoreBIPVariable(SimVariablePool.VAR_S, r, ga, 0, 0, 0);
+                DivVariable var = poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_S, r, ga, 0, 0, 0);
                 this.mapVarSToIndex.put(var.getName(), poolIndexes.indexes().get(ga));
             }
         }
@@ -145,8 +143,7 @@ public class DivLinGenerator
                 List<String> linList = new ArrayList<String>();            
                 for (int k = 0; k < desc.getNumPlans(); k++) {
                     String var = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
-                    String element = Double.toString(desc.getInternalPlanCost(k)) + var;
-                    linList.add(element); 
+                    linList.add(Double.toString(desc.getInternalPlanCost(k)) + var); 
                 }
                 String Cwq  = StringConcatenator.concatenate(" + ", linList);          
                         
@@ -156,8 +153,7 @@ public class DivLinGenerator
                     for (int i = 0; i < desc.getNumSlots(); i++) {  
                         for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
                             String var = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, a).getName();
-                            String element = Double.toString(desc.getIndexAccessCost(k, i, a)) + var;
-                            linList.add(element);     
+                            linList.add(Double.toString(desc.getIndexAccessCost(k, i, a)) + var);     
                         }
                     }
                 }       
