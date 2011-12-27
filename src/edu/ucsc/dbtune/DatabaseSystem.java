@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.extraction.MetadataExtractor;
 import edu.ucsc.dbtune.metadata.extraction.DB2Extractor;
 import edu.ucsc.dbtune.metadata.extraction.MySQLExtractor;
@@ -34,7 +33,6 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
  * <ol>
  *   <li>Create DBMS-specific {@link Connection} objects.</li>
  *   <li>Provide with the proper {@link Optimizer} and {@link Catalog} objects.</li>
- *   <li>Create DBMS-specific {@link Index} objects.</li>
  * </ol>
  * <p>
  * <b>Note:</b>There's a single connection used to communicate with the system. The user is 

@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.ucsc.dbtune.util.Objects;
-
 /**
  * A schema is a container of database objects, regularly tables, indexes, views, etcetera.
  *

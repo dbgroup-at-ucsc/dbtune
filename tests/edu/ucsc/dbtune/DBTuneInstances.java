@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -13,8 +14,9 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.BitArraySet;
+import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.Identifiable;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.Environment.extractDriver;
@@ -57,7 +59,7 @@ public final class DBTuneInstances
     {
         Environment cfg = new Environment(configureUser());
 
-        cfg.setProperty(JDBC_URL, "jdbc:db2://" + DB_URL );
+        cfg.setProperty(JDBC_URL, "jdbc:db2://" + DB_URL);
 
         try {
             extractDriver(cfg);
@@ -170,6 +172,8 @@ public final class DBTuneInstances
     /**
      * Returns a configuration with generic connectivity settings.
      *
+     * @param cfg
+     *      the configuration of the environment
      * @return
      *      a configured environment
      */
@@ -182,6 +186,8 @@ public final class DBTuneInstances
     /**
      * Returns a configuration with generic connectivity settings.
      *
+     * @param cfg
+     *      the configuration of the environment
      * @return
      *      a configured environment
      */
@@ -194,6 +200,8 @@ public final class DBTuneInstances
     /**
      * Returns a configuration with generic connectivity settings.
      *
+     * @param cfg
+     *      the configuration of the environment
      * @return
      *      a configured environment
      */
@@ -213,6 +221,12 @@ public final class DBTuneInstances
      * like having resources being hanged (when connections aren't properly closed).
      *
      * @see EnvironmentProperties#SUPPORTED_OPTIMIZERS
+     * @param env
+     *      the environment
+     * @return
+     *      the list of available optimizers
+     * @throws SQLException
+     *      if a new database system can't be constructed
      */
     public static Iterable<Optimizer> getSupportedOptimizersIterator(Environment env)
         throws SQLException
@@ -226,7 +240,7 @@ public final class DBTuneInstances
 
             conf = new Environment(env);
 
-            conf.setProperty(OPTIMIZER,optId);
+            conf.setProperty(OPTIMIZER, optId);
 
             opts.add(newDatabaseSystem(new Environment(conf)).getOptimizer());
         }
@@ -235,43 +249,51 @@ public final class DBTuneInstances
     }
 
     /**
-     * Creates a catalog with 2 schemas, 3 tables per schema and 4 columns and 4 indexes per table
+     * Creates a catalog with 2 schemas, 3 tables per schema and 4 columns and 4 indexes per table.
+     *
+     * @return
+     *      a configured catalog
      */    
-    public static Catalog configureCatalog() throws SQLException
+    public static Catalog configureCatalog()
     {
-        return configureCatalog (2, 3, 4);
+        return configureCatalog(2, 3, 4);
     }
     
 
     /**
-     * Create a catalog with the specified characteristics of Schema information
+     * Create a catalog with the specified characteristics of Schema information.
      * 
      * @param numSchema
-     * 		Number of schema
+     *      Number of schema
      * @param numTables
-     * 		Number of relations in each schema
+     *      Number of relations in each schema
      * @param numIndexes
-     * 		Number of indexes (equivalent to number of columns) in each relation per schema
+     *      Number of indexes (equivalent to number of columns) in each relation per schema
      * @return
-     * 		Catalog instance
+     *      Catalog instance
      * 
      * @throws SQLException
      */
-    public static Catalog configureCatalog(int numSchema, int numTables, int numIndexes) throws SQLException
+    public static Catalog configureCatalog(int numSchema, int numTables, int numIndexes)
     {
         Catalog catalog = new Catalog("catalog_0");
 
-        for(int j = 0; j < numSchema; j++) {
-            Schema schema = new Schema(catalog,"schema_" + j);
-            int counter = 0;
-            for(int k = 0; k < numTables; k++) {
-                Table table = new Table(schema,"table_" + k);
-                for(int l = 0; l < numIndexes; l++) {
-                    Column column = new Column(table,"column_" + l, l+1);
-                    new Index(table.getName() + "_index_" + counter++, column);
+        try {
+            for (int j = 0; j < numSchema; j++) {
+                Schema schema = new Schema(catalog, "schema_" + j);
+                int counter = 0;
+                for (int k = 0; k < numTables; k++) {
+                    Table table = new Table(schema, "table_" + k);
+                    for (int l = 0; l < numIndexes; l++) {
+                        Column column = new Column(table, "column_" + l, l + 1);
+                        new Index(table.getName() + "_index_" + counter++, column);
+                    }
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
+
 
         return catalog;
     }
@@ -280,10 +302,12 @@ public final class DBTuneInstances
     /**
      * Creates the IBG that is used as sample in {@link IndexBenefitGraph}.
      *
-     *
+     * @param cat
+     *      the catalog from which the graph is constructed
+     * @return
+     *      the configured graph
      */
     public static IndexBenefitGraph configureIndexBenefitGraph(Catalog cat)
-        throws SQLException
     {
         List<Index> indexes = cat.schemas().get(0).indexes();
 
@@ -397,11 +421,13 @@ public final class DBTuneInstances
     }
 
     /**
+     * @param cat
+     *      the catalog from which the graph is constructed
      * @return
      *     a list with all the subsets of the set (a,b,c,d), where the positions of the IndexBitSet 
      *     objects are a=0, b=1, c=2, d=3
      */
-    public static List<BitArraySet<Index>> configurePowerSet(Catalog cat) throws SQLException
+    public static List<BitArraySet<Index>> configurePowerSet(Catalog cat)
     {
         List<BitArraySet<Index>> list = new ArrayList<BitArraySet<Index>>();
         List<Index> indexes = cat.schemas().get(0).indexes();
@@ -482,5 +508,69 @@ public final class DBTuneInstances
         list.add(abcd);
 
         return list;
+    }
+
+    /**
+     * @param numOfElements
+     *      number of elements in the list
+     * @return
+     *      a list of identifiable integers. The list contains no duplicates
+     */
+    public static List<Identifiable> configureListOfIdentifiables(int numOfElements)
+    {
+        List<Identifiable> list = new ArrayList<Identifiable>();
+
+        for (int i = 0; i < numOfElements; i++) {
+            list.add(new DBTuneInstances.TrivialIdentifiable(i));
+        }
+
+        return list;
+    }
+
+    /**
+     * @param numOfElements
+     *      number of elements in the list
+     * @return
+     *      a list of identifiable integers. The list contains no duplicates
+     */
+    public static Set<Identifiable> configureBitArraySetOfIdentifiables(int numOfElements)
+    {
+        Set<Identifiable> bas = new BitArraySet<Identifiable>();
+
+        for (int i = 0; i < numOfElements; i++) {
+            bas.add(new DBTuneInstances.TrivialIdentifiable(i));
+        }
+
+        return bas;
+    }
+
+    /**
+     * Basic identifiable class.
+     *
+     * @author Ivo Jimenez
+     */
+    private static class TrivialIdentifiable implements Identifiable
+    {
+        private Integer i;
+
+        /**
+         * constructor.
+         *
+         * @param i
+         *      the integer value.
+         */
+        public TrivialIdentifiable(int i)
+        {
+            this.i = new Integer(i);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int getId()
+        {
+            return i;
+        }
     }
 }
