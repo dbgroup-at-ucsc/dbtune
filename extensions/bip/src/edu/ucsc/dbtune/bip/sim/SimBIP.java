@@ -12,15 +12,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.util.BIPPreparatorSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
-import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 import edu.ucsc.dbtune.bip.sim.ScheduleIndexPool;
 
 public class SimBIP 
@@ -55,8 +57,8 @@ public class SimBIP
 	 * {\b Note}: {@code listAgent} will be removed when this class is fully implemented
 	 */
     public MaterializationSchedule schedule(List<Index> Sinit, List<Index> Smat, 
-                                   List<WorkloadPerSchema> listWorkload, List<BIPPreparatorSchema> listPreparators,
-                                   int W, double B) throws SQLException
+                                            Map<Schema, Workload> mapSchemaToWorkload, List<BIPPreparatorSchema> listPreparators,
+                                            int W, double B) throws SQLException
 	{  
         this.W = W;
         poolIndexes = new ScheduleIndexPool();
@@ -69,12 +71,12 @@ public class SimBIP
 		int iPreparator = 0;
 		List<QueryPlanDesc> listQueryPlans = new ArrayList<QueryPlanDesc>();
 		
-		for (WorkloadPerSchema wl : listWorkload) {
+		for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
 		    //BIPPreparatorSchema agent = new BIPPreparatorSchema(wl.getSchema());
 		    // TODO: Change this line when the implementation of BIPAgentPerSchema is done
 		    BIPPreparatorSchema preparator = listPreparators.get(iPreparator++);
             
-		    for (Iterator<SQLStatement> iterStmt = wl.getWorkload().iterator(); iterStmt.hasNext(); ) {
+		    for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
 		        QueryPlanDesc desc =  new QueryPlanDesc();                    
                 // Populate the INUM space for each statement
                 // We do not add full table scans before populate from @desc

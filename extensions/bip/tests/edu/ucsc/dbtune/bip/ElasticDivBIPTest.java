@@ -37,7 +37,7 @@ public class ElasticDivBIPTest extends BIPTestConfiguration
             }
         }
         
-        DivRecommendedConfiguration conf = div.optimalShrinkReplicaDiv(listWorkload, listPreparators, divCandidateIndexes, 
+        DivRecommendedConfiguration conf = div.optimalShrinkReplicaDiv(mapSchemaToWorkload, listPreparators, divCandidateIndexes, 
                                                                        mapIndexesReplicasInitialConfiguration, 
                                                                        Nreplicas, Ndeploy, loadfactor, upperCdeploy);
         System.out.println("In test, result: " + conf.toString());
@@ -68,7 +68,7 @@ public class ElasticDivBIPTest extends BIPTestConfiguration
             }
         }
         
-        DivRecommendedConfiguration conf = div.optimalShrinkReplicaDiv(listWorkload, listPreparators, divCandidateIndexes, 
+        DivRecommendedConfiguration conf = div.optimalShrinkReplicaDiv(mapSchemaToWorkload, listPreparators, divCandidateIndexes, 
                                                                        mapIndexesReplicasInitialConfiguration, 
                                                                        Nreplicas, Ndeploy, loadfactor, upperCdeploy);
         System.out.println("In test, result: " + conf.toString());

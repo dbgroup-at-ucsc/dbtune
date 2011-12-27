@@ -34,7 +34,7 @@ public class SimBIPTest  extends BIPTestConfiguration
             }
         }
         
-        MaterializationSchedule schedule = sim.schedule(Sinit, Smat, listWorkload, listPreparators, W, timeLimit);
+        MaterializationSchedule schedule = sim.schedule(Sinit, Smat, mapSchemaToWorkload, listPreparators, W, timeLimit);
         System.out.println("Result: " + schedule.toString());
     }
 }

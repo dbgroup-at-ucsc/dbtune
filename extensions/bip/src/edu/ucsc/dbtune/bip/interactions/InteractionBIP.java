@@ -7,18 +7,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.util.Environment; 
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.BIPPreparatorSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
-import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLPMatrix;
@@ -57,17 +59,17 @@ public class InteractionBIP
 	 * 
 	 * {\b Note}: {@code listAgent} will be removed when this class is fully implemented
 	 */
-    public List<IndexInteraction> computeInteractionIndexes(List<WorkloadPerSchema> listWorkload, List<BIPPreparatorSchema> listAgent,
+    public List<IndexInteraction> computeInteractionIndexes(Map<Schema, Workload> mapSchemaToWorkload, List<BIPPreparatorSchema> listPreparators,
                                                             List<Index> candidateIndexes, double delta) throws SQLException
 	{	
         List<IndexInteraction> resultIndexInteraction = new ArrayList<IndexInteraction>();	
-        int iAgent = 0;
+        int iPreparator = 0;
         
-        for (WorkloadPerSchema wl : listWorkload) {
-            //BIPAgentPerSchema agent = new BIPAgentPerSchema(wl.getSchema());
-            BIPPreparatorSchema agent = listAgent.get(iAgent++);
+        for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
+            //BIPPreparatorSchema preparator = new BIPPreparatorSchema(entry.getKey());
+            BIPPreparatorSchema preparator = listPreparators.get(iPreparator++);
             
-            for (Iterator<SQLStatement> iterStmt = wl.getWorkload().iterator(); iterStmt.hasNext(); ) {
+            for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
                 // Formulate one BIP for each statement
                 BIPIndexPool poolIndexes = new BIPIndexPool();
                 // TODO: optimize later, add only indexes relevant to this statement into the pool
@@ -79,9 +81,9 @@ public class InteractionBIP
                 // Populate the INUM space for each statement
                 // We do not add full table scans before populate from @desc
                 // so that the full table scan is ordered at the end of each slot 
-                desc.generateQueryPlanDesc(agent, iterStmt.next(), poolIndexes);
+                desc.generateQueryPlanDesc(preparator, iterStmt.next(), poolIndexes);
                 // Add full table scans into the pool
-                for (Index index : agent.getListFullTableScanIndexes()) {
+                for (Index index : preparator.getListFullTableScanIndexes()) {
                     poolIndexes.addIndex(index);
                 }
                 // Map index in each slot to its pool ID
