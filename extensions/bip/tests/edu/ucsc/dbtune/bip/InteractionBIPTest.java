@@ -21,7 +21,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
                     
             double delta = 0.35;
             List<IndexInteraction> listInteractions =
-                bip.computeInteractionIndexes(listWorkload, listPreparators, candidateIndexes, delta);
+                bip.computeInteractionIndexes(mapSchemaToWorkload, listPreparators, candidateIndexes, delta);
             System.out.println(bip.printListInteraction(listInteractions));
         } catch (SQLException e){
             System.out.println(" error " + e.getMessage());

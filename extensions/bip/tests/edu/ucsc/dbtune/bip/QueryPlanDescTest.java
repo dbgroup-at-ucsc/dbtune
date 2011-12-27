@@ -3,18 +3,31 @@ package edu.ucsc.dbtune.bip;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+
 import org.junit.Test;
 
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 public class QueryPlanDescTest extends BIPTestConfiguration 
 {
     @Test
     public void testPlanDescriptionGeneration() throws Exception
     {   
+        List<SQLStatement> listStmt = new ArrayList<SQLStatement>();
+        for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
+            listStmt.add(entry.getValue().get(0));
+        }
+        
         for (int q = 0; q < numQ; q++) {
             QueryPlanDesc desc = new  QueryPlanDesc();
-            desc.generateQueryPlanDesc(listPreparators.get(q), listWorkload.get(q).getWorkload().get(0), candidateIndexes);
+            
+            desc.generateQueryPlanDesc(listPreparators.get(q), listStmt.get(q), candidateIndexes);
     
             assertThat(desc.getNumSlots(), is(numSchemaTables));
             assertThat(desc.getNumPlans(), is(numPlans[q]));

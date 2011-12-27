@@ -5,10 +5,14 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
+
 import edu.ucsc.dbtune.bip.util.*;
 
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -56,7 +60,7 @@ public abstract class BIPTestConfiguration
     protected static int numSch = 2;
     protected static int numSchemaTables = 3;
     protected static Environment environment = Environment.getInstance();
-    protected static List<WorkloadPerSchema> listWorkload = new ArrayList<WorkloadPerSchema>(); 
+    protected static Map<Schema, Workload> mapSchemaToWorkload = new HashMap<Schema, Workload>(); 
     protected static List<BIPPreparatorSchema> listPreparators = new ArrayList<BIPPreparatorSchema>();
     
     protected static List< List<Index> > listIndexQueries = new ArrayList<List<Index>>();
@@ -77,8 +81,7 @@ public abstract class BIPTestConfiguration
                 
                 BufferedReader reader = new BufferedReader(new FileReader(workloadName));
                 Workload wl = new Workload(reader);
-                WorkloadPerSchema ws = new WorkloadPerSchema(wl, listSchema.get(q));
-                listWorkload.add(ws);
+                mapSchemaToWorkload.put(listSchema.get(q), wl);
             }
             
             // list of candidate indexes
@@ -91,14 +94,14 @@ public abstract class BIPTestConfiguration
                 }
             }
             System.out.println("Number of candidate indexes " + numCandidateIndexes);
-           
-            for (int q = 0; q < numQ; q++) {
+            int q = 0;
+            for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
                 int idxTable = 0;
                 int idxLocalIndex = 0;
                 List<Index> listIndex = new ArrayList<Index>();
                 List<Table> listTable = new ArrayList<Table>();
                 
-                for (Table table : listWorkload.get(q).getSchema().tables()) {
+                for (Table table : entry.getKey().tables()) {
                     // the first query: 1st and 2nd relations of the first schema
                     // the second query: 2nd and 3rd relations of the second schema
                     if ( (q == 0 && idxTable <= 1) 
@@ -128,23 +131,24 @@ public abstract class BIPTestConfiguration
                 }
                 listIndexQueries.add(listIndex);
                 listTableQueries.add(listTable);
+                q++;
             }
-                        
-            for (int q = 0; q < numQ; q++) {
-                BIPPreparatorSchema agent = mock(BIPPreparatorSchema.class);
+                
+            q = 0;
+            for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
+                BIPPreparatorSchema preparator = mock(BIPPreparatorSchema.class);
                 List<Table> listTables = new ArrayList<Table>();
                 List<IndexFullTableScan> listIndexFullTableScan = new ArrayList<IndexFullTableScan>();
-                for (Table table : listWorkload.get(q).getSchema().tables()) {
+                for (Table table : entry.getKey().tables()) {
                     listTables.add(table);
                     IndexFullTableScan scanIdx = new IndexFullTableScan(table);
                     listIndexFullTableScan.add(scanIdx);
                 }
-                when (agent.getListSchemaTables()).thenReturn(listTables);
-                when (agent.getListFullTableScanIndexes()).thenReturn(listIndexFullTableScan);
+                when (preparator.getListSchemaTables()).thenReturn(listTables);
+                when (preparator.getListFullTableScanIndexes()).thenReturn(listIndexFullTableScan);
                 
                 // run over each statement in the workload
-                for (Iterator<SQLStatement> iterStmt = listWorkload.get(q).getWorkload().iterator();
-                        iterStmt.hasNext(); ){
+                for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ){
                     SQLStatement stmt = iterStmt.next();
                     InumSpace inum = mock(InumSpace.class);                    
                     Set<InumStatementPlan> templatePlans = new LinkedHashSet<InumStatementPlan>();
@@ -182,9 +186,10 @@ public abstract class BIPTestConfiguration
                     }
                     
                     when(inum.getTemplatePlans()).thenReturn(templatePlans);
-                    when(agent.populateInumSpace(stmt)).thenReturn(inum);
+                    when(preparator.populateInumSpace(stmt)).thenReturn(inum);
                 }
-                listPreparators.add(agent);
+                listPreparators.add(preparator);
+                q++;
             }
             
         }

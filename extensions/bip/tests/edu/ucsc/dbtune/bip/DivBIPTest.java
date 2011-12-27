@@ -24,7 +24,7 @@ public class DivBIPTest extends BIPTestConfiguration
             }
         }
         
-        DivRecommendedConfiguration conf = div.optimalDiv(listWorkload, listPreparators, divCandidateIndexes, 
+        DivRecommendedConfiguration conf = div.optimalDiv(mapSchemaToWorkload, listPreparators, divCandidateIndexes, 
                                     Nreplicas, loadfactor, B);
         System.out.println("In test, result: " + conf.toString());
         

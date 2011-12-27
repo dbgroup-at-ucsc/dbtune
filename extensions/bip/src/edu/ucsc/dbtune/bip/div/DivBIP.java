@@ -10,6 +10,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
@@ -18,10 +20,11 @@ import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.BIPPreparatorSchema;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.WorkloadPerSchema;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 public class DivBIP 
 {  
@@ -55,7 +58,7 @@ public class DivBIP
      * 
      * {\b Note}: {@code listPreparators} will be removed when this class is fully implemented
      */
-    public DivRecommendedConfiguration optimalDiv(List<WorkloadPerSchema> listWorkload, List<BIPPreparatorSchema> listPreparators,
+    public DivRecommendedConfiguration optimalDiv(Map<Schema, Workload> mapSchemaToWorkload, List<BIPPreparatorSchema> listPreparators,
                                                   List<Index> candidateIndexes, int Nreplicas, int loadfactor, double B) 
                                                   throws SQLException
     {   
@@ -70,12 +73,12 @@ public class DivBIP
         
         int iPreparator = 0;
         List<QueryPlanDesc> listQueryPlans = new ArrayList<QueryPlanDesc>();
-        for (WorkloadPerSchema wl : listWorkload) {
+        for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
             //BIPAgentPerSchema agent = new BIPAgentPerSchema(wl.getSchema());
             //TODO: Change this line when the implementation of BIPAgentPerSchema is done
             BIPPreparatorSchema preparator = listPreparators.get(iPreparator++);
             
-            for (Iterator<SQLStatement> iterStmt = wl.getWorkload().iterator(); iterStmt.hasNext(); ) {
+            for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
                 QueryPlanDesc desc = new QueryPlanDesc(); 
                 desc.generateQueryPlanDesc(preparator, iterStmt.next(), candidateIndexes);
                 listQueryPlans.add(desc);
