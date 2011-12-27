@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.workload;
 
-import java.sql.SQLException;
-
 /**
  * Represents a SQL statement. Each {@code SQLStatement} object is tied to a {@code String} object 
  * that contains the actual literal contents of the SQL statement.
@@ -10,10 +8,10 @@ import java.sql.SQLException;
  */
 public class SQLStatement
 {
-    /** category of statement */
+    /** category of statement. */
     private SQLCategory category;
 
-    /** literal contents of the statement */
+    /** literal contents of the statement. */
     private String sql;
 
     /**
@@ -22,11 +20,9 @@ public class SQLStatement
      *
      * @param sql
      *      a sql statement.
-     * @throws SQLException
-     *     if no category can't be extracted from the given string.
      * @see SQLCategory#from
      */
-    public SQLStatement(String sql) throws SQLException
+    public SQLStatement(String sql)
     {
         this(sql, SQLCategory.from(sql));
     }

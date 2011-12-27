@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.workload;
 
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,16 +12,22 @@ import java.util.List;
  */
 public enum SQLCategory
 {
+    /** */
     SELECT("S"),
+    /** */
     INSERT("I"),
+    /** */
     UPDATE("U"),
+    /** */
     DELETE("D"),
+    /** */
+    UNKNOWN("?"),
     /**
-     * Convenience element that represents all DML statements but {@link #SELECT}
+     * Convenience element that represents all DML statements but {@link #SELECT}.
      */
-    NOT_SELECT("I", "U", "D");
+    NOT_SELECT("I", "U", "D", "?");
 
-    /** codes corresponding to the category */
+    /** codes corresponding to the category. */
     private final List<String> code;
 
     /**
@@ -77,10 +82,8 @@ public enum SQLCategory
      *     code used to look for a category; this can also be a SQL statement.
      * @return
      *     the category whose one of its codes matches the given {@code code}
-     * @throws SQLException
-     *     if no category can't be extracted from the given string.
      */
-    public static SQLCategory from(String codeOrSQL) throws SQLException
+    public static SQLCategory from(String codeOrSQL)
     {
         if (codeOrSQL.length() == 1)
             for (SQLCategory category : values())
@@ -98,7 +101,7 @@ public enum SQLCategory
         } else if (sql.startsWith("delete")) {
             return SQLCategory.DELETE;
         } else {
-            throw new SQLException("Can't determine category for " + codeOrSQL);
+            return SQLCategory.UNKNOWN;
         }
     }
 

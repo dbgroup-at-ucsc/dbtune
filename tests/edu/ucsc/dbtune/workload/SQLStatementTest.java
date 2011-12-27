@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.workload;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -14,22 +12,30 @@ import static org.junit.Assert.assertThat;
  */
 public class SQLStatementTest
 {
-    @BeforeClass
-    public static void setUp() throws Exception
-    {
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception
-    {
-    }
-
-    /** checks the constructor */
+    /** checks the constructor. */
     @Test
-    public void testConstructor() throws Exception
+    public void testConstructor()
     {
-        SQLStatement sql = new SQLStatement("select * from tbl",SQLCategory.SELECT);
+        SQLStatement sql;
+        
+        sql = new SQLStatement("select * from tbl", SQLCategory.SELECT);
+        assertThat(sql.getSQL(), is("select * from tbl"));
+        assertThat(sql.getSQLCategory(), is(SQLCategory.SELECT));
 
-        assertThat(sql.getSQL(),is("select * from tbl"));
+        sql = new SQLStatement("select * from tbl");
+        assertThat(sql.getSQL(), is("select * from tbl"));
+        assertThat(sql.getSQLCategory(), is(SQLCategory.SELECT));
+
+        sql = new SQLStatement("delete from tbl");
+        assertThat(sql.getSQL(), is("delete from tbl"));
+        assertThat(sql.getSQLCategory(), is(SQLCategory.DELETE));
+
+        sql = new SQLStatement("delete from tbl");
+        assertThat(sql.getSQL(), is("delete from tbl"));
+        assertThat(sql.getSQLCategory(), is(SQLCategory.DELETE));
+
+        sql = new SQLStatement("io fjasfuuuuuuuuuoduaojk ldfsa l");
+        assertThat(sql.getSQL(), is("io fjasfuuuuuuuuuoduaojk ldfsa l"));
+        assertThat(sql.getSQLCategory(), is(SQLCategory.UNKNOWN));
     }
 }

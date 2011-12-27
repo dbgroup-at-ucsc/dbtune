@@ -395,8 +395,9 @@ public class OptimizerTest
     /**
      * Checks that the given optimizer complies with the sanity property:
      *    
-     *    For any index-sets X, Y and query q, if used (q, Y) ⊆ X ⊆ Y then optplan(q, X) = 
-     *    optplan(q, Y)
+     * For any index-sets X, Y and query q:
+     *
+     *   if used (q, Y) ⊆ X ⊆ Y, then optplan(q, X) = optplan(q, Y)
      */
     protected static void checkSanity(Catalog cat, Optimizer opt) throws Exception
     {
