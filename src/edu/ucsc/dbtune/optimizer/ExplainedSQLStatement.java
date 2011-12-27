@@ -48,41 +48,8 @@ public class ExplainedSQLStatement
     /** number of optimization calls done to produce this statement. */
     protected int optimizationCount;
 
-    /** the time it took an optimizer to produce this statement. */
-    protected double analysisTime;
-
     /** cached update cost. */
     protected double updateCost;
-
-    /**
-     * construct a new {@code ExplainedSQLStatement} object.
-     *
-     * @param sql
-     *      the statement
-     * @param cost
-     *      execution cost
-     * @param optimizer
-     *      optimizer that explained the statement
-     * @param configuration
-     *      configuration used to optimize the statement
-     * @param usedConfiguration
-     *      configuration that the generated execution plan uses
-     * @param optimizationCount
-     *      number of what-if optimization calls that were done to the DBMS
-     * @throws SQLException
-     *      if there is an error
-     */
-    public ExplainedSQLStatement(
-            SQLStatement sql,
-            double cost,
-            Optimizer optimizer,
-            Set<Index> configuration,
-            Set<Index> usedConfiguration,
-            int optimizationCount)
-        throws SQLException
-    {
-        this(sql, null, optimizer, cost, null, configuration, usedConfiguration, optimizationCount);
-    }
 
     /**
      * construct a new {@code ExplainedSQLStatement} for an update statement.
@@ -128,7 +95,6 @@ public class ExplainedSQLStatement
         this.optimizer         = optimizer;
         this.usedConfiguration = usedConfiguration;
         this.optimizationCount = optimizationCount;
-        this.analysisTime      = 0.0;
 
         if (updateCosts.size() != configuration.size())
             throw new SQLException(
@@ -337,17 +303,6 @@ public class ExplainedSQLStatement
                 updatedConfiguration.add(e.getKey());
 
         return updatedConfiguration;
-    }
-
-    /**
-     * Returns the time that an optimizer took to produce this statement.
-     *
-     * @return
-     *     the analysis time.
-     */
-    public double getAnalysisTime()
-    {
-        return analysisTime;
     }
 
     /**

@@ -8,8 +8,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * A convenience class for a no-op implementation of the {@link PreparedSQLStatement} interface.
- * The {@link PreparedSQLStatement#explain(Configuration)} method simply 
- * calls {{@link Optimizer#explain(SQLStatement,Configuration)}. 
+ * The {@link PreparedSQLStatement#explain(Configuration)} method simply calls {@link 
+ * Optimizer#explain(SQLStatement, Configuration)}. 
  * 
  * @author Alkis Polyzotis
  * @author Ivo Jimenez
@@ -36,8 +36,8 @@ public class DefaultPreparedSQLStatement implements PreparedSQLStatement
      */
     public DefaultPreparedSQLStatement(Optimizer optimizer, SQLStatement sql)
     {
-        this.optimizer  = optimizer;
-        this.sql        = sql;
+        this.optimizer = optimizer;
+        this.sql       = sql;
     }
     
     /**
@@ -48,22 +48,31 @@ public class DefaultPreparedSQLStatement implements PreparedSQLStatement
      */
     public DefaultPreparedSQLStatement(PreparedSQLStatement other)
     {
-        this.optimizer  =   other.getOptimizer();
-        this.sql        =   other.getSQLStatement();
+        this.optimizer = other.getOptimizer();
+        this.sql       = other.getSQLStatement();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optimizer getOptimizer()
     {
         return optimizer;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public SQLStatement getSQLStatement()
     {
         return sql;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExplainedSQLStatement explain(Set<Index> configuration)
         throws SQLException
