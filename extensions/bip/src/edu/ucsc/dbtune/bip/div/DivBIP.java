@@ -80,7 +80,7 @@ public class DivBIP
             
             for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
                 QueryPlanDesc desc = new QueryPlanDesc(); 
-                desc.generateQueryPlanDesc(preparator, iterStmt.next(), candidateIndexes);
+                desc.generateQueryPlanDesc(preparator, iterStmt.next(), poolIndexes);
                 listQueryPlans.add(desc);
             }
             

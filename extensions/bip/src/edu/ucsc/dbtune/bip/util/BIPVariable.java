@@ -9,7 +9,7 @@ package edu.ucsc.dbtune.bip.util;
 public class BIPVariable 
 {
     private String name;
-    private int type;
+    private int type; // y (internal plan), x (index access cost), ...
     
     public BIPVariable(String _name, int _type)
     {

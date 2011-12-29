@@ -25,8 +25,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 public class ElasticDivBIP extends DivBIP 
-{ 
-    private int inputNreplicas;
+{  
     /** 
      * Shrink Replicas Divergent index tuning
      *     
@@ -61,7 +60,6 @@ public class ElasticDivBIP extends DivBIP
     {   
         this.Nreplicas = Nreplicas;
         this.loadfactor = loadfactor;
-        this.inputNreplicas = Nreplicas;
         if (Ndeploys > Nreplicas) {
             // Expand replica cases
             // swap between Nreplicas and Ndeploys
@@ -83,7 +81,7 @@ public class ElasticDivBIP extends DivBIP
             
             for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
                 QueryPlanDesc desc = new QueryPlanDesc(); 
-                desc.generateQueryPlanDesc(preparator, iterStmt.next(), candidateIndexes);
+                desc.generateQueryPlanDesc(preparator, iterStmt.next(), poolIndexes);
                 listQueryPlans.add(desc);
             }
             
