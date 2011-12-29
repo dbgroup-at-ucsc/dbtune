@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.util.*;
@@ -100,6 +101,7 @@ public abstract class BIPTestConfiguration
                 int idxLocalIndex = 0;
                 List<Index> listIndex = new ArrayList<Index>();
                 List<Table> listTable = new ArrayList<Table>();
+                System.out.println(" schema: " + entry.getKey().getFullyQualifiedName());
                 
                 for (Table table : entry.getKey().tables()) {
                     // the first query: 1st and 2nd relations of the first schema
@@ -175,6 +177,7 @@ public abstract class BIPTestConfiguration
                                 val = accessCostPlan2[counter];
                             }
                             when (plan.getAccessCost(index)).thenReturn(val);
+                            System.out.println("Index access cost, " + index.getFullyQualifiedName() + " : " + val);
                             counter++;              
                         }
                         

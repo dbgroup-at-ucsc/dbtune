@@ -19,7 +19,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
         try {
             InteractionBIP bip = new InteractionBIP();
                     
-            double delta = 0.35;
+            double delta = 0.4;
             List<IndexInteraction> listInteractions =
                 bip.computeInteractionIndexes(mapSchemaToWorkload, listPreparators, candidateIndexes, delta);
             System.out.println(bip.printListInteraction(listInteractions));

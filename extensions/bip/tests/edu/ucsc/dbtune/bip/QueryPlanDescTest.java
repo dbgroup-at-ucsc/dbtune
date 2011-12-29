@@ -9,7 +9,9 @@ import java.util.Map.Entry;
 
 import org.junit.Test;
 
+import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -19,6 +21,10 @@ public class QueryPlanDescTest extends BIPTestConfiguration
     @Test
     public void testPlanDescriptionGeneration() throws Exception
     {   
+        BIPIndexPool poolIndexes = new BIPIndexPool();
+        for (Index index : candidateIndexes) {
+            poolIndexes.addIndex(index);
+        }
         List<SQLStatement> listStmt = new ArrayList<SQLStatement>();
         for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
             listStmt.add(entry.getValue().get(0));
@@ -27,7 +33,7 @@ public class QueryPlanDescTest extends BIPTestConfiguration
         for (int q = 0; q < numQ; q++) {
             QueryPlanDesc desc = new  QueryPlanDesc();
             
-            desc.generateQueryPlanDesc(listPreparators.get(q), listStmt.get(q), candidateIndexes);
+            desc.generateQueryPlanDesc(listPreparators.get(q), listStmt.get(q), poolIndexes);
     
             assertThat(desc.getNumSlots(), is(numSchemaTables));
             assertThat(desc.getNumPlans(), is(numPlans[q]));
