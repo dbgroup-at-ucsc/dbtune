@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -28,13 +27,13 @@ public class QueryRecord {
   }
 
   public QueryRecord(SQLStatement sql, Configuration configuration){
-    this.sql            = sql;
-    this.configuration  = configuration;
-    this.indexedTableNames = ConfigurationUtils.findUsedTables(this.configuration);
+    this.sql                = sql;
+    this.configuration      = configuration;
+    this.indexedTableNames  = ConfigurationUtils.findUsedTables(this.configuration);
   }
 
   @Override public int hashCode() {
-    return Objects.hashCode(sql, configuration);//(sql + configuration.toString()).hashCode();
+    return (sql + configuration.toString()).hashCode();
   }
 
   @Override public boolean equals(Object o) {
@@ -75,13 +74,19 @@ public class QueryRecord {
         return isMatch(other.sql, other.configuration);
     }
 
-    private static SQLStatement createStatement(String sql){
-        Preconditions.checkArgument(!Strings.isEmpty(sql), "SQL query is empty.");
-        try {
-            return new SQLStatement(sql);
-        } catch (Exception e){
-            Console.streaming().error("Unable to create SQL Statement", e);
-            throw new RuntimeException(e);
+  private static boolean intersects(Configuration first, Configuration second){
+    // second covers first, therefore first is a subset of second
+    final Configuration c = new Configuration(Lists.<Index>newArrayList());
+    if (first.size() < second.size()) {
+      for (Index x : first.toList()) {
+        if (second.toList().contains(x)) {
+          c.add(x);
+        }
+      }
+    } else {
+      for (Index x : second.toList()) {
+        if (first.toList().contains(x)) {
+          c.add(x);
         }
     }
     //  'first' is a subset of 'second' iff every member of 'first' is a member of 'second'
