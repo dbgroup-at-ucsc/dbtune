@@ -30,19 +30,18 @@ public class InumMatchingStrategy implements MatchingStrategy
         this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
     }
 
-    @Override
-    public double estimateCost(String query, Set<Index> inputConfiguration, InumSpace inumSpace)
-    {
-        // matched optimal plans for "query" ...
-        final Set<OptimalPlan> matchedOptimalPlans = matches(
-                query, inputConfiguration, inumSpace
-                );
-        // adding the cached cost + index access costs
-        final double indexAccessCosts = getIndexAccessCostEstimation().estimateIndexAccessCost(query, inputConfiguration);
-        final double derivedCost      = findOneWithMinCost(matchedOptimalPlans, indexAccessCosts);
-        Preconditions.checkArgument(compare(derivedCost, 0.0) > 0, "invalid execution cost. It cannot be negative or zero.");
-        return derivedCost;
-    }
+  @Override public double estimateCost(String query, Configuration inputConfiguration,
+      InumSpace inumSpace) {
+    // matched optimal plans for "query" ...
+    final Set<OptimalPlan> matchedOptimalPlans = matches(
+        query, inputConfiguration, inumSpace
+    );
+    // adding the cached cost + index access costs
+    final double indexAccessCosts = getIndexAccessCostEstimation().estimateIndexAccessCost(query, inputConfiguration);
+    final double derivedCost      = findOneWithMinCost(matchedOptimalPlans, indexAccessCosts);
+    Preconditions.checkArgument(compare(derivedCost, 0.0) > 0, "invalid execution cost. It must be greater than zero.");
+    return derivedCost;
+  }
 
     private static double findOneWithMinCost(Set<OptimalPlan> matches, double indexAccessCost)
     {
@@ -78,10 +77,10 @@ public class InumMatchingStrategy implements MatchingStrategy
     final Configuration copy      = new Configuration(inputConfiguration);  // defensive copy of configuration
     final QueryRecord targetKey = new QueryRecord(sql, copy);
     for(QueryRecord eachKey : inumSpace.keySet()){
-      if(eachKey.equals/* means (same SQL and intersects indexes)*/(targetKey)) {
+      if(eachKey.equals/* means (it has the same SQL query and also covers an interesting order)*/
+          (targetKey)) {
         final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(eachKey);
         found.addAll(optimalPlans);
-        break;
       }
     }
 
