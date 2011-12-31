@@ -1,18 +1,18 @@
 package edu.ucsc.dbtune.metadata.extraction;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
+
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
-
-import java.util.Map;
-import java.util.HashMap;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.sql.SQLException;
 
 /**
  * Extractor that uses JDBC's {@link DatabaseMetaData} class to obtain basic metadata information.
@@ -29,8 +29,8 @@ import java.sql.SQLException;
  */
 public abstract class GenericJDBCExtractor implements MetadataExtractor
 {
-    /** whether or not an extractor has swapped the catalog and schema terms */
-    protected boolean swappedTerms = false;
+    /** whether or not an extractor has swapped the catalog and schema terms. */
+    protected boolean swappedTerms;
 
     /**
      * Given a database connection, it extracts metadata information. The information is comprised 
@@ -165,9 +165,9 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
     protected void extractColumns(Catalog catalog, Connection connection) throws SQLException
     {
         DatabaseMetaData meta;
-        ResultSet        rs;
-        String           columnName;
-        int              type;
+        ResultSet rs;
+        String columnName;
+        int type;
 
         meta = connection.getMetaData();
 
@@ -185,7 +185,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
 
                 while (rs.next()) {
                     columnName = rs.getString("column_name");
-                    type       = rs.getInt("data_type");
+                    type = rs.getInt("data_type");
 
                     new Column(table, columnName, type);
                 }
@@ -199,6 +199,8 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
      * Extracts the {@link Index} objects contained in each schema. The information is comprised of 
      * all the indexes, their names, the columns contained in them and their constraints.
      * 
+     * @param catalog
+     *     catalog being populated
      * @param connection
      *     object used to obtain metadata for its associated database
      * @throws SQLException
@@ -209,7 +211,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
      */
     protected void extractIndexes(Catalog catalog, Connection connection) throws SQLException
     {
-        Map<Integer,Column> indexToColumns;
+        Map<Integer, Column> indexToColumns;
 
         DatabaseMetaData meta;
         ResultSet        rs;
@@ -230,7 +232,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         for (Schema sch : catalog.schemas()) {
             for (Table table : sch.tables()) {
 
-                indexToColumns = new HashMap<Integer,Column>();
+                indexToColumns = new HashMap<Integer, Column>();
                 indexName      = "";
                 index          = null;
 
@@ -243,15 +245,15 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                     type = rs.getShort("TYPE");
 
                     if (type == DatabaseMetaData.tableIndexStatistic) {
-                        table.setPages( rs.getInt("pages") );
-                        table.setCardinality( rs.getInt("cardinality") );
+                        table.setPages(rs.getInt("pages"));
+                        table.setCardinality(rs.getInt("cardinality"));
                     } else {
 
                         if (!indexName.equals(rs.getString("index_name"))) {
 
                             if (index != null)
                                 for (int i = 0; i < indexToColumns.size(); i++)
-                                    index.add(indexToColumns.get(i+1));
+                                    index.add(indexToColumns.get(i + 1));
 
                             type = rs.getShort("type");
 
@@ -264,7 +266,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                             indexName = rs.getString("index_name");
                             index     = new Index(sch, indexName, isPrimary, isClustered, isUnique);
 
-                            indexToColumns = new HashMap<Integer,Column>();
+                            indexToColumns = new HashMap<Integer, Column>();
 
                             index.setMaterialized(true);
                         }
@@ -273,7 +275,8 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                         column     = table.findColumn(columnName);
 
                         if (column == null)
-                            throw new SQLException("Column " + columnName + " not in " + table.getName());
+                            throw new SQLException(
+                                    "Column " + columnName + " not in " + table.getName());
 
                         indexToColumns.put(rs.getInt("ordinal_position"), column);
                     }
@@ -282,7 +285,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                 // add the columns of the last index
                 if (index != null)
                     for (int i = 0; i < indexToColumns.size(); i++)
-                        index.add(indexToColumns.get(i+1));
+                        index.add(indexToColumns.get(i + 1));
 
                 rs.close();
             }
@@ -499,7 +502,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
             for (Index  idx : sch.indexes()) {
 
                 if (idx.size() == 0)
-                    throw new SQLException("no columns in index "+idx.getName());
+                    throw new SQLException("no columns in index " + idx.getName());
 
                 if (idx.size() == 1) {
                     idx.setCardinality(idx.at(0).getCardinality());
@@ -512,15 +515,14 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
 
                 table = null;
 
-                for (Column col : idx.columns())
-                {
+                for (Column col : idx.columns()) {
                     if (table == null)
                         table = col.getTable();
 
                     cmd += col.getName() + ", ";
                 }
 
-                cmd = cmd.substring(0,cmd.length()-2);
+                cmd = cmd.substring(0, cmd.length() - 2);
 
                 cmd +=
                     " FROM " +
@@ -530,7 +532,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                 for (Column col : idx.columns())
                     cmd += col.getName() + ", ";
 
-                cmd = cmd.substring(0,cmd.length()-2);
+                cmd = cmd.substring(0, cmd.length() - 2);
                 stm = connection.createStatement();
                 rs  = stm.executeQuery(cmd);
 

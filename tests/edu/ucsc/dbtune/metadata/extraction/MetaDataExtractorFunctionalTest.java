@@ -41,7 +41,6 @@ public class MetaDataExtractorFunctionalTest
     private static Environment env;
     private static Connection  con;
     private static Catalog     cat;
-    private static Schema      sch;
 
     private static final String RATINGS     = "ratings";
     private static final String QUEUE       = "queue";
@@ -65,7 +64,7 @@ public class MetaDataExtractorFunctionalTest
         ddl = env.getScriptAtWorkloadsFolder("movies/create.sql");
         con = newConnection(env);
 
-        //execute(con, ddl);
+        execute(con, ddl);
 
         cat = newExtractor(env).extract(con);
 
@@ -139,41 +138,41 @@ public class MetaDataExtractorFunctionalTest
         {
             expected = -1;
 
-            if (Strings.same(tbl.getName(), USERS))
+            if (Strings.same(tbl.getName().toLowerCase(), USERS))
             {
                 expected = 5;
             }
-            else if (Strings.same(tbl.getName(), CREDITCARDS))
+            else if (Strings.same(tbl.getName().toLowerCase(), CREDITCARDS))
             {
                 expected = 4;
             }
-            else if (Strings.same(tbl.getName(), MOVIES))
+            else if (Strings.same(tbl.getName().toLowerCase(), MOVIES))
             {
                 expected = 5;
             }
-            else if (Strings.same(tbl.getName(), GENRES))
+            else if (Strings.same(tbl.getName().toLowerCase(), GENRES))
             {
                 expected = 2;
             }
-            else if (Strings.same(tbl.getName(), ACTORS))
+            else if (Strings.same(tbl.getName().toLowerCase(), ACTORS))
             {
                 expected = 4;
             }
-            else if (Strings.same(tbl.getName(), CASTS))
+            else if (Strings.same(tbl.getName().toLowerCase(), CASTS))
             {
                 expected = 2;
             }
-            else if (Strings.same(tbl.getName(), QUEUE))
+            else if (Strings.same(tbl.getName().toLowerCase(), QUEUE))
             {
                 expected = 4;
             }
-            else if (Strings.same(tbl.getName(), RATINGS))
+            else if (Strings.same(tbl.getName().toLowerCase(), RATINGS))
             {
                 expected = 4;
             }
             else
             {
-                fail("Unexpected table " + tbl.getName());
+                fail("Unexpected table " + tbl.getName().toLowerCase());
             }
 
             assertThat(tbl.size(), is(expected));
@@ -197,7 +196,7 @@ public class MetaDataExtractorFunctionalTest
 
             for (Column col : tbl.columns())
             {
-                if (Strings.same(tbl.getName(), USERS))
+                if (Strings.same(tbl.getName().toLowerCase(), USERS))
                     if (i == 0)
                         expected = "userid";
                     else if (i == 1)
@@ -211,7 +210,7 @@ public class MetaDataExtractorFunctionalTest
                     else
                         fail("Unexpected column " + tbl.at(i));
 
-                else if (Strings.same(tbl.getName(), MOVIES))
+                else if (Strings.same(tbl.getName().toLowerCase(), MOVIES))
                     if (i == 0)
                         expected = "movieid";
                     else if (i == 1)
@@ -225,7 +224,7 @@ public class MetaDataExtractorFunctionalTest
                     else
                         fail("Unexpected column " + tbl.at(i));
 
-                else if (Strings.same(tbl.getName(), ACTORS))
+                else if (Strings.same(tbl.getName().toLowerCase(), ACTORS))
                     if (i == 0)
                         expected = "aid";
                     else if (i == 1)
@@ -237,7 +236,7 @@ public class MetaDataExtractorFunctionalTest
                     else
                         fail("Unexpected column " + tbl.at(i));
 
-                else if (Strings.same(tbl.getName(), CREDITCARDS))
+                else if (Strings.same(tbl.getName().toLowerCase(), CREDITCARDS))
                     if (i == 0)
                         expected = "userid";
                     else if (i == 1)
@@ -248,21 +247,21 @@ public class MetaDataExtractorFunctionalTest
                         expected = "expdate";
                     else
                         fail("Unexpected column " + tbl.at(i));
-                else if (Strings.same(tbl.getName(), GENRES))
+                else if (Strings.same(tbl.getName().toLowerCase(), GENRES))
                     if (i == 0)
                         expected = "mgenre";
                     else if (i == 1)
                         expected = "movieid";
                     else
                         fail("Unexpected column " + tbl.at(i));
-                else if (Strings.same(tbl.getName(), CASTS))
+                else if (Strings.same(tbl.getName().toLowerCase(), CASTS))
                     if (i == 0)
                         expected = "aid";
                     else if (i == 1)
                         expected = "movieid";
                     else
                         fail("Unexpected column " + tbl.at(i));
-                else if (Strings.same(tbl.getName(), QUEUE))
+                else if (Strings.same(tbl.getName().toLowerCase(), QUEUE))
                     if (i == 0)
                         expected = "userid";
                     else if (i == 1)
@@ -273,7 +272,7 @@ public class MetaDataExtractorFunctionalTest
                         expected = "times";
                     else
                         fail("Unexpected column " + tbl.at(i));
-                else if (Strings.same(tbl.getName(), RATINGS))
+                else if (Strings.same(tbl.getName().toLowerCase(), RATINGS))
                     if (i == 0)
                         expected = "userid";
                     else if (i == 1)
@@ -285,9 +284,9 @@ public class MetaDataExtractorFunctionalTest
                     else
                         fail("Unexpected column " + tbl.at(i));
                 else
-                    fail("Unexpected table " + tbl.getName());
+                    fail("Unexpected table " + tbl.getName().toLowerCase());
 
-                assertThat(col.getName(), is(expected));
+                assertThat(col.getName().toLowerCase(), is(expected));
                 i++;
             }
         }
@@ -349,46 +348,46 @@ public class MetaDataExtractorFunctionalTest
         // XXX: complete for index cardinality
         for (Table tbl : cat.<Schema>findByName("movies").tables())
         {
-            if (Strings.same(tbl.getName(), USERS))
+            if (Strings.same(tbl.getName().toLowerCase(), USERS))
             {
                 assertEquals(6,tbl.getCardinality());
                 assertEquals(6,tbl.findColumn("email").getCardinality());
                 assertEquals(5,tbl.findColumn("ulastname").getCardinality());
             }
-            else if (Strings.same(tbl.getName(), CREDITCARDS))
+            else if (Strings.same(tbl.getName().toLowerCase(), CREDITCARDS))
             {
                 assertEquals(6,tbl.getCardinality());
                 assertEquals(6,tbl.findColumn("creditnum").getCardinality());
                 assertEquals(3,tbl.findColumn("credittype").getCardinality());
             }
-            else if (Strings.same(tbl.getName(), MOVIES))
+            else if (Strings.same(tbl.getName().toLowerCase(), MOVIES))
             {
                 assertEquals(3,tbl.getCardinality());
                 assertEquals(3,tbl.findColumn("movieid").getCardinality());
                 assertEquals(1,tbl.findColumn("url").getCardinality());
             }
-            else if (Strings.same(tbl.getName(), GENRES))
+            else if (Strings.same(tbl.getName().toLowerCase(), GENRES))
             {
                 assertEquals(5,tbl.getCardinality());
                 assertEquals(2,tbl.findColumn("mgenre").getCardinality());
             }
-            else if (Strings.same(tbl.getName(), ACTORS))
+            else if (Strings.same(tbl.getName().toLowerCase(), ACTORS))
             {
                 assertEquals(8,tbl.getCardinality());
                 assertEquals(8,tbl.findColumn("aid").getCardinality());
                 assertEquals(8,tbl.findColumn("dateofb").getCardinality());
             }
-            else if (Strings.same(tbl.getName(), CASTS))
+            else if (Strings.same(tbl.getName().toLowerCase(), CASTS))
             {
                 assertEquals(10,tbl.getCardinality());
             }
-            else if (Strings.same(tbl.getName(), QUEUE))
+            else if (Strings.same(tbl.getName().toLowerCase(), QUEUE))
             {
                 assertEquals(5,tbl.getCardinality());
                 assertEquals(2,tbl.findColumn("position").getCardinality());
                 assertEquals(5,tbl.findColumn("times").getCardinality());
             }
-            else if (Strings.same(tbl.getName(), RATINGS))
+            else if (Strings.same(tbl.getName().toLowerCase(), RATINGS))
             {
                 assertEquals(7,tbl.getCardinality());
                 assertEquals(4,tbl.findColumn("rate").getCardinality());
@@ -396,7 +395,7 @@ public class MetaDataExtractorFunctionalTest
             }
             else
             {
-                fail("Unexpected table " + tbl.getName());
+                fail("Unexpected table " + tbl.getName().toLowerCase());
             }
         }
     }

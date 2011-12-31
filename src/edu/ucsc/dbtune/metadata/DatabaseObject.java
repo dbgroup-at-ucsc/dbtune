@@ -1,9 +1,8 @@
 package edu.ucsc.dbtune.metadata;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.sql.SQLException;
 
 /**
  * The abstraction of a database object. A database object is any data structure that stores 
@@ -26,6 +25,9 @@ import java.sql.SQLException;
  */
 public abstract class DatabaseObject
 {
+    /** the value used to represent a non-assigned ID. */
+    public static final int NON_ID = -1;
+    
     protected List<DatabaseObject> containees;
     protected DatabaseObject       container;
 
@@ -36,15 +38,16 @@ public abstract class DatabaseObject
     protected long   bytes;
     protected double creationCost;
 
-    public static final int NON_ID = -1;
-    
     /**
-     * creates a dbobject with the given name constructor and contained on the given container
+     * creates a dbobject with the given name constructor and contained on the given container.
      *
      * @param container
-     *    where to insert the object
+     *      where to insert the object
      * @param name
-     *    name of the db object
+     *      name of the db object
+     * @throws SQLException
+     *      if the object can't be added to the newly created database object.
+     * @see #add
      */
     public DatabaseObject(DatabaseObject container, String name) throws SQLException
     {
@@ -62,7 +65,7 @@ public abstract class DatabaseObject
     }
 
     /**
-     * creates a dbobject with the given name constructor
+     * creates a dbobject with the given name constructor.
      *
      * @param name
      *    name of the db object
@@ -80,7 +83,7 @@ public abstract class DatabaseObject
     }
 
     /**
-     * copy constructor
+     * copy constructor.
      *
      * @param dbo
      *    other database object to be copied in the new one
@@ -119,7 +122,7 @@ public abstract class DatabaseObject
     }
 
     /**
-     * Returns the cost of creating the object
+     * Returns the cost of creating the object.
      *
      * @param cost
      *     cost of materializing the object
@@ -130,7 +133,7 @@ public abstract class DatabaseObject
     }
 
     /**
-     * Returns the cost of creating the index
+     * Returns the cost of creating the index.
      *
      * @return
      *     cost of materializing the index
@@ -170,14 +173,15 @@ public abstract class DatabaseObject
      * extending the class.
      *
      * @param cardinality
+     *      the value assigned to the cardinality of the object
      */
-    public void setCardinality( long cardinality )
+    public void setCardinality(long cardinality)
     {
         this.cardinality = cardinality;
     }
 
     /**
-     * Returns the cardinality of the object
+     * Returns the cardinality of the object.
      *
      * @return
      *     cardinality value
@@ -188,9 +192,10 @@ public abstract class DatabaseObject
     }
 
     /**
-     * Assigns the number of pages that the object occupies in disk. 
+     * Assigns the number of pages that the object occupies in disk. .
      *
      * @param pages
+     *      pages
      */
     public void setPages(long pages)
     {
@@ -198,7 +203,7 @@ public abstract class DatabaseObject
     }
 
     /**
-     * Returns the number of pages that the object occupies in disk
+     * Returns the number of pages that the object occupies in disk.
      *
      * @return
      *     number of pages
@@ -209,7 +214,7 @@ public abstract class DatabaseObject
     }
 
     /**
-     * Assigns the number of bytes that the object occupies in disk
+     * Assigns the number of bytes that the object occupies in disk.
      *
      * @param bytes
      *     size in bytes
@@ -220,7 +225,7 @@ public abstract class DatabaseObject
     }
 
     /**
-     * Returns the number of bytes that the object occupies in disk
+     * Returns the number of bytes that the object occupies in disk.
      *
      * @return
      *     size in bytes
@@ -241,6 +246,9 @@ public abstract class DatabaseObject
      *     fully qualified name of the new database object.
      * @return
      *     object corresponding to the given fully qualified name; {@code null} if not found.
+     * @throws SQLException
+     *     if path string is empty; if there is an empty path identifier; if an intermediate object 
+     *     can't be found
      */
     protected final DatabaseObject findByQualifiedName(String pathToObject)
         throws SQLException
@@ -264,7 +272,9 @@ public abstract class DatabaseObject
         else if (dbo == null)
             throw new SQLException("Can't find object " + pathElements[0] + "referenced in path");
         else
-            return dbo.findByQualifiedName(pathToObject.substring(pathToObject.indexOf(".")+1,pathToObject.length()));
+            return dbo.findByQualifiedName(
+                        pathToObject.substring(pathToObject.indexOf(".") + 1, 
+                            pathToObject.length()));
     }
 
     /**
@@ -279,7 +289,8 @@ public abstract class DatabaseObject
     }
 
     /**
-     * Returns the object whose name matches the given one.
+     * Returns the object whose name matches the given one. This method is case-insensitive, that 
+     * is, {@code "object-name" == "ObJeCt-NaMe"} is {@code true}.
      *
      * @param name
      *     name of the object that is searched for in {@code this}
@@ -288,8 +299,10 @@ public abstract class DatabaseObject
      */
     public DatabaseObject find(String name)
     {
+        String lowerName = name.toLowerCase();
+
         for (DatabaseObject containee : containees)
-            if (containee.getName().equals(name)) return containee;
+            if (containee.getName().toLowerCase().equals(lowerName)) return containee;
 
         return null;
     }
@@ -299,8 +312,6 @@ public abstract class DatabaseObject
      * following should be true: {@code dbo.getOrdinalPosition() == 
      * dbo.getContainer().at(dbo.getOrdinalPosition())}
      *
-     * @param position
-     *     ordinal position of the retrieved object
      * @return
      *     the ordinal position of the object; {@code 0} if object isn't contained in other
      */
@@ -351,7 +362,7 @@ public abstract class DatabaseObject
      * @param dbo
      *     dbo being removed
      */
-    public void remove(DatabaseObject dbo) throws SQLException
+    public void remove(DatabaseObject dbo)
     {
         containees.remove(dbo);
     }
@@ -360,10 +371,10 @@ public abstract class DatabaseObject
      * Returns all the objects contained in the containment hierarchy. The order of the objects is 
      * not specified. This effectively flattens the containment tree.
      *
-     * @param dbo
-     *     dbo being removed
+     * @return
+     *     all the objects contained in this object
      */
-    public List<DatabaseObject> getAll() throws SQLException
+    public List<DatabaseObject> getAll()
     {
         List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
 
@@ -373,17 +384,22 @@ public abstract class DatabaseObject
         return objects;
     }
 
-    private final void getAll(List<DatabaseObject> objects) throws SQLException
+    /**
+     * Returns all the objects in the given list of objects.
+     *
+     * @param objects
+     *      list of objects where the containees are inserted.
+     */
+    private void getAll(List<DatabaseObject> objects)
     {
-        for (DatabaseObject dbo : containees)
-        {
+        for (DatabaseObject dbo : containees) {
             objects.add(dbo);
             dbo.getAll(objects);
         }
     }
 
     /**
-     * Adds an element of this object
+     * Adds an element of this object.
      *
      * @param dbo
      *     new object to add
@@ -396,7 +412,9 @@ public abstract class DatabaseObject
             throw new SQLException("Object " + dbo.getName() + " already in " + getName());
 
         if (!isValid(dbo))
-            throw new SQLException("Object " + dbo.getName() + " with type " + dbo.getClass() + " not valid in " + getName());
+            throw new SQLException(
+                "Object " + dbo.getName() + " with type " + dbo.getClass() + " not valid in " + 
+                getName());
 
         containees.add(dbo);
     }
@@ -449,6 +467,8 @@ public abstract class DatabaseObject
      * @param dbObject
      *     database object whose type is checked to see if an instance of it could be added to 
      *     {@code this} one.
+     * @return
+     *      {@code true} if the object is valid; {@code false} otherwise
      */
     abstract boolean isValid(DatabaseObject dbObject);
 
@@ -470,6 +490,8 @@ public abstract class DatabaseObject
      * Compares another object against this one and determines if they're equal or not. Note that 
      * this is different from {@link #equals}.
      *
+     * @param other
+     *     object being compared against this one
      * @return
      *     {@code true} if contents of given object are equal to this; {@code false} otherwise.
      */
@@ -485,7 +507,8 @@ public abstract class DatabaseObject
             return false;
         DatabaseObject dbo = (DatabaseObject) other;
 
-        return getFullyQualifiedName().equals(dbo.getFullyQualifiedName());
+        return 
+            getFullyQualifiedName().toLowerCase().equals(dbo.getFullyQualifiedName().toLowerCase());
     }
 
     /**

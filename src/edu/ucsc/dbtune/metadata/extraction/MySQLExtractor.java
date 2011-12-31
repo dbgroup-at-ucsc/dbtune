@@ -1,17 +1,17 @@
 package edu.ucsc.dbtune.metadata.extraction;
 
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.metadata.Column;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
 
 /**
  * Metadata extractor for MySQL.
@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class MySQLExtractor extends GenericJDBCExtractor
 {
-    int idCounter=1;
+    private int idCounter = 1;
 
     /**
      * {@inheritDoc}
@@ -62,7 +62,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
             if (schName.equals("information_schema") || schName.equals("mysql"))
                 continue;
 
-            Schema sch = new Schema(catalog,schName);
+            Schema sch = new Schema(catalog, schName);
 
             sch.setInternalID(idCounter++);
         }
@@ -73,12 +73,12 @@ public class MySQLExtractor extends GenericJDBCExtractor
     }
 
     /**
-     * {inheritDoc}
+     * {@inheritDoc}
      */
     @Override
     protected void extractIndexes(Catalog catalog, Connection connection) throws SQLException
     {
-        Map<Integer,Column> indexToColumns;
+        Map<Integer, Column> indexToColumns;
 
         DatabaseMetaData meta;
         ResultSet        rs;
@@ -99,7 +99,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
 
                 table.setInternalID(idCounter++);
 
-                indexToColumns   = new HashMap<Integer,Column>();
+                indexToColumns   = new HashMap<Integer, Column>();
                 currentIndexName = "";
                 index            = null;
 
@@ -116,7 +116,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
 
                         if (index != null)
                             for (int i = 0; i < indexToColumns.size(); i++)
-                                index.add(indexToColumns.get(i+1));
+                                index.add(indexToColumns.get(i + 1));
 
                         type = rs.getShort("type");
 
@@ -137,7 +137,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
 
                         index = new Index(sch, currentIndexName, isPrimary, isClustered, isUnique);
 
-                        indexToColumns = new HashMap<Integer,Column>();
+                        indexToColumns = new HashMap<Integer, Column>();
 
                         index.setMaterialized(true);
                         index.setInternalID(idCounter++);
@@ -147,7 +147,8 @@ public class MySQLExtractor extends GenericJDBCExtractor
                     column     = table.findColumn(columnName);
 
                     if (column == null)
-                        throw new SQLException("Column " + columnName + " not in " + table.getName());
+                        throw new SQLException(
+                                "Column " + columnName + " not in " + table.getName());
 
                     indexToColumns.put(rs.getInt("ordinal_position"), column);
                 }
@@ -155,7 +156,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
                 // add the columns of the last index
                 if (index != null)
                     for (int i = 0; i < indexToColumns.size(); i++)
-                        index.add(indexToColumns.get(i+1));
+                        index.add(indexToColumns.get(i + 1));
 
                 rs.close();
 
@@ -168,7 +169,7 @@ public class MySQLExtractor extends GenericJDBCExtractor
     @Override
     protected void extractObjectIDs(Catalog catalog, Connection connection) throws SQLException
     {
-        // nothing yet
+        // MySQL doesn't assign internal IDS; the IDS are generated incrementally in #extractIndexes
     }
 
     @Override
