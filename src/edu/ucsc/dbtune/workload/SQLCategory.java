@@ -127,11 +127,11 @@ public enum SQLCategory
     {
         if (this.isSame(SELECT)) {
             return "SELECT";
-        } else if (this.isSame(SELECT)) {
+        } else if (this.isSame(UPDATE)) {
             return "UPDATE";
-        } else if (this.isSame(SELECT)) {
+        } else if (this.isSame(INSERT)) {
             return "INSERT";
-        } else if (this.isSame(SELECT)) {
+        } else if (this.isSame(DELETE)) {
             return "DELETE";
         } else {
             return "UNKNOWN";

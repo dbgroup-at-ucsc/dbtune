@@ -41,13 +41,18 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
      * Convenience method that casts the object returned by {@link #findByQualifiedName}.
      *
      * @param pathToObject
-     *     fully qualified name of the new database object.
+     *      fully qualified name of the new database object.
      * @return
-     *     object corresponding to the given fully qualified name; {@code null} if not found.
+     *      object corresponding to the given fully qualified name; {@code null} if not found.
+     * @throws SQLException
+     *      for the same reasons that {@link #findByQualifiedName} throws one
      * @throws java.lang.ClassCastException
-     *     if the {@link #findByQualifiedName} method returns an object whose type doesn't 
-     *     correspond to the type given as parameter of the generic expression.
+     *      if the {@link #findByQualifiedName} method returns an object whose type doesn't 
+     *      correspond to the type given as parameter of the generic expression.
      * @see #findByQualifiedName
+     * @param <T>
+     *      the object that is expected to be retrieved, i.e. the object type corresponding to the 
+     *      given fully qualified name
      */
     public final <T extends DatabaseObject> T findByName(String pathToObject)
         throws SQLException
@@ -79,7 +84,8 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
         String[]       pathElements;
         
         if (pathToObject.contains("."))
-            container = findByQualifiedName(pathToObject.substring(0,pathToObject.lastIndexOf(".")));
+            container =
+                findByQualifiedName(pathToObject.substring(0, pathToObject.lastIndexOf(".")));
         else
             container = this;
 
@@ -88,20 +94,26 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
 
         pathElements = pathToObject.split("\\.");
 
-        return container.newContainee(pathElements[pathElements.length-1]);
+        return container.newContainee(pathElements[pathElements.length - 1]);
     }
 
     /**
      * Convenience method that casts the object returned by {@link #createObject}.
      *
      * @param pathToObject
-     *     fully qualified name of the new database object.
+     *      fully qualified name of the new database object.
      * @return
-     *     object corresponding to the given fully qualified name; {@code null} if not found.
+     *      object corresponding to the given fully qualified name; {@code null} if not found.
      * @throws java.lang.ClassCastException
-     *     if the {@link #findByQualifiedName} method returns an object whose type doesn't 
-     *     correspond to the type given as parameter of the generic expression.
+     *      if the {@link #findByQualifiedName} method returns an object whose type doesn't 
+     *      correspond to the type given as parameter of the generic expression.
      * @see #findByQualifiedName
+     * @param <T>
+     *      the object that is expected to be retrieved, i.e. the object type corresponding to the 
+     *      given fully qualified name
+     * @throws SQLException
+     *      when {@link #createObject} throws an exception
+     * @see #createObject
      */
     public final <T> T create(String pathToObject) throws SQLException
     {
@@ -124,12 +136,18 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
     }
 
     /**
-     * Finds the schema whose name matches the given argument.
+     * Finds the index whose name matches the given argument, across all the schemas contained in 
+     * the catalog. If more than one index with the same name exists, this method makes no 
+     * guarantees on which gets returned, that is, this method returns the "first" to be found, 
+     * where "first" is ambiguous.
      *
      * @param name
-     *     name of the index that is searched for in {@code this} catalog.
+     *      name of the index that is searched for in {@code this} catalog.
      * @return
-     *     the index that has the given name; {@code null} if not found
+     *      the index that has the given name; {@code null} if not found
+     * @throws SQLException
+     *      when {@code name} is a fully qualified path, and there's an error searching by it
+     * @see #findByQualifiedName
      */
     public Index findIndex(String name) throws SQLException
     {
@@ -165,6 +183,9 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
 
     /**
      * returns the list of schemas that the catalog contains.
+     *
+     * @return
+     *      the schemas contained in the catalog
      */
     public List<Schema> schemas()
     {
@@ -177,7 +198,7 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
     @Override
     public DatabaseObject newContainee(String name) throws SQLException
     {
-        return new Schema(this,name);
+        return new Schema(this, name);
     }
 
     /**

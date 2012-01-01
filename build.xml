@@ -7,8 +7,6 @@
   <property file="build.properties"/>
   <taskdef resource="net/sf/antcontrib/antcontrib.properties"
            classpath="${lib.dir}/ant-contrib-1.0b3.jar"/>
-  <taskdef resource="checkstyletask.properties"
-           classpath="${lib.dir}/checkstyle-5.5-all.jar"/>
   <path id="compile.classpath">
     <fileset dir="${lib.dir}" includes="*.jar"/>
     <fileset dir="${ext.dir}" includes="**/*.jar"/>
@@ -18,9 +16,6 @@
   </target>
 
   <!-- core -->
-  <target name="checkstyle">
-    <ant dir="." antfile="common.xml" target="checkstyle"/>
-  </target>
   <target name="compile" >
     <ant dir="." antfile="common.xml" target="compile">
       <reference refid="compile.classpath" />

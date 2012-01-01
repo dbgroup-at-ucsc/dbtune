@@ -1,16 +1,17 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.sql.Connection;
+
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.util.Environment;
-
-import java.sql.Connection;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
 /**
  * Functional test for optimizer implementations. The optimizer being tested is specified by the 
@@ -25,12 +26,16 @@ import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
  */
 public class OptimizerFunctionalTest
 {
-    public static DatabaseSystem db;
-    public static Environment    env;
-    public static Optimizer      opt;
+    private static DatabaseSystem db;
+    private static Environment    env;
+    private static Optimizer      opt;
 
+    /**
+     * @throws Exception
+     *      if something goes wrong
+     */
     @BeforeClass
-    public static void setUp() throws Exception
+    public static void beforeClass() throws Exception
     {
         Connection con;
         String     ddl;
@@ -46,13 +51,19 @@ public class OptimizerFunctionalTest
         opt = db.getOptimizer();
     }
 
+    /**
+     * @throws Exception
+     *      if something goes wrong
+     */
     @AfterClass
-    public static void tearDown() throws Exception
+    public static void afterClass() throws Exception
     {
         db.getConnection().close();
     }
 
     /**
+     * @throws Exception
+     *      if something goes wrong
      * @see OptimizerTest#checkExplain
      */
     @Test
@@ -62,15 +73,19 @@ public class OptimizerFunctionalTest
     }
 
     /**
+     * @throws Exception
+     *      if something goes wrong
      * @see OptimizerTest#checkWhatIfExplain
      */
     @Test
     public void testWhatIfExplain() throws Exception
     {
-        OptimizerTest.checkWhatIfExplain(db.getCatalog(),opt);
+        OptimizerTest.checkWhatIfExplain(db.getCatalog(), opt);
     }
 
     /**
+     * @throws Exception
+     *      if something goes wrong
      * @see OptimizerTest#checkRecommendIndexes
      */
     @Test
@@ -80,6 +95,8 @@ public class OptimizerFunctionalTest
     }
 
     /**
+     * @throws Exception
+     *      if something goes wrong
      * @see OptimizerTest#checkUsedIndexes
      */
     @Test
@@ -91,6 +108,8 @@ public class OptimizerFunctionalTest
     /**
      * Checks that each supported optimizer is well behaved.
      *
+     * @throws Exception
+     *      if something goes wrong
      * @see OptimizerTest#checkIsWellBehaved
      */
     @Test
@@ -100,20 +119,24 @@ public class OptimizerFunctionalTest
     }
 
     /**
+     * @throws Exception
+     *      if something goes wrong
      * @see OptimizerTest#checkMonotonicity
      */
     @Test
     public void testMonotonicity() throws Exception
     {
-        OptimizerTest.checkMonotonicity(db.getCatalog(),opt);
+        OptimizerTest.checkMonotonicity(db.getCatalog(), opt);
     }
 
     /**
+     * @throws Exception
+     *      if something goes wrong
      * @see OptimizerTest#checkSanity
      */
     @Test
     public void testSanity() throws Exception
     {
-        OptimizerTest.checkSanity(db.getCatalog(),opt);
+        OptimizerTest.checkSanity(db.getCatalog(), opt);
     }
 }

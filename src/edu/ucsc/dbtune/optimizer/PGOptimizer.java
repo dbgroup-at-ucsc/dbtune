@@ -113,6 +113,7 @@ public class PGOptimizer extends AbstractOptimizer
         String              indexOverhead;
         Map<Index, Double>  updateCost;
         double[]            updateCosts;
+        double              aggregatedUpdateCost;
         double              selectCost;
         int[]               positions;
 
@@ -155,9 +156,11 @@ public class PGOptimizer extends AbstractOptimizer
                 updateCosts.length + " update costs for " + indexes.size() + "indexes");
 
         updateCost = new HashMap<Index, Double>();
+        aggregatedUpdateCost = 0.0;
 
         for (int i = 0; i < updateCosts.length; i++) {
             updateCost.put(list.get(0), updateCosts[i]);
+            aggregatedUpdateCost += updateCosts[i];
         }
 
         sqlPlan = null;
@@ -166,7 +169,7 @@ public class PGOptimizer extends AbstractOptimizer
             sqlPlan = getPlan(connection, sql);
 
         return new ExplainedSQLStatement(
-                sql, sqlPlan, this, selectCost, updateCost, indexes, usedConf, 1);
+            sql, sqlPlan, this, selectCost, aggregatedUpdateCost, updateCost, indexes, usedConf, 1);
     }
 
     /**

@@ -403,6 +403,20 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
+     * Whether or not this index is reversible.
+     *
+     * @return
+     *     <code>true</code> if reversible; <code>false</code> otherwise
+     */
+    public boolean isReversible()
+    {
+        if (scanOption == REVERSIBLE)
+            return true;
+
+        return false;
+    }
+
+    /**
      * Whether or not this index is unique.
      *
      * @return
@@ -551,15 +565,13 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      *     the column for which the descending value is being requested.
      * @return
      *     <code>true</code> the column is descending; <code>false</code> if ascending
-     * @throws SQLException
-     *     if the column isn't contained in the index
      */
-    public boolean isDescending(Column column) throws SQLException
+    public boolean isDescending(Column column)
     {
         try {
             return descending.get(containees.indexOf(column));
         } catch (IndexOutOfBoundsException ex) {
-            throw new SQLException(ex);
+            throw new RuntimeException(new SQLException(ex));
         }
     }
 

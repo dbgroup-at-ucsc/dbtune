@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -150,7 +149,8 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
                     null,
                     optimizer,
                     rootNode.cost(),
-                    new HashMap<Index, Double>(),
+                    0.0,
+                    null,
                     universe,
                     new BitArraySet<Index>(rootNode.getUsedIndexes()),
                     optimizationCount);
@@ -169,7 +169,8 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
                     null,
                     optimizer,
                     cost,
-                    new HashMap<Index, Double>(),
+                    0.0,
+                    null,
                     configuration,
                     new HashSet<Index>(), 
                     0);
@@ -186,7 +187,8 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
                 null,
                 optimizer,
                 result.getCost(),
-                new HashMap<Index, Double>(),
+                0.0,
+                null,
                 configuration,
                 result.getUsedConfiguration(),
                 0);

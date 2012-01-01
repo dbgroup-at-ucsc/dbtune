@@ -60,10 +60,7 @@ public class MySQLOptimizer extends AbstractOptimizer
 
         drop(configuration, connection);
 
-        return new ExplainedSQLStatement(
-                sql, plan, this, cost,
-                new HashMap<Index, Double>(),
-                configuration, used, 1);
+        return new ExplainedSQLStatement(sql, plan, this, cost, 0.0, null, configuration, used, 1);
     }
 
     /**
@@ -186,6 +183,7 @@ public class MySQLOptimizer extends AbstractOptimizer
             stmt.close();
         }
     }
+
     /**
      * Returns a string representation of the given index.
      *
@@ -193,6 +191,8 @@ public class MySQLOptimizer extends AbstractOptimizer
      *     an index
      * @return
      *     a string containing the MySQL-specific string representation of the given index
+     * @throws SQLException
+     *     if the name of a column contained in the index can't be obtained
      */
     private static String toString(Index index) throws SQLException
     {

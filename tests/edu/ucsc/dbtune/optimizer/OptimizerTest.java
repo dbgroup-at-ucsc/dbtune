@@ -201,16 +201,16 @@ public class OptimizerTest
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
-        assertThat(sqlp.getCost(), greaterThan(0.0));
-        assertThat(sqlp.getUpdateCost(), is(0.0));
+        assertThat(sqlp.getCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
         sqlp = opt.explain(sql,conf);
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
-        assertThat(sqlp.getCost(), greaterThan(0.0));
-        assertThat(sqlp.getUpdateCost(), is(0.0));
+        assertThat(sqlp.getCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getOptimizationCount(), is(1));
     }
 
@@ -246,7 +246,7 @@ public class OptimizerTest
         assertThat(cost1, is(not(cost2)));
 
         col  = cat.<Column>findByName("one_table.tbl.b");
-        idxb = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        idxb = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
 
         conf.add(idxb);
 
@@ -254,13 +254,14 @@ public class OptimizerTest
         sqlp = opt.explain(sql, conf);
 
         assertThat(sqlp.getCost(), is(cost2));
-        assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getCost()));
-        assertThat(sqlp.getTotalCost(), greaterThan(sqlp.getUpdateCost()));
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
+        assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getCost())));
+        assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getUpdateCost())));
         assertThat(sqlp.getTotalCost(), is(sqlp.getCost() + sqlp.getUpdateCost()));
 
-        assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(idxa)));
-        assertThat(sqlp.getUpdateCost(), greaterThan(sqlp.getUpdateCost(idxb)));
-        assertThat(sqlp.getUpdateCost(), is(sqlp.getUpdateCost(conf)));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxa))));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
+        //assertThat(sqlp.getUpdateCost(), is(sqlp.getUpdateCost(conf)));
 
         idxa.getSchema().remove(idxa);
         idxb.getSchema().remove(idxb);
@@ -327,8 +328,9 @@ public class OptimizerTest
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
         sqlp = opt.explain(sql, conf);
 
-        assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(true));
-        assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(false));
+        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
+        //assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(true));
+        //assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(false));
 
         conf.add(idxb);
 
@@ -337,14 +339,16 @@ public class OptimizerTest
 
         assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
         assertThat(sqlp.getUsedConfiguration().contains(idxb), is(false));
-        assertThat(conf.contains(sqlp.getUsedConfiguration()), is(true));
+
+        assertThat(conf.containsAll(sqlp.getUsedConfiguration()), is(true));
         assertThat(conf.size(), greaterThan(sqlp.getUsedConfiguration().size()));
 
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
         sqlp = opt.explain(sql, conf);
 
-        assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(true));
-        assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(true));
+        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
+        //assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(true));
+        //assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(true));
 
         idxa.getSchema().remove(idxa);
         idxb.getSchema().remove(idxb);

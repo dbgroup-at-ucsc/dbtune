@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ public class ExplainedSQLStatement
     protected Set<Index> usedConfiguration;
 
     /**
-     * For update statements, the cost that implies on each of the indexes containe in {@link 
+     * For update statements, the cost that implies on each of the indexes contained in {@link 
      * #getConfiguration}.
      */
     protected Map<Index, Double> updateCosts;
@@ -55,57 +56,61 @@ public class ExplainedSQLStatement
      * construct a new {@code ExplainedSQLStatement} for an update statement.
      *
      * @param statement
-     *     corresponding the statement
+     *      corresponding the statement
      * @param plan
-     *     the statement plan. Might be null.
+     *      the statement plan. Might be null.
      * @param cost
-     *     the execution cost. For update statements, this cost corresponds only to the SELECT 
-     *     shell, i.e. no update costs are considered
+     *      the execution cost. For update statements, this cost corresponds only to the SELECT 
+     *      shell, i.e. no update costs are considered
      * @param optimizer
      *      optimizer that explained the statement
+     * @param updateCost
+     *      since {@link #getCost} returns the {@code SELECT} shell cost, update statements have to 
+     *      get assigned with the actual update cost separately
      * @param updateCosts
-     *     for update statements, a Map of incurred update costs, where each element corresponds to 
-     *     an index contained in {@link #getConfiguration}
+     *      optionally, for update statements, a Map of incurred update costs, where each element 
+     *      corresponds to an index contained in {@link #getConfiguration} can be specified. Might 
+     *      be null, in which case zero is implied for each index in {@link #getConfiguration}. 
+     *      Implicitly, this also determines the set of indexes that are updated by an {@code 
+     *      UPDATE} statement, that is, if this value is specified then {@code 
+     *      getUpdatedConfiguration.equals(updateCosts.keySet())} is {@code true}. However, since 
+     *      this parameter is optional, it may be the case that {@link #getUpdateCost} is not zero 
+     *      but {@link #getUpdatedConfiguration} is empty (mainly due to the lack of some optimizers 
+     *      of specifying how the update cost is "distributed" among the affected indexes)
      * @param configuration
-     *     configuration used when the statement was optimized
+     *      configuration used when the statement was optimized
      * @param usedConfiguration
      *      configuration that the generated execution plan uses
      * @param optimizationCount
-     *     number of optimization calls done on to produce the statement
+     *      number of optimization calls done on to produce the statement
      * @throws SQLException
-     *     if statement is of {@link SQLCategory#NOT_SELECT} category and the update array is null 
-     *     or its length doesn't correspond to the configuration size.
+     *      if statement is of {@link SQLCategory#NOT_SELECT} category and the update array is null 
+     *      or its length doesn't correspond to the configuration size.
      */
     public ExplainedSQLStatement(
             SQLStatement statement,
             SQLStatementPlan plan,
             Optimizer optimizer,
             double cost,
+            double updateCost,
             Map<Index, Double> updateCosts,
             Set<Index> configuration,
             Set<Index> usedConfiguration,
             int optimizationCount)
         throws SQLException
     {
-        this.statement         = statement;
-        this.plan              = plan;
-        this.cost              = cost;
-        this.updateCosts       = updateCosts;
-        this.configuration     = configuration;
-        this.optimizer         = optimizer;
+        this.statement = statement;
+        this.plan = plan;
+        this.cost = cost;
+        this.updateCosts = updateCosts;
+        this.configuration = configuration;
+        this.optimizer = optimizer;
         this.usedConfiguration = usedConfiguration;
         this.optimizationCount = optimizationCount;
+        this.updateCost = updateCost;
 
-        if (updateCosts.size() != configuration.size())
-            throw new SQLException(
-                    "Incorrect update costs " + updateCosts.size() +
-                    " for configuration of size" + configuration.size());
-
-        if (!configuration.containsAll(updateCosts.keySet()))
-            throw new SQLException(
-                    "Not all indexes from configuration contained in update cost map");
-
-        this.updateCost = getUpdateCost(getConfiguration());
+        if (updateCosts == null)
+            this.updateCosts = new HashMap<Index, Double>();
     }
 
     /**
@@ -172,12 +177,14 @@ public class ExplainedSQLStatement
      *      a {@link edu.ucsc.dbtune.metadata.Index} object.
      * @return
      *      maintenance cost for that this statement implies for the given index. 0 if the statement 
-     *      isn't an update, there are no update costs defined at all or the configuration assigned 
-     *      to the statement doesn't contain the given index.
+     *      isn't an update; if there are no update costs defined at all; or the configuration 
+     *      assigned to the statement doesn't contain the given index.
      */
     public double getUpdateCost(Index index)
     {
-        if (!configuration.contains(index) || !statement.getSQLCategory().isSame(UPDATE))
+        if (!configuration.contains(index) ||
+                !statement.getSQLCategory().isSame(UPDATE) ||
+                updateCosts.get(index) == null)
             return 0.0;
 
         return updateCosts.get(index);
@@ -196,12 +203,12 @@ public class ExplainedSQLStatement
      */
     public double getUpdateCost(Set<Index> indexes)
     {
-        double updateCost = 0.0;
+        double upCost = 0.0;
 
         for (Index idx : indexes)
-            updateCost += getUpdateCost(idx);
+            upCost += getUpdateCost(idx);
 
-        return updateCost;
+        return upCost;
     }
 
     /**
