@@ -188,9 +188,9 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     return new InumWhatIfOptimizerImpl(inum);
   }
 
-  public static InumWhatIfOptimizer configureWhatIfOptimizer(Set<Index> configuration) throws 
+  public static InumWhatIfOptimizer configureWhatIfOptimizer(Configuration configuration) throws 
       Exception {
-    final Inum inum = configureInum("", configuration);
+    final Inum inum = configureInum("SELECT * FROM TABLE1", configuration);
     return new InumWhatIfOptimizerImpl(inum);
   }
 
