@@ -2,28 +2,30 @@ package edu.ucsc.dbtune.util;
 
 import org.junit.Test;
 
+import static edu.ucsc.dbtune.util.BinaryTree.LEFT;
+import static edu.ucsc.dbtune.util.BinaryTree.RIGHT;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-import static edu.ucsc.dbtune.util.BinaryTree.LEFT;
-import static edu.ucsc.dbtune.util.BinaryTree.RIGHT;
-
 /**
- * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)
+ * @author Ivo Jimenez
  */
 public class BinaryTreeTest
 {
+    /**
+     */
     @Test
     public void testBasicUsage()
     {
         BinaryTree<String> tree = new BinaryTree<String>("F");
 
         assertThat(tree.getRootElement(), is("F"));
-        assertThat(tree.contains("F"),   is(true));
-        assertThat(tree.contains("B"),   is(false));
-        assertThat(tree.contains("G"),   is(false));
-        assertThat(tree.size(),          is(1));
+        assertThat(tree.contains("F"), is(true));
+        assertThat(tree.contains("B"), is(false));
+        assertThat(tree.contains("G"), is(false));
+        assertThat(tree.size(), is(1));
 
         tree.setChild("F", "B", LEFT);
 

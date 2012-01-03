@@ -217,7 +217,7 @@ public class Tree<T extends Comparable<? super T>>
     }
 
     /**
-     * An entry of the binary tree
+     * An entry of the tree
      */
     public static class Entry<T extends Comparable<? super T>>
     {

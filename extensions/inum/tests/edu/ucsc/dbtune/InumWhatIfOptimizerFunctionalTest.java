@@ -63,6 +63,7 @@ public class InumWhatIfOptimizerFunctionalTest
 
   @BeforeClass public static void setUp() throws Exception
  {
+     /*
     final File    outputdir    = new File(DESTINATION);
     final File    twinWorkload = new File(WORKLOAD_IN_USE);
 
@@ -71,6 +72,7 @@ public class InumWhatIfOptimizerFunctionalTest
 
 
     Files.copy(new File(WORKLOAD_PATH), twinWorkload);
+    */
   }
 
   @AfterClass public static void tearDown() throws Exception

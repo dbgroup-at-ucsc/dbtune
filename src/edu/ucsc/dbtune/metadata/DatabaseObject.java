@@ -250,8 +250,7 @@ public abstract class DatabaseObject
      *     if path string is empty; if there is an empty path identifier; if an intermediate object 
      *     can't be found
      */
-    protected final DatabaseObject findByQualifiedName(String pathToObject)
-        throws SQLException
+    public final DatabaseObject findByQualifiedName(String pathToObject) throws SQLException
     {
         DatabaseObject dbo;
         String[]       pathElements;
@@ -270,7 +269,7 @@ public abstract class DatabaseObject
         if (pathElements.length == 1)
             return dbo;
         else if (dbo == null)
-            throw new SQLException("Can't find object " + pathElements[0] + "referenced in path");
+            throw new SQLException("Can't find object " + pathElements[0] + " referenced in path");
         else
             return dbo.findByQualifiedName(
                         pathToObject.substring(pathToObject.indexOf(".") + 1, 

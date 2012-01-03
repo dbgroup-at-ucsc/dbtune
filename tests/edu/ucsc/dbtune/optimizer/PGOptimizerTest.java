@@ -1,72 +1,29 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.io.StringReader;
+
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLTypes;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-//import edu.ucsc.dbtune.spi.Environment;
-import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.io.StringReader;
-//import java.sql.Connection;
 
 import static org.junit.Assert.assertEquals;
 
 /**
- * Depends on the 'one_table' workload. Assumes that we're connecting to a PostgreSQL 9.0 system or 
- * greater.
- *
- * @author Ivo Jimenez (ivo@cs.ucsc.edu.com)
+ * @author Ivo Jimenez
  */
 public class PGOptimizerTest
 {
-    //private static Environment environment;
-    //private static Connection  connection;
-    //private static PGOptimizer optimizer;
-
-    /**
-     * Executes the SQL script that should contain the 'one_table' workload.
-     */
-    @BeforeClass
-    public static void setUp() throws Exception
-    {
-        /*
-        XXX: this should be implemented using a JDBC mock
-
-        String ddlfilename;
-
-        environment = Environment.getInstance();
-        connection  = makeDatabaseConnectionManager(environment.getAll()).connect().getJdbcConnection();
-        ddlfilename = environment.getScriptAtWorkloadsFolder("one_table/create.sql");
-
-        SQLScriptExecuter.execute(connection, ddlfilename);
-        */
-    }
-
-    /**
-     * Checks that the code is verifying the PostgreSQL version correctly.
-     */
-    @Test
-    public void testConstructor() throws Exception
-    {
-        /*
-        XXX: this should be implemented using a JDBC mock
-        try {
-            optimizer = new PGOptimizer(connection);
-        } catch (UnsupportedOperationException ex) {
-            fail("Getting exception when we shouldn't. Are we connecting to postgres-9.0 or greater?");
-        }
-        */
-    }
-
     /**
      * Checks that JSON-to-plan conversion is done correctly.
+     *
+     * @throws Exception
+     *      if an i/o error occurs.
      */
     @Test
     public void testJSONToPlanConversion() throws Exception
@@ -173,6 +130,9 @@ public class PGOptimizerTest
     /**
      * Checks bound conversion. {@code DatabaseObject} instances should be bound to the 
      * corresponding operators
+     *
+     * @throws Exception
+     *      if an i/o error occurs.
      */
     @Test
     public void testBoundConversion() throws Exception
@@ -204,11 +164,11 @@ public class PGOptimizerTest
             "]";
 
         Catalog cat = new Catalog("catalog");
-        Schema  sch = new Schema(cat,"test");
-        Table   tbl = new Table(sch,"tbl");
+        Schema  sch = new Schema(cat, "test");
+        Table   tbl = new Table(sch, "tbl");
 
-        new Column(tbl,"a", SQLTypes.INTEGER);
-        new Index(sch,"index_a",false,false,false);
+        new Column(tbl, "a", SQLTypes.INTEGER);
+        new Index(sch, "index_a", false, false, false);
 
         SQLStatementPlan plan = PGOptimizer.parseJSON(new StringReader(jsonPlan), sch);
         Operator         root = plan.getRootOperator();
@@ -228,20 +188,5 @@ public class PGOptimizerTest
         Operator child2 = plan.getChildren(root).get(1);
         assertEquals("Index Scan", child2.getName());
         assertEquals("index_a", child2.getDatabaseObjects().get(0).getName());
-    }
-
-    /**
-     * Checks that the class can execute an explain statement and return a plan.
-     */
-    @Test
-    public void testPlanExtraction() throws Exception
-    {
-        /*
-        XXX: this should be implemented using a JDBC mock
-
-        SQLStatementPlan plan = optimizer.explain("select * from tbl t1, tbl t2 where t1.a=t2.a;");
-
-        assertEquals(plan.size(),4);
-        */
     }
 }

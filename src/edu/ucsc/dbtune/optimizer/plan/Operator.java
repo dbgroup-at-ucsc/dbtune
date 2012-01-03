@@ -1,31 +1,34 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
-import edu.ucsc.dbtune.metadata.DatabaseObject;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.ucsc.dbtune.metadata.DatabaseObject;
+import edu.ucsc.dbtune.util.Identifiable;
+
 /**
  * Represents an operator of a SQL statement plan.
+ *
+ * @author Ivo Jimenez
  */
-public class Operator implements Comparable<Operator>
+public class Operator implements Comparable<Operator>, Identifiable
 {
-    /** ID used to identify an operator within a plan */
+    /** ID used to identify an operator within a plan. */
     protected int id;
 
-    /** Name of operator */
+    /** Name of operator. */
     protected String name;
 
-    /** Accumulated cost of the plan up to this operator */
+    /** Accumulated cost of the plan up to this operator. */
     protected double accumulatedCost;
 
-    /** Cost of the operator (not accumulated cost) */
+    /** Cost of the operator (not accumulated cost). */
     protected double cost;
 
-    /** Number of tuples that the operator produces */
+    /** Number of tuples that the operator produces. */
     protected long cardinality;
 
-    /** When the operator is applied to base objects */
+    /** When the operator is applied to base objects. */
     protected List<DatabaseObject> objects;
 
     /**
@@ -37,7 +40,7 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * creates an operator of the given name
+     * creates an operator of the given name.
      *
      * @param name
      *     name of the operator
@@ -57,15 +60,6 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode()
-    {
-        return 1 * 31 + (new Long(id)).hashCode();
-    }
-
-    /**
      * Adds a {@link DatabaseObject} to the list of objects that are touched by this operator. 
      * Usually this corresponds to base operators like sequential and index scans, as well as 
      * columns used in predicates.
@@ -79,7 +73,7 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * Returns the list of objects that are touched by this operator
+     * Returns the list of objects that are touched by this operator.
      *
      * @return
      *     list of objects that are referenced by the operator
@@ -90,18 +84,19 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * returns the operator id
+     * returns the operator id.
      *
      * @return
      *     operator id
      */
+    @Override
     public int getId()
     {
         return id;
     }
 
     /**
-     * assigns the value of the operator id
+     * assigns the value of the operator id.
      *
      * @param id
      *     operator id
@@ -112,7 +107,7 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * returns the accumulated cost of the operator
+     * returns the accumulated cost of the operator.
      *
      * @return
      *     the value corresponding to the accumulated cost of the operator
@@ -123,7 +118,7 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * returns the cost of the operator
+     * returns the cost of the operator.
      *
      * @param cost
      *     the value corresponding to the cost of the operator
@@ -134,7 +129,7 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * returns the cost of the operator
+     * returns the cost of the operator.
      *
      * @return
      *     the value corresponding to the cost of the operator
@@ -145,7 +140,7 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * returns the number of rows produced by the operator
+     * returns the number of rows produced by the operator.
      *
      * @return
      *     cardinality of the operator
@@ -156,7 +151,7 @@ public class Operator implements Comparable<Operator>
     }
 
     /**
-     * returns the operator name
+     * returns the operator name.
      *
      * @return
      *     name of operator
@@ -184,16 +179,42 @@ public class Operator implements Comparable<Operator>
         StringBuilder str = new StringBuilder();
 
         str.append(
-           "id: " + id +
-           "; operator: " + name +
-           "; cost: " + cost +
-           "; accCost: " + accumulatedCost +
-           "; cardinality: " + cardinality);
+                "id: " + id +
+                "; operator: " + name +
+                "; cost: " + cost +
+                "; accCost: " + accumulatedCost +
+                "; cardinality: " + cardinality);
 
         for (DatabaseObject obj : objects) {
-           str.append("; " + obj.getClass().getName() + ": " + obj);
+            str.append("; " + obj.getClass().getName() + ": " + obj);
         }
 
         return str.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return new Integer(id).hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o)
+            return true;
+
+        if (!(o instanceof Operator))
+            return false;
+
+        Operator op = (Operator) o;
+
+        return getId() == op.getId();
     }
 }
