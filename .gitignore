@@ -7,7 +7,7 @@ doc/
 manifest.mf
 nbproject/
 nbbuild.xml
-.*.sw*
+*.sw*
 .checkstyle
 .classpath
 .ctags

@@ -1,11 +1,13 @@
 package edu.ucsc.dbtune;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -17,6 +19,11 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Identifiable;
+
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.Environment.extractDriver;
@@ -573,4 +580,42 @@ public final class DBTuneInstances
             return i;
         }
     }
+
+    //CHECKSTYLE:OFF
+    /**
+     * Taken from: http://bit.ly/vR8ujB
+     */
+    @SuppressWarnings("rawtypes")
+    public static ResultSet makeResultSet(
+            final List<String> aColumns, final List... rows)
+        throws Exception
+    {
+        ResultSet result = Mockito.mock(ResultSet.class);
+        final AtomicInteger currentIndex = new AtomicInteger(-1);
+
+        Mockito.when(result.next()).thenAnswer(new Answer() {
+            public Object answer(InvocationOnMock aInvocation) throws Throwable {
+                return currentIndex.incrementAndGet() < rows.length;
+            }
+        });
+
+        final ArgumentCaptor<String> argument = ArgumentCaptor.forClass(String.class);
+        Answer rowLookupAnswer = new Answer() {
+            public Object answer(InvocationOnMock aInvocation) throws Throwable {
+                currentIndex.get();
+                int columnIndex = aColumns.indexOf(argument.getValue());
+                return rows[currentIndex.get()].get(columnIndex);
+            }
+        };
+        Mockito.when(result.getString(argument.capture())).thenAnswer(rowLookupAnswer);
+        Mockito.when(result.getShort(argument.capture())).thenAnswer(rowLookupAnswer);
+        Mockito.when(result.getDate(argument.capture())).thenAnswer(rowLookupAnswer);
+        Mockito.when(result.getInt(argument.capture())).thenAnswer(rowLookupAnswer);
+        Mockito.when(result.getLong(argument.capture())).thenAnswer(rowLookupAnswer);
+        Mockito.when(result.getDouble(argument.capture())).thenAnswer(rowLookupAnswer);
+        Mockito.when(result.getTimestamp(argument.capture())).thenAnswer(rowLookupAnswer);
+
+        return result;
+    }
+    //CHECKSTYLE:ON
 }

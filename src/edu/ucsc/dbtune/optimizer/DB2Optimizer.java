@@ -5,16 +5,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
@@ -76,7 +80,8 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Clears the set of indexes loaded in the {@code SYSTOOLS.ADVISE_TABLE} table.
+     * Clears the content from the explain tables, so that the information of only one statement is 
+     * contained in them.
      *
      * @param connection
      *     connection used to communicate with the DBMS
@@ -97,7 +102,7 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Creates the given configuration as a set of hypothetical indexes in the database.
+     * Loads the given configuration the {@code ADVISE_INDEX} table.
      *
      * @param configuration
      *     configuration being created
@@ -334,7 +339,8 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Returns the cost of the statement that has been just explained.
+     * Returns the cost of the statement that has been just explained. Assumes that only one 
+     * statement is contained in the {@code EXPLAIN_STATEMENT} table.
      *
      * @param connection
      *     connection used to communicate with the DBMS
@@ -364,7 +370,7 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Returns the plan for the given statement.
+     * Explains the given statement and returns its execution plan.
      *
      * @param sql
      *     statement which the plan is obtained for
@@ -376,14 +382,43 @@ public class DB2Optimizer extends AbstractOptimizer
     protected SQLStatementPlan getPlan(SQLStatement sql) throws SQLException
     {
         Statement stmt = connection.createStatement();
+        ResultSet rs;
+        SQLStatementPlan plan;
 
         stmt.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
         stmt.execute(sql.getSQL());
         stmt.execute("SET CURRENT EXPLAIN MODE = NO");
 
+        rs = stmt.executeQuery(
+                "SELECT " +
+                "     o.operator_id as node_id, " +
+                "     s2.target_id as parent_id, " +
+                "     o.operator_type as operator_name, " +
+                "     s1.object_schema as object_schema, " +
+                "     s1.object_name as object_name, " +
+                "     s2.stream_count as cardinality, " +
+                "     o.total_cost as cost " +
+                " FROM " +
+                "     systools.explain_operator o " +
+                "        LEFT OUTER JOIN " +
+                "     systools.explain_stream s2 " +
+                "           ON o.operator_id=s2.source_id AND " +
+                "              s2.target_id > 0 " +
+                "        LEFT OUTER JOIN " +
+                "     systools.explain_stream s1 " +
+                "           ON o.operator_id = s1.target_id AND " +
+                "              o.explain_time = s1.explain_time AND " +
+                "              s1.object_name IS NOT NULL " +
+                " ORDER BY " +
+                "     o.explain_time ASC, " +
+                "     o.operator_id ASC");
+
+        plan = parsePlan(catalog, rs);
+
+        rs.close();
         stmt.close();
 
-        return null;
+        return plan;
     }
 
     /**
@@ -428,7 +463,9 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Returns the set of used indexes.
+     * Returns the set of indexes used in the execution plan of the statement that has been 
+     * previously explained. Assumes that the {@code EXPLAIN_OBJECT} table contains information 
+     * corresponding to only one statement.
      *
      * @param connection
      *     connection used to communicate with the DBMS
@@ -447,12 +484,12 @@ public class DB2Optimizer extends AbstractOptimizer
         Statement stmt = connection.createStatement();
         ResultSet rs =
             stmt.executeQuery(
-                    "SELECT object_name " +
+                    "SELECT object_name as name" +
                     " FROM  systools.explain_object " +
                     " WHERE object_type = 'IX'");
 
         while (rs.next())
-            used.add(catalog.findIndex(rs.getString("object_name")));
+            used.add(catalog.findIndex(rs.getString("name")));
 
         rs.close();
         stmt.close();
@@ -461,7 +498,8 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Returns the set of recommended indexes contained in the {@code ADVISE_INDEX} table.
+     * Reads the content of the {@code ADVISE_INDEX}, after a {@code RECOMMEND INDEXES} operation 
+     * has been done. Creates one index per each record in the table. 
      *
      * @param connection
      *     connection used to communicate with the DBMS
@@ -526,7 +564,8 @@ public class DB2Optimizer extends AbstractOptimizer
 
     /**
      * Parses the {@code ADVISE_INDEX.COLNAMES} column in order to extract the list of referenced 
-     * columns and their corresponding ASC/DESC values.
+     * columns and their corresponding ASC/DESC values. The read values are placed in the {@code 
+     * columns} and {@code descending} lists sent as arguments.
      *
      * @param table
      *     table from which the columns belong to
@@ -586,6 +625,98 @@ public class DB2Optimizer extends AbstractOptimizer
         columns.add(table.findColumn(str.substring(nameStart, str.length())));
     }
 
+    /**
+     * Reads an entry in the given result set object and creates a {@link Operator} object out of 
+     * it.
+     *
+     * @param rs
+     *     result set from which a record is read
+     * @param catalog
+     *     used to retrieve metadata information
+     * @return
+     *     the execution plan
+     * @throws SQLException
+     *     if an expected column is not in the result set; if a database object referenced by the 
+     *     operator can't be found in the catalog.
+     */
+    static Operator parseNode(Catalog catalog, ResultSet rs) throws SQLException
+    {
+        double accomulatedCost = rs.getDouble("cost");
+        long cardinality = rs.getLong("cardinality");
+        String name = rs.getString("operator_name");
+        String dboName = rs.getString("object_name");
+        String dboSchema = rs.getString("object_schema");
+        DatabaseObject dbo;
+
+        Operator op = new Operator(name, accomulatedCost, cardinality);
+
+        if (dboSchema != null)
+            dboSchema = dboSchema.trim();
+        if (dboName != null)
+            dboName = dboName.trim();
+
+        // check if the DBMS is building an index (in SYSTEM schema), in which case we ignore it.
+        if (dboName != null && dboSchema != null && !dboSchema.equals("SYSTEM")) {
+            dbo = catalog.findByQualifiedName(dboSchema + "." + dboName);
+
+            if (dbo == null)
+                throw new SQLException(
+                        "Can't find object " + dboSchema + "." + dboName);
+
+            op.add(dbo);
+        }
+
+        return op;
+    }
+
+    /**
+     * Reads the {@code EXPLAIN_OPERATOR} table and creates a {@link SQLStatementPlan} object out of 
+     * it. Assumes that the {@code EXPLAIN_OPERATOR} and {@code EXPLAIN_STREAM} tables contain 
+     * entries corresponding to one statement.
+     *
+     * @param rs
+     *     result set object that contains the answer from the DBMS for the query that extracts 
+     *     operator information. It is assumed that the set contains information for a single 
+     *     statement.
+     * @param catalog
+     *     used to retrieve metadata information
+     * @return
+     *     the execution plan
+     * @throws SQLException
+     *     if something goes wrong while talking to the DBMS
+     */
+    static SQLStatementPlan parsePlan(Catalog catalog, ResultSet rs) throws SQLException
+    {
+        Map<Integer, Operator> idToNode;
+        Operator child;
+        Operator parent;
+        Operator root;
+        SQLStatementPlan plan;
+
+        if (!rs.next())
+            throw new SQLException("Empty plan");
+
+        root = parseNode(catalog, rs);
+        plan = new SQLStatementPlan(root);
+        idToNode = new HashMap<Integer, Operator>();
+
+        idToNode.put(1, root);
+
+        while (rs.next()) {
+            child = parseNode(catalog, rs);
+            parent = idToNode.get(rs.getInt("parent_id"));
+
+            if (parent == null)
+                throw new SQLException(child + " expecting parent_id=" + rs.getInt("parent_id"));
+
+            plan.setChild(parent, child);
+            idToNode.put(rs.getInt("node_id"), child);
+        }
+
+        rs.close();
+
+        return plan;
+    }
 
     /**
      * {@inheritDoc}
