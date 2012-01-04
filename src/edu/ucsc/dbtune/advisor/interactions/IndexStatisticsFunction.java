@@ -117,7 +117,7 @@ public class IndexStatisticsFunction
         return doi.apply(a, b) ;
     }
 
-    public double benefit(Index a, BitArraySet m)
+    public double benefit(Index a, BitArraySet<Index> m)
     {
         return benefit.apply(a, m);
     }
@@ -241,7 +241,7 @@ public class IndexStatisticsFunction
             this.statistics = statistics;
         }
 
-        public double apply(Index arg, BitArraySet m)
+        public double apply(Index arg, BitArraySet<Index> m)
         {
             if (statistics.currentTimeStamp == 0)
                 return 0;

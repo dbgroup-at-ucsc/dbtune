@@ -9,8 +9,6 @@ import java.util.Set;
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.wfit.WFIT;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -22,10 +20,6 @@ import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
-import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
-
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
 
 /**
  * Functional test for the WFIT use case.

@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.HashSet;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 /**
  * default implementation of {@link InumWhatIfOptimizer} type.

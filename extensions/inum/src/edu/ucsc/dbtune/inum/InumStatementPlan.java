@@ -1,8 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
 import java.util.List;
-import java.util.Set;
-
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
