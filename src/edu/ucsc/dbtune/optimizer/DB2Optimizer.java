@@ -74,9 +74,9 @@ public class DB2Optimizer extends AbstractOptimizer
 
         selectCost = getCost(connection) - updateCost;
 
-        return
-            new ExplainedSQLStatement(
-                    sql, plan, this, selectCost, updateCost, null, indexes, used, 1);
+        return new ExplainedSQLStatement(
+            sql, plan, this, selectCost, updateCost, 0.0,
+            new HashMap<Index, Double>(), indexes, used, 1);
     }
 
     /**

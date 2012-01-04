@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Column;
@@ -59,7 +60,8 @@ public class MySQLOptimizer extends AbstractOptimizer
 
         drop(configuration, connection);
 
-        return new ExplainedSQLStatement(sql, plan, this, cost, 0.0, null, configuration, used, 1);
+        return new ExplainedSQLStatement(
+            sql, plan, this, cost, 0.0, 0.0, new HashMap<Index, Double>(), configuration, used, 1);             
     }
 
     /**

@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,7 +9,7 @@ import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 /**
  * Represents a SQL statement that has been optimized. Each {@code SQLStatement} object is tied to a 
@@ -25,75 +24,77 @@ public class ExplainedSQLStatement
     /** statement corresponding to this explained statement, i.e. SQL statement that was explained */
     protected SQLStatement statement;
 
-    /** configuration that was used to optimize the statement. */
-    protected Set<Index> configuration;
-
-    /** cost assigned by an {@link Optimizer}. */
-    protected double cost;
+    /** the optimizer that constructed the statement. */
+    protected Optimizer optimizer;
 
     /** the optimized plan. */
     protected SQLStatementPlan plan;
 
+    /** execution cost (for selects) or the select shell cost for updates. */
+    protected double selectCost;
+
+    /** update cost. */
+    protected double updateCost;
+
+    /** cost of updating the base table. */
+    protected double baseTableUpdateCost;
+
+    /** For updates, the incurred cost of each index in {@link #getUpdatedConfiguration}.*/
+    protected Map<Index, Double> indexUpdateCosts;
+
+    /** configuration that was used to optimize the statement. */
+    protected Set<Index> configuration;
+
     /** a list of indexes that are used by the optimized plan. */
     protected Set<Index> usedConfiguration;
 
-    /**
-     * For update statements, the cost that implies on each of the indexes contained in {@link 
-     * #getConfiguration}.
-     */
-    protected Map<Index, Double> updateCosts;
-
-    /** the optimizer that constructed the statement. */
-    protected Optimizer optimizer;
-
     /** number of optimization calls done to produce this statement. */
     protected int optimizationCount;
-
-    /** cached update cost. */
-    protected double updateCost;
 
     /**
      * construct a new {@code ExplainedSQLStatement} for an update statement.
      *
      * @param statement
-     *      corresponding the statement
+     *      the corresponding statement
      * @param plan
-     *      the statement plan. Might be null.
-     * @param cost
-     *      the execution cost. For update statements, this cost corresponds only to the SELECT 
-     *      shell, i.e. no update costs are considered
+     *      execution plan of the statement. <strong>Can be null</strong>
+     * @param selectCost
+     *      for {@link SQLCategory#SELECT} statements, the estimated execution cost. For {@link 
+     *      SQLCategory#NOT_SELECT} statements, this cost corresponds only to the SELECT shell
      * @param optimizer
      *      optimizer that explained the statement
      * @param updateCost
-     *      since {@link #getSelectCost} returns the {@code SELECT} shell cost, update statements have to 
-     *      get assigned with the actual update cost separately
-     * @param updateCosts
-     *      optionally, for update statements, a Map of incurred update costs, where each element 
-     *      corresponds to an index contained in {@link #getConfiguration} can be specified. Might 
-     *      be null, in which case zero is implied for each index in {@link #getConfiguration}. 
-     *      Implicitly, this also determines the set of indexes that are updated by an {@code 
-     *      UPDATE} statement, that is, if this value is specified then {@code 
-     *      getUpdatedConfiguration.equals(updateCosts.keySet())} is {@code true}. However, since 
-     *      this parameter is optional, it may be the case that {@link #getUpdateCost} is not zero 
-     *      but {@link #getUpdatedConfiguration} is empty (mainly due to the lack of some optimizers 
-     *      of specifying how the update cost is "distributed" among the affected indexes)
+     *      since {@link #getSelectCost} returns only the {@code SELECT} shell cost, update 
+     *      statements have to get assigned with the actual update cost separately.
+     * @param baseTableUpdateCost
+     *      for update statements, the cost of updating the base table
+     * @param indexUpdateCosts
+     *      for update statements, a Map of incurred update costs, where each element corresponds to 
+     *      an index contained in {@link #getUpdatedConfiguration}. Implicitly, this also determines 
+     *      the set of indexes that are updated by an {@code UPDATE} statement, that is, {@code 
+     *      getUpdatedConfiguration.equals(updateCosts.keySet())} is {@code true}
      * @param configuration
      *      configuration used when the statement was optimized
      * @param usedConfiguration
      *      configuration that the generated execution plan uses
      * @param optimizationCount
-     *      number of optimization calls done on to produce the statement
+     *      number of optimization calls done on the underlaying DBMS optimizer
      * @throws SQLException
-     *      if statement is of {@link SQLCategory#NOT_SELECT} category and the update array is null 
-     *      or its length doesn't correspond to the configuration size.
+     *      if the statement is a {@link SQLCategory#NOT_SELECT} one and the update costs ({@code 
+     *      baseTableUpdateCost}, {@code updateCost} and {@code indexUpdateCosts}) are inconsistent 
+     *      among them. That is, if the arguments cause that {@link #getUpdateCost}
+     * @throws NullPointerException
+     *      if any of {@code indexUpdateCosts}, {@code configuration} or {@code usedConfiguration} 
+     *      is null
      */
     public ExplainedSQLStatement(
             SQLStatement statement,
             SQLStatementPlan plan,
             Optimizer optimizer,
-            double cost,
+            double selectCost,
             double updateCost,
-            Map<Index, Double> updateCosts,
+            double baseTableUpdateCost,
+            Map<Index, Double> indexUpdateCosts,
             Set<Index> configuration,
             Set<Index> usedConfiguration,
             int optimizationCount)
@@ -101,16 +102,20 @@ public class ExplainedSQLStatement
     {
         this.statement = statement;
         this.plan = plan;
-        this.cost = cost;
-        this.updateCosts = updateCosts;
-        this.configuration = configuration;
         this.optimizer = optimizer;
+        this.selectCost = selectCost;
+        this.updateCost = updateCost;
+        this.baseTableUpdateCost = baseTableUpdateCost;
+        this.indexUpdateCosts = indexUpdateCosts;
+        this.configuration = configuration;
         this.usedConfiguration = usedConfiguration;
         this.optimizationCount = optimizationCount;
-        this.updateCost = updateCost;
 
-        if (updateCosts == null)
-            this.updateCosts = new HashMap<Index, Double>();
+        if (indexUpdateCosts == null || configuration == null || usedConfiguration == null)
+            throw new NullPointerException("Null arguments");
+
+        if (getUpdateCost() != getBaseTableUpdateCost() + getUpdateCost(getUpdatedConfiguration()))
+            throw new SQLException("Inconsistent assignment of update costs");
     }
 
     /**
@@ -121,89 +126,92 @@ public class ExplainedSQLStatement
      */
     public ExplainedSQLStatement(ExplainedSQLStatement other)
     {
-        this.configuration     = other.configuration;
-        this.cost              = other.cost;
-        this.optimizer         = other.optimizer;
-        this.plan              = other.plan;
-        this.statement         = other.statement;
-        this.updateCosts       = other.updateCosts;
-        this.updateCost        = other.updateCost;
+        this.statement = other.statement;
+        this.plan = other.plan;
+        this.optimizer = other.optimizer;
+        this.selectCost = other.selectCost;
+        this.updateCost = other.updateCost;
+        this.baseTableUpdateCost = other.baseTableUpdateCost;
+        this.indexUpdateCosts = other.indexUpdateCosts;
+        this.configuration = other.configuration;
         this.usedConfiguration = other.usedConfiguration;
-    }
-
-    /**
-     * Assigns the cost of executing the statement.
-     *
-     * @param cost
-     *      the execution cost of the statement.
-     */
-    void setCost(double cost)
-    {
-        this.cost = cost;
-    }
-
-    /**
-     * Sets the configuration that the optimizer considered when it optimized the statement.
-     *
-     * @param configuration
-     *     the list of indexes considered at optimization time.
-     */
-    void setConfiguration(Set<Index> configuration)
-    {
-        this.configuration = configuration;
+        this.optimizationCount = other.optimizationCount;
     }
 
     /**
      * Returns the cost of executing the statement. The cost returned is the cost that an optimizer 
      * estimated given the set of physical structures contained in {@link #getConfiguration}. For 
-     * update statements, this cost corresponds to the SELECT shell only, i.e. no update costs are 
-     * considered.
+     * update statements, this cost corresponds to the {@code SELECT} shell only, i.e. no update 
+     * costs are considered.
      *
      * @return
-     *      the execution cost of the statement.
+     *      the execution cost of the statement; the {@code SELECT} shell cost for update statements
      */
     public double getSelectCost()
     {
-        return cost;
+        return selectCost;
     }
 
     /**
-     * Returns the UPDATE cost that executing the statement implies on the given index. The cost 
-     * returned is the cost that an optimizer estimated given the set of physical structures 
-     * contained in {@link #getConfiguration}. This cost doesn't include the SELECT shell cost, i.e. 
-     * the cost of retrieving the tuples that will be affected by the update
+     * Returns the update cost of the statement. This cost doesn't include the {@code SELECT} shell 
+     * cost, i.e. the cost of retrieving the tuples that will be affected by the update.
+     *
+     * @return
+     *     the update cost. If the statement is a {@link SQLCategory#SELECT} statement, the value 
+     *     returned is zero.
+     */
+    public double getUpdateCost()
+    {
+        return updateCost;
+    }
+
+    /**
+     * Returns the update cost associated to the cost of updating the base table.
+     *
+     * @return
+     *     the update cost of the base table. If the statement is a {@link SQLCategory#SELECT} 
+     *     statement, the value returned is zero.
+     */
+    public double getBaseTableUpdateCost()
+    {
+        return baseTableUpdateCost;
+    }
+
+    /**
+     * Returns the update cost for the given index. This cost doesn't include the {@code SELECT} 
+     * shell cost, i.e. the cost of retrieving the tuples that will be affected by the update.
      *
      * @param index
      *      a {@link edu.ucsc.dbtune.metadata.Index} object.
      * @return
-     *      maintenance cost for that this statement implies for the given index. 0 if the statement 
-     *      isn't an update; if there are no update costs defined at all; or the configuration 
-     *      assigned to the statement doesn't contain the given index.
+     *      maintenance cost for the given index; zero if the statement isn't an update or if the 
+     *      {@link #getUpdatedConfiguration updated configuration} assigned to the statement doesn't 
+     *      contain the given index.
      */
     public double getUpdateCost(Index index)
     {
-        if (!configuration.contains(index) ||
-                !statement.getSQLCategory().isSame(UPDATE) ||
-                updateCosts.get(index) == null)
+        if (!statement.getSQLCategory().isSame(NOT_SELECT) || indexUpdateCosts.get(index) == null)
             return 0.0;
 
-        return updateCosts.get(index);
+        return indexUpdateCosts.get(index);
     }
 
     /**
-     * Returns the UPDATE cost that executing the statement implies on the given set of indexes. The 
-     * cost returned is the cost that an optimizer estimated given the set of physical structures 
-     * contained in {@link #getConfiguration}. This cost doesn't include the SELECT shell cost, i.e. 
-     * the cost of retrieving the tuples that will be affected by the update
+     * Returns the update cost associated to the given set of indexes.
      *
      * @param indexes
      *      list of {@link edu.ucsc.dbtune.metadata.Index} objects.
      * @return
-     *      aggregation of update costs of the given configuration.
+     *      aggregation of update costs of the given configuration. Zero if {@link 
+     *      SQLCategory#SELECT}.
+     * @see #getUpdateCost(Index)
      */
     public double getUpdateCost(Set<Index> indexes)
     {
         double upCost = 0.0;
+
+        if (!statement.getSQLCategory().isSame(NOT_SELECT))
+            return upCost;
 
         for (Index idx : indexes)
             upCost += getUpdateCost(idx);
@@ -212,25 +220,12 @@ public class ExplainedSQLStatement
     }
 
     /**
-     * Returns the update costs for the statement. If an index in {@code configuration} is contained 
-     * in {@code getUpdatedConfiguration()}, then it's cost is aggregated into the returned value.
-     *
-     * @return
-     *     the update costs for the given configuration.
-     */
-    public double getUpdateCost()
-    {
-        return updateCost;
-    }
-
-    /**
      * Returns the total cost of this statement. The total is equal to the sum of the statement's 
-     * plan cost and the maintenance of each of the updated indexes. For non-update statements this 
-     * is equal to {@link #getSelectCost}
+     * plan cost and the maintenance of each of the updated indexes. For {@link 
+     * SQLCategory#NOT_SELECT} statements this is equal to {@link #getSelectCost}
      *
      * @return
      *      the total cost of this query.
-     * @see #getUpdatedConfiguration
      */
     public double getTotalCost()
     {
@@ -271,7 +266,7 @@ public class ExplainedSQLStatement
      */
     public Set<Index> getConfiguration()
     {
-        return configuration;
+        return new BitArraySet<Index>(configuration);
     }
 
     /**
@@ -284,13 +279,7 @@ public class ExplainedSQLStatement
      */
     public Set<Index> getUsedConfiguration()
     {
-        Set<Index> usedConfiguration = new BitArraySet<Index>();
-
-        for (Index idx : getConfiguration())
-            if (isUsed(idx))
-                usedConfiguration.add(idx);
-
-        return usedConfiguration;
+        return new BitArraySet<Index>(usedConfiguration);
     }
 
     /**
@@ -303,13 +292,7 @@ public class ExplainedSQLStatement
      */
     public Set<Index> getUpdatedConfiguration()
     {
-        Set<Index> updatedConfiguration = new BitArraySet<Index>();
-
-        for (Map.Entry<Index, Double> e : updateCosts.entrySet())
-            if (e.getValue() != 0)
-                updatedConfiguration.add(e.getKey());
-
-        return updatedConfiguration;
+        return new BitArraySet<Index>(indexUpdateCosts.keySet());
     }
 
     /**
