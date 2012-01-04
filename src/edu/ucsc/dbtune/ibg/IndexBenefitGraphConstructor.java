@@ -103,7 +103,7 @@ public class IndexBenefitGraphConstructor
         BitArraySet<Index> rootConfig = new BitArraySet<Index>(conf);
         rootNode = new IndexBenefitGraph.Node(rootConfig, nodeCount++);
 
-        emptyCost = optimizer.explain(this.sql).getCost();
+        emptyCost = optimizer.explain(this.sql).getSelectCost();
 
         // initialize the queue
         queue.add(rootNode);
@@ -300,7 +300,7 @@ public class IndexBenefitGraphConstructor
         rootConfig    = new BitArraySet<Index>(candidateSet.set());
         queue         = new DefaultQueue<IndexBenefitGraph.Node>();
         rootNode      = new IndexBenefitGraph.Node(rootConfig, nodeCount++);
-        emptyCost     = optimizer.explain(sql).getCost();
+        emptyCost     = optimizer.explain(sql).getSelectCost();
 
         optCount++;
 

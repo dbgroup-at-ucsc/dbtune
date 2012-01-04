@@ -178,20 +178,20 @@ public class OptimizerTest
 
         sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         sqlp  = opt.explain(sql);
-        cost1 = sqlp.getCost();
+        cost1 = sqlp.getSelectCost();
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.SELECT), is(true));
-        assertThat(sqlp.getCost(), greaterThan(0.0));
+        assertThat(sqlp.getSelectCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
         conf  = new BitArraySet<Index>();
         sqlp  = opt.explain(sql, conf);
-        cost2 = sqlp.getCost();
+        cost2 = sqlp.getSelectCost();
         
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.SELECT), is(true));
-        assertThat(sqlp.getCost(), greaterThan(0.0));
+        assertThat(sqlp.getSelectCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
         assertThat(cost1, is(cost2));
@@ -201,7 +201,7 @@ public class OptimizerTest
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
-        assertThat(sqlp.getCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
@@ -209,7 +209,7 @@ public class OptimizerTest
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
-        assertThat(sqlp.getCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getOptimizationCount(), is(1));
     }
@@ -229,7 +229,7 @@ public class OptimizerTest
         double cost2;
 
         sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
-        cost1 = opt.explain(sql).getCost();
+        cost1 = opt.explain(sql).getSelectCost();
 
         idxa = new Index(cat.<Column>findByName("one_table.tbl.a"));
         conf = new BitArraySet<Index>();
@@ -237,11 +237,11 @@ public class OptimizerTest
         conf.add(idxa);
 
         sqlp  = opt.explain(sql, conf);
-        cost2 = sqlp.getCost();
+        cost2 = sqlp.getSelectCost();
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.SELECT), is(true));
-        assertThat(sqlp.getCost(), greaterThan(0.0));
+        assertThat(sqlp.getSelectCost(), greaterThan(0.0));
         assertThat(sqlp.getOptimizationCount(), is(1));
         assertThat(cost1, is(not(cost2)));
 
@@ -253,11 +253,11 @@ public class OptimizerTest
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
 
-        assertThat(sqlp.getCost(), is(cost2));
+        assertThat(sqlp.getSelectCost(), is(cost2));
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
-        assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getCost())));
+        assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getSelectCost())));
         assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getUpdateCost())));
-        assertThat(sqlp.getTotalCost(), is(sqlp.getCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
 
         assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxa))));
         assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
@@ -388,8 +388,8 @@ public class OptimizerTest
 
         conf.add(idx);
 
-        cost1 = opt.explain(sql).getCost();
-        cost2 = opt.explain(sql, conf).getCost();
+        cost1 = opt.explain(sql).getSelectCost();
+        cost2 = opt.explain(sql, conf).getSelectCost();
 
         assertThat(cost1, greaterThanOrEqualTo(cost2));
 
@@ -423,11 +423,11 @@ public class OptimizerTest
 
         conf.add(idxA);
 
-        cost1 = opt.explain(sql, conf).getCost();
+        cost1 = opt.explain(sql, conf).getSelectCost();
 
         conf.add(idxB);
 
-        cost2 = opt.explain(sql, conf).getCost();
+        cost2 = opt.explain(sql, conf).getSelectCost();
 
         assertThat(cost1, is(cost2));
 

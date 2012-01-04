@@ -314,7 +314,7 @@ public class WorkFunctionAlgorithm
             // Alkis I rewrote the following parts so that they correspond to something
             // sane. I am not sure what was the intended meaning of the previous code.
             ExplainedSQLStatement stmt = qinfos.get(q).explain(configuration);    
-            cost += stmt.getCost();
+            cost += stmt.getSelectCost();
             cost += stmt.getUpdateCost(stmt.getUsedConfiguration().toList());
             cost += transitionCost(candidateSet, prevState, state);
 

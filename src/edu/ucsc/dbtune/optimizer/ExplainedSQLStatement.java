@@ -65,7 +65,7 @@ public class ExplainedSQLStatement
      * @param optimizer
      *      optimizer that explained the statement
      * @param updateCost
-     *      since {@link #getCost} returns the {@code SELECT} shell cost, update statements have to 
+     *      since {@link #getSelectCost} returns the {@code SELECT} shell cost, update statements have to 
      *      get assigned with the actual update cost separately
      * @param updateCosts
      *      optionally, for update statements, a Map of incurred update costs, where each element 
@@ -162,7 +162,7 @@ public class ExplainedSQLStatement
      * @return
      *      the execution cost of the statement.
      */
-    public double getCost()
+    public double getSelectCost()
     {
         return cost;
     }
@@ -226,7 +226,7 @@ public class ExplainedSQLStatement
     /**
      * Returns the total cost of this statement. The total is equal to the sum of the statement's 
      * plan cost and the maintenance of each of the updated indexes. For non-update statements this 
-     * is equal to {@link #getCost}
+     * is equal to {@link #getSelectCost}
      *
      * @return
      *      the total cost of this query.
@@ -234,7 +234,7 @@ public class ExplainedSQLStatement
      */
     public double getTotalCost()
     {
-        return getCost() + getUpdateCost();
+        return getSelectCost() + getUpdateCost();
     }
 
     /**
@@ -339,7 +339,7 @@ public class ExplainedSQLStatement
     {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("Cost: " + getCost() + "\n");
+        sb.append("Cost: " + getSelectCost() + "\n");
 
         sb.append("All:\n");
 

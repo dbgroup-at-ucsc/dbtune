@@ -15,8 +15,8 @@ import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -58,23 +58,26 @@ public class ExplainedSQLStatementTest
         Catalog cat;
         Set<Index> conf;
         Set<Index> used;
-        Map<Index, Double> updateCost;
+        Set<Index> empty;
+        Map<Index, Double> indexUpdateCosts;
         Index a;
         Index b;
         Index c;
         double cost;
         double costA;
         double costB;
+        double updateCost;
         int count;
 
         // a SELECT
-        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5 AND b = 3");
         cost = 100.0;
-        count = 10;
+        count = 1;
         cat = configureCatalog();
 
-        conf = new HashSet<Index>(cat.schemas().get(0).indexes());
+        conf = new HashSet<Index>(cat.findSchema("schema_0").indexes());
         used = new HashSet<Index>();
+        empty = new HashSet<Index>();
         a = cat.schemas().get(0).indexes().get(1);
         b = cat.schemas().get(0).indexes().get(3);
         c = cat.schemas().get(0).indexes().get(2);
@@ -85,38 +88,58 @@ public class ExplainedSQLStatementTest
         estmt = new ExplainedSQLStatement(sql, null, optimizer, cost, 0.0, null, conf, used, count);
 
         assertThat(estmt.getConfiguration(), is(conf));
-        assertThat(estmt.getCost(), is(cost));
+        assertThat(estmt.getSelectCost(), is(cost));
         assertThat(estmt.getOptimizationCount(), is(count));
         assertThat(estmt.getStatement(), is(sql));
         assertThat(estmt.getTotalCost(), is(cost));
         assertThat(estmt.getUpdateCost(conf), is(0.0));
-        assertThat(estmt.getUpdateCost(a), is(0.0));
         assertThat(estmt.isUsed(a), is(true));
-        assertThat(estmt.getUpdateCost(b), is(0.0));
         assertThat(estmt.isUsed(b), is(true));
-        assertThat(estmt.getUpdateCost(), is(0.0));
-        assertThat(estmt.getUpdatedConfiguration(), is((Set<Index>) new HashSet<Index>()));
-        assertThat(estmt.getUsedConfiguration(), is(used));
         assertThat(estmt.isUsed(c), is(false));
+        assertThat(estmt.getUpdateCost(a), is(0.0));
+        assertThat(estmt.getUpdateCost(b), is(0.0));
+        assertThat(estmt.getUpdateCost(c), is(0.0));
+        assertThat(estmt.getUpdateCost(), is(0.0));
+        assertThat(estmt.getUsedConfiguration(), is(used));
+        assertThat(estmt.getUpdatedConfiguration(), is(empty));
+        //assertThat(estmt.isBaseTableUpdateCostAssigned(), is(false));
+        //assertThat(estmt.isIndexUpdateCostAssigned(), is(false));
 
-        // an UPDATE
+        // an UPDATE, only with updateCost
         sql = new SQLStatement("UPDATE one_table.tbl SET a = 1 WHERE a = 5");
-        updateCost = new HashMap<Index, Double>();
-        costA = 20.0;
-        costB = 50.0;
+        updateCost = 200.0;
 
-        for (Index i : conf)
-            updateCost.put(i, 0.0);
-        
-        updateCost.put(a, costA);
-        updateCost.put(b, costB);
+        used.remove(b);
 
         estmt =
             new ExplainedSQLStatement(
-                sql, null, optimizer, cost, 100.0, updateCost, conf, new HashSet<Index>(), count);
+                sql, null, optimizer, cost, updateCost, null, conf, used, count);
 
         assertThat(estmt.getConfiguration(), is(conf));
-        assertThat(estmt.getCost(), is(cost));
+        assertThat(estmt.getSelectCost(), is(cost));
+        assertThat(estmt.getOptimizationCount(), is(count));
+        assertThat(estmt.getStatement(), is(sql));
+        assertThat(estmt.getUpdateCost(), is(updateCost));
+        assertThat(estmt.getUsedConfiguration(), is(used));
+        assertThat(estmt.getUpdatedConfiguration(), is(empty));
+
+        // an UPDATE, with totalUpdateCost and update-cost-brakedown, i.e.:
+        //   (basetable + update-cost-for-indexes)
+        sql = new SQLStatement("UPDATE one_table.tbl SET a = 1 WHERE a = 5");
+        indexUpdateCosts = new HashMap<Index, Double>();
+        costA = 20.0;
+        costB = 50.0;
+
+        indexUpdateCosts.put(a, costA);
+        indexUpdateCosts.put(b, costB);
+
+        estmt =
+            new ExplainedSQLStatement(
+                sql, null, optimizer, cost, updateCost, indexUpdateCosts, conf, new 
+                HashSet<Index>(), count);
+
+        assertThat(estmt.getConfiguration(), is(conf));
+        assertThat(estmt.getSelectCost(), is(cost));
         assertThat(estmt.getOptimizationCount(), is(count));
         assertThat(estmt.getStatement(), is(sql));
         assertThat(estmt.getTotalCost(), is(greaterThanOrEqualTo(cost + costA + costB)));
@@ -126,7 +149,5 @@ public class ExplainedSQLStatementTest
         assertThat(estmt.getUpdateCost(), is(greaterThanOrEqualTo(costA + costB)));
         assertThat(estmt.getUpdatedConfiguration(), is(used));
         assertThat(estmt.getUsedConfiguration(), is((Set<Index>) new HashSet<Index>()));
-
-        // TODO check the update costs taking into account the base table
     }
 }
