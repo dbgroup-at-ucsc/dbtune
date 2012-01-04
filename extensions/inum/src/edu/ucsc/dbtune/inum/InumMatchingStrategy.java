@@ -1,11 +1,11 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
-
 import java.sql.Connection;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -16,22 +16,19 @@ import static java.lang.Double.compare;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumMatchingStrategy implements MatchingStrategy
-{
-    private final IndexAccessCostEstimation accessCostEstimator;
+public class InumMatchingStrategy implements MatchingStrategy {
+  private final IndexAccessCostEstimation accessCostEstimator;
 
-    InumMatchingStrategy(IndexAccessCostEstimation accessCostEstimator)
-    {
-        this.accessCostEstimator = accessCostEstimator;
-    }
+  InumMatchingStrategy(IndexAccessCostEstimation accessCostEstimator){
+    this.accessCostEstimator = accessCostEstimator;
+  }
 
-    public InumMatchingStrategy(Connection connection)
-    {
-        this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
-    }
+  public InumMatchingStrategy(Connection connection){
+    this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
+  }
 
-  @Override public double estimateCost(String query, Configuration inputConfiguration,
-      InumSpace inumSpace) {
+  @Override public double estimateCost(
+        String query, Set<Index> inputConfiguration, InumSpace inumSpace) {
     // matched optimal plans for "query" ...
     final Set<OptimalPlan> matchedOptimalPlans = matches(
         query, inputConfiguration, inumSpace
@@ -43,38 +40,35 @@ public class InumMatchingStrategy implements MatchingStrategy
     return derivedCost;
   }
 
-    private static double findOneWithMinCost(Set<OptimalPlan> matches, double indexAccessCost)
-    {
-        OptimalPlan min = null;
-        double derivedCost = 0.0;
-        for(OptimalPlan each : matches){
-            if(null == min) { // base case
-                min         = each;
-                derivedCost = sumCachedCosts(each) + indexAccessCost;
-                continue;
-            }
+  private static double findOneWithMinCost(Set<OptimalPlan> matches, double indexAccessCost){
+    OptimalPlan min = null;
+    double derivedCost = 0.0;
+    for(OptimalPlan each : matches){
+      if(null == min) { // base case
+        min         = each;
+        derivedCost = sumCachedCosts(each) + indexAccessCost;
+        continue;
+      }
 
-            final double first  = sumCachedCosts(min)  + indexAccessCost;
-            final double second = sumCachedCosts(each) + indexAccessCost;
-            if(compare(second, first) < 0/*check if second is less than first*/) {
-                min         = each;
-                derivedCost = second;
-            }
-        }
-        return derivedCost;
+      final double first  = sumCachedCosts(min)  + indexAccessCost;
+      final double second = sumCachedCosts(each) + indexAccessCost;
+      if(compare(second, first) < 0/*check if second is less than first*/) {
+        min         = each;
+        derivedCost = second;
+      }
     }
+    return derivedCost;
+  }
 
-    @Override
-    public IndexAccessCostEstimation getIndexAccessCostEstimation()
-    {
-        return accessCostEstimator;
-    }
+  @Override public IndexAccessCostEstimation getIndexAccessCostEstimation() {
+    return accessCostEstimator;
+  }
 
-  @Override public Set<OptimalPlan> matches(String sql, Configuration inputConfiguration,
-      InumSpace inumSpace) {
+  @Override public Set<OptimalPlan> matches(
+          String sql, Set<Index> inputConfiguration, InumSpace inumSpace) {
     final Set<OptimalPlan> found = Sets.newHashSet();
     // assuming there is a match, later methods will pick the optimal plan with the min cost.
-    final Configuration copy      = new Configuration(inputConfiguration);  // defensive copy of configuration
+    final Set<Index> copy = new HashSet<Index>(inputConfiguration); // defensive copy of configuration
     final QueryRecord targetKey = new QueryRecord(sql, copy);
     for(QueryRecord eachKey : inumSpace.keySet()){
       if(eachKey.equals/* means (it has the same SQL query and also covers an interesting order)*/
@@ -83,10 +77,11 @@ public class InumMatchingStrategy implements MatchingStrategy
         found.addAll(optimalPlans);
       }
     }
+    return found;
+  }
 
-    private static double sumCachedCosts(OptimalPlan optimalPlan)
-    {
-        optimalPlan.computeInternalPlanCost();  // sum all subplans' costs.
-        return optimalPlan.getInternalCost();
-    }
+  private static double sumCachedCosts(OptimalPlan optimalPlan){
+    optimalPlan.computeInternalPlanCost();  // sum all subplans' costs.
+    return optimalPlan.getInternalCost();
+  }
 }

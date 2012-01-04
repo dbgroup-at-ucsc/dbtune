@@ -1,8 +1,9 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Configuration;
-import edu.ucsc.dbtune.metadata.Index;
 import java.util.List;
+import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Index;
 
 /**
  * An optimal query execution plan returned by the dbms's optimizer for a given configuration.
@@ -26,7 +27,7 @@ public interface OptimalPlan {
    * @param queryRecord a descriptor of a SQL query
    * @see Index
    */
-  void fixAccessCosts(Configuration configuration, QueryRecord queryRecord);
+  void fixAccessCosts(Set<Index> configuration, QueryRecord queryRecord);
 
   /**
    * compute internal plan cost (subtract table access operations).

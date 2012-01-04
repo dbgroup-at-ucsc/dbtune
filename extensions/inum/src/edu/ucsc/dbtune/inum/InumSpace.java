@@ -1,13 +1,12 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Configuration;
 import java.util.Set;
 
 /**
  * It represents the INUM Space or Cached Plans. This cache is
  * a {@code set} that contains, for each {@code query}, a number of
  * alternative execution plans. Each plan in the INUM Space is
- * optimal for one or more possible {@link Configuration input}
+ * optimal for one or more possible {@link java.util.Set input}
  * configurations.
  *
  * The correctness of the INUM Space is guaranteed by these two

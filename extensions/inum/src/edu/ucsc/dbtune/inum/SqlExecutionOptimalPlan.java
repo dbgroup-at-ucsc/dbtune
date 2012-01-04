@@ -1,15 +1,17 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.caliper.internal.guava.collect.Maps;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import edu.ucsc.dbtune.metadata.Configuration;
+
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Strings;
 import static java.lang.Double.compare;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The not yet cached Sql Execution Plan.
@@ -26,7 +28,7 @@ public abstract class SqlExecutionOptimalPlan implements OptimalPlan {
   SqlExecutionOptimalPlan(List<PhysicalOperator> internalPlans) {
     this.internalPlans          = internalPlans;
     this.internal               = Double.NaN;
-    this.tableNameToAccessCost  = Maps.newHashMap();
+    this.tableNameToAccessCost  = new HashMap<String, Double>();
     this.root                   = null;
   }
 
@@ -40,7 +42,7 @@ public abstract class SqlExecutionOptimalPlan implements OptimalPlan {
 
   @Override public abstract void computeInternalPlanCost();
 
-  @Override public void fixAccessCosts(Configuration configuration, QueryRecord queryRecord) {
+  @Override public void fixAccessCosts(Set<Index> configuration, QueryRecord queryRecord) {
     double internal = getInternalCost();
     for (String eachTableName : queryRecord.getUsedTablesNames()){
       if(compare(getAccessCost(eachTableName.toUpperCase()), 0) <= 0/*check if second is less than first*/) {
@@ -61,8 +63,8 @@ public abstract class SqlExecutionOptimalPlan implements OptimalPlan {
     // from the old code, we can deduce that this previous method call was needed.
   }
 
-  private static Index firstIndexForTable(String tablename, Configuration configuration){
-    for(Index each : configuration.toList()){
+  private static Index firstIndexForTable(String tablename, Set<Index> configuration){
+    for(Index each : configuration){
       final String eachTablename = each.getTable().getName();
       if(Strings.same(eachTablename, tablename)){
         return each;

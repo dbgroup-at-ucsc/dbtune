@@ -1,8 +1,5 @@
 package edu.ucsc.dbtune;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,6 +7,9 @@ import java.sql.Statement;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.core.InumWhatIfOptimizer;
 import edu.ucsc.dbtune.core.InumWhatIfOptimizerImpl;
@@ -24,15 +24,15 @@ import edu.ucsc.dbtune.inum.Precomputation;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
+
 import org.mockito.Mockito;
 
+import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
 import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
 import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
 import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
-import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
 
 /**
  * Contains a set of tests fixtures that can be shared among all inum tests.
@@ -76,7 +76,7 @@ public final class SharedFixtures {
   }
 
   public static Inum configureInum() throws Exception {
-    final Set<Index> configuration = configureConfiguration();
+    final Set<Index>  configuration  = configureConfiguration();
     return configureInum("SELECT * FROM TABLE1;", configuration);
   }
 
@@ -188,9 +188,9 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     return new InumWhatIfOptimizerImpl(inum);
   }
 
-  public static InumWhatIfOptimizer configureWhatIfOptimizer(Configuration configuration) throws 
+  public static InumWhatIfOptimizer configureWhatIfOptimizer(Set<Index> configuration) throws 
       Exception {
-    final Inum inum = configureInum("SELECT * FROM TABLE1", configuration);
+    final Inum inum = configureInum("", configuration);
     return new InumWhatIfOptimizerImpl(inum);
   }
 
@@ -241,3 +241,4 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     }
   }
 }
+

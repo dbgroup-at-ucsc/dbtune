@@ -1,8 +1,11 @@
 package edu.ucsc.dbtune.inum;
 
-import com.google.common.base.Preconditions;
-import edu.ucsc.dbtune.metadata.Configuration;
 import java.util.List;
+import java.util.Set;
+
+import com.google.common.base.Preconditions;
+
+import edu.ucsc.dbtune.metadata.Index;
 
 /**
  * A cached plan wraps a plan suggested by the optimizer and flips the {@link OptimalPlan#isDirty()
@@ -26,7 +29,7 @@ public class CachedSqlExecutionOptimalPlan implements OptimalPlan {
     return plan.add(operator);
   }
 
-  @Override public void fixAccessCosts(Configuration configuration, QueryRecord queryRecord) {
+  @Override public void fixAccessCosts(Set<Index> configuration, QueryRecord queryRecord) {
     plan.fixAccessCosts(configuration, queryRecord);
   }
 
