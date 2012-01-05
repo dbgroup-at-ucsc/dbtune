@@ -16,14 +16,10 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public class DefaultPreparedSQLStatement implements PreparedSQLStatement
 {
-    /**
-     * The optimizer that created this statement.
-     */
+    /** The optimizer that created this statement. */
     protected final Optimizer optimizer;
     
-    /**
-     * The SQL statement corresponding to the prepared statement.
-     */
+    /** The SQL statement corresponding to the prepared statement. */
     protected final SQLStatement sql;
 
     /**

@@ -1,12 +1,10 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.BitArraySet;
-import edu.ucsc.dbtune.util.ToStringBuilder;
-
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
  * @author Huascar A. Sanchez
@@ -31,8 +29,8 @@ public class IndexStatisticsFunction
     public IndexStatisticsFunction(int indexStatisticsWindowSize)
     {
         this.tempPair              = IndexPair.emptyPair();
-        this.doiWindows            = new HashMap<IndexPair,MeasurementWindow>();
-        this.benefitWindows        = new HashMap<Index,MeasurementWindow>();
+        this.doiWindows            = new HashMap<IndexPair, MeasurementWindow>();
+        this.benefitWindows        = new HashMap<Index, MeasurementWindow>();
         this.currentTimeStamp      = 0;
         this.doi                   = new DoiFunction(this);
         this.benefit               = new BenefitFunction(this);
@@ -194,19 +192,7 @@ public class IndexStatisticsFunction
             return maxRate;
 
         }
-
-        @Override
-        public String toString()
-        {
-            return new ToStringBuilder<MeasurementWindow>(this)
-                   .add("measurements", Arrays.toString(measurements))
-                   .add("timestamps", Arrays.toString(timestamps))
-                   .add("lastPos", lastPos)
-                   .add("numMeasurements", numMeasurements)
-                   .toString();
-        }
     }
-
 
     private static class DoiFunction
     {
@@ -288,15 +274,6 @@ public class IndexStatisticsFunction
             final IndexPair pair = (IndexPair) other;
             return (a.equals(pair.a) && b.equals(pair.b))
                 || (a.equals(pair.b) && b.equals(pair.a));
-        }
-
-        @Override
-        public String toString()
-        {
-            return new ToStringBuilder<IndexPair>(this)
-                   .add("left", a)
-                   .add("right", b)
-                   .toString();
         }
     }
 }

@@ -1,12 +1,10 @@
 package edu.ucsc.dbtune.advisor.bc;
 
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 
 public class BcBenefitInfo
 {
@@ -132,17 +130,5 @@ public class BcBenefitInfo
     public ExplainedSQLStatement getProfiledQuery()
     {
         return profiledQuery;
-    }
-
-    @Override
-    public String toString()
-    {
-        return new ToStringBuilder<BcBenefitInfo>(this)
-               .add("origCosts", Arrays.toString(origCosts))
-               .add("newCosts", Arrays.toString(newCosts))
-               .add("reqLevels", Arrays.toString(reqLevels))
-               .add("overheads", Arrays.toString(overheads))
-               .add("profiledQuery", getProfiledQuery())
-            .toString();
     }
 }

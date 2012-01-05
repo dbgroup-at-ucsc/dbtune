@@ -12,7 +12,6 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  *
  * @author Ivo Jimenez
  * @author Alkis Polyzotis
- *
  */
 public interface PreparedSQLStatement
 {
