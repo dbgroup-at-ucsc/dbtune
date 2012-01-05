@@ -67,7 +67,7 @@ public class DB2Optimizer extends AbstractOptimizer
         plan = getPlan(sql);
         used = getUsedIndexes(catalog, connection);
 
-        if (sql.getSQLCategory().isSame(SQLCategory.UPDATE))
+        if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT))
             updateCost = getUpdateCost(connection);
         else
             updateCost = 0.0;
@@ -75,7 +75,7 @@ public class DB2Optimizer extends AbstractOptimizer
         selectCost = getCost(connection) - updateCost;
 
         return new ExplainedSQLStatement(
-            sql, plan, this, selectCost, updateCost, 0.0,
+            sql, plan, this, selectCost, updateCost, updateCost,
             new HashMap<Index, Double>(), indexes, used, 1);
     }
 
@@ -424,7 +424,7 @@ public class DB2Optimizer extends AbstractOptimizer
     /**
      * Returns the update cost of the statement that has been just explained. It assumes that the 
      * type of statement has been checked already, i.e. that the statement contained in {@code 
-     * EXPLAIN_STATEMENT} table is of type {@link SQLCategory#UPDATE}.
+     * EXPLAIN_STATEMENT} table is of type {@link SQLCategory#NOT_SELECT}.
      *
      * @param connection
      *     connection used to communicate with the DBMS
