@@ -556,7 +556,7 @@ public final class DBTuneInstances
      *
      * @author Ivo Jimenez
      */
-    private static class TrivialIdentifiable implements Identifiable
+    private static class TrivialIdentifiable implements Identifiable, Comparable
     {
         private Integer i;
 
@@ -578,6 +578,18 @@ public final class DBTuneInstances
         public int getId()
         {
             return i;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int compareTo(Object o)
+        {
+            if (!(o instanceof TrivialIdentifiable))
+                return 0;
+
+            return ((TrivialIdentifiable) o).i.compareTo(i);
         }
     }
 

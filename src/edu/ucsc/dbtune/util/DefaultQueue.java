@@ -1,25 +1,201 @@
 package edu.ucsc.dbtune.util;
 
+import java.util.AbstractQueue;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Queue;
 
-public class DefaultQueue<E>
+/**
+ * @param <E>
+ *      the class of objects to place in the queue
+ * @author Karl Schnaitter
+ */
+public class DefaultQueue<E> extends AbstractQueue<E> implements Queue<E>
 {
+    private static final int DEFAULT_INITIAL_CAPACITY = 100;
     private Object[] arr;
     private int count;
     private int first;
-    private static final int DEFAULT_INITIAL_CAPACITY = 100;
     
+    /**
+     * @param capacity
+     *      initial capacity
+     */
+    public DefaultQueue(int capacity)
+    {
+        arr = new Object[capacity];
+        count = 0;
+    }
+
+    /**
+     */
     public DefaultQueue()
     {
         arr = new Object[DEFAULT_INITIAL_CAPACITY];
         count = 0;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean addAll(Collection<? extends E> c)
+    {
+        boolean added = false;
+
+        for (E e : c)
+            if (add(e))
+                added = true;
+
+        return added;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        return Arrays.toString(arr);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean removeAll(Collection<?> c)
+    {
+        boolean removed = !isEmpty();
+        clear();
+        return removed;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean containsAll(Collection<?> c)
+    {
+        for (Object o : c)
+            if (!contains(o))
+                return false;
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean remove(Object o)
+    {
+        if (!contains(o))
+            return false;
+        else
+            throw new RuntimeException("not implemented yet");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isEmpty()
+    {
+        final boolean empty = count == 0;
+        if (empty) first = 0;
+        return empty;
+    }
     
-    public void add(E elt)
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean retainAll(Collection<?> c)
+    {
+        throw new RuntimeException("not implemented yet");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object[] toArray()
+    {
+        return Arrays.<Object>copyOf(arr, count);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <T> T[] toArray(T[] array)
+    {
+        throw new RuntimeException("not implemented yet");
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean offer(E e)
+    {
+        return add(e);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int size()
+    {
+        return count;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean contains(Object o)
+    {
+        for (Object e : arr)
+            if (o.equals(e)) return true;
+
+        return false;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean add(E elt)
     {
         ensureCapacity();
         setInternal(count, elt);
         ++count;
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void clear()
+    {
+        while (!isEmpty()) {
+            remove();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Iterator<E> iterator()
+    {
+        @SuppressWarnings("unchecked")
+        E[] e = (E[]) arr;
+        return Arrays.asList(e).iterator();
     }
 
     /**
@@ -38,6 +214,12 @@ public class DefaultQueue<E>
         }
     }
 
+    // CHECKSTYLE:OFF
+    public E poll()
+    {
+        return remove();
+    }
+
     public E remove()
     {
         if (count == 0)
@@ -51,6 +233,11 @@ public class DefaultQueue<E>
         return ret;
     }
 
+    public E element()
+    {
+        return peek();
+    }
+    
     public E peek()
     {
         if (count == 0)
@@ -59,13 +246,6 @@ public class DefaultQueue<E>
         return getInternal(0);
     }
     
-    public void clear()
-    {
-        while (!isEmpty()){
-            remove();
-        }
-    }
-
     public E fetch(int i)
     {
         if (i >= count)
@@ -85,13 +265,6 @@ public class DefaultQueue<E>
         return count;
     }
 
-    public boolean isEmpty()
-    {
-        final boolean empty = count == 0;
-        if (empty) first = 0;
-        return empty;
-    }
-    
     private E getInternal(int i)
     {
         //noinspection RedundantTypeArguments
@@ -102,10 +275,5 @@ public class DefaultQueue<E>
     {
         arr[(first+i) % arr.length] = elt;
     }
-
-    @Override
-    public String toString()
-    {
-        return Arrays.toString(arr);
-    }
+    // CHECKSTYLE:ON
 }
