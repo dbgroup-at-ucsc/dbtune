@@ -1,17 +1,30 @@
 package edu.ucsc.dbtune.util;
 
 import java.util.Arrays;
+import java.util.Stack;
 
-public class DefaultStack<E>
+public class DefaultStack<E> extends Stack<E>
 {
+    static final long serialVersionUID=0;
     Object[] arr;
     int top;
     private static final int DEFAULT_INITIAL_CAPACITY = 100;
 
     public DefaultStack()
     {
-        arr = new Object[DEFAULT_INITIAL_CAPACITY];
+        this(DEFAULT_INITIAL_CAPACITY);
+    }
+
+    public DefaultStack(int capacity)
+    {
+        arr = new Object[capacity];
         top = -1;
+    }
+
+    @Override
+    public final void clear()
+    {
+        popAll();
     }
     
     public final void popAll()
@@ -21,9 +34,12 @@ public class DefaultStack<E>
         }
     }
     
-    public final void pop()
+    @Override
+    public final E pop()
     {
-        popAndRelease();
+        @SuppressWarnings("unchecked")
+        E e = (E) popAndRelease();
+        return e;
     }
 
     Object popAndRelease(){
@@ -45,18 +61,28 @@ public class DefaultStack<E>
         }
     }
 
+    @Override
     public final E peek()
     {
         //noinspection RedundantTypeArguments
         return Objects.<E>as(arr[top]);
     }
     
-    public final void push(E elt)
+    @Override
+    public final E push(E elt)
     {
         ensureCapacity();
         arr[++top] = elt;
+        return elt;
     }
     
+    @Override
+    public final boolean empty()
+    {
+        return isEmpty();
+    }
+
+    @Override
     public final boolean isEmpty()
     {
         return top == -1;
