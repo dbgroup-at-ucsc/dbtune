@@ -26,7 +26,8 @@ import static org.junit.Assert.assertThat;
 public class IBGNodeTest
 {
     // CHECKSTYLE:OFF
-    private static IndexBenefitGraph ibg;
+    public static IndexBenefitGraph ibg;
+    public static Catalog cat = configureCatalog();
     private static IndexBenefitGraph.Node root;
     private static IndexBenefitGraph.Node node1;
     private static IndexBenefitGraph.Node node2;
@@ -76,7 +77,6 @@ public class IBGNodeTest
     @BeforeClass
     public static void beforeClass() throws Exception
     {
-        Catalog cat = configureCatalog();
         indexes = cat.schemas().get(0).indexes();
         empty = new BitArraySet<Index>();
         rootibs = new BitArraySet<Index>();
@@ -203,6 +203,60 @@ public class IBGNodeTest
     @Test
     public void testExpansion()
     {
+        checkExpansion();
+    }
+
+    /**
+     * Checks that the {@link IndexBenefitGraph.Node#expand} method works correctly.
+     */
+    @Test
+    public void testInternalBitSet()
+    {
+        checkInternalBitSet();
+    }
+
+    /**
+     */
+    @Test
+    public void testCostAssignment()
+    {
+        checkCostAssignment();
+    }
+
+    /**
+     */
+    @Test
+    public void testStructure()
+    {
+        checkStructure();
+    }
+
+    /**
+     */
+    @Test
+    public void testEdges()
+    {
+        checkEdges();
+    }
+
+    /**
+     */
+    @Test
+    public void testUsedAndClearIndexes()
+    {
+        checkUsedAndClearIndexes();
+    }
+
+    /**
+     */
+    @Test
+    public void testContainment()
+    {
+        checkContainment();
+    }
+
+    public static void checkExpansion()
+    {
         assertThat(ibg.rootNode().isExpanded(), is(true));
         assertThat(node1.isExpanded(), is(true));
         assertThat(node2.isExpanded(), is(true));
@@ -213,11 +267,7 @@ public class IBGNodeTest
         assertThat(node7.isExpanded(), is(true));
     }
 
-    /**
-     * Checks that the {@link IndexBenefitGraph.Node#expand} method works correctly.
-     */
-    @Test
-    public void testInternalBitSet()
+    public static void checkInternalBitSet()
     {
         assertThat(ibg.rootNode().getConfiguration(), is(rootibs));
         assertThat(node1.getConfiguration(), is(ibs1));
@@ -229,10 +279,7 @@ public class IBGNodeTest
         assertThat(node7.getConfiguration(), is(ibs7));
     }
 
-    /**
-     */
-    @Test
-    public void testCostAssignment()
+    public static void checkCostAssignment()
     {
         assertThat(ibg.rootNode().cost(), is(20.0));
         assertThat(node1.cost(), is(45.0));
@@ -244,10 +291,7 @@ public class IBGNodeTest
         assertThat(node7.cost(), is(80.0));
     }
 
-    /**
-     */
-    @Test
-    public void testStructure()
+    public static void checkStructure()
     {
         assertThat(ibg.rootNode(), is(root));
         assertThat(child1.getNode(), is(tmpchild1.getNode()));
@@ -266,10 +310,7 @@ public class IBGNodeTest
         assertThat(child8.getNode().firstChild(), is(nullValue()));
     }
 
-    /**
-     */
-    @Test
-    public void testEdges()
+    public static void checkEdges()
     {
         assertThat(child1.getUsedIndex(), is(indexes.get(3)));
         assertThat(child2.getUsedIndex(), is(indexes.get(0)));
@@ -281,10 +322,7 @@ public class IBGNodeTest
         assertThat(child8.getUsedIndex(), is(indexes.get(2)));
     }
 
-    /**
-     */
-    @Test
-    public void testUsedAndClearIndexes()
+    public static void checkUsedAndClearIndexes()
     {
         Set<Index> ibs = new BitArraySet<Index>();
 
@@ -329,10 +367,7 @@ public class IBGNodeTest
         assertThat(ibs, is(empty));
     }
 
-    /**
-     */
-    @Test
-    public void testContainment()
+    public static void checkContainment()
     {
         assertThat(root.usedSetIsSubsetOf(rootibs), is(true));
         assertThat(node1.usedSetIsSubsetOf(rootibs), is(true));

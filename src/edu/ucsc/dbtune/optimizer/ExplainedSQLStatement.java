@@ -253,7 +253,7 @@ public class ExplainedSQLStatement
      */
     public boolean isUsed(Index index)
     {
-        return usedConfiguration.contains(index);
+        return getUsedConfiguration().contains(index);
     }
 
     /**
