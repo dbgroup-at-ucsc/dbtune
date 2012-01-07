@@ -34,21 +34,18 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  * @see <a href="http://portal.acm.org/citation.cfm?id=1687766">
  *     Index interactions in physical design tuning: modeling, analysis, and applications</a>
  */
-public class IndexBenefitGraphConstructor
+public final class IndexBenefitGraphConstructor
 {
     /* 
      * Parameters of the construction.
      */
     protected SQLStatement sql;
     protected Set<Index> configuration;
-    protected final Optimizer optimizer;
+    protected Optimizer optimizer;
     protected CandidatePool.Snapshot candidateSet;
 
     /* Counter for assigning unique node IDs */
     private int nodeCount;
-
-    /* number of optimization calls done on the underlaying delegate optimizer */
-    private int optCount;
 
     /* Temporary bit sets allocated once to allow reuse... only used in buildNode() */ 
     private BitArraySet<Index> usedBitSet;
@@ -66,7 +63,7 @@ public class IndexBenefitGraphConstructor
     private double emptyCost;
 
     /* The queue of pending nodes to expand */
-    DefaultQueue<IndexBenefitGraph.Node> queue;
+    private DefaultQueue<IndexBenefitGraph.Node> queue;
 
     /* A monitor for waiting on a node expansion */
     private final Object nodeExpansionMonitor = new Object();
@@ -75,85 +72,30 @@ public class IndexBenefitGraphConstructor
     private final IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
 
     /* true if the index is used somewhere in the graph */
-    private BitArraySet<Index> isUsed;
+    private BitArraySet<Index> isUsed = new BitArraySet<Index>();
 
     /**
-     * Creates an IBG constructor that uses the given optimizer to execute optimization calls.
-     *
-     * @param optimizer
-     *     optimizer delegate that is being used
-     * @param sql
-     *     statement the IBG is being built for
-     * @param conf
-     *      a set of candidate indexes.
-     * @throws java.sql.SQLException
-     *      an unexpected error has occurred.
+     * Creates an IBG constructor.
      */
-    public IndexBenefitGraphConstructor(
-            Optimizer optimizer,
-            SQLStatement sql,
-            Set<Index> conf)
-        throws SQLException
+    private IndexBenefitGraphConstructor()
     {
-        this.optimizer     = optimizer;
-        this.sql           = sql;
-        this.configuration = conf;
-
-        // set up the root node, and initialize the queue
-        BitArraySet<Index> rootConfig = new BitArraySet<Index>(conf);
-        rootNode = new IndexBenefitGraph.Node(rootConfig, nodeCount++);
-
-        emptyCost = optimizer.explain(this.sql).getSelectCost();
-
-        // initialize the queue
-        queue.add(rootNode);
-    }
-
-    /**
-     * @return cost of the workload under the empty configuration, stored in emptyCost.
-     */
-    public final double emptyCost()
-    {
-        return emptyCost;
     }
 
     /**
      * @return the {@link Node root node}.
      */
-    public final IndexBenefitGraph.Node rootNode()
+    IndexBenefitGraph.Node rootNode()
     {
         return rootNode;
     }
 
     /**
-     * @return the number of nodes that were constructed.
-     */
-    public final int nodeCount()
-    {
-        return nodeCount;
-    }
-
-    /**
-     * @param i
-     *      position of index in the bit set of used indexes.
-     * @return {@code true} if the node is a used node.
-     */
-    public final boolean isUsed(int i)
-    {
-        return isUsed.contains(i);
-    }
-
-    public final Set<Index> candidateSet()
-    {
-        return configuration;
-    }
-
-    /*
-     * Wait for a specific node to be expanded
+     * Wait for a specific node to be expanded.
+     *
      * @param node
      *      a node to be expanded.
      */
-    public final void waitUntilExpanded(IndexBenefitGraph.Node node)
+    void waitUntilExpanded(IndexBenefitGraph.Node node)
     {
         synchronized (nodeExpansionMonitor) {
             while (!node.isExpanded())
@@ -170,10 +112,16 @@ public class IndexBenefitGraphConstructor
      * unexpanded nodes.
      *
      * This function is not safe to be called from more than one thread.
+     *
+     * @return
+     *      if the node built successfully
+     * @throws SQLException
+     *      if the what-if optimization call executed by the {@link Optimizer} fails
      */
-    public boolean buildNode() throws SQLException
+    boolean buildNode() throws SQLException
     {
-        IndexBenefitGraph.Node newNode, coveringNode;
+        IndexBenefitGraph.Node newNode;
+        IndexBenefitGraph.Node coveringNode;
         ExplainedSQLStatement stmt;
         double totalCost;
 
@@ -224,13 +172,12 @@ public class IndexBenefitGraphConstructor
 
             IndexBenefitGraph.Node.Child child = new IndexBenefitGraph.Node.Child(childNode, u);
 
-            if (firstChild == null) {
-                firstChild = lastChild = child;
-            }
-            else {
+            if (firstChild == null)
+                firstChild = child;
+            else
                 lastChild.setNext(child);
-                lastChild = child;
-            }
+
+            lastChild = child;
         }
 
         // Expand the node and notify waiting threads
@@ -242,80 +189,72 @@ public class IndexBenefitGraphConstructor
         return !queue.isEmpty();
     }
 
-    /*
-     * Auxiliary method for buildNodes
+    /**
+     * Auxiliary method for {@link buildNode}. Finds a node that corresponds to the given 
+     * configuration.
+     *
+     * @param queue
+     *      a queue of graph nodes
+     * @param configuration
+     *      the configuration
+     * @return
+     *      a node corresponding to the given configuration; {@code null} if not found.
      */
     private static IndexBenefitGraph.Node find(
-            DefaultQueue<IndexBenefitGraph.Node> queue, Set<Index> config)
+            DefaultQueue<IndexBenefitGraph.Node> queue, Set<Index> configuration)
     {
         for (int i = 0; i < queue.count(); i++) {
             IndexBenefitGraph.Node node = queue.fetch(i);
-            if (node.getConfiguration().equals(config))
+
+            if (node.getConfiguration().equals(configuration))
                 return node;
         }
+
         return null;
     }
 
-    public void setEmptyCost(double cost)
-    {
-        emptyCost = cost;
-    }
-
-    public final int getOptimizationCount()
-    {
-        return optCount;
-    }
-
     /**
-     * Creates an IBG which is in a state ready for building. Specifically, the rootNode is 
-     * physically constructed, but it is not expanded, so its cost and used set have not been 
+     * Initializes the IBG construction process. Specifically, the rootNode is physically 
+     * constructed (by obtaining the cost of the given statement under the empty configuration), but 
+     * it is not expanded, so its {@code cost} and {@code usedSet} properties have not been 
      * determined.
-     * 
-     * In the initial state, the cost of the workload under the empty configuration is set, and may 
-     * be accessed through emptyCost().
-     * 
-     * Nodes are built by calling buildNode() until it returns false.
      *
+     * @param delegate
+     *     used to make what-if optimization calls
      * @param sql
-     *     statement being explained
+     *      statement being explained
      * @param conf
-     *     configuration to take into account
+     *      configuration to take into account
+     * @return
+     *      the newly constructed IBG
+     * @throws SQLException
+     *      if the what-if optimization call executed by the {@link Optimizer} fails
      */
-    private void initializeConstruction(
-            SQLStatement sql,
-            Set<Index> conf)
+    private IndexBenefitGraph constructIBG(Optimizer delegate, SQLStatement sql, Set<Index> conf)
         throws SQLException
     {
         BitArraySet<Index> rootConfig;
         CandidatePool pool = new CandidatePool(conf);
 
-        this.sql      = sql;
+        this.optimizer = delegate;
+        this.sql = sql;
+        this.configuration = conf;
         configuration = conf;
-        optCount      = 0;
-        nodeCount     = 0;
-        usedBitSet    = new BitArraySet<Index>();
-        childBitSet   = new BitArraySet<Index>();
-        isUsed        = new BitArraySet<Index>();
-        candidateSet  = pool.getSnapshot();
-        rootConfig    = new BitArraySet<Index>(candidateSet.set());
-        queue         = new DefaultQueue<IndexBenefitGraph.Node>();
-        rootNode      = new IndexBenefitGraph.Node(rootConfig, nodeCount++);
-        emptyCost     = optimizer.explain(sql).getSelectCost();
+        nodeCount = 0;
+        usedBitSet = new BitArraySet<Index>();
+        childBitSet = new BitArraySet<Index>();
+        candidateSet = pool.getSnapshot();
+        rootConfig = new BitArraySet<Index>(candidateSet.set());
+        queue = new DefaultQueue<IndexBenefitGraph.Node>();
+        rootNode = new IndexBenefitGraph.Node(rootConfig, nodeCount++);
+        emptyCost = optimizer.explain(sql).getSelectCost();
 
-        optCount++;
-
+        isUsed.clear();
         // initialize the queue
         queue.add(rootNode);
-    }
 
-    /**
-     * Construct an IBG.
-     */
-    public IndexBenefitGraph constructIBG(Set<Index> configuration)
-        throws SQLException
-    {
         ThreadIBGAnalysis ibgAnalysis = new ThreadIBGAnalysis();
-        // XXX: hide the interaction bank in here, something like:
+        // note: hide the interaction bank in here, something like:
         //
         //   new ThreadIBGAnalysis(configuration);
         //
@@ -337,24 +276,9 @@ public class IndexBenefitGraphConstructor
         ibgConstruction.startConstruction(this);
         ibgConstruction.waitUntilDone();
         ibgAnalysis.startAnalysis(ibgAnalyzer, logger);
-        //long nStart = System.nanoTime();
         ibgAnalysis.waitUntilDone();
-        //long nStop = System.nanoTime();
 
-        // we leave this just for historical reasons, i.e. to see what was 
-        // happening before (in Karl's framework).
-        // ProfiledQuery<I> qinfo =
-        //   new ProfiledQuery(
-        //     sql,
-        //     explainInfo,
-        //     indexes,
-        //     ibgCons.getIBG(),
-        //     logger.getInteractionBank(),
-        //     conn.whatifCount(),
-        //     ((nStop - nStart) / 1000000.0));
-
-        IndexBenefitGraph ibg =
-            new IndexBenefitGraph(rootNode, emptyCost, isUsed); //, ibgAnalysis);
+        IndexBenefitGraph ibg = new IndexBenefitGraph(rootNode, emptyCost, isUsed);
 
         return ibg;
     }
@@ -362,25 +286,24 @@ public class IndexBenefitGraphConstructor
     /**
      * Construct an IBG from the given parameters.
      *
+     * @param delegate
+     *     used to make what-if optimization calls
      * @param sql
      *     statement being explained
      * @param conf
      *     configuration to take into account
+     * @return
+     *      the newly constructed IBG
+     * @throws SQLException
+     *      if the what-if optimization call executed by the {@link Optimizer} fails
      */
-    public static IndexBenefitGraph construct(
-            Optimizer delegate,
-            SQLStatement sql,
-            Set<Index> conf)
+    public static IndexBenefitGraph construct(Optimizer delegate, SQLStatement sql, Set<Index> conf)
         throws SQLException
     {
-        IndexBenefitGraphConstructor ibgConstructor =
-            new IndexBenefitGraphConstructor(delegate, sql, conf);
-
-        ibgConstructor.initializeConstruction(sql,conf);
-
-        return ibgConstructor.constructIBG(conf);
+        return (new IndexBenefitGraphConstructor()).constructIBG(delegate, sql, conf);
     }
 
+    //CHECKSTYLE:OFF
     public static class CandidatePool
     {
         /* serializable fields */
@@ -539,9 +462,8 @@ public class IndexBenefitGraphConstructor
                     }
                 }
 
-                //int analyzedCount = 0;
-
                 boolean done = false;
+
                 while (!done) {
                     switch (analyzer.analysisStep(logger, true)) {
                         case SUCCESS:
@@ -589,7 +511,9 @@ public class IndexBenefitGraphConstructor
                 while (state == State.PENDING) {
                     try {
                         taskMonitor.wait();
-                    } catch (InterruptedException e) { }
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 analyzer = null;
@@ -628,7 +552,7 @@ public class IndexBenefitGraphConstructor
                 }
 
                 try {
-                    boolean success; // bad name for this variable, should be called "moreNodesToBuild" or something to that effect
+                    boolean success;
                     do {
                         success = ibgCons.buildNode();
                     } while (success);
@@ -673,4 +597,5 @@ public class IndexBenefitGraphConstructor
             }
         }
     }
+    //CHECKSTYLE:ON
 }
