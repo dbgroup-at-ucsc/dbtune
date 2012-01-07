@@ -307,4 +307,93 @@ public class IBGAnalyzer
          */
         SUCCESS
     }
+
+    private static class ThreadIBGAnalysis implements Runnable
+    {
+        private IBGAnalyzer analyzer = null;
+        private InteractionLogger logger = null;
+
+        private Object taskMonitor = new Object();
+        private State state = State.IDLE;
+
+        private enum State
+        { IDLE, PENDING, DONE };
+
+        public ThreadIBGAnalysis()
+        {
+        }
+
+        public void run()
+        {
+            while (true) {
+                synchronized (taskMonitor) {
+                    while (state != State.PENDING) {
+                        try {
+                            taskMonitor.wait();
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+
+                boolean done = false;
+
+                while (!done) {
+                    switch (analyzer.analysisStep(logger, true)) {
+                        case SUCCESS:
+                            //if (++analyzedCount % 1000 == 0) Debug.println("a" + analyzedCount);
+                            break;
+                        case DONE:
+                            done = true;
+                            break;
+                        case BLOCKED:
+                            //Debug.logError("unexpected BLOCKED result from analysisStep");
+                            return;
+                        default:
+                            //Debug.logError("unexpected result from analysisStep");
+                            return;
+                    }
+                }
+
+                synchronized (taskMonitor) {
+                    state = State.DONE;
+                    taskMonitor.notify();
+                }
+            }
+        }
+
+        /*
+         * tell the analysis thread to start analyzing, and return immediately
+         */
+        public void startAnalysis(IBGAnalyzer analyzer0, InteractionLogger logger0)
+        {
+            synchronized (taskMonitor) {
+                if (state == State.PENDING) {
+                    throw new RuntimeException("unexpected state in IBG startAnalysis");
+                }
+
+                analyzer = analyzer0;
+                logger = logger0;
+                state = State.PENDING;
+                taskMonitor.notify();
+            }
+        }
+
+        public void waitUntilDone()
+        {
+            synchronized (taskMonitor) {
+                while (state == State.PENDING) {
+                    try {
+                        taskMonitor.wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                analyzer = null;
+                logger = null;
+                state = State.IDLE;
+            }
+        }
+    }
 }
