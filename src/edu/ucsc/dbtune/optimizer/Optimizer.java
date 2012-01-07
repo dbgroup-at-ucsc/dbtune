@@ -52,8 +52,7 @@ public interface Optimizer
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
-    ExplainedSQLStatement explain(String sql, Set<Index> configuration)
-        throws SQLException;
+    ExplainedSQLStatement explain(String sql, Set<Index> configuration) throws SQLException;
     
     /**
      * estimate what-if optimization plan of a statement using the given configuration.
@@ -68,8 +67,7 @@ public interface Optimizer
      * @throws java.sql.SQLException
      *     unable to estimate cost for the stated reasons.
      */
-    ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration)
-        throws SQLException;
+    ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration) throws SQLException;
     
     /**
      * Given a sql statement, it recommends indexes to make it run faster.
@@ -121,6 +119,5 @@ public interface Optimizer
      * @return
      *      the prepared statement object
      */
-    PreparedSQLStatement prepareExplain(SQLStatement sql)
-        throws SQLException;
+    PreparedSQLStatement prepareExplain(SQLStatement sql) throws SQLException;
 }

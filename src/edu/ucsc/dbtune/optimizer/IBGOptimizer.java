@@ -76,11 +76,15 @@ public class IBGOptimizer implements Optimizer
     /**
      * Build an {@link IndexBenefitGraph} corresponding to a specific {@link SQLStatement} and 
      * a specific {@link Configuration} that represents the universe of indexes.
-     * @param sql The statement
-     * @param universe The configuration that comprises all indexes of interest
-     * @return The index benefit graph
+     *
+     * @param sql
+     *      the statement
+     * @param universe
+     *      the configuration that comprises all indexes of interest
+     * @return
+     *      the index benefit graph
      * @throws SQLException
-     *      if theres an error
+     *      if there's an error
      */
     IndexBenefitGraph buildIBG(SQLStatement sql, Set<Index> universe)
         throws SQLException
@@ -88,6 +92,9 @@ public class IBGOptimizer implements Optimizer
         return construct(delegate, sql, universe);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PreparedSQLStatement prepareExplain(SQLStatement sql) 
         throws SQLException
@@ -95,18 +102,27 @@ public class IBGOptimizer implements Optimizer
         return new IBGPreparedSQLStatement(this, sql, null, null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExplainedSQLStatement explain(String sql) throws SQLException
     {
         return delegate.explain(sql);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException
     {
         return delegate.explain(sql);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ExplainedSQLStatement explain(String sql, Set<Index> configuration)
         throws SQLException
@@ -114,12 +130,18 @@ public class IBGOptimizer implements Optimizer
         return delegate.explain(sql, configuration);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Set<Index> recommendIndexes(String sql) throws SQLException
     {
         return delegate.recommendIndexes(sql);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getWhatIfCount()
     {

@@ -44,8 +44,7 @@ public abstract class AbstractOptimizer implements Optimizer
      * {@inheritDoc}
      */
     @Override
-    public ExplainedSQLStatement explain(String sql, Set<Index> configuration)
-        throws SQLException
+    public ExplainedSQLStatement explain(String sql, Set<Index> configuration) throws SQLException
     {
         return explain(new SQLStatement(sql), configuration);
     }
@@ -94,8 +93,7 @@ public abstract class AbstractOptimizer implements Optimizer
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement prepareExplain(SQLStatement sql)
-        throws SQLException
+    public PreparedSQLStatement prepareExplain(SQLStatement sql) throws SQLException
     {
         return new DefaultPreparedSQLStatement(this, sql);
     }
