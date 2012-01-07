@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.ibg;
 
 import java.util.List;
+import java.util.Set;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -26,21 +27,21 @@ import static org.junit.Assert.assertThat;
 public class IBGNodeFinderTest
 {
     private static Node root;
-    private static BitArraySet<Index> e;
-    private static BitArraySet<Index> a;
-    private static BitArraySet<Index> b;
-    private static BitArraySet<Index> c;
-    private static BitArraySet<Index> d;
-    private static BitArraySet<Index> ab;
-    private static BitArraySet<Index> ac;
-    private static BitArraySet<Index> ad;
-    private static BitArraySet<Index> bc;
-    private static BitArraySet<Index> bd;
-    private static BitArraySet<Index> cd;
-    private static BitArraySet<Index> abc;
-    private static BitArraySet<Index> acd;
-    private static BitArraySet<Index> bcd;
-    private static BitArraySet<Index> abcd;
+    private static Set<Index> e;
+    private static Set<Index> a;
+    private static Set<Index> b;
+    private static Set<Index> c;
+    private static Set<Index> d;
+    private static Set<Index> ab;
+    private static Set<Index> ac;
+    private static Set<Index> ad;
+    private static Set<Index> bc;
+    private static Set<Index> bd;
+    private static Set<Index> cd;
+    private static Set<Index> abc;
+    private static Set<Index> acd;
+    private static Set<Index> bcd;
+    private static Set<Index> abcd;
 
     /**
      * Setup for the test.

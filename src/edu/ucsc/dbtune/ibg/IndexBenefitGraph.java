@@ -1,8 +1,10 @@
 package edu.ucsc.dbtune.ibg;
 
+import java.util.Set;
+
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.Identifiable;
 import edu.ucsc.dbtune.util.BitArraySet;
+import edu.ucsc.dbtune.util.Identifiable;
 
 /**
  * An Index Benefit Graph (IBG) was introduced by Frank et al. [1]. An IBG enables a space-efficient 
@@ -70,9 +72,6 @@ public class IndexBenefitGraph
     /** cost of the empty configuration. */
     private double emptyCost;
 
-    /** a bit is set if the corresponding index is used somewhere in the graph. */
-    private final BitArraySet<Index> isUsed;
-
     /**
      * Creates an IBG with the given root node, cost and usedSet.
      *
@@ -80,14 +79,11 @@ public class IndexBenefitGraph
      *     root node of the IBG
      * @param emptyCost
      *     cost associated to the empty configuration
-     * @param isUsed
-     *     bit array associated with the used configuration ibg-wise.
      */
-    public IndexBenefitGraph(Node rootNode, double emptyCost, BitArraySet<Index> isUsed)
+    public IndexBenefitGraph(Node rootNode, double emptyCost)
     {
         this.rootNode  = rootNode;
         this.emptyCost = emptyCost;
-        this.isUsed    = isUsed;
     }
 
     /**
@@ -133,7 +129,7 @@ public class IndexBenefitGraph
     public static class Node implements Identifiable
     {
         /** Configuration that this node is about. */
-        private final BitArraySet<Index> config;
+        private final Set<Index> config;
 
         /** id for the node that is unique within the enclosing IBG. */
         private final int id;
@@ -154,7 +150,7 @@ public class IndexBenefitGraph
          * Used indexes.
          * Don't access until isExpanded() returns true
          */
-        private volatile BitArraySet<Index> usedIndexes;
+        private volatile Set<Index> usedIndexes;
 
         /**
          * @param config0
@@ -162,7 +158,7 @@ public class IndexBenefitGraph
          * @param id0
          *     id of the node
          */
-        public Node(BitArraySet<Index> config0, int id0)
+        public Node(Set<Index> config0, int id0)
         {
             config      = config0;
             id          = id0;
@@ -177,7 +173,7 @@ public class IndexBenefitGraph
          * @return
          *    the configuration corresponding to the node
          */
-        public final BitArraySet<Index> getConfiguration()
+        public final Set<Index> getConfiguration()
         {
             return config;
         }
@@ -226,9 +222,9 @@ public class IndexBenefitGraph
 
         /**
          * Return the used indexes from this node.
-         * @return The {@link BitArraySet} denoting the used indexes
+         * @return The {@link Set} denoting the used indexes
          */
-        public final BitArraySet<Index> getUsedIndexes()
+        public final Set<Index> getUsedIndexes()
         {
             assert isExpanded();
             return usedIndexes;
@@ -264,7 +260,7 @@ public class IndexBenefitGraph
          * @param other
          *      other configuration
          */
-        public final void addUsedIndexes(BitArraySet<Index> other)
+        public final void addUsedIndexes(Set<Index> other)
         {
             assert isExpanded();
 
@@ -278,7 +274,7 @@ public class IndexBenefitGraph
          * @param other
          *      other configuration
          */
-        public void clearUsedIndexes(BitArraySet<Index> other)
+        public void clearUsedIndexes(Set<Index> other)
         {
             assert isExpanded();
 
@@ -295,7 +291,7 @@ public class IndexBenefitGraph
          *      {@code true} if each of the used indexes are in the given configuration; {@code 
          *      false} otherwise.
          */
-        public boolean usedSetIsSubsetOf(BitArraySet<Index> other)
+        public boolean usedSetIsSubsetOf(Set<Index> other)
         {
             assert isExpanded();
 

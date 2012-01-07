@@ -3,7 +3,9 @@ package edu.ucsc.dbtune;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
@@ -21,7 +23,6 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Identifiable;
 
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -35,6 +36,9 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Huascar A. Sanchez
@@ -334,15 +338,15 @@ public final class DBTuneInstances
         IndexBenefitGraph.Node.Child child6;
         IndexBenefitGraph.Node.Child child7;
         IndexBenefitGraph.Node.Child child8;
-        BitArraySet<Index> rootibs;
-        BitArraySet<Index> ibs;
-        BitArraySet<Index> ibs1;
-        BitArraySet<Index> ibs2;
-        BitArraySet<Index> ibs3;
-        BitArraySet<Index> ibs4;
-        BitArraySet<Index> ibs5;
-        BitArraySet<Index> ibs6;
-        BitArraySet<Index> ibs7;
+        Set<Index> rootibs;
+        Set<Index> ibs;
+        Set<Index> ibs1;
+        Set<Index> ibs2;
+        Set<Index> ibs3;
+        Set<Index> ibs4;
+        Set<Index> ibs5;
+        Set<Index> ibs6;
+        Set<Index> ibs7;
 
         rootibs = new BitArraySet<Index>();
         ibs     = new BitArraySet<Index>();
@@ -424,7 +428,7 @@ public final class DBTuneInstances
         ibs.add(indexes.get(2));
         ibs.add(indexes.get(3));
 
-        return new IndexBenefitGraph(root, 80, ibs);
+        return new IndexBenefitGraph(root, 80);
     }
 
     /**
@@ -434,9 +438,9 @@ public final class DBTuneInstances
      *     a list with all the subsets of the set (a,b,c,d), where the positions of the IndexBitSet 
      *     objects are a=0, b=1, c=2, d=3
      */
-    public static List<BitArraySet<Index>> configurePowerSet(Catalog cat)
+    public static Map<String, Set<Index>> configurePowerSet(Catalog cat)
     {
-        List<BitArraySet<Index>> list = new ArrayList<BitArraySet<Index>>();
+        Map<String, Set<Index>> map = new HashMap<String, Set<Index>>();
         List<Index> indexes = cat.schemas().get(0).indexes();
 
         BitArraySet<Index> e = new BitArraySet<Index>();
@@ -498,23 +502,23 @@ public final class DBTuneInstances
         abcd.add(indexes.get(2));
         abcd.add(indexes.get(3));
 
-        list.add(e);
-        list.add(a);
-        list.add(b);
-        list.add(c);
-        list.add(d);
-        list.add(ab);
-        list.add(ac);
-        list.add(ad);
-        list.add(bc);
-        list.add(bd);
-        list.add(cd);
-        list.add(abc);
-        list.add(acd);
-        list.add(bcd);
-        list.add(abcd);
+        map.put("empty", e);
+        map.put("a", a);
+        map.put("b", b);
+        map.put("c", c);
+        map.put("d", d);
+        map.put("ab", ab);
+        map.put("ac", ac);
+        map.put("ad", ad);
+        map.put("bc", bc);
+        map.put("bd", bd);
+        map.put("cd", cd);
+        map.put("abc", abc);
+        map.put("acd", acd);
+        map.put("bcd", bcd);
+        map.put("abcd", abcd);
 
-        return list;
+        return map;
     }
 
     /**
@@ -556,7 +560,8 @@ public final class DBTuneInstances
      *
      * @author Ivo Jimenez
      */
-    private static class TrivialIdentifiable implements Identifiable, Comparable
+    private static class TrivialIdentifiable implements Identifiable, 
+            Comparable<TrivialIdentifiable>
     {
         private Integer i;
 
@@ -584,7 +589,7 @@ public final class DBTuneInstances
          * {@inheritDoc}
          */
         @Override
-        public int compareTo(Object o)
+        public int compareTo(TrivialIdentifiable o)
         {
             if (!(o instanceof TrivialIdentifiable))
                 return 0;
@@ -602,10 +607,10 @@ public final class DBTuneInstances
             final List<String> aColumns, final List... rows)
         throws Exception
     {
-        ResultSet result = Mockito.mock(ResultSet.class);
+        ResultSet result = mock(ResultSet.class);
         final AtomicInteger currentIndex = new AtomicInteger(-1);
 
-        Mockito.when(result.next()).thenAnswer(new Answer() {
+        when(result.next()).thenAnswer(new Answer() {
             public Object answer(InvocationOnMock aInvocation) throws Throwable {
                 return currentIndex.incrementAndGet() < rows.length;
             }
@@ -619,13 +624,13 @@ public final class DBTuneInstances
                 return rows[currentIndex.get()].get(columnIndex);
             }
         };
-        Mockito.when(result.getString(argument.capture())).thenAnswer(rowLookupAnswer);
-        Mockito.when(result.getShort(argument.capture())).thenAnswer(rowLookupAnswer);
-        Mockito.when(result.getDate(argument.capture())).thenAnswer(rowLookupAnswer);
-        Mockito.when(result.getInt(argument.capture())).thenAnswer(rowLookupAnswer);
-        Mockito.when(result.getLong(argument.capture())).thenAnswer(rowLookupAnswer);
-        Mockito.when(result.getDouble(argument.capture())).thenAnswer(rowLookupAnswer);
-        Mockito.when(result.getTimestamp(argument.capture())).thenAnswer(rowLookupAnswer);
+        when(result.getString(argument.capture())).thenAnswer(rowLookupAnswer);
+        when(result.getShort(argument.capture())).thenAnswer(rowLookupAnswer);
+        when(result.getDate(argument.capture())).thenAnswer(rowLookupAnswer);
+        when(result.getInt(argument.capture())).thenAnswer(rowLookupAnswer);
+        when(result.getLong(argument.capture())).thenAnswer(rowLookupAnswer);
+        when(result.getDouble(argument.capture())).thenAnswer(rowLookupAnswer);
+        when(result.getTimestamp(argument.capture())).thenAnswer(rowLookupAnswer);
 
         return result;
     }

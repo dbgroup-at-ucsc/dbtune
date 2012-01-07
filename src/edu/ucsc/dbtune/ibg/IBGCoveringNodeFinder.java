@@ -7,11 +7,11 @@ import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
  * @author Karl Schnaitter
+ * @author Ivo Jimenez
  */
 public class IBGCoveringNodeFinder
 {
-    private final BitArraySet<IndexBenefitGraph.Node> visited =
-        new BitArraySet<IndexBenefitGraph.Node>();
+    private final Set<IndexBenefitGraph.Node> visited = new BitArraySet<IndexBenefitGraph.Node>();
     private final IBGNodeStack  pending = new IBGNodeStack();
 
     /**
@@ -34,10 +34,10 @@ public class IBGCoveringNodeFinder
 
             if (foundNode != null) {
                 // Obtain used indexes
-                BitArraySet<Index> usedBitSet = new BitArraySet<Index>();
+                Set<Index> usedBitSet = new BitArraySet<Index>();
                 foundNode.addUsedIndexes(usedBitSet);
                 // Create the corresponding configuration
-                BitArraySet<Index> usedConfiguration = new BitArraySet<Index>(usedBitSet);
+                Set<Index> usedConfiguration = new BitArraySet<Index>(usedBitSet);
                 return new FindResult(usedConfiguration, foundNode.cost());
             } else {
                 return new FindResult(null, 0.0);
@@ -108,7 +108,7 @@ public class IBGCoveringNodeFinder
      */
     public IndexBenefitGraph.Node find(
             IndexBenefitGraph.Node rootNode,
-            BitArraySet<Index> config)
+            Set<Index> config)
     {
         visited.clear();
         pending.clear();

@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.ibg;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -27,22 +29,8 @@ import static org.junit.Assert.assertThat;
 public class IBGCoveringNodeFinderTest
 {
     private static Catalog cat;
+    private static Map<String, Set<Index>> confs;
     private static Node root;
-    private static BitArraySet<Index> e;
-    private static BitArraySet<Index> a;
-    private static BitArraySet<Index> b;
-    private static BitArraySet<Index> c;
-    private static BitArraySet<Index> d;
-    private static BitArraySet<Index> ab;
-    private static BitArraySet<Index> ac;
-    private static BitArraySet<Index> ad;
-    private static BitArraySet<Index> bc;
-    private static BitArraySet<Index> bd;
-    private static BitArraySet<Index> cd;
-    private static BitArraySet<Index> abc;
-    private static BitArraySet<Index> acd;
-    private static BitArraySet<Index> bcd;
-    private static BitArraySet<Index> abcd;
 
     /**
      * Setup for the test.
@@ -55,24 +43,7 @@ public class IBGCoveringNodeFinderTest
     {
         cat = configureCatalog();
         root = configureIndexBenefitGraph(cat).rootNode();
-
-        List<BitArraySet<Index>> list = configurePowerSet(cat);
-
-        e = list.get(0);
-        a = list.get(1);
-        b = list.get(2);
-        c = list.get(3);
-        d = list.get(4);
-        ab = list.get(5);
-        ac = list.get(6);
-        ad = list.get(7);
-        bc = list.get(8);
-        bd = list.get(9);
-        cd = list.get(10);
-        abc = list.get(11);
-        acd = list.get(12);
-        bcd = list.get(13);
-        abcd = list.get(14);
+        confs = configurePowerSet(cat);
     }
 
     /**
@@ -87,21 +58,21 @@ public class IBGCoveringNodeFinderTest
 
         List<Index> conf = cat.schemas().get(0).indexes();
 
-        assertThat(finder.find(root, e), is(notNullValue()));
-        assertThat(finder.find(root, a), is(notNullValue()));
-        assertThat(finder.find(root, b), is(notNullValue()));
-        assertThat(finder.find(root, c), is(notNullValue()));
-        assertThat(finder.find(root, d), is(notNullValue()));
-        assertThat(finder.find(root, ab), is(notNullValue()));
-        assertThat(finder.find(root, ac), is(notNullValue()));
-        assertThat(finder.find(root, ad), is(notNullValue()));
-        assertThat(finder.find(root, bc), is(notNullValue()));
-        assertThat(finder.find(root, bd), is(notNullValue()));
-        assertThat(finder.find(root, cd), is(notNullValue()));
-        assertThat(finder.find(root, abc), is(notNullValue()));
-        assertThat(finder.find(root, acd), is(notNullValue()));
-        assertThat(finder.find(root, bcd), is(notNullValue()));
-        assertThat(finder.find(root, abcd), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("empty")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("a")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("b")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("c")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("d")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("ab")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("ac")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("ad")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("bc")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("bd")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("cd")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("abc")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("acd")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("bcd")), is(notNullValue()));
+        assertThat(finder.find(root, confs.get("abcd")), is(notNullValue()));
 
         BitArraySet<Index> superSet = new BitArraySet<Index>();
 
@@ -123,28 +94,29 @@ public class IBGCoveringNodeFinderTest
         List<Index> conf = cat.schemas().get(0).indexes();
 
         assertThat(
-                !finder.find(root, e).getConfiguration().contains(conf.get(0)) ||
-                !finder.find(root, e).getConfiguration().contains(conf.get(2)) ||
-                !finder.find(root, e).getConfiguration().contains(conf.get(3)), is(true));
-        assertThat(finder.find(root, e).cost(), is(80.0));
+                !finder.find(root, confs.get("empty")).getConfiguration().contains(conf.get(0)) ||
+                !finder.find(root, confs.get("empty")).getConfiguration().contains(conf.get(2)) ||
+                !finder.find(root, confs.get("empty")).getConfiguration().contains(conf.get(3)), 
+                is(true));
+        assertThat(finder.find(root, confs.get("empty")).cost(), is(80.0));
 
-        assertThat(finder.find(root, a).getConfiguration(), is(ac));
-        assertThat(finder.find(root, ac).cost(), is(80.0));
+        assertThat(finder.find(root, confs.get("a")).getConfiguration(), is(confs.get("ac")));
+        assertThat(finder.find(root, confs.get("ac")).cost(), is(80.0));
 
-        assertThat(finder.find(root, b).getConfiguration(), is(bc));
-        assertThat(finder.find(root, b).cost(), is(50.0));
+        assertThat(finder.find(root, confs.get("b")).getConfiguration(), is(confs.get("bc")));
+        assertThat(finder.find(root, confs.get("b")).cost(), is(50.0));
 
-        assertThat(finder.find(root, ab).getConfiguration(), is(abc));
-        assertThat(finder.find(root, ab).cost(), is(45.0));
+        assertThat(finder.find(root, confs.get("ab")).getConfiguration(), is(confs.get("abc")));
+        assertThat(finder.find(root, confs.get("ab")).cost(), is(45.0));
 
-        assertThat(finder.find(root, ad).getConfiguration(), is(abcd));
-        assertThat(finder.find(root, ad).cost(), is(20.0));
+        assertThat(finder.find(root, confs.get("ad")).getConfiguration(), is(confs.get("abcd")));
+        assertThat(finder.find(root, confs.get("ad")).cost(), is(20.0));
 
-        assertThat(finder.find(root, bd).getConfiguration(), is(bcd));
-        assertThat(finder.find(root, bd).cost(), is(50.0));
+        assertThat(finder.find(root, confs.get("bd")).getConfiguration(), is(confs.get("bcd")));
+        assertThat(finder.find(root, confs.get("bd")).cost(), is(50.0));
 
-        assertThat(finder.find(root, acd).getConfiguration(), is(abcd));
-        assertThat(finder.find(root, acd).cost(), is(20.0));
+        assertThat(finder.find(root, confs.get("acd")).getConfiguration(), is(confs.get("abcd")));
+        assertThat(finder.find(root, confs.get("acd")).cost(), is(20.0));
     }
 
     /**
@@ -155,26 +127,58 @@ public class IBGCoveringNodeFinderTest
     {
         IBGCoveringNodeFinder finder = new IBGCoveringNodeFinder();
 
-        // check that a bad guess
-        assertThat(finder.findFast(root, a, finder.find(root, cd)).getConfiguration(), is(ac));
+        // check a bad guess
+        assertThat(
+            finder.findFast(root, confs.get("a"),
+                finder.find(root, confs.get("cd"))).getConfiguration(),
+            is(confs.get("ac")));
 
-        // check that a good guess
-        assertThat(finder.findFast(root, c, finder.find(root, cd)).getConfiguration(), is(c));
+        // check good guesses
+        assertThat(
+                finder.findFast(root, confs.get("c"),
+                    finder.find(root, confs.get("cd"))).getConfiguration(),
+                is(confs.get("c")));
 
-        assertThat(finder.find(root, e), is(finder.findFast(root, e, null)));
-        assertThat(finder.find(root, a), is(finder.findFast(root, a, null)));
-        assertThat(finder.find(root, b), is(finder.findFast(root, b, null)));
-        assertThat(finder.find(root, c), is(finder.findFast(root, c, null)));
-        assertThat(finder.find(root, d), is(finder.findFast(root, d, null)));
-        assertThat(finder.find(root, ab), is(finder.findFast(root, ab, null)));
-        assertThat(finder.find(root, ac), is(finder.findFast(root, ac, null)));
-        assertThat(finder.find(root, ad), is(finder.findFast(root, ad, null)));
-        assertThat(finder.find(root, bc), is(finder.findFast(root, bc, null)));
-        assertThat(finder.find(root, bd), is(finder.findFast(root, bd, null)));
-        assertThat(finder.find(root, cd), is(finder.findFast(root, cd, null)));
-        assertThat(finder.find(root, abc), is(finder.findFast(root, abc, null)));
-        assertThat(finder.find(root, acd), is(finder.findFast(root, acd, null)));
-        assertThat(finder.find(root, bcd), is(finder.findFast(root, bcd, null)));
-        assertThat(finder.find(root, abcd), is(finder.findFast(root, abcd, null)));
+        assertThat(
+                finder.find(root, confs.get("empty")),
+                is(finder.findFast(root, confs.get("empty"), null)));
+        assertThat(
+                finder.find(root, confs.get("a")), is(finder.findFast(root, confs.get("a"), null)));
+        assertThat(
+                finder.find(root, confs.get("b")), is(finder.findFast(root, confs.get("b"), null)));
+        assertThat(
+                finder.find(root, confs.get("c")), is(finder.findFast(root, confs.get("c"), null)));
+        assertThat(
+                finder.find(root, confs.get("d")), is(finder.findFast(root, confs.get("d"), null)));
+        assertThat(
+                finder.find(root, confs.get("ab")), is(finder.findFast(root, confs.get("ab"),  
+                        null)));
+        assertThat(
+                finder.find(root, confs.get("ac")), is(finder.findFast(root, confs.get("ac"),  
+                        null)));
+        assertThat(
+                finder.find(root, confs.get("ad")), is(finder.findFast(root, confs.get("ad"),  
+                        null)));
+        assertThat(
+                finder.find(root, confs.get("bc")), is(finder.findFast(root, confs.get("bc"),  
+                        null)));
+        assertThat(
+                finder.find(root, confs.get("bd")), is(finder.findFast(root, confs.get("bd"),  
+                        null)));
+        assertThat(
+                finder.find(root, confs.get("cd")), is(finder.findFast(root, confs.get("cd"),  
+                        null)));
+        assertThat(
+                finder.find(root, confs.get("abc")), is(finder.findFast(root, confs.get("abc"), 
+                        null)));
+        assertThat(
+                finder.find(root, confs.get("acd")), is(finder.findFast(root, confs.get("acd"), 
+                        null)));
+        assertThat(
+                finder.find(root, confs.get("bcd")), is(finder.findFast(root, confs.get("bcd"), 
+                        null)));
+        assertThat(
+                finder.find(root, confs.get("abcd")), is(finder.findFast(root, confs.get("abcd"), 
+                        null)));
     }
 }
