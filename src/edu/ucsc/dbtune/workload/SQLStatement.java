@@ -68,6 +68,26 @@ public class SQLStatement
      * {@inheritDoc}
      */
     @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+            return true;
+    
+        if (!(obj instanceof SQLStatement))
+            return false;
+    
+        SQLStatement o = (SQLStatement) obj;
+
+        if (category.isSame(o.category) && sql.equals(o.sql))
+            return true;
+
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String toString()
     {
         return "[ category=" + category +

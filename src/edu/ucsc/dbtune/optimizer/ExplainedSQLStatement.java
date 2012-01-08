@@ -318,6 +318,37 @@ public class ExplainedSQLStatement
      * {@inheritDoc}
      */
     @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+            return true;
+    
+        if (!(obj instanceof ExplainedSQLStatement))
+            return false;
+    
+        ExplainedSQLStatement o = (ExplainedSQLStatement) obj;
+    
+        // we don't take into account things that not all optimizer implementations might generate 
+        // equally, that is:
+        //   * plan
+        //   * baseTableUpdateCost
+        //   * indexUpdateCosts
+        // 
+        // the optimizationCount might be different too, but that's OK and it's not significant
+        if (statement.equals(o.statement) &&
+                selectCost == o.selectCost &&
+                updateCost == o.updateCost &&
+                configuration.equals(o.configuration) &&
+                usedConfiguration.equals(o.usedConfiguration))
+            return true;
+        
+        return false;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String toString()
     {
         StringBuilder sb = new StringBuilder();

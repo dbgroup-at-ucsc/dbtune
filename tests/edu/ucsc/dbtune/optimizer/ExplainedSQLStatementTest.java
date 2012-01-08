@@ -138,5 +138,13 @@ public class ExplainedSQLStatementTest
         assertThat(estmt.getUpdateCost(), is(greaterThanOrEqualTo(costA)));
         assertThat(estmt.getUsedConfiguration(), is(used));
         assertThat(estmt.getUpdatedConfiguration(), is(updated));
+
+        // equals
+        ExplainedSQLStatement estmt2 =
+            new ExplainedSQLStatement(
+                sql, null, optimizer, selectCost, updateCost,
+                baseTableCost, indexCosts, conf, used, count);
+
+        assertThat(estmt, is(estmt2));
     }
 }
