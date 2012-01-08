@@ -1,12 +1,11 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
-import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -14,18 +13,16 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
 import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
 import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
-import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
-import static edu.ucsc.dbtune.DBTuneInstances.configureAny;
-import static org.junit.Assert.assertThat;
 
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-
+import static org.junit.Assert.assertThat;
 
 /**
  * Unit test for optimizer implementations.
@@ -36,30 +33,26 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
  *
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
- * @see <a
- * href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
- *     "On-line Index Selection for Physical Database Tuning"</a>
+ * @see <a href="http://http://bit.ly/wXaQC3">
+ *         "On-line Index Selection for Physical Database Tuning"
+ *      </a>
  */
 public class OptimizerTest
 {
-    public static Environment env;
-
-    // XXX: test with a workload, eg. tpc-ds
-
     /**
      */
     @BeforeClass
-    public static void setUp() throws Exception
+    public static void beforeClass()
     {
-        env = new Environment(configureAny());
-        // XXX: issue #104 setUp mock objects and complete all the empty test methods
+        // env = new Environment(configureAny());
+        // note: issue #104 setUp mock objects and complete all the empty test methods
     }
 
     /**
-     * Checks that each supported optimizer returns not-null instances
+     * Checks that each supported optimizer returns not-null instances.
      */
     @Test
-    public void testNotNull() throws Exception
+    public void testNotNull()
     {
     }
 
@@ -67,7 +60,7 @@ public class OptimizerTest
      * @see OptimizerTest#checkExplain
      */
     @Test
-    public void testExplain() throws Exception
+    public void testExplain()
     {
         /*
         for (Optimizer opt : getSupportedOptimizersIterator(env)) {
@@ -80,7 +73,7 @@ public class OptimizerTest
      * @see OptimizerTest#checkWhatIfExplain
      */
     @Test
-    public void testWhatIfExplain() throws Exception
+    public void testWhatIfExplain()
     {
         /*
         for (Optimizer opt : getSupportedOptimizersIterator(env)) {
@@ -93,7 +86,7 @@ public class OptimizerTest
      * @see OptimizerTest#checkRecommendIndexes
      */
     @Test
-    public void testRecommendIndexes() throws Exception
+    public void testRecommendIndexes()
     {
         /*
         for (Optimizer opt : getSupportedOptimizersIterator(env)) {
@@ -109,7 +102,7 @@ public class OptimizerTest
      * @see checkUsedConfiguration
      */
     @Test
-    public void testUsedConfiguration() throws Exception
+    public void testUsedConfiguration()
     {
         /*
         for (Optimizer opt : getSupportedOptimizersIterator(env)) {
@@ -124,7 +117,7 @@ public class OptimizerTest
      * @see checkIsWellBehaved
      */
     @Test
-    public void testIsWellBehaved() throws Exception
+    public void testIsWellBehaved()
     {
         /*
         for (Optimizer opt : getSupportedOptimizersIterator(env)) {
@@ -134,12 +127,12 @@ public class OptimizerTest
     }
 
     /**
-     * Checks that each supported optimizer complies with the monotonicity property
+     * Checks that each supported optimizer complies with the monotonicity property.
      *
      * @see checkMonotonicity
      */
     @Test
-    public void testMonotonicity() throws Exception
+    public void testMonotonicity()
     {
         /*
         for (Optimizer opt : getSupportedOptimizersIterator(env)) {
@@ -149,12 +142,12 @@ public class OptimizerTest
     }
 
     /**
-     * Checks that each supported optimizer complies with the sanity property
+     * Checks that each supported optimizer complies with the sanity property.
      *
      * @see checkSanity
      */
     @Test
-    public void testSanity() throws Exception
+    public void testSanity()
     {
         /*
         for (Optimizer opt : getSupportedOptimizersIterator(env)) {
@@ -164,9 +157,14 @@ public class OptimizerTest
     }
 
     /**
-     * Checks that a basic "regular" explain operation is done correctly. A "regular" cost 
-     * estimation is an optimization call without hypothetical structures (or one empty hypothetical 
+     * Checks that a "regular" explain operation is done correctly. A "regular" cost estimation is 
+     * an optimization call without hypothetical structures (or one empty hypothetical 
      * configuration).
+     *
+     * @param opt
+     *      optimizer under test
+     * @throws Exception
+     *      if something wrong occurs
      */
     protected static void checkExplain(Optimizer opt) throws Exception
     {
@@ -205,7 +203,7 @@ public class OptimizerTest
         assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        sqlp = opt.explain(sql,conf);
+        sqlp = opt.explain(sql, conf);
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
@@ -215,7 +213,14 @@ public class OptimizerTest
     }
 
     /**
-     * Checks that the given optimizer can execute basic what-if optimizations
+     * Checks that the given optimizer can execute basic what-if optimizations.
+     *
+     * @param cat
+     *      catalog used to retrieve metadata
+     * @param opt
+     *      optimizer under test
+     * @throws Exception
+     *      if something wrong occurs
      */
     protected static void checkWhatIfExplain(Catalog cat, Optimizer opt) throws Exception
     {
@@ -261,14 +266,18 @@ public class OptimizerTest
 
         assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxa))));
         assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
-        //assertThat(sqlp.getUpdateCost(), is(sqlp.getUpdateCost(conf)));
 
         idxa.getSchema().remove(idxa);
         idxb.getSchema().remove(idxb);
     }
 
     /**
-     * Checks that the given optimizer can execute basic index recommendation operations
+     * Checks that the given optimizer can execute basic index recommendation operations.
+     *
+     * @param opt
+     *      optimizer under test
+     * @throws Exception
+     *      if something wrong occurs
      */
     protected static void checkRecommendIndexes(Optimizer opt) throws Exception
     {
@@ -289,6 +298,12 @@ public class OptimizerTest
     /**
      * Checks that for prepared statements generated by the given optimizer, the corresponding set 
      * of used physical structures is correct.
+     * @param cat
+     *      catalog used to retrieve metadata
+     * @param opt
+     *      optimizer under test
+     * @throws Exception
+     *      if something wrong occurs
      */
     protected static void checkUsedConfiguration(Catalog cat, Optimizer opt) throws Exception
     {
@@ -300,10 +315,10 @@ public class OptimizerTest
         Index idxb;
         
         col  = cat.<Column>findByName("one_table.tbl.a");
-        idxa = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        idxa = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
         conf = new BitArraySet<Index>();
         col  = cat.<Column>findByName("one_table.tbl.b");
-        idxb = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        idxb = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
 
         sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         sqlp = opt.explain(sql, conf);
@@ -354,11 +369,15 @@ public class OptimizerTest
         idxb.getSchema().remove(idxb);
     }
 
-    /// XXX:
     // protected static void checkAnalysisTime(Optimizer opt) throws Exception
 
     /**
-     * Checks that the optimizer is well behaved
+     * Checks that the optimizer is well behaved.
+     *
+     * @param opt
+     *      optimizer under test
+     * @throws Exception
+     *      if something wrong occurs
      */
     protected static void checkIsWellBehaved(Optimizer opt) throws Exception
     {
@@ -368,9 +387,16 @@ public class OptimizerTest
     }
 
     /**
-     * Checks that the optimizer respects the monotonicity property:
+     * Checks that the optimizer respects the monotonicity property. Defined by:
      *
-     *    For any index-sets X, Y and query q, if X ⊆ Y then cost(q, X) ≥ cost(q, Y )
+     *    For any index-sets X, Y and query q, if X ⊆ Y then cost(q, X) ≥ cost(q, Y)
+     *
+     * @param cat
+     *      catalog used to retrieve metadata
+     * @param opt
+     *      optimizer under test
+     * @throws Exception
+     *      if something wrong occurs
      */
     protected static void checkMonotonicity(Catalog cat, Optimizer opt) throws Exception
     {
@@ -383,7 +409,7 @@ public class OptimizerTest
 
         sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         col  = cat.<Column>findByName("one_table.tbl.a");
-        idx  = new Index(col,SECONDARY,UNCLUSTERED,NON_UNIQUE);
+        idx  = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
         conf = new BitArraySet<Index>();
 
         conf.add(idx);
@@ -397,11 +423,18 @@ public class OptimizerTest
     }
 
     /**
-     * Checks that the given optimizer complies with the sanity property:
-     *    
+     * Checks that the given optimizer complies with the sanity property.
+     * <p>
      * For any index-sets X, Y and query q:
      *
      *   if used (q, Y) ⊆ X ⊆ Y, then optplan(q, X) = optplan(q, Y)
+     *
+     * @param cat
+     *      catalog used to retrieve metadata
+     * @param opt
+     *      optimizer under test
+     * @throws Exception
+     *      if something wrong occurs
      */
     protected static void checkSanity(Catalog cat, Optimizer opt) throws Exception
     {
@@ -409,10 +442,10 @@ public class OptimizerTest
         Column colA;
         Column colB;
         Set<Index> conf;
+        ExplainedSQLStatement exp1;
+        ExplainedSQLStatement exp2;
         Index idxA;
         Index idxB;
-        double cost1;
-        double cost2;
 
         sql  = new SQLStatement("select a from one_table.tbl where a = 5");
         colA = cat.<Column>findByName("one_table.tbl.a");
@@ -423,18 +456,109 @@ public class OptimizerTest
 
         conf.add(idxA);
 
-        cost1 = opt.explain(sql, conf).getSelectCost();
+        exp1 = opt.explain(sql, conf);
 
         conf.add(idxB);
 
-        cost2 = opt.explain(sql, conf).getSelectCost();
+        exp2 = opt.explain(sql, conf);
 
-        assertThat(cost1, is(cost2));
+        assertThat(exp1.getSelectCost(), is(exp2.getSelectCost()));
+        assertThat(exp1.getUpdateCost(), is(exp2.getUpdateCost()));
+        assertThat(exp1.getUsedConfiguration(), is(exp2.getUsedConfiguration()));
 
-        // XXX: we should also check:
-        //   * the set of used indexes of each plan is the same
-        //   * the contents of the plan (the tree) are the same
+        // we should also check the contents of the plan (the tree) are the same
+
         idxA.getSchema().remove(idxA);
         idxB.getSchema().remove(idxB);
+    }
+
+    /**
+     * Checks that {@link PreparedSQLStatement} objects generated by the optimizer are correct.
+     *
+     * @param cat
+     *      catalog used to retrieve metadata
+     * @param opt
+     *      optimizer under test
+     * @throws Exception
+     *      if something wrong occurs
+     */
+    protected static void checkPreparedExplain(Catalog cat, Optimizer opt) throws Exception
+    {
+        SQLStatement sql;
+        PreparedSQLStatement stmt;
+        ExplainedSQLStatement exp1;
+        ExplainedSQLStatement exp2;
+        Set<Index> conf;
+        Column col;
+        Index idxa;
+        Index idxb;
+
+        // regular explain
+        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql);
+        exp2 = stmt.explain(new HashSet<Index>());
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2, is(exp2));
+
+        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql);
+        exp2 = stmt.explain(new HashSet<Index>());
+
+        // what-if call
+        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        idxa = new Index(cat.<Column>findByName("one_table.tbl.a"));
+        conf = new BitArraySet<Index>();
+
+        conf.add(idxa);
+
+        exp1 = opt.explain(sql, conf);
+        exp2 = stmt.explain(conf);
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2, is(exp2));
+
+        col  = cat.<Column>findByName("one_table.tbl.b");
+        idxb = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
+
+        conf.add(idxb);
+
+        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5 AND b = 2");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql, conf);
+        exp2 = stmt.explain(conf);
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2, is(exp2));
+
+        conf.remove(idxa);
+
+        exp1 = opt.explain(sql, conf);
+        exp2 = stmt.explain(conf);
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2, is(exp2));
+
+        idxa.getSchema().remove(idxa);
+        idxb.getSchema().remove(idxb);
     }
 }

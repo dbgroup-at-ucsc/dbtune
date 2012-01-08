@@ -141,7 +141,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
                     optimizationCount);
         }
         
-        if (!getUniverse().contains(configuration))
+        if (!getUniverse().containsAll(configuration))
             throw new SQLException(
                 "Configuration " + configuration + " not contained in statement's" + getUniverse());
 

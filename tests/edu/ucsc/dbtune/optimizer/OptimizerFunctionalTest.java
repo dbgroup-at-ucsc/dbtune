@@ -63,6 +63,17 @@ public class OptimizerFunctionalTest
     /**
      * @throws Exception
      *      if something goes wrong
+     * @see OptimizerTest#checkPreparedExplain
+     */
+    @Test
+    public void testPrepared() throws Exception
+    {
+        OptimizerTest.checkPreparedExplain(db.getCatalog(), opt);
+    }
+
+    /**
+     * @throws Exception
+     *      if something goes wrong
      * @see OptimizerTest#checkExplain
      */
     @Test
