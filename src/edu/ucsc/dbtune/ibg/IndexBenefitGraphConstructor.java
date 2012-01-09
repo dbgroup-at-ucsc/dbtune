@@ -9,6 +9,7 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.DefaultQueue;
+import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -225,6 +226,9 @@ public final class IndexBenefitGraphConstructor
         this.optimizer = delegate;
         this.sql = sql;
         this.configuration = conf;
+
+        if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT))
+            throw new SQLException("Can't handle " + sql.getSQLCategory() + " statements");
 
         nodeCount = 0;
         used = new BitArraySet<Index>();
