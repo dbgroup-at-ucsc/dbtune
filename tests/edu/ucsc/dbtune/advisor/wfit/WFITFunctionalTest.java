@@ -7,10 +7,9 @@ import java.sql.SQLException;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.wfit.WFIT;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.BitArraySet;
+import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -18,27 +17,33 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
 /**
  * Functional test for the WFIT use case.
- *
+ * <p>
  * Some of the documentation contained in this class refers to sections of Karl Schnaitter's 
  * Doctoral Thesis "On-line Index Selection for Physical Database Tuning". Specifically to chapter 
  * 6.
  *
- * @see <a href="http://proquest.umi.com/pqdlink?did=2171968721&Fmt=7&clientId=1565&RQT=309&VName=PQD">
- *     "On-line Index Selection for Physical Database Tuning"</a>
+ * @see <a href="http://bit.ly/wXaQC3">
+ *         "On-line Index Selection for Physical Database Tuning"
+ *      </a>
  * @author Ivo Jimenez
  */
 public class WFITFunctionalTest
 {
-    public static DatabaseSystem db;
-    public static Environment    en;
+    private static DatabaseSystem db;
+    private static Environment    en;
 
+    /**
+     * @throws Exception
+     *      if the workload can't be loaded
+     */
     @BeforeClass
-    public static void setUp() throws Exception
+    public static void beforeClass() throws Exception
     {
         Connection con;
         String     ddl;
@@ -53,8 +58,12 @@ public class WFITFunctionalTest
         db = newDatabaseSystem(en);
     }
 
+    /**
+     * @throws Exception
+     *      if the connection can't be closed
+     */
     @AfterClass
-    public static void tearDown() throws Exception
+    public static void afterClass() throws Exception
     {
         db.getConnection().close();
     }
@@ -62,6 +71,9 @@ public class WFITFunctionalTest
     /**
      * The test has to check first just one query and one index. We need to make sure that the index 
      * gets recommended and dropped consistently to what we expect.
+     *
+     * @throws Exception
+     *      if an i/o error occurrs; if a DBMS communication failure occurs
      */
     @Test
     public void testWFIT() throws Exception
@@ -78,7 +90,7 @@ public class WFITFunctionalTest
         int           maxNumStates;
         int           windowSize;
         int           partIterations;
-        int           q;
+        //int           q;
 
         workloadFile   = en.getScriptAtWorkloadsFolder("one_table/workload.sql");
         maxNumIndexes  = en.getMaxNumIndexes();
@@ -88,9 +100,11 @@ public class WFITFunctionalTest
         pool           = getCandidates(workloadFile);
         fileReader     = new FileReader(workloadFile);
         workload       = new Workload(fileReader);
-        q              = 0;
+        //q              = 0;
 
-        wfit = new WFIT(db.getOptimizer(), pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
+        wfit =
+            new WFIT(
+                db.getOptimizer(), pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
 
         for (SQLStatement sql : workload) {
             wfit.process(sql);
@@ -114,6 +128,7 @@ public class WFITFunctionalTest
             // only if there the single index is not useful for the query
             // assertThat(qinfo.getOptimizationCount(), is(1));
 
+            /*
             if (q < 5) {
                 //assertThat(configuration.size(), is(0));
                 //assertThat(configuration.isEmpty(), is(true));
@@ -128,9 +143,20 @@ public class WFITFunctionalTest
             }
 
             q++;
+            */
         }
     }
 
+    /**
+     * @param workloadFilename
+     *      workload file used to extract candidates
+     * @return
+     *      a set of candidate indexes
+     * @throws IOException
+     *      if an i/o error occurrs
+     * @throws SQLException
+     *      if candidate calculation generates an error
+     */
     private static Set<Index> getCandidates(String workloadFilename)
         throws SQLException, IOException
     {

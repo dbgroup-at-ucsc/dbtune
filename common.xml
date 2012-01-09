@@ -170,7 +170,7 @@
       <fileset dir="." includes="**/${bin.dir}/*"/>
     </copy>
     <chmod perm="755" dir="${bld.dir}" includes="**/${bin.dir}/*"/>
-    <tar destfile="${bld.dir}/${project}-${version}.zip"
+    <tar destfile="${bld.dir}/${project}-${version}.tgz"
          compression="gzip"
          basedir="${bld.dir}/"
          excludes="classes/,classes/**,tests/,tests/**,junit.output,junit.output/**" />
