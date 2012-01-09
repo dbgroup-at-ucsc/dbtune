@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
 /**
  * Functional test for optimizer implementations. The optimizer being tested is specified by the 
@@ -102,17 +103,6 @@ public class OptimizerFunctionalTest
     public void testRecommendIndexes() throws Exception
     {
         OptimizerTest.checkRecommendIndexes(opt);
-    }
-
-    /**
-     * @throws Exception
-     *      if something goes wrong
-     * @see OptimizerTest#checkUsedIndexes
-     */
-    @Test
-    public void testUsedIndexes() throws Exception
-    {
-        OptimizerTest.checkUsedConfiguration(db.getCatalog(), opt);
     }
 
     /**

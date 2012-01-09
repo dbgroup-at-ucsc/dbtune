@@ -20,7 +20,6 @@ import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
@@ -181,6 +180,12 @@ public class OptimizerTest
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.SELECT), is(true));
         assertThat(sqlp.getSelectCost(), greaterThan(0.0));
+        assertThat(sqlp.getUpdateCost(), is(0.0));
+        assertThat(sqlp.getBaseTableUpdateCost(), is(0.0));
+        assertThat(sqlp.getSelectCost(), is(sqlp.getTotalCost()));
+        assertThat(sqlp.getConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
         conf  = new BitArraySet<Index>();
@@ -190,17 +195,34 @@ public class OptimizerTest
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.SELECT), is(true));
         assertThat(sqlp.getSelectCost(), greaterThan(0.0));
+        assertThat(sqlp.getUpdateCost(), is(0.0));
+        assertThat(sqlp.getBaseTableUpdateCost(), is(0.0));
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost()));
+        assertThat(sqlp.getConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
         assertThat(cost1, is(cost2));
 
+        // XXX: issue #106 is causing this to fail for MySQLOptimizer {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql);
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
         assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
+
+        // XXX: issue #139 is causing this to fail for PGOptimizer {
         assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        // }
+
+        assertThat(sqlp.getBaseTableUpdateCost(), is(sqlp.getUpdateCost()));
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
         sqlp = opt.explain(sql, conf);
@@ -208,8 +230,20 @@ public class OptimizerTest
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
         assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
+
+        // XXX: issue #139 is causing this to fail for PGOptimizer {
         assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        // }
+
+        assertThat(sqlp.getBaseTableUpdateCost(), is(sqlp.getUpdateCost()));
+
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
+        // }
     }
 
     /**
@@ -226,19 +260,19 @@ public class OptimizerTest
     {
         SQLStatement sql;
         ExplainedSQLStatement sqlp;
-        Column col;
         Set<Index> conf;
         Index idxa;
         Index idxb;
         double cost1;
         double cost2;
 
-        sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         cost1 = opt.explain(sql).getSelectCost();
-
         idxa = new Index(cat.<Column>findByName("one_table.tbl.a"));
+        idxb = new Index(cat.<Column>findByName("one_table.tbl.b"));
         conf = new BitArraySet<Index>();
 
+        conf.add(idxb);
         conf.add(idxa);
 
         sqlp  = opt.explain(sql, conf);
@@ -247,25 +281,50 @@ public class OptimizerTest
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.SELECT), is(true));
         assertThat(sqlp.getSelectCost(), greaterThan(0.0));
+        assertThat(cost1, is(greaterThan(sqlp.getSelectCost())));
+        assertThat(sqlp.getUpdateCost(), is(0.0));
+        assertThat(sqlp.getBaseTableUpdateCost(), is(0.0));
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost()));
+        assertThat(sqlp.getConfiguration(), is(conf));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(false));
+        assertThat(sqlp.getUsedConfiguration().size(), is(1));
+        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
-        assertThat(cost1, is(not(cost2)));
 
-        col  = cat.<Column>findByName("one_table.tbl.b");
-        idxb = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
-
-        conf.add(idxb);
-
+        // XXX: issue #106 is causing this to fail for MySQLOptimizer {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
 
-        assertThat(sqlp.getSelectCost(), is(cost2));
+        assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
+        assertThat(sqlp.getSelectCost(), greaterThan(0.0));
+        assertThat(sqlp.getSelectCost(), is(cost2));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxa))));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
+
+        // XXX: issue #139 is causing this to fail for PGOptimizer {
+        assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        // }
+
+        assertThat(
+            sqlp.getUpdateCost(),
+            is(sqlp.getBaseTableUpdateCost() + sqlp.getUpdateCost(sqlp.getUpdatedConfiguration())));
         assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getSelectCost())));
         assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getUpdateCost())));
         assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getConfiguration(), is(conf));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(false));
+        assertThat(sqlp.getUsedConfiguration().size(), is(1));
+        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
 
-        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxa))));
-        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
+        // XXX: issue #142 is causing this to fail for DB2Optimizer {
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(false));
+        assertThat(sqlp.getUpdatedConfiguration(), is(conf));
+        // }
+        assertThat(sqlp.getOptimizationCount(), is(1));
+        // }
 
         idxa.getSchema().remove(idxa);
         idxb.getSchema().remove(idxb);
@@ -281,6 +340,7 @@ public class OptimizerTest
      */
     protected static void checkRecommendIndexes(Optimizer opt) throws Exception
     {
+        // XXX: issue #105 is causing this to fail for MySQLOptimizer {
         SQLStatement sql;
         Set<Index> rec;
         
@@ -293,80 +353,7 @@ public class OptimizerTest
         rec = opt.recommendIndexes(sql);
 
         assertThat(rec.isEmpty(), is(false));
-    }
-
-    /**
-     * Checks that for prepared statements generated by the given optimizer, the corresponding set 
-     * of used physical structures is correct.
-     * @param cat
-     *      catalog used to retrieve metadata
-     * @param opt
-     *      optimizer under test
-     * @throws Exception
-     *      if something wrong occurs
-     */
-    protected static void checkUsedConfiguration(Catalog cat, Optimizer opt) throws Exception
-    {
-        SQLStatement sql;
-        ExplainedSQLStatement sqlp;
-        Column col;
-        Set<Index> conf;
-        Index idxa;
-        Index idxb;
-        
-        col  = cat.<Column>findByName("one_table.tbl.a");
-        idxa = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
-        conf = new BitArraySet<Index>();
-        col  = cat.<Column>findByName("one_table.tbl.b");
-        idxb = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
-
-        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
-        sqlp = opt.explain(sql, conf);
-
-        assertThat(sqlp.getUsedConfiguration().size(), is(0));
-        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(false));
-
-        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
-        sqlp = opt.explain(sql, conf);
-
-        assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(false));
-        assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(false));
-
-        conf.add(idxa);
-
-        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
-        sqlp = opt.explain(sql, conf);
-
-        assertThat(sqlp.getUsedConfiguration().size(), is(1));
-        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
-
-        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
-        sqlp = opt.explain(sql, conf);
-
-        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
-        //assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(true));
-        //assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(false));
-
-        conf.add(idxb);
-
-        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
-        sqlp = opt.explain(sql, conf);
-
-        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
-        assertThat(sqlp.getUsedConfiguration().contains(idxb), is(false));
-
-        assertThat(conf.containsAll(sqlp.getUsedConfiguration()), is(true));
-        assertThat(conf.size(), greaterThan(sqlp.getUsedConfiguration().size()));
-
-        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a > 0");
-        sqlp = opt.explain(sql, conf);
-
-        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
-        //assertThat(sqlp.getUpdatedConfiguration().contains(idxa), is(true));
-        //assertThat(sqlp.getUpdatedConfiguration().contains(idxb), is(true));
-
-        idxa.getSchema().remove(idxa);
-        idxb.getSchema().remove(idxb);
+        // }
     }
 
     // protected static void checkAnalysisTime(Optimizer opt) throws Exception
@@ -447,7 +434,7 @@ public class OptimizerTest
         Index idxA;
         Index idxB;
 
-        sql  = new SQLStatement("select a from one_table.tbl where a = 5");
+        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         colA = cat.<Column>findByName("one_table.tbl.a");
         colB = cat.<Column>findByName("one_table.tbl.b");
         idxA = new Index(colA);
@@ -506,6 +493,7 @@ public class OptimizerTest
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp2));
 
+        // issue #106 is causing this to fail for MySQLOptimizer {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         stmt = opt.prepareExplain(sql);
 
@@ -513,6 +501,7 @@ public class OptimizerTest
 
         exp1 = opt.explain(sql);
         exp2 = stmt.explain(new HashSet<Index>());
+        // }
 
         // what-if call
         sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");

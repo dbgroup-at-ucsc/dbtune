@@ -36,6 +36,7 @@ import static edu.ucsc.dbtune.util.Strings.compareVersion;
 import static edu.ucsc.dbtune.util.Strings.toBooleanList;
 import static edu.ucsc.dbtune.util.Strings.toDoubleArrayFromIndexed;
 import static edu.ucsc.dbtune.util.Strings.toIntegerArray;
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 /**
  * The interface to the PostgreSQL optimizer.
@@ -115,11 +116,10 @@ public class PGOptimizer extends AbstractOptimizer
         double[]            updateCosts;
         double              aggregatedUpdateCost;
         double              selectCost;
-        int[]               positions;
 
         stmt = connection.createStatement();
         list = new ArrayList<Index>(indexes);
-        rs   = stmt.executeQuery("EXPLAIN INDEXES " + toString(list) + " " + sql.getSQL());
+        rs = stmt.executeQuery("EXPLAIN INDEXES " + toString(list) + " " + sql.getSQL());
 
         if (!rs.next())
             throw new SQLException("No result from EXPLAIN statement");
@@ -129,44 +129,43 @@ public class PGOptimizer extends AbstractOptimizer
                     sql.getSQLCategory() + " not the same to " + 
                     SQLCategory.from(rs.getString("category")));
 
-        selectCost     = rs.getDouble("qcost");
+        // select cost
+        selectCost = rs.getDouble("qcost");
+
+        // used configuration
         indexPositions = rs.getString("indexes").trim();
-        indexOverhead  = rs.getString("index_overhead").trim();
 
-        rs.close();
-        stmt.close();
+        if (!indexPositions.equals(""))
+            usedConf = getUsedConfiguration(list, toIntegerArray(indexPositions.split(" ")));
+        else
+            usedConf = new BitArraySet<Index>();
 
-        if (indexes.size() > 0) {
+        // update costs
+        indexOverhead = rs.getString("index_overhead").trim();
+        if (sql.getSQLCategory().isSame(NOT_SELECT) && indexes.size() > 0)
             updateCosts = toDoubleArrayFromIndexed(indexOverhead.split(" "), "=");
-
-            if (!indexPositions.equals(""))
-                positions = toIntegerArray(indexPositions.split(" "));
-            else
-                positions = new int[0];
-
-            usedConf = getUsedConfiguration(list, positions);
-
-        } else {
-            usedConf   = new BitArraySet<Index>();
+        else
             updateCosts = new double[0];
-        }
 
-        if (updateCosts.length != indexes.size())
-            throw new SQLException(
-                updateCosts.length + " update costs for " + indexes.size() + "indexes");
+        if (sql.getSQLCategory().isSame(NOT_SELECT) && updateCosts.length != indexes.size())
+            throw new SQLException(updateCosts.length + " costs for " + indexes.size() + "indexes");
 
         indexUpdateCosts = new HashMap<Index, Double>();
         aggregatedUpdateCost = 0.0;
 
         for (int i = 0; i < updateCosts.length; i++) {
-            indexUpdateCosts.put(list.get(0), updateCosts[i]);
+            indexUpdateCosts.put(list.get(i), updateCosts[i]);
             aggregatedUpdateCost += updateCosts[i];
         }
 
+        // plan
         if (obtainPlan)
             sqlPlan = getPlan(connection, sql);
         else
             sqlPlan = null;
+
+        rs.close();
+        stmt.close();
 
         return new ExplainedSQLStatement(
             sql, sqlPlan, this, selectCost, aggregatedUpdateCost, 0.0,

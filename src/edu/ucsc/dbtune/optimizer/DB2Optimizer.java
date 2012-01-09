@@ -58,6 +58,7 @@ public class DB2Optimizer extends AbstractOptimizer
         throws SQLException
     {
         Set<Index> used;
+        Map<Index, Double> updateCosts;
         SQLStatementPlan plan;
         double selectCost;
         double updateCost;
@@ -67,16 +68,20 @@ public class DB2Optimizer extends AbstractOptimizer
         plan = getPlan(sql);
         used = getUsedIndexes(catalog, connection);
 
-        if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT))
+        if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
             updateCost = getUpdateCost(connection);
-        else
+            updateCosts = new HashMap<Index, Double>();
+            // XXX: issue #142
+            // updateCosts = getUpdatedIndexes(connection);
+        } else {
             updateCost = 0.0;
+            updateCosts = new HashMap<Index, Double>();
+        }
 
         selectCost = getCost(connection) - updateCost;
 
         return new ExplainedSQLStatement(
-            sql, plan, this, selectCost, updateCost, updateCost,
-            new HashMap<Index, Double>(), indexes, used, 1);
+            sql, plan, this, selectCost, updateCost, updateCost, updateCosts, indexes, used, 1);     
     }
 
     /**
