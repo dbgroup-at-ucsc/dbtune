@@ -35,10 +35,10 @@ public class QueryPlanDescTest extends BIPTestConfiguration
             
             desc.generateQueryPlanDesc(listPreparators.get(q), listStmt.get(q), poolIndexes);
     
-            assertThat(desc.getNumSlots(), is(numSchemaTables));
-            assertThat(desc.getNumPlans(), is(numPlans[q]));
+            assertThat(desc.getNumberOfSlots(), is(numSchemaTables));
+            assertThat(desc.getNumberOfTemplatePlans(), is(numPlans[q]));
             
-            for (int k = 0; k < desc.getNumPlans(); k++) {
+            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                 if (q == 0){
                     assertThat(desc.getInternalPlanCost(k), is(internalCostPlan1[k]));
                 } else if (q == 1) {
@@ -47,17 +47,17 @@ public class QueryPlanDescTest extends BIPTestConfiguration
             }
             
             for (int i = 0; i < numSchemaTables; i++) {
-                assertThat(desc.getNumIndexesEachSlot(i), is(3));
+                assertThat(desc.getNumberOfIndexesEachSlot(i), is(3));
             }
             
             int p = 0;
-            for (int k = 0; k < desc.getNumPlans(); k++) {
+            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                 for (int i = 0; i < numSchemaTables; i++) {
-                    for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++){
+                    for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++){
                         if ( (q == 0 && i <= 1) // the first query
                              || (q == 1 && i >= 1) // the second query 
                            ){
-                            if (a == desc.getNumIndexesEachSlot(i) - 1) {
+                            if (a == desc.getNumberOfIndexesEachSlot(i) - 1) {
                                 assertThat(desc.getIndexAccessCost(k, i, a), is(100.0));
                             }
                             else {

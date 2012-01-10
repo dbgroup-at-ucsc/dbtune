@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.bip.util;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.metadata.Schema;
@@ -9,12 +10,12 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 
 /**
- * The class prepares for BIP formulation per schema
+ * The class prepares for BIP formulation per schema:  
  *      - Correspond to a specific schema (e.g., TPCH, TPCDS)       
  *      - Communicate with INUM to populate the space for each statement 
  *      - Generate the list of full table scan indexes associated with each relation in the schema
  * 
- * @author tqtrung
+ * @author tqtrung@soe.ucsc.edu
  *
  */
 public class BIPPreparatorSchema 
@@ -33,9 +34,19 @@ public class BIPPreparatorSchema
 		}
 	}
 	
-	
+	public void setSchema(Schema _schema) throws SQLException
+    {   
+        this.schema = _schema;
+        
+        // create a list of full table scan indexes
+        for (Table table : schema.tables()){
+            IndexFullTableScan scanIdx = new IndexFullTableScan(table);
+            this.listFullTableScanIndexes.add(scanIdx);
+        }
+    }
+
 	/**
-	 * Interact with INUM to get the INUM's search space for the given {@code stmt}
+	 * Interact with INUM to get the INUM's search space for the given {@code stmt} statement
 	 * 
 	 * @param stmt
 	 *     A SQL statement
@@ -56,17 +67,12 @@ public class BIPPreparatorSchema
 	 *     List of tables in the schema
 	 */
 	public List<Table> getListSchemaTables()
-	{
-	    /*
+	{   
 	    List<Table> listSchemaTables = new ArrayList<Table>();
 	    for (Table table : schema.tables()) {
 	        listSchemaTables.add(table);
 	    }
 	    return listSchemaTables;
-	    */
-	    // TODO: return list of tables in the schema
-        throw new RuntimeException("NOT IMPLEMENTED YET");
-	    
 	}
 
 	/**
@@ -76,10 +82,8 @@ public class BIPPreparatorSchema
      *     List of full table scan indexes
      */
 	public List<IndexFullTableScan> getListFullTableScanIndexes()
-	{
-	    // TODO: return list of full table scan indexes
-        throw new RuntimeException("NOT IMPLEMENTED YET");
-	    //return this.listFullTableScanIndexes;
+	{   
+	    return this.listFullTableScanIndexes;
 	}
 }
 

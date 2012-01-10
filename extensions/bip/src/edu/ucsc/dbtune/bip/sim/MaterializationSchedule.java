@@ -3,14 +3,29 @@ package edu.ucsc.dbtune.bip.sim;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.ucsc.dbtune.bip.util.BIPOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
-public class MaterializationSchedule 
+/**
+ * The class to store a materialization schedule that includes indexes to be created/dropped
+ * at each maintenance window
+ * 
+ * @author tqtrung@soe.ucsc.edu
+ *
+ */
+public class MaterializationSchedule extends BIPOutput
 {
     private int W;
     private List<List<Index>> listCreateIndexesWindow;
     private List<List<Index>> listDropIndexesWindow;
-     
+    
+    /**
+     * Constructor of a materialization schedule, given the number of maintenance window
+     * that this schedule corresponds to 
+     * 
+     * @param _W
+     *      The number of maintenance windows
+     */
     public MaterializationSchedule(int _W)
     {
         this.W = _W;
@@ -24,12 +39,26 @@ public class MaterializationSchedule
         }
     }
     
+    /**
+     * Record the given {@code index} as being created/dropped, 
+     * depending on the value of {@code type}, at maintenance window {@code window}
+     * 
+     * @param index
+     *      The index that is created/dropped
+     * @param window
+     *      The window when the index is materialized          
+     * @param type
+     *      The operation is either create when {@code type = VAR_CREATE},
+     *      or drop when {@code type = VAR_DROP})
+     */
     public void addIndexWindow(Index index, int window, int type)
     {
         if (type == SimVariablePool.VAR_CREATE) {
             listCreateIndexesWindow.get(window).add(index);
         } else if  (type == SimVariablePool.VAR_DROP) {
             listDropIndexesWindow.get(window).add(index);
+        } else {
+            throw new RuntimeException("The type of index must be created or dropped");
         }
     }
 

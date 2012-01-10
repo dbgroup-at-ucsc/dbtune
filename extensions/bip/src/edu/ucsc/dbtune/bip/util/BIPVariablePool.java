@@ -7,10 +7,10 @@ import java.util.Map;
 
 /**
  * A container that stores all variables constructed in a BIP
- * @author tqtrung
- *
+ * 
+ * @author tqtrung@soe.ucsc.edu
  */
-public class BIPVariablePool 
+public abstract class BIPVariablePool 
 {
     protected List<BIPVariable> listVar;
     protected Map<String, BIPVariable> mapNameVar;
@@ -21,19 +21,44 @@ public class BIPVariablePool
         mapNameVar = new HashMap<String, BIPVariable>();
     }
     
+    
+    /**
+     * Add a variable into this pool
+     * @param var
+     *      A BIP variable
+     */
     public void addVariable(BIPVariable var)
     {
         listVar.add(var);
     }
     
-   
     /**
-     * Enumerate list of variables in multiple lines, each line contains at most {@code NUM_VAR_PER_LINE} variable
+     * Retrieve a {@code BIPVariable} object given a name
+     * @param name
+     *      The name of the variable
+     * @return
+     *      The variable that has the name exactly matches with the given name 
+     *      or NULL if the given name does not match with any variables stored in the pool
+     */
+    public BIPVariable getVariable(String name)
+    {   
+        Object found = mapNameVar.get(name);
+        BIPVariable var = null;
+        if (found != null) {
+            var = (BIPVariable) found;
+        }
+        
+        return var;
+    }
+    
+    /**
+     * Enumerate list of variables in multiple lines, 
+     * Each line contains at most {@code NUM_VAR_PER_LINE} variables
      * 
      * @param NUM_VAR_PER_LINE
-     *      The maximum number of variables to be in one line
+     *      The maximum number of variables that are enumerated in one line
      * @return
-     *      The string (with multiple lines) that lists all varaibles stored in this pool
+     *      The string (with multiple lines) that lists all variables stored in the pool
      */ 
     public String enumerateListVariables(final int NUM_VAR_PER_LINE)
     {
@@ -57,23 +82,5 @@ public class BIPVariablePool
             result += "\n";
         }     
         return result;
-    }
-    
-    /**
-     * Retrieve a BIPVariable given a name
-     * @param name
-     *      The name of the variable
-     * @return
-     *      The object or NULL if it is not found
-     */
-    public BIPVariable getVariable(String name)
-    {   
-        Object found = mapNameVar.get(name);
-        BIPVariable var = null;
-        if (found != null) {
-            var = (BIPVariable) found;
-        }
-        
-        return var;
     }
 }

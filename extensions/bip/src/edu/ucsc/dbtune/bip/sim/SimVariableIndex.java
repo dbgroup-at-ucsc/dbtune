@@ -1,13 +1,31 @@
 package edu.ucsc.dbtune.bip.sim;
 
-
 import edu.ucsc.dbtune.bip.util.HashCodeUtil;
+
 
 public class SimVariableIndex 
 {
     private int typeVariable, window, q, k, i, a;
     private int fHashCode;
+
     
+    /**
+     * A {@code SimVarible} is defined based on the following
+     * five parameters
+     * 
+     * @param _type
+     *      The type of variable (e.g., VAR_CREATE, VAR_DROP)
+     * @param _window
+     *      The maintenance window
+     * @param _q
+     *      The statement ID
+     * @param _k
+     *      The query plan ID
+     * @param _i
+     *      The slot ID
+     * @param _a
+     *      The position of an index in this slot
+     */
     public SimVariableIndex(int _type, int _window, int _q, int _k, int _i, int _a)
     {
         this.typeVariable = _type;
