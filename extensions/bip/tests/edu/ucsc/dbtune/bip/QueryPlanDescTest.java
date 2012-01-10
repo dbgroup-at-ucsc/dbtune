@@ -10,9 +10,11 @@ import java.util.Map.Entry;
 import org.junit.Test;
 
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
+import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -30,10 +32,17 @@ public class QueryPlanDescTest extends BIPTestConfiguration
             listStmt.add(entry.getValue().get(0));
         }
         
-        for (int q = 0; q < numQ; q++) {
-            QueryPlanDesc desc = new  QueryPlanDesc();
-            
-            //desc.generateQueryPlanDesc(communicator, listStmt.get(q), poolIndexes);
+        int q = 0;
+        
+        for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
+            QueryPlanDesc desc = new  QueryPlanDesc();   
+            List<IndexFullTableScan> listFullTableScanIndexes = new  ArrayList<IndexFullTableScan>();
+            for (Table table : entry.getKey().tables()){
+                IndexFullTableScan scanIdx = new IndexFullTableScan(table);
+                listFullTableScanIndexes.add(scanIdx);
+            }
+            desc.generateQueryPlanDesc(communicator, entry.getKey(), listFullTableScanIndexes, 
+                                       listStmt.get(q), poolIndexes);
     
             assertThat(desc.getNumberOfSlots(), is(numSchemaTables));
             assertThat(desc.getNumberOfTemplatePlans(), is(numPlans[q]));
@@ -78,6 +87,7 @@ public class QueryPlanDescTest extends BIPTestConfiguration
                     }
                 }
             }
+            q++;
         }
         System.out.println("The generator of query plan descriptor is tested SUCCESSFULLY.");
     }
