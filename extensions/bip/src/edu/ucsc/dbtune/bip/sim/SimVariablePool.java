@@ -23,7 +23,7 @@ public class SimVariablePool extends BIPVariablePool
     
     /**
      * 
-     * Construct the variable name in the form: y(w, q, k), x(w,q, k,i,a), s(w, a), 
+     * Construct the variable name in the format: y(w, q, k), x(w,q, k,i,a), s(w, a), 
      * present(w,a), create(w,a), drop(w,a)
      *  
      *

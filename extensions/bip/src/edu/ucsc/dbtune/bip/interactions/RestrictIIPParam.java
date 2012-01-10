@@ -7,9 +7,6 @@ package edu.ucsc.dbtune.bip.interactions;
  * 			i.e., if doi_q(c,d) >= delta, then c and d interact with each other
  * 		@element totalIndex
  * 			The number of candidate Indexes
- * 		@element desc 
- * 			Query plan descriptor (derived from INUM interface)
- * 			including information about the internal plan and access cost
  * 		@element ic, id
  * 			The relation identifier that contains index c (resp. d)
  * 		@element pos_c, pos_d
@@ -49,7 +46,7 @@ public class RestrictIIPParam
 
 	
 	/**
-	 * Position of relation (or slot) containing @c index
+	 * Position of the relation (or slot) containing the index {@code c}
 	 */
 	public int getPosRelContainC() 
 	{
@@ -62,7 +59,7 @@ public class RestrictIIPParam
 	}
 	
 	/**
-	 * Position of relation (or slot) containing index @d
+	 * Position of relation (or slot) containing the index {@code d}
 	 */
 	public int getPosRelContainD() 
 	{
@@ -76,7 +73,7 @@ public class RestrictIIPParam
 	
 	
 	/**
-	 * Position of index @c in the corresponding slot
+	 * Position of the index {@code c} in its slot
 	 */
 	public int getLocalPosIndexC() 
 	{
@@ -90,7 +87,7 @@ public class RestrictIIPParam
 	
 	
 	/**
-	 * Position of index @d in the corresponding slot
+	 * Position of index the index {@code d} in its slot
 	 */
 	public int getLocalPosIndexD() 
 	{

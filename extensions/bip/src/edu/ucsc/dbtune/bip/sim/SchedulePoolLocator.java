@@ -1,19 +1,20 @@
 package edu.ucsc.dbtune.bip.sim;
 
-import edu.ucsc.dbtune.bip.util.BIPIndexPool;
-
 /**
- * The class stores all materialized indexes to be scheduled
- * in the order of: the created indexes, then the dropped indexes,
+ * The class records the starting and ending position of: the created indexes, then the dropped indexes,
  * and finally the indexes remain in the system (NOT created/dropped)
  * 
  * @author tqtrung@soe.ucsc.edu
  *
  */
-public class ScheduleIndexPool extends BIPIndexPool
+public class SchedulePoolLocator 
 {
 	private int startPosCreateIndex, startPosDropIndex, startPosRemainIndex;
 
+	public SchedulePoolLocator()
+	{
+	    
+	}
 	/**
 	 * Retrieve the position of the first index of type CREATE in the pool   
 	 * @return

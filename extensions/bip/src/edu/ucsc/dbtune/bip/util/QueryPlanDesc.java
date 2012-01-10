@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.inum.InumStatementPlan;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -35,7 +36,8 @@ public class QueryPlanDesc
 	private Map<Integer, Integer> mapReferencedSlotID;
 	private InumSpace inum;
 	private int stmtID;	
-    static AtomicInteger STMT_ID = new AtomicInteger(0); /** used to uniquely identify each instances of the class. */
+    static AtomicInteger STMT_ID = new AtomicInteger(0); 
+    /** used to uniquely identify each instances of the class. */
     
 	/**
 	 * Number of template plans	 
@@ -155,7 +157,10 @@ public class QueryPlanDesc
      *     at each slot
      * @throws SQLException 
      */ 
-    public void generateQueryPlanDesc(BIPPreparatorSchema preparator, SQLStatement stmt,
+    public void generateQueryPlanDesc(InumCommunicator communicator, 
+                                      Schema schema,
+                                      List<IndexFullTableScan> listFullTableScanIndexes,
+                                      SQLStatement stmt,
                                       BIPIndexPool poolIndexes) throws SQLException
     {
         S = new ArrayList<Integer>();
@@ -163,11 +168,13 @@ public class QueryPlanDesc
         gamma = new ArrayList<List<List<Double>>>(); 
         listIndexesEachSlot = new ArrayList<List<Index>>();
         
-        this.inum = preparator.populateInumSpace(stmt);
-        this.stmtID = QueryPlanDesc.STMT_ID.getAndIncrement();     
-        List<IndexFullTableScan> listFullTableScanIndexes = preparator.getListFullTableScanIndexes();  
-        listSchemaTables = preparator.getListSchemaTables();
+        this.inum = communicator.populateInumSpace(stmt);
+        this.stmtID = QueryPlanDesc.STMT_ID.getAndIncrement();
         Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
+        listSchemaTables = new ArrayList<Table>();
+        for (Table table : schema.tables()) {
+            listSchemaTables.add(table);
+        }
                     
         // TODO: replace with the new interface ----------------------
         // Note that list tables is derived from the schema

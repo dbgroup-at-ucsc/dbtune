@@ -7,7 +7,7 @@ import edu.ucsc.dbtune.bip.util.BIPOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
 /**
- * The class to store a materialization schedule that includes indexes to be created/dropped
+ * The class stores a materialization schedule that includes indexes to be created/dropped
  * at each maintenance window
  * 
  * @author tqtrung@soe.ucsc.edu
