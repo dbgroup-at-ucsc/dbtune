@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 import edu.ucsc.dbtune.bip.div.DivBIP;
-import edu.ucsc.dbtune.bip.div.DivRecommendedConfiguration;
+import edu.ucsc.dbtune.bip.util.BIPOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
 public class DivBIPTest extends BIPTestConfiguration 
@@ -12,10 +12,10 @@ public class DivBIPTest extends BIPTestConfiguration
     @Test
     public void testDivergentDesign() throws Exception
     {  
-        DivBIP div = new DivBIP();
         int Nreplicas = 3;
         int loadfactor = 2;
         double B = 300;
+        DivBIP div = new DivBIP(Nreplicas, loadfactor, B);
        
         List<Index> divCandidateIndexes = new ArrayList<Index>();
         for (List<Index> listIndexQuery : listIndexQueries) {
@@ -23,10 +23,12 @@ public class DivBIPTest extends BIPTestConfiguration
                 divCandidateIndexes.add(idx);
             }
         }
+        div.setCandidateIndexes(divCandidateIndexes);
+        div.setMapSchemaToWorkload(mapSchemaToWorkload);
+        div.setCommunicator(communicator);
+        div.setWorkloadName("testwl"); 
         
-        DivRecommendedConfiguration conf = div.optimalDiv(mapSchemaToWorkload, listPreparators, divCandidateIndexes, 
-                                    Nreplicas, loadfactor, B);
-        System.out.println("In test, result: " + conf.toString());
-        
+        BIPOutput result = div.solve();
+        System.out.println("In test, result: " + result.toString());
     }
 }

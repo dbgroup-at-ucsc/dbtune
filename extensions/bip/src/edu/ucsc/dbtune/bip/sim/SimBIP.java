@@ -2,30 +2,28 @@ package edu.ucsc.dbtune.bip.sim;
 
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
-import ilog.cplex.IloCplex;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import edu.ucsc.dbtune.bip.util.AbstractBIPSolver;
+import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.BIPOutput;
-import edu.ucsc.dbtune.bip.util.BIPPreparatorSchema;
-import edu.ucsc.dbtune.bip.util.CPlexBuffer;
+import edu.ucsc.dbtune.bip.util.InumCommunicator;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
-import edu.ucsc.dbtune.bip.sim.ScheduleIndexPool;
+import edu.ucsc.dbtune.bip.sim.SchedulePoolLocator;
 import edu.ucsc.dbtune.metadata.Index;
 
 
 /**
- * The class that generates the set of linear expressions (constraints and objective functions)
- * for the problem of Scheduling Index Materialization
+ * The class serves as the main entry to solve the scheduling index problem using
+ * Binary Integer Program framework.
  * 
  * @author tqtrung@soe.ucsc.edu
  *
@@ -36,14 +34,14 @@ public class SimBIP extends AbstractBIPSolver
 	private int W;
 	private double timeLimit;
 	private List<Index> Sinit, Smat;
-	private ScheduleIndexPool poolIndexes;
 	private SimVariablePool poolVariables;
+	private SchedulePoolLocator poolLocator;
     // Map variable of type CREATE or DROP to the indexes
     private Map<String,Index> mapVarCreateDropToIndex;
            
     
     /**
-     * The constructor of the object to find the optimal index materialization
+     * The constructor of the object to find the optimal index materialization schedule
      * 
      * @param Sinit
      *      The set of indexes that are currently materialized in the system
@@ -56,94 +54,29 @@ public class SimBIP extends AbstractBIPSolver
      *      The time budget at each maintenance window
      */
 	public SimBIP(List<Index> Sinit, List<Index> Smat, 
-	              List<BIPPreparatorSchema> listPreparators,
+	              InumCommunicator communicator,
 	              final int W, final double timeLimit)
 	{	
 		this.W = W;
 		this.timeLimit = timeLimit;
-		listCwq = new ArrayList<String>();	
-		this.poolVariables = new SimVariablePool();
-		mapVarCreateDropToIndex = new HashMap<String,Index>();
-		
 		this.Sinit = Sinit;
 		this.Smat = Smat;
-		this.listPreparators = listPreparators;
+		this.communicator = communicator;
 	}
 	
-	/**    
-     * Derive an optimal schedule of materializing selected indexes
-     * 
-     * 
-     * @return
-     *      A sequence of indexes to be materialized (created/dropped) in each maintenance window
-	 * @throws SQLException 
-     * 
-     */
-    public BIPOutput solve() throws SQLException
-    {   
-        poolIndexes = new ScheduleIndexPool();
-      
-        // 1. Store indexes into the {@code poolIndexes} in the order of
-        // indexes of type CREATE, then indexes of type DROP, and finally indexes of type REMAIN
-        insertIndexesToPool();
-        
-        // 2. Derive the query plan description including internal cost, index access cost,
-        // index at each slot  
-        this.populatePlanDescriptionForStatement(this.poolIndexes);
-        
-        // Formulate BIP and run the BIP to derive the final result 
-        // which is a list of materialized indexes      
-        LogListener listener = new LogListener() {
-            public void onLogEvent(String component, String logEvent) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-        };
-           
-        try {
-            build(listener);            
-            CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());                          
-        }
-        catch(IOException e){
-            System.out.println("Error " + e);
-        }   
-        
-        //Load the corresponding CPLEX problem from the corresponding text file
-        try {               
-            cplex = new IloCplex(); 
-                      
-            // Read model from file with name @cplexFile into cplex optimizer object
-            cplex.importModel(this.buf.getLpFileName()); 
-            
-            // Solve the model and record the solution into @listIndex 
-            // if one was found
-            if (cplex.solve()) {    
-                System.out.println("The objective function value: " + cplex.getObjValue());
-               return getMaterializationSchedule();
-            } 
-            else {
-                System.out.println(" INFEASIBLE soltuion ");
-            }
-        }
-        catch (IloException e) {
-            System.err.println("Concert exception caught: " + e);
-        }
-        
-        return null;
-    }
-    
+	
     /**
      * Classify the index into one of the three types: 
      * INDEX_TYPE_CREATE, INDEX_TYPE_DROP, INDEX_TYPE_REMAIN
-     * 
-     *     
-     *  {\bf Note}: After the indexes are classified into their categories,
-     *  we will store the indexes into {@code poolIndexes} in the order of:
-     *  indexes of type CREATE, and then DROP, and finally REMAIN    
+     * and store into the pool in the order of:
+     * indexes of type CREATE, and then DROP, and finally REMAIN    
      * 
      */
     @Override
     protected void insertIndexesToPool()
-    {
+    {   
+        poolLocator = new SchedulePoolLocator();
+        poolIndexes = new BIPIndexPool();
         List<Index> Sin = new ArrayList<Index>();
         List<Index> Sout = new ArrayList<Index>();
         List<Index> Sremain = new ArrayList<Index>();
@@ -177,30 +110,24 @@ public class SimBIP extends AbstractBIPSolver
         
         // 2. Store into@MatIndexPool
         // in the order of @Sin, @Sout, and @Sremain
-        poolIndexes.setStartPosCreateIndex(poolIndexes.getTotalIndex());
+        poolLocator.setStartPosCreateIndex(poolIndexes.getTotalIndex());
         for (Index idx : Sin) {
             poolIndexes.addIndex(idx);
         }
-        poolIndexes.setStartPosDropIndex(poolIndexes.getTotalIndex());
+        poolLocator.setStartPosDropIndex(poolIndexes.getTotalIndex());
         for (Index idx : Sout) {
             poolIndexes.addIndex(idx);
         }
-        poolIndexes.setStartPosRemainIndex(poolIndexes.getTotalIndex());
+        poolLocator.setStartPosRemainIndex(poolIndexes.getTotalIndex());
         for (Index idx : Sremain) {
             poolIndexes.addIndex(idx);
         }
     }
     
-    /**
-     * Construct the BIP and store in a file
-     * 
-     * @param listener
-     *      The logger
-     * @throws IOException
-     */
-    private final void build(final LogListener listener) throws IOException 
+    @Override
+    protected final void buildBIP(final LogListener listener) throws IOException 
     {
-        listener.onLogEvent(LogListener.BIP, "Building IIP program...");
+        listener.onLogEvent(LogListener.BIP, "Building BIP for SIM...");
         super.numConstraints = 0;
         
         // 1. Add variables into {@code poolVariables}
@@ -233,15 +160,46 @@ public class SimBIP extends AbstractBIPSolver
     }
     
     
+    @Override
+    protected BIPOutput getOutput()
+    { 
+        MaterializationSchedule schedule = new MaterializationSchedule(this.W);
+        
+        // Iterate over variables create_{i,w} and drop_{i,w}
+        try {
+            matrix = getMatrix(cplex);
+            vars = matrix.getNumVars();
+            
+            for (int i = 0; i < vars.length; i++) {
+                IloNumVar var = vars[i];
+                if (cplex.getValue(var) == 1) {
+                    SimVariable simVar = (SimVariable) getVariable(var.getName());
+                    if (simVar.getType() == SimVariablePool.VAR_CREATE 
+                        || simVar.getType() == SimVariablePool.VAR_DROP ) {
+                        schedule.addIndexWindow(getIndexOfVarCreateDrop(var.getName()), 
+                                                simVar.getWindow(), simVar.getType());
+                    }
+                }
+            }
+        }
+        catch (IloException e) {
+            System.err.println("Concert exception caught: " + e);
+        }
+        
+        return schedule;
+    }
     
 	/**
-     * Add all variables into the pool of variables of the BIP formulation
+     * Construct and add all variables used by the BIP 
+     * into the pool of variables
      *  
      */
     private void constructVariables()
-    {        
+    {  
+        this.poolVariables = new SimVariablePool();
+        mapVarCreateDropToIndex = new HashMap<String,Index>();
         // for TYPE_CREATE index
-        for (int idx = poolIndexes.getStartPosCreateIndex(); idx < poolIndexes.getStartPosDropIndex(); idx++) {
+        for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
             for (int w = 0; w < W; w++) {
                 SimVariable var = poolVariables.createAndStoreBIPVariable(SimVariablePool.VAR_CREATE, w, idx, 0, 0, 0);
                 mapVarCreateDropToIndex.put(var.getName(), poolIndexes.indexes().get(idx));
@@ -249,7 +207,7 @@ public class SimBIP extends AbstractBIPSolver
         }
         
         // for TYPE_DROP index
-        for (int idx = poolIndexes.getStartPosDropIndex(); idx < poolIndexes.getStartPosRemainIndex(); idx++) {
+        for (int idx = poolLocator.getStartPosDropIndex(); idx < poolLocator.getStartPosRemainIndex(); idx++) {
             for (int w = 0; w < W; w++) {
                 SimVariable var = poolVariables.createAndStoreBIPVariable(SimVariablePool.VAR_DROP, w, idx, 0, 0, 0);
                 mapVarCreateDropToIndex.put(var.getName(), poolIndexes.indexes().get(idx));
@@ -264,7 +222,6 @@ public class SimBIP extends AbstractBIPSolver
         }
         
         // for TYPE_Y, TYPE_X
-        System.out.println(" ======== num query descs: " + listQueryPlanDescs.size());
         for (QueryPlanDesc desc : listQueryPlanDescs){
             int q = desc.getStatementID();
             for (int w = 0; w < W; w++) {               
@@ -304,7 +261,7 @@ public class SimBIP extends AbstractBIPSolver
     private void buildWellBehavedScheduleConstraints()
     {   
         // for TYPE_CREATE index
-        for (int idx = poolIndexes.getStartPosCreateIndex(); idx < poolIndexes.getStartPosDropIndex(); idx++) {
+        for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
             List<String> linList = new ArrayList<String>();
             for (int w = 0; w < W; w++) {
                 String var = poolVariables.getSimVariable(SimVariablePool.VAR_CREATE, w, idx, 0, 0, 0).getName();
@@ -318,7 +275,7 @@ public class SimBIP extends AbstractBIPSolver
         }
         
         // for TYPE_DROP index
-        for (int idx = poolIndexes.getStartPosDropIndex(); idx < poolIndexes.getStartPosRemainIndex(); idx++) {
+        for (int idx = poolLocator.getStartPosDropIndex(); idx < poolLocator.getStartPosRemainIndex(); idx++) {
             List<String> linList = new ArrayList<String>();
             for (int w = 0; w < W; w++) {
                 String var = poolVariables.getSimVariable(SimVariablePool.VAR_DROP, w, idx, 0, 0, 0).getName();
@@ -348,7 +305,7 @@ public class SimBIP extends AbstractBIPSolver
     private void buildIndexPresentConstraints()
     {   
         // for TYPE_CREATE index
-        for (int idx = poolIndexes.getStartPosCreateIndex(); idx < poolIndexes.getStartPosDropIndex(); idx++) {
+        for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
             for (int w = 0; w < W; w++) {
                 String var_present = poolVariables.getSimVariable(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0).getName();
                 List<String> linList = new ArrayList<String>();
@@ -365,7 +322,7 @@ public class SimBIP extends AbstractBIPSolver
         }
         
         // for TYPE_DROP index
-        for (int idx = poolIndexes.getStartPosDropIndex(); idx < poolIndexes.getStartPosRemainIndex(); idx++) {
+        for (int idx = poolLocator.getStartPosDropIndex(); idx < poolLocator.getStartPosRemainIndex(); idx++) {
             for (int w = 0; w < W; w++) {
                 String var_present = poolVariables.getSimVariable(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0).getName();
                 List<String> linList = new ArrayList<String>();
@@ -392,6 +349,8 @@ public class SimBIP extends AbstractBIPSolver
 	 */
 	private void buildQueryCostWindow()
 	{
+	    listCwq = new ArrayList<String>(); 
+        
 	    for (QueryPlanDesc desc : listQueryPlanDescs){
 		    int q = desc.getStatementID();
 			for (int w = 0; w < W; w++) {
@@ -469,7 +428,7 @@ public class SimBIP extends AbstractBIPSolver
 		}
 		
 		// s(w,ai) <= present(w,i)
-        for (int idx = poolIndexes.getStartPosCreateIndex(); idx < poolIndexes.getStartPosDropIndex(); idx++) {
+        for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
             for (int w = 0; w < W; w++) {
                 String var_present = poolVariables.getSimVariable(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0).getName();
                 String var_s = poolVariables.getSimVariable(SimVariablePool.VAR_S, w, idx, 0, 0, 0).getName();
@@ -491,7 +450,7 @@ public class SimBIP extends AbstractBIPSolver
 	{
 		for (int w = 0; w < W; w++) {
 		    List<String> linList = new ArrayList<String>();
-			for (int idx = poolIndexes.getStartPosCreateIndex(); idx < poolIndexes.getStartPosDropIndex(); idx++) {
+			for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
 				String var_create = poolVariables.getSimVariable(SimVariablePool.VAR_CREATE, w, idx, 0, 0, 0).getName();
 				Index index = poolIndexes.indexes().get(idx);
 				linList.add(Double.toString(index.getCreationCost()) + var_create);
@@ -523,54 +482,9 @@ public class SimBIP extends AbstractBIPSolver
         buf.getBin().println(strListVars);	
 	}
 	
-	/**
-     * Retrieve a materialized schedule from the result of the formulated BIP:
-     *     Use the value of variables {@code create_{w,i}} and {@code drop_{w,i}}
-     * 
-     * @return
-     *      The corresponding materialization schedule
-     */
-    private MaterializationSchedule getMaterializationSchedule()
-    { 
-        MaterializationSchedule schedule = new MaterializationSchedule(this.W);
-        
-        // Iterate over variables create_{i,w} and drop_{i,w}
-        try {
-            matrix = getMatrix(cplex);
-            vars = matrix.getNumVars();
-            
-            for (int i = 0; i < vars.length; i++) {
-                IloNumVar var = vars[i];
-                if (cplex.getValue(var) == 1) {
-                    System.out.println(" var: " + var.getName());
-                    SimVariable simVar = (SimVariable) getVariable(var.getName());
-                    if (simVar.getType() == SimVariablePool.VAR_CREATE 
-                        || simVar.getType() == SimVariablePool.VAR_DROP ) {
-                        schedule.addIndexWindow(getIndexOfVarCreateDrop(var.getName()), 
-                                                simVar.getWindow(), simVar.getType());
-                    }
-                }
-            }
-        }
-        catch (IloException e) {
-            System.err.println("Concert exception caught: " + e);
-        }
-        
-        return schedule;
-    }
-    
-    
-	/* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.sim.LinGenerator#getVariable(java.lang.String)
-     */
-	@Override
+    	
 	public SimVariable getVariable(String name)
-	{
-	    System.out.println(" List vars: " + poolVariables.enumerateListVariables(10));
-	    if (this.poolVariables.getVariable(name) == null) {
-	        System.out.println(" NULL ");
-	    }
-	    System.out.println(" Name: " + name);
+	{   
 	    return (SimVariable) this.poolVariables.getVariable(name);
 	}
 	

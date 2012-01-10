@@ -11,9 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.Map.Entry;
-
 import edu.ucsc.dbtune.bip.util.*;
 
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -63,24 +61,26 @@ public abstract class BIPTestConfiguration
     protected static Environment environment = Environment.getInstance();
     protected static Map<Schema, Workload> mapSchemaToWorkload = new HashMap<Schema, Workload>(); 
     protected static List<BIPPreparatorSchema> listPreparators = new ArrayList<BIPPreparatorSchema>();
-    
+    protected static InumCommunicator communicator;
     protected static List< List<Index> > listIndexQueries = new ArrayList<List<Index>>();
     protected static List< List<Table> > listTableQueries = new ArrayList<List<Table>>();            
+    protected static String workloadName;
     
     static {
         try {
             cat = DBTuneInstances.configureCatalog(numSch, numSchemaTables, 2); 
             listSchema = cat.schemas(); 
-            
+            communicator = mock(InumCommunicator.class);
+            workloadName = "testwl";
             // create two workloads, each corresponds to one schema and contains one query
             for (int q = 0; q < 2; q++) {
-                String workloadName = environment.getTempDir() + "/testwl" + q + ".wl";
-                PrintWriter writer = new PrintWriter(new FileWriter(workloadName));
+                String name = environment.getTempDir() + "/testwl" + q + ".wl";
+                PrintWriter writer = new PrintWriter(new FileWriter(name));
                 String sql = "SELECT * FROM R";
                 writer.println(sql);
                 writer.close();
                 
-                BufferedReader reader = new BufferedReader(new FileReader(workloadName));
+                BufferedReader reader = new BufferedReader(new FileReader(name));
                 Workload wl = new Workload(reader);
                 mapSchemaToWorkload.put(listSchema.get(q), wl);
             }
@@ -138,20 +138,17 @@ public abstract class BIPTestConfiguration
                 
             q = 0;
             for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
-                BIPPreparatorSchema preparator = mock(BIPPreparatorSchema.class);
-                
+                //BIPPreparatorSchema preparator = mock(BIPPreparatorSchema.class);
                 
                 List<Table> listTables = new ArrayList<Table>();
-                List<IndexFullTableScan> listIndexFullTableScan = new ArrayList<IndexFullTableScan>();
+                //List<IndexFullTableScan> listIndexFullTableScan = new ArrayList<IndexFullTableScan>();
                 for (Table table : entry.getKey().tables()) {
                     listTables.add(table);
-                    IndexFullTableScan scanIdx = new IndexFullTableScan(table);
-                    listIndexFullTableScan.add(scanIdx);
+                    //IndexFullTableScan scanIdx = new IndexFullTableScan(table);
+                    //listIndexFullTableScan.add(scanIdx);
                 }
-                when (preparator.getListSchemaTables()).thenReturn(listTables);
-                when (preparator.getListFullTableScanIndexes()).thenReturn(listIndexFullTableScan);
-                
-                //preparator.setSchema(entry.getKey());
+                //when (preparator.getListSchemaTables()).thenReturn(listTables);
+                //when (preparator.getListFullTableScanIndexes()).thenReturn(listIndexFullTableScan);
                 
                 // run over each statement in the workload
                 for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ){
@@ -193,12 +190,14 @@ public abstract class BIPTestConfiguration
                     }
                     
                     when(inum.getTemplatePlans()).thenReturn(templatePlans);
-                    when(preparator.populateInumSpace(stmt)).thenReturn(inum);
+                    //when(preparator.populateInumSpace(stmt)).thenReturn(inum);
+                    System.out.println(" before populate space for: " + stmt.getSQL());
+                    when(communicator.populateInumSpace(stmt)).thenReturn(inum);
+                    System.out.println(" after populate space for: " + stmt.getSQL());
                 }
-                listPreparators.add(preparator);
+                //listPreparators.add(preparator);
                 q++;
             }
-            
         }
         catch (Exception e){
             throw new RuntimeException(e);

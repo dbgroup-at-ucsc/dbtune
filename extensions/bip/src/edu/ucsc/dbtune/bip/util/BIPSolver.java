@@ -10,25 +10,14 @@ import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.workload.Workload;
 
 /**
- * The main interface to use the BIP for an index tuning related problems
+ * It serves as the entry interface for the approach that formulates 
+ * Binary Integer Program to solve index tuning related problems
  * 
  * @author tqtrung@soe.ucsc.edu
  *
  */
 public interface BIPSolver 
 {    
-    /**
-     * The main entry of using BIP to solve index tuning related problem
-     * The method communicates with INUM to populate INUM's space, formulates a Binary Integer Prgoram
-     * and construct the output from the result of the BIP solver
-     * 
-     * @return
-     *      The result derived from the result of BIP solver
-     *      
-     * @throws SQLException
-     */
-    BIPOutput solve() throws SQLException;
-    
     /**
      * Set the input list of candidate indexes 
      * @param candidateIndexes
@@ -47,12 +36,25 @@ public interface BIPSolver
     
     
     /**
-     * Set the workload name. 
-     * This function uses the given name to creates files that will contain the formulated BIP
-     * The file stored in  
+     * Set the workload name 
      * 
      * @param name
      *      The name of the workload
+     *      
+     * {\bf Note:} The workload name is used to name the file on which the BIP is stored      
      */
     void setWorkloadName(String name);
+    
+    /**
+     * 
+     * The method communicates with INUM to populate INUM's space, builds a Binary Integer Program,
+     * asks CPLEX to solve the formulated BIP, and finally derives the output from the result of CPLEX
+     * 
+     * @return
+     *      The result derived from the output of CPLEX
+     *      
+     * @throws SQLException
+     */
+    BIPOutput solve() throws SQLException;
+    
 }

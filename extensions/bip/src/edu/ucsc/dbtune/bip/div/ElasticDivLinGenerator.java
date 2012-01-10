@@ -140,13 +140,13 @@ public class ElasticDivLinGenerator extends DivLinGenerator
     protected void buildAtomicInternalPlanShrinkReplicasConstraints()
     {   
         for (QueryPlanDesc desc : listQueryPlanDescs){
-            int q = desc.getId();
+            int q = desc.getStatementID();
         
             for (int r = 0; r < Nreplicas; r++) {
                 String var_deploy = poolVariables.getDivVariable(DivVariablePool.VAR_DEPLOY, r, 0, 0, 0, 0).getName();
                 List<String> linList = new ArrayList<String>();
                 // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
-                for (int k = 0; k < desc.getNumPlans(); k++) {
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     linList.add(poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName());
                 }
                 buf.getCons().println("atomic_2a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) 

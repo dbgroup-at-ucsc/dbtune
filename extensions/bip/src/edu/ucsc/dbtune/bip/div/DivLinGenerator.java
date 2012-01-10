@@ -104,14 +104,14 @@ public class DivLinGenerator
     {   
         // for TYPE_Y, TYPE_X
         for (QueryPlanDesc desc : listQueryPlanDescs){
-            int q = desc.getId();
+            int q = desc.getStatementID();
             for (int r = 0; r < Nreplicas; r++) {
-                for (int k = 0; k < desc.getNumPlans(); k++) {
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0);
                 }    
-                for (int k = 0; k < desc.getNumPlans(); k++) {              
-                    for (int i = 0; i < desc.getNumSlots(); i++) {  
-                        for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {              
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {  
+                        for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
                             poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_X, r, q, k, i, a);
                         }
                     }
@@ -137,12 +137,12 @@ public class DivLinGenerator
     protected void buildQueryCostReplica()
     {           
         for (QueryPlanDesc desc : listQueryPlanDescs){
-            int q = desc.getId();
+            int q = desc.getStatementID();
             
             for (int r = 0; r < Nreplicas; r++) {
                 // Internal plan
                 List<String> linList = new ArrayList<String>();            
-                for (int k = 0; k < desc.getNumPlans(); k++) {
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     String var = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
                     linList.add(Double.toString(desc.getInternalPlanCost(k)) + var); 
                 }
@@ -150,9 +150,9 @@ public class DivLinGenerator
                         
                 // Index access cost
                 linList.clear();            
-                for (int k = 0; k < desc.getNumPlans(); k++) {              
-                    for (int i = 0; i < desc.getNumSlots(); i++) {  
-                        for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {              
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {  
+                        for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
                             String var = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, a).getName();
                             linList.add(Double.toString(desc.getIndexAccessCost(k, i, a)) + var);     
                         }
@@ -172,12 +172,12 @@ public class DivLinGenerator
     protected void buildAtomicInternalPlanConstraints()
     {   
         for (QueryPlanDesc desc : listQueryPlanDescs){
-            int q = desc.getId();
+            int q = desc.getStatementID();
         
             for (int r = 0; r < Nreplicas; r++) {
                 List<String> linList = new ArrayList<String>();
                 // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
-                for (int k = 0; k < desc.getNumPlans(); k++) {
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     linList.add(poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName());
                 }
                 buf.getCons().println("atomic_2a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) + " <= 1");
@@ -194,21 +194,21 @@ public class DivLinGenerator
     protected void buildAtomicIndexAcessCostConstraints()
     {   
         for (QueryPlanDesc desc : listQueryPlanDescs){
-            int q = desc.getId();
+            int q = desc.getStatementID();
         
             for (int r = 0; r < Nreplicas; r++) {
                 List<String> linList = new ArrayList<String>();
                 
                 // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
-                for (int k = 0; k < desc.getNumPlans(); k++) {
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     String var_y = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
                     
-                    for (int i = 0; i < desc.getNumSlots(); i++) {
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                         if (desc.isReferenced(i) == false) {
                             continue;
                         }                        
                         linList.clear();
-                        for (int a = 0; a < desc.getNumIndexesEachSlot(i); a++) {
+                        for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
                             String var_x = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, a).getName();
                             linList.add(var_x);
                             IndexInSlot iis = new IndexInSlot(q,i,a);
@@ -240,10 +240,10 @@ public class DivLinGenerator
     protected void buildTopmBestCostConstraints()
     {   
         for (QueryPlanDesc desc : listQueryPlanDescs){
-            int q = desc.getId();
+            int q = desc.getStatementID();
             List<String> linList = new ArrayList<String>();
             for (int r = 0; r < Nreplicas; r++) {
-                for (int k = 0; k < desc.getNumPlans(); k++) {
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     linList.add(poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName());
                 }
             }

@@ -6,20 +6,20 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
-import edu.ucsc.dbtune.bip.div.DivRecommendedConfiguration;
 import edu.ucsc.dbtune.bip.div.ElasticDivBIP;
+import edu.ucsc.dbtune.bip.util.BIPOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
 public class ElasticDivBIPTest extends BIPTestConfiguration 
 {
     @Test
     public void testShrinkReplicaDivergentDesign() throws Exception
-    {  
-        ElasticDivBIP div = new ElasticDivBIP();
+    {   
         int Nreplicas = 3;
-        int Ndeploy = 2;
+        int Ndeploys = 2;
         int loadfactor = 2;
         double upperCdeploy = 200;
+        double B = 300;
         Map<Index, List<Integer>> mapIndexesReplicasInitialConfiguration = new HashMap<Index, List<Integer>>(); 
         
         List<Index> divCandidateIndexes = new ArrayList<Index>();
@@ -36,13 +36,17 @@ public class ElasticDivBIPTest extends BIPTestConfiguration
                 }
             }
         }
-        
-        DivRecommendedConfiguration conf = div.optimalShrinkReplicaDiv(mapSchemaToWorkload, listPreparators, divCandidateIndexes, 
-                                                                       mapIndexesReplicasInitialConfiguration, 
-                                                                       Nreplicas, Ndeploy, loadfactor, upperCdeploy);
-        System.out.println("In test, result: " + conf.toString());
+        ElasticDivBIP div = new ElasticDivBIP(Nreplicas, loadfactor, B, Ndeploys, upperCdeploy,
+                                              mapIndexesReplicasInitialConfiguration);
+        div.setCandidateIndexes(divCandidateIndexes);
+        div.setMapSchemaToWorkload(mapSchemaToWorkload);
+        div.setCommunicator(communicator);
+        div.setWorkloadName("testwl");
+        BIPOutput result = div.solve();
+        System.out.println("In test, result: " + result.toString());
     }
     
+    /*
     @Test
     public void testExpandReplicaDivergentDesign() throws Exception
     {  
@@ -73,4 +77,5 @@ public class ElasticDivBIPTest extends BIPTestConfiguration
                                                                        Nreplicas, Ndeploy, loadfactor, upperCdeploy);
         System.out.println("In test, result: " + conf.toString());
     }
+    */
 }

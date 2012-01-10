@@ -33,7 +33,7 @@ public class QueryPlanDescTest extends BIPTestConfiguration
         for (int q = 0; q < numQ; q++) {
             QueryPlanDesc desc = new  QueryPlanDesc();
             
-            desc.generateQueryPlanDesc(listPreparators.get(q), listStmt.get(q), poolIndexes);
+            //desc.generateQueryPlanDesc(communicator, listStmt.get(q), poolIndexes);
     
             assertThat(desc.getNumberOfSlots(), is(numSchemaTables));
             assertThat(desc.getNumberOfTemplatePlans(), is(numPlans[q]));
