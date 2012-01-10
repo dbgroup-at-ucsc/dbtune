@@ -14,59 +14,37 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+/**
+ * This class stores the constants relating to INUM's template plans 
+ * such as: internal plan cost, index access costs for a given set
+ * of candidate indexes and a particular statement
+ *  
+ * @author tqtrung@soe.ucsc.edu
+ *
+ */
 public class QueryPlanDesc 
 {	
-	/**
-	 * The number of template plans for this query 
-	 */
-	protected int Kq; 
-	/**
-	 * The number of relations (also referred to as slots) used in the query
-	 */
-	protected int n; 
-	/**
-	 * The total number of candidate indexes 
-	 */
-	protected int numIndexes; 
-	/**
-	 * The number of indexes in each slot
-	 */
-	protected List<Integer> S; 
-	/**
-	 * The cost of internal plans
-	 */
-	protected List<Double> beta; 
-	/**
-	 * The index access costs
-	 */
-	protected List< List< List <Double> > > gamma;	 
-	/**
-	 * List of indexes in each slot
-	 */
-	protected List< List< Index> > listIndexesEachSlot;
-	
-	/**
-	 * List of tables in the schema
-	 */
-	protected List<Table> listSchemaTables;
-	
-	/**
-	 * Useful for BIPs 
-	 */
-	protected Map<Integer, Integer> mapReferencedSlotID;
-	protected InumSpace inum;
-	protected int stmtID;
-	/** used to uniquely identify each instances of the class. */
-    static AtomicInteger STMT_ID = new AtomicInteger(0);
+	private int Kq;
+	private int n; 
+	private int numIndexes;
+	private List<Integer> S;
+	private List<Double> beta;
+	private List< List< List <Double> > > gamma;
+	private List< List< Index> > listIndexesEachSlot;
+	private List<Table> listSchemaTables;
+	private Map<Integer, Integer> mapReferencedSlotID;
+	private InumSpace inum;
+	private int stmtID;	
+    static AtomicInteger STMT_ID = new AtomicInteger(0); /** used to uniquely identify each instances of the class. */
     
 	/**
 	 * Number of template plans	 
 	 */
-	public int getNumPlans()
+	public int getNumberOfTemplatePlans()
 	{
 		return Kq;
 	}
-	public void setNumPlans(int Kq)
+	public void setNumberOfTemplatePlans(int Kq)
 	{
 		this.Kq = Kq;
 	}
@@ -74,12 +52,12 @@ public class QueryPlanDesc
 	/**
 	 * Number of relations in the query schema 
 	 */
-	public int getNumSlots()
+	public int getNumberOfSlots()
 	{
 		return n;
 	}
 	
-	public void setNumSlots(int n)
+	public void setNumberOfSlots(int n)
 	{
 		this.n = n;
 	}
@@ -87,11 +65,11 @@ public class QueryPlanDesc
 	/**
 	 *  Number of candidate indexes
 	 */
-	public int getNumCandidateIndexes()
+	public int getNumberOfCandidateIndexes()
 	{
 		return numIndexes;
 	}
-	public void setNumCandidateIndexes(int numIndex)
+	public void setNumberOfCandidateIndexes(int numIndex)
 	{
 		this.numIndexes = numIndex;
 	}
@@ -99,11 +77,11 @@ public class QueryPlanDesc
 	/**
 	 * Number of candidate indexes at each slot 
 	 */
-	public int getNumIndexesEachSlot(int i)
+	public int getNumberOfIndexesEachSlot(int i)
 	{
 		return S.get(i);
 	}
-	public void setNumIndexesEachSlot(List<Integer> S)
+	public void setNumberOfIndexesEachSlot(List<Integer> S)
 	{
 		this.S = S;		
 	}
@@ -136,10 +114,11 @@ public class QueryPlanDesc
 	/**
 	 * Statement ID
 	 */
-	public int getId()
+	public int getStatementID()
     {
         return this.stmtID;
     }
+	
 	/**
 	 * Retrieve the index in the corresponding slot
 	 * @param i 
@@ -160,7 +139,7 @@ public class QueryPlanDesc
 	}
 	
 	/**
-     * Populate query plan description  number of template plans, internal cost, 
+     * Populate query plan description: the number of template plans, internal cost, 
      * index access cost, etc. )
      * 
      * @param preparator
@@ -168,7 +147,7 @@ public class QueryPlanDesc
      * @param stmt
      *      A SQL statement
      * @param globaCandidateIndexes
-     *      The given list of candidate indexes (globally)  
+     *      The given list of candidate indexes   
      * 
      * {\b Note}: 
      *     - There does not contain the empty index (table scan) in {@code globalCandidateIndexes}
@@ -185,7 +164,7 @@ public class QueryPlanDesc
         listIndexesEachSlot = new ArrayList<List<Index>>();
         
         this.inum = preparator.populateInumSpace(stmt);
-        this.stmtID = QueryPlanDesc.STMT_ID.getAndIncrement();
+        this.stmtID = QueryPlanDesc.STMT_ID.getAndIncrement();     
         List<IndexFullTableScan> listFullTableScanIndexes = preparator.getListFullTableScanIndexes();  
         listSchemaTables = preparator.getListSchemaTables();
         Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
@@ -255,15 +234,15 @@ public class QueryPlanDesc
                 // If the table is not reference then assigned gamma = 0
                 Object found = mapReferenceTable.get(listSchemaTables.get(i));
                 if (found == null){
-                    for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
+                    for (int a = 0; a < getNumberOfIndexesEachSlot(i); a++) {
                         gammaRel.add(new Double(0.0));
                     }
                 } else {
                     Table table = (Table) found;
-                    for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
+                    for (int a = 0; a < getNumberOfIndexesEachSlot(i); a++) {
                         Index index = getIndex(i, a);
                         // Full table scan index 
-                        if (a == getNumIndexesEachSlot(i) - 1){                     
+                        if (a == getNumberOfIndexesEachSlot(i) - 1){                     
                             gammaRel.add(new Double(plan.getFullTableScanCost(table)));
                         } else {
                             gammaRel.add(new Double(plan.getAccessCost(index)));
@@ -279,16 +258,15 @@ public class QueryPlanDesc
     }
 	
     /**
-     * Map index in each slot to their identifiers in the pool
+     * Map the position in each slot of every index in the pool {@code poolIndex} to its identifier
      * @param poolIndex
+     *      The pool that stores candidate indexes
      */
     public void mapIndexInSlotToPoolID(BIPIndexPool poolIndex)
     {
-        // Update the materialized index size and create the mapping table
-        // from position in each slot into the global position
-        int q = getId();
+        int q = getStatementID();
         for (int i = 0; i < n; i++) {
-            for (int a = 0; a < getNumIndexesEachSlot(i); a++) {
+            for (int a = 0; a < getNumberOfIndexesEachSlot(i); a++) {
                 Index index = getIndex(i, a);
                 IndexInSlot iis = new IndexInSlot(q,i,a);
                 poolIndex.mapIndexInSlot(iis, index);
@@ -297,12 +275,12 @@ public class QueryPlanDesc
     }
     
 	/**
-	 * Check if @idSlot is referenced by the query
+	 * Check if the relation at the position {@code idSlot} is referenced by the query
 	 * 
 	 * @param idSlot
 	 *     The ID of the slot
 	 * @return
-	 *     {@code boolean}: true if idSlot is referenced by the query
+	 *     {@code boolean}: true if the relation at the position {@code idSlot} is referenced by the query
 	 */
 	public boolean isReferenced(int idSlot)
 	{

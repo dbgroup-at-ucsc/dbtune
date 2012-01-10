@@ -7,21 +7,24 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ddash
- * Date: Mar 16, 2007
- * Time: 6:04:53 PM
- * To change this template use File | Settings | File Templates.
+ * File managements for a CPlex class
+ * 
  */
 public class CPlexBuffer 
 {
     private PrintWriter obj, cons, bin;
+    private String objFileName, consFileName, binFileName, lpFileName;
 
     public CPlexBuffer(String prefix) throws IOException 
     {
-        obj  = new PrintWriter(new FileWriter(prefix+".obj"));
-        cons = new PrintWriter(new FileWriter(prefix+".cons"));
-        bin  = new PrintWriter(new FileWriter(prefix+".bin"));
+        objFileName = prefix+".obj";
+        consFileName = prefix+".cons";
+        binFileName = prefix+".bin";
+        lpFileName = prefix+".lp";
+        
+        obj  = new PrintWriter(new FileWriter(objFileName));
+        cons = new PrintWriter(new FileWriter(consFileName));
+        bin  = new PrintWriter(new FileWriter(binFileName));
 
         cons.println();
         cons.println("Subject To");
@@ -40,7 +43,25 @@ public class CPlexBuffer
         bin.close();
     }
 
-
+    public String getObjFileName()
+    {
+        return this.objFileName;
+    }
+    
+    public String getBinFileName()
+    {
+        return this.binFileName;
+    }
+    
+    public String getConsFileName()
+    {
+        return this.consFileName;
+    }
+    
+    public String getLpFileName()
+    {
+        return this.lpFileName;
+    }
     public PrintWriter getObj() 
     {
         return obj;
@@ -58,7 +79,7 @@ public class CPlexBuffer
     
     /**
 	 * Concatenate the contents from multiple input files into an output file:
-	 *    Placing row by row in each input file into the output one
+	 *    Placing each row in each input file into the output file
 	 * 
 	 * @param target
 	 * 	    The name of the output file

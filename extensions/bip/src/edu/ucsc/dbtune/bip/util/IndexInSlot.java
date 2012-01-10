@@ -1,11 +1,27 @@
 package edu.ucsc.dbtune.bip.util;
 
-
+/**
+ * The position of indexes in slot including: query statement ID, slot ID, and the position
+ * of the index in the slot
+ *  
+ * @author tqtrung@soe.ucsc.edu
+ *
+ */
 public class IndexInSlot 
 {
 	private int q, i, a;
 	private int fHashCode;
 	
+	/**
+	 * Construct an {@code IndexInSlot} object
+	 * 
+	 * @param _q
+	 *     The query ID
+	 * @param _i
+	 *     The slot ID 
+	 * @param _a
+	 *     The position of an index in the {@code _i} slot
+	 */
 	public IndexInSlot(int _q, int _i, int _a)
 	{
 		q = _q;
@@ -14,21 +30,7 @@ public class IndexInSlot
 		fHashCode = 0;
 	}
 	
-	public int getSlotPosition()
-	{
-		return i;
-	}
 	
-	public int getPosInSlot()
-	{
-		return a;
-	}
-	
-	public int getQueryId()
-	{
-		return q;
-	}
-
 	@Override
 	public boolean equals(Object obj) 
 	{

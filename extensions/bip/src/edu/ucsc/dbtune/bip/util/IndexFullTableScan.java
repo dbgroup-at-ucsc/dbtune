@@ -7,7 +7,7 @@ import edu.ucsc.dbtune.metadata.Table;
 /**
  * The class represents a special index: full table scan index per relation 
  * 
- * @author tqtrung
+ * @author tqtrung@soe.ucsc.edu
  *
  */
 public class IndexFullTableScan extends Index 
@@ -15,6 +15,13 @@ public class IndexFullTableScan extends Index
 	private Table table;
 	public static final String FULL_TABLE_SCAN_SUFFIX =  "full_table_scan";
 	
+	/**
+	 * Construct a full table scan object for the given relation {@code table}
+	 * @param table
+	 *     The relation on which the full table scan object is defined
+	 *     
+	 * @throws SQLException
+	 */
 	public IndexFullTableScan(Table table) throws SQLException
     {
         super(table.getSchema(), "");
@@ -23,10 +30,10 @@ public class IndexFullTableScan extends Index
     }
 	
 	/**
-     * Returns the table on which the index is defined.
+     * Retrieves the table on which the index is defined.
      *
      * @return
-     *     the table that this index refers to.
+     *     The table that this index refers to.
      */
 	@Override
     public Table getTable()

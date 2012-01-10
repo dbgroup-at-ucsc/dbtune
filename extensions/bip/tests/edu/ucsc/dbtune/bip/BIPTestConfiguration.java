@@ -139,6 +139,8 @@ public abstract class BIPTestConfiguration
             q = 0;
             for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
                 BIPPreparatorSchema preparator = mock(BIPPreparatorSchema.class);
+                
+                
                 List<Table> listTables = new ArrayList<Table>();
                 List<IndexFullTableScan> listIndexFullTableScan = new ArrayList<IndexFullTableScan>();
                 for (Table table : entry.getKey().tables()) {
@@ -148,6 +150,8 @@ public abstract class BIPTestConfiguration
                 }
                 when (preparator.getListSchemaTables()).thenReturn(listTables);
                 when (preparator.getListFullTableScanIndexes()).thenReturn(listIndexFullTableScan);
+                
+                //preparator.setSchema(entry.getKey());
                 
                 // run over each statement in the workload
                 for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ){

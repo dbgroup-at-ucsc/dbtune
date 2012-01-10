@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 
-import edu.ucsc.dbtune.metadata.Index; 
-import edu.ucsc.dbtune.bip.sim.MaterializationSchedule;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
+import edu.ucsc.dbtune.bip.util.BIPOutput;
 
 
 /**
@@ -20,7 +20,6 @@ public class SimBIPTest  extends BIPTestConfiguration
     @Test
     public void testScheduling() throws Exception
     {   
-        SimBIP sim = new SimBIP();
         List<Index> Sinit = new ArrayList<Index>();
         List<Index> Smat = new ArrayList<Index>();
         int W = 4;
@@ -33,8 +32,11 @@ public class SimBIPTest  extends BIPTestConfiguration
                 Smat.add(idx);
             }
         }
-        
-        MaterializationSchedule schedule = sim.schedule(Sinit, Smat, mapSchemaToWorkload, listPreparators, W, timeLimit);
+        SimBIP sim = new SimBIP(Sinit, Smat,  
+                                listPreparators, W, timeLimit);
+        sim.setMapSchemaToWorkload(mapSchemaToWorkload);
+        sim.setWorkloadName("testwl");
+        BIPOutput schedule = sim.solve();
         System.out.println("Result: " + schedule.toString());
     }
 }
