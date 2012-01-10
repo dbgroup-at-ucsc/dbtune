@@ -59,8 +59,7 @@ public abstract class BIPTestConfiguration
     protected static int numSch = 2;
     protected static int numSchemaTables = 3;
     protected static Environment environment = Environment.getInstance();
-    protected static Map<Schema, Workload> mapSchemaToWorkload = new HashMap<Schema, Workload>(); 
-    protected static List<BIPPreparatorSchema> listPreparators = new ArrayList<BIPPreparatorSchema>();
+    protected static Map<Schema, Workload> mapSchemaToWorkload = new HashMap<Schema, Workload>();    
     protected static InumCommunicator communicator;
     protected static List< List<Index> > listIndexQueries = new ArrayList<List<Index>>();
     protected static List< List<Table> > listTableQueries = new ArrayList<List<Table>>();            
@@ -76,7 +75,7 @@ public abstract class BIPTestConfiguration
             for (int q = 0; q < 2; q++) {
                 String name = environment.getTempDir() + "/testwl" + q + ".wl";
                 PrintWriter writer = new PrintWriter(new FileWriter(name));
-                String sql = "SELECT * FROM R";
+                String sql = "SELECT * FROM R" + q;
                 writer.println(sql);
                 writer.close();
                 
@@ -109,6 +108,7 @@ public abstract class BIPTestConfiguration
                     if ( (q == 0 && idxTable <= 1) 
                        || (q == 1 && idxTable >= 1)){
                         listTable.add(table);
+                        System.out.println(" table " + table.getFullyQualifiedName());
                         for (Index index : candidateIndexes) {
                             if (index.getTable().equals(table)){
                                 double time = 0.0;
@@ -135,20 +135,13 @@ public abstract class BIPTestConfiguration
                 listTableQueries.add(listTable);
                 q++;
             }
-                
+            
             q = 0;
             for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
-                //BIPPreparatorSchema preparator = mock(BIPPreparatorSchema.class);
-                
                 List<Table> listTables = new ArrayList<Table>();
-                //List<IndexFullTableScan> listIndexFullTableScan = new ArrayList<IndexFullTableScan>();
                 for (Table table : entry.getKey().tables()) {
                     listTables.add(table);
-                    //IndexFullTableScan scanIdx = new IndexFullTableScan(table);
-                    //listIndexFullTableScan.add(scanIdx);
                 }
-                //when (preparator.getListSchemaTables()).thenReturn(listTables);
-                //when (preparator.getListFullTableScanIndexes()).thenReturn(listIndexFullTableScan);
                 
                 // run over each statement in the workload
                 for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ){
@@ -177,25 +170,20 @@ public abstract class BIPTestConfiguration
                             else if (q == 1) {
                                 val = accessCostPlan2[counter];
                             }
-                            when (plan.getAccessCost(index)).thenReturn(val);
-                            System.out.println("Index access cost, " + index.getFullyQualifiedName() + " : " + val);
+                            when (plan.getAccessCost(index)).thenReturn(val);                            
                             counter++;              
                         }
                         
                         for (Table table : listTableQueries.get(q)) {
-                            when (plan.getFullTableScanCost(table)).thenReturn(100.0);
+                            when (plan.getFullTableScanCost(table)).thenReturn(100.0);                            
                         }
                         when (plan.getReferencedTables()).thenReturn(listTableQueries.get(q));    
-                        templatePlans.add(plan);               
+                        templatePlans.add(plan);
                     }
                     
-                    when(inum.getTemplatePlans()).thenReturn(templatePlans);
-                    //when(preparator.populateInumSpace(stmt)).thenReturn(inum);
-                    System.out.println(" before populate space for: " + stmt.getSQL());
+                    when(inum.getTemplatePlans()).thenReturn(templatePlans);                    
                     when(communicator.populateInumSpace(stmt)).thenReturn(inum);
-                    System.out.println(" after populate space for: " + stmt.getSQL());
                 }
-                //listPreparators.add(preparator);
                 q++;
             }
         }
@@ -203,5 +191,4 @@ public abstract class BIPTestConfiguration
             throw new RuntimeException(e);
         }
     }
-    
 }
