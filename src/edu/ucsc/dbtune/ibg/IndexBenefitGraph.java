@@ -196,7 +196,7 @@ public class IndexBenefitGraph
          * @return
          *     whether or not the node is expanded.
          */
-        protected final boolean isExpanded()
+        public final boolean isExpanded()
         {
             return cost >= 0;
         }
@@ -248,7 +248,7 @@ public class IndexBenefitGraph
          * @return
          *      the first child in the linked list
          */
-        protected final Child firstChild()
+        public final Child firstChild()
         {
             assert isExpanded();
             return firstChild; 

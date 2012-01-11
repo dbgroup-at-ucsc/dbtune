@@ -34,7 +34,7 @@ public class IBGNodeQueue
      * @param ch
      *      new child node.
      */
-    final void addChildren(IndexBenefitGraph.Node.Child ch)
+    public final void addChildren(IndexBenefitGraph.Node.Child ch)
     {
         if (ch != null) queue.add(ch);
     }
@@ -45,7 +45,7 @@ public class IBGNodeQueue
      * @param node
      *      new node to be added.
      */
-    final void addNode(IndexBenefitGraph.Node node)
+    public final void addNode(IndexBenefitGraph.Node node)
     {
         queue.add(node);
     }
@@ -56,7 +56,7 @@ public class IBGNodeQueue
      * @return
      *      {@code true} if the queue has something remaining.
      */
-    final boolean hasNext()
+    public final boolean hasNext()
     {
         return !queue.isEmpty();
     }
@@ -65,7 +65,7 @@ public class IBGNodeQueue
     /**
      * remove all queued nodes.
      */
-    final void clear()
+    public final void clear()
     {
         queue.clear();
     }
@@ -74,7 +74,7 @@ public class IBGNodeQueue
     /**
      * @return the next node, or return null if none
      */
-    final IndexBenefitGraph.Node next()
+    public final IndexBenefitGraph.Node next()
     {
         if (queue.isEmpty()) {
             return null;

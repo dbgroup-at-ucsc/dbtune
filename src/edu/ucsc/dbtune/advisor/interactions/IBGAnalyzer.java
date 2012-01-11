@@ -1,18 +1,22 @@
-package edu.ucsc.dbtune.ibg;
+package edu.ucsc.dbtune.advisor.interactions;
 
 import java.util.Set;
 
-import edu.ucsc.dbtune.advisor.interactions.InteractionLogger;
+import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
+import edu.ucsc.dbtune.ibg.IBGNodeQueue;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
+import edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
  * This class implements the qINTERACT algorithm described in Schnaitter et. al. for computing the 
- * degree of interaction for all the pairs {@latex.inline $a,b \\in S$}
+ * degree of interaction for all the pairs {@latex.inline $a,b \\in S$}.
  *
  * @author Karl Schnaitter
  * @see <a href="http://portal.acm.org/citation.cfm?id=1687766">
- *     Index interactions in physical design tuning: modeling, analysis, and applications</a>
+ *         Index interactions in physical design tuning: modeling, analysis, and applications
+ *      </a>
  */
 public class IBGAnalyzer
 {
@@ -141,7 +145,6 @@ public class IBGAnalyzer
                 return StepStatus.SUCCESS;
         }
     }
-
 
     /**
      * Analyzes a specific node in the {@link IndexBenefitGraph graph}.
@@ -313,7 +316,7 @@ public class IBGAnalyzer
         private IBGAnalyzer analyzer = null;
         private InteractionLogger logger = null;
 
-        private Object taskMonitor = new Object();
+        private final Object taskMonitor = new Object();
         private State state = State.IDLE;
 
         private enum State
@@ -323,6 +326,7 @@ public class IBGAnalyzer
         {
         }
 
+        @Override
         public void run()
         {
             while (true) {
