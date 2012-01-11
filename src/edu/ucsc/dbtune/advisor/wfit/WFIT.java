@@ -13,7 +13,8 @@ import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
- * WFIT
+ * XXX #110 class Selector from Karl's repository should replace WFIT, since that's were the truly 
+ * ONLINE mode is implemented.
  */
 public class WFIT extends Advisor
 {
