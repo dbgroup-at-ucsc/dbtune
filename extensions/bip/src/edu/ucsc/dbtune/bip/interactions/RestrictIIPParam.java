@@ -39,11 +39,6 @@ public class RestrictIIPParam
 		return delta;
 	}
 	
-	public void setDelta(double delta) 
-	{
-		this.delta = delta;
-	}
-
 	
 	/**
 	 * Position of the relation (or slot) containing the index {@code c}
@@ -52,23 +47,13 @@ public class RestrictIIPParam
 	{
 		return ic;
 	}
-	
-	public void setPosRelContainC(int ic) 
-	{
-		this.ic = ic;
-	}
-	
+		
 	/**
 	 * Position of relation (or slot) containing the index {@code d}
 	 */
 	public int getPosRelContainD() 
 	{
 		return id;
-	}
-	
-	public void setPosRelContainD(int id) 
-	{
-		this.id = id;
 	}
 	
 	
@@ -79,12 +64,7 @@ public class RestrictIIPParam
 	{
 		return pos_c;
 	}
-	
-	public void setLocalPosIndexC(int pos_c) 
-	{
-		this.pos_c  = pos_c;
-	}
-	
+		
 	
 	/**
 	 * Position of index the index {@code d} in its slot
@@ -92,10 +72,5 @@ public class RestrictIIPParam
 	public int getLocalPosIndexD() 
 	{
 		return pos_d;
-	}
-	
-	public void setLocalPosIndexD(int pos_d) 
-	{
-		this.pos_d  = pos_d;
 	}
 }

@@ -2,12 +2,12 @@ package edu.ucsc.dbtune.bip.div;
 
 import edu.ucsc.dbtune.bip.util.HashCodeUtil;
 
-public class DivVariableIndex 
+public class DivVariableIndicator
 {
     private int typeVariable, replica, q, k, i, a;
     private int fHashCode;
     
-    public DivVariableIndex(int _type, int _replica, int _q, int _k, int _i, int _a)
+    public DivVariableIndicator(int _type, int _replica, int _q, int _k, int _i, int _a)
     {
         this.typeVariable = _type;
         this.replica = _replica;
@@ -22,10 +22,10 @@ public class DivVariableIndex
     @Override
     public boolean equals(Object obj) 
     {
-        if (!(obj instanceof DivVariableIndex))
+        if (!(obj instanceof DivVariableIndicator))
             return false;
 
-        DivVariableIndex var = (DivVariableIndex) obj;
+        DivVariableIndicator var = (DivVariableIndicator) obj;
         
         if ( (this.typeVariable != var.typeVariable) ||   
              (this.replica != var.replica) ||

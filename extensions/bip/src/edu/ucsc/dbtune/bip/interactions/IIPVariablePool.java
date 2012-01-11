@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import edu.ucsc.dbtune.bip.util.BIPVariable;
-import edu.ucsc.dbtune.bip.util.BIPVariablePool;
+import edu.ucsc.dbtune.bip.util.AbstractBIPVariablePool;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 
-public class IIPVariablePool extends BIPVariablePool 
+public class IIPVariablePool extends AbstractBIPVariablePool 
 {
     public static final int  VAR_Y = 0;
     public static final int  VAR_X = 1;
@@ -18,8 +18,12 @@ public class IIPVariablePool extends BIPVariablePool
     public static final int  VAR_DEFAULT = 100;    
     private String[] strTheta = {"empty", "c", "d", "cd"};
     private String[] strHeaderVariable = {"y", "x", "s", "u"};    
-    private Map<IIPVariableIndex, BIPVariable> mapHighDimensionVar = new HashMap<IIPVariableIndex, BIPVariable>();
+    private Map<IIPVariableIndicator, BIPVariable> mapHighDimensionVar;
     
+    public IIPVariablePool()
+    {
+        mapHighDimensionVar = new HashMap<IIPVariableIndicator, BIPVariable>();
+    }
     /**
      * 
      * Create the corresponding variable name in the form: y(empty, k), x(c,k,i,a), s(d, a), or u(cd, k,i,a).
@@ -60,11 +64,10 @@ public class IIPVariablePool extends BIPVariablePool
         varName = varName.concat(")");
                 
         BIPVariable var = new BIPVariable(varName, typeVariable);
-        this.listVar.add(var);
-        this.mapNameVar.put(var.getName(), var);
+        this.addVariable(var); 
         
         // Create a mapping from 
-        IIPVariableIndex iai = new IIPVariableIndex(theta, typeVariable, k, i, a);
+        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, i, a);
         this.mapHighDimensionVar.put(iai, var);
         
         return var;
@@ -89,7 +92,7 @@ public class IIPVariablePool extends BIPVariablePool
     public BIPVariable getBIPVariable(int theta, int typeVariable, int k, int i, int a)
     {
         // Create a mapping from 
-        IIPVariableIndex iai = new IIPVariableIndex(theta, typeVariable, k, i, a);
+        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, i, a);
         Object found = mapHighDimensionVar.get(iai);
         BIPVariable var = null;
         if (found != null) {

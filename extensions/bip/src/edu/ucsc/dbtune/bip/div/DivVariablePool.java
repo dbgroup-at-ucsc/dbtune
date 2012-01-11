@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 
-import edu.ucsc.dbtune.bip.util.BIPVariablePool;
+import edu.ucsc.dbtune.bip.util.AbstractBIPVariablePool;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 
-public class DivVariablePool extends BIPVariablePool 
+public class DivVariablePool extends AbstractBIPVariablePool 
 {
     public static final int VAR_Y = 0;
     public static final int VAR_X = 1;
@@ -19,7 +19,12 @@ public class DivVariablePool extends BIPVariablePool
     public static final int VAR_MOD = 5;
     public static final int VAR_DEFAULT = 100;    
     private String[] strHeaderVariable = {"y", "x", "s", "deploy", "div", "mod"};
-    private Map<DivVariableIndex, DivVariable> mapHighDimensionVar = new HashMap<DivVariableIndex, DivVariable>();
+    private Map<DivVariableIndicator, DivVariable> mapHighDimensionVar;
+    
+    public DivVariablePool()
+    {
+        mapHighDimensionVar = new HashMap<DivVariableIndicator, DivVariable>();
+    }
     
     /**
      * 
@@ -71,11 +76,10 @@ public class DivVariablePool extends BIPVariablePool
         varName = varName.concat(")");
                 
         DivVariable var = new DivVariable(varName, typeVariable, replica);
-        this.listVar.add(var);
-        this.mapNameVar.put(var.getName(), var);
+        this.addVariable(var);
         
         // Create a mapping from 
-        DivVariableIndex iai = new DivVariableIndex(typeVariable, replica, queryId, k, i, a);
+        DivVariableIndicator iai = new DivVariableIndicator(typeVariable, replica, queryId, k, i, a);
         this.mapHighDimensionVar.put(iai, var);
         
         return var;
@@ -101,7 +105,7 @@ public class DivVariablePool extends BIPVariablePool
      */
     public DivVariable getDivVariable(int typeVariable, int replica, int queryId, int k, int i, int a)
     {   
-        DivVariableIndex iai = new DivVariableIndex(typeVariable, replica, queryId, k, i, a);
+        DivVariableIndicator iai = new DivVariableIndicator(typeVariable, replica, queryId, k, i, a);
         Object found = mapHighDimensionVar.get(iai);
         DivVariable var = null;
         if (found != null) {

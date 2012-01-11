@@ -3,11 +3,10 @@ package edu.ucsc.dbtune.bip.sim;
 import edu.ucsc.dbtune.bip.util.HashCodeUtil;
 
 
-public class SimVariableIndex 
+public class SimVariableIndicator
 {
     private int typeVariable, window, q, k, i, a;
     private int fHashCode;
-
     
     /**
      * A {@code SimVarible} is defined based on the following
@@ -26,7 +25,7 @@ public class SimVariableIndex
      * @param _a
      *      The position of an index in this slot
      */
-    public SimVariableIndex(int _type, int _window, int _q, int _k, int _i, int _a)
+    public SimVariableIndicator(int _type, int _window, int _q, int _k, int _i, int _a)
     {
         this.typeVariable = _type;
         this.window = _window;
@@ -41,10 +40,10 @@ public class SimVariableIndex
     @Override
     public boolean equals(Object obj) 
     {
-        if (!(obj instanceof SimVariableIndex))
+        if (!(obj instanceof SimVariableIndicator))
             return false;
 
-        SimVariableIndex var = (SimVariableIndex) obj;
+        SimVariableIndicator var = (SimVariableIndicator) obj;
         
         if ( (this.typeVariable != var.typeVariable) ||   
              (this.window != var.window) ||

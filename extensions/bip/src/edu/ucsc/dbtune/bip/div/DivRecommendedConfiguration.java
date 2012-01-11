@@ -22,14 +22,15 @@ public class DivRecommendedConfiguration  extends BIPOutput
     }
     
     
-    public void addIndexReplica(int r, Index index)
+    public void addMaterializedIndexAtReplica(int r, Index index)
     {
         this.listIndexReplica.get(r).add(index);
     }
 
 
     @Override
-    public String toString() {
+    public String toString() 
+    {
         String result =  "DivRecommendedConfiguration [Nreplicas=" + Nreplicas
                         + ", listIndexReplica=\n" ;
         for (int r = 0; r < this.Nreplicas; r++) {

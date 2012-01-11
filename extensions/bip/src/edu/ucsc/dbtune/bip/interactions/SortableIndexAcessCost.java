@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.bip.interactions;
 
-
 public class SortableIndexAcessCost implements Comparable<SortableIndexAcessCost>
 {
 	private double gamma;

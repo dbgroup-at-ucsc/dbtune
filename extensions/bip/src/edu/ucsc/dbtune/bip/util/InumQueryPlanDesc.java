@@ -102,7 +102,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                                       Schema schema,
                                       List<IndexFullTableScan> listFullTableScanIndexes,
                                       SQLStatement stmt,
-                                      BIPIndexPool poolIndexes) throws SQLException
+                                      IndexPool poolIndexes) throws SQLException
     {   
         S = new ArrayList<Integer>();
         beta = new ArrayList<Double>();
@@ -207,7 +207,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	
     
 	@Override
-    public void mapIndexInSlotToPoolID(BIPIndexPool poolIndex)
+    public void mapIndexInSlotToPoolID(IndexPool poolIndex)
     {
         int q = getStatementID();
         for (int i = 0; i < n; i++) {

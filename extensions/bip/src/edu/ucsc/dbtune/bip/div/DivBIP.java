@@ -56,13 +56,14 @@ public class DivBIP extends AbstractBIPSolver
             for (int i = 0; i < vars.length; i++) {
                 IloNumVar var = vars[i];
                 if (cplex.getValue(var) == 1) {
-                    DivVariable divVar = getVariable(var.getName());
+                    String name = var.getName();
+                    DivVariable divVar = (DivVariable) this.poolVariables.getVariable(name);
                     
                     if (divVar.getType() == DivVariablePool.VAR_S){
-                        Index index = getIndexOfVarS(var.getName());
+                        Index index = this.mapVarSToIndex.get(name);
                         // only record the real indexes
                         if (index.getFullyQualifiedName().contains(IndexFullTableScan.FULL_TABLE_SCAN_SUFFIX) == false) {
-                            conf.addIndexReplica(divVar.getReplica(), index);
+                            conf.addMaterializedIndexAtReplica(divVar.getReplica(), index);
                         }
                     }
                 }
@@ -313,7 +314,6 @@ public class DivBIP extends AbstractBIPSolver
         buf.getObj().println(StringConcatenator.concatenate(" + ", listCrq));
     }
     
-    
     /**
      * Constraints all variables to be binary ones
      * 
@@ -323,15 +323,5 @@ public class DivBIP extends AbstractBIPSolver
         int NUM_VAR_PER_LINE = 10;
         String strListVars = poolVariables.enumerateListVariables(NUM_VAR_PER_LINE);
         buf.getBin().println(strListVars);     
-    }
-    
-    public DivVariable getVariable(String name)
-    {
-        return (DivVariable) this.poolVariables.getVariable(name);
-    }
-    
-    public Index getIndexOfVarS(String name)
-    {
-        return this.mapVarSToIndex.get(name);
     }    
 }
