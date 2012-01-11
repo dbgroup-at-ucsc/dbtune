@@ -12,7 +12,6 @@ import java.util.Map;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 import edu.ucsc.dbtune.bip.util.AbstractBIPSolver;
-import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.BIPOutput;
 import edu.ucsc.dbtune.bip.util.BIPVariable;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
@@ -33,7 +32,7 @@ import ilog.concert.IloNumVar;
  */
 public class InteractionBIP extends AbstractBIPSolver
 {	
-	public static HashMap<String,Integer> cachedInteractIndexName = new HashMap<String, Integer>();	
+	public static HashMap<String,Integer> cachedInteractIndexName;	
 	public static final int NUM_THETA = 4;
     public static final int IND_EMPTY = 0;
     public static final int IND_C = 1;
@@ -55,6 +54,7 @@ public class InteractionBIP extends AbstractBIPSolver
     public InteractionBIP(double delta)
     {
         this.delta = delta;
+        cachedInteractIndexName = new HashMap<String, Integer>();
     }
 	/**
 	 * Find all pairs of indexes from the given configuration, {@code C}, that 
@@ -89,7 +89,7 @@ public class InteractionBIP extends AbstractBIPSolver
         // 2. Iterate over the list of query plan descs that have been derived
         interactionOutput = new InteractionOutput();
         try {
-            for (QueryPlanDesc desc :  super.listQueryPlanDescs) {
+            for (QueryPlanDesc desc :  listQueryPlanDescs) {
                 investigatingDesc = desc;
                 findInteractions();
             }
@@ -97,15 +97,6 @@ public class InteractionBIP extends AbstractBIPSolver
             throw new RuntimeException(e);
         }
         return interactionOutput;
-    }
-    
-    @Override
-    protected void insertIndexesToPool() 
-    {   
-        poolIndexes = new BIPIndexPool();
-        for (Index index : candidateIndexes) {
-            poolIndexes.addIndex(index);
-        }
     }
     
     
@@ -132,7 +123,7 @@ public class InteractionBIP extends AbstractBIPSolver
         for (int ic = 0; ic < investigatingDesc.getNumberOfSlots(); ic++)    {
             // Note: the last index in each slot is a full table scan
             // Don't need to consider indexes that belong to relations NOT referenced by the query
-            if (investigatingDesc.isReferenced(ic) == false){
+            if (investigatingDesc.isSlotReferenced(ic) == false){
                 continue;
             }
             
@@ -140,7 +131,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 Index indexc = investigatingDesc.getIndex(ic, pos_c);
                 
                 for (int id = ic; id < investigatingDesc.getNumberOfSlots(); id++){
-                    if (investigatingDesc.isReferenced(id) == false){
+                    if (investigatingDesc.isSlotReferenced(id) == false){
                         continue;
                     }
                     for (int pos_d = 0; pos_d < investigatingDesc.getNumberOfIndexesEachSlot(id) - 1; pos_d++){
@@ -171,20 +162,14 @@ public class InteractionBIP extends AbstractBIPSolver
                         
                         // 3. Solve the first BIP
                         if (solveBIP() == true) {
-                            IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd);
-                            interactionOutput.addPairIndexInteraction(pairIndexes);                               
-                            addToCache(indexc, indexd);
-                            computeQueryCostTheta();
+                            this.storeInteractIndexes(indexc, indexd);
                         } else {
                             // formulate the alternative BIP
                             buildAlternativeBIP();
                             
                             // In this case we need to call CPLEX directly
                             if (cplex.solve()){
-                                IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd);
-                                interactionOutput.addPairIndexInteraction(pairIndexes);                               
-                                addToCache(indexc, indexd);
-                                computeQueryCostTheta();
+                                this.storeInteractIndexes(indexc, indexd);
                             } else {
                                 System.out.println(" NO INTERACTION ");
                             }
@@ -194,6 +179,8 @@ public class InteractionBIP extends AbstractBIPSolver
             }
         }
     }
+    
+    
     
     
     /**
@@ -366,7 +353,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 
                 for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
                     // -- not constraint on slot NOT referenced by the query 
-                    if (investigatingDesc.isReferenced(i) == false) {
+                    if (investigatingDesc.isSlotReferenced(i) == false) {
                         continue;
                     }
                     
@@ -521,7 +508,7 @@ public class InteractionBIP extends AbstractBIPSolver
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {          
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {                         
                 for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
-                    if (investigatingDesc.isReferenced(i) == false) {
+                    if (investigatingDesc.isSlotReferenced(i) == false) {
                         continue;
                     }
                     for (int a = 0; a < investigatingDesc.getNumberOfIndexesEachSlot(i); a++) {
@@ -592,7 +579,7 @@ public class InteractionBIP extends AbstractBIPSolver
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {             
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
                 for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
-                    if (investigatingDesc.isReferenced(i) == false) {
+                    if (investigatingDesc.isSlotReferenced(i) == false) {
                         continue;
                     }
                     // Sort index access cost
@@ -760,6 +747,21 @@ public class InteractionBIP extends AbstractBIPSolver
     }
     
     
+    /**
+     * Store the these two indexes as interact indexes and add to the cache
+     * 
+     * @param indexc
+     *      The first index
+     * @param indexd
+     *      The second index
+     */
+    private void storeInteractIndexes(Index indexc, Index indexd)
+    {
+        IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd);
+        interactionOutput.addPairIndexInteraction(pairIndexes);                               
+        addToCache(indexc, indexd);
+        computeQueryCostTheta();
+    }
 	
 	
 	/**

@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
+import edu.ucsc.dbtune.bip.util.InumQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
@@ -35,7 +36,7 @@ public class QueryPlanDescTest extends BIPTestConfiguration
         int q = 0;
         
         for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
-            QueryPlanDesc desc = new  QueryPlanDesc();   
+            QueryPlanDesc desc = new  InumQueryPlanDesc();   
             List<IndexFullTableScan> listFullTableScanIndexes = new  ArrayList<IndexFullTableScan>();
             for (Table table : entry.getKey().tables()){
                 IndexFullTableScan scanIdx = new IndexFullTableScan(table);

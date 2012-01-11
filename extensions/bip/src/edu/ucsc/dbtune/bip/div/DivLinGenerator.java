@@ -7,8 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
+import edu.ucsc.dbtune.bip.util.InumQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
+import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.LogListener;
@@ -18,7 +19,7 @@ public class DivLinGenerator
 {
     protected CPlexBuffer buf;
     protected List<String> listCrq;
-    protected List<QueryPlanDesc> listQueryPlanDescs;
+    protected List<InumQueryPlanDesc> listQueryPlanDescs;
     protected int Nreplicas;
     protected int loadfactor;
     protected double B;
@@ -29,7 +30,7 @@ public class DivLinGenerator
     protected Map<String,Index> mapVarSToIndex;
     
     
-    DivLinGenerator(final String prefix, final BIPIndexPool poolIndexes, final List<QueryPlanDesc> listQueryPlanDecs, 
+    DivLinGenerator(final String prefix, final BIPIndexPool poolIndexes, final List<InumQueryPlanDesc> listQueryPlanDecs, 
                     final int Nreplicas, final int loadfactor, final double B)
     {       
         this.poolIndexes = poolIndexes;
@@ -193,7 +194,7 @@ public class DivLinGenerator
      */
     protected void buildAtomicIndexAcessCostConstraints()
     {   
-        for (QueryPlanDesc desc : listQueryPlanDescs){
+        for (InumQueryPlanDesc desc : listQueryPlanDescs){
             int q = desc.getStatementID();
         
             for (int r = 0; r < Nreplicas; r++) {
@@ -204,7 +205,7 @@ public class DivLinGenerator
                     String var_y = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
                     
                     for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                        if (desc.isReferenced(i) == false) {
+                        if (desc.isSlotReferenced(i) == false) {
                             continue;
                         }                        
                         linList.clear();

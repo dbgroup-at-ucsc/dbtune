@@ -60,6 +60,15 @@ public abstract class AbstractBIPSolver implements BIPSolver
     public void setCandidateIndexes(List<Index> candidateIndexes) {
         this.candidateIndexes = candidateIndexes;
     }
+    
+    /**
+     * TODO: This method is implemented temporarily
+     * @param communicator
+     */
+    public void setCommunicator(InumCommunicator communicator)
+    {
+        this.communicator = communicator;
+    }
    
     @Override
     public BIPOutput solve() throws SQLException
@@ -96,24 +105,23 @@ public abstract class AbstractBIPSolver implements BIPSolver
         }
     }
     
-    /**
-     * TODO: This method is implemented temporarily
-     * @param communicator
-     */
-    public void setCommunicator(InumCommunicator communicator)
-    {
-        this.communicator = communicator;
-    }
     
     /**
      * Insert indexes from the candidate indexes into the pool in some order 
-     * to make the convenient in constructing variables related to indexes in BIP
+     * to make it convenient for constructing variables related to indexes in BIP
      * 
      * For example, in SimBIP, indexes of the same type (created, dropped, or remained)
      * in the system should be stored consecutively.
      * 
-     */
-    protected abstract void insertIndexesToPool();
+     */    
+    protected void insertIndexesToPool()
+    {
+        poolIndexes = new BIPIndexPool();
+        // Put all indexes in {@code candidateIndexes} into the pool of {@code MatIndexPool}
+        for (Index idx: candidateIndexes) {
+            poolIndexes.addIndex(idx);
+        }
+    }
     
     /**
      * Create the list of full table scan indexes per relation in each schema 
@@ -174,7 +182,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
             List<IndexFullTableScan> listIndexFullTableScans = mapSchemaListIndexFullTableScans.get(entry.getKey());
             for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
-                QueryPlanDesc desc =  new QueryPlanDesc();                    
+                QueryPlanDesc desc =  new InumQueryPlanDesc();                    
                 // Populate the INUM space for each statement
                 // We do not add full table scans before populate from @desc
                 // so that the full table scan is placed at the end of each slot 

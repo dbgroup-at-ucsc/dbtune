@@ -13,10 +13,10 @@ import edu.ucsc.dbtune.bip.util.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.BIPOutput;
 import edu.ucsc.dbtune.bip.util.InumCommunicator;
+import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.sim.SchedulePoolLocator;
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -38,7 +38,6 @@ public class SimBIP extends AbstractBIPSolver
 	private SchedulePoolLocator poolLocator;
     // Map variable of type CREATE or DROP to the indexes
     private Map<String,Index> mapVarCreateDropToIndex;
-           
     
     /**
      * The constructor of the object to find the optimal index materialization schedule
@@ -399,7 +398,7 @@ public class SimBIP extends AbstractBIPSolver
 				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
 					String var_y = poolVariables.getSimVariable(SimVariablePool.VAR_Y, w, q, k, 0, 0).getName();
 					for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-					    if (desc.isReferenced(i) == false) {
+					    if (desc.isSlotReferenced(i) == false) {
 					        continue;
 					    }
 						linList.clear();
