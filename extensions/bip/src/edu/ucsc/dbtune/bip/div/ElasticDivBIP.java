@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import edu.ucsc.dbtune.bip.util.BIPOutput;
+import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
@@ -132,7 +133,8 @@ public class ElasticDivBIP extends DivBIP
         binaryVariableConstraints();
         
         buf.close();
-                
+        CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
+        
         if (isExpand == true) {
             listener.onLogEvent(LogListener.BIP, "Built expand replicas DIV program");
         } else {

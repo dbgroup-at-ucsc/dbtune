@@ -12,6 +12,7 @@ import java.util.Map;
 import edu.ucsc.dbtune.bip.util.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.BIPOutput;
+import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.InumCommunicator;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
@@ -154,7 +155,8 @@ public class SimBIP extends AbstractBIPSolver
         binaryVariableConstraints();
         
         buf.close();
-                
+        
+        CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());        
         listener.onLogEvent(LogListener.BIP, "Built SIM program.");
     }
     

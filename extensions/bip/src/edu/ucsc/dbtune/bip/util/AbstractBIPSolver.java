@@ -73,7 +73,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     }
    
     @Override
-    public BIPOutput solve() throws SQLException
+    public BIPOutput solve() throws SQLException, IOException
     {   
         // Preprocess steps
         insertIndexesToPool();
@@ -91,13 +91,8 @@ public abstract class AbstractBIPSolver implements BIPSolver
             }
         };
          
-        try {
-            buildBIP(listener);            
-            CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());                          
-        }
-        catch(IOException e){
-            System.out.println("Error " + e);
-        }   
+        // 2. Build BIP        
+        buildBIP(listener);       
         
         // 3. Solve the BIP
         if (this.solveBIP() == true) {

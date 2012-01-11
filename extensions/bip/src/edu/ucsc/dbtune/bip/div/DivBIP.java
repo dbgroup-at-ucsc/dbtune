@@ -12,6 +12,7 @@ import java.util.Map;
 
 import edu.ucsc.dbtune.bip.util.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.util.BIPOutput;
+import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.LogListener;
@@ -122,7 +123,7 @@ public class DivBIP extends AbstractBIPSolver
         binaryVariableConstraints();
         
         buf.close();
-                
+        CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
         listener.onLogEvent(LogListener.BIP, "Built DIV program");
     }
     
