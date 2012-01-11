@@ -11,12 +11,11 @@ import java.util.Map;
 
 
 import edu.ucsc.dbtune.bip.util.AbstractBIPSolver;
-import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.BIPOutput;
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -76,16 +75,6 @@ public class DivBIP extends AbstractBIPSolver
         return conf;
     }
 
-
-    @Override
-    protected void insertIndexesToPool() 
-    {
-        poolIndexes = new BIPIndexPool();
-        // Put all indexes in {@code candidateIndexes} into the pool of {@code MatIndexPool}
-        for (Index idx: candidateIndexes) {
-            poolIndexes.addIndex(idx);
-        }
-    }
     
    
     /**
@@ -248,7 +237,7 @@ public class DivBIP extends AbstractBIPSolver
                     String var_y = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
                     
                     for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                        if (desc.isReferenced(i) == false) {
+                        if (desc.isSlotReferenced(i) == false) {
                             continue;
                         }                        
                         linList.clear();

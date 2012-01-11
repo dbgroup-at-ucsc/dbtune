@@ -8,6 +8,7 @@ import java.util.Map;
 
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.bip.util.InumQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
@@ -24,7 +25,7 @@ public class ElasticDivLinGenerator extends DivLinGenerator
     // tricky: swap between Ndeploy and Nreplicas so that the source code changes minimally 
     private int inputNdeploys, inputNreplicas;
     
-    ElasticDivLinGenerator (String prefix, BIPIndexPool poolIndexes, List<QueryPlanDesc> listQueryPlanDecs, 
+    ElasticDivLinGenerator (String prefix, BIPIndexPool poolIndexes, List<InumQueryPlanDesc> listQueryPlanDecs, 
                             Map<Index, List<Integer>> mapIndexesReplicasInitialConfiguration,
                             int Nreplicas, int Ndeploys, int loadfactor, double upperCdeploy) 
     {                       
