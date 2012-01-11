@@ -1,8 +1,10 @@
-package edu.ucsc.dbtune.bip.util;
+package edu.ucsc.dbtune.bip.core;
 
 import java.sql.SQLException;
 import java.util.List;
 
+import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
+import edu.ucsc.dbtune.bip.util.InumCommunicator;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.workload.SQLStatement;

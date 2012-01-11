@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.bip.util;
+package edu.ucsc.dbtune.bip.core;
 
 /**
  * The abstract class that stores the result of an index tuning related problem

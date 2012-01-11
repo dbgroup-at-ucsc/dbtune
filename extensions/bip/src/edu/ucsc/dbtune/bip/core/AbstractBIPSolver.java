@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.bip.util;
+package edu.ucsc.dbtune.bip.core;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLPMatrix;
@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import edu.ucsc.dbtune.bip.util.CPlexBuffer;
+import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
+import edu.ucsc.dbtune.bip.util.InumCommunicator;
+import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;

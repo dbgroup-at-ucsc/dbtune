@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.bip.util;
+package edu.ucsc.dbtune.bip.core;
 
 
 import java.io.IOException;

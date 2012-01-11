@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.ucsc.dbtune.bip.util.IndexPool;
+import edu.ucsc.dbtune.bip.core.IndexPool;
+import edu.ucsc.dbtune.bip.core.InumQueryPlanDesc;
+import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.InumQueryPlanDesc;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
 

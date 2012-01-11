@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.bip.util;
+package edu.ucsc.dbtune.bip.core;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
+import edu.ucsc.dbtune.bip.util.IndexInSlot;
+import edu.ucsc.dbtune.bip.util.InumCommunicator;
 import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.inum.InumStatementPlan;
 import edu.ucsc.dbtune.metadata.Index;
@@ -98,12 +101,11 @@ public class InumQueryPlanDesc implements QueryPlanDesc
      * @see edu.ucsc.dbtune.bip.util.QueryPlanDesc#generateQueryPlanDesc(edu.ucsc.dbtune.bip.util.InumCommunicator, edu.ucsc.dbtune.metadata.Schema, java.util.List, edu.ucsc.dbtune.workload.SQLStatement, edu.ucsc.dbtune.bip.util.BIPIndexPool)
      */ 
 	@Override
-    public void generateQueryPlanDesc(InumCommunicator communicator, 
-                                      Schema schema,
-                                      List<IndexFullTableScan> listFullTableScanIndexes,
-                                      SQLStatement stmt,
-                                      IndexPool poolIndexes) throws SQLException
-    {   
+    public void generateQueryPlanDesc  (InumCommunicator communicator, Schema schema,
+                                        List<IndexFullTableScan> listFullTableScanIndexes,
+                                        SQLStatement stmt, IndexPool poolIndexes) 
+                                        throws SQLException
+    {
         S = new ArrayList<Integer>();
         beta = new ArrayList<Double>();
         gamma = new ArrayList<List<List<Double>>>(); 

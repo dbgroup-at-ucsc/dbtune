@@ -2,8 +2,9 @@ package edu.ucsc.dbtune.bip;
 
 import java.sql.SQLException;
 import org.junit.Test;
+
+import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
-import edu.ucsc.dbtune.bip.util.BIPOutput;
 
 /**
  * Test for the InteractionBIP class

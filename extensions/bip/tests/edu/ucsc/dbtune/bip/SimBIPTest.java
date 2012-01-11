@@ -5,8 +5,8 @@ import java.util.List;
 import org.junit.Test;
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
-import edu.ucsc.dbtune.bip.util.BIPOutput;
 
 
 /**

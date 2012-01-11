@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
+
+import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.div.ElasticDivBIP;
-import edu.ucsc.dbtune.bip.util.BIPOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
 public class ElasticDivBIPTest extends BIPTestConfiguration 

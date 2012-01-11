@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.bip.interactions;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.ucsc.dbtune.bip.util.BIPOutput;
+import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 
 public class InteractionOutput extends BIPOutput 
