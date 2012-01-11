@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.bip.util;
 
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,8 @@ public interface BIPSolver
      *      The result derived from the output of CPLEX
      *      
      * @throws SQLException
+     * @throws IOException 
      */
-    BIPOutput solve() throws SQLException;
+    BIPOutput solve() throws SQLException, IOException;
     
 }

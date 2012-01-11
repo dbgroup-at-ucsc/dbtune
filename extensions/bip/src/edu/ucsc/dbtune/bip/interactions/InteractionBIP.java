@@ -72,10 +72,11 @@ public class InteractionBIP extends AbstractBIPSolver
 	 * @throws SQLException 
 	 * 
 	 * {\b Note}: {@code listAgent} will be removed when this class is fully implemented
+	 * @throws IOException 
 	 * @throws IloException 
 	 */
     @Override
-    public BIPOutput solve() throws SQLException
+    public BIPOutput solve() throws SQLException, IOException
     {   
         // Store indexes into the {@code poolIndexes}
         insertIndexesToPool();
@@ -110,9 +111,10 @@ public class InteractionBIP extends AbstractBIPSolver
     /**
      * Find pairs of indexes from the pool of candidate indexes that interact with each other
      * @throws IloException 
+     * @throws IOException 
      *  
      */
-    public void findInteractions() throws IloException  
+    public void findInteractions() throws IloException, IOException  
     {   
         LogListener listener = new LogListener() {
             public void onLogEvent(String component, String logEvent) {
@@ -152,13 +154,7 @@ public class InteractionBIP extends AbstractBIPSolver
                         initializeBuffer(this.workloadName);
                         
                         // 2. Construct BIP
-                        try {
-                            buildBIP(listener);            
-                            CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());                          
-                        }
-                        catch(IOException e){
-                            System.out.println("Error " + e);
-                        }   
+                        buildBIP(listener);
                         
                         // 3. Solve the first BIP
                         if (solveBIP() == true) {
@@ -226,7 +222,7 @@ public class InteractionBIP extends AbstractBIPSolver
         binaryVariableConstraints();
         
         buf.close();
-                
+        CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
         listener.onLogEvent(LogListener.BIP, "Built IIP program");
     }
     
