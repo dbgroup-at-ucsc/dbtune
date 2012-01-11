@@ -1,4 +1,6 @@
-package edu.ucsc.dbtune.bip.util;
+package edu.ucsc.dbtune.bip.core;
+
+import edu.ucsc.dbtune.bip.util.BIPVariable;
 
 /**
  * This interface represents a container that stores all variables constructed in a BIP

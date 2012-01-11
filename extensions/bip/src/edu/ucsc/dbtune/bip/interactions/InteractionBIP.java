@@ -11,13 +11,13 @@ import java.util.Map;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
-import edu.ucsc.dbtune.bip.util.AbstractBIPSolver;
-import edu.ucsc.dbtune.bip.util.BIPOutput;
+import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
+import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.BIPVariable;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 
 import ilog.concert.IloException;

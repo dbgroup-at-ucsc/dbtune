@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 
-import edu.ucsc.dbtune.bip.util.AbstractBIPVariablePool;
+import edu.ucsc.dbtune.bip.core.AbstractBIPVariablePool;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 
 public class DivVariablePool extends AbstractBIPVariablePool 

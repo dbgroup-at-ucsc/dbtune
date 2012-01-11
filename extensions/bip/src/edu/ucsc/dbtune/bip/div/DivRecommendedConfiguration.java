@@ -2,7 +2,8 @@ package edu.ucsc.dbtune.bip.div;
 
 import java.util.ArrayList;
 import java.util.List;
-import edu.ucsc.dbtune.bip.util.BIPOutput;
+
+import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
 

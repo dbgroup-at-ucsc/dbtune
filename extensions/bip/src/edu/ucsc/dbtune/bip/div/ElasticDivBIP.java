@@ -9,11 +9,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import edu.ucsc.dbtune.bip.util.BIPOutput;
+
+import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
 
