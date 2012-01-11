@@ -31,16 +31,18 @@ import edu.ucsc.dbtune.workload.Workload;
 public abstract class AbstractBIPSolver implements BIPSolver 
 {
     protected List<Index> candidateIndexes;
-    protected CPlexBuffer buf;
-    protected List<QueryPlanDesc> listQueryPlanDescs;
-    protected BIPIndexPool poolIndexes;
+    protected String workloadName;
     protected Map<Schema, Workload> mapSchemaToWorkload;
     protected InumCommunicator communicator;
+    
+    protected List<QueryPlanDesc> listQueryPlanDescs;
+    protected IndexPool poolIndexes;
     protected Map<Schema, List<IndexFullTableScan>> mapSchemaListIndexFullTableScans;
     protected IloLPMatrix matrix;
     protected IloNumVar [] vars;
     protected IloCplex cplex;
-    protected String workloadName;
+    
+    protected CPlexBuffer buf;
     protected Environment environment = Environment.getInstance();
     protected int numConstraints;
     
@@ -175,7 +177,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
      *      
      * @throws SQLException
      */
-    protected void populatePlanDescriptionForStatement(BIPIndexPool poolIndexes) throws SQLException
+    protected void populatePlanDescriptionForStatement(IndexPool poolIndexes) throws SQLException
     {   
         listQueryPlanDescs = new ArrayList<QueryPlanDesc>();
         

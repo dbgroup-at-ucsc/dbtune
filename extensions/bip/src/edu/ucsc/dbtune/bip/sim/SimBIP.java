@@ -172,11 +172,11 @@ public class SimBIP extends AbstractBIPSolver
             for (int i = 0; i < vars.length; i++) {
                 IloNumVar var = vars[i];
                 if (cplex.getValue(var) == 1) {
-                    SimVariable simVar = (SimVariable) getVariable(var.getName());
+                    SimVariable simVar = (SimVariable) poolVariables.getVariable(var.getName());
                     if (simVar.getType() == SimVariablePool.VAR_CREATE 
                         || simVar.getType() == SimVariablePool.VAR_DROP ) {
-                        schedule.addIndexWindow(getIndexOfVarCreateDrop(var.getName()), 
-                                                simVar.getWindow(), simVar.getType());
+                        Index index = this.mapVarCreateDropToIndex.get(var.getName());
+                        schedule.addIndexWindow(index, simVar.getWindow(), simVar.getType());
                     }
                 }
             }
@@ -469,7 +469,6 @@ public class SimBIP extends AbstractBIPSolver
 		buf.getObj().println(StringConcatenator.concatenate(" + ", listCwq));
 	}
 	
-	
 	/**
 	 * Constraint all variables to be binary ones
 	 * 
@@ -480,22 +479,4 @@ public class SimBIP extends AbstractBIPSolver
         String strListVars = poolVariables.enumerateListVariables(NUM_VAR_PER_LINE);
         buf.getBin().println(strListVars);	
 	}
-	
-    	
-	public SimVariable getVariable(String name)
-	{   
-	    return (SimVariable) this.poolVariables.getVariable(name);
-	}
-	
-	/**
-     * Retrieve the corresponding index that a variable of type create, drop is defined on
-     * @param name
-     *     The given of a BIP variable     
-     * @return
-     *     An index object or NULL
-     */
-	private Index getIndexOfVarCreateDrop(String name)
-	{
-	    return this.mapVarCreateDropToIndex.get(name);
-	}    
 }

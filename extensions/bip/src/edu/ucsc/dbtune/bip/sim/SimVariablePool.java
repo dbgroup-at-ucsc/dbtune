@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import edu.ucsc.dbtune.bip.util.BIPVariable;
-import edu.ucsc.dbtune.bip.util.BIPVariablePool;
+import edu.ucsc.dbtune.bip.util.AbstractBIPVariablePool;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 
-public class SimVariablePool extends BIPVariablePool 
+public class SimVariablePool extends AbstractBIPVariablePool 
 {
     public static final int  VAR_Y = 0;
     public static final int  VAR_X = 1;
@@ -19,13 +19,16 @@ public class SimVariablePool extends BIPVariablePool
     public static final int  VAR_DROP = 5;
     public static final int  VAR_DEFAULT = 100;    
     private String[] strHeaderVariable = {"y", "x", "s", "present", "create", "drop"};
-    private Map<SimVariableIndex, BIPVariable> mapHighDimensionVar = new HashMap<SimVariableIndex, BIPVariable>();
+    private Map<SimVariableIndicator, BIPVariable> mapHighDimensionVar;
     
+    public SimVariablePool()
+    {
+        mapHighDimensionVar = new HashMap<SimVariableIndicator, BIPVariable>();
+    }
     /**
      * 
      * Construct the variable name in the format: y(w, q, k), x(w,q, k,i,a), s(w, a), 
-     * present(w,a), create(w,a), drop(w,a)
-     *  
+     * present(w,a), create(w,a), drop(w,a)      
      *
      * @param typeVarible
      *      The type of variable, the value is in the set {y, x, s, present, create, drop}, 
@@ -68,13 +71,13 @@ public class SimVariablePool extends BIPVariablePool
         
         varName = varName.concat(StringConcatenator.concatenate(",", nameComponent));
         varName = varName.concat(")");
-                
+         
+        // store the variable with the derived name
         SimVariable var = new SimVariable(varName, typeVariable, window);
-        this.listVar.add(var);
-        this.mapNameVar.put(var.getName(), var);
+        this.addVariable(var);
         
-        // Create a mapping from 
-        SimVariableIndex iai = new SimVariableIndex(typeVariable, window, queryId, k, i, a);
+        // Create a mapping for this variable 
+        SimVariableIndicator iai = new SimVariableIndicator(typeVariable, window, queryId, k, i, a);
         this.mapHighDimensionVar.put(iai, var);
         
         return var;
@@ -100,7 +103,7 @@ public class SimVariablePool extends BIPVariablePool
      */
     public SimVariable getSimVariable(int typeVariable, int window, int queryId, int k, int i, int a)
     {   
-        SimVariableIndex iai = new SimVariableIndex(typeVariable, window, queryId, k, i, a);
+        SimVariableIndicator iai = new SimVariableIndicator(typeVariable, window, queryId, k, i, a);
         Object found = mapHighDimensionVar.get(iai);
         SimVariable var = null;
         if (found != null) {

@@ -14,7 +14,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
     public void testInteraction() throws Exception
     {
         try {
-            double delta = 0.35;
+            double delta = 0.4;
             InteractionBIP bip = new InteractionBIP(delta);
             bip.setCandidateIndexes(candidateIndexes);
             bip.setCommunicator(communicator);

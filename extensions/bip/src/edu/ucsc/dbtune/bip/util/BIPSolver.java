@@ -36,7 +36,7 @@ public interface BIPSolver
     
     
     /**
-     * Set the workload name 
+     * Set the input workload name 
      * 
      * @param name
      *      The name of the workload

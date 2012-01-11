@@ -16,20 +16,15 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  *
  */
 public interface QueryPlanDesc 
-{
-    /**
-     * Each index in the pool of candidate indexes are placed into a particular slot
-     * of the query plan, represented by an {@code IndexInSlot} object,
-     * which includes: statement ID, slot ID, and the position in slot.  
-     *  
-     * This function maps the position in each slot   
-     * of every index in the pool of candidate to the pool ID of the corresponding index
+{     
+    /**  
+     * Map the position in each slot of every index in the pool of candidate to the pool ID 
+     * of the corresponding index
+     * 
      * @param poolIndexes
      *      The pool that stores candidate indexes
-     *      
-     * {\bf Note:} Our assumption is that every index is defined on exactly one relation.     
      */
-    void mapIndexInSlotToPoolID(BIPIndexPool poolIndexes);
+    void mapIndexInSlotToPoolID(IndexPool poolIndexes);
     
     /**
      * Retrieve the number of template plans
@@ -104,7 +99,7 @@ public interface QueryPlanDesc
      * @param poolIndexes
      *      The pool of candidate indexes   
      * 
-     * {\bf Note}:
+     * {\bf Note}
      * <p>
      * <ol> 
      *  <li> There does not contain the full table scan in {@code poolIndexes}</li>
@@ -119,7 +114,7 @@ public interface QueryPlanDesc
      */
     void generateQueryPlanDesc (InumCommunicator communicator, Schema schema,
                                 List<IndexFullTableScan> listFullTableScanIndexes,
-                                SQLStatement stmt, BIPIndexPool poolIndexes) 
+                                SQLStatement stmt, IndexPool poolIndexes) 
                                 throws SQLException;
     
     

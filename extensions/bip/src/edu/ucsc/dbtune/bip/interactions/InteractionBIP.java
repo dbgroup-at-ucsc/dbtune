@@ -96,7 +96,7 @@ public class InteractionBIP extends AbstractBIPSolver
         } catch (IloException e) {
             throw new RuntimeException(e);
         }
-        return interactionOutput;
+        return getOutput();
     }
     
     
@@ -179,8 +179,6 @@ public class InteractionBIP extends AbstractBIPSolver
             }
         }
     }
-    
-    
     
     
     /**

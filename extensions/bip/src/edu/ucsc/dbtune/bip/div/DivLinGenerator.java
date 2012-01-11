@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.ucsc.dbtune.bip.util.BIPIndexPool;
+import edu.ucsc.dbtune.bip.util.IndexPool;
 import edu.ucsc.dbtune.bip.util.InumQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
@@ -25,12 +25,12 @@ public class DivLinGenerator
     protected double B;
     protected int numConstraints;
     protected DivVariablePool poolVariables;
-    protected BIPIndexPool poolIndexes;
+    protected IndexPool poolIndexes;
     // Map variable of type CREATE or DROP to the indexes
     protected Map<String,Index> mapVarSToIndex;
     
     
-    DivLinGenerator(final String prefix, final BIPIndexPool poolIndexes, final List<InumQueryPlanDesc> listQueryPlanDecs, 
+    DivLinGenerator(final String prefix, final IndexPool poolIndexes, final List<InumQueryPlanDesc> listQueryPlanDecs, 
                     final int Nreplicas, final int loadfactor, final double B)
     {       
         this.poolIndexes = poolIndexes;

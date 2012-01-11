@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import edu.ucsc.dbtune.bip.util.BIPIndexPool;
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
+import edu.ucsc.dbtune.bip.util.IndexPool;
 import edu.ucsc.dbtune.bip.util.InumQueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.QueryPlanDesc;
 import edu.ucsc.dbtune.metadata.Index;
@@ -24,7 +25,7 @@ public class QueryPlanDescTest extends BIPTestConfiguration
     @Test
     public void testPlanDescriptionGeneration() throws Exception
     {   
-        BIPIndexPool poolIndexes = new BIPIndexPool();
+        IndexPool poolIndexes = new BIPIndexPool();
         for (Index index : candidateIndexes) {
             poolIndexes.addIndex(index);
         }
