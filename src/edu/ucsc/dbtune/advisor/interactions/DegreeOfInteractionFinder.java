@@ -18,20 +18,19 @@ import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 public interface DegreeOfInteractionFinder
 {
     /**
-     * Computes the interactions for any two distinct elements contained in {@code indexes}, with 
-     * respect to a {@code select} statement.
+     * Computes the degree of interaction for any two distinct elements contained in {@code 
+     * indexes}, with respect to the given {@code select} statement.
      *
-     * @param q
-     *      a prepared statement corresponding to a query
-     * @param indexes
+     * @param sql
+     *      a prepared statement
+     * @param s
      *      the set of indexes that are considered when the interactions are discovered.
      * @return
      *      the interactions found
      * @throws SQLException
-     *      if the prepared statement doesn't correspond to a {@link SQLCategory.SELECT select}; if 
-     *      an error occurs while executing a {@link PreparedSQLStatement#explain what-if} call on 
-     *      the prepared statement.
+     *      if an error occurs while executing a {@link PreparedSQLStatement#explain what-if} call 
+     *      on the prepared statement.
      */
-    InteractionBank degreeOfInteraction(PreparedSQLStatement q, Set<Index> indexes)
+    InteractionBank degreeOfInteraction(PreparedSQLStatement sql, Set<Index> s)
         throws SQLException;
 }

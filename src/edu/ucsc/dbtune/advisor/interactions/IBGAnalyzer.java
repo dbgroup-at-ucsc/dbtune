@@ -1,6 +1,10 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
+import java.sql.SQLException;
+
 import java.util.Set;
+
+import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
 
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IBGNodeQueue;
@@ -43,6 +47,8 @@ public class IBGAnalyzer
     // keeps track of visited nodes
     private final Set<IndexBenefitGraph.Node> visitedNodes;
 
+    private final IndexBenefitGraph.Node rootNode;
+
     // All the following correspond to a bunch of structures that we keep around to
     // avoid excessive garbage collection. These structures are only used in the
     // analyzeNode() method.
@@ -59,24 +65,21 @@ public class IBGAnalyzer
      *
      * @param ibgCons
      *      a given {@link IndexBenefitGraphConstructor} object.
-     * @param nodeQueue
-     *      a given {@link IBGNodeQueue} object which contains IBG nodes.
-     * @param revisitQueue
-     *      a given {@link IBGNodeQueue} object which contains IBG node that will be revisited.
      */
-    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons, IBGNodeQueue nodeQueue, IBGNodeQueue 
-            revisitQueue)
+    private IBGAnalyzer(IndexBenefitGraphConstructor ibgCons)
     {
         // initialize fields
-        this.ibgCons        = ibgCons;
-        this.nodeQueue      = nodeQueue;
-        this.revisitQueue   = revisitQueue;
-        allUsedIndexes      = new BitArraySet<Index>();
-        rootBitSet          = new BitArraySet<Index>(ibgCons.rootNode().getConfiguration());
-        visitedNodes        = new BitArraySet<IndexBenefitGraph.Node>();
+        this.ibgCons = ibgCons;
+        this.nodeQueue = new IBGNodeQueue();
+        this.revisitQueue = new IBGNodeQueue();
+        allUsedIndexes = new BitArraySet<Index>();
+        rootBitSet = new BitArraySet<Index>(ibgCons.rootNode().getConfiguration());
+        visitedNodes = new BitArraySet<IndexBenefitGraph.Node>();
 
         // seed the queue with the root node
         nodeQueue.addNode(ibgCons.rootNode());
+
+        rootNode = ibgCons.rootNode();
     }
 
     /**
@@ -85,15 +88,26 @@ public class IBGAnalyzer
      * @param ibgCons
      *      a given {@link IndexBenefitGraphConstructor} object.
      */
-    public IBGAnalyzer(IndexBenefitGraphConstructor ibgCons)
+    private IBGAnalyzer(IndexBenefitGraph ibg)
     {
-        this(ibgCons, new IBGNodeQueue(), new IBGNodeQueue());
+        // initialize fields
+        ibgCons = null;
+        nodeQueue = new IBGNodeQueue();
+        revisitQueue = new IBGNodeQueue();
+        allUsedIndexes = new BitArraySet<Index>();
+        rootBitSet = new BitArraySet<Index>(ibgCons.rootNode().getConfiguration());
+        visitedNodes = new BitArraySet<IndexBenefitGraph.Node>();
+
+        // seed the queue with the root node
+        nodeQueue.addNode(ibg.rootNode());
+
+        rootNode = ibg.rootNode();
     }
 
     /**
      * traverses the {@link IndexBenefitGraph}.
      *
-     * @param logger
+     * @param bank
      *      a logger that keeps tracks of the visited nodes.
      * @param wait
      *      a flag that indicates if {@link IndexBenefitGraphConstructor}
@@ -102,7 +116,7 @@ public class IBGAnalyzer
      * @return either {@link StepStatus#BLOCKED}, {@link StepStatus#DONE}, or
      *      {@link StepStatus#SUCCESS}.
      */
-    public final StepStatus analysisStep(InteractionLogger logger, boolean wait)
+    public final StepStatus analysisStep(InteractionBank bank, boolean wait) throws SQLException
     {
         // we might need to go through several nodes to find one that we haven't visited yet
         while (true) {
@@ -114,7 +128,11 @@ public class IBGAnalyzer
                 }
                 else if (wait) {
                     node = nodeQueue.next();
-                    ibgCons.waitUntilExpanded(node);
+
+                    if (ibgCons == null)
+                        throw new SQLException("IBGConstructor not defined");
+                    else
+                        ibgCons.waitUntilExpanded(node);
                 }
                 else if (revisitQueue.hasNext()) {
                     node = revisitQueue.next();
@@ -133,7 +151,7 @@ public class IBGAnalyzer
             if (visitedNodes.contains(node))
                 continue;
 
-            if (analyzeNode(node, logger)) {
+            if (analyzeNode(rootNode, node, bank)) {
                 visitedNodes.add(node);
                 nodeQueue.addChildren(node.firstChild());
             }
@@ -151,13 +169,14 @@ public class IBGAnalyzer
      *
      * @param node
      *      the node being analyzed
-     * @param logger
+     * @param bank
      *      the logger used to log interactions
      * @return
      *      whether or not the analyses completed. When the analysis doesn't complete it is due to 
      *      the IBG not being completely expanded.
      */
-    private boolean analyzeNode(IndexBenefitGraph.Node node, InteractionLogger logger)
+    private boolean analyzeNode(
+            IndexBenefitGraph.Node root, IndexBenefitGraph.Node node, InteractionBank bank)
     {
         Set<Index> bitsetY = node.getConfiguration();
 
@@ -191,12 +210,12 @@ public class IBGAnalyzer
             bitsetYaSimple.add(a);
 
             IndexBenefitGraph.Node yaSimple =
-                coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYaSimple, null);
+                coveringNodeFinder.findFast(root, bitsetYaSimple, null);
 
             if (yaSimple == null)
                 retval = false;
             else
-                logger.assignBenefit(a, costY - yaSimple.cost());
+                bank.assignBenefit(a, costY - yaSimple.cost());
 
             for (Index b : candidatesBitSet) {
                 IndexBenefitGraph.Node ya;
@@ -217,8 +236,8 @@ public class IBGAnalyzer
                 bitsetYab.add(a);
                 bitsetYab.add(b);
 
-                yab = coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYab, yaSimple);
-                ya = coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYa, yab);
+                yab = coveringNodeFinder.findFast(root, bitsetYab, yaSimple);
+                ya = coveringNodeFinder.findFast(root, bitsetYa, yab);
 
                 if (ya == null) {
                     retval = false;
@@ -244,19 +263,19 @@ public class IBGAnalyzer
                 bitsetYbPlus.remove(a);
                 bitsetYbPlus.add(b);
 
-                ybPlus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYbPlus, yab);
-                ybMinus = coveringNodeFinder.findFast(ibgCons.rootNode(), bitsetYbMinus, ybPlus);
+                ybPlus = coveringNodeFinder.findFast(root, bitsetYbPlus, yab);
+                ybMinus = coveringNodeFinder.findFast(root, bitsetYbMinus, ybPlus);
 
                 // try to set lower bound based on Y, Ya, YbPlus, and Yab
                 if (ybPlus != null)
-                    logger.assignInteraction(
+                    bank.assignInteraction(
                             a, b, interactionLevel(costY, costYa, ybPlus.cost(), costYab));
                 else
                     retval = false;
 
                 // try to set lower bound based on Y, Ya, YbMinus, and Yab
                 if (ybMinus != null)
-                    logger.assignInteraction(
+                    bank.assignInteraction(
                             a, b, interactionLevel(costY, costYa, ybMinus.cost(), costYab));
                 else
                     retval = false;
@@ -311,20 +330,49 @@ public class IBGAnalyzer
         SUCCESS
     }
 
+    /**
+     * Analyze an IBG to identify index interactions. The IBG is assumed to be fully constructed.
+     *
+     * @param ibg
+     *      the IBG to be analyzed
+     * @return
+     *      the interactions that were identified
+     * @throws SQLException
+     *      if the ibg is not fully constructed
+     */
+    public static InteractionBank analyze(IndexBenefitGraph ibg) throws SQLException
+    {
+        InteractionBank bank = new InteractionBank(ibg.rootNode().getConfiguration());
+        IBGAnalyzer analyzer = new IBGAnalyzer(ibg);
+
+        boolean done = false;
+
+        while (!done) {
+            switch (analyzer.analysisStep(bank, false)) {
+                case DONE:
+                    done = true;
+                    break;
+                case SUCCESS:
+                    break;
+                case BLOCKED:
+                default:
+                    throw new SQLException("Error in computing interactions");
+            }
+        }
+
+        return bank;
+    }
+
     private static class ThreadIBGAnalysis implements Runnable
     {
         private IBGAnalyzer analyzer = null;
-        private InteractionLogger logger = null;
+        private InteractionBank bank = null;
 
         private final Object taskMonitor = new Object();
         private State state = State.IDLE;
 
         private enum State
         { IDLE, PENDING, DONE };
-
-        public ThreadIBGAnalysis()
-        {
-        }
 
         @Override
         public void run()
@@ -342,8 +390,9 @@ public class IBGAnalyzer
 
                 boolean done = false;
 
+                try {
                 while (!done) {
-                    switch (analyzer.analysisStep(logger, true)) {
+                    switch (analyzer.analysisStep(bank, true)) {
                         case SUCCESS:
                             //if (++analyzedCount % 1000 == 0) Debug.println("a" + analyzedCount);
                             break;
@@ -358,6 +407,9 @@ public class IBGAnalyzer
                             return;
                     }
                 }
+                } catch(SQLException e) {
+                    throw new RuntimeException(e);
+                }
 
                 synchronized (taskMonitor) {
                     state = State.DONE;
@@ -369,7 +421,7 @@ public class IBGAnalyzer
         /*
          * tell the analysis thread to start analyzing, and return immediately
          */
-        public void startAnalysis(IBGAnalyzer analyzer0, InteractionLogger logger0)
+        public void startAnalysis(IBGAnalyzer analyzer0, InteractionBank bank0)
         {
             synchronized (taskMonitor) {
                 if (state == State.PENDING) {
@@ -377,7 +429,7 @@ public class IBGAnalyzer
                 }
 
                 analyzer = analyzer0;
-                logger = logger0;
+                bank = bank0;
                 state = State.PENDING;
                 taskMonitor.notify();
             }
@@ -395,7 +447,7 @@ public class IBGAnalyzer
                 }
 
                 analyzer = null;
-                logger = null;
+                bank = null;
                 state = State.IDLE;
             }
         }

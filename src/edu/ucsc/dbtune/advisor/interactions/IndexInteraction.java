@@ -6,13 +6,11 @@ public class IndexInteraction
 {
     private Index a;
     private Index b;
-    private double interactionLevel;
     
-    public IndexInteraction(Index a, Index b, double interactionLevel)
+    public IndexInteraction(Index a, Index b)
     {
         this.a = a;
         this.b = b;
-        this.interactionLevel = interactionLevel;
     }
     
     public Index getFirst()
@@ -23,10 +21,5 @@ public class IndexInteraction
     public Index getSecond()
     {
         return b;
-    }
-
-    public double getInteractionLevel()
-    {
-        return interactionLevel;
     }
 }
