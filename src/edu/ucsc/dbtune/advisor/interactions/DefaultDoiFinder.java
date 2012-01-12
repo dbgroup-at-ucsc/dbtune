@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
+import static java.lang.Math.abs;
 import static java.lang.Math.max;
 
 import edu.ucsc.dbtune.metadata.Index;
@@ -65,7 +66,7 @@ public class DefaultDoiFinder implements DegreeOfInteractionFinder
                 final double costXb = sql.explain(xb).getSelectCost();
                 final double costXab = sql.explain(xab).getSelectCost();
 
-                final double d = (costX - costXa - costXb + costXab) / costXab;
+                final double d = abs(costX - costXa - costXb + costXab) / costXab;
 
                 bank.assignInteraction(a, b, max(bank.interactionLevel(a, b), d));
             }
