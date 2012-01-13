@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.spi;
+package edu.ucsc.dbtune.util;
 
 import org.junit.After;
 import org.junit.Before;
