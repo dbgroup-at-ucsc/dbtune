@@ -11,40 +11,35 @@ import java.util.Set;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class WorkloadDirectoryNode implements WorkloadNode <Set<String>>
-{
+public class WorkloadDirectoryNode implements WorkloadNode<Set<String>> {
   private final File directory;
   static final String INUM_WORKLOAD_PATH = Environment.getInstance().getScriptAtWorkloadsFolder(
       "inum/");
 
-  public WorkloadDirectoryNode(File directory)
-  {
+  public WorkloadDirectoryNode(File directory) {
     this.directory = directory;
   }
 
-  public WorkloadDirectoryNode()
-  {
-   this(new File(INUM_WORKLOAD_PATH));
+  public WorkloadDirectoryNode() {
+    this(new File(INUM_WORKLOAD_PATH));
   }
 
-  @Override public Set<String> accept(WorkloadVisitor visitor)
- {
+  @Override public Set<String> accept(WorkloadVisitor visitor) {
     return visitor.visit(this);
   }
 
-  public Set<WorkloadNode<?>> getChildren()
-  {
+  public Set<WorkloadNode<?>> getChildren() {
     final File[] files = getDirectory().listFiles(new OnlyDirectoriesOrSqlFiles());
     final Set<WorkloadNode<?>> workload = Sets.newHashSet();
-    for (File each : files){
-      if (each.isDirectory()){
+    for (File each : files) {
+      if (each.isDirectory()) {
         final WorkloadDirectoryNode directory = new WorkloadDirectoryNode(each);
-        if (!workload.contains(directory)){
+        if (!workload.contains(directory)) {
           workload.add(directory);
         }
       } else {
         final WorkloadFileNode node = new WorkloadFileNode(each);
-        if (!workload.contains(node)){
+        if (!workload.contains(node)) {
           workload.add(node);
         }
       }
@@ -53,23 +48,19 @@ public class WorkloadDirectoryNode implements WorkloadNode <Set<String>>
     return workload;
   }
 
-  public File getDirectory()
-  {
+  public File getDirectory() {
     return directory;
   }
 
-  @Override public String toString()
- {
+  @Override public String toString() {
     return String.format(
         "%s (children=%d)",
         getDirectory().getName(),
         getChildren().size());
   }
 
-  private static class OnlyDirectoriesOrSqlFiles implements FileFilter
-  {
-    @Override public boolean accept(File file)
- {
+  private static class OnlyDirectoriesOrSqlFiles implements FileFilter {
+    @Override public boolean accept(File file) {
       return file.isDirectory() || file.getName().endsWith(".sql");
     }
   }
