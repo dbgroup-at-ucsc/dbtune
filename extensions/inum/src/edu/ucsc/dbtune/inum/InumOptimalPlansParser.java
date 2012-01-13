@@ -2,14 +2,12 @@ package edu.ucsc.dbtune.inum;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.util.Environment;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
 import edu.ucsc.dbtune.util.Pair;
 import edu.ucsc.dbtune.util.Strings;
 import static java.util.Arrays.asList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,8 +62,7 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
   }
 
   // parsing plan suggested by optimizer
-  private static Set<OptimalPlan> buildPlans(String queryExecutionPlan) {
-    final Set<OptimalPlan> suggestedPlans = Sets.newHashSet();
+  private static OptimalPlan buildPlans(String queryExecutionPlan) {
     final OptimalPlan optimalPlan = isPG() ? new PostgresSqlExecutionPlan() : new DB2SqlExecutionPlan() ;
     final List<String> parsedlines = Lists.newArrayList();
     final List<Integer> parents = Lists.newArrayList();
@@ -136,8 +133,8 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
 
       optimalPlan.add(subplan);
     }
-    suggestedPlans.add(optimalPlan);
-    return suggestedPlans;
+
+    return optimalPlan;
   }
 
   private static String findOperator(String name) {
@@ -185,7 +182,7 @@ public class InumOptimalPlansParser implements OptimalPlansParser {
     return Strings.isEmpty(vendor) || Strings.same(env.getVendor(), PG);
   }
 
-  @Override public Set<OptimalPlan> parse(String returnedStatement) {
+  @Override public OptimalPlan parse(String returnedStatement) {
     return buildPlans(returnedStatement);
   }
 }

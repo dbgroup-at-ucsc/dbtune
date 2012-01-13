@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.inum;
 
-import java.util.Set;
-
 /**
  * Parses the result obtained when calling the optimizer using a query and the indexes of that
  * query.
@@ -11,11 +9,11 @@ import java.util.Set;
 public interface OptimalPlansParser {
 
   /**
-   * parses the returned optimal plans in a String form. These plans are then turned into a set of
-   * optimalplan objects.
+   * parses the returned optimal plan in a String form. This plan is then turned into an
+   * optimal plan object.
    *
    * @param returnedStatement optimal plans in String form.
-   * @return a set of optimal plans.
+   * @return an optimal plan.
    */
-  Set<OptimalPlan> parse(String returnedStatement);
+  OptimalPlan parse(String returnedStatement);
 }
