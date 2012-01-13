@@ -1,9 +1,8 @@
 package edu.ucsc.dbtune.inum;
 
-import java.util.Set;
-
 import edu.ucsc.dbtune.metadata.Index;
 import java.sql.Connection;
+import java.util.Set;
 
 /**
  * Default implementation of {@link IndexAccessCostEstimation} interface.
@@ -38,13 +37,6 @@ public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation 
   }
 
   private OptimalPlan singlePlan(String returnedPlan) {
-    // the assumption is that we will get one plan.....
-    final Set<OptimalPlan> plans = parser.parse(returnedPlan);
-    OptimalPlan plan = null;
-    for (OptimalPlan each : plans) {
-      if (plan == null) { plan = each; } else { break; }
-    }
-
-    return plan;
+    return parser.parse(returnedPlan);
   }
 }
