@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune;
 
+import edu.ucsc.dbtune.inum.InumWhatIfOptimizer;
+import edu.ucsc.dbtune.inum.InumWhatIfOptimizerImpl;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,8 +13,6 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import edu.ucsc.dbtune.core.InumWhatIfOptimizer;
-import edu.ucsc.dbtune.core.InumWhatIfOptimizerImpl;
 import edu.ucsc.dbtune.inum.IndexAccessCostEstimation;
 import edu.ucsc.dbtune.inum.InterestingOrdersExtractor;
 import edu.ucsc.dbtune.inum.Inum;
@@ -188,9 +188,9 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     return new InumWhatIfOptimizerImpl(inum);
   }
 
-  public static InumWhatIfOptimizer configureWhatIfOptimizer(Set<Index> configuration) throws 
+  public static InumWhatIfOptimizer configureWhatIfOptimizer(String sql, Set<Index> configuration) throws
       Exception {
-    final Inum inum = configureInum("", configuration);
+    final Inum inum = configureInum(sql, configuration);
     return new InumWhatIfOptimizerImpl(inum);
   }
 
