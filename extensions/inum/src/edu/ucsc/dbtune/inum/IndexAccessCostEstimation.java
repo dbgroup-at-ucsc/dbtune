@@ -18,9 +18,9 @@ public interface IndexAccessCostEstimation {
    * Estimate the cost of accessing the indexes in an input configuration. Computing only the
    * individual index access costs is much faster than a full blown optimizer call.
    *
-   * @param query single query.
+   * @param optimalPlan matched optimal plan.
    * @param indexes indexes to be used in the index access cost calculation
    * @return the cost of accessing the given index.
    */
-  double estimateIndexAccessCost(String query, Set<Index> indexes);
+  double estimateIndexAccessCost(OptimalPlan optimalPlan, Set<Index> indexes);
 }

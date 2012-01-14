@@ -44,12 +44,11 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
 /**
- * Extracts the interesting orders of a query.
+ * Default implementation of {@link InterestingOrdersExtractor}.
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumInterestingOrdersExtractor implements InterestingOrdersExtractor
-{
+public class InumInterestingOrdersExtractor implements InterestingOrdersExtractor {
   private static final Set<String> AGGR_OPER;
   private static final String BLANK;
   private final ColumnPropertyLookup properties;
@@ -86,7 +85,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
 
   InumInterestingOrdersExtractor(
       Catalog catalog, ColumnPropertyLookup properties) {
-    this.catalog    = catalog;
+    this.catalog = catalog;
     this.properties = properties;
   }
 
@@ -133,7 +132,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
 
   private static List<Column> findColumns(Table table, Set<String> names)
       throws SQLException {
-    final Set<Column> result = Sets.newHashSet();
+    final List<Column> result = Lists.newArrayList();
 
     for (String name : names) {
       final Column c = table.findColumn(name.toLowerCase());
@@ -143,12 +142,11 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       result.add(c);
     }
 
-    return Lists.newArrayList(result);
+    return result;
   }
 
   @SuppressWarnings("rawtypes")
-  private static Vector parseQuery(String query) throws InumExecutionException
-  {
+  private static Vector parseQuery(String query) throws InumExecutionException {
     try {
       final InputStream is = new ByteArrayInputStream(query.getBytes("UTF-8"));
       final ZqlParser p = new ZqlParser(is);
@@ -165,8 +163,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
    * column information extractor. this class helps retrieve information of the columns from the
    * dbms.
    */
-  private static class ColumnsExtractor
-  {
+  private static class ColumnsExtractor {
     private final ZQuery query;
     private final Set<String> allColumns;
     private final Set<String> eqColumns;
@@ -190,8 +187,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       buildIndexes(this.query, allColumns, eqColumns, joinColumns);
     }
 
-    public Set<String> getUsedColumns()
-    {
+    public Set<String> getUsedColumns() {
 
       final Set<String> caps = Sets.newHashSet();
       for (String each : allColumns) {
@@ -206,14 +202,12 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       return allColumns;
     }
 
-    public Multimap<String, String> usedColumns()
-    {
+    public Multimap<String, String> usedColumns() {
       return associateColumnsWithTables(getUsedColumns());
     }
 
     @SuppressWarnings("rawtypes")
-    private void processSelectClause(Vector select, Set<String> allColumns)
-    {
+    private void processSelectClause(Vector select, Set<String> allColumns) {
       if (select == null) { return; }
       final Set<String> selectColumns = Sets.newHashSet();
       for (Object eachObj : select) {
@@ -222,11 +216,10 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       }
     }
 
-    public Set<String> getInterestingOrders()
-    {
+    public Set<String> getInterestingOrders() {
       final Set<String> caps = Sets.newHashSet();
 
-      for (String each : joinColumns)    { caps.add(each.toUpperCase()); }
+      for (String each : joinColumns) { caps.add(each.toUpperCase()); }
 
       for (String each : groupByColumns) { caps.add(each.toUpperCase()); }
 
@@ -235,8 +228,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       return caps;
     }
 
-    public Multimap<String, String> interestingOrders()
-    {
+    public Multimap<String, String> interestingOrders() {
       return associateColumnsWithTables(getInterestingOrders());
     }
 
@@ -293,8 +285,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       orderByColumns.addAll(orderByColumn);
     }
 
-    private void processGrouByClause(ZGroupBy groupBy, Set<String> allColumns)
-    {
+    private void processGrouByClause(ZGroupBy groupBy, Set<String> allColumns) {
       if (groupBy == null) {
         return;
       }
@@ -320,8 +311,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       eqColumns.addAll(groupByColumn);
     }
 
-    public Multimap<String, String> getOrderByOrders()
-    {
+    public Multimap<String, String> getOrderByOrders() {
       final Set<String> orderByColumns = getOrderByColumns();
       if (orderByColumns.isEmpty()) {
         return HashMultimap.create();
@@ -347,8 +337,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       return multiMap;
     }
 
-    public Set<String> getOrderByColumns()
-    {
+    public Set<String> getOrderByColumns() {
       final Set<String> caps = toUpperCaseSet(orderByColumns);
       synchronized (orderByColumns) {
         orderByColumns.clear();
@@ -357,8 +346,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       return ImmutableSet.copyOf(orderByColumns);
     }
 
-    private Set<String> toUpperCaseSet(Set<String> orderByColumns)
-    {
+    private Set<String> toUpperCaseSet(Set<String> orderByColumns) {
       final Set<String> caps = Sets.newLinkedHashSet();
       for (String orderByColumn : orderByColumns) {
         caps.add((orderByColumn).toUpperCase());
@@ -366,8 +354,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       return caps;
     }
 
-    public Multimap<String, String> getGroupByOrders()
-    {
+    public Multimap<String, String> getGroupByOrders() {
       final Set<String> groupByColumns = getGroupByColumns();
       if (groupByColumns.isEmpty()) {
         return HashMultimap.create();
@@ -376,13 +363,11 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       return associateColumnsWithTables(groupByColumns);
     }
 
-    public Set<String> getIndexableColumns()
-    {
+    public Set<String> getIndexableColumns() {
       return toUpperCaseSet(eqColumns);
     }
 
-    public Set<String> getGroupByColumns()
-    {
+    public Set<String> getGroupByColumns() {
       final Set<String> caps = Sets.newLinkedHashSet();
       for (String each : groupByColumns) {
         caps.add(each.toUpperCase());
@@ -395,8 +380,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       return groupByColumns;
     }
 
-    public Set<String> getQueryTables()
-    {
+    public Set<String> getQueryTables() {
       final Set<String> tableNames = Sets.newHashSet();
       @SuppressWarnings("rawtypes")
       Vector from = this.query.getFrom();
@@ -494,8 +478,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
   /**
    * A record object that holds information of columns.
    */
-  public static class ColumnInformation
-  {
+  public static class ColumnInformation {
     String columnName;
     String columnType;
 
@@ -505,8 +488,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     boolean isNullable;
   }
   // todo(Huascar): convert this to interface.
-  public enum ColumnsProperties implements ColumnPropertyLookup
-  {
+  public enum ColumnsProperties implements ColumnPropertyLookup {
     INSTANCE;
 
     final Map<String, Set<ColumnInformation>> stringToSetOfColumnInfo;
@@ -518,8 +500,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       properties = new Properties();
     }
 
-    public Connection getDatabaseConnection()
-    {
+    public Connection getDatabaseConnection() {
       try {
         if (connection.isClosed()) { throw new IllegalStateException("Connection is closed."); }
       } catch (SQLException ex) {
@@ -536,14 +517,12 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       return this;
     }
 
-    @Override public String getProperty(String key)
- {
+    @Override public String getProperty(String key) {
       final String property = properties.getProperty(key);
       return property == null ? BLANK : property;
     }
 
-    @Override public void refresh()
- {
+    @Override public void refresh() {
       final String sqlquery
           = "select relname,relpages, reltuples, relfilenode from pg_class where relnamespace = 2200 and relam =0";
       try {
@@ -563,8 +542,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       }
     }
 
-    @Override public Properties getProperties()
- {
+    @Override public Properties getProperties() {
       final Properties props = new Properties();
       for (String eachTableName : stringToSetOfColumnInfo.keySet()) {
         final Set<ColumnInformation> info = stringToSetOfColumnInfo.get(eachTableName);
@@ -575,8 +553,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       return props;
     }
 
-    @Override public Set<ColumnInformation> getColumnInformation(int reloid)
- {
+    @Override public Set<ColumnInformation> getColumnInformation(int reloid) {
       final Set<ColumnInformation> columns = Sets.newHashSet();
       final String sqlquery =
           "select attname, attnum, atttypid, attnotnull from pg_attribute where attnum > 0 and attrelid = "
@@ -607,8 +584,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
     }
 
     // todo(Huascar) this is slow...must be improved.
-    @Override public int getColumnDataType(String tableName, String columnName)
- {
+    @Override public int getColumnDataType(String tableName, String columnName) {
       for (ColumnInformation each : stringToSetOfColumnInfo.get(tableName)) {
         if (Strings.same(each.columnName, columnName)) { return each.atttypid; }
       }
