@@ -1,17 +1,14 @@
 package edu.ucsc.dbtune.inum;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.Console;
 import edu.ucsc.dbtune.util.ConfigurationUtils;
 import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import java.util.Set;
 
 /**
  * Inumspace key consisting of a SQL query and an index configuration.
@@ -21,8 +18,9 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public class QueryRecord {
   private final SQLStatement          sql;
-  private final Set<Index>         configuration;
+  private final Set<Index>            configuration;
   private final Set<String>           indexedTableNames; // these map to the tables part of the interesting orders in a SQL query
+
   public QueryRecord(String sql, Set<Index> configuration) {
     this(createStatement(sql), configuration);
   }
@@ -40,11 +38,21 @@ public class QueryRecord {
   @Override public boolean equals(Object o) {
     if(!(o instanceof QueryRecord)) return false;
     final QueryRecord other = (QueryRecord)o;
-    return isCoveredBy(other.sql, other.configuration);
+    final boolean isSameSQL     = Strings.same(this.sql.getSQL(), other.sql.getSQL());
+    final boolean isSameConfig  = Objects.equal(this.configuration, other.configuration);
+    return isSameSQL && isSameConfig;
+  }
+
+  public String getSQL(){
+    return this.sql.getSQL();
   }
 
   public Set<String> getUsedTablesNames(){
-    return ImmutableSet.copyOf(indexedTableNames);
+    return indexedTableNames;
+  }
+
+  public Set<Index> getConfiguration(){
+    return configuration;
   }
 
   private static SQLStatement createStatement(String sql){
@@ -57,35 +65,6 @@ public class QueryRecord {
     }
   }
 
-  private boolean isCoveredBy(SQLStatement sql, Set<Index> other){
-    final boolean equalSQL    = Strings.same(this.sql.getSQL(), sql.getSQL());
-    final boolean intersected = intersects(configuration, other);
-    final boolean sameConfig  = configuration.equals(other);
-
-    return ((equalSQL && intersected) || (equalSQL && sameConfig));
-  }
-
-
-  private static boolean intersects(Set<Index> first, Set<Index> second){
-    // second covers first, therefore first is a subset of second
-    final Set<Index> c = new HashSet<Index>();
-    if (first.size() < second.size()) {
-      for (Index x : first) {
-        if (second.contains(x)) {
-          c.add(x);
-        }
-      }
-    } else {
-      for (Index x : second) {
-        if (first.contains(x)) {
-          c.add(x);
-        }
-      }
-    }
-    //  'first' is a subset of 'second' iff every member of 'first' is a member of 'second'
-    final boolean isEveryMemberInSecond = c.size() == first.size();
-    return !c.isEmpty() && isEveryMemberInSecond;
-  }
 
   @Override public String toString() {
     return new ToStringBuilder<QueryRecord>(QueryRecord.class)
