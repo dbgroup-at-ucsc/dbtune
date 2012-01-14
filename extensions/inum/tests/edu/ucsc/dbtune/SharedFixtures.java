@@ -1,7 +1,26 @@
 package edu.ucsc.dbtune;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
+import edu.ucsc.dbtune.inum.IndexAccessCostEstimation;
+import edu.ucsc.dbtune.inum.InterestingOrdersExtractor;
+import edu.ucsc.dbtune.inum.Inum;
+import edu.ucsc.dbtune.inum.InumSpace;
 import edu.ucsc.dbtune.inum.InumWhatIfOptimizer;
 import edu.ucsc.dbtune.inum.InumWhatIfOptimizerImpl;
+import edu.ucsc.dbtune.inum.MatchingStrategy;
+import edu.ucsc.dbtune.inum.OptimalPlan;
+import edu.ucsc.dbtune.inum.Precomputation;
+import edu.ucsc.dbtune.inum.QueryRecord;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
+import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
+import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,30 +28,7 @@ import java.sql.Statement;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
-import edu.ucsc.dbtune.inum.IndexAccessCostEstimation;
-import edu.ucsc.dbtune.inum.InterestingOrdersExtractor;
-import edu.ucsc.dbtune.inum.Inum;
-import edu.ucsc.dbtune.inum.InumSpace;
-import edu.ucsc.dbtune.inum.QueryRecord;
-import edu.ucsc.dbtune.inum.MatchingStrategy;
-import edu.ucsc.dbtune.inum.OptimalPlan;
-import edu.ucsc.dbtune.inum.Precomputation;
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.metadata.Table;
-
 import org.mockito.Mockito;
-
-import static edu.ucsc.dbtune.SharedFixtures.NameGenerator.generateRandomName;
-import static edu.ucsc.dbtune.metadata.Index.CLUSTERED;
-import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
-import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
 
 /**
  * Contains a set of tests fixtures that can be shared among all inum tests.
@@ -150,7 +146,7 @@ public final class SharedFixtures {
 
   public static IndexAccessCostEstimation configureEstimator() {
     final IndexAccessCostEstimation estimation = Mockito.mock(IndexAccessCostEstimation.class);
-    Mockito.when(estimation.estimateIndexAccessCost(Mockito.anyString(), 
+    Mockito.when(estimation.estimateIndexAccessCost(Mockito.any(OptimalPlan.class),
                 Mockito.<Set<Index>>any())).thenReturn(10.0);
     return estimation;
   }

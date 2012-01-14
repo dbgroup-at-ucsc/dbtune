@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
+import com.google.common.base.Preconditions;
 import edu.ucsc.dbtune.metadata.Index;
-import java.sql.Connection;
 import java.util.Set;
 
 /**
@@ -10,33 +10,12 @@ import java.util.Set;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class InumIndexAccessCostEstimation implements IndexAccessCostEstimation {
-  private final OptimalPlanProvider provider;
-  private final OptimalPlansParser parser;
-
-  InumIndexAccessCostEstimation(OptimalPlanProvider provider,
-      OptimalPlansParser parser){
-    this.provider   = provider;
-    this.parser     = parser;
-  }
-
-  public InumIndexAccessCostEstimation(Connection connection)
-  {
-    this(new SqlExecutionPlanProvider(connection), new InumOptimalPlansParser());
-  }
-
-  @Override public double estimateIndexAccessCost(String query, Set<Index> indexes) {
-    // this method will call the optimizer and then get the index access cost
-    // per index in the Iterable<DBIndex> object.
-    final String optPlan = provider.getSqlExecutionPlan(query, indexes);
-    final OptimalPlan singlePlan = singlePlan(optPlan);
+  @Override public double estimateIndexAccessCost(OptimalPlan optimalPlan, Set<Index> indexes) {
+    final OptimalPlan nonNullOptimalPlan = Preconditions.checkNotNull(optimalPlan);
     double sumOfIndexAccessCosts = 0.0;
     for (Index each : indexes) {
-      sumOfIndexAccessCosts += singlePlan.getAccessCost(each.getTable().getName());
+      sumOfIndexAccessCosts += nonNullOptimalPlan.getAccessCost(each.getTable().getName());
     }
     return sumOfIndexAccessCosts;
-  }
-
-  private OptimalPlan singlePlan(String returnedPlan) {
-    return parser.parse(returnedPlan);
   }
 }

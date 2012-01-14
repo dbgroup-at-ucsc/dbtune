@@ -1,15 +1,10 @@
 package edu.ucsc.dbtune.inum;
 
-import java.sql.Connection;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
-
 import edu.ucsc.dbtune.metadata.Index;
-
 import static java.lang.Double.compare;
+import java.util.Set;
 
 /**
  * Default implementation of Inum's {@link MatchingStrategy}
@@ -23,8 +18,8 @@ public class InumMatchingStrategy implements MatchingStrategy {
     this.accessCostEstimator = accessCostEstimator;
   }
 
-  public InumMatchingStrategy(Connection connection){
-    this(new InumIndexAccessCostEstimation(Preconditions.checkNotNull(connection)));
+  public InumMatchingStrategy(){
+    this(new InumIndexAccessCostEstimation());
   }
 
   @Override public double estimateCost(
@@ -33,55 +28,43 @@ public class InumMatchingStrategy implements MatchingStrategy {
     final Set<OptimalPlan> matchedOptimalPlans = matches(
         query, inputConfiguration, inumSpace
     );
-    // adding the cached cost + index access costs
-    final double indexAccessCosts = getIndexAccessCostEstimation().estimateIndexAccessCost(query, inputConfiguration);
-    final double derivedCost      = findOneWithMinCost(matchedOptimalPlans, indexAccessCosts);
-    Preconditions.checkArgument(compare(derivedCost, 0.0) > 0, "invalid execution cost. It must be greater than zero.");
-    return derivedCost;
-  }
 
-  private static double findOneWithMinCost(Set<OptimalPlan> matches, double indexAccessCost){
-    OptimalPlan min = null;
-    double derivedCost = 0.0;
-    for(OptimalPlan each : matches){
-      if(null == min) { // base case
-        min         = each;
-        derivedCost = sumCachedCosts(each) + indexAccessCost;
+    double min = 0.0;
+    for(OptimalPlan p : matchedOptimalPlans){
+      final double actual =  internalCost(p) + indexAccessCost(p, inputConfiguration);
+      if(compare(min, 0.0) == 0 && compare(actual, 0.0) > 0) {
+        min = actual;
         continue;
       }
 
-      final double first  = sumCachedCosts(min)  + indexAccessCost;
-      final double second = sumCachedCosts(each) + indexAccessCost;
-      if(compare(second, first) < 0/*check if second is less than first*/) {
-        min         = each;
-        derivedCost = second;
+      if(compare(actual, min) < 0/*check if actual is less than min*/) {
+        min = actual;
       }
     }
-    return derivedCost;
+
+    Preconditions.checkArgument(compare(min, 0.0) > 0, "invalid execution cost. It must be greater than zero.");
+    return min;
   }
 
   @Override public IndexAccessCostEstimation getIndexAccessCostEstimation() {
     return accessCostEstimator;
   }
 
+  private double indexAccessCost(OptimalPlan plan, Set<Index> configuration){
+    return getIndexAccessCostEstimation().estimateIndexAccessCost(plan, configuration);
+  }
+
+  private static double internalCost(OptimalPlan optimalPlan){
+    optimalPlan.computeInternalPlanCost();  // sum all subplans' costs.
+    return optimalPlan.getInternalCost();
+  }
+
   @Override public Set<OptimalPlan> matches(
           String sql, Set<Index> inputConfiguration, InumSpace inumSpace) {
     final Set<OptimalPlan> found = Sets.newHashSet();
     // assuming there is a match, later methods will pick the optimal plan with the min cost.
-    final Set<Index> copy = new HashSet<Index>(inputConfiguration); // defensive copy of configuration
-    final QueryRecord targetKey = new QueryRecord(sql, copy);
-    for(QueryRecord eachKey : inumSpace.keySet()){
-      if(eachKey.equals/* means (it has the same SQL query and also covers an interesting order)*/
-          (targetKey)) {
-        final Set<OptimalPlan> optimalPlans = inumSpace.getOptimalPlans(eachKey);
-        found.addAll(optimalPlans);
-      }
-    }
+    final QueryRecord targetKey = new QueryRecord(sql, inputConfiguration);
+    found.addAll(inumSpace.getOptimalPlans(targetKey));
     return found;
-  }
-
-  private static double sumCachedCosts(OptimalPlan optimalPlan){
-    optimalPlan.computeInternalPlanCost();  // sum all subplans' costs.
-    return optimalPlan.getInternalCost();
   }
 }
