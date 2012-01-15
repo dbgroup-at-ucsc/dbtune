@@ -7,6 +7,8 @@ import java.util.Set;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 
+import com.google.common.collect.Sets;
+
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 
@@ -14,7 +16,6 @@ import static com.google.common.collect.Sets.cartesianProduct;
 import static com.google.common.collect.Sets.difference;
 import static com.google.common.collect.Sets.powerSet;
 import static com.google.common.collect.Sets.union;
-import static edu.ucsc.dbtune.util.Sets.newHashSet;
 
 /**
  * Computes the degree of interaction by implementing the NAIVE algorithm described in "Index 
@@ -57,9 +58,9 @@ public class DefaultDoiFinder implements DegreeOfInteractionFinder
                 if (a.equals(b))
                     continue;
 
-                final Set<Index> xa = union(x, newHashSet(a)).immutableCopy();
-                final Set<Index> xb = union(x, newHashSet(b)).immutableCopy();
-                final Set<Index> xab = union(xa, newHashSet(b)).immutableCopy();
+                final Set<Index> xa = union(x, Sets.<Index>newHashSet(a)).immutableCopy();
+                final Set<Index> xb = union(x, Sets.<Index>newHashSet(b)).immutableCopy();
+                final Set<Index> xab = union(xa, Sets.<Index>newHashSet(b)).immutableCopy();
 
                 final double costX = sql.explain(x).getSelectCost();
                 final double costXa = sql.explain(xa).getSelectCost();
