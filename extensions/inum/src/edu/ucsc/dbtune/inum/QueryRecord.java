@@ -6,7 +6,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.Console;
 import edu.ucsc.dbtune.util.ConfigurationUtils;
 import edu.ucsc.dbtune.util.Strings;
-import edu.ucsc.dbtune.util.ToStringBuilder;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import java.util.Set;
 
@@ -65,9 +64,8 @@ public class QueryRecord {
     }
   }
 
-
   @Override public String toString() {
-    return new ToStringBuilder<QueryRecord>(QueryRecord.class)
+    return Objects.toStringHelper(this)
         .add("sql", sql)
         .add("configuration", configuration)
         .toString();
