@@ -36,7 +36,8 @@ import org.mockito.Mockito;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public final class SharedFixtures {
-  private SharedFixtures(){}
+  private SharedFixtures() {
+  }
 
   public static Connection configureConnection() throws Exception {
     return configureJdbcConnection();
@@ -44,10 +45,11 @@ public final class SharedFixtures {
 
   private static Connection configureJdbcConnection() throws Exception {
     final Connection jdbcConnection = Mockito.mock(Connection.class);
-    final Statement  statement      = configureStatement();
+    final Statement statement = configureStatement();
     final PreparedStatement preparedStatement = configurePrepareStatement();
     Mockito.when(jdbcConnection.createStatement()).thenReturn(statement);
-    Mockito.when(jdbcConnection.prepareStatement(Mockito.anyString())).thenReturn(preparedStatement);
+    Mockito.when(jdbcConnection.prepareStatement(Mockito.anyString()))
+        .thenReturn(preparedStatement);
     return jdbcConnection;
   }
 
@@ -72,22 +74,22 @@ public final class SharedFixtures {
   }
 
   public static Inum configureInum() throws Exception {
-    final Set<Index>  configuration  = configureConfiguration();
+    final Set<Index> configuration = configureConfiguration();
     return configureInum("SELECT * FROM TABLE1;", configuration);
   }
 
   public static Inum configureInum(String sql, Set<Index> configuration) throws Exception {
-    final Connection                  connection     = configureConnection();
-    final InumSpace                   inumSpace      = configureInumSpace(sql, configuration);
-    final Precomputation              precomputation = configurePrecomputation(inumSpace);
-    final MatchingStrategy            matchingLogic  = configureMatchingLogic(inumSpace);
-    final InterestingOrdersExtractor  ioExtractor    = configureIOExtractor(configuration);
+    final Connection connection = configureConnection();
+    final InumSpace inumSpace = configureInumSpace(sql, configuration);
+    final Precomputation precomputation = configurePrecomputation(inumSpace);
+    final MatchingStrategy matchingLogic = configureMatchingLogic(inumSpace);
+    final InterestingOrdersExtractor ioExtractor = configureIOExtractor(configuration);
 
     return Inum.newInumInstance(
         connection, precomputation, matchingLogic, ioExtractor);
   }
 
-  public static InterestingOrdersExtractor configureIOExtractor(Set<Index> configuration) throws 
+  public static InterestingOrdersExtractor configureIOExtractor(Set<Index> configuration) throws
       Exception {
     final InterestingOrdersExtractor extractor = Mockito.mock(InterestingOrdersExtractor.class);
     final Set<Index> indexes = new HashSet<Index>(configuration);
@@ -96,16 +98,16 @@ public final class SharedFixtures {
   }
 
   public static InterestingOrdersExtractor configureIOExtractor() throws Exception {
-    final Set<Index> indexes = configureConfiguration(new Table(new Schema(new Catalog("testc"), 
-                    "tests"),"test"), 3, 3);
+    final Set<Index> indexes = configureConfiguration(new Table(new Schema(new Catalog("testc"),
+        "tests"), "test"), 3, 3);
     return configureIOExtractor(indexes);
   }
 
   public static MatchingStrategy configureMatchingLogic(InumSpace inumSpace) throws Exception {
     final MatchingStrategy matchingLogic = Mockito.mock(MatchingStrategy.class);
-    final Set<OptimalPlan> plans         = inumSpace.getAllSavedOptimalPlans();
-    Mockito.when(matchingLogic.matches(Mockito.anyString(), Mockito.<Set<Index>>any(), 
-                Mockito.eq(inumSpace))).thenReturn(plans);
+    final Set<OptimalPlan> plans = inumSpace.getAllSavedOptimalPlans();
+    Mockito.when(matchingLogic.matches(Mockito.anyString(), Mockito.<Set<Index>>any(),
+        Mockito.eq(inumSpace))).thenReturn(plans);
     final double cost = Lists.newArrayList(plans).get(0).getTotalCost();
     Mockito.when(matchingLogic.estimateCost(Mockito.anyString(), Mockito.<Set<Index>>any(),
         Mockito.eq(inumSpace))).thenReturn(cost);
@@ -113,7 +115,7 @@ public final class SharedFixtures {
   }
 
   public static Precomputation configurePrecomputation(InumSpace inumSpace) throws Exception {
-    final Precomputation    setup     = Mockito.mock(Precomputation.class);
+    final Precomputation setup = Mockito.mock(Precomputation.class);
     Mockito.when(setup.getInumSpace()).thenReturn(inumSpace);
     Mockito.when(setup.setup(Mockito.anyString(), Mockito.<Set<Index>>any())).thenReturn(inumSpace);
 
@@ -147,31 +149,32 @@ public final class SharedFixtures {
   public static IndexAccessCostEstimation configureEstimator() {
     final IndexAccessCostEstimation estimation = Mockito.mock(IndexAccessCostEstimation.class);
     Mockito.when(estimation.estimateIndexAccessCost(Mockito.any(OptimalPlan.class),
-                Mockito.<Set<Index>>any())).thenReturn(10.0);
+        Mockito.<Set<Index>>any())).thenReturn(10.0);
     return estimation;
   }
 
   @SuppressWarnings("serial")
-public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
+  public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     final OptimalPlan optimalPlan = Mockito.mock(OptimalPlan.class);
-    return new HashSet<OptimalPlan>(){{add(optimalPlan);}};
+    return new HashSet<OptimalPlan>() {{add(optimalPlan);}};
   }
 
   public static Set<Index> configureConfiguration() throws Exception {
-    return configureConfiguration(new Table(new Schema(new Catalog("testc"), "tests"),"test"), 1, 2);
+    return configureConfiguration(new Table(new Schema(new Catalog("testc"), "tests"), "test"), 1,
+        2);
   }
 
-  public static Set<Index> configureConfiguration(Table table, int noIndexes, int noColsPerIndex) 
+  public static Set<Index> configureConfiguration(Table table, int noIndexes, int noColsPerIndex)
       throws Exception {
     final List<Column> cols = Lists.newArrayList();
-    final List<Index>  idxs = Lists.newArrayList();
-    int i =0;
-    for(int idx = 0; idx < noIndexes; idx++) {
-      for(int idx2 = 0; idx2 < noColsPerIndex; idx2 ++) {
-        final Column col = new Column(table, generateRandomName(), INTEGER );
+    final List<Index> idxs = Lists.newArrayList();
+    int i = 0;
+    for (int idx = 0; idx < noIndexes; idx++) {
+      for (int idx2 = 0; idx2 < noColsPerIndex; idx2++) {
+        final Column col = new Column(table, generateRandomName(), INTEGER);
         cols.add(col);
       }
-      idxs.add(new Index("idx_"+i, cols, idx == 0, CLUSTERED, UNIQUE));
+      idxs.add(new Index("idx_" + i, cols, idx == 0, CLUSTERED, UNIQUE));
       i++;
       cols.clear();
     }
@@ -180,41 +183,42 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
   }
 
   public static InumWhatIfOptimizer configureWhatIfOptimizer() throws Exception {
-    final Inum inum      = configureInum();
+    final Inum inum = configureInum();
     return new InumWhatIfOptimizerImpl(inum);
   }
 
-  public static InumWhatIfOptimizer configureWhatIfOptimizer(String sql, Set<Index> configuration) throws
+  public static InumWhatIfOptimizer configureWhatIfOptimizer(String sql, Set<Index> configuration)
+      throws
       Exception {
     final Inum inum = configureInum(sql, configuration);
     return new InumWhatIfOptimizerImpl(inum);
   }
 
-
   static class CharacterFrequency {
-    char  character;
+    char character;
     float frequency;
-    CharacterFrequency(char character, float frequency){
+
+    CharacterFrequency(char character, float frequency) {
       this.character = character;
       this.frequency = frequency;
     }
   }
 
   public static class NameGenerator {
-    static CharacterFrequency[] frequencies = new CharacterFrequency[]{
-         new CharacterFrequency('a', 0.8f),
-         new CharacterFrequency('c', 0.4f),
-         new CharacterFrequency('g', 0.2f),
-         new CharacterFrequency('t', 0.6f)
+    static CharacterFrequency[] frequencies = new CharacterFrequency[] {
+        new CharacterFrequency('a', 0.8f),
+        new CharacterFrequency('c', 0.4f),
+        new CharacterFrequency('g', 0.2f),
+        new CharacterFrequency('t', 0.6f)
     };
 
-    public static String generateRandomName(){
+    public static String generateRandomName() {
       return generateName(frequencies.length);
     }
 
-    public static String generateName(int noCharacters){
+    public static String generateName(int noCharacters) {
       final StringBuilder name = new StringBuilder();
-      for(int idx = 0; idx < noCharacters; idx ++){
+      for (int idx = 0; idx < noCharacters; idx++) {
         name.append(getRandomCharacter());
       }
       return name.toString();
@@ -223,7 +227,7 @@ public static Set<OptimalPlan> configureOptimalPlans() throws Exception {
     private static char getRandomCharacter() {
       final float v = (float) Math.random();
 
-      char  c = frequencies[0].character;
+      char c = frequencies[0].character;
       float f = frequencies[0].frequency;
 
       for (CharacterFrequency eachCharFreq : frequencies) {
