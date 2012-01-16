@@ -1,11 +1,17 @@
 package edu.ucsc.dbtune.util;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Utility class for dealing with configurations.
@@ -13,7 +19,33 @@ import edu.ucsc.dbtune.metadata.Index;
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
 public class ConfigurationUtils {
+  static final Function<Index, String> GROUPING_FUNCTION = new Function<Index, String>() {
+    @Override public String apply(@Nullable Index index) {
+      if(index == null) return null;
+      final Table nonNullTable = Preconditions.checkNotNull(index.getTable());
+      return nonNullTable.getName();
+    }
+  };
+
   private ConfigurationUtils() {
+  }
+
+  /**
+   * This method returns every possible list that can be formed by choosing one element
+   * from each of the given sets in order; the "n-ary Cartesian product" of the sets.
+   * @param configuration
+   *    a set of indexes (interesting orders)
+   * @return "n-ary Cartesian product" of the sets, including the empty set.
+   */
+  public static Set<List<Index>> cartesianProductOf(Set<Index> configuration){
+    final List<Set<Index>> grouped                           = groupIndexesByTable(configuration);
+    final Set<List<Index>> carterianProductWithoutEmptyList  = Sets.cartesianProduct(grouped);
+    // why a new HashSet? This is because Sets.cartesianProduct(..) returns AbstractSet object
+    // which it throws an UnsupportedOperationException when invoking the add method.
+    final Set<List<Index>> result = Sets.newHashSet(carterianProductWithoutEmptyList);
+    result.add(Lists.<Index>newArrayList());
+
+    return result;
   }
 
   /**
@@ -32,6 +64,15 @@ public class ConfigurationUtils {
     }
     return tables;
 
+  }
+
+  private static List<Set<Index>> groupIndexesByTable(Set<Index> configuration){
+    final Multimap<String, Index> group = Multimaps.index(configuration, GROUPING_FUNCTION);
+    final List<Set<Index>> groupedList = Lists.newArrayList();
+    for(String each : group.keySet()){
+      groupedList.add(Sets.<Index>newHashSet(group.get(each)));
+    }
+    return groupedList;
   }
 
   /**

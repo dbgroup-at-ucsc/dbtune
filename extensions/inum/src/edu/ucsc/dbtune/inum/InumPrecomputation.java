@@ -4,9 +4,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.spi.Console;
-import edu.ucsc.dbtune.util.Combinations;
+import edu.ucsc.dbtune.util.ConfigurationUtils;
 import edu.ucsc.dbtune.util.Strings;
 import java.sql.Connection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -45,9 +46,10 @@ public class InumPrecomputation implements Precomputation {
     addQuerytoListOfSeenQueries(query);
     // generate all possible interesting orders combinations (atomic) that will be used
     // during the INUM's {@link Precomputation setup} phase.
-    final Set<Set<Index>> allAtomicCombOfInterestingOrders = 
-        Combinations.setOfAllSubsets(interestingOrders);
-    for(Set<Index> o /*o as in the JavaDoc*/
+    final Set<List<Index>> allAtomicCombOfInterestingOrders =
+        ConfigurationUtils.cartesianProductOf(interestingOrders);
+
+    for(List<Index> o /*o as in the JavaDoc*/
         : allAtomicCombOfInterestingOrders){
       final Set<OptimalPlan> optimalPlansPerInterestingOrder = Sets.newHashSet();
       // call optimizer given the workload and an input configuration
@@ -56,11 +58,13 @@ public class InumPrecomputation implements Precomputation {
       //   add all returned plans to optimalPlans
       //   save plans in InumSpace indexed by interesting order.
       // return a reference to the set of optimal plans
-      final String queryExecutionPlan = provider.getSqlExecutionPlan(query, o);
+      final Set<Index> io = asSet(o); // Guava returns a List, and we need a set.. this is why
+                                      // I am converting 'o' to a set.
+      final String queryExecutionPlan = provider.getSqlExecutionPlan(query, io);
       if(Strings.isEmpty(queryExecutionPlan)) continue;
       optimalPlansPerInterestingOrder.add(parser.parse(queryExecutionPlan));
 
-      final QueryRecord key = new QueryRecord(query, o);
+      final QueryRecord key = new QueryRecord(query, io);
       getInumSpace().save(key, optimalPlansPerInterestingOrder);
 
       Console.streaming().info(
@@ -73,6 +77,10 @@ public class InumPrecomputation implements Precomputation {
     }
 
     return getInumSpace();
+  }
+
+  private static Set<Index> asSet(List<Index> list){
+    return Sets.newHashSet(list); // Why creating a new Set? Look at Guava's Sets#cartesianProduct(....) return value.
   }
 
 
