@@ -3,15 +3,14 @@ package edu.ucsc.dbtune.inum;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.StopWatch;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This object represents the entry point to the INUM functionality. It will
@@ -112,7 +111,9 @@ public class Inum {
 
     if (isEnded()) { throw new InumExecutionException(errmsg); }
 
-    if (!precomputation.skip(query)) { precomputation.setup(query, findInterestingOrders(query)); }
+    if (!precomputation.skip(query)) {
+      precomputation.setup(query, findInterestingOrders(query));
+    }
 
     return matchingLogic.estimateCost(query, inputConfiguration, precomputation.getInumSpace());
   }
@@ -133,7 +134,7 @@ public class Inum {
    * @throws SQLException
    *    unable to find these interesting orders due to the stated reasons.
    */
-  public Set<Index> findInterestingOrders(String query)
+  public List<Set<Index>> findInterestingOrders(String query)
       throws SQLException {
     return ioExtractor.extractInterestingOrders(query);
   }

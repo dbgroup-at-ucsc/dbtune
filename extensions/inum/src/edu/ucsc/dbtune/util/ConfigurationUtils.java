@@ -33,13 +33,12 @@ public class ConfigurationUtils {
   /**
    * This method returns every possible list that can be formed by choosing one element
    * from each of the given sets in order; the "n-ary Cartesian product" of the sets.
-   * @param configuration
-   *    a set of indexes (interesting orders)
+   * @param interestingOrdersPerTable
+   *    a list of interesting orders sets per table
    * @return "n-ary Cartesian product" of the sets, including the empty set.
    */
-  public static Set<List<Index>> cartesianProductOf(Set<Index> configuration){
-    final List<Set<Index>> grouped                           = groupIndexesByTable(configuration);
-    final Set<List<Index>> carterianProductWithoutEmptyList  = Sets.cartesianProduct(grouped);
+  public static Set<List<Index>> cartesianProductOf(List<Set<Index>> interestingOrdersPerTable){
+    final Set<List<Index>> carterianProductWithoutEmptyList  = Sets.cartesianProduct(interestingOrdersPerTable);
     // why a new HashSet? This is because Sets.cartesianProduct(..) returns AbstractSet object
     // which it throws an UnsupportedOperationException when invoking the add method.
     final Set<List<Index>> result = Sets.newHashSet(carterianProductWithoutEmptyList);
@@ -66,7 +65,13 @@ public class ConfigurationUtils {
 
   }
 
-  private static List<Set<Index>> groupIndexesByTable(Set<Index> configuration){
+  /**
+   * group indexes by table.
+   * @param configuration
+   *    set of indexes to be grouped by table.
+   * @return a list of indexes sets.
+   */
+  public static List<Set<Index>> groupIndexesByTable(Set<Index> configuration){
     final Multimap<String, Index> group = Multimaps.index(configuration, GROUPING_FUNCTION);
     final List<Set<Index>> groupedList = Lists.newArrayList();
     for(String each : group.keySet()){

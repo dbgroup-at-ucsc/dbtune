@@ -1,24 +1,21 @@
 package edu.ucsc.dbtune.inum;
 
 import com.google.common.collect.Sets;
-
-import java.sql.Connection;
-import java.util.Properties;
-import java.util.Set;
-
 import edu.ucsc.dbtune.DBTuneInstances;
 import edu.ucsc.dbtune.SharedFixtures;
 import edu.ucsc.dbtune.inum.InumInterestingOrdersExtractor.ColumnInformation;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.SQLTypes;
-
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import static edu.ucsc.dbtune.metadata.SQLTypes.INT;
+import java.sql.Connection;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * Tests the {@link InterestingOrdersExtractor} interface.
@@ -37,7 +34,7 @@ public class InterestingOrdersExtractorTest
     final Catalog                    catalog        = DBTuneInstances.configureCatalog();
     final ColumnPropertyLookup       columnProperty = configureProperty();
     final InterestingOrdersExtractor extractor      = new InumInterestingOrdersExtractor(catalog, columnProperty);
-    final Set<Index> ios = extractor.extractInterestingOrders(SAMPLE_QUERY);
+    final List<Set<Index>> ios = extractor.extractInterestingOrders(SAMPLE_QUERY);
     assertThat(ios.isEmpty(), is(false));
   }
 

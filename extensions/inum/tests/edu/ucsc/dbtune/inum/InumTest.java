@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
+import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.SharedFixtures;
 import static edu.ucsc.dbtune.SharedFixtures.configureConfiguration;
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -31,11 +32,17 @@ public class InumTest {
   }
 
   @Test public void testCartesianProductGeneration() throws Exception {
-    final Table table = new Table(new Schema(new Catalog("persons_db"), "persons_sch"), "persons");
-    final Set<Index> interestingOrders = configureConfiguration(table, 3, 3);
+    final Set<Index> interestingOrders = Sets.newHashSet();
+    interestingOrders.addAll(configureConfiguration(
+        new Table(new Schema(new Catalog("roles_db"), "roles_sch"), "doctors"), "dr_", 1, 3));
+    interestingOrders.addAll(configureConfiguration(new Table(new Schema(new Catalog("roles_db"), "roles_sch"), "doctors"), "eng_", 1, 2));
+    interestingOrders.addAll(configureConfiguration(new Table(new Schema(new Catalog("roles_db"), "roles_sch"), "lawyers"), "law_", 1, 2));
+    interestingOrders.addAll(configureConfiguration(new Table(new Schema(new Catalog("roles_db"), "roles_sch"), "lawyers"), "std_", 1, 2));
 
-    final Set<List<Index>> combinations = ConfigurationUtils.cartesianProductOf(interestingOrders);
-    assertThat(combinations.size(), equalTo(4)); // 3 elements from the same table and 1 empty list
+    final List<Set<Index>> lists = ConfigurationUtils.groupIndexesByTable(interestingOrders);
+
+    final Set<List<Index>> combinations = ConfigurationUtils.cartesianProductOf(lists);
+    assertThat(combinations.size(), equalTo(5)); // 3 elements from the same table and 1 empty list
     System.out.println(combinations);
   }
 

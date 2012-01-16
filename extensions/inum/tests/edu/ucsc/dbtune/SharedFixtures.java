@@ -92,7 +92,8 @@ public final class SharedFixtures {
   public static InterestingOrdersExtractor configureIOExtractor(Set<Index> configuration) throws
       Exception {
     final InterestingOrdersExtractor extractor = Mockito.mock(InterestingOrdersExtractor.class);
-    final Set<Index> indexes = new HashSet<Index>(configuration);
+    final List<Set<Index>> indexes = Lists.newArrayList();
+    indexes.add(new HashSet<Index>(configuration));
     Mockito.when(extractor.extractInterestingOrders(Mockito.anyString())).thenReturn(indexes);
     return extractor;
   }
@@ -117,7 +118,7 @@ public final class SharedFixtures {
   public static Precomputation configurePrecomputation(InumSpace inumSpace) throws Exception {
     final Precomputation setup = Mockito.mock(Precomputation.class);
     Mockito.when(setup.getInumSpace()).thenReturn(inumSpace);
-    Mockito.when(setup.setup(Mockito.anyString(), Mockito.<Set<Index>>any())).thenReturn(inumSpace);
+    Mockito.when(setup.setup(Mockito.anyString(), Mockito.<List<Set<Index>>>any())).thenReturn(inumSpace);
 
     return setup;
   }
@@ -164,7 +165,8 @@ public final class SharedFixtures {
         2);
   }
 
-  public static Set<Index> configureConfiguration(Table table, int noIndexes, int noColsPerIndex)
+
+  public static Set<Index> configureConfiguration(Table table, String prefix, int noIndexes, int noColsPerIndex)
       throws Exception {
     final List<Column> cols = Lists.newArrayList();
     final List<Index> idxs = Lists.newArrayList();
@@ -174,12 +176,17 @@ public final class SharedFixtures {
         final Column col = new Column(table, generateRandomName(), INTEGER);
         cols.add(col);
       }
-      idxs.add(new Index("idx_" + i, cols, idx == 0, CLUSTERED, UNIQUE));
+      idxs.add(new Index(prefix + "idx_" + i, cols, idx == 0, CLUSTERED, UNIQUE));
       i++;
       cols.clear();
     }
 
     return new HashSet<Index>(idxs);
+  }
+
+  public static Set<Index> configureConfiguration(Table table, int noIndexes, int noColsPerIndex)
+      throws Exception {
+    return configureConfiguration(table, "", noIndexes, noColsPerIndex);
   }
 
   public static InumWhatIfOptimizer configureWhatIfOptimizer() throws Exception {

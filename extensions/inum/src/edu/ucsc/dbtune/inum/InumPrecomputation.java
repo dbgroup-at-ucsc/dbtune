@@ -42,7 +42,7 @@ public class InumPrecomputation implements Precomputation {
     return inumSpace;
   }
 
-  @Override public InumSpace setup(String query, Set<Index> interestingOrders) {
+  @Override public InumSpace setup(String query, List<Set<Index>> interestingOrders) {
     addQuerytoListOfSeenQueries(query);
     // generate all possible interesting orders combinations (atomic) that will be used
     // during the INUM's {@link Precomputation setup} phase.
