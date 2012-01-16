@@ -1,8 +1,8 @@
 package edu.ucsc.dbtune.inum;
 
-import java.util.Set;
-
 import edu.ucsc.dbtune.metadata.Index;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Represents the set-up phase of the INUM. The precomputation step
@@ -47,13 +47,12 @@ public interface Precomputation
    *      precomputation step should be skipped if the plans for a given query have been
    *      already precomputed. This is done by calling the {@link #skip(String)} functionality.
    * @param interestingOrders
-   *      a representative configuration. The representative configuration could contain
-   *      any set of indexes satisfying the non-join or non-interesting orders.
+   *      a list that holds interesting orders sets per table.
    * @return
    *      a reference to the updated {@link InumSpace inumSpace} object, useful if you wish to hold a reference to
    *      the {@link InumSpace} object for checking post-conditions or other purposes (e.g., logging).
    */
-  InumSpace setup(String query, Set<Index> interestingOrders);
+  InumSpace setup(String query, List<Set<Index>> interestingOrders);
 
   /**
    * checks whether the precomputation step should be skipped for a

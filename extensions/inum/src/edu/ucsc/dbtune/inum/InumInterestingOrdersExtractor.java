@@ -1,28 +1,5 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.metadata.SQLTypes;
-import edu.ucsc.dbtune.spi.Console;
-import edu.ucsc.dbtune.util.Objects;
-import edu.ucsc.dbtune.util.Strings;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicReference;
-
 import Zql.ZConstant;
 import Zql.ZExp;
 import Zql.ZExpression;
@@ -33,15 +10,34 @@ import Zql.ZQuery;
 import Zql.ZSelectItem;
 import Zql.ZUtils;
 import Zql.ZqlParser;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.SQLTypes;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.spi.Console;
+import static edu.ucsc.dbtune.util.ConfigurationUtils.groupIndexesByTable;
+import edu.ucsc.dbtune.util.Objects;
+import edu.ucsc.dbtune.util.Strings;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Default implementation of {@link InterestingOrdersExtractor}.
@@ -90,7 +86,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
   }
 
   @Override
-  public Set<Index> extractInterestingOrders(String singleQuery)
+  public List<Set<Index>> extractInterestingOrders(String singleQuery)
       throws SQLException {
     @SuppressWarnings("rawtypes")
     Vector statements = parseQuery(singleQuery);
@@ -127,7 +123,7 @@ public class InumInterestingOrdersExtractor implements InterestingOrdersExtracto
       }
     }
 
-    return new HashSet<Index>(ImmutableList.copyOf(indexes));
+    return groupIndexesByTable(indexes);
   }
 
   private static List<Column> findColumns(Table table, Set<String> names)

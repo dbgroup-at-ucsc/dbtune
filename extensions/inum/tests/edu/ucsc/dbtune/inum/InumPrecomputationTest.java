@@ -1,18 +1,17 @@
 package edu.ucsc.dbtune.inum;
 
-import java.sql.Connection;
-import java.util.Set;
-
+import com.google.common.collect.Lists;
 import edu.ucsc.dbtune.SharedFixtures;
 import edu.ucsc.dbtune.metadata.Index;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
+import java.sql.Connection;
+import java.util.List;
+import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import org.junit.After;
 import static org.junit.Assert.assertThat;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests the default implementation of {@link Precomputation} type.
@@ -28,8 +27,8 @@ public class InumPrecomputationTest {
 
   @Test public void testInumSpaceBuilding_SingleElement() throws Exception {
     final Precomputation setup = new InumPrecomputation(mockConnection);
-    final Set<Index> configurationOfOneIndex = SharedFixtures.configureConfiguration();
-    setup.setup("SELECT * FROM test;", configurationOfOneIndex);
+    final List<Set<Index>> list = configuration();
+    setup.setup("SELECT * FROM test;", list);
 
     final InumSpace is = setup.getInumSpace();
     final Integer size = is.getAllSavedOptimalPlans().size();
@@ -40,9 +39,16 @@ public class InumPrecomputationTest {
 
   @Test public void testSkippingQuery() throws Exception {
     final Precomputation setup = new InumPrecomputation(mockConnection);
-    final Set<Index> configurationOfOneIndex = SharedFixtures.configureConfiguration();
-    setup.setup("SELECT * FROM test;", configurationOfOneIndex);
+    final List<Set<Index>> list = configuration();
+    setup.setup("SELECT * FROM test;", list);
     assertThat(setup.skip("SELECT * FROM test;"), is(true));
+  }
+
+  private static List<Set<Index>> configuration() throws Exception {
+    final Set<Index> configurationOfOneIndex = SharedFixtures.configureConfiguration();
+    final List<Set<Index>> list = Lists.newArrayList();
+    list.add(configurationOfOneIndex);
+    return list;
   }
 
   @After public void tearDown() throws Exception {
