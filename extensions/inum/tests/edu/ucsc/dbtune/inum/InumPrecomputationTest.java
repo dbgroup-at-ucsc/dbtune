@@ -19,37 +19,33 @@ import static org.junit.Assert.assertThat;
  *
  * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
  */
-public class InumPrecomputationTest
-{
+public class InumPrecomputationTest {
   private Connection mockConnection;
 
-  @Before public void setUp() throws Exception
- {
+  @Before public void setUp() throws Exception {
     mockConnection = SharedFixtures.configureConnection();
   }
 
-  @Test public void testInumSpaceBuilding_SingleElement() throws Exception
- {
-    final Precomputation setup                   = new InumPrecomputation(mockConnection);
-    final Set<Index>  configurationOfOneIndex = SharedFixtures.configureConfiguration();
+  @Test public void testInumSpaceBuilding_SingleElement() throws Exception {
+    final Precomputation setup = new InumPrecomputation(mockConnection);
+    final Set<Index> configurationOfOneIndex = SharedFixtures.configureConfiguration();
     setup.setup("SELECT * FROM test;", configurationOfOneIndex);
 
-    final InumSpace is    = setup.getInumSpace();
-    final Integer   size  = is.getAllSavedOptimalPlans().size();
-    final Integer   expectedSize = 2; // why 2? We are including the empty interesting order plus the non-empty one (suggested by INUM's VLDB paper)/
+    final InumSpace is = setup.getInumSpace();
+    final Integer size = is.getAllSavedOptimalPlans().size();
+    final Integer expectedSize
+        = 2; // why 2? We are including the empty interesting order plus the non-empty one (suggested by INUM's VLDB paper)/
     assertThat(size, equalTo(expectedSize));
   }
 
-  @Test public void testSkippingQuery() throws Exception
- {
+  @Test public void testSkippingQuery() throws Exception {
     final Precomputation setup = new InumPrecomputation(mockConnection);
     final Set<Index> configurationOfOneIndex = SharedFixtures.configureConfiguration();
     setup.setup("SELECT * FROM test;", configurationOfOneIndex);
     assertThat(setup.skip("SELECT * FROM test;"), is(true));
   }
 
-  @After public void tearDown() throws Exception
- {
+  @After public void tearDown() throws Exception {
     mockConnection = null;
   }
 }
