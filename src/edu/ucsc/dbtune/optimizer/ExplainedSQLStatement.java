@@ -244,6 +244,23 @@ public class ExplainedSQLStatement
     }
 
     /**
+     * Returns the plan corresponding to the statement that was used to generate this prepared 
+     * statement.
+     *
+     * @return
+     *     the execution plan.
+     * @throws NullPointerException
+     *     if the plan wasn't given when constructing this object
+     */
+    public SQLStatementPlan getPlan()
+    {
+        if (plan == null)
+            throw new NullPointerException("Plan not given to constructor");
+
+        return plan;
+    }
+
+    /**
      * Determines whether a given index is used by the corresponding execution plan.
      *
      * @param index

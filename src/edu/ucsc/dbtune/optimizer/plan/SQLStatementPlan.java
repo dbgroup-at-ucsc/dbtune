@@ -1,22 +1,25 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.util.Tree;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-import java.util.List;
-import java.util.ArrayList;
-
 /**
  * Represents a plan for SQL statements of a RDBMS.
+ *
+ * @author Ivo Jimenez
  */
 public class SQLStatementPlan extends Tree<Operator>
 {
-    /** to keep a register of inserted operators */
+    /** to keep a register of inserted operators. */
     private int globalId = 1;
 
-    /** the statement this plan corresponds to */
+    /** the statement this plan corresponds to. */
     private SQLStatement sql;
 
     /**
@@ -27,17 +30,14 @@ public class SQLStatementPlan extends Tree<Operator>
      */
     public SQLStatementPlan(Operator root)
     {
-        super(root);
-
-        this.sql = null;
-        elements.clear();
-        root.setId(globalId++);
-        elements.put(root,this.root);
+        this(null, root);
     }
 
     /**
      * Creates a SQL statement plan with one (given root) node.
      *
+     * @param sql
+     *     statement that corresponds to the plan
      * @param root
      *     root of the plan
      */
@@ -48,7 +48,20 @@ public class SQLStatementPlan extends Tree<Operator>
         this.sql = sql;
         elements.clear();
         root.setId(globalId++);
-        elements.put(root,this.root);
+        elements.put(root, this.root);
+    }
+
+    /**
+     * Creates a SQL statement plan with one (given root) node.
+     *
+     * @param other
+     *     root of the plan
+     */
+    public SQLStatementPlan(SQLStatementPlan other)
+    {
+        super(other);
+        this.sql = other.sql;
+        this.globalId = other.globalId;
     }
 
     /**
@@ -119,6 +132,17 @@ public class SQLStatementPlan extends Tree<Operator>
         }
 
         return indexes;
+    }
+
+    /**
+     * Return the list of tables referenced by the statement.
+     *
+     * @return
+     *     the list of referenced tables
+     */
+    public List<Table> getReferencedTables()
+    {
+        throw new RuntimeException("NOT IMPLEMENTED YET");
     }
 
     /**
