@@ -5,19 +5,28 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 /**
- * It extracts interesting orders from a query.
+ * Extracts interesting orders out of SQL statements.
  *
- * @author hsanchez@cs.ucsc.edu (Huascar A. Sanchez)
+ * @author Huascar A. Sanchez
+ * @author Ivo Jimenez
  */
-public interface InterestingOrdersExtractor {
-  /**
-   * extracts the interesting orders of a single query.
-   *
-   * @param singleQuery single SQL query.
-   * @return a set of interesting orders.
-   * @throws SQLException if unable to extract interesting orders.
-   */
-  List<Set<Index>> extractInterestingOrders(String singleQuery)
-      throws SQLException;
+public interface InterestingOrdersExtractor
+{
+    /**
+     * Extracts the interesting orders for a given statement.
+     *
+     * @param statement
+     *      statement from which the set of interesting orders get extracted
+     * @return
+     *      a list of sets of interesting orders, one per every table referenced in the statement
+     * @throws SQLException
+     *      if the statement doesn't imply any interesting order. For example, if the statement 
+     *      refers only one table in the {@code FROM} clause and it doesn't contain neither an 
+     *      {@code ORDER BY} nor a {@code GROUP BY} clause.
+     */
+    List<Set<Index>> extract(SQLStatement statement) throws SQLException;
 }
