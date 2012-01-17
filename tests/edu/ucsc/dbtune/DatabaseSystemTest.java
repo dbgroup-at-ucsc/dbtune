@@ -16,8 +16,6 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.util.Environment;
 
-import org.junit.Test;
-
 import static edu.ucsc.dbtune.DBTuneInstances.configureDB2;
 import static edu.ucsc.dbtune.DBTuneInstances.configureDBMSOptimizer;
 import static edu.ucsc.dbtune.DBTuneInstances.configureIBGOptimizer;
@@ -26,11 +24,13 @@ import static edu.ucsc.dbtune.DBTuneInstances.configureMySQL;
 import static edu.ucsc.dbtune.DBTuneInstances.configurePG;
 
 import org.junit.runner.RunWith;
+import org.junit.Test;
  
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.anyString;
@@ -122,36 +122,19 @@ public class DatabaseSystemTest
 
         // check INUM
         env = configureINUMOptimizer(configureDB2());
-
-        assertThat(DatabaseSystem.newConnection(env), is(con));
-        try {
-            Optimizer opt = DatabaseSystem.newOptimizer(env, con);
-            fail("Optimizer " + opt + " shouldn't be returned");
-        } catch (SQLException e) {
-            // nice;
-        }
+        assertThat(DatabaseSystem.newOptimizer(env, con), is(notNullValue()));
         assertThat(DatabaseSystem.newExtractor(env) instanceof DB2Extractor, is(true));
 
         env = configureINUMOptimizer(configureMySQL());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
-        try {
-            Optimizer opt = DatabaseSystem.newOptimizer(env,con);
-            fail("Optimizer " + opt + " shouldn't be returned");
-        } catch (SQLException e) {
-            // nice;
-        }
+        assertThat(DatabaseSystem.newOptimizer(env, con), is(notNullValue()));
         assertThat(DatabaseSystem.newExtractor(env) instanceof MySQLExtractor, is(true));
 
         env = configureINUMOptimizer(configurePG());
 
         assertThat(DatabaseSystem.newConnection(env), is(con));
-        try {
-            Optimizer opt = DatabaseSystem.newOptimizer(env,con);
-            fail("Optimizer " + opt + " shouldn't be returned");
-        } catch (SQLException e) {
-            // nice;
-        }
+        assertThat(DatabaseSystem.newOptimizer(env, con), is(notNullValue()));
         assertThat(DatabaseSystem.newExtractor(env) instanceof PGExtractor, is(true));
     }
 
