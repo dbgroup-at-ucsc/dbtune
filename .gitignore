@@ -2,6 +2,7 @@ build/
 extensions/*/build/
 bin
 bin/
+derby.log
 doc
 doc/
 manifest.mf

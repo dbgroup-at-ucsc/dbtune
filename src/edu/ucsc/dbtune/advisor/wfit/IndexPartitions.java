@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.advisor.interactions;
+package edu.ucsc.dbtune.advisor.wfit;
 
 import java.util.ArrayList;
 import java.util.HashSet;

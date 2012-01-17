@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.sql.SQLException;
 
-import edu.ucsc.dbtune.advisor.interactions.IndexPartitions;
+import edu.ucsc.dbtune.advisor.wfit.IndexPartitions;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
