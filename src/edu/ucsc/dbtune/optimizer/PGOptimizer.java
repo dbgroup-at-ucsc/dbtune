@@ -361,7 +361,7 @@ public class PGOptimizer extends AbstractOptimizer
             sb.append(idx.getTable().getInternalID());
 
             for (Column col : idx.columns()) {
-                sb.append(idx.isDescending(col) ? " desc" : " asc");
+                sb.append(idx.isAscending(col) ? " asc" : " desc");
                 sb.append(" ").append(col.getOrdinalPosition());
             }
             sb.append(") ");

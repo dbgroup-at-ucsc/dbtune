@@ -332,10 +332,10 @@ public class DB2Optimizer extends AbstractOptimizer
             else
                 sb.append(",");
 
-            if (index.isDescending(col))
-                sb.append("-");
-            else
+            if (index.isAscending(col))
                 sb.append("+");
+            else
+                sb.append("-");
 
             sb.append(col.getName());
         }

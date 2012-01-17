@@ -13,9 +13,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
-import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
-import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
+import static edu.ucsc.dbtune.metadata.Index.DESCENDING;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -268,8 +266,8 @@ public class OptimizerTest
 
         sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         cost1 = opt.explain(sql).getSelectCost();
-        idxa = new Index(cat.<Column>findByName("one_table.tbl.a"));
-        idxb = new Index(cat.<Column>findByName("one_table.tbl.b"));
+        idxa = new Index(cat.<Column>findByName("one_table.tbl.a"), DESCENDING);
+        idxb = new Index(cat.<Column>findByName("one_table.tbl.b"), DESCENDING);
         conf = new BitArraySet<Index>();
 
         conf.add(idxb);
@@ -396,7 +394,7 @@ public class OptimizerTest
 
         sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         col  = cat.<Column>findByName("one_table.tbl.a");
-        idx  = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
+        idx  = new Index(col, DESCENDING);
         conf = new BitArraySet<Index>();
 
         conf.add(idx);
@@ -437,8 +435,8 @@ public class OptimizerTest
         sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         colA = cat.<Column>findByName("one_table.tbl.a");
         colB = cat.<Column>findByName("one_table.tbl.b");
-        idxA = new Index(colA);
-        idxB = new Index(colB);
+        idxA = new Index(colA, DESCENDING);
+        idxB = new Index(colB, DESCENDING);
         conf = new BitArraySet<Index>();
 
         conf.add(idxA);
@@ -509,7 +507,7 @@ public class OptimizerTest
 
         assertThat(stmt, is(notNullValue()));
 
-        idxa = new Index(cat.<Column>findByName("one_table.tbl.a"));
+        idxa = new Index(cat.<Column>findByName("one_table.tbl.a"), DESCENDING);
         conf = new BitArraySet<Index>();
 
         conf.add(idxa);
@@ -522,7 +520,7 @@ public class OptimizerTest
         assertThat(exp2, is(exp2));
 
         col  = cat.<Column>findByName("one_table.tbl.b");
-        idxb = new Index(col, SECONDARY, UNCLUSTERED, NON_UNIQUE);
+        idxb = new Index(col, DESCENDING);
 
         conf.add(idxb);
 
