@@ -37,7 +37,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
     // CHECKSTYLE:ON
 
-    protected List<Boolean> descending;
+    protected List<Boolean> ascending;
     protected int           type;
     protected int           scanOption;
     protected int           inMemoryID;
@@ -57,7 +57,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      * @throws SQLException
      *     if schema already contains an index with the defaulted name
      */
-    public Index(Schema schema,  String name) throws SQLException
+    public Index(Schema schema, String name) throws SQLException
     {
         this(schema,  name,  new ArrayList<Column>(), 
                 new ArrayList<Boolean>(),  SECONDARY,  NON_UNIQUE,  UNCLUSTERED);
@@ -93,61 +93,21 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
 
     /**
      * Creates an index containing the given column. The name of the index is defaulted to {@code 
-     * column.getName()+"_index"}. The column is taken as being in descending order. The index is 
+     * column.getName()+"_index"}. The column is taken as being in ascending order. The index is 
      * assumed to be {@link SECONDARY},  {@link NON_UNIQUE} and {@link UNCLUSTERED}
      *
      * @param column
      *     column that will define the index
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
+     *     order.
      * @throws SQLException
      *     if column list empty; if schema already contains an index with the defaulted name; if not 
      *     all of the columns in the list correspond to the same table.
      */
-    public Index(Column column)
-        throws SQLException
+    public Index(Column column, boolean ascending) throws SQLException
     {
-        this(column, SECONDARY, NON_UNIQUE, UNCLUSTERED);
-    }
-
-    /**
-     * Creates an index containing the given column. The column is taken as being in descending 
-     * order. The index is assumed to be {@link SECONDARY},  {@link NON_UNIQUE} and {@link 
-     * UNCLUSTERED}
-     *
-     * @param name
-     *     name of the index
-     * @param column
-     *     column that will define the index
-     * @throws SQLException
-     *     if column list empty; if schema already contains an index with the defaulted name; if not 
-     *     all of the columns in the list correspond to the same table.
-     */
-    public Index(String name, Column column)
-        throws SQLException
-    {
-        this(name, column, SECONDARY, NON_UNIQUE, UNCLUSTERED);
-    }
-
-    /**
-     * Creates an index with the given column,  primary,  uniqueness and clustering values. The name 
-     * of the index is defaulted to {@code column.getName()+"_index"}. The column is taken as being 
-     * in descending order.
-     *
-     * @param column
-     *     column that will define the index
-     * @param primary
-     *     whether or not the index is primary
-     * @param unique
-     *     whether the index is unique or not.
-     * @param clustered
-     *     whether the corresponding table is clustered on this index
-     * @throws SQLException
-     *     if column list empty; if schema already contains an index with the defaulted name; if not 
-     *     all of the columns in the list correspond to the same table.
-     */
-    public Index(Column column,  boolean primary,  boolean unique,  boolean clustered)
-        throws SQLException
-    {
-        this(column.getName() + "_index", column, primary, unique, clustered);
+        this(column.getName() + "_index", column, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
     }
 
     /**
@@ -158,6 +118,9 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      *     name of the index
      * @param column
      *     column that will define the index
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
+     *     order.
      * @param primary
      *     whether or not the index is primary
      * @param unique
@@ -165,15 +128,19 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      * @param clustered
      *     whether the corresponding table is clustered on this index
      * @throws SQLException
-     *     if column list empty; if schema already contains an index with the defaulted name; if not 
-     *     all of the columns in the list correspond to the same table.
+     *     if schema already contains an index with the given name.
      */
-    public Index(String name,  Column column,  boolean primary,  boolean unique,  boolean clustered)
+    public Index(
+            String name,
+            Column column,
+            boolean ascending,
+            boolean primary,
+            boolean unique,
+            boolean clustered)
         throws SQLException
     {
         this((Schema) column.getContainer().getContainer(), name, primary, unique, clustered);
-        add(column);
-        descending.add(ASCENDING);
+        this.add(column, ascending);
     }
 
     /**
@@ -207,8 +174,8 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      *     name of the index
      * @param columns
      *     columns that will define the index
-     * @param descending
-     *     indicates whether or not the corresponding column is sorted in ascending or descending 
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
      *     order.
      * @param primary
      *     whether or not the index is primary
@@ -223,13 +190,13 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     public Index(
             String name, 
             List<Column> columns, 
-            List<Boolean> descending, 
+            List<Boolean> ascending, 
             boolean primary, 
             boolean unique, 
             boolean clustered)
         throws SQLException
     {
-        this(null, name, columns, descending, primary, unique, clustered);
+        this(null, name, columns, ascending, primary, unique, clustered);
     }
 
     /**
@@ -241,8 +208,8 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      *     name of the index
      * @param columns
      *     columns that will define the index
-     * @param descending
-     *     indicates whether or not the corresponding column is sorted in ascending or descending 
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
      *     order.
      * @param unique
      *     whether or not the index is unique
@@ -258,7 +225,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             Schema schema, 
             String name, 
             List<Column> columns, 
-            List<Boolean> descending, 
+            List<Boolean> ascending, 
             boolean primary, 
             boolean unique, 
             boolean clustered)
@@ -279,15 +246,15 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             container = schema;
         }
 
-        this.descending = new ArrayList<Boolean>();
+        this.ascending = new ArrayList<Boolean>();
 
-        if (descending == null)
+        if (ascending == null)
             for (int i = 0; i < columns.size(); i++)
-                this.descending.add(ASCENDING);
-        else if (descending.size() != columns.size())
-            throw new SQLException("Incorrect number of descending values");
+                this.ascending.add(ASCENDING);
+        else if (ascending.size() != columns.size())
+            throw new SQLException("Incorrect number of ascending/descending values");
         else
-            this.descending = new ArrayList<Boolean>(descending);
+            this.ascending = new ArrayList<Boolean>(ascending);
 
         for (int i = 0; i < columns.size(); i++) {
             if (table == null)
@@ -326,7 +293,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         this.primary      = other.primary;
         this.clustered    = other.clustered;
         this.materialized = other.materialized;
-        this.descending   = other.descending;
+        this.ascending   = other.ascending;
         this.scanOption   = other.scanOption;
     }
 
@@ -533,19 +500,19 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      *
      * @param column
      *     new column to be inserted to the sequence
-     * @param descending
-     *     {@code true} if the column is in descending order. {@code false} if ascending.
+     * @param ascending
+     *     {@code true} if the column is in ascending order. {@code false} if ascending.
      * @throws SQLException
      *     if column is already contained in the index
      */
-    public void add(Column column,  Boolean descending) throws SQLException
+    public void add(Column column,  Boolean ascending) throws SQLException
     {
         if (containees.size() != 0 && containees.get(0).getContainer() != column.container)
             throw new SQLException("Table " + column.getContainer().getName() +
                                    " doesn't correspond to " + containees.get(0).getContainer());
 
         super.add(column);
-        this.descending.add(descending);
+        this.ascending.add(ascending);
     }
 
     /**
@@ -563,17 +530,17 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
-     * Returns the descending value for the given column.
+     * Returns the ascending value for the given column.
      *
      * @param column
-     *     the column for which the descending value is being requested.
+     *     the column for which the ascending value is being requested.
      * @return
-     *     <code>true</code> the column is descending; <code>false</code> if ascending
+     *     <code>true</code> the column is ascending; <code>false</code> if ascending
      */
-    public boolean isDescending(Column column)
+    public boolean isAscending(Column column)
     {
         try {
-            return descending.get(containees.indexOf(column));
+            return ascending.get(containees.indexOf(column));
         } catch (IndexOutOfBoundsException ex) {
             throw new RuntimeException(new SQLException(ex));
         }
@@ -606,7 +573,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             if (containees.get(i) != idx.containees.get(i))
                 return false;
 
-            if (descending.get(i) != idx.descending.get(i))
+            if (ascending.get(i) != idx.ascending.get(i))
                 return false;
         }
 

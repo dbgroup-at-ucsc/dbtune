@@ -28,6 +28,7 @@ public class DB2OptimizerTest
      * @throws Exception
      *      if the creation of the mock fails
      */
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception
     {

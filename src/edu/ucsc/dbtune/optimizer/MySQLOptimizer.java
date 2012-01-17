@@ -213,7 +213,7 @@ public class MySQLOptimizer extends AbstractOptimizer
 
             sb.append(col.getName());
             // not supported. Can be specified but it'll be ignored
-            // sb.append(index.isDescending(col) ? " DESC" : " ASC");
+            // sb.append(index.isAscending(col) ? " ASC" : " DESC");
         }
 
         sb.append(")");

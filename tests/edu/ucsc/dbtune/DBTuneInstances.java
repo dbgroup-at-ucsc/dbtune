@@ -27,6 +27,10 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.metadata.Index.ASCENDING;
+import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
+import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
+import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
 import static edu.ucsc.dbtune.util.Environment.extractDriver;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DBMS;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
@@ -297,7 +301,9 @@ public final class DBTuneInstances
                     Table table = new Table(schema, "table_" + k);
                     for (int l = 0; l < numIndexes; l++) {
                         Column column = new Column(table, "column_" + l, l + 1);
-                        new Index(table.getName() + "_index_" + counter++, column);
+                        new Index(
+                                table.getName() + "_index_" + counter++,
+                                column, ASCENDING, SECONDARY, NON_UNIQUE, UNCLUSTERED);
                     }
                 }
             }
