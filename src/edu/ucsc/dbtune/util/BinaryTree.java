@@ -121,13 +121,13 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
     protected Entry<T> find(T value, Entry<T> entry)
     {
         while (entry != null) {
-            if (value.compareTo(entry.element) < 0) {
+            if (value.compareTo(entry.getElement()) < 0) {
                 if (entry.children.size() > 0) {
                     entry = entry.children.get(0);
                 } else {
                     entry = null;
                 }
-            } else if (value.compareTo(entry.element) > 0) {
+            } else if (value.compareTo(entry.getElement()) > 0) {
                 if (entry.children.size() > 1) {
                     entry = entry.children.get(1);
                 } else {

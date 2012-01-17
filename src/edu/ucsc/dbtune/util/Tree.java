@@ -7,27 +7,46 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * A binary tree implementation
+ * Implementation of a tree.
+ *
+ * @param <T>
+ *      type of objects being stored in the tree
+ * @author Ivo Jimenez
  */
 public class Tree<T extends Comparable<? super T>>
 {
     protected Entry<T>        root;
-    protected Map<T,Entry<T>> elements;
-    protected int             size;
+    protected Map<T, Entry<T>> elements;
 
     /**
-     * Builds a tree with the given argument as root
+     * Builds a tree with the given argument as root.
      *
      * @param root
      *     the root of the tree
      */
-    public Tree( T root )
+    public Tree(T root)
     {
         this.root     = new Entry<T>(root);
-        this.elements = new HashMap<T,Entry<T>>();
-        this.size     = 1;
+        this.elements = new HashMap<T, Entry<T>>();
 
-        elements.put( root, this.root );
+        elements.put(root, this.root);
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param other
+     *     tree being copied
+     */
+    public Tree(Tree<T> other)
+    {
+        this.elements = new HashMap<T, Entry<T>>(other.elements);
+
+        T rootElement = other.root.element;
+        this.elements.remove(other.root.element);
+        this.root = new Entry<T>(rootElement);
+
+        elements.put(rootElement, this.root);
     }
 
     /**
@@ -42,27 +61,38 @@ public class Tree<T extends Comparable<? super T>>
     }
 
     /**
-     * returns the children of an element.
+     * returns the leafs of the tree.
      *
      * @return
-     *     a list containing the children elements of the given value. Empty if the given element is 
-     *     a leaf of the tree.
+     *     elements at the leafs
+     */
+    public List<T> leafs()
+    {
+        throw new RuntimeException("not yet");
+    }
+
+    /**
+     * returns the children of an element.
+     *
+     * @param value
+     *      value for which the children are being retrieved
+     * @return
+     *      a list containing the children elements of the given value. Empty if the given element 
+     *      is a leaf of the tree.
      * @throws NoSuchElementException
-     *     if {@code value} isn't a member of the tree
+     *      if {@code value} isn't a member of the tree
      */
     public List<T> getChildren(T value) throws NoSuchElementException
     {
         Entry<T> entry = find(value, root);
 
-        if (entry == null) {
-            throw new NoSuchElementException( value + " is not a member");
-        }
+        if (entry == null)
+            throw new NoSuchElementException(value + " is not a member");
 
         List<T> children = new ArrayList<T>();
 
-        for (Entry<T> e : entry.children) {
+        for (Entry<T> e : entry.children)
             children.add(valueOf(e));
-        }
 
         return children;
     }
@@ -93,7 +123,7 @@ public class Tree<T extends Comparable<? super T>>
     }
 
     /**
-     * returns the value contained in the given entry
+     * returns the value contained in the given entry.
      *
      * @param entry
      *     entry whose value is extracted from
@@ -109,13 +139,15 @@ public class Tree<T extends Comparable<? super T>>
      * Sets a value as the parent of another given child value.
      *
      * @param parentValue
-     *     the value that will be the parent of {@code childValue}
+     *      the value that will be the parent of {@code childValue}
      * @param childValue
-     *     the value that will be the child of {@code parentValue}
+     *      the value that will be the child of {@code parentValue}
      * @throws NoSuchElementException
-     *     if parentValue isn't a member of the tree
+     *      if parentValue isn't a member of the tree
+     * @return
+     *      the entry corresponding to the newly added child
      * @throws IllegalArgumentException
-     *     if {@code childValue} is already in the tree.
+     *      if {@code childValue} is already in the tree.
      */
     public Entry<T> setChild(T parentValue, T childValue)
     {
@@ -128,7 +160,7 @@ public class Tree<T extends Comparable<? super T>>
 
         parentEntry = elements.get(parentValue);
 
-        if ( parentEntry == null ) {
+        if (parentEntry == null) {
             throw new NoSuchElementException(parentValue + " not in tree");
         }
 
@@ -138,19 +170,17 @@ public class Tree<T extends Comparable<? super T>>
 
         parentEntry.children.add(childEntry);
 
-        size++;
-
         return childEntry;
     }
 
     /**
-     * returns the number of elements in the tree
+     * returns the number of elements in the tree.
      *
      * @return size of the tree.
      */
     public int size()
     {
-        return size;
+        return elements.size();
     }
 
     /**
@@ -200,7 +230,7 @@ public class Tree<T extends Comparable<? super T>>
             str += padding + entry.element + "\n";
 
             for (Entry<T> e : entry.children) {
-                str += toString(e, padding + padding );
+                str += toString(e, padding + padding);
             }
         }
 
@@ -217,15 +247,15 @@ public class Tree<T extends Comparable<? super T>>
     }
 
     /**
-     * An entry of the tree
+     * An entry of the tree.
      */
     public static class Entry<T extends Comparable<? super T>>
     {
-        T              element;
+        private T element;
         List<Entry<T>> children;
 
         /**
-         * creates a tree entry
+         * creates a tree entry.
          *
          * @param element
          *     element to be wrapped by this entry
@@ -237,7 +267,7 @@ public class Tree<T extends Comparable<? super T>>
         }
 
         /**
-         * Returns the corresponding element
+         * Returns the corresponding element.
          *
          * @return the element wrapped by the entry
          */

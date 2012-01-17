@@ -108,8 +108,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
      * Uses the IBG to obtain a new {@link ExplainedSQLStatement}.
      *
      * @param configuration
-     *      the configuration considered to estimate the cost of the new statement. This can (or 
-     *      not) be the same as {@link #getConfiguration}.
+     *      the configuration considered to estimate the cost of the new statement.
      * @return
      *      a new statement
      * @throws SQLException
