@@ -1,21 +1,22 @@
 package edu.ucsc.dbtune;
 
+import java.lang.reflect.InvocationTargetException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
+
 import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.extraction.MetadataExtractor;
 import edu.ucsc.dbtune.metadata.extraction.DB2Extractor;
+import edu.ucsc.dbtune.metadata.extraction.MetadataExtractor;
 import edu.ucsc.dbtune.metadata.extraction.MySQLExtractor;
 import edu.ucsc.dbtune.metadata.extraction.PGExtractor;
-import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.MySQLOptimizer;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.util.Environment;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.DriverManager;
-import java.util.Properties;
 
 import static edu.ucsc.dbtune.util.Environment.extractDriver;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DB2;
@@ -57,6 +58,8 @@ public class DatabaseSystem
      *     a metadata extractor
      * @param optimizer
      *     an optimizer
+     * @throws SQLException
+     *      if an error occurs while extracting the catalog from the underlying DBMS
      * @see Connection
      * @see Catalog
      * @see Optimizer
@@ -85,7 +88,7 @@ public class DatabaseSystem
     }
 
     /**
-     * Returns the corresponding catalog
+     * Returns the corresponding catalog.
      *
      * @return
      *      a metadata extractor
@@ -102,7 +105,7 @@ public class DatabaseSystem
      *      a connection
      * @see Connection
      */
-    public Connection getConnection() throws SQLException
+    public Connection getConnection()
     {
         return connection;
     }
@@ -130,8 +133,14 @@ public class DatabaseSystem
     /**
      * Returns the corresponding metadata extractor.
      *
+     * @param env
+     *      the environment object.
      * @return
      *      a metadata extractor
+     * @throws SQLException
+     *     if {@link Environment#getVendor()}, {@link Environment#getJdbcURL}, {@link 
+     *     Environment#getOptimizer} are null; or if there isn't an implementation of {@link 
+     *     MetadataExtractor} for the given vendor.
      */
     public static MetadataExtractor newExtractor(Environment env) throws SQLException
     {
@@ -154,8 +163,16 @@ public class DatabaseSystem
     /**
      * Returns the corresponding optimizer.
      *
+     * @param env
+     *      the environment object.
+     * @param con
+     *     a JDBC connection
      * @return
      *      an optimizer.
+     * @throws SQLException
+     *     if {@link Environment#getVendor()}, {@link Environment#getJdbcURL}, {@link 
+     *     Environment#getOptimizer} are null; or if there isn't an implementation of {@link 
+     *     Optimizer} for the given optimizer option.
      * @see Optimizer
      */
     public static Optimizer newOptimizer(Environment env, Connection con) throws SQLException
@@ -171,17 +188,54 @@ public class DatabaseSystem
         else if (env.getVendor().equals(PG))
             optimizer = new PGOptimizer(con);
         else
-            throw new SQLException("Unable to create an optimizer interface for " + 
-                    env.getVendor());
+            throw new SQLException("Unable to find optimizer for " + env.getVendor());
 
         if (env.getOptimizer().equals(DBMS))
             return optimizer;
         else if (env.getOptimizer().equals(IBG))
             return new IBGOptimizer(optimizer);
         else if (env.getOptimizer().equals(INUM))
-            throw new SQLException("INUMOptimizer doesn't exist yet");
+            return newOptimizer("edu.ucsc.dbtune.optimizer.InumOptimizer", optimizer);
         else
             throw new SQLException("Unknown optimizer option: " + env.getOptimizer());
+    }
+
+    /**
+     * Creates an Optimizer instance with the given class name, if available in the classpath.
+     *
+     * @param className
+     *      name of the optimizer class
+     * @param delegate
+     *      argument sent as delegate to the constructor
+     * @return
+     *      an instance of the
+     * @throws SQLException
+     *      if {@code className} can't be found in the class path
+     */
+    public static Optimizer newOptimizer(String className, Optimizer delegate) throws SQLException
+    {
+        try {
+            return (Optimizer)
+                Class
+                .forName(className)
+                .getConstructor(Optimizer.class)
+                .newInstance(delegate);
+        }
+        catch (ClassNotFoundException e) {
+            throw new SQLException(e);
+        }
+        catch (NoSuchMethodException e) {
+            throw new SQLException(e);
+        }
+        catch (InstantiationException e) {
+            throw new SQLException(e);
+        }
+        catch (IllegalAccessException e) {
+            throw new SQLException(e);
+        }
+        catch (InvocationTargetException e) {
+            throw new SQLException(e);
+        }
     }
 
     /**
@@ -212,6 +266,13 @@ public class DatabaseSystem
      *
      * @param properties
      *     used to access the properties of the system
+     * @return
+     *      a database system instance with the passed properties
+     * @throws SQLException
+     *      if {@link Environment#getVendor()}, {@link Environment#getJdbcURL}, {@link 
+     *      Environment#getOptimizer} are null; or if there isn't an implementation of {@link 
+     *      Optimizer} for the given optimizer option; or an implementation of a {@link 
+     *      MetadataExtractor} for the given vendor option.
      */
     public static DatabaseSystem newDatabaseSystem(Properties properties) throws SQLException
     {
@@ -226,6 +287,13 @@ public class DatabaseSystem
      *
      * @param env
      *     an environment object used to access the properties of the system
+     * @return
+     *      a database system instance with the passed properties
+     * @throws SQLException
+     *      if {@link Environment#getVendor()}, {@link Environment#getJdbcURL}, {@link 
+     *      Environment#getOptimizer} are null; or if there isn't an implementation of {@link 
+     *      Optimizer} for the given optimizer option; or an implementation of a {@link 
+     *      MetadataExtractor} for the given vendor option.
      */
     public static DatabaseSystem newDatabaseSystem(Environment env) throws SQLException
     {
@@ -234,6 +302,14 @@ public class DatabaseSystem
 
     /**
      * Creates a database system instance with the default properties from {@link Environment}.
+     *
+     * @return
+     *      a database system instance configured with the default settings
+     * @throws SQLException
+     *      if {@link Environment#getVendor()}, {@link Environment#getJdbcURL}, {@link 
+     *      Environment#getOptimizer} are null; or if there isn't an implementation of {@link 
+     *      Optimizer} for the given optimizer option; or an implementation of a {@link 
+     *      MetadataExtractor} for the given vendor option.
      */
     public static DatabaseSystem newDatabaseSystem() throws SQLException
     {
@@ -253,20 +329,28 @@ public class DatabaseSystem
          * corresponding type, with the appropriate members. 
          *
          * @param env
-         *     an environment object used to access the properties of the system
+         *      an environment object used to access the properties of the system
+         * @return
+         *      a database system instance with the passed properties
+         * @throws SQLException
+         *      if {@link Environment#getVendor()}, {@link Environment#getJdbcURL}, {@link 
+         *      Environment#getOptimizer} are null; or if there isn't an implementation of {@link 
+         *      Optimizer} for the given optimizer option; or an implementation of a {@link 
+         *      MetadataExtractor} for the given vendor option.
          */
         public static DatabaseSystem newDatabaseSystem(Environment env) throws SQLException
         {
-            Connection        connection;
-            Optimizer         optimizer;
+            Connection connection;
+            Optimizer optimizer;
             MetadataExtractor extractor;
-            DatabaseSystem    db;
+            DatabaseSystem db;
 
             validate(env);
 
             try {
                 Class.forName(env.getJdbcDriver());
-            } catch (Exception e) {
+            }
+            catch (ClassNotFoundException e) {
                 throw new SQLException(e);
             }
 
