@@ -1,19 +1,18 @@
 package edu.ucsc.dbtune.bip;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 
 import java.io.FileReader;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
+import org.junit.Test;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -56,7 +55,7 @@ public class SimBIPTest
         for (Index index : allIndexes) {
             System.out.println(" Index " + index.getFullyQualifiedName());
         }
-        /*
+        
         Set<Index> Sinit = new HashSet<Index>();
         Set<Index> Smat = new HashSet<Index>();
         int W = 4;
@@ -66,10 +65,10 @@ public class SimBIPTest
         // Sinit = \emptyset
         SimBIP sim = new SimBIP(Sinit, Smat, W, timeLimit);
         Map<Schema, Workload> mapSchemaToWorkload = workload.getSchemaToWorkloadMapping();
-        sim.setMapSchemaToWorkload(mapSchemaToWorkload);
+        sim.setSchemaToWorkloadMapping(mapSchemaToWorkload);
         sim.setWorkloadName(workloadFile);
         BIPOutput schedule = sim.solve();
         System.out.println("Result: " + schedule.toString());
-        */
+        
     }
 }
