@@ -22,7 +22,7 @@ public interface IndexPool
      * {\b Note}: The index will be assigned a pool ID that is equivalent to the number of indexes
      * that are currently stored in the pool.      
      */
-    void addIndex(Index index);
+    void add(Index index);
 
     /**
      * Get the pool ID of the given {@code index} object

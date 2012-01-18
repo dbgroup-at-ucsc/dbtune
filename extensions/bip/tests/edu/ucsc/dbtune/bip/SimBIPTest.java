@@ -1,7 +1,9 @@
 package edu.ucsc.dbtune.bip;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import org.junit.Test;
 
 import edu.ucsc.dbtune.metadata.Index;
@@ -20,8 +22,8 @@ public class SimBIPTest  extends BIPTestConfiguration
     @Test
     public void testScheduling() throws Exception
     {   
-        List<Index> Sinit = new ArrayList<Index>();
-        List<Index> Smat = new ArrayList<Index>();
+        Set<Index> Sinit = new HashSet<Index>();
+        Set<Index> Smat = new HashSet<Index>();
         int W = 4;
         double timeLimit = 300;
      

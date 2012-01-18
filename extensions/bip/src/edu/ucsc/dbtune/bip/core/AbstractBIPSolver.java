@@ -8,16 +8,15 @@ import ilog.cplex.IloCplex;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.IndexFullTableScan;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
@@ -37,10 +36,8 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected List<Index> candidateIndexes;
     protected String workloadName;
     protected Map<Schema, Workload> mapSchemaToWorkload;
-    
     protected List<QueryPlanDesc> listQueryPlanDescs;
     protected IndexPool poolIndexes;
-    protected Map<Schema, List<IndexFullTableScan>> mapSchemaListIndexFullTableScans;
     protected IloLPMatrix matrix;
     protected IloNumVar [] vars;
     protected IloCplex cplex;
@@ -48,7 +45,6 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected CPlexBuffer buf;
     protected Environment environment = Environment.getInstance();
     protected int numConstraints;
-    
     protected InumOptimizer inumOptimizer;
     
     @Override
@@ -64,7 +60,8 @@ public abstract class AbstractBIPSolver implements BIPSolver
     }
     
     @Override
-    public void setCandidateIndexes(List<Index> candidateIndexes) {
+    public void setCandidateIndexes(List<Index> candidateIndexes) 
+    {
         this.candidateIndexes = candidateIndexes;
     }
     
@@ -80,12 +77,11 @@ public abstract class AbstractBIPSolver implements BIPSolver
     {   
         // Preprocess steps
         insertIndexesToPool();
-        populateSchemaIndexFullTableScans();
         initializeBuffer(this.workloadName);
         
         // 1. Communicate with INUM 
         // to derive the query plan descriptions including internal cost, index access cost, etc.  
-        this.populatePlanDescriptionForStatement(this.poolIndexes);
+        this.populatePlanDescriptionForStatements(this.poolIndexes);
         
         // 2. Build BIP       
         LogListener listener = new LogListener() {
@@ -112,38 +108,27 @@ public abstract class AbstractBIPSolver implements BIPSolver
      * 
      * For example, in SimBIP, indexes of the same type (created, dropped, or remained)
      * in the system should be stored consecutively.
+     * @throws SQLException 
      * 
      */    
-    protected void insertIndexesToPool()
+    protected void insertIndexesToPool() throws SQLException
     {
         poolIndexes = new BIPIndexPool();
         // Put all indexes in {@code candidateIndexes} into the pool of {@code MatIndexPool}
         for (Index idx: candidateIndexes) {
-            poolIndexes.addIndex(idx);
+            poolIndexes.add(idx);
         }
-    }
-    
-    /**
-     * Create the list of full table scan indexes per relation in each schema 
-     * that the workload refers to
-     * 
-     * @throws SQLException
-     */
-    protected void populateSchemaIndexFullTableScans() throws SQLException
-    {
-        mapSchemaListIndexFullTableScans = new HashMap<Schema, List<IndexFullTableScan>>();
+        
+        // Add index full table scan into {@code poolIndexes}
         for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
-            // create a list of full table scan indexes
-            List<IndexFullTableScan> listIndexes = new  ArrayList<IndexFullTableScan>();
             for (Table table : entry.getKey().tables()){
                 IndexFullTableScan scanIdx = new IndexFullTableScan(table);
-                listIndexes.add(scanIdx);
+                poolIndexes.add(scanIdx);
             }
-            mapSchemaListIndexFullTableScans.put(entry.getKey(), listIndexes);
         }
     }
     
-    /**
+     /**
      * Initialize empty buffer files that will store the Binary Integer Program
      * 
      * @param prefix
@@ -175,27 +160,19 @@ public abstract class AbstractBIPSolver implements BIPSolver
      *      
      * @throws SQLException
      */
-    protected void populatePlanDescriptionForStatement(IndexPool poolIndexes) throws SQLException
+    protected void populatePlanDescriptionForStatements(IndexPool poolIndexes) throws SQLException
     {   
         listQueryPlanDescs = new ArrayList<QueryPlanDesc>();
         
         for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
-            List<IndexFullTableScan> listIndexFullTableScans = mapSchemaListIndexFullTableScans.get(entry.getKey());
             for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
                 QueryPlanDesc desc =  new InumQueryPlanDesc(inumOptimizer);                    
-                // Populate the INUM space for each statement
-                // We do not add full table scans before populate from @desc
-                // so that the full table scan is placed at the end of each slot 
-               desc.generateQueryPlanDesc(entry.getKey(), listIndexFullTableScans, 
-                                           iterStmt.next(), poolIndexes);
+                // Populate the INUM space for each statement 
+               desc.generateQueryPlanDesc(iterStmt.next(), entry.getKey(), poolIndexes);
                 listQueryPlanDescs.add(desc);
             }
-            
-            // Add full table scans into the pool
-            for (Index index : listIndexFullTableScans) {
-                poolIndexes.addIndex(index);
-            }
         }
+        
         // Map index in each slot to its pool ID
         for (QueryPlanDesc desc : listQueryPlanDescs) {
             desc.mapIndexInSlotToPoolID(poolIndexes);

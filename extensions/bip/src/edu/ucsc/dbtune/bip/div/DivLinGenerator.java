@@ -111,7 +111,7 @@ public class DivLinGenerator
                     poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0);
                 }    
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {              
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {  
+                    for (int i = 0; i < desc.getNumberOfGlobalSlots(); i++) {  
                         for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
                             poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_X, r, q, k, i, a);
                         }
@@ -152,7 +152,7 @@ public class DivLinGenerator
                 // Index access cost
                 linList.clear();            
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {              
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {  
+                    for (int i = 0; i < desc.getNumberOfGlobalSlots(); i++) {  
                         for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
                             String var = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, a).getName();
                             linList.add(Double.toString(desc.getIndexAccessCost(k, i, a)) + var);     
@@ -204,7 +204,7 @@ public class DivLinGenerator
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     String var_y = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
                     
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+                    for (int i = 0; i < desc.getNumberOfGlobalSlots(); i++) {
                         if (desc.isSlotReferenced(i) == false) {
                             continue;
                         }                        

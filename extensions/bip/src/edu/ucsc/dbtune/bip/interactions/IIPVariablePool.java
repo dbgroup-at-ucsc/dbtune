@@ -45,7 +45,7 @@ public class IIPVariablePool extends AbstractBIPVariablePool
      * @return
      *      The variable name
      */
-    public BIPVariable createAndStoreBIPVariable(int theta, int typeVariable, int k, int i, int a)
+    public BIPVariable createAndStoreVariable(int theta, int typeVariable, int k, int i, int a)
     {
         String varName = "";
         varName = varName.concat(strHeaderVariable[typeVariable]);
@@ -64,7 +64,7 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         varName = varName.concat(")");
                 
         BIPVariable var = new BIPVariable(varName, typeVariable);
-        this.addVariable(var); 
+        this.add(var); 
         
         // Create a mapping from 
         IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, i, a);
@@ -89,7 +89,7 @@ public class IIPVariablePool extends AbstractBIPVariablePool
      * @return
      *      BIP Variable
      */
-    public BIPVariable getBIPVariable(int theta, int typeVariable, int k, int i, int a)
+    public BIPVariable getVariable(int theta, int typeVariable, int k, int i, int a)
     {
         // Create a mapping from 
         IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, i, a);

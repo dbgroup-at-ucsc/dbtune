@@ -9,9 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
+
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.IndexFullTableScan;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
@@ -54,7 +55,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
      * @see edu.ucsc.dbtune.bip.util.QueryPlanDesc#getNumberOfSlots()
      */
     @Override
-	public int getNumberOfSlots()
+	public int getNumberOfGlobalSlots()
 	{
 		return n;
 	}		
@@ -104,13 +105,10 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	}
 	
 	/* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.util.QueryPlanDesc#generateQueryPlanDesc(edu.ucsc.dbtune.bip.util.InumCommunicator, edu.ucsc.dbtune.metadata.Schema, java.util.List, edu.ucsc.dbtune.workload.SQLStatement, edu.ucsc.dbtune.bip.util.BIPIndexPool)
+     * @see edu.ucsc.dbtune.bip.util.QueryPlanDesc#generateQueryPlanDesc(SQLStatement stmt, Schema schema, IndexPool poolIndexes)
      */ 
 	@Override
-    public void generateQueryPlanDesc  (Schema schema,
-                                        List<IndexFullTableScan> listFullTableScanIndexes,
-                                        SQLStatement stmt, IndexPool poolIndexes) 
-                                        throws SQLException
+    public void generateQueryPlanDesc(SQLStatement stmt, Schema schema, IndexPool poolIndexes) throws SQLException
     {
         S = new ArrayList<Integer>();
         beta = new ArrayList<Double>();
@@ -118,51 +116,39 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         listIndexesEachSlot = new ArrayList<List<Index>>();
         
         this.stmtID = InumQueryPlanDesc.STMT_ID.getAndIncrement();
-        //Set<InumStatementPlan> templatePlans = inum.getTemplatePlans();
         InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) this.inumOptimizer.prepareExplain(stmt);
         preparedStmt.explain(new HashSet<Index>());
         Set<InumPlan> templatePlans = preparedStmt.getTemplatePlans();
         
         listSchemaTables = new ArrayList<Table>();
+        List<Table> listReferencedTables = new ArrayList<Table>();
         for (Table table : schema.tables()) {
             listSchemaTables.add(table);
-        }
-                    
-        // TODO: replace with the new interface ----------------------
-        // Note that list tables is derived from the schema
-        // @listSchemaTables and @listReferencedTable is different      
-        List<Table> listReferencedTables = new ArrayList<Table>();   
+        }     
         for (InumPlan plan : templatePlans) {
             listReferencedTables = plan.getReferencedTables();
             break;
         }
-        // ------------------------------------------------------------
         
         // 1. Set up the number of slots & number of indexes in each slot
         n = 0;
-        numIndexes = 0;     
-        
+        numIndexes = 0;
         for (Table table : listSchemaTables) {          
             int numIndexEachSlot = 0;
             List<Index> listIndex = new ArrayList<Index>();         
-            
+            IndexFullTableScan scanIdx = new IndexFullTableScan(table);
             for (Index index : poolIndexes.indexes()) {
-                if (index.getTable().equals(table)){                
+                // normal index (not the full table scan index)
+                if (index.getTable().equals(table) && index.equals(scanIdx) == false){                
                     numIndexEachSlot++;
                     numIndexes++;
                     listIndex.add(index);
                 }
             }
-            
-            // find the full table scan index corresponding to the slot
-            for (IndexFullTableScan scanIdx : listFullTableScanIndexes) {
-                if (scanIdx.getTable().equals(table) == true) {
-                    numIndexEachSlot++;
-                    numIndexes++;
-                    listIndex.add(scanIdx);
-                    break;
-                }
-            }
+            // add the index full table scan at the last position in this slot
+            numIndexEachSlot++;
+            numIndexes++;
+            listIndex.add(scanIdx);
             
             S.add(new Integer(numIndexEachSlot));
             listIndexesEachSlot.add(listIndex);
@@ -197,20 +183,13 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                         gammaRel.add(new Double(0.0));
                     }
                 } else {
-                    Table table = (Table) found;
                     for (int a = 0; a < getNumberOfIndexesEachSlot(i); a++) {
                         Index index = getIndex(i, a);
-                        // Full table scan index 
-                        if (a == getNumberOfIndexesEachSlot(i) - 1){                     
-                            //gammaRel.add(new Double(plan.getFullTableScanCost(table)));
-                        } else {
-                            gammaRel.add(new Double(plan.plug(index)));
-                        }
+                        gammaRel.add(new Double(plan.plug(index)));
                     }       
                 }
                 gammaPlan.add(gammaRel);                            
             }
-            
             gamma.add(gammaPlan);
             Kq++;
         }

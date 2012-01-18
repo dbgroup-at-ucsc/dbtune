@@ -57,21 +57,8 @@ public class InteractionBIP extends AbstractBIPSolver
         cachedInteractIndexName = new HashMap<String, Integer>();
     }
 	/**
-	 * Find all pairs of indexes from the given configuration, {@code C}, that 
-	 * interact with each other
+	 * Find all pairs of indexes from the given candidate index-set that interact with each other
 	 *  
-	 * @param listWorkload
-	 * 		Each entry of this list is a list of SQL Statements that belong to a same schema
-     * @param candidateIndexes
-	 * 		The given set of candidate indexes
-	 * @param delta
-	 * 		The threshold to determine the interaction
-	 * 
-	 * @return
-	 * 		List of pairs of interacting indexes
-	 * @throws SQLException 
-	 * 
-	 * {\b Note}: {@code listAgent} will be removed when this class is fully implemented
 	 * @throws IOException 
 	 * @throws IloException 
 	 */
@@ -79,13 +66,12 @@ public class InteractionBIP extends AbstractBIPSolver
     public BIPOutput solve() throws SQLException, IOException
     {   
         // Store indexes into the {@code poolIndexes}
-        insertIndexesToPool();
-        populateSchemaIndexFullTableScans();
+        insertIndexesToPool(); 
         
         // 1. Communicate with INUM 
         // to derive the query plan description including internal cost, index access cost,
         // index at each slot, etc.  
-        this.populatePlanDescriptionForStatement(this.poolIndexes);
+        this.populatePlanDescriptionForStatements(this.poolIndexes);
         
         // 2. Iterate over the list of query plan descs that have been derived
         interactionOutput = new InteractionOutput();
@@ -122,7 +108,7 @@ public class InteractionBIP extends AbstractBIPSolver
             }
         };
         
-        for (int ic = 0; ic < investigatingDesc.getNumberOfSlots(); ic++)    {
+        for (int ic = 0; ic < investigatingDesc.getNumberOfGlobalSlots(); ic++)    {
             // Note: the last index in each slot is a full table scan
             // Don't need to consider indexes that belong to relations NOT referenced by the query
             if (investigatingDesc.isSlotReferenced(ic) == false){
@@ -132,7 +118,7 @@ public class InteractionBIP extends AbstractBIPSolver
             for (int pos_c = 0; pos_c < investigatingDesc.getNumberOfIndexesEachSlot(ic) - 1; pos_c++){
                 Index indexc = investigatingDesc.getIndex(ic, pos_c);
                 
-                for (int id = ic; id < investigatingDesc.getNumberOfSlots(); id++){
+                for (int id = ic; id < investigatingDesc.getNumberOfGlobalSlots(); id++){
                     if (investigatingDesc.isSlotReferenced(id) == false){
                         continue;
                     }
@@ -247,15 +233,15 @@ public class InteractionBIP extends AbstractBIPSolver
             List<String> listVarTheta = new ArrayList<String>();
             // var y
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {
-                BIPVariable var = poolVariables.createAndStoreBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0);
+                BIPVariable var = poolVariables.createAndStoreVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0);
                 listVarTheta.add(var.getName());
             }
            
             // var x
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {              
-                for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {                  
+                for (int i = 0; i < investigatingDesc.getNumberOfGlobalSlots(); i++) {                  
                     for (int a = 0; a < investigatingDesc.getNumberOfIndexesEachSlot(i); a++) {
-                        BIPVariable var = poolVariables.createAndStoreBIPVariable(theta, IIPVariablePool.VAR_X, k, i, a);
+                        BIPVariable var = poolVariables.createAndStoreVariable(theta, IIPVariablePool.VAR_X, k, i, a);
                         listVarTheta.add(var.getName());
                     }
                 }
@@ -263,15 +249,15 @@ public class InteractionBIP extends AbstractBIPSolver
             
             // var s
             for (int ga = 0; ga < this.poolIndexes.indexes().size(); ga++) {
-                BIPVariable var = poolVariables.createAndStoreBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0);
+                BIPVariable var = poolVariables.createAndStoreVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0);
                 listVarTheta.add(var.getName());
             }
             
             // var u
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
-                for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
+                for (int i = 0; i < investigatingDesc.getNumberOfGlobalSlots(); i++) {
                     for (int a = 0; a < investigatingDesc.getNumberOfIndexesEachSlot(i); a++) {
-                        BIPVariable var =  poolVariables.createAndStoreBIPVariable(theta, IIPVariablePool.VAR_U, t, i, a); 
+                        BIPVariable var =  poolVariables.createAndStoreVariable(theta, IIPVariablePool.VAR_U, t, i, a); 
                         listVarTheta.add(var.getName());
                     }
                 }
@@ -296,7 +282,7 @@ public class InteractionBIP extends AbstractBIPSolver
             List<String> linList = new ArrayList<String>();
             
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {
-                String var = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName();
+                String var = poolVariables.getVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName();
                 String element = Double.toString(investigatingDesc.getInternalPlanCost(k)) + var;
                 linList.add(element);
                 linListElement.add(element);
@@ -307,9 +293,9 @@ public class InteractionBIP extends AbstractBIPSolver
             // Index access cost
             linList.clear();
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {             
-                for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {                 
+                for (int i = 0; i < investigatingDesc.getNumberOfGlobalSlots(); i++) {                 
                     for (int a = 0; a < investigatingDesc.getNumberOfIndexesEachSlot(i); a++) {
-                        String var = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_X, k, i, a).getName();
+                        String var = poolVariables.getVariable(theta, IIPVariablePool.VAR_X, k, i, a).getName();
                         String element = Double.toString(investigatingDesc.getIndexAccessCost(k, i, a)) + var;
                         linList.add(element);
                         linListElement.add(element);
@@ -336,16 +322,16 @@ public class InteractionBIP extends AbstractBIPSolver
             List<String> linList = new ArrayList<String>();
             // (3a) \sum_{k \in [1, Kq]}y^{theta}_k = 1
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {
-                linList.add(poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName());
+                linList.add(poolVariables.getVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName());
             }
             buf.getCons().println("atomic_3a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) + " = 1");
             numConstraints++;
             
             // (3b) \sum_{a \in S+_i \cup I_{\emptyset}} x(theta, k, i, a) = y(theta, k)
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {
-                String var_y = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName();
+                String var_y = poolVariables.getVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName();
                 
-                for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
+                for (int i = 0; i < investigatingDesc.getNumberOfGlobalSlots(); i++) {
                     // -- not constraint on slot NOT referenced by the query 
                     if (investigatingDesc.isSlotReferenced(i) == false) {
                         continue;
@@ -353,11 +339,11 @@ public class InteractionBIP extends AbstractBIPSolver
                     
                     linList.clear();
                     for (int a = 0; a < investigatingDesc.getNumberOfIndexesEachSlot(i); a++) {
-                        String var_x = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_X, k, i, a).getName();
+                        String var_x = poolVariables.getVariable(theta, IIPVariablePool.VAR_X, k, i, a).getName();
                         linList.add(var_x);
                         IndexInSlot iis = new IndexInSlot(investigatingDesc.getStatementID(), i, a);
                         int ga = poolIndexes.getPoolID(iis);
-                        String var_s = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName();
+                        String var_s = poolVariables.getVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName();
                         
                         // (4a) s_a^{theta} \geq x_{kia}^{theta}
                         buf.getCons().println("atomic_4a_" + numConstraints + ":" 
@@ -380,7 +366,7 @@ public class InteractionBIP extends AbstractBIPSolver
          * 
          */
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
-            for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
+            for (int i = 0; i < investigatingDesc.getNumberOfGlobalSlots(); i++) {
                 List<String> linList = new ArrayList<String>();
                 if ( (theta == IND_C && i == restrictIIP.getPosRelContainC()) 
                      || (theta == IND_D && i == restrictIIP.getPosRelContainD())
@@ -397,7 +383,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 for (int a = 0; a < investigatingDesc.getNumberOfIndexesEachSlot(i) - 1; a++) {
                     IndexInSlot iis = new IndexInSlot(investigatingDesc.getStatementID(), i, a);
                     int ga = poolIndexes.getPoolID(iis);
-                    linList.add(poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());      
+                    linList.add(poolVariables.getVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());      
                 }
                 
                 buf.getCons().println("atomic_4b_" +  numConstraints + ":" 
@@ -418,7 +404,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 if (a != restrictIIP.getLocalPosIndexC()) {
                     IndexInSlot iis = new IndexInSlot(investigatingDesc.getStatementID(), restrictIIP.getPosRelContainC(), a);
                     int ga = poolIndexes.getPoolID(iis);
-                    linList.add(poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());
+                    linList.add(poolVariables.getVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());
                 }
             }
             buf.getCons().println("atomic_4c_" +  numConstraints + ":" 
@@ -441,7 +427,7 @@ public class InteractionBIP extends AbstractBIPSolver
                     IndexInSlot iis = new IndexInSlot(investigatingDesc.getStatementID(), 
                                                         restrictIIP.getPosRelContainD(), a);
                     int ga = poolIndexes.getPoolID(iis);
-                    linList.add(poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());
+                    linList.add(poolVariables.getVariable(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());
                 }
             }
             buf.getCons().println("atomic_4d_" + numConstraints + ":" 
@@ -457,19 +443,19 @@ public class InteractionBIP extends AbstractBIPSolver
         IndexInSlot iis = new IndexInSlot(investigatingDesc.getStatementID(), restrictIIP.getPosRelContainC(), restrictIIP.getLocalPosIndexC());
         int ga = poolIndexes.getPoolID(iis);
         buf.getCons().println("atomic_5_" + numConstraints + ":" 
-                            + poolVariables.getBIPVariable(IND_EMPTY, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{empty}_c = 0     
+                            + poolVariables.getVariable(IND_EMPTY, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{empty}_c = 0     
         numConstraints++;
         buf.getCons().println("atomic_5_" + numConstraints + ":" 
-                + poolVariables.getBIPVariable(IND_D, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{d}_c = 0  
+                + poolVariables.getVariable(IND_D, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{d}_c = 0  
         numConstraints++;
 
         iis = new IndexInSlot(investigatingDesc.getStatementID(), restrictIIP.getPosRelContainD(), restrictIIP.getLocalPosIndexD());
         ga = poolIndexes.getPoolID(iis);
         buf.getCons().println("atomic_5_" + numConstraints + ":" 
-                            + poolVariables.getBIPVariable(IND_EMPTY, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{empty}_d = 0
+                            + poolVariables.getVariable(IND_EMPTY, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{empty}_d = 0
         numConstraints++;       
         buf.getCons().println("atomic_5_" + numConstraints + ":"
-                            + poolVariables.getBIPVariable(IND_C, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{c}_d = 0
+                            + poolVariables.getVariable(IND_C, IIPVariablePool.VAR_S, ga, 0, 0).getName() + " = 0 "); // For s^{c}_d = 0
         numConstraints++;
     }
     
@@ -483,9 +469,9 @@ public class InteractionBIP extends AbstractBIPSolver
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
                 List<String> linList = new ArrayList<String>();     
-                for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
+                for (int i = 0; i < investigatingDesc.getNumberOfGlobalSlots(); i++) {
                     for (int a = 0; a < investigatingDesc.getNumberOfIndexesEachSlot(i); a++) {
-                        String var_u = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_U, t, i, a).getName();       
+                        String var_u = poolVariables.getVariable(theta, IIPVariablePool.VAR_U, t, i, a).getName();       
                         linList.add(Double.toString(investigatingDesc.getIndexAccessCost(t, i, a)) + var_u);                                              
                     }
                 }
@@ -501,12 +487,12 @@ public class InteractionBIP extends AbstractBIPSolver
         
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {          
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {                         
-                for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
+                for (int i = 0; i < investigatingDesc.getNumberOfGlobalSlots(); i++) {
                     if (investigatingDesc.isSlotReferenced(i) == false) {
                         continue;
                     }
                     for (int a = 0; a < investigatingDesc.getNumberOfIndexesEachSlot(i); a++) {
-                        String var_u = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_U, t, i, a).getName();                       
+                        String var_u = poolVariables.getVariable(theta, IIPVariablePool.VAR_U, t, i, a).getName();                       
                         if ( (theta == IND_C && a == restrictIIP.getLocalPosIndexC() 
                                 && i == restrictIIP.getPosRelContainC())  
                             || (theta == IND_D && a == restrictIIP.getLocalPosIndexD() 
@@ -548,10 +534,10 @@ public class InteractionBIP extends AbstractBIPSolver
                             if (a  <  investigatingDesc.getNumberOfIndexesEachSlot(i) - 1) {
                                 buf.getCons().println("optimal_9a_" + numConstraints + ":" 
                                         + var_u 
-                                        + " - " + poolVariables.getBIPVariable(IND_EMPTY, IIPVariablePool.VAR_S, ga, 0, 0)
-                                        + " - " + poolVariables.getBIPVariable(IND_C, IIPVariablePool.VAR_S, ga, 0, 0)
-                                        + " - " + poolVariables.getBIPVariable(IND_D, IIPVariablePool.VAR_S, ga, 0, 0)
-                                        + " - " + poolVariables.getBIPVariable(IND_CD, IIPVariablePool.VAR_S, ga, 0, 0)
+                                        + " - " + poolVariables.getVariable(IND_EMPTY, IIPVariablePool.VAR_S, ga, 0, 0)
+                                        + " - " + poolVariables.getVariable(IND_C, IIPVariablePool.VAR_S, ga, 0, 0)
+                                        + " - " + poolVariables.getVariable(IND_D, IIPVariablePool.VAR_S, ga, 0, 0)
+                                        + " - " + poolVariables.getVariable(IND_CD, IIPVariablePool.VAR_S, ga, 0, 0)
                                         + " <= 0 ");
                             }   
                             numConstraints++;
@@ -572,7 +558,7 @@ public class InteractionBIP extends AbstractBIPSolver
         // Constraint (7a), (8), (9)
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {             
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
-                for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
+                for (int i = 0; i < investigatingDesc.getNumberOfGlobalSlots(); i++) {
                     if (investigatingDesc.isSlotReferenced(i) == false) {
                         continue;
                     }
@@ -593,7 +579,7 @@ public class InteractionBIP extends AbstractBIPSolver
                         IndexInSlot iis = new IndexInSlot(investigatingDesc.getStatementID(), i, p);
                         int ga = poolIndexes.getPoolID(iis);
                         
-                        String var_u = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_U, t, i, p).getName();
+                        String var_u = poolVariables.getVariable(theta, IIPVariablePool.VAR_U, t, i, p).getName();
                         linList.add(var_u);
                         String LHS = StringConcatenator.concatenate(" + ", linList);
                         
@@ -620,7 +606,7 @@ public class InteractionBIP extends AbstractBIPSolver
                                 // Constraint (8)
                                 buf.getCons().println("optimal_8_" + numConstraints + ":" 
                                         + LHS + " - "
-                                        + poolVariables.getBIPVariable(thetainternal, IIPVariablePool.VAR_S, ga, 0, 0).getName()
+                                        + poolVariables.getVariable(thetainternal, IIPVariablePool.VAR_S, ga, 0, 0).getName()
                                         + " >= 0");
                                 numConstraints++;
                             }
@@ -753,7 +739,11 @@ public class InteractionBIP extends AbstractBIPSolver
     {
         IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd);
         interactionOutput.addPairIndexInteraction(pairIndexes);                               
-        addToCache(indexc, indexd);
+        String combinedName = indexc.getFullyQualifiedName() + "+" + indexd.getFullyQualifiedName();        
+        cachedInteractIndexName.put(combinedName, 1);
+        combinedName = indexd.getFullyQualifiedName()+ "+" + indexc.getFullyQualifiedName();        
+        cachedInteractIndexName.put(combinedName, 1);
+        // TODO: this method might be removed
         computeQueryCostTheta();
     }
 	
@@ -777,23 +767,7 @@ public class InteractionBIP extends AbstractBIPSolver
 				
 		return false;
 	}
-	
-	/**
-	 * Put pair of interacted indexes into the cache of CPlex class
-	 * 
-	 * @param indexc
-	 * 		One of the pair of interacted indexes
-	 * @param indexd
-	 * 		One of the pair of interacted indexes
-	 * 
-	 */
-	private void addToCache(Index indexc, Index indexd)
-	{
-		String combinedName = indexc.getFullyQualifiedName() + "+" + indexd.getFullyQualifiedName();		
-		cachedInteractIndexName.put(combinedName, 1);
-		combinedName = indexd.getFullyQualifiedName()+ "+" + indexc.getFullyQualifiedName();		
-		cachedInteractIndexName.put(combinedName, 1);
-	}	
+		
 	
 	/**
      * Check the correctness
@@ -818,15 +792,15 @@ public class InteractionBIP extends AbstractBIPSolver
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {                     
             double ctheta = 0.0;        
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {
-                String var = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName();
+                String var = poolVariables.getVariable(theta, IIPVariablePool.VAR_Y, k, 0, 0).getName();
                 double eleVar = mapVarVal.get(var);
                 ctheta += investigatingDesc.getInternalPlanCost(k) * eleVar;             
             }
             
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {             
-                for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {                 
+                for (int i = 0; i < investigatingDesc.getNumberOfGlobalSlots(); i++) {                 
                     for (int a = 0; a < investigatingDesc.getNumberOfIndexesEachSlot(i); a++) {
-                        String var = poolVariables.getBIPVariable(theta, IIPVariablePool.VAR_X, k, i, a).getName();
+                        String var = poolVariables.getVariable(theta, IIPVariablePool.VAR_X, k, i, a).getName();
                         double eleVar = mapVarVal.get(var);
                         ctheta += investigatingDesc.getIndexAccessCost(k, i, a) * eleVar;
                     }

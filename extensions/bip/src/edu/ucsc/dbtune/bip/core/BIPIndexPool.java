@@ -26,7 +26,7 @@ public class BIPIndexPool implements IndexPool
     /* (non-Javadoc)
      * @see edu.ucsc.dbtune.bip.util.IndexPool#addIndex(edu.ucsc.dbtune.metadata.Index)
      */
-    public void addIndex(Index index) 
+    public void add(Index index) 
     {
         int id = listIndexes.size();
         listIndexes.add(index);

@@ -13,7 +13,6 @@ import java.util.Map;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
@@ -293,11 +292,9 @@ public class ElasticDivBIP extends DivBIP
                         if (mapDeployedReplicas.containsKey(new Integer(divVar.getReplica())) == false) {
                             continue;
                         }
-                        Index index = this.mapVarSToIndex.get(var.getName());
-                        // only record the real indexes
-                        if (index.getFullyQualifiedName().contains(IndexFullTableScan.FULL_TABLE_SCAN_SUFFIX) == false) {
-                            conf.addMaterializedIndexAtReplica(divVar.getReplica(), index);
-                        }
+                        // TODO: only record the normal indexes
+                        conf.addMaterializedIndexAtReplica(divVar.getReplica(), mapVarSToIndex.get(var.getName()));
+                        
                     }
                 }
             }
