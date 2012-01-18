@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
@@ -33,7 +34,7 @@ import edu.ucsc.dbtune.workload.Workload;
  */
 public abstract class AbstractBIPSolver implements BIPSolver 
 {
-    protected List<Index> candidateIndexes;
+    protected Set<Index> candidateIndexes;
     protected String workloadName;
     protected Map<Schema, Workload> mapSchemaToWorkload;
     protected List<QueryPlanDesc> listQueryPlanDescs;
@@ -54,13 +55,13 @@ public abstract class AbstractBIPSolver implements BIPSolver
     }
     
     @Override    
-    public void setMapSchemaToWorkload(Map<Schema, Workload> mapSchemaToWorkload)
+    public void setSchemaToWorkloadMapping(Map<Schema, Workload> mapSchemaToWorkload)
     {
         this.mapSchemaToWorkload = mapSchemaToWorkload;
     }
     
     @Override
-    public void setCandidateIndexes(List<Index> candidateIndexes) 
+    public void setCandidateIndexes(Set<Index> candidateIndexes) 
     {
         this.candidateIndexes = candidateIndexes;
     }
@@ -168,7 +169,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
             for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
                 QueryPlanDesc desc =  new InumQueryPlanDesc(inumOptimizer);                    
                 // Populate the INUM space for each statement 
-               desc.generateQueryPlanDesc(iterStmt.next(), entry.getKey(), poolIndexes);
+                desc.generateQueryPlanDesc(iterStmt.next(), entry.getKey(), poolIndexes);
                 listQueryPlanDescs.add(desc);
             }
         }

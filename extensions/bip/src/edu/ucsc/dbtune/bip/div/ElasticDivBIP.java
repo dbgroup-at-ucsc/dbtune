@@ -276,7 +276,7 @@ public class ElasticDivBIP extends DivBIP
             for (int i = 0; i < vars.length; i++) {
                 IloNumVar var = vars[i];
                 if (cplex.getValue(var) == 1) {
-                    DivVariable divVar = (DivVariable) this.poolVariables.getVariable(var.getName());
+                    DivVariable divVar = (DivVariable) this.poolVariables.get(var.getName());
                     if (divVar.getType() == DivVariablePool.VAR_DEPLOY){
                         mapDeployedReplicas.put(new Integer(divVar.getReplica()), new Integer(1));
                     }
@@ -286,7 +286,7 @@ public class ElasticDivBIP extends DivBIP
             for (int i = 0; i < vars.length; i++) {
                 IloNumVar var = vars[i];
                 if (cplex.getValue(var) == 1) {
-                    DivVariable divVar = (DivVariable) this.poolVariables.getVariable(var.getName());
+                    DivVariable divVar = (DivVariable) this.poolVariables.get(var.getName());
                     if (divVar.getType() == DivVariablePool.VAR_S){
                         // only the replicas that will be deployed
                         if (mapDeployedReplicas.containsKey(new Integer(divVar.getReplica())) == false) {

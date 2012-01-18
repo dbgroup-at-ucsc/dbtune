@@ -24,7 +24,7 @@ public interface BIPVariablePool
      *      The variable that has the name exactly matches with the given name 
      *      or NULL if the given name does not match with any variables stored in the pool
      */
-    BIPVariable getVariable(String name);
+    BIPVariable get(String name);
 
     /**
      * Enumerate list of variables in multiple lines, 
@@ -37,5 +37,5 @@ public interface BIPVariablePool
      *      
      *  {\bf Note}: This function is usually used to enumerate binary variables     
      */
-    String enumerateListVariables(final int NUM_VAR_PER_LINE);
+    String enumerateList(final int NUM_VAR_PER_LINE);
 }

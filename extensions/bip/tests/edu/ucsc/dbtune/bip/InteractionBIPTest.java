@@ -14,6 +14,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
     @Test
     public void testInteraction() throws Exception
     {
+        /*
         try {
             double delta = 0.4;
             InteractionBIP bip = new InteractionBIP(delta);
@@ -26,5 +27,6 @@ public class InteractionBIPTest extends BIPTestConfiguration
         } catch (SQLException e){
             System.out.println(" error " + e.getMessage());
         }
+        */
     }
 }

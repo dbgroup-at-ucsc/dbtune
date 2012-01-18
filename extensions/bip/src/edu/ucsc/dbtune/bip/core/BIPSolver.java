@@ -1,10 +1,9 @@
 package edu.ucsc.dbtune.bip.core;
 
-
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
@@ -25,7 +24,7 @@ public interface BIPSolver
      * @param candidateIndexes
      *      The set of candidate indexes
      */
-    void setCandidateIndexes(List<Index> candidateIndexes);
+    void setCandidateIndexes(Set<Index> candidateIndexes);
     
     /**
      * Set the workload as a part of the inputs
@@ -34,7 +33,7 @@ public interface BIPSolver
      *      Each entry of this map is a list of SQL statements that belong to a same schema
      * 
      */
-    void setMapSchemaToWorkload(Map<Schema, Workload> mapSchemaToWorkload);
+    void setSchemaToWorkloadMapping(Map<Schema, Workload> mapSchemaToWorkload);
     
     
     /**

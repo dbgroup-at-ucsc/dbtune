@@ -163,7 +163,7 @@ public class SimBIP extends AbstractBIPSolver
             for (int i = 0; i < vars.length; i++) {
                 IloNumVar var = vars[i];
                 if (cplex.getValue(var) == 1) {
-                    SimVariable simVar = (SimVariable) poolVariables.getVariable(var.getName());
+                    SimVariable simVar = (SimVariable) poolVariables.get(var.getName());
                     if (simVar.getType() == SimVariablePool.VAR_CREATE 
                         || simVar.getType() == SimVariablePool.VAR_DROP ) {
                         Index index = this.mapVarCreateDropToIndex.get(var.getName());
@@ -191,7 +191,7 @@ public class SimBIP extends AbstractBIPSolver
         // for TYPE_CREATE index
         for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
             for (int w = 0; w < W; w++) {
-                SimVariable var = poolVariables.createAndStoreVariable(SimVariablePool.VAR_CREATE, w, idx, 0, 0, 0);
+                SimVariable var = poolVariables.createAndStore(SimVariablePool.VAR_CREATE, w, idx, 0, 0, 0);
                 mapVarCreateDropToIndex.put(var.getName(), poolIndexes.indexes().get(idx));
             }          
         }
@@ -199,7 +199,7 @@ public class SimBIP extends AbstractBIPSolver
         // for TYPE_DROP index
         for (int idx = poolLocator.getStartPosDropIndex(); idx < poolLocator.getStartPosRemainIndex(); idx++) {
             for (int w = 0; w < W; w++) {
-                SimVariable var = poolVariables.createAndStoreVariable(SimVariablePool.VAR_DROP, w, idx, 0, 0, 0);
+                SimVariable var = poolVariables.createAndStore(SimVariablePool.VAR_DROP, w, idx, 0, 0, 0);
                 mapVarCreateDropToIndex.put(var.getName(), poolIndexes.indexes().get(idx));
             }          
         }
@@ -207,7 +207,7 @@ public class SimBIP extends AbstractBIPSolver
         // for TYPE_PRESENT
         for (int idx = 0; idx < poolIndexes.getTotalIndex(); idx++) {
             for (int w = 0; w < W; w++) {
-                poolVariables.createAndStoreVariable(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0);
+                poolVariables.createAndStore(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0);
             }          
         }
         
@@ -216,12 +216,12 @@ public class SimBIP extends AbstractBIPSolver
             int q = desc.getStatementID();
             for (int w = 0; w < W; w++) {               
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    poolVariables.createAndStoreVariable(SimVariablePool.VAR_Y, w, q, k, 0, 0);
+                    poolVariables.createAndStore(SimVariablePool.VAR_Y, w, q, k, 0, 0);
                 }    
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {              
                     for (int i = 0; i < desc.getNumberOfGlobalSlots(); i++) {  
                         for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
-                            poolVariables.createAndStoreVariable(SimVariablePool.VAR_X, w, q, k, i, a);
+                            poolVariables.createAndStore(SimVariablePool.VAR_X, w, q, k, i, a);
                         }
                     }
                 }       
@@ -231,7 +231,7 @@ public class SimBIP extends AbstractBIPSolver
         // for TYPE_S
         for (int ga = 0; ga < poolIndexes.getTotalIndex(); ga++) {
             for (int w = 0; w < W; w++) {
-                poolVariables.createAndStoreVariable(SimVariablePool.VAR_S, w, ga, 0, 0, 0);
+                poolVariables.createAndStore(SimVariablePool.VAR_S, w, ga, 0, 0, 0);
             }
         }
     }
@@ -254,7 +254,7 @@ public class SimBIP extends AbstractBIPSolver
         for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
             List<String> linList = new ArrayList<String>();
             for (int w = 0; w < W; w++) {
-                String var = poolVariables.getVariable(SimVariablePool.VAR_CREATE, w, idx, 0, 0, 0).getName();
+                String var = poolVariables.get(SimVariablePool.VAR_CREATE, w, idx, 0, 0, 0).getName();
                 linList.add(var);
             }
            
@@ -268,7 +268,7 @@ public class SimBIP extends AbstractBIPSolver
         for (int idx = poolLocator.getStartPosDropIndex(); idx < poolLocator.getStartPosRemainIndex(); idx++) {
             List<String> linList = new ArrayList<String>();
             for (int w = 0; w < W; w++) {
-                String var = poolVariables.getVariable(SimVariablePool.VAR_DROP, w, idx, 0, 0, 0).getName();
+                String var = poolVariables.get(SimVariablePool.VAR_DROP, w, idx, 0, 0, 0).getName();
                 linList.add(var);
             }
             buf.getCons().println("well_behaved_11b_" + numConstraints  
@@ -297,10 +297,10 @@ public class SimBIP extends AbstractBIPSolver
         // for TYPE_CREATE index
         for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
             for (int w = 0; w < W; w++) {
-                String var_present = poolVariables.getVariable(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0).getName();
+                String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0).getName();
                 List<String> linList = new ArrayList<String>();
                 for (int j = 0; j <= w; j++) {
-                    String var_create = poolVariables.getVariable(SimVariablePool.VAR_CREATE, j, idx, 0, 0, 0).getName();
+                    String var_create = poolVariables.get(SimVariablePool.VAR_CREATE, j, idx, 0, 0, 0).getName();
                     linList.add(var_create);
                 }
                 
@@ -314,10 +314,10 @@ public class SimBIP extends AbstractBIPSolver
         // for TYPE_DROP index
         for (int idx = poolLocator.getStartPosDropIndex(); idx < poolLocator.getStartPosRemainIndex(); idx++) {
             for (int w = 0; w < W; w++) {
-                String var_present = poolVariables.getVariable(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0).getName();
+                String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0).getName();
                 List<String> linList = new ArrayList<String>();
                 for (int j = 0; j <= w; j++) {
-                    String var_create = poolVariables.getVariable(SimVariablePool.VAR_DROP, j, idx, 0, 0, 0).getName();
+                    String var_create = poolVariables.get(SimVariablePool.VAR_DROP, j, idx, 0, 0, 0).getName();
                     linList.add(var_create);
                 }
                 buf.getCons().println("index_present_12b_" + numConstraints  
@@ -346,7 +346,7 @@ public class SimBIP extends AbstractBIPSolver
 			for (int w = 0; w < W; w++) {
 			    List<String> linList = new ArrayList<String>();
 				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-					String var = poolVariables.getVariable(SimVariablePool.VAR_Y, w, q, k, 0, 0).getName();
+					String var = poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0, 0).getName();
 					linList.add(Double.toString(desc.getInternalPlanCost(k)) + var);		
 				}
 				String Cwq  = StringConcatenator.concatenate(" + ", linList);			
@@ -356,7 +356,7 @@ public class SimBIP extends AbstractBIPSolver
 				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {				
 					for (int i = 0; i < desc.getNumberOfGlobalSlots(); i++) {	
 						for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
-							String var = poolVariables.getVariable(SimVariablePool.VAR_X, w, q, k, i, a).getName();
+							String var = poolVariables.get(SimVariablePool.VAR_X, w, q, k, i, a).getName();
 							linList.add(Double.toString(desc.getIndexAccessCost(k, i, a)) + var);		
 						}
 					}
@@ -380,25 +380,25 @@ public class SimBIP extends AbstractBIPSolver
                 List<String> linList = new ArrayList<String>();
 				// (1) \sum_{k \in [1, Kq]}y^{theta}_k = 1
 				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-					linList.add(poolVariables.getVariable(SimVariablePool.VAR_Y, w, q, k, 0, 0).getName());
+					linList.add(poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0, 0).getName());
 				}
 				buf.getCons().println("atomic_13a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) + " = 1");
 				numConstraints++;
 			
 				// (2) \sum_{a \in S_i} x(theta, k, i, a) = y(theta, k)
 				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-					String var_y = poolVariables.getVariable(SimVariablePool.VAR_Y, w, q, k, 0, 0).getName();
+					String var_y = poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0, 0).getName();
 					for (int i = 0; i < desc.getNumberOfGlobalSlots(); i++) {
 					    if (desc.isSlotReferenced(i) == false) {
 					        continue;
 					    }
 						linList.clear();
 						for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
-							String var_x = poolVariables.getVariable(SimVariablePool.VAR_X, w, q, k, i, a).getName();
+							String var_x = poolVariables.get(SimVariablePool.VAR_X, w, q, k, i, a).getName();
 							linList.add(var_x);
 							IndexInSlot iis = new IndexInSlot(q,i,a);
 							int ga = poolIndexes.getPoolID(iis);
-							String var_s = poolVariables.getVariable(SimVariablePool.VAR_S, w, ga, 0, 0, 0).getName();
+							String var_s = poolVariables.get(SimVariablePool.VAR_S, w, ga, 0, 0, 0).getName();
 							
 							// (3) s_a^{theta} \geq x_{kia}^{theta}
 							buf.getCons().println("atomic_14a_" + numConstraints + ":" 
@@ -420,8 +420,8 @@ public class SimBIP extends AbstractBIPSolver
 		// s(w,ai) <= present(w,i)
         for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
             for (int w = 0; w < W; w++) {
-                String var_present = poolVariables.getVariable(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0).getName();
-                String var_s = poolVariables.getVariable(SimVariablePool.VAR_S, w, idx, 0, 0, 0).getName();
+                String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, w, idx, 0, 0, 0).getName();
+                String var_s = poolVariables.get(SimVariablePool.VAR_S, w, idx, 0, 0, 0).getName();
                 buf.getCons().println("atomic_14b_" + numConstraints  
                                         + ": " + var_s + " - " + var_present + " <= 0 ");
                 numConstraints++;   
@@ -441,7 +441,7 @@ public class SimBIP extends AbstractBIPSolver
 		for (int w = 0; w < W; w++) {
 		    List<String> linList = new ArrayList<String>();
 			for (int idx = poolLocator.getStartPosCreateIndex(); idx < poolLocator.getStartPosDropIndex(); idx++) {
-				String var_create = poolVariables.getVariable(SimVariablePool.VAR_CREATE, w, idx, 0, 0, 0).getName();
+				String var_create = poolVariables.get(SimVariablePool.VAR_CREATE, w, idx, 0, 0, 0).getName();
 				Index index = poolIndexes.indexes().get(idx);
 				linList.add(Double.toString(index.getCreationCost()) + var_create);
 			}
@@ -467,7 +467,7 @@ public class SimBIP extends AbstractBIPSolver
 	private void binaryVariableConstraints()
 	{
 	    int NUM_VAR_PER_LINE = 10;
-        String strListVars = poolVariables.enumerateListVariables(NUM_VAR_PER_LINE);
+        String strListVars = poolVariables.enumerateList(NUM_VAR_PER_LINE);
         buf.getBin().println(strListVars);	
 	}
 }
