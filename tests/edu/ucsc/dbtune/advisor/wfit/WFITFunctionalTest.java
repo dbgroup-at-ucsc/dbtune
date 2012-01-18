@@ -106,6 +106,9 @@ public class WFITFunctionalTest
             new WFIT(
                 db.getOptimizer(), pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
 
+        
+        
+        
         for (SQLStatement sql : workload) {
             wfit.process(sql);
 

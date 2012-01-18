@@ -31,3 +31,5 @@ Add an IndexFullTableScan class that corresponds to the FTS of a base table
 # 154 Create InumSpaceComputation interface and implementations
 
 Add an EagerSpaceComputation class that obtains the whole template plan space
+
+# 155 separate queries per schema
