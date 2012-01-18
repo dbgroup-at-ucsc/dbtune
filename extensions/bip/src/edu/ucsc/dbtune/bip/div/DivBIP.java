@@ -57,7 +57,7 @@ public class DivBIP extends AbstractBIPSolver
                 IloNumVar var = vars[i];
                 if (cplex.getValue(var) == 1) {
                     String name = var.getName();
-                    DivVariable divVar = (DivVariable) this.poolVariables.getVariable(name);
+                    DivVariable divVar = (DivVariable) this.poolVariables.get(name);
                     
                     if (divVar.getType() == DivVariablePool.VAR_S){
                         Index index = this.mapVarSToIndex.get(name);
@@ -319,7 +319,7 @@ public class DivBIP extends AbstractBIPSolver
     protected void binaryVariableConstraints()
     {
         int NUM_VAR_PER_LINE = 10;
-        String strListVars = poolVariables.enumerateListVariables(NUM_VAR_PER_LINE);
+        String strListVars = poolVariables.enumerateList(NUM_VAR_PER_LINE);
         buf.getBin().println(strListVars);     
     }    
 }

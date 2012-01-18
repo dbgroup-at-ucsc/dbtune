@@ -51,7 +51,7 @@ public class Column extends DatabaseObject
         this.isNull       = true;
         this.isDefault    = true;
         this.defaultValue = "";
-
+        
         setDataType(type);
     }
 

@@ -34,7 +34,7 @@ public abstract class AbstractBIPVariablePool implements BIPVariablePool
      * @see edu.ucsc.dbtune.bip.util.BIPVariablePool#getVariable(java.lang.String)
      */
     @Override
-    public BIPVariable getVariable(String name)
+    public BIPVariable get(String name)
     {   
         Object found = mapNameVar.get(name);
         BIPVariable var = null;
@@ -49,7 +49,7 @@ public abstract class AbstractBIPVariablePool implements BIPVariablePool
      * @see edu.ucsc.dbtune.bip.util.BIPVariablePool#enumerateListVariables(int)
      */ 
     @Override
-    public String enumerateListVariables(final int NUM_VAR_PER_LINE)
+    public String enumerateList(final int NUM_VAR_PER_LINE)
     {
         String lineVars = "", result = "";
         int countVar = 0;

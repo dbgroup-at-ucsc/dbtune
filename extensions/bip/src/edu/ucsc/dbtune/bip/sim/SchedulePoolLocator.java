@@ -13,7 +13,9 @@ public class SchedulePoolLocator
 
 	public SchedulePoolLocator()
 	{
-	    
+	    startPosCreateIndex = -1;
+	    startPosDropIndex = -1;
+	    startPosRemainIndex = -1;
 	}
 	/**
 	 * Retrieve the position of the first index of type CREATE in the pool   

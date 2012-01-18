@@ -86,7 +86,7 @@ public class Workload implements Iterable<SQLStatement>
     //                              // even having to do some query processing (parse, rewrite
     //                              // views, query flattening, etc) in order to compare queries
     
-    public static Map<Schema, Workload> getSchemaToWorkloadMapping(Workload wl)
+    public static Map<Schema, Workload> getSchemaToWorkloadMapping()
     {
         throw new RuntimeException("not yet");
     }
