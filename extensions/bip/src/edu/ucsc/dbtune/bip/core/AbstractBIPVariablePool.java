@@ -24,7 +24,7 @@ public abstract class AbstractBIPVariablePool implements BIPVariablePool
      * @see edu.ucsc.dbtune.bip.util.BIPVariablePool#addVariable(edu.ucsc.dbtune.bip.util.BIPVariable)
      */
     @Override
-    public void addVariable(BIPVariable var)
+    public void add(BIPVariable var)
     {
         listVar.add(var);
         mapNameVar.put(var.getName(), var);

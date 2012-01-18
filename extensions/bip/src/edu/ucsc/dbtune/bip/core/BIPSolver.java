@@ -21,14 +21,14 @@ import edu.ucsc.dbtune.workload.Workload;
 public interface BIPSolver 
 {    
     /**
-     * Set the input list of candidate indexes 
+     * Set the list of candidate indexes as a part of the inputs 
      * @param candidateIndexes
      *      The set of candidate indexes
      */
     void setCandidateIndexes(List<Index> candidateIndexes);
     
     /**
-     * Set the input workload
+     * Set the workload as a part of the inputs
      * 
      * @param mapSchemaToWorkload
      *      Each entry of this map is a list of SQL statements that belong to a same schema
@@ -47,7 +47,12 @@ public interface BIPSolver
      */
     void setWorkloadName(String name);
     
-    
+    /**
+     * Set the INUM optimize that will be used
+     * 
+     * @param optimizer
+     *      An INUM-based optimizer
+     */
     void setInumOptimizer(InumOptimizer optimizer);
     
     /**
@@ -62,5 +67,4 @@ public interface BIPSolver
      * @throws IOException 
      */
     BIPOutput solve() throws SQLException, IOException;
-    
 }

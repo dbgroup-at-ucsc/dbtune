@@ -1,9 +1,7 @@
 package edu.ucsc.dbtune.bip.core;
 
 import java.sql.SQLException;
-import java.util.List;
 
-import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -17,16 +15,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  *
  */
 public interface QueryPlanDesc 
-{     
-    /**  
-     * Map the position in each slot of every index in the pool of candidate to the pool ID 
-     * of the corresponding index
-     * 
-     * @param poolIndexes
-     *      The pool that stores candidate indexes
-     */
-    void mapIndexInSlotToPoolID(IndexPool poolIndexes);
-    
+{   
     /**
      * Retrieve the number of template plans
      *      
@@ -36,14 +25,13 @@ public interface QueryPlanDesc
     int getNumberOfTemplatePlans();
 
     /**
-     * Retrieve the number of slots that each template plan has
-     * 
-     * {\bf Note:} The number of slots is equal to the number of relations in the database schema
-     * that the query is defined on. The result of this function is the value of the constant {\it n}
-     * in the paper. 
+     * Retrieve the number of ``global'' slots that each template plan has;
+     * where this number is equal to the number of relations in the database schema
+     * that the query is defined on.  The result of this function is the value of 
+     * the constant {\it n} in the paper. 
      * 
      */
-    int getNumberOfSlots();
+    int getNumberOfGlobalSlots();
     
 
     /**
@@ -54,7 +42,7 @@ public interface QueryPlanDesc
     int getNumberOfIndexesEachSlot(int i);
 
     /**
-     * Retrieve the internal plan cost of the {@code k}^th template plan
+     * Retrieve the internal plan cost of the {@code k}-template plan
      * 
      * @param k
      *      The index of the plan that we need to retrieve its internal plan cost
@@ -65,7 +53,7 @@ public interface QueryPlanDesc
     double getInternalPlanCost(int k);
 
     /**
-     * Retrieve the index acess cost of the index stored at a particular slot
+     * Retrieve the index access cost of the index stored at a particular slot
      * 
      * @param k
      *      The position of the template plan
@@ -91,32 +79,20 @@ public interface QueryPlanDesc
      * Populate query plan description: the number of template plans, internal cost, 
      * index access cost, etc. )
      * 
-     * @param communicator
-     *      The class to communicate with INUM to get InumSpace
-     * @param schema
-     *      The schema on which this statement refers to     
      * @param stmt
-     *      A SQL statement
+     *      The SQL statement
+     * @param schema
+     *      The schema on which {@code stmt} refers to 
      * @param poolIndexes
      *      The pool of candidate indexes   
      * 
-     * {\bf Note}
-     * <p>
-     * <ol> 
-     *  <li> There does not contain the full table scan in {@code poolIndexes}</li>
-     *  <li> The index full table scan is always assigned the last position in the list of indexes
-     *     at each slot </li>
-     *  <li> Optimization: {@code schema} can be modified to contain only
-     *  relations that are referenced in the workload </li>
-     * </ol>
-     * </p>  
+     * {\bf Note: }The index full table scan is assigned the last position in the list of indexes
+     *  at each slot. Optimization: {@code schema} can be modified to contain only
+     *  relations that are referenced by queries in the workload. 
      *     
      * @throws SQLException 
      */
-    void generateQueryPlanDesc (Schema schema,
-                                List<IndexFullTableScan> listFullTableScanIndexes,
-                                SQLStatement stmt, IndexPool poolIndexes) 
-                                throws SQLException;
+    void generateQueryPlanDesc (SQLStatement stmt, Schema schema, IndexPool poolIndexes) throws SQLException;
     
     
     /**
@@ -139,4 +115,13 @@ public interface QueryPlanDesc
      *     {@code boolean}: true if the relation at the position {@code idSlot} is referenced by the query
      */    
     boolean isSlotReferenced(int idSlot);
+    
+    /**  
+     * Map the position in each slot of every index in the pool of candidate to the pool ID 
+     * of the corresponding index
+     * 
+     * @param poolIndexes
+     *      The pool that stores candidate indexes
+     */
+    void mapIndexInSlotToPoolID(IndexPool poolIndexes);
 }

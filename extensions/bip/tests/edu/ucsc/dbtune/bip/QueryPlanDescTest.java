@@ -13,7 +13,6 @@ import edu.ucsc.dbtune.bip.core.BIPIndexPool;
 import edu.ucsc.dbtune.bip.core.IndexPool;
 import edu.ucsc.dbtune.bip.core.InumQueryPlanDesc;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
-import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;

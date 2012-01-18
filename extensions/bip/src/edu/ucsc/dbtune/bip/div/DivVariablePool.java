@@ -76,7 +76,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
         varName = varName.concat(")");
                 
         DivVariable var = new DivVariable(varName, typeVariable, replica);
-        this.addVariable(var);
+        this.add(var);
         
         // Create a mapping from 
         DivVariableIndicator iai = new DivVariableIndicator(typeVariable, replica, queryId, k, i, a);

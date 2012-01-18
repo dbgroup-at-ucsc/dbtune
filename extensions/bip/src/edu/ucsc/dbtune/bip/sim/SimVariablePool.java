@@ -50,7 +50,7 @@ public class SimVariablePool extends AbstractBIPVariablePool
      * @return
      *      The variable name
      */
-    public SimVariable createAndStoreBIPVariable(int typeVariable, int window, int queryId, int k, int i, int a)
+    public SimVariable createAndStoreVariable(int typeVariable, int window, int queryId, int k, int i, int a)
     {
         String varName = "";
         varName = varName.concat(strHeaderVariable[typeVariable]);
@@ -74,7 +74,7 @@ public class SimVariablePool extends AbstractBIPVariablePool
          
         // store the variable with the derived name
         SimVariable var = new SimVariable(varName, typeVariable, window);
-        this.addVariable(var);
+        this.add(var);
         
         // Create a mapping for this variable 
         SimVariableIndicator iai = new SimVariableIndicator(typeVariable, window, queryId, k, i, a);
@@ -101,7 +101,7 @@ public class SimVariablePool extends AbstractBIPVariablePool
      * @return
      *      BIP Variable
      */
-    public SimVariable getSimVariable(int typeVariable, int window, int queryId, int k, int i, int a)
+    public SimVariable getVariable(int typeVariable, int window, int queryId, int k, int i, int a)
     {   
         SimVariableIndicator iai = new SimVariableIndicator(typeVariable, window, queryId, k, i, a);
         Object found = mapHighDimensionVar.get(iai);

@@ -33,3 +33,6 @@ Add an IndexFullTableScan class that corresponds to the FTS of a base table
 Add an EagerSpaceComputation class that obtains the whole template plan space
 
 # 155 separate queries per schema
+
+# 156 Change the way BIP communicates with INUM optimizer
+Change the implementation of BIP to comply with the new interface of INUM optimizer

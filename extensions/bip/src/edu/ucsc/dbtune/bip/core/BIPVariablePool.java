@@ -14,7 +14,7 @@ public interface BIPVariablePool
      * @param var
      *      A BIP variable
      */
-    void addVariable(BIPVariable var);
+    void add(BIPVariable var);
 
     /**
      * Retrieve a {@code BIPVariable} object given a name
