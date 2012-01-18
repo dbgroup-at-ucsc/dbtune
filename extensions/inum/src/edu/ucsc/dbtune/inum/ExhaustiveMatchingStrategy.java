@@ -48,7 +48,7 @@ public class ExhaustiveMatchingStrategy implements MatchingStrategy
 
         for (InumPlan plan : templatePlans)
             for (List<Index> atomicConfiguration : atomicConfigurations) {
-                final double cost = plan.plugIntoSlots(new BitArraySet<Index>(atomicConfiguration));
+                final double cost = plan.plug(new BitArraySet<Index>(atomicConfiguration));
 
                 if (cost < bestCost) {
                     bestCost = cost;

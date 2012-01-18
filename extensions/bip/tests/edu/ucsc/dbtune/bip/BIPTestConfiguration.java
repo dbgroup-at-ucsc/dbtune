@@ -16,8 +16,6 @@ import edu.ucsc.dbtune.bip.util.*;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.DBTuneInstances;
-import edu.ucsc.dbtune.inum.InumSpace;
-import edu.ucsc.dbtune.inum.InumStatementPlan;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.metadata.Index; 
@@ -60,7 +58,7 @@ public abstract class BIPTestConfiguration
     protected static int numSchemaTables = 3;
     protected static Environment environment = Environment.getInstance();
     protected static Map<Schema, Workload> mapSchemaToWorkload = new HashMap<Schema, Workload>();    
-    protected static InumCommunicator communicator;
+    
     protected static List< List<Index> > listIndexQueries = new ArrayList<List<Index>>();
     protected static List< List<Table> > listTableQueries = new ArrayList<List<Table>>();            
     protected static String workloadName;
@@ -69,7 +67,7 @@ public abstract class BIPTestConfiguration
         try {
             cat = DBTuneInstances.configureCatalog(numSch, numSchemaTables, 2); 
             listSchema = cat.schemas(); 
-            communicator = mock(InumCommunicator.class);
+           
             workloadName = "testwl";
             // create two workloads, each corresponds to one schema and contains one query
             for (int q = 0; q < 2; q++) {
@@ -146,13 +144,13 @@ public abstract class BIPTestConfiguration
                 // run over each statement in the workload
                 for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ){
                     SQLStatement stmt = iterStmt.next();
-                    InumSpace inum = mock(InumSpace.class);                    
-                    Set<InumStatementPlan> templatePlans = new LinkedHashSet<InumStatementPlan>();
-                
+                   // InumSpace inum = mock(InumSpace.class);                    
+                   // Set<InumStatementPlan> templatePlans = new LinkedHashSet<InumStatementPlan>();
+                    /*
                     int counter = 0;
                     System.out.println(" Query: " + q + " Number of template plans: " + numPlans[q]);
                     for (int k = 0; k < numPlans[q]; k++) {
-                        InumStatementPlan plan = mock(InumStatementPlan.class);
+                     //   InumStatementPlan plan = mock(InumStatementPlan.class);
                     
                         if (q == 0) {
                             when(plan.getInternalCost()).thenReturn(internalCostPlan1[k]);
@@ -183,6 +181,7 @@ public abstract class BIPTestConfiguration
                     
                     when(inum.getTemplatePlans()).thenReturn(templatePlans);                    
                     when(communicator.populateInumSpace(stmt)).thenReturn(inum);
+                    */
                 }
                 q++;
             }

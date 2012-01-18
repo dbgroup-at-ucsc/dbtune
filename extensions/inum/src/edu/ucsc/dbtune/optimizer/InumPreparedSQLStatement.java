@@ -86,4 +86,9 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
             result.getBestConfiguration(),
             0);
     }
+    
+    public Set<InumPlan> getTemplatePlans()
+    {
+        return inumSpace;
+    }
 }

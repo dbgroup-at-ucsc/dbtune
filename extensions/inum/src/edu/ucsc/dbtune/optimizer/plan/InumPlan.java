@@ -67,7 +67,7 @@ public class InumPlan extends SQLStatementPlan
      *      Double#POSITIVE_INFINITY} if some of the indexes in the configuration can't be used in a 
      *      slot.
      */
-    public double plugIntoSlots(Set<Index> atomicConfiguration)
+    public double plug(Set<Index> atomicConfiguration)
     {
         throw new RuntimeException("not yet");
     }
@@ -75,5 +75,16 @@ public class InumPlan extends SQLStatementPlan
     public Collection<TableAccessSlot> getAccessSlots()
     {
         return slots.values();
+    }
+    
+    /**
+     * @return
+     *      the cost if the atomic configuration is used in each slot; {@link 
+     *      Double#POSITIVE_INFINITY} if some of the indexes in the configuration can't be used in a 
+     *      slot.
+     */
+    public double plug(Index index)
+    {
+        throw new RuntimeException("not yet");
     }
 }

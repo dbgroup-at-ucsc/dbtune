@@ -17,8 +17,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
         try {
             double delta = 0.4;
             InteractionBIP bip = new InteractionBIP(delta);
-            bip.setCandidateIndexes(candidateIndexes);
-            bip.setCommunicator(communicator);
+            bip.setCandidateIndexes(candidateIndexes);            
             bip.setMapSchemaToWorkload(mapSchemaToWorkload);
             bip.setWorkloadName(workloadName);
             
