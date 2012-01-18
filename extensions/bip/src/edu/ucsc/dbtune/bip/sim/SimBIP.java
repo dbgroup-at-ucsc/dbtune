@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.InumCommunicator;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.LogListener;
@@ -53,15 +52,13 @@ public class SimBIP extends AbstractBIPSolver
      * @param timeLimit
      *      The time budget at each maintenance window
      */
-	public SimBIP(List<Index> Sinit, List<Index> Smat, 
-	              InumCommunicator communicator,
+	public SimBIP(List<Index> Sinit, List<Index> Smat,	             
 	              final int W, final double timeLimit)
 	{	
 		this.W = W;
 		this.timeLimit = timeLimit;
 		this.Sinit = Sinit;
 		this.Smat = Smat;
-		this.communicator = communicator;
 	}
 	
 	

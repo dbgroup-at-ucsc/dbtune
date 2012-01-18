@@ -8,6 +8,7 @@ import java.util.Map;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.workload.Workload;
 
 /**
@@ -45,6 +46,9 @@ public interface BIPSolver
      * {\bf Note:} The workload name is used to name the file on which the BIP is stored      
      */
     void setWorkloadName(String name);
+    
+    
+    void setInumOptimizer(InumOptimizer optimizer);
     
     /**
      * 

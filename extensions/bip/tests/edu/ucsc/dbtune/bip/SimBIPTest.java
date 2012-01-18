@@ -32,7 +32,7 @@ public class SimBIPTest  extends BIPTestConfiguration
                 Smat.add(idx);
             }
         }
-        SimBIP sim = new SimBIP(Sinit, Smat, communicator, W, timeLimit);
+        SimBIP sim = new SimBIP(Sinit, Smat, W, timeLimit);
         sim.setMapSchemaToWorkload(mapSchemaToWorkload);
         sim.setWorkloadName(workloadName);
         BIPOutput schedule = sim.solve();

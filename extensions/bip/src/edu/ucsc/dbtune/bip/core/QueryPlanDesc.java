@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.List;
 
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
-import edu.ucsc.dbtune.bip.util.InumCommunicator;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -114,7 +113,7 @@ public interface QueryPlanDesc
      *     
      * @throws SQLException 
      */
-    void generateQueryPlanDesc (InumCommunicator communicator, Schema schema,
+    void generateQueryPlanDesc (Schema schema,
                                 List<IndexFullTableScan> listFullTableScanIndexes,
                                 SQLStatement stmt, IndexPool poolIndexes) 
                                 throws SQLException;

@@ -16,11 +16,11 @@ import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.IndexFullTableScan;
-import edu.ucsc.dbtune.bip.util.InumCommunicator;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -37,7 +37,6 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected List<Index> candidateIndexes;
     protected String workloadName;
     protected Map<Schema, Workload> mapSchemaToWorkload;
-    protected InumCommunicator communicator;
     
     protected List<QueryPlanDesc> listQueryPlanDescs;
     protected IndexPool poolIndexes;
@@ -49,6 +48,8 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected CPlexBuffer buf;
     protected Environment environment = Environment.getInstance();
     protected int numConstraints;
+    
+    protected InumOptimizer inumOptimizer;
     
     @Override
     public void setWorkloadName(String workloadName)
@@ -67,14 +68,12 @@ public abstract class AbstractBIPSolver implements BIPSolver
         this.candidateIndexes = candidateIndexes;
     }
     
-    /**
-     * TODO: This method is implemented temporarily
-     * @param communicator
-     */
-    public void setCommunicator(InumCommunicator communicator)
+    @Override
+    public void setInumOptimizer(InumOptimizer optimizer) 
     {
-        this.communicator = communicator;
+        this.inumOptimizer = optimizer;
     }
+    
    
     @Override
     public BIPOutput solve() throws SQLException, IOException
@@ -183,11 +182,11 @@ public abstract class AbstractBIPSolver implements BIPSolver
         for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
             List<IndexFullTableScan> listIndexFullTableScans = mapSchemaListIndexFullTableScans.get(entry.getKey());
             for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
-                QueryPlanDesc desc =  new InumQueryPlanDesc();                    
+                QueryPlanDesc desc =  new InumQueryPlanDesc(inumOptimizer);                    
                 // Populate the INUM space for each statement
                 // We do not add full table scans before populate from @desc
                 // so that the full table scan is placed at the end of each slot 
-                desc.generateQueryPlanDesc(communicator, entry.getKey(), listIndexFullTableScans, 
+               desc.generateQueryPlanDesc(entry.getKey(), listIndexFullTableScans, 
                                            iterStmt.next(), poolIndexes);
                 listQueryPlanDescs.add(desc);
             }
