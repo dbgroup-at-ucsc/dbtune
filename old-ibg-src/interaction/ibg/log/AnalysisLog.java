@@ -7,11 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public class AnalysisLog implements Iterable<AnalysisLog.Entry> {
-	int indexCount;
+	InteractionBank bank;
 	List<Entry> list = new ArrayList<Entry>();
 	
-	public AnalysisLog(int indexCount) {
-		this.indexCount = indexCount;
+	public AnalysisLog(InteractionBank bank) {
+		this.bank = bank;
 	}
 	
 	public void add(Entry entry) {
@@ -24,7 +24,7 @@ public class AnalysisLog implements Iterable<AnalysisLog.Entry> {
 	
 	public void output(PrintWriter out) throws IOException {
 		// print header row first
-		Entry.headerRow(indexCount).output(out);
+		Entry.headerRow(bank).output(out);
 		for (Entry entry : list) 
 			entry.output(out);
 		if (out.checkError())
@@ -71,8 +71,15 @@ public class AnalysisLog implements Iterable<AnalysisLog.Entry> {
 			out.println();
 		}
 		
-		static Entry headerRow(int indexCount) {
-			return new Entry(-1, -1, -1, 0L, 0, 0, indexCount, -1.0, 1.0);
+		static Entry headerRow(InteractionBank bank) {	
+			int indexCount = bank.indexCount;
+			double pairCount = (indexCount*(indexCount-1)) / 2.0; // n choose 2	
+			double sumRelativeError = 0;
+			for (int a = 0; a < indexCount; a++)
+				for (int b = 0; b < a; b++) 
+					if (bank.interactionLevel(a, b) > 0)
+						++sumRelativeError;
+			return new Entry(-1, -1, -1, 0L, 0, 0, indexCount, -1.0, sumRelativeError/pairCount);
 		}
 	}
 }

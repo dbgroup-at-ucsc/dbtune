@@ -6,8 +6,11 @@ import interaction.workload.*;
 import java.io.*;
 import java.sql.SQLException;
 
+/*
+ * This just has some static functions that are shared among other classes
+ * in this package.
+ */
 public class Main {
-	public static String sql;
 	public static DBConnection globalConn; // for debugging only
 	
 	protected static DBConnection openConnection() throws SQLException {
@@ -26,32 +29,4 @@ public class Main {
 	protected static SQLWorkload getWorkload() throws IOException {
 		return new SQLWorkload(Configuration.queryListFile());
 	}
-
-//	public static void runSteps(File queryFile) {
-//		DBConnection conn;
-//		SQLWorkload xacts;
-//		
-//
-//		
-//		// open DB connection
-//
-//		globalConn = conn;
-//		System.gc();	
-//
-//		// do analysis and close connection
-//		try {
-//			AnalysisMain.analyze(conn, xacts);
-//		} catch (SQLException e) {
-//			System.out.println(Main.sql);
-//			e.printStackTrace();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		try {
-//			conn.close();
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		}
-//	}
 }

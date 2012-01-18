@@ -112,4 +112,26 @@ public class InteractionBank implements Serializable {
 					uf.union(a,b);
 		return uf.sets();
 	}
+	
+	public void printStablePartitioning(BitSet used, double threshold) {
+		// make a separate UF structure from the instance var
+		// so we can get the "possible" rather than the "certain" interactions
+		UnionFind uf = new UnionFind(indexCount);
+		
+		System.out.println("Pairwise interactions: ");
+		for (int id1 = 0; id1 < indexCount; id1++) {
+			if (!used.get(id1)) continue;
+			System.out.println(id1 + ": ");
+			for (int id2 = 0; id2 < id1; id2++) {
+				if (!used.get(id2)) continue;
+				if (interactionLevel(id1, id2) > threshold) {
+					uf.union(id1, id2);
+					System.out.println("\t" + id2 + " = " + lowerBounds[id1][id2]);
+				}
+			}
+		}
+		System.out.println();
+		System.out.println("Stable partitioning: ");
+		uf.print(used);
+	}
 }

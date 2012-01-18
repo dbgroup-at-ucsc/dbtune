@@ -35,9 +35,9 @@ public class LogMain {
 
 	private static void runSteps() throws IOException, ClassNotFoundException {
 		Generation.Strategy[] strategies = new Generation.Strategy[] {
-//				UNION_OPTIMAL,
-//				FULL_BUDGET,
-//				HALF_BUDGET,
+				UNION_OPTIMAL,
+				FULL_BUDGET,
+				HALF_BUDGET,
 				OPTIMAL_1C
 		};
 		AnalysisMode[] modes = new AnalysisMode[] {

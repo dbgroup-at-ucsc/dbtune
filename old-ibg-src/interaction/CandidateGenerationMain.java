@@ -13,6 +13,12 @@ import interaction.db.DBConnection;
 import interaction.util.Files;
 import interaction.workload.SQLWorkload;
 
+/*
+ * Chooses index candidates for a workload
+ * 
+ * Multiple sets of candidates can be chosen according to different 
+ * generation strategies (see Generation.java)
+ */
 public class CandidateGenerationMain {
 
 	public static void main(String[] args) {
@@ -47,29 +53,32 @@ public class CandidateGenerationMain {
 
 			// UNION_OPTIMAL
 //			File optimalCandidateFile = Configuration.candidateFile(UNION_OPTIMAL);
-			DB2IndexSet optimalSet = UnionOptimal.getCandidates(conn, workload);
+//			DB2IndexSet optimalSet = UnionOptimal.getCandidates(conn, workload);
 //			writeCandidates(optimalCandidateFile, optimalSet);
 //			
 //			System.out.println(Files.readObjectFromFile(optimalCandidateFile));
 //			System.out.println();
 			
+			
+//			// FULL_BUDGET
+			String db2Advis = Configuration.db2Advis;
+			File fullCandidateFile = Configuration.candidateFile(FULL_BUDGET);
+			Advisor.FileInfo fullInfo = Advisor.createAdvisorFile(conn, db2Advis, -1, workloadFile);
+			DB2IndexSet fullSet = fullInfo.getCandidates(conn);
+			writeCandidates(fullCandidateFile, fullSet);
+			
+			System.out.println(Files.readObjectFromFile(fullCandidateFile));
+			System.out.println();
+			
+
 			// OPTIMAL_1C
 			File onecolCandidateFile = Configuration.candidateFile(OPTIMAL_1C);
-			DB2IndexSet onecolSet = DB2Index.extractSingleColumns(optimalSet);
+			DB2IndexSet onecolSet = DB2Index.extractSingleColumns(fullSet);
 			writeCandidates(onecolCandidateFile, onecolSet);
 			
 			System.out.println(Files.readObjectFromFile(onecolCandidateFile));
 			System.out.println();
 			
-//			// FULL_BUDGET
-//			String db2Advis = Configuration.db2Advis;
-//			File fullCandidateFile = Configuration.candidateFile(FULL_BUDGET);
-//			Advisor.FileInfo fullInfo = Advisor.createAdvisorFile(conn, db2Advis, -1, workloadFile);
-//			DB2IndexSet fullSet = fullInfo.getCandidates(conn);
-//			writeCandidates(fullCandidateFile, fullSet);
-//			
-//			System.out.println(Files.readObjectFromFile(fullCandidateFile));
-//			System.out.println();
 //			
 //			// HALF_BUDGET (relies on results from HALF_BUDGET
 //			File halfCandidateFile = Configuration.candidateFile(HALF_BUDGET);

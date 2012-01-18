@@ -485,7 +485,6 @@ public class DBConnection {
 					sbuf.append(") THEN 'Y' ELSE 'N' END");
 					sql = sbuf.toString();
 				}	
-				interaction.Main.sql = sql;
 				int count = tempStmt.executeUpdate(sql);
 				conn.commit();
 				return count;

@@ -31,7 +31,7 @@ import interaction.util.Files;
  *   -o recommendation.xml = put recommendation into recommendation.xml
  *   -a karlsch/**** = username/password
  *   
- * The workload file must be an SQL file with comma-delimited queries 
+ * The workload file must be an SQL file with semicolon-delimited queries 
  */
 public class Advisor {
 	private static final Pattern indexHeaderPattern = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
@@ -40,7 +40,7 @@ public class Advisor {
 	private static final Pattern endIndexesPattern = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES"); 
 
 	public static FileInfo createAdvisorFile(DBConnection conn, String advisorPath, int budget, File workloadFile) throws IOException, AdvisorException, SQLException {
-		conn.qlib.clearAdviseIndex.execute();
+		conn.qlib.clearAdviseIndex.execute(); // executes "DELETE FROM advise_index"
 		
 		String cmd = getCmd(conn, advisorPath, budget, workloadFile);
 		Process prcs = Runtime.getRuntime().exec(cmd);
@@ -115,7 +115,7 @@ public class Advisor {
 		}
 		
 		private static void processFile(InputStream stream, List<String> names, List<Double> sizes) throws IOException, AdvisorException { 
-			List<String> lines = Files.getLines(stream);
+			List<String> lines = Files.getLines(stream); // splits the file into individual lines
 			Iterator<String> iter = lines.iterator();
 			Matcher headerMatcher = indexHeaderPattern.matcher("");
 			Matcher startMatcher = startIndexesPattern.matcher("");

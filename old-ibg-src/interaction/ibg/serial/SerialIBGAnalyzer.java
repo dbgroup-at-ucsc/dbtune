@@ -1,6 +1,5 @@
 package interaction.ibg.serial;
 
-import interaction.Configuration;
 import interaction.ibg.log.InteractionLogger;
 import interaction.ibg.serial.SerialIndexBenefitGraph.IBGNode;
 import interaction.util.BitSet;

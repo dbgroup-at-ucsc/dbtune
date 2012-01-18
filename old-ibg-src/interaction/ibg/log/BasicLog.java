@@ -36,16 +36,20 @@ public class BasicLog implements Serializable {
 	
 	public AnalysisLog getAnalysisLog(double threshold) {
 		int indexCount = bank.indexCount;
-		double pairCount = (indexCount*(indexCount-1)) / 2.0; // n choose 2
+		//double pairCount = (indexCount*(indexCount-1)) / 2.0; // n choose 2
 		double sumRelativeError = 0;
+		double trueTotalInteraction = 0;
 		for (int a = 0; a < indexCount; a++)
 			for (int b = 0; b < a; b++) 
-				if (bank.interactionLevel(a, b) > 0)
+				if (bank.interactionLevel(a, b) > 0) {
 					++sumRelativeError;
+					trueTotalInteraction += bank.interactionLevel(a,b);
+				}
 		UnionFind uf = new UnionFind(indexCount);
 		int numInteractingPairs = 0; // count up as we go
+		double totalInteractionSoFar = 0;
 
-		AnalysisLog log = new AnalysisLog(indexCount);
+		AnalysisLog log = new AnalysisLog(bank);
 		
 		for (Entry e : list) {
 			double doi = bank.interactionLevel(e.a, e.b);
@@ -55,8 +59,9 @@ public class BasicLog implements Serializable {
 			assert(0 <= oldRE && oldRE <= 1.0);
 			assert(oldRE >= newRE);
 			sumRelativeError -= oldRE - newRE;
+			totalInteractionSoFar += e.doiNew - e.doiOld;
 			
-			if (oldRE < threshold && newRE >= threshold) {
+			if (e.doiOld < threshold && e.doiNew >= threshold) {
 				++numInteractingPairs;
 				uf.union(e.a, e.b);
 			}
@@ -65,7 +70,8 @@ public class BasicLog implements Serializable {
 						e.a, e.b, e.doiNew,
 						e.millis, e.whatifCalls, 
 						numInteractingPairs, uf.numSets(), 
-						newRE, sumRelativeError/pairCount));
+						newRE, 1 - totalInteractionSoFar/trueTotalInteraction));
+//						newRE, sumRelativeError/pairCount));
 		}
 		return log;
 	}

@@ -1,7 +1,6 @@
 package interaction.ibg.serial;
 
 import interaction.db.*;
-import interaction.schedule.IBGScheduleInfo;
 import interaction.util.BitSet;
 import interaction.util.Queue;
 import interaction.workload.*;
@@ -9,7 +8,7 @@ import interaction.workload.*;
 import java.io.Serializable;
 import java.sql.SQLException;
 
-public class SerialIndexBenefitGraph implements IBGScheduleInfo.Graph, Serializable {
+public class SerialIndexBenefitGraph implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/*
@@ -46,10 +45,6 @@ public class SerialIndexBenefitGraph implements IBGScheduleInfo.Graph, Serializa
 	}
 	
 	public final IBGNode rootNode() {
-		return rootNode;
-	}
-
-	public final IBGScheduleInfo.Node rootIBGInfoNode() {
 		return rootNode;
 	}
 	
@@ -142,7 +137,7 @@ public class SerialIndexBenefitGraph implements IBGScheduleInfo.Graph, Serializa
 	/*
 	 * A node of the IBG
 	 */
-	public static class IBGNode implements IBGScheduleInfo.Node, Serializable {
+	public static class IBGNode implements Serializable {
 		private static final long serialVersionUID = 1L;
 
 		/* Configuration that this node is about */
@@ -263,15 +258,12 @@ public class SerialIndexBenefitGraph implements IBGScheduleInfo.Graph, Serializa
 		}
 	}
 
-	public static class ScheduleInfo implements IBGScheduleInfo<SerialIndexBenefitGraph> {
-		private SerialIndexBenefitGraph ibgs[];
-		public ScheduleInfo(SerialIndexBenefitGraph[] ibgs) { this.ibgs = ibgs; }
-		public SerialIndexBenefitGraph[] ibgs() { return ibgs; }
-		public Searcher<SerialIndexBenefitGraph> searcher() { return new SerialIBGCoveringNodeFinder(); }
-	}
-
 	public String usedSetToString() {
 		return usedSet.toString();
+	}
+
+	public BitSet usedSet() {
+		return (BitSet) usedSet.clone();
 	}
 }
 

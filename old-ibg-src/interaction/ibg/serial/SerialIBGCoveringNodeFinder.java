@@ -1,10 +1,9 @@
 package interaction.ibg.serial;
 
 import interaction.ibg.serial.SerialIndexBenefitGraph.IBGNode;
-import interaction.schedule.IBGScheduleInfo;
 import interaction.util.BitSet;
 
-public class SerialIBGCoveringNodeFinder implements IBGScheduleInfo.Searcher<SerialIndexBenefitGraph> {
+public class SerialIBGCoveringNodeFinder {
 	private final BitSet visited = new BitSet();
 	private final SerialIBGNodeStack pending = new SerialIBGNodeStack();
 	
@@ -77,19 +76,5 @@ public class SerialIBGCoveringNodeFinder implements IBGScheduleInfo.Searcher<Ser
 		}
 		
 		return null;
-	}
-	
-	public final double findCost(SerialIndexBenefitGraph ibg, BitSet config) {
-		if (config.isEmpty())
-			return ibg.emptyCost();
-		else
-			return find(ibg, config).cost();
-	}
-	
-	public final double findCost(SerialIndexBenefitGraph[] ibgs, BitSet config) {
-		double cost = 0;
-		for (SerialIndexBenefitGraph ibg : ibgs)
-			cost += findCost(ibg, config);
-		return cost;
 	}
 }
