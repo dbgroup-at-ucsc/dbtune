@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.optimizer;
 import java.sql.SQLException;
 import java.util.Set;
 
-import edu.ucsc.dbtune.inum.ExhaustiveInumSpaceComputation;
+import edu.ucsc.dbtune.inum.EagerSpaceComputation;
 import edu.ucsc.dbtune.inum.ExhaustiveMatchingStrategy;
 import edu.ucsc.dbtune.inum.InumSpaceComputation;
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -46,7 +46,7 @@ public class InumOptimizer implements Optimizer
     public InumOptimizer(Optimizer optimizer)
     {
         this.delegate = optimizer;
-        this.inumSpaceComputation = new ExhaustiveInumSpaceComputation();
+        this.inumSpaceComputation = new EagerSpaceComputation();
     }
 
     /**
