@@ -25,6 +25,11 @@ public class InteractionOutput extends BIPOutput
     {
         listInteractions.add(pairIndexes);
     }
+    
+    public List<IndexInteraction> getListInteractions()
+    {
+        return this.listInteractions;
+    }
 
     @Override
     public String toString() 
