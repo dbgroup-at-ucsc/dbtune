@@ -8,6 +8,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import edu.ucsc.dbtune.metadata.Schema;
 
 /**
  * Represents a workload.
@@ -82,4 +85,9 @@ public class Workload implements Iterable<SQLStatement>
     //                              // string. This would require string matching stuff, or
     //                              // even having to do some query processing (parse, rewrite
     //                              // views, query flattening, etc) in order to compare queries
+    
+    public static Map<Schema, Workload> getSchemaToWorkloadMapping(Workload wl)
+    {
+        throw new RuntimeException("not yet");
+    }
 }

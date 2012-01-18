@@ -16,6 +16,7 @@ import edu.ucsc.dbtune.bip.util.*;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.DBTuneInstances;
+import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.metadata.Index; 
@@ -23,6 +24,8 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -189,5 +192,21 @@ public abstract class BIPTestConfiguration
         catch (Exception e){
             throw new RuntimeException(e);
         }
+        /*
+         * DatabaseSystem db = DatabaseSystem.newDatabaseSystem();
+
+        assertThat(db.getConnection() != null, is(true));
+        assertThat(db.getOptimizer() != null, is(true));
+        assertThat(db.getCatalog() != null, is(true));
+
+        db.getConnection().close();
+        for (SQLStatement sql : workload) {
+            allIndexes.addAll(db.getOptimizer().recommendIndexes(sql));
+        }
+        
+        workloadFile   = en.getScriptAtWorkloadsFolder("one_table/workload.sql");        
+        fileReader     = new FileReader(workloadFile);
+        workload       = new Workload(fileReader);
+        */
     }
 }

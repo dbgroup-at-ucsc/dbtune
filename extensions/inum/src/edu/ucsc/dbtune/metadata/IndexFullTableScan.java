@@ -17,7 +17,7 @@ public class IndexFullTableScan extends Index
         this.name = "full_table_scan";
         this.table = table;
     }
-    
+        
     /**
      * Returns the table on which the index is defined.
      *
