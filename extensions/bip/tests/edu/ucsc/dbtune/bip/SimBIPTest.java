@@ -1,29 +1,29 @@
 package edu.ucsc.dbtune.bip;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-
 import java.io.FileReader;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-
-import org.junit.Test;
-
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.sim.SimBIP;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
-import edu.ucsc.dbtune.bip.core.BIPOutput;
-import edu.ucsc.dbtune.bip.sim.SimBIP;
 
+import org.junit.Test;
+
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 
 /**
- * Test SimBIP
- * @author tqtrung
+ * Test SimBIP.
  *
+ * @author tqtrung
  */
 public class SimBIPTest 
 {   
@@ -56,19 +56,24 @@ public class SimBIPTest
             System.out.println(" Index " + index.getFullyQualifiedName());
         }
         
-        Set<Index> Sinit = new HashSet<Index>();
-        Set<Index> Smat = new HashSet<Index>();
-        int W = 4;
+        Set<Index> sInit = new HashSet<Index>();
+        Set<Index> sMat = new HashSet<Index>();
+        int w = 4;
         double timeLimit = 300;
-        Smat = allIndexes;
+        sMat = allIndexes;
         
+        Optimizer io = db.getOptimizer();
+
+        if (!(io instanceof InumOptimizer))
+            throw new Exception("Expecting InumOptimizer instance");
+
         // Sinit = \emptyset
-        SimBIP sim = new SimBIP(Sinit, Smat, W, timeLimit);
+        SimBIP sim = new SimBIP(sInit, sMat, w, timeLimit);
+        sim.setInumOptimizer((InumOptimizer) io);
         Map<Schema, Workload> mapSchemaToWorkload = workload.getSchemaToWorkloadMapping();
         sim.setSchemaToWorkloadMapping(mapSchemaToWorkload);
         sim.setWorkloadName(workloadFile);
         BIPOutput schedule = sim.solve();
         System.out.println("Result: " + schedule.toString());
-        
     }
 }
