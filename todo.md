@@ -46,14 +46,14 @@ Add a class of BIP that implements IndexInteractionFinder interface.
 
 # 158 modify test for bipsolver subclasses
 
-# 159 Fix DB2 metadata issues
-
-No issues found. It looks like other empty databases are getting in the way.
-
-# 160 Extend MetadataExtractorFunctionalTest
+# 159 Extend MetadataExtractorFunctionalTest
 
 Add more workloads in order to check that a variety of kinds of catalogs can be extracted 
 appropriately. At least all the TPC ones.
+
+# 160 Fix DB2 metadata issues
+
+No issues found. It looks like other empty databases are getting in the way.
 
 # 161 add support for multi-line in Workload
 
