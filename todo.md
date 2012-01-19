@@ -37,5 +37,10 @@ Add an EagerSpaceComputation class that obtains the whole template plan space
 # 156 Change the way BIP communicates with INUM optimizer
 Change the implementation of BIP to comply with the new interface of INUM optimizer
 
-#157 Add class implements IndexInteractionFinder
+# 157 Add class implements IndexInteractionFinder
 Add a class of BIP that implements IndexInteractionFinder interface.
+
+# 158 modify test for bipsolver subclasses
+
+# 159 Fix DB2 metadata issues
+
