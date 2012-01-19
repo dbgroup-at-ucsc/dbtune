@@ -2,9 +2,11 @@ package edu.ucsc.dbtune.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Implementation of a tree.
@@ -26,7 +28,7 @@ public class Tree<T extends Comparable<? super T>>
      */
     public Tree(T root)
     {
-        this.root     = new Entry<T>(root);
+        this.root = new Entry<T>(root);
         this.elements = new HashMap<T, Entry<T>>();
 
         elements.put(root, this.root);
@@ -66,9 +68,18 @@ public class Tree<T extends Comparable<? super T>>
      * @return
      *     elements at the leafs
      */
-    public List<T> leafs()
+    public Set<T> leafs()
     {
-        throw new RuntimeException("not yet");
+        // if this needs to be implemented more efficiently, we can keep a list of all the leafs and 
+        // maintain it as elements are removed/inserted from/into the tree
+
+        Set<T> leafs = new HashSet<T>();
+
+        for (Entry<T> e : elements.values())
+            if (e.children.isEmpty())
+                leafs.add(e.element);
+
+        return leafs;
     }
 
     /**
@@ -252,7 +263,7 @@ public class Tree<T extends Comparable<? super T>>
     public static class Entry<T extends Comparable<? super T>>
     {
         private T element;
-        List<Entry<T>> children;
+        private List<Entry<T>> children;
 
         /**
          * creates a tree entry.
