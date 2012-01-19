@@ -12,6 +12,7 @@ nbbuild.xml
 .checkstyle
 .classpath
 .ctags
+.metadata
 .project
 .scala_dependencies
 .settings
