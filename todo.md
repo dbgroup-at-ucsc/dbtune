@@ -32,7 +32,7 @@ Add an IndexFullTableScan class that corresponds to the FTS of a base table
 
 Add an EagerSpaceComputation class that obtains the whole template plan space
 
-# 155 separate queries per schema
+# 155 partition a workload in order to have one subset of statements per schema
 
 # 156 Change the way BIP communicates with INUM optimizer
 Change the implementation of BIP to comply with the new interface of INUM optimizer
@@ -44,3 +44,11 @@ Add a class of BIP that implements IndexInteractionFinder interface.
 
 # 159 Fix DB2 metadata issues
 
+# 160 Extend MetadataExtractorFunctionalTest
+
+Add more workloads in order to check that a variety of kinds of catalogs can be extracted 
+appropriately. At least all the TPC ones.
+
+# 161 add support for multi-line in Workload
+
+Add size() to Workload class.
