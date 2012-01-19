@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.metadata.extraction;
 
+import java.sql.Connection;
+
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
@@ -7,8 +9,6 @@ import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Strings;
-
-import java.sql.Connection;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,13 +18,13 @@ import static edu.ucsc.dbtune.DatabaseSystem.newExtractor;
 import static edu.ucsc.dbtune.metadata.DatabaseObject.NON_ID;
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * Test for the metadata extraction functionality. This test assumes that the system on the backend 
@@ -54,9 +54,12 @@ public class MetaDataExtractorFunctionalTest
     /**
      * Executes the SQL script that should contain the 'movies' database, then extracts the metadata 
      * for this database using the appropriate {@link MetadataExtractor} implementor.
+     *
+     * @throws Exception
+     *      if something happens when loading the catalog
      */
     @BeforeClass
-    public static void setUp() throws Exception
+    public static void beforeClass() throws Exception
     {
         String ddl;
 
@@ -75,7 +78,7 @@ public class MetaDataExtractorFunctionalTest
      * Tests that the catalog we created exists.
      */
     @Test
-    public void testCatalogExists() throws Exception
+    public void testCatalogExists()
     {
         assertThat(cat != null, is(true));
     }
@@ -84,7 +87,7 @@ public class MetaDataExtractorFunctionalTest
      * Tests that the schema we created exists.
      */
     @Test
-    public void testSchemaExists() throws Exception
+    public void testSchemaExists()
     {
         assertThat(cat.size() > 0, is(true));
 
@@ -95,34 +98,31 @@ public class MetaDataExtractorFunctionalTest
      * Tests ids aren't {@link DatabaseObject#NON_ID}, i.e. ids are correctly assigned
      */
     @Test
-    public void testIDs() throws Exception
+    public void testIDs()
     {
         assertThat(cat.getInternalID(), is(1));
 
-        for (Schema sch : cat)
-        {
+        for (Schema sch : cat) {
             assertThat(sch.getInternalID(), is(not(NON_ID)));
 
-            for (Table tbl : sch.tables())
-            {
+            for (Table tbl : sch.tables()) {
                 assertThat(tbl.getInternalID(), is(not(NON_ID)));
 
-                for (Column col : tbl.columns())
-                {
+                for (Column col : tbl.columns()) {
                     assertThat(col.getInternalID(), is(not(NON_ID)));
                 }
-
             }
 
             for (Index idx : sch.indexes())
-            {
                 assertThat(idx.getInternalID(), is(not(NON_ID)));
-            }
         }
     }
 
     /**
-     * Tests tables and columns exist
+     * Tests tables and columns exist.
+     *
+     * @throws Exception
+     *      if the movies schema can't be found
      */
     @Test
     public void testTablesAndColumnsExist() throws Exception
@@ -132,46 +132,36 @@ public class MetaDataExtractorFunctionalTest
         Schema sch = cat.<Schema>findByName("movies");
 
         assertThat(cat.size() >= 1, is(true));
-        assertThat(sch.size()-sch.getBaseConfiguration().size(), is(8));
+        assertThat(sch.size() - sch.getBaseConfiguration().size(), is(8));
 
-        for (Table tbl : sch.tables())
-        {
+        for (Table tbl : sch.tables()) {
             expected = -1;
 
-            if (Strings.same(tbl.getName().toLowerCase(), USERS))
-            {
+            if (Strings.same(tbl.getName().toLowerCase(), USERS)) {
                 expected = 5;
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), CREDITCARDS))
-            {
+            else if (Strings.same(tbl.getName().toLowerCase(), CREDITCARDS)) {
                 expected = 4;
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), MOVIES))
-            {
+            else if (Strings.same(tbl.getName().toLowerCase(), MOVIES)) {
                 expected = 5;
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), GENRES))
-            {
+            else if (Strings.same(tbl.getName().toLowerCase(), GENRES)) {
                 expected = 2;
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), ACTORS))
-            {
+            else if (Strings.same(tbl.getName().toLowerCase(), ACTORS)) {
                 expected = 4;
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), CASTS))
-            {
+            else if (Strings.same(tbl.getName().toLowerCase(), CASTS)) {
                 expected = 2;
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), QUEUE))
-            {
+            else if (Strings.same(tbl.getName().toLowerCase(), QUEUE)) {
                 expected = 4;
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), RATINGS))
-            {
+            else if (Strings.same(tbl.getName().toLowerCase(), RATINGS)) {
                 expected = 4;
             }
-            else
-            {
+            else {
                 fail("Unexpected table " + tbl.getName().toLowerCase());
             }
 
@@ -184,18 +174,19 @@ public class MetaDataExtractorFunctionalTest
      * that the elements on the list that is returned by a container (eg.  
      * <code>columns</code>), when iterated using the <code>List.iterator()</code>  
      * method, are in the correct order.
+     *
+     * @throws Exception
+     *      if the movies schema can't be found
      */
     @Test
     public void testColumnOrdering() throws Exception
     {
         String expected = "";
 
-        for (Table tbl : cat.<Schema>findByName("movies").tables())
-        {
+        for (Table tbl : cat.<Schema>findByName("movies").tables()) {
             int i = 0;
 
-            for (Column col : tbl.columns())
-            {
+            for (Column col : tbl.columns()) {
                 if (Strings.same(tbl.getName().toLowerCase(), USERS))
                     if (i == 0)
                         expected = "userid";
@@ -293,108 +284,110 @@ public class MetaDataExtractorFunctionalTest
     }
 
     /**
-     * Tests indexes exist
+     * Tests indexes exist.
+     *
+     * @throws Exception
+     *      if an object can't be found
      */
     @Test
     public void testIndexesExist() throws Exception
     {
-        assertThat(cat.<Index>findByName("movies.users_userid_email"), is(notNullValue()));
-        assertThat(cat.<Index>findByName("movies.creditcards_creditnum_userid_credittype"), is(notNullValue()));
-        assertThat(cat.<Index>findByName("movies.movies_moiveid_title_yearofr"), is(notNullValue()));
-        assertThat(cat.<Index>findByName("movies.actors_afirstname_alastname_dateofb"), is(notNullValue()));
-        assertThat(cat.<Index>findByName("movies.queue_times"), is(notNullValue()));
+        assertThat(
+                cat.<Index>findByName("movies.users_userid_email"), is(notNullValue()));
+        assertThat(
+                cat.<Index>findByName("movies.creditcards_creditnum_userid_credittype"), 
+                is(notNullValue()));
+        assertThat(
+                cat.<Index>findByName("movies.movies_moiveid_title_yearofr"),
+                is(notNullValue()));
+        assertThat(
+                cat.<Index>findByName("movies.actors_afirstname_alastname_dateofb"), 
+                is(notNullValue()));
+        assertThat(
+                cat.<Index>findByName("movies.queue_times"), is(notNullValue()));
     }
 
     /**
      */
     @Test
-    public void testPrimaryKeys() throws Exception
+    public void testPrimaryKeys()
     {
-        // XXX
     }
 
     /**
      */
     @Test
-    public void testForeignKeys() throws Exception
+    public void testForeignKeys()
     {
-        // XXX
     }
 
     /**
      */
     @Test
-    public void testColumnConstraints() throws Exception
+    public void testColumnConstraints()
     {
-        // XXX: for columns, check unique, default and not null constraints
+        // for columns, check unique, default and not null constraints
     }
 
     /**
      */
     @Test
-    public void testIndexConstraints() throws Exception
+    public void testIndexConstraints()
     {
-        // XXX: for indexes, check asc/desc, default and not null constraints
+        // for indexes, check asc/desc, default and not null constraints
     }
 
     /**
      * Tests cardinality of database objects. Checks that tables, columns and indexes have the 
      * expected cardinality. For columns and indexes, this corresponds to the count of unique 
      * entries; for tables, the number of rows contained in it.
+     *
+     * @throws Exception
+     *      if an object can't be found
      */
     @Test
     public void testCardinality() throws Exception
     {
-        // XXX: complete for index cardinality
-        for (Table tbl : cat.<Schema>findByName("movies").tables())
-        {
-            if (Strings.same(tbl.getName().toLowerCase(), USERS))
-            {
-                assertEquals(6,tbl.getCardinality());
-                assertEquals(6,tbl.findColumn("email").getCardinality());
-                assertEquals(5,tbl.findColumn("ulastname").getCardinality());
+        // todo: complete for index cardinality
+        for (Table tbl : cat.<Schema>findByName("movies").tables()) {
+            if (Strings.same(tbl.getName().toLowerCase(), USERS)) {
+                assertEquals(6, tbl.getCardinality());
+                assertEquals(6, tbl.findColumn("email").getCardinality());
+                assertEquals(5, tbl.findColumn("ulastname").getCardinality());
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), CREDITCARDS))
-            {
-                assertEquals(6,tbl.getCardinality());
-                assertEquals(6,tbl.findColumn("creditnum").getCardinality());
-                assertEquals(3,tbl.findColumn("credittype").getCardinality());
+            else if (Strings.same(tbl.getName().toLowerCase(), CREDITCARDS)) {
+                assertEquals(6, tbl.getCardinality());
+                assertEquals(6, tbl.findColumn("creditnum").getCardinality());
+                assertEquals(3, tbl.findColumn("credittype").getCardinality());
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), MOVIES))
-            {
-                assertEquals(3,tbl.getCardinality());
-                assertEquals(3,tbl.findColumn("movieid").getCardinality());
-                assertEquals(1,tbl.findColumn("url").getCardinality());
+            else if (Strings.same(tbl.getName().toLowerCase(), MOVIES)) {
+                assertEquals(3, tbl.getCardinality());
+                assertEquals(3, tbl.findColumn("movieid").getCardinality());
+                assertEquals(1, tbl.findColumn("url").getCardinality());
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), GENRES))
-            {
-                assertEquals(5,tbl.getCardinality());
-                assertEquals(2,tbl.findColumn("mgenre").getCardinality());
+            else if (Strings.same(tbl.getName().toLowerCase(), GENRES)) {
+                assertEquals(5, tbl.getCardinality());
+                assertEquals(2, tbl.findColumn("mgenre").getCardinality());
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), ACTORS))
-            {
-                assertEquals(8,tbl.getCardinality());
-                assertEquals(8,tbl.findColumn("aid").getCardinality());
-                assertEquals(8,tbl.findColumn("dateofb").getCardinality());
+            else if (Strings.same(tbl.getName().toLowerCase(), ACTORS)) {
+                assertEquals(8, tbl.getCardinality());
+                assertEquals(8, tbl.findColumn("aid").getCardinality());
+                assertEquals(8, tbl.findColumn("dateofb").getCardinality());
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), CASTS))
-            {
-                assertEquals(10,tbl.getCardinality());
+            else if (Strings.same(tbl.getName().toLowerCase(), CASTS)) {
+                assertEquals(10, tbl.getCardinality());
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), QUEUE))
-            {
-                assertEquals(5,tbl.getCardinality());
-                assertEquals(2,tbl.findColumn("position").getCardinality());
-                assertEquals(5,tbl.findColumn("times").getCardinality());
+            else if (Strings.same(tbl.getName().toLowerCase(), QUEUE)) {
+                assertEquals(5, tbl.getCardinality());
+                assertEquals(2, tbl.findColumn("position").getCardinality());
+                assertEquals(5, tbl.findColumn("times").getCardinality());
             }
-            else if (Strings.same(tbl.getName().toLowerCase(), RATINGS))
-            {
-                assertEquals(7,tbl.getCardinality());
-                assertEquals(4,tbl.findColumn("rate").getCardinality());
-                assertEquals(7,tbl.findColumn("review").getCardinality());
+            else if (Strings.same(tbl.getName().toLowerCase(), RATINGS)) {
+                assertEquals(7, tbl.getCardinality());
+                assertEquals(4, tbl.findColumn("rate").getCardinality());
+                assertEquals(7, tbl.findColumn("review").getCardinality());
             }
-            else
-            {
+            else {
                 fail("Unexpected table " + tbl.getName().toLowerCase());
             }
         }
@@ -407,16 +400,36 @@ public class MetaDataExtractorFunctionalTest
      * as row size).
      */
     @Test
-    public void testSize() throws Exception
+    public void testSize()
     {
-        // XXX:
     }
 
     /**
      */
     @Test
-    public void testPages() throws Exception
+    public void testPages()
     {
-        // XXX:
+    }
+
+    /**
+     * @throws Exception
+     *      if something happens when loading the catalog
+     */
+    @Test
+    public void checkTPC() throws Exception
+    {
+        String ddl;
+
+        ddl = env.getScriptAtWorkloadsFolder("tpch/create.sql");
+        con = newConnection(env);
+
+        execute(con, ddl);
+
+        cat = newExtractor(env).extract(con);
+
+        con.close();
+
+        testCatalogExists();
+        testIDs();
     }
 }

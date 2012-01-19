@@ -34,6 +34,10 @@ Add an EagerSpaceComputation class that obtains the whole template plan space
 
 # 155 partition a workload in order to have one subset of statements per schema
 
+In the meantime we'll need to have to find a workaround, because for this we need to parse and bind 
+and since it's done at an early stage of the recommendation process, this might be tricky. I think 
+we're find assuming that only one workload is received
+
 # 156 Change the way BIP communicates with INUM optimizer
 Change the implementation of BIP to comply with the new interface of INUM optimizer
 
@@ -43,6 +47,8 @@ Add a class of BIP that implements IndexInteractionFinder interface.
 # 158 modify test for bipsolver subclasses
 
 # 159 Fix DB2 metadata issues
+
+No issues found. It looks like other empty databases are getting in the way.
 
 # 160 Extend MetadataExtractorFunctionalTest
 
