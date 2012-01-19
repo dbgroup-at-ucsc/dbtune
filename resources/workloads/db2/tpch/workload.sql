@@ -23,8 +23,8 @@ from
 where
     c_custkey = o_custkey
     and l_orderkey = o_orderkey
-    and o_orderdate >= date '1994-09-01'
-    and o_orderdate < date '1994-09-01' + interval '3' month
+    and o_orderdate >= date ('1994-09-01')
+    and o_orderdate < date ('1994-09-01') + 3 month
     and l_returnflag = 'R'
     and c_nationkey = n_nationkey
 group by
@@ -37,6 +37,8 @@ group by
     c_comment
 order by
     revenue desc;
+
+
 
 --#SET ROWS_FETCH 20
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
@@ -75,6 +77,8 @@ group by
 order by
     value desc;
 
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -105,12 +109,14 @@ where
     and l_shipmode in ('MAIL', 'RAIL')
     and l_commitdate < l_receiptdate
     and l_shipdate < l_commitdate
-    and l_receiptdate >= date '1997-01-01'
-    and l_receiptdate < date '1997-01-01' + interval '1' year
+    and l_receiptdate >= date ('1997-01-01')
+    and l_receiptdate < date ('1997-01-01') + 1 year
 group by
     l_shipmode
 order by
     l_shipmode;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -140,6 +146,8 @@ group by
 order by
     custdist desc,
     c_count desc;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -160,8 +168,10 @@ from
     tpch.part
 where
     l_partkey = p_partkey
-    and l_shipdate >= date '1997-05-01'
-    and l_shipdate < date '1997-05-01' + interval '1' month;
+    and l_shipdate >= date ('1997-05-01')
+    and l_shipdate < date ('1997-05-01') + 1 month;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -170,40 +180,43 @@ where
 -- Functional Query Definition
 -- Approved February 1998
 
-create view revenue0 (supplier_no, total_revenue) as
-    select
-        l_suppkey,
-        sum(l_extendedprice * (1 - l_discount))
-    from
-        tpch.lineitem
-    where
-        l_shipdate >= date '1995-08-01'
-        and l_shipdate < date '1995-08-01' + interval '3' month
-    group by
-        l_suppkey;
+-- create view revenue0 (supplier_no, total_revenue) as
+    -- select
+        -- l_suppkey,
+        -- sum(l_extendedprice * (1 - l_discount))
+    -- from
+        -- tpch.lineitem
+    -- where
+        -- l_shipdate >= date '1995-08-01'
+        -- and l_shipdate < date '1995-08-01' + interval '3' month
+    -- group by
+        -- l_suppkey;
+
+-- select
+    -- s_suppkey,
+    -- s_name,
+    -- s_address,
+    -- s_phone,
+    -- total_revenue
+-- from
+    -- tpch.supplier,
+    -- tpch.revenue0
+-- where
+    -- s_suppkey = supplier_no
+    -- and total_revenue = (
+        -- select
+            -- max(total_revenue)
+        -- from
+            -- tpch.revenue0
+    -- )
+-- order by
+    -- s_suppkey;
+
+-- drop view revenue0;
 
 
-select
-    s_suppkey,
-    s_name,
-    s_address,
-    s_phone,
-    total_revenue
-from
-    tpch.supplier,
-    tpch.revenue0
-where
-    s_suppkey = supplier_no
-    and total_revenue = (
-        select
-            max(total_revenue)
-        from
-            tpch.revenue0
-    )
-order by
-    s_suppkey;
 
-drop view revenue0;
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -211,7 +224,6 @@ drop view revenue0;
 -- TPC-H/TPC-R Parts/Supplier Relationship Query (Q16)
 -- Functional Query Definition
 -- Approved February 1998
-
 
 select
     p_brand,
@@ -243,6 +255,8 @@ order by
     p_brand,
     p_type,
     p_size;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -269,6 +283,8 @@ where
         where
             l_partkey = p_partkey
     );
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -310,6 +326,8 @@ group by
 order by
     o_totalprice desc,
     o_orderdate;
+
+
 --#SET ROWS_FETCH 100
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -354,6 +372,8 @@ where
         and l_shipmode in ('AIR', 'AIR REG')
         and l_shipinstruct = 'DELIVER IN PERSON'
     );
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -361,7 +381,6 @@ where
 -- TPC-H/TPC-R Pricing Summary Report Query (Q1)
 -- Functional Query Definition
 -- Approved February 1998
-
 
 select
     l_returnflag,
@@ -377,13 +396,15 @@ select
 from
     tpch.lineitem
 where
-    l_shipdate <= date '1998-12-01' - interval '105' day (3)
+    l_shipdate <= date ('1998-12-01') - 105 day
 group by
     l_returnflag,
     l_linestatus
 order by
     l_returnflag,
     l_linestatus;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -422,14 +443,16 @@ where
                 where
                     l_partkey = ps_partkey
                     and l_suppkey = ps_suppkey
-                    and l_shipdate >= date '1993-01-01'
-                    and l_shipdate < date '1993-01-01' + interval '1' year
+                    and l_shipdate >= date ('1993-01-01')
+                    and l_shipdate < date ('1993-01-01') + 1 year
             )
     )
     and s_nationkey = n_nationkey
     and n_name = 'ARGENTINA'
 order by
     s_name;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -478,6 +501,8 @@ group by
 order by
     numwait desc,
     s_name;
+
+
 --#SET ROWS_FETCH 100
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -524,6 +549,8 @@ group by
     cntrycode
 order by
     cntrycode;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -576,6 +603,8 @@ order by
     n_name,
     s_name,
     p_partkey;
+
+
 --#SET ROWS_FETCH 100
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -598,8 +627,8 @@ where
     c_mktsegment = 'AUTOMOBILE'
     and c_custkey = o_custkey
     and l_orderkey = o_orderkey
-    and o_orderdate < date '1995-03-16'
-    and l_shipdate > date '1995-03-16'
+    and o_orderdate < date ('1995-03-16')
+    and l_shipdate > date ('1995-03-16')
 group by
     l_orderkey,
     o_orderdate,
@@ -607,6 +636,8 @@ group by
 order by
     revenue desc,
     o_orderdate;
+
+
 --#SET ROWS_FETCH 10
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -622,8 +653,8 @@ select
 from
     tpch.orders
 where
-    o_orderdate >= date '1995-07-01'
-    and o_orderdate < date '1995-07-01' + interval '3' month
+    o_orderdate >= date ('1995-07-01')
+    and o_orderdate < date ('1995-07-01') + 3 month
     and exists (
         select
             *
@@ -637,6 +668,8 @@ group by
     o_orderpriority
 order by
     o_orderpriority;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -664,12 +697,14 @@ where
     and s_nationkey = n_nationkey
     and n_regionkey = r_regionkey
     and r_name = 'EUROPE'
-    and o_orderdate >= date '1997-01-01'
-    and o_orderdate < date '1997-01-01' + interval '1' year
+    and o_orderdate >= date ('1997-01-01')
+    and o_orderdate < date ('1997-01-01') + 1 year
 group by
     n_name
 order by
     revenue desc;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -684,10 +719,12 @@ select
 from
     tpch.lineitem
 where
-    l_shipdate >= date '1997-01-01'
-    and l_shipdate < date '1997-01-01' + interval '1' year
+    l_shipdate >= date ('1997-01-01')
+    and l_shipdate < date ('1997-01-01') + 1 year
     and l_discount between 0.09 - 0.01 and 0.09 + 0.01
     and l_quantity < 24;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -726,7 +763,7 @@ from
                 (n1.n_name = 'RUSSIA' and n2.n_name = 'EGYPT')
                 or (n1.n_name = 'EGYPT' and n2.n_name = 'RUSSIA')
             )
-            and l_shipdate between date '1995-01-01' and date '1996-12-31'
+            and l_shipdate between date ('1995-01-01') and date ('1996-12-31')
     ) as shipping
 group by
     supp_nation,
@@ -736,6 +773,8 @@ order by
     supp_nation,
     cust_nation,
     l_year;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -775,13 +814,15 @@ from
             and n1.n_regionkey = r_regionkey
             and r_name = 'MIDDLE EAST'
             and s_nationkey = n2.n_nationkey
-            and o_orderdate between date '1995-01-01' and date '1996-12-31'
+            and o_orderdate between date ('1995-01-01') and date ('1996-12-31')
             and p_type = 'LARGE BURNISHED BRASS'
     ) as all_nations
 group by
     o_year
 order by
     o_year;
+
+
 --#SET ROWS_FETCH -1
 -- TPC TPC-H Parameter Substitution (Version 2.14.0 build 0)
 -- using 1326918973 as a seed to the RNG
@@ -823,4 +864,6 @@ group by
 order by
     nation,
     o_year desc;
+
+
 --#SET ROWS_FETCH -1
