@@ -357,9 +357,9 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
     protected void extractCardinality(Catalog catalog, Connection connection)
         throws SQLException
     {
-        extractTableCardinality(catalog, connection);
-        extractColumnCardinality(catalog, connection);
-        extractIndexCardinality(catalog, connection);
+        //extractTableCardinality(catalog, connection);
+        //extractColumnCardinality(catalog, connection);
+        //extractIndexCardinality(catalog, connection);
     }
 
     /**
