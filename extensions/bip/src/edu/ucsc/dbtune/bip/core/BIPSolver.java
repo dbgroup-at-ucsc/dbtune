@@ -2,11 +2,9 @@ package edu.ucsc.dbtune.bip.core;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -29,22 +27,12 @@ public interface BIPSolver
     /**
      * Set the workload as a part of the inputs
      * 
-     * @param mapSchemaToWorkload
-     *      Each entry of this map is a list of SQL statements that belong to a same schema
+     * @param workload
+     *      The input workload
      * 
      */
-    void setSchemaToWorkloadMapping(Map<Schema, Workload> mapSchemaToWorkload);
+    void setWorkload(Workload wl);
     
-    
-    /**
-     * Set the input workload name 
-     * 
-     * @param name
-     *      The name of the workload
-     *      
-     * {\bf Note:} The workload name is used to name the file on which the BIP is stored      
-     */
-    void setWorkloadName(String name);
     
     /**
      * Set the INUM optimize that will be used
@@ -52,7 +40,7 @@ public interface BIPSolver
      * @param optimizer
      *      An INUM-based optimizer
      */
-    void setInumOptimizer(InumOptimizer optimizer);
+    void setOptimizer(InumOptimizer optimizer);
     
     /**
      * 

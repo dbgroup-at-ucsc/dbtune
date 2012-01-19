@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
@@ -22,10 +21,6 @@ import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.sim.SchedulePoolLocator;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.IndexFullTableScan;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.workload.Workload;
 
 
 /**
@@ -102,14 +97,6 @@ public class SimBIP extends AbstractBIPSolver
         poolLocator.setStartPosRemainIndex(poolIndexes.getTotalIndex());
         for (Index idx : Sremain) {
             poolIndexes.add(idx);
-        }
-        
-        // Add index full table scan into {@code poolIndexes}
-        for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
-            for (Table table : entry.getKey().tables()){
-                IndexFullTableScan scanIdx = new IndexFullTableScan(table);
-                poolIndexes.add(scanIdx);
-            }
         }
     }
     
