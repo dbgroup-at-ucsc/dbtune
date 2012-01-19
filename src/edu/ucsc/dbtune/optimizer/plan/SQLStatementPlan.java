@@ -125,11 +125,9 @@ public class SQLStatementPlan extends Tree<Operator>
     {
         List<Index> indexes = new ArrayList<Index>();
 
-        for (DatabaseObject ob : getDatabaseObjects()) {
-            if (ob instanceof Index) {
+        for (DatabaseObject ob : getDatabaseObjects())
+            if (ob instanceof Index)
                 indexes.add((Index) ob);
-            }
-        }
 
         return indexes;
     }
@@ -142,7 +140,13 @@ public class SQLStatementPlan extends Tree<Operator>
      */
     public List<Table> getReferencedTables()
     {
-        throw new RuntimeException("NOT IMPLEMENTED YET");
+        List<Table> tables = new ArrayList<Table>();
+
+        for (DatabaseObject ob : getDatabaseObjects())
+            if (ob instanceof Table)
+                tables.add((Table) ob);
+
+        return tables;
     }
 
     /**
