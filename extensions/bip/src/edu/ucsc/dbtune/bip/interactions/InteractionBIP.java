@@ -71,7 +71,7 @@ public class InteractionBIP extends AbstractBIPSolver
         // 1. Communicate with INUM 
         // to derive the query plan description including internal cost, index access cost,
         // index at each slot, etc.  
-        this.populatePlanDescriptionForStatements(this.poolIndexes);
+        this.populatePlanDescriptionForStatements();
         
         // 2. Iterate over the list of query plan descs that have been derived
         interactionOutput = new InteractionOutput();
@@ -137,7 +137,7 @@ public class InteractionBIP extends AbstractBIPSolver
                         // 1. initializeBIP()
                         // Set variables correspondingly
                         this.restrictIIP = new RestrictIIPParam(delta, ic, id, pos_c, pos_d);
-                        initializeBuffer(this.workloadName);
+                        initializeBuffer();
                         
                         // 2. Construct BIP
                         buildBIP(listener);

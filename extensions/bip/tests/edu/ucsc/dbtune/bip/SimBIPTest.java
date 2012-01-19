@@ -52,10 +52,12 @@ public class SimBIPTest
             allIndexes.addAll(db.getOptimizer().recommendIndexes(sql));
         }
          
+        System.out.println("Number of indexes: " + allIndexes.size());
         for (Index index : allIndexes) {
-            System.out.println(" Index " + index.getFullyQualifiedName());
+            System.out.println("Index : " + index.columns()); 
         }
         
+        /*
         Set<Index> sInit = new HashSet<Index>();
         Set<Index> sMat = new HashSet<Index>();
         int w = 4;
@@ -75,5 +77,6 @@ public class SimBIPTest
         sim.setWorkloadName(workloadFile);
         BIPOutput schedule = sim.solve();
         System.out.println("Result: " + schedule.toString());
+        */
     }
 }

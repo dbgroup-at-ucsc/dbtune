@@ -58,3 +58,7 @@ No issues found. It looks like other empty databases are getting in the way.
 # 161 add support for multi-line in Workload
 
 Add size() to Workload class.
+
+#162 replace the mapping of schema to workload by workload only
+Replace a part of the input to the BIP to consist of only workload, instead of 
+workload that is partitioned in terms of the schema on which the queries are defined on.  

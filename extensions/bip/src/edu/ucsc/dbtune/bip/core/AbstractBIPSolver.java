@@ -8,17 +8,16 @@ import ilog.cplex.IloCplex;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.IndexFullTableScan;
-import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Environment;
@@ -34,10 +33,10 @@ import edu.ucsc.dbtune.workload.Workload;
  */
 public abstract class AbstractBIPSolver implements BIPSolver 
 {
-    protected Set<Index> candidateIndexes;
-    protected String workloadName;
-    protected Map<Schema, Workload> mapSchemaToWorkload;
+    protected Set<Index> candidateIndexes;    
+    protected Workload workload;
     protected List<QueryPlanDesc> listQueryPlanDescs;
+    protected List<Table> listWorkloadTables;
     protected IndexPool poolIndexes;
     protected IloLPMatrix matrix;
     protected IloNumVar [] vars;
@@ -48,16 +47,11 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected int numConstraints;
     protected InumOptimizer inumOptimizer;
     
-    @Override
-    public void setWorkloadName(String workloadName)
-    {
-        this.workloadName = workloadName;
-    }
     
     @Override    
-    public void setSchemaToWorkloadMapping(Map<Schema, Workload> mapSchemaToWorkload)
+    public void setWorkload(Workload wl)
     {
-        this.mapSchemaToWorkload = mapSchemaToWorkload;
+        this.workload = wl;
     }
     
     @Override
@@ -67,7 +61,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     }
     
     @Override
-    public void setInumOptimizer(InumOptimizer optimizer) 
+    public void setOptimizer(InumOptimizer optimizer) 
     {
         this.inumOptimizer = optimizer;
     }
@@ -78,11 +72,11 @@ public abstract class AbstractBIPSolver implements BIPSolver
     {   
         // Preprocess steps
         insertIndexesToPool();
-        initializeBuffer(this.workloadName);
+        initializeBuffer();
         
         // 1. Communicate with INUM 
         // to derive the query plan descriptions including internal cost, index access cost, etc.  
-        this.populatePlanDescriptionForStatements(this.poolIndexes);
+        this.populatePlanDescriptionForStatements();
         
         // 2. Build BIP       
         LogListener listener = new LogListener() {
@@ -119,29 +113,19 @@ public abstract class AbstractBIPSolver implements BIPSolver
         for (Index idx: candidateIndexes) {
             poolIndexes.add(idx);
         }
-        
-        // Add index full table scan into {@code poolIndexes}
-        for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
-            for (Table table : entry.getKey().tables()){
-                IndexFullTableScan scanIdx = new IndexFullTableScan(table);
-                poolIndexes.add(scanIdx);
-            }
-        }
     }
     
      /**
      * Initialize empty buffer files that will store the Binary Integer Program
-     * 
-     * @param prefix
-     *      Prefix name (usually use {@code workloadName})
-     *      
+     *      *      
      * {\bf Note. }There are four files that are created for a BIP,
      * including: {@code prefix.obj}, {@code prefix.cons}, {@code prefix.bin} and {@code prefix.lp}
      * store the objective function, list of constraints, binary variables, and the whole BIP, respectively 
      *      
      */
-    protected void initializeBuffer(String prefix)
+    protected void initializeBuffer()
     { 
+        String prefix = "wl.sql";
         String name = environment.getTempDir() + "/" + prefix;
         try {
             this.buf = new CPlexBuffer(name);
@@ -156,23 +140,44 @@ public abstract class AbstractBIPSolver implements BIPSolver
      * (e.g, internal plan cost, index access costs, etc.)
      * for each statement in the given workload
      * 
-     * @param poolIndexes
-     *      The pool of indexes managed by the BIP
      *      
      * @throws SQLException
      */
-    protected void populatePlanDescriptionForStatements(IndexPool poolIndexes) throws SQLException
+    protected void populatePlanDescriptionForStatements() throws SQLException
     {   
         listQueryPlanDescs = new ArrayList<QueryPlanDesc>();
+        listWorkloadTables = new ArrayList<Table>(); 
+        Map<Table, Integer> mapWorkloadTables = new HashMap<Table, Integer>();
         
-        for (Entry<Schema, Workload> entry : mapSchemaToWorkload.entrySet()) {
-            for (Iterator<SQLStatement> iterStmt = entry.getValue().iterator(); iterStmt.hasNext(); ) {
-                QueryPlanDesc desc =  new InumQueryPlanDesc(inumOptimizer);                    
-                // Populate the INUM space for each statement 
-                desc.generateQueryPlanDesc(iterStmt.next(), entry.getKey(), poolIndexes);
-                listQueryPlanDescs.add(desc);
+        for (Iterator<SQLStatement> iterStmt = workload.iterator(); iterStmt.hasNext(); ) {
+            QueryPlanDesc desc =  new InumQueryPlanDesc();
+            // Set the corresponding SQL statement
+            desc.setStatement(iterStmt.next());
+            // Populate the INUM space 
+            desc.populateInumSpace(inumOptimizer);            
+            listQueryPlanDescs.add(desc);
+            
+            // Add referenced tables of each statement
+            // into the ``global'' set {@code listWorkloadTables}
+            for (Table table : desc.getReferencedTables()) {
+                Object found = mapWorkloadTables.get(table);
+                if (found == null) {
+                    listWorkloadTables.add(table);
+                    mapWorkloadTables.put(table, new Integer(1));
+                }
             }
         }
+        
+        // Generate query plan descriptions
+        for (QueryPlanDesc desc : listQueryPlanDescs) {
+            desc.generateQueryPlanDesc(listWorkloadTables, poolIndexes);
+        }
+        
+        // Add full table scan indexes into the pool
+        for (Table table : listWorkloadTables) {
+            IndexFullTableScan scanIdx = new IndexFullTableScan(table);
+            poolIndexes.add(scanIdx);
+        }        
         
         // Map index in each slot to its pool ID
         for (QueryPlanDesc desc : listQueryPlanDescs) {
