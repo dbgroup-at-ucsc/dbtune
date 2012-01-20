@@ -20,7 +20,9 @@ Add an InumPlan extend `SQLStatementPlan` class and add inum-specific functions 
  * double plugIntoSlots(Set<Index> atomicConfiguration)
  * List<TableAccessSlot> getAccessSlots()
 
-Add an IndexFullTableScan class that corresponds to the FTS of a base table
+Add an IndexFullTableScan singleton-per-table class that corresponds to the FTS of a base table. 
+
+Add an Index.isCoveredBy()
 
 # 153 Refactor MatchingStrategy and implementations
 
