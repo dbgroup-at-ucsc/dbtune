@@ -10,6 +10,7 @@ import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
@@ -41,15 +42,27 @@ public class SimBIPTest
     {
         en  = Environment.getInstance();
         db = newDatabaseSystem(en);
+        
         System.out.println(" In test scheduling ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/workload.sql");        
-        System.out.println(" file " + workloadFile);
+        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/workload.sql");
         FileReader fileReader = new FileReader(workloadFile);
         Workload workload     = new Workload(fileReader);
         
         Set<Index> allIndexes = new HashSet<Index>();
-        for (SQLStatement sql : workload) {
-            allIndexes.addAll(db.getOptimizer().recommendIndexes(sql));
+        for (SQLStatement stmt : workload) {
+            System.out.println("==== Query: " + stmt.getSQL());
+            Set<Index> stmtIndexes = db.getOptimizer().recommendIndexes(stmt); 
+            for (Index newIdx : stmtIndexes) {
+                boolean exist = false;
+                for (Index oldIdx : allIndexes) {
+                    if (oldIdx.equalsContent(newIdx)) {
+                        exist = true;
+                    }
+                }
+                if (exist == false) {
+                    allIndexes.add(newIdx);
+                }
+            }
         }
          
         System.out.println("Number of indexes: " + allIndexes.size());

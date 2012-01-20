@@ -30,7 +30,8 @@ public final class FullTableScanIndex extends Index
      */
     private FullTableScanIndex(Table table) throws SQLException
     {
-        super(table.getSchema(), "full_table_scan");
+        //super(table.getSchema(), table.getFullyQualifiedName() + "_full_table_scan");       
+        super(table.getFullyQualifiedName() + "_full_table_scan", table.columns().get(0),false, false, false, false);
     }
 
     /**

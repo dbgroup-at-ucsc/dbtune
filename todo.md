@@ -67,3 +67,6 @@ workload that is partitioned in terms of the schema on which the queries are def
 
 #163 DB2Optimizer bug 
 The contents of columns corresponding to system tables need to be trim.   
+
+#164 FullTableScanIndex bug
+The constructor of FTS should contain information to link with the table, on which this object is defined.
