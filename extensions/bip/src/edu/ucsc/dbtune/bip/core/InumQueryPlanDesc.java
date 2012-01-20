@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.FullTableScanIndex;
-import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
@@ -22,7 +21,20 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.metadata.FullTableScanIndex.getFullTableScanIndexInstance;
 
-public class InumQueryPlanDesc implements QueryPlanDesc {	private int Kq;
+/**
+ * An implementation of {@link QueryPlanDesc} interface.
+ * There's only one single object of this type per statement, 
+ * i.e., this can be viewed as a singleton class but instead of 
+ * creating one object throughout the JVM, this class creates one for every 
+ * distinct statement contained in a {@link Workload}.
+ * 
+ * @author tqtrung@soe.ucsc.edu.sg
+ *
+ */
+public class InumQueryPlanDesc implements QueryPlanDesc 
+{	
+    public static double BIP_MAX_VALUE = 999999999; 
+    private int Kq;
     private int n; private List<Integer> S;
 	private List<Double> beta;
 	private List< List< List <Double> > > gamma;
@@ -34,37 +46,64 @@ public class InumQueryPlanDesc implements QueryPlanDesc {	private int Kq;
 	private int stmtID;	
 	SQLStatement stmt;
 	Set<InumPlan> templatePlans;
-	List<Table> listReferencedTables;
+	List<Table> listTables;
     
+	private static Map<SQLStatement, QueryPlanDesc> instances = new HashMap<SQLStatement, QueryPlanDesc>();
+	
 	/**
-	 * The constructor. This object is automatically assigned an ID, increasing from 0
+	 * The constructor, each object of this class corresponds to a {@code SQLSatement} object
+	 * 
+	 * @param stmt
+	 *      The statement that this object corresponds to
+	 *      
+	 * {\bf Note}: A new object is associated with an ID, that is incremented starting from 0     
 	 */
-    public InumQueryPlanDesc()
+    private InumQueryPlanDesc(SQLStatement stmt)
     {
         this.stmtID = InumQueryPlanDesc.STMT_ID.getAndIncrement();
+        this.stmt = stmt;
+        this.templatePlans = null;
+        this.listTables = null;
     }
     
-    @Override
-    public void setStatement(SQLStatement stmt)
+    /**
+     * Returns the single instance of this class corresponding to the given statement.
+     *
+     * @param stmt
+     *      SQL statement for which the corresponding instance is being retrieved
+     * @return
+     *      The query plan description object corresponding to the given statement      
+     */
+    public static QueryPlanDesc getQueryPlanDescInstance(SQLStatement stmt) 
     {
-        this.stmt = stmt;
+        QueryPlanDesc desc = (QueryPlanDesc) instances.get(stmt);
+
+        if (desc == null) {
+            desc = new InumQueryPlanDesc(stmt);
+            instances.put(stmt, desc);
+        }
+
+        return desc;
     }
     
     @Override
     public void populateInumSpace(InumOptimizer optimizer)
     {   
-        try {
-            InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
-            preparedStmt.explain(new HashSet<Index>());
-            templatePlans = preparedStmt.getTemplatePlans();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-                
-        listReferencedTables = new ArrayList<Table>();             
-        for (InumPlan plan : templatePlans) {
-            listReferencedTables = plan.getReferencedTables();
-            break;
+        // only populate the INUM space if it has not been done before
+        if (templatePlans == null) {
+            try {
+                InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
+                preparedStmt.explain(new HashSet<Index>());
+                templatePlans = preparedStmt.getTemplatePlans();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+                    
+            listTables = new ArrayList<Table>();             
+            for (InumPlan plan : templatePlans) {
+                listTables = plan.getTables();
+                break;
+            }
         }
     }
     
@@ -103,7 +142,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc {	private int Kq;
         }
         
         Map<Table, Table> mapReferencedTable = new HashMap<Table, Table>();
-        for (Table referencedTable : listReferencedTables){
+        for (Table referencedTable : listTables){
             mapReferencedTable.put(referencedTable, referencedTable);
         }
         
@@ -117,6 +156,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc {	private int Kq;
         
         Kq = 0;
         for (InumPlan plan : templatePlans) {
+            System.out.println("L119, internal plan cost: " + plan.getInternalCost());
             beta.add(new Double(plan.getInternalCost()));
             List<List<Double>> gammaPlan = new ArrayList<List<Double>>();
             
@@ -132,7 +172,13 @@ public class InumQueryPlanDesc implements QueryPlanDesc {	private int Kq;
                 } else {
                     for (int a = 0; a < getNumberOfIndexesEachSlot(i); a++) {
                         Index index = getIndex(i, a);
-                        gammaRel.add(new Double(plan.plug(index)));
+                        double cost = plan.plug(index);
+                        if (cost == Double.POSITIVE_INFINITY) {
+                            cost = InumQueryPlanDesc.BIP_MAX_VALUE;
+                        }
+                        gammaRel.add(new Double(cost));
+                        System.out.println("L136, index: " + index.getFullyQualifiedName()
+                                            + " cost: " + cost);
                     }       
                 }
                 gammaPlan.add(gammaRel);                            
@@ -231,9 +277,9 @@ public class InumQueryPlanDesc implements QueryPlanDesc {	private int Kq;
 	}
     
     @Override 
-    public List<Table> getReferencedTables()
+    public List<Table> getTables()
     {
-        return this.listReferencedTables;
+        return this.listTables;
     }
 	
 	

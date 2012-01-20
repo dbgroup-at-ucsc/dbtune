@@ -44,7 +44,7 @@ public class SimBIPTest
         db = newDatabaseSystem(en);
         
         System.out.println(" In test scheduling ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/workload.sql");
+        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
         FileReader fileReader = new FileReader(workloadFile);
         Workload workload     = new Workload(fileReader);
         
@@ -57,6 +57,7 @@ public class SimBIPTest
                 for (Index oldIdx : allIndexes) {
                     if (oldIdx.equalsContent(newIdx)) {
                         exist = true;
+                        break;
                     }
                 }
                 if (exist == false) {
@@ -70,10 +71,10 @@ public class SimBIPTest
             System.out.println("Index : " + index.columns()); 
         }
         
-        /*
+        
         Set<Index> sInit = new HashSet<Index>();
         Set<Index> sMat = new HashSet<Index>();
-        int w = 4;
+        int w = 2;
         double timeLimit = 300;
         sMat = allIndexes;
         
@@ -84,12 +85,10 @@ public class SimBIPTest
 
         // Sinit = \emptyset
         SimBIP sim = new SimBIP(sInit, sMat, w, timeLimit);
-        sim.setInumOptimizer((InumOptimizer) io);
-        Map<Schema, Workload> mapSchemaToWorkload = workload.getSchemaToWorkloadMapping();
-        sim.setSchemaToWorkloadMapping(mapSchemaToWorkload);
-        sim.setWorkloadName(workloadFile);
+        sim.setOptimizer((InumOptimizer) io);
+        sim.setWorkload(workload);
         BIPOutput schedule = sim.solve();
         System.out.println("Result: " + schedule.toString());
-        */
+        
     }
 }

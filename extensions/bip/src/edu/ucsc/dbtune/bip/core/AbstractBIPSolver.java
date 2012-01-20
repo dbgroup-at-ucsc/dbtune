@@ -18,7 +18,6 @@ import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.FullTableScanIndex;
-import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Environment;
@@ -153,16 +152,15 @@ public abstract class AbstractBIPSolver implements BIPSolver
         Map<Table, Integer> mapWorkloadTables = new HashMap<Table, Integer>();
         
         for (Iterator<SQLStatement> iterStmt = workload.iterator(); iterStmt.hasNext(); ) {
-            QueryPlanDesc desc =  new InumQueryPlanDesc();
             // Set the corresponding SQL statement
-            desc.setStatement(iterStmt.next());
+            QueryPlanDesc desc =  InumQueryPlanDesc.getQueryPlanDescInstance(iterStmt.next());
             // Populate the INUM space 
             desc.populateInumSpace(inumOptimizer);            
             listQueryPlanDescs.add(desc);
             
             // Add referenced tables of each statement
             // into the ``global'' set {@code listWorkloadTables}
-            for (Table table : desc.getReferencedTables()) {
+            for (Table table : desc.getTables()) {
                 Object found = mapWorkloadTables.get(table);
                 if (found == null) {
                     listWorkloadTables.add(table);

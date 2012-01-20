@@ -275,7 +275,8 @@ public class InteractionBIP extends AbstractBIPSolver
      *
      */
     private void buildCTheta()
-    {           
+    {      
+        System.out.println(" Number of template plans: " + investigatingDesc.getNumberOfTemplatePlans());
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {         
             String ctheta = "";
             List<String> linListElement = new ArrayList<String>();          
@@ -385,11 +386,12 @@ public class InteractionBIP extends AbstractBIPSolver
                     int ga = poolIndexes.getPoolID(iis);
                     linList.add(poolVariables.get(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());      
                 }
-                
-                buf.getCons().println("atomic_4b_" +  numConstraints + ":" 
-                        + StringConcatenator.concatenate(" + ", linList) 
-                        + " <= 1");
-                numConstraints++;
+                if (linList.size() > 0){
+                    buf.getCons().println("atomic_4b_" +  numConstraints + ":" 
+                            + StringConcatenator.concatenate(" + ", linList) 
+                            + " <= 1");
+                    numConstraints++;
+                }
             }
         }
         
@@ -407,10 +409,13 @@ public class InteractionBIP extends AbstractBIPSolver
                     linList.add(poolVariables.get(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());
                 }
             }
-            buf.getCons().println("atomic_4c_" +  numConstraints + ":" 
-                                + StringConcatenator.concatenate(" + ", linList) 
-                                + " <= 1");
-            numConstraints++;
+            // since we  do not consider FTS, the list can be empty
+            if (linList.size() > 0) {
+                buf.getCons().println("atomic_4c_" +  numConstraints + ":" 
+                                    + StringConcatenator.concatenate(" + ", linList) 
+                                    + " <= 1");
+                numConstraints++;
+            }
         }
         
         
@@ -430,10 +435,13 @@ public class InteractionBIP extends AbstractBIPSolver
                     linList.add(poolVariables.get(theta, IIPVariablePool.VAR_S, ga, 0, 0).getName());
                 }
             }
-            buf.getCons().println("atomic_4d_" + numConstraints + ":" 
-                                + StringConcatenator.concatenate(" + ", linList) 
-                                + "  <= 1");
-            numConstraints++;
+            // since we  do not consider FTS, the list can be empty
+            if (linList.size() > 0) {
+                buf.getCons().println("atomic_4d_" + numConstraints + ":" 
+                                    + StringConcatenator.concatenate(" + ", linList) 
+                                    + "  <= 1");
+                numConstraints++;
+            }
         }
         
         
@@ -550,7 +558,7 @@ public class InteractionBIP extends AbstractBIPSolver
     }
     
     /**
-     * Implement the optimal constraints on variable @u in the RHS of (7a), (8), and (9)
+     * Implement the optimal constraints on variable {@code u} in the RHS of (7a), (8), and (9)
      * 
      */
     private void buidOptimalConstraints()
@@ -585,6 +593,8 @@ public class InteractionBIP extends AbstractBIPSolver
                         
                         if ( i == restrictIIP.getPosRelContainC() && p == restrictIIP.getLocalPosIndexC()) {
                             // --- \sum >= 1
+                            // because this sum is also <= 1 (due to atomic constraint)
+                            // therefore, we optimizer to write \sum = 1
                             if (theta == IND_C || theta == IND_CD) {
                                 buf.getCons().println("optimal_9_" + numConstraints + ":" 
                                         + LHS  
