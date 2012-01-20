@@ -15,7 +15,6 @@ import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
-import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -86,15 +85,10 @@ public class DivBIP extends AbstractBIPSolver
      * </ol>
      * </p>   
      * 
-     * @param listener
-     *      Log the building process
-     * 
-     * @throws IOException
      */
     @Override
-    protected void buildBIP(LogListener listener) throws IOException 
+    protected void buildBIP() 
     {
-        listener.onLogEvent(LogListener.BIP, "Building DIV program...");
         numConstraints = 0;
         
         // 1. Add variables into list
@@ -120,8 +114,12 @@ public class DivBIP extends AbstractBIPSolver
         binaryVariableConstraints();
         
         buf.close();
-        CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
-        listener.onLogEvent(LogListener.BIP, "Built DIV program");
+        try {
+            CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot concantenate text files that store BIP.");
+        }
+        
     }
     
     /**

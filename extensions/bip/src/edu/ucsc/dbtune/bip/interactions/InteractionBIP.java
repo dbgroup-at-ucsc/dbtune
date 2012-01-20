@@ -67,11 +67,13 @@ public class InteractionBIP extends AbstractBIPSolver
     {   
         // Store indexes into the {@code poolIndexes}
         insertIndexesToPool(); 
+        logger.onLogEvent(LogListener.EVENT_PREPROCESS);
         
         // 1. Communicate with INUM 
         // to derive the query plan description including internal cost, index access cost,
         // index at each slot, etc.  
         this.populatePlanDescriptionForStatements();
+        logger.onLogEvent(LogListener.EVENT_INUM_POPULATING);
         
         // 2. Iterate over the list of query plan descs that have been derived
         interactionOutput = new InteractionOutput();
@@ -102,12 +104,6 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     public void findInteractions() throws IloException, IOException  
     {   
-        LogListener listener = new LogListener() {
-            public void onLogEvent(String component, String logEvent) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-        };
-        
         for (int ic = 0; ic < investigatingDesc.getNumberOfGlobalSlots(); ic++)    {
             // Note: the last index in each slot is a full table scan
             // Don't need to consider indexes that belong to relations NOT referenced by the query
@@ -140,7 +136,8 @@ public class InteractionBIP extends AbstractBIPSolver
                         initializeBuffer();
                         
                         // 2. Construct BIP
-                        buildBIP(listener);
+                        buildBIP();
+                        logger.onLogEvent(LogListener.EVENT_BIP_FORMULATING);
                         
                         // 3. Solve the first BIP
                         if (solveBIP() == true) {
@@ -155,7 +152,8 @@ public class InteractionBIP extends AbstractBIPSolver
                             } else {
                                 System.out.println(" NO INTERACTION ");
                             }
-                        }                   
+                        } 
+                        logger.onLogEvent(LogListener.EVENT_BIP_SOLVING);
                     }   
                 }
             }
@@ -174,18 +172,11 @@ public class InteractionBIP extends AbstractBIPSolver
      * </p>   
      * 
      * <b> Note </b>: The alternative index interaction constraint, (13), will be considered only 
-     * if this problem formulation does not return any solution
-     * 
-     * @param listener
-     *      Log the building process
-     * 
-     * @throws IOException
+     * if this problem formulation does not return any solution    * 
      */
     @Override
-    protected void buildBIP(LogListener listener) throws IOException
+    protected void buildBIP() 
     {
-        listener.onLogEvent(LogListener.BIP, "Building IIP program...");
-        
         super.numConstraints = 0;
         
         // Construct all variable names
@@ -208,8 +199,12 @@ public class InteractionBIP extends AbstractBIPSolver
         binaryVariableConstraints();
         
         buf.close();
-        CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
-        listener.onLogEvent(LogListener.BIP, "Built IIP program");
+        try {
+            CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Cannot concantenate text files that store BIP.");
+        }
     }
     
 	

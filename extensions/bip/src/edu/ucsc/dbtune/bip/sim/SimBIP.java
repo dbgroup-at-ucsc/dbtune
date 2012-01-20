@@ -14,7 +14,6 @@ import java.util.Set;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
-import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.BIPIndexPool;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
@@ -101,9 +100,8 @@ public class SimBIP extends AbstractBIPSolver
     }
     
     @Override
-    protected final void buildBIP(final LogListener listener) throws IOException 
-    {
-        listener.onLogEvent(LogListener.BIP, "Building BIP for SIM...");
+    protected final void buildBIP() 
+    {   
         super.numConstraints = 0;
         
         // 1. Add variables into {@code poolVariables}
@@ -132,8 +130,11 @@ public class SimBIP extends AbstractBIPSolver
         
         buf.close();
         
-        CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());        
-        listener.onLogEvent(LogListener.BIP, "Built SIM program.");
+        try {
+            CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot concantenate text files that store BIP.");
+        }
     }
     
     
