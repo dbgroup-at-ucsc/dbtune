@@ -13,6 +13,9 @@ import edu.ucsc.dbtune.util.Identifiable;
  */
 public class Operator implements Comparable<Operator>, Identifiable
 {
+    /** NLJ operator. **/
+    public static final String NLJ = "nested.loop.join";
+
     /** ID used to identify an operator within a plan. */
     protected int id;
 
@@ -57,6 +60,22 @@ public class Operator implements Comparable<Operator>, Identifiable
         this.accumulatedCost = accumulatedCost;
         this.cardinality     = cardinality;
         this.objects         = new ArrayList<DatabaseObject>();
+    }
+
+    /**
+     * Copies an operator.
+     *
+     * @param o
+     *      other operator being copied
+     */
+    Operator(Operator o)
+    {
+        this.id = o.id;
+        this.name = o.name;
+        this.cost = o.cost;
+        this.accumulatedCost = o.accumulatedCost;
+        this.cardinality = o.cardinality;
+        this.objects = o.objects;
     }
 
     /**

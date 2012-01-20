@@ -79,10 +79,10 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
 
         childEntry = null;
 
-        if ( leftOrRight == LEFT && parentEntry.children.size() > 0) {
-            childEntry = parentEntry.children.get(0);
-        } else if (leftOrRight == RIGHT && parentEntry.children.size() > 1) {
-            childEntry = parentEntry.children.get(1);
+        if ( leftOrRight == LEFT && parentEntry.getChildren().size() > 0) {
+            childEntry = parentEntry.getChildren().get(0);
+        } else if (leftOrRight == RIGHT && parentEntry.getChildren().size() > 1) {
+            childEntry = parentEntry.getChildren().get(1);
         }
 
         if (childEntry != null) {
@@ -99,7 +99,7 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
     {
         Entry<T> parentEntry = elements.get(parentValue);
 
-        if (parentEntry.children.size() > 1) {
+        if (parentEntry.getChildren().size() > 1) {
             throw new IllegalArgumentException("Parent already has child at given sub-tree");
         }
 
@@ -122,14 +122,14 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
     {
         while (entry != null) {
             if (value.compareTo(entry.getElement()) < 0) {
-                if (entry.children.size() > 0) {
-                    entry = entry.children.get(0);
+                if (entry.getChildren().size() > 0) {
+                    entry = entry.getChildren().get(0);
                 } else {
                     entry = null;
                 }
             } else if (value.compareTo(entry.getElement()) > 0) {
-                if (entry.children.size() > 1) {
-                    entry = entry.children.get(1);
+                if (entry.getChildren().size() > 1) {
+                    entry = entry.getChildren().get(1);
                 } else {
                     entry = null;
                 }
