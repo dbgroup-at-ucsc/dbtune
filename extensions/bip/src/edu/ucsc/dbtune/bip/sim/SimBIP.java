@@ -21,6 +21,12 @@ import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.sim.SchedulePoolLocator;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.FullTableScanIndex;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.workload.Workload;
+
+import static edu.ucsc.dbtune.metadata.FullTableScanIndex.getFullTableScanIndexInstance;
 
 
 /**
