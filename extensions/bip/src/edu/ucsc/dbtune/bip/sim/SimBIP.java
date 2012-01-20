@@ -21,12 +21,6 @@ import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.sim.SchedulePoolLocator;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.FullTableScanIndex;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.workload.Workload;
-
-import static edu.ucsc.dbtune.metadata.FullTableScanIndex.getFullTableScanIndexInstance;
 
 
 /**
@@ -150,6 +144,7 @@ public class SimBIP extends AbstractBIPSolver
         
         // Iterate over variables create_{i,w} and drop_{i,w}
         try {
+            System.out.println("L147 (SimBIP), objective value: " + cplex.getObjValue());
             matrix = getMatrix(cplex);
             vars = matrix.getNumVars();
             

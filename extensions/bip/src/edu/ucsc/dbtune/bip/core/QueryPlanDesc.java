@@ -6,7 +6,6 @@ import java.util.List;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
-import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * This interface corresponds to a statement in the given workload.
@@ -18,14 +17,6 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public interface QueryPlanDesc 
 {   
-    /**
-     * Set the statement that this object corresponds to 
-     * 
-     * @param stmt
-     *      The SQL statement
-     */
-    void setStatement(SQLStatement stmt);
-    
     /**
      * The method communicates with the given optimizer, {@code optimizer},
      * and populates the INUM space for the statement that this object
@@ -141,7 +132,7 @@ public interface QueryPlanDesc
      * @return
      *      A list of tables 
      */
-    List<Table> getReferencedTables();
+    List<Table> getTables();
     
     
     /**  
