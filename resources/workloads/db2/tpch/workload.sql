@@ -1,5 +1,3 @@
-;
-
 --query
 select
 	l_returnflag,
@@ -21,9 +19,7 @@ group by
 	l_linestatus
 order by
 	l_returnflag,
-	l_linestatus
-;
-
+	l_linestatus;
 --query
 select
 	s_acctbal,
@@ -67,9 +63,7 @@ order by
 	s_acctbal desc,
 	n_name,
 	s_name,
-	p_partkey
-;
-
+	p_partkey;
 --query
 select
 	l_orderkey,
@@ -92,10 +86,7 @@ group by
 	o_shippriority
 order by
 	revenue desc,
-	o_orderdate
-
-;
-
+	o_orderdate;
 --query
 select
 	o_orderpriority,
@@ -117,10 +108,7 @@ where
 group by
 	o_orderpriority
 order by
-	o_orderpriority
-
-;
-
+	o_orderpriority;
 --query
 select
 	n_name,
@@ -145,9 +133,7 @@ where
 group by
 	n_name
 order by
-	revenue desc
-;
-
+	revenue desc;
 --query
 select
 	sum(l_extendedprice * l_discount) as revenue
@@ -157,9 +143,7 @@ where
 	l_shipdate >= '1993-01-01'
 	and l_shipdate < cast('1993-01-01' as date) + 1 year
 	and l_discount between 0.07 - 0.01 and 0.07 + 0.01
-	and l_quantity < 25
-;
-
+	and l_quantity < 25;
 --query
 select
 	supp_nation,
@@ -199,9 +183,7 @@ group by
 order by
 	supp_nation,
 	cust_nation,
-	l_year
-;
-
+	l_year;
 --query
 select
 	o_year,
@@ -239,9 +221,7 @@ from
 group by
 	o_year
 order by
-	o_year
-;
-
+	o_year;
 --query
 select
 	nation,
@@ -274,9 +254,7 @@ group by
 	o_year
 order by
 	nation,
-	o_year desc
-;
-
+	o_year desc;
 --query
 select
 	c_custkey,
@@ -308,9 +286,7 @@ group by
 	c_address,
 	c_comment
 order by
-	revenue desc
-;
-
+	revenue desc;
 --query
 select
 	ps_partkey,
@@ -338,9 +314,7 @@ group by
 				and n_name = 'JAPAN'
 		)
 order by
-	value desc
-;
-
+	value desc;
 --query
 select
 	l_shipmode,
@@ -369,9 +343,7 @@ where
 group by
 	l_shipmode
 order by
-	l_shipmode
-;
-
+	l_shipmode;
 --query
 select
 	c_count,
@@ -392,9 +364,7 @@ group by
 	c_count
 order by
 	custdist desc,
-	c_count desc
-;
-
+	c_count desc;
 --query
 select
 	100.00 * sum(case
@@ -408,47 +378,27 @@ from
 where
 	l_partkey = p_partkey
 	and l_shipdate >= '1993-05-01'
-	and l_shipdate < cast('1993-05-01' as date) + 1 month
---ddl
-create view revenue0 (supplier_no, total_revenue) as
-	select
-		l_suppkey,
-		sum(l_extendedprice * (1 - l_discount))
-	from
-		tpch.lineitem
-	where
-		l_shipdate >= '1995-08-01'
-		and l_shipdate < cast('1995-08-01' as date) + 3 months
-	group by
-		l_suppkey
-
-;
-
+	and l_shipdate < cast('1993-05-01' as date) + 1 month;
 --query
-select
-	s_suppkey,
-	s_name,
-	s_address,
-	s_phone,
-	total_revenue
-from
-	tpch.supplier,
-	tpch.revenue0
-where
-	s_suppkey = supplier_no
-	and total_revenue = (
-		select
-			max(total_revenue)
-		from
-			tpch.revenue0
-	)
-order by
-	s_suppkey
-
---ddl
-drop view revenue0
-;
-
+--select
+--	s_suppkey,
+--	s_name,
+--	s_address,
+--	s_phone,
+--	total_revenue
+--from
+--	tpch.supplier,
+--	tpch.revenue999
+--where
+--	s_suppkey = supplier_no
+--	and total_revenue = (
+--		select
+--			max(total_revenue)
+--		from
+--			tpch.revenue999
+--	)
+--order by
+--	s_suppkey;
 --query
 select
 	p_brand,
@@ -479,9 +429,7 @@ order by
 	supplier_cnt desc,
 	p_brand,
 	p_type,
-	p_size
-;
-
+	p_size;
 --query
 select
 	sum(l_extendedprice) / 7.0 as avg_yearly
@@ -499,9 +447,7 @@ where
 			tpch.lineitem
 		where
 			l_partkey = p_partkey
-	)
-;
-
+	);
 --query
 select
 	c_name,
@@ -519,7 +465,7 @@ where
 		select
 			l_orderkey
 		from
-			lineitem
+			tpch.lineitem
 		group by
 			l_orderkey having
 				sum(l_quantity) > 313
@@ -534,15 +480,13 @@ group by
 	o_totalprice
 order by
 	o_totalprice desc,
-	o_orderdate
-;
-
+	o_orderdate;
 --query
 select
 	sum(l_extendedprice* (1 - l_discount)) as revenue
 from
 	tpch.lineitem,
-	part
+	tpch.part
 where
 	(
 		p_partkey = l_partkey
@@ -572,9 +516,7 @@ where
 		and p_size between 1 and 15
 		and l_shipmode in ('AIR', 'AIR REG')
 		and l_shipinstruct = 'DELIVER IN PERSON'
-	)
-;
-
+	);
 --query
 select
 	s_name,
@@ -612,18 +554,16 @@ where
 	and s_nationkey = n_nationkey
 	and n_name = 'KENYA'
 order by
-	s_name
-;
-
+	s_name;
 --query
 select
 	s_name,
 	count(*) as numwait
 from
 	tpch.supplier,
-	lineitem l1,
-	orders,
-	nation
+	tpch.lineitem l1,
+	tpch.orders,
+	tpch.nation
 where
 	s_suppkey = l1.l_suppkey
 	and o_orderkey = l1.l_orderkey
@@ -654,9 +594,7 @@ group by
 	s_name
 order by
 	numwait desc,
-	s_name
-;
-
+	s_name;
 --query
 select
 	cntrycode,

@@ -2,15 +2,13 @@ package edu.ucsc.dbtune.bip;
 
 import java.io.FileReader;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
+import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
@@ -84,11 +82,14 @@ public class SimBIPTest
             throw new Exception("Expecting InumOptimizer instance");
 
         // Sinit = \emptyset
-        SimBIP sim = new SimBIP(sInit, sMat, w, timeLimit);
-        sim.setOptimizer((InumOptimizer) io);
-        sim.setWorkload(workload);
-        BIPOutput schedule = sim.solve();
+        LogListener logger = LogListener.getInstance();
+        SimBIP bip = new SimBIP(sInit, sMat, w, timeLimit);
+        bip.setOptimizer((InumOptimizer) io);
+        bip.setWorkload(workload);
+        bip.setLogListenter(logger);
+        BIPOutput schedule = bip.solve();
         System.out.println("Result: " + schedule.toString());
+        System.out.println(logger.toString());
         
     }
 }

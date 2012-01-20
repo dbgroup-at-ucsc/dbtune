@@ -70,3 +70,8 @@ The contents of columns corresponding to system tables need to be trim.
 
 #164 FullTableScanIndex bug
 The constructor of FTS should contain information to link with the table, on which this object is defined.
+In addition, the name of FTS should include the table name in order to uniquely identifies
+a FTS for a table.
+
+#165 Add LogListener class to record the running time of BIP
+Implementating a logger that records the running time of BIP

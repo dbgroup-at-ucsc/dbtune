@@ -49,6 +49,8 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected int numConstraints;
     protected InumOptimizer inumOptimizer;
     
+    protected LogListener logger;
+    
     
     @Override    
     public void setWorkload(Workload wl)
@@ -75,29 +77,36 @@ public abstract class AbstractBIPSolver implements BIPSolver
         // Preprocess steps
         insertIndexesToPool();
         initializeBuffer();
+        logger.onLogEvent(LogListener.EVENT_PREPROCESS);
         
         // 1. Communicate with INUM 
         // to derive the query plan descriptions including internal cost, index access cost, etc.  
         this.populatePlanDescriptionForStatements();
+        logger.onLogEvent(LogListener.EVENT_INUM_POPULATING);
         
-        // 2. Build BIP       
-        LogListener listener = new LogListener() {
-            public void onLogEvent(String component, String logEvent) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-        };
-         
         // 2. Build BIP        
-        buildBIP(listener);       
+        buildBIP();       
+        logger.onLogEvent(LogListener.EVENT_BIP_FORMULATING);
         
         // 3. Solve the BIP
+        BIPOutput result = null;
         if (this.solveBIP() == true) {
-            return this.getOutput();
-        } else {
-            return null;
+            result = this.getOutput();
         }
+        logger.onLogEvent(LogListener.EVENT_BIP_SOLVING);
+        return result;            
     }
     
+    /**
+     * Set the listener that logs the running time
+     * 
+     * @param listener
+     *      The listener
+     */
+    public void setLogListenter(LogListener logger)
+    {
+        this.logger = logger;
+    }
     
     /**
      * Insert indexes from the candidate indexes into the pool in some order 
@@ -144,6 +153,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
      * 
      *      
      * @throws SQLException
+     *      if the connection to INUM fails
      */
     protected void populatePlanDescriptionForStatements() throws SQLException
     {   
@@ -190,11 +200,9 @@ public abstract class AbstractBIPSolver implements BIPSolver
     /**
      * Build the BIP and store into a text file
      * 
-     * @param listener
-     *      The logger
      * @throws IOException
      */
-    protected abstract void buildBIP(final LogListener listener) throws IOException;
+    protected abstract void buildBIP();
     
     /**
      * Call CPLEX to solve the formulated BIP, imported from the file

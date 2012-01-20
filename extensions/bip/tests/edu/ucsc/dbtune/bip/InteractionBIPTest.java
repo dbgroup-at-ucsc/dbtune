@@ -1,8 +1,6 @@
 package edu.ucsc.dbtune.bip;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.metadata.FullTableScanIndex.getFullTableScanIndexInstance;
-
 import java.io.FileReader;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -13,14 +11,14 @@ import org.junit.Test;
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
-import edu.ucsc.dbtune.metadata.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
+
+import edu.ucsc.dbtune.bip.util.LogListener;
 
 /**
  * Test for the InteractionBIP class
@@ -72,25 +70,18 @@ public class InteractionBIPTest extends BIPTestConfiguration
             if (!(io instanceof InumOptimizer))
                 throw new Exception("Expecting InumOptimizer instance");
 
-            InteractionBIP bip = new InteractionBIP(delta);
+            LogListener logger = LogListener.getInstance();
+            InteractionBIP bip = new InteractionBIP(delta);            
             bip.setCandidateIndexes(allIndexes);
             bip.setWorkload(workload);
             bip.setOptimizer((InumOptimizer)io);
+            bip.setLogListenter(logger);
             
             BIPOutput output = bip.solve();
             System.out.println(output.toString());
+            System.out.println(logger.toString());
         } catch (SQLException e){
             System.out.println(" error " + e.getMessage());
-        }
-        
-        /*
-        // Add full table scan indexes into the pool
-        for (Table table : db.getCatalog().schemas().get(1).tables()) {
-            FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
-            System.out.println(" index name " + scanIdx.getFullyQualifiedName());
-            Table t1 = scanIdx.getTable();
-            System.out.println(" table name: " + t1.getFullyQualifiedName());
-        }
-        */
+        }        
     }
 }

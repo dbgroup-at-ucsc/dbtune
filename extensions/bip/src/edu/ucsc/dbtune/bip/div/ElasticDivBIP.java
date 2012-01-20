@@ -13,7 +13,6 @@ import java.util.Map;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -86,19 +85,10 @@ public class ElasticDivBIP extends DivBIP
      * </ol>
      * </p>   
      * 
-     * @param listener
-     *      Log the building process
-     * 
-     * @throws IOException
      */
     @Override
-    protected void buildBIP(LogListener listener) throws IOException 
+    protected void buildBIP()  
     {
-        if (isExpand == true) {
-            listener.onLogEvent(LogListener.BIP, "Building expand replicas DIV program...");
-        } else {
-            listener.onLogEvent(LogListener.BIP, "Building shrink replicas DIV program...");
-        }
         numConstraints = 0;
         
         // 1. Add variables into list
@@ -133,13 +123,13 @@ public class ElasticDivBIP extends DivBIP
         binaryVariableConstraints();
         
         buf.close();
-        CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
-        
-        if (isExpand == true) {
-            listener.onLogEvent(LogListener.BIP, "Built expand replicas DIV program");
-        } else {
-            listener.onLogEvent(LogListener.BIP, "Built shrink replicas DIV program");
+        try {
+            CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
+        }  catch (IOException e) {
+            throw new RuntimeException("Cannot concantenate text files that store BIP.");
         }
+        
+        
     }
    
     private void constructVariablesElastic()
