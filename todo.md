@@ -61,4 +61,7 @@ Add size() to Workload class.
 
 #162 replace the mapping of schema to workload by workload only
 Replace a part of the input to the BIP to consist of only workload, instead of 
-workload that is partitioned in terms of the schema on which the queries are defined on.  
+workload that is partitioned in terms of the schema on which the queries are defined on.
+
+#163 DB2Optimizer bug 
+The contents of columns corresponding to system tables need to be trim.   

@@ -494,7 +494,7 @@ public class DB2Optimizer extends AbstractOptimizer
                     " WHERE object_type = 'IX'");
 
         while (rs.next())
-            used.add(catalog.findIndex(rs.getString("name")));
+            used.add(catalog.findIndex(rs.getString("name").trim()));
 
         rs.close();
         stmt.close();
@@ -532,26 +532,26 @@ public class DB2Optimizer extends AbstractOptimizer
         boolean primary = false;
 
         while (rs.next()) {
-            schema = catalog.findSchema(rs.getString("tbcreator"));
-            table = schema.findTable(rs.getString("tbname"));
+            schema = catalog.findSchema(rs.getString("tbcreator").trim());
+            table = schema.findTable(rs.getString("tbname").trim());
             columns = new ArrayList<Column>();
             descending = new ArrayList<Boolean>();
             name = "sat_index_" + new Random().nextInt(10000);
 
             parseColumnNames(table, rs.getString("colnames"), columns, descending);
 
-            if (rs.getString("uniquerule").equals("U"))
+            if (rs.getString("uniquerule").trim().equals("U"))
                 unique = true;
-            else if (rs.getString("uniquerule").equals("D"))
+            else if (rs.getString("uniquerule").trim().equals("D"))
                 unique = false;
             else {
                 unique = true;
                 primary = true;
             }
 
-            if (rs.getString("indextype").equals("REG"))
+            if (rs.getString("indextype").trim().equals("REG"))
                 primary = false;
-            else if (rs.getString("indextype").equals("CLUS"))
+            else if (rs.getString("indextype").trim().equals("CLUS"))
                 clustered = true;
             else
                 clustered = false;
@@ -653,7 +653,7 @@ public class DB2Optimizer extends AbstractOptimizer
         String dboSchema = rs.getString("object_schema");
         DatabaseObject dbo;
 
-        Operator op = new Operator(name, accomulatedCost, cardinality);
+        Operator op = new Operator(name.trim(), accomulatedCost, cardinality);
 
         if (dboSchema != null)
             dboSchema = dboSchema.trim();
