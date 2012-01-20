@@ -547,6 +547,32 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
+     * Whether the given index covers this one. An index a is covered by another b if a's columns 
+     * are a subset of b's and they're in the same order and with the same {@link #isAscending 
+     * ascending} value.
+     *
+     * @param other
+     *     index that may (or not) cover this one.
+     * @return
+     *     {@code true} if this index is covered by the given one; {@code false} otherwise
+     */
+    public boolean isCoveredBy(Index other)
+    {
+        if (other.size() < this.size())
+            return false;
+
+        for (int i = 0; i < other.size(); i++) {
+            if (containees.get(i) != other.containees.get(i))
+                return false;
+
+            if (ascending.get(i) != other.ascending.get(i))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -564,25 +590,29 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         if (!(other instanceof Index))
             return false;
 
-        Index idx = (Index) other;
+        Index o = (Index) other;
 
-        if (containees.size() != idx.containees.size())
+        if (this.size() != o.size())
             return false;
 
-        for (int i = 0; i < idx.size(); i++) {
-            if (containees.get(i) != idx.containees.get(i))
+        if (!isCoveredBy(o))
+            return false;
+
+        // we begin where isCoveredBy() was left (i.e. in the size()'nth column of this index)
+        for (int i = size() - 1; i < o.size(); i++) {
+            if (containees.get(i) != o.containees.get(i))
                 return false;
 
-            if (ascending.get(i) != idx.ascending.get(i))
+            if (ascending.get(i) != o.ascending.get(i))
                 return false;
         }
 
-        if (type != idx.type ||
-                unique != idx.unique ||
-                primary != idx.primary ||
-                clustered != idx.clustered ||
-                materialized != idx.materialized ||
-                scanOption != idx.scanOption)
+        if (type != o.type ||
+                unique != o.unique ||
+                primary != o.primary ||
+                clustered != o.clustered ||
+                materialized != o.materialized ||
+                scanOption != o.scanOption)
             return false;
 
         return true;

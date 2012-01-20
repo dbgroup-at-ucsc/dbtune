@@ -288,6 +288,16 @@ public class Tree<T extends Comparable<? super T>>
         }
 
         /**
+         * Gets the children for this instance.
+         *
+         * @return The children.
+         */
+        public List<Entry<T>> getChildren()
+        {
+            return this.children;
+        }
+
+        /**
          * {@inheritDoc}
          */
         @Override

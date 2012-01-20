@@ -138,7 +138,7 @@ public class SQLStatementPlan extends Tree<Operator>
      * @return
      *     the list of referenced tables
      */
-    public List<Table> getReferencedTables()
+    public List<Table> getTables()
     {
         List<Table> tables = new ArrayList<Table>();
 
