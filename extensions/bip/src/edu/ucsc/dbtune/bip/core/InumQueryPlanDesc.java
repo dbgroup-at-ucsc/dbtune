@@ -12,19 +12,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.IndexFullTableScan;
+import edu.ucsc.dbtune.metadata.FullTableScanIndex;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static edu.ucsc.dbtune.metadata.FullTableScanIndex.getFullTableScanIndexInstance;
 
-public class InumQueryPlanDesc implements QueryPlanDesc 
-{	
-	private int Kq;
-	private int n; 
-	private List<Integer> S;
+public class InumQueryPlanDesc implements QueryPlanDesc {	private int Kq;
+    private int n; private List<Integer> S;
 	private List<Double> beta;
 	private List< List< List <Double> > > gamma;
 	private List< List< Index> > listIndexesEachSlot;	
@@ -95,7 +94,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                 }
             }
             // add the index full table scan at the last position in this slot
-            IndexFullTableScan scanIdx = new IndexFullTableScan(table);
+            FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
             numIndexEachSlot++;
             listIndex.add(scanIdx);
             

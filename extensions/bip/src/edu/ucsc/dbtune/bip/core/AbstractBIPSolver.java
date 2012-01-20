@@ -17,12 +17,15 @@ import java.util.Set;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.IndexFullTableScan;
+import edu.ucsc.dbtune.metadata.FullTableScanIndex;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
+
+import static edu.ucsc.dbtune.metadata.FullTableScanIndex.getFullTableScanIndexInstance;
 
 /**
  * This class abstracts the common methods shared by different BIP solvers
@@ -175,7 +178,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         
         // Add full table scan indexes into the pool
         for (Table table : listWorkloadTables) {
-            IndexFullTableScan scanIdx = new IndexFullTableScan(table);
+            FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
             poolIndexes.add(scanIdx);
         }        
         
