@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.ucsc.dbtune.util.IncrementallyIdentifiable;
@@ -111,6 +112,28 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
+     * Creates an index containing the given column. The column is taken as being in ascending 
+     * order. The index is assumed to be {@link SECONDARY},  {@link NON_UNIQUE} and {@link 
+     * UNCLUSTERED}
+     *
+     * @param name
+     *     name of the index
+     * @param columns
+     *     columns that will define the index
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
+     *     order.
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the defaulted name; if not 
+     *     all of the columns in the list correspond to the same table.
+     */
+    public Index(String name, List<Column> columns, Map<Column, Boolean> ascending)
+        throws SQLException
+    {
+        this(name, columns, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+    }
+
+    /**
      * Creates an index with the given name, column, primary, uniqueness and clustering values. The 
      * column is taken as being in ascending order.
      *
@@ -167,6 +190,44 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     {
         this(null, name, columns, null, primary, unique, clustered);
     }
+
+    /**
+     * Creates an index from the given columns,  primary,  uniqueness and clustering values.
+     *
+     * @param name
+     *     name of the index
+     * @param columns
+     *     columns that will define the index
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
+     *     order.
+     * @param primary
+     *     whether or not the index is primary
+     * @param unique
+     *     whether or not the index is unique
+     * @param clustered
+     *     whether the corresponding table is clustered on this index
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the given name; if not all 
+     *     of the columns in the list correspond to the same table.
+     */
+    public Index(
+            String name,
+            List<Column> columns,
+            Map<Column, Boolean> ascending,
+            boolean primary,
+            boolean unique,
+            boolean clustered)
+        throws SQLException
+    {
+        this(null, name, columns, null, primary, unique, clustered);
+
+        ascending.clear();
+
+        for (Column c : columns)
+            this.ascending.add(ascending.get(c));
+    }
+
     /**
      * Creates an index from the given columns,  primary,  uniqueness and clustering values.
      *
@@ -221,7 +282,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      *     if column list empty; if schema already contains an index with the given name; if not all 
      *     of the columns in the list correspond to the same table.
      */
-    Index(
+    private Index(
             Schema schema, 
             String name, 
             List<Column> columns, 
@@ -297,7 +358,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
-     * Sets the type of index. Either PRIMARY, CLUSTERED or SECONDARY.
+     * Sets the type of index. Either UNKNOWN, B_TREE or BITMAP.
      *
      * @param type
      *     one of the available fields.

@@ -60,7 +60,6 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     private static final String DERBY_DEBUG_SETTING = "derby.debug.true";
     private static final String DRIVER_NAME = "org.apache.derby.jdbc.EmbeddedDriver";
     private static final String LANG_CONNECTION = "LanguageConnectionContext";
-    private static final String SHUTDOWN_URL = "jdbc:derby:;shutdown=true";
     private static final String STOP_AFTER_PARSING =  "StopAfterParsing";
     private static final String STOPPED_AFTER_PARSING = "42Z55";
     private static final Connection CON;
@@ -169,14 +168,9 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
         try {
             visit(qt);
-            DriverManager.getConnection(SHUTDOWN_URL);
         }
         catch (StandardException e) {
             throw new SQLException("An error occurred while walking the query AST", e);
-        }
-        catch (SQLException e) {
-            // expected; the SHUTDOWN mechanism throws an exception
-            e = null;
         }
         // qt.treePrint(); // useful for debugging; prints to stdout
     }
@@ -292,7 +286,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                     interestingOrdersPerTable.put(tblName, interestingOrdersForTable);
                 }
 
-                interestingOrdersForTable.add(new Index(col, ascending.get(colName)));
+                interestingOrdersForTable.add(new InterestingOrder(col, ascending.get(colName)));
 
                 // we found the column, so let's look for the next one (we assume the SQL is well 
                 // written, i.e. that the reference to a column is not ambiguous).

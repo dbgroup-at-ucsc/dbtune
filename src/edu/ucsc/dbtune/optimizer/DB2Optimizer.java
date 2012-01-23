@@ -485,7 +485,7 @@ public class DB2Optimizer extends AbstractOptimizer
             Catalog catalog, Connection connection)
         throws SQLException
     {
-        Set<Index> used = new BitArraySet<Index>();
+        Set<Index> used = new HashSet<Index>();
         Statement stmt = connection.createStatement();
         ResultSet rs =
             stmt.executeQuery(

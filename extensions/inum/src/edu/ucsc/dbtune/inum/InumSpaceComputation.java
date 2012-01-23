@@ -13,14 +13,19 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  * answer what-if calls efficiently and without the need of contacting the optimizer again.
  * <p>
  * For statements containing a large number of joins, for instance for queries joining 10 or 20 
- * tables, the computation of the inum space becomes expensive, as more than a thousand optimizer 
+ * tables, the computation of the INUM space becomes expensive, as more than a thousand optimizer 
  * calls are required to fully compute the INUM Space.
  * <p>
  * Fortunately, there are ways to optimize the performance of INUM construction by abstracting this 
  * mechanism and enable different implementations, so that it's still efficient to do what-if 
- * analysis on INUM.
+ * analysis on INUM. Alternatives to this can range from <i>Eager evaluation</i> to others more 
+ * sophisticated techniques such as the ones outlined in [1], like <i>Lazy</i> or <i>cost-based 
+ * evaluation</i>.
  *
  * @author Ivo Jimenez
+ * @see <a href="http://portal.acm.org/citation.cfm?id=1325974"?>
+ *        [1] Efficient use of the query optimizer for automated physical design
+ *      </a>
  */
 public interface InumSpaceComputation
 {
