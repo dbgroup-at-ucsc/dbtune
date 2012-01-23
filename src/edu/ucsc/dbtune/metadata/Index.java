@@ -275,7 +275,6 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         this.inMemoryID = Index.IN_MEMORY_ID.getAndIncrement();
 
         container.add(this);
-
     }
 
     /**
@@ -298,7 +297,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
-     * Sets the type of index. Either PRIMARY,  CLUSTERED or SECONDARY.
+     * Sets the type of index. Either PRIMARY, CLUSTERED or SECONDARY.
      *
      * @param type
      *     one of the available fields.
@@ -373,8 +372,8 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      * Whether or not this index is reversible. An index is reversible if it can be scanned in 
      * reverse order. For example, assume two indexes on one column {@code A} of a table are created 
      * with {@code ASC} and {@code DESC} constraints, respectively. A reversible index can replace 
-     * them since scanning it in reverse order is equivalent to having an index with the opposite 
-     * constraint.
+     * them since scanning it in reverse order is equivalent to having an index defined with the 
+     * opposite constraint.
      *
      * @return
      *     <code>true</code> if reversible; <code>false</code> otherwise

@@ -175,10 +175,10 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             throw new SQLException("An error occurred while walking the query AST", e);
         }
         catch (SQLException e) {
-            /* expected; the SHUTDOWN mechanism throws an exception */
+            // expected; the SHUTDOWN mechanism throws an exception
             e = null;
         }
-        // qt.treePrint(); // useful for debugging
+        // qt.treePrint(); // useful for debugging; prints to stdout
     }
 
     /**
@@ -278,7 +278,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                     col = catalog.<Column>findByName(tblName + "." + colName);
                 }
                 catch (SQLException e) {
-                    /* it's OK not to find it, as long as we find it in a subsequent iteration */
+                    // it's OK not to find it, as long as we find it in a subsequent iteration
                     e = null;
                 }
 
@@ -298,8 +298,8 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 // written, i.e. that the reference to a column is not ambiguous).
                 break;
                 // Alternatively, we could go to the next loop and check if we found that the column 
-                // is also in another table then throw an ambiguity exception, but we don't bother 
-                // for now since we assume that the SQL query is well written (otherwise the 
+                // is also in another table and then throw an ambiguity exception, but we don't 
+                // bother for now since we assume that the SQL query is well written (otherwise the 
                 // underlying DBMS would be throwing an exception)
             }
 
@@ -312,7 +312,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     }
 
     /**
-     * Walks the tree to extract the FROM, ORDER by and GROUP by lists.
+     * Walks the tree to extract the FROM, ORDER BY and GROUP BY lists.
      *
      * @param node
      *      a node of the tree

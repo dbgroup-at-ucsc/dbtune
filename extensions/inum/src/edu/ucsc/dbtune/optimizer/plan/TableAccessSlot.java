@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.sql.SQLException;
 
 import edu.ucsc.dbtune.metadata.DatabaseObject;
-import edu.ucsc.dbtune.metadata.FullTableScanIndex;
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
