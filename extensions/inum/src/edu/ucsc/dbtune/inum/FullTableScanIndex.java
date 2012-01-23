@@ -1,11 +1,12 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
 import java.sql.SQLException;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 
 /**
  * Used to represent the full table scan access in an INUM template plan. There's only one single 
@@ -18,7 +19,7 @@ import java.util.Map;
  * @see edu.ucsc.dbtune.optimizer.plan.InumPlan
  * @see edu.ucsc.dbtune.optimizer.plan.TableAccessSlot
  */
-public final class FullTableScanIndex extends Index
+public final class FullTableScanIndex extends InterestingOrder
 {
     private static Map<Table, Index> instances = new HashMap<Table, Index>();
     
@@ -32,7 +33,7 @@ public final class FullTableScanIndex extends Index
      */
     private FullTableScanIndex(Table table) throws SQLException
     {
-        super(table.getSchema(), table.getName() + "_full_table_scan");
+        super(table.getSchema(), table, table.getName() + "_full_table_scan");
     }
 
     /**
