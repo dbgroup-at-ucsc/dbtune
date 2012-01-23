@@ -12,14 +12,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.FullTableScanIndex;
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-import static edu.ucsc.dbtune.metadata.FullTableScanIndex.getFullTableScanIndexInstance;
+import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 
 /**
  * An implementation of {@link QueryPlanDesc} interface.
