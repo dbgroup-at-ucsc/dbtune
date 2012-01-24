@@ -5,15 +5,15 @@ import edu.ucsc.dbtune.bip.util.HashCodeUtil;
 
 public class IIPVariableIndicator 
 {
-    private int theta, typeVariable, k,  a;
+    private int theta, typeVariable, k, a;
     private int fHashCode;
     
     /**
      * A {@code IIPVarible} is defined based on the following
-     * five parameters
+     * four parameters:
      * 
      * @param _theta
-     *      Variables defined on either VAR_EMPTY, VAR_C, VAR_D, VAR_CD           
+     *      Variables are defined on either VAR_EMPTY, VAR_C, VAR_D, VAR_CD           
      * @param _typeVariable
      *      The type of variable (e.g., VAR_X, VAR_Y)
      * @param _k

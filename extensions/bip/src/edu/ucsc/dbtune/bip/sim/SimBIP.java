@@ -69,6 +69,15 @@ public class SimBIP extends AbstractBIPSolver
         Sremain.retainAll(Smat);
 	}
 	
+	/**
+	 * Since the set of indexes are derived from the initial configuration ({@code Sinit}) and
+	 * the configuration to be materialized ({@code Smat}), this method is left to be empty. 
+	 */
+	@Override
+	public void setCandidateIndexes(Set<Index> candidateIndexes)
+	{
+	    
+	}
     
 	@Override
     protected final void buildBIP() 
@@ -179,11 +188,11 @@ public class SimBIP extends AbstractBIPSolver
      * A well-behaved schedule satisfies the following three conditions:
      * <p>
      * <ol>
-     *  <li> Index I in Screate is created one time. In addition, I is present at window w if and only I has been 
-     *  created at some window point between 0 and w </li>
-     *  <li> Index I in Sdrop is dropped one time. Furthermore, I is present at w if and only I has not been 
-     *  dropped at all windows between 0 and w </li>
-     *  <li> Indexes in Sremain remain in the DBMS at all windows</li>
+     *  <li> Index I in {@code Screate} is created one time. In addition, I is present at window w 
+     *  if and only I has been created at some window point between 0 and w </li>
+     *  <li> Index I in {@code Sdrop} is dropped one time. Furthermore, I is present at window w 
+     *  if and only I has not been dropped at all windows between 0 and w </li>
+     *  <li> Indexes in {@code Sremain} remain in the DBMS at all windows</li>
      * </ol>
      * </p>
      *  
@@ -307,7 +316,8 @@ public class SimBIP extends AbstractBIPSolver
 				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
 					linList.add(poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0).getName());
 				}
-				buf.getCons().println("atomic_13a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) + " = 1");
+				buf.getCons().println("atomic_13a_" + numConstraints + ": " + 
+				                        StringConcatenator.concatenate(" + ", linList) + " = 1");
 				numConstraints++;
 			
 				// (2) \sum_{a \in S_i} x(w, k, i, a) = y(w, k)

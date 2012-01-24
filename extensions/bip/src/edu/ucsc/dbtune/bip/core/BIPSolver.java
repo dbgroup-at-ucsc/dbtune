@@ -51,7 +51,9 @@ public interface BIPSolver
      *      The result derived from the output of CPLEX
      *      
      * @throws SQLException
-     * @throws IOException 
+     *      when there is error in connecting with Inum optimizer
+     * @throws IOException
+     *      when there is file error in storing BIP
      */
     BIPOutput solve() throws SQLException, IOException;
 }

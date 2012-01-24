@@ -96,6 +96,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     {   
         beta = new ArrayList<Double>();
         listIndexesEachSlot = new ArrayList<List<Index>>();
+        listIndexesWithoutFTSEachSlot = new ArrayList<List<Index>>();
         InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
         preparedStmt.explain(new HashSet<Index>());
         Set<InumPlan> templatePlans = preparedStmt.getTemplatePlans();

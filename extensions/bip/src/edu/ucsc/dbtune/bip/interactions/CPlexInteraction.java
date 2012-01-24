@@ -20,8 +20,8 @@ public class CPlexInteraction extends CPlexImplementer
      * @param mapVarCoef
      *      The coefficient for variable in the alternative constraint
      * @return 
-     *      {@code true} if CPLEX returns a solution, and
-     *      {@code false} otherwise     
+     *      a map variables to their assigned values if CPLEX has a solution
+     *      or {@code null}, otherwise     
      */
     public Map<String, Integer> solveAlternativeInteractionConstraint(Map<String, Double> mapVarCoef)
     {

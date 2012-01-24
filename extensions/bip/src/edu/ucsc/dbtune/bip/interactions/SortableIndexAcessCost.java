@@ -30,7 +30,6 @@ public class SortableIndexAcessCost implements Comparable<SortableIndexAcessCost
 	}
 	
 	
-	
 	public Index getIndex()
 	{
 		return this.index;

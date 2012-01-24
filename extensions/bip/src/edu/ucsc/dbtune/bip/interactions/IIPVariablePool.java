@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPVariablePool;
-import edu.ucsc.dbtune.bip.util.BIPVariable;
+import edu.ucsc.dbtune.bip.core.BIPVariable;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 
 public class IIPVariablePool extends AbstractBIPVariablePool 
@@ -26,17 +26,17 @@ public class IIPVariablePool extends AbstractBIPVariablePool
     }
     /**
      * 
-     * Create the corresponding variable name in the form: y(empty, k), x(c,k,a), s(d, a), or u(cd, k, a).
+     * Create and store a variable, whose name is in the form of
+     * y(empty, k), x(c,k,a), s(d, a), or u(cd, k, a).
      *  
      * @param theta
-     *      The value of theta in the set of {empty, c, d, cd}
+     *      The value is in the set of {empty, c, d, cd}
      * @param typeVarible
      *      The type of variable, the value is in the set {y, x, u, s}
      * @param k
      *      The identifier of the corresponding template plan if {@code typeVariable} = VAR_Y, VAR_X, VAR_U 
      * @param a 
-     *      The index ID
-     *      Only enable when {@code typeVariable} = VAR_X, VAR_U, VAR_S
+     *      The index ID when {@code typeVariable} = VAR_X, VAR_U, VAR_S
      * 
      * @return
      *      The variable name
@@ -46,9 +46,9 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         StringBuilder varName = new StringBuilder();
         varName.append(strHeaderVariable[typeVariable]);
         varName.append("(");
-        List<String> nameComponent = new ArrayList<String>();
         
-        nameComponent.add(strTheta[theta]);
+        List<String> nameComponent = new ArrayList<String>();        
+        nameComponent.add(strTheta[theta]);        
         if (typeVariable == VAR_Y || typeVariable == VAR_X || typeVariable == VAR_U){
             nameComponent.add(Integer.toString(k));
         }

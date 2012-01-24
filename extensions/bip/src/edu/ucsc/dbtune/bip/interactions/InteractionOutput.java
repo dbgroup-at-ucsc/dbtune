@@ -34,14 +34,13 @@ public class InteractionOutput extends BIPOutput
     @Override
     public String toString() 
     {
-        String strInteractions = "";
-        strInteractions = "========= List of interactions ========\n";
+        StringBuilder strInteractions = new StringBuilder("========= List of interactions ========\n");        
         for (IndexInteraction pair : listInteractions){
-            strInteractions += (pair.getFirst().getFullyQualifiedName() + " ---- " 
-                                + pair.getSecond().getFullyQualifiedName()
-                                 + " \n");
+            strInteractions.append(pair.getFirst().getFullyQualifiedName() + " ---- " 
+                                    + pair.getSecond().getFullyQualifiedName()
+                                    + " \n");
         }
         
-        return strInteractions;
+        return strInteractions.toString();
     }
 }

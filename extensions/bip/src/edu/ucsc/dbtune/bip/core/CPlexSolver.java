@@ -5,8 +5,8 @@ import java.util.Map;
 public interface CPlexSolver 
 {
     /**
-     * Reads the BIP in the given {@code} inputFile name, solve the BIP, and returns the result,
-     * which is a mapping of variable name to their assigned value
+     * Reads the BIP in the given {@code inputFile}, solve the BIP, and returns the result,
+     * which is a mapping of variable names to their assigned values
      * 
      * @param inputFile
      *      The input file name that contains the BIP to solve

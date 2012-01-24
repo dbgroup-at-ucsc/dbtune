@@ -1,9 +1,5 @@
 package edu.ucsc.dbtune.bip.core;
 
-import ilog.concert.IloException;
-import ilog.concert.IloLPMatrix;
-import ilog.concert.IloNumVar;
-import ilog.cplex.IloCplex;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -44,8 +40,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected Map<String, Integer> mapVariableValue;
     protected Environment environment = Environment.getInstance();
     protected int numConstraints;
-    protected InumOptimizer inumOptimizer;
-    
+    protected InumOptimizer inumOptimizer;    
     protected LogListener logger;
     
     
@@ -66,7 +61,6 @@ public abstract class AbstractBIPSolver implements BIPSolver
     {
         this.inumOptimizer = optimizer;
     }
-    
    
     @Override
     public BIPOutput solve() throws SQLException, IOException
@@ -74,12 +68,12 @@ public abstract class AbstractBIPSolver implements BIPSolver
         // 1. Communicate with INUM 
         // to derive the query plan descriptions including internal cost, index access cost, etc.  
         this.populatePlanDescriptionForStatements();
-        logger.onLogEvent(LogListener.EVENT_INUM_POPULATING);
+        logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
         
         // 2. Build BIP        
         initializeBuffer();
         buildBIP();       
-        logger.onLogEvent(LogListener.EVENT_BIP_FORMULATING);
+        logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);
         
         // 3. Solve the BIP
         BIPOutput result = null;
@@ -88,12 +82,12 @@ public abstract class AbstractBIPSolver implements BIPSolver
         if (this.mapVariableValue != null){
             result = this.getOutput();
         }
-        logger.onLogEvent(LogListener.EVENT_BIP_SOLVING);
+        logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         return result;            
     }
     
     /**
-     * Set the listener that logs the running time
+     * Set the listener that logs the running time (for experimental purpose)
      * 
      * @param listener
      *      The listener

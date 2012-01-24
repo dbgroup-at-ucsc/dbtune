@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.bip.sim;
 
-import edu.ucsc.dbtune.bip.util.BIPVariable;
+import edu.ucsc.dbtune.bip.core.BIPVariable;
 
 public class SimVariable extends BIPVariable 
 {

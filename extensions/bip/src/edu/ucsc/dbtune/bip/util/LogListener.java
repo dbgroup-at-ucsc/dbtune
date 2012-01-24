@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * This class is a singleton that records the running time of a corresponding BIP solver.
- * It also breaks the running time of BIP into three main components:
+ * It breaks the running time of BIP into three main components:
  * (1) communicating with INUM to populate INUM's space,
  * (2) formulating the BIP, and
  * (3) solving BIP. 
@@ -18,12 +18,11 @@ public class LogListener
 {   
     private static LogListener instance;
     public static int EVENT_PREPROCESS = 0;
-    public static int EVENT_INUM_POPULATING = 1;
-    public static int EVENT_BIP_FORMULATING = 2;
-    public static int EVENT_BIP_SOLVING = 3;    
+    public static int EVENT_POPULATING_INUM = 1;
+    public static int EVENT_FORMULATING_BIP = 2;
+    public static int EVENT_SOLVING_BIP = 3;    
     private Map<Integer, Double> mapEventTime;
-    double startTimer;    
-    
+    double startTimer;   
     
     private LogListener()
     {
@@ -76,19 +75,19 @@ public class LogListener
         str.append("LogListener: \n"); 
         double totalTime = 0.0;
         
-        Object found = mapEventTime.get(new Integer(EVENT_INUM_POPULATING));
+        Object found = mapEventTime.get(new Integer(EVENT_POPULATING_INUM));
         if (found != null) {
             str.append("Time to populate INUM space: " + (Double) found + " millis. \n");
             totalTime += (Double) found;
         }
         
-        found = mapEventTime.get(new Integer(EVENT_BIP_FORMULATING));
+        found = mapEventTime.get(new Integer(EVENT_FORMULATING_BIP));
         if (found != null) {
             str.append("Time to formulate BIP: " + (Double) found + " millis. \n");
             totalTime += (Double) found;
         }
         
-        found = mapEventTime.get(new Integer(EVENT_BIP_SOLVING));
+        found = mapEventTime.get(new Integer(EVENT_SOLVING_BIP));
         if (found != null) {
             str.append("Time to solve BIP: " + (Double) found + " millis. \n");
             totalTime += (Double) found;

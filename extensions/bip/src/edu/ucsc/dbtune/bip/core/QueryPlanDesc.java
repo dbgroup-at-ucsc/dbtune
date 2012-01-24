@@ -31,7 +31,7 @@ public interface QueryPlanDesc
      * at each slot. The {@code candidateIndexes} does not contain full table scan indexes.  
      *     
      * @throws SQLException
-     *      when there is erros in connecting with {@code optimizer} 
+     *      when there is erro in connecting with {@code optimizer} 
      */
     void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidateIndexes) throws SQLException;
     
@@ -69,7 +69,7 @@ public interface QueryPlanDesc
      *      The index to retrieve the access cost
      *      
      * {\bf Note}: The result of this function is the value of the constant {\it \gamma_{qkia}}
-     * in the paper. From the given {@code index}, we can infer the slot it is placed.     
+     * in the paper. From the given {@code index}, we can infer the slot (i) that the index is placed.     
      */
     double getAccessCost(int k, Index index);
 
@@ -90,14 +90,16 @@ public interface QueryPlanDesc
     List<Table> getTables();
     
     /**
-     * Retrieve the list of indexes (including FTS indexes) that are stored in a particular slot
+     * Retrieve the list of indexes (including FTS indexes) that are stored in 
+     * the given slot {@code i}
      * @param i
      *      The slot on which we retrieve the set of indexes
      */
     List<Index> getListIndexesAtSlot(int i);
 
     /**
-     * Retrieve the list of indexes (excluding FTS indexes) that are stored in a particular slot
+     * Retrieve the list of indexes (excluding FTS indexes) that are stored in 
+     * the given slot {@code i}
      * @param i
      *      The slot on which we retrieve the list of indexes
      */

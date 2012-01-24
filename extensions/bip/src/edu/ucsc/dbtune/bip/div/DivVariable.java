@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.bip.div;
 
-import edu.ucsc.dbtune.bip.util.BIPVariable;
+import edu.ucsc.dbtune.bip.core.BIPVariable;
 
 public class DivVariable extends BIPVariable 
 {

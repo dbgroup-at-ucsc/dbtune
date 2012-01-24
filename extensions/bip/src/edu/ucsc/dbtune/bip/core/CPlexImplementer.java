@@ -36,6 +36,12 @@ public class CPlexImplementer implements CPlexSolver
         return mapVariableValue;
     }
     
+    /**
+     * Retrieve the result from CPLEX
+     * 
+     * @return
+     *      A mapping that maps variable names to their values
+     */
     protected Map<String, Integer> getMapVariableValue()
     {
         Map<String, Integer> mapVariableValue = new HashMap<String, Integer>();
