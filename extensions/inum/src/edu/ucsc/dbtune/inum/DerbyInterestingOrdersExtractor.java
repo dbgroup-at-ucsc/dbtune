@@ -172,7 +172,8 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         catch (StandardException e) {
             throw new SQLException("An error occurred while walking the query AST", e);
         }
-        // qt.treePrint(); // useful for debugging; prints to stdout
+        System.out.println(" trung, L175 (derby extractor) ");
+        qt.treePrint(); // useful for debugging; prints to stdout
     }
 
     /**
@@ -201,11 +202,12 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
         if (from == null)
             throw new SQLException("null FROM list");
-
+        // Trung: it is still possible for this case
         if (from.size() == 1 && orderBy == null && groupBy == null)
             throw new SQLException(
                 "Can't extract for single-table queries without ORDER BY or GROUP BY clauses");
-
+        // why don't we extract the attributes in the query's join
+        // i.e., the join condition in the where-clause
         for (int i = 0; i < from.size(); i++) {
             if (from.elementAt(i) instanceof FromBaseTable)
                 tableNames.add(((FromBaseTable) from.elementAt(i)).getTableName().toString());
@@ -230,6 +232,8 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                     ascending.put(col, isDefaultAscending());
             }
         }
+        System.out.println("L234 (trung), table names: " + tableNames.toString()
+                            + " col names: " + columnNames.toString());
 
         return extractInterestingOrdersPerTable(tableNames, columnNames, ascending);
     }
@@ -285,7 +289,9 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                     interestingOrdersForTable = new BitArraySet<Index>();
                     interestingOrdersPerTable.put(tblName, interestingOrdersForTable);
                 }
-
+                // Trung: We also need to include the 'empty' interesting order 
+                // in O_i to account for the indexes in T_i that do not cover 
+                // an interesting order (e.g., full table scan)
                 interestingOrdersForTable.add(new InterestingOrder(col, ascending.get(colName)));
 
                 // we found the column, so let's look for the next one (we assume the SQL is well 
