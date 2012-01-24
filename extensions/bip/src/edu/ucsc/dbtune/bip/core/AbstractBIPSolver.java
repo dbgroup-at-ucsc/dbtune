@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
@@ -37,11 +38,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected Set<Index> candidateIndexes;    
     protected Workload workload;
     protected List<QueryPlanDesc> listQueryPlanDescs;
-    protected IloLPMatrix matrix;
-    protected IloNumVar [] vars;
-    protected IloCplex cplex;
     
     protected CPlexBuffer buf;
+    protected CPlexImplementer cplex;
+    protected Map<String, Integer> mapVariableValue;
     protected Environment environment = Environment.getInstance();
     protected int numConstraints;
     protected InumOptimizer inumOptimizer;
@@ -83,7 +83,9 @@ public abstract class AbstractBIPSolver implements BIPSolver
         
         // 3. Solve the BIP
         BIPOutput result = null;
-        if (this.solveBIP() == true) {
+        cplex = new CPlexImplementer();
+        this.mapVariableValue = cplex.solve(this.buf.getLpFileName());
+        if (this.mapVariableValue != null){
             result = this.getOutput();
         }
         logger.onLogEvent(LogListener.EVENT_BIP_SOLVING);
@@ -160,31 +162,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
      * @throws IOException
      */
     protected abstract void buildBIP();
-    
-    /**
-     * Call CPLEX to solve the formulated BIP, imported from the file
-     * 
-     * @return
-     *      {@code boolean} value to indicate whether the BIP has a feasible solution or not. 
-     */
-    protected boolean solveBIP()
-    {
-        try {               
-            cplex = new IloCplex(); 
-                      
-            // Read model from file into cplex optimizer object
-            cplex.importModel(this.buf.getLpFileName()); 
-            
-            // Solve the model 
-            return cplex.solve();
-        }
-        catch (IloException e) {
-            System.err.println("Concert exception caught: " + e);
-        }
-        
-        return false;
-    }
-    
+       
     /**
      * Generate the output for the problem by manipulating the outcome from {@code cplex} object
      * 
@@ -193,28 +171,4 @@ public abstract class AbstractBIPSolver implements BIPSolver
      *      (e.g., MaterializationSchedule for Scheduling Index Materialization problem)
      */
     protected abstract BIPOutput getOutput();
-    
-    
-    /**
-     * Retrieve the matrix used in the BIP problem
-     * 
-     * @param cplex
-     *      The model of the BIP problem
-     * @return
-     *      The matrix of @cplex      
-     */ 
-    protected IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
-    {
-        @SuppressWarnings("unchecked")
-        Iterator iter = cplex.getModel().iterator();
-        
-        while (iter.hasNext()) {
-            Object o = iter.next();
-            if (o instanceof IloLPMatrix) {
-                IloLPMatrix matrix = (IloLPMatrix) o;
-                return matrix;
-            }
-        }
-        return null;
-    }
 }

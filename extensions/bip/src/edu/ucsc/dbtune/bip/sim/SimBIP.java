@@ -1,14 +1,12 @@
 package edu.ucsc.dbtune.bip.sim;
 
-import ilog.concert.IloException;
-import ilog.concert.IloNumVar;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
@@ -114,27 +112,15 @@ public class SimBIP extends AbstractBIPSolver
         MaterializationSchedule schedule = new MaterializationSchedule(this.W);
         
         // Iterate over variables create_{i,w} and drop_{i,w}
-        try {
-            System.out.println("L147 (SimBIP), objective value: " + cplex.getObjValue());
-            matrix = getMatrix(cplex);
-            vars = matrix.getNumVars();
-            
-            for (int i = 0; i < vars.length; i++) {
-                IloNumVar var = vars[i];
-                if (cplex.getValue(var) == 1) {
-                    SimVariable simVar = (SimVariable) poolVariables.get(var.getName());
-                    if (simVar.getType() == SimVariablePool.VAR_CREATE 
-                        || simVar.getType() == SimVariablePool.VAR_DROP ) {
-                        Index index = this.mapVarCreateDropToIndex.get(var.getName());
-                        schedule.addIndexWindow(index, simVar.getWindow(), simVar.getType());
-                    }
+        for (Entry<String, Integer> pairVarVal : super.mapVariableValue.entrySet()) {
+            if (pairVarVal.getValue() == 1) {
+                SimVariable simVar = (SimVariable) poolVariables.get(pairVarVal.getKey());
+                if (simVar.getType() == SimVariablePool.VAR_CREATE || simVar.getType() == SimVariablePool.VAR_DROP ) {
+                    Index index = this.mapVarCreateDropToIndex.get(pairVarVal.getKey());
+                    schedule.addIndexWindow(index, simVar.getWindow(), simVar.getType());
                 }
             }
-        }
-        catch (IloException e) {
-            System.err.println("Concert exception caught: " + e);
-        }
-        
+        }        
         return schedule;
     }
     

@@ -1,14 +1,12 @@
 package edu.ucsc.dbtune.bip.div;
 
-import ilog.concert.IloException;
-import ilog.concert.IloNumVar;
-
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
@@ -256,43 +254,24 @@ public class ElasticDivBIP extends DivBIP
     {
         DivRecommendedConfiguration conf = new DivRecommendedConfiguration(this.Nreplicas);
         
-        // Iterate over variables s_{i,w}
-        try {
-            matrix = getMatrix(cplex);
-            vars = matrix.getNumVars();
-            
-            // get deploy replicas first
-            Map<Integer, Integer> mapDeployedReplicas = new HashMap<Integer, Integer>();
-            for (int i = 0; i < vars.length; i++) {
-                IloNumVar var = vars[i];
-                if (cplex.getValue(var) == 1) {
-                    DivVariable divVar = (DivVariable) this.poolVariables.get(var.getName());
-                    if (divVar.getType() == DivVariablePool.VAR_DEPLOY){
-                        mapDeployedReplicas.put(new Integer(divVar.getReplica()), new Integer(1));
+        Map<Integer, Integer> mapDeployedReplicas = new HashMap<Integer, Integer>();
+        for (Entry<String, Integer> pairVarVal : super.mapVariableValue.entrySet()) {
+            if (pairVarVal.getValue() == 1) {
+                DivVariable divVar = (DivVariable) this.poolVariables.get(pairVarVal.getKey());
+                if (divVar.getType() == DivVariablePool.VAR_DEPLOY){
+                    mapDeployedReplicas.put(new Integer(divVar.getReplica()), new Integer(1));
+                }
+                if (divVar.getType() == DivVariablePool.VAR_S){
+                    // only the replicas that will be deployed
+                    if (mapDeployedReplicas.containsKey(new Integer(divVar.getReplica())) == false) {
+                        continue;
                     }
+                    // TODO: only record the normal indexes
+                    conf.addMaterializedIndexAtReplica(divVar.getReplica(), mapVarSToIndex.get(pairVarVal.getKey()));
+                    
                 }
             }
-            
-            for (int i = 0; i < vars.length; i++) {
-                IloNumVar var = vars[i];
-                if (cplex.getValue(var) == 1) {
-                    DivVariable divVar = (DivVariable) this.poolVariables.get(var.getName());
-                    if (divVar.getType() == DivVariablePool.VAR_S){
-                        // only the replicas that will be deployed
-                        if (mapDeployedReplicas.containsKey(new Integer(divVar.getReplica())) == false) {
-                            continue;
-                        }
-                        // TODO: only record the normal indexes
-                        conf.addMaterializedIndexAtReplica(divVar.getReplica(), mapVarSToIndex.get(var.getName()));
-                        
-                    }
-                }
-            }
-        }
-        catch (IloException e) {
-            System.err.println("Concert exception caught: " + e);
-        }
-        
+        } 
         return conf;
     }
 }

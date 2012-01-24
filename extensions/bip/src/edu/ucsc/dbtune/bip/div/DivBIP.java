@@ -1,13 +1,11 @@
 package edu.ucsc.dbtune.bip.div;
 
-import ilog.concert.IloException;
-import ilog.concert.IloNumVar;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
@@ -47,28 +45,19 @@ public class DivBIP extends AbstractBIPSolver
         DivRecommendedConfiguration conf = new DivRecommendedConfiguration(this.Nreplicas);
         
         // Iterate over variables s_{i,w}
-        try {
-            matrix = getMatrix(cplex);
-            vars = matrix.getNumVars();
-            
-            for (int i = 0; i < vars.length; i++) {
-                IloNumVar var = vars[i];
-                if (cplex.getValue(var) == 1) {
-                    String name = var.getName();
-                    DivVariable divVar = (DivVariable) this.poolVariables.get(name);
-                    
-                    if (divVar.getType() == DivVariablePool.VAR_S){
-                        Index index = this.mapVarSToIndex.get(name);
-                        // TODO: only record the normal indexes
-                        conf.addMaterializedIndexAtReplica(divVar.getReplica(), index);
-                    }
+        // Iterate over variables create_{i,w} and drop_{i,w}
+        for (Entry<String, Integer> pairVarVal : super.mapVariableValue.entrySet()) {
+            if (pairVarVal.getValue() == 1) {
+                String name = pairVarVal.getKey();
+                DivVariable divVar = (DivVariable) this.poolVariables.get(name);
+                
+                if (divVar.getType() == DivVariablePool.VAR_S){
+                    Index index = this.mapVarSToIndex.get(name);
+                    // TODO: only record the normal indexes
+                    conf.addMaterializedIndexAtReplica(divVar.getReplica(), index);
                 }
             }
         }
-        catch (IloException e) {
-            System.err.println("Concert exception caught: " + e);
-        }
-        
         return conf;
     }
 

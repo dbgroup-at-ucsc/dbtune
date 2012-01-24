@@ -20,7 +20,6 @@ import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 
 import ilog.concert.IloException;
-import ilog.concert.IloNumVar;
  
  /* 
   * The class is responsible for solving the RestrictIIP problem: For a particular query q, the IIP 
@@ -48,12 +47,13 @@ public class InteractionBIP extends AbstractBIPSolver
     private InteractionOutput interactionOutput;
     private QueryPlanDesc investigatingDesc;
     private double delta;
-		
+	private CPlexInteraction cplex;	
     
     public InteractionBIP(double delta)
     {
         this.delta = delta;
         cachedInteractIndexName = new HashMap<String, Integer>();
+        cplex = new CPlexInteraction();
     }
 	/**
 	 * Find all pairs of indexes from the given candidate index-set that interact with each other
@@ -131,16 +131,16 @@ public class InteractionBIP extends AbstractBIPSolver
                        logger.onLogEvent(LogListener.EVENT_BIP_FORMULATING);
                         
                        // 3. Solve the first BIP
-                       if (solveBIP() == true) {
+                       // TODO: for debug only
+                       Map<String, Integer> mapVarVal = this.cplex.solve(this.buf.getLpFileName());
+                       if ( mapVarVal!= null) {
                             this.storeInteractIndexes(indexc, indexd);
+                            this.computeQueryCostTheta(mapVarVal);
                        } else {
                             // formulate the alternative BIP
-                           buildAlternativeBIP();
-                            
-                            // In this case we need to call CPLEX directly
-                            if (cplex.solve()){
-                                this.storeInteractIndexes(indexc, indexd);
-                            } else {
+                           if (solveAlternativeBIP() == true){
+                               this.storeInteractIndexes(indexc, indexd);
+                           } else {
                                 System.out.println(" NO INTERACTION ");
                             }
                        } 
@@ -607,26 +607,10 @@ public class InteractionBIP extends AbstractBIPSolver
     /**
      * Replace the index interaction constraint by the following:
      * cost(X,c) + cost(X,d) - cost(X) - (1-delta) cost(X,c,d)  <= 0
-     * <p>
-     * <ol> 
-     *  <li> Remove the last constraint in the CPEX </li> 
-     *  <li> Retrieve the matrix, and assign the value for the coefficient in the matrix</li>
-     *  <li> Add the alternative index interaction constraint </li>
-     * </ol>
-     * </p>
-     * @throws IloException 
      * 
      */
-    public void buildAlternativeBIP() throws IloException
-    {
-        matrix = getMatrix(cplex);
-        vars = matrix.getNumVars();
-        
-        // Remove the last constraint for the index interaction
-        // and replace by the alternative one
-        int last_row_id = matrix.getNrows() - 1;        
-        matrix.removeRow(last_row_id);      
-        
+    public boolean solveAlternativeBIP()
+    {   
         Map<String,Double> mapVarCoef = new HashMap<String, Double>();
         double deltaCD = restrictIIP.getDelta() - 1;                
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
@@ -656,19 +640,13 @@ public class InteractionBIP extends AbstractBIPSolver
                 mapVarCoef.put(var.getName(), new Double(coef));                
             }           
         }
-        
-        double[] listCoef = new double[vars.length];        
-        for (int i = 0; i < vars.length; i++) {
-            IloNumVar var = vars[i];
-            double coef = 0.0;
-            Object found = mapVarCoef.get(var.getName());
-            if (found != null) {
-                coef = ((Double)found).doubleValue();
-            }
-                  
-            listCoef[i] = coef;
+        Map<String, Integer> mapVarVal = this.cplex.solveAlternativeInteractionConstraint(mapVarCoef);
+        if (mapVarVal != null) {
+            this.computeQueryCostTheta(mapVarVal);
+            return true;
+        } else {
+            return false;
         }
-        cplex.addLe(cplex.scalProd(listCoef, vars), 0); 
     }
     
     /**
@@ -700,8 +678,6 @@ public class InteractionBIP extends AbstractBIPSolver
         cachedInteractIndexName.put(combinedName, 1);
         combinedName = indexd.getFullyQualifiedName()+ "+" + indexc.getFullyQualifiedName();        
         cachedInteractIndexName.put(combinedName, 1);
-        // TODO: this method might be removed
-        computeQueryCostTheta();
     }
 	
 	
@@ -729,23 +705,8 @@ public class InteractionBIP extends AbstractBIPSolver
 	/**
      * Check the correctness
      */
-    private void computeQueryCostTheta()
+    private void computeQueryCostTheta(Map<String, Integer> mapVarVal)
     {
-        Map<String, Double> mapVarVal = new HashMap<String, Double>(); 
-        try {
-            matrix = getMatrix(cplex);
-            vars = matrix.getNumVars();
-            System.out.println("Number of vars: " + vars.length);
-            
-            for (int i = 0; i < vars.length; i++) {
-                IloNumVar var = vars[i];
-                mapVarVal.put(var.getName(), new Double(cplex.getValue(var)));
-            }
-        }
-        catch (Exception e) {
-            System.out.println(" CPLEX error: " + e.getMessage());
-        }
-        
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {                     
             double ctheta = 0.0;        
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {
