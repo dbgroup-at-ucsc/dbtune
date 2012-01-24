@@ -24,6 +24,8 @@ Add an IndexFullTableScan singleton-per-table class that corresponds to the FTS 
 
 Add an Index.isCoveredBy()
 
+tests for all the above
+
 # 153 Refactor MatchingStrategy and implementations
 
  * refactor the MatchingStrategy interface

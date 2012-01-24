@@ -10,7 +10,6 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
-import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Sets.cartesianProduct;
@@ -45,7 +44,7 @@ public class EagerSpaceComputation implements InumSpaceComputation
         for (List<Index> atomic : cartesianProduct(indexesPerTable))
             plans.add(
                     new InumPlan(
-                        delegate.explain(statement, new BitArraySet<Index>(atomic)).getPlan()));
+                        delegate.explain(statement, new HashSet<Index>(atomic)).getPlan()));
 
         return plans;
     }

@@ -2,19 +2,20 @@ package edu.ucsc.dbtune.optimizer;
 
 import java.sql.ResultSet;
 import java.util.Arrays;
+import java.util.HashSet;
+
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.DBTuneInstances.makeResultSet;
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
+import static edu.ucsc.dbtune.DBTuneInstances.makeResultSet;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-
-import edu.ucsc.dbtune.metadata.Catalog;
-
-import edu.ucsc.dbtune.optimizer.plan.Operator;
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 
 /**
  * @author Ivo Jimenez
@@ -44,6 +45,7 @@ public class DB2OptimizerTest
         h[5] = "cardinality";
         h[6] = "cost";
         
+        // CHECKSTYLE:OFF
         rs = makeResultSet(
                 Arrays.asList(h[0], h[1], h[2],     h[3], h[4],              h[5], h[6]  ),
                 Arrays.asList(1, 0, "RETURN", "schema_0", null             , 10l , 2000.0),
@@ -51,6 +53,7 @@ public class DB2OptimizerTest
                 Arrays.asList(3, 2, "SORT"  , "schema_0", null             , 10l , 1500.0),
                 Arrays.asList(4, 3, "FETCH" , "schema_0", null             , 10l , 1400.0),
                 Arrays.asList(5, 4, "IXSCAN", "schema_0", "table_0_index_0", 100l,  700.0));
+        // CHECKSTYLE:ON
 
         cat = configureCatalog();
     }
@@ -68,22 +71,22 @@ public class DB2OptimizerTest
 
         rs.next();
 
-        op = DB2Optimizer.parseNode(cat, rs);
+        op = DB2Optimizer.parseNode(cat, rs, new HashSet<Index>());
 
         assertThat(op.getId(), is(0));
         assertThat(op.getName(), is("RETURN"));
-        assertThat(op.getCardinality(), is(10l));
+        assertThat(op.getCardinality(), is(10L));
         assertThat(op.getAccumulatedCost(), is(2000.0));
         assertThat(op.getDatabaseObjects().isEmpty(), is(true));
         assertThat(op.getCost(), is(0.0));
 
         rs.next();
 
-        op = DB2Optimizer.parseNode(cat, rs);
+        op = DB2Optimizer.parseNode(cat, rs, new HashSet<Index>());
 
         assertThat(op.getId(), is(0));
         assertThat(op.getName(), is("TBSCAN"));
-        assertThat(op.getCardinality(), is(10l));
+        assertThat(op.getCardinality(), is(10L));
         assertThat(op.getAccumulatedCost(), is(2000.0));
         assertThat(op.getDatabaseObjects().isEmpty(), is(false));
         assertThat(op.getDatabaseObjects().size(), is(1));
@@ -94,11 +97,11 @@ public class DB2OptimizerTest
         rs.next();
         rs.next();
 
-        op = DB2Optimizer.parseNode(cat, rs);
+        op = DB2Optimizer.parseNode(cat, rs, new HashSet<Index>());
 
         assertThat(op.getId(), is(0));
         assertThat(op.getName(), is("IXSCAN"));
-        assertThat(op.getCardinality(), is(100l));
+        assertThat(op.getCardinality(), is(100L));
         assertThat(op.getAccumulatedCost(), is(700.0));
         assertThat(op.getDatabaseObjects().isEmpty(), is(false));
         assertThat(op.getDatabaseObjects().size(), is(1));
@@ -117,7 +120,7 @@ public class DB2OptimizerTest
     @Test
     public void testPlanParsing() throws Exception
     {
-        SQLStatementPlan plan = DB2Optimizer.parsePlan(cat, rs);
+        SQLStatementPlan plan = DB2Optimizer.parsePlan(cat, rs, new HashSet<Index>());
 
         assertThat(plan.size(), is(5));
         assertThat(plan.getRootOperator().getId(), is(1));

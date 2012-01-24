@@ -83,4 +83,13 @@ public class TableAccessSlot extends Operator
     {
         return index.getTable();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        return index.getFullyQualifiedName();
+    }
 }

@@ -65,7 +65,7 @@ public class DB2Optimizer extends AbstractOptimizer
 
         create(indexes, connection);
 
-        plan = getPlan(sql);
+        plan = getPlan(sql, indexes);
         used = getUsedIndexes(catalog, connection);
 
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
@@ -293,8 +293,8 @@ public class DB2Optimizer extends AbstractOptimizer
         sb.append("CURRENT TIMESTAMP, ");
         sb.append("CURRENT TIMESTAMP, ");
         sb.append("NULL, ");
-        sb.append("'interaction analysis tool', ");
-        sb.append("'Created by index interaction analysis tool', ");
+        sb.append("'DBTune', ");
+        sb.append("'Created by DBTune', ");
         sb.append("'SYSTEM', ");
         sb.append("'SYSTEM', ");
         sb.append("'NULLID', ");
@@ -384,7 +384,7 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    protected SQLStatementPlan getPlan(SQLStatement sql) throws SQLException
+    protected SQLStatementPlan getPlan(SQLStatement sql, Set<Index> indexes) throws SQLException
     {
         Statement stmt = connection.createStatement();
         ResultSet rs;
@@ -418,7 +418,7 @@ public class DB2Optimizer extends AbstractOptimizer
                 "     o.explain_time ASC, " +
                 "     o.operator_id ASC");
 
-        plan = parsePlan(catalog, rs);
+        plan = parsePlan(catalog, rs, indexes);
 
         rs.close();
         stmt.close();
@@ -644,7 +644,7 @@ public class DB2Optimizer extends AbstractOptimizer
      *     if an expected column is not in the result set; if a database object referenced by the 
      *     operator can't be found in the catalog.
      */
-    static Operator parseNode(Catalog catalog, ResultSet rs) throws SQLException
+    static Operator parseNode(Catalog catalog, ResultSet rs, Set<Index> indexes) throws SQLException
     {
         double accomulatedCost = rs.getDouble("cost");
         long cardinality = rs.getLong("cardinality");
@@ -655,23 +655,48 @@ public class DB2Optimizer extends AbstractOptimizer
 
         Operator op = new Operator(name.trim(), accomulatedCost, cardinality);
 
-        if (dboSchema != null)
-            dboSchema = dboSchema.trim();
-        if (dboName != null)
-            dboName = dboName.trim();
+        if (dboSchema == null || dboName == null)
+            return op;
 
-        // check if the DBMS is building an index (in SYSTEM schema), in which case we ignore it.
-        if (dboName != null && dboSchema != null && !dboSchema.equals("SYSTEM")) {
+        dboSchema = dboSchema.trim();
+        dboName = dboName.trim();
+
+        if (dboSchema.equals("SYSTEM"))
+            // SYSTEM means that it's in the ADVISE_INDEX table; at least that's what we can infer
+            dbo = catalog.findIndex(dboName);
+        else
             dbo = catalog.findByQualifiedName(dboSchema + "." + dboName);
 
-            if (dbo == null)
-                throw new SQLException(
-                        "Can't find object " + dboSchema + "." + dboName);
+        if (dbo == null)
+            // try to find it in the set of indexes passed in the what-if invocation
+            dbo = find(indexes, dboName);
 
-            op.add(dbo);
-        }
+        if (dbo == null)
+            throw new SQLException("Can't find object " + dboSchema + "." + dboName);
+
+        op.add(dbo);
 
         return op;
+    }
+
+    /**
+     * Finds an index by name in a set of indexes.
+     *
+     * @param indexes
+     *      set of indexes where one with the given name is being looked for
+     * @param name
+     *      name of the index being looked for
+     * @return
+     *      the index with the given name; {@code null} if not found
+     */
+    private static Index find(Set<Index> indexes, String name)
+    {
+        for (Index i : indexes) {
+            if (i.getName().equals(name))
+                return i;
+        }
+
+        return null;
     }
 
     /**
@@ -690,7 +715,8 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    static SQLStatementPlan parsePlan(Catalog catalog, ResultSet rs) throws SQLException
+    static SQLStatementPlan parsePlan(Catalog catalog, ResultSet rs, Set<Index> indexes)
+        throws SQLException
     {
         Map<Integer, Operator> idToNode;
         Operator child;
@@ -701,14 +727,14 @@ public class DB2Optimizer extends AbstractOptimizer
         if (!rs.next())
             throw new SQLException("Empty plan");
 
-        root = parseNode(catalog, rs);
+        root = parseNode(catalog, rs, indexes);
         plan = new SQLStatementPlan(root);
         idToNode = new HashMap<Integer, Operator>();
 
         idToNode.put(1, root);
 
         while (rs.next()) {
-            child = parseNode(catalog, rs);
+            child = parseNode(catalog, rs, indexes);
             parent = idToNode.get(rs.getInt("parent_id"));
 
             if (parent == null)

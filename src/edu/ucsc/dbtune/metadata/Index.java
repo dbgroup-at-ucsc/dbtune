@@ -618,10 +618,10 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      */
     public boolean isCoveredBy(Index other)
     {
-        if (other.size() < this.size())
+        if (size() == 0 || other.size() < this.size())
             return false;
 
-        for (int i = 0; i < other.size(); i++) {
+        for (int i = 0; i < size(); i++) {
             if (containees.get(i) != other.containees.get(i))
                 return false;
 

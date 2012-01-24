@@ -13,14 +13,16 @@ import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
-import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
+ * Exhaustive matching strategy.
+ *
  * @author Ivo Jimenez
  */
 public class ExhaustiveMatchingStrategy implements MatchingStrategy
 {
     /**
+     * Constructor.
      */
     public ExhaustiveMatchingStrategy()
     {
@@ -47,8 +49,10 @@ public class ExhaustiveMatchingStrategy implements MatchingStrategy
         Set<List<Index>> atomicConfigurations = enumerateAtomicConfigurations(configuration);
 
         for (InumPlan plan : templatePlans)
+
             for (List<Index> atomicConfiguration : atomicConfigurations) {
-                final double cost = plan.plug(new BitArraySet<Index>(atomicConfiguration));
+
+                final double cost = plan.plug(new HashSet<Index>(atomicConfiguration));
 
                 if (cost < bestCost) {
                     bestCost = cost;
@@ -64,8 +68,13 @@ public class ExhaustiveMatchingStrategy implements MatchingStrategy
     }
 
     /**
+     *
+     * @param indexes
+     *      indexes from which the atomic configurations are enumerated
+     * @return
+     *      all the possible atomic configurations
      */
-    public static Set<List<Index>> enumerateAtomicConfigurations(Set<Index> indexes)
+    private static Set<List<Index>> enumerateAtomicConfigurations(Set<Index> indexes)
     {
         Map<Table, Set<Index>> interestingOrdersPerTable = new HashMap<Table, Set<Index>>();
         Set<Index> interestingOrdersForTable;
@@ -75,7 +84,7 @@ public class ExhaustiveMatchingStrategy implements MatchingStrategy
             interestingOrdersForTable = interestingOrdersPerTable.get(i.getTable());
 
             if (interestingOrdersForTable == null) {
-                interestingOrdersForTable = new BitArraySet<Index>();
+                interestingOrdersForTable = new HashSet<Index>();
                 interestingOrdersPerTable.put(i.getTable(), interestingOrdersForTable);
             }
 

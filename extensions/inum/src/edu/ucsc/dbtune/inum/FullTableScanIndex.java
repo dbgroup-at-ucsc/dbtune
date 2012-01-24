@@ -57,4 +57,16 @@ public final class FullTableScanIndex extends InterestingOrder
 
         return ftsIndex;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isCoveredBy(Index other)
+    {
+        if (getTable() == other.getTable())
+            return true;
+
+        return false;
+    }
 }

@@ -64,7 +64,7 @@ class InterestingOrder extends Index
     {
         super(column.getTable().getSchema(), makeName(column, ascending));
 
-        add(column);
+        add(column, ascending);
 
         table = column.getTable();
 
