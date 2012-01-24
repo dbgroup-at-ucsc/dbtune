@@ -38,7 +38,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
     // CHECKSTYLE:ON
 
-    protected List<Boolean> ascending;
+    protected List<Boolean> ascendingColumn;
     protected int           type;
     protected int           scanOption;
     protected int           inMemoryID;
@@ -222,10 +222,10 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     {
         this(null, name, columns, null, primary, unique, clustered);
 
-        ascending.clear();
+        this.ascendingColumn.clear();
 
         for (Column c : columns)
-            this.ascending.add(ascending.get(c));
+            this.ascendingColumn.add(ascending.get(c));
     }
 
     /**
@@ -307,15 +307,15 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             container = schema;
         }
 
-        this.ascending = new ArrayList<Boolean>();
+        this.ascendingColumn = new ArrayList<Boolean>();
 
         if (ascending == null)
             for (int i = 0; i < columns.size(); i++)
-                this.ascending.add(ASCENDING);
+                this.ascendingColumn.add(ASCENDING);
         else if (ascending.size() != columns.size())
             throw new SQLException("Incorrect number of ascending/descending values");
         else
-            this.ascending = new ArrayList<Boolean>(ascending);
+            this.ascendingColumn = new ArrayList<Boolean>(ascending);
 
         for (int i = 0; i < columns.size(); i++) {
             if (table == null)
@@ -353,7 +353,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         this.primary      = other.primary;
         this.clustered    = other.clustered;
         this.materialized = other.materialized;
-        this.ascending   = other.ascending;
+        this.ascendingColumn   = other.ascendingColumn;
         this.scanOption   = other.scanOption;
     }
 
@@ -572,7 +572,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
                                    " doesn't correspond to " + containees.get(0).getContainer());
 
         super.add(column);
-        this.ascending.add(ascending);
+        this.ascendingColumn.add(ascending);
     }
 
     /**
@@ -600,7 +600,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     public boolean isAscending(Column column)
     {
         try {
-            return ascending.get(containees.indexOf(column));
+            return ascendingColumn.get(containees.indexOf(column));
         } catch (IndexOutOfBoundsException ex) {
             throw new RuntimeException(new SQLException(ex));
         }
@@ -625,7 +625,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             if (containees.get(i) != other.containees.get(i))
                 return false;
 
-            if (ascending.get(i) != other.ascending.get(i))
+            if (ascendingColumn.get(i) != other.ascendingColumn.get(i))
                 return false;
         }
 
@@ -663,7 +663,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             if (containees.get(i) != o.containees.get(i))
                 return false;
 
-            if (ascending.get(i) != o.ascending.get(i))
+            if (ascendingColumn.get(i) != o.ascendingColumn.get(i))
                 return false;
         }
 

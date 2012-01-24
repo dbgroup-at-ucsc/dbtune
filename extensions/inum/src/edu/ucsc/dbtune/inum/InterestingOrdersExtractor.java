@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.metadata.Index;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;

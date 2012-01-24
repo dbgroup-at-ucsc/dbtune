@@ -315,7 +315,6 @@ public final class DBTuneInstances
         return catalog;
     }
 
-
     /**
      * Creates the IBG that is used as sample in {@link IndexBenefitGraph}.
      *
@@ -548,7 +547,7 @@ public final class DBTuneInstances
      * @param numOfElements
      *      number of elements in the list
      * @return
-     *      a list of identifiable integers. The list contains no duplicates
+     *      a list of identifiable integers
      */
     public static Set<Identifiable> configureBitArraySetOfIdentifiables(int numOfElements)
     {

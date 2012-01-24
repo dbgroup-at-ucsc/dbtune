@@ -12,12 +12,14 @@ import edu.ucsc.dbtune.metadata.Table;
 
 /**
  * Represents an interesting order. This class descends from {@link Index} but only for the purposes 
- * of reusing the comparison logic, that is, the containment logic that is implemented in {@link 
- * edu.ucsc.dbtune.metadata.DatabaseObject} is not used here and thus it shouldn't be invoked from 
- * this or the descendants of this class, otherwise the container-based operations won't count this 
- * object as being contained in an object and will throw exceptions.
+ * of reusing the comparison logic, specifically, the methods {@link #getFullyQualifiedName}, {@link 
+ * #hashCode}, {@link #toString}, {@link #equals}. The containment logic that is implemented in 
+ * {@link edu.ucsc.dbtune.metadata.DatabaseObject} is not used here and thus it shouldn't be invoked 
+ * from this or the descendants of this class, otherwise the container-based operations (like {@link 
+ * #contains}, {@link #size}, {@link #getAll}) of the corresponding container (i.e. a schema) won't 
+ * count this object as being contained in an object and will throw exceptions.
  * <p>
- * It is important that this derivation from Index is maintained since the {@link 
+ * It is important that this derivation from {@link Index} is maintained since the {@link 
  * edu.ucsc.optimizer} package relies on {@link Index} for doing what-if optimization.
  *
  * @author Ivo Jimenez
@@ -61,11 +63,11 @@ class InterestingOrder extends Index
     {
         super(column.getTable().getSchema(), makeName(column, ascending));
 
-        container.remove(this);
-
         add(column);
 
         table = column.getTable();
+
+        container.remove(this);
     }
 
     /**
@@ -85,7 +87,7 @@ class InterestingOrder extends Index
 
         container.remove(this);
 
-        // we know container has at least one column; is a precondition in super constructor
+        // we know the list has at least one column; it's a precondition of the super constructor
         table = columns.get(0).getTable();
 
         // override name
@@ -112,7 +114,7 @@ class InterestingOrder extends Index
      */
     private static String makeName(Column column, boolean ascending)
     {
-        return column.getName() + "_" + (ascending ? "a" : "d");
+        return column.getName() + "_" + (ascending ? "a" : "d") + "_";
     }
 
     /**
@@ -129,9 +131,8 @@ class InterestingOrder extends Index
     {
         StringBuilder str = new StringBuilder();
 
-        for (Column c : columns) {
-            str.append(makeName(c, ascending.get(c))).append("_");
-        }
+        for (Column c : columns)
+            str.append(makeName(c, ascending.get(c)));
 
         return str.toString();
     }
