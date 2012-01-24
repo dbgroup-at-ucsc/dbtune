@@ -31,21 +31,27 @@ import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInsta
  */
 public class InumQueryPlanDesc implements QueryPlanDesc 
 {	
-    public static double BIP_MAX_VALUE = 999999999; 
+    public static double BIP_MAX_VALUE = 999999999;
+    /** The corresponding SQL statement of this object */
+    SQLStatement stmt;
+    /** The number of template plans */
     private int Kq;
+    /** The number of slots */
     private int n; 
+    /** The array of internal plan costs */
 	private List<Double> beta;
+	/** List of indexes (including FTS) at each slot */
 	private List<List<Index>> listIndexesEachSlot;
+	/** List of indexes (excluding FTS) at each slot */
 	private List<List<Index>> listIndexesWithoutFTSEachSlot;
+	/** List of index access cost in each plan */
 	private List<Map<Index, Double>> listAccessCostPerPlan;
-	
+	/** used to uniquely identify each instances of the class. */
 	static AtomicInteger STMT_ID = new AtomicInteger(0); 
-    /** used to uniquely identify each instances of the class. */
-	private int stmtID;	
-	SQLStatement stmt;
-	Set<InumPlan> templatePlans;
+	/** List of referenced tables */
 	List<Table> listTables;
-    
+	private int stmtID;	
+    /** A map to manage each statement correresponding to one instance of this class*/
 	private static Map<SQLStatement, QueryPlanDesc> instances = new HashMap<SQLStatement, QueryPlanDesc>();
 	
 	/**
@@ -54,13 +60,12 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	 * @param stmt
 	 *      The statement that this object corresponds to
 	 *      
-	 * {\bf Note}: A new object is associated with an ID, that is incremented starting from 0     
+	 * {\bf Note}: A new object is associated with an ID that is incremented starting from 0     
 	 */
     private InumQueryPlanDesc(SQLStatement stmt)
     {
         this.stmtID = InumQueryPlanDesc.STMT_ID.getAndIncrement();
         this.stmt = stmt;
-        this.templatePlans = null;
         this.listTables = null;
     }
     
@@ -85,22 +90,16 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     }
     
     /* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.util.QueryPlanDesc#generateQueryPlanDesc(SQLStatement stmt, Schema schema, IndexPool poolIndexes)
      */ 
     @Override
     public void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidateIndexes) throws SQLException
     {   
         beta = new ArrayList<Double>();
         listIndexesEachSlot = new ArrayList<List<Index>>();
+        InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
+        preparedStmt.explain(new HashSet<Index>());
+        Set<InumPlan> templatePlans = preparedStmt.getTemplatePlans();
         
-        try {
-            InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
-            preparedStmt.explain(new HashSet<Index>());
-            templatePlans = preparedStmt.getTemplatePlans();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-                
         listTables = new ArrayList<Table>();             
         for (InumPlan plan : templatePlans) {
             listTables = plan.getTables();
@@ -108,8 +107,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         }
         
         // 1. Set up the number of slots & list of indexes in each slot
-        n = listTables.size();
-       
+        n = listTables.size();       
         for (Table table : listTables) {    
             List<Index> listIndex = new ArrayList<Index>();         
             
@@ -149,7 +147,6 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         
     
 	/* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.util.QueryPlanDesc#getNumberOfTemplatePlans()
      */
     @Override
 	public int getNumberOfTemplatePlans()
@@ -158,7 +155,6 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	}
 	
 	/* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.util.QueryPlanDesc#getNumberOfSlots()
      */
     @Override
 	public int getNumberOfSlots()
@@ -182,12 +178,11 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         return this.listIndexesWithoutFTSEachSlot.get(i);
     }
 	/* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.util.QueryPlanDesc#getInternalPlanCost(int)
      */
     @Override
-	public double getInternalPlanCost(int i)
+	public double getInternalPlanCost(int k)
 	{
-		return beta.get(i);
+		return beta.get(k);
 	}
 	
 	
@@ -196,17 +191,16 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     @Override
 	public double getAccessCost(int k, Index index)
 	{
-        assert (k < Kq);
 		Object found = listAccessCostPerPlan.get(k).get(index);
 		if (found != null) {
 		    return (Double) found;
+		} else {
+		    throw new RuntimeException(" Cannot compute the index access cost for: " + index.getName() + " at plan: " + k);
 		}
-        return -1;
 	}
 	
 	
 	/* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.util.QueryPlanDesc#getStatementID()
      */
     @Override
 	public int getStatementID()

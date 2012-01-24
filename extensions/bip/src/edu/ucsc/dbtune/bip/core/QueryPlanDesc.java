@@ -19,7 +19,7 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 public interface QueryPlanDesc 
 {   
     /**
-     * Communicate INUM to generate query plan description: the number of template plans, internal costs, 
+     * Communicate with INUM to generate query plan description: the number of template plans, internal costs, 
      * index access costs, etc. 
      * 
      * @param optimizer
@@ -30,7 +30,8 @@ public interface QueryPlanDesc
      * {\bf Note: }The index full table scan is placed at the last position in the list of indexes
      * at each slot. The {@code candidateIndexes} does not contain full table scan indexes.  
      *     
-     * @throws SQLException 
+     * @throws SQLException
+     *      when there is erros in connecting with {@code optimizer} 
      */
     void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidateIndexes) throws SQLException;
     
@@ -49,10 +50,10 @@ public interface QueryPlanDesc
     int getNumberOfSlots();
     
     /**
-     * Retrieve the internal plan cost of the {@code k}-template plan
+     * Retrieve the internal plan cost of the {@code k}^{th} template plan
      * 
      * @param k
-     *      The index of the plan that we need to retrieve its internal plan cost
+     *      The plan ID that we need to retrieve the internal plan cost
      *      
      * {\bf Note}: The result of this function is the value of the constant {\it \beta_{qk}}
      * in the paper.      
@@ -60,10 +61,10 @@ public interface QueryPlanDesc
     double getInternalPlanCost(int k);
 
     /**
-     * Retrieve the index access cost of the index in a particular plan
+     * Retrieve the index access cost of the given index in a particular plan
      * 
      * @param k
-     *      The id of the plan
+     *      The ID of the plan
      * @param index    
      *      The index to retrieve the access cost
      *      
@@ -75,8 +76,7 @@ public interface QueryPlanDesc
     /**
      * Retrieve the statement ID
      * 
-     * {\bf Note}: Whenever a class of {@code QueryPlanDesc} processes a statement,
-     * it will automatically assign an ID for this statement. 
+     *  
      */
     int getStatementID();
     

@@ -64,17 +64,16 @@ public class MaterializationSchedule extends BIPOutput
 
     @Override
     public String toString() {
-        String result =  "MaterializationSchedule [W=" + W + "]\n";
+        StringBuilder result = new StringBuilder("MaterializationSchedule [W=" + W + "]\n");
         for (int w = 0; w < this.W; w++) {
-            result += (" Window " + w + "-th: \n");
+            result.append(" Window " + w + "-th: \n");
             for (Index index : this.listCreateIndexesWindow.get(w)) {
-                result += ("CREATE INDEX "  + index.getFullyQualifiedName() + " Time: " + index.getCreationCost() + "\n");
+                result.append("CREATE INDEX "  + index.getFullyQualifiedName() + " Time: " + index.getCreationCost() + "\n");
             }
             for (Index index : this.listDropIndexesWindow.get(w)) {
-                result += ("DROP INDEX "  + index.getFullyQualifiedName() + "\n");
+                result.append("DROP INDEX "  + index.getFullyQualifiedName() + "\n");
             }
         }
-        return result;
+        return result.toString();
     }
-    
 }

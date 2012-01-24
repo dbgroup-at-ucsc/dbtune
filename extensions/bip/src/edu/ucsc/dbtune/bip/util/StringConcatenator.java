@@ -17,17 +17,17 @@ public class StringConcatenator
      */ 
     public static String concatenate(String connector, List<String> listElement)
     {   
-        String result = "";
+        StringBuilder result = new StringBuilder();
         boolean is_first = true;
         
         for (String var : listElement) {            
             if (is_first == false){
-                result = result.concat(connector);
+                result.append(connector); 
             }
-            result = result.concat(var);
+            result.append(var); 
             is_first = false;
         }
         
-        return result;
+        return result.toString();
     }
 }

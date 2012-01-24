@@ -72,34 +72,29 @@ public class LogListener
 
     @Override
     public String toString() {
-        String str = "LogListener: \n"; 
+        StringBuilder str = new StringBuilder();
+        str.append("LogListener: \n"); 
         double totalTime = 0.0;
         
-        Object found = mapEventTime.get(new Integer(EVENT_PREPROCESS));
+        Object found = mapEventTime.get(new Integer(EVENT_INUM_POPULATING));
         if (found != null) {
-            str += ("Time to preprocess: " + (Double) found + " millis. \n");
-            totalTime += (Double) found;
-        }
-        
-        found = mapEventTime.get(new Integer(EVENT_INUM_POPULATING));
-        if (found != null) {
-            str += ("Time to populate INUM space: " + (Double) found + " millis. \n");
+            str.append("Time to populate INUM space: " + (Double) found + " millis. \n");
             totalTime += (Double) found;
         }
         
         found = mapEventTime.get(new Integer(EVENT_BIP_FORMULATING));
         if (found != null) {
-            str += ("Time to formulate BIP: " + (Double) found + " millis. \n");
+            str.append("Time to formulate BIP: " + (Double) found + " millis. \n");
             totalTime += (Double) found;
         }
         
         found = mapEventTime.get(new Integer(EVENT_BIP_SOLVING));
         if (found != null) {
-            str += ("Time to solve BIP: " + (Double) found + " millis. \n");
+            str.append("Time to solve BIP: " + (Double) found + " millis. \n");
             totalTime += (Double) found;
         }
         
-        str += ("Total processing time: " + totalTime + " millis. \n");
-        return str;
+        str.append("Total processing time: " + totalTime + " millis. \n");
+        return str.toString();
     }
 }

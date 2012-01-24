@@ -26,17 +26,14 @@ public class IIPVariablePool extends AbstractBIPVariablePool
     }
     /**
      * 
-     * Create the corresponding variable name in the form: y(empty, k), x(c,k,i,a), s(d, a), or u(cd, k,i,a).
+     * Create the corresponding variable name in the form: y(empty, k), x(c,k,a), s(d, a), or u(cd, k, a).
      *  
      * @param theta
-     *      The value of @theta in the set of {empty, c, d, cd}
+     *      The value of theta in the set of {empty, c, d, cd}
      * @param typeVarible
      *      The type of variable, the value is in the set {y, x, u, s}
      * @param k
-     *      The identifier of the corresponding template plan if {@code typeVariable} = VAR_Y, VAR_X, VAR_U; 
-     * @param i 
-     *      The position of slot in the template plan
-     *      Only enable when {@code typeVariable} = VAR_X, VAR_U
+     *      The identifier of the corresponding template plan if {@code typeVariable} = VAR_Y, VAR_X, VAR_U 
      * @param a 
      *      The index ID
      *      Only enable when {@code typeVariable} = VAR_X, VAR_U, VAR_S
@@ -44,11 +41,11 @@ public class IIPVariablePool extends AbstractBIPVariablePool
      * @return
      *      The variable name
      */
-    public BIPVariable createAndStore(int theta, int typeVariable, int k, int i, int a)
+    public BIPVariable createAndStore(int theta, int typeVariable, int k, int a)
     {
-        String varName = "";
-        varName = varName.concat(strHeaderVariable[typeVariable]);
-        varName = varName.concat("(");
+        StringBuilder varName = new StringBuilder();
+        varName.append(strHeaderVariable[typeVariable]);
+        varName.append("(");
         List<String> nameComponent = new ArrayList<String>();
         
         nameComponent.add(strTheta[theta]);
@@ -56,23 +53,18 @@ public class IIPVariablePool extends AbstractBIPVariablePool
             nameComponent.add(Integer.toString(k));
         }
         
-        if (typeVariable == VAR_X || typeVariable == VAR_U) {           
-            nameComponent.add(Integer.toString(i));
-        } 
-        
         if (typeVariable == VAR_X || typeVariable == VAR_U || typeVariable == VAR_S) {
             nameComponent.add(Integer.toString(a));
         }
         
-        
-        varName = varName.concat(StringConcatenator.concatenate(",", nameComponent));
-        varName = varName.concat(")");
+        varName.append(StringConcatenator.concatenate(",", nameComponent));
+        varName.append(")");
                 
-        BIPVariable var = new BIPVariable(varName, typeVariable);
+        BIPVariable var = new BIPVariable(varName.toString(), typeVariable);
         this.add(var); 
         
         // Create a mapping from 
-        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, i, a);
+        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, a);
         this.mapHighDimensionVar.put(iai, var);
         
         return var;
@@ -84,20 +76,18 @@ public class IIPVariablePool extends AbstractBIPVariablePool
      * @param theta
      *      EMPTY, C,D, or CD
      * @param typeVariable
-     *      either Y,X,S, or U
+     *      either Y, X, S, or U
      * @param k
      *      template plan ID
-     * @param i
-     *      slot ID
      * @param a
-     *      position of index in the corresponding slot
+     *      index ID
      * @return
      *      BIP Variable
      */
-    public BIPVariable get(int theta, int typeVariable, int k, int i, int a)
+    public BIPVariable get(int theta, int typeVariable, int k, int a)
     {
         // Create a mapping from 
-        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, i, a);
+        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, a);
         Object found = mapHighDimensionVar.get(iai);
         BIPVariable var = null;
         if (found != null) {

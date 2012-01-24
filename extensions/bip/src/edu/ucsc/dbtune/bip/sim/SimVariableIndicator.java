@@ -5,7 +5,7 @@ import edu.ucsc.dbtune.bip.util.HashCodeUtil;
 
 public class SimVariableIndicator
 {
-    private int typeVariable, window, q, k, i, a;
+    private int typeVariable, window, q, k, a;
     private int fHashCode;
     
     /**
@@ -20,18 +20,15 @@ public class SimVariableIndicator
      *      The statement ID
      * @param _k
      *      The query plan ID
-     * @param _i
-     *      The slot ID
      * @param _a
-     *      The position of an index in this slot
+     *      The ID of the index
      */
-    public SimVariableIndicator(int _type, int _window, int _q, int _k, int _i, int _a)
+    public SimVariableIndicator(int _type, int _window, int _q, int _k, int _a)
     {
         this.typeVariable = _type;
         this.window = _window;
         this.q = _q;
         this.k = _k;
-        this.i = _i;
         this.a = _a;
         fHashCode = 0;
     }
@@ -49,7 +46,6 @@ public class SimVariableIndicator
              (this.window != var.window) ||
              (this.q != var.q) ||  
              (this.k != var.k) ||
-             (this.i != var.i) ||
              (this.a != var.a) ) {
             return false;
         }
@@ -66,12 +62,10 @@ public class SimVariableIndicator
             result = HashCodeUtil.hash(result, this.window);
             result = HashCodeUtil.hash(result, this.q);
             result = HashCodeUtil.hash(result, this.k);
-            result = HashCodeUtil.hash(result, this.i);
             result = HashCodeUtil.hash(result, this.a);
             fHashCode = result;
         }
         
         return fHashCode;
     }
-
 }

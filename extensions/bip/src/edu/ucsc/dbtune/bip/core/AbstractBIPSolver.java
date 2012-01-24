@@ -71,16 +71,13 @@ public abstract class AbstractBIPSolver implements BIPSolver
     @Override
     public BIPOutput solve() throws SQLException, IOException
     {   
-        // Preprocess steps        
-        initializeBuffer();
-        logger.onLogEvent(LogListener.EVENT_PREPROCESS);
-        
         // 1. Communicate with INUM 
         // to derive the query plan descriptions including internal cost, index access cost, etc.  
         this.populatePlanDescriptionForStatements();
         logger.onLogEvent(LogListener.EVENT_INUM_POPULATING);
         
         // 2. Build BIP        
+        initializeBuffer();
         buildBIP();       
         logger.onLogEvent(LogListener.EVENT_BIP_FORMULATING);
         
@@ -103,27 +100,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     {
         this.logger = logger;
     }
-    
-    
-     /**
-     * Initialize empty buffer files that will store the Binary Integer Program
-     *      *      
-     * {\bf Note. }There are four files that are created for a BIP,
-     * including: {@code prefix.obj}, {@code prefix.cons}, {@code prefix.bin} and {@code prefix.lp}
-     * store the objective function, list of constraints, binary variables, and the whole BIP, respectively 
-     *      
-     */
-    protected void initializeBuffer()
-    { 
-        String prefix = "wl.sql";
-        String name = environment.getTempDir() + "/" + prefix;
-        try {
-            this.buf = new CPlexBuffer(name);
-        }
-        catch (IOException e) {
-            System.out.println(" Error in opening files " + e.toString());          
-        }
-    }
+     
     
     /**
      * Communicate with INUM to populate the query plan description 
@@ -150,13 +127,32 @@ public abstract class AbstractBIPSolver implements BIPSolver
             listWorkloadTables.addAll(desc.getTables());
         }
         
-        // Add full table scan indexes into the pool
+        // Add full table scan indexes into the candidate index set
         for (Table table : listWorkloadTables) {
             FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
             candidateIndexes.add(scanIdx);
         }
     }
     
+    /**
+     * Initialize empty buffer files that will store the Binary Integer Program
+     *      *      
+     * {\bf Note. }There are four files that are created for a BIP,
+     * including: {@code prefix.obj}, {@code prefix.cons}, {@code prefix.bin} and {@code prefix.lp}
+     * store the objective function, list of constraints, binary variables, and the whole BIP, respectively 
+     *      
+     */
+    protected void initializeBuffer()
+    { 
+        String prefix = "wl.sql";
+        String name = environment.getTempDir() + "/" + prefix;
+        try {
+            this.buf = new CPlexBuffer(name);
+        }
+        catch (IOException e) {
+            System.out.println(" Error in opening files " + e.toString());          
+        }
+    }
     
     /**
      * Build the BIP and store into a text file
