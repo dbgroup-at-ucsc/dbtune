@@ -145,10 +145,10 @@ public class ElasticDivBIP extends DivBIP
         }
         
         // for div_a and mod_a
-        for (int ga = 0; ga < poolIndexes.getTotalIndex(); ga++) {
+        for (Index index : candidateIndexes){
             for (int r = 0; r < Nreplicas; r++) {
-                poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_DIV, r, ga, 0, 0, 0);
-                poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_MOD, r, ga, 0, 0, 0);
+                poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_DIV, r, index.getId(), 0, 0, 0);
+                poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_MOD, r, index.getId(), 0, 0, 0);
             }
         }
     }
@@ -208,8 +208,7 @@ public class ElasticDivBIP extends DivBIP
     protected void buildDeployCostConstraints()
     {
         List<String> linList = new ArrayList<String>();
-        for (int ga = 0; ga < poolIndexes.getTotalIndex(); ga++) {
-            Index index = this.poolIndexes.indexes().get(ga);
+        for (Index index : candidateIndexes) {
             List<Integer> found = mapIndexesReplicasInitialConfiguration.get(index);
             Map<Integer, Integer> mapReplicas = new HashMap<Integer, Integer>();
             if (found != null) {
@@ -217,6 +216,7 @@ public class ElasticDivBIP extends DivBIP
                     mapReplicas.put(replica, replica);
                 }
             }
+            int ga = index.getId();
             
             // TODO: optimize for expand  case, with new replica, don't need to impose the constraints
             // on div_a and mod_a

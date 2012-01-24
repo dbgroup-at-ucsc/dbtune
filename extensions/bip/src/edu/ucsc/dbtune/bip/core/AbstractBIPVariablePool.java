@@ -8,7 +8,7 @@ import java.util.Map;
 import edu.ucsc.dbtune.bip.util.BIPVariable;
 
 
-public abstract class AbstractBIPVariablePool implements BIPVariablePool 
+public abstract class AbstractBIPVariablePool  
 {
     protected List<BIPVariable> listVar;
     protected Map<String, BIPVariable> mapNameVar;
@@ -20,20 +20,25 @@ public abstract class AbstractBIPVariablePool implements BIPVariablePool
     }
     
     
-    /* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.util.BIPVariablePool#addVariable(edu.ucsc.dbtune.bip.util.BIPVariable)
+    /**
+     * Add a variable into this pool
+     * @param var
+     *      A BIP variable
      */
-    @Override
     public void add(BIPVariable var)
     {
         listVar.add(var);
         mapNameVar.put(var.getName(), var);
     }
     
-    /* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.util.BIPVariablePool#getVariable(java.lang.String)
+    /**
+     * Retrieve a {@code BIPVariable} object given a name
+     * @param name
+     *      The name of the variable
+     * @return
+     *      The variable that has the name exactly matches with the given name 
+     *      or NULL if the given name does not match with any variables stored in the pool
      */
-    @Override
     public BIPVariable get(String name)
     {   
         Object found = mapNameVar.get(name);
@@ -45,10 +50,17 @@ public abstract class AbstractBIPVariablePool implements BIPVariablePool
         return var;
     }
     
-    /* (non-Javadoc)
-     * @see edu.ucsc.dbtune.bip.util.BIPVariablePool#enumerateListVariables(int)
-     */ 
-    @Override
+    /**
+     * Enumerate list of variables in multiple lines, 
+     * Each line contains at most {@code NUM_VAR_PER_LINE} variables
+     * 
+     * @param NUM_VAR_PER_LINE
+     *      The maximum number of variables that are enumerated in one line
+     * @return
+     *      The string (with multiple lines) that lists all variables stored in the pool
+     *      
+     *  {\bf Note}: This function is usually used to enumerate binary variables     
+     */
     public String enumerateList(final int NUM_VAR_PER_LINE)
     {
         String lineVars = "", result = "";

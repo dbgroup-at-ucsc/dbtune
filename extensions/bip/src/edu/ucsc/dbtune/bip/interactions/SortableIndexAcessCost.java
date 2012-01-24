@@ -1,17 +1,19 @@
 package edu.ucsc.dbtune.bip.interactions;
 
+import edu.ucsc.dbtune.metadata.Index;
+
 public class SortableIndexAcessCost implements Comparable<SortableIndexAcessCost>
 {
 	private double gamma;
-	private int pos;
+	private Index index;
 	
 	/**
 	 * Constructor
 	 */
-	SortableIndexAcessCost(double gamma, int pos)
+	SortableIndexAcessCost(double gamma, Index index)
 	{
 		this.gamma = gamma;
-		this.pos  = pos;		
+		this.index = index;
 	}
 	
 	
@@ -27,14 +29,11 @@ public class SortableIndexAcessCost implements Comparable<SortableIndexAcessCost
 		return this.gamma;
 	}
 	
-	public void setPosition(int pos)
-	{
-		this.pos = pos;
-	}
 	
-	public int getPosition()
+	
+	public Index getIndex()
 	{
-		return this.pos;
+		return this.index;
 	}
 	
 

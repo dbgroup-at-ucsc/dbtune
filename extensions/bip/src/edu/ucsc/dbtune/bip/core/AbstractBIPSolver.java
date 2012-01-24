@@ -8,10 +8,9 @@ import ilog.cplex.IloCplex;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
@@ -38,8 +37,6 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected Set<Index> candidateIndexes;    
     protected Workload workload;
     protected List<QueryPlanDesc> listQueryPlanDescs;
-    protected List<Table> listWorkloadTables;
-    protected IndexPool poolIndexes;
     protected IloLPMatrix matrix;
     protected IloNumVar [] vars;
     protected IloCplex cplex;
@@ -74,8 +71,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     @Override
     public BIPOutput solve() throws SQLException, IOException
     {   
-        // Preprocess steps
-        insertIndexesToPool();
+        // Preprocess steps        
         initializeBuffer();
         logger.onLogEvent(LogListener.EVENT_PREPROCESS);
         
@@ -108,23 +104,6 @@ public abstract class AbstractBIPSolver implements BIPSolver
         this.logger = logger;
     }
     
-    /**
-     * Insert indexes from the candidate indexes into the pool in some order 
-     * to make it convenient for constructing variables related to indexes in BIP
-     * 
-     * For example, in SimBIP, indexes of the same type (created, dropped, or remained)
-     * in the system should be stored consecutively.
-     * @throws SQLException 
-     * 
-     */    
-    protected void insertIndexesToPool() throws SQLException
-    {
-        poolIndexes = new BIPIndexPool();
-        // Put all indexes in {@code candidateIndexes} into the pool of {@code MatIndexPool}
-        for (Index idx: candidateIndexes) {
-            poolIndexes.add(idx);
-        }
-    }
     
      /**
      * Initialize empty buffer files that will store the Binary Integer Program
@@ -158,41 +137,23 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected void populatePlanDescriptionForStatements() throws SQLException
     {   
         listQueryPlanDescs = new ArrayList<QueryPlanDesc>();
-        listWorkloadTables = new ArrayList<Table>(); 
-        Map<Table, Integer> mapWorkloadTables = new HashMap<Table, Integer>();
-        
+        Set<Table> listWorkloadTables = new HashSet<Table>();
         for (Iterator<SQLStatement> iterStmt = workload.iterator(); iterStmt.hasNext(); ) {
             // Set the corresponding SQL statement
             QueryPlanDesc desc =  InumQueryPlanDesc.getQueryPlanDescInstance(iterStmt.next());
             // Populate the INUM space 
-            desc.populateInumSpace(inumOptimizer);            
+            desc.generateQueryPlanDesc(inumOptimizer, candidateIndexes);            
             listQueryPlanDescs.add(desc);
             
             // Add referenced tables of each statement
             // into the ``global'' set {@code listWorkloadTables}
-            for (Table table : desc.getTables()) {
-                Object found = mapWorkloadTables.get(table);
-                if (found == null) {
-                    listWorkloadTables.add(table);
-                    mapWorkloadTables.put(table, new Integer(1));
-                }
-            }
-        }
-        
-        // Generate query plan descriptions
-        for (QueryPlanDesc desc : listQueryPlanDescs) {
-            desc.generateQueryPlanDesc(listWorkloadTables, poolIndexes);
+            listWorkloadTables.addAll(desc.getTables());
         }
         
         // Add full table scan indexes into the pool
         for (Table table : listWorkloadTables) {
             FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
-            poolIndexes.add(scanIdx);
-        }        
-        
-        // Map index in each slot to its pool ID
-        for (QueryPlanDesc desc : listQueryPlanDescs) {
-            desc.mapIndexInSlotToPoolID(poolIndexes);
+            candidateIndexes.add(scanIdx);
         }
     }
     

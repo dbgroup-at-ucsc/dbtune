@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.bip.interactions;
 
+import edu.ucsc.dbtune.metadata.Index;
+
 /**
  * The class contains the input to Restrict IIP problem including
  * 		@element delta
@@ -19,16 +21,16 @@ public class RestrictIIPParam
 {
 	private double delta;		
 	private int ic, id; 
-	private int pos_c, pos_d;
+	private Index indexc, indexd;
 	
-	RestrictIIPParam(double delta, int ic, int id, int pos_c, int pos_d)
+	RestrictIIPParam(double delta, int ic, int id, Index indexc, Index indexd)
 	{
 		this.delta = delta;
 		this.ic = ic;
 		this.id = id;
 		
-		this.pos_c = pos_c;
-		this.pos_d = pos_d;
+		this.indexc = indexc;
+		this.indexd = indexd;
 	}
 	
 	/**
@@ -58,19 +60,19 @@ public class RestrictIIPParam
 	
 	
 	/**
-	 * Position of the index {@code c} in its slot
+	 * The first index
 	 */
-	public int getLocalPosIndexC() 
+	public Index getIndexC() 
 	{
-		return pos_c;
+		return indexc;
 	}
 		
 	
 	/**
-	 * Position of index the index {@code d} in its slot
+	 * The second index
 	 */
-	public int getLocalPosIndexD() 
+	public Index getIndexD() 
 	{
-		return pos_d;
+		return indexd;
 	}
 }

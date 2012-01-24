@@ -13,12 +13,11 @@ public class SimVariablePool extends AbstractBIPVariablePool
 {
     public static final int  VAR_Y = 0;
     public static final int  VAR_X = 1;
-    public static final int  VAR_S = 2;
-    public static final int  VAR_PRESENT = 3;
-    public static final int  VAR_CREATE = 4;
-    public static final int  VAR_DROP = 5;
+    public static final int  VAR_PRESENT = 2;
+    public static final int  VAR_CREATE = 3;
+    public static final int  VAR_DROP = 4;
     public static final int  VAR_DEFAULT = 100;    
-    private String[] strHeaderVariable = {"y", "x", "s", "present", "create", "drop"};
+    private String[] strHeaderVariable = {"y", "x", "present", "create", "drop"};
     private Map<SimVariableIndicator, BIPVariable> mapHighDimensionVar;
     
     public SimVariablePool()
@@ -27,16 +26,15 @@ public class SimVariablePool extends AbstractBIPVariablePool
     }
     /**
      * 
-     * Construct the variable name in the format: y(w, q, k), x(w,q, k,i,a), s(w, a), 
+     * Construct the variable name in the format: y(w, q, k), x(w, q, k,i,a), , 
      * present(w,a), create(w,a), drop(w,a)      
      *
      * @param typeVarible
-     *      The type of variable, the value is in the set {y, x, s, present, create, drop}, 
+     *      The type of variable, the value is in the set {y, x, present, create, drop}, 
      * @param window
      *      The window time in the materialized schedule
      * @param queryId
-     *      The identifier of the processing query if {@code typeVariable = VAR_Y, VAR_X}; 
-     *      Or the identifier of the index if {@code typeVariable = VAR_S, VAR_PRESENT, VAR_CREATE, VAR_DROP}
+     *      The identifier of the processing query when {@code typeVariable = VAR_Y, VAR_X}
      * @param k
      *      The template plan identifier
      *      Only enable when {@code typeVariable = VAR_X, VAR_Y}
@@ -44,8 +42,7 @@ public class SimVariablePool extends AbstractBIPVariablePool
      *      The position of slot in the template plan
      *      Only enable when {@code typeVariable = VAR_X}
      * @param a 
-     *      The position of the index in the corresponding slot
-     *      Only enable when {@code typeVariable = VAR_X}
+     *      The identifier of the index if {@code typeVariable = VAR_X, VAR_PRESENT, VAR_CREATE, VAR_DROP}
      * 
      * @return
      *      The variable name
@@ -58,14 +55,17 @@ public class SimVariablePool extends AbstractBIPVariablePool
         
         List<String> nameComponent = new ArrayList<String>();        
         nameComponent.add(Integer.toString(window));
-        nameComponent.add(Integer.toString(queryId));
         
         if (typeVariable == VAR_X || typeVariable == VAR_Y) {
+            nameComponent.add(Integer.toString(queryId));
             nameComponent.add(Integer.toString(k));
         }
         
         if (typeVariable == VAR_X) {
             nameComponent.add(Integer.toString(i));
+        }
+        
+        if (typeVariable == VAR_X || typeVariable == VAR_PRESENT || typeVariable == VAR_CREATE || typeVariable == VAR_DROP) {
             nameComponent.add(Integer.toString(a));
         }
         
@@ -87,7 +87,7 @@ public class SimVariablePool extends AbstractBIPVariablePool
      * Get the corresponding variable
      * 
      * @param typeVariable
-     *      either Y, X, S, create, drop, or present
+     *      either Y, X, create, drop, or present
      * @param window
      *      window ID
      * @queryId     
@@ -97,7 +97,7 @@ public class SimVariablePool extends AbstractBIPVariablePool
      * @param i
      *      slot ID
      * @param a
-     *      position of index in the corresponding slot
+     *      index ID
      * @return
      *      BIP Variable
      */

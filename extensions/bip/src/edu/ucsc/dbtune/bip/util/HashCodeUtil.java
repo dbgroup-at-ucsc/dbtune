@@ -18,6 +18,18 @@ public final class HashCodeUtil
 	  }
 
 	  /**
+	      * chars.
+	      */
+	  public static int hash( int aSeed, String aString ) 
+	  {        
+	      int total = 0;
+	      for (int i = 0; i < aString.length(); i++) {
+	          total += aString.charAt(i);
+	      }
+	       return firstTerm( aSeed ) + total;
+	  }
+	      
+	  /**
 	  * chars.
 	  */
 	  public static int hash( int aSeed, char aChar ) 

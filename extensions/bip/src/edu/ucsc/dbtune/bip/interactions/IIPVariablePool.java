@@ -33,14 +33,13 @@ public class IIPVariablePool extends AbstractBIPVariablePool
      * @param typeVarible
      *      The type of variable, the value is in the set {y, x, u, s}
      * @param k
-     *      The identifier of the corresponding template plan if @typeVariable = VAR_Y, VAR_X, VAR_U; 
-     *      Or the identifier of the index if @typeVariable = VAR_S
+     *      The identifier of the corresponding template plan if {@code typeVariable} = VAR_Y, VAR_X, VAR_U; 
      * @param i 
      *      The position of slot in the template plan
-     *      Only enable when @typeVariable = VAR_X, VAR_U
+     *      Only enable when {@code typeVariable} = VAR_X, VAR_U
      * @param a 
-     *      The position of the index in the corresponding slot
-     *      Only enable when @typeVariable = VAR_X, VAR_U
+     *      The index ID
+     *      Only enable when {@code typeVariable} = VAR_X, VAR_U, VAR_S
      * 
      * @return
      *      The variable name
@@ -53,12 +52,18 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         List<String> nameComponent = new ArrayList<String>();
         
         nameComponent.add(strTheta[theta]);
-        nameComponent.add(Integer.toString(k));
+        if (typeVariable == VAR_Y || typeVariable == VAR_X || typeVariable == VAR_U){
+            nameComponent.add(Integer.toString(k));
+        }
         
         if (typeVariable == VAR_X || typeVariable == VAR_U) {           
             nameComponent.add(Integer.toString(i));
+        } 
+        
+        if (typeVariable == VAR_X || typeVariable == VAR_U || typeVariable == VAR_S) {
             nameComponent.add(Integer.toString(a));
         }
+        
         
         varName = varName.concat(StringConcatenator.concatenate(",", nameComponent));
         varName = varName.concat(")");

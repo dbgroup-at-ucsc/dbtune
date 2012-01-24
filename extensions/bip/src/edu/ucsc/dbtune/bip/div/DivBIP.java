@@ -14,7 +14,6 @@ import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.IndexInSlot;
 import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -139,9 +138,9 @@ public class DivBIP extends AbstractBIPSolver
                     poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0);
                 }    
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {              
-                    for (int i = 0; i < desc.getNumberOfGlobalSlots(); i++) {  
-                        for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
-                            poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_X, r, q, k, i, a);
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {  
+                        for (Index index : desc.getListIndexesAtSlot(i)) {
+                            poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_X, r, q, k, i, index.getId());
                         }
                     }
                 }       
@@ -149,10 +148,10 @@ public class DivBIP extends AbstractBIPSolver
         }
         
         // for TYPE_S
-        for (int ga = 0; ga < poolIndexes.getTotalIndex(); ga++) {
+        for (Index index : candidateIndexes) {           
             for (int r = 0; r < Nreplicas; r++) {
-                DivVariable var = poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_S, r, ga, 0, 0, 0);
-                this.mapVarSToIndex.put(var.getName(), poolIndexes.indexes().get(ga));
+                DivVariable var = poolVariables.createAndStoreBIPVariable(DivVariablePool.VAR_S, r, index.getId(), 0, 0, 0);
+                this.mapVarSToIndex.put(var.getName(), index);
             }
         }
     }
@@ -181,10 +180,10 @@ public class DivBIP extends AbstractBIPSolver
                 // Index access cost
                 linList.clear();            
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {              
-                    for (int i = 0; i < desc.getNumberOfGlobalSlots(); i++) {  
-                        for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
-                            String var = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, a).getName();
-                            linList.add(Double.toString(desc.getIndexAccessCost(k, i, a)) + var);     
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {  
+                        for (Index index : desc.getListIndexesAtSlot(i)) {
+                            String var = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, index.getId()).getName();
+                            linList.add(Double.toString(desc.getAccessCost(k, index)) + var);     
                         }
                     }
                 }       
@@ -233,17 +232,12 @@ public class DivBIP extends AbstractBIPSolver
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     String var_y = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
                     
-                    for (int i = 0; i < desc.getNumberOfGlobalSlots(); i++) {
-                        if (desc.isSlotReferenced(i) == false) {
-                            continue;
-                        }                        
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {            
                         linList.clear();
-                        for (int a = 0; a < desc.getNumberOfIndexesEachSlot(i); a++) {
-                            String var_x = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, a).getName();
+                        for (Index index : desc.getListIndexesAtSlot(i)) { 
+                            String var_x = poolVariables.getDivVariable(DivVariablePool.VAR_X, r, q, k, i, index.getId()).getName();
                             linList.add(var_x);
-                            IndexInSlot iis = new IndexInSlot(q,i,a);
-                            int ga = poolIndexes.getPoolID(iis);
-                            String var_s = poolVariables.getDivVariable(DivVariablePool.VAR_S, r, ga, 0, 0, 0).getName();
+                            String var_s = poolVariables.getDivVariable(DivVariablePool.VAR_S, r, index.getId(), 0, 0, 0).getName();
                             
                             // (3) s_a^{r} \geq x_{qkia}^{r}
                             buf.getCons().println("atomic_2c_" + numConstraints + ":" 
@@ -290,9 +284,9 @@ public class DivBIP extends AbstractBIPSolver
     {   
         for (int r = 0; r < Nreplicas; r++) {
             List<String> linList = new ArrayList<String>();
-            for (int idx = 0; idx < poolIndexes.getTotalIndex(); idx++) {
-                String var_create = poolVariables.getDivVariable(DivVariablePool.VAR_S, r, idx, 0, 0, 0).getName();
-                double sizeindx = poolIndexes.indexes().get(idx).getBytes();
+            for (Index index : candidateIndexes) {               
+                String var_create = poolVariables.getDivVariable(DivVariablePool.VAR_S, r, index.getId(), 0, 0, 0).getName();
+                double sizeindx = index.getBytes();
                 linList.add(Double.toString(sizeindx) + var_create);
             }
             buf.getCons().println("space_constraint_4" + numConstraints  
