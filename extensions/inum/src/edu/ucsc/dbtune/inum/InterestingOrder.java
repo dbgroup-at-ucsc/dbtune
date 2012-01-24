@@ -16,8 +16,9 @@ import edu.ucsc.dbtune.metadata.Table;
  * #hashCode}, {@link #toString}, {@link #equals}. The containment logic that is implemented in 
  * {@link edu.ucsc.dbtune.metadata.DatabaseObject} is not used here and thus it shouldn't be invoked 
  * from this or the descendants of this class, otherwise the container-based operations (like {@link 
- * #contains}, {@link #size}, {@link #getAll}) of the corresponding container (i.e. a schema) won't 
- * count this object as being contained in an object and will throw exceptions.
+ * #contains}, {@link #size}, {@link #getAll}, {@link #getId}, etc.) of the corresponding container 
+ * (i.e. a schema) won't count this object as being contained in an object and will throw 
+ * exceptions.
  * <p>
  * It is important that this derivation from {@link Index} is maintained since the {@link 
  * edu.ucsc.optimizer} package relies on {@link Index} for doing what-if optimization.

@@ -34,7 +34,7 @@ Add an Index.isCoveredBy()
 
 Add an EagerSpaceComputation class that obtains the whole template plan space
 
-# 155 partition a workload in order to have one subset of statements per schema
+# 155 Partition a workload in order to have one subset of statements per schema
 
 In the meantime we'll need to have to find a workaround, because for this we need to parse and bind 
 and since it's done at an early stage of the recommendation process, this might be tricky. I think 
@@ -46,7 +46,7 @@ Change the implementation of BIP to comply with the new interface of INUM optimi
 # 157 Add class implements IndexInteractionFinder
 Add a class of BIP that implements IndexInteractionFinder interface.
 
-# 158 modify test for bipsolver subclasses
+# 158 Modify test for bipsolver subclasses
 
 # 159 Extend MetadataExtractorFunctionalTest
 
@@ -57,11 +57,11 @@ appropriately. At least all the TPC ones.
 
 No issues found. It looks like other empty databases are getting in the way.
 
-# 161 add support for multi-line in Workload
+# 161 Add support for multi-line in Workload
 
 Add size() to Workload class.
 
-# 162 replace the mapping of schema to workload by workload only
+# 162 Replace the mapping of schema to workload by workload only
 
 Replace a part of the input to the BIP to consist of only workload, instead of 
 workload that is partitioned in terms of the schema on which the queries are defined on.
@@ -88,3 +88,25 @@ without needing to apply the containment logic of the dbtune.metadata package.
 
 This can be easily added by extending the Index class.
 
+# 167 Hide the unused methods from DatabaseObject
+
+InterestingOrder shouldn't have access to the unused methods from DatabaseObject and Index, like:
+
+ * contains
+ * getAll
+ * getId
+ * size
+ * etc..
+
+only the comparison ones should be exposed (getFullyQualifiedName, hashCode, toString, equals). In 
+particular, the Identifiable interface shouldn't be accessed since it will unnecessarily increment 
+the id used by BitArraySet
+
+# 168 Extract interesting orders for Join statements
+
+DerbyInterestingOrdersExtractor should extract interesting orders from joins.
+
+# 169 Extract interesting orders for statements containing subqueries
+
+DerbyInterestingOrdersExtractor should extract interesting orders from statements containing 
+subqueries.

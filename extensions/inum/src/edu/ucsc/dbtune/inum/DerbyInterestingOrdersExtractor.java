@@ -13,7 +13,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.BitArraySet;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.apache.derby.iapi.error.StandardException;
@@ -30,6 +30,8 @@ import org.apache.derby.impl.sql.compile.GroupByList;
 import org.apache.derby.impl.sql.compile.OrderByList;
 import org.apache.derby.impl.sql.compile.QueryTreeNode;
 import org.apache.derby.impl.sql.compile.SelectNode;
+
+import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 
 /**
  * Extracts interesting orders by parsing a query using the Derby SQL parser. Supports any SQL 
@@ -92,14 +94,15 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     /**
      * @param catalog
      *      used to retrieve database metadata
-     * @param ascendingDefault
+     * @param mode
      *      the default value assigned to columns appearing in {@code GROUP BY} but not in the 
-     *      {@code ORDER BY} clause.
+     *      {@code ORDER BY} clause. Possible values are {@link Index#ASCENDING} and {@link 
+     *      Index#DESCENDING}
      */
-    public DerbyInterestingOrdersExtractor(Catalog catalog, boolean ascendingDefault)
+    public DerbyInterestingOrdersExtractor(Catalog catalog, boolean mode)
     {
         this.catalog = catalog;
-        this.defaultAscending = ascendingDefault;
+        this.defaultAscending = mode;
     }
 
     /**
@@ -172,8 +175,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         catch (StandardException e) {
             throw new SQLException("An error occurred while walking the query AST", e);
         }
-        System.out.println(" trung, L175 (derby extractor) ");
-        qt.treePrint(); // useful for debugging; prints to stdout
+        //qt.treePrint(); // useful for debugging; prints to stdout
     }
 
     /**
@@ -202,12 +204,11 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
         if (from == null)
             throw new SQLException("null FROM list");
-        // Trung: it is still possible for this case
+
         if (from.size() == 1 && orderBy == null && groupBy == null)
             throw new SQLException(
                 "Can't extract for single-table queries without ORDER BY or GROUP BY clauses");
-        // why don't we extract the attributes in the query's join
-        // i.e., the join condition in the where-clause
+
         for (int i = 0; i < from.size(); i++) {
             if (from.elementAt(i) instanceof FromBaseTable)
                 tableNames.add(((FromBaseTable) from.elementAt(i)).getTableName().toString());
@@ -232,8 +233,6 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                     ascending.put(col, isDefaultAscending());
             }
         }
-        System.out.println("L234 (trung), table names: " + tableNames.toString()
-                            + " col names: " + columnNames.toString());
 
         return extractInterestingOrdersPerTable(tableNames, columnNames, ascending);
     }
@@ -260,11 +259,11 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             List<String> tableNames, Set<String> columnNames, Map<String, Boolean> ascending)
         throws SQLException
     {
-        Map<String, Set<Index>> interestingOrdersPerTable;
+        Map<Table, Set<Index>> interestingOrdersPerTable;
         Set<Index> interestingOrdersForTable;
         Column col;
 
-        interestingOrdersPerTable = new HashMap<String, Set<Index>>();
+        interestingOrdersPerTable = new HashMap<Table, Set<Index>>();
 
         for (String colName : columnNames) {
 
@@ -286,12 +285,12 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 interestingOrdersForTable = interestingOrdersPerTable.get(tblName);
 
                 if (interestingOrdersForTable == null) {
-                    interestingOrdersForTable = new BitArraySet<Index>();
-                    interestingOrdersPerTable.put(tblName, interestingOrdersForTable);
+                    interestingOrdersForTable = new HashSet<Index>();
+                    // add the empty interesting order
+                    interestingOrdersForTable.add(getFullTableScanIndexInstance(col.getTable()));
+                    interestingOrdersPerTable.put(col.getTable(), interestingOrdersForTable);
                 }
-                // Trung: We also need to include the 'empty' interesting order 
-                // in O_i to account for the indexes in T_i that do not cover 
-                // an interesting order (e.g., full table scan)
+
                 interestingOrdersForTable.add(new InterestingOrder(col, ascending.get(colName)));
 
                 // we found the column, so let's look for the next one (we assume the SQL is well 
