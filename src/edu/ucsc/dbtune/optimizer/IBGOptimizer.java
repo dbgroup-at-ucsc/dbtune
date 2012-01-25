@@ -6,6 +6,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
@@ -146,5 +147,11 @@ public class IBGOptimizer implements Optimizer
     public int getWhatIfCount()
     {
         return delegate.getWhatIfCount();
+    }
+
+    @Override
+    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled) 
+    {
+        delegate.setFTSDisabled(tables, isFTSDisabled);
     }
 }

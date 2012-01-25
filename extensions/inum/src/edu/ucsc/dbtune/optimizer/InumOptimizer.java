@@ -8,6 +8,7 @@ import edu.ucsc.dbtune.inum.ExhaustiveMatchingStrategy;
 import edu.ucsc.dbtune.inum.InumSpaceComputation;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -155,5 +156,11 @@ public class InumOptimizer implements Optimizer
     public int getWhatIfCount()
     {
         return delegate.getWhatIfCount();
+    }
+
+    @Override
+    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled) 
+    {
+        delegate.setFTSDisabled(tables, isFTSDisabled);
     }
 }
