@@ -64,7 +64,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
         
         
         try {
-            double delta = 0.1;
+            double delta = -0.1;
             Optimizer io = db.getOptimizer();
 
             if (!(io instanceof InumOptimizer))

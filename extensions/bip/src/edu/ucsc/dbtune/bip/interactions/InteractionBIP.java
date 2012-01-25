@@ -112,7 +112,9 @@ public class InteractionBIP extends AbstractBIPSolver
                             continue;
                         }
                         System.out.println("*** Investigating pair of " + indexc.getFullyQualifiedName()
+                                            + " Id: " + indexc.getId()
                                             + " vs. " + indexd.getFullyQualifiedName()
+                                            + " Id: " + indexd.getId()
                                             + " using statement " + this.investigatingDesc.getStatementID()
                                             + "****");
                         // initialize an instance of RestrictIIP problem
@@ -453,8 +455,8 @@ public class InteractionBIP extends AbstractBIPSolver
         // atomic constraint
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
-                List<String> linList = new ArrayList<String>();     
                 for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
+                    List<String> linList = new ArrayList<String>();
                     for (Index index : this.investigatingDesc.getListIndexesAtSlot(i)) {
                         String var_u = poolVariables.get(theta, IIPVariablePool.VAR_U, t, index.getId()).getName();       
                         linList.add(var_u);                                              
@@ -475,18 +477,18 @@ public class InteractionBIP extends AbstractBIPSolver
                     // since u_{FTS} <= 1
                     for (Index index : this.investigatingDesc.getListIndexesWithoutFTSAtSlot(i)) {
                         String var_u = poolVariables.get(theta, IIPVariablePool.VAR_U, t, index.getId()).getName();                       
-                        if ( (theta == IND_C && index.equalsContent(this.restrictIIP.getIndexC()))  
-                            || (theta == IND_D &&  index.equalsContent(this.restrictIIP.getIndexD()))
-                            || (theta == IND_CD && index.equalsContent(this.restrictIIP.getIndexC()))  
-                            || (theta == IND_CD &&  index.equalsContent(this.restrictIIP.getIndexD()))        
+                        if ( (theta == IND_C && index.equals(this.restrictIIP.getIndexC()))  
+                            || (theta == IND_D &&  index.equals(this.restrictIIP.getIndexD()))
+                            || (theta == IND_CD && index.equals(this.restrictIIP.getIndexC()))  
+                            || (theta == IND_CD &&  index.equals(this.restrictIIP.getIndexD()))        
                             )
                         {
                             // u^{theta}_{c,d} <= 1 (it is implies by binary variable constraint)
                         } 
-                        else if ( (theta == IND_EMPTY && index.equalsContent(this.restrictIIP.getIndexC())) 
-                                || (theta == IND_EMPTY && index.equalsContent(this.restrictIIP.getIndexD()))                        
-                                || (theta == IND_C && index.equalsContent(this.restrictIIP.getIndexD()))
-                                || (theta == IND_D && index.equalsContent(this.restrictIIP.getIndexC()))
+                        else if ( (theta == IND_EMPTY && index.equals(this.restrictIIP.getIndexC())) 
+                                || (theta == IND_EMPTY && index.equals(this.restrictIIP.getIndexD()))                        
+                                || (theta == IND_C && index.equals(this.restrictIIP.getIndexD()))
+                                || (theta == IND_D && index.equals(this.restrictIIP.getIndexC()))
                         )
                         {                           
                             buf.getCons().println("optimal_6c_" + numConstraints + ":" 
@@ -544,7 +546,7 @@ public class InteractionBIP extends AbstractBIPSolver
                             // because this sum is also <= 1 (due to atomic constraint)
                             // therefore, we optimizer to write \sum = 1
                             if (theta == IND_C || theta == IND_CD) {
-                                buf.getCons().println("optimal_7_" + numConstraints + ":" 
+                                buf.getCons().println("optimal_7c_" + numConstraints + ":" 
                                         + LHS  
                                         + " = 1");
                                 numConstraints++;
@@ -553,7 +555,7 @@ public class InteractionBIP extends AbstractBIPSolver
                         else if (index.equals(this.restrictIIP.getIndexD())) {
                             // --- \sum >= 1
                             if (theta == IND_D || theta == IND_CD) {
-                                buf.getCons().println("optimal_7_" + numConstraints + ":" 
+                                buf.getCons().println("optimal_7d_" + numConstraints + ":" 
                                         + LHS  
                                         + " = 1");
                                 numConstraints++;
@@ -588,6 +590,7 @@ public class InteractionBIP extends AbstractBIPSolver
         
         for (int p = 0; p < coefVarTheta.get(IND_CD).size(); p++) {
             String element = varTheta.get(IND_CD).get(p);
+            // realCoef is supposed to be positive
             realCoef = coef * coefVarTheta.get(IND_CD).get(p);
             listcd.add(Double.toString(realCoef) + element);            
         }

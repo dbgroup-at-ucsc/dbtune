@@ -111,14 +111,15 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         n = listTables.size();       
         for (Table table : listTables) {    
             List<Index> listIndex = new ArrayList<Index>();         
-            
+            List<Index> listIndexWithoutFTS = new ArrayList<Index>();
             for (Index index : candidateIndexes) {
                 // normal index (not the full table scan index)
                 if (index.getTable().equals(table)){     
                     listIndex.add(index);
+                    listIndexWithoutFTS.add(index);
                 }
             }
-            this.listIndexesWithoutFTSEachSlot.add(listIndex);
+            this.listIndexesWithoutFTSEachSlot.add(listIndexWithoutFTS);
             // add the index full table scan at the last position in this slot
             FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
             listIndex.add(scanIdx);
@@ -128,7 +129,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         Kq = templatePlans.size();
         listAccessCostPerPlan = new ArrayList<Map<Index, Double>>();
         for (InumPlan plan : templatePlans) {
-            System.out.println("L119, internal plan cost: " + plan.getInternalCost());
+            System.out.println(plan + "");
             beta.add(new Double(plan.getInternalCost()));
             Map<Index, Double> mapIndexAccessCost = new HashMap<Index, Double>();
             for (int i = 0; i < n; i++) {
@@ -138,7 +139,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                         cost = InumQueryPlanDesc.BIP_MAX_VALUE;
                     }
                     mapIndexAccessCost.put(index, new Double(cost));
-                    System.out.println("L136, index: " + index.getFullyQualifiedName()
+                    System.out.println("L136, index: " + index
                                             + " cost: " + cost);
                 }                            
             }
