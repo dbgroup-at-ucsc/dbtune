@@ -64,6 +64,17 @@ public class OptimizerFunctionalTest
     /**
      * @throws Exception
      *      if something goes wrong
+     * @see OptimizerTest#checkFTSDisabled
+     */
+    @Test
+    public void testFTSDisabled() throws Exception
+    {
+        OptimizerTest.checkFTSDisabled(db.getCatalog(), opt);
+    }
+
+    /**
+     * @throws Exception
+     *      if something goes wrong
      * @see OptimizerTest#checkPreparedExplain
      */
     @Test
