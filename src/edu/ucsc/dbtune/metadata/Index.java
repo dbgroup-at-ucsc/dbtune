@@ -315,7 +315,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         else if (ascending.size() != columns.size())
             throw new SQLException("Incorrect number of ascending/descending values");
         else
-            this.ascendingColumn = new ArrayList<Boolean>(ascending);
+            this.ascendingColumn = new ArrayList<Boolean>();
 
         for (int i = 0; i < columns.size(); i++) {
             if (table == null)
@@ -324,7 +324,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             if (table != columns.get(i).container)
                 throw new SQLException("Columns from different tables");
 
-            add(columns.get(i));
+            add(columns.get(i), ascending.get(i));
         }
 
         this.type       = UNKNOWN;
@@ -702,5 +702,11 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     public boolean isValid(DatabaseObject dbo)
     {
         return dbo instanceof Column;
+    }
+    
+    @Override
+    public String toString()
+    {
+        return containees + " " + ascendingColumn;
     }
 }
