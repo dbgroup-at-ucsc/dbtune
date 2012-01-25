@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.bip.sim;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +24,7 @@ import edu.ucsc.dbtune.metadata.Index;
  * @author tqtrung@soe.ucsc.edu
  *
  */
-public class SimBIP extends AbstractBIPSolver 
+public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 {   
 	private List<String> listCwq;
 	private int W;
@@ -32,41 +33,59 @@ public class SimBIP extends AbstractBIPSolver
     /** Map variable of type CREATE or DROP to the indexes */
     private Map<String,Index> mapVarCreateDropToIndex;
     /** Set of indexes that are created, dropped, and not touched */
-    private Set<Index> Screate, Sdrop, Sremain;
+    private Set<Index> Sinit, Smat, Screate, Sdrop, Sremain;
+    private int maxNumIndexesEachWindow, maxTimeEachWindow;
+    boolean isNumberIndexes, isTimeLimit;
     
-    /**
-     * The constructor of the object to find the optimal index materialization schedule
-     * 
-     * @param Sinit
-     *      The set of indexes that are currently materialized in the system
-     * @param Smat
-     *      The set of indexes that are going to be materialized
-     * @param W
-     *      The number of maintenance windows
-     * @param timeLimit
-     *      The time budget at each maintenance window
-     */
-	public SimBIP(Set<Index> Sinit, Set<Index> Smat, final int W, final double timeLimit)
-	{	
-		this.W = W;
-		this.timeLimit = timeLimit;
-	
-		/**
-	     * Classify the indexes into one of the three types: 
-	     * INDEX_TYPE_CREATE, INDEX_TYPE_DROP, INDEX_TYPE_REMAIN
-	     */
-		candidateIndexes = Smat;
+    @Override
+    public void setConfigurations(Set<Index> Sinit, Set<Index> Smat) 
+    {
+        this.Sinit = Sinit;
+        this.Smat = Smat;
+        /**
+         * Classify the indexes into one of the three types: 
+         * INDEX_TYPE_CREATE, INDEX_TYPE_DROP, INDEX_TYPE_REMAIN
+         */
+        candidateIndexes = new HashSet<Index> (Smat);
         candidateIndexes.addAll(Sinit);
         
         // Screate = Smat - Sinit
-        Screate = Smat;
+        Screate = new HashSet<Index>(Smat);
         Screate.removeAll(Sinit);
         // Sdrop = Sinit - Smat
-        Sdrop = Sinit;
+        Sdrop = new HashSet<Index>(Sinit);
         Sdrop.removeAll(Smat);
         // Sremain = Sin \cap Smat
-        Sremain = Sinit;
+        Sremain = new HashSet<Index>(Sinit); 
         Sremain.retainAll(Smat);
+    }
+    
+
+    @Override
+    public void setNumberWindow(int W) 
+    {
+        this.W  = W;
+    }
+
+    @Override
+    public void setNumberofIndexesEachWindow(int n) 
+    {
+        this.maxNumIndexesEachWindow = n; 
+        this.isNumberIndexes = true;
+    }
+
+    @Override
+    public void setTimeLimitWindow(int T) 
+    {
+        this.timeLimit = T;
+        this.isTimeLimit = true;
+    }
+    
+    
+	public SimBIP()
+	{	
+	    this.isNumberIndexes = false;
+	    this.isTimeLimit = false;	
 	}
 	
 	/**
@@ -75,8 +94,7 @@ public class SimBIP extends AbstractBIPSolver
 	 */
 	@Override
 	public void setCandidateIndexes(Set<Index> candidateIndexes)
-	{
-	    
+	{   
 	}
     
 	@Override
@@ -97,7 +115,13 @@ public class SimBIP extends AbstractBIPSolver
         buildAtomicConstraints();       
         
         // 5. Space constraints
-        buildTimeConstraints();
+        if (this.isTimeLimit == true) {
+            buildTimeConstraints();
+        }
+        
+        if (this.isNumberIndexes == true) {
+            buildNumberIndexesWindowConstraints();
+        }
         
         // 6. Optimal constraint
         buildObjectiveFunction();
@@ -367,6 +391,21 @@ public class SimBIP extends AbstractBIPSolver
 		}
 	}
 	
+	private void buildNumberIndexesWindowConstraints()
+	{
+	    for (int w = 0; w < W; w++) {
+            List<String> linList = new ArrayList<String>();
+            for (Index index : this.Screate){
+                String var_create = poolVariables.get(SimVariablePool.VAR_CREATE, w, 0, 0, index.getId()).getName();                
+                linList.add(var_create);
+            }
+            buf.getCons().println("number_index_constraint" + numConstraints  
+                    + " : " + StringConcatenator.concatenate(" + ", linList)                    
+                    + " <= " + this.maxNumIndexesEachWindow);
+            numConstraints++;               
+        }
+	}
+	
 	/**
 	 * The accumulated total cost function
 	 */
@@ -385,4 +424,6 @@ public class SimBIP extends AbstractBIPSolver
         String strListVars = poolVariables.enumerateList(NUM_VAR_PER_LINE);
         buf.getBin().println(strListVars);	
 	}
+
+    
 }

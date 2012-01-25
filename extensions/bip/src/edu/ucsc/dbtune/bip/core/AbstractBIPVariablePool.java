@@ -61,26 +61,20 @@ public abstract class AbstractBIPVariablePool
      *  {\bf Note}: This function is usually used to enumerate binary variables     
      */
     public String enumerateList(final int NUM_VAR_PER_LINE)
-    {
-        String lineVars = "", result = "";
+    {   
         int countVar = 0;
-       
+        StringBuilder result = new StringBuilder();
         for (BIPVariable var : listVar) {
-            lineVars += var.getName();
-            lineVars += " ";
+            result.append(var.getName() + " ");
             countVar++;
             if (countVar >= NUM_VAR_PER_LINE) {
+                result.append("\n");
                 countVar = 0;
-                result += lineVars;
-                result += "\n";
-                lineVars = "";                  
             }
         }
-       
         if (countVar > 0) {
-            result += lineVars;
-            result += "\n";
-        }     
-        return result;
+            result.append("\n");
+        }
+        return result.toString();
     }
 }

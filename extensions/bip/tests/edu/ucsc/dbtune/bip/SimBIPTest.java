@@ -70,26 +70,28 @@ public class SimBIPTest
         }
         
         
-        Set<Index> sInit = new HashSet<Index>();
-        Set<Index> sMat = new HashSet<Index>();
-        int w = 2;
-        double timeLimit = 300;
-        sMat = allIndexes;
+        Set<Index> Sinit = new HashSet<Index>();
+        Set<Index> Smat = new HashSet<Index>();
+        Smat = allIndexes;
         
         Optimizer io = db.getOptimizer();
 
         if (!(io instanceof InumOptimizer))
             throw new Exception("Expecting InumOptimizer instance");
-
-        // Sinit = \emptyset
+        
         LogListener logger = LogListener.getInstance();
-        SimBIP bip = new SimBIP(sInit, sMat, w, timeLimit);
+        SimBIP bip = new SimBIP();
         bip.setOptimizer((InumOptimizer) io);
         bip.setWorkload(workload);
         bip.setLogListenter(logger);
-        BIPOutput schedule = bip.solve();
-        System.out.println("Result: " + schedule.toString());
-        System.out.println(logger.toString());
+        bip.setConfigurations(Sinit, Smat);
+        bip.setNumberofIndexesEachWindow(1);
+        bip.setNumberWindow(2);
         
+        BIPOutput schedule = bip.solve();
+        if (schedule != null) {
+            System.out.println("Result: " + schedule.toString());
+            System.out.println(logger.toString());
+        }
     }
 }
