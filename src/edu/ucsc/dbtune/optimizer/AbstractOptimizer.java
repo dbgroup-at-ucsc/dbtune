@@ -1,11 +1,13 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -21,6 +23,38 @@ public abstract class AbstractOptimizer implements Optimizer
 
     /** Counter for the actual number of what-if calls. */
     protected int whatIfCount;
+    
+    /** Whether or not to disable the generation of plans containing FTS operators. */
+    protected boolean isFTSDisabled;
+    
+    /** Whether or not to disable the generation of plans containing NLJ operators. */
+    protected boolean isNLJDisabled;
+    
+    /** Tables for which FTS should be disabled. */
+    protected Set<Table> ftsDisabledTables;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public abstract ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration)
+        throws SQLException;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public abstract Set<Index> recommendIndexes(SQLStatement sql) throws SQLException;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled)
+    {
+        this.ftsDisabledTables = new HashSet<Table>(tables);
+        this.isFTSDisabled = isFTSDisabled;
+    }
     
     /**
      * {@inheritDoc}
@@ -53,23 +87,10 @@ public abstract class AbstractOptimizer implements Optimizer
      * {@inheritDoc}
      */
     @Override
-    public abstract ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration)
-        throws SQLException;
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public Set<Index> recommendIndexes(String sql) throws SQLException
     {
         return recommendIndexes(new SQLStatement(sql));
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract Set<Index> recommendIndexes(SQLStatement sql) throws SQLException;
 
     /**
      * {@inheritDoc}

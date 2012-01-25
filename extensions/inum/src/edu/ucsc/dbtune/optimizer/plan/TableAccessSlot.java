@@ -2,8 +2,8 @@ package edu.ucsc.dbtune.optimizer.plan;
 
 import java.sql.SQLException;
 
-import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
+import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
@@ -44,6 +44,8 @@ public class TableAccessSlot extends Operator
             index = (Index) object;
         else
             throw new SQLException("Can't proceed with object type " + object.getClass().getName());
+
+        super.cost = super.accumulatedCost;
     }
 
     /**

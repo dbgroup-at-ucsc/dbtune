@@ -202,12 +202,15 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         Map<String, Boolean> ascending = new HashMap<String, Boolean>();
         String col;
 
-        if (from == null)
-            throw new SQLException("null FROM list");
+        if (from == null || from.size() == 0)
+            throw new SQLException("null or empty FROM list");
 
         if (from.size() == 1 && orderBy == null && groupBy == null)
             throw new SQLException(
                 "Can't extract for single-table queries without ORDER BY or GROUP BY clauses");
+
+        if (from.size() > 1)
+            throw new SQLException("Can't extract for joins yet");
 
         for (int i = 0; i < from.size(); i++) {
             if (from.elementAt(i) instanceof FromBaseTable)
@@ -282,12 +285,14 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 if (col == null)
                     continue;
 
-                interestingOrdersForTable = interestingOrdersPerTable.get(tblName);
+                interestingOrdersForTable = interestingOrdersPerTable.get(col.getTable());
 
                 if (interestingOrdersForTable == null) {
                     interestingOrdersForTable = new HashSet<Index>();
+
                     // add the empty interesting order
                     interestingOrdersForTable.add(getFullTableScanIndexInstance(col.getTable()));
+                    
                     interestingOrdersPerTable.put(col.getTable(), interestingOrdersForTable);
                 }
 
@@ -306,7 +311,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 // not found in any table, so we don't know how to proceed
                 throw new SQLException("Can't find column " + colName + " in catalog");
         }
-
+        
         return new ArrayList<Set<Index>>(interestingOrdersPerTable.values());
     }
 

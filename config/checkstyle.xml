@@ -398,7 +398,7 @@
           <property name="max" value="41"/>
         </module>
         <module name="NPathComplexity">
-          <property name="max" value="320"/>
+          <property name="max" value="390"/>
         </module>
 
         <!-- Identify TODOs -->
@@ -425,5 +425,4 @@
         <!-- Avoid trailing comments -->
         <module name="TrailingComment"/>
     </module>
-
 </module>

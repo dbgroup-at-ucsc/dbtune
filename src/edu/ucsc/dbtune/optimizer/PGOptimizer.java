@@ -623,4 +623,13 @@ public class PGOptimizer extends AbstractOptimizer
 
         return operator;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled)
+    {
+        throw new RuntimeException("not yet");
+    }
 }

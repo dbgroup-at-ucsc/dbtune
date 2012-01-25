@@ -1,25 +1,22 @@
--- query
+--query
 select
-	l_extendedprice, l_discount
+	l_returnflag,
+	l_linestatus,
+	sum(l_quantity) as sum_qty,
+	sum(l_extendedprice) as sum_base_price,
+	sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+	sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+	avg(l_quantity) as avg_qty,
+	avg(l_extendedprice) as avg_price,
+	avg(l_discount) as avg_disc,
+	count(*) as count_order
 from
-	tpch.lineitem,
-	tpch.part
+	tpch.lineitem
 where
-		p_partkey = l_partkey
-		and p_brand = 'Brand#13'
-		and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
-		and l_quantity >= 6 and l_quantity <= 16
-		and p_size between 1 and 5
-		and l_shipmode in ('AIR', 'AIR REG')
-		and l_shipinstruct = 'DELIVER IN PERSON';
--- query
-select
-				sum(ps_supplycost * ps_availqty) * 0.0001000000
-			from
-				tpch.partsupp,
-				tpch.supplier,
-				tpch.nation
-			where
-				ps_suppkey = s_suppkey
-				and s_nationkey = n_nationkey
-				and n_name = 'JAPAN';
+	l_shipdate = cast('1998-12-01' as date)
+group by
+	l_returnflag,
+	l_linestatus
+order by
+	l_returnflag,
+	l_linestatus;

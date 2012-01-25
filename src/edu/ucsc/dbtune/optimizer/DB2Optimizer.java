@@ -20,16 +20,17 @@ import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * Interface to the DB2 optimizer.
  * <p>
- * This class assumes that the Explain Tables have been created in the target DB2 instance.
+ * This class assumes that the {@code EXPLAIN_*}, {@code ADVISE_*} and {@code OPT_PROFILE} tables 
+ * have been created in the target DB2 instance.
  *
  * @see <a href="http://bit.ly/vmHlsj">Explain Tables</a>
+ * @see <a href="http://bit.ly/xxPpoz">OPT_PROFILE table</a>
  *
  * @author Karl Schnaitter
  * @author Huascar Sanchez
@@ -79,6 +80,8 @@ public class DB2Optimizer extends AbstractOptimizer
         }
 
         selectCost = getCost(connection) - updateCost;
+
+        unloadOptimizationProfiles(connection);
 
         return new ExplainedSQLStatement(
             sql, plan, this, selectCost, updateCost, updateCost, updateCosts, indexes, used, 1);     
@@ -379,6 +382,8 @@ public class DB2Optimizer extends AbstractOptimizer
      *
      * @param sql
      *     statement which the plan is obtained for
+     * @param indexes
+     *     physical configuration the optimizer should consider when preparing the statement
      * @return
      *     an execution plan
      * @throws SQLException
@@ -386,6 +391,8 @@ public class DB2Optimizer extends AbstractOptimizer
      */
     protected SQLStatementPlan getPlan(SQLStatement sql, Set<Index> indexes) throws SQLException
     {
+        loadOptimizationProfiles();
+
         Statement stmt = connection.createStatement();
         ResultSet rs;
         SQLStatementPlan plan;
@@ -638,6 +645,8 @@ public class DB2Optimizer extends AbstractOptimizer
      *     result set from which a record is read
      * @param catalog
      *     used to retrieve metadata information
+     * @param indexes
+     *     physical configuration the optimizer should consider when preparing the statement
      * @return
      *     the execution plan
      * @throws SQLException
@@ -710,6 +719,8 @@ public class DB2Optimizer extends AbstractOptimizer
      *     statement.
      * @param catalog
      *     used to retrieve metadata information
+     * @param indexes
+     *     physical configuration the optimizer should consider when preparing the statement
      * @return
      *     the execution plan
      * @throws SQLException
@@ -766,5 +777,80 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.close();
 
         return getRecommendedIndexes(catalog, connection);
+    }
+
+    /**
+     * Loads the optimization profiles based on the state of the variables {@link #isFTSDisabled}, 
+     * {@link #isNLJDisabled} and the given set of indexes.
+     *
+     * @throws SQLException
+     *      if the profiles can't be loaded
+     */
+    private void loadOptimizationProfiles() throws SQLException
+    {
+        if (isFTSDisabled)
+            loadFTSDisabledProfile(connection, ftsDisabledTables);
+        //if (isNLJDisabled)
+            //loadNLJDisabledProfile(connection, indexes);
+    }
+
+    /**
+     * Loads the FTS profile for the given set of tables.
+     *
+     * @param connection
+     *      used to communicate to DB2
+     * @param tables
+     *      tables for which the FTS profile is loaded
+     * @throws SQLException
+     *      if an error occurs while communicating to the DBMS
+     */
+    private static void loadFTSDisabledProfile(Connection connection, Set<Table> tables)
+        throws SQLException
+    {
+        Set<Schema> schs = new HashSet<Schema>();
+        StringBuilder xml = new StringBuilder();
+
+        xml.append(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?> " +
+            "<OPTPROFILE VERSION=\"9.1.0.0\"> " +
+            "<OPTGUIDELINES> ");
+
+        for (Table t : tables) {
+            xml.append("<IXSCAN TABLE=\"" + t.getFullyQualifiedName() + "\"/>");
+            schs.add(t.getSchema());
+        }
+
+        xml.append("</OPTGUIDELINES></OPTPROFILE>");
+
+        Statement stmt = connection.createStatement();
+
+        stmt.execute("DELETE FROM systools.opt_profile");
+
+        for (Schema s : schs)
+            stmt.execute(
+                "INSERT INTO systools.opt_profile values(" +
+                "    'NoFTS', " +
+                "    '" + s.getName() + "', " +
+                "    BLOB('" + xml + "')" +
+                ")");
+
+        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
+
+        stmt.close();
+    }
+
+    /**
+     * @param connection
+     *      used to communicate to DB2
+     * @throws SQLException
+     *      if an error occurs while communicating to the DBMS
+     */
+    private static void unloadOptimizationProfiles(Connection connection)
+        throws SQLException
+    {
+        Statement stmt = connection.createStatement();
+        stmt.execute("SET CURRENT OPTIMIZATION PROFILE = ''");
+        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
+        stmt.close();
     }
 }

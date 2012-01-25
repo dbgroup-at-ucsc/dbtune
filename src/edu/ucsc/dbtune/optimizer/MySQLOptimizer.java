@@ -9,6 +9,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.util.BitArraySet;
@@ -219,5 +220,14 @@ public class MySQLOptimizer extends AbstractOptimizer
         sb.append(")");
 
         return sb.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled)
+    {
+        throw new RuntimeException("not yet");
     }
 }
