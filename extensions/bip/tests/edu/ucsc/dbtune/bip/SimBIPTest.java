@@ -42,13 +42,13 @@ public class SimBIPTest
         db = newDatabaseSystem(en);
         
         System.out.println(" In test scheduling ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
+        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/workload_bip.sql");
         FileReader fileReader = new FileReader(workloadFile);
         Workload workload     = new Workload(fileReader);
         
         Set<Index> allIndexes = new HashSet<Index>();
         for (SQLStatement stmt : workload) {
-            System.out.println("==== Query: " + stmt.getSQL());
+            //System.out.println("==== Query: " + stmt.getSQL());
             Set<Index> stmtIndexes = db.getOptimizer().recommendIndexes(stmt); 
             for (Index newIdx : stmtIndexes) {
                 boolean exist = false;
@@ -64,11 +64,11 @@ public class SimBIPTest
             }
         }
          
-        System.out.println("Number of indexes: " + allIndexes.size());
+        System.out.println("Number of indexes: " + allIndexes.size() + " number of statements: "
+                            + workload.size());
         for (Index index : allIndexes) {
             System.out.println("Index : " + index.columns()); 
         }
-        
         
         Set<Index> Sinit = new HashSet<Index>();
         Set<Index> Smat = new HashSet<Index>();
@@ -86,7 +86,7 @@ public class SimBIPTest
         bip.setLogListenter(logger);
         bip.setConfigurations(Sinit, Smat);
         bip.setNumberofIndexesEachWindow(1);
-        bip.setNumberWindow(2);
+        bip.setNumberWindow(allIndexes.size());
         
         BIPOutput schedule = bip.solve();
         if (schedule != null) {

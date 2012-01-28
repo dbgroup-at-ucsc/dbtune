@@ -21,12 +21,12 @@ public class CPlexImplementer implements CPlexSolver
         Map<String, Integer> mapVariableValue = null;
         try {               
             cplex = new IloCplex(); 
-                      
+            cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
             // Read model from file into cplex optimizer object
             cplex.importModel(inputFile);
             
             if (cplex.solve() == true){
-                mapVariableValue = this.getMapVariableValue();
+                mapVariableValue = getMapVariableValue();
             }
         }
         catch (IloException e) {
@@ -82,5 +82,18 @@ public class CPlexImplementer implements CPlexSolver
             }
         }
         return null;
-    }    
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder("CPlexImplementer: \n");
+        result.append(" Number of variables: " + cplex.getNcols());
+        result.append(" Number of constraints: " + cplex.getNrows());
+        try {
+            result.append(" Objetive value: " + cplex.getObjValue());
+        } catch (IloException e) {
+            e.printStackTrace();
+        } 
+        return result.toString();
+    }
 }

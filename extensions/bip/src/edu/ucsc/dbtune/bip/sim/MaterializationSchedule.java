@@ -68,10 +68,10 @@ public class MaterializationSchedule extends BIPOutput
         for (int w = 0; w < this.W; w++) {
             result.append(" Window " + w + "-th: \n");
             for (Index index : this.listCreateIndexesWindow.get(w)) {
-                result.append("CREATE INDEX "  + index.getFullyQualifiedName() + " Time: " + index.getCreationCost() + "\n");
+                result.append("CREATE INDEX "  + index + " Time: " + index.getCreationCost() + "\n");
             }
             for (Index index : this.listDropIndexesWindow.get(w)) {
-                result.append("DROP INDEX "  + index.getFullyQualifiedName() + "\n");
+                result.append("DROP INDEX "  + index + "\n");
             }
         }
         return result.toString();

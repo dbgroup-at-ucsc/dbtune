@@ -35,7 +35,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
         db = newDatabaseSystem(en);
         
         System.out.println(" In test interaction ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
+        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/workload_bip.sql");
         FileReader fileReader = new FileReader(workloadFile);
         Workload workload     = new Workload(fileReader);
         
@@ -57,11 +57,10 @@ public class InteractionBIPTest extends BIPTestConfiguration
             }
         }
          
-        System.out.println("Number of indexes: " + allIndexes.size());
+        System.out.println("L60 (Test), Number of indexes: " + allIndexes.size());
         for (Index index : allIndexes) {
-            System.out.println("Index : " + index.columns()); 
+            System.out.println("L62, Index : " + index); 
         }
-        
         
         try {
             double delta = -0.1;

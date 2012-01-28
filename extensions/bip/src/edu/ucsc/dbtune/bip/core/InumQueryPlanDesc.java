@@ -32,6 +32,7 @@ import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInsta
 public class InumQueryPlanDesc implements QueryPlanDesc 
 {	
     public static double BIP_MAX_VALUE = 999999999;
+    public static int MAX_NUMBER_PLANS = 8;
     /** The corresponding SQL statement of this object */
     SQLStatement stmt;
     /** The number of template plans */
@@ -51,7 +52,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	/** List of referenced tables */
 	List<Table> listTables;
 	private int stmtID;	
-    /** A map to manage each statement correresponding to one instance of this class*/
+    /** A map to manage each statement corresponding to one instance of this class*/
 	private static Map<SQLStatement, QueryPlanDesc> instances = new HashMap<SQLStatement, QueryPlanDesc>();
 	
 	/**
@@ -126,24 +127,27 @@ public class InumQueryPlanDesc implements QueryPlanDesc
             listIndexesEachSlot.add(listIndex);
         }
                 
-        Kq = templatePlans.size();
+        Kq = 0;
         listAccessCostPerPlan = new ArrayList<Map<Index, Double>>();
         for (InumPlan plan : templatePlans) {
-            System.out.println(plan + "");
+            //System.out.println("L132 (query plan), internal plan cost: " + plan.getInternalCost());
             beta.add(new Double(plan.getInternalCost()));
             Map<Index, Double> mapIndexAccessCost = new HashMap<Index, Double>();
             for (int i = 0; i < n; i++) {
                 for (Index index : this.listIndexesEachSlot.get(i)) {
-                    double cost = plan.plug(index);
+                    double cost = plan.plug(index);                    
                     if (cost == Double.POSITIVE_INFINITY) {
                         cost = InumQueryPlanDesc.BIP_MAX_VALUE;
                     }
+                    
                     mapIndexAccessCost.put(index, new Double(cost));
-                    System.out.println("L136, index: " + index
-                                            + " cost: " + cost);
                 }                            
             }
             this.listAccessCostPerPlan.add(mapIndexAccessCost);
+            Kq++;
+            if (Kq >= InumQueryPlanDesc.MAX_NUMBER_PLANS) {
+                break;
+            }
         }
     }
         
