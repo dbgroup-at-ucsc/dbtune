@@ -97,6 +97,36 @@ public class DerbyInterestingOrdersExtractorTest
      *      when an error occurs
      */
     @Test
+    public void testOneRelation() throws Exception
+    {
+        List<Set<Index>> indexesPerTable;
+        SQLStatement sql;
+
+        Table t = catalog.<Table>findByName("schema_0.table_0");
+
+        sql = new SQLStatement(
+                "SELECT " +
+                "     column_0 " +
+                "  FROM " +
+                "     schema_0.table_0 " +
+                "  WHERE " +
+                "     column_0 = 5 ");
+
+        indexesPerTable = extractor.extract(sql);
+
+        // only one table referenced
+        assertThat(indexesPerTable.size(), is(1));
+
+        // one interesting order
+        assertThat(indexesPerTable.get(0).size(), is(1));
+        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(true));
+    }
+    
+    /**
+     * @throws Exception
+     *      when an error occurs
+     */
+    @Test
     public void testOrderBy() throws Exception
     {
         List<Set<Index>> indexesPerTable;

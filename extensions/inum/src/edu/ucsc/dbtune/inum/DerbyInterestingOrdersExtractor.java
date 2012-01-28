@@ -217,16 +217,23 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         if (from == null || from.size() == 0) {
             throw new SQLException("null or empty FROM list");
         }
-        // TODO: Is it necessary?
-        if (from.size() == 1 && orderBy == null && groupBy == null)
-            throw new SQLException(
-                "Can't extract for single-table queries without ORDER BY or GROUP BY clauses");
+
+        // Add an empty interesting order
+        if (from.size() == 1 && orderBy == null && groupBy == null) {
+            String tblName = ((FromBaseTable) from.elementAt(0)).getTableName().toString();
+            Table table = catalog.<Table>findByName(tblName);
+            mapTableColumn.put(table, new ArrayList<Column>());
+            return extractInterestingOrdersPerTable(mapTableColumn, ascending);
+         //   throw new SQLException(
+         //    "Can't extract for single-table queries without ORDER BY or GROUP BY clauses");
+        }
 
         for (int i = 0; i < from.size(); i++) {
             if (from.elementAt(i) instanceof FromBaseTable)
                 tableNames.add(((FromBaseTable) from.elementAt(i)).getTableName().toString());
-            else if (from.elementAt(i) instanceof FromSubquery)
-                throw new SQLException("Can't handle subqueries yet");
+            else if (from.elementAt(i) instanceof FromSubquery) {
+                //throw new SQLException("Can't handle subqueries yet");
+            }
         }
         
         // Order by attributes
