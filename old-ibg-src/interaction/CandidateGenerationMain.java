@@ -52,15 +52,15 @@ public class CandidateGenerationMain {
 			// create the candidate files
 
 			// UNION_OPTIMAL
-//			File optimalCandidateFile = Configuration.candidateFile(UNION_OPTIMAL);
-//			DB2IndexSet optimalSet = UnionOptimal.getCandidates(conn, workload);
-//			writeCandidates(optimalCandidateFile, optimalSet);
-//			
-//			System.out.println(Files.readObjectFromFile(optimalCandidateFile));
-//			System.out.println();
+			File optimalCandidateFile = Configuration.candidateFile(UNION_OPTIMAL);
+			DB2IndexSet optimalSet = UnionOptimal.getCandidates(conn, workload);
+			writeCandidates(optimalCandidateFile, optimalSet);
 			
+			System.out.println(Files.readObjectFromFile(optimalCandidateFile));
+			System.out.println();
 			
-//			// FULL_BUDGET
+			/*
+			// FULL_BUDGET
 			String db2Advis = Configuration.db2Advis;
 			File fullCandidateFile = Configuration.candidateFile(FULL_BUDGET);
 			Advisor.FileInfo fullInfo = Advisor.createAdvisorFile(conn, db2Advis, -1, workloadFile);
@@ -69,11 +69,11 @@ public class CandidateGenerationMain {
 			
 			System.out.println(Files.readObjectFromFile(fullCandidateFile));
 			System.out.println();
-			
+			*/
 
 			// OPTIMAL_1C
 			File onecolCandidateFile = Configuration.candidateFile(OPTIMAL_1C);
-			DB2IndexSet onecolSet = DB2Index.extractSingleColumns(fullSet);
+			DB2IndexSet onecolSet = DB2Index.extractSingleColumns(optimalSet);
 			writeCandidates(onecolCandidateFile, onecolSet);
 			
 			System.out.println(Files.readObjectFromFile(onecolCandidateFile));

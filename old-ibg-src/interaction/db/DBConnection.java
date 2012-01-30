@@ -129,7 +129,7 @@ public class DBConnection {
 						queryCount++;
 						try {
 							execute(query.sql);
-							throw new Error("returned from execute() in what-if mode");
+							//throw new Error("returned from execute() in what-if mode");
 						} catch (SQLException e) {
 							System.err.print('.');
 							// expected in explain mode
@@ -272,17 +272,17 @@ public class DBConnection {
 		/*
 		 * QUERY: clearExplainObject
 		 */
-		public final Update clearExplainObject = new Update("DELETE FROM explain_object");
+		public final Update clearExplainObject = new Update("DELETE FROM SYSTOOLS.explain_object");
 		
 		/*
 		 * QUERY: clearExplainStatement
 		 */
-		public final Update clearExplainStatement = new Update("DELETE FROM explain_statement");
+		public final Update clearExplainStatement = new Update("DELETE FROM SYSTOOLS.explain_statement");
 
 		/*
 		 * QUERY: clearAdviseIndex
 		 */
-		public final Update clearAdviseIndex = new Update("DELETE FROM advise_index");
+		public final Update clearAdviseIndex = new Update("DELETE FROM SYSTOOLS.advise_index");
 
 		/* 
 		 * QUERY: fetchExplainStatementTotals
@@ -298,7 +298,7 @@ public class DBConnection {
 			private boolean init = false;
 			PreparedStatement ps = conn.prepareStatement(
 						"SELECT SUM(TOTAL_COST) AS COST, COUNT(*) AS COUNT "
-					  + "FROM explain_statement "
+					  + "FROM SYSTOOLS.explain_statement "
 					  + "WHERE explain_level = 'P'");
 			
 			public ExplainStatementTotalsStatement() throws SQLException {
@@ -350,7 +350,7 @@ public class DBConnection {
 			PreparedStatement ps = conn.prepareStatement(
 				"SELECT DISTINCT CAST(SUBSTRING(object_name FROM " 
 		      + (DB2Index.indexNameBase.length() + 1) + " USING CODEUNITS16) AS INT) "
-			  + "FROM EXPLAIN_OBJECT "
+			  + "FROM SYSTOOLS.EXPLAIN_OBJECT "
 			  + "WHERE OBJECT_NAME LIKE '" + DB2Index.indexNameBase + "_%'");
 			
 			public ExplainObjectCandidatesStatement() throws SQLException {
@@ -384,7 +384,7 @@ public class DBConnection {
 				StringBuilder sbuf = new StringBuilder();
 				sbuf.append("SELECT ");
 				implode(sbuf, AdviseIndexColumn.values(), ", ");
-				sbuf.append(" FROM advise_index");
+				sbuf.append(" FROM SYSTOOLS.advise_index");
 				psAll = conn.prepareStatement(sbuf.toString());
 				sbuf.append(" WHERE name = ?");
 				psOne = conn.prepareStatement(sbuf.toString());
@@ -434,7 +434,7 @@ public class DBConnection {
 				StringBuilder sbuf = new StringBuilder();
 				
 				if (sqlprefix == null) {
-					sbuf.append("INSERT INTO advise_index(");
+					sbuf.append("INSERT INTO SYSTOOLS.advise_index(");
 					implode(sbuf, AdviseIndexColumn.values(), ", ");
 					sbuf.append(") VALUES ");
 					sqlprefix = sbuf.toString();
@@ -470,11 +470,11 @@ public class DBConnection {
 				String sql;
 				
 				if (config.cardinality() == 0)
-					sql = "UPDATE advise_index SET use_index = 'N'";
+					sql = "UPDATE SYSTOOLS.advise_index SET use_index = 'N'";
 				else {
 					StringBuilder sbuf = new StringBuilder();
 					
-					sbuf.append("UPDATE advise_index SET use_index = CASE WHEN iid IN (");
+					sbuf.append("UPDATE SYSTOOLS.advise_index SET use_index = CASE WHEN iid IN (");
 					boolean first = true;
 					for (int i = config.nextSetBit(0); i >= 0; i = config.nextSetBit(i+1)) {
 						if (!first)

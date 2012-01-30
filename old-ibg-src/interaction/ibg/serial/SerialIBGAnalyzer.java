@@ -94,6 +94,9 @@ public class SerialIBGAnalyzer {
 		boolean retval = true; // set false on first failure
 		for (int a = candidatesBitSet.nextSetBit(0); a >= 0; a = candidatesBitSet.nextSetBit(a+1)) {
 			for (int b = candidatesBitSet.nextSetBit(a+1); b >= 0; b = candidatesBitSet.nextSetBit(b+1)) {
+			    // starting the timer to calculate the running time of analyzing index interaction               
+                logger.startTimerAnalyzingInteraction();
+                // --------------------------------------------------------------------------------
 				IBGNode Y, Ya, Yab, YbPlus, YbMinus;
 				double costY, costYa, costYab;
 

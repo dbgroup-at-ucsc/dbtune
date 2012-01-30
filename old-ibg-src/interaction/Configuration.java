@@ -13,17 +13,27 @@ public abstract class Configuration {
 	public static Generation.Strategy candidates = Generation.Strategy.UNION_OPTIMAL;
 	public static double interactionThreshold = 0.01;
 	public static String subdir = "tpch"; // subdirectory of resultsRoot, see below
-	
+	/*
 	// below this line should not need much changing
 	public static String dbName = "KARLSCH";
 	public static String userName = "karlsch";
 	public static String password = null;
 	public static String url = "jdbc:db2://localhost:48459/karlsch";
 	public static String driverClass = "com.ibm.db2.jcc.DB2Driver";
-	public static String db2Advis = "/Users/karlsch/sqllib/bin/db2advis";
-	
+	public static String db2Advis = "/Users/karlsch/sqllib/bin/db2advis";	
 	// File management 
 	private static File root = new File("/Users/karlsch/school/chameleon-dbms/bengraph/results");
+	*/
+	public static String dbName = "ONEGB";
+    public static String userName = "db2inst1";
+    public static String password = "db2inst1admin";
+    public static String url = "jdbc:db2://localhost:50000/ONEGB";
+    public static String driverClass = "com.ibm.db2.jcc.DB2Driver";
+    public static String db2Advis = "/home/db2inst1/sqllib/bin/db2advis";
+    
+    // File management
+    private static File root = new File("/home/tqtrung/previous_source_code/bengraph/results/");
+    
 	private static File resultsDir() {
 		return new File (root, subdir);
 	}

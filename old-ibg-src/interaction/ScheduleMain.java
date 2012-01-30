@@ -55,8 +55,6 @@ public class ScheduleMain {
 		
 		
 		
-		
-		
 		for (Generation.Strategy s : strategies) {
 			File ibgFile = Configuration.ibgFile(s);
 			SerialIndexBenefitGraph[] ibgs = (SerialIndexBenefitGraph[]) Files.readObjectFromFile(ibgFile);
@@ -91,11 +89,12 @@ public class ScheduleMain {
 			DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
 			
 //			randomSchedules(candidateSet, ibgs, basicLog.getInteractionBank(), 0.02);
-			
+			/*
 			IBGScheduleInfo<SerialIndexBenefitGraph> ibgInfo = new SerialIndexBenefitGraph.ScheduleInfo(ibgs);
 			for (double t : thresholds) {
 				allSchedules(candidateSet, ibgInfo, basicLog.getInteractionBank(), t);
 			}
+			*/
 		}
 	}
 	
@@ -174,7 +173,7 @@ public class ScheduleMain {
 				if (selectedQueries[j])
 					subset[p++] = ibgs[j];
 			assert(p == selectedCount);
-			
+			/*
 			SerialIndexBenefitGraph.ScheduleInfo ibgInfo = new SerialIndexBenefitGraph.ScheduleInfo(subset);
 			double greedy = GreedyScheduler.schedule(rootBitSet, ibgInfo).penalty();
 			double partitioned = PartitionedScheduler.schedule(rootBitSet, ibgInfo, bank.stablePartitioning(threshold)).penalty();
@@ -184,6 +183,7 @@ public class ScheduleMain {
 				if (selectedQueries[j])
 					System.out.print((j+1) + " ");
 			System.out.println();
+			*/
 		}
 		
 	}

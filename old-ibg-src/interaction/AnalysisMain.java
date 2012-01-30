@@ -53,8 +53,8 @@ public class AnalysisMain {
 		DBConnection conn = Main.openConnection();
 		try {
 			SQLWorkload workload = Main.getWorkload();
-//			analyze(conn, workload, UNION_OPTIMAL);
-			analyze(conn, workload, OPTIMAL_1C);
+			analyze(conn, workload, UNION_OPTIMAL);
+//			analyze(conn, workload, OPTIMAL_1C);
 //			analyze(conn, workload, FULL_BUDGET);
 //			analyze(conn, workload, HALF_BUDGET);
 		} finally {
@@ -88,6 +88,7 @@ public class AnalysisMain {
 			AnalysisLog serial2 = serial1.getAnalysisLog(0.1);
 			serial2.output(out);
 			
+			/*
 			// reset logger and analyze in parallel
 			logger.reset();
 			analyzeParallel(conn, workload, candidateSet, logger);
@@ -97,6 +98,7 @@ public class AnalysisMain {
 			BasicLog parallel1 = (BasicLog)Files.readObjectFromFile(Configuration.analysisFile(strategy, PARALLEL));
 			AnalysisLog parallel2 = parallel1.getAnalysisLog(0.1);
 			parallel2.output(out);
+			*/
 		} finally {
 			out.close();
 		}
@@ -106,14 +108,20 @@ public class AnalysisMain {
 	throws SQLException {
 		SerialIndexBenefitGraph[] ibgs;
 		int i;
-		
+		long timerStart, elapsedTime;
 		logger.startTimer();
 		
 		/* analyze queries one at a time, combining their interactions */
 		ibgs = new SerialIndexBenefitGraph[xacts.transactionCount()];
 		i = 0;
 		for (SQLTransaction xact : xacts) {
+		    timerStart = System.currentTimeMillis();
 			SerialIndexBenefitGraph ibg = SerialIndexBenefitGraph.build(conn, new SQLWorkload(xact), candidateSet);
+			// ----------------------------------------------------------------------------
+            elapsedTime = System.currentTimeMillis() - timerStart;
+            System.out.println("L116 (Analysis Main), time to build IBG: " + elapsedTime + " millis");
+            logger.addTimerBuildingIBG(elapsedTime);
+            // -----------------------------------------------------------------------------
 			SerialIBGAnalyzer analyzer = new SerialIBGAnalyzer(ibg);
 			analyzer.doAnalysis(logger);
 			ibgs[i++] = ibg;
