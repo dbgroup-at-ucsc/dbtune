@@ -11,6 +11,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 
 /**
  * Extends {@link SQLStatementPlan} class in order to add INUM-specific functionality. Specifically, 
@@ -22,6 +23,7 @@ import edu.ucsc.dbtune.metadata.Table;
  * special Index type} is used.
  *
  * @author Ivo Jimenez
+ * @author Quoc Trung Tran
  * @see edu.ucsc.dbtune.metadata.IndexFullTableScan 
  */
 public class InumPlan extends SQLStatementPlan
@@ -39,6 +41,12 @@ public class InumPlan extends SQLStatementPlan
     private Map<Table, TableAccessSlot> slots;
 
     /**
+     * We use this optimizer for doing what-if calls to compute
+     * index access cost
+     */
+    private Optimizer delegate; 
+    
+    /**
      * Creates a new instance of an INUM plan. 
      *
      * @param plan
@@ -48,9 +56,10 @@ public class InumPlan extends SQLStatementPlan
      * @throws SQLException
      *      if the plan is referencing a table more than once or if the plan contains NLJ operators.
      */
-    public InumPlan(SQLStatementPlan plan) throws SQLException
-    {
+    public InumPlan(Optimizer delegate, SQLStatementPlan plan) throws SQLException
+    {   
         super(plan);
+        this.delegate = delegate;
 
         double leafsCost = 0;
         TableAccessSlot slot;
@@ -71,6 +80,7 @@ public class InumPlan extends SQLStatementPlan
                     slot.getTable() + " referenced more than once; self-joins not supported yet");
 
             slots.put(slot.getTable(), slot);
+            // TODO: add the cost of RIDSCAN into the cost of IXSCAN (leafsCost)
             leafsCost += o.getAccumulatedCost();
         }
 
@@ -157,12 +167,58 @@ public class InumPlan extends SQLStatementPlan
     {
         TableAccessSlot slot = slots.get(index.getTable());
 
-        if (slot == null)
+        if (slot == null) 
             throw new SQLException("Plan doesn't contain a slot for table " + index.getTable());
-
-        if (slot.isCompatible(index))
+        
+        if (!slot.isCompatible(index)) 
+            return Double.POSITIVE_INFINITY;
+        
+        
+        // if both are full table scan
+        if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index)) 
             return slot.getCost();
         
+        // Assume the relation of index is R
+        // SELECT (attributes of R that are referenced in the statement)
+        // FROM R
+        // WHERE (predicates on columns of R that are in index)
+        // ORDER BY (slot.getIndex())
+        String sql = "";
+        Set<Index> atomic = new HashSet<Index>();
+        atomic.add(index);
+        SQLStatementPlan plan = delegate.explain(sql, atomic).getPlan();
+        
+        if (plan.leafs().size() > 1) 
+            throw new RuntimeException(" The plan should have only one leaf.");
+        
+        for (Operator o : plan.leafs()) {
+
+            // check if the operator is over a database object (Table or Index); ignore if not
+            if (o.getDatabaseObjects().isEmpty())
+                throw new RuntimeException(" The slot should not be empty.");
+
+            // TODO: get the cost of RID + IXSCAN
+            if (o.getDatabaseObjects().get(0) instanceof Index){
+                
+                
+            } else // Plan uses a full table scan
+                return Double.POSITIVE_INFINITY;
+        }
+        
         return Double.POSITIVE_INFINITY;
+        
+    }
+    
+    /**
+     * Retrieve the slot corresponding to the given table
+     * @param table
+     *      The given table
+     * @return
+     *      An {@code TableAccessSlot} object or NULL if the table
+     *      is not referenced by the statement
+     */
+    public TableAccessSlot getSlot(Table table)
+    {
+        return slots.get(table);
     }
 }
