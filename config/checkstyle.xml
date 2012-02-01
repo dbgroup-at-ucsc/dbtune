@@ -401,10 +401,11 @@
           <property name="max" value="390"/>
         </module>
 
-        <!-- Identify TODOs -->
+        <!-- Identify TODOs - already done by Eclipse
         <module name="TodoComment">
           <property name="format" value="TODO"/>
         </module>
+        -->
 
         <!-- Flag uncommented main() methods (debugging left-overs) -->
         <module name="UncommentedMain"/>

@@ -1,5 +1,6 @@
-package edu.ucsc.dbtune.inum;
+package edu.ucsc.dbtune.optimizer.plan;
 
+import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import java.sql.SQLException;
 
 import java.util.ArrayList;

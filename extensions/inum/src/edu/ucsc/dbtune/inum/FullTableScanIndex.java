@@ -19,7 +19,7 @@ import edu.ucsc.dbtune.metadata.Table;
  * @see edu.ucsc.dbtune.optimizer.plan.InumPlan
  * @see edu.ucsc.dbtune.optimizer.plan.TableAccessSlot
  */
-public final class FullTableScanIndex extends InterestingOrder
+public final class FullTableScanIndex extends InumInterestingOrder
 {
     private static Map<Table, Index> instances = new HashMap<Table, Index>();
     

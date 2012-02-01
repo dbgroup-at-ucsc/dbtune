@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 
+import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

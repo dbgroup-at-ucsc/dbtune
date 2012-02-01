@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
+import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import java.util.List;
 import java.util.Set;
 

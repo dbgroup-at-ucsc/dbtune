@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.inum;
+package edu.ucsc.dbtune.optimizer.plan;
 
 import java.sql.SQLException;
 
@@ -7,7 +7,6 @@ import java.util.Map;
 
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 
 /**
@@ -25,30 +24,9 @@ import edu.ucsc.dbtune.metadata.Table;
  *
  * @author Ivo Jimenez
  */
-class InterestingOrder extends Index
+public class InterestingOrder extends Index
 {
-    private Table table;
-
-    /**
-     * Invoked only by {@link FullTableScanIndex}.
-     *
-     * @param schema
-     *     schema that corresponds to the index
-     * @param table
-     *     table where the index is defined in
-     * @param indexName
-     *     name of the index
-     * @throws SQLException
-     *     if the schema of the table is null or can't be retrieved
-     */
-    InterestingOrder(Schema schema, Table table, String indexName) throws SQLException
-    {
-        super(schema, indexName);
-
-        this.table = table;
-
-        container.remove(this);
-    }
+    protected Table table;
 
     /**
      * Creates an interesting order instance.
@@ -98,6 +76,7 @@ class InterestingOrder extends Index
     /**
      * {@inheritDoc}
      */
+    @Override
     public Table getTable()
     {
         return this.table;
