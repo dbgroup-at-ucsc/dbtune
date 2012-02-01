@@ -10,17 +10,17 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Sets.cartesianProduct;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 
 /**
  * An implementation of the INUM space computation that populates it eagerly without any kind of 
  * optimization. This is in contrast to other more sophisticated strategies such as the ones 
  * outlined in [1], like <i>Lazy</i> and <i>Cost-based</i> evaluation.
- * <p>
- * This implementation assumes that the plans obtained by the delegate don't contain NLJ operators.
  *
  * @author Ivo Jimenez
  * @author Quoc Trung Tran
@@ -33,70 +33,99 @@ public class EagerSpaceComputation implements InumSpaceComputation
     /**
      * {@inheritDoc}
      */
+    @Override
     public Set<InumPlan> compute(SQLStatement statement, Optimizer delegate, Catalog catalog)
         throws SQLException
     {
-        Set<InumPlan> plans;
-        DerbyInterestingOrdersExtractor ioE;
         List<Set<Index>> indexesPerTable;
+        Set<InumPlan> inumSpace;
+        List<Index> minimumAtomic;
+        DerbyInterestingOrdersExtractor interestingOrdersExtractor;
+        SQLStatementPlan sqlPlan;
+        InumPlan templatePlan;
 
-        ioE = new DerbyInterestingOrdersExtractor(catalog, true);
-        indexesPerTable = ioE.extract(statement);
+        interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(catalog, true);
+        indexesPerTable = interestingOrdersExtractor.extract(statement);
 
-        plans = new HashSet<InumPlan>();
+        inumSpace = new HashSet<InumPlan>();
 
         for (List<Index> atomic : cartesianProduct(indexesPerTable)) {
-            InumPlan plan = new InumPlan(delegate,
-                    delegate.explain(statement, new HashSet<Index>(atomic)).getPlan());
-            // if plan.isNLJ()
-            //  throw it away
-            
-            if (isPlanUsingInterestingOrder(plan, atomic)) 
-                plans.add(plan);
-        }
-        
-        // get NLJ for Imin
+            sqlPlan = delegate.explain(statement, new HashSet<Index>(atomic)).getPlan();
 
-        return plans;
+            if (sqlPlan.contains(NLJ))
+                // ignore it since we check for NLJ below
+                continue;
+            
+            templatePlan = new InumPlan(delegate, sqlPlan);
+
+            if (isPlanUsingInterestingOrder(templatePlan, atomic))
+                inumSpace.add(templatePlan);
+        }
+
+        minimumAtomic = getMinimumAtomicConfiguration(delegate.explain(statement).getPlan());
+        
+        sqlPlan = delegate.explain(statement, new HashSet<Index>(minimumAtomic)).getPlan();
+
+        if (sqlPlan.contains(NLJ))
+            inumSpace.add(new InumPlan(delegate, sqlPlan));
+
+        return inumSpace;
     }
     
     /**
-     * Check if the plan actually uses the indexes in the given interesting order
+     * Checks if the plan actually uses the indexes in the given interesting order.
      * 
      * @param plan
      *      The plan returned by the optimizer
      * @param interestingOrders
      *      The given interesting order
      * @return
-     *      {@code true} if the plan uses the given interesting order,
-     *      {@code false} otherwise
+     *      {@code true} if the plan uses the given interesting order, {@code false} otherwise
      */
-    private boolean isPlanUsingInterestingOrder(InumPlan plan, List<Index> interestingOrders)
-    {   
-        TableAccessSlot slot; 
+    private static boolean isPlanUsingInterestingOrder(InumPlan plan, List<Index> interestingOrders)
+    {
+        TableAccessSlot slot;
+        boolean isInterestingOrderFTS;
+        boolean isSlotFTS;
+
         for (Index index : interestingOrders) {
             slot = plan.getSlot(index.getTable());
-            boolean isInterestingOrderFTS = (index instanceof FullTableScanIndex);
-            boolean isSlotFTS = (slot.getIndex() instanceof FullTableScanIndex);
+            isInterestingOrderFTS = index instanceof FullTableScanIndex;
+            isSlotFTS = slot.getIndex() instanceof FullTableScanIndex;
             
-            if (isInterestingOrderFTS == true && isSlotFTS == false) 
-                throw new RuntimeException("NOT yet handle the case of interesting order is a FTS " +
-                		"but the optimizer uses a materialized index. ");
+            if (isInterestingOrderFTS && !isSlotFTS)
+                throw new RuntimeException(
+                    "interesting order is a FTS but the optimizer uses a materialized index");
             
-            // the given interesting order is an index, but the one returned by the optimizer
-            // is a FTS: not compatible
-            if (isInterestingOrderFTS == false && isSlotFTS == true)
+            if (!isInterestingOrderFTS && isSlotFTS)
+                // the given interesting order is an index, but the one returned by the optimizer
+                // is a FTS: not compatible
                 return false;
             
-            // if (isInterestingOrderFTS == true && isSlotInterestingOrderFTS == true)
-            // this is fine, because both are full table scans
+            // if (isInterestingOrderFTS && isSlotInterestingOrderFTS)
+                // this is fine, because both are full table scans
             
-            // need to check whether the two indexes are the same
-            if (isInterestingOrderFTS == false && isSlotFTS == false)                
-                if (index.equalsContent(slot.getIndex()) == false) 
+            if (!isInterestingOrderFTS && !isSlotFTS)
+                // need to check whether the two indexes are the same
+                if (!index.equalsContent(slot.getIndex()))
                     return false;
         }
         
         return true;
+    }
+
+    /**
+     * Returns the minimum atomic configuration for the given plan. A minimum index for a table and 
+     * a statement is the index that covers all the columns accessed by the statement of a given 
+     * table. Thus, the minimum atomic configuration is the set of covering indexes of a statement.
+     * 
+     * @param plan
+     *      the plan returned by an optimizer
+     * @return
+     *      the atomic configuration for the statement associated with the plan
+     */
+    private static List<Index> getMinimumAtomicConfiguration(SQLStatementPlan plan)
+    {
+        throw new RuntimeException("Not yet");
     }
 }
