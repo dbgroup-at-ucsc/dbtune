@@ -393,42 +393,64 @@ public class DB2Optimizer extends AbstractOptimizer
     {
         loadOptimizationProfiles();
 
-        Statement stmt = connection.createStatement();
-        ResultSet rs;
-        SQLStatementPlan plan;
+        Statement stmt1 = connection.createStatement();
+        Statement stmt2 = connection.createStatement();
+        ResultSet rs1;
+        ResultSet rs2;
+        SQLStatementPlan plan;        
 
-        stmt.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
-        stmt.execute(sql.getSQL());
-        stmt.execute("SET CURRENT EXPLAIN MODE = NO");
-
-        rs = stmt.executeQuery(
-                "SELECT " +
-                "     o.operator_id as node_id, " +
-                "     s2.target_id as parent_id, " +
-                "     o.operator_type as operator_name, " +
-                "     s1.object_schema as object_schema, " +
-                "     s1.object_name as object_name, " +
-                "     s2.stream_count as cardinality, " +
-                "     o.total_cost as cost " +
+        stmt1.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
+        stmt1.execute(sql.getSQL());
+        stmt1.execute("SET CURRENT EXPLAIN MODE = NO");
+        
+        rs1 = stmt1.executeQuery(
+             "SELECT " +
+             "   os.node_id, " +
+             "   os.parent_id, " +
+             "   os.operator_name, " +
+             "   os.cost, " +
+             "   os.column_names, " +
+             "   s2.object_name, " +
+             "   s2.object_schema " +
+             " FROM " +
+             "   ( " +
+             "      SELECT " +
+             "          o.operator_id   as node_id, " +
+             "          s.target_id     as parent_id, " +
+             "          o.operator_type as operator_name, " +
+             "          o.total_cost    as cost, " +
+             "          cast(cast(s.column_names AS CLOB(2097152)) as varchar(255)) as column_names " +
+             "       FROM " +
+             "          systools.explain_operator o " +
+             "             LEFT OUTER JOIN     " +
+             "          systools.explain_stream s " +
+             "             ON o.operator_id = s.source_id " +             
+             " ORDER BY " +
+             "          o.operator_id ASC " +
+             "    ) as os " +
+             "       INNER JOIN " +
+             "    systools.explain_stream s2 " + 
+             "          ON os.node_id = s2.target_id");
+        
+        stmt2 = connection.createStatement();
+        rs2 = stmt2.executeQuery(
+                " SELECT " +
+                "   o.operator_id   as node_id, " +
+                "   cast(cast(p.predicate_text AS CLOB(2097152)) as varchar(255)) as predicate_text " +
                 " FROM " +
-                "     systools.explain_operator o " +
-                "        LEFT OUTER JOIN " +
-                "     systools.explain_stream s2 " +
-                "           ON o.operator_id=s2.source_id AND " +
-                "              s2.target_id > 0 " +
-                "        LEFT OUTER JOIN " +
-                "     systools.explain_stream s1 " +
-                "           ON o.operator_id = s1.target_id AND " +
-                "              o.explain_time = s1.explain_time AND " +
-                "              s1.object_name IS NOT NULL " +
+                "   systools.explain_operator o " +
+                "      INNER JOIN     " +
+                "   systools.explain_predicate p " +
+                "         ON o.operator_id = p.operator_id " +             
                 " ORDER BY " +
-                "     o.explain_time ASC, " +
-                "     o.operator_id ASC");
+                "          o.operator_id ASC ");
+         
+        plan = parsePlan(catalog, rs1, rs2, indexes);
 
-        plan = parsePlan(catalog, rs, indexes);
-
-        rs.close();
-        stmt.close();
+        rs1.close();
+        stmt1.close();
+        rs2.close();
+        stmt2.close();
 
         return plan;
     }
@@ -656,13 +678,20 @@ public class DB2Optimizer extends AbstractOptimizer
     static Operator parseNode(Catalog catalog, ResultSet rs, Set<Index> indexes) throws SQLException
     {
         double accomulatedCost = rs.getDouble("cost");
-        long cardinality = rs.getLong("cardinality");
+        //long cardinality = rs.getLong("cardinality");
         String name = rs.getString("operator_name");
         String dboName = rs.getString("object_name");
-        String dboSchema = rs.getString("object_schema");
+        String dboSchema = rs.getString("object_schema");     
+        
+       // String predicateText = rs.getString("predicate_text");
+        System.out.println("L669 (db2optimizer), predicate text: " // + predicateText
+                + " operator Name: " + name
+                + " object name: " + dboName
+                + " schema name: " + dboSchema
+                + " column name: " + rs.getString("column_names"));
         DatabaseObject dbo;
 
-        Operator op = new Operator(name.trim(), accomulatedCost, cardinality);
+        Operator op = new Operator(name.trim(), accomulatedCost, -1);//cardinality);
 
         if (dboSchema == null || dboName == null)
             return op;
@@ -726,36 +755,53 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    static SQLStatementPlan parsePlan(Catalog catalog, ResultSet rs, Set<Index> indexes)
+    static SQLStatementPlan parsePlan(
+            Catalog catalog,
+            ResultSet rsOperator,
+            ResultSet rsPredicate,
+            Set<Index> indexes)
         throws SQLException
     {
         Map<Integer, Operator> idToNode;
+        Map<Integer, List<String>> idToPredicateList;
+        List<String> predicatesForOperator;
         Operator child;
         Operator parent;
         Operator root;
         SQLStatementPlan plan;
 
-        if (!rs.next())
+        if (!rsOperator.next())
             throw new SQLException("Empty plan");
 
-        root = parseNode(catalog, rs, indexes);
+        root = parseNode(catalog, rsOperator, indexes);
         plan = new SQLStatementPlan(root);
         idToNode = new HashMap<Integer, Operator>();
+        idToPredicateList = new HashMap<Integer, List<String>>();
+        
+        while (rsPredicate.next()) {
+            predicatesForOperator = idToPredicateList.get(rsPredicate.getInt("node_id"));
+            
+            if (predicatesForOperator == null ) {
+                predicatesForOperator = new ArrayList<String>();
+                idToPredicateList.put(rsPredicate.getInt("node_id"), predicatesForOperator);
+            }
+            
+            predicatesForOperator.add(rsPredicate.getString("predicate_text"));
+            System.out.println("preds for " + rsPredicate.getInt("node_id") + "; text: " + rsPredicate.getString("predicate_text"));
+        }
 
         idToNode.put(1, root);
 
-        while (rs.next()) {
-            child = parseNode(catalog, rs, indexes);
-            parent = idToNode.get(rs.getInt("parent_id"));
+        while (rsOperator.next()) {
+            child = parseNode(catalog, rsOperator, indexes);
+            parent = idToNode.get(rsOperator.getInt("parent_id"));
 
             if (parent == null)
-                throw new SQLException(child + " expecting parent_id=" + rs.getInt("parent_id"));
+                throw new SQLException(child + " expecting parent_id=" + rsOperator.getInt("parent_id"));
 
             plan.setChild(parent, child);
-            idToNode.put(rs.getInt("node_id"), child);
+            idToNode.put(rsOperator.getInt("node_id"), child);
         }
-
-        rs.close();
 
         return plan;
     }
