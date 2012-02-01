@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
+import edu.ucsc.dbtune.optimizer.plan.Predicate;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -146,6 +147,67 @@ public class DB2Optimizer extends AbstractOptimizer
             stmt.execute(getAdviseIndexInsertStatement(index));
 
         stmt.close();
+    }
+
+    /**
+     * Extracts the predicates corresponding to each operator from the given result set. It is 
+     * assumed that the result set contains the {@code node_id} and {@code predicate_text} columns 
+     * and has been previously populated.
+     *
+     * @param rs
+     *      result set containing the list of predicates. More than one entry per operator is 
+     *      allowed
+     * @return
+     *      a mapping where the key is the node_id and the value is a list of predicates used 
+     *      internally by the optimizer.
+     * @throws SQLException
+     *      if an error occurs while reading from the given result set
+     */
+    private static Map<Integer, List<String>> extractOperatorToPredicateListMap(ResultSet rs)
+        throws SQLException
+    {
+        Map<Integer, List<String>> idToPredicateList = new HashMap<Integer, List<String>>();
+        List<String> predicatesForOperator;
+
+        while (rs.next()) {
+            predicatesForOperator = idToPredicateList.get(rs.getInt("node_id"));
+            
+            if (predicatesForOperator == null) {
+                predicatesForOperator = new ArrayList<String>();
+                idToPredicateList.put(rs.getInt("node_id"), predicatesForOperator);
+            }
+            
+            predicatesForOperator.add(rs.getString("predicate_text"));
+        }
+
+        return idToPredicateList;
+    }
+
+    /**
+     * Parses the list of predicates for a given operator, binds the contents to the given {@code 
+     * catalog} and, for each predicate, it creates an instance of {@link Predicate}.
+     *
+     * @param predicateList
+     *      a list of strings where each corresponds to a record from the {@code 
+     *      EXPLAIN_PREDICATE.PREDICATE_TEXT} column
+     * @param catalog
+     *      the catalog used to retrieve metadata information (to do the binding)
+     * @return
+     *      a list of predicates for the operator
+     * @throws SQLException
+     *      if a reference contained in a predicate can't be bound to its metadata counterpart
+     */
+    private static List<Predicate> extractPredicatesUsedByOperator(
+            List<String> predicateList, Catalog catalog)
+        throws SQLException
+    {
+        List<Predicate> predicates = new ArrayList<Predicate>();
+
+        if (predicateList.size() == 0)
+            return predicates;
+
+        // TODO
+        throw new RuntimeException("");
     }
 
     /**
@@ -837,6 +899,7 @@ public class DB2Optimizer extends AbstractOptimizer
             throw new SQLException("Can't find object " + dboSchema + "." + dboName);
 
         op.add(dbo);
+        op.add(extractPredicatesUsedByOperator(predicateList, catalog));
 
         return op;
     }
@@ -882,7 +945,7 @@ public class DB2Optimizer extends AbstractOptimizer
         if (!rsOperator.next())
             throw new SQLException("Empty plan");
 
-        predicateList = new HashMap<Integer, List<String>>();
+        predicateList = extractOperatorToPredicateListMap(rsPredicate);
         root = parseNode(catalog, rsOperator, predicateList.get(1), indexes);
         plan = new SQLStatementPlan(root);
         idToNode = new HashMap<Integer, Operator>();
