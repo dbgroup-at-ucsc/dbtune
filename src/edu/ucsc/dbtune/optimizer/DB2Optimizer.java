@@ -18,6 +18,7 @@ import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.Predicate;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
@@ -147,6 +148,29 @@ public class DB2Optimizer extends AbstractOptimizer
             stmt.execute(getAdviseIndexInsertStatement(index));
 
         stmt.close();
+    }
+
+    /**
+     * Extracts columns that the operator is processing.
+     *
+     * @param colNamesInExplainStream
+     *      column names as they appear in the {@code EXPLAIN_STREAM.COLNAMES} column
+     * @param catalog
+     *      to do the binding
+     * @return
+     *      the columns touched by the operator, as an instance of {@link InterestingOrder}
+     * @throws SQLException
+     *      if one of the column names can't be bound to the corresponding column
+     */
+    private static InterestingOrder extractColumnsUsedByOperator(
+            String colNamesInExplainStream, Catalog catalog)
+        throws SQLException
+    {
+        if (colNamesInExplainStream == null || colNamesInExplainStream.equals(""))
+            return null;
+
+        // TODO
+        throw new RuntimeException("");
     }
 
     /**
@@ -873,7 +897,7 @@ public class DB2Optimizer extends AbstractOptimizer
         String dboSchema = rs.getString("object_schema");
         String dboName = rs.getString("object_name");
         double accomulatedCost = rs.getDouble("cost");
-        //String columnNames = rs.getString("column_names");
+        String columnNames = rs.getString("column_names");
         
         DatabaseObject dbo;
 
@@ -899,6 +923,7 @@ public class DB2Optimizer extends AbstractOptimizer
             throw new SQLException("Can't find object " + dboSchema + "." + dboName);
 
         op.add(dbo);
+        op.add(extractColumnsUsedByOperator(columnNames, catalog));
         op.add(extractPredicatesUsedByOperator(predicateList, catalog));
 
         return op;
