@@ -33,6 +33,9 @@ public class Operator implements Comparable<Operator>, Identifiable
 
     /** When the operator is applied to base objects. */
     protected List<DatabaseObject> objects;
+    
+    /** The predicate associated with the operator */
+    protected List<Predicate> predicates;
 
     /**
      * creates an empty operator ({@code name="empty"}. This can be used to represent empty plans.
@@ -60,6 +63,7 @@ public class Operator implements Comparable<Operator>, Identifiable
         this.accumulatedCost = accumulatedCost;
         this.cardinality     = cardinality;
         this.objects         = new ArrayList<DatabaseObject>();
+        this.predicates      = new ArrayList<Predicate>();
     }
 
     /**
@@ -76,6 +80,7 @@ public class Operator implements Comparable<Operator>, Identifiable
         this.accumulatedCost = o.accumulatedCost;
         this.cardinality = o.cardinality;
         this.objects = o.objects;
+        this.predicates = o.predicates;
     }
 
     /**
@@ -178,6 +183,16 @@ public class Operator implements Comparable<Operator>, Identifiable
     public String getName()
     {
         return name;
+    }
+    
+    /**
+     * Assign the predicate associated with the operator
+     * @param p
+     *      The predicate
+     */
+    public void addPredicate (Predicate p)
+    {
+        predicates.add(p);
     }
 
     /**
