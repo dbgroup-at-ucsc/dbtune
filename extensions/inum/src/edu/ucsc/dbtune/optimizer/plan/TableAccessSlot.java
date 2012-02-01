@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.sql.SQLException;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
+import edu.ucsc.dbtune.inum.InumInterestingOrder;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -16,34 +17,40 @@ import edu.ucsc.dbtune.metadata.Table;
 public class TableAccessSlot extends Operator
 {
     private Index index;
+    private InterestingOrder columnsFetched;
 
     /**
      * Analyzes the database objects referenced in the given operator and creates a slot 
      * corresponding to it. If the database object referenced is a table (i.e. a FTS is being done), 
      * the slot will have the  {@link IndexFullTableScan FTS index singleton}.
      *
-     * @param operator
+     * @param leaf
      *      the operator from which the slot is being extracted
      * @throws SQLException
      *      if the given operator references more than one database object; if the database object 
      *      is not of type {@link Table} or {@link Index}.
      * @see IndexFullTableScan
      */
-    public TableAccessSlot(Operator operator) throws SQLException
+    public TableAccessSlot(Operator leaf) throws SQLException
     {
-        super(operator);
+        super(leaf);
 
-        if (operator.getDatabaseObjects().size() != 1)
-            throw new SQLException("Only accepting one DB object; operator: " + operator);
+        for (DatabaseObject object : leaf.getDatabaseObjects()) {
+            if (object instanceof Table)
+                index = FullTableScanIndex.getFullTableScanIndexInstance((Table) object);
+            else if (object instanceof InumInterestingOrder)
+                index = (Index) object;
+            else if (object instanceof InterestingOrder)
+                columnsFetched = (InterestingOrder) object;
+            else if (object instanceof Index)
+                index = (Index) object;
+            else
+                throw new SQLException(
+                        "Can't proceed with object type " + object.getClass().getName());
+        }
 
-        DatabaseObject object = operator.getDatabaseObjects().get(0);
-
-        if (object instanceof Table)
-            index = FullTableScanIndex.getFullTableScanIndexInstance((Table) object);
-        else if (object instanceof Index)
-            index = (Index) object;
-        else
-            throw new SQLException("Can't proceed with object type " + object.getClass().getName());
+        if (index == null)
+            throw new SQLException("Can't determine object associated to leaf node: " + leaf);
 
         super.cost = super.accumulatedCost;
     }
@@ -84,6 +91,17 @@ public class TableAccessSlot extends Operator
     public Table getTable()
     {
         return index.getTable();
+    }
+
+    /**
+     * Returns the columns that are fetched by this operator.
+     *
+     * @return
+     *      columns that are processed by this operator
+     */
+    public InterestingOrder getColumnsFetched()
+    {
+        return columnsFetched;
     }
 
     /**
