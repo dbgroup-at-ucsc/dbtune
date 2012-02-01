@@ -9,9 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * Extends {@link SQLStatementPlan} class in order to add INUM-specific functionality. Specifically, 
@@ -41,14 +45,15 @@ public class InumPlan extends SQLStatementPlan
     private Map<Table, TableAccessSlot> slots;
 
     /**
-     * We use this optimizer for doing what-if calls to compute
-     * index access cost
+     * We use this optimizer for doing what-if calls to compute index access cost.
      */
     private Optimizer delegate; 
     
     /**
      * Creates a new instance of an INUM plan. 
      *
+     * @param delegate
+     *      to do what-if optimization later on
      * @param plan
      *      a regular execution plan produced by a Optimizer implementations (through the {@link 
      *      edu.ucsc.dbtune.optimizer.Optimizer#explain} or {@link 
@@ -68,19 +73,19 @@ public class InumPlan extends SQLStatementPlan
 
         for (Operator o : leafs()) {
 
-            // check if the operator is over a database object (Table or Index); ignore if not
             if (o.getDatabaseObjects().isEmpty())
+                // check if the operator is over a database object (Table or Index); ignore if not
                 continue;
 
             slot = new TableAccessSlot(o);
 
-            // we don't allow self-joins
             if (slots.get(slot.getTable()) != null)
+                // we don't allow self-joins
                 throw new SQLException(
                     slot.getTable() + " referenced more than once; self-joins not supported yet");
 
             slots.put(slot.getTable(), slot);
-            // TODO: add the cost of RIDSCAN into the cost of IXSCAN (leafsCost)
+
             leafsCost += o.getAccumulatedCost();
         }
 
@@ -148,6 +153,10 @@ public class InumPlan extends SQLStatementPlan
             c += plug(i);
         }
 
+        if (visited.size() != slots.size())
+            throw new SQLException(
+                    "One or more tables missing in atomic configuration: " + atomicConfiguration);
+
         return c;
     }
     
@@ -173,52 +182,73 @@ public class InumPlan extends SQLStatementPlan
         if (!slot.isCompatible(index)) 
             return Double.POSITIVE_INFINITY;
         
-        
-        // if both are full table scan
-        if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index)) 
+        if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index))
+            // if we have the same index as when we built the template
             return slot.getCost();
+
+        // we have an index that we haven't seen before, so we need to invoke the optimizer
+        SQLStatementPlan plan =
+            delegate.explain(
+                    buildQueryForUnseenIndex(slot, index),
+                    Sets.<Index>newHashSet(index)).getPlan();
         
+        if (plan.leafs().size() > 1)
+            throw new RuntimeException("plan should have only one leaf.");
+        
+        Operator o = Iterables.<Operator>get(plan.leafs(), 0);
+
+        if (o.getDatabaseObjects().isEmpty())
+            throw new RuntimeException(" The slot should not be empty.");
+
+        if (o.getDatabaseObjects().get(0) instanceof Index)
+            return o.getCost();
+                
+        // plan uses a full table scan, so it's not compatible
+        return Double.POSITIVE_INFINITY;
+    }
+    
+    /**
+     * Returns the slot corresponding to the given table.
+     *
+     * @param table
+     *      the given table
+     * @return
+     *      a {@code TableAccessSlot} object or {@code null} if the table is not referenced by the 
+     *      statement
+     */
+    public TableAccessSlot getSlot(Table table)
+    {
+        return slots.get(table);
+    }
+
+    /**
+     * Builds a query for an unseen index. An unseen index is one that wasn't part of the 
+     * interesting order enumeration that was used to build a template plan, thus the cost of using 
+     * it can't be inferred from the template and has to be estimated through the DBMS' optimizer.
+     * <p>
+     * This method assumes that the index is compatible with the slot, i.e. that {@code 
+     * slot.getTable == index.getTable()} is {@code true}.
+     *
+     * @param slot
+     *      slot that corresponds to the index
+     * @param index
+     *      the index
+     * @return
+     *      a SQL statement that can be used to retrieve the cost of using the index at the given 
+     *      slot
+     */
+    private static SQLStatement buildQueryForUnseenIndex(TableAccessSlot slot, Index index)
+    {
+        slot.getColumnsFetched(); // returns the columns that are fetched
+        slot.getPredicates(); // returns the predicate list
+        slot.getTable(); // returns the table
+
         // Assume the relation of index is R
         // SELECT (attributes of R that are referenced in the statement)
         // FROM R
         // WHERE (predicates on columns of R that are in index)
         // ORDER BY (slot.getIndex())
-        String sql = "";
-        Set<Index> atomic = new HashSet<Index>();
-        atomic.add(index);
-        SQLStatementPlan plan = delegate.explain(sql, atomic).getPlan();
-        
-        if (plan.leafs().size() > 1) 
-            throw new RuntimeException(" The plan should have only one leaf.");
-        
-        for (Operator o : plan.leafs()) {
 
-            // check if the operator is over a database object (Table or Index); ignore if not
-            if (o.getDatabaseObjects().isEmpty())
-                throw new RuntimeException(" The slot should not be empty.");
-
-            // TODO: get the cost of RID + IXSCAN
-            if (o.getDatabaseObjects().get(0) instanceof Index){
-                
-                
-            } else // Plan uses a full table scan
-                return Double.POSITIVE_INFINITY;
-        }
-        
-        return Double.POSITIVE_INFINITY;
-        
-    }
-    
-    /**
-     * Retrieve the slot corresponding to the given table
-     * @param table
-     *      The given table
-     * @return
-     *      An {@code TableAccessSlot} object or NULL if the table
-     *      is not referenced by the statement
-     */
-    public TableAccessSlot getSlot(Table table)
-    {
-        return slots.get(table);
+        throw new RuntimeException("not yet");
     }
 }
