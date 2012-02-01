@@ -150,6 +150,28 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
+     * Checks if the plan contains the given operator.
+     *
+     * @param operatorName
+     *      one of the possible defined operator names ({@link Operator})
+     * @return
+     *      {@code true} if the operator identified by the given name is contained in this plan; 
+     *      {@code false} otherwise
+     * @see Operator#NLJ
+     * @see Operator#HJ
+     * @see Operator#MJ
+     */
+    public boolean contains(String operatorName)
+    {
+        // TODO: make this more efficient by using a Map<String,Boolean>
+        for (Operator o : toList())
+            if (o.getName() == operatorName)
+                return true;
+
+        return false;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override

@@ -23,6 +23,9 @@ import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static edu.ucsc.dbtune.util.MetadataUtils.find;
+import static edu.ucsc.dbtune.util.MetadataUtils.getSchemas;
+
 /**
  * Interface to the DB2 optimizer.
  * <p>
@@ -101,10 +104,21 @@ public class DB2Optimizer extends AbstractOptimizer
         Statement stmt = connection.createStatement();
 
         stmt.executeUpdate("DELETE FROM SYSTOOLS.ADVISE_INDEX");
+        stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_INSTANCE");
+        /*
+         * there's a trigger on EXPLAIN_INSTANCE that causes all data corresponding to an explain 
+         * instance to be removed from the EXPLAIN tables, so there's no need to execute the 
+         * following, we're leaving it just for the record.
+
+        stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_ACTUALS");
+        stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_ARGUMENT");
+        stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_DIAGNOSTIC");
+        stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_DIAGNOSTIC_DATA");
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_OBJECT");
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_OPERATOR");
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_PREDICATE");
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_STATEMENT");
+        */
 
         stmt.close();
     }
@@ -271,7 +285,7 @@ public class DB2Optimizer extends AbstractOptimizer
 
         sb.append("'" + index.getName() + "', ");
         sb.append("'CREATE INDEX " + index.getName() + "', ");
-        sb.append("'N', ");
+        sb.append("'Y', ");
         sb.append("0, ");
         sb.append(index.getId() + ", ");
         sb.append("'Y', ");
@@ -378,6 +392,32 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
+     * Returns the DBMS-agnostic operator name corresponding to the given DB2-dependent operator 
+     * name.
+     *
+     * @param operatorName
+     *      the DB2-dependent operator name
+     * @return
+     *      one of the DBMS-independent operator names defined in {@link Operator}
+     * @see Operator
+     */
+    private static String getOperatorName(String operatorName)
+    {
+        if (operatorName.equals("IXSCAN"))
+            return Operator.IS;
+        else if (operatorName.equals("TBSCAN"))
+            return Operator.TS;
+        else if (operatorName.equals("NLJOIN"))
+            return Operator.NLJ;
+        else if (operatorName.equals("MSJOIN"))
+            return Operator.MSJ;
+        else if (operatorName.equals("HSJOIN"))
+            return Operator.HJ;
+        else
+            return operatorName;
+    }
+
+    /**
      * Explains the given statement and returns its execution plan.
      *
      * @param sql
@@ -391,7 +431,7 @@ public class DB2Optimizer extends AbstractOptimizer
      */
     protected SQLStatementPlan getPlan(SQLStatement sql, Set<Index> indexes) throws SQLException
     {
-        loadOptimizationProfiles();
+        loadOptimizationProfiles(sql);
 
         Statement stmt1 = connection.createStatement();
         Statement stmt2 = connection.createStatement();
@@ -414,19 +454,19 @@ public class DB2Optimizer extends AbstractOptimizer
              "   s2.object_schema " +
              " FROM " +
              "   ( " +
-             "      SELECT " +
-             "          o.operator_id   as node_id, " +
-             "          s.target_id     as parent_id, " +
-             "          o.operator_type as operator_name, " +
-             "          o.total_cost    as cost, " +
-             "          cast(cast(s.column_names AS CLOB(2097152)) as varchar(255)) as column_names " +
-             "       FROM " +
-             "          systools.explain_operator o " +
-             "             LEFT OUTER JOIN     " +
-             "          systools.explain_stream s " +
-             "             ON o.operator_id = s.source_id " +             
-             " ORDER BY " +
-             "          o.operator_id ASC " +
+             "   SELECT " +
+             "       o.operator_id   as node_id, " +
+             "       s.target_id     as parent_id, " +
+             "       o.operator_type as operator_name, " +
+             "       o.total_cost    as cost, " +
+             "       cast(cast(s.column_names AS CLOB(2097152)) as varchar(255)) as column_names " +
+             "    FROM " +
+             "       systools.explain_operator o " +
+             "          LEFT OUTER JOIN     " +
+             "       systools.explain_stream s " +
+             "          ON o.operator_id = s.source_id " +
+             "    ORDER BY " +
+             "       o.operator_id ASC " +
              "    ) as os " +
              "       INNER JOIN " +
              "    systools.explain_stream s2 " + 
@@ -436,7 +476,7 @@ public class DB2Optimizer extends AbstractOptimizer
         rs2 = stmt2.executeQuery(
                 " SELECT " +
                 "   o.operator_id   as node_id, " +
-                "   cast(cast(p.predicate_text AS CLOB(2097152)) as varchar(255)) as predicate_text " +
+                "CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(255)) AS predicate_text " +
                 " FROM " +
                 "   systools.explain_operator o " +
                 "      INNER JOIN     " +
@@ -597,6 +637,88 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
+     * Loads the optimization profiles based on the state of the variables {@link #isFTSDisabled}, 
+     * {@link #isNLJDisabled} and the given set of indexes.
+     *
+     * @param sql
+     *     statement which the plan is obtained for
+     * @throws SQLException
+     *      if the profiles can't be loaded
+     */
+    private void loadOptimizationProfiles(SQLStatement sql) throws SQLException
+    {
+        if (isFTSDisabled)
+            loadFTSDisabledProfile(sql, connection, ftsDisabledTables);
+        //if (isNLJDisabled)
+            //loadNLJDisabledProfile(connection, indexes);
+    }
+
+    /**
+     * Loads the FTS profile for the given set of tables.
+     *
+     * @param sql
+     *     statement which the plan is obtained for
+     * @param connection
+     *      used to communicate to DB2
+     * @param tables
+     *      tables for which the FTS profile is loaded
+     * @throws SQLException
+     *      if an error occurs while communicating to the DBMS
+     */
+    private static void loadFTSDisabledProfile(
+            SQLStatement sql, Connection connection, Set<Table> tables)
+        throws SQLException
+    {
+        if (tables.size() == 0)
+            return;
+
+        if (getSchemas(tables).size() > 1)
+            throw new SQLException("Can only apply FTS for tables of the same schema");
+
+        Schema s = null;
+
+        for (Table t : tables) {
+            s = t.getSchema();
+            break;
+        }
+
+        StringBuilder xml = new StringBuilder();
+
+        xml.append(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<OPTPROFILE VERSION=\"9.1.0.0\">\n" +
+            "   <STMTPROFILE ID=\"noFTS on given tables foo\">\n" +
+            "      <STMTKEY SCHEMA=\"" + s.getName() + "\">\n" +
+            "         <![CDATA[" + sql.getSQL() + "]]>\n" +
+            "      </STMTKEY>\n" +
+            "      <OPTGUIDELINES>\n");
+
+        for (Table t : tables) xml.append(
+            "         <IXSCAN TABLE=\"" + t.getName() + "/>");
+
+        xml.append(
+            "      </OPTGUIDELINES>\n" +
+            "   </STMTPROFILE>\n" +
+            "</OPTPROFILE>");
+
+        Statement stmt = connection.createStatement();
+
+        stmt.execute("DELETE FROM systools.opt_profile");
+
+        stmt.execute(
+                "INSERT INTO systools.opt_profile values(" +
+                "    '" + s.getName() + "', " +
+                "    'NOFTS', " +
+                "    BLOB('" + xml + "')" +
+                ")");
+
+        stmt.execute("SET CURRENT OPTIMIZATION PROFILE = '" + s.getName() + ".NOFTS'");
+        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
+
+        stmt.close();
+    }
+
+    /**
      * Parses the {@code ADVISE_INDEX.COLNAMES} column in order to extract the list of referenced 
      * columns and their corresponding ASC/DESC values. The read values are placed in the {@code 
      * columns} and {@code descending} lists sent as arguments.
@@ -664,9 +786,15 @@ public class DB2Optimizer extends AbstractOptimizer
      * it.
      *
      * @param rs
-     *     result set from which a record is read
+     *     result set where operator information is contained. It is assumed that the result set 
+     *     contains information for a single statement, and one entry per operator. The columns 
+     *     expected in the resultset are {@code operator_name}, {@code object_name}, {@code 
+     *     object_name}, {@code cost} and {@code column_names}.
      * @param catalog
      *     used to retrieve metadata information
+     * @param predicateList
+     *     list of predicates as contained in the {@code SYSTOOLS.EXPLAIN_PREDICATE.PREDICATE_TEXT} 
+     *     column. Each predicate contains
      * @param indexes
      *     physical configuration the optimizer should consider when preparing the statement
      * @return
@@ -675,23 +803,19 @@ public class DB2Optimizer extends AbstractOptimizer
      *     if an expected column is not in the result set; if a database object referenced by the 
      *     operator can't be found in the catalog.
      */
-    static Operator parseNode(Catalog catalog, ResultSet rs, Set<Index> indexes) throws SQLException
+    static Operator parseNode(
+            Catalog catalog, ResultSet rs, List<String> predicateList, Set<Index> indexes)
+        throws SQLException
     {
-        double accomulatedCost = rs.getDouble("cost");
-        //long cardinality = rs.getLong("cardinality");
         String name = rs.getString("operator_name");
+        String dboSchema = rs.getString("object_schema");
         String dboName = rs.getString("object_name");
-        String dboSchema = rs.getString("object_schema");     
+        double accomulatedCost = rs.getDouble("cost");
+        //String columnNames = rs.getString("column_names");
         
-       // String predicateText = rs.getString("predicate_text");
-        System.out.println("L669 (db2optimizer), predicate text: " // + predicateText
-                + " operator Name: " + name
-                + " object name: " + dboName
-                + " schema name: " + dboSchema
-                + " column name: " + rs.getString("column_names"));
         DatabaseObject dbo;
 
-        Operator op = new Operator(name.trim(), accomulatedCost, -1);//cardinality);
+        Operator op = new Operator(getOperatorName(name.trim()), accomulatedCost, -1);
 
         if (dboSchema == null || dboName == null)
             return op;
@@ -718,34 +842,17 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Finds an index by name in a set of indexes.
-     *
-     * @param indexes
-     *      set of indexes where one with the given name is being looked for
-     * @param name
-     *      name of the index being looked for
-     * @return
-     *      the index with the given name; {@code null} if not found
-     */
-    private static Index find(Set<Index> indexes, String name)
-    {
-        for (Index i : indexes) {
-            if (i.getName().equals(name))
-                return i;
-        }
-
-        return null;
-    }
-
-    /**
      * Reads the {@code EXPLAIN_OPERATOR} table and creates a {@link SQLStatementPlan} object out of 
      * it. Assumes that the {@code EXPLAIN_OPERATOR} and {@code EXPLAIN_STREAM} tables contain 
      * entries corresponding to one statement.
      *
-     * @param rs
+     * @param rsOperator
      *     result set object that contains the answer from the DBMS for the query that extracts 
-     *     operator information. It is assumed that the set contains information for a single 
-     *     statement.
+     *     operator information. It is assumed that the result set contains information for a single 
+     *     statement, and one entry per operator.
+     * @param rsPredicate
+     *     result set object that contains the answer from the DBMS for the query that extracts 
+     *     predicate information.
      * @param catalog
      *     used to retrieve metadata information
      * @param indexes
@@ -754,6 +861,7 @@ public class DB2Optimizer extends AbstractOptimizer
      *     the execution plan
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
+     * @see #parseNode
      */
     static SQLStatementPlan parsePlan(
             Catalog catalog,
@@ -763,44 +871,35 @@ public class DB2Optimizer extends AbstractOptimizer
         throws SQLException
     {
         Map<Integer, Operator> idToNode;
-        Map<Integer, List<String>> idToPredicateList;
-        List<String> predicatesForOperator;
+        Map<Integer, List<String>> predicateList;
         Operator child;
         Operator parent;
         Operator root;
         SQLStatementPlan plan;
+        int operatorId;
+        int parentId;
 
         if (!rsOperator.next())
             throw new SQLException("Empty plan");
 
-        root = parseNode(catalog, rsOperator, indexes);
+        predicateList = new HashMap<Integer, List<String>>();
+        root = parseNode(catalog, rsOperator, predicateList.get(1), indexes);
         plan = new SQLStatementPlan(root);
         idToNode = new HashMap<Integer, Operator>();
-        idToPredicateList = new HashMap<Integer, List<String>>();
         
-        while (rsPredicate.next()) {
-            predicatesForOperator = idToPredicateList.get(rsPredicate.getInt("node_id"));
-            
-            if (predicatesForOperator == null ) {
-                predicatesForOperator = new ArrayList<String>();
-                idToPredicateList.put(rsPredicate.getInt("node_id"), predicatesForOperator);
-            }
-            
-            predicatesForOperator.add(rsPredicate.getString("predicate_text"));
-            System.out.println("preds for " + rsPredicate.getInt("node_id") + "; text: " + rsPredicate.getString("predicate_text"));
-        }
-
         idToNode.put(1, root);
 
         while (rsOperator.next()) {
-            child = parseNode(catalog, rsOperator, indexes);
-            parent = idToNode.get(rsOperator.getInt("parent_id"));
+            operatorId = rsOperator.getInt("node_id");
+            parentId = rsOperator.getInt("parent_id");
+            child = parseNode(catalog, rsOperator, predicateList.get(operatorId), indexes);
+            parent = idToNode.get(parentId);
 
             if (parent == null)
-                throw new SQLException(child + " expecting parent_id=" + rsOperator.getInt("parent_id"));
+                throw new SQLException(child + " expecting parent_id=" + parentId);
 
             plan.setChild(parent, child);
-            idToNode.put(rsOperator.getInt("node_id"), child);
+            idToNode.put(operatorId, child);
         }
 
         return plan;
@@ -823,66 +922,6 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.close();
 
         return getRecommendedIndexes(catalog, connection);
-    }
-
-    /**
-     * Loads the optimization profiles based on the state of the variables {@link #isFTSDisabled}, 
-     * {@link #isNLJDisabled} and the given set of indexes.
-     *
-     * @throws SQLException
-     *      if the profiles can't be loaded
-     */
-    private void loadOptimizationProfiles() throws SQLException
-    {
-        if (isFTSDisabled)
-            loadFTSDisabledProfile(connection, ftsDisabledTables);
-        //if (isNLJDisabled)
-            //loadNLJDisabledProfile(connection, indexes);
-    }
-
-    /**
-     * Loads the FTS profile for the given set of tables.
-     *
-     * @param connection
-     *      used to communicate to DB2
-     * @param tables
-     *      tables for which the FTS profile is loaded
-     * @throws SQLException
-     *      if an error occurs while communicating to the DBMS
-     */
-    private static void loadFTSDisabledProfile(Connection connection, Set<Table> tables)
-        throws SQLException
-    {
-        Set<Schema> schs = new HashSet<Schema>();
-        StringBuilder xml = new StringBuilder();
-
-        xml.append(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?> " +
-            "<OPTPROFILE VERSION=\"9.1.0.0\"> " +
-            "<OPTGUIDELINES> ");
-
-        for (Table t : tables) {
-            xml.append("<IXSCAN TABLE=\"" + t.getFullyQualifiedName() + "\"/>");
-            schs.add(t.getSchema());
-        }
-
-        xml.append("</OPTGUIDELINES></OPTPROFILE>");
-
-        Statement stmt = connection.createStatement();
-
-        stmt.execute("DELETE FROM systools.opt_profile");
-
-        for (Schema s : schs)
-            stmt.execute(
-                "INSERT INTO systools.opt_profile values(" +
-                "    'NoFTS', " +
-                "    '" + s.getName() + "', " +
-                "    BLOB('" + xml + "')" +
-                ")");
-
-        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
-
-        stmt.close();
     }
 
     /**

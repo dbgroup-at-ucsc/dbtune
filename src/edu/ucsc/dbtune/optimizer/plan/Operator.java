@@ -16,6 +16,21 @@ public class Operator implements Comparable<Operator>, Identifiable
     /** NLJ operator. **/
     public static final String NLJ = "nested.loop.join";
 
+    /** Indexed NL join operator. **/
+    public static final String INLJ = "indexed.nested.loop.join";
+
+    /** hash join operator. **/
+    public static final String HJ = "hash.join";
+
+    /** merge sort join operator. **/
+    public static final String MSJ = "sort.merge.join";
+
+    /** table scan operator. **/
+    public static final String TS = "table.scan";
+
+    /** index scan operator. **/
+    public static final String IS = "index.scan";
+
     /** ID used to identify an operator within a plan. */
     protected int id;
 
@@ -34,7 +49,7 @@ public class Operator implements Comparable<Operator>, Identifiable
     /** When the operator is applied to base objects. */
     protected List<DatabaseObject> objects;
     
-    /** The predicate associated with the operator */
+    /** The predicates associated with the operator. */
     protected List<Predicate> predicates;
 
     /**
@@ -95,6 +110,17 @@ public class Operator implements Comparable<Operator>, Identifiable
     {
         objects.add(dbObject);
     }
+    
+    /**
+     * Adds predicates to the list of predicates that are associated with the operator.
+     *
+     * @param predicates
+     *      the predicates
+     */
+    public void add(List<Predicate> predicates)
+    {
+        this.predicates.addAll(predicates);
+    }
 
     /**
      * Returns the list of objects that are touched by this operator.
@@ -105,6 +131,17 @@ public class Operator implements Comparable<Operator>, Identifiable
     public List<DatabaseObject> getDatabaseObjects()
     {
         return new ArrayList<DatabaseObject>(objects);
+    }
+
+    /**
+     * Returns the list of objects that are touched by this operator.
+     *
+     * @return
+     *     list of objects that are referenced by the operator
+     */
+    public List<Predicate> getPredicates()
+    {
+        return new ArrayList<Predicate>(predicates);
     }
 
     /**
@@ -183,16 +220,6 @@ public class Operator implements Comparable<Operator>, Identifiable
     public String getName()
     {
         return name;
-    }
-    
-    /**
-     * Assign the predicate associated with the operator
-     * @param p
-     *      The predicate
-     */
-    public void addPredicate (Predicate p)
-    {
-        predicates.add(p);
     }
 
     /**
