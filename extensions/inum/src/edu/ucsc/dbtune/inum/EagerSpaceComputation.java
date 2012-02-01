@@ -48,9 +48,14 @@ public class EagerSpaceComputation implements InumSpaceComputation
         for (List<Index> atomic : cartesianProduct(indexesPerTable)) {
             InumPlan plan = new InumPlan(delegate,
                     delegate.explain(statement, new HashSet<Index>(atomic)).getPlan());
+            // if plan.isNLJ()
+            //  throw it away
+            
             if (isPlanUsingInterestingOrder(plan, atomic)) 
                 plans.add(plan);
         }
+        
+        // get NLJ for Imin
 
         return plans;
     }
