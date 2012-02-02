@@ -42,7 +42,7 @@ public class SimBIPTest
         db = newDatabaseSystem(en);
         
         System.out.println(" In test scheduling ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/workload_bip.sql");
+        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
         FileReader fileReader = new FileReader(workloadFile);
         Workload workload     = new Workload(fileReader);
         
