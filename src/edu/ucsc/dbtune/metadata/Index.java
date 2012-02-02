@@ -130,7 +130,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     public Index(String name, List<Column> columns, Map<Column, Boolean> ascending)
         throws SQLException
     {
-        this(name, columns, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+        this(name, columns, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);        
     }
 
     /**
@@ -298,32 +298,32 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
 
         if (sch == null && columns.size() == 0)
             throw new SQLException("Column list should have at least one element");
-
+        
         Table table = null;
 
         if (sch == null) {
-            table     = (Table) columns.get(0).container;
-            sch       = (Schema) table.container;
+            table     = columns.get(0).getTable();
+            sch       = table.getSchema();
             container = schema;
         }
-
+        
         this.ascendingColumn = new ArrayList<Boolean>();
 
-        if (ascending == null)
+        if (ascending == null) {
+            ascending = new ArrayList<Boolean>();
             for (int i = 0; i < columns.size(); i++)
-                this.ascendingColumn.add(ASCENDING);
+                ascending.add(ASCENDING);
+        }
         else if (ascending.size() != columns.size())
             throw new SQLException("Incorrect number of ascending/descending values");
-        else
-            this.ascendingColumn = new ArrayList<Boolean>();
-
+        
         for (int i = 0; i < columns.size(); i++) {
             if (table == null)
                 table = (Table) columns.get(i).container;
 
             if (table != columns.get(i).container)
                 throw new SQLException("Columns from different tables");
-
+            
             add(columns.get(i), ascending.get(i));
         }
 
