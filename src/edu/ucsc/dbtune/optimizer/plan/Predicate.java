@@ -14,7 +14,7 @@ public class Predicate
     private Column columnB;
     private String predicateText;
     
-    Predicate(Column _column, String _text)
+    public Predicate(Column _column, String _text)
     {
         columnA = _column;
         predicateText = _text;

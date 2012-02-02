@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -40,6 +42,7 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getSchemas;
  * @author Karl Schnaitter
  * @author Huascar Sanchez
  * @author Ivo Jimenez
+ * @author Quoc Trung Tran
  */
 public class DB2Optimizer extends AbstractOptimizer
 {
@@ -163,14 +166,67 @@ public class DB2Optimizer extends AbstractOptimizer
      *      if one of the column names can't be bound to the corresponding column
      */
     private static InterestingOrder extractColumnsUsedByOperator(
-            String colNamesInExplainStream, Catalog catalog)
+            String colNamesInExplainStream, String tblName, Catalog catalog)
         throws SQLException
     {
         if (colNamesInExplainStream == null || colNamesInExplainStream.equals(""))
             return null;
-
-        // TODO
-        throw new RuntimeException("");
+        
+        // +Q4.PS_SUPPLYCOST+Q4.PS_PARTKEY
+        String regex = "[+-]|[^.+-]+|[\\.]|[^.+-]+";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher m = pattern.matcher(colNamesInExplainStream);
+        int pos = 0;
+        List<String> strColumns = new ArrayList<String>();
+        List<String> strAscending = new ArrayList<String>();
+        List<String> strTabIDs = new ArrayList<String>();
+        String element;
+        while (m.find()) {
+            element = colNamesInExplainStream.substring(m.start(), m.end());
+            switch (pos) {
+            case 0:
+                strAscending.add(element);
+                break;
+            case 3:
+                strColumns.add(element);
+                break;
+            case 1:
+                strTabIDs.add(element);
+                break;
+            case 2:  // .
+                break;
+            }
+            
+            pos++;
+            if (pos == 4) 
+                pos = 0;
+        }
+        
+        // Make sure all columns belong to the same table
+        assert(strTabIDs.size() > 0);
+        String tabID = strTabIDs.get(0);
+        for (String t : strTabIDs) {
+            if (t.equals(tabID) == false) {
+                throw new RuntimeException("Columns do not belong to a same relation.");
+            }
+        }
+        
+        // Parse to derive interesting order
+        Column col;
+        List<Column> columns = new ArrayList<Column>();
+        Map<Column, Boolean> ascending = new HashMap<Column, Boolean>();
+        for (int i = 0; i < strColumns.size(); i++) {
+            col = catalog.<Column>findByName(tblName + "." + strColumns.get(i));
+            assert(col != null);
+            columns.add(col);
+            if (strAscending.get(i).equals("+")) {
+                ascending.put(col, true);
+            } else {
+                ascending.put(col, false);
+            }
+        }
+        
+        return new InterestingOrder(columns, ascending);
     }
 
     /**
@@ -225,13 +281,38 @@ public class DB2Optimizer extends AbstractOptimizer
             List<String> predicateList, Catalog catalog)
         throws SQLException
     {
-        List<Predicate> predicates = new ArrayList<Predicate>();
-
+        // TODO: bind column to the catalog object later
+        List<Predicate> predicates = new ArrayList<Predicate>();        
         if (predicateList.size() == 0)
             return predicates;
 
-        // TODO
-        throw new RuntimeException("");
+        // NOT((Q3.P_TYPE LIKE 'MEDIUM BURNISHED%'))        
+        String regex = "[^.Q]+|[Q|[^.Q]+]|[\\.]|[^.Q]+";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher m;
+        String element, predicate; 
+        boolean isAfterQ;
+        for (String strPredicate : predicateList) {
+            m = pattern.matcher(strPredicate);
+            isAfterQ = false;
+            predicate = "";
+            while (m.find()) {
+                element = strPredicate.substring(m.start(), m.end());
+                // Q3.P_BRAND
+                if (element.equals("Q")) 
+                    isAfterQ = true;
+                else {
+                    if (isAfterQ == false)
+                        predicate += element;
+                    else if (element.equals(".")) 
+                        isAfterQ = false;
+                }
+            }
+            // a selection predicate
+            Predicate p = new Predicate(null, predicate);
+            predicates.add(p);
+        }
+        return predicates;
     }
 
     /**
@@ -922,9 +1003,10 @@ public class DB2Optimizer extends AbstractOptimizer
         if (dbo == null)
             throw new SQLException("Can't find object " + dboSchema + "." + dboName);
 
-        op.add(dbo);
-        op.add(extractColumnsUsedByOperator(columnNames, catalog));
-        op.add(extractPredicatesUsedByOperator(predicateList, catalog));
+        op.add(dbo);        
+        op.add(extractColumnsUsedByOperator(columnNames, dboSchema + "." + dbo.getName(), catalog));
+        if (predicateList != null)
+            op.add(extractPredicatesUsedByOperator(predicateList, catalog));
 
         return op;
     }

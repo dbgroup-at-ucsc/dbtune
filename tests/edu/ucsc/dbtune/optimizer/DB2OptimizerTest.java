@@ -22,13 +22,13 @@ import static org.junit.Assert.assertThat;
  */
 public class DB2OptimizerTest
 {
-    private ResultSet rs;
-    private Catalog cat;
+    //private ResultSet rs;
+    //private Catalog cat;
 
     /**
      * @throws Exception
      *      if the creation of the mock fails
-     */
+     *
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws Exception
@@ -63,7 +63,7 @@ public class DB2OptimizerTest
      *
      * @throws Exception
      *      if the creation of the mock fails
-     */
+     *
     @Test
     public void testNodeParsing() throws Exception
     {
@@ -116,7 +116,7 @@ public class DB2OptimizerTest
      *
      * @throws Exception
      *      if the creation of the mock fails
-     */
+     *
     @Test
     public void testPlanParsing() throws Exception
     {
@@ -127,6 +127,7 @@ public class DB2OptimizerTest
         assertThat(plan.getRootOperator().getId(), is(1));
         assertThat(plan.getIndexes().size(), is(1));
         assertThat(plan.getRootOperator().getName(), is("RETURN"));
-        */
+        
     }
+    */
 }
