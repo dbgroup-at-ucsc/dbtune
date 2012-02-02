@@ -149,7 +149,7 @@ public class DB2Optimizer extends AbstractOptimizer
 
         for (Index index : configuration)
             stmt.execute(getAdviseIndexInsertStatement(index));
-
+        
         stmt.close();
     }
 
@@ -203,7 +203,8 @@ public class DB2Optimizer extends AbstractOptimizer
         }
         
         // Make sure all columns belong to the same table
-        assert(strTabIDs.size() > 0);
+        if (strTabIDs.size() == 0) 
+            throw new RuntimeException("There must have at least one column fetched at an operator. ");
         String tabID = strTabIDs.get(0);
         for (String t : strTabIDs) {
             if (t.equals(tabID) == false) {
@@ -216,8 +217,12 @@ public class DB2Optimizer extends AbstractOptimizer
         List<Column> columns = new ArrayList<Column>();
         Map<Column, Boolean> ascending = new HashMap<Column, Boolean>();
         for (int i = 0; i < strColumns.size(); i++) {
+            if (strColumns.get(i).contains("RID"))
+                continue;
             col = catalog.<Column>findByName(tblName + "." + strColumns.get(i));
-            assert(col != null);
+            if (col == null)
+                throw new RuntimeException("Cannot bind the column's name to a column object");
+
             columns.add(col);
             if (strAscending.get(i).equals("+")) {
                 ascending.put(col, true);
