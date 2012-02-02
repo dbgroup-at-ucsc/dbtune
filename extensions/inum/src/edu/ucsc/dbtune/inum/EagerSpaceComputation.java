@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -61,14 +62,16 @@ public class EagerSpaceComputation implements InumSpaceComputation
             if (isPlanUsingInterestingOrder(templatePlan, atomic))
                 inumSpace.add(templatePlan);
         }
-
-        minimumAtomic = getMinimumAtomicConfiguration(delegate.explain(statement).getPlan());
+        
+        minimumAtomic =
+            getMinimumAtomicConfiguration(
+                    new InumPlan(delegate, delegate.explain(statement).getPlan()));
         
         sqlPlan = delegate.explain(statement, new HashSet<Index>(minimumAtomic)).getPlan();
 
         if (sqlPlan.contains(NLJ))
             inumSpace.add(new InumPlan(delegate, sqlPlan));
-
+        
         return inumSpace;
     }
     
@@ -123,9 +126,21 @@ public class EagerSpaceComputation implements InumSpaceComputation
      *      the plan returned by an optimizer
      * @return
      *      the atomic configuration for the statement associated with the plan
+     * @throws SQLException
+     *      if there's a table without a corresponding slot in the given inum plan
      */
-    private static List<Index> getMinimumAtomicConfiguration(SQLStatementPlan plan)
+    private static List<Index> getMinimumAtomicConfiguration(InumPlan plan) throws SQLException
     {
-        throw new RuntimeException("Not yet");
+        List<Index> ios = new ArrayList<Index>();
+        
+        for (TableAccessSlot s : plan.getSlots()) {
+            
+            if (s.getColumnsFetched() == null)
+                throw new SQLException("Can't find columns fetched for " + s.getTable());
+            
+            ios.add(s.getColumnsFetched());
+        }
+        
+        return ios;
     }
 }
