@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +13,8 @@ import java.util.Set;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
+import edu.ucsc.dbtune.bip.util.StringConcatenator;
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -180,11 +183,13 @@ public class InumPlan extends SQLStatementPlan
             throw new SQLException("Plan doesn't contain a slot for table " + index.getTable());
         
         if (!slot.isCompatible(index)) 
-            return Double.POSITIVE_INFINITY;
+            return Double.POSITIVE_INFINITY;        
         
         if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index))
             // if we have the same index as when we built the template
             return slot.getCost();
+        
+        
 
         // we have an index that we haven't seen before, so we need to invoke the optimizer
         SQLStatementPlan plan =
@@ -220,6 +225,17 @@ public class InumPlan extends SQLStatementPlan
     {
         return slots.get(table);
     }
+    
+    /**
+     * Returns the slots of the template plan.
+     *
+     * @return
+     *      a set of {@code TableAccessSlot} objects
+     */
+    public Collection<TableAccessSlot> getSlots()
+    {
+        return slots.values();
+    }
 
     /**
      * Builds a query for an unseen index. An unseen index is one that wasn't part of the 
@@ -239,16 +255,45 @@ public class InumPlan extends SQLStatementPlan
      */
     private static SQLStatement buildQueryForUnseenIndex(TableAccessSlot slot, Index index)
     {
-        slot.getColumnsFetched(); // returns the columns that are fetched
-        slot.getPredicates(); // returns the predicate list
-        slot.getTable(); // returns the table
-
+        InterestingOrder io = slot.getColumnsFetched(); // returns the columns that are fetched
+        List<Predicate> predicates = slot.getPredicates(); // returns the predicate list
+        Table table = slot.getTable(); // returns the table
+        String select = " SELECT ", from = " FROM ", where = " WHERE ", orderby = " ORDER BY ";
+        List<String> listElement = new ArrayList<String>();
+        
         // Assume the relation of index is R
         // SELECT (attributes of R that are referenced in the statement)
         // FROM R
         // WHERE (predicates on columns of R that are in index)
         // ORDER BY (slot.getIndex())
-
-        throw new RuntimeException("not yet");
+        select = " SELECT ";        
+        for (Column col: io.columns()) {
+            listElement.add(col.getName());
+        }
+        select += StringConcatenator.concatenate(" , ", listElement);
+        from += table.getName();
+        
+        listElement.clear();
+        for (Predicate p: predicates) {
+            listElement.add(p.getText()); 
+        }
+        where += StringConcatenator.concatenate(" AND ", listElement);
+        
+        listElement.clear();
+        String element = "";
+        Index indexSlot = slot.getIndex();
+        
+        for (Column col : indexSlot.columns()) {
+            element = col.getName();
+            if (indexSlot.isAscending(col)) {
+                element += " ASC ";
+            } else {
+                element += " DESC ";
+            }
+            listElement.add(element);
+        }
+        orderby += StringConcatenator.concatenate(" , ", listElement);
+        
+        return new SQLStatement(select + from + where + orderby);
     }
 }

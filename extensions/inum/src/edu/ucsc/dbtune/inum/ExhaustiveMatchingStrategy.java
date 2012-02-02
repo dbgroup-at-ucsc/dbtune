@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.caliper.internal.guava.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.metadata.Index;
@@ -42,6 +43,13 @@ public class ExhaustiveMatchingStrategy implements MatchingStrategy
     public Result match(Set<InumPlan> templatePlans, Set<Index> configuration)
         throws SQLException
     {
+        if (templatePlans.size() == 0)
+            throw new SQLException(" No template plan in the INUM space");
+        
+        if (configuration.size() != Iterables.get(templatePlans, 0).getTables().size())
+            throw new SQLException(" Not implementing yet this scenarios: use full table scan for the slot that" +
+            		" is not provided any index ");
+                
         List<Index> bestConf = null;
         InumPlan bestPlan = null;
         double bestCost = Double.MAX_VALUE;

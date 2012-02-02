@@ -69,8 +69,7 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
     @Override
     public ExplainedSQLStatement explain(Set<Index> configuration) throws SQLException
     {
-        if (inumSpace == null)
-            inumSpace = ((InumOptimizer) getOptimizer()).computeInumSpace(sql);
+        computeInumSpace();
 
         MatchingStrategy.Result result = matchingStrategy.match(inumSpace, configuration);
 
@@ -90,5 +89,11 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
     public Set<InumPlan> getTemplatePlans()
     {
         return inumSpace;
+    }
+    
+    public void computeInumSpace() throws SQLException
+    {
+        if (inumSpace == null)
+            inumSpace = ((InumOptimizer) getOptimizer()).computeInumSpace(sql);
     }
 }

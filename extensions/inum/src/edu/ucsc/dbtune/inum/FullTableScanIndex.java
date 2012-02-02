@@ -59,14 +59,20 @@ public final class FullTableScanIndex extends InumInterestingOrder
     }
 
     /**
-     * {@inheritDoc}
+     * A given index covers the FTS, only if the index is covering all the columns in the table and
+     * the clustering of the table corresponds to the sorting of the given index.
+     * 
+     * @param other
+     *      the index that is checked
+     * @return
+     *      {@code true} if the index covers the FTS; {@code false} otherwise
      */
     @Override
     public boolean isCoveredBy(Index other)
     {
-        if (getTable() == other.getTable())
-            return true;
-
+        if (other.size() == table.size())
+            throw new RuntimeException("Not handled yet");
+        
         return false;
     }
 }
