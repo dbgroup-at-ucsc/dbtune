@@ -139,7 +139,8 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                     cost = plan.plug(index);                    
                     if (cost == Double.POSITIVE_INFINITY)
                         cost = InumQueryPlanDesc.BIP_MAX_VALUE;
-                    
+                    System.out.println("L142 (query plan), index: " + index
+                                        + " cost: " + cost);
                     mapIndexAccessCost.put(index, new Double(cost));
                 }                            
             }

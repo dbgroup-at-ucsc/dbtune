@@ -33,15 +33,13 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     /** Map variable of type CREATE or DROP to the indexes */
     private Map<String,Index> mapVarCreateDropToIndex;
     /** Set of indexes that are created, dropped, and not touched */
-    private Set<Index> Sinit, Smat, Screate, Sdrop, Sremain;
-    private int maxNumIndexesEachWindow, maxTimeEachWindow;
-    boolean isNumberIndexes, isTimeLimit;
+    private Set<Index> Screate, Sdrop, Sremain;
+    private int maxNumberIndexesEachWindow, maxTimeEachWindow;
+    boolean isConstraintNumberIndexesWindow, isConstraintTimeLimitWindow;
     
     @Override
     public void setConfigurations(Set<Index> Sinit, Set<Index> Smat) 
     {
-        this.Sinit = Sinit;
-        this.Smat = Smat;
         /**
          * Classify the indexes into one of the three types: 
          * INDEX_TYPE_CREATE, INDEX_TYPE_DROP, INDEX_TYPE_REMAIN
@@ -70,22 +68,22 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     @Override
     public void setNumberofIndexesEachWindow(int n) 
     {
-        this.maxNumIndexesEachWindow = n; 
-        this.isNumberIndexes = true;
+        this.maxNumberIndexesEachWindow = n; 
+        this.isConstraintNumberIndexesWindow = true;
     }
 
     @Override
     public void setTimeLimitWindow(int T) 
     {
         this.timeLimit = T;
-        this.isTimeLimit = true;
+        this.isConstraintTimeLimitWindow = true;
     }
     
     
 	public SimBIP()
 	{	
-	    this.isNumberIndexes = false;
-	    this.isTimeLimit = false;	
+	    this.isConstraintNumberIndexesWindow = false;
+	    this.isConstraintTimeLimitWindow = false;	
 	}
 	
 	/**
@@ -106,25 +104,26 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
         constructVariables();
         
         // 2. Index present
-        buildIndexPresentConstraints();
+        indexPresentConstraints();
         
         // 3. Construct the query cost at each window time
-        buildQueryCostWindow();
+        queryCostWindow();
         
         // 4. Atomic constraints
-        buildAtomicConstraints();       
+        atomicConstraints();        
+        usedIndexAtWindow();
         
         // 5. Space constraints
-        if (this.isTimeLimit == true) {
-            buildTimeConstraints();
+        if (isConstraintTimeLimitWindow == true) {
+            timeConstraints();
         }
         
-        if (this.isNumberIndexes == true) {
-            buildNumberIndexesWindowConstraints();
+        if (isConstraintNumberIndexesWindow == true) {
+            numberIndexesAtEachWindowConstraint();
         }
         
         // 6. Optimal constraint
-        buildObjectiveFunction();
+        objectiveFunction();
         
         // 7. binary variables
         binaryVariableConstraints();
@@ -233,7 +232,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
      * </p>
      *  
      */
-    private void buildIndexPresentConstraints()
+    private void indexPresentConstraints()
     {   
         // for TYPE_CREATE index
         for (Index index : Screate) {
@@ -308,13 +307,14 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     }
     
    	/**
-	 * Build cost function of each query in each window w
+	 * Build the execution cost of each query at each window
 	 * 
-	 * Cqw = \sum_{k \in [1, Kq]} \beta_{qk} y(w,q,k) + 
-	 *      + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} x(w,q,k,i,a) \gamma_{q,k,i,a}     
+	 * {@code cost(q, w) = \sum_{k \in [1, Kq]} \beta_{qk} y(w,q,k) }
+	 * {@code            +  \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} }
+	 * {@code                x(w,q,k,i,a) \gamma_{q,k,i,a} }     
 	 *
 	 */
-	private void buildQueryCostWindow()
+	private void queryCostWindow()
 	{
 	    listCwq = new ArrayList<String>(); 
         
@@ -352,10 +352,15 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	}
 	
 	/**
-	 * The set of atomic constraints
-	 * 
-	 */
-	private void buildAtomicConstraints()
+     * Build a set of atomic constraints on variables {@code VAR_X} and {@code VAR_Y}
+     * that are common for methods using INUM.
+     * 
+     * For example, the summation of all variables of type {@code VAR_Y} of a same {@code theta}
+     * must be {@code 1} in order for the optimal execution cost corresponds to only one 
+     * template plan.  
+     * 
+     */
+	private void atomicConstraints()
 	{	
 		for (QueryPlanDesc desc : listQueryPlanDescs){
             int q = desc.getStatementID();
@@ -382,15 +387,6 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 							String var_x = poolVariables.get(SimVariablePool.VAR_X, w, 
 							                                 q, k, index.getId()).getName();
 							linList.add(var_x);
-							String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, 
-							                                 w, 0, 0, index.getId()).getName();
-							
-							// (3) s_a^{w} \geq x_{kia}^{w}
-							buf.getCons().println("atomic_14a_" + numConstraints + ":" 
-												+ var_x + " - " 
-												+ var_present
-												+ " <= 0 ");
-							numConstraints++;
 						}
 						buf.getCons().println("atomic_13b_" + numConstraints  
 											+ ": " + StringConcatenator.concatenate(" + ", linList) 
@@ -404,10 +400,44 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	}
 	
 	/**
+	 * An index {@code a} is used to compute {@code cost(q, w)} if and only if {@code present_a = 1}
+	 */
+	private  void usedIndexAtWindow()
+	{
+	    for (QueryPlanDesc desc : listQueryPlanDescs){
+            int q = desc.getStatementID();
+        
+            for (int w = 0; w < W; w++) {
+                
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+                    
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+                        
+                        for (Index index : desc.getListIndexesAtSlot(i)) {
+                            
+                            String var_x = poolVariables.get(SimVariablePool.VAR_X, w, 
+                                                             q, k, index.getId()).getName();
+                        
+                            String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, 
+                                                             w, 0, 0, index.getId()).getName();
+                            
+                            // (3) present_a^{w} \geq x_{qkia}^{w}
+                            buf.getCons().println("atomic_14a_" + numConstraints + ":" 
+                                                + var_x + " - " 
+                                                + var_present
+                                                + " <= 0 ");
+                            numConstraints++;
+                        }
+                    }
+                }       
+            }
+        }
+	}
+	/**
 	 * Time constraint on the materialized indexes at all maintenance window
 	 * 
 	 */
-	private void buildTimeConstraints()
+	private void timeConstraints()
 	{
 		for (int w = 0; w < W; w++) {
 		    List<String> linList = new ArrayList<String>();
@@ -423,7 +453,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 		}
 	}
 	
-	private void buildNumberIndexesWindowConstraints()
+	private void numberIndexesAtEachWindowConstraint()
 	{
 	    for (int w = 0; w < W; w++) {
             List<String> linList = new ArrayList<String>();
@@ -434,7 +464,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
             }
             buf.getCons().println("number_index_constraint" + numConstraints  
                     + " : " + StringConcatenator.concatenate(" + ", linList)                    
-                    + " <= " + maxNumIndexesEachWindow);
+                    + " <= " + maxNumberIndexesEachWindow);
             numConstraints++;               
         }
 	}
@@ -442,7 +472,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	/**
 	 * The accumulated total cost function
 	 */
-	private void buildObjectiveFunction()
+	private void objectiveFunction()
 	{
 		buf.getObj().println(StringConcatenator.concatenate(" + ", listCwq));
 	}
