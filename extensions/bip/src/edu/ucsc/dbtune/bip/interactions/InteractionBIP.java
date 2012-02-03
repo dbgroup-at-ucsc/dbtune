@@ -31,7 +31,7 @@ import ilog.concert.IloException;
  */
 public class InteractionBIP extends AbstractBIPSolver
 {	
-	public static HashMap<String,Integer> cachedInteractIndexName;	
+	public static HashMap<String,Integer> pairInteractingIndexNames;	
 	public static final int NUM_THETA = 4;
     public static final int IND_EMPTY = 0;
     public static final int IND_C = 1;
@@ -53,7 +53,7 @@ public class InteractionBIP extends AbstractBIPSolver
     public InteractionBIP(double delta)
     {
         this.delta = delta;
-        cachedInteractIndexName = new HashMap<String, Integer>();
+        pairInteractingIndexNames = new HashMap<String, Integer>();
         cplex = new CPlexInteraction();
     }
 	
@@ -96,58 +96,58 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     public void findInteractions() throws IloException, IOException  
     {   
+        // Derive list of indexes that might interact
+        List<Index> indexes = new ArrayList<Index>();
+        Map<Index, Integer> mapIndexSlotID = new HashMap<Index, Integer>();
+        
         // Note: NOT consider FTS
-        for (int ic = 0; ic < investigatingDesc.getNumberOfSlots(); ic++)    {  
+        for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
+            for (Index index : investigatingDesc.getListIndexesWithoutFTSAtSlot(i)) {
+                indexes.add(index);
+                mapIndexSlotID.put(index, i);
+            }   
+        }
+        
+        Index indexc, indexd;
+        int ic, id;
+        for (int pos_c = 0; pos_c < indexes.size(); pos_c++) {
+            indexc = indexes.get(pos_c);
+            ic = mapIndexSlotID.get(indexc);
             
-            for (int pos_c = 0; pos_c < investigatingDesc.
-                                            getListIndexesWithoutFTSAtSlot(ic).size(); pos_c++){
+            for (int pos_d = pos_c + 1; pos_d < indexes.size(); pos_d++) {
+                indexd = indexes.get(pos_d);
+                if (isInteracting(indexc, indexd) == true)
+                    continue;
                 
-                Index indexc = this.investigatingDesc.
-                                            getListIndexesWithoutFTSAtSlot(ic).get(pos_c);
+                id = mapIndexSlotID.get(indexc);
+                System.out.println("*** Investigating pair of " + indexc
+                                    + " vs. " + indexd                                            
+                                    + " using statement "  
+                                    + investigatingDesc.getStatementID()
+                                    + "****");
+                // initialize an instance of RestrictIIP problem
+                restrictIIP = new RestrictIIPParam(delta, ic, id, indexc, indexd);
                 
-                for (int id = ic; id < investigatingDesc.getNumberOfSlots(); id++){
+                // 2. Construct BIP
+                initializeBuffer();
+                buildBIP();
+                logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);
+                
+                // 3. Solve the first BIP
+                // TODO: for debug only
+                Map<String, Integer> mapVarVal = cplex.solve(buf.getLpFileName());                
+                if (mapVarVal!= null) {
+                    storeInteractingIndexes(indexc, indexd);
+                    computeQueryCostTheta(mapVarVal);
+                } else {
+                    // formulate the alternative BIP
+                   if (solveAlternativeBIP() == true)
+                       storeInteractingIndexes(indexc, indexd);
+                   else 
+                        System.out.println(" NO INTERACTION ");
                     
-                    for (int pos_d = 0; pos_d < investigatingDesc.
-                                            getListIndexesWithoutFTSAtSlot(id).size(); pos_d++){
-                        
-                        if (ic == id && pos_c >= pos_d)    
-                            continue;
-                                                
-                        Index indexd = investigatingDesc.
-                                            getListIndexesWithoutFTSAtSlot(id).get(pos_d);
-                        if (checkInCache(indexc, indexd) == true)
-                            continue;
-                        
-                        System.out.println("*** Investigating pair of " + indexc
-                                            + " vs. " + indexd                                            
-                                            + " using statement "  
-                                            + investigatingDesc.getStatementID()
-                                            + "****");
-                        // initialize an instance of RestrictIIP problem
-                        restrictIIP = new RestrictIIPParam(delta, ic, id, indexc, indexd);
-                        
-                        // 2. Construct BIP
-                        initializeBuffer();
-                        buildBIP();
-                        logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);
-                        
-                        // 3. Solve the first BIP
-                        // TODO: for debug only
-                        Map<String, Integer> mapVarVal = cplex.solve(buf.getLpFileName());
-                        if (mapVarVal!= null) {
-                            storeInteractingIndexes(indexc, indexd);
-                            computeQueryCostTheta(mapVarVal);
-                        } else {
-                            // formulate the alternative BIP
-                           if (solveAlternativeBIP() == true)
-                               storeInteractingIndexes(indexc, indexd);
-                           else 
-                                System.out.println(" NO INTERACTION ");
-                            
-                        } 
-                        logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
-                    }
-                }
+                } 
+                logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
             }
         }
     }
@@ -157,9 +157,9 @@ public class InteractionBIP extends AbstractBIPSolver
      * The function builds the BIP for the Restrict IIP problem, includes three sets of constraints:
      * <p>
      * <ol> 
-     *  <li> Atomic constraints, including (3) - (5) </li> 
-     *  <li> Optimal constraints, including (6) - (9) </li>
-     *  <li> One alternative of index interaction constraint, (10a) </li>
+     *  <li> Atomic constraints </li> 
+     *  <li> Optimal constraints </li>
+     *  <li> One alternative of index interaction constraint </li>
      * </ol>
      * </p>   
      * 
@@ -171,23 +171,28 @@ public class InteractionBIP extends AbstractBIPSolver
     {
         super.numConstraints = 0;
         
-        // Construct all variable names
+        // Construct variable
         constructVariables();
         
-        // Construct the formula of @C{theta} in (3)
-        buildCTheta();
+        // Construct the formula of Ctheta
+        buildQueryExecutionCost();
         
-        // 1. Atomic constraints (3) - (5)
-        buildAtomicConstraints();
+        // 1. Atomic constraints 
+        atomicConstraintForINUM();
+        atomicConstraintAtheta();
+        interactionPrecondition();
         
-        // 2. Optimal constraints (6) - (9)
-        buildLocalOptimal();
-        buidOptimalConstraints();
         
-        // 3. Index interaction (10a)
-        buildIndexInteractionConstraint1();
+        // 2. Optimal constraints
+        localOptimal();
+        atomicConstraintLocalOptimal();
+        presentVariableLocalOptimal();
+        selectingAtEachSlot();
         
-        // 4. binary variables
+        // 3. Index interaction 
+        indexInteractionConstraint1();
+        
+        // 4. Binary variables
         binaryVariableConstraints();
         
         buf.close();
@@ -202,20 +207,20 @@ public class InteractionBIP extends AbstractBIPSolver
     
 	
     /**
-     * Add all variables into the pool of variables of this BIP formulation
+     * Construct variables of type: VAR_X, VAR_Y, VAR_S, VAR_U used in the BIP formulation,
+     * and store these variables in the pool of {@code poolVariables}.
+     * E.g., variable {@code y^c(d, 0)} is used to determine whether the first template plan
+     * is used to compute {@code cost(q, A_c \cup \{ c \}).  
+     * 
+     * We also record the set of variables used in the formula of each  
+     * {@code cost(q, Atheta \cup Stheta}} with {@code theta \in \{ EMPTY, C, D, CD })
+     * in order to build the index interaction constraint.  
      *  
      */
     private void constructVariables()
-    {
-        CTheta = new ArrayList<String>();
-        elementCTheta = new ArrayList<List<String>>(); 
-        varTheta = new ArrayList<List<String>>();
-        coefVarTheta = new ArrayList<List<Double>> ();              
-        for (int theta = 0; theta < NUM_THETA; theta++) {
-            List <Double> coefV = new ArrayList<Double>();
-            coefVarTheta.add(coefV);
-        }
+    {   
         poolVariables = new IIPVariablePool();
+        varTheta = new ArrayList<List<String>>();
         
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
             
@@ -235,7 +240,7 @@ public class InteractionBIP extends AbstractBIPSolver
                     for (Index index : investigatingDesc.getListIndexesAtSlot(i)) {
                         
                         BIPVariable var = poolVariables.createAndStore
-                                                        (theta, IIPVariablePool.VAR_X, k, index.getId());
+                                                   (theta, IIPVariablePool.VAR_X, k, index.getId());
                         listVarTheta.add(var.getName());
                     }
                 }
@@ -268,14 +273,23 @@ public class InteractionBIP extends AbstractBIPSolver
     
 
     /**
-     * Construct the formula of C{theta} in (3)
-     * 
-     * C(theta)=  sum_{k \in [1, Kq] } beta_k y_{k,theta}
-     *         + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} x_{kia, theta}
+     * Construct the formula of the query execution cost of the investigating statement
+     * using the configuration {@code Atheta \cup Stheta}
+     *        {@code cost(q, Atheta \cup Stheta)}      
+     *        {@code  =  sum_{k \in [1, Kq] } beta_k y_{k,theta} }
+     *        {@code  +  \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} } 
+     *        {@code     x_{kia, theta}}
      *
      */
-    private void buildCTheta()
+    private void buildQueryExecutionCost()
     {   
+        CTheta = new ArrayList<String>();
+        elementCTheta = new ArrayList<List<String>>();
+        coefVarTheta = new ArrayList<List<Double>> ();              
+        for (int theta = 0; theta < NUM_THETA; theta++) {
+            List <Double> coefV = new ArrayList<Double>();
+            coefVarTheta.add(coefV);
+        }
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {         
             String ctheta = "";
             List<String> linListElement = new ArrayList<String>();          
@@ -315,14 +329,18 @@ public class InteractionBIP extends AbstractBIPSolver
             elementCTheta.add(linListElement);
         }
     }
-        
+     
     /**
-     * Atomic constraints: (3) - (5)
+     * Build a set of atomic constraints on variables {@code VAR_X} and {@code VAR_Y}
+     * that are common for methods using INUM.
+     * 
+     * For example, the summation of all variables of type {@code VAR_Y} of a same {@code theta}
+     * must be {@code 1} in order for the optimal execution cost corresponds to only one 
+     * template plan.  
      * 
      */
-    private void buildAtomicConstraints()
-    {   
-        // Constraint (3): atomic configuration for each C{theta} 
+    private void atomicConstraintForINUM()
+    {
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
             
             List<String> linList = new ArrayList<String>();
@@ -363,12 +381,17 @@ public class InteractionBIP extends AbstractBIPSolver
                     numConstraints++;
                 }
             }       
-        }
-        
-        /**
-         * Constraint (4b): A_{\theta} is atomic 
-         * 
-         */
+        }    
+    }
+    
+    /**
+     * The set of constraints that enforces {@code Atheta} to be atomic in the
+     * {@code RestrictIIP} problem.
+     * 
+     * That is {@code Atheta} has at most one index of a particular relation. 
+     */
+    private void atomicConstraintAtheta()
+    {
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
             
             for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
@@ -446,17 +469,23 @@ public class InteractionBIP extends AbstractBIPSolver
                 numConstraints++;
             }
         }
-        
-        /**
-         * Constraint (5): constraining for the indexes c and d not appear in X
-         */
+    }
+    
+    /**
+     * This set of constraints ensures the investing pairs of indexes 
+     * do not appear in {@code Atheta}.
+     * 
+     * For example, index {@code c} is not allowed to appear in the index-set {@code Aempty}
+     */
+    private void interactionPrecondition()
+    {   
         buf.getCons().println("atomic_4c_" + numConstraints + ":" 
                             + poolVariables.get(IND_EMPTY, IIPVariablePool.VAR_S, 0, 
                                                 restrictIIP.getIndexC().getId()).getName() 
                                                 + " = 0 "); // For s^{empty}_c = 0     
         numConstraints++;
         buf.getCons().println("atomic_4c_" + numConstraints + ":" 
-                + poolVariables.get(IND_D, IIPVariablePool.VAR_S, 0, 
+                            + poolVariables.get(IND_D, IIPVariablePool.VAR_S, 0, 
                                                 restrictIIP.getIndexC().getId()).getName() 
                                                 + " = 0 "); // For s^{d}_c = 0  
         numConstraints++;
@@ -473,12 +502,14 @@ public class InteractionBIP extends AbstractBIPSolver
         numConstraints++;
     }
     
+    
+    
     /**
-     * Build local optimal formula: C^opt_t 
-     * Add variables of type VAR_U into the list of variables
+     * This set of constraints ensure {@code cost(q, Atheta \cup Atheta} is 
+     * not greater than the local optimal cost of using any template plan.  
      * 
      */
-    private void buildLocalOptimal()
+    private void localOptimal()
     {   
         // construct C^opt_t
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
@@ -503,8 +534,13 @@ public class InteractionBIP extends AbstractBIPSolver
                 numConstraints++;
             }
         }
-        
-        // atomic constraint
+    }
+    
+    /**
+     * The set of atomic constraints on variable of type {@code VAR_U}
+     */
+    private void atomicConstraintLocalOptimal()
+    {
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
             
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
@@ -525,8 +561,17 @@ public class InteractionBIP extends AbstractBIPSolver
                 }
             }
         }
-        
-        // constraint on the domain of VAR_U variables
+    }
+    
+    /**
+     * Constraint on the present of {@code VAR_U} variables.
+     * 
+     * For example, a variable corresponding to some index {@code a} must be {@code 0}
+     * if {@code a} has not been appeared in any of {@code Atheta}
+     * 
+     */
+    private void presentVariableLocalOptimal()
+    {   
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
             
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) { 
@@ -580,10 +625,12 @@ public class InteractionBIP extends AbstractBIPSolver
     }
     
     /**
-     * Implement the optimal constraints on variable of type {@code VAR_U}
+     * 
+     * The constraints ensure the index with the small index access cost is used
+     * to compute {@code cost(q, Atheta \cup Stheta} 
      * 
      */
-    private void buidOptimalConstraints()
+    private void selectingAtEachSlot()
     {  
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {    
             
@@ -653,15 +700,17 @@ public class InteractionBIP extends AbstractBIPSolver
     }
     
     /**
-     * Build the first index interaction constraint (13) (more often)
-     * cost(X) + (1 + delta) cost(X, c,d ) - cost(X,c) - cost(X,d) <= 0
+     * Build the first index interaction constraint: 
+     * {@code cost(Aempty) + (1 + delta) cost(Acd \cup \{ c,d \} )} 
+     *         {@code - cost(Ac \cup \{ c \}) - cost(Ad \cup \{ d \} ) <= 0 }
      *      
      */
 
-    private void buildIndexInteractionConstraint1()
+    private void indexInteractionConstraint1()
     {    
         ArrayList<String> listcd = new ArrayList<String>();
-        double coef = 1 + restrictIIP.getDelta(), realCoef;     
+        double coef, realCoef;
+        coef = 1 + restrictIIP.getDelta();
         
         for (int p = 0; p < coefVarTheta.get(IND_CD).size(); p++) {
             
@@ -671,11 +720,12 @@ public class InteractionBIP extends AbstractBIPSolver
             listcd.add(realCoef + element);            
         }
         
-        buf.getCons().println("interaction_8a:" + CTheta.get(IND_EMPTY) 
+        buf.getCons().println("interaction_8a:" 
+                              + CTheta.get(IND_EMPTY) 
                               + " + " + StringConcatenator.concatenate(" + ", listcd) 
-                              + " -  " + StringConcatenator.concatenate(" - ", 
+                              + " - " + StringConcatenator.concatenate(" - ", 
                                                                         elementCTheta.get(IND_C))
-                              + " -  " + StringConcatenator.concatenate(" - ", 
+                              + " - "  + StringConcatenator.concatenate(" - ", 
                                                                         elementCTheta.get(IND_D))
                               + " <= 0");
     }
@@ -687,15 +737,16 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     public boolean solveAlternativeBIP()
     {   
+        System.out.println(" L715, solve alternative \n");
         Map<String,Double> mapVarCoef = new HashMap<String, Double>();
-        double deltaCD = restrictIIP.getDelta() - 1;   
+        double deltaCD = restrictIIP.getDelta() - 1; 
+        double coef;
         
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
             List<String> listVar = varTheta.get(theta); 
             for (int p = 0; p < listVar.size(); p++) {
                 BIPVariable var = poolVariables.get(listVar.get(p));
-                
-                double coef = 0.0;
+                coef = 0.0;
                 
                 if (var.getType() == IIPVariablePool.VAR_X ||
                     var.getType() == IIPVariablePool.VAR_Y){
@@ -754,10 +805,10 @@ public class InteractionBIP extends AbstractBIPSolver
     {
         IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd);
         interactionOutput.addPairIndexInteraction(pairIndexes);                               
-        String combinedName = indexc.getFullyQualifiedName() + "+" + indexd.getFullyQualifiedName();        
-        cachedInteractIndexName.put(combinedName, 1);
-        combinedName = indexd.getFullyQualifiedName()+ "+" + indexc.getFullyQualifiedName();        
-        cachedInteractIndexName.put(combinedName, 1);
+        String combinedName = indexc + "_" + indexd;        
+        pairInteractingIndexNames.put(combinedName, 1);
+        combinedName = indexd + "_" + indexc;        
+        pairInteractingIndexNames.put(combinedName, 1);
     }
 	
 	
@@ -766,23 +817,19 @@ public class InteractionBIP extends AbstractBIPSolver
 	 * 
 	 * @param indexc, indexd
 	 * 		The two given indexes
-	 * @param cachedIndexes
-	 * 		The hash map containing the cache
 	 * 
 	 * @return {@code true/false}
 	 */
-	private boolean checkInCache(Index indexc, Index indexd)
+	private boolean isInteracting(Index indexc, Index indexd)
 	{
-		String key = indexc.getFullyQualifiedName() + "+" + indexd.getFullyQualifiedName();
-		if (cachedInteractIndexName.get(key) != null)
-			return true;
-				
-		return false;
+		String key = indexc  + "_" + indexd;
+		return pairInteractingIndexNames.containsKey(key); 
 	}
 		
 	
 	/**
-     * Check the correctness
+     * Print the actual query execution cost derived by the CPLEX solver.
+     * This method is implemented to check the correctness of our BIP solution. 
      */
     private void computeQueryCostTheta(Map<String, Integer> mapVarVal)
     {
