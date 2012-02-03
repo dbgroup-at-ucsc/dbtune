@@ -25,9 +25,9 @@ public class CPlexImplementer implements CPlexSolver
             // Read model from file into cplex optimizer object
             cplex.importModel(inputFile);
             
-            if (cplex.solve() == true){
+            if (cplex.solve() == true)
                 mapVariableValue = getMapVariableValue();
-            }
+            
         }
         catch (IloException e) {
             System.err.println("Concert exception caught: " + e);
@@ -48,16 +48,23 @@ public class CPlexImplementer implements CPlexSolver
         try {
             matrix = getMatrix(cplex);
             vars = matrix.getNumVars();
-            
+            double val;
+            IloNumVar var;
             for (int i = 0; i < vars.length; i++) {
-                IloNumVar var = vars[i];
-                double val = cplex.getValue(var);
+                var = vars[i];
+                val = cplex.getValue(var);
                 mapVariableValue.put(var.getName(), (int)Math.round(val));
             }
         } catch (IloException e) {
             System.err.println("Concert exception caught: " + e);
         }
         
+        try {
+            System.out.println("L63 (Cplex implementer), the objective value: " + 
+                                    cplex.getObjValue());
+        } catch (IloException e) {            
+            e.printStackTrace();
+        }
         return mapVariableValue;
     }
      

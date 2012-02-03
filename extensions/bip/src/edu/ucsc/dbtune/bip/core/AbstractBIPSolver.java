@@ -79,9 +79,9 @@ public abstract class AbstractBIPSolver implements BIPSolver
         BIPOutput result = null;
         cplex = new CPlexImplementer();
         this.mapVariableValue = cplex.solve(this.buf.getLpFileName());
-        if (this.mapVariableValue != null){
+        if (this.mapVariableValue != null)
             result = this.getOutput();
-        }
+        
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         return result;            
     }

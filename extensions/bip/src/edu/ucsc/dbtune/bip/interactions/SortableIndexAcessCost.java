@@ -40,12 +40,11 @@ public class SortableIndexAcessCost implements Comparable<SortableIndexAcessCost
 	public int compareTo(SortableIndexAcessCost o) 
 	{		
 	    double objCost = o.getIndexAccessCost(); 
-		if (gamma < objCost){
+		if (gamma < objCost)
 			return -1;
-		} else if (gamma == objCost){
+		else if (gamma == objCost)
 			return 0;
-		} else {
+		else 
 			return 1;
-		}
 	}
 }

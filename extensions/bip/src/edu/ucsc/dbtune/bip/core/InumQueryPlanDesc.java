@@ -52,7 +52,8 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	List<Table> listTables;
 	private int stmtID;	
     /** A map to manage each statement corresponding to one instance of this class*/
-	private static Map<SQLStatement, QueryPlanDesc> instances = new HashMap<SQLStatement, QueryPlanDesc>();
+	private static Map<SQLStatement, QueryPlanDesc> instances = new 
+	                                            HashMap<SQLStatement, QueryPlanDesc>();
 	
 	/**
 	 * The constructor, each object of this class corresponds to a {@code SQLSatement} object
@@ -119,7 +120,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                     listIndexWithoutFTS.add(index);
                 }
             }
-            this.listIndexesWithoutFTSEachSlot.add(listIndexWithoutFTS);
+            listIndexesWithoutFTSEachSlot.add(listIndexWithoutFTS);
             // add the index full table scan at the last position in this slot
             FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
             listIndex.add(scanIdx);
@@ -127,6 +128,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         }
                 
         Kq = 0;
+        double cost;
         listAccessCostPerPlan = new ArrayList<Map<Index, Double>>();
         for (InumPlan plan : templatePlans) {
             System.out.println("L132 (query plan), internal plan cost: " + plan.getInternalCost());
@@ -134,15 +136,14 @@ public class InumQueryPlanDesc implements QueryPlanDesc
             Map<Index, Double> mapIndexAccessCost = new HashMap<Index, Double>();
             for (int i = 0; i < n; i++) {
                 for (Index index : this.listIndexesEachSlot.get(i)) {
-                    double cost = plan.plug(index);                    
-                    if (cost == Double.POSITIVE_INFINITY) {
+                    cost = plan.plug(index);                    
+                    if (cost == Double.POSITIVE_INFINITY)
                         cost = InumQueryPlanDesc.BIP_MAX_VALUE;
-                    }
-                    System.out.println(" index: " + index + " cost: " + cost);
+                    
                     mapIndexAccessCost.put(index, new Double(cost));
                 }                            
             }
-            this.listAccessCostPerPlan.add(mapIndexAccessCost);
+            listAccessCostPerPlan.add(mapIndexAccessCost);
             Kq++;
         }
     }
@@ -169,7 +170,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     @Override
 	public List<Index> getListIndexesAtSlot(int i)
 	{
-		return this.listIndexesEachSlot.get(i);
+		return listIndexesEachSlot.get(i);
 	}
 	
     /* (non-Javadoc)
@@ -177,7 +178,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     @Override
     public List<Index> getListIndexesWithoutFTSAtSlot(int i)
     {
-        return this.listIndexesWithoutFTSEachSlot.get(i);
+        return listIndexesWithoutFTSEachSlot.get(i);
     }
 	/* (non-Javadoc)
      */
@@ -194,11 +195,10 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	public double getAccessCost(int k, Index index)
 	{
 		Object found = listAccessCostPerPlan.get(k).get(index);
-		if (found != null) {
+		if (found != null) 
 		    return (Double) found;
-		} else {
+		else 
 		    throw new RuntimeException(" Cannot compute the index access cost for: " + index.getName() + " at plan: " + k);
-		}
 	}
 	
 	

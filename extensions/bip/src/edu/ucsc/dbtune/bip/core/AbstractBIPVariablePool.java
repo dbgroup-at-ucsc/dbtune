@@ -42,9 +42,8 @@ public abstract class AbstractBIPVariablePool
     {   
         Object found = mapNameVar.get(name);
         BIPVariable var = null;
-        if (found != null) {
+        if (found != null) 
             var = (BIPVariable) found;
-        }
         
         return var;
     }
@@ -72,9 +71,9 @@ public abstract class AbstractBIPVariablePool
                 countVar = 0;
             }
         }
-        if (countVar > 0) {
+        if (countVar > 0) 
             result.append("\n");
-        }
+        
         return result.toString();
     }
 }

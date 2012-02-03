@@ -28,18 +28,17 @@ public class InteractionOutput extends BIPOutput
     
     public List<IndexInteraction> getListInteractions()
     {
-        return this.listInteractions;
+        return listInteractions;
     }
 
     @Override
     public String toString() 
     {
         StringBuilder strInteractions = new StringBuilder("========= List of interactions ========\n");        
-        for (IndexInteraction pair : listInteractions){
-            strInteractions.append(pair.getFirst().getFullyQualifiedName() + " ---- " 
-                                    + pair.getSecond().getFullyQualifiedName()
+        for (IndexInteraction pair : listInteractions)
+            strInteractions.append(pair.getFirst() + " ---- " 
+                                    + pair.getSecond()
                                     + " \n");
-        }
         
         return strInteractions.toString();
     }

@@ -53,26 +53,26 @@ public class MaterializationSchedule extends BIPOutput
      */
     public void addIndexWindow(Index index, int window, int type)
     {
-        if (type == SimVariablePool.VAR_CREATE) {
+        if (type == SimVariablePool.VAR_CREATE) 
             listCreateIndexesWindow.get(window).add(index);
-        } else if  (type == SimVariablePool.VAR_DROP) {
+        else if  (type == SimVariablePool.VAR_DROP) 
             listDropIndexesWindow.get(window).add(index);
-        } else {
+        else 
             throw new RuntimeException("The type of index must be created or dropped");
-        }
     }
 
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder("MaterializationSchedule [W=" + W + "]\n");
         for (int w = 0; w < this.W; w++) {
+            
             result.append(" Window " + w + "-th: \n");
-            for (Index index : this.listCreateIndexesWindow.get(w)) {
+            for (Index index : this.listCreateIndexesWindow.get(w)) 
                 result.append("CREATE INDEX "  + index + " Time: " + index.getCreationCost() + "\n");
-            }
-            for (Index index : this.listDropIndexesWindow.get(w)) {
+            
+            for (Index index : this.listDropIndexesWindow.get(w)) 
                 result.append("DROP INDEX "  + index + "\n");
-            }
+            
         }
         return result.toString();
     }

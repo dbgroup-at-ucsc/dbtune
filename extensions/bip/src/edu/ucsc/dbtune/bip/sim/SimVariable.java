@@ -29,6 +29,6 @@ public class SimVariable extends BIPVariable
      */
     public int getWindow()
     {
-        return this.window;
+        return window;
     }
 }

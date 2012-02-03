@@ -58,20 +58,20 @@ public class SimVariablePool  extends AbstractBIPVariablePool
             nameComponent.add(Integer.toString(k));
         }
         
-        if (typeVariable == VAR_X || typeVariable == VAR_PRESENT || typeVariable == VAR_CREATE || typeVariable == VAR_DROP) {
+        if (typeVariable == VAR_X || typeVariable == VAR_PRESENT || 
+                    typeVariable == VAR_CREATE || typeVariable == VAR_DROP) 
             nameComponent.add(Integer.toString(a));
-        }
         
         varName.append(StringConcatenator.concatenate(",", nameComponent));
         varName.append(")");
          
         // store the variable with the derived name
         SimVariable var = new SimVariable(varName.toString(), typeVariable, window);
-        this.add(var);
+        add(var);
         
         // Create a mapping for this variable 
         SimVariableIndicator iai = new SimVariableIndicator(typeVariable, window, queryId, k, a);
-        this.mapHighDimensionVar.put(iai, var);
+        mapHighDimensionVar.put(iai, var);
         
         return var;
     }
@@ -97,9 +97,8 @@ public class SimVariablePool  extends AbstractBIPVariablePool
         SimVariableIndicator iai = new SimVariableIndicator(typeVariable, window, queryId, k, a);
         Object found = mapHighDimensionVar.get(iai);
         SimVariable var = null;
-        if (found != null) {
+        if (found != null) 
             var = (SimVariable) found;
-        } 
         
         return var;
     }

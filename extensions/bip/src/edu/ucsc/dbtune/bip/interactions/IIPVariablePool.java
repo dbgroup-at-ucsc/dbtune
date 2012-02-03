@@ -49,23 +49,21 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         
         List<String> nameComponent = new ArrayList<String>();        
         nameComponent.add(strTheta[theta]);        
-        if (typeVariable == VAR_Y || typeVariable == VAR_X || typeVariable == VAR_U){
+        if (typeVariable == VAR_Y || typeVariable == VAR_X || typeVariable == VAR_U)
             nameComponent.add(Integer.toString(k));
-        }
         
-        if (typeVariable == VAR_X || typeVariable == VAR_U || typeVariable == VAR_S) {
+        if (typeVariable == VAR_X || typeVariable == VAR_U || typeVariable == VAR_S) 
             nameComponent.add(Integer.toString(a));
-        }
         
         varName.append(StringConcatenator.concatenate(",", nameComponent));
         varName.append(")");
                 
         BIPVariable var = new BIPVariable(varName.toString(), typeVariable);
-        this.add(var); 
+        add(var); 
         
         // Create a mapping from 
         IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, a);
-        this.mapHighDimensionVar.put(iai, var);
+        mapHighDimensionVar.put(iai, var);
         
         return var;
     }
@@ -90,9 +88,9 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, a);
         Object found = mapHighDimensionVar.get(iai);
         BIPVariable var = null;
-        if (found != null) {
+        if (found != null) 
             var = (BIPVariable) found;
-        } 
+         
         
         return var;
     }

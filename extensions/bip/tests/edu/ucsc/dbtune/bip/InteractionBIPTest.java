@@ -35,7 +35,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
         db = newDatabaseSystem(en);
         
         System.out.println(" In test interaction ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/workload_bip.sql");
+        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
         FileReader fileReader = new FileReader(workloadFile);
         Workload workload     = new Workload(fileReader);
         

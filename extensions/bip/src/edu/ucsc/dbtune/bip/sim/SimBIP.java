@@ -132,7 +132,8 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
         buf.close();
         
         try {
-            CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
+            CPlexBuffer.concat(buf.getLpFileName(), buf.getObjFileName(), 
+                               buf.getConsFileName(), buf.getBinFileName());
         } catch (IOException e) {
             throw new RuntimeException("Cannot concantenate text files that store BIP.");
         }
@@ -142,14 +143,15 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     @Override
     protected BIPOutput getOutput()
     { 
-        MaterializationSchedule schedule = new MaterializationSchedule(this.W);
+        MaterializationSchedule schedule = new MaterializationSchedule(W);
         
         // Iterate over variables create_{i,w} and drop_{i,w}
-        for (Entry<String, Integer> pairVarVal : super.mapVariableValue.entrySet()) {
+        for (Entry<String, Integer> pairVarVal : mapVariableValue.entrySet()) {
             if (pairVarVal.getValue() == 1) {
                 SimVariable simVar = (SimVariable) poolVariables.get(pairVarVal.getKey());
-                if (simVar.getType() == SimVariablePool.VAR_CREATE || simVar.getType() == SimVariablePool.VAR_DROP ) {
-                    Index index = this.mapVarCreateDropToIndex.get(pairVarVal.getKey());
+                if (simVar.getType() == SimVariablePool.VAR_CREATE 
+                        || simVar.getType() == SimVariablePool.VAR_DROP) {
+                    Index index = mapVarCreateDropToIndex.get(pairVarVal.getKey());
                     schedule.addIndexWindow(index, simVar.getWindow(), simVar.getType());
                 }
             }
@@ -164,26 +166,31 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
      */
     private void constructVariables()
     {  
-        this.poolVariables = new SimVariablePool();
+        poolVariables = new SimVariablePool();
         mapVarCreateDropToIndex = new HashMap<String,Index>();
         // for TYPE_CREATE index 
-        for (Index index : this.Screate) {
+        for (Index index : Screate) {
+            
             for (int w = 0; w < W; w++) {
-                SimVariable var = poolVariables.createAndStore(SimVariablePool.VAR_CREATE, w, 0, 0, index.getId());
+                SimVariable var = poolVariables.createAndStore(SimVariablePool.VAR_CREATE, w, 
+                                                               0, 0, index.getId());
                 mapVarCreateDropToIndex.put(var.getName(), index);
             }          
         }
         
         // for TYPE_DROP index
-        for (Index index : this.Sdrop) {
+        for (Index index : Sdrop) {
+            
             for (int w = 0; w < W; w++) {
-                SimVariable var = poolVariables.createAndStore(SimVariablePool.VAR_DROP, w, 0, 0, index.getId());
+                SimVariable var = poolVariables.createAndStore(SimVariablePool.VAR_DROP, w, 
+                                                               0, 0, index.getId());
                 mapVarCreateDropToIndex.put(var.getName(), index);
             }          
         }
         
         // for TYPE_PRESENT
         for (Index index : candidateIndexes) {
+            
             for (int w = 0; w < W; w++) {
                 poolVariables.createAndStore(SimVariablePool.VAR_PRESENT, w, 0, 0, index.getId());
             }          
@@ -191,16 +198,21 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
         
         // for TYPE_Y, TYPE_X
         for (QueryPlanDesc desc : listQueryPlanDescs){
+            
             int q = desc.getStatementID();
-            for (int w = 0; w < W; w++) {               
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            for (int w = 0; w < W; w++) {
+                
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) 
                     poolVariables.createAndStore(SimVariablePool.VAR_Y, w, q, k, 0);
-                }    
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {              
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {  
-                        for (Index index : desc.getListIndexesAtSlot(i)) {
-                            poolVariables.createAndStore(SimVariablePool.VAR_X, w, q, k, index.getId());
-                        }
+                    
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {    
+                    
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+                        
+                        for (Index index : desc.getListIndexesAtSlot(i)) 
+                            poolVariables.createAndStore(SimVariablePool.VAR_X, w, q, k, 
+                                                         index.getId());
+                        
                     }
                 }       
             }
@@ -224,10 +236,11 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     private void buildIndexPresentConstraints()
     {   
         // for TYPE_CREATE index
-        for (Index index : this.Screate) {
+        for (Index index : Screate) {
             List<String> linList = new ArrayList<String>();
             for (int w = 0; w < W; w++) {
-                String var = poolVariables.get(SimVariablePool.VAR_CREATE, w, 0, 0, index.getId()).getName();
+                String var = poolVariables.get(SimVariablePool.VAR_CREATE, w, 
+                                               0, 0, index.getId()).getName();
                 linList.add(var);
             }
             buf.getCons().println("well_behaved_11a_" + numConstraints  
@@ -236,10 +249,12 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
             numConstraints++;
             
             for (int w = 0; w < W; w++) {
-                String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 0, 0, index.getId()).getName();
+                String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 
+                                                       0, 0, index.getId()).getName();
                 linList = new ArrayList<String>();
                 for (int j = 0; j <= w; j++) {
-                    String var_create = poolVariables.get(SimVariablePool.VAR_CREATE, j, 0, 0, index.getId()).getName();
+                    String var_create = poolVariables.get(SimVariablePool.VAR_CREATE, j, 
+                                                          0, 0, index.getId()).getName();
                     linList.add(var_create);
                 }
                 
@@ -251,10 +266,11 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
         }
         
         // for TYPE_DROP index
-        for (Index index : this.Sdrop) {
+        for (Index index : Sdrop) {
             List<String> linList = new ArrayList<String>();
             for (int w = 0; w < W; w++) {
-                String var = poolVariables.get(SimVariablePool.VAR_DROP, w, 0, 0, index.getId()).getName();
+                String var = poolVariables.get(SimVariablePool.VAR_DROP, w, 0, 
+                                               0, index.getId()).getName();
                 linList.add(var);
             }
             buf.getCons().println("well_behaved_11b_" + numConstraints  
@@ -263,10 +279,12 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
             numConstraints++;
             
             for (int w = 0; w < W; w++) {
-                String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 0, 0, index.getId()).getName();
+                String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 
+                                                       0, 0, index.getId()).getName();
                 linList = new ArrayList<String>();
                 for (int j = 0; j <= w; j++) {
-                    String var_drop = poolVariables.get(SimVariablePool.VAR_DROP, j, 0, 0, index.getId()).getName();
+                    String var_drop = poolVariables.get(SimVariablePool.VAR_DROP, j, 
+                                                        0, 0, index.getId()).getName();
                     linList.add(var_drop);
                 }
                 buf.getCons().println("index_present_12b_" + numConstraints  
@@ -277,9 +295,10 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
         }
         
         // for TYPE_PRESENT index
-        for (Index index : this.Sremain) {
+        for (Index index : Sremain) {
             for (int w = 0; w < W; w++) {
-                String var = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 0, 0, index.getId()).getName();
+                String var = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 
+                                                0, 0, index.getId()).getName();
                 buf.getCons().println("well_behaved_11b_" + numConstraints  
                         + ": " + var      
                         + " = 1");
@@ -300,10 +319,13 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	    listCwq = new ArrayList<String>(); 
         
 	    for (QueryPlanDesc desc : listQueryPlanDescs){
+	        
 		    int q = desc.getStatementID();
 			for (int w = 0; w < W; w++) {
+			    
 			    List<String> linList = new ArrayList<String>();
 				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+				    
 					String var = poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0).getName();
 					linList.add(Double.toString(desc.getInternalPlanCost(k)) + var);		
 				}
@@ -311,10 +333,14 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 						
 				// Index access cost
 				linList.clear();			
-				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {				
-					for (int i = 0; i < desc.getNumberOfSlots(); i++) {	
+				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {	
+				    
+					for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+					    
 					    for (Index index : desc.getListIndexesAtSlot(i)) {
-							String var = poolVariables.get(SimVariablePool.VAR_X, w, q, k, index.getId()).getName();
+					        
+							String var = poolVariables.get(SimVariablePool.VAR_X, w, 
+							                               q, k, index.getId()).getName();
 							linList.add(Double.toString(desc.getAccessCost(k, index)) + var);		
 						}
 					}
@@ -337,22 +363,27 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
             for (int w = 0; w < W; w++) {
                 List<String> linList = new ArrayList<String>();
 				// (1) \sum_{k \in [1, Kq]}y^{theta}_k = 1
-				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) 
 					linList.add(poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0).getName());
-				}
+				
 				buf.getCons().println("atomic_13a_" + numConstraints + ": " + 
 				                        StringConcatenator.concatenate(" + ", linList) + " = 1");
 				numConstraints++;
 			
 				// (2) \sum_{a \in S_i} x(w, k, i, a) = y(w, k)
 				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+				    
 					String var_y = poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0).getName();
 					for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+					    
 						linList.clear();
 						for (Index index : desc.getListIndexesAtSlot(i)) {
-							String var_x = poolVariables.get(SimVariablePool.VAR_X, w, q, k, index.getId()).getName();
+						    
+							String var_x = poolVariables.get(SimVariablePool.VAR_X, w, 
+							                                 q, k, index.getId()).getName();
 							linList.add(var_x);
-							String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 0, 0, index.getId()).getName();
+							String var_present = poolVariables.get(SimVariablePool.VAR_PRESENT, 
+							                                 w, 0, 0, index.getId()).getName();
 							
 							// (3) s_a^{w} \geq x_{kia}^{w}
 							buf.getCons().println("atomic_14a_" + numConstraints + ":" 
@@ -380,8 +411,9 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	{
 		for (int w = 0; w < W; w++) {
 		    List<String> linList = new ArrayList<String>();
-			for (Index index : this.Screate){
-				String var_create = poolVariables.get(SimVariablePool.VAR_CREATE, w, 0, 0, index.getId()).getName();				
+			for (Index index : Screate){
+				String var_create = poolVariables.get(SimVariablePool.VAR_CREATE, w, 
+				                                      0, 0, index.getId()).getName();				
 				linList.add(Double.toString(index.getCreationCost()) + var_create);
 			}
 			buf.getCons().println("time_constraint" + numConstraints  
@@ -395,13 +427,14 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	{
 	    for (int w = 0; w < W; w++) {
             List<String> linList = new ArrayList<String>();
-            for (Index index : this.Screate){
-                String var_create = poolVariables.get(SimVariablePool.VAR_CREATE, w, 0, 0, index.getId()).getName();                
+            for (Index index : Screate){
+                String var_create = poolVariables.get(SimVariablePool.VAR_CREATE, w, 
+                                                      0, 0, index.getId()).getName();                
                 linList.add(var_create);
             }
             buf.getCons().println("number_index_constraint" + numConstraints  
                     + " : " + StringConcatenator.concatenate(" + ", linList)                    
-                    + " <= " + this.maxNumIndexesEachWindow);
+                    + " <= " + maxNumIndexesEachWindow);
             numConstraints++;               
         }
 	}
@@ -423,7 +456,5 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	    int NUM_VAR_PER_LINE = 10;
         String strListVars = poolVariables.enumerateList(NUM_VAR_PER_LINE);
         buf.getBin().println(strListVars);	
-	}
-
-    
+	}    
 }
