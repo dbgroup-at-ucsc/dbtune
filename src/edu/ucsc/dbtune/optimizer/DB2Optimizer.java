@@ -457,7 +457,7 @@ public class DB2Optimizer extends AbstractOptimizer
 
         sb.append("'" + index.getName() + "', ");
         sb.append("'CREATE INDEX " + index.getName() + "', ");
-        sb.append("'Y', ");
+        sb.append("'N', ");
         sb.append("0, ");
         sb.append(index.getId() + ", ");
         sb.append("'Y', ");
