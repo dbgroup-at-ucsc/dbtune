@@ -182,14 +182,12 @@ public class InumPlan extends SQLStatementPlan
         if (slot == null) 
             throw new SQLException("Plan doesn't contain a slot for table " + index.getTable());
         
-        if (!slot.isCompatible(index)) 
-            return Double.POSITIVE_INFINITY;        
-        
         if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index))
             // if we have the same index as when we built the template
             return slot.getCost();
         
-        
+        if (!slot.isCompatible(index)) 
+            return Double.POSITIVE_INFINITY;        
 
         // we have an index that we haven't seen before, so we need to invoke the optimizer
         SQLStatementPlan plan =
