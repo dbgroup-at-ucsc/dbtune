@@ -395,7 +395,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             interestingOrdersForTable = new HashSet<Index>();
             
             for (Column col : entry.getValue()) 
-                interestingOrdersForTable.add(new InterestingOrder(col, ascending.get(col)));
+                interestingOrdersForTable.add(new InumInterestingOrder(col, ascending.get(col)));
             
             // add full table scan
             interestingOrdersForTable.add(getFullTableScanIndexInstance(entry.getKey()));

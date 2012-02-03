@@ -70,51 +70,53 @@ select
 --	n_name,
 --	s_name,
 --	p_partkey;
+
+-- problems with self-joins
 --query
-select
-	l_orderkey,
-	sum(l_extendedprice * (1 - l_discount)) as revenue,
-	o_orderdate,
-	o_shippriority
-from
-	tpch.customer,
-	tpch.orders,
-	tpch.lineitem
-where
-	c_mktsegment = 'FURNITURE'
-	and c_custkey = o_custkey
-	and l_orderkey = o_orderkey
-	and o_orderdate < '1995-03-17'
-	and l_shipdate > '1995-03-17'
-group by
-	l_orderkey,
-	o_orderdate,
-	o_shippriority
-order by
-	revenue desc,
-	o_orderdate;
+--select
+--	l_orderkey,
+--	sum(l_extendedprice * (1 - l_discount)) as revenue,
+--	o_orderdate,
+--	o_shippriority
+--from
+--	tpch.customer,
+--	tpch.orders,
+--	tpch.lineitem
+--where
+--	c_mktsegment = 'FURNITURE'
+--	and c_custkey = o_custkey
+--	and l_orderkey = o_orderkey
+--	and o_orderdate < '1995-03-17'
+--	and l_shipdate > '1995-03-17'
+--group by
+--	l_orderkey,
+--	o_orderdate,
+--	o_shippriority
+--order by
+--	revenue desc,
+--	o_orderdate;
 --query
-select
-	o_orderpriority,
-	count(*) as order_count
-from
-	tpch.orders
-where
-	o_orderdate >= '1995-08-01'
-	and o_orderdate < cast('1995-11-01' as date)
-	and exists (
-		select
-			*
-		from
-			tpch.lineitem
-		where
-			l_orderkey = o_orderkey
-			and l_commitdate < l_receiptdate
-	)
-group by
-	o_orderpriority
-order by
-	o_orderpriority;
+--select
+--	o_orderpriority,
+--	count(*) as order_count
+--from
+--	tpch.orders
+--where
+--	o_orderdate >= '1995-08-01'
+--	and o_orderdate < cast('1995-11-01' as date)
+--	and exists (
+--		select
+--			*
+--		from
+--			tpch.lineitem
+--		where
+--			l_orderkey = o_orderkey
+--			and l_commitdate < l_receiptdate
+--	)
+--group by
+--	o_orderpriority
+--order by
+--	o_orderpriority;
 --query
 select
 	n_name,
@@ -229,38 +231,38 @@ order by
 --order by
 --	o_year;
 --query
-select
-	nation,
-	o_year,
-	sum(amount) as sum_profit
-from
-	(
-		select
-			n_name as nation,
-			year(o_orderdate) as o_year,
-			l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
-		from
-			tpch.part,
-			tpch.supplier,
-			tpch.lineitem,
-			tpch.partsupp,
-			tpch.orders,
-			tpch.nation
-		where
-			s_suppkey = l_suppkey
-			and ps_suppkey = l_suppkey
-			and ps_partkey = l_partkey
-			and p_partkey = l_partkey
-			and o_orderkey = l_orderkey
-			and s_nationkey = n_nationkey
-			and p_name like '%thistle%'
-	) as profit
-group by
-	nation,
-	o_year
-order by
-	nation,
-	o_year desc;
+--select
+--	nation,
+--	o_year,
+--	sum(amount) as sum_profit
+--from
+--	(
+--		select
+--			n_name as nation,
+--			year(o_orderdate) as o_year,
+--			l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
+--		from
+--			tpch.part,
+--			tpch.supplier,
+--			tpch.lineitem,
+--			tpch.partsupp,
+--			tpch.orders,
+--			tpch.nation
+--		where
+--			s_suppkey = l_suppkey
+--			and ps_suppkey = l_suppkey
+--			and ps_partkey = l_partkey
+--			and p_partkey = l_partkey
+--			and o_orderkey = l_orderkey
+---			and s_nationkey = n_nationkey
+--			and p_name like '%thistle%'
+--	) as profit
+--group by
+--	nation,
+--	o_year
+--order by
+--	nation,
+--	o_year desc;
 --query
 select
 	c_custkey,
@@ -351,26 +353,26 @@ order by
 --order by
 --	l_shipmode;
 --query
-select
-	c_count,
-	count(*) as custdist
-from
-	(
-		select
-			c_custkey,
-			count(o_orderkey)
-		from
-			tpch.customer left outer join tpch.orders on
-				c_custkey = o_custkey
-				and o_comment not like '%special%packages%'
-		group by
-			c_custkey
-	) as c_orders (c_custkey, c_count)
-group by
-	c_count
-order by
-	custdist desc,
-	c_count desc;
+--select
+--	c_count,
+--	count(*) as custdist
+--from
+--	(
+--		select
+--			c_custkey,
+--			count(o_orderkey)
+--		from
+--			tpch.customer left outer join tpch.orders on
+--				c_custkey = o_custkey
+--				and o_comment not like '%special%packages%'
+--		group by
+--			c_custkey
+--	) as c_orders (c_custkey, c_count)
+--group by
+--	c_count
+--order by
+--	custdist desc,
+--	c_count desc;
 --query
 select
 	100.00 * sum(case
@@ -405,37 +407,39 @@ where
 --	)
 --order by
 --	s_suppkey;
+
 --query
-select
-	p_brand,
-	p_type,
-	p_size,
-	count(distinct ps_suppkey) as supplier_cnt
-from
-	tpch.partsupp,
-	tpch.part
-where
-	p_partkey = ps_partkey
-	and p_brand <> 'Brand#41'
-	and p_type not like 'MEDIUM BURNISHED%'
-	and p_size in (4, 21, 15, 41, 49, 43, 27, 47)
-	and ps_suppkey not in (
-		select
-			s_suppkey
-		from
-			tpch.supplier
-		where
-			s_comment like '%Customer%Complaints%'
-	)
-group by
-	p_brand,
-	p_type,
-	p_size
-order by
-	supplier_cnt desc,
-	p_brand,
-	p_type,
-	p_size;
+-- negative cost, it could be because of the subquery
+--select
+--	p_brand,
+--	p_type,
+--	p_size,
+--	count(distinct ps_suppkey) as supplier_cnt
+--from
+--	tpch.partsupp,
+--	tpch.part
+--where
+--	p_partkey = ps_partkey
+--	and p_brand <> 'Brand#41'
+--	and p_type not like 'MEDIUM BURNISHED%'
+--	and p_size in (4, 21, 15, 41, 49, 43, 27, 47)
+--	and ps_suppkey not in (
+--		select
+--			s_suppkey
+--		from
+--			tpch.supplier
+--		where
+--			s_comment like '%Customer%Complaints%'
+--	)
+--group by
+--	p_brand,
+--	p_type,
+--	p_size
+--order by
+--	supplier_cnt desc,
+--	p_brand,
+--	p_type,
+--	p_size;
 --query
 --select
 --	sum(l_extendedprice) / 7.0 as avg_yearly
@@ -639,4 +643,3 @@ order by
 --	cntrycode
 --order by
 --	cntrycode;
->>>>>>> issue #177 Tune CPlex solver

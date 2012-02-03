@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
 
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 
@@ -37,5 +38,19 @@ public class InumInterestingOrder extends InterestingOrder
         this.remove(table.columns().get(0));
 
         container.remove(this);
+    }
+    /**
+     * Creates an interesting order instance.
+     *
+     * @param column
+     *     column that will define the index
+     * @param ascending
+     *     indicates whether or not the column is sorted in ascending or ascending order.
+     * @throws SQLException
+     *      if the schema of the table is null or can't be retrieved
+     */
+    public InumInterestingOrder(Column column, boolean ascending) throws SQLException
+    {
+        super(column, ascending);
     }
 }
