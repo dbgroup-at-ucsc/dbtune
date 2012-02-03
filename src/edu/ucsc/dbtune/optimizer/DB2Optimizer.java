@@ -166,69 +166,52 @@ public class DB2Optimizer extends AbstractOptimizer
      *      if one of the column names can't be bound to the corresponding column
      */
     private static InterestingOrder extractColumnsUsedByOperator(
-            String colNamesInExplainStream, String tblName, Catalog catalog)
+            String colNamesInExplainStream, DatabaseObject dbo, Catalog catalog)
         throws SQLException
     {
-        if (colNamesInExplainStream == null || colNamesInExplainStream.equals(""))
+        if (colNamesInExplainStream == null || colNamesInExplainStream.trim().equals(""))
             return null;
-        
-        // +Q4.PS_SUPPLYCOST+Q4.PS_PARTKEY
-        String regex = "[+-]|[^.+-]+|[\\.]|[^.+-]+";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher m = pattern.matcher(colNamesInExplainStream);
-        int pos = 0;
-        List<String> strColumns = new ArrayList<String>();
-        List<String> strAscending = new ArrayList<String>();
-        List<String> strTabIDs = new ArrayList<String>();
-        String element;
-        while (m.find()) {
-            element = colNamesInExplainStream.substring(m.start(), m.end());
-            switch (pos) {
-            case 0:
-                strAscending.add(element);
-                break;
-            case 3:
-                strColumns.add(element);
-                break;
-            case 1:
-                strTabIDs.add(element);
-                break;
-            case 2:  // .
-                break;
-            }
-            
-            pos++;
-            if (pos == 4) 
-                pos = 0;
-        }
-        
-        // Make sure all columns belong to the same table
-        if (strTabIDs.size() == 0) 
-            throw new RuntimeException("There must have at least one column fetched at an operator. ");
-        String tabID = strTabIDs.get(0);
-        for (String t : strTabIDs) {
-            if (t.equals(tabID) == false) {
-                throw new RuntimeException("Columns do not belong to a same relation.");
-            }
-        }
-        
-        // Parse to derive interesting order
+        // +Q4.PS_SUPPLYCOST(A)+Q4.PS_PARTKEY
+        Table table;
         Column col;
         List<Column> columns = new ArrayList<Column>();
-        Map<Column, Boolean> ascending = new HashMap<Column, Boolean>();
-        for (int i = 0; i < strColumns.size(); i++) {
-            if (strColumns.get(i).contains("RID"))
+        String[] colNamesAndAscending = colNamesInExplainStream.split("\\+");
+        String colName;
+        Map<Column, Boolean>  ascending = new HashMap<Column, Boolean>();
+        boolean asc;
+        
+        if (dbo instanceof Index) 
+            table = ((Index) dbo).getTable();
+        else if (dbo instanceof Table)
+            table = (Table) dbo;
+        else 
+            throw new SQLException(" The database object must be either index or table");
+        
+        for (String tblAndColNameAndAscending : colNamesAndAscending) {
+            if (tblAndColNameAndAscending.contains("RID") || tblAndColNameAndAscending.equals(""))
                 continue;
-            col = catalog.<Column>findByName(tblName + "." + strColumns.get(i));
-            if (col == null)
-                throw new RuntimeException("Cannot bind the column's name to a column object");
-
-            columns.add(col);
-            if (strAscending.get(i).equals("+")) {
-                ascending.put(col, true);
-            } else {
-                ascending.put(col, false);
+            String colNameAndAscending = tblAndColNameAndAscending.split("Q*\\.")[1];
+            if (!colNameAndAscending.contains("(")) {
+                colName = colNameAndAscending;
+                asc = true;
             }
+            else {
+                colName = colNameAndAscending.split("\\(")[0];
+                
+                if (colNameAndAscending.split("\\(")[1].contains("A"))
+                    asc = true;
+                else
+                    asc = false;
+            }
+            
+            col = catalog.<Column>findByName(
+                    table.getFullyQualifiedName() + "." + colName);
+            
+            if (col == null)
+                throw new RuntimeException("Cannot bind the column's name to " +
+                		"a column object");
+            columns.add(col);
+            ascending.put(col, asc);
         }
         
         return new InterestingOrder(columns, ascending);
@@ -253,7 +236,7 @@ public class DB2Optimizer extends AbstractOptimizer
     {
         Map<Integer, List<String>> idToPredicateList = new HashMap<Integer, List<String>>();
         List<String> predicatesForOperator;
-
+       
         while (rs.next()) {
             predicatesForOperator = idToPredicateList.get(rs.getInt("node_id"));
             
@@ -262,7 +245,10 @@ public class DB2Optimizer extends AbstractOptimizer
                 idToPredicateList.put(rs.getInt("node_id"), predicatesForOperator);
             }
             
-            predicatesForOperator.add(rs.getString("predicate_text"));
+            if (rs.getString("predicate_text") == null)
+                predicatesForOperator.add("");
+            else
+                predicatesForOperator.add(rs.getString("predicate_text"));
         }
 
         return idToPredicateList;
@@ -605,19 +591,19 @@ public class DB2Optimizer extends AbstractOptimizer
     {
         loadOptimizationProfiles(sql);
 
-        Statement stmt1 = connection.createStatement();
-        Statement stmt2 = connection.createStatement();
-        ResultSet rs1;
-        ResultSet rs2;
+        Statement stmtOperator = connection.createStatement();
+        Statement stmtPredicate = connection.createStatement();
+        ResultSet rsOperator;
+        ResultSet rsPredicate;
         SQLStatementPlan plan;        
 
-        stmt1.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
-        stmt1.execute(sql.getSQL());
-        stmt1.execute("SET CURRENT EXPLAIN MODE = NO");
+        stmtOperator.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
+        stmtOperator.execute(sql.getSQL());
+        stmtOperator.execute("SET CURRENT EXPLAIN MODE = NO");
         
-        rs1 = stmt1.executeQuery(
+        rsOperator = stmtOperator.executeQuery(
              "SELECT " +
-             "   os.node_id, " +
+             "   DISTINCT os.node_id, " +
              "   os.parent_id, " +
              "   os.operator_name, " +
              "   os.cost, " +
@@ -642,27 +628,28 @@ public class DB2Optimizer extends AbstractOptimizer
              "    ) as os " +
              "       INNER JOIN " +
              "    systools.explain_stream s2 " + 
-             "          ON os.node_id = s2.target_id");
+             "          ON os.node_id = s2.target_id" +
+             " ORDER BY node_id");
         
-        stmt2 = connection.createStatement();
-        rs2 = stmt2.executeQuery(
+        stmtPredicate = connection.createStatement();
+        rsPredicate = stmtPredicate.executeQuery(
                 " SELECT " +
                 "   o.operator_id   as node_id, " +
                 "CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(255)) AS predicate_text " +
                 " FROM " +
                 "   systools.explain_operator o " +
-                "      INNER JOIN     " +
+                "      LEFT OUTER JOIN     " +
                 "   systools.explain_predicate p " +
                 "         ON o.operator_id = p.operator_id " +             
                 " ORDER BY " +
                 "          o.operator_id ASC ");
          
-        plan = parsePlan(catalog, rs1, rs2, indexes);
+        plan = parsePlan(catalog, rsOperator, rsPredicate, indexes);
 
-        rs1.close();
-        stmt1.close();
-        rs2.close();
-        stmt2.close();
+        rsOperator.close();
+        stmtOperator.close();
+        rsPredicate.close();
+        stmtPredicate.close();
 
         return plan;
     }
@@ -763,7 +750,7 @@ public class DB2Optimizer extends AbstractOptimizer
         ResultSet rs = stmt.executeQuery("SELECT * FROM systools.advise_index");
         Set<Index> recommended = new HashSet<Index>();
         List<Column> columns;
-        List<Boolean> descending;
+        List<Boolean> ascending;
         Schema schema;
         Table table;
         Index index;
@@ -776,10 +763,10 @@ public class DB2Optimizer extends AbstractOptimizer
             schema = catalog.findSchema(rs.getString("tbcreator").trim());
             table = schema.findTable(rs.getString("tbname").trim());
             columns = new ArrayList<Column>();
-            descending = new ArrayList<Boolean>();
-            name = "sat_index_" + new Random().nextInt(10000);
+            ascending = new ArrayList<Boolean>();
+            name = "sat_index_" + new Random().nextInt(Integer.MAX_VALUE);
 
-            parseColumnNames(table, rs.getString("colnames"), columns, descending);
+            parseColumnNames(table, rs.getString("colnames"), columns, ascending);
 
             if (rs.getString("uniquerule").trim().equals("U"))
                 unique = true;
@@ -797,7 +784,7 @@ public class DB2Optimizer extends AbstractOptimizer
             else
                 clustered = false;
 
-            index = new Index(name, columns, descending, primary, unique, clustered);
+            index = new Index(name, columns, ascending, primary, unique, clustered);
 
             recommended.add(index);
         }
@@ -908,7 +895,7 @@ public class DB2Optimizer extends AbstractOptimizer
      *     if a SQL communication error occurs
      */
     private static void parseColumnNames(
-            Table table, String str, List<Column> columns, List<Boolean> descending)
+            Table table, String str, List<Column> columns, List<Boolean> ascending)
         throws SQLException
     {
         char c;
@@ -918,9 +905,9 @@ public class DB2Optimizer extends AbstractOptimizer
         c = str.charAt(0);
 
         if (c == '+')
-            descending.add(false);
+            ascending.add(true);
         else if (c == '-')
-            descending.add(true);
+            ascending.add(false);
         else
             throw new SQLException("first character '" + c + "' unexpected in COLNAMES");
 
@@ -931,10 +918,10 @@ public class DB2Optimizer extends AbstractOptimizer
             c = str.charAt(i);
 
             if (c == '+') {
-                descending.add(false);
+                ascending.add(true);
                 newColumn = true;
             } else if (c == '-') {
-                descending.add(true);
+                ascending.add(false);
                 newColumn = true;
             } else
                 newColumn = false;
@@ -984,7 +971,6 @@ public class DB2Optimizer extends AbstractOptimizer
         String dboName = rs.getString("object_name");
         double accomulatedCost = rs.getDouble("cost");
         String columnNames = rs.getString("column_names");
-        
         DatabaseObject dbo;
 
         Operator op = new Operator(getOperatorName(name.trim()), accomulatedCost, -1);
@@ -1001,17 +987,17 @@ public class DB2Optimizer extends AbstractOptimizer
         else
             dbo = catalog.findByQualifiedName(dboSchema + "." + dboName);
 
-        if (dbo == null)
+        if (dbo == null) {
             // try to find it in the set of indexes passed in the what-if invocation
             dbo = find(indexes, dboName);
+        }
 
         if (dbo == null)
             throw new SQLException("Can't find object " + dboSchema + "." + dboName);
 
         op.add(dbo);        
-        op.add(extractColumnsUsedByOperator(columnNames, dboSchema + "." + dbo.getName(), catalog));
-        if (predicateList != null)
-            op.add(extractPredicatesUsedByOperator(predicateList, catalog));
+        op.add(extractColumnsUsedByOperator(columnNames, dbo, catalog));        
+        op.add(extractPredicatesUsedByOperator(predicateList, catalog));
 
         return op;
     }
@@ -1067,6 +1053,7 @@ public class DB2Optimizer extends AbstractOptimizer
         while (rsOperator.next()) {
             operatorId = rsOperator.getInt("node_id");
             parentId = rsOperator.getInt("parent_id");
+            
             child = parseNode(catalog, rsOperator, predicateList.get(operatorId), indexes);
             parent = idToNode.get(parentId);
 
