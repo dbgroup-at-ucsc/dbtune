@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
 
-import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -11,7 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
+
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -30,7 +29,6 @@ import org.apache.derby.impl.sql.compile.ColumnReference;
 import org.apache.derby.impl.sql.compile.CursorNode;
 import org.apache.derby.impl.sql.compile.FromBaseTable;
 import org.apache.derby.impl.sql.compile.FromList;
-import org.apache.derby.impl.sql.compile.FromSubquery;
 import org.apache.derby.impl.sql.compile.GroupByList;
 import org.apache.derby.impl.sql.compile.OrderByList;
 import org.apache.derby.impl.sql.compile.QueryTreeNode;
@@ -78,7 +76,8 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     private OrderByList orderBy;
     private Set<Visitable> astNodes;
     private boolean defaultAscending;
-    
+    private Set<Column> columns;
+    Map<Column, Boolean> ascending; 
     private List<ColumnReference> binaryOperandNodes;
     boolean leftOperand, rightOperand;
     
@@ -206,115 +205,142 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      #extractInterestingOrdersPerTable} fails; 
      */
     private List<Set<Index>> extractInterestingOrders() throws StandardException, SQLException
-    {
-        Column col; 
-        String colName;
+    {   
         List<String> tableNames = new ArrayList<String>();
-        List<Column> listCols = new ArrayList<Column>();
-        Map<Column, Boolean> ascending = new HashMap<Column, Boolean>();        
-        Map<Table, List<Column>> mapTableColumn = new HashMap<Table, List<Column>>();
-        Map<Column, Integer> mapInterestingOrderColumn = new HashMap<Column, Integer>();
-
+        columns = new HashSet<Column>();
+        ascending = new HashMap<Column, Boolean>();        
+     
         if (from == null || from.size() == 0)
             throw new SQLException("null or empty FROM list");
         
-        // Add an empty interesting order
-        if (from.size() == 1 && orderBy == null && groupBy == null) {
-            String tblName = ((FromBaseTable) from.elementAt(0)).getTableName().toString();
-            Table table = catalog.<Table>findByName(tblName);
-            mapTableColumn.put(table, new ArrayList<Column>());
-            return extractInterestingOrdersPerTable(mapTableColumn, ascending);
-        }
-
         for (int i = 0; i < from.size(); i++) {
             if (from.elementAt(i) instanceof FromBaseTable)
                 tableNames.add(((FromBaseTable) from.elementAt(i)).getTableName().toString());
-            else if (from.elementAt(i) instanceof FromSubquery) 
-                throw new SQLException("Can't handle subqueries yet");
         }
-        
-        // Order by attributes
-        if (orderBy != null) {
-            listCols.clear();
-            for (int i = 0; i < orderBy.size(); i++) {
-                colName = orderBy.getOrderByColumn(i).getColumnExpression().getColumnName(); 
-                col = bindColumnToTable(tableNames, colName);
-                // TODO: strictly speaking, we need to match the unknown column
-                // with the alias column in the select-clause
-                if (col == null)
-                    continue;
-                                
-                ascending.put(col, orderBy.getOrderByColumn(i).isAscending());
-                listCols.add(col);
-            }
-            bindColumnToTable(listCols, mapTableColumn);
             
-            // keep only the first column in each table
-            // due to the semantic of ORDER BY
-            for (Entry<Table, List<Column>> entry : mapTableColumn.entrySet()){
-                List<Column> ls = new ArrayList<Column>();
-                Column column = entry.getValue().get(0);
-                ls.add(column);                
-                entry.setValue(ls);
-                mapInterestingOrderColumn.put(column, new Integer(1));
-            }         
-        }
+        if (orderBy != null)
+            bindOrderByColumns(orderBy, tableNames); 
         
-        // Group by attributes
-        if (groupBy != null) {
-            listCols.clear();
-            for (int i = 0; i < groupBy.size(); i++) {                
-                colName = groupBy.getGroupByColumn(i).getColumnExpression().getColumnName();               
-                col = bindColumnToTable(tableNames, colName);
-                if (col == null) 
-                    continue;
-                
-                if (mapInterestingOrderColumn.containsKey(col) == false){
-                    mapInterestingOrderColumn.put(col, new Integer(1));
-                    ascending.put(col, isDefaultAscending());
-                    listCols.add(col);
-                }
-            }
-            bindColumnToTable(listCols, mapTableColumn);
-        }
+        if (groupBy != null)
+            bindGroupByColumns(groupBy, tableNames);
         
-        // Join predicates
-        if (binaryOperandNodes.size() > 0) {
-            listCols.clear();
-            for (ColumnReference colRef: binaryOperandNodes) {
-                colName = colRef.getColumnName();
-                col = null;
-                // p_partkey = ps_partkey
-                if (colRef.getTableName() == null) 
-                    col = this.bindColumnToTable(tableNames, colName);
-                else {
-                    // table_0.column_0 = table_1.column_0    
-                    // We need to retrieve the table name of each {@ColumnReference} object
-                    // for not ambiguous which relation the column {column_0} refers to
-                    for (String tblName : tableNames) {
-                        if (tblName.contains(colRef.getTableName()) == true) {
-                            colName = tblName + "." + colName;                        
-                            col = catalog.<Column>findByName(colName);
-                            break;
-                        }
-                    }
-                }
-                
-                if (col == null) 
-                    continue;
-                
-                if (mapInterestingOrderColumn.containsKey(col) == false){
-                    mapInterestingOrderColumn.put(col, new Integer(1));
-                    ascending.put(col, isDefaultAscending());
-                    listCols.add(col);
-                }
-            }
-            bindColumnToTable(listCols, mapTableColumn);
-        }
-
-        return extractInterestingOrdersPerTable(mapTableColumn, ascending);
+        if (binaryOperandNodes.size() > 0)
+            bindJoinPredicateColumns(binaryOperandNodes, tableNames);
+        
+        return extractInterestingOrdersPerTable(tableNames, columns, ascending);
     }
 
+    /**
+     * Bind columns referenced in the order-by into the corresponding database objects.
+     * We only add the first column in the order-by clause 
+     * @param orderBy
+     *      The list of order-by columns
+     * @param tableNames
+     *      The list of table names in the from-clause 
+     */
+    private void bindOrderByColumns(OrderByList orderBy, List<String> tableNames)
+    {
+        // only consider the first column in the order-by clause
+        String colName = orderBy.getOrderByColumn(0).getColumnExpression().getColumnName();
+        Column col = bindColumn(tableNames, colName);
+        if (col != null) {
+            columns.add(col);
+            ascending.put(col, orderBy.getOrderByColumn(0).isAscending());
+        }
+    }
+    
+    /**
+     * Bind columns in the given group-by list into the corresponding database object
+     * 
+     * @param groupBy
+     *      The list of group-by columns
+     * @param tableNames
+     *      The list of table names in the from-clause
+     */
+    void bindGroupByColumns(GroupByList groupBy, List<String> tableNames)
+    {
+        String colName;
+        Column col;
+        for (int i = 0; i < groupBy.size(); i++) {                
+            colName = groupBy.getGroupByColumn(i).getColumnExpression().getColumnName();
+            col = bindColumn(tableNames, colName);
+            if (col == null) 
+                continue;
+            
+            if (columns.add(col))
+                ascending.put(col, isDefaultAscending()); 
+        }
+    }
+    
+    
+    /**
+     * Bind the columns that are referenced in the join predicates
+     * @param binaryOperandNodes
+     *      A list of left and right columns of all the binary operators in the statement
+     *      (including join predicate R.a  = S.b, selection predicate R.a > R.c, and
+     *      the predicates in the sub-queries) 
+     * @param tableNames
+     *      The list of table names that we can find the columns on 
+     *  
+     * {\bf Note: }Need to eliminate columns in a selection predicate, as well as columns
+     * that are referenced in the sub-queries.      
+     * 
+     */
+    void bindJoinPredicateColumns(List<ColumnReference> binaryOperandNodes, List<String> tableNames) throws SQLException
+    {
+        String colName;
+        Column col;
+        List<Column> columnBinaryOperator = new ArrayList<Column>();
+        
+        for (ColumnReference colRef: binaryOperandNodes) {
+            colName = colRef.getColumnName();
+            col = null;
+            // p_partkey = ps_partkey
+            if (colRef.getTableName() == null) 
+                col = bindColumn(tableNames, colName);
+            else {
+                // table_0.column_0 = table_1.column_0    
+                // We need to retrieve the table name of each {@ColumnReference} object
+                // to unambiguously identify which relation the column belongs to
+                for (String tblName : tableNames) {
+                    if (tblName.contains(colRef.getTableName()) == true) {
+                        colName = tblName + "." + colName;
+                        
+                        try {
+                            col = catalog.<Column>findByName(colName);
+                        } catch (SQLException e) {
+                            // the column might belong to subqueries
+                            e = null;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            columnBinaryOperator.add(col);
+        }
+  
+        // postprocess {@code columnBinaryOperator}
+        // the two consecutive columns must be not null and belong to different relations
+        for (int i = 0; i < columnBinaryOperator.size(); i += 2) {
+            Column leftCol = columnBinaryOperator.get(i);
+            Column rightCol = columnBinaryOperator.get(i + 1); 
+            
+            // the predicate belongs to subqueries
+            if (leftCol == null || rightCol == null)
+                continue;
+            
+            // this is an actual join predicate
+            if (!(leftCol.getTable()).equals(rightCol.getTable())) {
+                if (columns.add(leftCol))
+                    ascending.put(leftCol, isDefaultAscending());
+                
+                if (columns.add(rightCol))
+                    ascending.put(rightCol, isDefaultAscending());
+            }    
+        }
+    }
+    
     /**
      * Binds database object names to their in-memory representation (by consulting the {@link 
      * Catalog} object that was provided to the constructor). This method assumes that the SQL text 
@@ -329,7 +355,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      A {@Column} object or NULL if the column is not a part of all the tables
      *      in @code tableNames} 
      */
-    private Column bindColumnToTable(List<String> tableNames, String colName)
+    private Column bindColumn(List<String> tableNames, String colName)
     {
         Column col = null;
         
@@ -341,42 +367,20 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 // it's OK not to find it, as long as we find it in a subsequent iteration
                 e = null;
             }
-            if (col != null) {
+            if (col != null) 
                 break;
-            }
         }
         
         return col;
     }
     
     /**
-     * Place columns into the mapping of the table that contains this column
-     * 
-     * @param listCols
-     *      The list of columns
-     * @param bindTable
-     *      The mapping 
-     *      
-     * {\bf Note}: The variable {@bindTable} might be changed after this method is called.     
-     */
-    private void bindColumnToTable(List<Column> listCols, Map<Table, List<Column>> bindTable)
-    {   
-        for (Column col : listCols) {           
-            List<Column> lc = bindTable.get(col.getTable());
-            if (lc == null) {
-                List<Column> newListCols = new ArrayList<Column>();
-                newListCols.add(col);
-                bindTable.put(col.getTable(), newListCols);
-            } else 
-                lc.add(col);
-        }
-    }
-    
-    /**
      * Extract interesting orders 
      * 
-     * @param mapTableColumn
-     *      Map each table to a list of interesting columns that belongs to this table
+     * @param tableNames
+     *      List of table names referenced in the from-clause
+     * @param columns
+     *      The set of columns that are referenced by from, order by, and group by clause
      * @param ascending
      *      The ascending order of each interesting column
      * @return
@@ -385,21 +389,37 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      when there is error in connecting with databases     
      */
     private List<Set<Index>> extractInterestingOrdersPerTable(
-            Map<Table, List<Column>> mapTableColumn, Map<Column, Boolean> ascending) 
+                                                    List<String> tableNames,
+                                                    Set<Column> columns,  
+                                                    Map<Column, Boolean> ascending) 
             throws SQLException
-    {   
+    {    
         Map<Table, Set<Index>> interestingOrdersPerTable = new HashMap<Table, Set<Index>>();        
         Set<Index> interestingOrdersForTable;
+        Table table;
         
-        for (Entry<Table, List<Column>> entry : mapTableColumn.entrySet()){
-            interestingOrdersForTable = new HashSet<Index>();
+        for (Column col : columns) {
+            table = col.getTable();
             
-            for (Column col : entry.getValue()) 
-                interestingOrdersForTable.add(new InumInterestingOrder(col, ascending.get(col)));
+            // add the full table scan if the {@code table} has not been seen before
+            if (!interestingOrdersPerTable.containsKey(table))  {
+                interestingOrdersForTable = new HashSet<Index> ();
+                interestingOrdersForTable.add(getFullTableScanIndexInstance(table));
+                interestingOrdersPerTable.put(table, interestingOrdersForTable);
+            }
             
-            // add full table scan
-            interestingOrdersForTable.add(getFullTableScanIndexInstance(entry.getKey()));
-            interestingOrdersPerTable.put(entry.getKey(), interestingOrdersForTable);
+            interestingOrdersForTable = interestingOrdersPerTable.get(table);
+            interestingOrdersForTable.add(new InumInterestingOrder(col, ascending.get(col)));
+        }
+        
+        for (String tblName : tableNames) {
+            table = catalog.<Table>findByName(tblName);
+            // add the full table scan if the {@code table} has not been seen before
+            if (!interestingOrdersPerTable.containsKey(table))  {
+                interestingOrdersForTable = new HashSet<Index> ();
+                interestingOrdersForTable.add(getFullTableScanIndexInstance(table));
+                interestingOrdersPerTable.put(table, interestingOrdersForTable);
+            }
         }
         
         return new ArrayList<Set<Index>>(interestingOrdersPerTable.values());
@@ -447,13 +467,22 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 
                 rightOperand = false;
             }
-            if (node instanceof SelectNode) {
+            // ignore the subqueries for now
+            else if (node instanceof SelectNode) {
                 final SelectNode select = (SelectNode) node;
-                from = select.getFromList();
-                groupBy = select.getGroupByList();
-            } else if (node instanceof CursorNode) 
-                orderBy = ((CursorNode) node).getOrderByList();
-            else if (node instanceof BinaryRelationalOperatorNode) {
+                if (from == null)
+                    from = select.getFromList();
+                else {
+                    for (int i = 0; i < select.getFromList().size(); i++)
+                        from.addFromTable((FromBaseTable) select.getFromList().elementAt(i));
+                }
+                
+                if (groupBy == null)
+                    groupBy = select.getGroupByList();
+            } else if (node instanceof CursorNode){ 
+                if (orderBy == null)
+                    orderBy = ((CursorNode) node).getOrderByList();
+            } else if (node instanceof BinaryRelationalOperatorNode) {
                 leftOperand = true;
                 rightOperand = false;
             }            
