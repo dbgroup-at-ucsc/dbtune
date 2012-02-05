@@ -1,5 +1,13 @@
 package edu.ucsc.dbtune.util;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DB2;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.FILE;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
@@ -14,16 +22,9 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.TEMP_DIR;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.WORKLOADS_FOLDERNAME;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.TEMP_DIR;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * @author Huascar A. Sanchez
@@ -31,14 +32,26 @@ import java.util.Properties;
  */
 public class Environment
 {
+    private static Environment instance;
 
     private final Properties configuration;
+
+    static
+    {
+        try {
+            instance = new Environment();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     /**
      * Creates an environment object from the given filename.
      *
      * @param propertiesFilename
-     *     name of file containing properties
+     *      name of file containing properties
+     * @throws IOException
+     *      if the file doesn't exist
      */
     public Environment(String propertiesFilename) throws IOException
     {
@@ -47,24 +60,14 @@ public class Environment
     }
 
     /**
-     * Copy constructor
+     * Copy constructor.
+     *
+     * @param other
+     *      object being copied
      */
     public Environment(Environment other)
     {
         configuration = new Properties(other.configuration);
-    }
-
-    /**
-     * Assigns a property.
-     *
-     * @param property
-     *     name of the property
-     * @param value
-     *     value of the property
-     */
-    public void setProperty(String property, String value)
-    {
-        configuration.setProperty(property,value);
     }
 
     /**
@@ -80,10 +83,43 @@ public class Environment
 
     /**
      * Creates an environment object from the default configuration file.
+     *
+     * @throws IOException
+     *      if the default configuration file doesn't exist or can't be read.
      */
     public Environment() throws IOException
     {
         this(FILE);
+    }
+
+    /**
+     * @return
+     *      the environment singleton.
+     */
+    public static Environment getInstance()
+    {
+        return instance;
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#TEMP_DIR}
+     */
+    public String getTempDir()
+    {
+        return configuration.getProperty(TEMP_DIR);
+    }
+
+    /**
+     * Assigns a property.
+     *
+     * @param property
+     *     name of the property
+     * @param value
+     *     value of the property
+     */
+    public void setProperty(String property, String value)
+    {
+        configuration.setProperty(property, value);
     }
 
     /**
@@ -128,6 +164,9 @@ public class Environment
 
     /**
      * @return {@link EnvironmentProperties#OPTIMIZER}
+     * @throws IllegalArgumentException
+     *      if the {@link EnvironmentProperties#OPTIMIZER} option doesn't correspond to one 
+     *      specified in {@link #SUPPORTED_OPTIMIZERS}
      */
     public String getOptimizer() throws IllegalArgumentException
     {
@@ -212,8 +251,9 @@ public class Environment
     }
 
     /**
-     * Returns the path to a file inside the workload folder. The path is qualified against the {@link 
-     * EnvironmentProperties#WORKLOADS_FOLDERNAME} field. The contents of the returned string look like:
+     * Returns the path to a file inside the workload folder. The path is qualified against the 
+     * {@link EnvironmentProperties#WORKLOADS_FOLDERNAME} field. The contents of the returned string 
+     * look like:
      * <p>
      * {@code getWorkloadsFoldername()} + "/" + {@code filename}
      *
@@ -229,6 +269,31 @@ public class Environment
     }
 
     /**
+     * Returns a list where each element corresponds to a workload folder. The path is not 
+     * qualified. For example, if {@code #WORKLOADS_FOLDERNAME} contains three workloads, say, 
+     * {@code one_table}, {@code movies} and {@code tpch}, the returned list will contain three 
+     * elements:
+     * <pre>
+     * {@code [one_table, movies, tpch]}
+     * </pre>
+     *
+     * @return
+     *      list containing the name of each folder for each workload contained inside {@link 
+     *      EnvironmentProperties#WORKLOADS_FOLDERNAME}.
+     * @see #getWorkloadsFoldername
+     */
+    public List<String> getWorkloadFolders()
+    {
+        List<String> workloadFolders = new ArrayList<String>();
+
+        for (File f : (new File(getWorkloadsFoldername())).listFiles())
+            if (f.isDirectory())
+                workloadFolders.add(f.getAbsolutePath());
+
+        return workloadFolders;
+    }
+
+    /**
      * Extracts the driver name by inspecting the {@link EnvironmentProperties#JDBC_URL} property 
      * and assigns it to {@link EnvironmentProperties#JDBC_DRIVER} on the given {@link Environment} 
      * object.
@@ -236,6 +301,8 @@ public class Environment
      * @param env
      *     object where the {@link EnvironmentProperties#JDBC_DRIVER} is assigned after it's 
      *     extracted
+     * @throws SQLException
+     *      if the driver name can't be extracted from the given {@code env} object
      */
     public static void extractDriver(Environment env) throws SQLException
     {
@@ -251,156 +318,5 @@ public class Environment
             throw new SQLException("Can't extract driver from " + env.getJdbcURL());
 
         env.setProperty(JDBC_DRIVER, driver);
-    }
-
-    static abstract class Configuration {
-        private final Properties properties = new Properties();
-
-        /**
-         * This method should be overridden to check whether the
-         * properties could maybe have changed, and if yes, to reload
-         * them.
-         */
-        protected abstract void checkForPropertyChanges();
-        
-        protected abstract Properties getDefaults();
-        
-        protected boolean isDefaultsMode()
-        { return false; }
-
-        public String getProperty(String propertyName)
-        {
-            checkForPropertyChanges();
-            synchronized (properties){
-                return !isDefaultsMode() ? properties.getProperty(propertyName) : getDefaults().getProperty(propertyName);
-            }
-        }
-
-        public Properties getAllProperties()
-        {
-            synchronized (properties){
-                return new Properties(properties);
-            }
-        }
-
-        /**
-         * setting a property.
-         *
-         * @param propertyName
-         *     name of property
-         * @param value
-         *    value of property.
-         */
-        public final void setProperty(String propertyName, String value)
-        {
-            System.out.println("setting " + propertyName + " to " + value);
-            synchronized (properties) {
-                Object old = properties.get(propertyName);
-                if ((value != null && !value.equals(old))
-                        || value == null && old != null) {
-                System.out.println("setted ");
-                    properties.put(propertyName, value);
-                }
-            }
-        }
-    }
-
-    static class PropertiesConfiguration extends Configuration {
-        private File       file;
-        private Properties defaults;
-        private long       lastModified = 0;
-        private boolean    useDefaults;
-
-        PropertiesConfiguration(Properties defaults) {
-            super();
-            this.defaults    = defaults;
-            this.file        = new File("");
-            this.useDefaults = true;
-
-            setAllProperties(this.defaults);
-        }
-
-        PropertiesConfiguration(String filename) throws IOException {
-            super();
-
-            this.file = new File(filename);
-
-            if (!file.exists()) {
-                throw new IOException("File " + filename + " doesn't exist");
-            }
-
-            this.defaults    = null;
-            this.useDefaults = !file.exists();
-
-            loadPropertiesFromFile();
-        }
-
-        @Override
-        protected void checkForPropertyChanges()
-        {
-            if (lastModified != file.lastModified()) {
-                lastModified = file.lastModified();
-              try {
-                lastModified = file.lastModified();
-                loadPropertiesFromFile();
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-            }
-        }
-
-        @Override
-        protected Properties getDefaults()
-        {
-            return defaults;
-        }
-
-        @Override
-        protected boolean isDefaultsMode()
-        {
-            return useDefaults;
-        }
-
-        private void loadPropertiesFromFile() throws IOException
-        {
-            Properties props = new Properties();
-            props.load(new FileInputStream(file));
-            setAllProperties(props);
-        }
-
-        private void setAllProperties(Properties properties)
-        {
-            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                setProperty((String)entry.getKey(), (String) entry.getValue());
-            }
-        }
-    }
-
-    /**
-     * @return the environment singleton.
-     */
-    public static Environment getInstance()
-    {
-        return Installer.INSTANCE;
-    }
-
-    /** Lazy-constructed singleton, which is thread safe */
-    static class Installer {
-        static final Environment INSTANCE;
-
-        static {
-            try {
-                INSTANCE = new Environment();
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-    }
-    
-    /**
-     * @return {@link EnvironmentProperties#TEMP_DIR}
-     */
-    public String getTempDir(){
-        return configuration.getProperty(TEMP_DIR);
     }
 }
