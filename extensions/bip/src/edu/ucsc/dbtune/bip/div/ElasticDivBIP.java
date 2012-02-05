@@ -11,8 +11,8 @@ import java.util.Map.Entry;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Strings;
 
 public class ElasticDivBIP extends DivBIP 
 {  
@@ -169,7 +169,7 @@ public class ElasticDivBIP extends DivBIP
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     linList.add(poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName());
                 }
-                buf.getCons().println("atomic_2a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) 
+                buf.getCons().println("atomic_2a_" + numConstraints + ": " + Strings.concatenate(" + ", linList) 
                                         + " - " + var_deploy +
                                         " <= 0");
                 numConstraints++;
@@ -190,7 +190,7 @@ public class ElasticDivBIP extends DivBIP
             String var_deploy = poolVariables.getDivVariable(DivVariablePool.VAR_DEPLOY, r, 0, 0, 0, 0).getName();
             linList.add(var_deploy);
         }
-        buf.getCons().println("num_replica_6_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) 
+        buf.getCons().println("num_replica_6_" + numConstraints + ": " + Strings.concatenate(" + ", linList) 
                 + " <= " + Ndeploys);
         numConstraints++;
     }
@@ -235,7 +235,7 @@ public class ElasticDivBIP extends DivBIP
                 linList.add(Double.toString(index.getCreationCost()) + div_a);
             }
         }
-        Cdeploy = StringConcatenator.concatenate(" + ", linList); 
+        Cdeploy = Strings.concatenate(" + ", linList); 
         buf.getCons().println("atomic_deploy_cost_8" + numConstraints + ": " + Cdeploy
                 + " <= " + Double.toString(this.upperCdeploy));
     }

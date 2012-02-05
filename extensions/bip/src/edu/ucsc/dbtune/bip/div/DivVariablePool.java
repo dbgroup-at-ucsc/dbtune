@@ -7,7 +7,7 @@ import java.util.Map;
 
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPVariablePool;
-import edu.ucsc.dbtune.bip.util.StringConcatenator;
+import edu.ucsc.dbtune.util.Strings;
 
 public class DivVariablePool extends AbstractBIPVariablePool 
 {
@@ -72,7 +72,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
             nameComponent.add(Integer.toString(a));
         }
         
-        varName = varName.concat(StringConcatenator.concatenate(",", nameComponent));
+        varName = varName.concat(Strings.concatenate(",", nameComponent));
         varName = varName.concat(")");
                 
         DivVariable var = new DivVariable(varName, typeVariable, replica);

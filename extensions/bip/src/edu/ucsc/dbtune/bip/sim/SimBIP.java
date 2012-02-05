@@ -10,11 +10,11 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Strings;
 
 
 /**
@@ -243,7 +243,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                 linList.add(var);
             }
             buf.getCons().println("well_behaved_11a_" + numConstraints  
-                    + ": " + StringConcatenator.concatenate(" + ", linList)                     
+                    + ": " + Strings.concatenate(" + ", linList)                     
                     + " = 1");
             numConstraints++;
             
@@ -258,7 +258,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                 }
                 
                 buf.getCons().println("index_present_12a_" + numConstraints  
-                        + ": " + StringConcatenator.concatenate(" + ", linList)                     
+                        + ": " + Strings.concatenate(" + ", linList)                     
                         + " - " + var_present + " = 0 ");
                 numConstraints++;   
             }
@@ -273,7 +273,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                 linList.add(var);
             }
             buf.getCons().println("well_behaved_11b_" + numConstraints  
-                    + ": " + StringConcatenator.concatenate(" + ", linList)                     
+                    + ": " + Strings.concatenate(" + ", linList)                     
                     + " = 1");
             numConstraints++;
             
@@ -287,7 +287,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                     linList.add(var_drop);
                 }
                 buf.getCons().println("index_present_12b_" + numConstraints  
-                        + ": " + StringConcatenator.concatenate(" + ", linList)                     
+                        + ": " + Strings.concatenate(" + ", linList)                     
                         + " + " + var_present + " = 1 ");
                 numConstraints++;                   
             }
@@ -329,7 +329,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 					String var = poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0).getName();
 					linList.add(Double.toString(desc.getInternalPlanCost(k)) + var);		
 				}
-				String Cwq  = StringConcatenator.concatenate(" + ", linList);			
+				String Cwq  = Strings.concatenate(" + ", linList);			
 						
 				// Index access cost
 				linList.clear();			
@@ -345,7 +345,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 						}
 					}
 				}		
-				Cwq = Cwq + " + " + StringConcatenator.concatenate(" + ", linList);
+				Cwq = Cwq + " + " + Strings.concatenate(" + ", linList);
 				listCwq.add(Cwq);
 			}
 		}
@@ -372,7 +372,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 					linList.add(poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0).getName());
 				
 				buf.getCons().println("atomic_13a_" + numConstraints + ": " + 
-				                        StringConcatenator.concatenate(" + ", linList) + " = 1");
+						Strings.concatenate(" + ", linList) + " = 1");
 				numConstraints++;
 			
 				// (2) \sum_{a \in S_i} x(w, k, i, a) = y(w, k)
@@ -389,7 +389,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 							linList.add(var_x);
 						}
 						buf.getCons().println("atomic_13b_" + numConstraints  
-											+ ": " + StringConcatenator.concatenate(" + ", linList) 
+											+ ": " + Strings.concatenate(" + ", linList) 
 											+ " - " + var_y
 											+ " = 0");
 						numConstraints++;
@@ -447,7 +447,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 				linList.add(Double.toString(index.getCreationCost()) + var_create);
 			}
 			buf.getCons().println("time_constraint" + numConstraints  
-					+ " : " + StringConcatenator.concatenate(" + ", linList) 					
+					+ " : " + Strings.concatenate(" + ", linList) 					
 					+ " <= " + timeLimit);
 			numConstraints++;				
 		}
@@ -462,10 +462,10 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                                                       0, 0, index.getId()).getName();                
                 linList.add(var_create);
             }
-            buf.getCons().println("number_index_constraint" + numConstraints  
-                    + " : " + StringConcatenator.concatenate(" + ", linList)                    
+            buf.getCons().println("number_index_constraint" + numConstraints
+                    + " : " + Strings.concatenate(" + ", linList)
                     + " <= " + maxNumberIndexesEachWindow);
-            numConstraints++;               
+            numConstraints++;
         }
 	}
 	
@@ -474,7 +474,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	 */
 	private void objectiveFunction()
 	{
-		buf.getObj().println(StringConcatenator.concatenate(" + ", listCwq));
+		buf.getObj().println(Strings.concatenate(" + ", listCwq));
 	}
 	
 	/**

@@ -7,7 +7,7 @@ import java.util.Map;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPVariablePool;
 import edu.ucsc.dbtune.bip.core.BIPVariable;
-import edu.ucsc.dbtune.bip.util.StringConcatenator;
+import edu.ucsc.dbtune.util.Strings;
 
 public class IIPVariablePool extends AbstractBIPVariablePool 
 {
@@ -55,7 +55,7 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         if (typeVariable == VAR_X || typeVariable == VAR_U || typeVariable == VAR_S) 
             nameComponent.add(Integer.toString(a));
         
-        varName.append(StringConcatenator.concatenate(",", nameComponent));
+        varName.append(Strings.concatenate(",", nameComponent));
         varName.append(")");
                 
         BIPVariable var = new BIPVariable(varName.toString(), typeVariable);

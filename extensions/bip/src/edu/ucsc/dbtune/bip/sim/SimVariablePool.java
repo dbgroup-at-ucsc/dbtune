@@ -7,7 +7,7 @@ import java.util.Map;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPVariablePool;
 import edu.ucsc.dbtune.bip.core.BIPVariable;
-import edu.ucsc.dbtune.bip.util.StringConcatenator;
+import edu.ucsc.dbtune.util.Strings;
 
 public class SimVariablePool  extends AbstractBIPVariablePool
 {
@@ -62,7 +62,7 @@ public class SimVariablePool  extends AbstractBIPVariablePool
                     typeVariable == VAR_CREATE || typeVariable == VAR_DROP) 
             nameComponent.add(Integer.toString(a));
         
-        varName.append(StringConcatenator.concatenate(",", nameComponent));
+        varName.append(Strings.concatenate(",", nameComponent));
         varName.append(")");
          
         // store the variable with the derived name

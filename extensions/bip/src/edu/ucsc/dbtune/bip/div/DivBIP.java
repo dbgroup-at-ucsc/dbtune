@@ -12,8 +12,8 @@ import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
-import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Strings;
 
 public class DivBIP extends AbstractBIPSolver
 {  
@@ -164,7 +164,7 @@ public class DivBIP extends AbstractBIPSolver
                     String var = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName();
                     linList.add(Double.toString(desc.getInternalPlanCost(k)) + var); 
                 }
-                String Cwq  = StringConcatenator.concatenate(" + ", linList);          
+                String Cwq  = Strings.concatenate(" + ", linList);          
                         
                 // Index access cost
                 linList.clear();            
@@ -176,7 +176,7 @@ public class DivBIP extends AbstractBIPSolver
                         }
                     }
                 }       
-                Cwq = Cwq + " + " + StringConcatenator.concatenate(" + ", linList);
+                Cwq = Cwq + " + " + Strings.concatenate(" + ", linList);
                 listCrq.add(Cwq);
             }
         }
@@ -198,7 +198,7 @@ public class DivBIP extends AbstractBIPSolver
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     linList.add(poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName());
                 }
-                buf.getCons().println("atomic_2a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) + " <= 1");
+                buf.getCons().println("atomic_2a_" + numConstraints + ": " + Strings.concatenate(" + ", linList) + " <= 1");
                 numConstraints++;
             }
         }
@@ -236,7 +236,7 @@ public class DivBIP extends AbstractBIPSolver
                             numConstraints++;
                         }
                         buf.getCons().println("atomic_2b_" + numConstraints  
-                                            + ": " + StringConcatenator.concatenate(" + ", linList) 
+                                            + ": " + Strings.concatenate(" + ", linList) 
                                             + " - " + var_y
                                             + " = 0");
                         numConstraints++;
@@ -260,7 +260,7 @@ public class DivBIP extends AbstractBIPSolver
                     linList.add(poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName());
                 }
             }
-            buf.getCons().println("topm_3a_" + numConstraints + ": " + StringConcatenator.concatenate(" + ", linList) + " = " + loadfactor);
+            buf.getCons().println("topm_3a_" + numConstraints + ": " + Strings.concatenate(" + ", linList) + " = " + loadfactor);
             numConstraints++;
         }
     }
@@ -279,7 +279,7 @@ public class DivBIP extends AbstractBIPSolver
                 linList.add(Double.toString(sizeindx) + var_create);
             }
             buf.getCons().println("space_constraint_4" + numConstraints  
-                    + " : " + StringConcatenator.concatenate(" + ", linList)                    
+                    + " : " + Strings.concatenate(" + ", linList)                    
                     + " <= " + B);
             numConstraints++;               
         }
@@ -290,7 +290,7 @@ public class DivBIP extends AbstractBIPSolver
      */
     protected void buildObjectiveFunction()
     {
-        buf.getObj().println(StringConcatenator.concatenate(" + ", listCrq));
+        buf.getObj().println(Strings.concatenate(" + ", listCrq));
     }
     
     /**

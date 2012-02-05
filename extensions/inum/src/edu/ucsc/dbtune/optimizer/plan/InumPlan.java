@@ -13,11 +13,11 @@ import java.util.Set;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
-import edu.ucsc.dbtune.bip.util.StringConcatenator;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -268,14 +268,14 @@ public class InumPlan extends SQLStatementPlan
         for (Column col: io.columns()) {
             listElement.add(col.getName());
         }
-        select += StringConcatenator.concatenate(" , ", listElement);
+        select += Strings.concatenate(" , ", listElement);
         from += table.getName();
         
         listElement.clear();
         for (Predicate p: predicates) {
             listElement.add(p.getText()); 
         }
-        where += StringConcatenator.concatenate(" AND ", listElement);
+        where += Strings.concatenate(" AND ", listElement);
         
         listElement.clear();
         String element = "";
@@ -290,7 +290,7 @@ public class InumPlan extends SQLStatementPlan
             }
             listElement.add(element);
         }
-        orderby += StringConcatenator.concatenate(" , ", listElement);
+        orderby += Strings.concatenate(" , ", listElement);
         
         return new SQLStatement(select + from + where + orderby);
     }

@@ -10,6 +10,7 @@ import java.util.Map;
 
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
@@ -17,8 +18,6 @@ import edu.ucsc.dbtune.bip.core.BIPVariable;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.StringConcatenator;
-
 import ilog.concert.IloException;
  
 /**
@@ -303,7 +302,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 linListElement.add(element);
                 coefVarTheta.get(theta).add(investigatingDesc.getInternalPlanCost(k));   
             }
-            ctheta  = StringConcatenator.concatenate(" + ", linList);
+            ctheta  = Strings.concatenate(" + ", linList);
                         
             // Index access cost
             linList.clear();
@@ -322,7 +321,7 @@ public class InteractionBIP extends AbstractBIPSolver
                     }
                 }
             }       
-            ctheta = ctheta + " + " + StringConcatenator.concatenate(" + ", linList);
+            ctheta = ctheta + " + " + Strings.concatenate(" + ", linList);
             
             /** Record {@code ctheta}, element of {@code ctheta} */
             CTheta.add(ctheta);         
@@ -349,7 +348,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 linList.add(poolVariables.get(theta, IIPVariablePool.VAR_Y, k, 0).getName());
             
             buf.getCons().println("atomic_3a_" + numConstraints + ": " + 
-                                   StringConcatenator.concatenate(" + ", linList) + " = 1");
+            		Strings.concatenate(" + ", linList) + " = 1");
             numConstraints++;
             
             // (3b) \sum_{a \in S+_i \cup I_{\emptyset}} x(theta, k, i, a) = y(theta, k)
@@ -375,7 +374,7 @@ public class InteractionBIP extends AbstractBIPSolver
                         numConstraints++;
                     }
                     buf.getCons().println("atomic_3b_" + numConstraints  
-                                            + ": " + StringConcatenator.concatenate(" + ", linList) 
+                                            + ": " + Strings.concatenate(" + ", linList) 
                                             + " - " + var_y
                                             + " = 0");
                     numConstraints++;
@@ -415,7 +414,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 
                 if (linList.size() > 0){
                     buf.getCons().println("atomic_4b_" +  numConstraints + ":" 
-                            + StringConcatenator.concatenate(" + ", linList) 
+                            + Strings.concatenate(" + ", linList) 
                             + " <= 1");
                     numConstraints++;
                 }
@@ -442,7 +441,7 @@ public class InteractionBIP extends AbstractBIPSolver
             // since we  do not consider FTS, the list can be empty
             if (linList.size() > 0) {
                 buf.getCons().println("atomic_4b_" +  numConstraints + ":" 
-                                    + StringConcatenator.concatenate(" + ", linList) 
+                                    + Strings.concatenate(" + ", linList) 
                                     + " <= 1");
                 numConstraints++;
             }
@@ -464,7 +463,7 @@ public class InteractionBIP extends AbstractBIPSolver
             // since we  do not consider FTS, the list can be empty
             if (linList.size() > 0) {
                 buf.getCons().println("atomic_4b_" + numConstraints + ":" 
-                                    + StringConcatenator.concatenate(" + ", linList) 
+                                    + Strings.concatenate(" + ", linList) 
                                     + "  <= 1");
                 numConstraints++;
             }
@@ -529,7 +528,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 // Constraint (5)
                 buf.getCons().println("optimal_5_" + numConstraints + ":" 
                         + CTheta.get(theta) + " - " 
-                        + StringConcatenator.concatenate(" - ", linList)        
+                        + Strings.concatenate(" - ", linList)        
                         + " <=  " + investigatingDesc.getInternalPlanCost(t));
                 numConstraints++;
             }
@@ -556,7 +555,7 @@ public class InteractionBIP extends AbstractBIPSolver
                     }
                     // Atomic constraint (6a) 
                     buf.getCons().println("optimal_6a_" + numConstraints + ":" 
-                                        + StringConcatenator.concatenate(" + ", linList) + " = 1");
+                                        + Strings.concatenate(" + ", linList) + " = 1");
                     numConstraints++;
                 }
             }
@@ -658,7 +657,7 @@ public class InteractionBIP extends AbstractBIPSolver
                         String var_u = poolVariables.get(theta, IIPVariablePool.VAR_U, t, 
                                                         index.getId()).getName();
                         linList.add(var_u);
-                        String LHS = StringConcatenator.concatenate(" + ", linList);
+                        String LHS = Strings.concatenate(" + ", linList);
                         
                         if (index.equals(this.restrictIIP.getIndexC())){
                             // --- \sum >= 1 (for the case of theta = IND_C || IND_D
@@ -722,10 +721,10 @@ public class InteractionBIP extends AbstractBIPSolver
         
         buf.getCons().println("interaction_8a:" 
                               + CTheta.get(IND_EMPTY) 
-                              + " + " + StringConcatenator.concatenate(" + ", listcd) 
-                              + " - " + StringConcatenator.concatenate(" - ", 
+                              + " + " + Strings.concatenate(" + ", listcd) 
+                              + " - " + Strings.concatenate(" - ", 
                                                                         elementCTheta.get(IND_C))
-                              + " - "  + StringConcatenator.concatenate(" - ", 
+                              + " - "  + Strings.concatenate(" - ", 
                                                                         elementCTheta.get(IND_D))
                               + " <= 0");
     }

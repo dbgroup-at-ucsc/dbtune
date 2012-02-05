@@ -80,7 +80,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
      */
     public static QueryPlanDesc getQueryPlanDescInstance(SQLStatement stmt) 
     {
-        QueryPlanDesc desc = (QueryPlanDesc) instances.get(stmt);
+        QueryPlanDesc desc = instances.get(stmt);
 
         if (desc == null) {
             desc = new InumQueryPlanDesc(stmt);
