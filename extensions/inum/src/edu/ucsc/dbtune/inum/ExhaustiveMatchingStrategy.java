@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.caliper.internal.guava.collect.Iterables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.metadata.Index;

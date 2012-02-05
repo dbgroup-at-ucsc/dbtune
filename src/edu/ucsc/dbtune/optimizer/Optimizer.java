@@ -131,4 +131,12 @@ public interface Optimizer
      *      the prepared statement object
      */
     PreparedSQLStatement prepareExplain(SQLStatement sql) throws SQLException;
+
+    /**
+     * Returns the delegate optimizer, in case that this optimizer is using one.
+     *
+     * @return
+     *      the delegate optimizer; {@code null} if none used.
+     */
+    Optimizer getDelegate();
 }

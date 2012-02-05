@@ -95,17 +95,9 @@ public class InumOptimizer implements Optimizer
     }
 
     /**
-     * estimate what-if optimization cost given a single sql statement.
-     *
-     * @param sql
-     *      sql statement
-     * @param configuration
-     *      an index configuration
-     * @return
-     *      the prepared statement
-     * @throws SQLException
-     *      unable to estimate cost due to the stated reasons.
+     * {@inheritDoc}
      */
+    @Override
     public ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration)
         throws SQLException
     {
@@ -162,5 +154,14 @@ public class InumOptimizer implements Optimizer
     public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled) 
     {
         delegate.setFTSDisabled(tables, isFTSDisabled);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optimizer getDelegate()
+    {
+        return delegate;
     }
 }

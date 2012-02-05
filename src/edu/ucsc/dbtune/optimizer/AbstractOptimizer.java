@@ -118,4 +118,13 @@ public abstract class AbstractOptimizer implements Optimizer
     {
         return new DefaultPreparedSQLStatement(this, sql);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optimizer getDelegate()
+    {
+        return null;
+    }
 }
