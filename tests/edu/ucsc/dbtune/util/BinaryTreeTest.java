@@ -37,6 +37,13 @@ public class BinaryTreeTest
         assertThat(tree.contains("B"), is(true));
         assertThat(tree.contains("G"), is(true));
 
+        assertThat(tree.leafs().size(), is(2));
+        assertThat(tree.leafs().contains("B"), is(true));
+        assertThat(tree.leafs().contains("G"), is(true));
+
+        assertThat(tree.getParent("B"), is("F"));
+        assertThat(tree.getParent("G"), is("F"));
+
         try {
             tree.setChild("B", "G", LEFT);
             fail("No exception caught");

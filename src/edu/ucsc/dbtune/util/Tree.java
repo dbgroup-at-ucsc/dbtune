@@ -28,7 +28,7 @@ public class Tree<T extends Comparable<? super T>>
      */
     public Tree(T root)
     {
-        this.root = new Entry<T>(root);
+        this.root = new Entry<T>(null, root);
         this.elements = new HashMap<T, Entry<T>>();
 
         elements.put(root, this.root);
@@ -46,7 +46,7 @@ public class Tree<T extends Comparable<? super T>>
 
         T rootElement = other.root.element;
         this.elements.remove(other.root.element);
-        this.root = new Entry<T>(rootElement);
+        this.root = new Entry<T>(null, rootElement);
 
         elements.put(rootElement, this.root);
     }
@@ -98,7 +98,7 @@ public class Tree<T extends Comparable<? super T>>
         Entry<T> entry = find(value, root);
 
         if (entry == null)
-            throw new NoSuchElementException(value + " is not a member");
+            throw new NoSuchElementException(value + " is not a member of the tree");
 
         List<T> children = new ArrayList<T>();
 
@@ -175,13 +175,31 @@ public class Tree<T extends Comparable<? super T>>
             throw new NoSuchElementException(parentValue + " not in tree");
         }
 
-        childEntry = new Entry<T>(childValue);
+        childEntry = new Entry<T>(parentEntry, childValue);
 
         elements.put(childValue, childEntry);
 
         parentEntry.children.add(childEntry);
 
         return childEntry;
+    }
+
+    /**
+     * Returns the parent of the given value.
+     *
+     * @param childValue
+     *      the value that will be the child of the returned parent value
+     * @return
+     *      parent of {@code child}; {@code null} if {@code child} is the root or not in the tree
+     */
+    public T getParent(T childValue)
+    {
+        Entry<T> childEntry = find(childValue, root);
+
+        if (childEntry == null)
+            return null;
+
+        return childEntry.parent.getElement();
     }
 
     /**
@@ -238,11 +256,10 @@ public class Tree<T extends Comparable<? super T>>
         String str = "";
 
         if (entry != null) {
-            str += padding + entry.element + "\n";
+            str += padding + entry.element;
 
-            for (Entry<T> e : entry.children) {
+            for (Entry<T> e : entry.children)
                 str += toString(e, padding + padding);
-            }
         }
 
         return str;
@@ -264,15 +281,19 @@ public class Tree<T extends Comparable<? super T>>
     {
         private T element;
         private List<Entry<T>> children;
+        private Entry<T> parent;
 
         /**
          * creates a tree entry.
          *
+         * @param parent
+         *     the new element's parent entry
          * @param element
          *     element to be wrapped by this entry
          */
-        public Entry(T element)
+        public Entry(Entry<T> parent, T element)
         {
+            this.parent   = parent;
             this.element  = element;
             this.children = new ArrayList<Entry<T>>();
         }
@@ -295,6 +316,16 @@ public class Tree<T extends Comparable<? super T>>
         public List<Entry<T>> getChildren()
         {
             return this.children;
+        }
+
+        /**
+         * Gets the parent for this instance.
+         *
+         * @return The parent.
+         */
+        public Entry<T> getParent()
+        {
+            return this.parent;
         }
 
         /**
