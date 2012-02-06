@@ -67,6 +67,7 @@ public class InumPlan extends SQLStatementPlan
     public InumPlan(Optimizer delegate, SQLStatementPlan plan) throws SQLException
     {   
         super(plan);
+
         this.delegate = delegate;
 
         double leafsCost = 0;
@@ -89,7 +90,7 @@ public class InumPlan extends SQLStatementPlan
 
             slots.put(slot.getTable(), slot);
 
-            leafsCost += o.getAccumulatedCost();
+            leafsCost += extractCostOfLeaf(plan, o);
         }
 
         internalPlanCost = getRootOperator().getAccumulatedCost() - leafsCost;
@@ -204,7 +205,7 @@ public class InumPlan extends SQLStatementPlan
             throw new RuntimeException(" The slot should not be empty.");
 
         if (o.getDatabaseObjects().get(0) instanceof Index)
-            return o.getCost();
+            return extractCostOfLeaf(plan, o);
                 
         // plan uses a full table scan, so it's not compatible
         return Double.POSITIVE_INFINITY;
@@ -253,10 +254,13 @@ public class InumPlan extends SQLStatementPlan
      */
     private static SQLStatement buildQueryForUnseenIndex(TableAccessSlot slot, Index index)
     {
-        InterestingOrder io = slot.getColumnsFetched(); // returns the columns that are fetched
-        List<Predicate> predicates = slot.getPredicates(); // returns the predicate list
-        Table table = slot.getTable(); // returns the table
-        String select = " SELECT ", from = " FROM ", where = " WHERE ", orderby = " ORDER BY ";
+        InterestingOrder io = slot.getColumnsFetched();
+        List<Predicate> predicates = slot.getPredicates();
+        Table table = slot.getTable();
+        String select = " SELECT ";
+        String from = " FROM ";
+        String where = " WHERE ";
+        String orderby = " ORDER BY ";
         List<String> listElement = new ArrayList<String>();
         
         // Assume the relation of index is R
@@ -293,5 +297,31 @@ public class InumPlan extends SQLStatementPlan
         orderby += Strings.concatenate(" , ", listElement);
         
         return new SQLStatement(select + from + where + orderby);
+    }
+
+    /**
+     * Returns the cost of the given leaf.
+     *
+     * @param sqlPlan
+     *      plan which the leaf is contained in
+     * @param leaf
+     *      operator at the base of the plan
+     * @return
+     *      cost of the leaf
+     */
+    static double extractCostOfLeaf(SQLStatementPlan sqlPlan, Operator leaf)
+    {
+        if (leaf.getName().equals(Operator.TABLE_SCAN))
+            return leaf.getAccumulatedCost();
+
+        Operator parent = sqlPlan.getParent(leaf);
+
+        if (parent == null)
+            throw new RuntimeException("Something is wrong, leaf should have a parent");
+
+        if (parent.getName().equals(Operator.FETCH) || parent.getName().equals(Operator.RID_SCAN))
+            return parent.getAccumulatedCost();
+
+        return leaf.getAccumulatedCost();
     }
 }
