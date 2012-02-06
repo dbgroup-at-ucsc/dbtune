@@ -35,7 +35,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
         db = newDatabaseSystem(en);
         
         System.out.println(" In test interaction ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
+        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/workload.sql");
         FileReader fileReader = new FileReader(workloadFile);
         Workload workload     = new Workload(fileReader);
         
@@ -51,7 +51,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
                         break;
                     }
                 }
-                if (exist == false) {
+                if (!exist) {
                     allIndexes.add(newIdx);
                 }
             }
@@ -61,7 +61,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
         for (Index index : allIndexes) {
             System.out.println("L62, Index : " + index); 
         }
-        
+
         try {
             double delta = 0.0001;
             Optimizer io = db.getOptimizer();
@@ -73,14 +73,14 @@ public class InteractionBIPTest extends BIPTestConfiguration
             InteractionBIP bip = new InteractionBIP(delta);            
             bip.setCandidateIndexes(allIndexes);
             bip.setWorkload(workload);
-            bip.setOptimizer((InumOptimizer)io);
+            bip.setOptimizer((InumOptimizer) io);
             bip.setLogListenter(logger);
             
             BIPOutput output = bip.solve();
             System.out.println(output.toString());
             System.out.println(logger.toString());
-        } catch (SQLException e){
+        } catch (SQLException e) {
             System.out.println(" error " + e.getMessage());
-        }        
+        }
     }
 }
