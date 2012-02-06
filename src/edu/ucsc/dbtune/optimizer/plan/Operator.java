@@ -14,22 +14,42 @@ import edu.ucsc.dbtune.util.Identifiable;
 public class Operator implements Comparable<Operator>, Identifiable
 {
     /** NLJ operator. **/
-    public static final String NLJ = "nested.loop.join";
+    public static final String NLJ = "NESTED.LOOP.JOIN";
+    /** NLJ operator. **/
+    public static final String NESTED_LOOP_JOIN = NLJ;
 
     /** Indexed NL join operator. **/
-    public static final String INLJ = "indexed.nested.loop.join";
+    public static final String INLJ = "INDEXED.NESTED.LOOP.JOIN";
+    /** Indexed NL join operator. **/
+    public static final String INDEXED_NESTED_LOOP_JOIN = INLJ;
 
     /** hash join operator. **/
-    public static final String HJ = "hash.join";
+    public static final String HJ = "HASH.JOIN";
+    /** hash join operator. **/
+    public static final String HASH_JOIN = HJ;
 
     /** merge sort join operator. **/
-    public static final String MSJ = "sort.merge.join";
+    public static final String MSJ = "SORT.MERGE.JOIN";
+    /** merge sort join operator. **/
+    public static final String SMJ = MSJ;
+    /** merge sort join operator. **/
+    public static final String SORT_MERGE_JOIN = MSJ;
 
     /** table scan operator. **/
-    public static final String TS = "table.scan";
+    public static final String TS = "TABLE.SCAN";
+    /** table scan operator. **/
+    public static final String TABLE_SCAN = TS;
 
     /** index scan operator. **/
-    public static final String IS = "index.scan";
+    public static final String IS = "INDEX.SCAN";
+    /** table scan operator. **/
+    public static final String INDEX_SCAN = IS;
+
+    /** row id scan operator. **/
+    public static final String RID_SCAN = "RID_SCAN";
+
+    /** fetch operator. **/
+    public static final String FETCH = "FETCH";
 
     /** ID used to identify an operator within a plan. */
     protected int id;
@@ -239,16 +259,13 @@ public class Operator implements Comparable<Operator>, Identifiable
     {
         StringBuilder str = new StringBuilder();
 
-        str.append(
-                "id: " + id +
-                "; operator: " + name +
-                "; cost: " + cost +
-                "; accCost: " + accumulatedCost +
-                "; cardinality: " + cardinality);
+        str.append(id + ": " + name + "(cost=" + accumulatedCost + " rows=" + cardinality + ")\n");
 
-        for (DatabaseObject obj : objects) {
-            str.append("; " + obj.getClass().getName() + ": " + obj);
-        }
+        if (!objects.isEmpty())
+            str.append("   Objects: \n");
+
+        for (DatabaseObject obj : objects)
+            str.append("       " + obj.getClass().getName() + ": " + obj + "\n");
 
         return str.toString();
     }

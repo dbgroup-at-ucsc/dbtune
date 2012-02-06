@@ -158,6 +158,9 @@ public class DB2Optimizer extends AbstractOptimizer
      *
      * @param colNamesInExplainStream
      *      column names as they appear in the {@code EXPLAIN_STREAM.COLNAMES} column
+     * @param dbo
+     *      database object for which the columns correspond (either an {@link Index} or {@link 
+     *      Table})
      * @param catalog
      *      to do the binding
      * @return
@@ -208,8 +211,9 @@ public class DB2Optimizer extends AbstractOptimizer
                     table.getFullyQualifiedName() + "." + colName);
             
             if (col == null)
-                throw new RuntimeException("Cannot bind the column's name to " +
-                		"a column object");
+                throw new RuntimeException(
+                    "Cannot bind the column's name to a column object");
+
             columns.add(col);
             ascending.put(col, asc);
         }
@@ -281,7 +285,8 @@ public class DB2Optimizer extends AbstractOptimizer
         String regex = "[^.Q]+|[Q|[^.Q]+]|[\\.]|[^.Q]+";
         Pattern pattern = Pattern.compile(regex);
         Matcher m;
-        String element, predicate; 
+        String element;
+        String predicate;
         boolean isAfterQ;
         for (String strPredicate : predicateList) {
             m = pattern.matcher(strPredicate);
@@ -293,7 +298,7 @@ public class DB2Optimizer extends AbstractOptimizer
                 if (element.equals("Q")) 
                     isAfterQ = true;
                 else {
-                    if (isAfterQ == false)
+                    if (!isAfterQ)
                         predicate += element;
                     else if (element.equals(".")) 
                         isAfterQ = false;
@@ -603,39 +608,34 @@ public class DB2Optimizer extends AbstractOptimizer
         
         rsOperator = stmtOperator.executeQuery(
              "SELECT " +
-             "   DISTINCT os.node_id, " +
-             "   os.parent_id, " +
-             "   os.operator_name, " +
-             "   os.cost, " +
-             "   os.column_names, " +
-             "   s2.object_name, " +
-             "   s2.object_schema " +
-             " FROM " +
-             "   ( " +
-             "   SELECT " +
-             "       o.operator_id   as node_id, " +
-             "       s.target_id     as parent_id, " +
-             "       o.operator_type as operator_name, " +
-             "       o.total_cost    as cost, " +
-             "       cast(cast(s.column_names AS CLOB(2097152)) as varchar(255)) as column_names " +
-             "    FROM " +
-             "       systools.explain_operator o " +
-             "          LEFT OUTER JOIN     " +
-             "       systools.explain_stream s " +
-             "          ON o.operator_id = s.source_id " +
-             "    ORDER BY " +
-             "       o.operator_id ASC " +
-             "    ) as os " +
-             "       INNER JOIN " +
-             "    systools.explain_stream s2 " + 
-             "          ON os.node_id = s2.target_id" +
-             " ORDER BY node_id");
-        
+             "     o.operator_id    AS node_id, " +
+             "     s2.target_id     AS parent_id, " +
+             "     o.operator_type  AS operator_name, " +
+             "     s1.object_schema AS object_schema, " +
+             "     s1.object_name   AS object_name," +
+             "     s1.stream_count  AS cardinality, " +
+             "     o.total_cost     AS cost, " +
+             "     cast(cast(s1.column_names AS CLOB(2097152)) AS VARCHAR(255)) " +
+             "                      AS column_names " +
+             "  FROM " +
+             "     systools.explain_operator o " +
+             "        LEFT OUTER JOIN " +
+             "     systools.explain_stream s2 ON" +
+             "           o.operator_id = s2.source_id " +
+             "        LEFT OUTER JOIN " +
+             "     systools.explain_stream s1 ON " +
+             "           o.operator_id = s1.target_id AND " +
+             "           o.explain_time = s1.explain_time AND " +
+             "           s1.object_name IS NOT NULL " +
+             "  ORDER BY " +
+             "     o.operator_id ASC");
+
         stmtPredicate = connection.createStatement();
         rsPredicate = stmtPredicate.executeQuery(
                 " SELECT " +
-                "   o.operator_id   as node_id, " +
-                "CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(255)) AS predicate_text " +
+                "   o.operator_id   AS node_id, " +
+                "   CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(255)) " +
+                "                   AS predicate_text " +
                 " FROM " +
                 "   systools.explain_operator o " +
                 "      LEFT OUTER JOIN     " +
@@ -647,8 +647,8 @@ public class DB2Optimizer extends AbstractOptimizer
         plan = parsePlan(catalog, rsOperator, rsPredicate, indexes);
 
         rsOperator.close();
-        stmtOperator.close();
         rsPredicate.close();
+        stmtOperator.close();
         stmtPredicate.close();
 
         return plan;
@@ -888,7 +888,7 @@ public class DB2Optimizer extends AbstractOptimizer
      *     string being parsed
      * @param columns
      *     list being populated with the name of columns
-     * @param descending
+     * @param ascending
      *     list being populated with the asc/desc values. The size of the list is equal to the 
      *     {@code columns} list
      * @throws SQLException
@@ -971,9 +971,10 @@ public class DB2Optimizer extends AbstractOptimizer
         String dboName = rs.getString("object_name");
         double accomulatedCost = rs.getDouble("cost");
         String columnNames = rs.getString("column_names");
+        long cardinality = rs.getLong("cardinality");
         DatabaseObject dbo;
 
-        Operator op = new Operator(getOperatorName(name.trim()), accomulatedCost, -1);
+        Operator op = new Operator(getOperatorName(name.trim()), accomulatedCost, cardinality);
 
         if (dboSchema == null || dboName == null)
             return op;
