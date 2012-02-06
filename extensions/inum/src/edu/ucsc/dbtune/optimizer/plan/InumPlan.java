@@ -269,16 +269,16 @@ public class InumPlan extends SQLStatementPlan
         // WHERE (predicates on columns of R that are in index)
         // ORDER BY (slot.getIndex())
         select = " SELECT ";        
-        for (Column col: io.columns()) {
+        for (Column col: io.columns()) 
             listElement.add(col.getName());
-        }
+        
         select += Strings.concatenate(" , ", listElement);
-        from += table.getName();
+        from += table.getFullyQualifiedName();
         
         listElement.clear();
-        for (Predicate p: predicates) {
+        for (Predicate p: predicates) 
             listElement.add(p.getText()); 
-        }
+        
         where += Strings.concatenate(" AND ", listElement);
         
         listElement.clear();
@@ -287,11 +287,11 @@ public class InumPlan extends SQLStatementPlan
         
         for (Column col : indexSlot.columns()) {
             element = col.getName();
-            if (indexSlot.isAscending(col)) {
+            if (indexSlot.isAscending(col)) 
                 element += " ASC ";
-            } else {
+            else 
                 element += " DESC ";
-            }
+            
             listElement.add(element);
         }
         orderby += Strings.concatenate(" , ", listElement);
