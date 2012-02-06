@@ -168,84 +168,86 @@ where
 	and l_quantity < 25;
 
 --query 07
-select
-	supp_nation,
-	cust_nation,
-	l_year,
-	sum(volume) as revenue
-from
-	(
-		select
-			n1.n_name as supp_nation,
-			n2.n_name as cust_nation,
-			year(l_shipdate) as l_year,
-			l_extendedprice * (1 - l_discount) as volume
-		from
-			tpch.supplier,
-			tpch.lineitem,
-			tpch.orders,
-			tpch.customer,
-			tpch.nation n1,
-			tpch.nation n2
-		where
-			s_suppkey = l_suppkey
-			and o_orderkey = l_orderkey
-			and c_custkey = o_custkey
-			and s_nationkey = n1.n_nationkey
-			and c_nationkey = n2.n_nationkey
-			and (
-				(n1.n_name = 'MOZAMBIQUE' and n2.n_name = 'UNITED KINGDOM')
-				or (n1.n_name = 'UNITED KINGDOM' and n2.n_name = 'MOZAMBIQUE')
-			)
-			and l_shipdate between '1995-01-01' and '1996-12-31'
-	) as shipping
-group by
-	supp_nation,
-	cust_nation,
-	l_year
-order by
-	supp_nation,
-	cust_nation,
-	l_year;
+-- contain two instances of nation relation
+--select
+--	supp_nation,
+--	cust_nation,
+--	l_year,
+--	sum(volume) as revenue
+--from
+--	(
+--		select
+--			n1.n_name as supp_nation,
+--			n2.n_name as cust_nation,
+--			year(l_shipdate) as l_year,
+--			l_extendedprice * (1 - l_discount) as volume
+--		from
+--			tpch.supplier,
+--			tpch.lineitem,
+--			tpch.orders,
+--			tpch.customer,
+--			tpch.nation n1,
+--			tpch.nation n2
+--		where
+--			s_suppkey = l_suppkey
+--			and o_orderkey = l_orderkey
+--			and c_custkey = o_custkey
+--			and s_nationkey = n1.n_nationkey
+--			and c_nationkey = n2.n_nationkey
+--			and (
+--				(n1.n_name = 'MOZAMBIQUE' and n2.n_name = 'UNITED KINGDOM')
+--				or (n1.n_name = 'UNITED KINGDOM' and n2.n_name = 'MOZAMBIQUE')
+--			)
+--			and l_shipdate between '1995-01-01' and '1996-12-31'
+--	) as shipping
+--group by
+--	supp_nation,
+--	cust_nation,
+--	l_year
+--order by
+--	supp_nation,
+--	cust_nation,
+--	l_year;
 
 --query 08
-select
-	o_year,
-	sum(case
-		when nation = 'MOZAMBIQUE' then volume
-		else 0
-	end) / sum(volume) as mkt_share
-from
-	(
-		select
-			year(o_orderdate) as o_year,
-			l_extendedprice * (1 - l_discount) as volume,
-			n2.n_name as nation
-		from
-			tpch.part,
-			tpch.supplier,
-			tpch.lineitem,
-			tpch.orders,
-			tpch.customer,
-			tpch.nation n1,
-			tpch.nation n2,
-			tpch.region
-		where
-			p_partkey = l_partkey
-			and s_suppkey = l_suppkey
-			and l_orderkey = o_orderkey
-			and o_custkey = c_custkey
-			and c_nationkey = n1.n_nationkey
-			and n1.n_regionkey = r_regionkey
-			and r_name = 'AFRICA'
-			and s_nationkey = n2.n_nationkey
-			and o_orderdate between '1995-01-01' and '1996-12-31'
-			and p_type = 'PROMO POLISHED TIN'
-	) as all_nations
-group by
-	o_year
-order by
-	o_year;
+-- contains two instances of nation
+--select
+--	o_year,
+--	sum(case
+--		when nation = 'MOZAMBIQUE' then volume
+--		else 0
+--	end) / sum(volume) as mkt_share
+--from
+--	(
+--		select
+--			year(o_orderdate) as o_year,
+--			l_extendedprice * (1 - l_discount) as volume,
+--			n2.n_name as nation
+--		from
+--			tpch.part,
+--			tpch.supplier,
+--			tpch.lineitem,
+--			tpch.orders,
+--			tpch.customer,
+--			tpch.nation n1,
+--			tpch.nation n2,
+--			tpch.region
+--		where
+--			p_partkey = l_partkey
+--			and s_suppkey = l_suppkey
+--			and l_orderkey = o_orderkey
+--			and o_custkey = c_custkey
+--			and c_nationkey = n1.n_nationkey
+--			and n1.n_regionkey = r_regionkey
+--			and r_name = 'AFRICA'
+--			and s_nationkey = n2.n_nationkey
+--			and o_orderdate between '1995-01-01' and '1996-12-31'
+--			and p_type = 'PROMO POLISHED TIN'
+--	) as all_nations
+--group by
+--	o_year
+--order by
+--	o_year;
 
 --query 09
 select
