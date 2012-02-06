@@ -504,14 +504,8 @@ public class DB2Optimizer extends AbstractOptimizer
     private static String getColumnNames(Index index)
     {
         StringBuilder sb = new StringBuilder();
-        boolean first = true;
 
         for (Column col : index.columns()) {
-            if (first)
-                first = false;
-            else
-                sb.append(",");
-
             if (index.isAscending(col))
                 sb.append("+");
             else

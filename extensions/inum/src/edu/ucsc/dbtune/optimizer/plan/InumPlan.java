@@ -195,8 +195,8 @@ public class InumPlan extends SQLStatementPlan
             delegate.explain(
                     buildQueryForUnseenIndex(slot, index),
                     Sets.<Index>newHashSet(index)).getPlan();
-        
-        if (plan.leafs().size() > 1)
+
+        if (plan.leafs().size() != 1)
             throw new RuntimeException("plan should have only one leaf.");
         
         Operator o = Iterables.<Operator>get(plan.leafs(), 0);
@@ -206,7 +206,7 @@ public class InumPlan extends SQLStatementPlan
 
         if (o.getDatabaseObjects().get(0) instanceof Index)
             return extractCostOfLeaf(plan, o);
-                
+
         // plan uses a full table scan, so it's not compatible
         return Double.POSITIVE_INFINITY;
     }

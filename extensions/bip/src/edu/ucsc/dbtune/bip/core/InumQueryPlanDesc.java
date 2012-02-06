@@ -131,7 +131,6 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         double cost;
         listAccessCostPerPlan = new ArrayList<Map<Index, Double>>();
         for (InumPlan plan : templatePlans) {
-            System.out.println("L132 (query plan), internal plan cost: " + plan.getInternalCost());
             beta.add(new Double(plan.getInternalCost()));
             Map<Index, Double> mapIndexAccessCost = new HashMap<Index, Double>();
             for (int i = 0; i < n; i++) {
@@ -139,8 +138,6 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                     cost = plan.plug(index);                    
                     if (cost == Double.POSITIVE_INFINITY)
                         cost = InumQueryPlanDesc.BIP_MAX_VALUE;
-                    System.out.println("L142 (query plan), index: " + index
-                                        + " cost: " + cost);
                     mapIndexAccessCost.put(index, new Double(cost));
                 }                            
             }
