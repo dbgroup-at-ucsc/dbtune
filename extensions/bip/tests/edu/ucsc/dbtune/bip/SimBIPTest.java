@@ -5,7 +5,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.CPlexSolver;
+import edu.ucsc.dbtune.bip.core.CandidateGenerator;
+import edu.ucsc.dbtune.bip.core.DB2CandidateGenerator;
+import edu.ucsc.dbtune.bip.sim.MaterializationSchedule;
+import edu.ucsc.dbtune.bip.sim.MaterializationScheduleOnOptimizer;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
@@ -45,34 +49,22 @@ public class SimBIPTest
         String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
         FileReader fileReader = new FileReader(workloadFile);
         Workload workload     = new Workload(fileReader);
+        Set<Index> indexes;
         
-        Set<Index> allIndexes = new HashSet<Index>();
-        for (SQLStatement stmt : workload) {
-            //System.out.println("==== Query: " + stmt.getSQL());
-            Set<Index> stmtIndexes = db.getOptimizer().recommendIndexes(stmt); 
-            for (Index newIdx : stmtIndexes) {
-                boolean exist = false;
-                for (Index oldIdx : allIndexes) {
-                    if (oldIdx.equalsContent(newIdx)) {
-                        exist = true;
-                        break;
-                    }
-                }
-                if (exist == false) {
-                    allIndexes.add(newIdx);
-                }
-            }
-        }
-         
-        System.out.println("Number of indexes: " + allIndexes.size() + " number of statements: "
-                            + workload.size());
-        for (Index index : allIndexes) {
+        CandidateGenerator generator = new DB2CandidateGenerator();
+        generator.setOptimizer(db.getOptimizer());
+        generator.setWorkload(workload);
+        indexes = generator.optimalCandidateSet();
+        
+        System.out.println("Number of indexes: " + indexes.size() 
+                            + " number of statements: " + workload.size());
+        for (Index index : indexes) 
             System.out.println("Index : " + index.columns()); 
-        }
+        
         
         Set<Index> Sinit = new HashSet<Index>();
         Set<Index> Smat = new HashSet<Index>();
-        Smat = allIndexes;
+        Smat = indexes;
         
         Optimizer io = db.getOptimizer();
 
@@ -86,10 +78,24 @@ public class SimBIPTest
         bip.setLogListenter(logger);
         bip.setConfigurations(Sinit, Smat);
         bip.setNumberofIndexesEachWindow(1);
-        bip.setNumberWindow(allIndexes.size());
+        bip.setNumberWindows(indexes.size());
         
-        BIPOutput schedule = bip.solve();
+        Set<SQLStatement> sqls = new HashSet<SQLStatement>();
+        for (int i = 0; i < workload.size(); i++)
+            sqls.add(workload.get(i));
+        
+        MaterializationSchedule schedule = new MaterializationSchedule (0, new HashSet<Index>());
+        schedule = (MaterializationSchedule) bip.solve();
         if (schedule != null) {
+            CPlexSolver cplex = bip.getSolver();
+            // invoke the actual optimizer
+            MaterializationScheduleOnOptimizer mso = new MaterializationScheduleOnOptimizer();
+            mso.verify(io, schedule, sqls);
+            System.out.println(" Cost by BIP: " + cplex.getObjectiveValue()
+                               + " vs. cost by DB2: " + mso.getTotalCost()
+                               + " The RATIO: " + cplex.getObjectiveValue() / mso.getTotalCost());
+            
+            System.out.println("Solver information: " + cplex);            
             System.out.println("Result: " + schedule.toString());
             System.out.println(logger.toString());
         }

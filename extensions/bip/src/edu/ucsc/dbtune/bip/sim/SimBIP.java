@@ -33,13 +33,14 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     /** Map variable of type CREATE or DROP to the indexes */
     private Map<String,Index> mapVarCreateDropToIndex;
     /** Set of indexes that are created, dropped, and not touched */
-    private Set<Index> Screate, Sdrop, Sremain;
+    private Set<Index> Sinit, Screate, Sdrop, Sremain;
     private int maxNumberIndexesEachWindow, maxTimeEachWindow;
     boolean isConstraintNumberIndexesWindow, isConstraintTimeLimitWindow;
     
     @Override
     public void setConfigurations(Set<Index> Sinit, Set<Index> Smat) 
     {
+        this.Sinit = Sinit;
         /**
          * Classify the indexes into one of the three types: 
          * INDEX_TYPE_CREATE, INDEX_TYPE_DROP, INDEX_TYPE_REMAIN
@@ -60,7 +61,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     
 
     @Override
-    public void setNumberWindow(int W) 
+    public void setNumberWindows(int W) 
     {
         this.W  = W;
     }
@@ -142,7 +143,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     @Override
     protected BIPOutput getOutput()
     { 
-        MaterializationSchedule schedule = new MaterializationSchedule(W);
+        MaterializationSchedule schedule = new MaterializationSchedule(W, Sinit);
         
         // Iterate over variables create_{i,w} and drop_{i,w}
         for (Entry<String, Integer> pairVarVal : mapVariableValue.entrySet()) {
@@ -341,7 +342,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 					        
 							String var = poolVariables.get(SimVariablePool.VAR_X, w, 
 							                               q, k, index.getId()).getName();
-							linList.add(Double.toString(desc.getAccessCost(k, index)) + var);		
+							linList.add(desc.getAccessCost(k, index) + var);		
 						}
 					}
 				}		

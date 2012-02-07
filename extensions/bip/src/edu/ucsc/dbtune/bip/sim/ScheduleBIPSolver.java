@@ -22,7 +22,7 @@ public interface ScheduleBIPSolver extends BIPSolver
      * @param W
      *      The number of windows
      */
-    void setNumberWindow(int W);
+    void setNumberWindows(int W);
     
     /**
      * Set the maximum number of indexes to be materialized at each window.
