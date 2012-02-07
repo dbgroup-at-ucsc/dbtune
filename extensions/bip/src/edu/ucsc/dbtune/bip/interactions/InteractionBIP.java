@@ -5,12 +5,19 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
+
+import com.google.caliper.internal.guava.collect.Sets;
 
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Strings;
+import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
@@ -21,33 +28,40 @@ import edu.ucsc.dbtune.bip.util.LogListener;
 import ilog.concert.IloException;
  
 /**
- * The class is responsible for solving the RestrictIIP problem: 
- * Given a query q, the Index Interaction Problem (IIP) finds pairs of indexes (c,d) 
- * that interact with respect to q; i.e., doi_q(c,d) >= delta.
+ * The class is responsible for solving the interaction problem: 
+ * Given a query {@code q}, finds pairs of indexes {@code (c,d)} 
+ * that interact with respect to {@code q}; i.e., {@code doi_q(c,d) >= delta}.
  *  
  * @author Quoc Trung Tran
  *
  */
 public class InteractionBIP extends AbstractBIPSolver
 {	
-	public static HashMap<String,Integer> pairInteractingIndexNames;	
-	public static final int NUM_THETA = 4;
+	public static HashMap<String,Integer> pairInteractingIndexNames;
+	
     public static final int IND_EMPTY = 0;
     public static final int IND_C = 1;
     public static final int IND_D = 2;
     public static final int IND_CD = 3;
-     
-    private List<String> CTheta;
-    private List<List<String>> elementCTheta;
-    private List<List<String>> varTheta;
+    
+    public final List<Integer> listTheta = 
+                    Arrays.asList(IND_EMPTY, IND_C, IND_D, IND_CD); 
+                         
+    private Map<Integer, String> CTheta;
+    private Map<Integer, List<String>> elementCTheta;    
+    private Map<Integer, List<String>> varTheta;
     private Map<String, Double> coefVarYXTheta;
     private IIPVariablePool poolVariables;
     private RestrictIIPParam restrictIIP;
+    private Map<String, Index> mapVarSIndex;
     
     private InteractionOutput interactionOutput;
     private QueryPlanDesc investigatingDesc;
     private double delta;
 	private CPlexInteraction cplex;	
+	private SQLStatement sql;
+    private Optimizer optimizer;
+    
     
     public InteractionBIP(double delta)
     {
@@ -56,6 +70,16 @@ public class InteractionBIP extends AbstractBIPSolver
         cplex = new CPlexInteraction();
     }
 	
+    /**
+     * Set the conventional optimizer that will be used to verify the correctness of BIP solution
+     * @param optimizer
+     *      A conventional optimizer (e.g., DB2Optimizer)
+     */
+    public void setConventionalOptimizer(Optimizer optimizer)
+    {
+        this.optimizer = optimizer;
+    }
+    
     
     @Override
     public BIPOutput solve() throws SQLException, IOException
@@ -63,15 +87,19 @@ public class InteractionBIP extends AbstractBIPSolver
         // 1. Communicate with INUM 
         // to derive the query plan description including internal cost, index access cost,
         // index at each slot, etc.  
+        logger.setStartTimer();
         populatePlanDescriptionForStatements();
         logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
         
         // 2. Iterate over the list of query plan descs that have been derived
         interactionOutput = new InteractionOutput();
+        int i = 0;
         try {
             for (QueryPlanDesc desc : listQueryPlanDescs) {
+                sql = workload.get(i);
                 investigatingDesc = desc;
                 findInteractions();
+                i++;
             }
         } catch (IloException e) {
             throw new RuntimeException(e);
@@ -109,7 +137,8 @@ public class InteractionBIP extends AbstractBIPSolver
         
         Index indexc, indexd;
         int ic, id;
-        double doi;
+        boolean isInteracting;
+        
         for (int pos_c = 0; pos_c < indexes.size(); pos_c++) {
             indexc = indexes.get(pos_c);
             ic = mapIndexSlotID.get(indexc);
@@ -130,28 +159,33 @@ public class InteractionBIP extends AbstractBIPSolver
                 restrictIIP = new RestrictIIPParam(delta, ic, id, indexc, indexd);
                 
                 // 2. Construct BIP
+                logger.setStartTimer();
                 initializeBuffer();
                 buildBIP();
                 logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);
                 
                 // 3. Solve the first BIP
-                // TODO: for debug only
+                isInteracting = false;
+                logger.setStartTimer();
                 Map<String, Integer> mapVarVal = cplex.solve(buf.getLpFileName());                
-                if (mapVarVal != null) {
-                    doi = computeDoi(mapVarVal); 
-                    storeInteractingIndexes(indexc, indexd, doi);
+                if (mapVarVal != null) { 
+                    cacheInteractingIndexes(indexc, indexd);
+                    isInteracting = true;
                 } else {
                     // formulate the alternative BIP
                    mapVarVal = solveAlternativeBIP(); 
                    if (mapVarVal != null) {
-                       doi = computeDoi(mapVarVal);
-                       storeInteractingIndexes(indexc, indexd, doi);
+                       cacheInteractingIndexes(indexc, indexd);
+                       isInteracting = true;
                    }
                    else 
                         System.out.println(" NO INTERACTION ");
-                } 
-               
+                }  
                 logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
+                
+                // compute the doi
+                if (isInteracting) 
+                    storeInteractingPair(indexc, indexd, mapVarVal, optimizer);
             }
         }
     }
@@ -218,15 +252,19 @@ public class InteractionBIP extends AbstractBIPSolver
      * 
      * We also record the set of variables used in the formula of each  
      * {@code cost(q, Atheta \cup Stheta}} with {@code theta \in \{ EMPTY, C, D, CD })
-     * in order to build the index interaction constraint.  
+     * in order to build the index interaction constraint.
+     * 
+     * We also map variable of type {@code TYPE_S} to the index that this variable is defined 
+     * on (for debugging purpose).   
      *  
      */
     private void constructVariables()
     {   
         poolVariables = new IIPVariablePool();
-        varTheta = new ArrayList<List<String>>();
+        varTheta = new HashMap<Integer, List<String>>();
+        mapVarSIndex = new HashMap<String, Index>();
         
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
+        for (int theta : listTheta) {
             
             List<String> listVarTheta = new ArrayList<String>();
             // var y
@@ -256,6 +294,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 BIPVariable var = poolVariables.createAndStore
                                                 (theta, IIPVariablePool.VAR_S, 0, index.getId());
                 listVarTheta.add(var.getName());
+                mapVarSIndex.put(var.getName(), index);
             }
             
             // var u
@@ -271,7 +310,9 @@ public class InteractionBIP extends AbstractBIPSolver
                     }
                 }
             }
-            varTheta.add(listVarTheta);
+            
+            // record the list of variables of each theta
+            varTheta.put(theta, listVarTheta);
         }
     }
     
@@ -287,13 +328,15 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     private void buildQueryExecutionCost()
     {   
-        CTheta = new ArrayList<String>();
-        elementCTheta = new ArrayList<List<String>>();
+        CTheta = new HashMap<Integer, String>();
+        elementCTheta = new HashMap<Integer, List<String>>();
         coefVarYXTheta = new HashMap<String, Double>(); 
         
         double cost;
         String element;
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {         
+        
+        for (int theta : listTheta) {
+            
             String ctheta = "";
             List<String> linListElement = new ArrayList<String>();          
             List<String> linList = new ArrayList<String>();
@@ -329,9 +372,9 @@ public class InteractionBIP extends AbstractBIPSolver
             }       
             ctheta = ctheta + " + " + Strings.concatenate(" + ", linList);
             
-            /** Record {@code ctheta}, element of {@code ctheta} */
-            CTheta.add(ctheta);         
-            elementCTheta.add(linListElement);
+            /** Record ctheta as well as element of ctheta */
+            CTheta.put(theta, ctheta);
+            elementCTheta.put(theta, linListElement);
         }
     }
      
@@ -346,7 +389,7 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     private void atomicConstraintForINUM()
     {
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
+        for (int theta : listTheta) {
             
             List<String> linList = new ArrayList<String>();
             // (3a) \sum_{k \in [1, Kq]}y^{theta}_k = 1
@@ -397,7 +440,7 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     private void atomicConstraintAtheta()
     {
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
+        for (int theta : listTheta) {
             
             for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
                 
@@ -427,11 +470,12 @@ public class InteractionBIP extends AbstractBIPSolver
             }
         }
         
-        for (int theta = IND_C; theta <= IND_CD; theta++) {   
+        
+        // for case of Ac and Acd
+        for (int theta : listTheta) {
             
-            if (theta == IND_D) { 
-                continue;
-            }
+            if (theta == IND_EMPTY || theta == IND_D)
+                continue; 
             
             List<String> linList = new ArrayList<String>();
             // not consider full table scan
@@ -453,8 +497,11 @@ public class InteractionBIP extends AbstractBIPSolver
             }
         }
         
-        
-        for (int theta = IND_D; theta <= IND_CD; theta++) {     
+        // for case of Ad and Acd
+        for (int theta : listTheta) {
+            
+            if (theta == IND_EMPTY || theta == IND_C)
+                continue;
             
             List<String> linList = new ArrayList<String>();
             // not consider full table scan 
@@ -517,14 +564,14 @@ public class InteractionBIP extends AbstractBIPSolver
     private void localOptimal()
     {   
         // construct C^opt_t
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
+        for (int theta : listTheta) {
             
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
                 
                 List<String> linList = new ArrayList<String>();     
                 for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : this.investigatingDesc.getListIndexesAtSlot(i)) {
+                    for (Index index : investigatingDesc.getListIndexesAtSlot(i)) {
                         
                         String var_u = poolVariables.get(theta, IIPVariablePool.VAR_U, t, 
                                                         index.getId()).getName();       
@@ -546,7 +593,7 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     private void atomicConstraintLocalOptimal()
     {
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
+        for (int theta : listTheta) {
             
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
                 
@@ -577,7 +624,7 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     private void presentVariableLocalOptimal()
     {   
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
+        for (int theta : listTheta) {
             
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) { 
                 
@@ -614,12 +661,16 @@ public class InteractionBIP extends AbstractBIPSolver
                                         + var_u 
                                         + " - " + poolVariables.get(IND_EMPTY, 
                                                                     IIPVariablePool.VAR_S, 0, ga)
+                                                                    .getName()
                                         + " - " + poolVariables.get(IND_C, 
                                                                     IIPVariablePool.VAR_S, 0, ga)
+                                                                    .getName()
                                         + " - " + poolVariables.get(IND_D, 
                                                                     IIPVariablePool.VAR_S, 0, ga)
+                                                                    .getName()
                                         + " - " + poolVariables.get(IND_CD, 
                                                                     IIPVariablePool.VAR_S, 0, ga)
+                                                                    .getName()
                                         + " <= 0 ");
                             numConstraints++;
                         } 
@@ -637,7 +688,7 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     private void selectingAtEachSlot()
     {  
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {    
+        for (int theta : listTheta) {    
             
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
                 
@@ -749,7 +800,7 @@ public class InteractionBIP extends AbstractBIPSolver
         double coef, existingCoef;
         Object found;
         
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
+        for (int theta : listTheta) {
             
             for (String var : varTheta.get(theta)) {
                 coef = 0.0;
@@ -800,10 +851,8 @@ public class InteractionBIP extends AbstractBIPSolver
      * @param indexd
      *      The second index
      */
-    private void storeInteractingIndexes(Index indexc, Index indexd, double doi)
-    {
-        IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd, doi);
-        interactionOutput.addPairIndexInteraction(pairIndexes);                               
+    private void cacheInteractingIndexes(Index indexc, Index indexd)
+    {                                  
         String combinedName = indexc + "_" + indexd;        
         pairInteractingIndexNames.put(combinedName, 1);
         combinedName = indexd + "_" + indexc;        
@@ -827,6 +876,64 @@ public class InteractionBIP extends AbstractBIPSolver
 		
 	
 	/**
+	 * This function computes the degree of interaction from BIP as well as from the actual
+	 * optimizer and store this pair in the output
+	 * 
+	 * @param indexc
+	 *     The first interacting index
+	 * @param indexd
+	 *     The second interacting index	      
+	 * @param mapVarVal
+	 *     A map between the variable and the assignment found by CPLEX solver
+	 * 
+	 */
+	private void storeInteractingPair(Index indexc, Index indexd, 
+	                                  Map<String, Integer> mapVarVal,
+	                                  Optimizer optimizer)
+	{   
+	    IndexInteraction pair = new IndexInteraction(indexc, indexd);
+	    pair.setDoiBIP(computeDoi(mapVarVal));
+	    
+	    // compute doi from the optimizer
+	    double eleVar;
+	    Object found;
+	    Map<Integer, Set<Index>> mapThetaIndexSet = new HashMap<Integer, Set<Index>>();
+
+	    for (int theta : listTheta) {
+	        
+	        Set<Index> Atheta = new HashSet<Index>();
+	        
+	        for (String var : varTheta.get(theta)) {
+	            
+	            if (!mapVarVal.containsKey(var))
+	                continue;
+	            
+	            eleVar = mapVarVal.get(var);
+	            if (eleVar == 1) {
+	                // if the variable has been assigned value 1 and 
+	                // is of type TYPE_S
+	                found = mapVarSIndex.get(var);
+	                if (found != null)
+	                    Atheta.add((Index) found);
+	            }
+	        }
+	        mapThetaIndexSet.put(theta, Atheta);
+	    }
+	    
+	    Set<SQLStatement> sqls = Sets.newHashSet(sql);
+	    InteractionOnOptimizer ioo = new InteractionOnOptimizer(indexc, indexd, mapThetaIndexSet);
+	    try {
+            ioo.verify(optimizer, null, sqls);
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+	    pair.setDoiOptimizer(ioo.getDoiOptimizer());
+	    
+	    interactionOutput.addInteraction(pair);
+	}
+	
+	/**
      * Print the actual query execution cost derived by the CPLEX solver.
      * This method is implemented to check the correctness of our BIP solution. 
      */
@@ -836,7 +943,7 @@ public class InteractionBIP extends AbstractBIPSolver
         double coef, eleVar, ctheta;
         Object found;
         
-        for (int theta = IND_EMPTY; theta <= IND_CD; theta++) { 
+        for (int theta : listTheta) { 
             
             ctheta = 0.0;     
             for (String var : varTheta.get(theta)) {
@@ -847,9 +954,6 @@ public class InteractionBIP extends AbstractBIPSolver
                     coef = (Double) found;
                     eleVar = mapVarVal.get(var);
                     ctheta += coef * eleVar;
-                    if (eleVar == 1) {
-                        System.out.println("L868, var: " + var + " coef: " + coef);
-                    }
                 }
             }
             
@@ -863,5 +967,7 @@ public class InteractionBIP extends AbstractBIPSolver
         System.out.println(" doi: " + doi);
         return doi;
     }
+    
+     
 }
  

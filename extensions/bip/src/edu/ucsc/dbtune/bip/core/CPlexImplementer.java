@@ -14,11 +14,19 @@ public class CPlexImplementer implements CPlexSolver
     protected IloLPMatrix matrix;
     protected IloNumVar [] vars;
     protected IloCplex cplex;
+    protected boolean isSolvable;
+    public static double OBJ_VALUE_UNKNOWN = -999;
+    
+    public CPlexImplementer()
+    {
+        isSolvable = false;
+    }
     
     @Override
     public Map<String, Integer> solve(String inputFile) 
     {
         Map<String, Integer> mapVariableValue = null;
+        isSolvable = false;
         try {
             // if cplex is NOT null, clear model
             if (cplex != null)
@@ -38,9 +46,10 @@ public class CPlexImplementer implements CPlexSolver
             // Read model from file into cplex optimizer object
             cplex.importModel(inputFile);
             
-            if (cplex.solve())
+            if (cplex.solve()) {
                 mapVariableValue = getMapVariableValue();
-            
+                isSolvable = true;
+            }
         }
         catch (IloException e) {
             System.err.println("Concert exception caught: " + e);
@@ -72,12 +81,6 @@ public class CPlexImplementer implements CPlexSolver
             System.err.println("Concert exception caught: " + e);
         }
         
-        try {
-            System.out.println("L63 (Cplex implementer), the objective value: " + 
-                                    cplex.getObjValue());
-        } catch (IloException e) {            
-            e.printStackTrace();
-        }
         return mapVariableValue;
     }
      
@@ -105,11 +108,37 @@ public class CPlexImplementer implements CPlexSolver
     }
 
     @Override
-    public String toString() {
+    public String toString() 
+    {
         StringBuilder result = new StringBuilder("CPlexImplementer: \n");
         result.append(" Number of variables: " + cplex.getNcols());
         result.append(" Number of constraints: " + cplex.getNrows());
         
         return result.toString();
+    }
+
+    @Override
+    public int getNumberOfConstraints() 
+    {
+        return cplex.getNrows();
+    }
+
+    @Override
+    public int getNumberOfVariables() 
+    {
+        return cplex.getNcols();
+    }
+
+    @Override
+    public double getObjectiveValue() 
+    {
+        if (isSolvable) {
+            try {
+                return cplex.getObjValue();
+            } catch (IloException e) {
+                System.err.append("Error with CPlex object" + e.getMessage());
+            }
+        }
+        return CPlexImplementer.OBJ_VALUE_UNKNOWN;
     }
 }

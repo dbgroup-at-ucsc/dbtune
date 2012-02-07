@@ -8,34 +8,34 @@ import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 
 public class InteractionOutput extends BIPOutput 
 {
-    private List<IndexInteraction> listInteractions;
+    private List<IndexInteraction> interactions;
     
     public InteractionOutput()
     {
-        listInteractions = new ArrayList<IndexInteraction>();
+        interactions = new ArrayList<IndexInteraction>();
     }
     
     /**
      * Add a pair of interaction indexes into the list
      * 
-     * @param pairIndexes
+     * @param pair
      *      A pair of indexes that are found to interact with each other
      */
-    public void addPairIndexInteraction(IndexInteraction pairIndexes)
+    public void addInteraction(IndexInteraction pair)
     {
-        listInteractions.add(pairIndexes);
+        interactions.add(pair);
     }
     
-    public List<IndexInteraction> getListInteractions()
+    public List<IndexInteraction> getInteractions()
     {
-        return listInteractions;
+        return interactions;
     }
 
     @Override
     public String toString() 
     {
         StringBuilder strInteractions = new StringBuilder("========= List of interactions ========\n");        
-        for (IndexInteraction pair : listInteractions)
+        for (IndexInteraction pair : interactions)
             strInteractions.append(pair.toString());
         
         return strInteractions.toString();

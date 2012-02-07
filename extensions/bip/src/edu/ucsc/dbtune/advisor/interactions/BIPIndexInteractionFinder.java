@@ -35,6 +35,6 @@ public class BIPIndexInteractionFinder implements IndexInteractionFinder
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return out.getListInteractions();
+        return out.getInteractions();
     }
 }

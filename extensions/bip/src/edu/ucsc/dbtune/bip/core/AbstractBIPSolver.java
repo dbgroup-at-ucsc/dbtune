@@ -36,7 +36,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected List<QueryPlanDesc> listQueryPlanDescs;
     
     protected CPlexBuffer buf;
-    protected CPlexImplementer cplex;
+    protected CPlexSolver cplex;
     protected Map<String, Integer> mapVariableValue;
     protected Environment environment = Environment.getInstance();
     protected int numConstraints;
@@ -66,21 +66,24 @@ public abstract class AbstractBIPSolver implements BIPSolver
     public BIPOutput solve() throws SQLException, IOException
     {   
         // 1. Communicate with INUM 
-        // to derive the query plan descriptions including internal cost, index access cost, etc.  
-        this.populatePlanDescriptionForStatements();
+        // to derive the query plan descriptions including internal cost, index access cost, etc.
+        logger.setStartTimer();
+        populatePlanDescriptionForStatements();
         logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
         
-        // 2. Build BIP        
+        // 2. Build BIP    
+        logger.setStartTimer();
         initializeBuffer();
         buildBIP();       
         logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);
         
         // 3. Solve the BIP
+        logger.setStartTimer();
         BIPOutput result = null;
         cplex = new CPlexImplementer();
-        this.mapVariableValue = cplex.solve(this.buf.getLpFileName());
-        if (this.mapVariableValue != null)
-            result = this.getOutput();
+        mapVariableValue = cplex.solve(this.buf.getLpFileName());
+        if (mapVariableValue != null)
+            result = getOutput();
         
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         return result;            
@@ -148,6 +151,21 @@ public abstract class AbstractBIPSolver implements BIPSolver
         catch (IOException e) {
             System.out.println(" Error in opening files " + e.toString());          
         }
+    }
+    
+    
+    /**
+     * Retrieve the solver that is used to to solve problem. This function is mainly used
+     * to obtain information about the solver (e.g., the objective function, number of variables,
+     * number of constraints, etc. )
+     * 
+     * @return
+     *      The CPlexSolver object 
+     *      
+     */
+    public CPlexSolver getSolver()
+    {
+        return this.cplex;
     }
     
     /**

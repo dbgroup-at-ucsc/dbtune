@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 
-
 public abstract class AbstractBIPVariablePool  
 {
     protected List<BIPVariable> listVar;
@@ -40,12 +39,7 @@ public abstract class AbstractBIPVariablePool
      */
     public BIPVariable get(String name)
     {   
-        Object found = mapNameVar.get(name);
-        BIPVariable var = null;
-        if (found != null) 
-            var = (BIPVariable) found;
-        
-        return var;
+        return mapNameVar.get(name);
     }
     
     /**

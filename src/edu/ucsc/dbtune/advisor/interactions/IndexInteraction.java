@@ -6,13 +6,12 @@ public class IndexInteraction
 {
     private Index a;
     private Index b;
-    private double doi;
+    private double doiBIP, doiOptimizer;
     
-    public IndexInteraction(Index a, Index b, double doi)
+    public IndexInteraction(Index a, Index b)
     {
         this.a = a;
         this.b = b;
-        this.doi = doi;
     }
     
     public Index getFirst()
@@ -25,14 +24,44 @@ public class IndexInteraction
         return b;
     }
     
-    public double getLowerDegreeOfInteraction()
+    /**
+     * Retrieve the degree of interaction computing using convention optimizer
+     * 
+     * @return  
+     *      The {@code doi} value
+     */
+    public double getDoiOptimizer()
     {
-        return doi;
+        return doiOptimizer;
     }
-
+    
+    
+    /**
+     * Retrieve the degree of interaction computed by BIP method
+     * 
+     * @return  
+     *      The {@code doi} value
+     */
+    public double getDoiBIP()
+    {
+        return doiBIP;
+    }
+    
+    
+    public void setDoiOptimizer(double doi)
+    {
+        doiOptimizer = doi;
+    }
+    
+    public void setDoiBIP(double doi)
+    {
+        doiBIP = doi;
+    }
+    
     @Override
     public String toString() {
-        return "IndexInteraction [first=" + a + ", second=" + b + ", doi=" + doi + "]\n";
+        return "IndexInteraction [first=" + a + ", second=" + b + ", doiBIP=" + doiBIP + 
+               ", doiOptimizer=" + doiOptimizer + "]\n";
     }
     
 }

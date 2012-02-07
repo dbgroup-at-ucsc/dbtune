@@ -15,4 +15,30 @@ public interface CPlexSolver
      *      or NULL if there has no solution
      */
     Map<String, Integer> solve(String inputFile);
+    
+    /**
+     * Retrieve the objective value of the solution
+     * 
+     * @return
+     *      The object value. 
+     */
+    public double getObjectiveValue();
+    
+    /**
+     * Retrieve the number of variables constructed in the BIP
+     * (i.e., the number of columns in the matrix used inside the BIP)
+     * 
+     * @return
+     *     The number of variables
+     */
+    public int getNumberOfVariables();
+    
+    /**
+     * Retrieve the number of constraints constructed in the BIP
+     * (i.e., the number of rows in the matrix used inside the BIP)
+     * 
+     * @return
+     *      The number of constraints
+     */
+    public int getNumberOfConstraints();
 }
