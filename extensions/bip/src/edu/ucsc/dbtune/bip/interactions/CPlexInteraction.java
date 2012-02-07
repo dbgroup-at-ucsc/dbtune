@@ -40,14 +40,15 @@ public class CPlexInteraction extends CPlexImplementer
                 double coef = 0.0;
                 Object found = mapVarCoef.get(var.getName());
                 if (found != null) 
-                    coef = ((Double)found).doubleValue();
+                    coef = (Double) found;
                       
                 listCoef[i] = coef;
             }
             cplex.addLe(cplex.scalProd(listCoef, vars), 0);
             
-            if (cplex.solve())
+            if (cplex.solve()) 
                 mapVariableValue = super.getMapVariableValue();
+            
             
         } catch (IloException e) {
             e.printStackTrace();

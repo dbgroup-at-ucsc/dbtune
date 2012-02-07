@@ -22,9 +22,10 @@ public class CPlexBuffer
         binFileName = prefix+".bin";
         lpFileName = prefix+".lp";
         
-        obj  = new PrintWriter(new FileWriter(objFileName));
-        cons = new PrintWriter(new FileWriter(consFileName));
-        bin  = new PrintWriter(new FileWriter(binFileName));
+        // erase the content stored in the current file
+        obj  = new PrintWriter(new FileWriter(objFileName), false);
+        cons = new PrintWriter(new FileWriter(consFileName), false);
+        bin  = new PrintWriter(new FileWriter(binFileName), false);
 
         cons.println();
         cons.println("Subject To");

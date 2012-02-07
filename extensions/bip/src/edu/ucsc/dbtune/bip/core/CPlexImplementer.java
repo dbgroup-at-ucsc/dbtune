@@ -19,13 +19,26 @@ public class CPlexImplementer implements CPlexSolver
     public Map<String, Integer> solve(String inputFile) 
     {
         Map<String, Integer> mapVariableValue = null;
-        try {               
-            cplex = new IloCplex(); 
+        try {
+            // if cplex is NOT null, clear model
+            if (cplex != null)
+                cplex.clearModel();
+            else 
+                cplex = new IloCplex();
+            
+            // allow the solution differed 5% from the actual optimal value
             cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
+            // not output the log of CPLEX
+            cplex.setOut(null);
+            // not output the warning
+            cplex.setWarning(null);
+            // set the mode to be parallel barrier (determistic)
+            //cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Barrier);   
+            cplex.setParam(IloCplex.IntParam.ParallelMode, IloCplex.ParallelMode.Deterministic);
             // Read model from file into cplex optimizer object
             cplex.importModel(inputFile);
             
-            if (cplex.solve() == true)
+            if (cplex.solve())
                 mapVariableValue = getMapVariableValue();
             
         }
@@ -96,11 +109,7 @@ public class CPlexImplementer implements CPlexSolver
         StringBuilder result = new StringBuilder("CPlexImplementer: \n");
         result.append(" Number of variables: " + cplex.getNcols());
         result.append(" Number of constraints: " + cplex.getNrows());
-        try {
-            result.append(" Objetive value: " + cplex.getObjValue());
-        } catch (IloException e) {
-            e.printStackTrace();
-        } 
+        
         return result.toString();
     }
 }
