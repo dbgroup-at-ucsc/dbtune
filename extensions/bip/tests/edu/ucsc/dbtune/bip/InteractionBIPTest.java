@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.CandidateGenerator;
+import edu.ucsc.dbtune.bip.core.DB2CandidateGenerator;
 import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
@@ -35,35 +37,22 @@ public class InteractionBIPTest extends BIPTestConfiguration
         db = newDatabaseSystem(en);
         
         System.out.println(" In test interaction ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/workload.sql");
+        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
         FileReader fileReader = new FileReader(workloadFile);
         Workload workload     = new Workload(fileReader);
         
-        Set<Index> allIndexes = new HashSet<Index>();
-        for (SQLStatement stmt : workload) {
-            System.out.println("==== Query: " + stmt.getSQL());
-            Set<Index> stmtIndexes = db.getOptimizer().recommendIndexes(stmt); 
-            for (Index newIdx : stmtIndexes) {
-                boolean exist = false;
-                for (Index oldIdx : allIndexes) {
-                    if (oldIdx.equalsContent(newIdx)) {
-                        exist = true;
-                        break;
-                    }
-                }
-                if (!exist) {
-                    allIndexes.add(newIdx);
-                }
-            }
-        }
-         
-        System.out.println("L60 (Test), Number of indexes: " + allIndexes.size());
-        for (Index index : allIndexes) {
+        CandidateGenerator generator = new DB2CandidateGenerator();
+        generator.setWorkload(workload);
+        generator.setOptimizer(db.getOptimizer());
+        Set<Index> candidates = generator.optimalCandidateSet();
+                
+        System.out.println("L60 (Test), Number of indexes: " + candidates.size());
+        for (Index index : candidates) {
             System.out.println("L62, Index : " + index); 
         }
 
         try {
-            double delta = 0.0001;
+            double delta = 1;
             Optimizer io = db.getOptimizer();
 
             if (!(io instanceof InumOptimizer))
@@ -71,7 +60,7 @@ public class InteractionBIPTest extends BIPTestConfiguration
 
             LogListener logger = LogListener.getInstance();
             InteractionBIP bip = new InteractionBIP(delta);            
-            bip.setCandidateIndexes(allIndexes);
+            bip.setCandidateIndexes(candidates);
             bip.setWorkload(workload);
             bip.setOptimizer((InumOptimizer) io);
             bip.setLogListenter(logger);

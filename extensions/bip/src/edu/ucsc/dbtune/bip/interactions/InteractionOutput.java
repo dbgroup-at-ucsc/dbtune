@@ -36,9 +36,7 @@ public class InteractionOutput extends BIPOutput
     {
         StringBuilder strInteractions = new StringBuilder("========= List of interactions ========\n");        
         for (IndexInteraction pair : listInteractions)
-            strInteractions.append(pair.getFirst() + " ---- " 
-                                    + pair.getSecond()
-                                    + " \n");
+            strInteractions.append(pair.toString());
         
         return strInteractions.toString();
     }

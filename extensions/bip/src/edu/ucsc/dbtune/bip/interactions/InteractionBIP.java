@@ -40,7 +40,7 @@ public class InteractionBIP extends AbstractBIPSolver
     private List<String> CTheta;
     private List<List<String>> elementCTheta;
     private List<List<String>> varTheta;
-    private List<List<Double>> coefVarTheta;
+    private Map<String, Double> coefVarYXTheta;
     private IIPVariablePool poolVariables;
     private RestrictIIPParam restrictIIP;
     
@@ -63,13 +63,13 @@ public class InteractionBIP extends AbstractBIPSolver
         // 1. Communicate with INUM 
         // to derive the query plan description including internal cost, index access cost,
         // index at each slot, etc.  
-        this.populatePlanDescriptionForStatements();
+        populatePlanDescriptionForStatements();
         logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
         
         // 2. Iterate over the list of query plan descs that have been derived
         interactionOutput = new InteractionOutput();
         try {
-            for (QueryPlanDesc desc :  listQueryPlanDescs) {
+            for (QueryPlanDesc desc : listQueryPlanDescs) {
                 investigatingDesc = desc;
                 findInteractions();
             }
@@ -109,13 +109,14 @@ public class InteractionBIP extends AbstractBIPSolver
         
         Index indexc, indexd;
         int ic, id;
+        double doi;
         for (int pos_c = 0; pos_c < indexes.size(); pos_c++) {
             indexc = indexes.get(pos_c);
             ic = mapIndexSlotID.get(indexc);
             
             for (int pos_d = pos_c + 1; pos_d < indexes.size(); pos_d++) {
                 indexd = indexes.get(pos_d);
-                if (isInteracting(indexc, indexd) == true)
+                if (isInteracting(indexc, indexd))
                     continue;
                 
                 id = mapIndexSlotID.get(indexc);
@@ -123,7 +124,8 @@ public class InteractionBIP extends AbstractBIPSolver
                                     + " vs. " + indexd                                            
                                     + " using statement "  
                                     + investigatingDesc.getStatementID()
-                                    + "****");
+                                    + " id: " + indexc.getId()
+                                    + " vs.: " + indexd.getId() + "****");
                 // initialize an instance of RestrictIIP problem
                 restrictIIP = new RestrictIIPParam(delta, ic, id, indexc, indexd);
                 
@@ -135,17 +137,20 @@ public class InteractionBIP extends AbstractBIPSolver
                 // 3. Solve the first BIP
                 // TODO: for debug only
                 Map<String, Integer> mapVarVal = cplex.solve(buf.getLpFileName());                
-                if (mapVarVal!= null) {
-                    storeInteractingIndexes(indexc, indexd);
-                    computeQueryCostTheta(mapVarVal);
+                if (mapVarVal != null) {
+                    doi = computeDoi(mapVarVal); 
+                    storeInteractingIndexes(indexc, indexd, doi);
                 } else {
                     // formulate the alternative BIP
-                   if (solveAlternativeBIP() == true)
-                       storeInteractingIndexes(indexc, indexd);
+                   mapVarVal = solveAlternativeBIP(); 
+                   if (mapVarVal != null) {
+                       doi = computeDoi(mapVarVal);
+                       storeInteractingIndexes(indexc, indexd, doi);
+                   }
                    else 
                         System.out.println(" NO INTERACTION ");
-                    
                 } 
+               
                 logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
             }
         }
@@ -284,11 +289,10 @@ public class InteractionBIP extends AbstractBIPSolver
     {   
         CTheta = new ArrayList<String>();
         elementCTheta = new ArrayList<List<String>>();
-        coefVarTheta = new ArrayList<List<Double>> ();              
-        for (int theta = 0; theta < NUM_THETA; theta++) {
-            List <Double> coefV = new ArrayList<Double>();
-            coefVarTheta.add(coefV);
-        }
+        coefVarYXTheta = new HashMap<String, Double>(); 
+        
+        double cost;
+        String element;
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {         
             String ctheta = "";
             List<String> linListElement = new ArrayList<String>();          
@@ -297,10 +301,11 @@ public class InteractionBIP extends AbstractBIPSolver
             for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {
                 
                 String var = poolVariables.get(theta, IIPVariablePool.VAR_Y, k, 0).getName();
-                String element = investigatingDesc.getInternalPlanCost(k) + var;
+                cost = investigatingDesc.getInternalPlanCost(k);
+                element = cost + var;
                 linList.add(element);
                 linListElement.add(element);
-                coefVarTheta.get(theta).add(investigatingDesc.getInternalPlanCost(k));   
+                coefVarYXTheta.put(var, cost);   
             }
             ctheta  = Strings.concatenate(" + ", linList);
                         
@@ -314,10 +319,11 @@ public class InteractionBIP extends AbstractBIPSolver
                         
                         String var = poolVariables.get(theta, IIPVariablePool.VAR_X, 
                                                         k, index.getId()).getName();
-                        String element = investigatingDesc.getAccessCost(k, index) + var;
+                        cost = investigatingDesc.getAccessCost(k, index);
+                        element = cost + var;
                         linList.add(element);
                         linListElement.add(element);
-                        coefVarTheta.get(theta).add(investigatingDesc.getAccessCost(k, index));
+                        coefVarYXTheta.put(var, cost);
                     }
                 }
             }       
@@ -431,7 +437,7 @@ public class InteractionBIP extends AbstractBIPSolver
             // not consider full table scan
             // and exclude {@code indexc}
             for (Index index : investigatingDesc.getListIndexesWithoutFTSAtSlot
-                                    (            restrictIIP.getPosRelContainC())) {
+                                    (restrictIIP.getPosRelContainC())) {
                 
                 if (!index.equals(restrictIIP.getIndexC())) 
                     linList.add(poolVariables.get(theta, IIPVariablePool.VAR_S, 0, index.getId())
@@ -710,73 +716,67 @@ public class InteractionBIP extends AbstractBIPSolver
         ArrayList<String> listcd = new ArrayList<String>();
         double coef, realCoef;
         coef = 1 + restrictIIP.getDelta();
-        
-        for (int p = 0; p < coefVarTheta.get(IND_CD).size(); p++) {
-            
-            String element = varTheta.get(IND_CD).get(p);
-            // realCoef is supposed to be positive
-            realCoef = coef * coefVarTheta.get(IND_CD).get(p);
-            listcd.add(realCoef + element);            
+        Object found;
+        for (String var : varTheta.get(IND_CD)) {
+            found = coefVarYXTheta.get(var);
+            if (found != null) {
+                realCoef = (Double) found * coef;
+                listcd.add(realCoef + var);
+            }   
         }
         
         buf.getCons().println("interaction_8a:" 
                               + CTheta.get(IND_EMPTY) 
                               + " + " + Strings.concatenate(" + ", listcd) 
-                              + " - " + Strings.concatenate(" - ", 
-                                                                        elementCTheta.get(IND_C))
-                              + " - "  + Strings.concatenate(" - ", 
-                                                                        elementCTheta.get(IND_D))
+                              + " - " + Strings.concatenate(" - ", elementCTheta.get(IND_C))
+                              + " - " + Strings.concatenate(" - ", elementCTheta.get(IND_D))
                               + " <= 0");
     }
     
     /**
      * Replace the index interaction constraint by the following:
-     * cost(X,c) + cost(X,d) - cost(X) - (1-delta) cost(X,c,d)  <= 0
+     * cost(X,c) + cost(X,d) - cost(X) + (delta - 1) cost(X,c,d)  <= 0
      * 
+     * @return
+     *      A map from variable to their assigned binary values
+     *      or NULL, otherwise
      */
-    public boolean solveAlternativeBIP()
+    public Map<String, Integer> solveAlternativeBIP()
     {   
         System.out.println(" L715, solve alternative \n");
         Map<String,Double> mapVarCoef = new HashMap<String, Double>();
         double deltaCD = restrictIIP.getDelta() - 1; 
-        double coef;
+        double coef, existingCoef;
+        Object found;
         
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) {
-            List<String> listVar = varTheta.get(theta); 
-            for (int p = 0; p < listVar.size(); p++) {
-                BIPVariable var = poolVariables.get(listVar.get(p));
+            
+            for (String var : varTheta.get(theta)) {
                 coef = 0.0;
-                
-                if (var.getType() == IIPVariablePool.VAR_X ||
-                    var.getType() == IIPVariablePool.VAR_Y){
-                    double existingCoef = coefVarTheta.get(theta).get(p);
+                found = coefVarYXTheta.get(var);
+                // Variables of TYPE Y or X
+                if (found != null) {
+                    existingCoef = (Double) found;
                     switch(theta) {
-                        case IND_EMPTY:
-                            coef = -existingCoef;
-                            break;
-                        case IND_C:
-                            coef = existingCoef;
-                            break;
-                        case IND_D:
-                            coef = existingCoef;
-                            break;
-                        case IND_CD:
-                            coef = deltaCD * existingCoef;
-                            break;
+                    case IND_EMPTY:
+                        coef = -existingCoef;
+                        break;
+                    case IND_C:
+                        coef = existingCoef;
+                        break;
+                    case IND_D:
+                        coef = existingCoef;
+                        break;
+                    case IND_CD:
+                        coef = deltaCD * existingCoef;
+                        break;
                     }
+                    mapVarCoef.put(var, coef);
                 }
-                
-                mapVarCoef.put(var.getName(), new Double(coef));                
             }           
         }
         
-        Map<String, Integer> mapVarVal = cplex.solveAlternativeInteractionConstraint(mapVarCoef);
-        if (mapVarVal != null) {
-            computeQueryCostTheta(mapVarVal);
-            return true;
-        } else 
-            return false;
-        
+        return cplex.solveAlternativeInteractionConstraint(mapVarCoef);
     }
     
     /**
@@ -800,9 +800,9 @@ public class InteractionBIP extends AbstractBIPSolver
      * @param indexd
      *      The second index
      */
-    private void storeInteractingIndexes(Index indexc, Index indexd)
+    private void storeInteractingIndexes(Index indexc, Index indexd, double doi)
     {
-        IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd);
+        IndexInteraction pairIndexes = new IndexInteraction(indexc, indexd, doi);
         interactionOutput.addPairIndexInteraction(pairIndexes);                               
         String combinedName = indexc + "_" + indexd;        
         pairInteractingIndexNames.put(combinedName, 1);
@@ -830,33 +830,38 @@ public class InteractionBIP extends AbstractBIPSolver
      * Print the actual query execution cost derived by the CPLEX solver.
      * This method is implemented to check the correctness of our BIP solution. 
      */
-    private void computeQueryCostTheta(Map<String, Integer> mapVarVal)
+    private double computeDoi(Map<String, Integer> mapVarVal)
     {
+        List<Double> listCTheta = new ArrayList<Double>();
+        double coef, eleVar, ctheta;
+        Object found;
+        
         for (int theta = IND_EMPTY; theta <= IND_CD; theta++) { 
             
-            double ctheta = 0.0;        
-            for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {
-                
-                String var = poolVariables.get(theta, IIPVariablePool.VAR_Y, k, 0).getName();
-                double eleVar = mapVarVal.get(var);
-                ctheta += investigatingDesc.getInternalPlanCost(k) * eleVar;             
-            }
-            
-            for (int k = 0; k < investigatingDesc.getNumberOfTemplatePlans(); k++) {
-                
-                for (int i = 0; i < investigatingDesc.getNumberOfSlots(); i++) {
-                    
-                    for (Index index : this.investigatingDesc.getListIndexesAtSlot(i)) {
-                        
-                        String var = poolVariables.get(theta, IIPVariablePool.VAR_X, 
-                                                        k, index.getId()).getName();
-                        double eleVar = mapVarVal.get(var);
-                        ctheta += investigatingDesc.getAccessCost(k, index) * eleVar;
+            ctheta = 0.0;     
+            for (String var : varTheta.get(theta)) {
+                coef = 0.0;
+                found = coefVarYXTheta.get(var);
+                // Variables of TYPE Y or X
+                if (found != null) {
+                    coef = (Double) found;
+                    eleVar = mapVarVal.get(var);
+                    ctheta += coef * eleVar;
+                    if (eleVar == 1) {
+                        System.out.println("L868, var: " + var + " coef: " + coef);
                     }
                 }
-            }       
+            }
+            
             System.out.println(" Ctheta " + theta + " : " + ctheta);
+            listCTheta.add(ctheta);
         }
+        
+        double doi = Math.abs(listCTheta.get(IND_EMPTY) + listCTheta.get(IND_CD)
+                              - listCTheta.get(IND_C) - listCTheta.get(IND_D)) 
+                     / listCTheta.get(IND_CD);
+        System.out.println(" doi: " + doi);
+        return doi;
     }
 }
  
