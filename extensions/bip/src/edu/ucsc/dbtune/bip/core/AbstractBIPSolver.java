@@ -143,7 +143,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         String prefix = "wl.sql";
         String name = environment.getTempDir() + "/" + prefix;
         try {
-            this.buf = new CPlexBuffer(name);
+            buf = new CPlexBuffer(name);
         }
         catch (IOException e) {
             System.out.println(" Error in opening files " + e.toString());          
