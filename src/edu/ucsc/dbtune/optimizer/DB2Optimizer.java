@@ -27,6 +27,8 @@ import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static com.google.common.collect.Sets.newHashSet;
+
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
 
 /**
@@ -76,10 +78,10 @@ public class DB2Optimizer extends AbstractOptimizer
         insertIntoAdviseIndexTable(connection, indexes);
 
         plan = getPlan(connection, sql, catalog, indexes);
-        used = getUsedIndexes(connection, catalog);
+        used = newHashSet(plan.getIndexes());
 
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
-            updateCost = getUpdateCost(connection);
+            updateCost = getUpdateCost(plan);
             updateCosts = new HashMap<Index, Double>();
             // XXX: issue #142
             // updateCosts = getUpdatedIndexes(connection);
@@ -88,7 +90,7 @@ public class DB2Optimizer extends AbstractOptimizer
             updateCosts = new HashMap<Index, Double>();
         }
 
-        selectCost = getCost(connection) - updateCost;
+        selectCost = plan.getRootOperator().getAccumulatedCost() - updateCost;
 
         return new ExplainedSQLStatement(
             sql, plan, this, selectCost, updateCost, updateCost, updateCosts, indexes, used, 1);     
@@ -380,37 +382,6 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Returns the cost of the statement that has been just explained. Assumes that only one 
-     * statement is contained in the {@code EXPLAIN_STATEMENT} table.
-     *
-     * @param connection
-     *     connection used to communicate with the DBMS
-     * @return
-     *     the cost of the plan
-     * @throws SQLException
-     *     if something goes wrong while talking to the DBMS
-     */
-    private static double getCost(Connection connection) throws SQLException
-    {
-        Statement stmt = connection.createStatement();
-        ResultSet rs =
-            stmt.executeQuery(
-                "SELECT SUM(total_cost) as cost " +
-                " FROM  systools.explain_statement " +
-                " WHERE explain_level='P'");
-
-        if (!rs.next())
-            throw new SQLException("No result in EXPLAIN_STATEMENT table");
-
-        double cost = rs.getDouble("cost");
-
-        rs.close();
-        stmt.close();
-        
-        return cost;
-    }
-
-    /**
      * Returns the DBMS-agnostic operator name corresponding to the given DB2-dependent operator 
      * name.
      *
@@ -482,77 +453,35 @@ public class DB2Optimizer extends AbstractOptimizer
 
     /**
      * Returns the update cost of the statement that has been just explained. It assumes that the 
-     * type of statement has been checked already, i.e. that the statement contained in {@code 
-     * EXPLAIN_STATEMENT} table is of type {@link SQLCategory#NOT_SELECT}.
+     * type of statement has been checked already, i.e. that the statement is of type {@link 
+     * SQLCategory#NOT_SELECT}.
      *
-     * @param connection
-     *     connection used to communicate with the DBMS
+     * @param sqlPlan
+     *     plan for the statement
      * @return
-     *     the cost of the plan
+     *     the update cost of the plan
      * @throws SQLException
-     *     if something goes wrong while talking to the DBMS
+     *      if the plan doesn't contain exactly 3 nodes (i.e. the number of operators in any 
+     *      execution plan of an update)
      */
-    private static double getUpdateCost(Connection connection) throws SQLException
+    private static double getUpdateCost(SQLStatementPlan sqlPlan) throws SQLException
     {
-        Statement stmt = connection.createStatement();
-        ResultSet rs =
-            stmt.executeQuery(
-                    "SELECT    total_cost " +
-                    " FROM     systools.explain_operator " +
-                    " WHERE    operator_id = 2 OR operator_id = 3 " +
-                    " ORDER BY operator_id");
+        double updateOpCost = -1;
+        double childOpCost = -1;
 
-        if (!rs.next())
-            throw new SQLException("Could not get update cost: no rows");
+        if (sqlPlan.toList().size() != 3)
+            throw new SQLException("Something went wrong for the UPDATE, should have 3 nodes");
 
-        double updateOpCost = rs.getDouble(1);
+        for (Operator o : sqlPlan.toList())
+            if (o.getId() == 2)
+                updateOpCost = o.getAccumulatedCost();
+            else if (o.getId() == 3)
+                childOpCost = o.getAccumulatedCost();
 
-        if (!rs.next())
-            throw new SQLException("Could not get update cost: only one row");
+        if (updateOpCost == -1 || childOpCost == -1)
+            throw new SQLException("Something went wrong for the UPDATE");
 
-        double childOpCost = rs.getDouble(1);
-
-        if (rs.next())
-            throw new SQLException("Could not get update cost: too many rows");
-
-        rs.close();
-        stmt.close();
-        
         return updateOpCost - childOpCost;
-    }
-
-    /**
-     * Returns the set of indexes used in the execution plan of the statement that has been 
-     * previously explained. Assumes that the {@code EXPLAIN_OBJECT} table contains information 
-     * corresponding to only one statement.
-     *
-     * @param connection
-     *     connection used to communicate with the DBMS
-     * @param catalog
-     *     used to retrieve metadata information
-     * @return
-     *     the set of indexes used by the execution plan
-     * @throws SQLException
-     *     if something goes wrong while talking to the DBMS
-     */
-    private static Set<Index> getUsedIndexes(Connection connection, Catalog catalog)
-        throws SQLException
-    {
-        Set<Index> used = new HashSet<Index>();
-        Statement stmt = connection.createStatement();
-        ResultSet rs =
-            stmt.executeQuery(
-                    "SELECT object_name as name" +
-                    " FROM  systools.explain_object " +
-                    " WHERE object_type = 'IX'");
-
-        while (rs.next())
-            used.add(catalog.findIndex(rs.getString("name").trim()));
-
-        rs.close();
-        stmt.close();
-        
-        return used;
     }
 
     /**

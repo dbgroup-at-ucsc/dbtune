@@ -126,7 +126,7 @@ public class SQLStatementPlan extends Tree<Operator>
         List<Index> indexes = new ArrayList<Index>();
 
         for (DatabaseObject ob : getDatabaseObjects())
-            if (ob instanceof Index)
+            if (ob instanceof Index && !(ob instanceof InterestingOrder))
                 indexes.add((Index) ob);
 
         return indexes;

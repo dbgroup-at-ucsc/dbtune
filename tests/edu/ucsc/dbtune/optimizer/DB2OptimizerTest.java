@@ -205,7 +205,7 @@ public class DB2OptimizerTest
 
         assertThat(plan.size(), is(5));
         assertThat(plan.getRootOperator().getId(), is(1));
-        assertThat(plan.getIndexes().size(), is(3)); // one index and two interesting orders
+        assertThat(plan.getIndexes().size(), is(1));
         assertThat(plan.getRootOperator().getName(), is("RETURN"));
         // CHECKSTYLE:ON
 
