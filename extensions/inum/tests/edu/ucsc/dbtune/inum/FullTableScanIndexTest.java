@@ -51,7 +51,8 @@ public class FullTableScanIndexTest
         assertThat(ftsR.getFullyQualifiedName(), is(not(ftsS.getFullyQualifiedName())));
         assertThat(ftsS.getFullyQualifiedName(), is(not(ftsT.getFullyQualifiedName())));
         assertThat(ftsR.hashCode(), is(not(ftsS.hashCode())));
-        assertThat(ftsR.toString(), is(not(ftsT.toString())));
+        assertThat(ftsR.hashCode(), is(not(ftsT.hashCode())));
+        assertThat(ftsR.getFullyQualifiedName(), is(not(ftsT.getFullyQualifiedName())));
 
         assertThat(ftsR, is(not(ftsS)));
         assertThat(ftsR, is(not(ftsT)));
@@ -63,7 +64,6 @@ public class FullTableScanIndexTest
         assertThat(ftsT, is(ftsT2));
         assertThat(ftsT.getFullyQualifiedName(), is(ftsT2.getFullyQualifiedName()));
         assertThat(ftsT.hashCode(), is(ftsT2.hashCode()));
-        assertThat(ftsT.toString(), is(ftsT2.toString()));
     }
 }
 

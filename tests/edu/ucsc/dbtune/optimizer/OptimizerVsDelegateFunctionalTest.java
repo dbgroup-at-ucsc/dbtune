@@ -68,6 +68,8 @@ public class OptimizerVsDelegateFunctionalTest
     @Test
     public void testExplain() throws Exception
     {
+        if (delegate == null) return;
+
         Workload wl;
 
         for (String wlName : env.getWorkloadFolders()) {
@@ -87,6 +89,8 @@ public class OptimizerVsDelegateFunctionalTest
     @Test
     public void testWhatIfExplain() throws Exception
     {
+        if (delegate == null) return;
+
         Workload wl;
 
         for (String wlName : env.getWorkloadFolders()) {
@@ -108,6 +112,8 @@ public class OptimizerVsDelegateFunctionalTest
     @Test
     public void testPreparedSQLStatement() throws Exception
     {
+        if (delegate == null) return;
+
         Workload wl;
 
         for (String wlName : env.getWorkloadFolders()) {

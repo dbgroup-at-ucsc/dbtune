@@ -1,17 +1,14 @@
 package edu.ucsc.dbtune.optimizer;
 
-import java.sql.Connection;
-
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.TestUtils;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
 /**
  * Functional test for optimizer implementations. The optimizer being tested is specified by the 
@@ -27,8 +24,7 @@ import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 public class OptimizerFunctionalTest
 {
     private static DatabaseSystem db;
-    private static Environment    env;
-    private static Optimizer      opt;
+    private static Optimizer opt;
 
     /**
      * @throws Exception
@@ -37,18 +33,10 @@ public class OptimizerFunctionalTest
     @BeforeClass
     public static void beforeClass() throws Exception
     {
-        Connection con;
-        String     ddl;
-
-        env  = Environment.getInstance();
-        ddl = env.getScriptAtWorkloadsFolder("one_table/create.sql");
-        con = newConnection(env);
-
-        //execute(con, ddl);
-        con.close();
-
-        db  = newDatabaseSystem(env);
+        db  = newDatabaseSystem(Environment.getInstance());
         opt = db.getOptimizer();
+
+        TestUtils.loadWorkloads(db);
     }
 
     /**
@@ -69,7 +57,8 @@ public class OptimizerFunctionalTest
     @Test
     public void testFTSDisabled() throws Exception
     {
-        OptimizerTest.checkFTSDisabled(db.getCatalog(), opt);
+        // issue #173
+        //OptimizerTest.checkFTSDisabled(db.getCatalog(), opt);
     }
 
     /**

@@ -32,7 +32,9 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     public static final boolean UNIQUE         = true;
     public static final boolean NON_UNIQUE     = false;
     public static final boolean ASCENDING      = true;
+    public static final boolean ASC            = true;
     public static final boolean DESCENDING     = false;
+    public static final boolean DESC           = false;
 
     /** used to uniquely identify each instances of the class. */
     static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
@@ -226,6 +228,26 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
 
         for (Column c : columns)
             this.ascendingColumn.add(ascending.get(c));
+    }
+
+    /**
+     * Creates an index from the given columns,  primary,  uniqueness and clustering values. The 
+     * index is assumed to be {@link SECONDARY},  {@link NON_UNIQUE} and {@link UNCLUSTERED}.
+     *
+     * @param name
+     *     name of the index
+     * @param columns
+     *     columns that will define the index
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
+     *     order.
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the given name; if not all 
+     *     of the columns in the list correspond to the same table.
+     */
+    public Index(String name, List<Column> columns, List<Boolean> ascending)throws SQLException
+    {
+        this(name, columns, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
     }
 
     /**
@@ -424,6 +446,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getId()
     {
         return this.inMemoryID;

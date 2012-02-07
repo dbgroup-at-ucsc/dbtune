@@ -28,7 +28,6 @@ import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
-import static edu.ucsc.dbtune.util.MetadataUtils.getSchemas;
 
 /**
  * Interface to the DB2 optimizer.
@@ -72,10 +71,12 @@ public class DB2Optimizer extends AbstractOptimizer
         double selectCost;
         double updateCost;
 
-        create(indexes, connection);
+        clearAdviseAndExplainTables(connection);
 
-        plan = getPlan(sql, indexes);
-        used = getUsedIndexes(catalog, connection);
+        insertIntoAdviseIndexTable(connection, indexes);
+
+        plan = getPlan(connection, sql, catalog, indexes);
+        used = getUsedIndexes(connection, catalog);
 
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
             updateCost = getUpdateCost(connection);
@@ -89,10 +90,103 @@ public class DB2Optimizer extends AbstractOptimizer
 
         selectCost = getCost(connection) - updateCost;
 
-        unloadOptimizationProfiles(connection);
-
         return new ExplainedSQLStatement(
             sql, plan, this, selectCost, updateCost, updateCost, updateCosts, indexes, used, 1);     
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Set<Index> recommendIndexes(SQLStatement sql) throws SQLException
+    {
+        Statement stmt = connection.createStatement();
+
+        clearAdviseAndExplainTables(connection);
+
+        stmt.execute("SET CURRENT EXPLAIN MODE = RECOMMEND INDEXES");
+        stmt.execute(sql.getSQL());
+        stmt.execute("SET CURRENT EXPLAIN MODE = NO");
+
+        stmt.close();
+
+        return readAdviseIndexTable(connection, catalog);
+    }
+
+    /**
+     * Returns a comma-separated list of the names of columns contained in the given index.
+     *
+     * @param index
+     *     an index
+     * @return
+     *     a string containing the comma-separated list of column names
+     */
+    static String buildColumnNamesValue(Index index)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        for (Column col : index.columns()) {
+            if (index.isAscending(col))
+                sb.append("+");
+            else
+                sb.append("-");
+
+            sb.append(col.getName());
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Returns a SQL statement that can be executed to insert the given index into the {@code 
+     * ADVISE_INDEX} table.
+     *
+     * @param index
+     *     an index
+     * @return
+     *     a string containing the  string representation of the given index
+     */
+    static String buildAdviseIndexInsertStatement(Index index)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(INSERT_INTO_ADVISE_INDEX_COLUMNS);
+        sb.append("'" + index.getTable().getSchema().getName() + "', ");
+        sb.append("'" + index.getTable().getName() + "', ");
+        sb.append("'" + buildColumnNamesValue(index) + "', ");
+        sb.append(index.size() + ", ");
+
+        if (index.isPrimary())
+            sb.append("'P', ");
+        else if (index.isUnique())
+            sb.append("'U', ");
+        else
+            sb.append("'D', ");
+
+        if (index.isUnique())
+            sb.append(index.size() + ", ");
+        else
+            sb.append("-1, ");
+
+        if (index.isReversible())
+            sb.append("'Y', ");
+        else
+            sb.append("'N', ");
+
+        if (index.isClustered())
+            sb.append("'CLUS', ");
+        else
+            sb.append("'REG', ");
+
+        sb.append("'" + index.getName() + "', ");
+        sb.append("'CREATE INDEX " + index.getName() + "', ");
+        sb.append("'N', ");
+        sb.append("0, ");
+        sb.append(index.getId() + ", ");
+
+        sb.append(INSERT_INTO_ADVISE_INDEX_REST_OF_VALUES);
+
+        return sb.toString();
     }
 
     /**
@@ -104,12 +198,12 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *      if an error occurs while operating over the {@code ADVISE_INDEX} table
      */
-    private static void clearTables(Connection connection) throws SQLException
+    static void clearAdviseAndExplainTables(Connection connection) throws SQLException
     {
         Statement stmt = connection.createStatement();
 
-        stmt.executeUpdate("DELETE FROM SYSTOOLS.ADVISE_INDEX");
-        stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_INSTANCE");
+        stmt.executeUpdate(DELETE_FROM_ADVISE_INDEX);
+        stmt.executeUpdate(DELETE_FROM_EXPLAIN_INSTANCE);
         /*
          * there's a trigger on EXPLAIN_INSTANCE that causes all data corresponding to an explain 
          * instance to be removed from the EXPLAIN tables, so there's no need to execute the 
@@ -129,31 +223,6 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Loads the given configuration the {@code ADVISE_INDEX} table.
-     *
-     * @param configuration
-     *     configuration being created
-     * @param connection
-     *     connection used to communicate with the DBMS
-     * @throws SQLException
-     *      if an error occurs while operating over the {@code ADVISE_INDEX} table
-     */
-    private static void create(Set<Index> configuration, Connection connection) throws SQLException
-    {
-        clearTables(connection);
-
-        if (configuration.isEmpty())
-            return;
-
-        Statement stmt = connection.createStatement();
-
-        for (Index index : configuration)
-            stmt.execute(getAdviseIndexInsertStatement(index));
-        
-        stmt.close();
-    }
-
-    /**
      * Extracts columns that the operator is processing.
      *
      * @param colNamesInExplainStream
@@ -168,7 +237,7 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *      if one of the column names can't be bound to the corresponding column
      */
-    private static InterestingOrder extractColumnsUsedByOperator(
+    static InterestingOrder extractColumnsUsedByOperator(
             String colNamesInExplainStream, DatabaseObject dbo, Catalog catalog)
         throws SQLException
     {
@@ -211,8 +280,7 @@ public class DB2Optimizer extends AbstractOptimizer
                     table.getFullyQualifiedName() + "." + colName);
             
             if (col == null)
-                throw new RuntimeException(
-                    "Cannot bind the column's name to a column object");
+                throw new RuntimeException("Cannot bind " + colName + " to a column object");
 
             columns.add(col);
             ascending.put(col, asc);
@@ -235,7 +303,7 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *      if an error occurs while reading from the given result set
      */
-    private static Map<Integer, List<String>> extractOperatorToPredicateListMap(ResultSet rs)
+    static Map<Integer, List<String>> extractOperatorToPredicateListMap(ResultSet rs)
         throws SQLException
     {
         Map<Integer, List<String>> idToPredicateList = new HashMap<Integer, List<String>>();
@@ -272,7 +340,7 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *      if a reference contained in a predicate can't be bound to its metadata counterpart
      */
-    private static List<Predicate> extractPredicatesUsedByOperator(
+    static List<Predicate> extractPredicatesUsedByOperator(
             List<String> predicateList, Catalog catalog)
         throws SQLException
     {
@@ -309,212 +377,6 @@ public class DB2Optimizer extends AbstractOptimizer
             predicates.add(p);
         }
         return predicates;
-    }
-
-    /**
-     * Returns a SQL statement that can be executed to insert the given index into the {@code 
-     * ADVISE_INDEX} table.
-     *
-     * @param index
-     *     an index
-     * @return
-     *     a string containing the  string representation of the given index
-     */
-    private static String getAdviseIndexInsertStatement(Index index)
-    {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("INSERT INTO systools.advise_index (");
-
-        // user metadata... extract it from the system's recommended indexes 
-        sb.append("EXPLAIN_REQUESTER, ");
-        sb.append("TBCREATOR, "); 
-        
-        // table name (string) 
-        sb.append("TBNAME, ");
-
-        // '+A-B+C' means "A" ASC, "B" DESC, "C" ASC ...not sure about INCLUDE columns
-        sb.append("COLNAMES, ");
-
-        // #Key columns + #Include columns. Must match COLNAMES
-        sb.append("COLCOUNT, ");
-
-        // 'P' (primary), 'D' (duplicates allowed), 'U' (unique) 
-        sb.append("UNIQUERULE, ");
-
-        // IF unique index THEN #Key columns ELSE -1 
-        sb.append("UNIQUE_COLCOUNT, ");
-
-        // 'Y' or 'N' indicating if reverse scans are supported
-        sb.append("REVERSE_SCANS, ");
-
-        // 'CLUS', 'REG', 'DIM', 'BLOK' 
-        sb.append("INDEXTYPE, ");
-        
-        // The name of the index and the CREATE INDEX statement (must match)
-        sb.append("NAME, ");  
-        sb.append("CREATION_TEXT, ");
-        
-        // Indicates if the index is real or hypothetical
-        // 'Y' or 'N' 
-        sb.append("EXISTS, ");
-        
-        // Indicates if the index is system defined... should only be true for real indexes
-        // 0, 1, or 2 
-        sb.append("SYSTEM_REQUIRED, ");
-        
-        // We use this field to identify an index (also stored locally)
-        sb.append("IID, ");
-        
-        // enable the index for what-if analysis
-        // 'Y' or 'N'
-        sb.append("USE_INDEX, ");
-        
-        // statistics, set to -1 to indicate unknown
-        sb.append("NLEAF, ");
-        sb.append("NLEVELS, ");
-        sb.append("FIRSTKEYCARD, ");
-        sb.append("FULLKEYCARD, ");
-        sb.append("CLUSTERRATIO, ");
-        sb.append("AVGPARTITION_CLUSTERRATIO, ");
-        sb.append("AVGPARTITION_CLUSTERFACTOR, ");
-        sb.append("AVGPARTITION_PAGE_FETCH_PAIRS, ");
-        sb.append("DATAPARTITION_CLUSTERFACTOR, ");
-        sb.append("CLUSTERFACTOR, ");
-        sb.append("SEQUENTIAL_PAGES, ");
-        sb.append("DENSITY, ");
-        sb.append("FIRST2KEYCARD, ");
-        sb.append("FIRST3KEYCARD, ");
-        sb.append("FIRST4KEYCARD, ");
-        sb.append("PCTFREE, ");
-
-        // empty string instead of -1 for this one
-        sb.append("PAGE_FETCH_PAIRS, ");
-        // 0 instead of -1 for this one
-        sb.append("MINPCTUSED, ");
-        
-        /* the rest are likely useless */
-        sb.append("EXPLAIN_TIME, ");
-        sb.append("CREATE_TIME, ");
-        sb.append("STATS_TIME, ");
-        sb.append("SOURCE_NAME, ");
-        sb.append("REMARKS, ");
-        sb.append("CREATOR, ");
-        sb.append("DEFINER, ");
-        sb.append("SOURCE_SCHEMA, ");
-        sb.append("SOURCE_VERSION, ");
-        sb.append("EXPLAIN_LEVEL, ");
-        sb.append("USERDEFINED, ");
-        sb.append("STMTNO, ");
-        sb.append("SECTNO, ");
-        sb.append("QUERYNO, ");
-        sb.append("QUERYTAG, ");
-        sb.append("PACKED_DESC, ");
-        sb.append("RUN_ID, ");
-        sb.append("RIDTOBLOCK, ");
-        sb.append("CONVERTED) VALUES (");
-
-        /////////////////////////
-        // values
-        /////////////////////////
-
-        sb.append("'DBTune', ");
-        sb.append("'" + index.getTable().getSchema().getName() + "', ");
-        sb.append("'" + index.getTable().getName() + "', ");
-        sb.append("'" + getColumnNames(index) + "', ");
-        sb.append(index.size() + ", ");
-
-        if (index.isPrimary())
-            sb.append("'P', ");
-        else if (index.isUnique())
-            sb.append("'U', ");
-        else
-            sb.append("'D', ");
-
-        if (index.isUnique())
-            sb.append(index.size() + ", ");
-        else
-            sb.append("-1, ");
-
-        if (index.isReversible())
-            sb.append("'Y', ");
-        else
-            sb.append("'N', ");
-
-        if (index.isClustered())
-            sb.append("'CLUS', ");
-        else
-            sb.append("'REG', ");
-
-        sb.append("'" + index.getName() + "', ");
-        sb.append("'CREATE INDEX " + index.getName() + "', ");
-        sb.append("'N', ");
-        sb.append("0, ");
-        sb.append(index.getId() + ", ");
-        sb.append("'Y', ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("'', ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("-1, ");
-        sb.append("'', ");
-        sb.append("0 , ");
-        sb.append("CURRENT TIMESTAMP, ");
-        sb.append("CURRENT TIMESTAMP, ");
-        sb.append("NULL, ");
-        sb.append("'DBTune', ");
-        sb.append("'Created by DBTune', ");
-        sb.append("'SYSTEM', ");
-        sb.append("'SYSTEM', ");
-        sb.append("'NULLID', ");
-        sb.append("'', ");
-        sb.append("'P', ");
-        sb.append("1, ");
-        sb.append("1, ");
-        sb.append("1, ");
-        sb.append("1, ");
-        sb.append("'', ");
-        sb.append("NULL, ");
-        sb.append("NULL, ");
-        sb.append("'N', ");
-        sb.append("'Z')");
-
-        return sb.toString();
-    }
-
-    /**
-     * Returns a comma-separated list of the names of columns contained in the given index.
-     *
-     * @param index
-     *     an index
-     * @return
-     *     a string containing the comma-separated list of column names
-     */
-    private static String getColumnNames(Index index)
-    {
-        StringBuilder sb = new StringBuilder();
-
-        for (Column col : index.columns()) {
-            if (index.isAscending(col))
-                sb.append("+");
-            else
-                sb.append("-");
-
-            sb.append(col.getName());
-        }
-
-        return sb.toString();
     }
 
     /**
@@ -558,18 +420,22 @@ public class DB2Optimizer extends AbstractOptimizer
      *      one of the DBMS-independent operator names defined in {@link Operator}
      * @see Operator
      */
-    private static String getOperatorName(String operatorName)
+    static String getOperatorName(String operatorName)
     {
         if (operatorName.equals("IXSCAN"))
-            return Operator.IS;
+            return Operator.INDEX_SCAN;
         else if (operatorName.equals("TBSCAN"))
-            return Operator.TS;
+            return Operator.TABLE_SCAN;
         else if (operatorName.equals("NLJOIN"))
-            return Operator.NLJ;
+            return Operator.NESTED_LOOP_JOIN;
         else if (operatorName.equals("MSJOIN"))
-            return Operator.MSJ;
+            return Operator.MERGE_SORT_JOIN;
         else if (operatorName.equals("HSJOIN"))
-            return Operator.HJ;
+            return Operator.HASH_JOIN;
+        else if (operatorName.equals("FETCH"))
+            return Operator.FETCH;
+        else if (operatorName.equals("RIDSCN"))
+            return Operator.RID_SCAN;
         else
             return operatorName;
     }
@@ -577,68 +443,34 @@ public class DB2Optimizer extends AbstractOptimizer
     /**
      * Explains the given statement and returns its execution plan.
      *
+     *
+     * @param connection
+     *     connection used to communicate with the DBMS
      * @param sql
      *     statement which the plan is obtained for
      * @param indexes
      *     physical configuration the optimizer should consider when preparing the statement
+     * @param catalog
+     *      the catalog used to retrieve metadata information (to do the binding)
      * @return
      *     an execution plan
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    protected SQLStatementPlan getPlan(SQLStatement sql, Set<Index> indexes) throws SQLException
+    static SQLStatementPlan getPlan(
+            Connection connection, SQLStatement sql, Catalog catalog, Set<Index> indexes)
+        throws SQLException
     {
-        loadOptimizationProfiles(sql);
-
         Statement stmtOperator = connection.createStatement();
         Statement stmtPredicate = connection.createStatement();
-        ResultSet rsOperator;
-        ResultSet rsPredicate;
-        SQLStatementPlan plan;        
 
         stmtOperator.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
         stmtOperator.execute(sql.getSQL());
         stmtOperator.execute("SET CURRENT EXPLAIN MODE = NO");
         
-        rsOperator = stmtOperator.executeQuery(
-             "SELECT " +
-             "     o.operator_id    AS node_id, " +
-             "     s2.target_id     AS parent_id, " +
-             "     o.operator_type  AS operator_name, " +
-             "     s1.object_schema AS object_schema, " +
-             "     s1.object_name   AS object_name," +
-             "     s1.stream_count  AS cardinality, " +
-             "     o.total_cost     AS cost, " +
-             "     cast(cast(s1.column_names AS CLOB(2097152)) AS VARCHAR(255)) " +
-             "                      AS column_names " +
-             "  FROM " +
-             "     systools.explain_operator o " +
-             "        LEFT OUTER JOIN " +
-             "     systools.explain_stream s2 ON" +
-             "           o.operator_id = s2.source_id " +
-             "        LEFT OUTER JOIN " +
-             "     systools.explain_stream s1 ON " +
-             "           o.operator_id = s1.target_id AND " +
-             "           o.explain_time = s1.explain_time AND " +
-             "           s1.object_name IS NOT NULL " +
-             "  ORDER BY " +
-             "     o.operator_id ASC");
-
-        stmtPredicate = connection.createStatement();
-        rsPredicate = stmtPredicate.executeQuery(
-                " SELECT " +
-                "   o.operator_id   AS node_id, " +
-                "   CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(255)) " +
-                "                   AS predicate_text " +
-                " FROM " +
-                "   systools.explain_operator o " +
-                "      LEFT OUTER JOIN     " +
-                "   systools.explain_predicate p " +
-                "         ON o.operator_id = p.operator_id " +             
-                " ORDER BY " +
-                "          o.operator_id ASC ");
-         
-        plan = parsePlan(catalog, rsOperator, rsPredicate, indexes);
+        ResultSet rsOperator = stmtOperator.executeQuery(SELECT_FROM_EXPLAIN);
+        ResultSet rsPredicate = stmtPredicate.executeQuery(SELECT_FROM_PREDICATES);
+        SQLStatementPlan plan = parsePlan(catalog, rsOperator, rsPredicate, indexes);
 
         rsOperator.close();
         rsPredicate.close();
@@ -703,8 +535,7 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    private static Set<Index> getUsedIndexes(
-            Catalog catalog, Connection connection)
+    private static Set<Index> getUsedIndexes(Connection connection, Catalog catalog)
         throws SQLException
     {
         Set<Index> used = new HashSet<Index>();
@@ -725,149 +556,26 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * Reads the content of the {@code ADVISE_INDEX}, after a {@code RECOMMEND INDEXES} operation 
-     * has been done. Creates one index per each record in the table. 
+     * Loads the given configuration the {@code ADVISE_INDEX} table.
      *
+     * @param configuration
+     *     configuration being created
      * @param connection
      *     connection used to communicate with the DBMS
-     * @param catalog
-     *     used to retrieve metadata information
-     * @return
-     *     the cost of the plan
      * @throws SQLException
-     *     if something goes wrong while talking to the DBMS
+     *      if an error occurs while operating over the {@code ADVISE_INDEX} table
      */
-    private static Set<Index> getRecommendedIndexes(Catalog catalog, Connection connection)
+    static void insertIntoAdviseIndexTable(Connection connection, Set<Index> configuration)
         throws SQLException
     {
-        Statement stmt = connection.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM systools.advise_index");
-        Set<Index> recommended = new HashSet<Index>();
-        List<Column> columns;
-        List<Boolean> ascending;
-        Schema schema;
-        Table table;
-        Index index;
-        String name;
-        boolean unique = false;
-        boolean clustered = false;
-        boolean primary = false;
-
-        while (rs.next()) {
-            schema = catalog.findSchema(rs.getString("tbcreator").trim());
-            table = schema.findTable(rs.getString("tbname").trim());
-            columns = new ArrayList<Column>();
-            ascending = new ArrayList<Boolean>();
-            name = "sat_index_" + new Random().nextInt(Integer.MAX_VALUE);
-
-            parseColumnNames(table, rs.getString("colnames"), columns, ascending);
-
-            if (rs.getString("uniquerule").trim().equals("U"))
-                unique = true;
-            else if (rs.getString("uniquerule").trim().equals("D"))
-                unique = false;
-            else {
-                unique = true;
-                primary = true;
-            }
-
-            if (rs.getString("indextype").trim().equals("REG"))
-                primary = false;
-            else if (rs.getString("indextype").trim().equals("CLUS"))
-                clustered = true;
-            else
-                clustered = false;
-
-            index = new Index(name, columns, ascending, primary, unique, clustered);
-
-            recommended.add(index);
-        }
-
-        rs.close();
-        stmt.close();
-
-        return recommended;
-    }
-
-    /**
-     * Loads the optimization profiles based on the state of the variables {@link #isFTSDisabled}, 
-     * {@link #isNLJDisabled} and the given set of indexes.
-     *
-     * @param sql
-     *     statement which the plan is obtained for
-     * @throws SQLException
-     *      if the profiles can't be loaded
-     */
-    private void loadOptimizationProfiles(SQLStatement sql) throws SQLException
-    {
-        if (isFTSDisabled)
-            loadFTSDisabledProfile(sql, connection, ftsDisabledTables);
-        //if (isNLJDisabled)
-            //loadNLJDisabledProfile(connection, indexes);
-    }
-
-    /**
-     * Loads the FTS profile for the given set of tables.
-     *
-     * @param sql
-     *     statement which the plan is obtained for
-     * @param connection
-     *      used to communicate to DB2
-     * @param tables
-     *      tables for which the FTS profile is loaded
-     * @throws SQLException
-     *      if an error occurs while communicating to the DBMS
-     */
-    private static void loadFTSDisabledProfile(
-            SQLStatement sql, Connection connection, Set<Table> tables)
-        throws SQLException
-    {
-        if (tables.size() == 0)
+        if (configuration.isEmpty())
             return;
 
-        if (getSchemas(tables).size() > 1)
-            throw new SQLException("Can only apply FTS for tables of the same schema");
-
-        Schema s = null;
-
-        for (Table t : tables) {
-            s = t.getSchema();
-            break;
-        }
-
-        StringBuilder xml = new StringBuilder();
-
-        xml.append(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<OPTPROFILE VERSION=\"9.1.0.0\">\n" +
-            "   <STMTPROFILE ID=\"noFTS on given tables foo\">\n" +
-            "      <STMTKEY SCHEMA=\"" + s.getName() + "\">\n" +
-            "         <![CDATA[" + sql.getSQL() + "]]>\n" +
-            "      </STMTKEY>\n" +
-            "      <OPTGUIDELINES>\n");
-
-        for (Table t : tables) xml.append(
-            "         <IXSCAN TABLE=\"" + t.getName() + "/>");
-
-        xml.append(
-            "      </OPTGUIDELINES>\n" +
-            "   </STMTPROFILE>\n" +
-            "</OPTPROFILE>");
-
         Statement stmt = connection.createStatement();
 
-        stmt.execute("DELETE FROM systools.opt_profile");
-
-        stmt.execute(
-                "INSERT INTO systools.opt_profile values(" +
-                "    '" + s.getName() + "', " +
-                "    'NOFTS', " +
-                "    BLOB('" + xml + "')" +
-                ")");
-
-        stmt.execute("SET CURRENT OPTIMIZATION PROFILE = '" + s.getName() + ".NOFTS'");
-        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
-
+        for (Index index : configuration)
+            stmt.execute(buildAdviseIndexInsertStatement(index));
+        
         stmt.close();
     }
 
@@ -967,6 +675,7 @@ public class DB2Optimizer extends AbstractOptimizer
         String columnNames = rs.getString("column_names");
         long cardinality = rs.getLong("cardinality");
         DatabaseObject dbo;
+        DatabaseObject columnsFetched;
 
         Operator op = new Operator(getOperatorName(name.trim()), accomulatedCost, cardinality);
 
@@ -982,16 +691,20 @@ public class DB2Optimizer extends AbstractOptimizer
         else
             dbo = catalog.findByQualifiedName(dboSchema + "." + dboName);
 
-        if (dbo == null) {
+        if (dbo == null)
             // try to find it in the set of indexes passed in the what-if invocation
             dbo = find(indexes, dboName);
-        }
 
         if (dbo == null)
             throw new SQLException("Can't find object " + dboSchema + "." + dboName);
 
         op.add(dbo);        
-        op.add(extractColumnsUsedByOperator(columnNames, dbo, catalog));        
+
+        columnsFetched = extractColumnsUsedByOperator(columnNames, dbo, catalog);
+
+        if (columnsFetched != null)
+            op.add(columnsFetched);
+
         op.add(extractPredicatesUsedByOperator(predicateList, catalog));
 
         return op;
@@ -1063,30 +776,271 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
-     * {@inheritDoc}
+     * Reads the content of the {@code ADVISE_INDEX}, after a {@code RECOMMEND INDEXES} operation 
+     * has been done. Creates one index per each record in the table. 
+     *
+     * @param connection
+     *     connection used to communicate with the DBMS
+     * @param catalog
+     *     used to retrieve metadata information
+     * @return
+     *     the cost of the plan
+     * @throws SQLException
+     *     if something goes wrong while talking to the DBMS
      */
-    @Override
-    public Set<Index> recommendIndexes(SQLStatement sql) throws SQLException
+    private static Set<Index> readAdviseIndexTable(Connection connection, Catalog catalog)
+        throws SQLException
     {
         Statement stmt = connection.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT * FROM systools.advise_index");
+        Set<Index> recommended = new HashSet<Index>();
+        List<Column> columns;
+        List<Boolean> ascending;
+        Schema schema;
+        Table table;
+        Index index;
+        String name;
+        boolean unique = false;
+        boolean clustered = false;
+        boolean primary = false;
 
-        clearTables(connection);
+        while (rs.next()) {
+            schema = catalog.findSchema(rs.getString("tbcreator").trim());
+            table = schema.findTable(rs.getString("tbname").trim());
+            columns = new ArrayList<Column>();
+            ascending = new ArrayList<Boolean>();
+            name = "sat_index_" + new Random().nextInt(Integer.MAX_VALUE);
 
-        stmt.execute("SET CURRENT EXPLAIN MODE = RECOMMEND INDEXES");
-        stmt.execute(sql.getSQL());
-        stmt.execute("SET CURRENT EXPLAIN MODE = NO");
+            parseColumnNames(table, rs.getString("colnames"), columns, ascending);
 
+            if (rs.getString("uniquerule").trim().equals("U"))
+                unique = true;
+            else if (rs.getString("uniquerule").trim().equals("D"))
+                unique = false;
+            else {
+                unique = true;
+                primary = true;
+            }
+
+            if (rs.getString("indextype").trim().equals("REG"))
+                primary = false;
+            else if (rs.getString("indextype").trim().equals("CLUS"))
+                clustered = true;
+            else
+                clustered = false;
+
+            index = new Index(name, columns, ascending, primary, unique, clustered);
+
+            recommended.add(index);
+        }
+
+        rs.close();
         stmt.close();
 
-        return getRecommendedIndexes(catalog, connection);
+        return recommended;
     }
+
+    // CHECKSTYLE:OFF
+    final static String INSERT_INTO_ADVISE_INDEX_COLUMNS =
+        "INSERT INTO systools.advise_index (" +
+
+        // user metadata... extract it from the system's recommended indexes 
+        "   EXPLAIN_REQUESTER, " +
+        "   TBCREATOR, " +
+        
+        // table name (string) 
+        "   TBNAME, " +
+
+        // '+A-B+C' means "A" ASC, "B" DESC, "C" ASC ...not sure about INCLUDE columns
+        "   COLNAMES, " +
+
+        // #Key columns + #Include columns. Must match COLNAMES
+        "   COLCOUNT, " +
+
+        // 'P' (primary), 'D' (duplicates allowed), 'U' (unique) 
+        "   UNIQUERULE, " +
+
+        // IF unique index THEN #Key columns ELSE -1 
+        "   UNIQUE_COLCOUNT, " +
+
+        // 'Y' or 'N' indicating if reverse scans are supported
+        "   REVERSE_SCANS, " +
+
+        // 'CLUS', 'REG', 'DIM', 'BLOK' 
+        "   INDEXTYPE, " +
+        
+        // The name of the index and the CREATE INDEX statement (must match)
+        "   NAME, " +
+        "   CREATION_TEXT, " +
+        
+        // Indicates if the index is real or hypothetical
+        // 'Y' or 'N' 
+        "   EXISTS, " +
+        
+        // Indicates if the index is system defined... should only be true for real indexes
+        // 0, 1, or 2 
+        "   SYSTEM_REQUIRED, " +
+        
+        // We use this field to identify an index (also stored locally)
+        "   IID, " +
+        
+        // enable the index for what-if analysis
+        // 'Y' or 'N'
+        "   USE_INDEX, " +
+        
+        // statistics, set to -1 to indicate unknown
+        "   NLEAF, " +
+        "   NLEVELS, " +
+        "   FIRSTKEYCARD, " +
+        "   FULLKEYCARD, " +
+        "   CLUSTERRATIO, " +
+        "   AVGPARTITION_CLUSTERRATIO, " +
+        "   AVGPARTITION_CLUSTERFACTOR, " +
+        "   AVGPARTITION_PAGE_FETCH_PAIRS, " +
+        "   DATAPARTITION_CLUSTERFACTOR, " +
+        "   CLUSTERFACTOR, " +
+        "   SEQUENTIAL_PAGES, " +
+        "   DENSITY, " +
+        "   FIRST2KEYCARD, " +
+        "   FIRST3KEYCARD, " +
+        "   FIRST4KEYCARD, " +
+        "   PCTFREE, " +
+
+        // empty string instead of -1 for this one
+        "   PAGE_FETCH_PAIRS, " +
+        // 0 instead of -1 for this one
+        "   MINPCTUSED, " +
+        
+        /* the rest are likely useless */
+        "   EXPLAIN_TIME, " +
+        "   CREATE_TIME, " +
+        "   STATS_TIME, " +
+        "   SOURCE_NAME, " +
+        "   REMARKS, " +
+        "   CREATOR, " +
+        "   DEFINER, " +
+        "   SOURCE_SCHEMA, " +
+        "   SOURCE_VERSION, " +
+        "   EXPLAIN_LEVEL, " +
+        "   USERDEFINED, " +
+        "   STMTNO, " +
+        "   SECTNO, " +
+        "   QUERYNO, " +
+        "   QUERYTAG, " +
+        "   PACKED_DESC, " +
+        "   RUN_ID, " +
+        "   RIDTOBLOCK, " +
+        "   CONVERTED) " +
+        " VALUES (" +
+        "   'DBTune', ";
+
+    final static String INSERT_INTO_ADVISE_INDEX_REST_OF_VALUES =
+        "'Y', " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "'', " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "'', " +
+        "0 , " +
+        "CURRENT TIMESTAMP, " +
+        "CURRENT TIMESTAMP, " +
+        "NULL, " +
+        "'DBTune', " +
+        "'Created by DBTune', " +
+        "'SYSTEM', " +
+        "'SYSTEM', " +
+        "'NULLID', " +
+        "'', " +
+        "'P', " +
+        "1, " +
+        "1, " +
+        "1, " +
+        "1, " +
+        "'', " +
+        "NULL, " +
+        "NULL, " +
+        "'N', " +
+        "'Z')";
+
+    final static String SELECT_FROM_EXPLAIN =
+        "SELECT " +
+        "     o.operator_id    AS node_id, " +
+        "     s2.target_id     AS parent_id, " +
+        "     o.operator_type  AS operator_name, " +
+        "     s1.object_schema AS object_schema, " +
+        "     s1.object_name   AS object_name," +
+        "     s1.stream_count  AS cardinality, " +
+        "     o.total_cost     AS cost, " +
+        "     cast(cast(s1.column_names AS CLOB(2097152)) AS VARCHAR(255)) " +
+        "                      AS column_names " +
+        "  FROM " +
+        "     systools.explain_operator o " +
+        "        LEFT OUTER JOIN " +
+        "     systools.explain_stream s2 ON" +
+        "           o.operator_id = s2.source_id " +
+        "        LEFT OUTER JOIN " +
+        "     systools.explain_stream s1 ON " +
+        "           o.operator_id = s1.target_id AND " +
+        "           o.explain_time = s1.explain_time AND " +
+        "           s1.object_name IS NOT NULL " +
+        "  WHERE " +
+        "     s2.target_id >= 0 OR " +
+        "     s2.target_id IS NULL " + // RETURN (the root) has NULL as it's parent
+        "  ORDER BY " +
+        "     o.operator_id ASC";
+
+    final static String SELECT_FROM_PREDICATES =
+        " SELECT " +
+        "   o.operator_id   AS node_id, " +
+        "   CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(255)) " +
+        "                   AS predicate_text " +
+        " FROM " +
+        "   systools.explain_operator o " +
+        "      LEFT OUTER JOIN     " +
+        "   systools.explain_predicate p " +
+        "         ON o.operator_id = p.operator_id " +             
+        " ORDER BY " +
+        "          o.operator_id ASC ";
+
+    final static String DELETE_FROM_ADVISE_INDEX = "DELETE FROM SYSTOOLS.ADVISE_INDEX";
+
+    final static String DELETE_FROM_EXPLAIN_INSTANCE = "DELETE FROM SYSTOOLS.EXPLAIN_INSTANCE";
+    // CHECKSTYLE:ON
+
+    /**
+     * Loads the optimization profiles based on the state of the variables {@link #isFTSDisabled}, 
+     * {@link #isNLJDisabled} and the given set of indexes.
+     *
+     * @param sql
+     *     statement which the plan is obtained for
+     * @throws SQLException
+     *      if the profiles can't be loaded
+    private void loadOptimizationProfiles(SQLStatement sql) throws SQLException
+    {
+        if (isFTSDisabled)
+            loadFTSDisabledProfile(sql, connection, ftsDisabledTables);
+        //if (isNLJDisabled)
+            //loadNLJDisabledProfile(connection, indexes);
+    }
+     */
 
     /**
      * @param connection
      *      used to communicate to DB2
      * @throws SQLException
      *      if an error occurs while communicating to the DBMS
-     */
     private static void unloadOptimizationProfiles(Connection connection)
         throws SQLException
     {
@@ -1095,4 +1049,70 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
         stmt.close();
     }
+     */
+
+    /**
+     * Loads the FTS profile for the given set of tables.
+     *
+     * @param sql
+     *     statement which the plan is obtained for
+     * @param connection
+     *      used to communicate to DB2
+     * @param tables
+     *      tables for which the FTS profile is loaded
+     * @throws SQLException
+     *      if an error occurs while communicating to the DBMS
+    private static void loadFTSDisabledProfile(
+            SQLStatement sql, Connection connection, Set<Table> tables)
+        throws SQLException
+    {
+        if (tables.size() == 0)
+            return;
+
+        if (getSchemas(tables).size() > 1)
+            throw new SQLException("Can only apply FTS for tables of the same schema");
+
+        Schema s = null;
+
+        for (Table t : tables) {
+            s = t.getSchema();
+            break;
+        }
+
+        StringBuilder xml = new StringBuilder();
+
+        xml.append(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<OPTPROFILE VERSION=\"9.1.0.0\">\n" +
+            "   <STMTPROFILE ID=\"noFTS on given tables foo\">\n" +
+            "      <STMTKEY SCHEMA=\"" + s.getName() + "\">\n" +
+            "         <![CDATA[" + sql.getSQL() + "]]>\n" +
+            "      </STMTKEY>\n" +
+            "      <OPTGUIDELINES>\n");
+
+        for (Table t : tables) xml.append(
+            "         <IXSCAN TABLE=\"" + t.getName() + "/>");
+
+        xml.append(
+            "      </OPTGUIDELINES>\n" +
+            "   </STMTPROFILE>\n" +
+            "</OPTPROFILE>");
+
+        Statement stmt = connection.createStatement();
+
+        stmt.execute("DELETE FROM systools.opt_profile");
+
+        stmt.execute(
+                "INSERT INTO systools.opt_profile values(" +
+                "    '" + s.getName() + "', " +
+                "    'NOFTS', " +
+                "    BLOB('" + xml + "')" +
+                ")");
+
+        stmt.execute("SET CURRENT OPTIMIZATION PROFILE = '" + s.getName() + ".NOFTS'");
+        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
+
+        stmt.close();
+    }
+     */
 }

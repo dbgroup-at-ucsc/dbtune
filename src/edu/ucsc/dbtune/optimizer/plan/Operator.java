@@ -34,6 +34,8 @@ public class Operator implements Comparable<Operator>, Identifiable
     public static final String SMJ = MSJ;
     /** merge sort join operator. **/
     public static final String SORT_MERGE_JOIN = MSJ;
+    /** merge sort join operator. **/
+    public static final String MERGE_SORT_JOIN = MSJ;
 
     /** table scan operator. **/
     public static final String TS = "TABLE.SCAN";
