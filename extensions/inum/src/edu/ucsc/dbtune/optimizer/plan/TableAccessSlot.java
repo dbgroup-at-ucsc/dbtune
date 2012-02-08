@@ -17,7 +17,6 @@ import edu.ucsc.dbtune.metadata.Table;
 public class TableAccessSlot extends Operator
 {
     private Index index;
-    private InterestingOrder columnsFetched;
 
     /**
      * Analyzes the database objects referenced in the given operator and creates a slot 
@@ -41,7 +40,7 @@ public class TableAccessSlot extends Operator
             else if (object instanceof InumInterestingOrder)
                 index = (Index) object;
             else if (object instanceof InterestingOrder)
-                columnsFetched = (InterestingOrder) object;
+                ; // ignore
             else if (object instanceof Index)
                 index = (Index) object;
             else
@@ -91,17 +90,6 @@ public class TableAccessSlot extends Operator
     public Table getTable()
     {
         return index.getTable();
-    }
-
-    /**
-     * Returns the columns that are fetched by this operator.
-     *
-     * @return
-     *      columns that are processed by this operator
-     */
-    public InterestingOrder getColumnsFetched()
-    {
-        return columnsFetched;
     }
 
     /**

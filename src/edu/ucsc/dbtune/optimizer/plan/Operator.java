@@ -74,6 +74,9 @@ public class Operator implements Comparable<Operator>, Identifiable
     /** The predicates associated with the operator. */
     protected List<Predicate> predicates;
 
+    /** columns fetched by the operator. */
+    protected InterestingOrder columnsFetched;
+
     /**
      * creates an empty operator ({@code name="empty"}. This can be used to represent empty plans.
      */
@@ -118,6 +121,7 @@ public class Operator implements Comparable<Operator>, Identifiable
         this.cardinality = o.cardinality;
         this.objects = o.objects;
         this.predicates = o.predicates;
+        this.columnsFetched = o.columnsFetched;
     }
 
     /**
@@ -133,6 +137,26 @@ public class Operator implements Comparable<Operator>, Identifiable
         objects.add(dbObject);
     }
     
+    /**
+     * @param columnsFetched
+     *     the columns fetched by this operator
+     */
+    public void addColumnsFetched(InterestingOrder columnsFetched)
+    {
+        this.columnsFetched = columnsFetched;
+    }
+
+    /**
+     * Returns the columns that are fetched by this operator.
+     *
+     * @return
+     *      columns that are processed by this operator
+     */
+    public InterestingOrder getColumnsFetched()
+    {
+        return columnsFetched;
+    }
+
     /**
      * Adds predicates to the list of predicates that are associated with the operator.
      *

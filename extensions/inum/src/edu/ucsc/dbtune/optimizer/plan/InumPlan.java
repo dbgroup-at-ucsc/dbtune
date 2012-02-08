@@ -13,6 +13,8 @@ import java.util.Set;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
+
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -93,6 +95,9 @@ public class InumPlan extends SQLStatementPlan
             leafsCost += extractCostOfLeaf(plan, o);
         }
 
+        if (slots.size() == 0)
+            throw new SQLException("No slot identified in given plan");
+
         internalPlanCost = getRootOperator().getAccumulatedCost() - leafsCost;
     }
 
@@ -105,7 +110,11 @@ public class InumPlan extends SQLStatementPlan
         List<Index> indexes = new ArrayList<Index>();
 
         for (TableAccessSlot s : slots.values())
-            indexes.add(s.getIndex());
+
+            if (s.getIndex() instanceof FullTableScanIndex)
+                continue;
+            else
+                indexes.add(s.getIndex());
 
         return indexes;
     }

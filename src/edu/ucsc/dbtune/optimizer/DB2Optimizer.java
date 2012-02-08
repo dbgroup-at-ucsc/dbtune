@@ -604,7 +604,7 @@ public class DB2Optimizer extends AbstractOptimizer
         String columnNames = rs.getString("column_names");
         long cardinality = rs.getLong("cardinality");
         DatabaseObject dbo;
-        DatabaseObject columnsFetched;
+        InterestingOrder columnsFetched;
 
         Operator op = new Operator(getOperatorName(name.trim()), accomulatedCost, cardinality);
 
@@ -632,7 +632,7 @@ public class DB2Optimizer extends AbstractOptimizer
         columnsFetched = extractColumnsUsedByOperator(columnNames, dbo, catalog);
 
         if (columnsFetched != null)
-            op.add(columnsFetched);
+            op.addColumnsFetched(columnsFetched);
 
         op.add(extractPredicatesUsedByOperator(predicateList, catalog));
 
@@ -918,15 +918,17 @@ public class DB2Optimizer extends AbstractOptimizer
         "     systools.explain_operator o " +
         "        LEFT OUTER JOIN " +
         "     systools.explain_stream s2 ON" +
-        "           o.operator_id = s2.source_id " +
+        "               o.operator_id = s2.source_id " +
+        "           AND (" +
+        "                  s2.target_id >= 0 " +
+        "               OR s2.target_id IS NULL " + // RETURN (the root) has NULL as it's parent
+        "               )" +
         "        LEFT OUTER JOIN " +
         "     systools.explain_stream s1 ON " +
-        "           o.operator_id = s1.target_id AND " +
-        "           o.explain_time = s1.explain_time AND " +
-        "           s1.object_name IS NOT NULL " +
-        "  WHERE " +
-        "     s2.target_id >= 0 OR " +
-        "     s2.target_id IS NULL " + // RETURN (the root) has NULL as it's parent
+        "              o.operator_id = s1.target_id " +
+        "          AND o.explain_time = s1.explain_time " +
+        "          AND s1.object_name IS NOT NULL " +
+        "          AND s1.object_schema NOT LIKE '%SYSIBM%' " +
         "  ORDER BY " +
         "     o.operator_id ASC";
 

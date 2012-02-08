@@ -108,9 +108,25 @@ public class SQLStatementPlan extends Tree<Operator>
     {
         List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
 
-        for (Operator op : toList()) {
+        for (Operator op : toList())
             objects.addAll(op.getDatabaseObjects());
-        }
+
+        return objects;
+    }
+
+    /**
+     * Aggregates the set of database objects referenced by all the operators in a list and returns 
+     * it.
+     *
+     * @return
+     *     list of objects referenced by one or more operators in the plan.
+     */
+    public List<DatabaseObject> getDatabaseObjectsAtLeafs()
+    {
+        List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
+
+        for (Operator op : leafs())
+            objects.addAll(op.getDatabaseObjects());
 
         return objects;
     }
@@ -126,7 +142,7 @@ public class SQLStatementPlan extends Tree<Operator>
         List<Index> indexes = new ArrayList<Index>();
 
         for (DatabaseObject ob : getDatabaseObjects())
-            if (ob instanceof Index && !(ob instanceof InterestingOrder))
+            if (ob instanceof Index)
                 indexes.add((Index) ob);
 
         return indexes;
@@ -145,6 +161,8 @@ public class SQLStatementPlan extends Tree<Operator>
         for (DatabaseObject ob : getDatabaseObjects())
             if (ob instanceof Table)
                 tables.add((Table) ob);
+            else if (ob instanceof Index)
+                tables.add(((Index) ob).getTable());
 
         return tables;
     }
