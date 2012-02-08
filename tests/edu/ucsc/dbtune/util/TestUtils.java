@@ -3,12 +3,12 @@ package edu.ucsc.dbtune.util;
 import java.io.FileReader;
 import java.io.IOException;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -53,16 +53,16 @@ public final class TestUtils
     }
 
     /**
-     * @param db
-     *      the database
+     * @param con
+     *      connection to the database
      * @throws Exception
      *      if an error occurs while loading the data
      */
-    public static void loadWorkloads(DatabaseSystem db) throws Exception
+    public static void loadWorkloads(Connection con) throws Exception
     {
         for (String wlName : Environment.getInstance().getWorkloadFolders())
             if (!isSchemaForWorkloadCreated(wlName))
-                execute(db.getConnection(), wlName + "/create.sql");
+                execute(con, wlName + "/create.sql");
     }
 
     /**
@@ -75,6 +75,55 @@ public final class TestUtils
      */
     private static boolean isSchemaForWorkloadCreated(String workloadName)
     {
+        // TODO:
+        // inside each workload.sql we have to put a header (in comments) that references the 
+        // schemas that the statements contained in the file are querying, in this way we can check 
+        // to see if the schema exists (by looking at the catalog)
+        //
+        // the above implies that we have to reorganize the way we organize workloads. Maybe 
+        // something like:
+        //
+        //   * resources
+        //      + db2
+        //         - data
+        //            * tpch
+        //            * tpcds
+        //            * movies
+        //            * one_table
+        //            * ...
+        //         - workloads
+        //            * mix
+        //            * tpch
+        //            * tpcds
+        //            * tpcde
+        //            * ...
+        //      + mysql
+        //         - data
+        //            * tpch
+        //            * tpcds
+        //            * movies
+        //            * one_table
+        //            * ...
+        //         - workloads
+        //            * mix
+        //            * tpch
+        //            * tpcds
+        //            * tpcde
+        //            * ...
+        //      + postgres
+        //         - data
+        //            * tpch
+        //            * tpcds
+        //            * movies
+        //            * one_table
+        //            * ...
+        //         - workloads
+        //            * mix
+        //            * tpch
+        //            * tpcds
+        //            * tpcde
+        //            * ...
+        //
         return true;
     }
 
@@ -97,8 +146,27 @@ public final class TestUtils
         List<Workload> workloads = new ArrayList<Workload>();
 
         for (String wlName : fullyQualifiedWorkloadNames)
-            workloads.add(new Workload(new FileReader(wlName + "/workload.sql")));
+            workloads.add(workload(wlName));
 
         return workloads;
+    }
+
+    /**
+     * Returns a {@link Workload} object containing the workload for the given fully qualified 
+     * workload name.
+     *
+     * @param fullyQualifiedWorkloadName
+     *      an instance of {@link Workload} is created for it
+     * @return
+     *      a workload
+     * @throws IOException
+     *      if the files doesn't exist
+     * @throws SQLException
+     *      if {@link Workload} constructor throws an exception
+     */
+    public static Workload workload(String fullyQualifiedWorkloadName)
+        throws IOException, SQLException
+    {
+        return new Workload(new FileReader(fullyQualifiedWorkloadName + "/workload.sql"));
     }
 }

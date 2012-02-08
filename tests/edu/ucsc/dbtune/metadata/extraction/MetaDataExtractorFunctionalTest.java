@@ -17,6 +17,7 @@ import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.DatabaseSystem.newExtractor;
 import static edu.ucsc.dbtune.metadata.DatabaseObject.NON_ID;
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
+import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -60,13 +61,9 @@ public class MetaDataExtractorFunctionalTest
     @BeforeClass
     public static void beforeClass() throws Exception
     {
-        String ddl;
-
-        env = Environment.getInstance();
-        ddl = env.getScriptAtWorkloadsFolder("movies/create.sql");
         con = newConnection(env);
 
-        execute(con, ddl);
+        loadWorkloads(con);
 
         cat = newExtractor(env).extract(con);
 

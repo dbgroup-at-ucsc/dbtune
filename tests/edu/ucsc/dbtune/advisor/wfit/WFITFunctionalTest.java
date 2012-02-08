@@ -1,14 +1,10 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -17,9 +13,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
+import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
+import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 /**
  * Functional test for the WFIT use case.
@@ -36,7 +32,7 @@ import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 public class WFITFunctionalTest
 {
     private static DatabaseSystem db;
-    private static Environment    en;
+    private static Environment env;
 
     /**
      * @throws Exception
@@ -45,17 +41,9 @@ public class WFITFunctionalTest
     @BeforeClass
     public static void beforeClass() throws Exception
     {
-        Connection con;
-        String     ddl;
-
-        en  = Environment.getInstance();
-        ddl = en.getScriptAtWorkloadsFolder("one_table/create.sql");
-        con = newConnection(en);
-
-        //execute(con, ddl);
-        con.close();
-
-        db = newDatabaseSystem(en);
+        env = Environment.getInstance();
+        db = newDatabaseSystem(env);
+        loadWorkloads(db.getConnection());
     }
 
     /**
@@ -78,35 +66,27 @@ public class WFITFunctionalTest
     @Test
     public void testWFIT() throws Exception
     {
-        //PreparedSQLStatement qinfo;
         Set<Index> pool;
         WFIT wfit;
         Workload workload;
-        String   workloadFile;
 
-        FileReader    fileReader;
         //Set<Index> configuration;
-        int           maxNumIndexes;
-        int           maxNumStates;
-        int           windowSize;
-        int           partIterations;
-        //int           q;
+        int maxNumIndexes;
+        int maxNumStates;
+        int windowSize;
+        int partIterations;
+        //int q;
 
-        workloadFile   = en.getScriptAtWorkloadsFolder("one_table/workload.sql");
-        maxNumIndexes  = en.getMaxNumIndexes();
-        maxNumStates   = en.getMaxNumStates();
-        windowSize     = en.getIndexStatisticsWindow();
-        partIterations = en.getNumPartitionIterations();
-        pool           = getCandidates(workloadFile);
-        fileReader     = new FileReader(workloadFile);
-        workload       = new Workload(fileReader);
-        //q              = 0;
+        workload = workload(env.getWorkloadsFoldername() + "/one_table");
+        maxNumIndexes = env.getMaxNumIndexes();
+        maxNumStates = env.getMaxNumStates();
+        windowSize = env.getIndexStatisticsWindow();
+        partIterations = env.getNumPartitionIterations();
+        pool = getCandidates(workload);
+        //q = 0;
 
-        wfit =
-            new WFIT(
+        wfit = new WFIT(
                 db.getOptimizer(), pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
-
-        
         
         
         for (SQLStatement sql : workload) {
@@ -151,33 +131,13 @@ public class WFITFunctionalTest
     }
 
     /**
-     * @param workloadFilename
+     * @param workload
      *      workload file used to extract candidates
      * @return
      *      a set of candidate indexes
-     * @throws IOException
-     *      if an i/o error occurrs
-     * @throws SQLException
-     *      if candidate calculation generates an error
      */
-    private static Set<Index> getCandidates(String workloadFilename)
-        throws SQLException, IOException
+    private static Set<Index> getCandidates(Workload workload)
     {
-        Set<Index>   pool;
-        Iterable<Index> candidateSet;
-        Workload        wl;
-        
-        wl   = new Workload(new FileReader(workloadFilename));
-        pool = new BitArraySet<Index>();
-
-        for (SQLStatement sql : wl) {
-            candidateSet = db.getOptimizer().recommendIndexes(sql);
-
-            for (Index index : candidateSet)
-                if (!pool.contains(index))
-                    pool.add(index);
-        }
-
-        return pool;
+        return new HashSet<Index>();
     }
 }

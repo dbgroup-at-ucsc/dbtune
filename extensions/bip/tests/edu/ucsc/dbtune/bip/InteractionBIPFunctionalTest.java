@@ -25,7 +25,7 @@ import edu.ucsc.dbtune.bip.util.LogListener;
 /**
  * Test for the InteractionBIP class
  */
-public class InteractionBIPTest extends BIPTestConfiguration
+public class InteractionBIPFunctionalTest extends BIPTestConfiguration
 {  
     private static DatabaseSystem db;
     private static Environment    en;

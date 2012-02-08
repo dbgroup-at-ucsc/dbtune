@@ -2,13 +2,13 @@ package edu.ucsc.dbtune.optimizer;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.util.TestUtils;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 
 /**
  * Functional test for optimizer implementations. The optimizer being tested is specified by the 
@@ -36,7 +36,7 @@ public class OptimizerFunctionalTest
         db  = newDatabaseSystem(Environment.getInstance());
         opt = db.getOptimizer();
 
-        TestUtils.loadWorkloads(db);
+        loadWorkloads(db.getConnection());
     }
 
     /**
