@@ -28,7 +28,7 @@ import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
  *
  * @author tqtrung
  */
-public class SimBIPTest 
+public class SimBIPFunctionalTest 
 {   
     private static DatabaseSystem db;
     private static Environment    en;
