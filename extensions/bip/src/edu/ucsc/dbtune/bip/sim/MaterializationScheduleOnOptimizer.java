@@ -23,11 +23,11 @@ public class MaterializationScheduleOnOptimizer implements BIPOutputOnActualOpti
      
         MaterializationSchedule ms = (MaterializationSchedule) bip;
         // the configuration at each window
-        Set<Index> Cw;
         totalCost = 0.0;
+        Set<Index> Cw = new HashSet<Index>(ms.getIntialIndexes());
         
         for (int w = 0; w < ms.getNumberWindows(); w++) {
-            Cw = new HashSet<Index>(ms.getIntialIndexes());
+            
             Cw.addAll(ms.getMaterializedIndexes(w));
             Cw.removeAll(ms.getDroppedIndexes(w));
             

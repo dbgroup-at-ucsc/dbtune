@@ -54,7 +54,7 @@ public class SimBIPTest
         CandidateGenerator generator = new DB2CandidateGenerator();
         generator.setOptimizer(db.getOptimizer());
         generator.setWorkload(workload);
-        indexes = generator.optimalCandidateSet();
+        indexes = generator.oneColumnCandidateSet();
         
         System.out.println("Number of indexes: " + indexes.size() 
                             + " number of statements: " + workload.size());
@@ -90,10 +90,11 @@ public class SimBIPTest
             CPlexSolver cplex = bip.getSolver();
             // invoke the actual optimizer
             MaterializationScheduleOnOptimizer mso = new MaterializationScheduleOnOptimizer();
-            mso.verify(io, schedule, sqls);
+            mso.verify(io.getDelegate(), schedule, sqls);
             System.out.println(" Cost by BIP: " + cplex.getObjectiveValue()
                                + " vs. cost by DB2: " + mso.getTotalCost()
                                + " The RATIO: " + cplex.getObjectiveValue() / mso.getTotalCost());
+            mso.verify(io, schedule, sqls);
             
             System.out.println("Solver information: " + cplex);            
             System.out.println("Result: " + schedule.toString());
