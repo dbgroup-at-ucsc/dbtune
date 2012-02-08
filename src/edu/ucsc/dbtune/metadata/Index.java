@@ -36,7 +36,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     public static final boolean DESCENDING     = false;
     public static final boolean DESC           = false;
 
-    /** used to uniquely identify each instances of the class. */
+    /** used to uniquely identify each instance of the class. */
     static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
     // CHECKSTYLE:ON
 
@@ -50,54 +50,9 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     protected boolean       materialized;
 
     /**
-     * Creates an empty index. The index is assumed to be {@link SECONDARY},  {@link NON_UNIQUE} and 
-     * {@link UNCLUSTERED}
-     *
-     * @param schema
-     *     schema where the index will be contained.
-     * @param name
-     *     name of the index
-     * @throws SQLException
-     *     if schema already contains an index with the defaulted name
-     */
-    public Index(Schema schema, String name) throws SQLException
-    {
-        this(schema,  name,  new ArrayList<Column>(), 
-                new ArrayList<Boolean>(),  SECONDARY,  NON_UNIQUE,  UNCLUSTERED);
-    }
-
-    /**
-     * Creates an empty index.
-     *
-     * @param schema
-     *     schema where the index will be contained.
-     * @param name
-     *     name of the index
-     * @param primary
-     *     whether or not the index is primary
-     * @param unique
-     *     whether the index is unique or not.
-     * @param clustered
-     *     whether the corresponding table is clustered on this index
-     * @throws SQLException
-     *     if schema already contains an index with the defaulted name
-     */
-    public Index(
-            Schema schema,  
-            String name,  
-            boolean primary, 
-            boolean unique,  
-            boolean clustered)
-        throws SQLException
-    {
-        this(schema, name, new ArrayList<Column>(), new ArrayList<Boolean>(), primary, unique, 
-                clustered);
-    }
-
-    /**
      * Creates an index containing the given column. The name of the index is defaulted to {@code 
-     * column.getName()+"_index"}. The column is taken as being in ascending order. The index is 
-     * assumed to be {@link SECONDARY},  {@link NON_UNIQUE} and {@link UNCLUSTERED}
+     * "dbtune_" + getId() + "_index"}. The column is taken as being in ascending order. The index 
+     * is assumed to be {@link SECONDARY},  {@link NON_UNIQUE} and {@link UNCLUSTERED}
      *
      * @param column
      *     column that will define the index
@@ -110,8 +65,26 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      */
     public Index(Column column, boolean ascending) throws SQLException
     {
-        this(column.getTable().getName() + "_" + column.getName() + "_" + ascending +"_index", 
+        this("dbtune_" + (IN_MEMORY_ID.get() + 1) + "_index",
                 column, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+    }
+
+    /**
+     * Creates an index containing the given column. The name of the index is defaulted to {@code 
+     * "dbtune_" + getId() + "_index"}. The index is assumed to be {@link SECONDARY},  {@link 
+     * NON_UNIQUE} and {@link UNCLUSTERED}.
+     *
+     * @param name
+     *     name of the index
+     * @param columns
+     *     columns that will define the index
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the defaulted name; if not 
+     *     all of the columns in the list correspond to the same table.
+     */
+    public Index(String name, List<Column> columns) throws SQLException
+    {
+        this(name, columns, (List<Boolean>) null);
     }
 
     /**
@@ -281,6 +254,51 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         throws SQLException
     {
         this(null, name, columns, ascending, primary, unique, clustered);
+    }
+
+    /**
+     * Creates an empty index. The index is assumed to be {@link SECONDARY},  {@link NON_UNIQUE} and 
+     * {@link UNCLUSTERED}
+     *
+     * @param schema
+     *     schema where the index will be contained.
+     * @param name
+     *     name of the index
+     * @throws SQLException
+     *     if schema already contains an index with the defaulted name
+     */
+    public Index(Schema schema, String name) throws SQLException
+    {
+        this(schema,  name,  new ArrayList<Column>(), 
+                new ArrayList<Boolean>(),  SECONDARY,  NON_UNIQUE,  UNCLUSTERED);
+    }
+
+    /**
+     * Creates an empty index.
+     *
+     * @param schema
+     *     schema where the index will be contained.
+     * @param name
+     *     name of the index
+     * @param primary
+     *     whether or not the index is primary
+     * @param unique
+     *     whether the index is unique or not.
+     * @param clustered
+     *     whether the corresponding table is clustered on this index
+     * @throws SQLException
+     *     if schema already contains an index with the defaulted name
+     */
+    public Index(
+            Schema schema,  
+            String name,  
+            boolean primary, 
+            boolean unique,  
+            boolean clustered)
+        throws SQLException
+    {
+        this(schema, name, new ArrayList<Column>(), new ArrayList<Boolean>(), primary, unique, 
+                clustered);
     }
 
     /**
@@ -728,6 +746,9 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         return dbo instanceof Column;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString()
     {
