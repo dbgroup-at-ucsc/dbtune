@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -22,9 +23,23 @@ public class DB2CandidateGenerator implements CandidateGenerator
     @Override
     public Set<Index> oneColumnCandidateSet() throws SQLException 
     {
-        // TODO: extract each column in every optimal candidate index
-        // construct the corresponding single-column index
-        return null;
+        Set<Index> oneColIndexes = new HashSet<Index>();
+        
+        for (Index index : optimalCandidateSet()) {
+            
+            for (Column col : index.columns()) {
+                
+                try {
+                    Index oneColIndex = new Index(col, index.isAscending(col));
+                    oneColIndexes.add(oneColIndex);
+                } catch (SQLException e) {
+                    continue;
+                }
+                
+            }
+        }
+            
+        return oneColIndexes;
     }
 
     @Override
@@ -71,5 +86,7 @@ public class DB2CandidateGenerator implements CandidateGenerator
     {
         this.workload = wl;
     }
+    
+    
 
 }

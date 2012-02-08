@@ -110,7 +110,8 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      */
     public Index(Column column, boolean ascending) throws SQLException
     {
-        this(column.getName() + "_index", column, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+        this(column.getTable().getName() + "_" + column.getName() + "_" + ascending +"_index", 
+                column, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
     }
 
     /**
