@@ -114,9 +114,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
     {   
         listQueryPlanDescs = new ArrayList<QueryPlanDesc>();
         Set<Table> listWorkloadTables = new HashSet<Table>();
-        for (Iterator<SQLStatement> iterStmt = workload.iterator(); iterStmt.hasNext(); ) {
+        
+        for (int i = 0; i < workload.size(); i++) {            
             // Set the corresponding SQL statement
-            QueryPlanDesc desc =  InumQueryPlanDesc.getQueryPlanDescInstance(iterStmt.next());
+            QueryPlanDesc desc =  InumQueryPlanDesc.getQueryPlanDescInstance(workload.get(i));
             // Populate the INUM space 
             desc.generateQueryPlanDesc(inumOptimizer, candidateIndexes);            
             listQueryPlanDescs.add(desc);

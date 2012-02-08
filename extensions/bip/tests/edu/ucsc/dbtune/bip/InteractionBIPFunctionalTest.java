@@ -44,15 +44,15 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
         CandidateGenerator generator = new DB2CandidateGenerator();
         generator.setWorkload(workload);
         generator.setOptimizer(db.getOptimizer());
-        Set<Index> candidates = generator.optimalCandidateSet();
+        Set<Index> candidates = generator.oneColumnCandidateSet();
                 
         System.out.println("L60 (Test), Number of indexes: " + candidates.size());
-        for (Index index : candidates) {
-            System.out.println("L62, Index : " + index); 
-        }
+        for (Index index : candidates) 
+            System.out.println("L62, Index: " + index.getId() + " " + index); 
+        
 
         try {
-            double delta = 1;
+            double delta = -0.1;
             Optimizer io = db.getOptimizer();
 
             if (!(io instanceof InumOptimizer))
@@ -64,6 +64,7 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
             bip.setWorkload(workload);
             bip.setOptimizer((InumOptimizer) io);
             bip.setLogListenter(logger);
+            bip.setConventionalOptimizer(io.getDelegate());
             
             BIPOutput output = bip.solve();
             System.out.println(output.toString());

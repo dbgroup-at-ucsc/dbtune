@@ -225,7 +225,7 @@ public class InteractionBIP extends AbstractBIPSolver
         localOptimal();
         atomicConstraintLocalOptimal();
         presentVariableLocalOptimal();
-        selectingAtEachSlot();
+        selectingIndexAtEachSlot();
         
         // 3. Index interaction 
         indexInteractionConstraint1();
@@ -686,8 +686,9 @@ public class InteractionBIP extends AbstractBIPSolver
      * to compute {@code cost(q, Atheta \cup Stheta} 
      * 
      */
-    private void selectingAtEachSlot()
+    private void selectingIndexAtEachSlot()
     {  
+        int idFTS, numIndex;
         for (int theta : listTheta) {    
             
             for (int t = 0; t < investigatingDesc.getNumberOfTemplatePlans(); t++) {
@@ -704,6 +705,9 @@ public class InteractionBIP extends AbstractBIPSolver
                         listSortedIndex.add(sac);                       
                     }                   
                     
+                    numIndex = investigatingDesc.getListIndexesAtSlot(i).size();
+                    idFTS = investigatingDesc.getListIndexesAtSlot(i).get(numIndex - 1).getId();
+                    
                     // sort in the increasing order of the index access cost
                     Collections.sort(listSortedIndex);
                     List<String> linList = new ArrayList<String>();
@@ -716,7 +720,7 @@ public class InteractionBIP extends AbstractBIPSolver
                         linList.add(var_u);
                         String LHS = Strings.concatenate(" + ", linList);
                         
-                        if (index.equals(this.restrictIIP.getIndexC())){
+                        if (index.equals(restrictIIP.getIndexC())){
                             // --- \sum >= 1 (for the case of theta = IND_C || IND_D
                             // because this sum is also <= 1 (due to atomic constraint)
                             // therefore, we optimizer to write \sum = 1
@@ -727,7 +731,7 @@ public class InteractionBIP extends AbstractBIPSolver
                                 numConstraints++;
                             }
                         }
-                        else if (index.equals(this.restrictIIP.getIndexD())) {
+                        else if (index.equals(restrictIIP.getIndexD())) {
                             // --- \sum >= 1
                             if (theta == IND_D || theta == IND_CD) {
                                 buf.getCons().println("optimal_7d_" + numConstraints + ":" 
@@ -737,16 +741,24 @@ public class InteractionBIP extends AbstractBIPSolver
                             }
                         }
                         else {                
-                            
-                            for (int thetainternal = IND_EMPTY; thetainternal <= IND_CD; 
-                                     thetainternal++) {
-                                // Constraint (8)
-                                buf.getCons().println("optimal_7_" + numConstraints + ":" 
-                                        + LHS + " - "
-                                        + poolVariables.get(thetainternal, IIPVariablePool.VAR_S, 
-                                                            0, index.getId()).getName()
-                                        + " >= 0");
+                            // Full table scan: must use
+                            if (index.getId() == idFTS) {
+                                
+                                buf.getCons().println("optimal_7_FTS_" + numConstraints + ":" 
+                                        + LHS + " = 1");
                                 numConstraints++;
+                            } else {
+                                
+                                for (int thetainternal = IND_EMPTY; thetainternal <= IND_CD; 
+                                     thetainternal++) {
+                                    // Constraint (8)
+                                    buf.getCons().println("optimal_7_" + numConstraints + ":" 
+                                            + LHS + " - "
+                                            + poolVariables.get(thetainternal, IIPVariablePool.VAR_S, 
+                                                            0, index.getId()).getName()
+                                            + " >= 0");
+                                    numConstraints++;
+                                }
                             }
                         }                                       
                     }   
@@ -915,6 +927,7 @@ public class InteractionBIP extends AbstractBIPSolver
 	                found = mapVarSIndex.get(var);
 	                if (found != null)
 	                    Atheta.add((Index) found);
+	                
 	            }
 	        }
 	        mapThetaIndexSet.put(theta, Atheta);

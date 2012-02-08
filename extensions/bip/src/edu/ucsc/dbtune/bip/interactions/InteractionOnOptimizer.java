@@ -52,10 +52,6 @@ public class InteractionOnOptimizer implements BIPOutputOnActualOptimizer
         Acd.add(first);
         Acd.add(second);
         
-        System.out.println(" Aempty: " + Aempty);
-        System.out.println(" Ac: " + Ac);
-        System.out.println(" Ad: " + Ad);
-        System.out.println(" Acd: " + Acd);
         // compute the cost
         // not that we only have one statement
         double costAempty = 0.0, costAc = 0.0, costAd = 0.0, costAcd = 0.0;
@@ -66,10 +62,16 @@ public class InteractionOnOptimizer implements BIPOutputOnActualOptimizer
             costAd = optimizer.explain(sql, Ad).getTotalCost();
             costAcd = optimizer.explain(sql, Acd).getTotalCost();
             
-            break;
+            System.out.println(" Aempty: " + Aempty + " cost: " + costAempty);
+            System.out.println(" Ac: " + Ac + " cost: " + costAc);
+            System.out.println(" Ad: " + Ad + " cost: " + costAd);
+            System.out.println(" Acd: " + Acd + " cost: " + costAcd);
+            
         }
         
         doiOptimizer = Math.abs(costAcd + costAempty - costAc - costAd) / costAcd;
+        System.out.println("L75, doi Optimizer: " + doiOptimizer);
+        
     }
     
     /**
