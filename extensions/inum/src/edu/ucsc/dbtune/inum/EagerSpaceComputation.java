@@ -63,6 +63,7 @@ public class EagerSpaceComputation implements InumSpaceComputation
                 inumSpace.add(templatePlan);
         }
         
+        // check if NLJ is considered 
         minimumAtomic =
             getMinimumAtomicConfiguration(
                     new InumPlan(delegate, delegate.explain(statement).getPlan()));
