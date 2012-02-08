@@ -47,13 +47,14 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);
                 
-        System.out.println("L60 (Test), Number of indexes: " + candidates.size());
+        System.out.println("L60 (Test), Number of indexes: " + candidates.size() 
+                            + " Number of statements: " + workload.size());
         for (Index index : candidates) 
             System.out.println("L62, Index: " + index.getId() + " " + index); 
         
 
         try {
-            double delta = -0.1;
+            double delta = 0.01;
             Optimizer io = db.getOptimizer();
 
             if (!(io instanceof InumOptimizer))
