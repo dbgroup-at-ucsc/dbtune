@@ -214,13 +214,11 @@ public class DB2OptimizerTest
         for (Operator o : plan.leafs()) {
 
             if (o.getName().equals(Operator.INDEX_SCAN)) {
-                // the index used plus the interesting order for the columns fetched
-                assertThat(o.getDatabaseObjects().size(), is(2));
+                assertThat(o.getDatabaseObjects().size(), is(1));
                 assertThat(o.getPredicates().size(), is(2));
             }
             else if (o.getName().equals(Operator.TABLE_SCAN)) {
-                // the table plus the interesting order for the columns fetched
-                assertThat(o.getDatabaseObjects().size(), is(2));
+                assertThat(o.getDatabaseObjects().size(), is(1));
                 assertThat(o.getPredicates().size(), is(3));
             }
             else {
