@@ -4,12 +4,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -27,10 +30,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.metadata.Index.ASCENDING;
-import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
-import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
-import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
 import static edu.ucsc.dbtune.util.Environment.extractDriver;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DBMS;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
@@ -299,11 +298,15 @@ public final class DBTuneInstances
                 int counter = 0;
                 for (int k = 0; k < numTables; k++) {
                     Table table = new Table(schema, "table_" + k);
-                    for (int l = 0; l < numIndexes; l++) {
-                        Column column = new Column(table, "column_" + l, l + 1);
+
+                    for (int l = 0; l < numIndexes; l++)
+                        new Column(table, "column_" + l, l + 1);
+
+                    for (Set<Column> cols : Sets.powerSet(new HashSet<Column>(table.columns()))) {
+                        if (cols.size() == 0)
+                            continue;
                         new Index(
-                                table.getName() + "_index_" + counter++,
-                                column, ASCENDING, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+                            table.getName() + "_index_" + counter++, new ArrayList<Column>(cols));
                     }
                 }
             }
@@ -616,6 +619,7 @@ public final class DBTuneInstances
         final AtomicInteger currentIndex = new AtomicInteger(-1);
 
         when(result.next()).thenAnswer(new Answer() {
+            @Override
             public Object answer(InvocationOnMock aInvocation) throws Throwable {
                 return currentIndex.incrementAndGet() < rows.length;
             }
@@ -623,6 +627,7 @@ public final class DBTuneInstances
 
         final ArgumentCaptor<String> argument = ArgumentCaptor.forClass(String.class);
         Answer rowLookupAnswer = new Answer() {
+            @Override
             public Object answer(InvocationOnMock aInvocation) throws Throwable {
                 currentIndex.get();
                 int columnIndex = aColumns.indexOf(argument.getValue());

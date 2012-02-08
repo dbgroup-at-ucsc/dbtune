@@ -1,13 +1,13 @@
 package edu.ucsc.dbtune.bip;
 
-import java.io.FileReader;
 import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.CPlexSolver;
-import edu.ucsc.dbtune.bip.core.CandidateGenerator;
-import edu.ucsc.dbtune.bip.core.DB2CandidateGenerator;
 import edu.ucsc.dbtune.bip.sim.MaterializationSchedule;
 import edu.ucsc.dbtune.bip.sim.MaterializationScheduleOnOptimizer;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
@@ -22,6 +22,8 @@ import edu.ucsc.dbtune.workload.Workload;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 /**
  * Test SimBIP.
@@ -46,21 +48,17 @@ public class SimBIPFunctionalTest
         db = newDatabaseSystem(en);
         
         System.out.println(" In test scheduling ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
-        FileReader fileReader = new FileReader(workloadFile);
-        Workload workload     = new Workload(fileReader);
-        Set<Index> indexes;
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        CandidateGenerator candGen =
+            new OneColumnCandidateGenerator(
+                new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())));
+        Set<Index> indexes = candGen.generate(workload);
         
-        CandidateGenerator generator = new DB2CandidateGenerator();
-        generator.setOptimizer(db.getOptimizer());
-        generator.setWorkload(workload);
-        indexes = generator.oneColumnCandidateSet();
-        
-        System.out.println("Number of indexes: " + indexes.size() 
-                            + " number of statements: " + workload.size());
+        System.out.println(
+            "Number of indexes: " + indexes.size() + " number of statements: " + workload.size());
+
         for (Index index : indexes) 
             System.out.println("Index : " + index.columns()); 
-        
         
         Set<Index> Sinit = new HashSet<Index>();
         Set<Index> Smat = new HashSet<Index>();

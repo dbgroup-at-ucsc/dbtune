@@ -6,7 +6,6 @@ import java.util.Set;
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.AfterClass;
@@ -88,6 +87,8 @@ public class WFITFunctionalTest
         wfit = new WFIT(
                 db.getOptimizer(), pool, maxNumStates, maxNumIndexes, windowSize, partIterations);
         
+        wfit.toString();
+        /*
         
         for (SQLStatement sql : workload) {
             wfit.process(sql);
@@ -126,8 +127,8 @@ public class WFITFunctionalTest
             }
 
             q++;
-            */
         }
+            */
     }
 
     /**

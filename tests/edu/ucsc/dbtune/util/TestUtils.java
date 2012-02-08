@@ -7,7 +7,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
+
+import com.google.common.collect.Iterables;
 
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.Workload;
@@ -21,6 +26,8 @@ import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
  */
 public final class TestUtils
 {
+    private static Random RANDOM = new Random();
+
     /**
      * Utility class.
      */
@@ -168,5 +175,31 @@ public final class TestUtils
         throws IOException, SQLException
     {
         return new Workload(new FileReader(fullyQualifiedWorkloadName + "/workload.sql"));
+    }
+
+    /**
+     * returns a random subset from the given set. The size of the subset is between 0 and {@code 
+     * maxSize}.
+     *
+     * @param set
+     *      the set for which
+     * @param maxSize
+     *      maximum number of elements contained in the subset
+     * @param <T>
+     *      the type of object
+     * @return
+     *      a random subset
+     */
+    public static <T> Set<T> randomSubset(Set<T> set, int maxSize)
+    {
+        Set<T> subset = new HashSet<T>();
+
+        int howManyToPick = RANDOM.nextInt(maxSize);
+
+        for (int i = 0; i < howManyToPick; i++) {
+            subset.add(Iterables.get(set, RANDOM.nextInt(set.size() - 1)));
+        }
+
+        return subset;
     }
 }

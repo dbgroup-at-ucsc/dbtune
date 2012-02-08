@@ -61,6 +61,7 @@ public class MetaDataExtractorFunctionalTest
     @BeforeClass
     public static void beforeClass() throws Exception
     {
+        env = Environment.getInstance();
         con = newConnection(env);
 
         loadWorkloads(con);

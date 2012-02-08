@@ -93,7 +93,6 @@ public class MetadataTest
             assertThat(catalog.find("schema_"+j++), is(notNullValue()));
             assertThat(schema.getCatalog(), is(catalog));
 
-            int counter = 0;
             for (int k = 0; k < 3; k++)
             {
                 Table table = schema.findTable("table_"+k);
@@ -106,11 +105,6 @@ public class MetadataTest
                     Column column = table.findColumn("column_"+l);
                     assertThat(column, is(notNullValue()));
                     assertThat(column.getTable(), is(table));
-
-                    Index index = schema.findIndex(table.getName()+"_index_"+counter++);
-                    assertThat(index, is(notNullValue()));
-                    assertThat(index.getSchema(), is(schema));
-                    assertThat(index.getTable(), is(table));
                 }
             }
         }
@@ -216,15 +210,15 @@ public class MetadataTest
     public void testCardinality() throws Exception
     {
         assertThat(catalog.size(),is(2));
-        assertThat(catalog.find("schema_0").size(),is(3+12));
+        assertThat(catalog.find("schema_0").size(),is(3+45));
         assertThat(catalog.findByQualifiedName("schema_0.table_0").size(),is(4));
         assertThat(catalog.getAll().size(),is(
-            1        + // 1 catalog
-            2        + // 2 schemas
-            (2*3)    + // 3 tables per schema
-            (2*3*4)  + // 4 columns per table
-            (2*3*4)  + // 4 indexes per table
-            (2*3*4*1)  // 1 column per index
+            1        + //   1 catalog
+            2        + //   2 schemas
+            (2*3)    + //   3 tables per schema
+            (2*3*4)  + //   4 columns per table
+            (2*3*15) + //  15 indexes per table
+            (192)      // 192 columns in indexes
         ));
     }
 

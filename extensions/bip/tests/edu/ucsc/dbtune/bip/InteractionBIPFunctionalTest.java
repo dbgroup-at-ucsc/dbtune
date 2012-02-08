@@ -1,50 +1,51 @@
 package edu.ucsc.dbtune.bip;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import java.io.FileReader;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.Test;
-
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.BIPOutput;
-import edu.ucsc.dbtune.bip.core.CandidateGenerator;
-import edu.ucsc.dbtune.bip.core.DB2CandidateGenerator;
 import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
+import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
-import edu.ucsc.dbtune.bip.util.LogListener;
+import org.junit.Test;
+
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 /**
- * Test for the InteractionBIP class
+ * Test for the InteractionBIP class.
+ *
+ * @author Quoc Trung Tran
  */
 public class InteractionBIPFunctionalTest extends BIPTestConfiguration
 {  
     private static DatabaseSystem db;
     private static Environment    en;
     
+    /**
+     * @throws Exception
+     *      if fails
+     */
     @Test
     public void testInteraction() throws Exception
     {
-        en  = Environment.getInstance();
+        en = Environment.getInstance();
         db = newDatabaseSystem(en);
         
         System.out.println(" In test interaction ");
-        String workloadFile   = en.getScriptAtWorkloadsFolder("tpch/smallworkload.sql");
-        FileReader fileReader = new FileReader(workloadFile);
-        Workload workload     = new Workload(fileReader);
-        
-        CandidateGenerator generator = new DB2CandidateGenerator();
-        generator.setWorkload(workload);
-        generator.setOptimizer(db.getOptimizer());
-        Set<Index> candidates = generator.oneColumnCandidateSet();
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        CandidateGenerator candGen =
+            new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        Set<Index> candidates = candGen.generate(workload);
                 
         System.out.println("L60 (Test), Number of indexes: " + candidates.size());
         for (Index index : candidates) 
