@@ -4,9 +4,7 @@ import java.sql.SQLException;
 import java.util.Set;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
-import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
@@ -19,13 +17,8 @@ import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
  * @author Ivo Jimenez
  * @author Neoklis Polyzotis
  */
-public class IBGOptimizer implements Optimizer
+public class IBGOptimizer extends AbstractOptimizerWithDelegate
 {
-    /**
-     * The {@link Optimizer} that the {@link IBGOptimizer} uses for actual what-if calls.
-     */
-    protected Optimizer delegate;
-
     /**
      * Constructs an {@code IBGOptimizer}. Relies on the given {@code optimizer} to execute actual 
      * optimization calls.
@@ -38,34 +31,6 @@ public class IBGOptimizer implements Optimizer
         this.delegate = optimizer;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Set<Index> recommendIndexes(SQLStatement sql) throws SQLException
-    {
-        return delegate.recommendIndexes(sql);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setCatalog(Catalog catalog)
-    {
-        delegate.setCatalog(catalog);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration)
-        throws SQLException
-    {
-        return delegate.explain(sql, configuration);
-    }
-    
     /**
      * Build an {@link IndexBenefitGraph} corresponding to a specific {@link SQLStatement} and 
      * a specific {@link Configuration} that represents the universe of indexes.
@@ -93,69 +58,5 @@ public class IBGOptimizer implements Optimizer
         throws SQLException
     {
         return new IBGPreparedSQLStatement(this, sql, null, null);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ExplainedSQLStatement explain(String sql) throws SQLException
-    {
-        return delegate.explain(sql);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException
-    {
-        return delegate.explain(sql);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ExplainedSQLStatement explain(String sql, Set<Index> configuration)
-        throws SQLException
-    {
-        return delegate.explain(sql, configuration);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Set<Index> recommendIndexes(String sql) throws SQLException
-    {
-        return delegate.recommendIndexes(sql);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getWhatIfCount()
-    {
-        return delegate.getWhatIfCount();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled) 
-    {
-        delegate.setFTSDisabled(tables, isFTSDisabled);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Optimizer getDelegate()
-    {
-        return delegate;
     }
 }

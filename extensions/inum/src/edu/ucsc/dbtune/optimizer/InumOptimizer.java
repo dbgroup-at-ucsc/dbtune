@@ -6,9 +6,6 @@ import java.util.Set;
 import edu.ucsc.dbtune.inum.EagerSpaceComputation;
 import edu.ucsc.dbtune.inum.ExhaustiveMatchingStrategy;
 import edu.ucsc.dbtune.inum.InumSpaceComputation;
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
 
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -22,18 +19,11 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  *
  * @author Ivo Jimenez
  */
-public class InumOptimizer implements Optimizer
+public class InumOptimizer extends AbstractOptimizerWithDelegate
 {
     /**
-     * The {@link Optimizer} that the {@link InumOptimizer} uses for actual what-if calls.
-     */
-    protected Optimizer delegate;
-
-    /** local reference to the catalog. */
-    private Catalog catalog;
-
-    /** inum space computation. This could be passed as argument if other kind of computation is 
-     * needed
+     * inum space computation. This could be passed as argument of the constructor if other kind of 
+     * computation is needed
      */
     private InumSpaceComputation inumSpaceComputation;
 
@@ -73,95 +63,5 @@ public class InumOptimizer implements Optimizer
         throws SQLException
     {
         return new InumPreparedSQLStatement(this, sql, new ExhaustiveMatchingStrategy());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Set<Index> recommendIndexes(SQLStatement sql) throws SQLException
-    {
-        return delegate.recommendIndexes(sql);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setCatalog(Catalog catalog)
-    {
-        delegate.setCatalog(catalog);
-        this.catalog = catalog;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ExplainedSQLStatement explain(SQLStatement sql, Set<Index> configuration)
-        throws SQLException
-    {
-        return delegate.explain(sql, configuration);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ExplainedSQLStatement explain(String sql) throws SQLException
-    {
-        return delegate.explain(sql);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ExplainedSQLStatement explain(SQLStatement sql) throws SQLException
-    {
-        return delegate.explain(sql);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ExplainedSQLStatement explain(String sql, Set<Index> configuration)
-        throws SQLException
-    {
-        return delegate.explain(sql, configuration);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Set<Index> recommendIndexes(String sql) throws SQLException
-    {
-        return delegate.recommendIndexes(sql);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getWhatIfCount()
-    {
-        return delegate.getWhatIfCount();
-    }
-
-    @Override
-    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled) 
-    {
-        delegate.setFTSDisabled(tables, isFTSDisabled);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Optimizer getDelegate()
-    {
-        return delegate;
     }
 }

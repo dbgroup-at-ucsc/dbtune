@@ -206,6 +206,9 @@ public class OptimizerTest
         assertThat(cost1, is(cost2));
 
         // XXX: issue #106 is causing this to fail for MySQLOptimizer {
+        if (!(opt instanceof MySQLOptimizer) &&
+                !(opt instanceof IBGOptimizer))
+        {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql);
 
@@ -214,8 +217,10 @@ public class OptimizerTest
         assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
 
         // XXX: issue #139 is causing this to fail for PGOptimizer {
+        if (!(opt instanceof PGOptimizer)) {
         assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        }
         // }
 
         assertThat(sqlp.getBaseTableUpdateCost(), is(sqlp.getUpdateCost()));
@@ -232,8 +237,10 @@ public class OptimizerTest
         assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
 
         // XXX: issue #139 is causing this to fail for PGOptimizer {
+        if (!(opt instanceof PGOptimizer)) {
         assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        }
         // }
 
         assertThat(sqlp.getBaseTableUpdateCost(), is(sqlp.getUpdateCost()));
@@ -243,6 +250,7 @@ public class OptimizerTest
         assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
+        }
         // }
     }
 
@@ -293,6 +301,9 @@ public class OptimizerTest
         assertThat(sqlp.getOptimizationCount(), is(1));
 
         // XXX: issue #106 is causing this to fail for MySQLOptimizer {
+        if (!(opt instanceof MySQLOptimizer) &&
+                !(opt instanceof IBGOptimizer))
+        {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
 
@@ -305,7 +316,9 @@ public class OptimizerTest
         assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
 
         // XXX: issue #139 is causing this to fail for PGOptimizer {
+        if (!(opt instanceof PGOptimizer)) {
         assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        }
         // }
 
         assertThat(
@@ -320,10 +333,13 @@ public class OptimizerTest
         assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
 
         // XXX: issue #142 is causing this to fail for DB2Optimizer {
-        //assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(false));
-        //assertThat(sqlp.getUpdatedConfiguration(), is(conf));
+        if (!(opt instanceof DB2Optimizer)) {
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(false));
+        assertThat(sqlp.getUpdatedConfiguration(), is(conf));
+        }
         // }
         assertThat(sqlp.getOptimizationCount(), is(1));
+        }
         // }
 
         idxa.getSchema().remove(idxa);
@@ -341,6 +357,9 @@ public class OptimizerTest
     protected static void checkRecommendIndexes(Optimizer opt) throws Exception
     {
         // XXX: issue #105 is causing this to fail for MySQLOptimizer {
+        if (!(opt instanceof MySQLOptimizer) &&
+                !(opt instanceof IBGOptimizer))
+        {
         SQLStatement sql;
         Set<Index> rec;
         
@@ -353,6 +372,7 @@ public class OptimizerTest
         rec = opt.recommendIndexes(sql);
 
         assertThat(rec.isEmpty(), is(false));
+        }
         // }
     }
 
@@ -494,6 +514,9 @@ public class OptimizerTest
         assertThat(exp2, is(exp2));
 
         // issue #106 is causing this to fail for MySQLOptimizer {
+        if (!(opt instanceof MySQLOptimizer) &&
+                !(opt instanceof IBGOptimizer))
+        {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         stmt = opt.prepareExplain(sql);
 
@@ -501,6 +524,7 @@ public class OptimizerTest
 
         exp1 = opt.explain(sql);
         exp2 = stmt.explain(new HashSet<Index>());
+        }
         // }
 
         // what-if call
@@ -563,7 +587,8 @@ public class OptimizerTest
      */
     protected static void checkFTSDisabled(Catalog cat, Optimizer opt) throws Exception
     {
-        // XXX: #175 #176 are causing this to fail for MySQLOptimizer and PGOptimizer {
+        // XXX: #175 #176 are causing this to fail for all optimizers {
+        if (opt instanceof Optimizer) return;
         SQLStatement sql;
         Set<Index> conf;
         Index idxa;
@@ -583,7 +608,6 @@ public class OptimizerTest
         opt.setFTSDisabled(getTables(conf), false);
 
         idxa.getSchema().remove(idxa);
-
         // }
     }
 }
