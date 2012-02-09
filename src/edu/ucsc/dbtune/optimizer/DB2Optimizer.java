@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -346,36 +344,14 @@ public class DB2Optimizer extends AbstractOptimizer
             List<String> predicateList, Catalog catalog)
         throws SQLException
     {
-        // TODO: bind column to the catalog object later
         List<Predicate> predicates = new ArrayList<Predicate>();        
         if (predicateList.size() == 0)
             return predicates;
 
-        // NOT((Q3.P_TYPE LIKE 'MEDIUM BURNISHED%'))        
-        String regex = "[^.Q]+|[Q|[^.Q]+]|[\\.]|[^.Q]+";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher m;
-        String element;
-        String predicate;
-        boolean isAfterQ;
+        // NOT((Q3.P_TYPE LIKE 'MEDIUM BURNISHED%'))
+        // Q1.L_QUANTIY < 20        
         for (String strPredicate : predicateList) {
-            m = pattern.matcher(strPredicate);
-            isAfterQ = false;
-            predicate = "";
-            while (m.find()) {
-                element = strPredicate.substring(m.start(), m.end());
-                // Q3.P_BRAND
-                if (element.equals("Q")) 
-                    isAfterQ = true;
-                else {
-                    if (!isAfterQ)
-                        predicate += element;
-                    else if (element.equals(".")) 
-                        isAfterQ = false;
-                }
-            }
-            // a selection predicate
-            Predicate p = new Predicate(null, predicate);
+            Predicate p = new Predicate(null, strPredicate.replaceAll("Q\\d+\\.", ""));
             predicates.add(p);
         }
         return predicates;

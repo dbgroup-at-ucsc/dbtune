@@ -196,7 +196,7 @@ public class InumPlan extends SQLStatementPlan
             // if we have the same index as when we built the template
             return slot.getCost();
         
-        if (!slot.isCompatible(index)) 
+        if ( !(slot.getIndex() instanceof FullTableScanIndex) && !slot.isCompatible(index)) 
             return Double.POSITIVE_INFINITY;        
 
         // we have an index that we haven't seen before, so we need to invoke the optimizer
@@ -277,6 +277,7 @@ public class InumPlan extends SQLStatementPlan
         // FROM R
         // WHERE (predicates on columns of R that are in index)
         // ORDER BY (slot.getIndex())
+        // If the slot is a FTS, we do not need ORDER BY clause
         select = " SELECT ";        
         for (Column col: io.columns()) 
             listElement.add(col.getName());
@@ -286,7 +287,8 @@ public class InumPlan extends SQLStatementPlan
         
         listElement.clear();
         for (Predicate p: predicates) 
-            listElement.add(p.getText()); 
+            listElement.add(p.getText());
+            
         
         where += Strings.concatenate(" AND ", listElement);
         
@@ -294,16 +296,20 @@ public class InumPlan extends SQLStatementPlan
         String element = "";
         Index indexSlot = slot.getIndex();
         
-        for (Column col : indexSlot.columns()) {
-            element = col.getName();
-            if (indexSlot.isAscending(col)) 
-                element += " ASC ";
-            else 
-                element += " DESC ";
-            
-            listElement.add(element);
+        if (indexSlot instanceof FullTableScanIndex) 
+            orderby = "";
+        else {
+            for (Column col : indexSlot.columns()) {
+                element = col.getName();
+                if (indexSlot.isAscending(col)) 
+                    element += " ASC ";
+                else 
+                    element += " DESC ";
+                
+                listElement.add(element);
+            }
+            orderby += Strings.concatenate(" , ", listElement);
         }
-        orderby += Strings.concatenate(" , ", listElement);
         
         return new SQLStatement(select + from + where + orderby);
     }
