@@ -2,6 +2,9 @@ package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
 
+import java.util.List;
+import java.util.Map;
+
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
@@ -39,6 +42,7 @@ public class InumInterestingOrder extends InterestingOrder
 
         container.remove(this);
     }
+
     /**
      * Creates an interesting order instance.
      *
@@ -52,5 +56,25 @@ public class InumInterestingOrder extends InterestingOrder
     public InumInterestingOrder(Column column, boolean ascending) throws SQLException
     {
         super(column, ascending);
+    }
+
+    /**
+     * Creates an index containing the given columns and ascending values. The name of the index is 
+     * defaulted to {@code "dbtune_" + getId() + "_index"}. The index is assumed to be {@link 
+     * SECONDARY},  {@link NON_UNIQUE} and {@link UNCLUSTERED}
+     *
+     * @param columns
+     *     columns that will define the index
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
+     *     order.
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the defaulted name; if not 
+     *     all of the columns in the list correspond to the same table.
+     */
+    public InumInterestingOrder(List<Column> columns, Map<Column, Boolean> ascending)
+        throws SQLException
+    {
+        super(columns, ascending);
     }
 }
