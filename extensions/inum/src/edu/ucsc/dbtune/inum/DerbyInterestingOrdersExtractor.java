@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.inum;
 
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -10,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -77,9 +75,12 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     private Set<Visitable> astNodes;
     private boolean defaultAscending;
     private Set<Column> columns;
-    Map<Column, Boolean> ascending;
+    private Map<Table, List<Column>> orderByColumnsPerTable;
+    private Map<Table, List<Column>> groupByColumnsPerTable;
+    private Map<Column, Boolean> ascending;
     private List<ColumnReference> binaryOperandNodes;
-    boolean leftOperand, rightOperand;
+    boolean leftOperand;
+    boolean rightOperand;
 
     static {
         System.setProperty(DERBY_DEBUG_SETTING, STOP_AFTER_PARSING);
@@ -97,6 +98,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        //SanityManager.SET_DEBUG_STREAM(new PrintWriter(System.out));
     }
 
     /**
@@ -177,14 +179,16 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         groupBy = null;
         orderBy = null;
         binaryOperandNodes = new ArrayList<ColumnReference>();
-        leftOperand = rightOperand = false;
+        leftOperand = false;
+        rightOperand = false;
         try {
             visit(qt);
         }
         catch (StandardException e) {
             throw new SQLException("An error occurred while walking the query AST", e);
         }
-        //qt.treePrint(); // useful for debugging; prints to stdout
+
+        qt.treePrint(); // useful for debugging; prints to stdout
     }
 
     /**
@@ -209,6 +213,8 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         List<String> tableNames = new ArrayList<String>();
         columns = new HashSet<Column>();
         ascending = new HashMap<Column, Boolean>();
+        groupByColumnsPerTable = new HashMap<Table, List<Column>>();
+        orderByColumnsPerTable = new HashMap<Table, List<Column>>();
 
         if (from == null || from.size() == 0)
             throw new SQLException("null or empty FROM list");
@@ -243,14 +249,33 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         // only consider the first column in the order-by clause
         String colName = orderBy.getOrderByColumn(0).getColumnExpression().getColumnName();
         Column col = bindColumn(tableNames, colName);
+        List<Column> orderByColumns;
         if (col != null) {
             columns.add(col);
             ascending.put(col, orderBy.getOrderByColumn(0).isAscending());
         }
+
+        for (int i = 0; i < orderBy.size(); i++) {
+            colName = orderBy.getOrderByColumn(i).getColumnExpression().getColumnName();
+            col = bindColumn(tableNames, colName);
+            if (col == null)
+                continue;
+
+            ascending.put(col, isDefaultAscending());
+
+            orderByColumns = orderByColumnsPerTable.get(col.getTable());
+
+            if (orderByColumns == null) {
+                orderByColumns = new ArrayList<Column>();
+                orderByColumnsPerTable.put(col.getTable(), orderByColumns);
+            }
+
+            orderByColumns.add(col);
+        }
     }
 
     /**
-     * Bind columns in the given group-by list into the corresponding database object
+     * Bind columns in the given group-by list into the corresponding database object.
      *
      * @param groupBy
      *      The list of group-by columns
@@ -261,6 +286,8 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     {
         String colName;
         Column col;
+        List<Column> groupByColumns;
+
         for (int i = 0; i < groupBy.size(); i++) {
             colName = groupBy.getGroupByColumn(i).getColumnExpression().getColumnName();
             col = bindColumn(tableNames, colName);
@@ -269,6 +296,15 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
             if (columns.add(col))
                 ascending.put(col, isDefaultAscending());
+
+            groupByColumns = groupByColumnsPerTable.get(col.getTable());
+
+            if (groupByColumns == null) {
+                groupByColumns = new ArrayList<Column>();
+                groupByColumnsPerTable.put(col.getTable(), groupByColumns);
+            }
+
+            groupByColumns.add(col);
         }
     }
 
@@ -349,7 +385,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *
      * @param tableNames
      *      each element corresponds to a table in the {@code FROM} clause
-     * @param columnName
+     * @param colName
      *      corresponds to a column in the {@code GROUP BY} or {@code ORDER BY} clause
      * @return
      *      A {@Column} object or NULL if the column is not a part of all the tables
@@ -375,7 +411,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     }
 
     /**
-     * Extract interesting orders
+     * Extract interesting orders.
      *
      * @param tableNames
      *      List of table names referenced in the from-clause
@@ -398,29 +434,42 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         Set<Index> interestingOrdersForTable;
         Table table;
 
-        for (Column col : columns) {
-            table = col.getTable();
+        // add FTS for each table in the from clause
+        for (String tblName : tableNames) {
+            table = catalog.<Table>findByName(tblName);
 
-            // add the full table scan if the {@code table} has not been seen before
-            if (!interestingOrdersPerTable.containsKey(table))  {
-                interestingOrdersForTable = new HashSet<Index> ();
+            if (interestingOrdersPerTable.get(table) == null)  {
+                interestingOrdersForTable = new HashSet<Index>();
                 interestingOrdersForTable.add(getFullTableScanIndexInstance(table));
                 interestingOrdersPerTable.put(table, interestingOrdersForTable);
             }
+        }
+
+        for (Column col : columns) {
+            table = col.getTable();
+
+            if (!interestingOrdersPerTable.containsKey(table))
+                throw new SQLException("Can't find " + table + " in the from list");
 
             interestingOrdersForTable = interestingOrdersPerTable.get(table);
             interestingOrdersForTable.add(new InumInterestingOrder(col, ascending.get(col)));
         }
 
-        for (String tblName : tableNames) {
-            table = catalog.<Table>findByName(tblName);
-            // add the full table scan if the {@code table} has not been seen before
-            if (!interestingOrdersPerTable.containsKey(table))  {
-                interestingOrdersForTable = new HashSet<Index> ();
-                interestingOrdersForTable.add(getFullTableScanIndexInstance(table));
-                interestingOrdersPerTable.put(table, interestingOrdersForTable);
-            }
+        for (Map.Entry<Table, List<Column>> entry : groupByColumnsPerTable.entrySet()) {
+            if (entry.getValue().size() == 1) continue;
+            InumInterestingOrder io = new InumInterestingOrder(entry.getValue(), ascending);
+            System.out.println("Adding groupBy interesting order: " + io);
+            interestingOrdersPerTable.get(entry.getKey()).add(io);
         }
+
+        for (Map.Entry<Table, List<Column>> entry : orderByColumnsPerTable.entrySet()) {
+            if (entry.getValue().size() == 1) continue;
+            InumInterestingOrder io = new InumInterestingOrder(entry.getValue(), ascending);
+            System.out.println("Adding orderBy interesting order: " + io);
+            interestingOrdersPerTable.get(entry.getKey()).add(io);
+        }
+
+        System.out.println("");
 
         return new ArrayList<Set<Index>>(interestingOrdersPerTable.values());
     }
