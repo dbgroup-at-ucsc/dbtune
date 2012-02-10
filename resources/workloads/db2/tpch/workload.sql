@@ -110,28 +110,27 @@ order by
 	o_orderdate;
 
 --query 04
--- TODO: SQLException: Can't determine object associated to leaf node
---select
-	--o_orderpriority,
-	--count(*) as order_count
---from
-	--tpch.orders
---where
-	--o_orderdate >= '1995-08-01'
-	--and o_orderdate < date('1995-11-01')
-	--and exists (
-		--select
-			--*
-		--from
-			--tpch.lineitem
-		--where
-			--l_orderkey = o_orderkey
-			--and l_commitdate < l_receiptdate
-	--)
---group by
-	--o_orderpriority
---order by
-	--o_orderpriority;
+select
+	o_orderpriority,
+	count(*) as order_count
+from
+	tpch.orders
+where
+	o_orderdate >= '1995-08-01'
+	and o_orderdate < date('1995-11-01')
+	and exists (
+		select
+			*
+		from
+			tpch.lineitem
+		where
+			l_orderkey = o_orderkey
+			and l_commitdate < l_receiptdate
+	)
+group by
+	o_orderpriority
+order by
+	o_orderpriority;
 
 --query 05
 select
@@ -288,39 +287,40 @@ order by
 
 
 --query 10
---select
-	--c_custkey,
-	--c_name,
-	--sum(l_extendedprice * (1 - l_discount)) as revenue,
-	--c_acctbal,
-	--n_name,
-	--c_address,
-	--c_phone,
-	--c_comment
---from
-	--tpch.customer,
-	--tpch.orders,
-	--tpch.lineitem,
-	--tpch.nation
---where
-	--c_custkey = o_custkey
-	--and l_orderkey = o_orderkey
-	--and o_orderdate >= cast('1993-11-01' as date)
-	--and o_orderdate < cast('1994-2-01' as date)
-	--and l_returnflag = 'R'
-	--and c_nationkey = n_nationkey
---group by
-	--c_custkey,
-	--c_name,
-	--c_acctbal,
-	--c_phone,
-	--n_name,
-	--c_address,
-	--c_comment
---order by
-	--revenue desc;
+select
+	c_custkey,
+	c_name,
+	sum(l_extendedprice * (1 - l_discount)) as revenue,
+	c_acctbal,
+	n_name,
+	c_address,
+	c_phone,
+	c_comment
+from
+	tpch.customer,
+	tpch.orders,
+	tpch.lineitem,
+	tpch.nation
+where
+	c_custkey = o_custkey
+	and l_orderkey = o_orderkey
+	and o_orderdate >= cast('1993-11-01' as date)
+	and o_orderdate < cast('1994-2-01' as date)
+	and l_returnflag = 'R'
+	and c_nationkey = n_nationkey
+group by
+	c_custkey,
+	c_name,
+	c_acctbal,
+	c_phone,
+	n_name,
+	c_address,
+	c_comment
+order by
+	revenue desc;
 
 --query 11
+-- TODO: contains two instances of supplier
 --select
 --	ps_partkey,
 --	sum(ps_supplycost * ps_availqty) as value
@@ -380,26 +380,28 @@ order by
 	l_shipmode;
 
 --query 13
-select
-	c_count,
-	count(*) as custdist
-from
-	(
-		select
-			c_custkey,
-			count(o_orderkey)
-		from
-			tpch.customer left outer join tpch.orders on
-				c_custkey = o_custkey
-				and o_comment not like '%special%packages%'
-		group by
-			c_custkey
-	) as c_orders (c_custkey, c_count)
-group by
-	c_count
-order by
-	custdist desc,
-	c_count desc;
+-- TODO: java.lang.ClassCastException:
+--   org.apache.derby.impl.sql.compile.HalfOuterJoinNode cannot be cast to org.apache.derby.impl.sql.compile.FromBaseTable
+--select
+	--c_count,
+	--count(*) as custdist
+--from
+	--(
+		--select
+			--c_custkey,
+			--count(o_orderkey)
+		--from
+			--tpch.customer left outer join tpch.orders on
+				--c_custkey = o_custkey
+				--and o_comment not like '%special%packages%'
+		--group by
+			--c_custkey
+	--) as c_orders (c_custkey, c_count)
+--group by
+	--c_count
+--order by
+	--custdist desc,
+	--c_count desc;
 
 --query 14
 select

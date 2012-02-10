@@ -21,55 +21,51 @@ order by
         l_returnflag,
         l_linestatus;
 
-
-
-
 --Query 2
-select
-        s_acctbal,
-        s_name,
-        n_name,
-        p_partkey,
-        p_mfgr,
-        s_address,
-        s_phone,
-        s_comment
-from
-        tpch.partsupp,
-        tpch.part,
-        tpch.supplier,
-        tpch.nation,
-        tpch.region
-where
-        p_partkey = ps_partkey
-        and s_suppkey = ps_suppkey
-        and p_size = 44
-        and p_type like '%BRASS'
-        and s_nationkey = n_nationkey
-        and n_regionkey = r_regionkey
-        and r_name = 'AFRICA'
-        and ps_supplycost = (
-                select
-                        min(ps_supplycost)
-                from
-                        tpch.partsupp,
-                        tpch.supplier,
-                        tpch.nation,
-                        tpch.region
-                where
-                        p_partkey = ps_partkey
-                        and s_suppkey = ps_suppkey
-                        and s_nationkey = n_nationkey
-                        and n_regionkey = r_regionkey
-                        and r_name = 'AFRICA'
-        )
-order by
-        s_acctbal desc,
-        n_name,
-        s_name,
-        p_partkey;
-
-
+-- TODO: more than one relation
+--select
+        --s_acctbal,
+        --s_name,
+        --n_name,
+        --p_partkey,
+        --p_mfgr,
+        --s_address,
+        --s_phone,
+        --s_comment
+--from
+        --tpch.partsupp,
+        --tpch.part,
+        --tpch.supplier,
+        --tpch.nation,
+        --tpch.region
+--where
+        --p_partkey = ps_partkey
+        --and s_suppkey = ps_suppkey
+        --and p_size = 44
+        --and p_type like '%BRASS'
+        --and s_nationkey = n_nationkey
+        ----and n_regionkey = r_regionkey
+        --and r_name = 'AFRICA'
+        --and ps_supplycost = (
+                --select
+                        --min(ps_supplycost)
+                --from
+                        --tpch.partsupp,
+                        --tpch.supplier,
+                        --tpch.nation,
+                        --tpch.region
+                --where
+                        --p_partkey = ps_partkey
+                        --and s_suppkey = ps_suppkey
+                        --and s_nationkey = n_nationkey
+                        --and n_regionkey = r_regionkey
+                        --and r_name = 'AFRICA'
+        --)
+--order by
+        --s_acctbal desc,
+        --n_name,
+        --s_name,
+        --p_partkey;
 
 --Query 3
 select
@@ -96,27 +92,22 @@ order by
         o_orderdate;
 
 
-
-
 --Query 4
--- TODO this query doesn't generate any slot
---select
-        --o_orderpriority,
-        --count(*) as order_count
---from
-        --tpch.orders,
-        --tpch.lineitem
---where
-        --o_orderdate >=  '1993-12-01'
-        --and o_orderdate <  '1993-3-01'
-        --and l_orderkey = o_orderkey
-        --and l_commitdate < l_receiptdate
---group by
-        --o_orderpriority
---order by
-        --o_orderpriority;
-
-
+select
+        o_orderpriority,
+        count(*) as order_count
+from
+        tpch.orders,
+        tpch.lineitem
+where
+        o_orderdate >=  '1993-12-01'
+        and o_orderdate <  '1993-3-01'
+        and l_orderkey = o_orderkey
+        and l_commitdate < l_receiptdate
+group by
+        o_orderpriority
+order by
+        o_orderpriority;
 
 --Query 5
 select
@@ -155,7 +146,6 @@ where
         and l_shipdate <  '1996-01-01'
         and l_discount between 0.02 - 0.01 and 0.02 + 0.01
         and l_quantity < 25;
-
 
 --Query 7
 -- problem with additional indexes on lineitem
@@ -392,38 +382,39 @@ where
 
 
 --Query 18
-select
-        c_name,
-        c_custkey,
-        o_orderkey,
-        o_orderdate,
-        o_totalprice,
-        sum(l_quantity)
-from
-        tpch.customer,
-        tpch.orders,
-        tpch.lineitem
-where
-        o_orderkey in (
-                select
-                        l_orderkey
-                from
-                        tpch.lineitem
-                group by
-                        l_orderkey having
-                                sum(l_quantity) > 314
-        )
-        and c_custkey = o_custkey
-        and o_orderkey = l_orderkey
-group by
-        c_name,
-        c_custkey,
-        o_orderkey,
-        o_orderdate,
-        o_totalprice
-order by
-        o_totalprice desc,
-        o_orderdate;
+-- TODO: more than one reference to lineitem
+--select
+        --c_name,
+        --c_custkey,
+        --o_orderkey,
+        --o_orderdate,
+        --o_totalprice,
+        --sum(l_quantity)
+--from
+        --tpch.customer,
+        --tpch.orders,
+        --tpch.lineitem
+--where
+        --o_orderkey in (
+                --select
+                        --l_orderkey
+                --from
+                        --tpch.lineitem
+                --group by
+                        --l_orderkey having
+                                --sum(l_quantity) > 314
+        --)
+        --and c_custkey = o_custkey
+        --and o_orderkey = l_orderkey
+--group by
+        --c_name,
+        --c_custkey,
+        --o_orderkey,
+        --o_orderdate,
+        --o_totalprice
+--order by
+        --o_totalprice desc,
+        --o_orderdate;
 
 
 --Query 19

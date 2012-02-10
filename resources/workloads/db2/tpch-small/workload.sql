@@ -1,3 +1,26 @@
+--query 01
+select
+	l_returnflag,
+	l_linestatus,
+	sum(l_quantity) as sum_qty,
+	sum(l_extendedprice) as sum_base_price,
+	sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+	sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+	avg(l_quantity) as avg_qty,
+	avg(l_extendedprice) as avg_price,
+	avg(l_discount) as avg_disc,
+	count(*) as count_order
+from
+	tpch.lineitem
+where
+	l_shipdate <= date('1998-09-22') 
+group by
+	l_returnflag,
+	l_linestatus
+order by
+	l_returnflag,
+	l_linestatus;
+
 --query 03
 select
 	l_orderkey,
@@ -30,7 +53,7 @@ from
 	tpch.orders
 where
 	o_orderdate >= '1995-08-01'
-	and o_orderdate < cast('1995-11-01' as date)
+	and o_orderdate < date('1995-11-01')
 	and exists (
 		select
 			*
@@ -45,6 +68,32 @@ group by
 order by
 	o_orderpriority;
 
+--query 05
+select
+	n_name,
+	sum(l_extendedprice * (1 - l_discount)) as revenue
+from
+	tpch.customer,
+	tpch.orders,
+	tpch.lineitem,
+	tpch.supplier,
+	tpch.nation,
+	tpch.region
+where
+	c_custkey = o_custkey
+	and l_orderkey = o_orderkey
+	and l_suppkey = s_suppkey
+	and c_nationkey = s_nationkey
+	and s_nationkey = n_nationkey
+	and n_regionkey = r_regionkey
+	and r_name = 'AMERICA'
+	and o_orderdate >= '1993-01-01'
+	and o_orderdate < cast('1994-01-01' as date)
+group by
+	n_name
+order by
+	revenue desc;
+
 --query 06
 select
 	sum(l_extendedprice * l_discount) as revenue
@@ -52,7 +101,7 @@ from
 	tpch.lineitem
 where
 	l_shipdate >= '1993-01-01'
-	and l_shipdate < cast('1994-01-01' as date) 
+	and l_shipdate < date('1994-01-01') 
 	and l_discount between 0.06 and 0.08 
 	and l_quantity < 25;
 
@@ -90,35 +139,70 @@ order by
 	nation,
 	o_year desc;
 
---query 12
+
+--query 10
 select
-	l_shipmode,
-	sum(case
-		when o_orderpriority = '1-URGENT'
-			or o_orderpriority = '2-HIGH'
-			then 1
-		else 0
-	end) as high_line_count,
-	sum(case
-		when o_orderpriority <> '1-URGENT'
-			and o_orderpriority <> '2-HIGH'
-			then 1
-		else 0
-	end) as low_line_count
+	c_custkey,
+	c_name,
+	sum(l_extendedprice * (1 - l_discount)) as revenue,
+	c_acctbal,
+	n_name,
+	c_address,
+	c_phone,
+	c_comment
 from
+	tpch.customer,
 	tpch.orders,
-	tpch.lineitem
+	tpch.lineitem,
+	tpch.nation
 where
-	o_orderkey = l_orderkey
-	and l_shipmode in ('FOB', 'REG AIR')
-	and l_commitdate < l_receiptdate
-	and l_shipdate < l_commitdate
-	and l_receiptdate >= '1993-01-01'
-	and l_receiptdate < cast('1994-01-01' as date) 
+	c_custkey = o_custkey
+	and l_orderkey = o_orderkey
+	and o_orderdate >= cast('1993-11-01' as date)
+	and o_orderdate < cast('1994-2-01' as date)
+	and l_returnflag = 'R'
+	and c_nationkey = n_nationkey
 group by
-	l_shipmode
+	c_custkey,
+	c_name,
+	c_acctbal,
+	c_phone,
+	n_name,
+	c_address,
+	c_comment
 order by
-	l_shipmode;
+	revenue desc;
+
+--query 12
+-- TODO: not working for SimBIP but works for InteractionBIP
+--select
+	--l_shipmode,
+	--sum(case
+		--when o_orderpriority = '1-URGENT'
+			--or o_orderpriority = '2-HIGH'
+			--then 1
+		--else 0
+	--end) as high_line_count,
+	--sum(case
+		--when o_orderpriority <> '1-URGENT'
+			--and o_orderpriority <> '2-HIGH'
+			--then 1
+		--else 0
+	--end) as low_line_count
+--from
+	--tpch.orders,
+	--tpch.lineitem
+--where
+	--o_orderkey = l_orderkey
+	--and l_shipmode in ('FOB', 'REG AIR')
+	--and l_commitdate < l_receiptdate
+	--and l_shipdate < l_commitdate
+	--and l_receiptdate >= '1993-01-01'
+	--and l_receiptdate < cast('1994-01-01' as date) 
+--group by
+	--l_shipmode
+--order by
+	--l_shipmode;
 
 
 --query 14
@@ -136,3 +220,40 @@ where
 	and l_shipdate >= '1993-05-01'
 	and l_shipdate < cast('1993-06-01' as date);
 
+--query 19
+-- TODO: not working for SimBIP but works for InteractionBIP
+--select
+	--sum(l_extendedprice* (1 - l_discount)) as revenue
+--from
+	--tpch.lineitem,
+	--tpch.part
+--where
+	--(
+		--p_partkey = l_partkey
+		--and p_brand = 'Brand#13'
+		--and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
+		--and l_quantity >= 6 and l_quantity <= 6 + 10
+		--and p_size between 1 and 5
+		--and l_shipmode in ('AIR', 'AIR REG')
+		--and l_shipinstruct = 'DELIVER IN PERSON'
+	--)
+	--or
+	--(
+		--p_partkey = l_partkey
+		--and p_brand = 'Brand#43'
+		--and p_container in ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK')
+		--and l_quantity >= 11 and l_quantity <= 11 + 10
+		--and p_size between 1 and 10
+		--and l_shipmode in ('AIR', 'AIR REG')
+		--and l_shipinstruct = 'DELIVER IN PERSON'
+	--)
+	--or
+	--(
+		--p_partkey = l_partkey
+		--and p_brand = 'Brand#55'
+		--and p_container in ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
+		--and l_quantity >= 27 and l_quantity <= 27 + 10
+		--and p_size between 1 and 15
+		--and l_shipmode in ('AIR', 'AIR REG')
+		--and l_shipinstruct = 'DELIVER IN PERSON'
+	--);
