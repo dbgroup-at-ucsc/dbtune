@@ -115,6 +115,26 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
+     * Creates an index containing the given column. The name of the index is defaulted to {@code 
+     * "dbtune_" + getId() + "_index"}. The index is assumed to be {@link SECONDARY},  {@link 
+     * NON_UNIQUE} and {@link UNCLUSTERED}
+     *
+     * @param columns
+     *     columns that will define the index
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
+     *     order.
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the defaulted name; if not 
+     *     all of the columns in the list correspond to the same table.
+     */
+    public Index(List<Column> columns, Map<Column, Boolean> ascending)
+        throws SQLException
+    {
+        this("dbtune_" + (IN_MEMORY_ID.get() + 1) + "_index", columns, ascending);
+    }
+
+    /**
      * Creates an index with the given name, column, primary, uniqueness and clustering values. The 
      * column is taken as being in ascending order.
      *
@@ -760,6 +780,13 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     @Override
     public String toString()
     {
-        return containees + " " + ascendingColumn;
+        String str = "[";
+
+        for (Column col : this)
+            str += "+" + col + (isAscending(col) ? "(A)" : "(D)");
+
+        str += "]";
+
+        return str;
     }
 }

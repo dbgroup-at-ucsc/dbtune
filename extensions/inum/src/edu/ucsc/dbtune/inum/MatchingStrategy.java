@@ -18,7 +18,7 @@ import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 public interface MatchingStrategy
 {
     /**
-     * It matches the input configuration to its corresponding optimal plan. If the input matches
+     * Matches the input configuration to its corresponding optimal plan. If the input matches
      * more than one optimal plan, then pick the one with minimum cost.
      *
      * @param inumSpace
