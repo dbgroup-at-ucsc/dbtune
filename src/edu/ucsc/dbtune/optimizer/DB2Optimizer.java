@@ -12,6 +12,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
@@ -87,6 +90,8 @@ public class DB2Optimizer extends AbstractOptimizer
             updateCost = 0.0;
             updateCosts = new HashMap<Index, Double>();
         }
+
+        plan.setStatement(sql);
 
         selectCost = plan.getRootOperator().getAccumulatedCost() - updateCost;
 
@@ -345,16 +350,45 @@ public class DB2Optimizer extends AbstractOptimizer
             List<String> predicateList, Catalog catalog)
         throws SQLException
     {
-        List<Predicate> predicates = new ArrayList<Predicate>();        
+        List<Predicate> predicates = new ArrayList<Predicate>();
+
         if (predicateList.size() == 0)
             return predicates;
 
-        // NOT((Q3.P_TYPE LIKE 'MEDIUM BURNISHED%'))
-        // Q1.L_QUANTIY < 20        
+        Pattern tableReferencePattern = Pattern.compile("Q\\d+\\.");
+
         for (String strPredicate : predicateList) {
-            Predicate p = new Predicate(null, strPredicate.replaceAll("Q\\d+\\.", ""));
-            predicates.add(p);
+
+            if (strPredicate == null || strPredicate.trim().equals(""))
+                continue;
+
+            final Matcher matcher = tableReferencePattern.matcher(strPredicate);
+
+            if (!matcher.find()) { 
+                // no table references (eg. 3 = 3), just create the predicate
+                predicates.add(new Predicate(null, strPredicate));
+                continue;
+            }
+
+            final String firstTableReference = matcher.group();
+
+            if (!matcher.find()) {
+                // only one table references (eg. Q1.L_QUANTITY < 3); create the predicate without
+                predicates.add(new Predicate(null, strPredicate.replaceAll("Q\\d+\\.", "")));
+                continue;
+            }
+
+            final String secondTableReference = matcher.group();
+
+            if (firstTableReference.equals(secondTableReference)) {
+                // we found something like Q1.L_QUANTITY = Q1.L_PRICE
+                predicates.add(new Predicate(null, strPredicate.replaceAll("Q\\d+\\.", "")));
+            }
+
+            // ignore since we have found a join predicate and we only care about predicates that 
+            // reference only the relation in question
         }
+
         return predicates;
     }
 
@@ -595,7 +629,12 @@ public class DB2Optimizer extends AbstractOptimizer
         dboSchema = dboSchema.trim();
         dboName = dboName.trim();
 
-        if (dboSchema.equals("SYSTEM"))
+        if (dboSchema.equalsIgnoreCase("SYSIBM") && dboName.equalsIgnoreCase("GENROW")) {
+            op.setName("GENROW");
+            return op;
+        }
+
+        if (dboSchema.equalsIgnoreCase("SYSTEM"))
             // SYSTEM means that it's in the ADVISE_INDEX table; at least that's what we can infer
             dbo = catalog.findIndex(dboName);
         else
@@ -679,6 +718,7 @@ public class DB2Optimizer extends AbstractOptimizer
                 throw new SQLException(child + " expecting parent_id=" + parentId);
 
             plan.setChild(parent, child);
+
             idToNode.put(operatorId, child);
         }
 
@@ -902,14 +942,13 @@ public class DB2Optimizer extends AbstractOptimizer
         "               o.operator_id = s2.source_id " +
         "           AND (" +
         "                  s2.target_id >= 0 " +
-        "               OR s2.target_id IS NULL " + // RETURN (the root) has NULL as it's parent
+        "               OR s2.target_id IS NULL " + // RETURN op (the root) has NULL as it's parent
         "               )" +
         "        LEFT OUTER JOIN " +
         "     systools.explain_stream s1 ON " +
         "              o.operator_id = s1.target_id " +
         "          AND o.explain_time = s1.explain_time " +
         "          AND s1.object_name IS NOT NULL " +
-        "          AND s1.object_schema NOT LIKE '%SYSIBM%' " +
         "  ORDER BY " +
         "     o.operator_id ASC";
 

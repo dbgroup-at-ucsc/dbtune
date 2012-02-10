@@ -34,17 +34,19 @@ public class TableAccessSlot extends Operator
         super(leaf);
 
         if (leaf.getDatabaseObjects().size() != 1)
-            throw new RuntimeException("Leaf should contain only one object");            
+            throw new SQLException("Leaf should contain only one object");
+
+        if (leaf.getColumnsFetched() == null || leaf.getColumnsFetched().size() == 0)
+            throw new SQLException("No columns fetched for leaf");
         
         DatabaseObject object = leaf.getDatabaseObjects().get(0);
         
         if (object instanceof Table)
-                index = FullTableScanIndex.getFullTableScanIndexInstance((Table) object);
-            else if (object instanceof Index)
-                index = (Index) object;
-            else
-                throw new SQLException(
-                        "Can't proceed with object type " + object.getClass().getName());
+            index = FullTableScanIndex.getFullTableScanIndexInstance((Table) object);
+        else if (object instanceof Index)
+            index = (Index) object;
+        else
+            throw new SQLException("Can't proceed with object type " + object.getClass().getName());
 
         if (index == null)
             throw new SQLException("Can't determine object associated to leaf node: " + leaf);

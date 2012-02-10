@@ -459,18 +459,14 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         for (Map.Entry<Table, List<Column>> entry : groupByColumnsPerTable.entrySet()) {
             if (entry.getValue().size() == 1) continue;
             InumInterestingOrder io = new InumInterestingOrder(entry.getValue(), ascending);
-            System.out.println("Adding groupBy interesting order: " + io);
             interestingOrdersPerTable.get(entry.getKey()).add(io);
         }
 
         for (Map.Entry<Table, List<Column>> entry : orderByColumnsPerTable.entrySet()) {
             if (entry.getValue().size() == 1) continue;
             InumInterestingOrder io = new InumInterestingOrder(entry.getValue(), ascending);
-            System.out.println("Adding orderBy interesting order: " + io);
             interestingOrdersPerTable.get(entry.getKey()).add(io);
         }
-        
-        System.out.println("");
     */
         return new ArrayList<Set<Index>>(interestingOrdersPerTable.values());
     }

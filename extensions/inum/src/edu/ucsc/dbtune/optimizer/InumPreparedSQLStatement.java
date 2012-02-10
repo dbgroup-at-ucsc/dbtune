@@ -48,7 +48,7 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
     {
         super(optimizer, sql);
 
-        if (sql.getSQLCategory().isSame(SQLCategory.UPDATE))
+        if (getSQLStatement().getSQLCategory().isSame(SQLCategory.UPDATE))
             throw new RuntimeException("Can't process UPDATE statements yet");
 
         this.matchingStrategy = matchingStrategy;
@@ -86,14 +86,26 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
             0);
     }
     
+    /**
+     * Returns the set of template plans contained in the INUM space.
+     *
+     * @return
+     *      set of template plans
+     */
     public Set<InumPlan> getTemplatePlans()
     {
         return inumSpace;
     }
     
+    /**
+     * computes the INUM space, if it hasn't been done before; otherwise returns immediately.
+     *
+     * @throws SQLException
+     *      if an error occurs while computing the inum space
+     */
     public void computeInumSpace() throws SQLException
     {
         if (inumSpace == null)
-            inumSpace = ((InumOptimizer) getOptimizer()).computeInumSpace(sql);
+            inumSpace = ((InumOptimizer) getOptimizer()).computeInumSpace(getSQLStatement());
     }
 }
