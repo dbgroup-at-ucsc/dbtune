@@ -72,7 +72,7 @@ public class DB2Optimizer extends AbstractOptimizer
         double updateCost;
 
         clearAdviseAndExplainTables(connection);
-
+        
         insertIntoAdviseIndexTable(connection, indexes);
 
         plan = getPlan(connection, sql, catalog, indexes);
@@ -204,6 +204,7 @@ public class DB2Optimizer extends AbstractOptimizer
 
         stmt.executeUpdate(DELETE_FROM_ADVISE_INDEX);
         stmt.executeUpdate(DELETE_FROM_EXPLAIN_INSTANCE);
+        
         /*
          * there's a trigger on EXPLAIN_INSTANCE that causes all data corresponding to an explain 
          * instance to be removed from the EXPLAIN tables, so there's no need to execute the 
@@ -410,7 +411,7 @@ public class DB2Optimizer extends AbstractOptimizer
     {
         Statement stmtOperator = connection.createStatement();
         Statement stmtPredicate = connection.createStatement();
-
+       
         stmtOperator.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
         stmtOperator.execute(sql.getSQL());
         stmtOperator.execute("SET CURRENT EXPLAIN MODE = NO");
@@ -478,8 +479,12 @@ public class DB2Optimizer extends AbstractOptimizer
 
         Statement stmt = connection.createStatement();
 
-        for (Index index : configuration)
+        for (Index index : configuration) {
+            if (index.size() == 0)
+                continue;
+            
             stmt.execute(buildAdviseIndexInsertStatement(index));
+        }
         
         stmt.close();
     }

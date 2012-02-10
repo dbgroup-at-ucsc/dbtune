@@ -44,7 +44,6 @@ public class EagerSpaceComputation implements InumSpaceComputation
         DerbyInterestingOrdersExtractor interestingOrdersExtractor;
         SQLStatementPlan sqlPlan;
         InumPlan templatePlan;
-        int i = 1;
 
         interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(catalog, true);
         indexesPerTable = interestingOrdersExtractor.extract(statement);
@@ -53,49 +52,26 @@ public class EagerSpaceComputation implements InumSpaceComputation
 
         for (List<Index> atomic : cartesianProduct(indexesPerTable)) {
             sqlPlan = delegate.explain(statement, new HashSet<Index>(atomic)).getPlan();
-
-            System.out.println("Checking interesting order: " + atomic);
-
-            if (sqlPlan.contains(NLJ)) {
-                System.out.println("    Ignored; contains NLJ");
-                // ignore it since we check for NLJ below
+            
+            if (sqlPlan.contains(NLJ))
                 continue;
-            }
             
             templatePlan = new InumPlan(delegate, sqlPlan);
 
-            if (isPlanUsingInterestingOrder(templatePlan, atomic)) {
-                System.out.println("    Added; plan uses at least one non-FTS interesting order");
+            if (isPlanUsingInterestingOrder(templatePlan, atomic)) 
                 inumSpace.add(templatePlan);
-            } else {
-                System.out.println("    Ignored; plan uses only FTS");
-            }
         }
-
+        
         // check if NLJ is considered 
         minimumAtomic =
             getMinimumAtomicConfiguration(
                     new InumPlan(delegate, delegate.explain(statement).getPlan()));
         
-        System.out.println("");
-        System.out.println("Checking for NLJ");
-        System.out.println("");
-        System.out.println("Checking atomic order: " + minimumAtomic);
-
         sqlPlan = delegate.explain(statement, new HashSet<Index>(minimumAtomic)).getPlan();
 
-        if (sqlPlan.contains(NLJ)) {
-            System.out.println("    Added; plan uses NLJ");
+        if (sqlPlan.contains(NLJ))
             inumSpace.add(new InumPlan(delegate, sqlPlan));
-        } else {
-            System.out.println("    Ignored; plan doesn't contain NLJ");
-        }
-
-        System.out.println("");
-        System.out.println("Total template plans: " + inumSpace.size());
-
-        System.out.println("<<<<<<<<<<<<<<<<<<<<<\n\n");
-        
+                
         return inumSpace;
     }
     
@@ -162,7 +138,7 @@ public class EagerSpaceComputation implements InumSpaceComputation
             if (s.getColumnsFetched() == null)
                 throw new SQLException("Can't find columns fetched for " + s.getTable());
             
-            ios.add(s.getColumnsFetched());
+            ios.add(new InumInterestingOrder(s.getColumnsFetched()));
         }
         
         return ios;

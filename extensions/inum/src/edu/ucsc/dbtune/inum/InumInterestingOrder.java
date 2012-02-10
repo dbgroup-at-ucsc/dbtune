@@ -77,4 +77,9 @@ public class InumInterestingOrder extends InterestingOrder
     {
         super(columns, ascending);
     }
+    
+    public InumInterestingOrder(InterestingOrder io) throws SQLException
+    {
+        super(io.columns(),io.getAscendingColumn());
+    }
 }

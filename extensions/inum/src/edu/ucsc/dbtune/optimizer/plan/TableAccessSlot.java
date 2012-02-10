@@ -3,7 +3,6 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.sql.SQLException;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
-import edu.ucsc.dbtune.inum.InumInterestingOrder;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -34,19 +33,18 @@ public class TableAccessSlot extends Operator
     {
         super(leaf);
 
-        for (DatabaseObject object : leaf.getDatabaseObjects()) {
-            if (object instanceof Table)
+        if (leaf.getDatabaseObjects().size() != 1)
+            throw new RuntimeException("Leaf should contain only one object");            
+        
+        DatabaseObject object = leaf.getDatabaseObjects().get(0);
+        
+        if (object instanceof Table)
                 index = FullTableScanIndex.getFullTableScanIndexInstance((Table) object);
-            else if (object instanceof InumInterestingOrder)
-                index = (Index) object;
-            else if (object instanceof InterestingOrder)
-                ; // ignore
             else if (object instanceof Index)
                 index = (Index) object;
             else
                 throw new SQLException(
                         "Can't proceed with object type " + object.getClass().getName());
-        }
 
         if (index == null)
             throw new SQLException("Can't determine object associated to leaf node: " + leaf);

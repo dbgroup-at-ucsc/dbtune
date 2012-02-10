@@ -68,6 +68,11 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         this("dbtune_" + (IN_MEMORY_ID.get() + 1) + "_index",
                 column, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
     }
+    public List<Boolean> getAscendingColumn()
+    {
+        return ascendingColumn;
+    }
+    
 
     /**
      * Creates an index containing the given column. The name of the index is defaulted to {@code 
@@ -200,8 +205,11 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
 
         this.ascendingColumn.clear();
 
-        for (Column c : columns)
+        for (Column c : columns) {
+            if (ascending.get(c) == null)
+                throw new RuntimeException("must have value for column " + c);
             this.ascendingColumn.add(ascending.get(c));
+        }
     }
 
     /**

@@ -72,6 +72,19 @@ public class InterestingOrder extends Index
         // override name
         name = makeName(columns, ascending);
     }
+    
+    public InterestingOrder(List<Column> columns, List<Boolean> ascending) throws SQLException
+    {
+        super("temporary", columns, ascending);
+
+        container.remove(this);
+
+        // we know the list has at least one column; it's a precondition of the super constructor
+        table = columns.get(0).getTable();
+
+        // override name
+        name = makeName(columns, ascending);
+    }
 
     /**
      * {@inheritDoc}
@@ -113,6 +126,16 @@ public class InterestingOrder extends Index
 
         for (Column c : columns)
             str.append(makeName(c, ascending.get(c)));
+
+        return str.toString();
+    }
+    
+    private static String makeName(List<Column> columns, List<Boolean> ascending)
+    {
+        StringBuilder str = new StringBuilder();
+
+        for (int i = 0; i < columns.size(); i++)
+            str.append(makeName(columns.get(i), ascending.get(i)));
 
         return str.toString();
     }
