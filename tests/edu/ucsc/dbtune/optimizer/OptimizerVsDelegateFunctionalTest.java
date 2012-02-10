@@ -15,17 +15,20 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
-import static edu.ucsc.dbtune.util.TestUtils.workloads;
+//import static edu.ucsc.dbtune.util.TestUtils.workloads;
+import static edu.ucsc.dbtune.util.TestUtils.workload;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+//import static org.hamcrest.Matchers.is;
+//import static org.junit.Assert.assertThat;
 
 /**
  * Functional test for testing non-dbms optimizers against the corresponding dbms one. The optimizer 
  * being tested is specified by the {@link edu.ucsc.dbtune.util.EnvironmentProperties#OPTIMIZER} 
  * property. The base optimizer, i.e. the implementation of {@link Optimizer} that runs right on top 
- * of the DBMS (e.g. {@link DB2Optimizer}) is retrieved through the.
+ * of the DBMS (e.g. {@link DB2Optimizer}) is retrieved through the {@link #getBaseOptimizer} 
+ * utility method.
  *
  * @author Ivo Jimenez
  */
@@ -47,7 +50,7 @@ public class OptimizerVsDelegateFunctionalTest
         env = Environment.getInstance();
         db = newDatabaseSystem(env);
         optimizer = db.getOptimizer();
-        delegate = optimizer.getDelegate();
+        delegate = getBaseOptimizer(optimizer);
         candGen = new OptimizerCandidateGenerator(delegate);
         
         loadWorkloads(db.getConnection());
@@ -69,55 +72,25 @@ public class OptimizerVsDelegateFunctionalTest
      * @see OptimizerTest#checkPreparedExplain
      */
     @Test
-    public void testExplain() throws Exception
-    {
-        if (delegate == null) return;
-
-        for (Workload wl : workloads(env.getWorkloadFolders()))
-            for (SQLStatement sql : wl)
-                assertThat(optimizer.explain(sql), is(delegate.explain(sql)));
-    }
-
-    /**
-     * @throws Exception
-     *      if something goes wrong
-     * @see OptimizerTest#checkPreparedExplain
-     */
-    @Test
-    public void testWhatIfExplain() throws Exception
-    {
-        if (delegate == null) return;
-
-        for (Workload wl : workloads(env.getWorkloadFolders())) {
-
-            final Set<Index> conf = candGen.generate(wl);
-
-            for (SQLStatement sql : wl)
-                assertThat(optimizer.explain(sql, conf), is(delegate.explain(sql, conf)));
-        }
-    }
-
-    /**
-     * @throws Exception
-     *      if something goes wrong
-     * @see OptimizerTest#checkPreparedExplain
-     */
-    @Test
     public void testPreparedSQLStatement() throws Exception
     {
         if (delegate == null) return;
 
-        for (Workload wl : workloads(env.getWorkloadFolders())) {
+        //for (Workload wl : workloads(env.getWorkloadFolders())) {
+        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
+        final Set<Index> conf = candGen.generate(wl);
 
-            final Set<Index> conf = candGen.generate(wl);
+        System.out.println("Candidates generated: " + conf.size());
 
-            for (SQLStatement sql : wl) {
-                final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
-                System.out.println(
+        int i = 1;
+        for (SQLStatement sql : wl) {
+            final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
+            System.out.println(
+                    "Query " + i++ + " -- " +
                     "INUM: " + pSql.explain(conf).getSelectCost() +
-                    " DB2: " + delegate.explain(sql, conf).getSelectCost());
-                //assertThat(pSql.explain(conf), is(delegate.explain(sql, conf)));
-            }
+                    "; DB2: " + delegate.explain(sql, conf).getSelectCost());
+            //assertThat(pSql.explain(conf), is(delegate.explain(sql, conf)));
         }
+        //}
     }
 }

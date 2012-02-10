@@ -719,7 +719,10 @@ public class DB2Optimizer extends AbstractOptimizer
 
             plan.setChild(parent, child);
 
-            idToNode.put(operatorId, child);
+            if (child.getName().equals("GENROW"))
+                renameClosestJoinAndRemoveBranchComingFrom(plan, child, Operator.SORT);
+            else
+                idToNode.put(operatorId, child);
         }
 
         return plan;
@@ -788,6 +791,112 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.close();
 
         return recommended;
+    }
+
+    /**
+     * Renames the closest node in the three (bottom-up) that is an ascendant of {@code operator} 
+     * and removes the entire branch that hangs from it (from the point of view of {@code 
+     * operator}). For example, if a plan like the following is given:
+     * <pre>
+     * {@code .
+     *
+     *                 Rows 
+     *                RETURN
+     *                (   1)
+     *                 Cost 
+     *                  I/O 
+     *                  |
+     *                2824.22 
+     *                NLJOIN
+     *                (   2)
+     *                211540 
+     *                207998 
+     *             /----+----\
+     *         9320.87        0.303 
+     *         TBSCAN        TBSCAN
+     *         (   3)        (   4)
+     *         211526       0.0103428 
+     *         207998           0 
+     *           |             |
+     *       6.00122e+06        2 
+     *     TABLE: TPCH       TEMP  
+     *        LINEITEM       (   5)
+     *           Q3         0.0030171 
+     *                          0 
+     *                         |
+     *                          2 
+     *                       TBSCAN
+     *                       (   6)
+     *                     2.95215e-05 
+     *                          0 
+     *                         |
+     *                          2 
+     *                  TABFNC: SYSIBM  
+     *                       GENROW
+     *                         Q1
+     * }
+     * </pre>
+     * <p>
+     * If this method is invoked with {@code plan, genRowOperator, "NLJOIN", "SORT"}, the plan looks 
+     * like the following when this method returns:
+     * <pre>
+     * {@code .
+     *
+     *                 Rows 
+     *                RETURN
+     *                (   1)
+     *                 Cost 
+     *                  I/O 
+     *                  |
+     *                2824.22 
+     *                 SORT
+     *                (   2)
+     *                211540 
+     *                207998 
+     *                  |
+     *                9320.87
+     *                TBSCAN
+     *                (   3)
+     *                211526
+     *                207998
+     *                  |
+     *              6.00122e+06
+     *            TABLE: TPCH
+     *               LINEITEM
+     *                  Q3
+     * }
+     * </pre>
+     *
+     * @param plan
+     *      plan that is modified
+     * @param child
+     *      node whose closest parent named {@code oldName} gets renamed. The branch that comes from 
+     *      this node up to the parent is entirely removed
+     * @param newName
+     *      new name of the parent
+     * @throws SQLException
+     *      if a {@code operatorName} is not found in any ascendant of {@code child}
+     */
+    private static void renameClosestJoinAndRemoveBranchComingFrom(
+            SQLStatementPlan plan, Operator child, String newName)
+        throws SQLException
+    {
+        Operator ascendant = null;
+        Operator shild = child;
+
+        while ((ascendant = plan.getParent(shild)) != null) {
+
+            if (ascendant.isJoin())
+                break;
+
+            shild = ascendant;
+        }
+
+        if (ascendant == null)
+            throw new SQLException("Can't find closest join (ascendant) of " + child);
+
+        ascendant.setName(newName);
+        plan.remove(shild);
     }
 
     // CHECKSTYLE:OFF

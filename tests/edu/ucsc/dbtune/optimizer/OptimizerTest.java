@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.metadata.Index.DESCENDING;
-import static edu.ucsc.dbtune.util.MetadataUtils.getTables;
+import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -601,11 +601,11 @@ public class OptimizerTest
 
         assertThat(opt.explain(sql, conf).getUsedConfiguration(), is(not(conf)));
 
-        opt.setFTSDisabled(getTables(conf), true);
+        opt.setFTSDisabled(getReferencedTables(conf), true);
 
         assertThat(opt.explain(sql, conf).getUsedConfiguration(), is(conf));
 
-        opt.setFTSDisabled(getTables(conf), false);
+        opt.setFTSDisabled(getReferencedTables(conf), false);
 
         idxa.getSchema().remove(idxa);
         // }

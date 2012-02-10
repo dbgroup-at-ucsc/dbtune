@@ -17,7 +17,7 @@ import java.util.Set;
  */
 public class Tree<T extends Comparable<? super T>>
 {
-    protected Entry<T>        root;
+    protected Entry<T> root;
     protected Map<T, Entry<T>> elements;
 
     /**
@@ -103,7 +103,7 @@ public class Tree<T extends Comparable<? super T>>
         List<T> children = new ArrayList<T>();
 
         for (Entry<T> e : entry.children)
-            children.add(valueOf(e));
+            children.add(e.getElement());
 
         return children;
     }
@@ -185,6 +185,58 @@ public class Tree<T extends Comparable<? super T>>
     }
 
     /**
+     * Removes the subtree corresponding to the given value.
+     *
+     * @param value
+     *      the value whose child branch is being removed from
+     * @throws NoSuchElementException
+     *      if {@code value} isn't a member of the tree
+     */
+    public void remove(T value)
+    {
+        remove(elements.get(value));
+    }
+
+    /**
+     * Removes an entry and the entire subtree that hangs from it.
+     *
+     * @param entry
+     *      entry to be removed
+     * @throws NoSuchElementException
+     *      if entry is null
+     */
+    private void remove(Entry<T> entry)
+    {
+        if (entry == null)
+            throw new NoSuchElementException("Entry not in tree");
+
+        List<Entry<T>> subtreeEntries = new ArrayList<Entry<T>>();
+
+        getSubtreeElements(subtreeEntries, entry);
+
+        for (Entry<T> e : subtreeEntries)
+            elements.remove(e.getElement());
+
+        Entry<T> parent = entry.getParent();
+
+        if (parent == null)
+            root = null;
+        else
+            parent.getChildren().remove(entry);
+    }
+
+    /**
+     * Returns an entry and its subtree in a list.
+     */
+    private void getSubtreeElements(List<Entry<T>> entries, Entry<T> entry)
+    {
+        for (Entry<T> child : entry.getChildren())
+            getSubtreeElements(entries, child);
+
+        entries.add(entry);
+    }
+
+    /**
      * Returns the parent of the given value.
      *
      * @param childValue
@@ -197,6 +249,10 @@ public class Tree<T extends Comparable<? super T>>
         Entry<T> childEntry = find(childValue, root);
 
         if (childEntry == null)
+            throw new NoSuchElementException("Value " + childValue + " not in tree");
+
+        if (childEntry.parent == null)
+            // the root, so no parent
             return null;
 
         return childEntry.parent.getElement();

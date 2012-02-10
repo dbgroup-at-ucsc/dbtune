@@ -53,6 +53,9 @@ public class Operator implements Comparable<Operator>, Identifiable
     /** fetch operator. **/
     public static final String FETCH = "FETCH";
 
+    /** sort operator. **/
+    public static final String SORT = "SORT";
+
     /** ID used to identify an operator within a plan. */
     protected int id;
 
@@ -214,6 +217,17 @@ public class Operator implements Comparable<Operator>, Identifiable
     }
 
     /**
+     * assigns the name of the operator.
+     *
+     * @param name
+     *     operator id
+     */
+    public void setName(String name)
+    {
+        this.name = name;
+    }
+
+    /**
      * returns the accumulated cost of the operator.
      *
      * @return
@@ -266,6 +280,18 @@ public class Operator implements Comparable<Operator>, Identifiable
     public String getName()
     {
         return name;
+    }
+
+    /**
+     * @return
+     *      {@code true} if the operator is a join; {@code false} otherwise.
+     */
+    public boolean isJoin()
+    {
+        if (name.equals(NLJ) || name.equals(MSJ) || name.equals(HJ) || name.equals(INLJ))
+            return true;
+
+        return false;
     }
 
     /**
