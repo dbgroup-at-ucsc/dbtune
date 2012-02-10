@@ -6,7 +6,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
@@ -42,7 +42,7 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
         db = newDatabaseSystem(en);
         
         System.out.println(" In test interaction ");
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         CandidateGenerator candGen =
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);
@@ -54,12 +54,12 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
         
 
         try {
-            double delta = 0.01;
+            double delta = 0.1;
             Optimizer io = db.getOptimizer();
 
             if (!(io instanceof InumOptimizer))
                 throw new Exception("Expecting InumOptimizer instance");
-
+            
             LogListener logger = LogListener.getInstance();
             InteractionBIP bip = new InteractionBIP(delta);            
             bip.setCandidateIndexes(candidates);
@@ -68,11 +68,13 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
             bip.setLogListenter(logger);
             bip.setConventionalOptimizer(io.getDelegate());
             
-            BIPOutput output = bip.solve();
+            IndexTuningOutput output = bip.solve();
             System.out.println(output.toString());
             System.out.println(logger.toString());
+            
         } catch (SQLException e) {
             System.out.println(" error " + e.getMessage());
+            throw e;
         }
     }
 }

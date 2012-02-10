@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.metadata.Index;
 

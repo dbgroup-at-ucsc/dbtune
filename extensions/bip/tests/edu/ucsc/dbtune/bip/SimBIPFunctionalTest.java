@@ -5,11 +5,12 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
+//import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.CPlexSolver;
 import edu.ucsc.dbtune.bip.sim.MaterializationSchedule;
 import edu.ucsc.dbtune.bip.sim.MaterializationScheduleOnOptimizer;
+import edu.ucsc.dbtune.bip.sim.RandomIndexMaterializationSchedule;
 import edu.ucsc.dbtune.bip.sim.SimBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
@@ -48,17 +49,17 @@ public class SimBIPFunctionalTest
         db = newDatabaseSystem(en);
         
         System.out.println(" In test scheduling ");
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
-        CandidateGenerator candGen =
-            new OneColumnCandidateGenerator(
-                new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())));
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        
+        CandidateGenerator candGen = 
+                new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> indexes = candGen.generate(workload);
         
         System.out.println(
             "Number of indexes: " + indexes.size() + " number of statements: " + workload.size());
 
         for (Index index : indexes) 
-            System.out.println("Index : " + index.columns()); 
+            System.out.println("Index : " + index); 
         
         Set<Index> Sinit = new HashSet<Index>();
         Set<Index> Smat = new HashSet<Index>();
@@ -84,19 +85,32 @@ public class SimBIPFunctionalTest
         
         MaterializationSchedule schedule = new MaterializationSchedule (0, new HashSet<Index>());
         schedule = (MaterializationSchedule) bip.solve();
+        double bipCost, randomCost;
+        
         if (schedule != null) {
             CPlexSolver cplex = bip.getSolver();
-            // invoke the actual optimizer
-            MaterializationScheduleOnOptimizer mso = new MaterializationScheduleOnOptimizer();
-            mso.verify(io.getDelegate(), schedule, sqls);
-            System.out.println(" Cost by BIP: " + cplex.getObjectiveValue()
-                               + " vs. cost by DB2: " + mso.getTotalCost()
-                               + " The RATIO: " + cplex.getObjectiveValue() / mso.getTotalCost());
-            mso.verify(io, schedule, sqls);
-            
             System.out.println("Solver information: " + cplex);            
             System.out.println("Result: " + schedule.toString());
             System.out.println(logger.toString());
+            
+            // invoke the actual optimizer
+            MaterializationScheduleOnOptimizer mso = new MaterializationScheduleOnOptimizer();
+            mso.verify(io.getDelegate(), schedule, sqls);
+            bipCost = mso.getTotalCost();
+            System.out.println(" Cost by BIP: " + cplex.getObjectiveValue()
+                    + " vs. cost by DB2: " + bipCost
+                    + " The RATIO: " + cplex.getObjectiveValue() / bipCost);
+            
+            // compute the random schedule
+            RandomIndexMaterializationSchedule randomSchedule = new  
+                                        RandomIndexMaterializationSchedule();
+            randomSchedule.setConfigurations(Sinit, Smat);
+            randomSchedule.setNumberofIndexesEachWindow(1);
+            randomSchedule.setNumberWindows(indexes.size());
+            mso.verify(io.getDelegate(), (MaterializationSchedule) randomSchedule.solve(), sqls);
+            randomCost = mso.getTotalCost();
+            System.out.println( "L112, BIP cost: " + bipCost + " vs. RANDOM cost: "
+                                + randomCost + " RATIO: " + bipCost / randomCost);
         }
     }
 }

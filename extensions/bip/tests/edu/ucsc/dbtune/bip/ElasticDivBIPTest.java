@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.ElasticDivBIP;
 import edu.ucsc.dbtune.metadata.Index;
 

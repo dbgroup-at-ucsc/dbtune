@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.metadata.Index;
@@ -40,7 +40,7 @@ public class DivBIP extends AbstractBIPSolver
      *      List of indexes to be materialized at each replica
      */
     @Override
-    protected BIPOutput getOutput() 
+    protected IndexTuningOutput getOutput() 
     {
         DivRecommendedConfiguration conf = new DivRecommendedConfiguration(this.Nreplicas);
         

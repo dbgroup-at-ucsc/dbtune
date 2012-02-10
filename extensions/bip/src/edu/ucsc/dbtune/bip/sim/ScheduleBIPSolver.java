@@ -37,5 +37,5 @@ public interface ScheduleBIPSolver extends BIPSolver
      * @param T
      *      The time limit
      */
-    void setTimeLimitWindow (int T);
+    void setCreationCostWindow (int T);
 }

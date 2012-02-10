@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
@@ -23,18 +21,18 @@ public class BIPIndexInteractionFinder implements IndexInteractionFinder
     @Override
     public List<IndexInteraction> getInteractingIndexes(Workload w, Set<Index> c, double delta) 
     {
+        InteractionOutput out = new InteractionOutput();
         InteractionBIP bip = new InteractionBIP(delta);
         bip.setCandidateIndexes(c);
         bip.setWorkload(w);        
-        bip.setOptimizer(this.inumOptimizer);
-        InteractionOutput out = new InteractionOutput();
+        
         try {
+            bip.setOptimizer(inumOptimizer);                        
             out = (InteractionOutput) bip.solve();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } 
+        
         return out.getInteractions();
     }
 }

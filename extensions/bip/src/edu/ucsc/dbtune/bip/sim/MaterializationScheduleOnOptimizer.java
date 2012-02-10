@@ -4,7 +4,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.BIPOutputOnActualOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.metadata.Index;
@@ -15,7 +15,7 @@ public class MaterializationScheduleOnOptimizer implements BIPOutputOnActualOpti
     private double totalCost;
     
     @Override
-    public void verify(Optimizer optimizer, BIPOutput bip, Set<SQLStatement> workload) 
+    public void verify(Optimizer optimizer, IndexTuningOutput bip, Set<SQLStatement> workload) 
                 throws SQLException 
     {
         if ( !(bip instanceof MaterializationSchedule)) 

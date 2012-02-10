@@ -3,11 +3,11 @@ package edu.ucsc.dbtune.bip.div;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
 
-public class DivRecommendedConfiguration  extends BIPOutput
+public class DivRecommendedConfiguration  extends IndexTuningOutput
 {
     private int Nreplicas;
     private List<List<Index>> listIndexReplica;

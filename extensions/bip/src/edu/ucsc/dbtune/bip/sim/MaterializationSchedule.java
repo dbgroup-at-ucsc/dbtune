@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
 /**
@@ -15,7 +15,7 @@ import edu.ucsc.dbtune.metadata.Index;
  * @author tqtrung@soe.ucsc.edu
  *
  */
-public class MaterializationSchedule extends BIPOutput
+public class MaterializationSchedule extends IndexTuningOutput
 {
     private int W;
     private List<List<Index>> listCreateIndexesWindow;
@@ -38,6 +38,7 @@ public class MaterializationSchedule extends BIPOutput
         
         listCreateIndexesWindow = new ArrayList<List<Index>>();
         listDropIndexesWindow = new ArrayList<List<Index>>();
+        
         for (int w = 0; w < W; w++) {
             List<Index> listCreateIndexes = new ArrayList<Index>();
             List<Index> listDropIndexes = new ArrayList<Index>();

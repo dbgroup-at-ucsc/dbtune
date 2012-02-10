@@ -20,7 +20,7 @@ import edu.ucsc.dbtune.util.Strings;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.BIPVariable;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
@@ -82,7 +82,7 @@ public class InteractionBIP extends AbstractBIPSolver
     
     
     @Override
-    public BIPOutput solve() throws SQLException, IOException
+    public IndexTuningOutput solve() throws SQLException, IOException
     {   
         // 1. Communicate with INUM 
         // to derive the query plan description including internal cost, index access cost,
@@ -109,7 +109,7 @@ public class InteractionBIP extends AbstractBIPSolver
     
     
     @Override
-    protected BIPOutput getOutput() 
+    protected IndexTuningOutput getOutput() 
     {
         return interactionOutput;
     }

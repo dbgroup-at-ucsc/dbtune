@@ -30,6 +30,6 @@ public interface BIPOutputOnActualOptimizer
      * @throws SQLException
      *      when there is error in communicating with the optimizer
      */
-    void verify(Optimizer optimizer, BIPOutput bip, Set<SQLStatement> workload)
+    void verify(Optimizer optimizer, IndexTuningOutput bip, Set<SQLStatement> workload)
     throws SQLException;
 }

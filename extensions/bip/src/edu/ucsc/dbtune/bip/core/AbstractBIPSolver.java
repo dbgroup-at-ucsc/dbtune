@@ -15,6 +15,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -24,7 +25,7 @@ import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInsta
  * This class abstracts the common methods shared by different BIP solvers
  * for different index tuning related problems.
  * 
- * @author tqtrung@soe.ucsc.edu
+ * @author Quoc Trung Tran
  *
  */
 public abstract class AbstractBIPSolver implements BIPSolver 
@@ -41,7 +42,6 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected InumOptimizer inumOptimizer;    
     protected LogListener logger;
     
-    
     @Override    
     public void setWorkload(Workload wl)
     {
@@ -55,13 +55,16 @@ public abstract class AbstractBIPSolver implements BIPSolver
     }
     
     @Override
-    public void setOptimizer(InumOptimizer optimizer) 
+    public void setOptimizer(Optimizer optimizer) throws Exception 
     {
-        this.inumOptimizer = optimizer;
+        if (!(optimizer instanceof InumOptimizer))
+            throw new Exception("Expecting InumOptimizer instance");
+        
+        inumOptimizer = (InumOptimizer) optimizer;
     }
    
     @Override
-    public BIPOutput solve() throws SQLException, IOException
+    public IndexTuningOutput solve() throws SQLException, IOException
     {   
         // 1. Communicate with INUM 
         // to derive the query plan descriptions including internal cost, index access cost, etc.
@@ -77,7 +80,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         
         // 3. Solve the BIP
         logger.setStartTimer();
-        BIPOutput result = null;
+        IndexTuningOutput result = null;
         cplex = new CPlexImplementer();
         mapVariableValue = cplex.solve(this.buf.getLpFileName());
         if (mapVariableValue != null)
@@ -181,5 +184,5 @@ public abstract class AbstractBIPSolver implements BIPSolver
      *      The output formatted for a particular problem 
      *      (e.g., MaterializationSchedule for Scheduling Index Materialization problem)
      */
-    protected abstract BIPOutput getOutput();
+    protected abstract IndexTuningOutput getOutput();
 }

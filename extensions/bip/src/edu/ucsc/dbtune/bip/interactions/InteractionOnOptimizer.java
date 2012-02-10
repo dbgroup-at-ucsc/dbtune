@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import edu.ucsc.dbtune.bip.core.BIPOutput;
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.BIPOutputOnActualOptimizer;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -36,7 +36,7 @@ public class InteractionOnOptimizer implements BIPOutputOnActualOptimizer
     }
     
     @Override
-    public void verify(Optimizer optimizer, BIPOutput bip, Set<SQLStatement> workload) 
+    public void verify(Optimizer optimizer, IndexTuningOutput bip, Set<SQLStatement> workload) 
                 throws SQLException 
     {
         Set<Index> Aempty, Ac, Ad, Acd;
