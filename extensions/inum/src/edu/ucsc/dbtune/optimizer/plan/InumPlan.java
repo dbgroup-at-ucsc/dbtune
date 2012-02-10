@@ -196,15 +196,16 @@ public class InumPlan extends SQLStatementPlan
             // if we have the same index as when we built the template
             return slot.getCost();
         
+        // If the slot is a normal index and the given index is not compatible
         if ( !(slot.getIndex() instanceof FullTableScanIndex) && !slot.isCompatible(index)) 
             return Double.POSITIVE_INFINITY;        
-
+        
         // we have an index that we haven't seen before, so we need to invoke the optimizer
         SQLStatementPlan plan =
             delegate.explain(
                     buildQueryForUnseenIndex(slot, index),
                     Sets.<Index>newHashSet(index)).getPlan();
-
+        
         if (plan.leafs().size() != 1)
             throw new RuntimeException("plan should have only one leaf.");
         
@@ -213,9 +214,13 @@ public class InumPlan extends SQLStatementPlan
         if (o.getDatabaseObjects().isEmpty())
             throw new RuntimeException(" The slot should not be empty.");
 
-        if (o.getDatabaseObjects().get(0) instanceof Index)
-            return extractCostOfLeaf(plan, o);
-
+        if (o.getDatabaseObjects().get(0) instanceof Index) {
+            if (slot.getIndex() instanceof FullTableScanIndex)
+                return plan.getRootOperator().accumulatedCost;
+            else 
+                return extractCostOfLeaf(plan, o);
+        }
+       
         // plan uses a full table scan, so it's not compatible
         return Double.POSITIVE_INFINITY;
     }
@@ -325,7 +330,7 @@ public class InumPlan extends SQLStatementPlan
      *      cost of the leaf
      */
     static double extractCostOfLeaf(SQLStatementPlan sqlPlan, Operator leaf)
-    {
+    {   
         if (leaf.getName().equals(Operator.TABLE_SCAN))
             return leaf.getAccumulatedCost();
 
@@ -333,7 +338,7 @@ public class InumPlan extends SQLStatementPlan
 
         if (parent == null)
             throw new RuntimeException("Something is wrong, leaf should have a parent");
-
+        
         if (parent.getName().equals(Operator.FETCH) || parent.getName().equals(Operator.RID_SCAN))
             return parent.getAccumulatedCost();
 
