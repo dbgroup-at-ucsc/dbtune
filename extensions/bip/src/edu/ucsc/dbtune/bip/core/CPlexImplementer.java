@@ -42,7 +42,7 @@ public class CPlexImplementer implements CPlexSolver
             cplex.setWarning(null);
             // set the mode to be parallel barrier (determistic)
             //cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Barrier);   
-            cplex.setParam(IloCplex.IntParam.ParallelMode, IloCplex.ParallelMode.Deterministic);
+            //cplex.setParam(IloCplex.IntParam.ParallelMode, IloCplex.ParallelMode.Deterministic);
             // Read model from file into cplex optimizer object
             cplex.importModel(inputFile);
             

@@ -149,12 +149,6 @@ public class InteractionBIP extends AbstractBIPSolver
                     continue;
                 
                 id = mapIndexSlotID.get(indexc);
-                System.out.println("*** Investigating pair of " + indexc
-                                    + " vs. " + indexd                                            
-                                    + " using statement "  
-                                    + investigatingDesc.getStatementID()
-                                    + " id: " + indexc.getId()
-                                    + " vs.: " + indexd.getId() + "****");
                 // initialize an instance of RestrictIIP problem
                 restrictIIP = new RestrictIIPParam(delta, ic, id, indexc, indexd);
                 
@@ -178,8 +172,6 @@ public class InteractionBIP extends AbstractBIPSolver
                        cacheInteractingIndexes(indexc, indexd);
                        isInteracting = true;
                    }
-                   else 
-                        System.out.println(" NO INTERACTION ");
                 }  
                 logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
                 
@@ -806,7 +798,6 @@ public class InteractionBIP extends AbstractBIPSolver
      */
     public Map<String, Integer> solveAlternativeBIP()
     {   
-        System.out.println(" L715, solve alternative \n");
         Map<String,Double> mapVarCoef = new HashMap<String, Double>();
         double deltaCD = restrictIIP.getDelta() - 1; 
         double coef, existingCoef;
