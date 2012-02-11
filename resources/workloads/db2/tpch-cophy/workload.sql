@@ -22,7 +22,7 @@ order by
         l_linestatus;
 
 --Query 2
--- TODO: more than one relation
+-- TODO: relation appearing more than once
 --select
         --s_acctbal,
         --s_name,
@@ -93,21 +93,22 @@ order by
 
 
 --Query 4
-select
-        o_orderpriority,
-        count(*) as order_count
-from
-        tpch.orders,
-        tpch.lineitem
-where
-        o_orderdate >=  '1993-12-01'
-        and o_orderdate <  '1993-3-01'
-        and l_orderkey = o_orderkey
-        and l_commitdate < l_receiptdate
-group by
-        o_orderpriority
-order by
-        o_orderpriority;
+-- TODO: Can't find closest join (ascendant) of 3: GENROW
+-- select
+        -- o_orderpriority,
+        -- count(*) as order_count
+-- from
+        -- tpch.orders,
+        -- tpch.lineitem
+-- where
+        -- o_orderdate >=  '1993-12-01'
+        -- and o_orderdate <  '1993-3-01'
+        -- and l_orderkey = o_orderkey
+        -- and l_commitdate < l_receiptdate
+-- group by
+        -- o_orderpriority
+-- order by
+        -- o_orderpriority;
 
 --Query 5
 select
@@ -149,6 +150,7 @@ where
 
 --Query 7
 -- problem with additional indexes on lineitem
+-- TODO: relation appearing more than once
 -- select
 --         n1.n_name,
 --         n2.n_name,
@@ -183,7 +185,7 @@ where
 
 
 --Query 8
--- problem with addtional indexes on lineitem
+-- TODO: relation appearing more than once
 --select
 --        datepart(year,o_orderdate),
 --        sum(l_extendedprice * (1 - l_discount))
@@ -212,7 +214,7 @@ where
 --order by
 --        datepart(year,o_orderdate);
 
-
+-- query 09
 select
         n_name,
         year(o_orderdate),
@@ -240,9 +242,7 @@ order by
         year(o_orderdate) desc;
 
 
-
 --Query 10
-
 -- result kindof affected by the clustered index on the customer.
 select
         c_custkey,
@@ -361,23 +361,24 @@ where
 
 
 --Query 17
-select
-        sum(l_extendedprice) / 7.0 as avg_yearly
-from
-        tpch.lineitem,
-        tpch.part
-where
-        p_partkey = l_partkey
-        and p_brand = 'Brand#54'
-        and p_container = 'SM CAN'
-        and l_quantity < (
-                select
-                        0.2 * avg(l_quantity)
-                from
-                        tpch.lineitem
-                where
-                        l_partkey = p_partkey
-        );
+-- TODO: relation appearing more than once
+--select
+        --sum(l_extendedprice) as avg_yearly
+--from
+        --tpch.lineitem,
+        --tpch.part
+--where
+        --p_partkey = l_partkey
+        --and p_brand = 'Brand#54'
+        --and p_container = 'SM CAN'
+        --and l_quantity < (
+                --select
+                        --0.2 * avg(l_quantity)
+                --from
+                        --tpch.lineitem
+                --where
+                        --l_partkey = p_partkey
+        --);
 --#SET ROWS_FETCH -1
 
 

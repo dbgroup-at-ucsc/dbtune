@@ -139,7 +139,6 @@ order by
 	nation,
 	o_year desc;
 
-
 --query 10
 select
 	c_custkey,
@@ -158,8 +157,8 @@ from
 where
 	c_custkey = o_custkey
 	and l_orderkey = o_orderkey
-	and o_orderdate >= cast('1993-11-01' as date)
-	and o_orderdate < cast('1994-2-01' as date)
+	and o_orderdate >= date('1993-11-01')
+	and o_orderdate < date('1994-2-01')
 	and l_returnflag = 'R'
 	and c_nationkey = n_nationkey
 group by
@@ -175,35 +174,56 @@ order by
 
 --query 12
 -- TODO: not working for SimBIP but works for InteractionBIP
---select
-	--l_shipmode,
-	--sum(case
-		--when o_orderpriority = '1-URGENT'
-			--or o_orderpriority = '2-HIGH'
-			--then 1
-		--else 0
-	--end) as high_line_count,
-	--sum(case
-		--when o_orderpriority <> '1-URGENT'
-			--and o_orderpriority <> '2-HIGH'
-			--then 1
-		--else 0
-	--end) as low_line_count
---from
-	--tpch.orders,
-	--tpch.lineitem
---where
-	--o_orderkey = l_orderkey
-	--and l_shipmode in ('FOB', 'REG AIR')
-	--and l_commitdate < l_receiptdate
-	--and l_shipdate < l_commitdate
-	--and l_receiptdate >= '1993-01-01'
-	--and l_receiptdate < cast('1994-01-01' as date) 
---group by
-	--l_shipmode
---order by
-	--l_shipmode;
+select
+	l_shipmode,
+	sum(case
+		when o_orderpriority = '1-URGENT'
+			or o_orderpriority = '2-HIGH'
+			then 1
+		else 0
+	end) as high_line_count,
+	sum(case
+		when o_orderpriority <> '1-URGENT'
+			and o_orderpriority <> '2-HIGH'
+			then 1
+		else 0
+	end) as low_line_count
+from
+	tpch.orders,
+	tpch.lineitem
+where
+	o_orderkey = l_orderkey
+	and l_shipmode in ('FOB', 'REG AIR')
+	and l_commitdate < l_receiptdate
+	and l_shipdate < l_commitdate
+	and l_receiptdate >= '1993-01-01'
+	and l_receiptdate < cast('1994-01-01' as date) 
+group by
+	l_shipmode
+order by
+	l_shipmode;
 
+--query 13
+select
+	c_count,
+	count(*) as custdist
+from
+	(
+		select
+			c_custkey,
+			count(o_orderkey)
+		from
+			tpch.customer left outer join tpch.orders on
+				c_custkey = o_custkey
+				and o_comment not like '%special%packages%'
+		group by
+			c_custkey
+	) as c_orders (c_custkey, c_count)
+group by
+	c_count
+order by
+	custdist desc,
+	c_count desc;
 
 --query 14
 select
@@ -222,38 +242,38 @@ where
 
 --query 19
 -- TODO: not working for SimBIP but works for InteractionBIP
---select
-	--sum(l_extendedprice* (1 - l_discount)) as revenue
---from
-	--tpch.lineitem,
-	--tpch.part
---where
-	--(
-		--p_partkey = l_partkey
-		--and p_brand = 'Brand#13'
-		--and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
-		--and l_quantity >= 6 and l_quantity <= 6 + 10
-		--and p_size between 1 and 5
-		--and l_shipmode in ('AIR', 'AIR REG')
-		--and l_shipinstruct = 'DELIVER IN PERSON'
-	--)
-	--or
-	--(
-		--p_partkey = l_partkey
-		--and p_brand = 'Brand#43'
-		--and p_container in ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK')
-		--and l_quantity >= 11 and l_quantity <= 11 + 10
-		--and p_size between 1 and 10
-		--and l_shipmode in ('AIR', 'AIR REG')
-		--and l_shipinstruct = 'DELIVER IN PERSON'
-	--)
-	--or
-	--(
-		--p_partkey = l_partkey
-		--and p_brand = 'Brand#55'
-		--and p_container in ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
-		--and l_quantity >= 27 and l_quantity <= 27 + 10
-		--and p_size between 1 and 15
-		--and l_shipmode in ('AIR', 'AIR REG')
-		--and l_shipinstruct = 'DELIVER IN PERSON'
-	--);
+select
+	sum(l_extendedprice* (1 - l_discount)) as revenue
+from
+	tpch.lineitem,
+	tpch.part
+where
+	(
+		p_partkey = l_partkey
+		and p_brand = 'Brand#13'
+		and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
+		and l_quantity >= 6 and l_quantity <= 6 + 10
+		and p_size between 1 and 5
+		and l_shipmode in ('AIR', 'AIR REG')
+		and l_shipinstruct = 'DELIVER IN PERSON'
+	)
+	or
+	(
+		p_partkey = l_partkey
+		and p_brand = 'Brand#43'
+		and p_container in ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK')
+		and l_quantity >= 11 and l_quantity <= 11 + 10
+		and p_size between 1 and 10
+		and l_shipmode in ('AIR', 'AIR REG')
+		and l_shipinstruct = 'DELIVER IN PERSON'
+	)
+	or
+	(
+		p_partkey = l_partkey
+		and p_brand = 'Brand#55'
+		and p_container in ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
+		and l_quantity >= 27 and l_quantity <= 27 + 10
+		and p_size between 1 and 15
+		and l_shipmode in ('AIR', 'AIR REG')
+		and l_shipinstruct = 'DELIVER IN PERSON'
+	);

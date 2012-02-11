@@ -40,11 +40,14 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
      * @param matchingStrategy
      *      strategy that should be used when searching for the optimal template for a given 
      *      configuration.
+     * @throws SQLException
+     *      if an error occurs while computing the inum space
      */
     public InumPreparedSQLStatement(
             InumOptimizer optimizer,
             SQLStatement sql,
             MatchingStrategy matchingStrategy)
+        throws SQLException
     {
         super(optimizer, sql);
 
@@ -52,6 +55,8 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
             throw new RuntimeException("Can't process UPDATE statements yet");
 
         this.matchingStrategy = matchingStrategy;
+
+        computeInumSpace();
     }
 
     /**
@@ -69,8 +74,6 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
     @Override
     public ExplainedSQLStatement explain(Set<Index> configuration) throws SQLException
     {
-        computeInumSpace();
-
         MatchingStrategy.Result result = matchingStrategy.match(inumSpace, configuration);
 
         return new ExplainedSQLStatement(
