@@ -42,7 +42,7 @@ public class ExhaustiveMatchingStrategy extends AbstractMatchingStrategy
 
                 final double cost = templatePlan.plug(atomicConfiguration);
 
-                if (cost <= bestCost) {
+                if (cost < bestCost) {
                     bestCost = cost;
                     bestConf = atomicConfiguration;
                     bestPlan = templatePlan;
