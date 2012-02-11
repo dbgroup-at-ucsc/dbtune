@@ -87,9 +87,8 @@ public class InumPlan extends SQLStatementPlan
             slot = new TableAccessSlot(o);
 
             if (slots.get(slot.getTable()) != null)
-                // we don't allow more than one slot for any table
-                throw new SQLException(
-                    slot.getTable() + " referenced more than once");
+                // we don't allow more than one slot for a table
+                throw new SQLException(slot.getTable() + " referenced more than once");
 
             slots.put(slot.getTable(), slot);
 
@@ -219,10 +218,7 @@ public class InumPlan extends SQLStatementPlan
             throw new SQLException("The slot should not be empty.");
 
         if (o.getDatabaseObjects().get(0) instanceof Index)
-            if (slot.getIndex() instanceof FullTableScanIndex)
-                return plan.getRootOperator().accumulatedCost;
-            else
-                return extractCostOfLeaf(plan, o);
+            return plan.getRootOperator().accumulatedCost;
 
         // plan uses a full table scan, so it's not compatible
         return Double.POSITIVE_INFINITY;
@@ -293,18 +289,18 @@ public class InumPlan extends SQLStatementPlan
         sb.append("SELECT ");
 
         for (Column c : slot.getColumnsFetched().columns())
-            sb.append(c.getName() + ", ");
+            sb.append(c.getName()).append(", ");
 
         sb.delete(sb.length() - 2, sb.length() - 1);
 
-        sb.append(" FROM " + slot.getTable().getFullyQualifiedName());
+        sb.append(" FROM ").append(slot.getTable().getFullyQualifiedName());
 
         if (slot.getPredicates().size() > 0) {
 
             sb.append(" WHERE ");
 
             for (Predicate p : slot.getPredicates())
-                sb.append(p.getText() + " AND ");
+                sb.append(p.getText()).append(" AND ");
 
             sb.delete(sb.length() - 5, sb.length() - 1);
         }
@@ -314,7 +310,8 @@ public class InumPlan extends SQLStatementPlan
             sb.append(" ORDER BY ");
 
             for (Column c : slot.getIndex().columns())
-                sb.append(c.getName() + (slot.getIndex().isAscending(c) ? " ASC, " : " DESC, "));
+                sb.append(c.getName())
+                    .append(slot.getIndex().isAscending(c) ? " ASC, " : " DESC, ");
 
             sb.delete(sb.length() - 2, sb.length() - 1);
         }
