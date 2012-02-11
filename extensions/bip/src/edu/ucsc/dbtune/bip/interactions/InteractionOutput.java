@@ -21,12 +21,12 @@ public class InteractionOutput extends IndexTuningOutput
      * @param pair
      *      A pair of indexes that are found to interact with each other
      */
-    public void addInteraction(IndexInteraction pair)
+    public void add(IndexInteraction pair)
     {
         interactions.add(pair);
     }
     
-    public List<IndexInteraction> getInteractions()
+    public List<IndexInteraction> get()
     {
         return interactions;
     }
@@ -34,7 +34,9 @@ public class InteractionOutput extends IndexTuningOutput
     @Override
     public String toString() 
     {
-        StringBuilder strInteractions = new StringBuilder("========= List of interactions ========\n");        
+        StringBuilder strInteractions = new 
+            StringBuilder("========= List of interactions ========\n");
+        
         for (IndexInteraction pair : interactions)
             strInteractions.append(pair.toString());
         

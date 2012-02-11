@@ -33,22 +33,27 @@ public class IIPVariablePool extends AbstractBIPVariablePool
      *      The value is in the set of {empty, c, d, cd}
      * @param typeVarible
      *      The type of variable, the value is in the set {y, x, u, s}
+     * @param q
+     *      The identifier of the statement     
      * @param k
-     *      The identifier of the corresponding template plan if {@code typeVariable} = VAR_Y, VAR_X, VAR_U 
+     *      The identifier of the corresponding template plan 
+     *      if {@code typeVariable} = VAR_Y, VAR_X, VAR_U 
      * @param a 
      *      The index ID when {@code typeVariable} = VAR_X, VAR_U, VAR_S
      * 
      * @return
      *      The variable name
      */
-    public BIPVariable createAndStore(int theta, int typeVariable, int k, int a)
+    public BIPVariable createAndStore(int theta, int typeVariable, int q, int k, int a)
     {
         StringBuilder varName = new StringBuilder();
         varName.append(strHeaderVariable[typeVariable]);
         varName.append("(");
         
         List<String> nameComponent = new ArrayList<String>();        
-        nameComponent.add(strTheta[theta]);        
+        nameComponent.add(strTheta[theta]);   
+        nameComponent.add(Integer.toString(q));
+        
         if (typeVariable == VAR_Y || typeVariable == VAR_X || typeVariable == VAR_U)
             nameComponent.add(Integer.toString(k));
         
@@ -62,7 +67,7 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         add(var); 
         
         // Create a mapping  
-        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, a);
+        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, q, k, a);
         mapHighDimensionVar.put(iai, var);
         
         return var;
@@ -82,10 +87,10 @@ public class IIPVariablePool extends AbstractBIPVariablePool
      * @return
      *      BIP Variable
      */
-    public BIPVariable get(int theta, int typeVariable, int k, int a)
+    public BIPVariable get(int theta, int typeVariable, int q, int k, int a)
     {
         // Create a mapping from 
-        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, k, a);
+        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, q, k, a);
         return mapHighDimensionVar.get(iai);
     }
 }

@@ -137,7 +137,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     
     /**
      * Initialize empty buffer files that will store the Binary Integer Program
-     *      *      
+     *            
      * {\bf Note. }There are four files that are created for a BIP,
      * including: {@code prefix.obj}, {@code prefix.cons}, {@code prefix.bin} and {@code prefix.lp}
      * store the objective function, list of constraints, binary variables, and the whole BIP, respectively 

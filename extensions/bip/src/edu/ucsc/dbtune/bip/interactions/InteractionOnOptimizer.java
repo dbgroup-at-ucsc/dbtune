@@ -42,10 +42,10 @@ public class InteractionOnOptimizer implements BIPOutputOnActualOptimizer
         Set<Index> Aempty, Ac, Ad, Acd;
         
         // derive four configuration
-        Aempty = new HashSet<Index>(mapThetaIndexSet.get(InteractionBIP.IND_EMPTY));
-        Ac = new HashSet<Index>(mapThetaIndexSet.get(InteractionBIP.IND_C));
-        Ad = new HashSet<Index>(mapThetaIndexSet.get(InteractionBIP.IND_D));
-        Acd = new HashSet<Index>(mapThetaIndexSet.get(InteractionBIP.IND_CD));
+        Aempty = new HashSet<Index>(mapThetaIndexSet.get(RestrictIIP.IND_EMPTY));
+        Ac = new HashSet<Index>(mapThetaIndexSet.get(RestrictIIP.IND_C));
+        Ad = new HashSet<Index>(mapThetaIndexSet.get(RestrictIIP.IND_D));
+        Acd = new HashSet<Index>(mapThetaIndexSet.get(RestrictIIP.IND_CD));
         
         Ac.add(first);
         Ad.add(second);
@@ -56,23 +56,14 @@ public class InteractionOnOptimizer implements BIPOutputOnActualOptimizer
         // not that we only have one statement
         double costAempty = 0.0, costAc = 0.0, costAd = 0.0, costAcd = 0.0;
         for (SQLStatement sql : workload) {
-            System.out.println(" EMPTY : " + optimizer.explain(sql, new HashSet<Index>()).getTotalCost());
+            
             costAempty = optimizer.explain(sql, Aempty).getTotalCost();
             costAc = optimizer.explain(sql, Ac).getTotalCost();
             costAd = optimizer.explain(sql, Ad).getTotalCost();
             costAcd = optimizer.explain(sql, Acd).getTotalCost();
-            
-            System.out.println(" Aempty: " + Aempty + " cost: " + costAempty);
-            System.out.println(" Ac: " + Ac + " cost: " + costAc);
-            System.out.println(" Ad: " + Ad + " cost: " + costAd);
-            System.out.println(" Acd: " + Acd + " cost: " + costAcd);
-            
-            
-            
         }
         
         doiOptimizer = Math.abs(costAcd + costAempty - costAc - costAd) / costAcd;
-        System.out.println("L75, doi Optimizer: " + doiOptimizer);
     }
     
     /**

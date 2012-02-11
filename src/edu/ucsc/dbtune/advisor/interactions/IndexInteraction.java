@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
+
+import edu.ucsc.dbtune.bip.util.HashCodeUtil;
 import edu.ucsc.dbtune.metadata.Index;
 
 public class IndexInteraction 
@@ -7,11 +9,13 @@ public class IndexInteraction
     private Index a;
     private Index b;
     private double doiBIP, doiOptimizer;
+    private int fHashCode;
     
     public IndexInteraction(Index a, Index b)
     {
         this.a = a;
         this.b = b;
+        this.fHashCode = 0;
     }
     
     public Index getFirst()
@@ -60,8 +64,36 @@ public class IndexInteraction
     
     @Override
     public String toString() {
-        return "IndexInteraction [first=" + a + ", second=" + b + ", doiBIP=" + doiBIP + 
+        return "IndexInteraction [first=" + a.getId() + ", second=" + b.getId() + ", doiBIP=" + doiBIP + 
                ", doiOptimizer=" + doiOptimizer + "]\n";
+    }
+    
+    @Override
+    public boolean equals(Object obj) 
+    {
+        if (!(obj instanceof IndexInteraction))
+            return false;
+
+        IndexInteraction pair = (IndexInteraction) obj;
+        
+        if ( (this.a.getId() != pair.a.getId())
+            || (this.b.getId() != pair.b.getId()))
+            return false;
+        
+        return true;
+    }
+
+    @Override
+    public int hashCode() 
+    {
+        if (fHashCode == 0) {
+            int result = HashCodeUtil.SEED;
+            result = HashCodeUtil.hash(result, this.a.getId());
+            result = HashCodeUtil.hash(result, this.b.getId());
+            fHashCode = result;
+        }
+        
+        return fHashCode;
     }
     
 }

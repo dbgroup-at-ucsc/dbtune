@@ -5,7 +5,7 @@ import edu.ucsc.dbtune.bip.util.HashCodeUtil;
 
 public class IIPVariableIndicator 
 {
-    private int theta, typeVariable, k, a;
+    private int theta, typeVariable, q, k, a;
     private int fHashCode;
     
     /**
@@ -21,10 +21,11 @@ public class IIPVariableIndicator
      * @param _a
      *      The index ID
      */
-    public IIPVariableIndicator(int _theta, int _typeVariable, int _k, int _a)
+    public IIPVariableIndicator(int _theta, int _typeVariable, int _q, int _k, int _a)
     {
         this.theta = _theta;
         this.typeVariable = _typeVariable;
+        this.q = _q;
         this.k = _k;
         this.a = _a;
         fHashCode = 0;
@@ -40,7 +41,8 @@ public class IIPVariableIndicator
         IIPVariableIndicator var = (IIPVariableIndicator) obj;
         
         if ( (this.theta != var.theta) ||
-             (this.typeVariable != var.typeVariable) ||   
+             (this.typeVariable != var.typeVariable) ||
+             (this.q != var.q) ||
              (this.k != var.k) ||
              (this.a != var.a) ) {
             return false;
@@ -56,6 +58,7 @@ public class IIPVariableIndicator
             int result = HashCodeUtil.SEED;
             result = HashCodeUtil.hash(result, this.theta);
             result = HashCodeUtil.hash(result, this.typeVariable);
+            result = HashCodeUtil.hash(result, this.q);
             result = HashCodeUtil.hash(result, this.k);
             result = HashCodeUtil.hash(result, this.a);
             fHashCode = result;
@@ -67,7 +70,8 @@ public class IIPVariableIndicator
 
     @Override
     public String toString() {
-        return "IIPVariableIndex [a=" + a + ", fHashCode=" + fHashCode + ", k=" + k + ", theta=" + theta + ", typeVariable="
-                + typeVariable + "]";
+        return "IIPVariableIndex [a=" + a + ", fHashCode=" + fHashCode + ", q=" + q
+                 + ", k=" + k + ", theta=" + theta + ", typeVariable="
+                 + typeVariable + "]";
     }    
 }
