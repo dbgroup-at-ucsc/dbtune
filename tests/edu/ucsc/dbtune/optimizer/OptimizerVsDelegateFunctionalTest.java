@@ -77,18 +77,25 @@ public class OptimizerVsDelegateFunctionalTest
         if (delegate == null) return;
 
         //for (Workload wl : workloads(env.getWorkloadFolders())) {
-        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
+        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-cophy");
         final Set<Index> conf = candGen.generate(wl);
 
         System.out.println("Candidates generated: " + conf.size());
 
-        int i = 1;
         for (SQLStatement sql : wl) {
+            long time = System.currentTimeMillis();
+
+            System.out.println("------------------------------");
+            System.out.println("Preparing statement\n\n " + sql.getSQL() + "\n");
+
             final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
-            System.out.println(
-                    "Query " + i++ + " -- " +
-                    "INUM: " + pSql.explain(conf).getSelectCost() +
-                    "; DB2: " + delegate.explain(sql, conf).getSelectCost());
+
+            System.out.println("    Prepare: " + (System.currentTimeMillis() - time));
+            System.out.println("       INUM: " + pSql.explain(conf).getSelectCost());
+            System.out.println("        DB2: " + delegate.explain(sql, conf).getSelectCost());
+            System.out.println("    Explain: " + (System.currentTimeMillis() - time));
+            System.out.println("------------------------------");
+
             //assertThat(pSql.explain(conf), is(delegate.explain(sql, conf)));
         }
         //}

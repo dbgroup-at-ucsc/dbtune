@@ -58,7 +58,7 @@ public class EagerSpaceComputation implements InumSpaceComputation
             
             templatePlan = new InumPlan(delegate, sqlPlan);
 
-            if (isPlanUsingInterestingOrder(templatePlan, atomic)) 
+            if (isPlanUsingAtLeastOneInterestingOrder(templatePlan, atomic))
                 inumSpace.add(templatePlan);
         }
         
@@ -85,7 +85,8 @@ public class EagerSpaceComputation implements InumSpaceComputation
      * @return
      *      {@code true} if the plan uses the given interesting order, {@code false} otherwise
      */
-    private static boolean isPlanUsingInterestingOrder(InumPlan plan, List<Index> interestingOrders)
+    private static boolean isPlanUsingAtLeastOneInterestingOrder(
+            InumPlan plan, List<Index> interestingOrders)
     {
         TableAccessSlot slot;
         boolean isInterestingOrderFTS;
