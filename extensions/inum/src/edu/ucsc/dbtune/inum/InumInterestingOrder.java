@@ -80,6 +80,6 @@ public class InumInterestingOrder extends InterestingOrder
     
     public InumInterestingOrder(InterestingOrder io) throws SQLException
     {
-        super(io.columns(),io.getAscendingColumn());
+        super(io.columns(),io.getAscending());
     }
 }

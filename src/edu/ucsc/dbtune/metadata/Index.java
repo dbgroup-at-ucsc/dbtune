@@ -68,11 +68,6 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         this("dbtune_" + (IN_MEMORY_ID.get() + 1) + "_index",
                 column, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
     }
-    public List<Boolean> getAscendingColumn()
-    {
-        return ascendingColumn;
-    }
-    
 
     /**
      * Creates an index containing the given column. The name of the index is defaulted to {@code 
@@ -364,6 +359,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         super(name);
 
         Schema sch = schema;
+        List<Boolean> localCopyAscending  = new ArrayList<Boolean>();
 
         if (sch == null && columns.size() == 0)
             throw new SQLException("Column list should have at least one element");
@@ -379,12 +375,13 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         this.ascendingColumn = new ArrayList<Boolean>();
 
         if (ascending == null) {
-            ascending = new ArrayList<Boolean>();
             for (int i = 0; i < columns.size(); i++)
-                ascending.add(ASCENDING);
-        }
-        else if (ascending.size() != columns.size())
+                localCopyAscending.add(ASCENDING);
+        } else if (ascending.size() != columns.size()) {
             throw new SQLException("Incorrect number of ascending/descending values");
+        } else {
+            localCopyAscending = new ArrayList<Boolean>(ascending);
+        }
         
         for (int i = 0; i < columns.size(); i++) {
             if (table == null)
@@ -393,7 +390,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             if (table != columns.get(i).container)
                 throw new SQLException("Columns from different tables");
             
-            add(columns.get(i), ascending.get(i));
+            add(columns.get(i), localCopyAscending.get(i));
         }
 
         this.type       = UNKNOWN;
@@ -424,6 +421,17 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         this.materialized = other.materialized;
         this.ascendingColumn   = other.ascendingColumn;
         this.scanOption   = other.scanOption;
+    }
+
+    /**
+     * Returns the list ascending values for each column contained in the index.
+     *
+     * @return
+     *      list of ascending values
+     */
+    public List<Boolean> getAscending()
+    {
+        return new ArrayList<Boolean>(ascendingColumn);
     }
 
     /**

@@ -72,6 +72,11 @@ public final class FullTableScanIndex extends InumInterestingOrder
     {
         if (other.size() == table.size())
             throw new RuntimeException("Not handled yet");
+
+        if ((other instanceof FullTableScanIndex) &&
+                (((FullTableScanIndex) other)).getTable().equals(getTable()))
+            return true;
+
         
         return false;
     }
