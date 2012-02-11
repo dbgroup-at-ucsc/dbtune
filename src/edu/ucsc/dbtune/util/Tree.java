@@ -42,13 +42,16 @@ public class Tree<T extends Comparable<? super T>>
      */
     public Tree(Tree<T> other)
     {
-        this.elements = new HashMap<T, Entry<T>>(other.elements);
+        elements = new HashMap<T, Entry<T>>();
 
-        T rootElement = other.root.element;
-        this.elements.remove(other.root.element);
-        this.root = new Entry<T>(null, rootElement);
+        for (Map.Entry<T, Entry<T>> mapEntry : other.elements.entrySet())
+            elements.put(mapEntry.getKey(), new Entry<T>(mapEntry.getValue()));
 
-        elements.put(rootElement, this.root);
+
+        root = elements.get(other.root.getElement());
+
+        if (root == null)
+            throw new RuntimeException("Can't find root in given tree");
     }
 
     /**
@@ -165,15 +168,13 @@ public class Tree<T extends Comparable<? super T>>
         Entry<T> parentEntry;
         Entry<T> childEntry;
 
-        if (elements.get(childValue) != null) {
+        if (elements.get(childValue) != null)
             throw new IllegalArgumentException("Child value already in tree");
-        }
 
         parentEntry = elements.get(parentValue);
 
-        if (parentEntry == null) {
+        if (parentEntry == null)
             throw new NoSuchElementException(parentValue + " not in tree");
-        }
 
         childEntry = new Entry<T>(parentEntry, childValue);
 
@@ -227,6 +228,11 @@ public class Tree<T extends Comparable<? super T>>
 
     /**
      * Returns an entry and its subtree in a list.
+     *
+     * @param entries
+     *      where to put the entries that hang from {@code entry}
+     * @param entry
+     *      entry whose subtree is added to {@code entries}
      */
     private void getSubtreeElements(List<Entry<T>> entries, Entry<T> entry)
     {
@@ -281,44 +287,20 @@ public class Tree<T extends Comparable<? super T>>
      */
     protected Entry<T> find(T value, Entry<T> entry)
     {
-        if (value.compareTo(entry.element) == 0) {
+        if (value.compareTo(entry.element) == 0)
             return entry;
-        } else {
-            Entry<T> found;
 
-            for (Entry<T> e : entry.children) {
-                found = find(value, e);
+        Entry<T> found;
 
-                if (found != null) {
-                    return found;
-                }
+        for (Entry<T> e : entry.children) {
+            found = find(value, e);
+
+            if (found != null) {
+                return found;
             }
         }
+
         return null;
-    }
-
-    /**
-     * returns the string representation of the sub-tree rooted at {@code entry}.
-     *
-     * @param entry
-     *     root of the sub-tree
-     * @param padding
-     *     the string used to pad the result
-     * @return
-     *     string representation of the sub-tree
-     */
-    private String toString(Entry<T> entry, String padding)
-    {
-        String str = "";
-
-        if (entry != null) {
-            str += padding + entry.element;
-
-            for (Entry<T> e : entry.children)
-                str += toString(e, padding + padding);
-        }
-
-        return str;
     }
 
     /**
@@ -327,7 +309,7 @@ public class Tree<T extends Comparable<? super T>>
     @Override
     public String toString()
     {
-        return toString(root, "+");
+        return root.print("", true);
     }
 
     /**
@@ -352,6 +334,19 @@ public class Tree<T extends Comparable<? super T>>
             this.parent   = parent;
             this.element  = element;
             this.children = new ArrayList<Entry<T>>();
+        }
+
+        /**
+         * copy constructor.
+         *
+         * @param other
+         *      other object being copied
+         */
+        Entry(Entry<T> other)
+        {
+            this.parent = other.parent;
+            this.element  = other.element;
+            this.children = new ArrayList<Entry<T>>(other.children);
         }
 
         /**
@@ -385,12 +380,33 @@ public class Tree<T extends Comparable<? super T>>
         }
 
         /**
-         * {@inheritDoc}
+         * @param prefix
+         *      prefix
+         * @param isTail
+         *      if it's tail
+         * @return
+         *      the string of the subtree hanging at this node
          */
-        @Override
-        public String toString()
+        private String print(String prefix, boolean isTail)
         {
-            return element.toString();
+            StringBuilder sb = new StringBuilder();
+
+            if (parent == null)
+                sb.append("   " + element + "\n");
+            else
+                sb.append(prefix + (isTail ? "└── " : "├── ") + element + "\n");
+
+            if (children != null) {
+                for (int i = 0; i < children.size() - 1; i++)
+                    sb.append(children.get(i).print(prefix + (isTail ? "    " : "│   "), false));
+
+                if (children.size() >= 1)
+                    sb.append(
+                        children.get(
+                            children.size() - 1).print(prefix + (isTail ? "    " : "│   "), true));
+            }
+
+            return sb.toString();
         }
     }
 }

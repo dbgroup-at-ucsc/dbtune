@@ -122,8 +122,8 @@ public class Operator implements Comparable<Operator>, Identifiable
         this.cost = o.cost;
         this.accumulatedCost = o.accumulatedCost;
         this.cardinality = o.cardinality;
-        this.objects = o.objects;
-        this.predicates = o.predicates;
+        this.objects = new ArrayList<DatabaseObject>(o.objects);
+        this.predicates = new ArrayList<Predicate>(o.predicates);
         this.columnsFetched = o.columnsFetched;
     }
 
@@ -311,13 +311,18 @@ public class Operator implements Comparable<Operator>, Identifiable
     {
         StringBuilder str = new StringBuilder();
 
-        str.append(id + ": " + name + "(cost=" + accumulatedCost + " rows=" + cardinality + ")\n");
-
-        if (!objects.isEmpty())
-            str.append("   Objects: \n");
-
-        for (DatabaseObject obj : objects)
-            str.append("       " + obj.getClass().getName() + ": " + obj + "\n");
+        str.append(id)
+            .append(": ")
+            .append(name)
+            .append("(cost=")
+            .append(accumulatedCost)
+            .append(" rows=")
+            .append(cardinality)
+            .append(" object=")
+            .append(objects.isEmpty() ? "NONE" : objects.get(0))
+            .append(" fetch=")
+            .append(columnsFetched == null ? "NONE" : columnsFetched)
+            .append(")");
 
         return str.toString();
     }
