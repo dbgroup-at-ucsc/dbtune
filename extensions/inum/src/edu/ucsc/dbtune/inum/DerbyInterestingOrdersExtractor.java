@@ -28,6 +28,8 @@ import org.apache.derby.impl.sql.compile.CursorNode;
 import org.apache.derby.impl.sql.compile.FromBaseTable;
 import org.apache.derby.impl.sql.compile.FromList;
 import org.apache.derby.impl.sql.compile.GroupByList;
+import org.apache.derby.impl.sql.compile.HalfOuterJoinNode;
+import org.apache.derby.impl.sql.compile.JoinNode;
 import org.apache.derby.impl.sql.compile.OrderByList;
 import org.apache.derby.impl.sql.compile.QueryTreeNode;
 import org.apache.derby.impl.sql.compile.SelectNode;
@@ -220,16 +222,18 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             throw new SQLException("null or empty FROM list");
 
         for (int i = 0; i < from.size(); i++) {
+            
             if (from.elementAt(i) instanceof FromBaseTable)
                 tableNames.add(((FromBaseTable) from.elementAt(i)).getTableName().toString());
         }
+        
 
         if (orderBy != null)
             bindOrderByColumns(orderBy, tableNames);
-
+        
         if (groupBy != null)
             bindGroupByColumns(groupBy, tableNames);
-
+        
         if (binaryOperandNodes.size() > 0)
             bindJoinPredicateColumns(binaryOperandNodes, tableNames);
 
@@ -250,14 +254,17 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         String colName = orderBy.getOrderByColumn(0).getColumnExpression().getColumnName();
         Column col = bindColumn(tableNames, colName);
         List<Column> orderByColumns;
+        
         if (col != null) {
             columns.add(col);
             ascending.put(col, orderBy.getOrderByColumn(0).isAscending());
         }
 
         for (int i = 0; i < orderBy.size(); i++) {
+            
             colName = orderBy.getOrderByColumn(i).getColumnExpression().getColumnName();
             col = bindColumn(tableNames, colName);
+            
             if (col == null)
                 continue;
 
@@ -322,18 +329,22 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      * that are referenced in the sub-queries.
      *
      */
-    void bindJoinPredicateColumns(List<ColumnReference> binaryOperandNodes, List<String> tableNames) throws SQLException
+    void bindJoinPredicateColumns(List<ColumnReference> binaryOperandNodes, 
+                                  List<String> tableNames) throws SQLException
     {
         String colName;
         Column col;
         List<Column> columnBinaryOperator = new ArrayList<Column>();
 
         for (ColumnReference colRef: binaryOperandNodes) {
+            
             colName = colRef.getColumnName();
             col = null;
+            
             // p_partkey = ps_partkey
             if (colRef.getTableName() == null)
                 col = bindColumn(tableNames, colName);
+            
             else {
                 // table_0.column_0 = table_1.column_0
                 // We need to retrieve the table name of each {@ColumnReference} object
@@ -359,6 +370,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         // postprocess {@code columnBinaryOperator}
         // the two consecutive columns must be not null and belong to different relations
         for (int i = 0; i < columnBinaryOperator.size(); i += 2) {
+            
             Column leftCol = columnBinaryOperator.get(i);
             Column rightCol = columnBinaryOperator.get(i + 1);
 
@@ -366,8 +378,9 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             if (leftCol == null || rightCol == null)
                 continue;
 
-            // this is an actual join predicate
+            // this is an actual join predicate (i.e., columns belonging to different relations) 
             if (!(leftCol.getTable()).equals(rightCol.getTable())) {
+                
                 if (columns.add(leftCol))
                     ascending.put(leftCol, isDefaultAscending());
 
@@ -396,6 +409,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         Column col = null;
 
         for (String tblName : tableNames) {
+            
             try {
                 col = catalog.<Column>findByName(tblName + "." + colName);
             }
@@ -436,6 +450,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
         // add FTS for each table in the from clause
         for (String tblName : tableNames) {
+            
             table = catalog.<Table>findByName(tblName);
 
             if (interestingOrdersPerTable.get(table) == null)  {
@@ -486,7 +501,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     {
         if (!astNodes.contains(node)) {
             astNodes.add(node);
-
+            
             /**
              * The algorithm to derive the columns in the join predicates work as follows:
              * Whenever we encounter {@code BinaryRelationalOperatorNode} object, we are expected
@@ -494,7 +509,9 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
              * We then need to check if both the left and right operand are of type
              * {code ColumnReference}, then this operator node corresponds to a join predicate.
              */
+            
             if (leftOperand == true) {
+                
                 // If the left operand is a column, we will investigate the right operand
                 // to determine a join predicate.
                 // Otherwise, we simply skip this BinaryOperator.
@@ -505,33 +522,61 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                     rightOperand = false;
 
                 leftOperand = false;
+                
             } else if (rightOperand == true) {
+                
                 if (node instanceof ColumnReference)// this is matched join predicate
                     binaryOperandNodes.add((ColumnReference) node);
                 else // if not, remove the left operand stored in the list
                     binaryOperandNodes.remove(binaryOperandNodes.size() - 1);
 
                 rightOperand = false;
-            }
-            // ignore the subqueries for now
+            }            
+            
             else if (node instanceof SelectNode) {
+                
                 final SelectNode select = (SelectNode) node;
                 if (from == null)
                     from = select.getFromList();
                 else {
-                    for (int i = 0; i < select.getFromList().size(); i++)
-                        from.addFromTable((FromBaseTable) select.getFromList().elementAt(i));
+                    
+                    for (int i = 0; i < select.getFromList().size(); i++) {
+                        
+                        if (select.getFromList().elementAt(i) instanceof FromBaseTable)
+                            from.addFromTable((FromBaseTable) select.getFromList().elementAt(i));
+                        // Extract the table from the left and right result set
+                        // of a join node instance
+                        else if (select.getFromList().elementAt(i) instanceof HalfOuterJoinNode) {
+                            
+                            HalfOuterJoinNode outerJoin = (HalfOuterJoinNode) 
+                                                            select.getFromList().elementAt(i);                            
+                            from.addFromTable((FromBaseTable)outerJoin.getLeftResultSet());
+                            from.addFromTable((FromBaseTable)outerJoin.getRightResultSet());
+                        }
+                        
+                        else if (select.getFromList().elementAt(i) instanceof JoinNode) {
+                            
+                            JoinNode outerJoin = (JoinNode) select.getFromList().elementAt(i);
+                            from.addFromTable((FromBaseTable)outerJoin.getLeftResultSet());
+                            from.addFromTable((FromBaseTable)outerJoin.getRightResultSet());
+                        }
+                    }
                 }
-
+                
                 if (groupBy == null)
                     groupBy = select.getGroupByList();
+                
             } else if (node instanceof CursorNode) {
+                
                 if (orderBy == null)
                     orderBy = ((CursorNode) node).getOrderByList();
+                
             } else if (node instanceof BinaryRelationalOperatorNode) {
+                
                 leftOperand = true;
                 rightOperand = false;
-            }
+            } 
+                
             node.accept(this);
         }
 
