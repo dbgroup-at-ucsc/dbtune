@@ -44,7 +44,7 @@ public class InumPlanTest
         // check index scan
         sqlPlan = mock(SQLStatementPlan.class);
         when(sqlPlan.getParent(idxScan)).thenReturn(ridScan);
-        assertThat(InumPlan.extractCostOfLeaf(sqlPlan, idxScan), is(ridScan.getAccumulatedCost()));
+        assertThat(InumPlan.extractCostOfLeaf(sqlPlan, idxScan), is(idxScan.getAccumulatedCost()));
 
         sqlPlan = mock(SQLStatementPlan.class);
         when(sqlPlan.getParent(idxScan)).thenReturn(fetch);

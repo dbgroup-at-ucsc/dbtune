@@ -409,26 +409,4 @@ public class MetaDataExtractorFunctionalTest
     public void testPages()
     {
     }
-
-    /**
-     * @throws Exception
-     *      if something happens when loading the catalog
-     */
-    @Test
-    public void checkTPC() throws Exception
-    {
-        String ddl;
-
-        ddl = env.getScriptAtWorkloadsFolder("tpch/create.sql");
-        con = newConnection(env);
-
-        execute(con, ddl);
-
-        cat = newExtractor(env).extract(con);
-
-        con.close();
-
-        testCatalogExists();
-        testIDs();
-    }
 }
