@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 import static edu.ucsc.dbtune.metadata.Index.ASC;
+import static edu.ucsc.dbtune.metadata.Index.DESC;
 
 import static org.hamcrest.Matchers.is;
 
@@ -61,7 +62,7 @@ public class TableAccessSlotTest
 
         // check a table scan
         try {
-            slot = new TableAccessSlot(tblScan);
+            slot = new TableAccessSlot(tblScan, join);
             fail("construction should reject an operator with no columns fetched");
         } catch (SQLException e) {
             assertThat(e.getMessage(), is("No columns fetched for leaf"));
@@ -69,7 +70,7 @@ public class TableAccessSlotTest
 
         tblScan.addColumnsFetched(io);
 
-        slot = new TableAccessSlot(tblScan);
+        slot = new TableAccessSlot(tblScan, join);
 
         assertThat(slot.getTable(), is(table));
 
@@ -86,7 +87,7 @@ public class TableAccessSlotTest
 
         // check a non-leaf, eg. a join
         try {
-            slot = new TableAccessSlot(join);
+            slot = new TableAccessSlot(join, join);
             fail("construction should reject an operator without database objects");
         } catch (SQLException e) {
             assertThat(e.getMessage(), is("Leaf should contain only one object"));
@@ -94,7 +95,7 @@ public class TableAccessSlotTest
 
         // check ixScan
         try {
-            slot = new TableAccessSlot(idxScan);
+            slot = new TableAccessSlot(idxScan, join);
             fail("construction should reject an operator with no columns fetched");
         } catch (SQLException e) {
             assertThat(e.getMessage(), is("No columns fetched for leaf"));
@@ -102,11 +103,28 @@ public class TableAccessSlotTest
 
         idxScan.addColumnsFetched(io);
 
-        slot = new TableAccessSlot(idxScan);
+        slot = new TableAccessSlot(idxScan, join);
 
         assertThat(slot.getTable(), is(table));
 
         assertThat(slot.getIndex(), is(index));
         assertThat(slot.isCompatible(index), is(true));
+
+        // check FETCH on top of IDXSCAN
+        InterestingOrder io2 = new InterestingOrder(table.columns().get(1), ASC);
+        io2.add(table.columns().get(2), DESC);
+        io2.add(table.columns().get(3), DESC);
+
+        fetch.addColumnsFetched(io2);
+
+        slot = new TableAccessSlot(idxScan, fetch);
+
+        assertThat(slot.getTable(), is(table));
+
+        assertThat(slot.getIndex(), is(index));
+        assertThat(slot.isCompatible(index), is(true));
+
+        assertThat(slot.getColumnsFetched().size(), is(4));
+        assertThat(slot.getColumnsFetched().columns(), is(table.columns()));
     }
 }
