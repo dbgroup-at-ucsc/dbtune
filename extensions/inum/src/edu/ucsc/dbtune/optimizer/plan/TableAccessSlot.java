@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.sql.SQLException;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -24,12 +25,14 @@ public class TableAccessSlot extends Operator
      *
      * @param leaf
      *      the operator from which the slot is being extracted
+     * @param parent
+     *      parent of the given leaf
      * @throws SQLException
      *      if the given operator references more than one database object; if the database object 
      *      is not of type {@link Table} or {@link Index}.
      * @see IndexFullTableScan
      */
-    public TableAccessSlot(Operator leaf) throws SQLException
+    public TableAccessSlot(Operator leaf, Operator parent) throws SQLException
     {
         super(leaf);
 
@@ -52,6 +55,11 @@ public class TableAccessSlot extends Operator
             throw new SQLException("Can't determine object associated to leaf node: " + leaf);
 
         super.cost = super.accumulatedCost;
+
+        if (parent.getName().equals(Operator.FETCH))
+            // if parent is a FETCH we have to pull the columns fetched down to the slot
+            for (Column c : parent.getColumnsFetched().columns())
+                getColumnsFetched().add(c, parent.getColumnsFetched().isAscending(c));
     }
 
     /**

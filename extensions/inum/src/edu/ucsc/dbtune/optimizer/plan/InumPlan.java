@@ -84,7 +84,7 @@ public class InumPlan extends SQLStatementPlan
                 // check if the operator is over a database object (Table or Index); ignore if not
                 continue;
 
-            slot = new TableAccessSlot(o);
+            slot = new TableAccessSlot(o, plan.getParent(o));
 
             if (slots.get(slot.getTable()) != null)
                 // we don't allow more than one slot for a table
@@ -206,7 +206,7 @@ public class InumPlan extends SQLStatementPlan
         // we have an index that we haven't seen before, so we need to invoke the optimizer
         SQLStatementPlan plan =
             delegate.explain(
-                    buildQueryForUnseenIndex(slot, index),
+                    buildQueryForUnseenIndex(slot),                   
                     Sets.<Index>newHashSet(index)).getPlan();
 
         if (plan.leafs().size() != 1)
@@ -214,8 +214,8 @@ public class InumPlan extends SQLStatementPlan
 
         Operator o = Iterables.<Operator>get(plan.leafs(), 0);
 
-        if (o.getDatabaseObjects().isEmpty())
-            throw new SQLException("The slot should not be empty.");
+        if (o.getDatabaseObjects().size() != 1)
+            throw new SQLException("The slot should have one database object.");
 
         if (o.getDatabaseObjects().get(0) instanceof Index)
             return plan.getRootOperator().accumulatedCost;
@@ -259,15 +259,13 @@ public class InumPlan extends SQLStatementPlan
      *
      * @param slot
      *      slot that corresponds to the index
-     * @param index
-     *      the index
      * @return
      *      a SQL statement that can be used to retrieve the cost of using the index at the given
      *      slot
      * @throws SQLException
      *      if no columns fetched for the corresponding table
      */
-    private static SQLStatement buildQueryForUnseenIndex(TableAccessSlot slot, Index index)
+    static SQLStatement buildQueryForUnseenIndex(TableAccessSlot slot)
         throws SQLException
     {
         StringBuilder sb = new StringBuilder();
@@ -275,16 +273,16 @@ public class InumPlan extends SQLStatementPlan
         if (slot.getColumnsFetched().size() == 0)
             throw new SQLException("No columns fetched; something must be wrong");
 
-        // Assume the relation of index is R
+        // We build a query like:
         //
         //   SELECT
-        //       (slot.getColumnsFetched)
+        //       slot.getColumnsFetched
         //   FROM
-        //       R
+        //       slot.getTable
         //   WHERE
-        //       (predicates on columns of R)
+        //       slot.getPredicates
         //   ORDER BY
-        //       (slot.getIndex())
+        //       slot.getIndex
 
         sb.append("SELECT ");
 
@@ -305,7 +303,7 @@ public class InumPlan extends SQLStatementPlan
             sb.delete(sb.length() - 5, sb.length() - 1);
         }
 
-        if (!(slot.getIndex() instanceof FullTableScanIndex)) {
+        if (slot.getIndex().size() > 0) {
 
             sb.append(" ORDER BY ");
 
@@ -339,7 +337,7 @@ public class InumPlan extends SQLStatementPlan
         if (parent == null)
             throw new RuntimeException("Something is wrong, leaf should have a parent");
 
-        if (parent.getName().equals(Operator.FETCH) || parent.getName().equals(Operator.RID_SCAN))
+        if (parent.getName().equals(Operator.FETCH))
             return parent.getAccumulatedCost();
 
         return leaf.getAccumulatedCost();
