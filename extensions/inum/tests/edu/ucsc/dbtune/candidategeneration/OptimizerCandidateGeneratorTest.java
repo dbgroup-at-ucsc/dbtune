@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.advisor.candidategeneration;
+package edu.ucsc.dbtune.candidategeneration;
 
 import java.util.ArrayList;
 import java.util.HashSet;

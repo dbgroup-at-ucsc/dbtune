@@ -3,8 +3,8 @@ package edu.ucsc.dbtune.optimizer;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;

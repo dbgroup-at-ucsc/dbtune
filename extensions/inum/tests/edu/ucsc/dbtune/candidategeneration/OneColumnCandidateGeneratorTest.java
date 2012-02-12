@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.advisor.candidategeneration;
+package edu.ucsc.dbtune.candidategeneration;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;

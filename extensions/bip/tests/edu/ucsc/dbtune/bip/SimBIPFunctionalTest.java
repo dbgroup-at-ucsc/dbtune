@@ -4,9 +4,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.candidategeneration.CandidateGenerator;
 //import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.CPlexSolver;
 import edu.ucsc.dbtune.bip.sim.MaterializationSchedule;
 import edu.ucsc.dbtune.bip.sim.MaterializationScheduleOnOptimizer;

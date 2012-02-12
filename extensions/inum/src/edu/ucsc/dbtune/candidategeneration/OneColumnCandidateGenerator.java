@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.advisor.candidategeneration;
+package edu.ucsc.dbtune.candidategeneration;
 
 import java.sql.SQLException;
 import java.util.HashSet;

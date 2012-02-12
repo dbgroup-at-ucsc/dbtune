@@ -70,19 +70,27 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     private static final String STOPPED_AFTER_PARSING = "42Z55";
     private static final Connection CON;
 
-    private Catalog catalog;
-    private FromList from;
-    private GroupByList groupBy;
-    private OrderByList orderBy;
-    private Set<Visitable> astNodes;
-    private boolean defaultAscending;
+    protected Catalog catalog;
+    protected Set<Visitable> astNodes;
+    protected boolean defaultAscending;
+    
+    /** From, group-by, and order-by list */
+    protected FromList from;
+    protected GroupByList groupBy;
+    protected OrderByList orderBy;
+    
+    /** Set of columns that correspond to interesting orders */
     private Set<Column> columns;
+    private Map<Column, Boolean> ascending;
+    
+    /** Order by and group by list per table*/
     private Map<Table, List<Column>> orderByColumnsPerTable;
     private Map<Table, List<Column>> groupByColumnsPerTable;
-    private Map<Column, Boolean> ascending;
-    private List<ColumnReference> binaryOperandNodes;
-    boolean leftOperand;
-    boolean rightOperand;
+    
+    /** Binary operand (e.g., R.a > S.b, R.a = 10) extracted by Derby */
+    private List<ColumnReference> binaryOperandNodes;    
+    protected boolean leftOperand;
+    protected boolean rightOperand;
 
     static {
         System.setProperty(DERBY_DEBUG_SETTING, STOP_AFTER_PARSING);
@@ -156,7 +164,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      if an error occurs while obtaining the statement AST; if an error occurs while walking
      *      through the statement AST
      */
-    private void parse(SQLStatement stmt) throws SQLException
+    protected void parse(SQLStatement stmt) throws SQLException
     {
         ContextManager cm;
         LanguageConnectionContext lcc;
@@ -190,7 +198,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             throw new SQLException("An error occurred while walking the query AST", e);
         }
 
-        qt.treePrint(); // useful for debugging; prints to stdout
+        //qt.treePrint(); // useful for debugging; prints to stdout
     }
 
     /**
@@ -227,7 +235,6 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 tableNames.add(((FromBaseTable) from.elementAt(i)).getTableName().toString());
         }
         
-
         if (orderBy != null)
             bindOrderByColumns(orderBy, tableNames);
         
@@ -239,10 +246,12 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
         return extractInterestingOrdersPerTable(tableNames, columns, ascending);
     }
-
+    
+    
     /**
      * Bind columns referenced in the order-by into the corresponding database objects.
      * We only add the first column in the order-by clause
+     * 
      * @param orderBy
      *      The list of order-by columns
      * @param tableNames
@@ -289,7 +298,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      * @param tableNames
      *      The list of table names in the from-clause
      */
-    void bindGroupByColumns(GroupByList groupBy, List<String> tableNames)
+    private void bindGroupByColumns(GroupByList groupBy, List<String> tableNames)
     {
         String colName;
         Column col;
@@ -325,12 +334,10 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      * @param tableNames
      *      The list of table names that we can find the columns on
      *
-     * {\bf Note: }Need to eliminate columns in a selection predicate, as well as columns
-     * that are referenced in the sub-queries.
      *
      */
-    void bindJoinPredicateColumns(List<ColumnReference> binaryOperandNodes, 
-                                  List<String> tableNames) throws SQLException
+    private void bindJoinPredicateColumns(List<ColumnReference> binaryOperandNodes, 
+                                          List<String> tableNames) throws SQLException
     {
         String colName;
         Column col;
@@ -404,7 +411,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      A {@Column} object or NULL if the column is not a part of all the tables
      *      in @code tableNames}
      */
-    private Column bindColumn(List<String> tableNames, String colName)
+    protected Column bindColumn(List<String> tableNames, String colName)
     {
         Column col = null;
 
@@ -470,19 +477,6 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             interestingOrdersForTable.add(new InumInterestingOrder(col, ascending.get(col)));
         }
 
-        /*
-        for (Map.Entry<Table, List<Column>> entry : groupByColumnsPerTable.entrySet()) {
-            if (entry.getValue().size() == 1) continue;
-            InumInterestingOrder io = new InumInterestingOrder(entry.getValue(), ascending);
-            interestingOrdersPerTable.get(entry.getKey()).add(io);
-        }
-
-        for (Map.Entry<Table, List<Column>> entry : orderByColumnsPerTable.entrySet()) {
-            if (entry.getValue().size() == 1) continue;
-            InumInterestingOrder io = new InumInterestingOrder(entry.getValue(), ascending);
-            interestingOrdersPerTable.get(entry.getKey()).add(io);
-        }
-    */
         return new ArrayList<Set<Index>>(interestingOrdersPerTable.values());
     }
 
@@ -525,7 +519,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 
             } else if (rightOperand == true) {
                 
-                if (node instanceof ColumnReference)// this is matched join predicate
+                if (node instanceof ColumnReference) // this is matched join predicate
                     binaryOperandNodes.add((ColumnReference) node);
                 else // if not, remove the left operand stored in the list
                     binaryOperandNodes.remove(binaryOperandNodes.size() - 1);

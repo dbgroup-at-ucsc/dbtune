@@ -4,8 +4,10 @@ import java.sql.SQLException;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.candidategeneration.OneColumnCandidateGenerator;
+import edu.ucsc.dbtune.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.candidategeneration.PowerSetCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;
@@ -43,16 +45,18 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
         
         System.out.println(" In test interaction ");
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
-        CandidateGenerator candGen =
-            new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        /*CandidateGenerator candGen =
+            //new OneColumnCandidateGenerator(
+                    new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        */
+        CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 1, true);
         Set<Index> candidates = candGen.generate(workload);
-                
+        
         System.out.println("L60 (Test), Number of indexes: " + candidates.size() 
                             + " Number of statements: " + workload.size());
         for (Index index : candidates) 
             System.out.println("L62, Index: " + index.getId() + " " + index); 
         
-
         try {
             double delta = 0.1;
             Optimizer io = db.getOptimizer();
