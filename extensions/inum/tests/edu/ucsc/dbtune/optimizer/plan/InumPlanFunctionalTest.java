@@ -77,10 +77,14 @@ public class InumPlanFunctionalTest
 
         for (Workload wl : workloads(env.getWorkloadFolders())) {
 
+            System.out.println("==============================");
+            System.out.println("Checking workload " + wl.getName());
+            System.out.println("==============================");
+            
             conf = candGen.generate(wl);
 
             for (SQLStatement sql : wl) {
-            
+
                 sqlPlan = optimizer.explain(sql, conf).getPlan();
 
                 if (!isPlanSuitableForInum(sqlPlan))
@@ -90,6 +94,10 @@ public class InumPlanFunctionalTest
 
                 for (Operator l : sqlPlan.leafs())
                     costLeafs += InumPlan.extractCostOfLeaf(sqlPlan, l);
+
+                System.out.println("---------------------------");
+                System.out.println("   Checking INUM template creation for\n" + sql);
+                System.out.println("\n\n    plan\n" + sqlPlan);
 
                 inumPlan = new InumPlan(optimizer, sqlPlan);
 

@@ -47,8 +47,9 @@ public class WorkloadTest
             "      -- this one also;    \n" +
             "    DELETE from a where b = 110;\n";
 
-        Workload wl = new Workload(new StringReader(sqls));
+        Workload wl = new Workload("test", new StringReader(sqls));
 
+        assertThat(wl.getName(), is("test"));
         assertThat(wl.size(), is(10));
 
         assertThat(wl.get(0).getSQL(), is("SELECT * from a"));
@@ -202,8 +203,9 @@ public class WorkloadTest
             "    revenue desc, \n" +
             "    o_orderdate;\n";
 
-        Workload wl = new Workload(new StringReader(sqls));
+        Workload wl = new Workload("test", new StringReader(sqls));
 
+        assertThat(wl.getName(), is("test"));
         assertThat(wl.size(), is(3));
 
         assertThat(wl.get(0).getSQLCategory(), is(SELECT));

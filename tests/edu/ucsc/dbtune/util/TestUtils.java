@@ -174,7 +174,9 @@ public final class TestUtils
     public static Workload workload(String fullyQualifiedWorkloadName)
         throws IOException, SQLException
     {
-        return new Workload(new FileReader(fullyQualifiedWorkloadName + "/workload.sql"));
+        return new Workload(
+                fullyQualifiedWorkloadName,
+                new FileReader(fullyQualifiedWorkloadName + "/workload.sql"));
     }
 
     /**
@@ -196,9 +198,8 @@ public final class TestUtils
 
         int howManyToPick = RANDOM.nextInt(maxSize);
 
-        for (int i = 0; i < howManyToPick; i++) {
+        for (int i = 0; i < howManyToPick; i++)
             subset.add(Iterables.get(set, RANDOM.nextInt(set.size() - 1)));
-        }
 
         return subset;
     }

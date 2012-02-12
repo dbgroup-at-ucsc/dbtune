@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.metadata.Schema;
 public class Workload implements Iterable<SQLStatement>
 {
     private List<SQLStatement> sqls;
+    private String name;
 
     /**
      * Creates a workload containing the set of SQL statements provided by the {@code 
@@ -47,6 +48,8 @@ public class Workload implements Iterable<SQLStatement>
      * produces a workload of size 1, but with the first query being {@code SELECT * FROM bla ; ; 
      * ;}, which will produce an error if gets executed by a JDBC-compliant driver.
      *
+     * @param name
+     *     name assigned to the workload
      * @param workloadStream
      *     stream that provides the set of SQL statements. One statement per line is assumed; 
      *     single-line comments only.
@@ -55,7 +58,7 @@ public class Workload implements Iterable<SQLStatement>
      * @throws SQLException
      *     if a statement can't get a category assigned to it
      */
-    public Workload(Reader workloadStream) throws IOException, SQLException
+    public Workload(String name, Reader workloadStream) throws IOException, SQLException
     {
         BufferedReader reader;
         StringBuilder sb;
@@ -85,6 +88,8 @@ public class Workload implements Iterable<SQLStatement>
                 sb.append(line + "\n");
             }
         }
+
+        this.name = name;
     }
 
     /**
@@ -133,6 +138,16 @@ public class Workload implements Iterable<SQLStatement>
     {
         // todo: in order to partition we need to parse and bind. Not doing it for now
         throw new RuntimeException("not yet");
+    }
+
+    /**
+     * Gets the name for this instance.
+     *
+     * @return The name.
+     */
+    public String getName()
+    {
+        return this.name;
     }
 
     // SQLStatement get(String sql) // return the statement corresponding to the given sql
