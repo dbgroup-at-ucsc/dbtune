@@ -132,7 +132,6 @@ order by
 	o_orderpriority;
 
 --query 05
--- TODO: takes too long
 select
 	n_name,
 	sum(l_extendedprice * (1 - l_discount)) as revenue
@@ -252,7 +251,6 @@ where
 --	o_year;
 
 --query 09
--- TODO: takes too long
 select
 	nation,
 	o_year,
@@ -419,29 +417,46 @@ where
 
 --query 15
 --  note: the view has been added as a subquery
-select
-	s_suppkey,
-	s_name,
-	s_address,
-	s_phone,
-	total_revenue
-from
-	tpch.supplier,
-        (
-	 select
-	     l_suppkey,
-	     sum(l_extendedprice * (1 - l_discount)) as total_revenue
-	 from
-	     tpch.lineitem
-	 where
-	         l_shipdate >= date('1995-08-01')
-	     and l_shipdate <  date('1995-11-01')
-        )
-where
-	    s_suppkey = l_suppkey
-	and total_revenue = max(total_revenue)
-order by
-	s_suppkey;
+--  TODO: lineitem referenced more than once
+--select
+	--s_suppkey,
+	--s_name,
+	--s_address,
+	--s_phone,
+	--total_revenue
+--from
+	--tpch.supplier,
+        --(
+	 --select
+	     --l_suppkey,
+	     --sum(l_extendedprice * (1 - l_discount)) as total_revenue
+	 --from
+	     --tpch.lineitem
+	 --where
+	         --l_shipdate >= date('1995-08-01')
+	     --and l_shipdate <  date('1995-11-01')
+         --group by
+             --l_suppkey
+        --)
+--where
+	    --s_suppkey = l_suppkey
+	--and total_revenue = (
+		--select
+                      --max(total_revenue)
+                --from (
+			 --select
+			     --l_suppkey,
+			     --sum(l_extendedprice * (1 - l_discount)) as total_revenue
+			 --from
+			     --tpch.lineitem
+			 --where
+				 --l_shipdate >= date('1995-08-01')
+			     --and l_shipdate <  date('1995-11-01')
+			 --group by
+			     --l_suppkey
+	     --))
+--order by
+	--s_suppkey;
 
 --query 16
 --  TODO: More than one leaf for a table, this means that IXSCAN is done to execute a JOIN,
@@ -595,7 +610,7 @@ where
 				select
 					0.5 * sum(l_quantity)
 				from
-					--tpch.lineitem
+					tpch.lineitem
 				where
 					l_partkey = ps_partkey
 					and l_suppkey = ps_suppkey

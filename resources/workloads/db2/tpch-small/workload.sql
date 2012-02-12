@@ -173,7 +173,6 @@ order by
 	revenue desc;
 
 --query 12
--- TODO: not working for SimBIP but works for InteractionBIP
 select
 	l_shipmode,
 	sum(case
@@ -241,7 +240,6 @@ where
 	and l_shipdate < cast('1993-06-01' as date);
 
 --query 19
--- TODO: not working for SimBIP but works for InteractionBIP
 select
 	sum(l_extendedprice* (1 - l_discount)) as revenue
 from
