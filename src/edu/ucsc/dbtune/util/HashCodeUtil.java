@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.bip.util;
+package edu.ucsc.dbtune.util;
 
 public final class HashCodeUtil 
 {

@@ -762,7 +762,7 @@ public class DB2Optimizer extends AbstractOptimizer
             table = schema.findTable(rs.getString("tbname").trim());
             columns = new ArrayList<Column>();
             ascending = new ArrayList<Boolean>();
-            name = "sat_index_" + new Random().nextInt(Integer.MAX_VALUE);
+            name = "dbtune_index_" + new Random().nextInt(Integer.MAX_VALUE);
 
             parseColumnNames(table, rs.getString("colnames"), columns, ascending);
 

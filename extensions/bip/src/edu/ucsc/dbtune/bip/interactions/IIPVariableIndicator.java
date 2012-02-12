@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.bip.interactions;
 
-import edu.ucsc.dbtune.bip.util.HashCodeUtil;
+import edu.ucsc.dbtune.util.HashCodeUtil;
 
 
 public class IIPVariableIndicator 

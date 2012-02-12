@@ -1,8 +1,7 @@
 package edu.ucsc.dbtune.advisor.interactions;
 
-
-import edu.ucsc.dbtune.bip.util.HashCodeUtil;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.HashCodeUtil;
 
 public class IndexInteraction 
 {
