@@ -1,5 +1,10 @@
 package edu.ucsc.dbtune.bip;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -11,17 +16,20 @@ import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 
 /**
  * Test for the InteractionBIP class.
@@ -34,29 +42,36 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
     private static Environment    en;
     
     /**
+     * Setup for the test.
+     */
+    @BeforeClass
+    public static void beforeClassSetUp() throws Exception
+    {
+        en = Environment.getInstance();
+        db = newDatabaseSystem(en);
+    }
+    
+    /**
      * @throws Exception
      *      if fails
      */
     @Test
     public void testInteraction() throws Exception
-    {
-        en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-        
+    {   
         System.out.println(" In test interaction ");
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         
-        CandidateGenerator candGen =
+        //CandidateGenerator candGen =
          //   new OneColumnCandidateGenerator(
-                    new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+          //          new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         
-        //CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 2, true);
+        CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 1, true);
         Set<Index> candidates = candGen.generate(workload);
         
-        System.out.println("L60 (Test), Number of indexes: " + candidates.size() 
+        System.out.println("L56 (Test), Number of indexes: " + candidates.size() 
                             + " Number of statements: " + workload.size());
         for (Index index : candidates) 
-            System.out.println("L62, Index: " + index.getId() + " " + index); 
+            System.out.println("L59, Index: " + index.getId() + " " + index); 
         
         try {
             double delta = 0.1;
@@ -82,4 +97,5 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
             throw e;
         }
     }
+    
 }

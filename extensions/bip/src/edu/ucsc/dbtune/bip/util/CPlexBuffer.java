@@ -12,8 +12,14 @@ import java.io.IOException;
  */
 public class CPlexBuffer 
 {
-    private PrintWriter obj, cons, bin;
-    private String objFileName, consFileName, binFileName, lpFileName;
+    private PrintWriter obj;
+    private PrintWriter cons;
+    private PrintWriter bin;
+    
+    private String objFileName;
+    private String consFileName;
+    private String binFileName;
+    private String lpFileName;
 
     public CPlexBuffer(String prefix) throws IOException 
     {
@@ -88,15 +94,19 @@ public class CPlexBuffer
 	 * 		The array of strings representing the name of the input files
 	 * @throws IOException
 	 */
-	public static void concat(String target, String... files) throws IOException {
+	public static void concat(String target, String... files) throws IOException 
+	{
         PrintWriter writer = new PrintWriter(new FileWriter(target));
+        
         for (int i = 0; i < files.length; i++) {
+            
             String file = files[i];
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line = null;
-            while((line = reader.readLine()) != null) {
+            
+            while((line = reader.readLine()) != null)
                 writer.println(line);
-            }
+            
             reader.close();
         }
         writer.close();
