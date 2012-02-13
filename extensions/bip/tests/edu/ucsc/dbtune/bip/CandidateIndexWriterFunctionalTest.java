@@ -49,20 +49,20 @@ public class CandidateIndexWriterFunctionalTest
         Workload workload = workload(folder);
         
         // 1. optimal indexes
-        
-        CandidateGenerator candGen =
-            new OneColumnCandidateGenerator(
-                       new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())));
-        
         /*
+        CandidateGenerator candGen =
+          //  new OneColumnCandidateGenerator(
+                       new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        */
+        
         CandidateGenerator candGen = new PowerSetCandidateGenerator
                                          (db.getCatalog(), 2, true);
-                                         */
+        
         Set<Index> candidates = candGen.generate(workload);
         System.out.println(" Number of indexes: " + candidates.size());
         
         try {
-            writeIndexesToFile(candidates, folder  + "/candidate-1C.txt");
+            writeIndexesToFile(candidates, folder  + "/candidate-powerset");
         } catch (Exception e) {
             throw e;
         }
@@ -98,7 +98,7 @@ public class CandidateIndexWriterFunctionalTest
             
             for (Column c : idx.columns())
                 sb.append(c.getName()).append("|")
-                        .append(idx.isAscending(c) ? "ASC" : " DESC")
+                        .append(idx.isAscending(c) ? "ASC" : "DESC")
                         .append("|");
             
             sb.delete(sb.length() - 1, sb.length() );
