@@ -5,6 +5,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetCandidateGenerator;
 //import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.CPlexSolver;
@@ -51,8 +52,9 @@ public class SimBIPFunctionalTest
         System.out.println(" In test scheduling ");
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         
-        CandidateGenerator candGen = 
-                new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        //CandidateGenerator candGen = 
+          //      new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 2, true);
         Set<Index> indexes = candGen.generate(workload);
         
         System.out.println(

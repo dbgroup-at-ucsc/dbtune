@@ -9,18 +9,18 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 
 /**
- * This interface corresponds to a statement in the given workload.
- * It serves as a cache that stores constants relating to INUM's template plans 
- * such as: internal plan cost, index access costs. 
+ * This interface corresponds to a statement in the given workload. It serves as a cache that 
+ * stores constants relating to INUM's template plans such as: internal plan cost, index access 
+ * costs. 
  *  
- * @author tqtrung@soe.ucsc.edu
+ * @author Quoc Trung Tran
  *
  */
 public interface QueryPlanDesc 
 {   
     /**
-     * Communicate with INUM to generate query plan description: the number of template plans, internal costs, 
-     * index access costs, etc. 
+     * Communicate with INUM to generate query plan description: the number of template plans, 
+     * internal costs, index access costs, etc. 
      * 
      * @param optimizer
      *      The INUM optimizer 
@@ -31,13 +31,18 @@ public interface QueryPlanDesc
      * at each slot. The {@code candidateIndexes} does not contain full table scan indexes.  
      *     
      * @throws SQLException
-     *      when there is erro in connecting with {@code optimizer} 
+     *      when there is error in connecting with {@code optimizer} 
      */
-    void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidateIndexes) throws SQLException;
+    void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidateIndexes) 
+                              throws SQLException;
     
     /**
-     * Retrieve the number of template plans
+     * Retrieve the number of template plans corresponding to the SQLStatement that this
+     * object corresponds to. 
      *      
+     * @return
+     *      The number of template plans.
+     *            
      * {\bf Note}: The result of this function is the value of the constant {\it K_q}
      * in the paper    
      */
@@ -54,7 +59,10 @@ public interface QueryPlanDesc
      * 
      * @param k
      *      The plan ID that we need to retrieve the internal plan cost
-     *      
+     *
+     * @return  
+     *      The internal plan cost.
+     *           
      * {\bf Note}: The result of this function is the value of the constant {\it \beta_{qk}}
      * in the paper.      
      */
@@ -67,15 +75,21 @@ public interface QueryPlanDesc
      *      The ID of the plan
      * @param index    
      *      The index to retrieve the access cost
+     * 
+     * @return 
+     *      The index access cost.
      *      
      * {\bf Note}: The result of this function is the value of the constant {\it \gamma_{qkia}}
-     * in the paper. From the given {@code index}, we can infer the slot (i) that the index is placed.     
+     * in the paper. From the given {@code index}, we can infer the slot (i) that the index is 
+     * placed.     
      */
     double getAccessCost(int k, Index index);
 
     /**
      * Retrieve the statement ID
      * 
+     * @return 
+     *      The statement ID
      *  
      */
     int getStatementID();
@@ -85,23 +99,44 @@ public interface QueryPlanDesc
      * Retrieve the list of tables that are referenced by the statement
      * 
      * @return
-     *      A list of tables 
+     *      The list of refenced tables. 
      */
     List<Table> getTables();
     
     /**
      * Retrieve the list of indexes (including FTS indexes) that are stored in 
-     * the given slot {@code i}
+     * the given slot {@code i}.
+     * 
      * @param i
      *      The slot on which we retrieve the set of indexes
+     * @return
+     *      The list of indexes at slot i.       
      */
     List<Index> getListIndexesAtSlot(int i);
 
     /**
      * Retrieve the list of indexes (excluding FTS indexes) that are stored in 
-     * the given slot {@code i}
+     * the given slot {@code i}.
+     * 
      * @param i
      *      The slot on which we retrieve the list of indexes
+     * @return 
+     *      The list of indexes at slot i.    
      */
     List<Index> getListIndexesWithoutFTSAtSlot(int i);
+    
+    /**
+     * 
+     * Retrieve the set of indexes that are compatible with at least one slot in one template plan
+     * of the given statement. Note that this method does not take the Full Table Scan Index into 
+     * account.
+     * 
+     * @param i
+     *      The slot ID
+     *      
+     * @return  
+     *      The set of indexes that are compatible with at least one slot in one template plan
+     *      of the query.
+     */
+    Set<Index> getActiveIndexsAtSlot(int i);
 }

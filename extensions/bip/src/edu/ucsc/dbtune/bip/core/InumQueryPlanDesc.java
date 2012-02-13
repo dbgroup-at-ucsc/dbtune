@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.bip.core;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,13 +20,12 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 
 /**
- * An implementation of {@link QueryPlanDesc} interface.
- * There's only one single object of this type per statement, 
- * i.e., this can be viewed as a singleton class but instead of 
- * creating one object throughout the JVM, this class creates one for every 
- * distinct statement contained in a {@link Workload}.
+ * An implementation of {@link QueryPlanDesc} interface. There's only one single object of 
+ * this type per statement, i.e., this can be viewed as a singleton class but instead of  
+ * creating one object throughout the JVM, this class creates one for every distinct statement 
+ * contained in a {@link Workload}.
  * 
- * @author tqtrung@soe.ucsc.edu.sg
+ * @author Quoc Trung Tran
  *
  */
 public class InumQueryPlanDesc implements QueryPlanDesc 
@@ -50,6 +50,9 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	/** List of indexes (excluding FTS) at each slot */
 	private List<List<Index>> listIndexesWithoutFTSEachSlot;
 	
+	/** List of indexes that can be used at at least one slot of the template plans */
+	private List<Set<Index>> listActiveIndexesEachSlot;
+	 
 	/** List of index access cost in each plan */
 	private List<Map<Index, Double>> listAccessCostPerPlan;
 	
@@ -65,21 +68,6 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	                                            HashMap<SQLStatement, QueryPlanDesc>();
 	
 	/**
-	 * The constructor, each object of this class corresponds to a {@code SQLSatement} object
-	 * 
-	 * @param stmt
-	 *      The statement that this object corresponds to
-	 *      
-	 * {\bf Note}: A new object is associated with an ID that is incremented starting from 0     
-	 */
-    private InumQueryPlanDesc(SQLStatement stmt)
-    {
-        this.stmtID = InumQueryPlanDesc.STMT_ID.getAndIncrement();
-        this.stmt = stmt;
-        this.listTables = null;
-    }
-    
-    /**
      * Returns the single instance of this class corresponding to the given statement.
      *
      * @param stmt
@@ -99,24 +87,41 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         return desc;
     }
     
-    /* (non-Javadoc)
-     */ 
+	/**
+	 * The constructor, each object of this class corresponds to a {@code SQLSatement} object
+	 * A new object is associated with an ID that is incremented starting from value {@code 0}.
+	 * 
+	 * @param stmt
+	 *      The statement that this object corresponds to
+	 */
+    private InumQueryPlanDesc(SQLStatement stmt)
+    {
+        this.stmtID = InumQueryPlanDesc.STMT_ID.getAndIncrement();
+        this.stmt = stmt;
+        this.listTables = null;
+    }
+    
+     
     @Override
     public void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidateIndexes) 
                                       throws SQLException
     {   
-        beta = new ArrayList<Double>();
-        listIndexesEachSlot = new ArrayList<List<Index>>();
+        beta                          = new ArrayList<Double>();
+        listIndexesEachSlot           = new ArrayList<List<Index>>();
         listIndexesWithoutFTSEachSlot = new ArrayList<List<Index>>();
+        listActiveIndexesEachSlot     = new ArrayList<Set<Index>>();
+        listTables                    = new ArrayList<Table>();
+        listAccessCostPerPlan         = new ArrayList<Map<Index, Double>>();
         
-        InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
-        preparedStmt.computeInumSpace();
-        Set<InumPlan> templatePlans = preparedStmt.getTemplatePlans();
-        
-        listTables = new ArrayList<Table>();             
+        InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) 
+                                                 optimizer.prepareExplain(stmt);
+        Set<InumPlan> templatePlans   = preparedStmt.getTemplatePlans();
+                     
         for (InumPlan plan : templatePlans) {
+            
             listTables = plan.getTables();
             break;
+            
         }
         
         // 1. Set up the number of slots & list of indexes in each slot
@@ -124,20 +129,24 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         
         for (Table table : listTables) {    
             
-            List<Index> listIndex = new ArrayList<Index>();         
+            List<Index> listIndex           = new ArrayList<Index>();         
             List<Index> listIndexWithoutFTS = new ArrayList<Index>();
+            Set<Index>   setActiveIndexes   = new HashSet<Index>();
             
+            // normal index (not the full table scan index)
             for (Index index : candidateIndexes) {
-                // normal index (not the full table scan index)
+                
                 if (index.getTable().equals(table)){     
                     listIndex.add(index);
                     listIndexWithoutFTS.add(index);
                 }
+                
             }
             
             listIndexesWithoutFTSEachSlot.add(listIndexWithoutFTS);
+            listActiveIndexesEachSlot.add(setActiveIndexes);
             
-            // add the index full table scan at the last position in this slot
+            // add the Full Table Scan Index at the last position in this slot
             FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
             listIndex.add(scanIdx);
             listIndexesEachSlot.add(listIndex);
@@ -145,7 +154,8 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                 
         Kq = 0;
         double cost;
-        listAccessCostPerPlan = new ArrayList<Map<Index, Double>>();
+        Index index;
+        int numIndex;
         
         for (InumPlan plan : templatePlans) {
             
@@ -154,22 +164,30 @@ public class InumQueryPlanDesc implements QueryPlanDesc
             
             for (int i = 0; i < n; i++) {
                 
-                for (Index index : this.listIndexesEachSlot.get(i)) {
+                numIndex = listIndexesEachSlot.get(i).size();
+                
+                for (int j = 0; j < numIndex; j++) {
+                    
+                    index = listIndexesEachSlot.get(i).get(j);
                     
                     cost = plan.plug(index);                    
                     if (cost == Double.POSITIVE_INFINITY)
                         cost = InumQueryPlanDesc.BIP_MAX_VALUE;
+                    else {
+                        if (j < numIndex - 1) 
+                        // not the FTS, index is active at slot i
+                            listActiveIndexesEachSlot.get(i).add(index);
+                    }
                     
-                    mapIndexAccessCost.put(index, new Double(cost));
-                }                            
+                    mapIndexAccessCost.put(index, cost);
+                }                                        
             }
             
             listAccessCostPerPlan.add(mapIndexAccessCost);
             Kq++;
         }
     }
-        
-    
+     
 	
     @Override
 	public int getNumberOfTemplatePlans()
@@ -209,24 +227,26 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     @Override
 	public double getAccessCost(int k, Index index)
 	{
-		Object found = listAccessCostPerPlan.get(k).get(index);
-		if (found != null) 
-		    return (Double) found;
-		else 
-		    throw new RuntimeException(" Cannot compute the index access cost for: " + index.getName() + " at plan: " + k);
+		return listAccessCostPerPlan.get(k).get(index);
 	}
 	
 	
     @Override
 	public int getStatementID()
     {
-        return this.stmtID;
+        return stmtID;
     }
 	
     
     @Override 
     public List<Table> getTables()
     {
-        return this.listTables;
+        return listTables;
     }
+
+    @Override
+    public Set<Index> getActiveIndexsAtSlot(int i) 
+    {
+        return listActiveIndexesEachSlot.get(i);
+    }   
 }

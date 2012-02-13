@@ -24,6 +24,14 @@ public class IIPVariablePool extends AbstractBIPVariablePool
     {
         mapHighDimensionVar = new HashMap<IIPVariableIndicator, BIPVariable>();
     }
+    
+    /**
+     * Clean all the data stored in this class
+     */
+    public void clear()
+    {
+        mapHighDimensionVar.clear();
+    }
     /**
      * 
      * Create and store a variable, whose name is in the form of

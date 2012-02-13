@@ -39,33 +39,37 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 public class RestrictIIP 
 {
     public static final int IND_EMPTY = 0;
-    public static final int IND_C = 1;
-    public static final int IND_D = 2;
-    public static final int IND_CD = 3;
+    public static final int IND_C     = 1;
+    public static final int IND_D     = 2;
+    public static final int IND_CD    = 3;
     
     protected final List<Integer> listTheta = 
                     Arrays.asList(IND_EMPTY, IND_C, IND_D, IND_CD);     
     
-    protected Map<Integer, String> CTheta;
+    protected Map<Integer, String>       CTheta;
     protected Map<Integer, List<String>> elementCTheta;    
     protected Map<Integer, List<String>> varTheta;
-    protected Map<String, Double> coefVarYXTheta;
-    protected IIPVariablePool poolVariables;    
-    protected Map<String, Index> mapVarSIndex;
+    protected Map<String, Double>        coefVarYXTheta;
+    protected IIPVariablePool            poolVariables;    
+    protected Map<String, Index>         mapVarSIndex;
     
-    protected QueryPlanDesc desc;
-    protected CPlexBuffer buf;
+    protected QueryPlanDesc    desc;
+    protected CPlexBuffer      buf;
     protected CPlexInteraction cplex;
-    protected Set<Index> candidateIndexes;
+    protected Set<Index>       candidateIndexes;
     
 	private double delta;		
-	private int ic, id; 
-	private Index indexc, indexd;
-	private int numConstraints;
+	private int    ic;
+	private int    id; 
+	private Index  indexc;
+	private Index  indexd;
+	private int    numConstraints;
+	private double doiOptimizer;
+	private double doiBIP;
+	
 	protected LogListener logger;
 	protected Environment environment = Environment.getInstance();
 	
-	private double doiOptimizer, doiBIP;
 	
 	/**
 	 * The constructor to formulate an instance of {@code RetrictIIP}
@@ -87,27 +91,28 @@ public class RestrictIIP
 	 *     The relation slot ID that contains the second index	  
 	 * 
 	 */
-	public RestrictIIP(final QueryPlanDesc desc, 
+	public RestrictIIP( final QueryPlanDesc desc, 
 	                    final LogListener logger, 
 	                    final double delta, final Index indexc, final Index indexd, 
 	                    final Set<Index> candidateIndexes,
 	                    final int ic, final int id)
 	{
-		this.delta = delta;
-		this.ic = ic;
-		this.id = id;
-		this.indexc = indexc;
-		this.indexd = indexd;
-		this.desc = desc;
-		this.logger = logger;
+		this.delta            = delta;
+		this.ic               = ic;
+		this.id               = id;
+		this.indexc           = indexc;
+		this.indexd           = indexd;
+		this.desc             = desc;
+		this.logger           = logger;
 		this.candidateIndexes = candidateIndexes;
 		
-		cplex = new CPlexInteraction();
+		this.cplex            = new CPlexInteraction();
 	}
 	
 	
 	/**
-	 * Check if the given pair of indexes in the constructor interact or not
+	 * Check if the given pair of indexes in the constructor interact or not by constructing
+	 * Binary Integer Program
 	 * 
 	 * @param sql
 	 *     The SQL statement
@@ -127,16 +132,34 @@ public class RestrictIIP
         
         // 3. Solve the first BIP        
         logger.setStartTimer();
-        Map<String, Integer> mapVarVal = cplex.solve(buf.getLpFileName());
-        boolean isInteracting = false;
+        boolean isInteracting          = false;
+        boolean isSolveAlternativeOnly = false;
+        Map<String, Integer> mapVarVal = null;
+        
+        // 
+        // One optimization.
+        //
+        // If indexes belong the same relation then the first index interaction constraint
+        // is false, since Aempty + Acd >= Ac + Ad. 
+        // 
+        // We invoke the alternative interaction constraint instead.
+        // 
+        if (ic != id)           
+            cplex.solve(buf.getLpFileName());
+        else
+            isSolveAlternativeOnly = true;
+        
         if (mapVarVal != null)
             isInteracting = true;
         else {
-            // formulate the alternative BIP
-           mapVarVal = solveAlternativeBIP(); 
+           // formulate the alternative BIP
+           mapVarVal = solveAlternativeBIP(isSolveAlternativeOnly, buf.getLpFileName()); 
            if (mapVarVal != null) 
                isInteracting = true;
         }
+        
+        // clear the model
+        cplex.clearModel();
         
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         
@@ -195,11 +218,7 @@ public class RestrictIIP
 	
 	/**
      * Initialize empty buffer files that will store the Binary Integer Program
-     *            
-     * {\bf Note. }There are four files that are created for a BIP,
-     * including: {@code prefix.obj}, {@code prefix.cons}, {@code prefix.bin} and {@code prefix.lp}
-     * store the objective function, list of constraints, binary variables, and 
-     * the whole BIP, respectively. 
+     *  
      *      
      */
     protected void initializeBuffer()
@@ -257,7 +276,7 @@ public class RestrictIIP
         buf.close();
         try {
             CPlexBuffer.concat(buf.getLpFileName(), buf.getObjFileName(), 
-                                buf.getConsFileName(), buf.getBinFileName());
+                               buf.getConsFileName(), buf.getBinFileName());
         }
         catch (IOException e) {
             throw new RuntimeException("Cannot concantenate text files that store BIP.");
@@ -282,13 +301,14 @@ public class RestrictIIP
     protected void constructBinaryVariables()
     {   
         poolVariables = new IIPVariablePool();
-        varTheta = new HashMap<Integer, List<String>>();
-        mapVarSIndex = new HashMap<String, Index>();
+        varTheta      = new HashMap<Integer, List<String>>();
+        mapVarSIndex  = new HashMap<String, Index>();        
+        int q         = desc.getStatementID();
         
-        int q = desc.getStatementID();
         for (int theta : listTheta) {            
             
             List<String> listVarTheta = new ArrayList<String>();
+            
             // var y
             for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                 
@@ -338,6 +358,18 @@ public class RestrictIIP
         }
     }
     
+    /**
+     * The method clears all data structures
+     */
+    public void clear()
+    {
+        CTheta.clear();
+        elementCTheta.clear();    
+        varTheta.clear();
+        coefVarYXTheta.clear();
+        poolVariables.clear();    
+        mapVarSIndex.clear();
+    }
 
     /**
      * Construct the formula of the query execution cost of the investigating statement
@@ -350,13 +382,14 @@ public class RestrictIIP
      */
     protected void buildQueryExecutionCost()
     {   
-        CTheta = new HashMap<Integer, String>();
-        elementCTheta = new HashMap<Integer, List<String>>();
-        coefVarYXTheta = new HashMap<String, Double>(); 
-        
+        int    q;
         double cost;
         String element;
-        int q = desc.getStatementID();
+        
+        CTheta         = new HashMap<Integer, String>();
+        elementCTheta  = new HashMap<Integer, List<String>>();
+        coefVarYXTheta = new HashMap<String, Double>(); 
+        q              = desc.getStatementID();
         
         for (int theta : listTheta) {
             
@@ -838,7 +871,8 @@ public class RestrictIIP
      *      A map from variable to their assigned binary values
      *      or NULL, otherwise
      */
-    protected Map<String, Integer> solveAlternativeBIP()
+    protected Map<String, Integer> solveAlternativeBIP(boolean isSolveAlternativeOnly,
+                                                       String inputFile)
     {   
         Map<String,Double> mapVarCoef = new HashMap<String, Double>();
         double deltaCD = delta - 1; 
@@ -872,7 +906,9 @@ public class RestrictIIP
             }           
         }
         
-        return cplex.solveAlternativeInteractionConstraint(mapVarCoef);
+        return cplex.solveAlternativeInteractionConstraint(mapVarCoef, 
+                                                           isSolveAlternativeOnly,
+                                                           inputFile);
     }
     
     /**

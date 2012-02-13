@@ -1,7 +1,10 @@
 package edu.ucsc.dbtune.bip.interactions;
 
 import ilog.concert.IloException;
+import ilog.concert.IloLPMatrix;
 import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex;
+
 import java.util.Map;
 
 import edu.ucsc.dbtune.bip.core.CPlexImplementer;
@@ -17,32 +20,72 @@ public class CPlexInteraction extends CPlexImplementer
      *  <li> Add the alternative index interaction constraint </li>
      * </ol>
      * </p>
+     * 
      * @param mapVarCoef
      *      The coefficient for variable in the alternative constraint
+     * @param isSolvealternativeOnly
+     *      The boolean value to indicate whether we only need to solve the alternative constraint
+     * @param inputFile
+     *      This parameter is taken into account if {@code isSolvealternativeOnly = true}
+     *                 
      * @return 
      *      a map variables to their assigned values if CPLEX has a solution
      *      or {@code null}, otherwise     
      */
-    public Map<String, Integer> solveAlternativeInteractionConstraint(Map<String, Double> mapVarCoef)
+    public Map<String, Integer> solveAlternativeInteractionConstraint(
+                                Map<String, Double> mapVarCoef, 
+                                boolean isSolvealternativeOnly,
+                                String inputFile)
     {
-        Map<String, Integer> mapVariableValue = null;
+        Map<String, Integer> mapVariableValue;
+        IloNumVar            var;
+        IloLPMatrix          matrix;
+        IloNumVar[]          vars;
+        double[]             listCoef;
+        
+        int    last_row_id;
+        double coef;
+        Object found;
+        
+        mapVariableValue = null;
+        
         try {
-            matrix = getMatrix(cplex);
-            vars = matrix.getNumVars();
+            
+            if(isSolvealternativeOnly) {
+                // We have not imported the model from the file before
+                cplex = new IloCplex();
+                
+                cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
+                
+                // not output the log of CPLEX
+                cplex.setOut(null);
+                // not output the warning
+                cplex.setWarning(null);
+                
+                // Read model from file
+                cplex.importModel(inputFile);
+            }
+            
+            matrix      = getMatrix(cplex);
+            vars        = matrix.getNumVars();
+            last_row_id = matrix.getNrows() - 1;
+            listCoef    = new double[vars.length];
+            
             // Remove the last constraint for the index interaction
-            // and replace by the alternative one
-            int last_row_id = matrix.getNrows() - 1;        
+            // and replace by the alternative one                    
             matrix.removeRow(last_row_id);
             
-            double[] listCoef = new double[vars.length];        
             for (int i = 0; i < vars.length; i++) {
-                IloNumVar var = vars[i];
-                double coef = 0.0;
-                Object found = mapVarCoef.get(var.getName());
+                
+                var   = vars[i];
+                coef  = 0.0;
+                found = mapVarCoef.get(var.getName());
+                
                 if (found != null) 
                     coef = (Double) found;
                       
                 listCoef[i] = coef;
+                
             }
             cplex.addLe(cplex.scalProd(listCoef, vars), 0);
             

@@ -45,11 +45,12 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
         
         System.out.println(" In test interaction ");
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
-        /*CandidateGenerator candGen =
-            //new OneColumnCandidateGenerator(
+        
+        CandidateGenerator candGen =
+         //   new OneColumnCandidateGenerator(
                     new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
-        */
-        CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 1, true);
+        
+        //CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 2, true);
         Set<Index> candidates = candGen.generate(workload);
         
         System.out.println("L60 (Test), Number of indexes: " + candidates.size() 

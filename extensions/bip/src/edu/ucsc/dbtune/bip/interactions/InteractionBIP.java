@@ -19,8 +19,8 @@ import edu.ucsc.dbtune.bip.util.LogListener;
  
 /**
  * The class is responsible for solving the interaction problem: 
- * Given a query {@code q}, finds pairs of indexes {@code (c,d)} 
- * that interact with respect to {@code q}; i.e., {@code doi_q(c,d) >= delta}.
+ * Given a query {@code q}, finds pairs of indexes {@code (c,d)} that interact with respect to 
+ * {@code q}; i.e., {@code doi_q(c,d) >= delta}.
  *  
  * @author Quoc Trung Tran
  *
@@ -92,46 +92,48 @@ public class InteractionBIP extends AbstractBIPSolver
     protected void findInteractions(SQLStatement sql, QueryPlanDesc desc) 
     {   
         // Derive list of indexes that might interact
-        List<Index> indexes = new ArrayList<Index>();
+        List<Index>         indexes        = new ArrayList<Index>();
         Map<Index, Integer> mapIndexSlotID = new HashMap<Index, Integer>();
         
-        // Note: NOT consider FTS
+        // Note consider full table scan indexes
         for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-            for (Index index : desc.getListIndexesWithoutFTSAtSlot(i)) {
+            
+            for (Index index : desc.getActiveIndexsAtSlot(i)) {
                 indexes.add(index);
                 mapIndexSlotID.put(index, i);
-            }   
+            }
+            
         }
         
         Index indexc, indexd;
         int ic, id;
+        IndexInteraction pair;
+        
         List<RestrictIIP> listIIP = new ArrayList<RestrictIIP>();
         
         for (int pos_c = 0; pos_c < indexes.size(); pos_c++) {
+            
             indexc = indexes.get(pos_c);
-            ic = mapIndexSlotID.get(indexc);
+            ic     = mapIndexSlotID.get(indexc);
             
             for (int pos_d = pos_c + 1; pos_d < indexes.size(); pos_d++) {
                 
-                indexd = indexes.get(pos_d);                
-                IndexInteraction pair = new IndexInteraction(indexc, indexd);
+                indexd = indexes.get(pos_d);
                 
-                if (cacheInteractingPairs.containsKey(pair)) 
+                if (cacheInteractingPairs.containsKey(new IndexInteraction(indexc, indexd))) 
                     continue;
+                
                 else {
                     
-                    IndexInteraction symetricPair = new IndexInteraction(indexd, indexc);
-                    if (cacheInteractingPairs.containsKey(symetricPair)) 
+                    if (cacheInteractingPairs.containsKey(new IndexInteraction(indexd, indexc))) 
                         continue;
-                    
                 }
                 
                 id = mapIndexSlotID.get(indexc);
                 
                 // call the BIP solution
-                RestrictIIP restrict = new RestrictIIP(desc, logger, delta, indexc, indexd, 
-                                              candidateIndexes, ic, id);
-                listIIP.add(restrict);
+                listIIP.add(new RestrictIIP(desc, logger, delta, indexc, indexd, 
+                                            candidateIndexes, ic, id));
             }
         }
         
@@ -140,8 +142,7 @@ public class InteractionBIP extends AbstractBIPSolver
             
             if (restrict.solve(sql, optimizer)) {
                 // cache pairs of interaction
-                IndexInteraction pair = new IndexInteraction
-                                            (restrict.getFirstIndex(), restrict.getSecondIndex());
+                pair = new IndexInteraction (restrict.getFirstIndex(), restrict.getSecondIndex());
                 cacheInteractingPairs.put(pair, 1);
                 
                 // store in the output
@@ -149,6 +150,8 @@ public class InteractionBIP extends AbstractBIPSolver
                 pair.setDoiOptimizer(restrict.getDoiOptimizer());
                 interactionOutput.add(pair);
             } 
+            
+            restrict.clear();
         }
     }
     
