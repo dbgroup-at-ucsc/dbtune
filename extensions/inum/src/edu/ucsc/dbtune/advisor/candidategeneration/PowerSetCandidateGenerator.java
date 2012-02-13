@@ -1,5 +1,6 @@
-package edu.ucsc.dbtune.candidategeneration;
+package edu.ucsc.dbtune.advisor.candidategeneration;
 
+import edu.ucsc.dbtune.advisor.candidategeneration.AbstractCandidateGenerator;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;

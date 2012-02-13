@@ -1,5 +1,6 @@
-package edu.ucsc.dbtune.candidategeneration;
+package edu.ucsc.dbtune.advisor.candidategeneration;
 
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

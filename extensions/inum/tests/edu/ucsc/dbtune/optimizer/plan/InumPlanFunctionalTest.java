@@ -5,8 +5,8 @@ import java.util.Set;
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;

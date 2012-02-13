@@ -4,10 +4,10 @@ import java.sql.SQLException;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.candidategeneration.OneColumnCandidateGenerator;
-import edu.ucsc.dbtune.candidategeneration.OptimizerCandidateGenerator;
-import edu.ucsc.dbtune.candidategeneration.PowerSetCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;

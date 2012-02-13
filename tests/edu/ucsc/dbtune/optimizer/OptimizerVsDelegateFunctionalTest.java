@@ -3,8 +3,8 @@ package edu.ucsc.dbtune.optimizer;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -96,10 +96,11 @@ public class OptimizerVsDelegateFunctionalTest
             final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
 
             prepareTime = System.currentTimeMillis() - time;
+            time = System.currentTimeMillis();
 
             System.out.println("       INUM: " + pSql.explain(conf).getSelectCost());
 
-            explainTime = System.currentTimeMillis() - prepareTime;
+            explainTime = System.currentTimeMillis() - time;
 
             System.out.println("        DB2: " + delegate.explain(sql, conf).getSelectCost());
             System.out.println("    Prepare: " + (prepareTime / 1000) + " sec.");
