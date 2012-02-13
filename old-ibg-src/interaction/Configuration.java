@@ -64,4 +64,8 @@ public abstract class Configuration {
 	public static File logFile(Strategy s, AnalysisMode m, double t) {
 		return new File(outputDir(), "log-" + s.nickname + "-" + m + "-" + t + ".txt");
 	}
+	
+	public static String candidateTextFile(Generation.Strategy s) {
+        return (outputDir() + "/candidate-" + s.nickname + ".txt");
+    }
 }

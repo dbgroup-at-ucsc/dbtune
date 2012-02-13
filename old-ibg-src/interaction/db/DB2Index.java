@@ -360,4 +360,32 @@ public class DB2Index implements Serializable {
 	    	defaultValue = defaultValue0;
 	    }
 	}
+	
+	/**
+	 * Construct an index from the DBTune table 
+	 * 
+	 */
+    public static DB2Index constructIndexFromDBTune 
+                    (String dbName, String tableName, 
+                    List<String> colNames, List<Boolean> descending,
+                    int id)  throws SQLException 
+    {
+        
+        // construct the schema
+        String uniqueRule = "D";
+        String reverseScan = "Y";
+        String indexType = "REG";
+        
+        DB2IndexSchema schema = new DB2IndexSchema(dbName, tableName, colNames, descending, 
+                                                   uniqueRule, reverseScan, indexType);
+        
+        // construct the object
+        String indexName = indexNameBase + id;
+        String indexOwner = "DB2INST1";
+        String tableOwner = tableName;
+        String indexExists = "N";
+        int systemRequired = 0;
+        
+        return new DB2Index(schema, id, indexName, indexOwner, tableOwner, indexExists, systemRequired);
+    }
 }

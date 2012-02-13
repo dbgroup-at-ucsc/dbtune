@@ -68,7 +68,7 @@ public class AnalysisMain {
 		SerialIndexBenefitGraph[] ibgs;
 		File candidateFile = Configuration.candidateFile(strategy);
 		DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
-
+		System.out.println("L71 (analysis), candidate indexes: " + candidateSet);
 		conn.fixCandidates(candidateSet);
 		logger = new InteractionLogger(conn, candidateSet);	
 		
