@@ -121,6 +121,7 @@ public class DB2Index implements Serializable {
 		String reverseScan = rs.getString(AdviseIndexColumn.REVERSE_SCANS.ordinal() + 1);
 		String indexType = rs.getString(AdviseIndexColumn.INDEXTYPE.ordinal() + 1);
 		
+		
 		DB2IndexSchema schema = new DB2IndexSchema(dbName, tableName, colNames, descending, 
 												   uniqueRule, reverseScan, indexType);
 		
@@ -382,7 +383,7 @@ public class DB2Index implements Serializable {
         // construct the object
         String indexName = indexNameBase + id;
         String indexOwner = "DB2INST1";
-        String tableOwner = tableName;
+        String tableOwner = "TPCH";
         String indexExists = "N";
         int systemRequired = 0;
         

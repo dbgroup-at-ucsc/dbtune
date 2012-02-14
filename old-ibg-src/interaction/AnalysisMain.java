@@ -53,7 +53,8 @@ public class AnalysisMain {
 		DBConnection conn = Main.openConnection();
 		try {
 			SQLWorkload workload = Main.getWorkload();
-			analyze(conn, workload, UNION_OPTIMAL);
+	//		analyze(conn, workload, UNION_OPTIMAL);
+			analyze(conn, workload, POWER_SET);
 //			analyze(conn, workload, OPTIMAL_1C);
 //			analyze(conn, workload, FULL_BUDGET);
 //			analyze(conn, workload, HALF_BUDGET);
@@ -64,7 +65,8 @@ public class AnalysisMain {
 	}
 	
 	private static void analyze(DBConnection conn, SQLWorkload workload, Generation.Strategy strategy) throws IOException, ClassNotFoundException, SQLException {
-		InteractionLogger logger;
+	    long start = System.currentTimeMillis();
+	    InteractionLogger logger;
 		SerialIndexBenefitGraph[] ibgs;
 		File candidateFile = Configuration.candidateFile(strategy);
 		DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
@@ -77,6 +79,7 @@ public class AnalysisMain {
 		logger.reset();
 		ibgs = analyzeSerial(conn, workload, candidateSet, logger);
 		writeAnalysis(strategy, SERIAL, logger.getBasicLog());
+		System.out.println("L81, the running time: " + (System.currentTimeMillis() - start));
 		writeIBGs(ibgs, strategy);
 	
 		

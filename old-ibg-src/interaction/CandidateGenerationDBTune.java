@@ -1,6 +1,7 @@
 package interaction;
 
 import static interaction.cand.Generation.Strategy.UNION_OPTIMAL;
+import static interaction.cand.Generation.Strategy.POWER_SET;
 
 import interaction.cand.UnionOptimal;
 import interaction.db.DB2Index;
@@ -21,7 +22,7 @@ public class CandidateGenerationDBTune {
     
     public static void main(String[] args) throws IOException, SQLException 
     {
-        String fileName = Configuration.candidateTextFile(UNION_OPTIMAL);
+        String fileName = Configuration.candidateTextFile(POWER_SET);
         
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
         String line = null;
@@ -56,7 +57,7 @@ public class CandidateGenerationDBTune {
         }
         
         System.out.println("L54, candidate set: " + candidateSet);
-        File optimalCandidateFile = Configuration.candidateFile(UNION_OPTIMAL);     
+        File optimalCandidateFile = Configuration.candidateFile(POWER_SET);     
         writeCandidates(optimalCandidateFile, candidateSet);
     }
     
