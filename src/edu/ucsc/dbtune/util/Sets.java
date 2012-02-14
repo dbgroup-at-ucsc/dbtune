@@ -20,15 +20,15 @@ public class Sets<E>
     }
     
     /**
-     * Enumerate all subsets of the given {@code set} where the number of elements in each
-     * enumerate set does not exceed the given {@code maxSize} value.
+     * Enumerate all subsets of the given {@code set}, where the number of elements in each
+     * enumerated set is equal to the given {@code size} value.
      * 
      * @param set
      *      A set of elements
      * @param size
      *      The number of elements in every enumerated subset. If {@code size} is greater than
-     *      the number of element in {@code set}, then {@code size} is reset to be the number of 
-     *      elements in {@code set}.
+     *      the number of element in {@code set}, then {@code size} is automatically adjusted to be 
+     *      the number of elements in {@code set}.
      *      
      * @return
      *      The power set of all subsets of the given size. 
