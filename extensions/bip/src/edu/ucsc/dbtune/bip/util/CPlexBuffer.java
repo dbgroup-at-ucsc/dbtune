@@ -1,10 +1,10 @@
 package edu.ucsc.dbtune.bip.util;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * File managements for a CPlex class
@@ -12,104 +12,97 @@ import java.io.IOException;
  */
 public class CPlexBuffer 
 {
-    private PrintWriter obj;
-    private PrintWriter cons;
-    private PrintWriter bin;
+    private List<String> obj;
+    private List<String> cons;
+    private List<String> bin;    
     
-    private String objFileName;
-    private String consFileName;
-    private String binFileName;
     private String lpFileName;
 
     public CPlexBuffer(String prefix) throws IOException 
-    {
-        objFileName = prefix+".obj";
-        consFileName = prefix+".cons";
-        binFileName = prefix+".bin";
-        lpFileName = prefix+".lp";
+    {   
+        lpFileName = prefix + ".lp";
         
-        // erase the content stored in the current file
-        obj  = new PrintWriter(new FileWriter(objFileName), false);
-        cons = new PrintWriter(new FileWriter(consFileName), false);
-        bin  = new PrintWriter(new FileWriter(binFileName), false);
+        obj  = new ArrayList<String>();
+        cons = new ArrayList<String>();
+        bin  = new ArrayList<String>();
+        
+        cons.add("Subject To");
+        bin.add("Binary");
 
-        cons.println();
-        cons.println("Subject To");
-
-        bin.println();
-        bin.println("Binary");
-        obj.println("minimize");
-        obj.print("obj: ");
+        obj.add("minimize");
+        obj.add("obj: ");
     }
 
-    public void close() 
-    {
-        bin.println("End");
-        obj.close();
-        cons.close();
-        bin.close();
-    }
-
-    public String getObjFileName()
-    {
-        return this.objFileName;
-    }
-    
-    public String getBinFileName()
-    {
-        return this.binFileName;
-    }
-    
-    public String getConsFileName()
-    {
-        return this.consFileName;
-    }
-    
+    /**
+     * Retrieve the file name that stores the formulated BIP.
+     * 
+     * @return
+     *      The file name
+     */
     public String getLpFileName()
     {
-        return this.lpFileName;
+        return lpFileName;
     }
-    public PrintWriter getObj() 
+    
+    /**
+     * Retrieve the list that stores the objective formula
+     * 
+     * @return
+     *      A list of string
+     */
+    public List<String> getObj() 
     {
         return obj;
     }
 
-    public PrintWriter getCons() 
+    /**
+     * Retrieve the list that will store constraints formulated for the BIP. Each constraint
+     * is stored as an element (a string) in this list.
+     * 
+     * @return
+     *      The list that stores constraints.
+     */
+    public List<String> getCons() 
     {
         return cons;
     }
 
-    public PrintWriter getBin() 
+    /**
+     * Retrieve the list that will store binary variable constraints
+     * 
+     * @return
+     *      The list that stores binary variable constraints.
+     */
+    public List<String> getBin() 
     {
         return bin;
     }
     
-    /**
-	 * Concatenate the contents from multiple input files into an output file:
-	 *    Placing each row in each input file into the output file
+	/**
+	 * Write the formulated BIP (constraints, objective function, etc.) into a text file for 
+	 * the CPLEX solver to read.
 	 * 
-	 * @param target
-	 * 	    The name of the output file
-	 * @param files
-	 * 		The array of strings representing the name of the input files
 	 * @throws IOException
+	 *     when there is I/O error.
 	 */
-	public static void concat(String target, String... files) throws IOException 
-	{
-        PrintWriter writer = new PrintWriter(new FileWriter(target));
+	public void writeToLpFile() throws IOException 
+    {   
+        PrintWriter writer = new PrintWriter(new FileWriter(lpFileName));
+        bin.add("End \n");
         
-        for (int i = 0; i < files.length; i++) {
+        for (String str : obj) 
+            writer.println(str);
+        
+        for (String str : cons)
+            writer.println(str);
             
-            String file = files[i];
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line = null;
-            
-            while((line = reader.readLine()) != null)
-                writer.println(line);
-            
-            reader.close();
-        }
+        for (String str : bin)
+            writer.println(str);
+        
         writer.close();
-	}
+        obj.clear();
+        cons.clear();
+        bin.clear();
+    }
 }
 

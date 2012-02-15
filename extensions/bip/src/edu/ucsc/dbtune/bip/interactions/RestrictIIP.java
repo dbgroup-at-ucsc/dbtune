@@ -162,12 +162,12 @@ public class RestrictIIP
         cplex.clearModel();
         
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
-        
+        /*
         if (isInteracting) {
             doiBIP = computeDoi(mapVarVal);
             doiOptimizer = computeDoiOptimizer(mapVarVal, sql, optimizer);
         }
-        
+        */
         return isInteracting;
 	}
 	
@@ -223,7 +223,7 @@ public class RestrictIIP
      */
     protected void initializeBuffer()
     { 
-        String prefix = "wl" + desc.getStatementID();
+        String prefix = "wl.sql";
         String name = environment.getTempDir() + "/" + prefix;
         try {
             buf = new CPlexBuffer(name);
@@ -273,10 +273,8 @@ public class RestrictIIP
         // 4. Binary variables
         binaryVariableConstraints();
         
-        buf.close();
         try {
-            CPlexBuffer.concat(buf.getLpFileName(), buf.getObjFileName(), 
-                               buf.getConsFileName(), buf.getBinFileName());
+            buf.writeToLpFile();
         }
         catch (IOException e) {
             throw new RuntimeException("Cannot concantenate text files that store BIP.");
@@ -454,7 +452,7 @@ public class RestrictIIP
             for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
                 linList.add(poolVariables.get(theta, IIPVariablePool.VAR_Y, q, k, 0).getName());
             
-            buf.getCons().println("atomic_3a_" + numConstraints + ": " + 
+            buf.getCons().add("atomic_3a_" + numConstraints + ": " + 
                     Strings.concatenate(" + ", linList) + " = 1");
             numConstraints++;
             
@@ -474,13 +472,13 @@ public class RestrictIIP
                                                          q, 0, index.getId()).getName();
                         
                         // (4a) s_a^{theta} \geq x_{kia}^{theta}
-                        buf.getCons().println("atomic_4a_" + numConstraints + ":" 
+                        buf.getCons().add("atomic_4a_" + numConstraints + ":" 
                                             + var_x + " - " 
                                             + var_s
                                             + " <= 0 ");
                         numConstraints++;
                     }
-                    buf.getCons().println("atomic_3b_" + numConstraints  
+                    buf.getCons().add("atomic_3b_" + numConstraints  
                                             + ": " + Strings.concatenate(" + ", linList) 
                                             + " - " + var_y
                                             + " = 0");
@@ -522,7 +520,7 @@ public class RestrictIIP
                                              .getName());      
                 
                 if (linList.size() > 0){
-                    buf.getCons().println("atomic_4b_" +  numConstraints + ":" 
+                    buf.getCons().add("atomic_4b_" +  numConstraints + ":" 
                             + Strings.concatenate(" + ", linList) 
                             + " <= 1");
                     numConstraints++;
@@ -549,7 +547,7 @@ public class RestrictIIP
             }
             // since we  do not consider FTS, the list can be empty
             if (linList.size() > 0) {
-                buf.getCons().println("atomic_4b_" +  numConstraints + ":" 
+                buf.getCons().add("atomic_4b_" +  numConstraints + ":" 
                                     + Strings.concatenate(" + ", linList) 
                                     + " <= 1");
                 numConstraints++;
@@ -573,7 +571,7 @@ public class RestrictIIP
             }
             // since we  do not consider FTS, the list can be empty
             if (linList.size() > 0) {
-                buf.getCons().println("atomic_4b_" + numConstraints + ":" 
+                buf.getCons().add("atomic_4b_" + numConstraints + ":" 
                                     + Strings.concatenate(" + ", linList) 
                                     + "  <= 1");
                 numConstraints++;
@@ -591,23 +589,23 @@ public class RestrictIIP
     {   
         int q = desc.getStatementID();
         
-        buf.getCons().println("atomic_4c_" + numConstraints + ":" 
+        buf.getCons().add("atomic_4c_" + numConstraints + ":" 
                             + poolVariables.get(IND_EMPTY, IIPVariablePool.VAR_S, q, 0, 
                                                 indexc.getId()).getName() 
                                                 + " = 0 "); // For s^{empty}_c = 0     
         numConstraints++;
-        buf.getCons().println("atomic_4c_" + numConstraints + ":" 
+        buf.getCons().add("atomic_4c_" + numConstraints + ":" 
                             + poolVariables.get(IND_D, IIPVariablePool.VAR_S, q, 0, 
                                                 indexc.getId()).getName() 
                                                 + " = 0 "); // For s^{d}_c = 0  
         numConstraints++;
 
-        buf.getCons().println("atomic_4c_" + numConstraints + ":" 
+        buf.getCons().add("atomic_4c_" + numConstraints + ":" 
                             + poolVariables.get(IND_EMPTY, IIPVariablePool.VAR_S, q, 0, 
                                                 indexd.getId()).getName() 
                                                 + " = 0 "); // For s^{empty}_d = 0
         numConstraints++;       
-        buf.getCons().println("atomic_4c_" + numConstraints + ":"
+        buf.getCons().add("atomic_4c_" + numConstraints + ":"
                             + poolVariables.get(IND_C, IIPVariablePool.VAR_S, q, 0, 
                                                 indexd.getId()).getName() 
                                                 + " = 0 "); // For s^{c}_d = 0
@@ -641,7 +639,7 @@ public class RestrictIIP
                     }
                 }
                 // Constraint (5)
-                buf.getCons().println("optimal_5_" + numConstraints + ":" 
+                buf.getCons().add("optimal_5_" + numConstraints + ":" 
                         + CTheta.get(theta) + " - " 
                         + Strings.concatenate(" - ", linList)        
                         + " <=  " + desc.getInternalPlanCost(t));
@@ -671,7 +669,7 @@ public class RestrictIIP
                         linList.add(var_u);                                              
                     }
                     // Atomic constraint (6a) 
-                    buf.getCons().println("optimal_6a_" + numConstraints + ":" 
+                    buf.getCons().add("optimal_6a_" + numConstraints + ":" 
                                         + Strings.concatenate(" + ", linList) + " = 1");
                     numConstraints++;
                 }
@@ -715,7 +713,7 @@ public class RestrictIIP
                                 || (theta == IND_D && index.equals(indexc))
                         )
                         {                           
-                            buf.getCons().println("optimal_6c_" + numConstraints + ":" 
+                            buf.getCons().add("optimal_6c_" + numConstraints + ":" 
                                                  + var_u + " = 0 ");
                             numConstraints++;
                             
@@ -723,7 +721,7 @@ public class RestrictIIP
                         else {                           
                             // Constraint (6b): u^{theta}_{tia} <= sum_{theta}_{a}                             
                             int ga = index.getId();
-                            buf.getCons().println("optimal_6b_" + numConstraints + ":" 
+                            buf.getCons().add("optimal_6b_" + numConstraints + ":" 
                                         + var_u 
                                         + " - " + poolVariables.get(IND_EMPTY, 
                                                                     IIPVariablePool.VAR_S, q, 0, ga)
@@ -793,7 +791,7 @@ public class RestrictIIP
                             // because this sum is also <= 1 (due to atomic constraint)
                             // therefore, we optimizer to write \sum = 1
                             if (theta == IND_C || theta == IND_CD) {
-                                buf.getCons().println("optimal_7c_" + numConstraints + ":" 
+                                buf.getCons().add("optimal_7c_" + numConstraints + ":" 
                                                        + LHS  
                                                        + " = 1");
                                 numConstraints++;
@@ -802,7 +800,7 @@ public class RestrictIIP
                         else if (index.equals(indexd)) {
                             // --- \sum >= 1
                             if (theta == IND_D || theta == IND_CD) {
-                                buf.getCons().println("optimal_7d_" + numConstraints + ":" 
+                                buf.getCons().add("optimal_7d_" + numConstraints + ":" 
                                         + LHS  
                                         + " = 1");
                                 numConstraints++;
@@ -812,7 +810,7 @@ public class RestrictIIP
                             // Full table scan: must use
                             if (index.getId() == idFTS) {
                                 
-                                buf.getCons().println("optimal_7_FTS_" + numConstraints + ":" 
+                                buf.getCons().add("optimal_7_FTS_" + numConstraints + ":" 
                                         + LHS + " = 1");
                                 numConstraints++;
                             } else {
@@ -820,7 +818,7 @@ public class RestrictIIP
                                 for (int thetainternal = IND_EMPTY; thetainternal <= IND_CD; 
                                      thetainternal++) {
                                     // Constraint (8)
-                                    buf.getCons().println("optimal_7_" + numConstraints + ":" 
+                                    buf.getCons().add("optimal_7_" + numConstraints + ":" 
                                             + LHS + " - "
                                             + poolVariables.get(thetainternal, IIPVariablePool.VAR_S, 
                                                             q, 0, index.getId()).getName()
@@ -855,7 +853,7 @@ public class RestrictIIP
             }   
         }
         
-        buf.getCons().println("interaction_8a:" 
+        buf.getCons().add("interaction_8a:" 
                               + CTheta.get(IND_EMPTY) 
                               + " + " + Strings.concatenate(" + ", listcd) 
                               + " - " + Strings.concatenate(" - ", elementCTheta.get(IND_C))
@@ -917,10 +915,8 @@ public class RestrictIIP
      * 
      */
     protected void binaryVariableConstraints()
-    {   
-        int NUM_VAR_PER_LINE = 10;
-        String strListVars = poolVariables.enumerateList(NUM_VAR_PER_LINE);
-        buf.getBin().println(strListVars);
+    {
+        buf.getBin().add(poolVariables.enumerateList(10));
     }
     
     /**

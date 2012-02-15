@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
-import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Strings;
 
@@ -120,9 +119,9 @@ public class ElasticDivBIP extends DivBIP
         // 8. Binary variables
         binaryVariableConstraints();
         
-        buf.close();
+       
         try {
-            CPlexBuffer.concat(this.buf.getLpFileName(), buf.getObjFileName(), buf.getConsFileName(), buf.getBinFileName());
+            buf.writeToLpFile();
         }  catch (IOException e) {
             throw new RuntimeException("Cannot concantenate text files that store BIP.");
         }
@@ -169,7 +168,7 @@ public class ElasticDivBIP extends DivBIP
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     linList.add(poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0, 0).getName());
                 }
-                buf.getCons().println("atomic_2a_" + numConstraints + ": " + Strings.concatenate(" + ", linList) 
+                buf.getCons().add("atomic_2a_" + numConstraints + ": " + Strings.concatenate(" + ", linList) 
                                         + " - " + var_deploy +
                                         " <= 0");
                 numConstraints++;
@@ -190,7 +189,7 @@ public class ElasticDivBIP extends DivBIP
             String var_deploy = poolVariables.getDivVariable(DivVariablePool.VAR_DEPLOY, r, 0, 0, 0, 0).getName();
             linList.add(var_deploy);
         }
-        buf.getCons().println("num_replica_6_" + numConstraints + ": " + Strings.concatenate(" + ", linList) 
+        buf.getCons().add("num_replica_6_" + numConstraints + ": " + Strings.concatenate(" + ", linList) 
                 + " <= " + Ndeploys);
         numConstraints++;
     }
@@ -230,13 +229,13 @@ public class ElasticDivBIP extends DivBIP
                 
                 int RHS = 1 - s_a0;
                 String LHS = "2" + div_a + " + " + mod_a + " - " + s_a; 
-                buf.getCons().println("deploy_cost_7_" + numConstraints + ": " + LHS + " = " + Integer.toString(RHS));
+                buf.getCons().add("deploy_cost_7_" + numConstraints + ": " + LHS + " = " + Integer.toString(RHS));
                 numConstraints++;
                 linList.add(Double.toString(index.getCreationCost()) + div_a);
             }
         }
         Cdeploy = Strings.concatenate(" + ", linList); 
-        buf.getCons().println("atomic_deploy_cost_8" + numConstraints + ": " + Cdeploy
+        buf.getCons().add("atomic_deploy_cost_8" + numConstraints + ": " + Cdeploy
                 + " <= " + Double.toString(this.upperCdeploy));
     }
 

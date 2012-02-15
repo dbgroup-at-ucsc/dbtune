@@ -28,14 +28,17 @@ import edu.ucsc.dbtune.bip.util.LogListener;
 public class InteractionBIP extends AbstractBIPSolver
 {	
     protected Map<IndexInteraction, Integer> cacheInteractingPairs;
-    protected InteractionOutput interactionOutput;
-    protected Optimizer optimizer;
+    protected InteractionOutput              interactionOutput;
+    protected Optimizer                      optimizer;
     
     protected double delta;
+    protected int    numCplexCall;
     
     public InteractionBIP(double delta)
     {
-        this.delta = delta;
+        this.delta        = delta;
+        this.numCplexCall = 0;
+        
         this.cacheInteractingPairs = new HashMap<IndexInteraction, Integer>();
     }
 	
@@ -68,6 +71,8 @@ public class InteractionBIP extends AbstractBIPSolver
         for (QueryPlanDesc desc : listQueryPlanDescs) {
             sql = workload.get(i);
             findInteractions(sql, desc);
+            System.out.println("L74, after statement " + i + "-th, number of CPLEX calls:"
+                              + numCplexCall);
             i++;
         }
         
@@ -153,6 +158,8 @@ public class InteractionBIP extends AbstractBIPSolver
             
             restrict.clear();
         }
+        
+        numCplexCall += listIIP.size();
     }
     
     

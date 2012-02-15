@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import edu.ucsc.dbtune.bip.util.CPlexBuffer;
+
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
@@ -136,11 +136,8 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
         // 7. binary variables
         binaryVariableConstraints();
         
-        buf.close();
-        
         try {
-            CPlexBuffer.concat(buf.getLpFileName(), buf.getObjFileName(), 
-                               buf.getConsFileName(), buf.getBinFileName());
+            buf.writeToLpFile();
         } catch (IOException e) {
             throw new RuntimeException("Cannot concantenate text files that store BIP.");
         }
@@ -255,7 +252,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                 linList.add(var);
             }
             
-            buf.getCons().println("well_behaved_11a_" + numConstraints  
+            buf.getCons().add("well_behaved_11a_" + numConstraints  
                     + ": " + Strings.concatenate(" + ", linList)                     
                     + " = 1");
             numConstraints++;
@@ -273,7 +270,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                     linList.add(var_create);
                 }
                 
-                buf.getCons().println("index_present_12a_" + numConstraints  
+                buf.getCons().add("index_present_12a_" + numConstraints  
                         + ": " + Strings.concatenate(" + ", linList)                     
                         + " - " + var_present + " = 0 ");
                 numConstraints++;   
@@ -290,7 +287,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                                                0, index.getId()).getName();
                 linList.add(var);
             }
-            buf.getCons().println("well_behaved_11b_" + numConstraints  
+            buf.getCons().add("well_behaved_11b_" + numConstraints  
                     + ": " + Strings.concatenate(" + ", linList)                     
                     + " = 1");
             numConstraints++;
@@ -307,7 +304,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                     linList.add(var_drop);
                 }
                 
-                buf.getCons().println("index_present_12b_" + numConstraints  
+                buf.getCons().add("index_present_12b_" + numConstraints  
                         + ": " + Strings.concatenate(" + ", linList)                     
                         + " + " + var_present + " = 1 ");
                 numConstraints++;                   
@@ -321,7 +318,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                 
                 String var = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 
                                                 0, 0, index.getId()).getName();
-                buf.getCons().println("well_behaved_11b_" + numConstraints  
+                buf.getCons().add("well_behaved_11b_" + numConstraints  
                         + ": " + var      
                         + " = 1");
                 numConstraints++;
@@ -395,7 +392,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 				for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) 
 					linList.add(poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0).getName());
 				
-				buf.getCons().println("atomic_13a_" + numConstraints + ": " + 
+				buf.getCons().add("atomic_13a_" + numConstraints + ": " + 
 						Strings.concatenate(" + ", linList) + " = 1");
 				numConstraints++;
 			
@@ -413,7 +410,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 							linList.add(var_x);
 						}
 						
-						buf.getCons().println("atomic_13b_" + numConstraints  
+						buf.getCons().add("atomic_13b_" + numConstraints  
 											+ ": " + Strings.concatenate(" + ", linList) 
 											+ " - " + var_y
 											+ " = 0");
@@ -447,7 +444,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                                                              w, 0, 0, index.getId()).getName();
                             
                             // (3) present_a^{w} \geq x_{qkia}^{w}
-                            buf.getCons().println("atomic_14a_" + numConstraints + ":" 
+                            buf.getCons().add("atomic_14a_" + numConstraints + ":" 
                                                 + var_x + " - " 
                                                 + var_present
                                                 + " <= 0 ");
@@ -474,7 +471,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 				linList.add(Double.toString(index.getCreationCost()) + var_create);
 			}
 			
-			buf.getCons().println("creation_cost_constraint" + numConstraints  
+			buf.getCons().add("creation_cost_constraint" + numConstraints  
 					+ " : " + Strings.concatenate(" + ", linList) 					
 					+ " <= " + maxCreationCostWindow);
 			numConstraints++;				
@@ -491,7 +488,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                 linList.add(var_create);
             }
             
-            buf.getCons().println("number_index_constraint" + numConstraints
+            buf.getCons().add("number_index_constraint" + numConstraints
                     + " : " + Strings.concatenate(" + ", linList)
                     + " <= " + maxNumberIndexesWindow);
             numConstraints++;
@@ -503,7 +500,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	 */
 	private void objectiveFunction()
 	{
-		buf.getObj().println(Strings.concatenate(" + ", listCwq));
+		buf.getObj().add(Strings.concatenate(" + ", listCwq));
 	}
 	
 	/**
@@ -514,6 +511,6 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	{
 	    int NUM_VAR_PER_LINE = 10;
         String strListVars = poolVariables.enumerateList(NUM_VAR_PER_LINE);
-        buf.getBin().println(strListVars);	
+        buf.getBin().add(strListVars);	
 	}    
 }
