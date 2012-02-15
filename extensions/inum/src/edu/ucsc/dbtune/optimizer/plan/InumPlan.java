@@ -141,7 +141,8 @@ public class InumPlan extends SQLStatementPlan
     }
 
     /**
-     * The cost for the plan, considering that the given atomic configuration is used in each slot.
+     * The cost for the plan, considering that the given atomic configuration is used in each slot, 
+     * as well as the internal cost.
      *
      * @param atomicConfiguration
      *      a configuration where every index corresponds to a different table
@@ -174,6 +175,8 @@ public class InumPlan extends SQLStatementPlan
                 "  Tables in stmt: " + getTables() + "\n" +
                 "  For statement:\n" + getStatement() + "\n" +
                 "  Plan: \n" + this);
+
+        c += getInternalCost();
 
         return c;
     }
