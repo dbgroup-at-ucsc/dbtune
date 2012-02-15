@@ -1,0 +1,15 @@
+db2 "CALL SYSPROC.SYSINSTALLOBJECTS('EXPLAIN', 'C', CAST (NULL AS VARCHAR(128)), CAST (NULL AS VARCHAR(128)))"
+db2 -z sqlres.out -tvsf Myscript.sql
+db2 "call sysinstallobjects('opt_profiles', 'c', '', '')"
+
+db2 load from "nation.tbl" of del modified by coldel"|" insert into toch.nation
+db2 load from "customer.tbl" of del modified by coldel"|" insert into toch.customer
+db2 load from "partsupp.tbl" of del modified by coldel"|" insert into toch.partsupp
+db2 load from "region.tbl" of del modified by coldel"|" insert into toch.region
+db2 load from "part.tbl" of del modified by coldel"|" insert into toch.part
+db2 load from "supplier.tbl" of del modified by coldel"|" insert into toch.supplier
+db2 load from "lineitem.tbl" of del modified by coldel"|" insert into toch.lineitem
+db2 load from "orders.tbl" of del modified by coldel"|" insert into toch.orders
+
+
+

@@ -1,0 +1,28 @@
+# I[index id] (cost to create) (cost to drop) (storage cost)
+I1 1000 0 1000
+I2 1000 0 1000
+I3 1000 0 1000
+
+# Q[query id] (cost without index) (relevant indices)
+Q1 1000 I1
+Q2 1000 I2
+Q3 1000 I1
+U4 10 I1
+Q5 1000 I2
+U6 10 I2
+Q7 1000 I3
+
+SEQ Q1,Q2,Q3,U4,Q5,U6,Q7
+SOURCE
+DESTINATION 
+STORAGE-CONSTRIANT 1000
+
+COST
+# Q[query id] indices cost
+Q1 I1 10
+Q3 I1 10
+U4 I1 1000
+Q2 I2 10
+Q5 I2 10
+U6 I2 1000
+Q7 I3 10
