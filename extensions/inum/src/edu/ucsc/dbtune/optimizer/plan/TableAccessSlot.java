@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
 import java.sql.SQLException;
+import java.util.Hashtable;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Column;
@@ -17,6 +18,11 @@ import edu.ucsc.dbtune.metadata.Table;
 public class TableAccessSlot extends Operator
 {
     private Index index;
+    
+    /**
+     * cache the cost of plug index into this slot
+     */
+    public Hashtable<Index,Double> costCache=new Hashtable<Index, Double>();
 
     /**
      * Analyzes the database objects referenced in the given operator and creates a slot 

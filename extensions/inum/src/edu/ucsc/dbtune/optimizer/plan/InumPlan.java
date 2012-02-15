@@ -165,6 +165,7 @@ public class InumPlan extends SQLStatementPlan
 
             c += plug(i);
         }
+        c+= internalPlanCost;
 
         if (visited.size() != slots.size())
             throw new SQLException(
@@ -204,15 +205,41 @@ public class InumPlan extends SQLStatementPlan
             return Double.POSITIVE_INFINITY;
 
         // we have an index that we haven't seen before, so we need to invoke the optimizer
-        SQLStatementPlan plan =
-            delegate.explain(
-                    buildQueryForUnseenIndex(slot),                   
-                    Sets.<Index>newHashSet(index)).getPlan();
+        return getPlugCostWithCaching(slot, index);
+    }
+    
+    /**
+     * Return the cost of plug a index into a slot without caching
+     * @param slot
+     * @param index
+     * @return
+     */
+    public double getPlugCostWithCaching(TableAccessSlot slot, Index index)
+            throws SQLException {
+        Double cost = slot.costCache.get(index);
+        if (cost != null)
+            return cost;
+        cost = getPlugCost(slot, index);
+        slot.costCache.put(index, cost);
+        return cost;
+    }
+    
+    /**
+     * Return the cost of plug a index into a slot without caching
+     * @param slot
+     * @param index
+     * @return
+     */
+    public double getPlugCost(TableAccessSlot slot, Index index)
+            throws SQLException {
+        SQLStatementPlan plan = delegate.explain(
+                buildQueryForUnseenIndex(slot), Sets.<Index> newHashSet(index))
+                .getPlan();
 
         if (plan.leafs().size() != 1)
             throw new SQLException("Plan should have only one leaf");
 
-        Operator o = Iterables.<Operator>get(plan.leafs(), 0);
+        Operator o = Iterables.<Operator> get(plan.leafs(), 0);
 
         if (o.getDatabaseObjects().size() != 1)
             throw new SQLException("The slot should have one database object.");

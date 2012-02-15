@@ -161,10 +161,10 @@ public class InumPerformanceTest {
 			System.out.println("Processing statement " + statementId++);
 			p.println(sql.getSQL());
 
-			time = System.currentTimeMillis();
+			time = System.nanoTime();
 			InumPreparedSQLStatement pSql = (InumPreparedSQLStatement) optimizer
 					.prepareExplain(sql);
-			long prepareTime = System.currentTimeMillis() - time;
+			long prepareTime = System.nanoTime() - time;
 
 			List<Table> tablesReferencedInStmt = pSql.getTemplatePlans()
 					.toArray(new InumPlan[0])[0].getTables();
@@ -190,7 +190,7 @@ public class InumPerformanceTest {
 			}
 			Conf[] configurations = cartesianProduct(indexPerTable);
 			p.println("Total configurations: " + configurations.length);
-			p.format("Inum prepare time %.2fs\n", prepareTime / 1000f);
+			p.format("Inum prepare time %.2fs\n", prepareTime / 1000000000.0);
 			p.println("inumCost,db2Cost,deviation,"
 					+ "inumTime,db2Time,configuration");
 			double totalDeviation = 0;
@@ -198,16 +198,16 @@ public class InumPerformanceTest {
 			double totalDb2Time = 0;
 			int totalConfigurations = 0;
 			for (Conf c : configurations) {
-				time = System.currentTimeMillis();
+				time = System.nanoTime();
 				double inumCost = pSql.explain(c.indexs).getSelectCost();
-				long inumTime = System.currentTimeMillis() - time;
+				long inumTime = System.nanoTime() - time;
 
-				time = System.currentTimeMillis();
+				time = System.nanoTime();
 				double db2Cost = delegate.explain(sql, c.indexs)
 						.getSelectCost();
-				long db2Time = System.currentTimeMillis() - time;
+				long db2Time = System.nanoTime() - time;
 				p.format("%f,%f,%f,%.2f,%.2f,\"%s\"\n", inumCost, db2Cost,
-						inumCost / db2Cost, inumTime / 1000f, db2Time / 1000f,
+						inumCost / db2Cost, inumTime / 1000000000.0, db2Time / 1000000000.0,
 						c.name);
 				totalDeviation += inumCost / db2Cost;
 				totalInumTime += inumTime;
@@ -218,14 +218,14 @@ public class InumPerformanceTest {
 			}
 			p.println();
 			p.format("inumPrepare=%fs\tavgInumTime=%fs\t"
-					+ "avgDb2Time=%fs\tavgDeviation=%f\tconfs=%d\n", prepareTime / 1000f,
-					totalInumTime / totalConfigurations / 1000f, totalDb2Time
-							/ totalConfigurations / 1000f, totalDeviation
+					+ "avgDb2Time=%fs\tavgDeviation=%f\tconfs=%d\n", prepareTime / 1000000000.0,
+					totalInumTime / totalConfigurations / 1000000000.0, totalDb2Time
+							/ totalConfigurations / 1000000000.0, totalDeviation
 							/ totalConfigurations, totalConfigurations);
 			finalResult.append(String.format("%f,\t %f,\t"
-					+ "%f,\t %f,\t %d\n", prepareTime / 1000f,
-					totalInumTime / totalConfigurations / 1000f, totalDb2Time
-					/ totalConfigurations / 1000f, totalDeviation
+					+ "%f,\t %f,\t %d\n", prepareTime / 1000000000.0,
+					totalInumTime / totalConfigurations / 1000000000.0, totalDb2Time
+					/ totalConfigurations / 1000000000.0, totalDeviation
 					/ totalConfigurations, totalConfigurations));
 			if (System.in.available() > 0)
 				break;
