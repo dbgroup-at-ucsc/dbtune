@@ -82,9 +82,11 @@ public abstract class AbstractBIPSolver implements BIPSolver
         logger.setStartTimer();
         IndexTuningOutput result = null;
         cplex = new CPlexImplementer();
-        mapVariableValue = cplex.solve(this.buf.getLpFileName());
-        if (mapVariableValue != null)
+        
+        if (cplex.solve(buf.getLpFileName())) {
+            mapVariableValue = cplex.getMapVariableValue();
             result = getOutput();
+        }
         
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         return result;            

@@ -134,7 +134,7 @@ public class InteractionBIP extends AbstractBIPSolver
                         continue;
                 }
                 
-                id = mapIndexSlotID.get(indexc);
+                id = mapIndexSlotID.get(indexd);
                 
                 // call the BIP solution
                 listIIP.add(new RestrictIIP(desc, logger, delta, indexc, indexd, 

@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.bip.core;
 
 import java.util.Map;
 
+
 public interface CPlexSolver 
 {
     /**
@@ -11,10 +12,18 @@ public interface CPlexSolver
      * @param inputFile
      *      The input file name that contains the BIP to solve
      * @return
-     *      A mapping from variables to their assigned value
-     *      or NULL if there has no solution
+     *      {@code true} if CPLEX returns a solution, 
+     *      {@code false} otherwise.
      */
-    Map<String, Integer> solve(String inputFile);
+    boolean solve(String inputFile);
+    
+    /**
+     * Retrieve the result from CPLEX
+     * 
+     * @return
+     *      A mapping that maps variable names to their values
+     */
+    Map<String, Integer> getMapVariableValue();
     
     /**
      * Retrieve the objective value of the solution

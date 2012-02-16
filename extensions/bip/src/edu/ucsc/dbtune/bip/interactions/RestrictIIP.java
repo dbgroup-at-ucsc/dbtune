@@ -58,14 +58,14 @@ public class RestrictIIP
     protected CPlexInteraction cplex;
     protected Set<Index>       candidateIndexes;
     
-	private double delta;		
-	private int    ic;
-	private int    id; 
-	private Index  indexc;
-	private Index  indexd;
-	private int    numConstraints;
-	private double doiOptimizer;
-	private double doiBIP;
+	protected double delta;		
+	protected int    ic;
+	protected int    id; 
+	protected Index  indexc;
+	protected Index  indexd;
+	protected int    numConstraints;
+	protected double doiOptimizer;
+	protected double doiBIP;
 	
 	protected LogListener logger;
 	protected Environment environment = Environment.getInstance();
@@ -134,7 +134,6 @@ public class RestrictIIP
         logger.setStartTimer();
         boolean isInteracting          = false;
         boolean isSolveAlternativeOnly = false;
-        Map<String, Integer> mapVarVal = null;
         
         // 
         // One optimization.
@@ -145,18 +144,13 @@ public class RestrictIIP
         // We invoke the alternative interaction constraint instead.
         // 
         if (ic != id)           
-            cplex.solve(buf.getLpFileName());
+            isInteracting = cplex.solve(buf.getLpFileName());
         else
             isSolveAlternativeOnly = true;
         
-        if (mapVarVal != null)
-            isInteracting = true;
-        else {
+        if (!isInteracting)
            // formulate the alternative BIP
-           mapVarVal = solveAlternativeBIP(isSolveAlternativeOnly, buf.getLpFileName()); 
-           if (mapVarVal != null) 
-               isInteracting = true;
-        }
+            isInteracting = solveAlternativeBIP(isSolveAlternativeOnly, buf.getLpFileName()); 
         
         // clear the model
         cplex.clearModel();
@@ -866,11 +860,10 @@ public class RestrictIIP
      * cost(X,c) + cost(X,d) - cost(X) + (delta - 1) cost(X,c,d)  <= 0
      * 
      * @return
-     *      A map from variable to their assigned binary values
-     *      or NULL, otherwise
+     *      {@code true} if CPLEX returns a solution,
+     *      {@code false} otherwise
      */
-    protected Map<String, Integer> solveAlternativeBIP(boolean isSolveAlternativeOnly,
-                                                       String inputFile)
+    protected boolean solveAlternativeBIP(boolean isSolveAlternativeOnly, String inputFile)
     {   
         Map<String,Double> mapVarCoef = new HashMap<String, Double>();
         double deltaCD = delta - 1; 
