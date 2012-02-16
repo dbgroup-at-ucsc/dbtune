@@ -35,7 +35,7 @@ public class InteractionOutput extends IndexTuningOutput
     public String toString() 
     {
         StringBuilder strInteractions = new 
-            StringBuilder("========= List of interactions ========\n");
+            StringBuilder("-- List of interactions: " + interactions.size() + "\n");
         
         for (IndexInteraction pair : interactions)
             strInteractions.append(pair.toString());
