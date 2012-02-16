@@ -104,7 +104,7 @@ public class CPlexBuffer
 	public void writeToLpFile() throws IOException 
     {   
         PrintWriter writer = new PrintWriter (
-                                 new BufferedWriter(new FileWriter(lpFileName), 65536));
+                                 new BufferedWriter(new FileWriter(lpFileName, false), 65536));
         bin.add("End \n");
         
         for (String str : obj) 
