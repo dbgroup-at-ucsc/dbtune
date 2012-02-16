@@ -67,9 +67,7 @@ public class InteractionLP extends AbstractBIPSolver
                 
                 for (Index index : desc.getActiveIndexsAtSlot(i)) {
                     mapIndexSlotID.put(index, i);
-                    System.out.println(" pos: " + pos
-                                + " index: " + index.getId()
-                                + " slot: " + i);
+                    
                     Set<Integer> listStmtPos = mapIndexListStatements.get(index);
                     if (listStmtPos == null) {
                         listStmtPos = new HashSet<Integer>();
@@ -86,7 +84,6 @@ public class InteractionLP extends AbstractBIPSolver
         
         findInteractions();
         
-        //numCplexCall += listIIP.size();
         return getOutput();
     }
     
@@ -96,6 +93,7 @@ public class InteractionLP extends AbstractBIPSolver
         
         Index indexc, indexd;
         IndexInteraction pair;
+        numCplexCall = 0;
         
         for (int pos_c = 0; pos_c < indexes.size(); pos_c++) {
             
@@ -104,14 +102,6 @@ public class InteractionLP extends AbstractBIPSolver
             for (int pos_d = pos_c + 1; pos_d < indexes.size(); pos_d++) {
                 
                 indexd = indexes.get(pos_d);
-                
-                if (cacheInteractingPairs.containsKey(new IndexInteraction(indexc, indexd))) 
-                    continue;
-                
-                else {
-                    if (cacheInteractingPairs.containsKey(new IndexInteraction(indexd, indexc))) 
-                        continue;
-                }
                 
                 // derive the common set of statements
                 Set<Integer> intersectID = new HashSet<Integer>
@@ -125,6 +115,8 @@ public class InteractionLP extends AbstractBIPSolver
                 if (intersectID.size() == 0)
                     continue;
                 
+                numCplexCall++;
+                
                 for (int pos : intersectID) {
                     lsql.add(listQueryPlanDescs.get(pos));
                     listRelationC.add(mapStmtIndexSlotID.get(pos).get(indexc));
@@ -134,11 +126,7 @@ public class InteractionLP extends AbstractBIPSolver
                 RestrictLP restrict = new RestrictLP(null, logger, delta, indexc, indexd,
                                                     candidateIndexes, 0, 0);
                 restrict.setListQueryDescriptions(lsql, listRelationC, listRelationD);
-                System.out.println("L132, indexc: " + indexc.getId()
-                                    + " index d: " + indexd.getId());
-                System.out.println("L134, interest ID: " + intersectID
-                                    + " list relation c: " + listRelationC
-                                    + " list realation d: " + listRelationD);
+                
                 if (restrict.solve()) {
                     // cache pairs of interaction
                     pair = new IndexInteraction (restrict.getFirstIndex(), restrict.getSecondIndex());
@@ -152,6 +140,8 @@ public class InteractionLP extends AbstractBIPSolver
                 //restrict.clear();
             }
         }
+        
+        System.out.println("L144, number of CPLEX calls: " + numCplexCall);
     }
     
     

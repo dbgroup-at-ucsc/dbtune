@@ -9,9 +9,8 @@ import edu.ucsc.dbtune.bip.core.InumQueryPlanDesc;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Strings;
-import edu.ucsc.dbtune.workload.SQLStatement;
+
 
 public class RestrictLP extends RestrictIIP 
 {
@@ -81,6 +80,7 @@ public class RestrictLP extends RestrictIIP
     protected void buildBIP() 
     {
         numConstraints = 0;
+        boolean isBothInteraction = true;
         
         for (int i = 0; i < listDescs.size(); i++) {
             
@@ -105,7 +105,7 @@ public class RestrictLP extends RestrictIIP
             presentVariableLocalOptimal();
             selectingIndexAtEachSlot();
             
-            boolean isBothInteraction = true;
+            isBothInteraction = true;
             
             // 3. Index interaction 
             if (ic != id)
@@ -120,8 +120,11 @@ public class RestrictLP extends RestrictIIP
         }
         
         // add one more constraint for the ind variable
-        buf.getCons().add(Strings.concatenate(" + ", listIndStatements)                        
-                        + " = " + (listIndStatements.size() - 1));
+        // If only one statement and consider constraint 2
+        // we don't need this constraint
+        if (isBothInteraction || listDescs.size() > 1)
+            buf.getCons().add(Strings.concatenate(" + ", listIndStatements)                        
+                    + " = " + (listIndStatements.size() - 1));
         
         try {
             buf.writeToLpFile();
@@ -220,9 +223,14 @@ public class RestrictLP extends RestrictIIP
             listIndStatements.add(indStatement1);
         }
         
-        // interactionVar2 - INF * indStatement2 <= 0
-        buf.getCons().add(interactionVar2 + " - " + InumQueryPlanDesc.BIP_MAX_VALUE 
+        if (!isBothInteraction && listDescs.size() == 1)
+            // only one interaction 2 constraint
+            buf.getCons().add(interactionVar2 + " <= 0 ");
+        else {
+            // interactionVar2 - INF * indStatement2 <= 0
+            buf.getCons().add(interactionVar2 + " - " + InumQueryPlanDesc.BIP_MAX_VALUE 
                 + indStatement2 + " <= 0");
-        listIndStatements.add(indStatement2);
+            listIndStatements.add(indStatement2);
+        }
     }
 }
