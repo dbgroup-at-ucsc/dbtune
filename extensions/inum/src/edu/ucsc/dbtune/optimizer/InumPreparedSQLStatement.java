@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,12 +52,12 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
     {
         super(optimizer, sql);
 
-        if (getSQLStatement().getSQLCategory().isSame(SQLCategory.UPDATE))
-            throw new RuntimeException("Can't process UPDATE statements yet");
+        if (getSQLStatement().getSQLCategory().isSame(SQLCategory.NOT_SELECT))
+            throw new RuntimeException("Can process SELECT statements only");
 
         this.matchingStrategy = matchingStrategy;
 
-        computeInumSpace();
+        inumSpace = optimizer.computeInumSpace(sql);
     }
 
     /**
@@ -78,14 +79,14 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
 
         return new ExplainedSQLStatement(
             sql,
-            null,
+            result.getInstantiatedPlan(),
             getOptimizer(),
             result.getBestCost(),
             0,
             0,
             empty,
             configuration,
-            result.getBestConfiguration(),
+            new HashSet<Index>(result.getInstantiatedPlan().getIndexes()),
             0);
     }
     
@@ -98,17 +99,5 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
     public Set<InumPlan> getTemplatePlans()
     {
         return inumSpace;
-    }
-    
-    /**
-     * computes the INUM space, if it hasn't been done before; otherwise returns immediately.
-     *
-     * @throws SQLException
-     *      if an error occurs while computing the inum space
-     */
-    public void computeInumSpace() throws SQLException
-    {
-        if (inumSpace == null)
-            inumSpace = ((InumOptimizer) getOptimizer()).computeInumSpace(getSQLStatement());
     }
 }

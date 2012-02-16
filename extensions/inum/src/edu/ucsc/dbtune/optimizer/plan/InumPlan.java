@@ -16,11 +16,14 @@ import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
 /**
@@ -65,7 +68,8 @@ public class InumPlan extends SQLStatementPlan
      *      edu.ucsc.dbtune.optimizer.Optimizer#explain} or {@link
      *      edu.ucsc.dbtune.optimizer.PreparedSQLStatement#explain} methods)
      * @throws SQLException
-     *      if the plan is referencing a table more than once or if the plan contains NLJ operators.
+     *      if the plan is referencing a table more than once or if one of the leafs doesn't refer 
+     *      any database object.
      */
     public InumPlan(Optimizer delegate, SQLStatementPlan plan) throws SQLException
     {
@@ -78,13 +82,12 @@ public class InumPlan extends SQLStatementPlan
 
         slots = new HashMap<Table, TableAccessSlot>();
 
-        for (Operator o : leafs()) {
+        for (Operator leaf : leafs()) {
 
-            if (o.getDatabaseObjects().isEmpty())
-                // check if the operator is over a database object (Table or Index); ignore if not
-                continue;
+            if (leaf.getDatabaseObjects().size() != 1)
+                throw new SQLException("Leaf " + leaf + " doesn't refer to any object");
 
-            slot = new TableAccessSlot(o, plan.getParent(o));
+            slot = new TableAccessSlot(leaf, plan.getParent(leaf));
 
             if (slots.get(slot.getTable()) != null)
                 // we don't allow more than one slot for a table
@@ -92,11 +95,13 @@ public class InumPlan extends SQLStatementPlan
 
             slots.put(slot.getTable(), slot);
 
-            leafsCost += extractCostOfLeaf(plan, o);
+            leafsCost += extractCostOfLeaf(plan, leaf);
+
+            replaceLeafBySlot(this, leaf, slot);
         }
 
-        if (slots.size() == 0)
-            throw new SQLException("No slot identified in given plan");
+        if (plan.leafs().size() != slots.size())
+            throw new SQLException("One or more leafs haven't been assigned with a slot");
 
         internalPlanCost = getRootOperator().getAccumulatedCost() - leafsCost;
     }
@@ -147,43 +152,24 @@ public class InumPlan extends SQLStatementPlan
      * @param atomicConfiguration
      *      a configuration where every index corresponds to a different table
      * @return
-     *      cost if the given configuration is used to execute the plan. The cost {@link
-     *      Double#POSITIVE_INFINITY} if an index isn't compatible with a table slot
+     *      {@code true} if all the indexes in the given configuration are compatible; {@code false} 
+     *      otherwise.
      * @throws SQLException
      *      if two or more indexes reference the same table
      */
     public double plug(Collection<Index> atomicConfiguration) throws SQLException
     {
-        Set<Table> visited = new HashSet<Table>();
-        double c = 0;
+        SQLStatementPlan plan = instantiate(atomicConfiguration);
 
-        for (Index i : atomicConfiguration) {
+        if (plan == null)
+            return Double.POSITIVE_INFINITY;
 
-            if (visited.contains(i.getTable()))
-                throw new SQLException("Not an atomic configuration: " + atomicConfiguration);
-
-            visited.add(i.getTable());
-
-            c += plug(i);
-        }
-        c+= internalPlanCost;
-
-        if (visited.size() != slots.size())
-            throw new SQLException(
-                "One or more tables missing in atomic configuration.\n" +
-                "  Tables in atomic " + getReferencedTables(atomicConfiguration) + "\n" +
-                "  Tables in stmt: " + getTables() + "\n" +
-                "  For statement:\n" + getStatement() + "\n" +
-                "  Plan: \n" + this);
-
-        c += getInternalCost();
-
-        return c;
+        return plan.getRootOperator().getAccumulatedCost();
     }
 
     /**
-     * The cost for the corresponding {@link TableSlot table slot}, considering that the given index
-     * is used to execute the operator.
+     * The cost for the corresponding {@link TableAccessSlot table slot}, considering that the given 
+     * index is used to execute the operator.
      *
      * @param index
      *      used to "instantiate" the corresponding slot
@@ -195,17 +181,38 @@ public class InumPlan extends SQLStatementPlan
      */
     public double plug(Index index) throws SQLException
     {
+        Operator o = instantiate(index);
+
+        if (o == null)
+            return Double.POSITIVE_INFINITY;
+
+        return o.getAccumulatedCost();
+    }
+
+    /**
+     * Instantiates a slot by plugging the given index in the corresponding slot.
+     *
+     * @param index
+     *      index being plugged
+     * @throws SQLException
+     *      if the plan doesn't contain a slot for {@code index.getTable()}
+     * @return
+     *      a new operator that results from plugging the index in the corresponding slot
+     */
+    public Operator instantiate(Index index) throws SQLException
+    {
         TableAccessSlot slot = slots.get(index.getTable());
 
         if (slot == null)
             throw new SQLException("Plan doesn't contain a slot for table " + index.getTable());
 
-        if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index))
+        if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index)) {
             // if we have the same index as when we built the template
-            return slot.getCost();
+            return makeOperator(slot);
+        }
 
-        if (!(slot.getIndex() instanceof FullTableScanIndex) && !slot.isCompatible(index))
-            return Double.POSITIVE_INFINITY;
+        if (!slot.isFullTableScan() && !slot.isCompatible(index))
+            return null;
 
         // we have an index that we haven't seen before, so we need to invoke the optimizer
         return getPlugCostWithCaching(slot, index);
@@ -247,11 +254,89 @@ public class InumPlan extends SQLStatementPlan
         if (o.getDatabaseObjects().size() != 1)
             throw new SQLException("The slot should have one database object.");
 
-        if (o.getDatabaseObjects().get(0) instanceof Index)
-            return plan.getRootOperator().accumulatedCost;
+        if (o.getName().equals(INDEX_SCAN)) {
+            o.setAccumulatedCost(plan.getRootOperator().getAccumulatedCost());
+            return o;
+        }
 
         // plan uses a full table scan, so it's not compatible
-        return Double.POSITIVE_INFINITY;
+        return null;
+    }
+
+    /**
+     * instantiates an operator out of a slot.
+     *
+     * @param slot
+     *      slot
+     * @return
+     *      a {@link Operator#TABLE_SCAN} operator if the slot is using a {@link 
+     *      FullTableScanIndex}; a {@link Operator#INDEX_SCAN} if the slot uses an {@link Index}.
+     */
+    private static Operator makeOperator(TableAccessSlot slot)
+    {
+        DatabaseObject dbo;
+        String name;
+
+        if (slot.getIndex() instanceof FullTableScanIndex) {
+            name = TABLE_SCAN;
+            dbo = slot.getTable();
+        } else {
+            name = INDEX_SCAN;
+            dbo = slot.getIndex();
+        }
+
+        Operator op = new Operator(name, slot.getAccumulatedCost(), slot.getCardinality());
+
+        op.add(dbo);
+        op.addColumnsFetched(slot.getColumnsFetched());
+        op.add(slot.getPredicates());
+
+        return op;
+    }
+
+    /**
+     * Instantiates a plan by plugging each given index in the corresponding slot.
+     *
+     * @param atomicConfiguration
+     *      configuration used to instantiate the template
+     * @throws SQLException
+     *      if the plan doesn't contain a slot for one of the tables
+     * @return
+     *      a new plan that results from plugging the index in the corresponding slot; {@code null} 
+     *      if the configuration is not compatible with the template
+     */
+    public SQLStatementPlan instantiate(Collection<Index> atomicConfiguration)
+        throws SQLException
+    {
+        Set<Table> visited = new HashSet<Table>();
+        List<Operator> operators = new ArrayList<Operator>();
+        Operator o;
+
+        for (Index i : atomicConfiguration) {
+
+            if (visited.contains(i.getTable()))
+                throw new SQLException("Not an atomic configuration: " + atomicConfiguration);
+
+            visited.add(i.getTable());
+
+            o = instantiate(i);
+
+            if (o == null)
+                // index i is not compatible to its corresponding slot
+                return null;
+
+            operators.add(o);
+        }
+
+        if (visited.size() != slots.size())
+            throw new SQLException(
+                "One or more tables missing in atomic configuration.\n" +
+                "  Tables in atomic " + getReferencedTables(atomicConfiguration) + "\n" +
+                "  Tables in stmt: " + getTables() + "\n" +
+                "  For statement:\n" + getStatement() + "\n" +
+                "  Plan: \n" + this);
+
+        return instantiatePlan(this, operators);
     }
 
     /**
@@ -371,5 +456,75 @@ public class InumPlan extends SQLStatementPlan
             return parent.getAccumulatedCost();
 
         return leaf.getAccumulatedCost();
+    }
+
+    /**
+     * Replaces the leafs in the plan by slots.
+     *
+     * @param sqlPlan
+     *      plan from which the given leaf will be removed and replaced by the slot
+     * @param leaf
+     *      leaf to be removed
+     * @param slot
+     *      slot to be inserted instead of the leaf
+     * @throws SQLException
+     *      if the leaf turns out to be the root operator
+     */
+    private static void replaceLeafBySlot(
+            SQLStatementPlan sqlPlan, Operator leaf, TableAccessSlot slot)
+        throws SQLException
+    {
+        Operator parent = sqlPlan.getParent(leaf);
+
+        if (parent == null)
+            throw new SQLException("Leaf " + leaf + " shouldn't be the root operator");
+
+        sqlPlan.remove(leaf);
+        sqlPlan.setChild(parent, slot);
+    }
+
+    /**
+     * Replaces the slots at the leafs by the actual operators used in the instantiated plan.
+     *
+     * @param templatePlan
+     *      template plan being instantiated
+     * @param instantiatedOperators
+     *      a list containing operators obtained from ({@link #instantiate(Index)})
+     * @return
+     *      an instance of a plan based on the given template, where each leaf is an {@link 
+     *      Operator#TABLE_SCAN} or a {@link Operator#INDEX_SCAN}
+     */
+    private static SQLStatementPlan instantiatePlan(
+            InumPlan templatePlan,
+            List<Operator> instantiatedOperators)
+    {
+        SQLStatementPlan plan = new SQLStatementPlan(templatePlan);
+        Operator parent;
+        TableAccessSlot slot;
+        double cost = 0;
+
+        for (Operator newLeaf : instantiatedOperators) {
+
+            DatabaseObject dbo = newLeaf.getDatabaseObjects().get(0);
+
+            if (dbo instanceof Table || dbo instanceof FullTableScanIndex)
+                slot = templatePlan.getSlot((Table) dbo);
+            else
+                slot = templatePlan.getSlot(((Index) dbo).getTable());
+
+            parent = templatePlan.getParent(slot);
+
+            plan.remove(slot);
+
+            plan.setChild(parent, newLeaf);
+
+            cost += newLeaf.getAccumulatedCost();
+        }
+
+        cost += templatePlan.getInternalCost();
+
+        plan.assignCost(plan.getRootElement(), cost);
+
+        return plan;
     }
 }

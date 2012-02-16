@@ -5,6 +5,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 
 /**
  * This represents the matching logic that determines the optimality of reused plans. Given a set of 
@@ -41,22 +42,31 @@ public interface MatchingStrategy
     public static class Result
     {
         private double bestCost;
-        private InumPlan bestPlan;
+        private InumPlan bestTemplate;
         private Set<Index> bestConfiguration;
+        private SQLStatementPlan instantiatedPlan;
 
         /**
          * construct a result with the given arguments.
          *
-         * @param bestPlan
+         * @param instantiatedPlan
+         *    plan that results from instantiating {@code bestTemplate} with {@code 
+         *    bestConfiguration}
+         * @param bestTemplate
          *    the template plan with the best cost for the configuration
          * @param bestConfiguration
          *    configuration corresponding to the best plan
          * @param bestCost
          *    cost associated to the plan
          */
-        public Result(InumPlan bestPlan, Set<Index> bestConfiguration, double bestCost)
+        public Result(
+                SQLStatementPlan instantiatedPlan,
+                InumPlan bestTemplate,
+                Set<Index> bestConfiguration,
+                double bestCost)
         {
-            this.bestPlan = bestPlan;
+            this.instantiatedPlan = instantiatedPlan;
+            this.bestTemplate = bestTemplate;
             this.bestConfiguration = bestConfiguration;
             this.bestCost = bestCost;
         }
@@ -76,9 +86,9 @@ public interface MatchingStrategy
          *
          * @return The bestPlan.
          */
-        public InumPlan getBestPlan()
+        public InumPlan getBestTemplate()
         {
-            return this.bestPlan;
+            return this.bestTemplate;
         }
 
         /**
@@ -89,6 +99,29 @@ public interface MatchingStrategy
         public Set<Index> getBestConfiguration()
         {
             return this.bestConfiguration;
+        }
+
+        /**
+         * Gets the instantiatedPlan for this instance.
+         *
+         * @return The instantiatedPlan.
+         */
+        public SQLStatementPlan getInstantiatedPlan()
+        {
+            return this.instantiatedPlan;
+        }
+
+        @Override
+        public String toString()
+        {
+            String str = "";
+
+            str += "cost: " + bestCost + "\n";
+            str += "bestTemplate: " + bestTemplate;
+            str += "instance: " + instantiatedPlan + "\n";
+            str += "bestConf: " + bestConfiguration;
+
+            return str;
         }
     }
 }

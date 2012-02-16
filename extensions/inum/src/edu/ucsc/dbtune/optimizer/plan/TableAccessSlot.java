@@ -60,12 +60,13 @@ public class TableAccessSlot extends Operator
         if (index == null)
             throw new SQLException("Can't determine object associated to leaf node: " + leaf);
 
-        super.cost = super.accumulatedCost;
-
+        // checkForFETCHOperatorAndPullDownFetchedColumns();
         if (parent.getName().equals(Operator.FETCH))
             // if parent is a FETCH we have to pull the columns fetched down to the slot
             for (Column c : parent.getColumnsFetched().columns())
                 getColumnsFetched().add(c, parent.getColumnsFetched().isAscending(c));
+
+        super.name = "TABLE.ACCESS.SLOT";
     }
 
     /**
@@ -107,11 +108,13 @@ public class TableAccessSlot extends Operator
     }
 
     /**
-     * {@inheritDoc}
+     * Whether or not the original plan was using FTS for this slot.
+     *
+     * @return
+     *      whether or not the slot was constructed assuming a FTS on this slot
      */
-    @Override
-    public String toString()
+    public boolean isFullTableScan()
     {
-        return index.getFullyQualifiedName();
+        return getIndex() instanceof FullTableScanIndex;
     }
 }

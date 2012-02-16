@@ -77,7 +77,7 @@ public class OptimizerVsDelegateFunctionalTest
         if (delegate == null) return;
 
         //for (Workload wl : workloads(env.getWorkloadFolders())) {
-        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-cophy");
+        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
         final Set<Index> conf = candGen.generate(wl);
 
         System.out.println("Candidates generated: " + conf.size());
@@ -86,10 +86,12 @@ public class OptimizerVsDelegateFunctionalTest
         long time;
         long prepareTime;
         long explainTime;
+        ExplainedSQLStatement prepared;
+        ExplainedSQLStatement explained;
 
         for (SQLStatement sql : wl) {
             System.out.println("------------------------------");
-            System.out.println("Processing statement " + i++);
+            System.out.println("Processing statement " + i++ + "\n");
 
             time = System.currentTimeMillis();
 
@@ -98,13 +100,18 @@ public class OptimizerVsDelegateFunctionalTest
             prepareTime = System.currentTimeMillis() - time;
             time = System.currentTimeMillis();
 
-            System.out.println("       INUM: " + pSql.explain(conf).getSelectCost());
+            prepared = pSql.explain(conf);
 
             explainTime = System.currentTimeMillis() - time;
 
-            System.out.println("        DB2: " + delegate.explain(sql, conf).getSelectCost());
-            System.out.println("    Prepare: " + (prepareTime / 1000) + " sec.");
-            System.out.println("    Explain: " + (explainTime / 1000) + " sec.");
+            explained = delegate.explain(sql, conf);
+
+            System.out.println("optimizer: " + explained.getSelectCost());
+            System.out.println("delegate:  " + prepared.getSelectCost());
+            System.out.println("prepare:   " + prepareTime + " milliseconds");
+            System.out.println("explain:   " + explainTime + " milliseconds\n");
+            System.out.println("optimizer plan:\n" + explained.getPlan());
+            System.out.println("delegate plan:\n" + prepared.getPlan() + "\n");
 
             //assertThat(pSql.explain(conf), is(delegate.explain(sql, conf)));
         }

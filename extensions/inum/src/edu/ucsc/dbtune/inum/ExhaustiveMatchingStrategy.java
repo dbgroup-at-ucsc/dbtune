@@ -7,6 +7,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.cartesianProduct;
@@ -31,8 +32,10 @@ public class ExhaustiveMatchingStrategy extends AbstractMatchingStrategy
             throw new SQLException("No template plan in the INUM space");
         
         List<Index> bestConf = null;
-        InumPlan bestPlan = null;
+        InumPlan bestTemplate = null;
+        SQLStatementPlan instantiatedPlan = null;
         double bestCost = Double.POSITIVE_INFINITY;
+        double cost;
 
         Set<List<Index>> atomicConfigurations = enumerateAtomicConfigurations(configuration);
 
@@ -40,20 +43,26 @@ public class ExhaustiveMatchingStrategy extends AbstractMatchingStrategy
 
             for (List<Index> atomicConfiguration : atomicConfigurations) {
 
-                final double cost = templatePlan.plug(atomicConfiguration);
+                SQLStatementPlan plan = templatePlan.instantiate(atomicConfiguration);
+
+                if (plan == null)
+                    continue;
+
+                cost = plan.getRootOperator().getAccumulatedCost();
 
                 if (cost < bestCost) {
                     bestCost = cost;
                     bestConf = atomicConfiguration;
-                    bestPlan = templatePlan;
+                    bestTemplate = templatePlan;
+                    instantiatedPlan = plan;
                 }
             }
         }
         
-        if (bestPlan == null)
+        if (bestTemplate == null)
             throw new SQLException("Can't find match for configuration " + configuration);
 
-        return new Result(bestPlan, new HashSet<Index>(bestConf), bestCost);
+        return new Result(instantiatedPlan, bestTemplate, new HashSet<Index>(bestConf), bestCost);
     }
 
     /**
