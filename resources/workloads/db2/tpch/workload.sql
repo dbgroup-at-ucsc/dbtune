@@ -1,20 +1,3 @@
---====================================
---query 00
--- not actually part of the benchmark
-select
-	ps_suppkey,
-        s_suppkey, s_acctbal
-from
-	tpch.partsupp,
-	tpch.supplier
-where
-	ps_suppkey = s_suppkey AND ps_suppkey < 10 AND s_suppkey < 10
-
-ORDER BY
-        ps_suppkey,
-        s_suppkey ;
---====================================
-
 --query 01
 select
 	l_returnflag,
@@ -158,15 +141,16 @@ order by
 	revenue desc;
 
 --query 06
-select
-	sum(l_extendedprice * l_discount) as revenue
-from
-	tpch.lineitem
-where
-	l_shipdate >= '1993-01-01'
-	and l_shipdate < date('1994-01-01') 
-	and l_discount between 0.06 and 0.08 
-	and l_quantity < 25;
+-- NOTE: DB2 uses index intersection
+--select
+	--sum(l_extendedprice * l_discount) as revenue
+--from
+	--tpch.lineitem
+--where
+	--l_shipdate >= '1993-01-01'
+	--and l_shipdate < date('1994-01-01') 
+	--and l_discount between 0.06 and 0.08 
+	--and l_quantity < 25;
 
 --query 07
 -- TODO: contains two instances of nation
@@ -416,7 +400,7 @@ where
 	and l_shipdate < cast('1993-06-01' as date);
 
 --query 15
---  note: the view has been added as a subquery
+--  NOTE: the view has been added as a subquery
 --  TODO: lineitem referenced more than once
 --select
 	--s_suppkey,
