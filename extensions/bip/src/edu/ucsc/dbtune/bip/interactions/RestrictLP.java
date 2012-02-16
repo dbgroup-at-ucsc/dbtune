@@ -202,14 +202,17 @@ public class RestrictLP extends RestrictIIP
         }
         
         interactionVar2 = prefixInteractionVar + desc.getStatementID() + "_2";
-            
-        buf.getCons().add(
-                CTheta.get(IND_C)
-                + " + " + CTheta.get(IND_D)
-                + " - " + Strings.concatenate(" - ", elementCTheta.get(IND_EMPTY))
-                + connectorCD + Strings.concatenate(connectorCD, listcd) 
-                + " - " + interactionVar2 + " = 0 ");
-        buf.getBound().add(interactionVar2 + " >= - " + InumQueryPlanDesc.BIP_MAX_VALUE);
+        
+        if (isBothInteraction || listDescs.size() > 1) {
+            buf.getCons().add(
+                    CTheta.get(IND_C)
+                    + " + " + CTheta.get(IND_D)
+                    + " - " + Strings.concatenate(" - ", elementCTheta.get(IND_EMPTY))
+                    + connectorCD + Strings.concatenate(connectorCD, listcd) 
+                    + " - " + interactionVar2 + " = 0 ");
+            buf.getBound().add(interactionVar2 + " >= - " + InumQueryPlanDesc.BIP_MAX_VALUE);
+        }
+         
         indStatement2 = prefixIndStatement + desc.getStatementID() + "_2";
         
         if (isBothInteraction) {
@@ -223,9 +226,14 @@ public class RestrictLP extends RestrictIIP
             listIndStatements.add(indStatement1);
         }
         
-        if (!isBothInteraction && listDescs.size() == 1)
-            // only one interaction 2 constraint
-            buf.getCons().add(interactionVar2 + " <= 0 ");
+        if (!isBothInteraction && listDescs.size() == 1) {
+            buf.getCons().add(
+                    CTheta.get(IND_C)
+                    + " + " + CTheta.get(IND_D)
+                    + " - " + Strings.concatenate(" - ", elementCTheta.get(IND_EMPTY))
+                    + connectorCD + Strings.concatenate(connectorCD, listcd) 
+                    + " <= 0 ");
+        }
         else {
             // interactionVar2 - INF * indStatement2 <= 0
             buf.getCons().add(interactionVar2 + " - " + InumQueryPlanDesc.BIP_MAX_VALUE 
