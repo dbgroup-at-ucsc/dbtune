@@ -6,6 +6,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
@@ -16,11 +17,11 @@ import edu.ucsc.dbtune.inum.InumInterestingOrder;
 import edu.ucsc.dbtune.inum.InumSpaceComputation;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
-import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -43,19 +44,56 @@ public class IBGSpaceComputation implements InumSpaceComputation {
         InumPlan templatePlan = new InumPlan(delegate, sqlPlan);
 
         Vector<Index> usedIndexes = new Vector<Index>();
+        final Hashtable<Table, HashSet<Index>> tables = new Hashtable<Table, HashSet<Index>>();
+        class A {
+            HashSet<Index> getTable(Table table) {
+                HashSet<Index> set = tables.get(table);
+                if (set == null) {
+                    set = new HashSet<Index>();
+                    tables.put(table, set);
+                }
+                return set;
+            }
+        }
+        ;
+        A a = new A();
+        // multiple interesting order are used in one table
+        boolean conflict = false;
         for (TableAccessSlot slot : templatePlan.getSlots()) {
             Index usedIndex = slot.getIndex();
             if (usedIndex instanceof FullTableScanIndex)
                 continue;
             usedIndexes.add(usedIndex);
+            HashSet<Index> set = a.getTable(usedIndex.getTable());
+            set.add(usedIndex);
+            if (set.size() > 1)
+                conflict = true;
         }
-        if (usedIndexes.size() == 0) {
+        if (conflict) {
+            Vector<HashSet<Index>> conflictInterestingOrder = new Vector<HashSet<Index>>();
+            Vector<Index> validInterestingOrder = new Vector<Index>();
+            for (HashSet<Index> set : tables.values()) {
+                if (set.size() > 1)
+                    conflictInterestingOrder.add(set);
+                else
+                    validInterestingOrder.add((Index) set.toArray()[0]);
+            }
+            for (List<Index> atomic : cartesianProduct(conflictInterestingOrder)) {
+                HashSet<Index> set = new HashSet<Index>();
+                set.addAll(validInterestingOrder);
+                for (Index index : atomic)
+                    set.add(index);
+                ibg(statement, delegate, set, inumSpace);
+            }
+        } else if (usedIndexes.size() == 0) {
             if (!hasPlanWhichDontUseIndex) {
                 hasPlanWhichDontUseIndex = true;
-                inumSpace.add(templatePlan);
+                if (!sqlPlan.contains(NLJ))
+                    inumSpace.add(templatePlan);
             }
         } else {
-            inumSpace.add(templatePlan);
+            if (!sqlPlan.contains(NLJ))
+                inumSpace.add(templatePlan);
             for (Index usedIndex : usedIndexes) {
                 HashSet<Index> set = new HashSet<Index>();
                 set.addAll(indexes);
@@ -79,7 +117,7 @@ public class IBGSpaceComputation implements InumSpaceComputation {
                 catalog, true);
         indexesPerTable = interestingOrdersExtractor.extract(statement);
         HashSet<Index> allIndex = new HashSet<Index>();
-        Rt.showDate=false;
+        Rt.showDate = false;
         Rt.p("building INUM space, input indexes grouped by table");
         for (Set<Index> set : indexesPerTable) {
             Rt.p("-------------");
@@ -117,12 +155,13 @@ public class IBGSpaceComputation implements InumSpaceComputation {
         // if (sqlPlan.contains(NLJ))
         // inumSpace.add(new InumPlan(delegate, sqlPlan));
         // timer.finishAndReset();
-        Rt.p("Num of INUM template plans: "+ inumSpace.size());
+        Rt.p("Num of INUM template plans: " + inumSpace.size());
         for (InumPlan plan : inumSpace) {
             Rt.p(plan.toString());
-            Rt.p("Num of slots: "+plan.getSlots().size());
+            Rt.p("Num of slots: " + plan.getSlots().size());
             for (TableAccessSlot slot : plan.getSlots()) {
-                Rt.p(slot.getTable().toString()+" "+slot.getIndex().toString());
+                Rt.p(slot.getTable().toString() + " "
+                        + slot.getIndex().toString());
             }
         }
         Rt.p("Complete building INUM space");

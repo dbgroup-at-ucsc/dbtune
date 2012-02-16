@@ -190,9 +190,9 @@ public class InumPerformanceTest {
             }
             Conf[] configurations = cartesianProduct(indexPerTable);
             p.println("Total configurations: " + configurations.length);
-            p.format("Inum prepare time %.2fs\n", prepareTime / 1000000000.0);
-            p.println("inumCost,db2Cost,deviation,"
-                    + "inumTime,db2Time,configuration");
+            p.format("Inum prepare time %fs\n", prepareTime / 1000000000.0);
+            p.println("inumCost,\tdb2Cost,\tdeviation,\t"
+                    + "inumTime,\tdb2Time,\tconfiguration");
             double totalDeviation = 0;
             double totalInumTime = 0;
             double totalDb2Time = 0;
@@ -206,8 +206,8 @@ public class InumPerformanceTest {
                 double db2Cost = delegate.explain(sql, c.indexs)
                         .getSelectCost();
                 long db2Time = System.nanoTime() - time;
-                p.format("%f,%f,%f,%.2f,%.2f,\"%s\"\n", inumCost, db2Cost,
-                        inumCost / db2Cost, inumTime / 1000000000.0,
+                p.format("%f,\t%f,\t%f,\t%.5f,\t%.5f,\t\"%s\"\n", inumCost,
+                        db2Cost, inumCost / db2Cost, inumTime / 1000000000.0,
                         db2Time / 1000000000.0, c.name);
                 totalDeviation += inumCost / db2Cost;
                 totalInumTime += inumTime;
