@@ -29,25 +29,23 @@ public class CPlexInteraction extends CPlexImplementer
      *      This parameter is taken into account if {@code isSolvealternativeOnly = true}
      *                 
      * @return 
-     *      a map variables to their assigned values if CPLEX has a solution
-     *      or {@code null}, otherwise     
+     *      {@code true} if CPLEX has a solution,
+     *      {@code false} otherwise     
      */
-    public Map<String, Integer> solveAlternativeInteractionConstraint(
+    public boolean solveAlternativeInteractionConstraint(
                                 Map<String, Double> mapVarCoef, 
                                 boolean isSolvealternativeOnly,
                                 String inputFile)
     {
-        Map<String, Integer> mapVariableValue;
-        IloNumVar            var;
-        IloLPMatrix          matrix;
-        IloNumVar[]          vars;
-        double[]             listCoef;
+        
+        IloNumVar   var;
+        IloLPMatrix matrix;
+        IloNumVar[] vars;
+        double[]    listCoef;
         
         int    last_row_id;
         double coef;
         Object found;
-        
-        mapVariableValue = null;
         
         try {
             
@@ -89,14 +87,11 @@ public class CPlexInteraction extends CPlexImplementer
             }
             cplex.addLe(cplex.scalProd(listCoef, vars), 0);
             
-            if (cplex.solve()) 
-                mapVariableValue = super.getMapVariableValue();
-            
-            
+            return cplex.solve();
         } catch (IloException e) {
             e.printStackTrace();
         }
         
-        return mapVariableValue;
+        return false;
     }
 }

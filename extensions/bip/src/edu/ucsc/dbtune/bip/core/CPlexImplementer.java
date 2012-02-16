@@ -11,17 +11,15 @@ import java.util.Map;
 
 public class CPlexImplementer implements CPlexSolver 
 {   
-    public static double OBJ_VALUE_UNKNOWN = -999;
-    protected IloCplex cplex;
-    protected boolean isSolvable;
-    protected int nRows;
-    protected int nCols;
-    protected double obj;
+    protected IloCplex cplex;    
+    protected int      nRows;
+    protected int      nCols;
+    protected double   obj;
     
     
     public CPlexImplementer()
     {
-        isSolvable = false;
+    
     }
  
     /**
@@ -60,66 +58,55 @@ public class CPlexImplementer implements CPlexSolver
 
     
     @Override
-    public Map<String, Integer> solve(String inputFile) 
+    public boolean solve(String inputFile) 
     {
-        Map<String, Integer> mapVariableValue = null;
-        isSolvable = false;
+        boolean isSolve = false;
+        
         try {
             // start CPLEX
             cplex = new IloCplex();
-            
+                       
             // allow the solution differed 5% from the actual optimal value
             cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
             // not output the log of CPLEX
             cplex.setOut(null);
             // not output the warning
             cplex.setWarning(null);
-            // set the mode to be parallel barrier (determistic)
-            //cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Barrier);   
-            //cplex.setParam(IloCplex.IntParam.ParallelMode, IloCplex.ParallelMode.Deterministic);
-            // Read model from file into cplex optimizer object
+            
+            // import model from file
             cplex.importModel(inputFile);
             
-            if (cplex.solve()) {
-                mapVariableValue = getMapVariableValue();
-                obj = cplex.getObjValue();
-                isSolvable = true;
-            } else {
-                isSolvable = false;
-                obj = OBJ_VALUE_UNKNOWN;
-            }
-
             // collect some statistics    
             nRows = cplex.getNrows();
             nCols = cplex.getNcols();
+            
+            isSolve = cplex.solve();                    
         }
         catch (IloException e) {
             System.err.println("Concert exception caught: " + e);
         }
         
-        return mapVariableValue;
+        return isSolve;
     }
     
     
-    /**
-     * Retrieve the result from CPLEX
-     * 
-     * @return
-     *      A mapping that maps variable names to their values
-     */
-    protected Map<String, Integer> getMapVariableValue()
-    {
+    @Override
+    public Map<String, Integer> getMapVariableValue()
+    {   
         Map<String, Integer> mapVariableValue = new HashMap<String, Integer>();
         try {
+            obj = cplex.getObjValue();
             IloLPMatrix matrix = getMatrix(cplex);
             IloNumVar [] vars = matrix.getNumVars();
             double val;
             IloNumVar var;
+            
             for (int i = 0; i < vars.length; i++) {
                 var = vars[i];
                 val = cplex.getValue(var);
                 mapVariableValue.put(var.getName(), (int)Math.round(val));
             }
+            
         } catch (IloException e) {
             System.err.println("Concert exception caught: " + e);
         }
@@ -159,5 +146,4 @@ public class CPlexImplementer implements CPlexSolver
         
         return result.toString();
     }
-
 }

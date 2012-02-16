@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.bip.interactions;
 
-import edu.ucsc.dbtune.util.HashCodeUtil;
-
 
 public class IIPVariableIndicator 
 {
@@ -55,12 +53,13 @@ public class IIPVariableIndicator
     public int hashCode() 
     {
         if (fHashCode == 0) {
-            int result = HashCodeUtil.SEED;
-            result = HashCodeUtil.hash(result, this.theta);
-            result = HashCodeUtil.hash(result, this.typeVariable);
-            result = HashCodeUtil.hash(result, this.q);
-            result = HashCodeUtil.hash(result, this.k);
-            result = HashCodeUtil.hash(result, this.a);
+            int result = 0;
+            
+            result = 37 * result + this.theta;
+            result = 37 * result + this.typeVariable;
+            result = 37 * result + this.q;
+            result = 37 * result + this.k;
+            result = 37 * result + this.a;
             fHashCode = result;
         }
         
