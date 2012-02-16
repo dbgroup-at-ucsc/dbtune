@@ -70,6 +70,8 @@ public class TreeTest
         assertThat(tree.getChildren(root).contains("C"), is(true));
         assertThat(tree.getChildren(root).contains("D"), is(true));
 
+        assertThat(tree.getParent("S"), is("H"));
+
         Tree<String> copy = new Tree<String>(tree);
 
         assertThat(tree.size(), is(copy.size()));

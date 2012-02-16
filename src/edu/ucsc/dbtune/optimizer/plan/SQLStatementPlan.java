@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
@@ -16,9 +17,6 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public class SQLStatementPlan extends Tree<Operator>
 {
-    /** to keep a register of inserted operators. */
-    private int globalId = 1;
-
     /** the statement this plan corresponds to. */
     private SQLStatement sql;
 
@@ -47,7 +45,6 @@ public class SQLStatementPlan extends Tree<Operator>
 
         this.sql = sql;
         elements.clear();
-        root.setId(globalId++);
         elements.put(root, this.root);
     }
 
@@ -61,7 +58,6 @@ public class SQLStatementPlan extends Tree<Operator>
     {
         super(other);
         this.sql = other.sql;
-        this.globalId = other.globalId;
     }
 
     /**
@@ -168,6 +164,52 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
+     * Renames the given operator.
+     *
+     * @param op
+     *      operator to be renamed
+     * @param newName
+     *      new name to give to the operator
+     */
+    public void rename(Operator op, String newName)
+    {
+        // elements is a hash table and if we rename the operator we need to do it with care since 
+        // by modifying the name of the operator we modify its hashCode. So what we do here is to
+        // first remove the value from the hash
+        Entry<Operator> entry = elements.get(op);
+
+        if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+
+        op.setName(newName);
+
+        elements.put(op, entry);
+    }
+
+    /**
+     * Assigns the cost to the given operator.
+     *
+     * @param op
+     *      operator to be renamed
+     * @param cost
+     *      cost of the operator
+     */
+    public void assignCost(Operator op, double cost)
+    {
+        // elements is a hash table and if we rename the operator we need to do it with care since 
+        // by modifying the name of the operator we modify its hashCode. So what we do here is to
+        // first remove the value from the hash
+        Entry<Operator> entry = elements.get(op);
+
+        if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+
+        op.setAccumulatedCost(cost);
+
+        elements.put(op, entry);
+    }
+
+    /**
      * Checks if the plan contains the given operator.
      *
      * @param operatorName
@@ -187,20 +229,5 @@ public class SQLStatementPlan extends Tree<Operator>
                 return true;
 
         return false;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Entry<Operator> setChild(Operator parentValue, Operator childValue)
-    {
-        Entry<Operator> e;
-
-        childValue.setId(globalId++);
-        
-        e = super.setChild(parentValue, childValue);
-
-        return e;
     }
 }

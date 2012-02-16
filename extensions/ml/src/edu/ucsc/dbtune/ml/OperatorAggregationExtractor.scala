@@ -134,7 +134,7 @@ class OperatorAggregationExtractor(operatorNames: List[String]) extends PlanInst
       if(idx < 0) throw new NoSuchElementException("Operator " + operator.getName + " not in list")
 
       values(idx+0) = values(idx+0) + 1.0;
-      values(idx+1) = values(idx+1) + operator.getCost;
+      values(idx+1) = values(idx+1) + operator.getAccumulatedCost;
     }
     new Instance(1.0,values)
   }

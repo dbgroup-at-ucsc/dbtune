@@ -15,7 +15,7 @@ import java.util.Set;
  *      type of objects being stored in the tree
  * @author Ivo Jimenez
  */
-public class Tree<T extends Comparable<? super T>>
+public class Tree<T>
 {
     protected Entry<T> root;
     protected Map<T, Entry<T>> elements;
@@ -42,16 +42,39 @@ public class Tree<T extends Comparable<? super T>>
      */
     public Tree(Tree<T> other)
     {
-        elements = new HashMap<T, Entry<T>>();
+        if (other.root == null)
+            throw new RuntimeException("Root in given tree is null");
 
-        for (Map.Entry<T, Entry<T>> mapEntry : other.elements.entrySet())
-            elements.put(mapEntry.getKey(), new Entry<T>(mapEntry.getValue()));
+        this.root = new Entry<T>(null, other.getRootElement());
 
+        this.elements = new HashMap<T, Entry<T>>();
 
-        root = elements.get(other.root.getElement());
+        copy(root, other.root);
+    }
 
-        if (root == null)
-            throw new RuntimeException("Can't find root in given tree");
+    /**
+     * Copies the subtree that hangs from {@code other} and makes it a subtree of {@code entry}. 
+     * This method is used only by the copy constructor.
+     *
+     * @param thisParent
+     *      entry whose is expanded (whose children are being populated)
+     * @param otherParent
+     *      another entry whose children are copied to {@code entry}
+     */
+    private void copy(Entry<T> thisParent, Entry<T> otherParent)
+    {
+        Entry<T> thisChild;
+
+        for (Entry<T> otherChild : otherParent.children) {
+            thisChild = new Entry<T>(thisParent, otherChild.element);
+
+            thisChild.parent = thisParent;
+            thisParent.children.add(thisChild);
+
+            copy(thisChild, otherChild);
+        }
+
+        elements.put(thisParent.element, thisParent);
     }
 
     /**
@@ -178,9 +201,9 @@ public class Tree<T extends Comparable<? super T>>
 
         childEntry = new Entry<T>(parentEntry, childValue);
 
-        elements.put(childValue, childEntry);
-
         parentEntry.children.add(childEntry);
+
+        elements.put(childValue, childEntry);
 
         return childEntry;
     }
@@ -213,17 +236,28 @@ public class Tree<T extends Comparable<? super T>>
 
         List<Entry<T>> subtreeEntries = new ArrayList<Entry<T>>();
 
-        getSubtreeElements(subtreeEntries, entry);
+        getSubtreeEntries(subtreeEntries, entry);
 
-        for (Entry<T> e : subtreeEntries)
-            elements.remove(e.getElement());
+        for (Entry<T> e : subtreeEntries) {
 
-        Entry<T> parent = entry.getParent();
+            if (e.parent == null)
+                root = null;
+            else if (!e.parent.children.remove(e)) {
+                System.out.println("List: ");
+                for (Entry<T> en : e.parent.children) {
+                    System.out.println("entry sent " + e + " entry in parent's list " + en +
+                            " for element " + en.element);
+                    if (en.equals(e))
+                        System.out.println("entries are equal");
+                    else
+                        System.out.println("they aren't");
+                }
+                throw new RuntimeException("Can't remove " + e.element);
+            }
 
-        if (parent == null)
-            root = null;
-        else
-            parent.getChildren().remove(entry);
+            e.parent = null;
+            elements.remove(e.element);
+        }
     }
 
     /**
@@ -234,10 +268,10 @@ public class Tree<T extends Comparable<? super T>>
      * @param entry
      *      entry whose subtree is added to {@code entries}
      */
-    private void getSubtreeElements(List<Entry<T>> entries, Entry<T> entry)
+    private void getSubtreeEntries(List<Entry<T>> entries, Entry<T> entry)
     {
         for (Entry<T> child : entry.getChildren())
-            getSubtreeElements(entries, child);
+            getSubtreeEntries(entries, child);
 
         entries.add(entry);
     }
@@ -275,8 +309,8 @@ public class Tree<T extends Comparable<? super T>>
     }
 
     /**
-     * Finds recursively for a value given the root of a sub-tree where the value is expected to be 
-     * found.
+     * Finds recursively (in a breath-first manner) for a value given the root of a sub-tree where 
+     * the value is expected to be found. Uses the {@link Object#equals} method.
      *
      * @param value
      *     value whose entry is being searched for
@@ -287,7 +321,7 @@ public class Tree<T extends Comparable<? super T>>
      */
     protected Entry<T> find(T value, Entry<T> entry)
     {
-        if (value.compareTo(entry.element) == 0)
+        if (value.equals(entry.element))
             return entry;
 
         Entry<T> found;
@@ -315,7 +349,7 @@ public class Tree<T extends Comparable<? super T>>
     /**
      * An entry of the tree.
      */
-    public static class Entry<T extends Comparable<? super T>>
+    public static class Entry<T>
     {
         private T element;
         private List<Entry<T>> children;
@@ -334,19 +368,6 @@ public class Tree<T extends Comparable<? super T>>
             this.parent   = parent;
             this.element  = element;
             this.children = new ArrayList<Entry<T>>();
-        }
-
-        /**
-         * copy constructor.
-         *
-         * @param other
-         *      other object being copied
-         */
-        Entry(Entry<T> other)
-        {
-            this.parent = other.parent;
-            this.element  = other.element;
-            this.children = new ArrayList<Entry<T>>(other.children);
         }
 
         /**

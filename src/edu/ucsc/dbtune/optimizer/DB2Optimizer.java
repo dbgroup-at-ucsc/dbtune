@@ -480,13 +480,15 @@ public class DB2Optimizer extends AbstractOptimizer
         double updateOpCost = -1;
         double childOpCost = -1;
 
-        if (sqlPlan.toList().size() != 3)
-            throw new SQLException("Something went wrong for the UPDATE, should have 3 nodes");
+        if (sqlPlan.size() != 3)
+            throw new SQLException("UPDATE plan should have 3 nodes but has " + sqlPlan.size());
 
         for (Operator o : sqlPlan.toList())
-            if (o.getId() == 2)
+            if (o.getName().toLowerCase().contains("return"))
+                continue;
+            else if (o.getName().toLowerCase().contains("update"))
                 updateOpCost = o.getAccumulatedCost();
-            else if (o.getId() == 3)
+            else
                 childOpCost = o.getAccumulatedCost();
 
         if (updateOpCost == -1 || childOpCost == -1)
@@ -630,7 +632,7 @@ public class DB2Optimizer extends AbstractOptimizer
         dboName = dboName.trim();
 
         if (dboSchema.equalsIgnoreCase("SYSIBM") && dboName.equalsIgnoreCase("GENROW")) {
-            op.setName("GENROW");
+            op = new Operator("GENROW", accomulatedCost, cardinality);
             return op;
         }
 
@@ -895,7 +897,7 @@ public class DB2Optimizer extends AbstractOptimizer
         if (ascendant == null)
             throw new SQLException("Can't find closest join (ascendant) of " + child);
 
-        ascendant.setName(newName);
+        plan.rename(ascendant, newName);
         plan.remove(shild);
     }
 

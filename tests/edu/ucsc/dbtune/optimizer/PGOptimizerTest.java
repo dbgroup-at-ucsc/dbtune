@@ -98,7 +98,6 @@ public class PGOptimizerTest
         assertEquals("Seq Scan", child1.getName());
         assertEquals(10000,     child1.getCardinality());
         assertEquals(155.00,    child1.getAccumulatedCost(), 0.0);
-        assertEquals(155.00,    child1.getCost(), 0.01);
         assertEquals(0,         plan.getChildren(child1).size());
         
         // check second child
@@ -106,7 +105,6 @@ public class PGOptimizerTest
         assertEquals("Hash", child2.getName());
         assertEquals(184,   child2.getCardinality());
         assertEquals(155.00, child2.getAccumulatedCost(), 0.0);
-        assertEquals(0.0,   child2.getCost(), 0.01);
         assertEquals(1,     plan.getChildren(child2).size());
         
         // check child of second child
@@ -114,7 +112,6 @@ public class PGOptimizerTest
         assertEquals("Seq Scan", child3.getName());
         assertEquals(10000,     child3.getCardinality());
         assertEquals(155.00,    child3.getAccumulatedCost(), 0.0);
-        assertEquals(155.00,    child3.getCost(), 0.01);
         assertEquals(0,         plan.getChildren(child3).size());
         
         // check third child
@@ -122,7 +119,6 @@ public class PGOptimizerTest
         assertEquals("Index Scan", child4.getName());
         assertEquals(28437,       child4.getCardinality());
         assertEquals(1778.00,     child4.getAccumulatedCost(), 0.0);
-        assertEquals(1778.00,     child4.getCost(), 0.01);
         assertEquals(0,           plan.getChildren(child4).size());
         
     }

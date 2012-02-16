@@ -44,14 +44,10 @@ object OperatorAggregationExtractorTest {
         val root = new Operator("Nested Loop", 926.37, 1)
         val plan = new SQLStatementPlan(new SQLStatement("select * from a"), root)
 
-        root.setCost(343.00)
-
         var oper = new Operator("Seq Scan",155.0,10000)
-        oper.setCost(155.0)
         plan.setChild(root,oper)
 
         oper = new Operator("Seq Scan",428.0,10000)
-        oper.setCost(428.0)
         plan.setChild(root,oper)
         plan
     }
@@ -59,10 +55,7 @@ object OperatorAggregationExtractorTest {
         val root = new Operator("Limit", 115.11, 12345)
         val plan = new SQLStatementPlan(new SQLStatement("select * from a"), root)
 
-        root.setCost(115.11)
-
         var oper = new Operator("Index Scan",12.2,123456)
-        oper.setCost(12.2)
         plan.setChild(root,oper)
         plan
     }

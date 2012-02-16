@@ -527,24 +527,22 @@ public class PGOptimizer extends AbstractOptimizer
         List<Map<String, Object>> childrenData =
             (List<Map<String, Object>>) parentData.get("Plans");
 
-        parent.setCost(parent.getAccumulatedCost());
-
         if (childrenData == null || childrenData.size() == 0) {
             return;
         }
 
         Operator child;
-        double   childrenCost = 0.0;
+        //double   childrenCost = 0.0;
 
         for (Map<String, Object> childData : childrenData) {
             child         = extractNode(childData, schema);
-            childrenCost += child.getAccumulatedCost();
+            //childrenCost += child.getAccumulatedCost();
 
             plan.setChild(parent, child);
             extractChildNodes(plan, child, childData, schema);
         }
 
-        parent.setCost(parent.getAccumulatedCost() - childrenCost);
+        //parent.setCost(parent.getAccumulatedCost() - childrenCost);
     }
 
     /**

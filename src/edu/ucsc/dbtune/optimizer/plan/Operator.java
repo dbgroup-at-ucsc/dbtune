@@ -4,14 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.ucsc.dbtune.metadata.DatabaseObject;
-import edu.ucsc.dbtune.util.Identifiable;
 
 /**
  * Represents an operator of a SQL statement plan.
  *
  * @author Ivo Jimenez
  */
-public class Operator implements Comparable<Operator>, Identifiable
+public class Operator
 {
     /** NLJ operator. **/
     public static final String NLJ = "NESTED.LOOP.JOIN";
@@ -56,17 +55,11 @@ public class Operator implements Comparable<Operator>, Identifiable
     /** sort operator. **/
     public static final String SORT = "SORT";
 
-    /** ID used to identify an operator within a plan. */
-    protected int id;
-
     /** Name of operator. */
     protected String name;
 
     /** Accumulated cost of the plan up to this operator. */
     protected double accumulatedCost;
-
-    /** Cost of the operator (not accumulated cost). */
-    protected double cost;
 
     /** Number of tuples that the operator produces. */
     protected long cardinality;
@@ -100,9 +93,7 @@ public class Operator implements Comparable<Operator>, Identifiable
      */
     public Operator(String name, double accumulatedCost, long cardinality)
     {
-        this.id              = 0;
         this.name            = name;
-        this.cost            = 0.0;
         this.accumulatedCost = accumulatedCost;
         this.cardinality     = cardinality;
         this.objects         = new ArrayList<DatabaseObject>();
@@ -117,9 +108,7 @@ public class Operator implements Comparable<Operator>, Identifiable
      */
     Operator(Operator o)
     {
-        this.id = o.id;
         this.name = o.name;
-        this.cost = o.cost;
         this.accumulatedCost = o.accumulatedCost;
         this.cardinality = o.cardinality;
         this.objects = new ArrayList<DatabaseObject>(o.objects);
@@ -194,37 +183,33 @@ public class Operator implements Comparable<Operator>, Identifiable
     }
 
     /**
-     * returns the operator id.
-     *
-     * @return
-     *     operator id
-     */
-    @Override
-    public int getId()
-    {
-        return id;
-    }
-
-    /**
-     * assigns the value of the operator id.
-     *
-     * @param id
-     *     operator id
-     */
-    public void setId(int id)
-    {
-        this.id = id;
-    }
-
-    /**
-     * assigns the name of the operator.
+     * assigns the name of the operator. <b>WARNING: </b> by using this method, a plan might get 
+     * corrupted since the {@link edu.ucsc.dbtune.util.Tree} class maintains a hash list internally 
+     * and modifying the name means that the hashCode of this object changes. Thus, don't use this 
+     * method unless you are updating the internal map of the plan accordingly.
      *
      * @param name
      *     operator id
+     * @see Plan#rename
      */
-    public void setName(String name)
+    void setName(String name)
     {
         this.name = name;
+    }
+
+    /**
+     * assigns the cost of the operator. <b>WARNING: </b> by using this method, a plan might get 
+     * corrupted since the {@link edu.ucsc.dbtune.util.Tree} class maintains a hash list internally 
+     * and modifying the name means that the hashCode of this object changes. Thus, don't use this 
+     * method unless you are updating the internal map of the plan accordingly.
+     *
+     * @param cost
+     *     new cost
+     * @see Plan#assignCost
+     */
+    void setAccumulatedCost(double cost)
+    {
+        this.accumulatedCost = cost;
     }
 
     /**
@@ -236,28 +221,6 @@ public class Operator implements Comparable<Operator>, Identifiable
     public double getAccumulatedCost()
     {
         return accumulatedCost;
-    }
-
-    /**
-     * returns the cost of the operator.
-     *
-     * @param cost
-     *     the value corresponding to the cost of the operator
-     */
-    public void setCost(double cost)
-    {
-        this.cost = cost;
-    }
-
-    /**
-     * returns the cost of the operator.
-     *
-     * @return
-     *     the value corresponding to the cost of the operator
-     */
-    public double getCost()
-    {
-        return cost;
     }
 
     /**
@@ -298,22 +261,11 @@ public class Operator implements Comparable<Operator>, Identifiable
      * {@inheritDoc}
      */
     @Override
-    public int compareTo(Operator operator)
-    {
-        return new Integer(this.id).compareTo(operator.id);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public String toString()
     {
         StringBuilder str = new StringBuilder();
 
-        str.append(id)
-            .append(": ")
-            .append(name)
+        str.append(name)
             .append("(cost=")
             .append(accumulatedCost)
             .append(" rows=")
@@ -333,7 +285,18 @@ public class Operator implements Comparable<Operator>, Identifiable
     @Override
     public int hashCode()
     {
-        return new Integer(id).hashCode();
+        int code = 1;
+
+        code = 37 * code + name.hashCode();
+        code = 37 * code + (int) Double.doubleToLongBits(accumulatedCost);
+        code = 37 * code + (int) (cardinality ^ (cardinality >>> 32));
+        code = 37 * code + objects.hashCode();
+        code = 37 * code + predicates.hashCode();
+
+        if (columnsFetched != null)
+            code = 37 * code + columnsFetched.hashCode();
+
+        return code;
     }
 
     /**
@@ -350,6 +313,18 @@ public class Operator implements Comparable<Operator>, Identifiable
 
         Operator op = (Operator) o;
 
-        return getId() == op.getId();
+        if (!name.equals(op.name) ||
+                accumulatedCost != op.accumulatedCost ||
+                cardinality != op.cardinality ||
+                !objects.equals(op.objects) ||
+                !predicates.equals(op.predicates))
+            return false;
+
+        if ((columnsFetched == null && op.columnsFetched == null) ||
+            (columnsFetched != null && op.columnsFetched != null &&
+                columnsFetched.equals(op.columnsFetched)))
+            return true;
+
+        return false;
     }
 }

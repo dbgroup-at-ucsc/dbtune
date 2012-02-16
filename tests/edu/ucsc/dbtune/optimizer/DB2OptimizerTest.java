@@ -113,25 +113,21 @@ public class DB2OptimizerTest
 
         op = DB2Optimizer.parseNode(cat, rs, new ArrayList<String>(), new HashSet<Index>());
 
-        assertThat(op.getId(), is(0));
         assertThat(op.getName(), is("RETURN"));
         assertThat(op.getCardinality(), is(10L));
         assertThat(op.getAccumulatedCost(), is(2000.0));
         assertThat(op.getDatabaseObjects().isEmpty(), is(true));
-        assertThat(op.getCost(), is(0.0));
 
         rs.next();
 
         op = DB2Optimizer.parseNode(cat, rs, new ArrayList<String>(), new HashSet<Index>());
 
-        assertThat(op.getId(), is(0));
         assertThat(op.getName(), is(Operator.TABLE_SCAN));
         assertThat(op.getCardinality(), is(10L));
         assertThat(op.getAccumulatedCost(), is(2000.0));
         assertThat(op.getDatabaseObjects().isEmpty(), is(false));
         assertThat(op.getDatabaseObjects().size(), is(1));
         assertThat(op.getDatabaseObjects().get(0).getName(), is("table_0"));
-        assertThat(op.getCost(), is(0.0));
 
         rs.next();
 
@@ -160,14 +156,12 @@ public class DB2OptimizerTest
 
         op = DB2Optimizer.parseNode(cat, rs, new ArrayList<String>(), new HashSet<Index>());
 
-        assertThat(op.getId(), is(0));
         assertThat(op.getName(), is(Operator.INDEX_SCAN));
         assertThat(op.getCardinality(), is(100L));
         assertThat(op.getAccumulatedCost(), is(700.0));
         assertThat(op.getDatabaseObjects().isEmpty(), is(false));
         assertThat(op.getDatabaseObjects().size(), is(1));
         assertThat(op.getDatabaseObjects().get(0).getName(), is("table_0_index_0"));
-        assertThat(op.getCost(), is(0.0));
 
         assertThat(rs.next(), is(false));
     }
@@ -204,7 +198,6 @@ public class DB2OptimizerTest
         SQLStatementPlan plan = DB2Optimizer.parsePlan(cat, rs, rs2, new HashSet<Index>());
 
         assertThat(plan.size(), is(5));
-        assertThat(plan.getRootOperator().getId(), is(1));
         assertThat(plan.getIndexes().size(), is(1));
         assertThat(plan.getRootOperator().getName(), is("RETURN"));
         // CHECKSTYLE:ON
