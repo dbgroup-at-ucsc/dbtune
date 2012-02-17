@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.inum;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -53,7 +54,7 @@ public class EagerSpaceComputation implements InumSpaceComputation
         for (List<Index> atomic : cartesianProduct(indexesPerTable)) {
             sqlPlan = delegate.explain(statement, new HashSet<Index>(atomic)).getPlan();
             
-            if (sqlPlan.contains(NLJ))
+            if (sqlPlan.contains(NLJ) && !isAllFTS(atomic))
                 continue;
             
             templatePlan = new InumPlan(delegate, sqlPlan);
@@ -144,5 +145,23 @@ public class EagerSpaceComputation implements InumSpaceComputation
         }
         
         return ios;
+    }
+
+    /**
+     * Checks if a given collection of indexes contains only {@link FullTableScanIndex} instances.
+     *
+     * @param indexes
+     *      collection of indexes that is being checked
+     * @return
+     *      {@code true} if all indexes are instances of {@link FullTableScanIndex}; {@code false} 
+     *      otherwise
+     */
+    private static boolean isAllFTS(Collection<Index> indexes)
+    {
+        for (Index i : indexes)
+            if (!(i instanceof FullTableScanIndex))
+                return false;
+
+        return true;
     }
 }
