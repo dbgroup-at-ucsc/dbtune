@@ -70,4 +70,15 @@ public abstract class AbstractBIPVariablePool
         
         return result.toString();
     }
+    
+    /**
+     * Retrieve the list of variables stored in this pool
+     * 
+     * @return
+     *      A list of variables.
+     */
+    public List<BIPVariable> variables()
+    {
+        return listVar; 
+    }
 }

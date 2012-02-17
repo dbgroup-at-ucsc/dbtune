@@ -58,6 +58,7 @@ public interface BIPSolver
      *      when there is error in connecting with the optimizer
      * @throws IOException
      *      when there is I/O error
+     * @throws Exception 
      */
-    IndexTuningOutput solve() throws SQLException, IOException;
+    IndexTuningOutput solve() throws Exception;
 }

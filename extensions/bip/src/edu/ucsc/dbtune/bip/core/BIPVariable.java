@@ -1,17 +1,23 @@
 package edu.ucsc.dbtune.bip.core;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * A variable object constructed in the BIP.
  * For example: y(empty, 0) for the internal plan cost
  * x(empty, 1, 0) for the index access cost 
  * 
- * @author tqtrung@soe.ucsc.edu
+ * @author Quoc Trung Tran
  *
  */
 public class BIPVariable 
 {
     private String name;
-    private int type; 
+    private int    type; 
+    private int    inMemoryID;
+    
+    /** used to uniquely identify each instance of the class. */
+    public static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
     
     /**
      * Construct a {@code BIPVariable} object with the given name and type
@@ -24,6 +30,8 @@ public class BIPVariable
     {
         this.name = _name;
         this.type = _type;
+        
+        this.inMemoryID = BIPVariable.IN_MEMORY_ID.getAndIncrement();
     }
     
     /**
@@ -44,5 +52,16 @@ public class BIPVariable
     public int getType()
     {
         return type;
+    }
+    
+    /**
+     * Retrieve the identifier of this object
+     * 
+     * @return
+     *      The ID.
+     */
+    public int getId()
+    {
+        return inMemoryID;
     }
 }

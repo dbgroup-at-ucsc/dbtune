@@ -1,22 +1,15 @@
 package edu.ucsc.dbtune.bip;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
+
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -61,18 +54,19 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
         System.out.println(" In test interaction ");
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         
-        //CandidateGenerator candGen =
+        CandidateGenerator candGen =
          //   new OneColumnCandidateGenerator(
-          //          new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+                    new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         
-        CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 1, true);
+        
+        //CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 3, true);
         Set<Index> candidates = candGen.generate(workload);
         
         System.out.println("L56 (Test), Number of indexes: " + candidates.size() 
                             + " Number of statements: " + workload.size());
         for (Index index : candidates) 
             System.out.println("L59, Index: " + index.getId() + " " + index); 
-        
+        long start = System.currentTimeMillis();
         try {
             double delta = 0.1;
             Optimizer io = db.getOptimizer();
@@ -96,6 +90,7 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
             System.out.println(" error " + e.getMessage());
             throw e;
         }
+        
+        System.out.println(" total time: " + (System.currentTimeMillis() - start));
     }
-    
 }

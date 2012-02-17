@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPVariablePool;
 import edu.ucsc.dbtune.bip.core.BIPVariable;
@@ -26,12 +27,15 @@ public class IIPVariablePool extends AbstractBIPVariablePool
     }
     
     /**
-     * Clean all the data stored in this class
+     * Clean all the data stored in this class. 
+     * Reset the ID. 
      */
     public void clear()
     {
         mapHighDimensionVar.clear();
+        BIPVariable.IN_MEMORY_ID = new AtomicInteger(0);
     }
+    
     /**
      * 
      * Create and store a variable, whose name is in the form of
