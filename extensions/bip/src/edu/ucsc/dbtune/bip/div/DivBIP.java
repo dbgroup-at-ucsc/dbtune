@@ -45,6 +45,7 @@ public class DivBIP extends AbstractBIPSolver
         
         // Iterate over variables s_{i,w}
         // Iterate over variables create_{i,w} and drop_{i,w}
+        /*
         for (Entry<String, Integer> pairVarVal : super.mapVariableValue.entrySet()) {
             if (pairVarVal.getValue() == 1) {
                 String name = pairVarVal.getKey();
@@ -56,7 +57,8 @@ public class DivBIP extends AbstractBIPSolver
                     conf.addMaterializedIndexAtReplica(divVar.getReplica(), index);
                 }
             }
-        }
+        }*/
+        
         return conf;
     }
 

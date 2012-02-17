@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.bip.interactions;
 
-import java.io.IOException;
-import java.sql.SQLException;
+import ilog.concert.IloException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,7 +54,7 @@ public class InteractionBIP extends AbstractBIPSolver
     
     
     @Override
-    public IndexTuningOutput solve() throws SQLException, IOException
+    public IndexTuningOutput solve() throws Exception
     {   
         // 1. Communicate with INUM 
         // to derive the query plan description including internal cost, index access cost,
@@ -71,8 +71,6 @@ public class InteractionBIP extends AbstractBIPSolver
         for (QueryPlanDesc desc : listQueryPlanDescs) {
             sql = workload.get(i);
             findInteractions(sql, desc);
-            System.out.println("L74, after statement " + i + "-th, number of CPLEX calls:"
-                              + numCplexCall);
             i++;
         }
         
@@ -93,8 +91,9 @@ public class InteractionBIP extends AbstractBIPSolver
      *      The giving SQL statement
      * @param desc
      *      The query plan description of the statement
+     * @throws IloException 
      */
-    protected void findInteractions(SQLStatement sql, QueryPlanDesc desc) 
+    protected void findInteractions(SQLStatement sql, QueryPlanDesc desc) throws IloException 
     {   
         // Derive list of indexes that might interact
         List<Index>         indexes        = new ArrayList<Index>();
@@ -114,7 +113,7 @@ public class InteractionBIP extends AbstractBIPSolver
         int ic, id;
         IndexInteraction pair;
         
-        List<RestrictIIP> listIIP = new ArrayList<RestrictIIP>();
+        List<RestrictModel> listIIP = new ArrayList<RestrictModel>();
         
         for (int pos_c = 0; pos_c < indexes.size(); pos_c++) {
             
@@ -136,14 +135,14 @@ public class InteractionBIP extends AbstractBIPSolver
                 
                 id = mapIndexSlotID.get(indexd);
                 
-                // call the BIP solution
-                listIIP.add(new RestrictIIP(desc, logger, delta, indexc, indexd, 
-                                            candidateIndexes, ic, id));
+                //  call the BIP solution
+                listIIP.add(new RestrictModel(desc, logger, delta, indexc, indexd, 
+                                              candidateIndexes, ic, id));
             }
         }
         
         // Build the BIP to check the interaction
-        for (RestrictIIP restrict : listIIP) {
+        for (RestrictModel restrict : listIIP) {
             
             if (restrict.solve(sql, optimizer)) {
                 // cache pairs of interaction

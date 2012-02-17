@@ -254,6 +254,7 @@ public class ElasticDivBIP extends DivBIP
         DivRecommendedConfiguration conf = new DivRecommendedConfiguration(this.Nreplicas);
         
         Map<Integer, Integer> mapDeployedReplicas = new HashMap<Integer, Integer>();
+        /*
         for (Entry<String, Integer> pairVarVal : super.mapVariableValue.entrySet()) {
             if (pairVarVal.getValue() == 1) {
                 DivVariable divVar = (DivVariable) this.poolVariables.get(pairVarVal.getKey());
@@ -271,6 +272,7 @@ public class ElasticDivBIP extends DivBIP
                 }
             }
         } 
+        */
         return conf;
     }
 }

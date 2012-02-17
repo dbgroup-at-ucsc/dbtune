@@ -149,6 +149,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     { 
         MaterializationSchedule schedule = new MaterializationSchedule(W, Sinit);
         
+        /*
         // Iterate over variables create_{i,w} and drop_{i,w}
         for (Entry<String, Integer> pairVarVal : mapVariableValue.entrySet()) {
             
@@ -162,6 +163,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                 }
             }
         }    
+        */
         
         return schedule;
     }

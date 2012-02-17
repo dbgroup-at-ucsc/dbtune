@@ -5,14 +5,10 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetCandidateGenerator;
 //import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
-import edu.ucsc.dbtune.bip.core.CPlexSolver;
 import edu.ucsc.dbtune.bip.sim.MaterializationSchedule;
-import edu.ucsc.dbtune.bip.sim.MaterializationScheduleOnOptimizer;
-import edu.ucsc.dbtune.bip.sim.RandomIndexMaterializationSchedule;
-import edu.ucsc.dbtune.bip.sim.SimBIP;
+import edu.ucsc.dbtune.bip.sim.SimModel;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
@@ -52,9 +48,10 @@ public class SimBIPFunctionalTest
         System.out.println(" In test scheduling ");
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         
-        //CandidateGenerator candGen = 
-          //      new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
-        CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 2, true);
+        CandidateGenerator candGen = 
+                new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        
+        //CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 2, true);
         Set<Index> indexes = candGen.generate(workload);
         
         System.out.println(
@@ -73,7 +70,7 @@ public class SimBIPFunctionalTest
             throw new Exception("Expecting InumOptimizer instance");
         
         LogListener logger = LogListener.getInstance();
-        SimBIP bip = new SimBIP();
+        SimModel bip = new SimModel();
         bip.setOptimizer((InumOptimizer) io);
         bip.setWorkload(workload);
         bip.setLogListenter(logger);
@@ -87,14 +84,14 @@ public class SimBIPFunctionalTest
         
         MaterializationSchedule schedule = new MaterializationSchedule (0, new HashSet<Index>());
         schedule = (MaterializationSchedule) bip.solve();
-        double bipCost, randomCost;
+        //double bipCost, randomCost;
         
-        if (schedule != null) {
-            CPlexSolver cplex = bip.getSolver();
-            System.out.println("Solver information: " + cplex);            
+        if (schedule != null) {       
+                       
             System.out.println("Result: " + schedule.toString());
             System.out.println(logger.toString());
             
+            /*
             // invoke the actual optimizer
             MaterializationScheduleOnOptimizer mso = new MaterializationScheduleOnOptimizer();
             mso.verify(io.getDelegate(), schedule, sqls);
@@ -113,6 +110,7 @@ public class SimBIPFunctionalTest
             randomCost = mso.getTotalCost();
             System.out.println( "L112, BIP cost: " + bipCost + " vs. RANDOM cost: "
                                 + randomCost + " RATIO: " + bipCost / randomCost);
+                                */
         }
     }
 }
