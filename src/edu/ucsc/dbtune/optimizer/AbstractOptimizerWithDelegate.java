@@ -6,7 +6,6 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
 
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -107,9 +106,9 @@ public abstract class AbstractOptimizerWithDelegate extends AbstractOptimizer
      * {@inheritDoc}
      */
     @Override
-    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled) 
+    public void setFTSDisabled(boolean isFTSDisabled)
     {
-        delegate.setFTSDisabled(tables, isFTSDisabled);
+        delegate.setFTSDisabled(isFTSDisabled);
     }
 
     /**

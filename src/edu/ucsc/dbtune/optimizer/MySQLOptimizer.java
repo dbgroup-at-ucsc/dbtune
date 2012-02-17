@@ -9,9 +9,8 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -62,7 +61,7 @@ public class MySQLOptimizer extends AbstractOptimizer
         drop(configuration, connection);
 
         return new ExplainedSQLStatement(
-            sql, plan, this, cost, 0.0, 0.0, new HashMap<Index, Double>(), configuration, used, 1);             
+            sql, plan, this, cost, 0.0, 0.0, new HashMap<Index, Double>(), configuration, used, 1);
     }
 
     /**
@@ -226,7 +225,7 @@ public class MySQLOptimizer extends AbstractOptimizer
      * {@inheritDoc}
      */
     @Override
-    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled)
+    public void setFTSDisabled(boolean isFTSDisabled)
     {
         throw new RuntimeException("not yet");
     }

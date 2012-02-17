@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.metadata.Index.DESCENDING;
-import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -611,25 +611,28 @@ public class OptimizerTest
      */
     protected static void checkFTSDisabled(Catalog cat, Optimizer opt) throws Exception
     {
-        // XXX: #175 #176 are causing this to fail for all optimizers {
-        if (opt instanceof Optimizer) return;
+        // XXX: #175 #176 are causing this to fail for MySQL and Postgres {
+        if (getBaseOptimizer(opt) instanceof MySQLOptimizer ||
+                getBaseOptimizer(opt) instanceof PGOptimizer)
+            return;
+
         SQLStatement sql;
         Set<Index> conf;
         Index idxa;
 
-        sql = new SQLStatement("SELECT * FROM one_table.tbl WHERE a > -1000000");
+        sql = new SQLStatement("SELECT * FROM ONE_TABLE.TBL WHERE a > -1000000");
         idxa = new Index(cat.<Column>findByName("one_table.tbl.a"), DESCENDING);
-        conf = new BitArraySet<Index>();
+        conf = new HashSet<Index>();
 
         conf.add(idxa);
 
         assertThat(opt.explain(sql, conf).getUsedConfiguration(), is(not(conf)));
 
-        opt.setFTSDisabled(getReferencedTables(conf), true);
+        opt.setFTSDisabled(true);
 
         assertThat(opt.explain(sql, conf).getUsedConfiguration(), is(conf));
 
-        opt.setFTSDisabled(getReferencedTables(conf), false);
+        opt.setFTSDisabled(false);
 
         idxa.getSchema().remove(idxa);
         // }

@@ -1,13 +1,11 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -26,12 +24,6 @@ public abstract class AbstractOptimizer implements Optimizer
     
     /** Whether or not to disable the generation of plans containing FTS operators. */
     protected boolean isFTSDisabled;
-    
-    /** Whether or not to disable the generation of plans containing NLJ operators. */
-    protected boolean isNLJDisabled;
-    
-    /** Tables for which FTS should be disabled. */
-    protected Set<Table> ftsDisabledTables;
 
     /**
      * {@inheritDoc}
@@ -50,9 +42,8 @@ public abstract class AbstractOptimizer implements Optimizer
      * {@inheritDoc}
      */
     @Override
-    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled)
+    public void setFTSDisabled(boolean isFTSDisabled)
     {
-        this.ftsDisabledTables = new HashSet<Table>(tables);
         this.isFTSDisabled = isFTSDisabled;
     }
     

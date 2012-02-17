@@ -206,13 +206,14 @@ public class InumPlan extends SQLStatementPlan
         if (slot == null)
             throw new SQLException("Plan doesn't contain a slot for table " + index.getTable());
 
-        if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index)) {
+        if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index))
             // if we have the same index as when we built the template
             return makeOperator(slot);
-        }
 
         if (!slot.isFullTableScan() && !slot.isCompatible(index))
             return null;
+
+        delegate.setFTSDisabled(true);
 
         // we have an index that we haven't seen before, so we need to invoke the optimizer
         return getPlugCostWithCaching(slot, index);
@@ -246,21 +247,23 @@ public class InumPlan extends SQLStatementPlan
                 buildQueryForUnseenIndex(slot), Sets.<Index> newHashSet(index))
                 .getPlan();
 
+        delegate.setFTSDisabled(false);
+
         if (plan.leafs().size() != 1)
             throw new SQLException("Plan should have only one leaf");
 
         Operator o = Iterables.<Operator> get(plan.leafs(), 0);
 
         if (o.getDatabaseObjects().size() != 1)
-            throw new SQLException("The slot should have one database object.");
+            throw new SQLException("The leaf should have one database object.");
 
-        if (o.getName().equals(INDEX_SCAN)) {
-            o.setAccumulatedCost(plan.getRootOperator().getAccumulatedCost());
-            return o;
-        }
+        if (!o.getName().equals(INDEX_SCAN))
+            throw new SQLException("The leaf should be an " + INDEX_SCAN);
 
-        // plan uses a full table scan, so it's not compatible
-        return null;
+        o.setAccumulatedCost(plan.getRootOperator().getAccumulatedCost());
+
+        // create a new Operator to avoid memory leaks (by keeping the whole plan hanging)
+        return new Operator(o);
     }
 
     /**
@@ -413,7 +416,7 @@ public class InumPlan extends SQLStatementPlan
             sb.append(" WHERE ");
 
             for (Predicate p : slot.getPredicates())
-                sb.append(p.getText()).append(" AND ");
+                sb.append(p.getText().replaceAll("'.*'", "\\?")).append(" AND ");
 
             sb.delete(sb.length() - 5, sb.length() - 1);
         }

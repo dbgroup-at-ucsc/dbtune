@@ -121,8 +121,31 @@ public final class MetadataUtils
      */
     public static Index find(Set<Index> indexes, String name)
     {
+        String[] pathElements = name.split("\\.");
+        String schemaName = null;
+        String indexName;
+
+        if (pathElements.length == 0)
+            throw new RuntimeException("String is empty");
+
+        if (pathElements.length == 1) {
+            indexName = name;
+        } else if (pathElements.length == 2) {
+            schemaName = pathElements[0];
+            indexName = pathElements[1];
+        } else {
+            throw new RuntimeException("Can't find an index with 3 path elements");
+        }
+
+        if (schemaName != null)
+            // search by schemaName.indexname first
+            for (Index i : indexes)
+                if (i.getSchema().getName().equals(schemaName) && i.getName().equals(indexName))
+                    return i;
+
+        // search by the name only
         for (Index i : indexes)
-            if (i.getName().equals(name))
+            if (i.getName().equals(indexName))
                 return i;
 
         return null;

@@ -28,9 +28,12 @@ import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
+import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedSchemas;
+import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
 /**
  * Interface to the DB2 optimizer.
@@ -75,6 +78,8 @@ public class DB2Optimizer extends AbstractOptimizer
         double updateCost;
 
         clearAdviseAndExplainTables(connection);
+
+        loadOptimizationProfiles(sql, indexes);
         
         insertIntoAdviseIndexTable(connection, indexes);
 
@@ -94,6 +99,8 @@ public class DB2Optimizer extends AbstractOptimizer
         plan.setStatement(sql);
 
         selectCost = plan.getRootOperator().getAccumulatedCost() - updateCost;
+
+        unloadOptimizationProfiles();
 
         return new ExplainedSQLStatement(
             sql, plan, this, selectCost, updateCost, updateCost, updateCosts, indexes, used, 1);     
@@ -183,8 +190,8 @@ public class DB2Optimizer extends AbstractOptimizer
         else
             sb.append("'REG', ");
 
-        sb.append("'" + index.getName() + "', ");
-        sb.append("'CREATE INDEX " + index.getName() + "', ");
+        sb.append("'" + index.getFullyQualifiedName() + "', ");
+        sb.append("'CREATE INDEX " + index.getFullyQualifiedName() + "', ");
         sb.append("'N', ");
         sb.append("0, ");
         sb.append(index.getId() + ", ");
@@ -291,6 +298,9 @@ public class DB2Optimizer extends AbstractOptimizer
             columns.add(col);
             ascending.put(col, asc);
         }
+
+        if (columns.size() == 0)
+            return null;
         
         return new InterestingOrder(columns, ascending);
     }
@@ -526,6 +536,112 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     /**
+     * Loads the optimization profiles based on the state of the variables {@link #isFTSDisabled}, 
+     * {@link #isNLJDisabled} and the given set of indexes.
+     *
+     * @param sql
+     *     statement for which the plan is being obtained
+     * @param indexes
+     *     tables referenced by these set are included in the optimization profile so that NO-FTS 
+     *     restriction is set
+     * @throws SQLException
+     *     if the profiles can't be loaded; if the indexes refer to tables from more than one schema
+     */
+    private void loadOptimizationProfiles(SQLStatement sql, Set<Index> indexes) throws SQLException
+    {
+        if (isFTSDisabled)
+            loadFTSDisabledProfile(sql, connection, getReferencedTables(indexes));
+    }
+
+    /**
+     * Unloads the optimization profiles.
+     *
+     * @throws SQLException
+     *      if {@link #unloadOptimizationProfiles(Connnection)} throws an exception
+     */
+    private void unloadOptimizationProfiles() throws SQLException
+    {
+        unloadOptimizationProfiles(connection);
+    }
+
+    /**
+     * @param connection
+     *      used to communicate to DB2
+     * @throws SQLException
+     *      if an error occurs while communicating to the DBMS
+     */
+    private static void unloadOptimizationProfiles(Connection connection)
+        throws SQLException
+    {
+        Statement stmt = connection.createStatement();
+        stmt.execute("SET CURRENT OPTIMIZATION PROFILE = ''");
+        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
+        stmt.close();
+    }
+
+    /**
+     * Loads the FTS profile for the given set of tables.
+     *
+     * @param sql
+     *     statement which the plan is obtained for
+     * @param connection
+     *      used to communicate to DB2
+     * @param tables
+     *      tables for which the FTS profile is loaded
+     * @throws SQLException
+     *      if an error occurs while communicating to the DBMS
+     */
+    private static void loadFTSDisabledProfile(
+            SQLStatement sql, Connection connection, Set<Table> tables)
+        throws SQLException
+    {
+        if (tables.size() == 0)
+            return;
+
+        Set<Schema> referencedSchemas = getReferencedSchemas(tables);
+
+        if (referencedSchemas.size() > 1)
+            throw new SQLException("Can only apply optimization profiles on ONE schema");
+
+        Schema s = get(referencedSchemas, 0);
+
+        StringBuilder xml = new StringBuilder();
+
+        xml.append(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<OPTPROFILE VERSION=\"9.1.0.0\">\n" +
+            "   <STMTPROFILE ID=\"no FTS\">\n" +
+            "      <STMTKEY SCHEMA=\"" + s.getName() + "\">\n" +
+            "         <![CDATA[" + sql.getSQL() + "]]>\n" +
+            "      </STMTKEY>\n" +
+            "      <OPTGUIDELINES>\n");
+        for (Table t : tables)
+            xml.append("<IXSCAN TABLE=\"" + t.getName() + "\"/>\n").
+                append("<REOPT VALUE=\"NONE\"/>\n");
+        xml.append(
+            "      </OPTGUIDELINES>\n" +
+            "   </STMTPROFILE>\n" +
+            "</OPTPROFILE>");
+
+        Statement stmt = connection.createStatement();
+
+        stmt.execute("DELETE FROM systools.opt_profile");
+
+        stmt.execute(
+                "INSERT INTO systools.opt_profile VALUES(" +
+                "    '" + s.getName() + "', " +
+                "    'NOFTS', " +
+                "    BLOB('" + xml + "')" +
+                ")");
+
+        stmt.execute("SET CURRENT OPTIMIZATION PROFILE = '" + s.getName() + ".NOFTS'");
+        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
+        stmt.execute("SET CURRENT SCHEMA=" + s.getName());
+
+        stmt.close();
+    }
+
+    /**
      * Parses the {@code ADVISE_INDEX.COLNAMES} column in order to extract the list of referenced 
      * columns and their corresponding ASC/DESC values. The read values are placed in the {@code 
      * columns} and {@code descending} lists sent as arguments.
@@ -636,18 +752,24 @@ public class DB2Optimizer extends AbstractOptimizer
             return op;
         }
 
-        if (dboSchema.equalsIgnoreCase("SYSTEM"))
+        Schema schema = catalog.findSchema(dboSchema);
+
+        if (schema != null)
+            // it's a table
+            dbo = schema.findTable(dboName);
+        else if (dboSchema.equalsIgnoreCase("SYSTEM"))
             // SYSTEM means that it's in the ADVISE_INDEX table; at least that's what we can infer
-            dbo = catalog.findIndex(dboName);
+            dbo = catalog.findByQualifiedName(dboName);
         else
-            dbo = catalog.findByQualifiedName(dboSchema + "." + dboName);
+            throw new SQLException("Impossible to look for " + dboSchema + "." + dboName);
 
         if (dbo == null)
             // try to find it in the set of indexes passed in the what-if invocation
             dbo = find(indexes, dboName);
 
         if (dbo == null)
-            throw new SQLException("Can't find object " + dboSchema + "." + dboName);
+            throw new SQLException(
+                    "Can't find object with schema " + dboSchema + " and name " + dboName);
 
         op.add(dbo);        
 
@@ -1080,101 +1202,4 @@ public class DB2Optimizer extends AbstractOptimizer
 
     final static String DELETE_FROM_EXPLAIN_INSTANCE = "DELETE FROM SYSTOOLS.EXPLAIN_INSTANCE";
     // CHECKSTYLE:ON
-
-    /**
-     * Loads the optimization profiles based on the state of the variables {@link #isFTSDisabled}, 
-     * {@link #isNLJDisabled} and the given set of indexes.
-     *
-     * @param sql
-     *     statement which the plan is obtained for
-     * @throws SQLException
-     *      if the profiles can't be loaded
-    private void loadOptimizationProfiles(SQLStatement sql) throws SQLException
-    {
-        if (isFTSDisabled)
-            loadFTSDisabledProfile(sql, connection, ftsDisabledTables);
-        //if (isNLJDisabled)
-            //loadNLJDisabledProfile(connection, indexes);
-    }
-     */
-
-    /**
-     * @param connection
-     *      used to communicate to DB2
-     * @throws SQLException
-     *      if an error occurs while communicating to the DBMS
-    private static void unloadOptimizationProfiles(Connection connection)
-        throws SQLException
-    {
-        Statement stmt = connection.createStatement();
-        stmt.execute("SET CURRENT OPTIMIZATION PROFILE = ''");
-        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
-        stmt.close();
-    }
-     */
-
-    /**
-     * Loads the FTS profile for the given set of tables.
-     *
-     * @param sql
-     *     statement which the plan is obtained for
-     * @param connection
-     *      used to communicate to DB2
-     * @param tables
-     *      tables for which the FTS profile is loaded
-     * @throws SQLException
-     *      if an error occurs while communicating to the DBMS
-    private static void loadFTSDisabledProfile(
-            SQLStatement sql, Connection connection, Set<Table> tables)
-        throws SQLException
-    {
-        if (tables.size() == 0)
-            return;
-
-        if (getSchemas(tables).size() > 1)
-            throw new SQLException("Can only apply FTS for tables of the same schema");
-
-        Schema s = null;
-
-        for (Table t : tables) {
-            s = t.getSchema();
-            break;
-        }
-
-        StringBuilder xml = new StringBuilder();
-
-        xml.append(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<OPTPROFILE VERSION=\"9.1.0.0\">\n" +
-            "   <STMTPROFILE ID=\"noFTS on given tables foo\">\n" +
-            "      <STMTKEY SCHEMA=\"" + s.getName() + "\">\n" +
-            "         <![CDATA[" + sql.getSQL() + "]]>\n" +
-            "      </STMTKEY>\n" +
-            "      <OPTGUIDELINES>\n");
-
-        for (Table t : tables) xml.append(
-            "         <IXSCAN TABLE=\"" + t.getName() + "/>");
-
-        xml.append(
-            "      </OPTGUIDELINES>\n" +
-            "   </STMTPROFILE>\n" +
-            "</OPTPROFILE>");
-
-        Statement stmt = connection.createStatement();
-
-        stmt.execute("DELETE FROM systools.opt_profile");
-
-        stmt.execute(
-                "INSERT INTO systools.opt_profile values(" +
-                "    '" + s.getName() + "', " +
-                "    'NOFTS', " +
-                "    BLOB('" + xml + "')" +
-                ")");
-
-        stmt.execute("SET CURRENT OPTIMIZATION PROFILE = '" + s.getName() + ".NOFTS'");
-        stmt.execute("FLUSH OPTIMIZATION PROFILE CACHE");
-
-        stmt.close();
-    }
-     */
 }

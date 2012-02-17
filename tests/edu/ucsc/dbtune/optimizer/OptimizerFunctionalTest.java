@@ -57,8 +57,7 @@ public class OptimizerFunctionalTest
     @Test
     public void testFTSDisabled() throws Exception
     {
-        // issue #173
-        //OptimizerTest.checkFTSDisabled(db.getCatalog(), opt);
+        OptimizerTest.checkFTSDisabled(db.getCatalog(), opt);
     }
 
     /**

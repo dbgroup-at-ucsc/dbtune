@@ -5,7 +5,6 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -113,12 +112,11 @@ public interface Optimizer
     /**
      * Whether or not to disable the generation of plans containing FTS.
      *
-     * @param tables
-     *      tables for which the FTS is being enabled/disabled.
      * @param isFTSDisabled
-     *      whether to disable the generation of plans containing full table scan operators
+     *      {@code true} if the optimizer should not consider plans containing FTS when optimizing a 
+     *      statement; {@code false} otherwise
      */
-    void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled);
+    void setFTSDisabled(boolean isFTSDisabled);
 
     /**
      * Generates a {@link PreparedSQLStatement}, given a {@code sql} object.

@@ -626,7 +626,7 @@ public class PGOptimizer extends AbstractOptimizer
      * {@inheritDoc}
      */
     @Override
-    public void setFTSDisabled(Set<Table> tables, boolean isFTSDisabled)
+    public void setFTSDisabled(boolean isFTSDisabled)
     {
         throw new RuntimeException("not yet");
     }
