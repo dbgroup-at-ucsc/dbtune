@@ -66,7 +66,7 @@ public class TableAccessSlot extends Operator
             for (Column c : parent.getColumnsFetched().columns())
                 getColumnsFetched().add(c, parent.getColumnsFetched().isAscending(c));
 
-        super.name = "TABLE.ACCESS.SLOT";
+        name = "TABLE.ACCESS.SLOT";
     }
 
     /**

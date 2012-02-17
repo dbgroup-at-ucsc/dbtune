@@ -90,7 +90,7 @@ public class SQLStatementPlan extends Tree<Operator>
      */
     public Operator getRootOperator()
     {
-        return super.getRootElement();
+        return getRootElement();
     }
 
     /**

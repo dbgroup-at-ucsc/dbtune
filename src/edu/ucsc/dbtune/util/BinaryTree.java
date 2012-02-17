@@ -89,12 +89,13 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
             throw new IllegalArgumentException("Parent already has child");
         }
 
-        return super.setChild(parentValue,childValue);
+        return setChild(parentValue,childValue);
     }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     public Entry<T> setChild(T parentValue, T childValue)
     {
         Entry<T> parentEntry = elements.get(parentValue);
