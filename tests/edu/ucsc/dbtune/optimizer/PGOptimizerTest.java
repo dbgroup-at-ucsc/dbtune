@@ -32,34 +32,34 @@ public class PGOptimizerTest
             "[                                                 " +
             "   {                                              " +
             "     \"Plan\": {                                  " +
-            "       \"Node Type\": \"Hash Join\",             " +
-            "       \"Join Type\": \"Inner\",                 " +
-            "       \"Startup Cost\": 280.00,                 " +
-            "       \"Total Cost\": 375510.00,                " +
-            "       \"Plan Rows\": 25005000,                  " +
-            "       \"Plan Width\": 32,                       " +
-            "       \"Hash Cond\": \"(t1.a = t2.a)\",         " +
+            "       \"Node Type\": \"Hash Join\",              " +
+            "       \"Join Type\": \"Inner\",                  " +
+            "       \"Startup Cost\": 280.00,                  " +
+            "       \"Total Cost\": 375510.00,                 " +
+            "       \"Plan Rows\": 25005000,                   " +
+            "       \"Plan Width\": 32,                        " +
+            "       \"Hash Cond\": \"(t1.a = t2.a)\",          " +
             "       \"Plans\": [                               " +
             "         {                                        " +
-            "           \"Node Type\": \"Seq Scan\",          " +
-            "           \"Parent Relationship\": \"Outer\",   " +
-            "           \"Relation Name\": \"tbl\",           " +
-            "           \"Alias\": \"t1\",                    " +
-            "           \"Startup Cost\": 0.00,               " +
-            "           \"Total Cost\": 155.00,               " +
-            "           \"Plan Rows\": 10000,                 " +
+            "           \"Node Type\": \"Seq Scan\",           " +
+            "           \"Parent Relationship\": \"Outer\",    " +
+            "           \"Relation Name\": \"tbl\",            " +
+            "           \"Alias\": \"t1\",                     " +
+            "           \"Startup Cost\": 0.00,                " +
+            "           \"Total Cost\": 255.00,                " +
+            "           \"Plan Rows\": 10100,                  " +
             "           \"Plan Width\": 16                     " +
-            "         },                                      " +
+            "         },                                       " +
             "         {                                        " +
-            "           \"Node Type\": \"Hash\",              " +
-            "           \"Parent Relationship\": \"Inner\",   " +
-            "           \"Startup Cost\": 155.00,             " +
-            "           \"Total Cost\": 155.00,               " +
-            "           \"Plan Rows\": 184,                   " +
-            "           \"Plan Width\": 16,                   " +
+            "           \"Node Type\": \"Hash\",               " +
+            "           \"Parent Relationship\": \"Inner\",    " +
+            "           \"Startup Cost\": 155.00,              " +
+            "           \"Total Cost\": 155.00,                " +
+            "           \"Plan Rows\": 184,                    " +
+            "           \"Plan Width\": 16,                    " +
             "           \"Plans\": [                           " +
             "             {                                    " +
-            "               \"Node Type\": \"Seq Scan\",      " +
+            "               \"Node Type\": \"Seq Scan\",       " +
             "               \"Parent Relationship\": \"Outer\"," +
             "               \"Relation Name\": \"tbl\",       " +
             "               \"Alias\": \"t2\",                " +
@@ -96,8 +96,8 @@ public class PGOptimizerTest
         // check first child
         Operator child1 = plan.getChildren(root).get(0);
         assertEquals("Seq Scan", child1.getName());
-        assertEquals(10000,     child1.getCardinality());
-        assertEquals(155.00,    child1.getAccumulatedCost(), 0.0);
+        assertEquals(10100,     child1.getCardinality());
+        assertEquals(255.00,    child1.getAccumulatedCost(), 0.0);
         assertEquals(0,         plan.getChildren(child1).size());
         
         // check second child

@@ -98,13 +98,13 @@ public class DB2OptimizerTest
     {
         // CHECKSTYLE:OFF
         ResultSet rs = makeResultSet(
-        Arrays.asList(h[0], h[1],       h[2],       h[3],              h[4], h[5],   h[6], h[7]),
-        Arrays.asList(   1,    0,   "RETURN", "schema_0", null             , 10l , 2000.0,   ""),
-        Arrays.asList(   2,    1,   "TBSCAN", "schema_0", "table_0"        , 10l , 2000.0,   ""),
-        Arrays.asList(   3,    2,   "SORT"  , "schema_0", null             , 10l , 1500.0,   ""),
-        Arrays.asList(   4,    3,   "RIDSCN", "schema_0", null             , 10l , 1400.0,   ""),
-        Arrays.asList(   5,    4,   "FETCH" , "schema_0", "table_0"        , 100l,  700.0,   ""),
-        Arrays.asList(   6,    5,   "IXSCAN", "schema_0", "table_0_index_0", 100l,  700.0,   ""));
+        Arrays.asList(h[0], h[1],       h[2],       h[3],                       h[4], h[5],   h[6], h[7]),
+        Arrays.asList(   1,    0,   "RETURN", "schema_0", null                      , 10l , 2000.0,   ""),
+        Arrays.asList(   2,    1,   "TBSCAN", "schema_0", "table_0"                 , 10l , 2000.0,   ""),
+        Arrays.asList(   3,    2,   "SORT"  , "schema_0", null                      , 10l , 1500.0,   ""),
+        Arrays.asList(   4,    3,   "RIDSCN", "schema_0", null                      , 10l , 1400.0,   ""),
+        Arrays.asList(   5,    4,   "FETCH" , "schema_0", "table_0"                 , 100l,  700.0,   ""),
+        Arrays.asList(   6,    5,   "IXSCAN", "SYSTEM",   "schema_0.table_0_index_0", 100l,  700.0,   ""));
         // CHECKSTYLE:ON
         
         Operator op;
@@ -177,12 +177,12 @@ public class DB2OptimizerTest
     {
         // CHECKSTYLE:OFF
         ResultSet rs = makeResultSet(
-        Arrays.asList(h[0], h[1],      h[2],        h[3],               h[4],  h[5],    h[6], h[7]),
-        Arrays.asList(   1, null,  "RETURN",  "schema_0",  null             ,  10l ,  2000.0,   ""),
-        Arrays.asList(   2,    1,  "GRPBY" ,  "schema_0",  null             ,  10l ,  2000.0,   ""),
-        Arrays.asList(   3,    2,  "SORT"  ,  "schema_0",  null             ,  10l ,  1500.0,   ""),
-        Arrays.asList(   4,    3,  "TBSCAN",  "schema_0",  "table_2"        ,  100l,   700.0,   "+Q1.column_0(A)+Q2.column_3(D)+Q3.column_2"),
-        Arrays.asList(   5,    3,  "IXSCAN",  "schema_0",  "table_0_index_0",  100l,   700.0,   "+Q2.column_1"));
+        Arrays.asList(h[0], h[1],      h[2],        h[3],                        h[4],  h[5],    h[6], h[7]),
+        Arrays.asList(   1, null,  "RETURN",  "schema_0",  null                      ,  10l ,  2000.0,   ""),
+        Arrays.asList(   2,    1,  "GRPBY" ,  "schema_0",  null                      ,  10l ,  2000.0,   ""),
+        Arrays.asList(   3,    2,  "SORT"  ,  "schema_0",  null                      ,  10l ,  1500.0,   ""),
+        Arrays.asList(   4,    3,  "TBSCAN",  "schema_0",  "table_2"                 ,  100l,   700.0,   "+Q1.column_0(A)+Q2.column_3(D)+Q3.column_2"),
+        Arrays.asList(   5,    3,  "IXSCAN",    "SYSTEM",  "schema_0.table_0_index_0",  100l,   700.0,   "+Q2.column_1"));
 
         ResultSet rs2 = makeResultSet(
         Arrays.asList(h2[0], h2[1]),

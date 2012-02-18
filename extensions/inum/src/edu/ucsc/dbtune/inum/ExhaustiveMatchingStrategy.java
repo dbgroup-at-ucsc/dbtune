@@ -39,11 +39,11 @@ public class ExhaustiveMatchingStrategy extends AbstractMatchingStrategy
 
         Set<List<Index>> atomicConfigurations = enumerateAtomicConfigurations(configuration);
 
-        for (InumPlan templatePlan : inumSpace) {
+        for (InumPlan template : inumSpace) {
 
             for (List<Index> atomicConfiguration : atomicConfigurations) {
 
-                SQLStatementPlan plan = templatePlan.instantiate(atomicConfiguration);
+                SQLStatementPlan plan = template.instantiate(atomicConfiguration);
 
                 if (plan == null)
                     continue;
@@ -53,7 +53,7 @@ public class ExhaustiveMatchingStrategy extends AbstractMatchingStrategy
                 if (cost < bestCost) {
                     bestCost = cost;
                     bestConf = atomicConfiguration;
-                    bestTemplate = templatePlan;
+                    bestTemplate = template;
                     instantiatedPlan = plan;
                 }
             }

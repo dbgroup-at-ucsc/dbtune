@@ -41,7 +41,7 @@ class OperatorAggregationExtractorTest {
 
 object OperatorAggregationExtractorTest {
     val plan1 = {
-        val root = new Operator("Nested Loop", 926.37, 1)
+        val root = new Operator("Nested Loop", 343.0, 1)
         val plan = new SQLStatementPlan(new SQLStatement("select * from a"), root)
 
         var oper = new Operator("Seq Scan",155.0,10000)

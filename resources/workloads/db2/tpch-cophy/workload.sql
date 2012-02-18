@@ -92,22 +92,21 @@ order by
         o_orderdate;
 
 --Query 4
--- TODO: Can't find closest join (ascendant) of 3: GENROW
--- select
-        -- o_orderpriority,
-        -- count(*) as order_count
--- from
-        -- tpch.orders,
-        -- tpch.lineitem
--- where
-        -- o_orderdate >=  '1993-12-01'
-        -- and o_orderdate <  '1993-3-01'
-        -- and l_orderkey = o_orderkey
-        -- and l_commitdate < l_receiptdate
--- group by
-        -- o_orderpriority
--- order by
-        -- o_orderpriority;
+select
+        o_orderpriority,
+        count(*) as order_count
+from
+        tpch.orders,
+        tpch.lineitem
+where
+        o_orderdate <=  '1993-12-01'
+        and o_orderdate >  '1993-3-01'
+        and l_orderkey = o_orderkey
+        and l_commitdate < l_receiptdate
+group by
+        o_orderpriority
+order by
+        o_orderpriority;
 
 --Query 5
 select

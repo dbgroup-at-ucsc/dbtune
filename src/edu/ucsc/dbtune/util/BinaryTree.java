@@ -59,37 +59,31 @@ public class BinaryTree<T extends Comparable<? super T>> extends Tree<T>
      */
     public Entry<T> setChild(T parentValue, T childValue, int leftOrRight)
     {
+        if (leftOrRight != LEFT && leftOrRight != RIGHT)
+            throw new IllegalArgumentException(leftOrRight + " not a valid child position");
 
-        if (leftOrRight != LEFT && leftOrRight != RIGHT) {
-            throw new IllegalArgumentException( leftOrRight + " not a valid child position");
-        }
-
-        if (elements.get(childValue) != null) {
+        if (elements.get(childValue) != null)
             throw new IllegalArgumentException("Child value already in tree");
-        }
 
         Entry<T> parentEntry;
         Entry<T> childEntry;
 
         parentEntry = elements.get(parentValue);
 
-        if ( parentEntry == null ) {
+        if (parentEntry == null)
             throw new NoSuchElementException(parentValue + " not in tree");
-        }
 
         childEntry = null;
 
-        if ( leftOrRight == LEFT && parentEntry.getChildren().size() > 0) {
+        if (leftOrRight == LEFT && parentEntry.getChildren().size() > 0)
             childEntry = parentEntry.getChildren().get(0);
-        } else if (leftOrRight == RIGHT && parentEntry.getChildren().size() > 1) {
+        else if (leftOrRight == RIGHT && parentEntry.getChildren().size() > 1)
             childEntry = parentEntry.getChildren().get(1);
-        }
 
-        if (childEntry != null) {
+        if (childEntry != null)
             throw new IllegalArgumentException("Parent already has child");
-        }
 
-        return setChild(parentValue,childValue);
+        return super.setChild(parentValue, childValue);
     }
 
     /**
