@@ -3,8 +3,8 @@ package edu.ucsc.dbtune.optimizer;
 import java.sql.SQLException;
 import java.util.Set;
 
-import edu.ucsc.dbtune.IBGSpaceComputation;
 import edu.ucsc.dbtune.inum.EagerSpaceComputation;
+import edu.ucsc.dbtune.inum.IBGSpaceComputation;
 import edu.ucsc.dbtune.inum.ExhaustiveMatchingStrategy;
 import edu.ucsc.dbtune.inum.InumSpaceComputation;
 
@@ -38,8 +38,8 @@ public class InumOptimizer extends AbstractOptimizerWithDelegate
     public InumOptimizer(Optimizer optimizer)
     {
         this.delegate = optimizer;
-//        this.inumSpaceComputation = new EagerSpaceComputation();
-        this.inumSpaceComputation = new IBGSpaceComputation();
+        this.inumSpaceComputation = new EagerSpaceComputation();
+        //this.inumSpaceComputation = new IBGSpaceComputation();
     }
 
     /**
