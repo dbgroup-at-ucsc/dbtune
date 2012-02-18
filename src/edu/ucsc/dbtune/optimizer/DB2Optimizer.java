@@ -31,6 +31,9 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
 
+import static edu.ucsc.dbtune.optimizer.plan.Operator.SORT;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.SUBQUERY;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedSchemas;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
@@ -843,13 +846,99 @@ public class DB2Optimizer extends AbstractOptimizer
 
             plan.setChild(parent, child);
 
-            if (child.getName().equals("GENROW"))
-                renameClosestJoinAndRemoveBranchComingFrom(plan, child, Operator.SORT);
-            else
-                idToNode.put(operatorId, child);
+            idToNode.put(operatorId, child);
         }
 
+        // post-process
+        postprocess(plan);
+
         return plan;
+    }
+
+    /**
+     * Post-processes a plan by (1) replacing GENROW and (2) transforming non-leaf table scans.
+     *
+     * @param plan
+     *      plan to be postprocessed
+     * @throws SQLException
+     *      if an error occurs while post-processing
+     */
+    private static void postprocess(SQLStatementPlan plan) throws SQLException
+    {
+        while (removeGENROW(plan))
+            // remove all occurrences of GENROW
+            plan.getStatement();
+
+        rewriteNonLeafTableScans(plan);
+    }
+
+    /**
+     * @param plan
+     *      plan whose non-leaf table scan operators are to be converted into leafs
+     * @throws SQLException
+     *      if an error occurs while transforming the plan
+     */
+    private static void rewriteNonLeafTableScans(SQLStatementPlan plan) throws SQLException
+    {
+        Operator newSibling;
+        Operator leaf;
+        double leafCost;
+
+        for (Operator o : plan.toList()) {
+
+            if (o.getName().equals(TABLE_SCAN) && o.getDatabaseObjects().size() > 0)
+
+                if (plan.getChildren(o).size() == 0) {
+                    // fine, it is an actual leaf
+                    plan.getChildren(o);
+                } else if (plan.getChildren(o).size() == 1) {
+
+                    newSibling = plan.getChildren(o).get(0);
+
+                    leafCost = o.getAccumulatedCost() - newSibling.getAccumulatedCost();
+
+                    leaf = new Operator(TABLE_SCAN, leafCost, o.getCardinality());
+
+                    leaf.add(o.getDatabaseObjects().get(0));
+                    leaf.addColumnsFetched(o.getColumnsFetched());
+                    leaf.add(o.getPredicates());
+
+                    plan.rename(o, SUBQUERY);
+                    plan.removeDatabaseObject(o);
+                    plan.removeColumnsFetched(o);
+                    plan.removePredicates(o);
+                    plan.setChild(o, leaf);
+                } else {
+                    throw new SQLException(
+                        "Don't know how to handle " + TABLE_SCAN + " with more than one child");
+                }
+        }
+    }
+
+    /**
+     * Renames the first occurence of {@code GENROW} operator (to {@code SORT}) by calling {@link 
+     * #renameClosestJoinAndRemoveBranchComingFrom}.
+     *
+     * @param plan
+     *      plan whose non-leaf table scan operators are to be converted into leafs
+     * @return
+     *      {@code true} if a rename was performed; {@code false} otherwise
+     * @throws SQLException
+     *      if {@link #renameClosestJoinAndRemoveBranchComingFrom} throws an exception
+     */
+    private static boolean removeGENROW(SQLStatementPlan plan) throws SQLException
+    {
+        boolean removed = false;
+
+        for (Operator o : plan.toList()) {
+            if (o.getName().equals("GENROW")) {
+                renameClosestJoinAndRemoveBranchComingFrom(plan, o, SORT);
+                removed = true;
+                break;
+            }
+        }
+
+        return removed;
     }
 
     /**

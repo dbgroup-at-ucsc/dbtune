@@ -210,6 +210,69 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
+     * Assigns the cost to the given operator.
+     *
+     * @param op
+     *      operator whose database object is to be removed
+     */
+    public void removeColumnsFetched(Operator op)
+    {
+        // elements is a hash table and if we rename the operator we need to do it with care since 
+        // by modifying the name of the operator we modify its hashCode. So what we do here is to
+        // first remove the value from the hash
+        Entry<Operator> entry = elements.get(op);
+
+        if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+
+        op.removeColumnsFetched();
+
+        elements.put(op, entry);
+    }
+
+    /**
+     * Assigns the cost to the given operator.
+     *
+     * @param op
+     *      operator whose database object is to be removed
+     */
+    public void removePredicates(Operator op)
+    {
+        // elements is a hash table and if we rename the operator we need to do it with care since 
+        // by modifying the name of the operator we modify its hashCode. So what we do here is to
+        // first remove the value from the hash
+        Entry<Operator> entry = elements.get(op);
+
+        if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+
+        op.removePredicates();
+
+        elements.put(op, entry);
+    }
+
+    /**
+     * Assigns the cost to the given operator.
+     *
+     * @param op
+     *      operator whose database object is to be removed
+     */
+    public void removeDatabaseObject(Operator op)
+    {
+        // elements is a hash table and if we rename the operator we need to do it with care since 
+        // by modifying the name of the operator we modify its hashCode. So what we do here is to
+        // first remove the value from the hash
+        Entry<Operator> entry = elements.get(op);
+
+        if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+
+        op.removeDatabaseObject();
+
+        elements.put(op, entry);
+    }
+
+    /**
      * Checks if the plan contains the given operator.
      *
      * @param operatorName

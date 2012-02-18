@@ -55,6 +55,9 @@ public class Operator
     /** sort operator. **/
     public static final String SORT = "SORT";
 
+    /** sort operator. **/
+    public static final String SUBQUERY = "SUBQUERY";
+
     /** Name of operator. */
     protected String name;
 
@@ -243,6 +246,33 @@ public class Operator
     public String getName()
     {
         return name;
+    }
+
+    /**
+     * removes the object associated to the operator.
+     */
+    public void removeDatabaseObject()
+    {
+        if (objects.size() != 1)
+            throw new RuntimeException("Operator " + this + " doesn't have ONE database object");
+
+        objects.clear();
+    }
+
+    /**
+     * removes the predicates associated to the operator.
+     */
+    public void removePredicates()
+    {
+        predicates.clear();
+    }
+
+    /**
+     * removes the predicates associated to the operator.
+     */
+    public void removeColumnsFetched()
+    {
+        columnsFetched = null;
     }
 
     /**
