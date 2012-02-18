@@ -444,38 +444,37 @@ where
     --s_suppkey;
 
 --query 16
---  TODO: More than one leaf for a table, this means that IXSCAN is done to execute a JOIN,
---  then a FTSCAN is done to do the fetch. Not sure if this is atomic or not.
-select
-    p_brand,
-    p_type,
-    p_size,
-    count(distinct ps_suppkey) as supplier_cnt
-from
-    tpch.partsupp,
-    tpch.part
-where
-    p_partkey = ps_partkey
-    and p_brand <> 'Brand#41'
-    and p_type not like 'MEDIUM BURNISHED%'
-    and p_size in (4, 21, 15, 41, 49, 43, 27, 47)
-    and ps_suppkey not in (
-        select
-            s_suppkey
-        from
-            tpch.supplier
-        where
-            s_comment like '%Customer%Complaints%'
-    )
-group by
-    p_brand,
-    p_type,
-    p_size
-order by
-    supplier_cnt desc,
-    p_brand,
-    p_type,
-    p_size;
+--  TODO: IXAND, i.e. index intersection
+--select
+    --p_brand,
+    --p_type,
+    --p_size,
+    --count(distinct ps_suppkey) as supplier_cnt
+--from
+    --tpch.partsupp,
+    --tpch.part
+--where
+    --p_partkey = ps_partkey
+    --and p_brand <> 'Brand#41'
+    --and p_type not like 'MEDIUM BURNISHED%'
+    --and p_size in (4, 21, 15, 41, 49, 43, 27, 47)
+    --and ps_suppkey not in (
+        --select
+            --s_suppkey
+        --from
+            --tpch.supplier
+        --where
+            --s_comment like '%Customer%Complaints%'
+    --)
+--group by
+    --p_brand,
+    --p_type,
+    --p_size
+--order by
+    --supplier_cnt desc,
+    --p_brand,
+    --p_type,
+    --p_size;
 
 --query 17
 -- TODO: lineitem referenced more than once
@@ -570,43 +569,44 @@ where
     );
 
 --query 20
-select
-    s_name,
-    s_address
-from
-    tpch.supplier,
-    tpch.nation
-where
-    s_suppkey in (
-        select
-            ps_suppkey
-        from
-            tpch.partsupp
-        where
-            ps_partkey in (
-                select
-                    p_partkey
-                from
-                    tpch.part
-                where
-                    p_name like 'ivory%'
-            )
-            and ps_availqty > (
-                select
-                    0.5 * sum(l_quantity)
-                from
-                    tpch.lineitem
-                where
-                    l_partkey = ps_partkey
-                    and l_suppkey = ps_suppkey
-                    and l_shipdate >= '1996-01-01'
-                    and l_shipdate < '1997-01-01'
-            )
-    )
-    and s_nationkey = n_nationkey
-    and n_name = 'KENYA'
-order by
-    s_name;
+-- TODO: IBGSpaceComputation fails
+--select
+    --s_name,
+    --s_address
+--from
+    --tpch.supplier,
+    --tpch.nation
+--where
+    --s_suppkey in (
+        --select
+            --ps_suppkey
+        --from
+            --tpch.partsupp
+        --where
+            --ps_partkey in (
+                --select
+                    --p_partkey
+                --from
+                    --tpch.part
+                --where
+                    --p_name like 'ivory%'
+            --)
+            --and ps_availqty > (
+                --select
+                    --0.5 * sum(l_quantity)
+                --from
+                    --tpch.lineitem
+                --where
+                    --l_partkey = ps_partkey
+                    --and l_suppkey = ps_suppkey
+                    --and l_shipdate >= '1996-01-01'
+                    --and l_shipdate < '1997-01-01'
+            --)
+    --)
+    --and s_nationkey = n_nationkey
+    --and n_name = 'KENYA'
+--order by
+    --s_name;
 
 --query 21
 -- TODO: lineitem referenced more than once

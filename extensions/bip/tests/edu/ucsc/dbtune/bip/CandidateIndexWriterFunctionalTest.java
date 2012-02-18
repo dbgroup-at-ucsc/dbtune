@@ -1,26 +1,24 @@
 package edu.ucsc.dbtune.bip;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
-
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Set;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetCandidateGenerator;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
+
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 /**
  * 
@@ -63,26 +61,29 @@ public class CandidateIndexWriterFunctionalTest
         
         try {
             writeIndexesToFile(candidates, folder  + "/candidate-powerset");
+            (new File(folder  + "/candidate-powerset")).delete();
         } catch (Exception e) {
             throw e;
         }
+
+        
     }
     
     
     /**
-     * Write the set of indexes into the specified file in the format of:
-     * {@code id|table_name|col_name|ASC}
-     * 
-     * @param indexes
-     *      A set of indexes to be serialized into binary file
-     * @param folder
-     *      The folder of the file to be written
-     * @param name
-     *      The name of the file
-     * 
-     * @throws IOException
-     *      when there is an error in creating files.
-     */
+	 * Write the set of indexes into the specified file in the format of:
+	 * {@code id|table_name|col_name|ASC}
+	 * 
+	 * @param indexes
+	 *            A set of indexes to be serialized into binary file
+	 * @param folder
+	 *            The folder of the file to be written
+	 * @param name
+	 *            The name of the file
+	 * 
+	 * @throws IOException
+	 *             when there is an error in creating files.
+	 */
     private void writeIndexesToFile(Set<Index> indexes, String name) 
                 throws IOException
     {
