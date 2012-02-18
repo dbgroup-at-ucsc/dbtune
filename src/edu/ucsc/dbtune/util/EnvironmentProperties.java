@@ -23,10 +23,11 @@ public class EnvironmentProperties
     // update.
 
     /**
-     * Never invoked
+     * Never invoked.
      */
     private EnvironmentProperties()
-    {}
+    {
+    }
 
 
 
@@ -85,8 +86,8 @@ public class EnvironmentProperties
 
     // XXX: Note to devs
     // 
-    // if a new type of optimizer is added, the Wiki entry core-configuration-file should be updated 
-    // accordingly.
+    // if a new type of optimizer is added, the Wiki entry 'core-configuration-file' should be 
+    // updated accordingly.
     /**
      * Type of optimizer to use
      */
@@ -131,12 +132,6 @@ public class EnvironmentProperties
     public static final String WORKLOADS_FOLDERNAME = "workloads.dir";
 
 
-
-    /**
-     *  Folder for storing inum cache files and/or workload files. By convention this folder won't
-     *  contain any sub-folders.
-     */
-    public static final String INUM_CACHE_DEPLOYMENT_DIR = "cache.deployment.dir";
 
     /**
      *  Folder for storing temporary file that will be deleted eventually

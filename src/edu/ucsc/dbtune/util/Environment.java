@@ -11,7 +11,6 @@ import java.util.Properties;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DB2;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.FILE;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_CACHE_DEPLOYMENT_DIR;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_DRIVER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_URL;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.MAX_NUM_INDEXES;
@@ -176,14 +175,6 @@ public class Environment
             throw new IllegalArgumentException("Bad optimizer option " + opt);
 
         return opt;
-    }
-
-    /**
-     * @return {@link EnvironmentProperties#INUM_CACHE_DEPLOYMENT_DIR}
-     */
-    public String getInumCacheDeploymentDir()
-    {
-        return configuration.getProperty(INUM_CACHE_DEPLOYMENT_DIR);
     }
 
     /**
