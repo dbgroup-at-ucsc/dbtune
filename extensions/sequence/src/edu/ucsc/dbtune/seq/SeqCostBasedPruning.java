@@ -19,7 +19,8 @@ public class SeqCostBasedPruning {
 	public SeqCostBasedPruning(SeqCost cost, SeqQuery[] queries, SeqIndex[] indices) throws SQLException {
 		int n = queries.length;
 		SeqIndex[] index = new SeqIndex[1];
-		Vector<SeqIndex>[] usedIndices = new Vector[n];
+        @SuppressWarnings({"unchecked"})
+        Vector<SeqIndex>[] usedIndices = new Vector[n];
 		for (int i = 0; i < n; i++) {
 			usedIndices[i] = new Vector<SeqIndex>();
 		}

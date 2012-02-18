@@ -37,7 +37,8 @@ import org.junit.Test;
  * @author Ivo Jimenez
  * @author Rui Wang
  */
-public class InumPerformanceTest {
+public class InumPerformance
+{
     private static DatabaseSystem db;
     private static Environment env;
     private static Optimizer optimizer;

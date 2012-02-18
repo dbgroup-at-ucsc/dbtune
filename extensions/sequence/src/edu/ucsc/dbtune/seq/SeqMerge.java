@@ -42,6 +42,7 @@ public class SeqMerge {
 			}
 		}
 		Collections.sort(vector, new Comparator<Item>() {
+            @Override
 			public int compare(Item o1, Item o2) {
 				return o1.query.id - o2.query.id;
 			}
@@ -53,6 +54,7 @@ public class SeqMerge {
 		for (int i = 0; i < queries.length; i++) {
 			hash.put(queries[i], i);
 		}
+        @SuppressWarnings({"unchecked"})
 		HashSet<SeqIndex>[] indices = new HashSet[vector.size()];
 		for (int i = 0; i < indices.length; i++) {
 			indices[i] = new HashSet<SeqIndex>();

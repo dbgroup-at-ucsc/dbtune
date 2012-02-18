@@ -26,7 +26,7 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
-public class RInumTest {
+public class RInum {
 	private static DatabaseSystem inum;
 	private static DatabaseSystem dbms;
 	private static Environment en;

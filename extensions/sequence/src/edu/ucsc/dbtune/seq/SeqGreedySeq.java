@@ -17,11 +17,12 @@ public class SeqGreedySeq {
 	public HashSet<SeqConfiguration>[] C;
 	public SeqStepConf[] r, s, t;
 
+    @SuppressWarnings({"unchecked"})
 	public SeqGreedySeq(SeqCost cost, SeqQuery[] queries, SeqIndex[] indices) throws SQLException {
 		this.cost = cost;
 		this.queries = queries;
 		SeqIndex[] index = new SeqIndex[1];
-		C = new HashSet[queries.length];
+        C = (HashSet<SeqConfiguration>[]) new HashSet[queries.length];
 		for (int i = 0; i < C.length; i++)
 			C[i] = new HashSet<SeqConfiguration>();
 		for (int i = 0; i < indices.length; i++) {

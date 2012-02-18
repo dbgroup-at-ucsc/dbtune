@@ -105,8 +105,8 @@ public class InteractionLP extends AbstractBIPSolver
                 
                 // derive the common set of statements
                 Set<Integer> intersectID = new HashSet<Integer>
-                                               ((Set<Integer>) mapIndexListStatements.get(indexc));
-                intersectID.retainAll((Set<Integer>) mapIndexListStatements.get(indexd));
+                                               (mapIndexListStatements.get(indexc));
+                intersectID.retainAll(mapIndexListStatements.get(indexd));
                 
                 List<QueryPlanDesc> lsql = new ArrayList<QueryPlanDesc>();
                 List<Integer>       listRelationC = new ArrayList<Integer>();

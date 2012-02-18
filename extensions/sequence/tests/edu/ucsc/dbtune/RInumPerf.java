@@ -18,7 +18,7 @@ import edu.ucsc.dbtune.workload.Workload;
  * @author wangrui
  *
  */
-public class RInumPerfTest {
+public class RInumPerf {
     private static DatabaseSystem db;
     private static Environment env;
     private static Optimizer optimizer;
