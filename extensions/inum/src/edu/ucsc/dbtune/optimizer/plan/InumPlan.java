@@ -87,17 +87,17 @@ public class InumPlan extends SQLStatementPlan
             if (leaf.getDatabaseObjects().size() != 1)
                 throw new SQLException("Leaf " + leaf + " doesn't refer to any object");
 
-            slot = new TableAccessSlot(leaf, plan.getParent(leaf));
+            leafsCost += extractCostOfLeaf(this, leaf);
+
+            slot = new TableAccessSlot(leaf);
 
             if (slots.get(slot.getTable()) != null)
                 // we don't allow more than one slot for a table
                 throw new SQLException(slot.getTable() + " referenced more than once");
 
-            slots.put(slot.getTable(), slot);
-
-            leafsCost += extractCostOfLeaf(plan, leaf);
-
             replaceLeafBySlot(this, leaf, slot);
+
+            slots.put(slot.getTable(), slot);
         }
 
         if (plan.leafs().size() != slots.size())
@@ -410,7 +410,8 @@ public class InumPlan extends SQLStatementPlan
     }
 
     /**
-     * Returns the cost of the given leaf.
+     * Returns the cost of the given leaf, taking into account that if it's an {@link 
+     * Operator#INDEX_SCAN}, a {@link Operator#FETCH} operator is.
      *
      * @param sqlPlan
      *      plan which the leaf is contained in
@@ -418,19 +419,55 @@ public class InumPlan extends SQLStatementPlan
      *      operator at the base of the plan
      * @return
      *      cost of the leaf
+     * @throws SQLException
+     *      if {@link Operator#FETCH} is found but it has no parent; if {@link Operator#FETCH} has 
+     *      siblings; if an error occurs while pulling down the set of columns fetched from {@link
+     *      Operator#FETCH} down to the leaf.
      */
-    static double extractCostOfLeaf(SQLStatementPlan sqlPlan, Operator leaf)
+    static double extractCostOfLeaf(SQLStatementPlan sqlPlan, Operator leaf) throws SQLException
     {
         if (leaf.getName().equals(Operator.TABLE_SCAN))
             return leaf.getAccumulatedCost();
 
+        Operator fetch = null;
         Operator parent = sqlPlan.getParent(leaf);
+        Index index = (Index) leaf.getDatabaseObjects().get(0);
 
-        if (parent == null)
-            throw new RuntimeException("Something is wrong, leaf should have a parent");
+        while (parent != null) {
 
-        if (parent.getName().equals(Operator.FETCH))
-            return parent.getAccumulatedCost();
+            if (parent.getName().equals(Operator.FETCH)) {
+                fetch = parent;
+                break;
+            } else {
+                parent = sqlPlan.getParent(parent);
+            }
+        }
+        
+        if (fetch == null || !fetch.getDatabaseObjects().get(0).equals(index.getTable()))
+            // no FETCH found, or is referring to table distinct from the one the index refers to
+            return leaf.getAccumulatedCost();
+
+        Operator fetchParent = sqlPlan.getParent(fetch);
+
+        if (fetchParent == null)
+            throw new SQLException(
+                    "Something's wrong, " + Operator.FETCH + " should have a dad");
+
+        if (sqlPlan.getChildren(fetchParent).size() > 1)
+            throw new SQLException(
+                    "Something's wrong, " + Operator.FETCH + " shouldn't have no siblings");
+
+        sqlPlan.remove(leaf);
+
+        leaf.setAccumulatedCost(fetch.getAccumulatedCost());
+        leaf.add(fetch.getPredicates());
+        
+        // we also have to pull the columns fetched down to the slot
+        for (Column c : parent.getColumnsFetched().columns())
+            leaf.getColumnsFetched().add(c, parent.getColumnsFetched().isAscending(c));
+
+        sqlPlan.remove(fetch);
+        sqlPlan.setChild(fetchParent, leaf);
 
         return leaf.getAccumulatedCost();
     }
