@@ -1,14 +1,17 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
-import edu.ucsc.dbtune.inum.EagerSpaceComputation;
-import edu.ucsc.dbtune.inum.IBGSpaceComputation;
 import edu.ucsc.dbtune.inum.ExhaustiveMatchingStrategy;
+import edu.ucsc.dbtune.inum.IBGSpaceComputation;
 import edu.ucsc.dbtune.inum.InumSpaceComputation;
+import edu.ucsc.dbtune.inum.EagerSpaceComputation;
 
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+
+import edu.ucsc.dbtune.util.InumPlanSetWithCache;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -38,8 +41,8 @@ public class InumOptimizer extends AbstractOptimizerWithDelegate
     public InumOptimizer(Optimizer optimizer)
     {
         this.delegate = optimizer;
-        this.inumSpaceComputation = new EagerSpaceComputation();
-        //this.inumSpaceComputation = new IBGSpaceComputation();
+        //this.inumSpaceComputation = new EagerSpaceComputation();
+        this.inumSpaceComputation = new IBGSpaceComputation();
     }
 
     /**
@@ -54,7 +57,12 @@ public class InumOptimizer extends AbstractOptimizerWithDelegate
      */
     Set<InumPlan> computeInumSpace(SQLStatement sql) throws SQLException
     {
-        return inumSpaceComputation.compute(sql, delegate, catalog);
+        //Set<InumPlan> inumSpace = new HashSet<InumPlan>();
+        Set<InumPlan> inumSpace = new InumPlanSetWithCache();
+
+        inumSpaceComputation.compute(inumSpace, sql, delegate, catalog);
+
+        return inumSpace;
     }
     
     /**

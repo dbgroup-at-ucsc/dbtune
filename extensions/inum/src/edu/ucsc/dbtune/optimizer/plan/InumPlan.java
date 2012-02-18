@@ -42,16 +42,16 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 public class InumPlan extends SQLStatementPlan
 {
     /**
+     * Convenience object that maps tables to slots. This is done so that the {@link
+     * #getAccessSlots} and {@link #plugIntoSlots} method can run efficiently
+     */
+    protected Map<Table, TableAccessSlot> slots;
+
+    /**
      * The cost of the internal nodes of a plan; the paper refers to it as {@latex.inline
      * $\\beta_k$}.
      */
     private double internalPlanCost;
-
-    /**
-     * Convenience object that maps tables to slots. This is done so that the {@link
-     * #getAccessSlots} and {@link #plugIntoSlots} method can run efficiently
-     */
-    private Map<Table, TableAccessSlot> slots;
 
     /**
      * We use this optimizer for doing what-if calls to compute index access cost.
@@ -104,6 +104,21 @@ public class InumPlan extends SQLStatementPlan
             throw new SQLException("One or more leafs haven't been assigned with a slot");
 
         internalPlanCost = getRootOperator().getAccumulatedCost() - leafsCost;
+    }
+
+    /**
+     * copy constructor.
+     *
+     * @param other
+     *      plan being copied
+     */
+    InumPlan(InumPlan other)
+    {
+        super(other);
+
+        slots = other.slots;
+        internalPlanCost = other.internalPlanCost;
+        delegate = other.delegate;
     }
 
     /**
@@ -213,13 +228,25 @@ public class InumPlan extends SQLStatementPlan
         if (!slot.isFullTableScan() && !slot.isCompatible(index))
             return null;
 
+        return instantiateOperatorForUnseenIndex(buildQueryForUnseenIndex(slot), index);
+    }
+
+    /**
+     * @param sql
+     *      statement to be explained in order to obtain an {@link Operator#INDEX_SCAN} operator
+     * @param index
+     *      the index being sent as the hypothetical configuration
+     * @return
+     *      an {@link Operator#INDEX_SCAN} operator
+     * @throws SQLException
+     *      if the statement can't be explained
+     */
+    public Operator instantiateOperatorForUnseenIndex(SQLStatement sql, Index index)
+        throws SQLException
+    {
         delegate.setFTSDisabled(true);
 
-        // we have an index that we haven't seen before, so we need to invoke the optimizer
-        SQLStatementPlan plan =
-            delegate.explain(
-                    buildQueryForUnseenIndex(slot),                   
-                    Sets.<Index>newHashSet(index)).getPlan();
+        SQLStatementPlan plan = delegate.explain(sql, Sets.<Index>newHashSet(index)).getPlan();
 
         delegate.setFTSDisabled(false);
 
@@ -447,15 +474,13 @@ public class InumPlan extends SQLStatementPlan
             // no FETCH found, or is referring to table distinct from the one the index refers to
             return leaf.getAccumulatedCost();
 
+        if (sqlPlan.getChildren(fetch).size() > 1)
+            throw new SQLException(Operator.FETCH + " shouldn't have siblings in\n" + sqlPlan);
+
         Operator fetchParent = sqlPlan.getParent(fetch);
 
         if (fetchParent == null)
-            throw new SQLException(
-                    "Something's wrong, " + Operator.FETCH + " should have a dad");
-
-        if (sqlPlan.getChildren(fetchParent).size() > 1)
-            throw new SQLException(
-                    "Something's wrong, " + Operator.FETCH + " shouldn't have no siblings");
+            throw new SQLException(Operator.FETCH + " should have a dad in\n" + sqlPlan);
 
         sqlPlan.remove(leaf);
 
