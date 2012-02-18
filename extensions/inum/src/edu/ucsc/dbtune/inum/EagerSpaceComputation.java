@@ -36,11 +36,11 @@ public class EagerSpaceComputation implements InumSpaceComputation
      * {@inheritDoc}
      */
     @Override
-    public Set<InumPlan> compute(SQLStatement statement, Optimizer delegate, Catalog catalog)
+    public void compute(
+            Set<InumPlan> space, SQLStatement statement, Optimizer delegate, Catalog catalog)
         throws SQLException
     {
         List<Set<Index>> indexesPerTable;
-        Set<InumPlan> inumSpace;
         List<Index> minimumAtomic;
         DerbyInterestingOrdersExtractor interestingOrdersExtractor;
         SQLStatementPlan sqlPlan;
@@ -49,7 +49,7 @@ public class EagerSpaceComputation implements InumSpaceComputation
         interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(catalog, true);
         indexesPerTable = interestingOrdersExtractor.extract(statement);
 
-        inumSpace = new HashSet<InumPlan>();
+        space.clear();
 
         for (List<Index> atomic : cartesianProduct(indexesPerTable)) {
             sqlPlan = delegate.explain(statement, new HashSet<Index>(atomic)).getPlan();
@@ -59,8 +59,8 @@ public class EagerSpaceComputation implements InumSpaceComputation
             
             templatePlan = new InumPlan(delegate, sqlPlan);
 
-            if (isPlanUsingAllInterestingOrders(templatePlan, atomic))
-                inumSpace.add(templatePlan);
+            if (isUsingAllInterestingOrders(templatePlan, atomic))
+                space.add(templatePlan);
         }
         
         // check if NLJ is considered 
@@ -71,45 +71,53 @@ public class EagerSpaceComputation implements InumSpaceComputation
         sqlPlan = delegate.explain(statement, new HashSet<Index>(minimumAtomic)).getPlan();
 
         if (sqlPlan.contains(NLJ))
-            inumSpace.add(new InumPlan(delegate, sqlPlan));
-                
-        return inumSpace;
+            space.add(new InumPlan(delegate, sqlPlan));
     }
     
     /**
-     * Checks if the plan actually uses the indexes in the given interesting order.
+     * Checks if the plan actually uses the given {@code interestingOrders}. For each slot, the 
+     * corresponding index is retrieved and compares it against the corresponding index contained in 
+     * {@code interestingOrders}, if for any slot the order doesn't correspond to the used 
+     * interesting order, the method returns {@code false}.
      * 
      * @param plan
      *      The plan returned by the optimizer
      * @param interestingOrders
      *      The given interesting order
      * @return
-     *      {@code true} if the plan uses indexes corresponding to the given interesting orders; 
-     *      {@code false} otherwise
+     *      {@code true} if the plan uses all the indexes corresponding to the given interesting 
+     *      orders; {@code false} otherwise
+     * @throws SQLException
+     *      if one slot if {@code null}; if the plan is using a materialized index
      */
-    private static boolean isPlanUsingAllInterestingOrders(
-            InumPlan plan, List<Index> interestingOrders)
+    private static boolean isUsingAllInterestingOrders(InumPlan plan, List<Index> interestingOrders)
+        throws SQLException
     {
         TableAccessSlot slot;
         boolean isInterestingOrderFTS;
         boolean isSlotFTS;
 
         for (Index index : interestingOrders) {
+
             slot = plan.getSlot(index.getTable());
+
+            if (slot == null)
+                throw new SQLException("No slot for table " + index.getTable() + " in \n" + plan);
+
             isInterestingOrderFTS = index instanceof FullTableScanIndex;
             isSlotFTS = slot.getIndex() instanceof FullTableScanIndex;
             
-            if (isInterestingOrderFTS && !isSlotFTS)
-                throw new RuntimeException(
-                    "interesting order is a FTS but the optimizer uses a materialized index");
-            
-            if (!isInterestingOrderFTS && isSlotFTS)
-                // the given interesting order is an index, but the one returned by the optimizer
-                // is a FTS: not compatible
-                return false;
-            
             // if (isInterestingOrderFTS && isSlotInterestingOrderFTS)
                 // this is fine, because both are full table scans
+            
+            if (isInterestingOrderFTS && !isSlotFTS)
+                throw new SQLException(
+                    "Interesting order is a FTS but the optimizer uses a materialized index");
+            
+            if (!isInterestingOrderFTS && isSlotFTS)
+                // the given interesting order is an actual index, but the one returned by the 
+                // optimizer is the FTS index, thus they're not compatible
+                return false;
             
             if (!isInterestingOrderFTS && !isSlotFTS)
                 // need to check whether the two indexes are the same

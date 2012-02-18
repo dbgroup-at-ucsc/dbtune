@@ -38,6 +38,8 @@ public interface InumSpaceComputation
      * return a non-null instance when calling {@link 
      * edu.ucsc.dbtune.optimizer.ExplainedSQLStatement#getPlan}.
      * 
+     * @param space
+     *      the space to be computed. {@link Set#clear} is invoked before populating it.
      * @param statement
      *      SQL statement for which the INUM space is computed
      * @param delegate
@@ -45,11 +47,9 @@ public interface InumSpaceComputation
      *      calls}
      * @param catalog
      *      used to retrieve metadata for objects referenced in the statement
-     * @return
-     *      the set of template plans
      * @throws SQLException
      *      if the inum space can't be populated
      */
-    Set<InumPlan> compute(SQLStatement statement, Optimizer delegate, Catalog catalog)
+    void compute(Set<InumPlan> space, SQLStatement statement, Optimizer delegate, Catalog catalog)
         throws SQLException;
 }

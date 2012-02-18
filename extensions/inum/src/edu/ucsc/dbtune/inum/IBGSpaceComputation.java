@@ -132,44 +132,24 @@ public class IBGSpaceComputation implements InumSpaceComputation
      * {@inheritDoc}
      */
     @Override
-    public Set<InumPlan> compute(SQLStatement statement, Optimizer delegate, Catalog catalog)
+    public void compute(
+            Set<InumPlan> space, SQLStatement statement, Optimizer delegate, Catalog catalog)
         throws SQLException
     {
         List<Set<Index>> indexesPerTable;
-        Set<InumPlan> inumSpace;
         DerbyInterestingOrdersExtractor interestingOrdersExtractor;
 
-        interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(
-                catalog, true);
+        interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(catalog, true);
         indexesPerTable = interestingOrdersExtractor.extract(statement);
         HashSet<Index> allIndex = new HashSet<Index>();
 
-        System.out.println("building INUM space, input indexes grouped by table");
-        for (Set<Index> set : indexesPerTable) {
-            System.out.println("-------------");
-            for (Index index : set) {
+        for (Set<Index> set : indexesPerTable)
+            for (Index index : set)
                 allIndex.add(index);
-                System.out.println(index);
-            }
-        }
 
-        inumSpace = new HashSet<InumPlan>();
+        space.clear();
 
         hasPlanWhichDontUseIndex = false;
-        ibg(statement, delegate, allIndex, inumSpace);
-
-        System.out.println("Num of INUM template plans: " + inumSpace.size());
-
-        for (InumPlan plan : inumSpace) {
-            System.out.println(plan.toString());
-            System.out.println("Num of slots: " + plan.getSlots().size());
-
-            for (TableAccessSlot slot : plan.getSlots())
-                System.out.println(slot.getTable().toString() + " " + slot.getIndex().toString());
-        }
-
-        System.out.println("Complete building INUM space");
-
-        return inumSpace;
+        ibg(statement, delegate, allIndex, space);
     }
 }
