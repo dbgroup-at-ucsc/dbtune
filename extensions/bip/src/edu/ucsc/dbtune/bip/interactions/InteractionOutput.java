@@ -31,6 +31,11 @@ public class InteractionOutput extends IndexTuningOutput
         return interactions;
     }
 
+    public int size()
+    {
+        return interactions.size();
+    }
+    
     @Override
     public String toString() 
     {

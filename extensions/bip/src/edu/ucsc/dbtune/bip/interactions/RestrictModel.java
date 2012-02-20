@@ -21,7 +21,6 @@ import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloNumVarType;
-import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
@@ -51,9 +50,8 @@ public class RestrictModel
     
     protected IloLinearNumExpr exprIteraction1;
     
-    protected IloCplex      cplex;
-    protected IloNumVar[]   cplexVar;
-    protected IloRange[]    cplexRange;
+    protected IloCplex        cplex;
+    protected List<IloNumVar> cplexVar;
     
     protected LogListener logger;
     
@@ -317,12 +315,14 @@ public class RestrictModel
         if (cplexVar != null)
             cplexVar = null;
         
-        cplexVar = cplex.numVarArray(size, lb, ub, type);
-        cplex.add(cplexVar);
+        IloNumVar[] iloVar = cplex.numVarArray(size, lb, ub, type);
+        cplex.add(iloVar);
         
         for (int i = 0; i < size; i++) {
-            cplexVar[i].setName(vars.get(i).getName());
+            iloVar[i].setName(vars.get(i).getName());
         }
+        
+        cplexVar = new ArrayList<IloNumVar>(Arrays.asList(iloVar));
     }
     
     /**
@@ -352,7 +352,7 @@ public class RestrictModel
             // (3a) \sum_{k \in [1, Kq]}y^{theta}_k = 1
             for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                 idY = poolVariables.get(theta, IIPVariablePool.VAR_Y, q, k, 0).getId();
-                expr.addTerm(1, cplexVar[idY]);
+                expr.addTerm(1, cplexVar.get(idY));
             }
             
             cplex.addEq(expr, 1, "atomic_" + numConstraints);
@@ -366,13 +366,13 @@ public class RestrictModel
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
                     expr = cplex.linearNumExpr();
-                    expr.addTerm(-1, cplexVar[idY]);
+                    expr.addTerm(-1, cplexVar.get(idY));
                     
                     for (Index index : desc.getListIndexesAtSlot(i)) {
                         
                         id = poolVariables.get(theta, IIPVariablePool.VAR_X, 
                                                q, k, index.getId()).getId();
-                        expr.addTerm(1, cplexVar[id]);                        
+                        expr.addTerm(1, cplexVar.get(id));                        
                     }
                     
                     cplex.addEq(expr, 0, "atomic_" + numConstraints);                    
@@ -394,8 +394,8 @@ public class RestrictModel
                                                q, 0, index.getId()).getId();
                         
                         expr = cplex.linearNumExpr();
-                        expr.addTerm(1, cplexVar[id]);
-                        expr.addTerm(-1, cplexVar[idS]); 
+                        expr.addTerm(1, cplexVar.get(id));
+                        expr.addTerm(-1, cplexVar.get(idS)); 
                         cplex.addLe(expr, 0, "atomic_" + numConstraints);
                         numConstraints++;
                     }
@@ -440,7 +440,7 @@ public class RestrictModel
                 for (Index index : desc.getListIndexesWithoutFTSAtSlot(i)) {
                     idS = poolVariables.get(theta, IIPVariablePool.VAR_S, q, 0, index.getId())
                                              .getId();
-                    expr.addTerm(1, cplexVar[idS]);
+                    expr.addTerm(1, cplexVar.get(idS));
                     hasTerm = true;
                 }
                 
@@ -467,7 +467,7 @@ public class RestrictModel
                 if (!index.equals(indexC)) {
                     idS = poolVariables.get(theta, IIPVariablePool.VAR_S, q, 0, index.getId())
                                         .getId();
-                    expr.addTerm(1, cplexVar[idS]);
+                    expr.addTerm(1, cplexVar.get(idS));
                     hasTerm = true;
                 }
                 
@@ -494,7 +494,7 @@ public class RestrictModel
                 if (!index.equals(indexD)) {
                     idS = poolVariables.get(theta, IIPVariablePool.VAR_S, q, 0, index.getId())
                                        .getId();
-                    expr.addTerm(1, cplexVar[idS]);
+                    expr.addTerm(1, cplexVar.get(idS));
                     hasTerm = true;
                 }
             }
@@ -523,26 +523,26 @@ public class RestrictModel
         
         expr = cplex.linearNumExpr();
         idS = poolVariables.get(IND_EMPTY, IIPVariablePool.VAR_S, q, 0, indexC.getId()).getId();
-        expr.addTerm(1, cplexVar[idS]);
+        expr.addTerm(1, cplexVar.get(idS));
         cplex.addEq(expr, 0, "Empty_" + numConstraints); // For s^{empty}_c = 0     
         numConstraints++;
         
         expr = cplex.linearNumExpr();
         idS = poolVariables.get(IND_D, IIPVariablePool.VAR_S, q, 0, indexC.getId()).getId();
-        expr.addTerm(1, cplexVar[idS]);
+        expr.addTerm(1, cplexVar.get(idS));
         cplex.addEq(expr, 0, "sdc_" + numConstraints); // For s^{d}_c = 0     
         numConstraints++;
         
         
         expr = cplex.linearNumExpr();
         idS = poolVariables.get(IND_EMPTY, IIPVariablePool.VAR_S, q, 0, indexD.getId()).getId();
-        expr.addTerm(1, cplexVar[idS]);
+        expr.addTerm(1, cplexVar.get(idS));
         cplex.addEq(expr, 0, "Empty_" + numConstraints); // For s^{empty}_d = 0     
         numConstraints++;
 
         expr = cplex.linearNumExpr();
         idS = poolVariables.get(IND_C, IIPVariablePool.VAR_S, q, 0, indexD.getId()).getId();
-        expr.addTerm(1, cplexVar[idS]);
+        expr.addTerm(1, cplexVar.get(idS));
         cplex.addEq(expr, 0, "scd_" + numConstraints); // For s^{c}_d = 0     
         numConstraints++;
     }
@@ -601,7 +601,14 @@ public class RestrictModel
     {
         poolVariables.clear();
         mapThetaVarCoef.clear();
-    }
+        try {
+            cplex.clearModel();
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+        
+        cplexVar.clear();
+    }   
     
     /**
      * This set of constraints ensure {@code cost(q, Atheta \cup Atheta} is 
@@ -615,6 +622,7 @@ public class RestrictModel
         int idU;
         
         int q = desc.getStatementID();
+        double threshold = 1.04;
         
         // construct C^opt_t
         for (int theta : listTheta) {
@@ -624,7 +632,7 @@ public class RestrictModel
                 expr = cplex.linearNumExpr();
                 
                 for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(theta).entrySet()){
-                    expr.addTerm(coefs.getValue(), cplexVar[coefs.getKey()]);
+                    expr.addTerm(coefs.getValue(), cplexVar.get(coefs.getKey()));
                 }
                 
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
@@ -633,11 +641,11 @@ public class RestrictModel
                         
                         idU = poolVariables.get(theta, IIPVariablePool.VAR_U, q, t, 
                                                 index.getId()).getId();
-                        expr.addTerm(-desc.getAccessCost(t, index), cplexVar[idU]);
+                        expr.addTerm(- (threshold * desc.getAccessCost(t, index)), cplexVar.get(idU));
                     }
                 }
                 
-                cplex.addLe(expr, desc.getInternalPlanCost(t), "local_" + numConstraints);
+                cplex.addLe(expr, threshold * desc.getInternalPlanCost(t), "local_" + numConstraints);
                 numConstraints++;
             }
         }
@@ -665,7 +673,7 @@ public class RestrictModel
                         
                         idU = poolVariables.get(theta, IIPVariablePool.VAR_U, q, t, 
                                                 index.getId()).getId();
-                        expr.addTerm(1, cplexVar[idU]);
+                        expr.addTerm(1, cplexVar.get(idU));
                                                                       
                     }
                     
@@ -720,7 +728,7 @@ public class RestrictModel
                                 || (theta == IND_D && index.equals(indexC))
                         )
                         {    
-                            expr.addTerm(1, cplexVar[idU]);
+                            expr.addTerm(1, cplexVar.get(idU));
                             cplex.addEq(expr, 0, "U_empty_" + numConstraints); // var_u = 0                            
                             numConstraints++;
                             
@@ -728,12 +736,12 @@ public class RestrictModel
                         else {                           
                             // Constraint (6b): u^{theta}_{tia} <= sum_{theta}_{a}                             
                             int ga = index.getId();
-                            expr.addTerm(1, cplexVar[idU]);
+                            expr.addTerm(1, cplexVar.get(idU));
                             
                             for (int innerTheta : listTheta) {
                                 idS = poolVariables.get(innerTheta, IIPVariablePool.VAR_S, q, 0, ga)
                                                    .getId();
-                                expr.addTerm(-1, cplexVar[idS]);
+                                expr.addTerm(-1, cplexVar.get(idS));
                             }
                                 
                             cplex.addLe(expr, 0, "U_sum_" + numConstraints);
@@ -799,10 +807,11 @@ public class RestrictModel
                                 IloLinearNumExpr exprInternal = cplex.linearNumExpr();
                                 
                                 for (int varID : varIDs)
-                                    exprInternal.addTerm(1, cplexVar[varID]);
+                                    exprInternal.addTerm(1, cplexVar.get(varID));
                                 
                                 cplex.addEq(exprInternal, 1, "optimal_C_" + numConstraints); 
                                 numConstraints++;
+                                break; // the remaining variables will be assigned value 0
                             }
                         }
                         else if (index.equals(indexD)){
@@ -811,10 +820,11 @@ public class RestrictModel
                                 
                                 IloLinearNumExpr exprInternal = cplex.linearNumExpr();
                                 for (int varID : varIDs)
-                                    exprInternal.addTerm(1, cplexVar[varID]);
+                                    exprInternal.addTerm(1, cplexVar.get(varID));
                                 
                                 cplex.addEq(exprInternal, 1, "optimal_D_" + numConstraints); 
                                 numConstraints++;
+                                break; // the remaining variables will be assigned value 0
                             }
                         }
                         else {
@@ -822,10 +832,12 @@ public class RestrictModel
                             if (index.getId() == idFTS) {
                                 IloLinearNumExpr exprInternal = cplex.linearNumExpr();
                                 for (int varID : varIDs)
-                                    exprInternal.addTerm(1, cplexVar[varID]);
+                                    exprInternal.addTerm(1, cplexVar.get(varID));
                             
                                 cplex.addEq(exprInternal, 1, "FTS_" + numConstraints);
                                 numConstraints++;
+                                
+                                break; // the remaining variables will be assigned value 0 
                             } else {
                             
                                 for (int thetainternal : listTheta) {
@@ -833,11 +845,11 @@ public class RestrictModel
                                     // exprInternal >= 0                                    
                                     IloLinearNumExpr exprInternal = cplex.linearNumExpr();
                                     for (int varID : varIDs)
-                                        exprInternal.addTerm(1, cplexVar[varID]);
+                                        exprInternal.addTerm(1, cplexVar.get(varID));
                                     
                                     idS = poolVariables.get(thetainternal, IIPVariablePool.VAR_S, 
                                             q, 0, index.getId()).getId();
-                                    exprInternal.addTerm(-1, cplexVar[idS]);
+                                    exprInternal.addTerm(-1, cplexVar.get(idS));
                                     cplex.addGe(exprInternal, 0, "select_index_" + numConstraints); 
                                     numConstraints++;
                                 }   
@@ -863,22 +875,22 @@ public class RestrictModel
         
         // Aempty
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_EMPTY).entrySet()){
-            expr.addTerm(coefs.getValue(), cplexVar[coefs.getKey()]);
+            expr.addTerm(coefs.getValue(), cplexVar.get(coefs.getKey()));
         }
         
         // for -Ac
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_C).entrySet()){
-            expr.addTerm(-coefs.getValue(), cplexVar[coefs.getKey()]);
+            expr.addTerm(-coefs.getValue(), cplexVar.get(coefs.getKey()));
         }
         
         // for -Ad
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_D).entrySet()){
-            expr.addTerm(-coefs.getValue(), cplexVar[coefs.getKey()]);
+            expr.addTerm(-coefs.getValue(), cplexVar.get(coefs.getKey()));
         }
         
         // for newDelta * Acd
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_CD).entrySet()){
-            expr.addTerm(newDelta * coefs.getValue(), cplexVar[coefs.getKey()]);
+            expr.addTerm(newDelta * coefs.getValue(), cplexVar.get(coefs.getKey()));
         }
         
         cplex.addLe(expr, 0, "interaction_1");
@@ -906,22 +918,22 @@ public class RestrictModel
         
         // for Ac
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_C).entrySet()){
-            expr.addTerm(coefs.getValue(), cplexVar[coefs.getKey()]);
+            expr.addTerm(coefs.getValue(), cplexVar.get(coefs.getKey()));
         }
         
         // for Ad
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_D).entrySet()){
-            expr.addTerm(coefs.getValue(), cplexVar[coefs.getKey()]);
+            expr.addTerm(coefs.getValue(), cplexVar.get(coefs.getKey()));
         }
         
         // for -Aempty
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_EMPTY).entrySet()){
-            expr.addTerm(-coefs.getValue(), cplexVar[coefs.getKey()]);
+            expr.addTerm(-coefs.getValue(), cplexVar.get(coefs.getKey()));
         }
         
         // for newDelta * Acd
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_CD).entrySet()){
-            expr.addTerm(newDelta * coefs.getValue(), cplexVar[coefs.getKey()]);
+            expr.addTerm(newDelta * coefs.getValue(), cplexVar.get(coefs.getKey()));
         }    
         cplex.addLe(expr, 0, "interaction_2");
     }
@@ -934,11 +946,11 @@ public class RestrictModel
      */
     protected double computeDoi() throws UnknownObjectException, IloException
     {
-        double[] val = cplex.getValues(cplexVar);
+        double[] val = cplex.getValues(cplexVar.toArray(new IloNumVar[cplexVar.size()]));
         
         for (int i= 0;i < val.length; i++)
             if (val[i] == 1)
-                System.out.println(cplexVar[i].getName());
+                System.out.println(cplexVar.get(i).getName());
         
         double Cempty, Cc, Cd, Ccd;
         
@@ -962,7 +974,7 @@ public class RestrictModel
         // Ad
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_D).entrySet()){
             if (val[coefs.getKey()] == 1) {
-                System.out.println(" var: " + cplexVar[coefs.getKey()].getName()  
+                System.out.println(" var: " + cplexVar.get(coefs.getKey()).getName()  
                      + " coef: " + coefs.getValue());
             }
             Cd += (coefs.getValue() * val[coefs.getKey()]);

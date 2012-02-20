@@ -1,10 +1,12 @@
 package edu.ucsc.dbtune.bip;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
 
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
@@ -55,12 +57,26 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         
         CandidateGenerator candGen =
-         //   new OneColumnCandidateGenerator(
+            new PowerSetOptimalCandidateGenerator(
+                    new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())), 3);
+        
+        /*
+        CandidateGenerator candGen = 
                     new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
-        
-        
+        */
         //CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 3, true);
         Set<Index> candidates = candGen.generate(workload);
+        
+        Set<Index> temp = new HashSet<Index>();
+        int count = 0;
+        for (Index index : candidates) {
+            count++;
+            temp.add(index);
+            if (count >= 120)
+                break;
+        }
+        candidates = temp;
+        
         
         System.out.println("L56 (Test), Number of indexes: " + candidates.size() 
                             + " Number of statements: " + workload.size());

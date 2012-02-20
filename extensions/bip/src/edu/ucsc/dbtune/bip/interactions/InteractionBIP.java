@@ -156,9 +156,16 @@ public class InteractionBIP extends AbstractBIPSolver
             } 
             
             restrict.clear();
+            numCplexCall++;
+            
+            if (numCplexCall % 100 == 0)
+                System.out.println(" PROCESSING statement: " + desc.getStatementID()
+                                    + " number of CPLEX calls: " + numCplexCall
+                                    + " number of interactions: " + interactionOutput.size());
         }
         
         numCplexCall += listIIP.size();
+        
     }
     
     
