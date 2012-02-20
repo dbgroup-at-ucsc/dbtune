@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.bip.interactions;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -163,7 +162,7 @@ public class RestrictModel
         
         if (iC != iD) {           
             indexInteractionConstraint1();
-            isInteracting = cplex.solve();
+            isInteracting = cplex.solve();            
         }
         else
             isSolveAlternativeOnly = true;
@@ -174,6 +173,9 @@ public class RestrictModel
         } 
         
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
+        
+        if (isInteracting) 
+            doiBIP = computeDoi();
         
         return isInteracting;
     }
@@ -622,7 +624,6 @@ public class RestrictModel
         int idU;
         
         int q = desc.getStatementID();
-        double threshold = 1.04;
         
         // construct C^opt_t
         for (int theta : listTheta) {
@@ -641,11 +642,11 @@ public class RestrictModel
                         
                         idU = poolVariables.get(theta, IIPVariablePool.VAR_U, q, t, 
                                                 index.getId()).getId();
-                        expr.addTerm(- (threshold * desc.getAccessCost(t, index)), cplexVar.get(idU));
+                        expr.addTerm(-desc.getAccessCost(t, index), cplexVar.get(idU));
                     }
                 }
                 
-                cplex.addLe(expr, threshold * desc.getInternalPlanCost(t), "local_" + numConstraints);
+                cplex.addLe(expr, desc.getInternalPlanCost(t), "local_" + numConstraints);
                 numConstraints++;
             }
         }
@@ -947,11 +948,11 @@ public class RestrictModel
     protected double computeDoi() throws UnknownObjectException, IloException
     {
         double[] val = cplex.getValues(cplexVar.toArray(new IloNumVar[cplexVar.size()]));
-        
+        /*
         for (int i= 0;i < val.length; i++)
             if (val[i] == 1)
                 System.out.println(cplexVar.get(i).getName());
-        
+        */
         double Cempty, Cc, Cd, Ccd;
         
         Cempty = 0.0;
@@ -960,32 +961,27 @@ public class RestrictModel
         Ccd = 0.0;
         
         // for Aemtpy
-        for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_EMPTY).entrySet()){
+        for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_EMPTY).entrySet())
             Cempty += (coefs.getValue() * val[coefs.getKey()]);
-        }       
+               
         System.out.println(" cemtpy: " + Cempty);
         
         // for Ac
-        for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_C).entrySet()){
+        for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_C).entrySet())
             Cc += (coefs.getValue() * val[coefs.getKey()]);
-        }
+        
         System.out.println(" cc: " + Cc);
         
         // Ad
-        for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_D).entrySet()){
-            if (val[coefs.getKey()] == 1) {
-                System.out.println(" var: " + cplexVar.get(coefs.getKey()).getName()  
-                     + " coef: " + coefs.getValue());
-            }
+        for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_D).entrySet())            
             Cd += (coefs.getValue() * val[coefs.getKey()]);
-        }
+        
         
         System.out.println(" cd: " + Cd);
         
         // Acd
-        for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_CD).entrySet()){
+        for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_CD).entrySet())
             Ccd += (coefs.getValue() * val[coefs.getKey()]);
-        }
         
         System.out.println(" ccd: " + Ccd);
     

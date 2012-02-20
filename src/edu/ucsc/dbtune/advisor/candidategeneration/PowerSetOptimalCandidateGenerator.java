@@ -53,9 +53,10 @@ public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerato
         
         for (Index index : delegate.generate(workload)) {
             
-            max = maxCols > index.columns().size() ? index.columns().size() : maxCols;
+            max = maxCols > (index.columns().size() - 1)
+                            ? (index.columns().size() - 1): maxCols;
           
-            for (int num = 1; num < max; num++) {
+            for (int num = 1; num <= max; num++) {
                 
                 per = new Permutations<Column>(index.columns(), num);                
                 ascendingIndex = new HashMap<Column, Boolean>();

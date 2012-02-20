@@ -2,8 +2,11 @@ package edu.ucsc.dbtune.bip.sim;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
+import ilog.concert.IloNumVar;
 import ilog.concert.IloNumVarType;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,9 +30,9 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
     private Map<String,Index> mapVarCreateDropToIndex;
     
     /** Variables for the constraints on windows*/
-    protected int W;    
-    protected int maxNumberIndexesWindow;
-    protected double maxCreationCostWindow;
+    protected int     W;    
+    protected int     maxNumberIndexesWindow;
+    protected double  maxCreationCostWindow;
     protected boolean isConstraintNumberIndexesWindow;
     protected boolean isConstraintCreationCostWindow;
     
@@ -243,12 +246,14 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
             ub[i]   = 1.0;
         }
             
-        cplexVar = cplex.numVarArray(size, lb, ub, type);
-        cplex.add(cplexVar);
+        IloNumVar[] iloVar = cplex.numVarArray(size, lb, ub, type);
+        cplex.add(iloVar);
         
         for (int i = 0; i < size; i++) {
-            cplexVar[i].setName(vars.get(i).getName());
+            iloVar[i].setName(vars.get(i).getName());
         }
+        
+        cplexVar = new ArrayList<IloNumVar>(Arrays.asList(iloVar));
     }
     
     /**
@@ -280,7 +285,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
             for (int w = 0; w < W; w++) {                
                 id = poolVariables.get(SimVariablePool.VAR_CREATE, w, 
                                        0, 0, index.getId()).getId();
-                expr.addTerm(1, cplexVar[id]);
+                expr.addTerm(1, cplexVar.get(id));
             }
             
             cplex.addEq(expr, 1, "create_constraint_" + numConstraints); 
@@ -290,13 +295,13 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                 expr = cplex.linearNumExpr(); 
                 idPresent = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 
                                               0, 0, index.getId()).getId();
-                expr.addTerm(-1, cplexVar[idPresent]);
+                expr.addTerm(-1, cplexVar.get(idPresent));
                 
                 for (int j = 0; j <= w; j++) {
                     
                     id = poolVariables.get(SimVariablePool.VAR_CREATE, j, 
                                            0, 0, index.getId()).getId();
-                    expr.addTerm(1, cplexVar[id]);
+                    expr.addTerm(1, cplexVar.get(id));
                 }
                 
                 cplex.addEq(expr, 0, "present_constraint_" + numConstraints);
@@ -311,7 +316,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
             for (int w = 0; w < W; w++) {
                 id = poolVariables.get(SimVariablePool.VAR_DROP, w, 0, 
                                        0, index.getId()).getId();
-                expr.addTerm(1, cplexVar[id]);
+                expr.addTerm(1, cplexVar.get(id));
             }
             cplex.addEq(expr, 1, "drop_constraint_" + numConstraints); 
             numConstraints++;
@@ -320,12 +325,12 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                 expr = cplex.linearNumExpr(); 
                 idPresent = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 
                                               0, 0, index.getId()).getId();
-                expr.addTerm(1, cplexVar[idPresent]);
+                expr.addTerm(1, cplexVar.get(idPresent));
                 
                 for (int j = 0; j <= w; j++) {
                     id = poolVariables.get(SimVariablePool.VAR_DROP, j, 
                                             0, 0, index.getId()).getId();
-                    expr.addTerm(1, cplexVar[id]);
+                    expr.addTerm(1, cplexVar.get(id));
                 }
                 cplex.addEq(expr, 1, "present_constraint_" + numConstraints);
                 numConstraints++;  
@@ -340,7 +345,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                 expr      = cplex.linearNumExpr();
                 idPresent = poolVariables.get(SimVariablePool.VAR_PRESENT, w, 
                                          0, 0, index.getId()).getId();
-                expr.addTerm(1, cplexVar[idPresent]);
+                expr.addTerm(1, cplexVar.get(idPresent));
                 cplex.addEq(expr, 1, "present_constraint_" + numConstraints);
                 numConstraints++;
             }          
@@ -370,7 +375,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     
                     id = poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0).getId();
-                    expr.addTerm(desc.getInternalPlanCost(k), cplexVar[id]);        
+                    expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(id));        
                 }
                           
                 // Index access cost                            
@@ -382,7 +387,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                             
                             id = poolVariables.get(SimVariablePool.VAR_X, w, 
                                                    q, k, index.getId()).getId();
-                            expr.addTerm(desc.getAccessCost(k, index), cplexVar[id]);        
+                            expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(id));        
                         }
                     }
                 }
@@ -419,7 +424,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                 // (1) \sum_{k \in [1, Kq]}y^{theta}_k = 1
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     id = poolVariables.get(SimVariablePool.VAR_Y, w, q, k, 0).getId();
-                    expr.addTerm(1, cplexVar[id]);
+                    expr.addTerm(1, cplexVar.get(id));
                 }
                 
                 cplex.addEq(expr, 1, "atomic_constraint_" + numConstraints);
@@ -433,13 +438,13 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                     for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                         
                         expr = cplex.linearNumExpr(); 
-                        expr.addTerm(-1, cplexVar[idY]);
+                        expr.addTerm(-1, cplexVar.get(idY));
                         
                         for (Index index : desc.getListIndexesAtSlot(i)) {
                             
                             id = poolVariables.get(SimVariablePool.VAR_X, w, 
                                                   q, k, index.getId()).getId();
-                            expr.addTerm(1, cplexVar[id]);
+                            expr.addTerm(1, cplexVar.get(id));
                         }
                         
                         cplex.addEq(expr, 0, "atomic_constraint_" + numConstraints);
@@ -479,8 +484,8 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                             
                             idPresent = poolVariables.get(SimVariablePool.VAR_PRESENT, 
                                                           w, 0, 0, index.getId()).getId();
-                            expr.addTerm(1, cplexVar[id]);
-                            expr.addTerm(-1, cplexVar[idPresent]);
+                            expr.addTerm(1, cplexVar.get(id));
+                            expr.addTerm(-1, cplexVar.get(idPresent));
                             
                             cplex.addLe(expr, 0, "index_used_" + numConstraints);
                             numConstraints++;
@@ -526,7 +531,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
             for (Index index : Screate){
                 id = poolVariables.get(SimVariablePool.VAR_CREATE, w, 
                                        0, 0, index.getId()).getId();
-                expr.addTerm(1, cplexVar[id]);
+                expr.addTerm(1, cplexVar.get(id));
             }
             
             cplex.addLe(expr, maxNumberIndexesWindow, "window_" + numConstraints);

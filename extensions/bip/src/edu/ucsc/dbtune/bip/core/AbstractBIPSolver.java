@@ -32,20 +32,23 @@ import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInsta
  */
 public abstract class AbstractBIPSolver implements BIPSolver 
 {
+    public static double UNKNOWN_OBJ_VALUE = -99999999;
+    
     protected Set<Index>          candidateIndexes;    
     protected Workload            workload;
     protected List<QueryPlanDesc> listQueryPlanDescs;
     
-    protected CPlexBuffer   buf;
-    protected IloCplex      cplex;
-    protected IloNumVar[]   cplexVar; 
-    protected double[]      valVar;
+    protected CPlexBuffer     buf;
+    protected IloCplex        cplex;
+    protected List<IloNumVar> cplexVar; 
+    protected double[]        valVar;
     
     protected Environment   environment = Environment.getInstance();
     
     protected int           numConstraints;
     protected InumOptimizer inumOptimizer;    
     protected LogListener   logger;
+    protected double        objVal;
     
     @Override    
     public void setWorkload(Workload wl)
@@ -79,7 +82,16 @@ public abstract class AbstractBIPSolver implements BIPSolver
         
         // 2. Build BIP    
         logger.setStartTimer();
+        
+        // start CPLEX
         cplex = new IloCplex();
+        // allow the solution differed 5% from the actual optimal value
+        cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
+        // not output the log of CPLEX
+        cplex.setOut(null);
+        // not output the warning
+        cplex.setWarning(null);
+        
         buildBIP();       
         logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);
         
@@ -90,10 +102,24 @@ public abstract class AbstractBIPSolver implements BIPSolver
         if (cplex.solve()) {
             getMapVariableValue();
             result = getOutput();
+            objVal = cplex.getObjValue();
+        } else {
+            objVal = UNKNOWN_OBJ_VALUE;
         }
         
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         return result;            
+    }
+    
+    /**
+     * Retrieve the objective value returned by BIP
+     * 
+     * @return
+     *      The objective value
+     */
+    public double getObjValue()
+    {
+        return objVal;
     }
     
     /**
@@ -147,7 +173,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
      */
     protected void getMapVariableValue() throws Exception
     {   
-        valVar = cplex.getValues(cplexVar);
+        valVar = cplex.getValues(cplexVar.toArray(new IloNumVar[cplexVar.size()]));
     }
   
     /**

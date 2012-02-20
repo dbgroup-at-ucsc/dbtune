@@ -106,11 +106,11 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     public void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidateIndexes) 
                                       throws SQLException
     {   
-        beta                          = new ArrayList<Double>();
+        beta                      = new ArrayList<Double>();
         indexesEachSlot           = new ArrayList<List<Index>>();
         indexesWithoutFTSEachSlot = new ArrayList<List<Index>>();
         activeIndexesEachSlot     = new ArrayList<Set<Index>>();
-        listTables                    = new ArrayList<Table>();
+        listTables                = new ArrayList<Table>();
         accessCostPerPlan         = new ArrayList<Map<Integer, Double>>();
         
         InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) 
@@ -159,7 +159,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         
         for (InumPlan plan : templatePlans) {
             
-            beta.add(new Double(plan.getInternalCost()));
+            beta.add(plan.getInternalCost());
             Map<Integer, Double> mapIndexAccessCost = new HashMap<Integer, Double>();
             
             for (int i = 0; i < n; i++) {
@@ -179,7 +179,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                     else if (cost < costFTS) 
                         activeIndexesEachSlot.get(i).add(index);
                     
-                    mapIndexAccessCost.put(index.getId(), cost);
+                    mapIndexAccessCost.put(index.getId(), cost);                    
                 }
                 
             }
