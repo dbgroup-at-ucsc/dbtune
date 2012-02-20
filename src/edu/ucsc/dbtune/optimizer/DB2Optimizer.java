@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import java.util.regex.Matcher;
@@ -965,7 +964,6 @@ public class DB2Optimizer extends AbstractOptimizer
         Schema schema;
         Table table;
         Index index;
-        String name;
         boolean unique = false;
         boolean clustered = false;
         boolean primary = false;
@@ -975,8 +973,7 @@ public class DB2Optimizer extends AbstractOptimizer
             table = schema.findTable(rs.getString("tbname").trim());
             columns = new ArrayList<Column>();
             ascending = new ArrayList<Boolean>();
-            name = "dbtune_index_" + new Random().nextInt(Integer.MAX_VALUE);
-
+            
             parseColumnNames(table, rs.getString("colnames"), columns, ascending);
 
             if (rs.getString("uniquerule").trim().equals("U"))
@@ -995,7 +992,7 @@ public class DB2Optimizer extends AbstractOptimizer
             else
                 clustered = false;
 
-            index = new Index(name, columns, ascending, primary, unique, clustered);
+            index = new Index(columns, ascending, primary, unique, clustered);
 
             recommended.add(index);
         }

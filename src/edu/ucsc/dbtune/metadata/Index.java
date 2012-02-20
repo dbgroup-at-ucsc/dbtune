@@ -226,6 +226,29 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             this.ascendingColumn.add(ascending.get(c));
         }
     }
+    
+    /**
+     * Creates an index from the given columns,  primary,  uniqueness and clustering values. The 
+     * index is assumed to be {@link SECONDARY},  {@link NON_UNIQUE} and {@link UNCLUSTERED}.
+     * 
+     * @param columns
+     *     columns that will define the index
+     * @param ascending
+     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
+     *     order.
+     * @throws SQLException
+     *     if column list empty; if schema already contains an index with the given name; if not all 
+     *     of the columns in the list correspond to the same table.
+     */
+    public Index(List<Column> columns, List<Boolean> ascending,
+            boolean primary,
+            boolean unique,
+            boolean clustered) throws SQLException
+    {
+        this("dbtune_" + (IN_MEMORY_ID.get() + 1) + "_index", columns, 
+                ascending, primary, unique, clustered);
+    }
+   
 
     /**
      * Creates an index from the given columns,  primary,  uniqueness and clustering values. The 
