@@ -5,12 +5,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.inum.ExhaustiveMatchingStrategy;
-import edu.ucsc.dbtune.inum.IBGSpaceComputation;
 import edu.ucsc.dbtune.inum.InumSpaceComputation;
-import edu.ucsc.dbtune.inum.EagerSpaceComputation;
 
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 
+import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.InumPlanSetWithCache;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -25,6 +24,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public class InumOptimizer extends AbstractOptimizerWithDelegate
 {
+    private boolean useInumCache;
+
     /**
      * inum space computation. This could be passed as argument of the constructor if other kind of 
      * computation is needed
@@ -37,12 +38,26 @@ public class InumOptimizer extends AbstractOptimizerWithDelegate
      *
      * @param optimizer
      *      a DBMS-specific implementation of an {@link Optimizer} type.
+     * @param env
+     *      to get properties about the environment where the optimizer is running
+     * @throws SQLException
+     *      if the underlying {@link InumSpaceComputation} specified by the {@code env} object can't 
+     *      be instantiated.
      */
-    public InumOptimizer(Optimizer optimizer)
+    public InumOptimizer(Optimizer optimizer, Environment env) throws SQLException
     {
         this.delegate = optimizer;
-        //this.inumSpaceComputation = new EagerSpaceComputation();
-        this.inumSpaceComputation = new IBGSpaceComputation();
+
+        if (env.getInumSlotCache())
+            useInumCache = true;
+        else
+            useInumCache = false;
+
+        try {
+            inumSpaceComputation = InumSpaceComputation.Factory.newInumSpaceComputation(env);
+        } catch (InstantiationException ex) {
+            throw new SQLException(ex);
+        }
     }
 
     /**
@@ -57,8 +72,12 @@ public class InumOptimizer extends AbstractOptimizerWithDelegate
      */
     Set<InumPlan> computeInumSpace(SQLStatement sql) throws SQLException
     {
-        //Set<InumPlan> inumSpace = new HashSet<InumPlan>();
-        Set<InumPlan> inumSpace = new InumPlanSetWithCache();
+        Set<InumPlan> inumSpace;
+
+        if (useInumCache)
+            inumSpace = new InumPlanSetWithCache();
+        else
+            inumSpace = new HashSet<InumPlan>();
 
         inumSpaceComputation.compute(inumSpace, sql, delegate, catalog);
 

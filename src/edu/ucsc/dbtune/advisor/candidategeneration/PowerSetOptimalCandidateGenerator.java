@@ -23,16 +23,17 @@ import edu.ucsc.dbtune.workload.Workload;
 public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerator 
 {
     private CandidateGenerator delegate;
-    private int                 maxCols;
+    private int maxCols;
     
     /**
      * Constructs a generator with the given delegate used to generate candidate indexes
-     * and the maximum number of columns that an index can have
+     * and the maximum number of columns that an index can have.
      *
      * @param delegate
      *      an optimizer
      * @param maxCols
-     *      the maximum number of columns in an index     
+     *      the maximum number of columns in an index. If zero or negative, the size of an index is 
+     *      taken as the maximum number of columns that an index has
      */
     public PowerSetOptimalCandidateGenerator(CandidateGenerator delegate, int maxCols)
     {
@@ -40,9 +41,12 @@ public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerato
         this.maxCols  = maxCols;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Set<ByContentIndex> generateByContent(Workload workload)
-            throws SQLException 
+        throws SQLException
     {
         Set<ByContentIndex>  indexes = new HashSet<ByContentIndex>();
         List<Column>         idxCols;

@@ -195,7 +195,7 @@ public class DatabaseSystem
         else if (env.getOptimizer().equals(IBG))
             return new IBGOptimizer(optimizer);
         else if (env.getOptimizer().equals(INUM))
-            return newOptimizer("edu.ucsc.dbtune.optimizer.InumOptimizer", optimizer);
+            return newOptimizer("edu.ucsc.dbtune.optimizer.InumOptimizer", optimizer, env);
         else
             throw new SQLException("Unknown optimizer option: " + env.getOptimizer());
     }
@@ -207,19 +207,22 @@ public class DatabaseSystem
      *      name of the optimizer class
      * @param delegate
      *      argument sent as delegate to the constructor
+     * @param env
+     *      the environment object.
      * @return
      *      an instance of the
      * @throws SQLException
      *      if {@code className} can't be found in the class path
      */
-    public static Optimizer newOptimizer(String className, Optimizer delegate) throws SQLException
+    public static Optimizer newOptimizer(String className, Optimizer delegate, Environment env) 
+        throws SQLException
     {
         try {
             return (Optimizer)
                 Class
                 .forName(className)
-                .getConstructor(Optimizer.class)
-                .newInstance(delegate);
+                .getConstructor(Optimizer.class, Environment.class)
+                .newInstance(delegate, env);
         }
         catch (ClassNotFoundException e) {
             throw new SQLException(e);

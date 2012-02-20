@@ -43,6 +43,18 @@ public final class Strings
     }
 
     /**
+     * check if two strings are the same.
+     *
+     * @param left string
+     * @param right string
+     * @return {@code true} if they are the same. {@code false} otherwise.
+     */
+    public static boolean same(String left, String right)
+    {
+        return left.equals(right) || left.equalsIgnoreCase(right);
+    }
+
+    /**
      * performs some rudimentary trimming of some text that is assumed to contain an sql
      * statement.
      *
@@ -89,6 +101,28 @@ public final class Strings
         for (int i = 0; i < valArray.length; i++) { intArray[i] = Integer.parseInt(valArray[i]); }
 
         return intArray;
+    }
+
+    /**
+     * Converts from a string to a boolean value. The valid literal values are "Y" or "N", "yes" or 
+     * "no", "on" or "off", "true" or "false". The comparison is case insensitive.
+     *
+     * @param value
+     *      a string containing a literal boolean value
+     * @return
+     *      {@code true} if {@code "y"}, {@code "on"} or {@code "true"}; {@code false} if {@code 
+     *      "n"}, {@code "off"} or {@code "false"}.
+     */
+    public static boolean toBoolean(String value)
+    {
+        String lv = value.toLowerCase();
+
+        if (lv.equals("y") || lv.equals("true") || lv.equals("on") || lv.equals("yes"))
+            return true;
+        else if (lv.equals("n") || lv.equals("false") || lv.equals("off") || lv.equals("no"))
+            return false;
+
+        throw new RuntimeException("Unknown value " + value);
     }
 
     /**
@@ -241,41 +275,6 @@ public final class Strings
         for (String each : searchStrs) { result |= contains(str, each); }
 
         return result;
-    }
-
-    /**
-     * checks if a String is empty ("") or null.
-     *
-     * @param str string to be checked.
-     * @return true if the string is empty; false otherwise.
-     */
-    public static boolean isEmpty(String str)
-    {
-        return null == str || str.length() == 0;
-    }
-
-    /**
-     * check if two strings are the same.
-     *
-     * @param left string
-     * @param right string
-     * @return {@code true} if they are the same. {@code false} otherwise.
-     */
-    public static boolean same(String left, String right)
-    {
-        return left.equals(right) || left.equalsIgnoreCase(right);
-    }
-
-    /**
-     * Obtain the string representation of an object.
-     *
-     * @param value object of interest.
-     * @param <T> type of the object of interest.
-     * @return a string representation of the object of interest.
-     */
-    public static <T> String str(T value)
-    {
-        return value == null ? "" : value.toString();
     }
 
     /**

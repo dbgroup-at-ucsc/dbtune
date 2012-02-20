@@ -38,6 +38,9 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_URL;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_EAGER_COMPUTATION;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SLOT_CACHE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SPACE_COMPUTATION;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
 
 import static org.mockito.Mockito.mock;
@@ -222,6 +225,8 @@ public final class DBTuneInstances
     public static Environment configureINUMOptimizer(Environment cfg)
     {
         cfg.setProperty(OPTIMIZER, INUM);
+        cfg.setProperty(INUM_SLOT_CACHE, "ON");
+        cfg.setProperty(INUM_SPACE_COMPUTATION, INUM_EAGER_COMPUTATION);
         return cfg;
     }
 

@@ -10,7 +10,7 @@ import java.util.List;
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
  */
-public class EnvironmentProperties
+public final class EnvironmentProperties
 {
     // XXX: Note to devs.
     //
@@ -21,13 +21,6 @@ public class EnvironmentProperties
     // For some groups, the addition of a new property may need to be reflected in other classes of 
     // the API. When this is the case, there will be a note indicating the list of class#method to 
     // update.
-
-    /**
-     * Never invoked.
-     */
-    private EnvironmentProperties()
-    {
-    }
 
 
 
@@ -43,7 +36,7 @@ public class EnvironmentProperties
      */
     public static final String USERNAME = "username";
     /**
-     * Developer's DBMS password
+     * Developer's DBMS password.
      */
     public static final String PASSWORD = "password";
     /**
@@ -54,23 +47,23 @@ public class EnvironmentProperties
 
 
     /**
-     * Fully qualified path to JDBC's {@code Driver} class
+     * Fully qualified path to JDBC's {@code Driver} class.
      */
     public static final String JDBC_DRIVER = "driver";
     /**
-     * DB2 driver class path
+     * DB2 driver class path.
      */
     public static final String DB2 = "com.ibm.db2.jcc.DB2Driver";
     /**
-     * MySQL driver class path
+     * MySQL driver class path.
      */
     public static final String MYSQL = "com.mysql.jdbc.Driver";
     /**
-     * PG driver class path
+     * PG driver class path.
      */
     public static final String PG = "org.postgresql.Driver";
     /**
-     * List of vendors that the API supports
+     * List of vendors that the API supports.
      */
     public static final List<String> SUPPORTED_VENDORS;
 
@@ -89,23 +82,23 @@ public class EnvironmentProperties
     // if a new type of optimizer is added, the Wiki entry 'core-configuration-file' should be 
     // updated accordingly.
     /**
-     * Type of optimizer to use
+     * Type of optimizer to use.
      */
     public static final String OPTIMIZER = "optimizer";
     /**
-     * DBMS optimizer
+     * DBMS optimizer.
      */
     public static final String DBMS = "dbms";
     /**
-     * INUM optimizer
+     * INUM optimizer.
      */
     public static final String INUM = "inum";
     /**
-     * IBG optimizer
+     * IBG optimizer.
      */
     public static final String IBG = "ibg";
     /**
-     * List of supported optimizers
+     * List of supported optimizers.
      */
     public static final List<String> SUPPORTED_OPTIMIZERS;
 
@@ -116,6 +109,26 @@ public class EnvironmentProperties
         SUPPORTED_OPTIMIZERS.add(IBG);
         SUPPORTED_OPTIMIZERS.add(INUM);
     }
+
+
+    /**
+     * Type of candidate generator to use. Two generators can be specified (separating them with 
+     * comma) if the one accepts another generator as a construction parameter. By convention, a 
+     * generator in the right is the parameter of the one in the left.
+     */
+    public static final String CANDIDATE_GENERATOR = "candidate.generator";
+    /**
+     * @see OptimizerCandidateGenerator
+     */
+    //public static final String OPTIMIZER = "optimizer"; // already defined above
+    /**
+     * @see OneColumnCandidateGenerator
+     */
+    public static final String ONE_COLUMN = "one.column";
+    /**
+     * @see PowerSetOptimalCandidateGenerator
+     */
+    public static final String POWERSET = "powerset";
 
 
 
@@ -130,14 +143,29 @@ public class EnvironmentProperties
      * contains SQL statements.
      */
     public static final String WORKLOADS_FOLDERNAME = "workloads.dir";
-
-
-
     /**
-     *  Folder for storing temporary file that will be deleted eventually
+     *  Folder for storing temporary file that will be deleted eventually.
      */
     public static final String TEMP_DIR = "temp.dir";
 
+
+    
+    // INUM
+    /**
+     *  Space computation option.
+     */
+    public static final String INUM_SPACE_COMPUTATION = "inum.space.computation";
+    /** ibg-based space computation. */
+    public static final String INUM_IBG_COMPUTATION = IBG;
+    /** eager space computation. */
+    public static final String INUM_EAGER_COMPUTATION = "eager";
+    /** lazy computation of the INUM space. */
+    public static final String INUM_LAZY_COMPUTATION = "lazy";
+    /** cache for slots? */
+    public static final String INUM_SLOT_CACHE = "inum.slot.cache";
+
+
+    // WFIT
 
     /**
      * Specifies an upper bound on the number of indexes that are monitored by an instance of WFA 
@@ -147,7 +175,7 @@ public class EnvironmentProperties
      *
      * @see edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm#getRecommendation
      */
-    public static final String MAX_NUM_INDEXES = "max.number.of.indexes";
+    public static final String WFIT_MAX_NUM_INDEXES = "max.number.of.indexes";
     /**
      * Specifies an upper bound on the number of configurations tracked by WFIT and is read from 
      * function {@code chooseCands} (as referenced in page 169 (Figure 6.5) of Schnaitter's thesis), 
@@ -156,13 +184,20 @@ public class EnvironmentProperties
      *
      * @see edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm#getRecommendation
      */
-    public static final String MAX_NUM_STATES = "max.number.of.states";
+    public static final String WFIT_MAX_NUM_STATES = "max.number.of.states";
     /**
-     * XXX document
+     * XXX document.
      */
-    public static final String NUM_PARTITION_ITERATIONS = "num.partition.iterations";
+    public static final String WFIT_NUM_PARTITION_ITERATIONS = "num.partition.iterations";
     /**
-     * XXX document
+     * XXX document.
      */
-    public static final String INDEX_STATISTICS_WINDOW = "index.statistics.window";
+    public static final String WFIT_INDEX_STATISTICS_WINDOW = "index.statistics.window";
+
+    /**
+     * Never invoked.
+     */
+    private EnvironmentProperties()
+    {
+    }
 }

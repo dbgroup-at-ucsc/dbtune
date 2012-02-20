@@ -5,25 +5,33 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
+import static edu.ucsc.dbtune.util.EnvironmentProperties.CANDIDATE_GENERATOR;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DB2;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.FILE;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.INDEX_STATISTICS_WINDOW;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SLOT_CACHE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SPACE_COMPUTATION;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_DRIVER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_URL;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.MAX_NUM_INDEXES;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.MAX_NUM_STATES;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.MYSQL;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.NUM_PARTITION_ITERATIONS;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.TEMP_DIR;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.WFIT_INDEX_STATISTICS_WINDOW;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.WFIT_MAX_NUM_INDEXES;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.WFIT_MAX_NUM_STATES;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.WFIT_NUM_PARTITION_ITERATIONS;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.WORKLOADS_FOLDERNAME;
+import static edu.ucsc.dbtune.util.Strings.toBoolean;
 
 /**
  * @author Huascar A. Sanchez
@@ -99,14 +107,6 @@ public class Environment
     {
         return instance;
     }
-    
-    /**
-     * @return {@link EnvironmentProperties#TEMP_DIR}
-     */
-    public String getTempDir()
-    {
-        return configuration.getProperty(TEMP_DIR);
-    }
 
     /**
      * Assigns a property.
@@ -122,43 +122,86 @@ public class Environment
     }
 
     /**
+     * Checks if a property is null or empty and throws a {@link NoSuchMethodException} if it is.
+     *
+     * @param properties
+     *      used to get the corresponding name
+     * @param propertyName
+     *      property being checked
+     * @return
+     *      the corresponding property
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    private static String getOrThrowIfNullOrEmpty(Properties properties, String propertyName)
+        throws NoSuchElementException
+    {
+        String propertyValue = properties.getProperty(propertyName);
+        
+        if (isNullOrEmpty(propertyValue))
+            throw new NoSuchElementException(propertyName + " not specified or empty");
+
+        return propertyValue;
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#TEMP_DIR}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public String getTempDir()
+    {
+        return getOrThrowIfNullOrEmpty(configuration, TEMP_DIR);
+    }
+
+    /**
      * @return {@link EnvironmentProperties#USERNAME}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public String getUsername()
     {
-        return configuration.getProperty(USERNAME);
+        return getOrThrowIfNullOrEmpty(configuration, USERNAME);
     }
 
     /**
      * @return {@link EnvironmentProperties#PASSWORD}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public String getPassword()
     {
-        return configuration.getProperty(PASSWORD);
+        return getOrThrowIfNullOrEmpty(configuration, PASSWORD);
     }
 
     /**
      * @return {@link EnvironmentProperties#JDBC_URL}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public String getJdbcURL()
     {
-        return configuration.getProperty(JDBC_URL);
+        return getOrThrowIfNullOrEmpty(configuration, JDBC_URL);
     }
 
     /**
      * @return {@link EnvironmentProperties#JDBC_DRIVER}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public String getJdbcDriver()
     {
-        return configuration.getProperty(JDBC_DRIVER);
+        return getOrThrowIfNullOrEmpty(configuration, JDBC_DRIVER);
     }
 
     /**
      * @return {@link EnvironmentProperties#JDBC_DRIVER}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public String getVendor()
     {
-        return configuration.getProperty(JDBC_DRIVER);
+        return getOrThrowIfNullOrEmpty(configuration, JDBC_DRIVER);
     }
 
     /**
@@ -166,10 +209,12 @@ public class Environment
      * @throws IllegalArgumentException
      *      if the {@link EnvironmentProperties#OPTIMIZER} option doesn't correspond to one 
      *      specified in {@link #SUPPORTED_OPTIMIZERS}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public String getOptimizer() throws IllegalArgumentException
     {
-        String opt = configuration.getProperty(OPTIMIZER);
+        String opt = getOrThrowIfNullOrEmpty(configuration, OPTIMIZER);
 
         if (!SUPPORTED_OPTIMIZERS.contains(opt))
             throw new IllegalArgumentException("Bad optimizer option " + opt);
@@ -179,18 +224,33 @@ public class Environment
 
     /**
      * @return {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public String getWorkloadsFoldername()
     {
-        return configuration.getProperty(WORKLOADS_FOLDERNAME);
+        return getOrThrowIfNullOrEmpty(configuration, WORKLOADS_FOLDERNAME);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#CANDIDATE_GENERATOR}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public List<String> getCandidateGenerator()
+    {
+        return Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, CANDIDATE_GENERATOR).split(","));
     }
 
     /**
      * @return {@link EnvironmentProperties#MAX_NUM_INDEXES}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public int getMaxNumIndexes()
     {
-        String maxSize = configuration.getProperty(MAX_NUM_INDEXES);
+        String maxSize = getOrThrowIfNullOrEmpty(configuration, WFIT_MAX_NUM_INDEXES);
         return Integer.valueOf(maxSize);
     }
 
@@ -198,10 +258,12 @@ public class Environment
      * @return {@link EnvironmentProperties#MAX_NUM_STATES}
      * @throws NumberFormatException
      *      unable to return the max num of states due to the stated reason.
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public int getMaxNumStates() throws NumberFormatException
     {
-        String numOfStates = configuration.getProperty(MAX_NUM_STATES);
+        String numOfStates = getOrThrowIfNullOrEmpty(configuration, WFIT_MAX_NUM_STATES);
         return Integer.valueOf(numOfStates);
     }
 
@@ -209,22 +271,26 @@ public class Environment
      * @return {@link EnvironmentProperties#NUM_PARTITION_ITERATIONS}
      * @throws NumberFormatException
      *      unable to return the overhead factor due to the stated reason.
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public int getNumPartitionIterations() throws NumberFormatException
     {
-        String numPartitionIterations = configuration.getProperty(NUM_PARTITION_ITERATIONS);
-        return Integer.valueOf(numPartitionIterations);
+        return Integer.valueOf(
+                getOrThrowIfNullOrEmpty(configuration, WFIT_NUM_PARTITION_ITERATIONS));
     }
 
     /**
      * @return {@link EnvironmentProperties#INDEX_STATISTICS_WINDOW}
      * @throws NumberFormatException
      *      unable to return the overhead factor due to the stated reason.
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public int getIndexStatisticsWindow() throws NumberFormatException
     {
-        String indexStatisticsWindow = configuration.getProperty(INDEX_STATISTICS_WINDOW);
-        return Integer.valueOf(indexStatisticsWindow);
+        return Integer.valueOf(
+                getOrThrowIfNullOrEmpty(configuration, WFIT_INDEX_STATISTICS_WINDOW));
     }
 
     /**
@@ -235,6 +301,8 @@ public class Environment
      *    relative path to the file contained in {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}.
      * @return
      *    {@code String} containing the path to the given script filename
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public String getScriptAtWorkloadsFolder(String scriptPath)
     {
@@ -252,6 +320,8 @@ public class Environment
      *    name of file contained inside {@link EnvironmentProperties#WORKLOADS_FOLDERNAME}.
      * @return
      *    {@code String} containing the path to the given script filename
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      * @see #getWorkloadsFoldername
      */
     public String getFilenameAtWorkloadFolder(String filename)
@@ -272,6 +342,8 @@ public class Environment
      *      list containing the name of each folder for each workload contained inside {@link 
      *      EnvironmentProperties#WORKLOADS_FOLDERNAME}.
      * @see #getWorkloadsFoldername
+     * @throws NoSuchElementException
+     *      if the property is empty or null
      */
     public List<String> getWorkloadFolders()
     {
@@ -309,5 +381,25 @@ public class Environment
             throw new SQLException("Can't extract driver from " + env.getJdbcURL());
 
         env.setProperty(JDBC_DRIVER, driver);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#INUM_SPACE_COMPUTATION}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public String getInumSpaceComputation()
+    {
+        return getOrThrowIfNullOrEmpty(configuration, INUM_SPACE_COMPUTATION);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#INUM_SLOT_CACHE}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public boolean getInumSlotCache()
+    {
+        return toBoolean(getOrThrowIfNullOrEmpty(configuration, INUM_SLOT_CACHE));
     }
 }
