@@ -124,4 +124,36 @@ public class TableAccessSlot extends Operator
     {
         return getIndex() instanceof FullTableScanIndex;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return 37 * super.hashCode() + index.hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object o)
+    {
+        if (!super.equals(o))
+            return false;
+
+        if (this == o)
+            return true;
+
+        if (!(o instanceof TableAccessSlot))
+            return false;
+
+        TableAccessSlot op = (TableAccessSlot) o;
+
+        if (index.equalsContent(op.index))
+            return true;
+
+        return false;
+    }
 }
