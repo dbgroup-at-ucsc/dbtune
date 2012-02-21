@@ -34,8 +34,6 @@ import org.apache.derby.impl.sql.compile.OrderByList;
 import org.apache.derby.impl.sql.compile.QueryTreeNode;
 import org.apache.derby.impl.sql.compile.SelectNode;
 
-import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
-
 /**
  * Extracts interesting orders by parsing a query using the Derby SQL parser. Supports any SQL
  * statement that is supported by Derby 10.8. This implementation assumes that the SQL statements
@@ -462,7 +460,6 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
             if (interestingOrdersPerTable.get(table) == null)  {
                 interestingOrdersForTable = new HashSet<Index>();
-                interestingOrdersForTable.add(getFullTableScanIndexInstance(table));
                 interestingOrdersPerTable.put(table, interestingOrdersForTable);
             }
         }

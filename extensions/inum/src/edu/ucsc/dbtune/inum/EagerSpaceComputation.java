@@ -4,20 +4,24 @@ import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.cartesianProduct;
+import static com.google.common.collect.Sets.newHashSet;
+
 import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
+import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 
 /**
  * An implementation of the INUM space computation that populates it eagerly without any kind of 
@@ -32,6 +36,8 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
  */
 public class EagerSpaceComputation implements InumSpaceComputation
 {
+    private static Set<Index> empty = newHashSet();
+
     /**
      * {@inheritDoc}
      */
@@ -40,35 +46,37 @@ public class EagerSpaceComputation implements InumSpaceComputation
             Set<InumPlan> space, SQLStatement statement, Optimizer delegate, Catalog catalog)
         throws SQLException
     {
-        List<Set<Index>> indexesPerTable;
-        List<Index> minimumAtomic;
-        DerbyInterestingOrdersExtractor interestingOrdersExtractor;
         SQLStatementPlan sqlPlan;
-        InumPlan templatePlan;
+        InumPlan templateForEmpty;
 
-        interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(catalog, true);
-        indexesPerTable = interestingOrdersExtractor.extract(statement);
+        List<Set<Index>> indexesPerTable =
+            (new DerbyInterestingOrdersExtractor(catalog, true)).extract(statement);
 
         space.clear();
 
         for (List<Index> atomic : cartesianProduct(indexesPerTable)) {
-            sqlPlan = delegate.explain(statement, new HashSet<Index>(atomic)).getPlan();
-            
-            if (sqlPlan.contains(NLJ) && !isAllFTS(atomic))
-                continue;
-            
-            templatePlan = new InumPlan(delegate, sqlPlan);
 
-            if (isUsingAllInterestingOrders(templatePlan, atomic))
-                space.add(templatePlan);
+            sqlPlan = delegate.explain(statement, newHashSet(atomic)).getPlan();
+
+            if (sqlPlan.contains(NLJ))
+                continue;
+
+            if (!isUsingAllInterestingOrders(sqlPlan, atomic))
+                continue;
+
+            space.add(new InumPlan(delegate, sqlPlan));
         }
+
+        templateForEmpty = new InumPlan(delegate, delegate.explain(statement, empty).getPlan());
+
+        // check worst-case: empty inumspace, in which case we store the FTS-on-all-slots template
+        if (space.isEmpty())
+            space.add(templateForEmpty);
         
-        // check if NLJ is considered 
-        minimumAtomic =
-            getMinimumAtomicConfiguration(
-                    new InumPlan(delegate, delegate.explain(statement).getPlan()));
+        // check NLJ
+        List<Index> minimumAtomic = getMinimumAtomicConfiguration(templateForEmpty);
         
-        sqlPlan = delegate.explain(statement, new HashSet<Index>(minimumAtomic)).getPlan();
+        sqlPlan = delegate.explain(statement, newHashSet(minimumAtomic)).getPlan();
 
         if (sqlPlan.contains(NLJ))
             space.add(new InumPlan(delegate, sqlPlan));
@@ -88,44 +96,69 @@ public class EagerSpaceComputation implements InumSpaceComputation
      *      {@code true} if the plan uses all the indexes corresponding to the given interesting 
      *      orders; {@code false} otherwise
      * @throws SQLException
-     *      if one slot if {@code null}; if the plan is using a materialized index
+     *      if a leaf of the plan corresponding to a table contains more than one index assigned to 
+     *      it, i.e. if the plan is not atomic; if the plan is using a materialized index
      */
-    private static boolean isUsingAllInterestingOrders(InumPlan plan, List<Index> interestingOrders)
+    private static boolean isUsingAllInterestingOrders(
+            SQLStatementPlan plan, List<Index> interestingOrders)
         throws SQLException
     {
-        TableAccessSlot slot;
-        boolean isInterestingOrderFTS;
-        boolean isSlotFTS;
+        for (Table table : plan.getTables()) {
 
-        for (Index index : interestingOrders) {
+            Index indexFromPlan = getIndexReferencingTable(plan.getIndexes(), table);
+            Index indexFromOrder = getIndexReferencingTable(interestingOrders, table);
 
-            slot = plan.getSlot(index.getTable());
-
-            if (slot == null)
-                throw new SQLException("No slot for table " + index.getTable() + " in \n" + plan);
-
-            isInterestingOrderFTS = index instanceof FullTableScanIndex;
-            isSlotFTS = slot.getIndex() instanceof FullTableScanIndex;
+            boolean isIndexFromPlanFTS = indexFromPlan instanceof FullTableScanIndex;
+            boolean isIndexFromOrderFTS = indexFromOrder instanceof FullTableScanIndex;
             
-            // if (isInterestingOrderFTS && isSlotInterestingOrderFTS)
+            if (isIndexFromOrderFTS && isIndexFromPlanFTS)
                 // this is fine, because both are full table scans
+                continue;
             
-            if (isInterestingOrderFTS && !isSlotFTS)
+            if (isIndexFromOrderFTS && !isIndexFromPlanFTS)
                 throw new SQLException(
-                    "Interesting order is a FTS but the optimizer uses a materialized index");
+                    "Interesting order is FTS but optimizer is using a materialized index");
             
-            if (!isInterestingOrderFTS && isSlotFTS)
+            if (!isIndexFromOrderFTS && isIndexFromPlanFTS)
                 // the given interesting order is an actual index, but the one returned by the 
                 // optimizer is the FTS index, thus they're not compatible
                 return false;
             
-            if (!isInterestingOrderFTS && !isSlotFTS)
+            if (!isIndexFromOrderFTS && !isIndexFromPlanFTS)
                 // need to check whether the two indexes are the same
-                if (!index.equalsContent(slot.getIndex()))
+                if (!indexFromOrder.equalsContent(indexFromPlan))
                     return false;
         }
         
         return true;
+    }
+
+    /**
+     * Returns the index that references the given table. If there is no index referencing the given 
+     * table, the corresponding {@link FullTableScanIndex} is returned.
+     *
+     * @param indexes
+     *      indexes that are iterated in order to look for one referencing to {@code table}
+     * @param table
+     *      table that should be referenced by an index
+     * @return
+     *      the index in {@code indexes} that refers to {@code table}; the {@link 
+     *      FullTableScanIndex} if none is referring to {@code table}
+     * @throws SQLException
+     *      if a table is referenced by more than one index
+     */
+    private static Index getIndexReferencingTable(Collection<Index> indexes, Table table)
+        throws SQLException
+    {
+        Set<Index> indexesReferncingTable = getIndexesReferencingTable(indexes, table);
+
+        if (indexesReferncingTable.size() > 1)
+            throw new SQLException("More than one index for slot for " + table);
+
+        if (indexesReferncingTable.size() == 0)
+            return FullTableScanIndex.getFullTableScanIndexInstance(table);
+
+        return get(indexesReferncingTable, 0);
     }
 
     /**
@@ -153,23 +186,5 @@ public class EagerSpaceComputation implements InumSpaceComputation
         }
         
         return ios;
-    }
-
-    /**
-     * Checks if a given collection of indexes contains only {@link FullTableScanIndex} instances.
-     *
-     * @param indexes
-     *      collection of indexes that is being checked
-     * @return
-     *      {@code true} if all indexes are instances of {@link FullTableScanIndex}; {@code false} 
-     *      otherwise
-     */
-    private static boolean isAllFTS(Collection<Index> indexes)
-    {
-        for (Index i : indexes)
-            if (!(i instanceof FullTableScanIndex))
-                return false;
-
-        return true;
     }
 }

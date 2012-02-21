@@ -91,6 +91,27 @@ public final class MetadataUtils
     }
 
     /**
+     * Returns the set of indexes that reference one the given table.
+     *
+     * @param indexes
+     *      a collection of indexes
+     * @param table
+     *      a table
+     * @return
+     *      the set of indexes that reference {@code table}
+     */
+    public static Set<Index> getIndexesReferencingTable(Collection<Index> indexes, Table table)
+    {
+        Set<Index> indexesReferencingTable = new HashSet<Index>();
+
+        for (Index i : indexes)
+            if (table.equals(i.getTable()))
+                indexesReferencingTable.add(i);
+
+        return indexesReferencingTable;
+    }
+
+    /**
      * Returns the set of tables referenced by the given collection of indexes.
      *
      * @param indexes

@@ -1,17 +1,12 @@
 package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
-
-import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 
-import static com.google.common.collect.Iterables.get;
-
-import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTables;
+import static edu.ucsc.dbtune.util.InumUtils.complete;
 
 /**
  * Base matching strategy. Implementors of this class should only implement the {@link #matchAtomic} 
@@ -30,14 +25,7 @@ public abstract class AbstractMatchingStrategy implements MatchingStrategy
     public final Result match(Set<InumPlan> inumSpace, Set<Index> configuration)
         throws SQLException
     {
-        List<Table> tablesReferencedInStmt = get(inumSpace, 0).getTables();
-
-        Set<Index> indexes = getIndexesReferencingTables(configuration, tablesReferencedInStmt);
-
-        for (Table table : tablesReferencedInStmt)
-            indexes.add(FullTableScanIndex.getFullTableScanIndexInstance(table));
-
-        return matchCompleteConfiguration(inumSpace, indexes);
+        return matchCompleteConfiguration(inumSpace, complete(inumSpace, configuration));
     }
 
     /**
