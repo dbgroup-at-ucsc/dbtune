@@ -146,7 +146,15 @@ public class InteractionBIP extends AbstractBIPSolver
             
             if (restrict.solve(sql, optimizer)) {
                 // cache pairs of interaction
-                pair = new IndexInteraction (restrict.getFirstIndex(), restrict.getSecondIndex());
+                indexc = restrict.getFirstIndex();
+                indexd = restrict.getSecondIndex();
+                
+                // store the first index has ID less than ID of the second index
+                if (indexc.getId() < indexd.getId())                    
+                    pair = new IndexInteraction(indexc, indexd);
+                else 
+                    pair = new IndexInteraction(indexd, indexc);
+                
                 cacheInteractingPairs.put(pair, 1);
                 
                 // store in the output

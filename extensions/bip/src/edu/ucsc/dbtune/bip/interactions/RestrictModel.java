@@ -174,8 +174,8 @@ public class RestrictModel
         
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         
-        if (isInteracting) 
-            doiBIP = computeDoi();
+        //if (isInteracting) 
+          //  doiBIP = computeDoi();
         
         return isInteracting;
     }
@@ -948,11 +948,7 @@ public class RestrictModel
     protected double computeDoi() throws UnknownObjectException, IloException
     {
         double[] val = cplex.getValues(cplexVar.toArray(new IloNumVar[cplexVar.size()]));
-        /*
-        for (int i= 0;i < val.length; i++)
-            if (val[i] == 1)
-                System.out.println(cplexVar.get(i).getName());
-        */
+       
         double Cempty, Cc, Cd, Ccd;
         
         Cempty = 0.0;

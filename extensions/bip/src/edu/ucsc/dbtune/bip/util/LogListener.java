@@ -20,12 +20,13 @@ import java.util.Map;
 public class LogListener 
 {   
     private static LogListener instance;
-    public static int EVENT_PREPROCESS = 0;
+    public static int EVENT_PREPROCESS      = 0;
     public static int EVENT_POPULATING_INUM = 1;
     public static int EVENT_FORMULATING_BIP = 2;
-    public static int EVENT_SOLVING_BIP = 3;    
+    public static int EVENT_SOLVING_BIP     = 3;
+    
     private Map<Integer, Double> mapEventTime;
-    double startTimer;   
+    double  startTimer;   
     
     private LogListener()
     {
@@ -36,12 +37,15 @@ public class LogListener
      * Initialize a singleton object of this class
      *  
      * @return
-     *      The singleton of this class
+     *      An instance of this class
      */
-    public static synchronized LogListener getInstance() {
+    public static synchronized LogListener getInstance() 
+    {   
+        /*
         if (instance == null)
             instance = new LogListener();
-        
+        */
+        instance = new LogListener();
         return instance;
     }
     
@@ -70,15 +74,16 @@ public class LogListener
         // update into the map       
         Object found = mapEventTime.get(new Integer(event));
         if (found == null)
-            mapEventTime.put(new Integer(event), new Double(time));
+            mapEventTime.put(new Integer(event), time);
         else { 
             time += (Double) found;
-            mapEventTime.put(new Integer(event), new Double(time));
+            mapEventTime.put(new Integer(event), time);
         }
     }
 
     @Override
-    public String toString() {
+    public String toString() 
+    {
         StringBuilder str = new StringBuilder();
         str.append("LogListener: \n"); 
         double totalTime = 0.0;

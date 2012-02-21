@@ -1,7 +1,9 @@
 package edu.ucsc.dbtune.bip.interactions;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
@@ -13,6 +15,40 @@ public class InteractionOutput extends IndexTuningOutput
     public InteractionOutput()
     {
         interactions = new ArrayList<IndexInteraction>();
+    }
+    
+    /**
+     * Compute F-measure of the the two sets
+     * 
+     * @param other
+     *      A set of interaction pairs
+     *      
+     * @return 
+     *      The F-measure value      
+     */
+    public double f_measure(Set<IndexInteraction> other)
+    {
+        int pa;
+        int pb;
+        int pc;
+        Set<IndexInteraction> intersect;
+        Set<IndexInteraction> left;
+        Set<IndexInteraction> right;
+        
+        intersect = new HashSet<IndexInteraction>(interactions);
+        left      = new HashSet<IndexInteraction>(intersect);
+        right     = new HashSet<IndexInteraction>(other);
+                
+        intersect.retainAll(other);
+        pa = intersect.size();
+
+        left.removeAll(other);
+        pb = left.size();
+        
+        right.removeAll(new HashSet<IndexInteraction>(interactions));
+        pc = right.size();
+        
+        return (double) (2 * pa) / (2 * pa + pb + pc);
     }
     
     /**
