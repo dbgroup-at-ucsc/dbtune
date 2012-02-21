@@ -460,6 +460,19 @@ public abstract class DatabaseObject
     }
 
     /**
+     * Returns the object whose name matches the given one.
+     *
+     * @param dbo
+     *     database object to test for inclusion
+     * @return
+     *     {@code true} if contained; {@code false} otherwise.
+     */
+    public final boolean contains(DatabaseObject dbo)
+    {
+        return containees.contains(dbo);
+    }
+
+    /**
      * Checks if the type of the given database object is valid. With valid we mean that it can be 
      * contained by {@code this}.
      *

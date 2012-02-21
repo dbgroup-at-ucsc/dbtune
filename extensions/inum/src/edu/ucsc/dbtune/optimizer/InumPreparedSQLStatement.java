@@ -44,7 +44,7 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
      * @throws SQLException
      *      if an error occurs while computing the inum space
      */
-    public InumPreparedSQLStatement(
+    InumPreparedSQLStatement(
             InumOptimizer optimizer,
             SQLStatement sql,
             MatchingStrategy matchingStrategy)

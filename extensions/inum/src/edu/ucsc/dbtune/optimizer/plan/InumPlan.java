@@ -489,7 +489,8 @@ public class InumPlan extends SQLStatementPlan
         
         // we also have to pull the columns fetched down to the slot
         for (Column c : parent.getColumnsFetched().columns())
-            leaf.getColumnsFetched().add(c, parent.getColumnsFetched().isAscending(c));
+            if (!leaf.getColumnsFetched().contains(c))
+                leaf.getColumnsFetched().add(c, parent.getColumnsFetched().isAscending(c));
 
         sqlPlan.remove(fetch);
         sqlPlan.setChild(fetchParent, leaf);
