@@ -56,8 +56,33 @@ public class SQLStatementPlan extends Tree<Operator>
      */
     public SQLStatementPlan(SQLStatementPlan other)
     {
-        super(other);
-        this.sql = other.sql;
+        this(other.sql, new Operator(other.getRootOperator()));
+
+        copyRecursively(root, other.root);
+    }
+
+    /**
+     * Copies the subtree that hangs from {@code otherParent} and makes it a subtree of {@code 
+     * thisParent}. This method is used only by the copy constructor.
+     *
+     * @param thisParent
+     *      entry whose is expanded (whose children are being populated)
+     * @param otherParent
+     *      another entry whose children are copied to {@code thisParent}
+     */
+    private void copyRecursively(Entry<Operator> thisParent, Entry<Operator> otherParent)
+    {
+        Entry<Operator> thisChild;
+
+        for (Entry<Operator> otherChild : otherParent.getChildren()) {
+            thisChild = new Entry<Operator>(thisParent, otherChild.getElement().duplicate());
+
+            thisParent.getChildren().add(thisChild);
+
+            copyRecursively(thisChild, otherChild);
+        }
+
+        elements.put(thisParent.getElement(), thisParent);
     }
 
     /**

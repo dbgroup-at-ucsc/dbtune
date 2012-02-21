@@ -1,10 +1,8 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
 import java.sql.SQLException;
-import java.util.Hashtable;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
-import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -54,6 +52,28 @@ public class TableAccessSlot extends Operator
             throw new SQLException("Can't determine object associated to leaf node: " + leaf);
 
         name = "TABLE.ACCESS.SLOT";
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param other
+     *      other object
+     */
+    public TableAccessSlot(TableAccessSlot other)
+    {
+        super(other);
+
+        this.index = other.index;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Operator duplicate()
+    {
+        return new TableAccessSlot(this);
     }
 
     /**

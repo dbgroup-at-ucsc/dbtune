@@ -120,6 +120,17 @@ public class Operator
     }
 
     /**
+     * Duplicates this object.
+     *
+     * @return
+     *      a duplicate of this operator
+     */
+    public Operator duplicate()
+    {
+        return new Operator(this);
+    }
+
+    /**
      * Adds a {@link DatabaseObject} to the list of objects that are touched by this operator. 
      * Usually this corresponds to base operators like sequential and index scans, as well as 
      * columns used in predicates.

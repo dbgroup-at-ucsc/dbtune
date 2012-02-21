@@ -116,7 +116,14 @@ public class InumPlan extends SQLStatementPlan
     {
         super(other);
 
-        slots = other.slots;
+        slots = new HashMap<Table, TableAccessSlot>();
+
+        for (Operator o : leafs())
+            if (!(o instanceof TableAccessSlot))
+                throw new RuntimeException("Leaf should be a " + TableAccessSlot.class.getName());
+            else
+                slots.put(((TableAccessSlot) o).getTable(), (TableAccessSlot) o);
+
         internalPlanCost = other.internalPlanCost;
         delegate = other.delegate;
     }
@@ -226,6 +233,8 @@ public class InumPlan extends SQLStatementPlan
             return makeOperator(slot);
 
         if (!slot.isFullTableScan() && !slot.isCompatible(index))
+            // the FTS slot is compatible with any index. So if we dont have a FTS we have to check 
+            // that the sent index is compatible with the slot
             return null;
 
         return instantiateOperatorForUnseenIndex(buildQueryForUnseenIndex(slot), index);
@@ -314,7 +323,6 @@ public class InumPlan extends SQLStatementPlan
     {
         Set<Table> visited = new HashSet<Table>();
         List<Operator> operators = new ArrayList<Operator>();
-        Operator o;
 
         for (Index i : atomicConfiguration) {
 
@@ -323,7 +331,7 @@ public class InumPlan extends SQLStatementPlan
 
             visited.add(i.getTable());
 
-            o = instantiate(i);
+            Operator o = instantiate(i);
 
             if (o == null)
                 // index i is not compatible to its corresponding slot
@@ -566,5 +574,31 @@ public class InumPlan extends SQLStatementPlan
         plan.assignCost(plan.getRootElement(), cost);
 
         return plan;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return slots.hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+            return true;
+    
+        if (!(obj instanceof InumPlan))
+            return false;
+    
+        InumPlan o = (InumPlan) obj;
+    
+        return slots.equals(o.slots);
     }
 }
