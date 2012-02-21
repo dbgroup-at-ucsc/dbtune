@@ -5,9 +5,12 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
 //import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.sim.MaterializationSchedule;
+import edu.ucsc.dbtune.bip.sim.MaterializationScheduleOnOptimizer;
+import edu.ucsc.dbtune.bip.sim.RandomIndexMaterializationSchedule;
 import edu.ucsc.dbtune.bip.sim.SimModel;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
@@ -48,11 +51,25 @@ public class SimBIPFunctionalTest
         System.out.println(" In test scheduling ");
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         
+        // 2. powerset
         CandidateGenerator candGen = 
-                new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+            new PowerSetOptimalCandidateGenerator(
+                    new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())), 3);
         
         //CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 2, true);
         Set<Index> indexes = candGen.generate(workload);
+        
+        if (indexes.size() >= 200) {
+            Set<Index> temp = new HashSet<Index>();
+            int count = 0;
+            for (Index index : indexes) {
+                temp.add(index);
+                count++;
+                if (count >= 200)
+                    break;
+            }
+            indexes = temp;
+        }
         
         System.out.println(
             "Number of indexes: " + indexes.size() + " number of statements: " + workload.size());
@@ -75,8 +92,8 @@ public class SimBIPFunctionalTest
         bip.setWorkload(workload);
         bip.setLogListenter(logger);
         bip.setConfigurations(Sinit, Smat);
-        bip.setNumberofIndexesEachWindow(1);
-        bip.setNumberWindows(indexes.size());
+        bip.setNumberofIndexesEachWindow(10);
+        bip.setNumberWindows(indexes.size() / 10 + 1);
         
         Set<SQLStatement> sqls = new HashSet<SQLStatement>();
         for (int i = 0; i < workload.size(); i++)
@@ -84,21 +101,21 @@ public class SimBIPFunctionalTest
         
         MaterializationSchedule schedule = new MaterializationSchedule (0, new HashSet<Index>());
         schedule = (MaterializationSchedule) bip.solve();
-        //double bipCost, randomCost;
+        double bipCost, randomCost;
         
         if (schedule != null) {       
                        
             System.out.println("Result: " + schedule.toString());
             System.out.println(logger.toString());
             
-            /*
+            
             // invoke the actual optimizer
             MaterializationScheduleOnOptimizer mso = new MaterializationScheduleOnOptimizer();
             mso.verify(io.getDelegate(), schedule, sqls);
             bipCost = mso.getTotalCost();
-            System.out.println(" Cost by BIP: " + cplex.getObjectiveValue()
+            System.out.println(" Cost by BIP: " + bip.getObjValue()
                     + " vs. cost by DB2: " + bipCost
-                    + " The RATIO: " + cplex.getObjectiveValue() / bipCost);
+                    + " The RATIO: " + bip.getObjValue() / bipCost);
             
             // compute the random schedule
             RandomIndexMaterializationSchedule randomSchedule = new  
@@ -110,7 +127,7 @@ public class SimBIPFunctionalTest
             randomCost = mso.getTotalCost();
             System.out.println( "L112, BIP cost: " + bipCost + " vs. RANDOM cost: "
                                 + randomCost + " RATIO: " + bipCost / randomCost);
-                                */
+                             
         }
     }
 }
