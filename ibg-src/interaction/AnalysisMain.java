@@ -2,6 +2,7 @@ package interaction;
 
 import static interaction.cand.Generation.Strategy.*;
 import interaction.cand.Generation;
+import interaction.cand.Generation.Strategy;
 import interaction.db.*;
 import interaction.ibg.*;
 import static interaction.ibg.AnalysisMode.PARALLEL;
@@ -9,17 +10,21 @@ import static interaction.ibg.AnalysisMode.SERIAL;
 import interaction.ibg.log.AnalysisLog;
 import interaction.ibg.log.BasicLog;
 import interaction.ibg.log.InteractionLogger;
+import interaction.ibg.log.BasicLog.InteractionPair;
 import interaction.ibg.parallel.*;
 import interaction.ibg.serial.*;
 import interaction.util.Files;
 import interaction.workload.*;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.Iterator;
+import java.util.List;
 
 /*
  * Builds the IBGs for the queries in a workload and discovers  
@@ -55,7 +60,7 @@ public class AnalysisMain {
 		try {
 			SQLWorkload workload = Main.getWorkload();
 			analyze(conn, workload, UNION_OPTIMAL);
-//			analyze(conn, workload, POWER_SET);
+			analyze(conn, workload, POWER_SET);
 //			analyze(conn, workload, OPTIMAL_1C);
 //			analyze(conn, workload, FULL_BUDGET);
 //			analyze(conn, workload, HALF_BUDGET);
@@ -65,7 +70,8 @@ public class AnalysisMain {
 		}
 	}
 	
-	private static void analyze(DBConnection conn, SQLWorkload workload, Generation.Strategy strategy) throws IOException, ClassNotFoundException, SQLException {
+	private static void analyze(DBConnection conn, SQLWorkload workload, Generation.Strategy strategy) 
+	                throws IOException, ClassNotFoundException, SQLException {
 		
 		long start = System.currentTimeMillis();
 		System.out.println("L69, starting time: " + start);
@@ -82,11 +88,11 @@ public class AnalysisMain {
 		{	
 			temp.add(iter.next());
 			count++;
-			if (count >= 80)
+			if (count >= 400)
 				break;
 		}
 		candidateSet = temp;
-		System.out.println(" L89, candidate set: " + candidateSet);
+		System.out.println(" L89, candidate set: " + candidateSet.size());
 		conn.fixCandidates(candidateSet);
 		logger = new InteractionLogger(conn, candidateSet);	
 		
@@ -100,8 +106,22 @@ public class AnalysisMain {
 		long time = System.currentTimeMillis() - start;
 		System.out.println("L101 (Analysis Main), the running time: " + time);
 		
-		// test
+		double[] thresholds = new double[] {
+                0.01,
+                0.1,
+                1.0
+        };
+
+		BasicLog serial1 = (BasicLog)Files.readObjectFromFile(
+		                            Configuration.analysisFile(strategy, SERIAL));
 		
+		for (double t : thresholds) {
+		    serial1.getAnalysisLog(t);
+		    writeInteraction(serial1.interactions(), strategy, SERIAL, t);
+		}
+		
+		// test
+		/*
 		PrintWriter out = new PrintWriter(System.out);
 		try {
 			System.out.println("Serial log:");
@@ -121,11 +141,11 @@ public class AnalysisMain {
 			BasicLog parallel1 = (BasicLog)Files.readObjectFromFile(Configuration.analysisFile(strategy, PARALLEL));
 			AnalysisLog parallel2 = parallel1.getAnalysisLog(0.1);
 			parallel2.output(out);
-			*/
+			
 		} finally {
 			out.close();
 		}
-		
+		*/
 	}
 
 	public static SerialIndexBenefitGraph[] analyzeSerial(DBConnection conn, SQLWorkload xacts, DB2IndexSet candidateSet, InteractionLogger logger) 
@@ -211,5 +231,24 @@ public class AnalysisMain {
 		} finally {
 			out.close();
 		}
+	}
+	
+	public static void writeInteraction(List<InteractionPair> pairs,
+	                                    Strategy s, AnalysisMode m, double t)
+	{
+	    try {
+            PrintWriter writer = new PrintWriter (
+                    new BufferedWriter(new FileWriter(
+                                        Configuration.logInteractionFile(s, m, t), false), 65536));
+            
+            System.out.println(" file name: " + Configuration.logInteractionFile(s, m, t));
+            for (InteractionPair pair : pairs)
+                writer.println(pair);
+            
+            writer.close();
+            
+        } catch (IOException e) {            
+            e.printStackTrace();
+        }
 	}
 }

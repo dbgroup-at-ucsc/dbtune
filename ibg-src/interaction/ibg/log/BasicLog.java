@@ -42,6 +42,7 @@ public class BasicLog implements Serializable {
 	
 	public AnalysisLog getAnalysisLog(double threshold) {
 		int indexCount = bank.indexCount;
+		listInteraction = new ArrayList<InteractionPair>();
 		//double pairCount = (indexCount*(indexCount-1)) / 2.0; // n choose 2
 		double sumRelativeError = 0;
 		double trueTotalInteraction = 0;
@@ -72,7 +73,10 @@ public class BasicLog implements Serializable {
 				uf.union(e.a, e.b);
 				
 				// add into listInteraction
-				listInteraction.add(new InteractionPair(e.a, e.b));
+				if (e.a < e.b)
+				    listInteraction.add(new InteractionPair(e.a, e.b));
+				else 
+				    listInteraction.add(new InteractionPair(e.b, e.a));
 			}
 			
 			log.add(new AnalysisLog.Entry(
@@ -109,7 +113,7 @@ public class BasicLog implements Serializable {
 		}
 	}
 	
-	static class InteractionPair 
+	public class InteractionPair 
 	{	
 		int a;
 		int b;

@@ -68,4 +68,8 @@ public abstract class Configuration {
 	public static String candidateTextFile(Generation.Strategy s) {
         return (outputDir() + "/candidate-" + s.nickname + ".txt");
     }
+	
+	public static File logInteractionFile(Strategy s, AnalysisMode m, double t) {
+        return new File(outputDir(), "interaction-" + s.nickname + "-" + m + "-" + t + ".txt");
+    }
 }

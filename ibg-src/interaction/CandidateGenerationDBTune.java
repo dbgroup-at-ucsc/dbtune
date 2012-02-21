@@ -3,7 +3,7 @@ package interaction;
 import static interaction.cand.Generation.Strategy.UNION_OPTIMAL;
 import static interaction.cand.Generation.Strategy.POWER_SET;
 
-import interaction.cand.UnionOptimal;
+import interaction.cand.Generation;
 import interaction.db.DB2Index;
 import interaction.db.DB2IndexSet;
 import interaction.util.Files;
@@ -21,7 +21,14 @@ public class CandidateGenerationDBTune
 {    
     public static void main(String[] args) throws IOException, SQLException 
     {
-        String fileName = Configuration.candidateTextFile(UNION_OPTIMAL);
+        readIndexesFromDBTune(UNION_OPTIMAL);
+        readIndexesFromDBTune(POWER_SET);
+    }
+    
+    private static void readIndexesFromDBTune(Generation.Strategy strategy)
+                throws IOException, SQLException
+    {
+        String fileName = Configuration.candidateTextFile(strategy);
         
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
         String line = null;
@@ -56,7 +63,7 @@ public class CandidateGenerationDBTune
         }
         
         System.out.println("L54, candidate set: " + candidateSet);
-        File optimalCandidateFile = Configuration.candidateFile(UNION_OPTIMAL);     
+        File optimalCandidateFile = Configuration.candidateFile(strategy);     
         writeCandidates(optimalCandidateFile, candidateSet);
     }
     

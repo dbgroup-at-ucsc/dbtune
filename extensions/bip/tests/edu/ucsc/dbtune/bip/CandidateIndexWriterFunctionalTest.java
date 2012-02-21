@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.bip;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -8,7 +7,9 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
@@ -18,6 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 /**
@@ -43,30 +45,45 @@ public class CandidateIndexWriterFunctionalTest
     @Test
     public void generateAndWriteIndexesToFile() throws Exception
     {
+        Set<Index> candidates;
         String folder = en.getWorkloadsFoldername() + "/tpch-small";
         Workload workload = workload(folder);
         
-        // 1. optimal indexes
-        /*
-        CandidateGenerator candGen =
-          //  new OneColumnCandidateGenerator(
-                       new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
-        */
+        // 1. one column        
+        CandidateGenerator candGen = 
+            new OneColumnCandidateGenerator(
+                    new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())));
         
-        CandidateGenerator candGen = new PowerSetCandidateGenerator
-                                         (db.getCatalog(), 2, true);
-        
-        Set<Index> candidates = candGen.generate(workload);
-        System.out.println(" Number of indexes: " + candidates.size());
+        candidates = candGen.generate(workload);
         
         try {
-            writeIndexesToFile(candidates, folder  + "/candidate-powerset");
-            (new File(folder  + "/candidate-powerset")).delete();
+            writeIndexesToFile(candidates, folder  + "/candidate-1C.txt");            
+        } catch (Exception e) {
+            throw e;
+        }    
+        
+        // 2. powerset
+        candGen = 
+            new PowerSetOptimalCandidateGenerator(
+                    new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())), 3);
+        candidates = candGen.generate(workload);
+        
+        try {
+            writeIndexesToFile(candidates, folder  + "/candidate-powerset.txt");            
         } catch (Exception e) {
             throw e;
         }
-
         
+        // 3. optimal
+        candGen = 
+            new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        candidates = candGen.generate(workload);
+        
+        try {
+            writeIndexesToFile(candidates, folder  + "/candidate-optimal.txt");            
+        } catch (Exception e) {
+            throw e;
+        }
     }
     
     
