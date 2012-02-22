@@ -56,13 +56,25 @@ public class EagerSpaceComputation implements InumSpaceComputation
 
         for (List<Index> atomic : cartesianProduct(indexesPerTable)) {
 
+            //System.out.println("\n   Explaining interesting order:\n       " + atomic + "\n");
+
             sqlPlan = delegate.explain(statement, newHashSet(atomic)).getPlan();
 
-            if (sqlPlan.contains(NLJ))
-                continue;
+            //System.out.println("\n   Plan for interesting order:\n" + sqlPlan);
 
-            if (!isUsingAllInterestingOrders(sqlPlan, atomic))
+            if (sqlPlan.contains(NLJ)) {
+                //System.out.println("\n   Uses NLJ; skipping\n");
                 continue;
+            }
+
+            if (!isUsingAllInterestingOrders(sqlPlan, atomic)) {
+                //System.out.println("\n   Not using all interesting orders sent; skipping\n");
+                continue;
+            }
+
+            //System.out.println(
+                //"\n   Adding template plan\n " + new InumPlan(delegate, sqlPlan) +
+                //"\n   >>>>>>>\n");
 
             space.add(new InumPlan(delegate, sqlPlan));
         }
@@ -70,16 +82,33 @@ public class EagerSpaceComputation implements InumSpaceComputation
         templateForEmpty = new InumPlan(delegate, delegate.explain(statement, empty).getPlan());
 
         // check worst-case: empty inumspace, in which case we store the FTS-on-all-slots template
-        if (space.isEmpty())
+        if (space.isEmpty()) {
+            //System.out.println("\n   INUM space empty; adding FTS-on-all-slots template\n");
+
             space.add(templateForEmpty);
+
+            //System.out.println(
+                    //"\n   Template for FTS-on-all-slots: \n" + new InumPlan(delegate, sqlPlan));
+        }
         
         // check NLJ
         List<Index> minimumAtomic = getMinimumAtomicConfiguration(templateForEmpty);
         
+        //System.out.println("\n   Checking for NLJ with minimum:\n      " + minimumAtomic + "\n");
+
         sqlPlan = delegate.explain(statement, newHashSet(minimumAtomic)).getPlan();
 
-        if (sqlPlan.contains(NLJ))
+        //System.out.println("\n   Plan for NLJ and minimum atomic:\n" + sqlPlan + "\n");
+
+        if (sqlPlan.contains(NLJ)) {
+            //System.out.println("\n   Plan uses NLJ, creating template\n");
+            //System.out.println(
+                    //"\n   Template for NLJ: \n" + new InumPlan(delegate, sqlPlan) + "\n");
+
             space.add(new InumPlan(delegate, sqlPlan));
+        } else {
+            //System.out.println("\n   Plan DOESN'T use NLJ; skipping\n");
+        }
     }
     
     /**

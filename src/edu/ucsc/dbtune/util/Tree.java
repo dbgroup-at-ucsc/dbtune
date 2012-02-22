@@ -242,18 +242,8 @@ public class Tree<T>
 
             if (e.parent == null)
                 root = null;
-            else if (!e.parent.children.remove(e)) {
-                System.out.println("List: ");
-                for (Entry<T> en : e.parent.children) {
-                    System.out.println("entry sent " + e + " entry in parent's list " + en +
-                            " for element " + en.element);
-                    if (en.equals(e))
-                        System.out.println("entries are equal");
-                    else
-                        System.out.println("they aren't");
-                }
+            else if (!e.parent.children.remove(e))
                 throw new RuntimeException("Can't remove " + e.element);
-            }
 
             e.parent = null;
             elements.remove(e.element);
