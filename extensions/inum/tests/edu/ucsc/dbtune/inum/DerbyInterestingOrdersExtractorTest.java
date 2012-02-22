@@ -70,8 +70,8 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(indexesPerTable.size(), is(1));
 
         // two interesting orders, column_0 and empty
-        assertThat(indexesPerTable.get(0).size(), is(2));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(true));
+        assertThat(indexesPerTable.get(0).size(), is(1));
+        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
         assertThat(indexesPerTable.get(0).contains(io), is(true));
 
         sql = new SQLStatement(
@@ -88,8 +88,8 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(indexesPerTable.size(), is(1));
 
         // two interesting orders, column_0 (by implying it from GROUP BY) and the empty one
-        assertThat(indexesPerTable.get(0).size(), is(2));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(true));
+        assertThat(indexesPerTable.get(0).size(), is(1));
+        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
         assertThat(indexesPerTable.get(0).contains(io), is(true));
     }
     
@@ -119,8 +119,8 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(indexesPerTable.size(), is(1));
 
         // one interesting order
-        assertThat(indexesPerTable.get(0).size(), is(1));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(true));
+        assertThat(indexesPerTable.get(0).size(), is(0));
+        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
     }
     
     /**
@@ -153,8 +153,8 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(indexesPerTable.size(), is(1));
 
         // two interesting orders, column_0 and empty
-        assertThat(indexesPerTable.get(0).size(), is(2));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(true));
+        assertThat(indexesPerTable.get(0).size(), is(1));
+        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
         assertThat(indexesPerTable.get(0).contains(io), is(true));
     }
         
@@ -192,8 +192,8 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(indexesPerTable.size(), is(1));
 
         // two interesting orders, column_0 and empty
-        assertThat(indexesPerTable.get(0).size(), is(3));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(true));
+        assertThat(indexesPerTable.get(0).size(), is(2));
+        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
         assertThat(indexesPerTable.get(0).contains(io0), is(true));
         assertThat(indexesPerTable.get(0).contains(io1), is(true));
     }
@@ -232,14 +232,16 @@ public class DerbyInterestingOrdersExtractorTest
         
         // find out the relation that is index by indexsPerTable
         for (int i = 0; i < 2; i++){
-            assertThat(indexesPerTable.get(i).size(), is(2));
+            assertThat(indexesPerTable.get(i).size(), is(1));
             for (Index index: indexesPerTable.get(i)) {
                 Table t = index.getTable();
                 if (t.equals(t0)) {
-                    assertThat(indexesPerTable.get(i).contains(getFullTableScanIndexInstance(t0)), is(true));
+                    assertThat(indexesPerTable.get(i).contains(getFullTableScanIndexInstance(t0)), 
+                            is(false));
                     assertThat(indexesPerTable.get(i).contains(io0), is(true));
                 } else if (t.equals(t1)) {
-                    assertThat(indexesPerTable.get(i).contains(getFullTableScanIndexInstance(t1)), is(true));
+                    assertThat(indexesPerTable.get(i).contains(getFullTableScanIndexInstance(t1)), 
+                            is(false));
                     assertThat(indexesPerTable.get(i).contains(io1), is(true));
                 }  
                 break;

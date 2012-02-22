@@ -130,6 +130,25 @@ public final class MetadataUtils
     }
 
     /**
+     * Finds an index by id in a set of indexes.
+     *
+     * @param indexes
+     *      set of indexes where one with the given name is being looked for
+     * @param id
+     *      id of the index being looked for
+     * @return
+     *      the index with the given id; {@code null} if not found
+     */
+    public static Index find(Set<Index> indexes, int id)
+    {
+        for (Index i : indexes)
+            if (i.getId() == id)
+                return i;
+
+        return null;
+    }
+
+    /**
      * Finds an index by name in a set of indexes. This looks only at the name of the of the index 
      * and not to the whole fully qualified one.
      *
@@ -155,7 +174,7 @@ public final class MetadataUtils
             schemaName = pathElements[0];
             indexName = pathElements[1];
         } else {
-            throw new RuntimeException("Can't find an index with 3 path elements");
+            throw new RuntimeException("Can't look for an index with 3 path elements");
         }
 
         if (schemaName != null)
