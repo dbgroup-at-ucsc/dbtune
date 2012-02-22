@@ -112,7 +112,7 @@ public interface QueryPlanDesc
      * @return
      *      The list of indexes at slot i.       
      */
-    List<Index> getListIndexesAtSlot(int i);
+    List<Index> getIndexesAtSlot(int i);
 
     /**
      * Retrieve the list of indexes (excluding FTS indexes) that are stored in 
@@ -123,7 +123,7 @@ public interface QueryPlanDesc
      * @return 
      *      The list of indexes at slot i.    
      */
-    List<Index> getListIndexesWithoutFTSAtSlot(int i);
+    List<Index> getIndexesWithoutFTSAtSlot(int i);
     
     /**
      * 
@@ -138,5 +138,5 @@ public interface QueryPlanDesc
      *      The set of indexes that are compatible with at least one slot in one template plan
      *      of the query.
      */
-    Set<Index> getActiveIndexsAtSlot(int i);
+    Set<Index> getActiveIndexesAtSlot(int i);
 }

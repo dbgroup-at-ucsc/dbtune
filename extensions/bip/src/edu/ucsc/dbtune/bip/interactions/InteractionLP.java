@@ -65,7 +65,7 @@ public class InteractionLP extends AbstractBIPSolver
             // in one template plan of each statement
             for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                 
-                for (Index index : desc.getActiveIndexsAtSlot(i)) {
+                for (Index index : desc.getActiveIndexesAtSlot(i)) {
                     mapIndexSlotID.put(index, i);
                     
                     Set<Integer> listStmtPos = mapIndexListStatements.get(index);

@@ -313,7 +313,7 @@ public class RestrictIIP
                 
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         
                         BIPVariable var = poolVariables.createAndStore
                                                    (theta, IIPVariablePool.VAR_X, q, k, index.getId());
@@ -336,7 +336,7 @@ public class RestrictIIP
                 
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         
                         BIPVariable var =  poolVariables.createAndStore(theta, 
                                                          IIPVariablePool.VAR_U, q, t, index.getId()); 
@@ -406,7 +406,7 @@ public class RestrictIIP
                 
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         
                         String var = poolVariables.get(theta, IIPVariablePool.VAR_X, 
                                                        q, k, index.getId()).getName();
@@ -458,7 +458,7 @@ public class RestrictIIP
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
                     linList.clear();
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         String var_x = poolVariables.get(theta, IIPVariablePool.VAR_X, 
                                                          q, k, index.getId()).getName();
                         linList.add(var_x);
@@ -509,7 +509,7 @@ public class RestrictIIP
                 // - not consider full table scan
                 // - it could be possible s^{theta}_{a} = 1 and s^{theta}_{full table scan} = 1
                 // - in this case full table scan is used instead of a for the optimal cost
-                for (Index index : desc.getListIndexesWithoutFTSAtSlot(i))
+                for (Index index : desc.getIndexesWithoutFTSAtSlot(i))
                     linList.add(poolVariables.get(theta, IIPVariablePool.VAR_S, q, 0, index.getId())
                                              .getName());      
                 
@@ -532,7 +532,7 @@ public class RestrictIIP
             List<String> linList = new ArrayList<String>();
             // not consider full table scan
             // and exclude {@code indexc}
-            for (Index index : desc.getListIndexesWithoutFTSAtSlot(ic)) {
+            for (Index index : desc.getIndexesWithoutFTSAtSlot(ic)) {
                 
                 if (!index.equals(indexc)) 
                     linList.add(poolVariables.get(theta, IIPVariablePool.VAR_S, q, 0, index.getId())
@@ -556,7 +556,7 @@ public class RestrictIIP
             
             List<String> linList = new ArrayList<String>();
             // not consider full table scan 
-            for (Index index : desc.getListIndexesWithoutFTSAtSlot(id)){
+            for (Index index : desc.getIndexesWithoutFTSAtSlot(id)){
                 
                 if (!index.equals(indexd)) 
                     linList.add(poolVariables.get(theta, IIPVariablePool.VAR_S, q, 0, index.getId())
@@ -625,7 +625,7 @@ public class RestrictIIP
                 List<String> linList = new ArrayList<String>();     
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         
                         String var_u = poolVariables.get(theta, IIPVariablePool.VAR_U, q, t, 
                                                         index.getId()).getName();       
@@ -656,7 +656,7 @@ public class RestrictIIP
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
                     List<String> linList = new ArrayList<String>();
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         
                         String var_u = poolVariables.get(theta, IIPVariablePool.VAR_U, q, t, 
                                                         index.getId()).getName();       
@@ -690,7 +690,7 @@ public class RestrictIIP
                     
                     // no need to constraint FTS
                     // since u_{FTS} <= 1
-                    for (Index index : desc.getListIndexesWithoutFTSAtSlot(i)) {
+                    for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
                         String var_u = poolVariables.get(theta, IIPVariablePool.VAR_U, q, t, 
                                                         index.getId()).getName();                       
                         if ( (theta == IND_C && index.equals(indexc))  
@@ -759,14 +759,14 @@ public class RestrictIIP
                     List<SortableIndexAcessCost> listSortedIndex  = 
                                 new ArrayList<SortableIndexAcessCost>();
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         SortableIndexAcessCost sac = new SortableIndexAcessCost
                                                 (desc.getAccessCost(t, index), index);
                         listSortedIndex.add(sac);                       
                     }                   
                     
-                    numIndex = desc.getListIndexesAtSlot(i).size();
-                    idFTS = desc.getListIndexesAtSlot(i).get(numIndex - 1).getId();
+                    numIndex = desc.getIndexesAtSlot(i).size();
+                    idFTS = desc.getIndexesAtSlot(i).get(numIndex - 1).getId();
                     
                     // sort in the increasing order of the index access cost
                     Collections.sort(listSortedIndex);

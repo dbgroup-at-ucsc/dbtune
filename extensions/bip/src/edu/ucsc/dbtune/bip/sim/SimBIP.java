@@ -215,7 +215,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                     
                     for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                         
-                        for (Index index : desc.getListIndexesAtSlot(i)) 
+                        for (Index index : desc.getIndexesAtSlot(i)) 
                             poolVariables.createAndStore(SimVariablePool.VAR_X, w, q, k, 
                                                          index.getId());
                         
@@ -358,7 +358,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 				    
 					for (int i = 0; i < desc.getNumberOfSlots(); i++) {
 					    
-					    for (Index index : desc.getListIndexesAtSlot(i)) {
+					    for (Index index : desc.getIndexesAtSlot(i)) {
 					        
 							String var = poolVariables.get(SimVariablePool.VAR_X, w, 
 							                               q, k, index.getId()).getName();
@@ -404,7 +404,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 					for (int i = 0; i < desc.getNumberOfSlots(); i++) {
 					    
 						linList.clear();
-						for (Index index : desc.getListIndexesAtSlot(i)) {
+						for (Index index : desc.getIndexesAtSlot(i)) {
 						    
 							String var_x = poolVariables.get(SimVariablePool.VAR_X, w, 
 							                                 q, k, index.getId()).getName();
@@ -436,7 +436,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
                     
                     for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                         
-                        for (Index index : desc.getListIndexesAtSlot(i)) {
+                        for (Index index : desc.getIndexesAtSlot(i)) {
                             
                             String var_x = poolVariables.get(SimVariablePool.VAR_X, w, 
                                                              q, k, index.getId()).getName();

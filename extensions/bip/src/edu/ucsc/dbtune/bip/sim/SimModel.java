@@ -206,7 +206,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                     
                     for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                         
-                        for (Index index : desc.getListIndexesAtSlot(i)) 
+                        for (Index index : desc.getIndexesAtSlot(i)) 
                             poolVariables.createAndStore(SimVariablePool.VAR_X, w, q, k, 
                                                          index.getId());
                         
@@ -383,7 +383,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                     
                     for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                         
-                        for (Index index : desc.getListIndexesAtSlot(i)) {
+                        for (Index index : desc.getIndexesAtSlot(i)) {
                             
                             id = poolVariables.get(SimVariablePool.VAR_X, w, 
                                                    q, k, index.getId()).getId();
@@ -440,7 +440,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                         expr = cplex.linearNumExpr(); 
                         expr.addTerm(-1, cplexVar.get(idY));
                         
-                        for (Index index : desc.getListIndexesAtSlot(i)) {
+                        for (Index index : desc.getIndexesAtSlot(i)) {
                             
                             id = poolVariables.get(SimVariablePool.VAR_X, w, 
                                                   q, k, index.getId()).getId();
@@ -476,7 +476,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                         
                         //for (Index index : desc.getListIndexesAtSlot(i)) {
                         // NOT constraint for FTS
-                        for (Index index : desc.getListIndexesWithoutFTSAtSlot(i)) {
+                        for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
                             
                             expr = cplex.linearNumExpr(); 
                             id = poolVariables.get(SimVariablePool.VAR_X, w, 

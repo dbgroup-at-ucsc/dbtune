@@ -4,8 +4,10 @@ import ilog.concert.IloException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 import edu.ucsc.dbtune.metadata.Index;
@@ -98,15 +100,15 @@ public class InteractionBIP extends AbstractBIPSolver
         // Derive list of indexes that might interact
         List<Index>         indexes        = new ArrayList<Index>();
         Map<Index, Integer> mapIndexSlotID = new HashMap<Index, Integer>();
-        
+    
+        Set<Index>  candidateIndexesDesc   = new HashSet<Index>();
         // Note consider full table scan indexes
-        for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-            
-            for (Index index : desc.getActiveIndexsAtSlot(i)) {
+        for (int i = 0; i < desc.getNumberOfSlots(); i++) {            
+            for (Index index : desc.getActiveIndexesAtSlot(i)) {
                 indexes.add(index);
                 mapIndexSlotID.put(index, i);
             }
-            
+            candidateIndexesDesc.addAll(desc.getIndexesAtSlot(i));
         }
         
         Index indexc, indexd;
@@ -137,7 +139,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 
                 //  call the BIP solution
                 listIIP.add(new RestrictModel(desc, logger, delta, indexc, indexd, 
-                                              candidateIndexes, ic, id));
+                                              candidateIndexesDesc, ic, id));
             }
         }
         

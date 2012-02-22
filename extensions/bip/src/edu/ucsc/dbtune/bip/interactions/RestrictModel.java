@@ -36,7 +36,7 @@ public class RestrictModel
     protected IIPVariablePool    poolVariables;    
     protected Map<String, Index> mapVarSIndex;   
     protected QueryPlanDesc      desc;
-    protected Set<Index>        candidateIndexes;
+    protected Set<Index>         candidateIndexes;
     
     protected double delta;     
     protected int    iC;
@@ -257,7 +257,7 @@ public class RestrictModel
                 
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : desc.getListIndexesAtSlot(i))                        
+                    for (Index index : desc.getIndexesAtSlot(i))                        
                         poolVariables.createAndStore
                                       (theta, IIPVariablePool.VAR_X, q, k, index.getId());
                 }
@@ -276,7 +276,7 @@ public class RestrictModel
                 
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) 
+                    for (Index index : desc.getIndexesAtSlot(i)) 
                         poolVariables.createAndStore(theta, 
                                                     IIPVariablePool.VAR_U, q, t, index.getId());
                 }
@@ -370,7 +370,7 @@ public class RestrictModel
                     expr = cplex.linearNumExpr();
                     expr.addTerm(-1, cplexVar.get(idY));
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         
                         id = poolVariables.get(theta, IIPVariablePool.VAR_X, 
                                                q, k, index.getId()).getId();
@@ -388,7 +388,7 @@ public class RestrictModel
                 
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         id  = poolVariables.get(theta, IIPVariablePool.VAR_X, 
                                                q, k, index.getId()).getId();
                         
@@ -439,7 +439,7 @@ public class RestrictModel
                 // - in this case full table scan is used instead of a for the optimal cost
                 expr = cplex.linearNumExpr();
                 hasTerm = false; 
-                for (Index index : desc.getListIndexesWithoutFTSAtSlot(i)) {
+                for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
                     idS = poolVariables.get(theta, IIPVariablePool.VAR_S, q, 0, index.getId())
                                              .getId();
                     expr.addTerm(1, cplexVar.get(idS));
@@ -464,7 +464,7 @@ public class RestrictModel
             // and exclude {@code indexC}
             expr = cplex.linearNumExpr();
             hasTerm = false;
-            for (Index index : desc.getListIndexesWithoutFTSAtSlot(iC)) {
+            for (Index index : desc.getIndexesWithoutFTSAtSlot(iC)) {
                 
                 if (!index.equals(indexC)) {
                     idS = poolVariables.get(theta, IIPVariablePool.VAR_S, q, 0, index.getId())
@@ -491,7 +491,7 @@ public class RestrictModel
             hasTerm = false;
             
             // not consider full table scan 
-            for (Index index : desc.getListIndexesWithoutFTSAtSlot(iD)){
+            for (Index index : desc.getIndexesWithoutFTSAtSlot(iD)){
                 
                 if (!index.equals(indexD)) {
                     idS = poolVariables.get(theta, IIPVariablePool.VAR_S, q, 0, index.getId())
@@ -580,7 +580,7 @@ public class RestrictModel
                 // index access cost
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         
                         idX = poolVariables.get(theta, IIPVariablePool.VAR_X, 
                                                 q, k, index.getId()).getId();
@@ -638,7 +638,7 @@ public class RestrictModel
                 
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) {
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         
                         idU = poolVariables.get(theta, IIPVariablePool.VAR_U, q, t, 
                                                 index.getId()).getId();
@@ -670,7 +670,7 @@ public class RestrictModel
                     
                     expr = cplex.linearNumExpr();
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         
                         idU = poolVariables.get(theta, IIPVariablePool.VAR_U, q, t, 
                                                 index.getId()).getId();
@@ -709,7 +709,7 @@ public class RestrictModel
                     
                     // no need to constraint FTS
                     // since u_{FTS} <= 1
-                    for (Index index : desc.getListIndexesWithoutFTSAtSlot(i)) {
+                    for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
                         idU = poolVariables.get(theta, IIPVariablePool.VAR_U, q, t, 
                                                 index.getId()).getId();
                         
@@ -778,14 +778,14 @@ public class RestrictModel
                     List<SortableIndexAcessCost> listSortedIndex  = 
                                 new ArrayList<SortableIndexAcessCost>();
                     
-                    for (Index index : desc.getListIndexesAtSlot(i)) {
+                    for (Index index : desc.getIndexesAtSlot(i)) {
                         SortableIndexAcessCost sac = new SortableIndexAcessCost
                                                 (desc.getAccessCost(t, index), index);
                         listSortedIndex.add(sac);                       
                     }                   
                     
-                    numIndex = desc.getListIndexesAtSlot(i).size();
-                    idFTS = desc.getListIndexesAtSlot(i).get(numIndex - 1).getId();
+                    numIndex = desc.getIndexesAtSlot(i).size();
+                    idFTS = desc.getIndexesAtSlot(i).get(numIndex - 1).getId();
                     
                     // sort in the increasing order of the index access cost
                     Collections.sort(listSortedIndex);
