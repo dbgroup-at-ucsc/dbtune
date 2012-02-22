@@ -1,8 +1,5 @@
 package interaction;
 
-import static interaction.cand.Generation.Strategy.UNION_OPTIMAL;
-import static interaction.cand.Generation.Strategy.POWER_SET;
-
 import interaction.cand.Generation;
 import interaction.db.DB2Index;
 import interaction.db.DB2IndexSet;
@@ -13,22 +10,36 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.ucsc.dbtune.util.Environment;
+
 public class CandidateGenerationDBTune 
 {    
-    public static void main(String[] args) throws IOException, SQLException 
+    private static Environment    en;
+    
+    
+    public static void readIndexesFromDBTune()  throws Exception
     {
-        readIndexesFromDBTune(UNION_OPTIMAL);
-        readIndexesFromDBTune(POWER_SET);
+        en = Environment.getInstance();
+        readIndexesFromDBTune(Generation.Strategy.UNION_OPTIMAL);
+        readIndexesFromDBTune(Generation.Strategy.POWER_SET);
     }
     
     private static void readIndexesFromDBTune(Generation.Strategy strategy)
-                throws IOException, SQLException
+                throws Exception
     {
-        String fileName = Configuration.candidateTextFile(strategy);
+        String folder = en.getWorkloadsFoldername() + "/tpch-small";
+        String fileName;
+        
+        if (strategy.equals(Generation.Strategy.OPTIMAL_1C))
+            fileName = folder  + "/candidate-1C.txt";
+        else if (strategy.equals(Generation.Strategy.POWER_SET))
+            fileName = folder  + "/candidate-powerset.txt";
+        else
+            fileName = folder  + "/candidate-optimal.txt";
+        
         
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
         String line = null;
@@ -62,7 +73,7 @@ public class CandidateGenerationDBTune
                                     colNames, descending, id));
         }
         
-        System.out.println("L54, candidate set: " + candidateSet);
+        System.out.println("L54, candidate set: " + candidateSet.size());
         File optimalCandidateFile = Configuration.candidateFile(strategy);     
         writeCandidates(optimalCandidateFile, candidateSet);
     }

@@ -303,6 +303,11 @@ public class DB2Index implements Serializable {
         
         return new DB2Index(schema, id, indexName, indexOwner, tableOwner, indexExists, systemRequired);
     }
+    
+    public int getId()
+    {
+        return internalID;
+    }
 
 	/* ------------------
 	 * ADVISE_INDEX stuff

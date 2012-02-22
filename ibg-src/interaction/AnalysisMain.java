@@ -1,13 +1,10 @@
 package interaction;
 
-import static interaction.cand.Generation.Strategy.*;
 import interaction.cand.Generation;
 import interaction.cand.Generation.Strategy;
 import interaction.db.*;
 import interaction.ibg.*;
-import static interaction.ibg.AnalysisMode.PARALLEL;
 import static interaction.ibg.AnalysisMode.SERIAL;
-import interaction.ibg.log.AnalysisLog;
 import interaction.ibg.log.BasicLog;
 import interaction.ibg.log.InteractionLogger;
 import interaction.ibg.log.BasicLog.InteractionPair;
@@ -23,8 +20,15 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import edu.ucsc.dbtune.bip.InteractionComparisonFunctionalTest;
+
 
 /*
  * Builds the IBGs for the queries in a workload and discovers  
@@ -54,16 +58,15 @@ public class AnalysisMain {
 		}
 	}
 
-	private static void runSteps() throws SQLException, IOException, ClassNotFoundException {
+	public static void runSteps() throws SQLException, IOException, ClassNotFoundException {
 		// Connect to database
 		DBConnection conn = Main.openConnection();
 		try {
 			SQLWorkload workload = Main.getWorkload();
-			analyze(conn, workload, UNION_OPTIMAL);
-			analyze(conn, workload, POWER_SET);
-//			analyze(conn, workload, OPTIMAL_1C);
-//			analyze(conn, workload, FULL_BUDGET);
-//			analyze(conn, workload, HALF_BUDGET);
+			
+			for (Generation.Strategy s : InteractionComparisonFunctionalTest.strategies)
+			    analyze(conn, workload, s);
+
 		} finally {
 			conn.commit();
 			conn.close();
@@ -73,26 +76,36 @@ public class AnalysisMain {
 	private static void analyze(DBConnection conn, SQLWorkload workload, Generation.Strategy strategy) 
 	                throws IOException, ClassNotFoundException, SQLException {
 		
-		long start = System.currentTimeMillis();
-		System.out.println("L69, starting time: " + start);
+		long start = System.currentTimeMillis();		
 		InteractionLogger logger;
 		SerialIndexBenefitGraph[] ibgs;
 		File candidateFile = Configuration.candidateFile(strategy);
 		DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
-
+		
+		
 		// Vary the size of candidateSet
-		// 60
-		DB2IndexSet temp = new DB2IndexSet();
-		int count = 0;
-		for (Iterator<DB2Index> iter = candidateSet.iterator(); iter.hasNext(); )
-		{	
-			temp.add(iter.next());
-			count++;
-			if (count >= 400)
-				break;
+		if (candidateSet.size() > InteractionComparisonFunctionalTest.MAX_NUM_INDEX) {
+    		
+    		List<Integer>                 ids = new ArrayList<Integer>();
+    		Map<Integer, DB2Index> mapIDIndex = new HashMap<Integer, DB2Index>();
+    		
+    		for (Iterator<DB2Index> iter = candidateSet.iterator(); iter.hasNext(); ) {
+    		    DB2Index index = iter.next();    		    
+    		    ids.add(index.getId());
+    		    mapIDIndex.put(index.getId(), index);
+    		}
+    		
+    		Collections.sort(ids);
+    		DB2IndexSet temp = new DB2IndexSet();
+    		for (int count = 0; count < InteractionComparisonFunctionalTest.MAX_NUM_INDEX; 
+    		     count++)
+    		    temp.add(mapIDIndex.get(ids.get(count)));
+    		
+    		candidateSet = temp;
 		}
-		candidateSet = temp;
-		System.out.println(" L89, candidate set: " + candidateSet.size());
+		
+		System.out.println(" L107 (Karl, Analysis), candidate set: " + candidateSet.size());
+		
 		conn.fixCandidates(candidateSet);
 		logger = new InteractionLogger(conn, candidateSet);	
 		
@@ -104,11 +117,11 @@ public class AnalysisMain {
 		writeIBGs(ibgs, strategy);
 		
 		long time = System.currentTimeMillis() - start;
-		System.out.println("L101 (Analysis Main), the running time: " + time);
+		System.out.println("L120 (Karl, Analysis Main), the running time: " + time);
 		
 		double[] thresholds = new double[] {
-                0.01,
-                0.1,
+         //       0.01,
+         //       0.1,
                 1.0
         };
 
