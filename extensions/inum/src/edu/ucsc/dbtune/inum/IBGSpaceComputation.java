@@ -52,7 +52,6 @@ public class IBGSpaceComputation implements InumSpaceComputation
         throws SQLException
     {
         SQLStatementPlan sqlPlan = delegate.explain(statement, indexes).getPlan();
-        InumPlan templatePlan = new InumPlan(delegate, sqlPlan);
 
         Vector<Index> usedIndexes = new Vector<Index>();
         final Hashtable<Table, HashSet<Index>> tables = new Hashtable<Table, HashSet<Index>>();
@@ -84,8 +83,7 @@ public class IBGSpaceComputation implements InumSpaceComputation
         A a = new A();
         // multiple interesting order are used in one table
         boolean conflict = false;
-        for (TableAccessSlot slot : templatePlan.getSlots()) {
-            Index usedIndex = slot.getIndex();
+        for (Index usedIndex : sqlPlan.getIndexes()) {
             if (usedIndex instanceof FullTableScanIndex)
                 continue;
             usedIndexes.add(usedIndex);
@@ -113,12 +111,12 @@ public class IBGSpaceComputation implements InumSpaceComputation
         } else if (usedIndexes.size() == 0) {
             if (!hasPlanWhichDontUseIndex) {
                 hasPlanWhichDontUseIndex = true;
-                if (!sqlPlan.contains(NLJ))
-                    inumSpace.add(templatePlan);
+//                if (!sqlPlan.contains(NLJ))
+                    inumSpace.add(new InumPlan(delegate, sqlPlan));
             }
         } else {
-            if (!sqlPlan.contains(NLJ))
-                inumSpace.add(templatePlan);
+//            if (!sqlPlan.contains(NLJ))
+                inumSpace.add(new InumPlan(delegate, sqlPlan));
             for (Index usedIndex : usedIndexes) {
                 HashSet<Index> set = new HashSet<Index>();
                 set.addAll(indexes);
