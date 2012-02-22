@@ -599,6 +599,7 @@ public class InumPlan extends SQLStatementPlan
     
         InumPlan o = (InumPlan) obj;
     
-        return slots.equals(o.slots) && internalPlanCost == o.internalPlanCost;
+        return slots.equals(o.slots)
+                && Math.abs(internalPlanCost - o.internalPlanCost) < 1E-20;
     }
 }

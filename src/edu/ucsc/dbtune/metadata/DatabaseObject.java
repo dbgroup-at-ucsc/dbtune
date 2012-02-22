@@ -529,7 +529,11 @@ public abstract class DatabaseObject
     @Override
     public int hashCode()
     {
-        return getFullyQualifiedName().hashCode();
+        String s = getFullyQualifiedName();
+        int t = s.lastIndexOf("(id=");
+        if (t > 0)
+            s = s.substring(0, t);
+        return s.hashCode();
     }
 
     /**
