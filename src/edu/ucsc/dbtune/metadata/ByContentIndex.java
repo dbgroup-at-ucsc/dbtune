@@ -38,7 +38,6 @@ public class ByContentIndex extends Index
     public ByContentIndex(Index other)
     {
         super(other);
-        inMemoryID = other.getId();
     }
 
     /**

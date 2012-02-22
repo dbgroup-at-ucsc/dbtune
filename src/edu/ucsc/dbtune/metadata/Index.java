@@ -236,11 +236,19 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      * @param ascending
      *     indicates whether or not the corresponding column is sorted in ascending or ascending 
      *     order.
+     * @param primary
+     *     whether or not the index is primary
+     * @param unique
+     *     whether or not the index is unique
+     * @param clustered
+     *     whether the corresponding table is clustered on this index
      * @throws SQLException
      *     if column list empty; if schema already contains an index with the given name; if not all 
      *     of the columns in the list correspond to the same table.
      */
-    public Index(List<Column> columns, List<Boolean> ascending,
+    public Index(
+            List<Column> columns,
+            List<Boolean> ascending,
             boolean primary,
             boolean unique,
             boolean clustered) throws SQLException
@@ -437,6 +445,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     {
         super(other);
 
+        this.inMemoryID   = other.inMemoryID;
         this.type         = other.type;
         this.unique       = other.unique;
         this.primary      = other.primary;
