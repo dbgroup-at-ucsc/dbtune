@@ -425,7 +425,7 @@ public class InumPlan extends SQLStatementPlan
             sb.append(" WHERE ");
 
             for (Predicate p : slot.getPredicates())
-                sb.append(p.getText().replaceAll("'.*'", "\\?")).append(" AND ");
+                sb.append(p.getText()).append(" AND ");
 
             sb.delete(sb.length() - 5, sb.length() - 1);
         }

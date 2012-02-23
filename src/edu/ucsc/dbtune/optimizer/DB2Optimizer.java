@@ -87,12 +87,8 @@ public class DB2Optimizer extends AbstractOptimizer
         double selectCost;
         double updateCost;
 
-        clearExplainTables(connection);
-
         loadOptimizationProfiles(sql, indexes);
         
-        insertIntoAdviseIndexTable(connection, indexes);
-
         plan = getPlan(connection, sql, catalog, indexes);
         used = newHashSet(plan.getIndexes());
 
@@ -236,7 +232,8 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_OPERATOR");
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_PREDICATE");
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_STATEMENT");
-        */
+
+         */
 
         stmt.close();
     }
@@ -459,6 +456,10 @@ public class DB2Optimizer extends AbstractOptimizer
             Connection connection, SQLStatement sql, Catalog catalog, Set<Index> indexes)
         throws SQLException
     {
+        clearExplainTables(connection);
+
+        insertIntoAdviseIndexTable(connection, indexes);
+
         Statement stmtOperator = connection.createStatement();
         Statement stmtPredicate = connection.createStatement();
        
@@ -529,10 +530,9 @@ public class DB2Optimizer extends AbstractOptimizer
         if (configuration.isEmpty())
             return;
 
-        Set<Index> indexesNotLoaded = removeAlreadyLoaded(connection, configuration);
-
-        if (indexesNotLoaded.isEmpty())
-            return;
+        Statement stmt = connection.createStatement();
+        stmt.execute(DELETE_FROM_ADVISE_INDEX);
+        stmt.close();
 
         PreparedStatement ps = connection.prepareStatement(INSERT_INTO_ADVISE_INDEX);
 
@@ -543,41 +543,6 @@ public class DB2Optimizer extends AbstractOptimizer
         ps.executeBatch();
         ps.clearBatch();
         ps.close();
-
-        turnOffIndexes(connection);
-
-        System.out.println("Sent: ");
-
-        for (Index i : configuration)
-            System.out.println("    [" + i.getId() + "]");
-
-        System.out.println("Before turning on: ");
-
-        Statement stmt = connection.createStatement();
-
-        ResultSet rs;
-        
-        rs = stmt.executeQuery("SELECT iid, use_index, name FROM systools.advise_index");
-
-        while (rs.next())
-            System.out.println(
-                    "    [" + rs.getString(1) + "][" + rs.getString(2) + "] " + rs.getString(3));
-
-        rs.close();
-
-        turnOnIndexes(connection, configuration);
-
-        System.out.println("After turning on: ");
-
-        rs = stmt.executeQuery("SELECT iid, use_index, name FROM systools.advise_index");
-
-        while (rs.next())
-            System.out.println(
-                    "    [" + rs.getString(1) + "][" + rs.getString(2) + "] " + rs.getString(3));
-
-        rs.close();
-
-        stmt.close();
     }
 
     /**
@@ -621,7 +586,6 @@ public class DB2Optimizer extends AbstractOptimizer
 
         Statement stmt = connection.createStatement();
 
-        System.out.println(sql.toString());
         stmt.executeUpdate(sql.toString());
         stmt.close();
     }
@@ -686,8 +650,10 @@ public class DB2Optimizer extends AbstractOptimizer
      */
     private void loadOptimizationProfiles(SQLStatement sql, Set<Index> indexes) throws SQLException
     {
+        String escapedSQL = sql.getSQL().replaceAll("'", "''");
+
         if (isFTSDisabled)
-            loadFTSDisabledProfile(sql, connection, getReferencedTables(indexes));
+            loadFTSDisabledProfile(escapedSQL, connection, getReferencedTables(indexes));
     }
 
     /**
@@ -729,7 +695,7 @@ public class DB2Optimizer extends AbstractOptimizer
      *      if an error occurs while communicating to the DBMS
      */
     private static void loadFTSDisabledProfile(
-            SQLStatement sql, Connection connection, Set<Table> tables)
+            String sql, Connection connection, Set<Table> tables)
         throws SQLException
     {
         if (tables.size() == 0)
@@ -749,7 +715,7 @@ public class DB2Optimizer extends AbstractOptimizer
             "<OPTPROFILE VERSION=\"9.1.0.0\">\n" +
             "   <STMTPROFILE ID=\"no FTS\">\n" +
             "      <STMTKEY SCHEMA=\"" + s.getName() + "\">\n" +
-            "         <![CDATA[" + sql.getSQL() + "]]>\n" +
+            "         <![CDATA[" + sql + "]]>\n" +
             "      </STMTKEY>\n" +
             "      <OPTGUIDELINES>\n");
         for (Table t : tables)
