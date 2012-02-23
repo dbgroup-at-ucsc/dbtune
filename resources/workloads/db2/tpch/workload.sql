@@ -269,7 +269,6 @@ order by
     nation,
     o_year desc;
 
-
 --query 10
 select
     c_custkey,
@@ -569,7 +568,7 @@ where
     );
 
 --query 20
--- TODO: IBGSpaceComputation fails
+-- TODO: IBGSpaceComputation fails; IXSCAN should be discarded
 --select
     --s_name,
     --s_address

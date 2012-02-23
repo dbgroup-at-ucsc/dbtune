@@ -125,9 +125,12 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.execute(sql.getSQL());
         stmt.execute("SET CURRENT EXPLAIN MODE = NO");
 
+        Set<Index> recommended = readAdviseIndexTable(connection, catalog);
+
+        stmt.execute(DELETE_FROM_ADVISE_INDEX);
         stmt.close();
 
-        return readAdviseIndexTable(connection, catalog);
+        return recommended;
     }
 
     /**
@@ -527,12 +530,15 @@ public class DB2Optimizer extends AbstractOptimizer
     static void insertIntoAdviseIndexTable(Connection connection, Set<Index> configuration)
         throws SQLException
     {
+        turnOffIndexes(connection);
+
         if (configuration.isEmpty())
             return;
 
-        Statement stmt = connection.createStatement();
-        stmt.execute(DELETE_FROM_ADVISE_INDEX);
-        stmt.close();
+        Set<Index> indexesNotLoaded = removeAlreadyLoaded(connection, configuration);
+
+        if (indexesNotLoaded.isEmpty())
+            return;
 
         PreparedStatement ps = connection.prepareStatement(INSERT_INTO_ADVISE_INDEX);
 
