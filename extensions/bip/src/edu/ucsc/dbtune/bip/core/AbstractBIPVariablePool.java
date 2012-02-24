@@ -8,12 +8,12 @@ import java.util.Map;
 
 public abstract class AbstractBIPVariablePool  
 {
-    protected List<BIPVariable> listVar;
+    protected List<BIPVariable>        listVar;
     protected Map<String, BIPVariable> mapNameVar;
     
     public AbstractBIPVariablePool()
     {
-        listVar = new ArrayList<BIPVariable>();
+        listVar    = new ArrayList<BIPVariable>();
         mapNameVar = new HashMap<String, BIPVariable>();
     }
     

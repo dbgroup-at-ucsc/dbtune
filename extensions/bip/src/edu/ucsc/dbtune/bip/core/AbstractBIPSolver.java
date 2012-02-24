@@ -1,12 +1,15 @@
 package edu.ucsc.dbtune.bip.core;
 
 
+import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
+import ilog.concert.IloNumVarType;
 import ilog.cplex.IloCplex;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +39,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     
     protected Set<Index>          candidateIndexes;    
     protected Workload            workload;
-    protected List<QueryPlanDesc> listQueryPlanDescs;
+    protected List<QueryPlanDesc> queryPlanDescs;
     
     protected CPlexBuffer     buf;
     protected IloCplex        cplex;
@@ -145,23 +148,23 @@ public abstract class AbstractBIPSolver implements BIPSolver
      */
     protected void populatePlanDescriptionForStatements() throws SQLException
     {   
-        listQueryPlanDescs = new ArrayList<QueryPlanDesc>();
-        Set<Table> listWorkloadTables = new HashSet<Table>();
+        queryPlanDescs            = new ArrayList<QueryPlanDesc>();
+        Set<Table> workloadTables = new HashSet<Table>();
         
         for (int i = 0; i < workload.size(); i++) {            
             // Set the corresponding SQL statement
             QueryPlanDesc desc =  InumQueryPlanDesc.getQueryPlanDescInstance(workload.get(i));
             // Populate the INUM space 
             desc.generateQueryPlanDesc(inumOptimizer, candidateIndexes);            
-            listQueryPlanDescs.add(desc);
+            queryPlanDescs.add(desc);
             
             // Add referenced tables of each statement
             // into the ``global'' set {@code listWorkloadTables}
-            listWorkloadTables.addAll(desc.getTables());
+            workloadTables.addAll(desc.getTables());
         }
         
         // Add full table scan indexes into the candidate index set
-        for (Table table : listWorkloadTables) {
+        for (Table table : workloadTables) {
             FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
             candidateIndexes.add(scanIdx);
         }
@@ -176,6 +179,41 @@ public abstract class AbstractBIPSolver implements BIPSolver
         valVar = cplex.getValues(cplexVar.toArray(new IloNumVar[cplexVar.size()]));
     }
   
+    /**
+     * Create corresponding variables in CPLEX model.
+     * 
+     * @throws IloException 
+     * 
+     */
+    protected void createCplexVariable(List<BIPVariable> vars) throws IloException
+    {   
+        IloNumVarType[] type;
+        double[]        lb;
+        double[]        ub;
+        int             size;
+        
+        size = vars.size();
+        type = new IloNumVarType[size];
+        lb   = new double[size];
+        ub   = new double[size];
+        
+        // initial variables as Binary Type
+        for (int i = 0; i < size; i++) {
+            type[i] = IloNumVarType.Int;
+            lb[i]   = 0.0;
+            ub[i]   = 1.0;
+        }
+            
+        IloNumVar[] iloVar = cplex.numVarArray(size, lb, ub, type);
+        cplex.add(iloVar);
+        
+        for (int i = 0; i < size; i++) {
+            iloVar[i].setName(vars.get(i).getName());
+        }
+        
+        cplexVar = new ArrayList<IloNumVar>(Arrays.asList(iloVar));
+    }
+    
     /**
      * Build the BIP and store into a text file
      * 

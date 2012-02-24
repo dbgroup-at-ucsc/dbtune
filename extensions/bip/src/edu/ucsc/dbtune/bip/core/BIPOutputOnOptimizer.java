@@ -15,7 +15,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  * @author Quoc Trung Tran
  *
  */
-public interface BIPOutputOnActualOptimizer 
+public interface BIPOutputOnOptimizer 
 {   
     /**
      * Verify the result from BIP. The semantic of this method depends heavily on each problem

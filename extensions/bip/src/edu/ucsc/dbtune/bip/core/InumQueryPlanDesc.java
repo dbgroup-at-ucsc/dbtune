@@ -45,13 +45,13 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	private List<Double> beta;
 	
 	/** List of indexes (including FTS) at each slot */
-	private List<List<Index>> indexesEachSlot;
+	private List<List<Index>> indexesSlot;
 	
 	/** List of indexes (excluding FTS) at each slot */
-	private List<List<Index>> indexesWithoutFTSEachSlot;
+	private List<List<Index>> indexesWithoutFTSSlot;
 	
 	/** List of active indexes at each slot*/
-	private List<Set<Index>> activeIndexesWithouFTSEachSlot;
+	private List<Set<Index>> activeIndexesWithouFTSSlot;
 	 
 	/** List of index access cost in each plan */
 	private List<Map<Integer, Double>> accessCostPerPlan;
@@ -61,7 +61,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	private int stmtID;
 	
 	/** List of referenced tables */
-	List<Table> listTables;
+	List<Table> tables;
 		
     /** A map to manage each statement corresponding to one instance of this class*/
 	private static Map<SQLStatement, QueryPlanDesc> instances = new 
@@ -98,7 +98,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     {
         this.stmtID = InumQueryPlanDesc.STMT_ID.getAndIncrement();
         this.stmt = stmt;
-        this.listTables = null;
+        this.tables = null;
     }
     
      
@@ -106,46 +106,49 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     public void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidateIndexes) 
                                       throws SQLException
     {   
-        beta                      = new ArrayList<Double>();
-        indexesEachSlot           = new ArrayList<List<Index>>();
-        indexesWithoutFTSEachSlot = new ArrayList<List<Index>>();        
-        listTables                = new ArrayList<Table>();
-        accessCostPerPlan         = new ArrayList<Map<Integer, Double>>();
+        InumPreparedSQLStatement preparedStmt;
+        Set<InumPlan>            templatePlans;
         
-        activeIndexesWithouFTSEachSlot        = new ArrayList<Set<Index>>();
-        InumPreparedSQLStatement preparedStmt = (InumPreparedSQLStatement) 
-                                                 optimizer.prepareExplain(stmt);
-        Set<InumPlan> templatePlans           = preparedStmt.getTemplatePlans();
+        beta   = new ArrayList<Double>();
+        tables = new ArrayList<Table>();
+        
+        indexesSlot           = new ArrayList<List<Index>>();
+        indexesWithoutFTSSlot = new ArrayList<List<Index>>();
+        accessCostPerPlan     = new ArrayList<Map<Integer, Double>>();
+        
+        activeIndexesWithouFTSSlot = new ArrayList<Set<Index>>();
+        
+        preparedStmt  = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
+        templatePlans = preparedStmt.getTemplatePlans();
                      
         for (InumPlan plan : templatePlans) {
-            listTables = plan.getTables();
+            tables = plan.getTables();
             break;
         }
         
         // 1. Set up the number of slots & list of indexes in each slot
-        n = listTables.size();    
+        n = tables.size();    
         
-        for (Table table : listTables) {    
+        for (Table table : tables) {    
             
-            List<Index> listIndex           = new ArrayList<Index>();         
-            List<Index> listIndexWithoutFTS = new ArrayList<Index>();
-            Set<Index>  setActiveIndexes    = new HashSet<Index>();
+            List<Index> indexes           = new ArrayList<Index>();         
+            List<Index> indexesWithoutFTS = new ArrayList<Index>();
+            Set<Index>  activeIndexes     = new HashSet<Index>();
             
             // normal index (not the full table scan index)
-            for (Index index : candidateIndexes) {
+            for (Index index : candidateIndexes) 
                 if (index.getTable().equals(table)){     
-                    listIndex.add(index);
-                    listIndexWithoutFTS.add(index);
+                    indexes.add(index);
+                    indexesWithoutFTS.add(index);
                 }
-            }
             
-            indexesWithoutFTSEachSlot.add(listIndexWithoutFTS);
-            activeIndexesWithouFTSEachSlot.add(setActiveIndexes);
+            indexesWithoutFTSSlot.add(indexesWithoutFTS);
+            activeIndexesWithouFTSSlot.add(activeIndexes);
             
             // add the Full Table Scan Index at the last position in this slot
             FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
-            listIndex.add(scanIdx);
-            indexesEachSlot.add(listIndex);
+            indexes.add(scanIdx);
+            indexesSlot.add(indexes);
         }
                 
         Kq = 0;
@@ -160,22 +163,22 @@ public class InumQueryPlanDesc implements QueryPlanDesc
             
             for (int i = 0; i < n; i++) {
                 
-                numIndex = indexesEachSlot.get(i).size();
+                numIndex = indexesSlot.get(i).size();
                 
-                for (int j = numIndex - 1; j > -1; j--){
-                    index = indexesEachSlot.get(i).get(j);                    
+                for (int j = numIndex - 1; j > -1; j--) {
+                    index = indexesSlot.get(i).get(j);                    
                     cost = plan.plug(index);                    
-                    
+
                     if (cost == Double.POSITIVE_INFINITY)
                         cost = InumQueryPlanDesc.BIP_MAX_VALUE;
              
                     if (j == numIndex - 1) 
                         costFTS = cost;
                     else if (cost < costFTS) 
-                        activeIndexesWithouFTSEachSlot.get(i).add(index);
+                        activeIndexesWithouFTSSlot.get(i).add(index);
                     
-                    mapIndexAccessCost.put(index.getId(), cost);                    
-                }
+                    mapIndexAccessCost.put(index.getId(), cost);
+                }                
             }
             
             accessCostPerPlan.add(mapIndexAccessCost);
@@ -185,14 +188,14 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         // Update indexEachSlot and indexWithoutFTSEachSlot
         // Remove inactive index
         for (int i = 0; i < n; i++) {
-            indexesWithoutFTSEachSlot.set(i, new ArrayList<Index>
-                                             (activeIndexesWithouFTSEachSlot.get(i)));
-            numIndex  = indexesEachSlot.get(i).size();
-            Index fts = indexesEachSlot.get(i).get(numIndex - 1);
+            indexesWithoutFTSSlot.set(i, new ArrayList<Index>
+                                             (activeIndexesWithouFTSSlot.get(i)));
+            numIndex  = indexesSlot.get(i).size();
+            Index fts = indexesSlot.get(i).get(numIndex - 1);
             List<Index> active = new ArrayList<Index>
-                                     (activeIndexesWithouFTSEachSlot.get(i));
+                                     (activeIndexesWithouFTSSlot.get(i));
             active.add(fts);
-            indexesEachSlot.set(i, active);     
+            indexesSlot.set(i, active);     
         }
     }
      
@@ -214,14 +217,14 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     @Override
 	public List<Index> getIndexesAtSlot(int i)
 	{
-		return indexesEachSlot.get(i);
+		return indexesSlot.get(i);
 	}
 	
     
     @Override
     public List<Index> getIndexesWithoutFTSAtSlot(int i)
     {
-        return indexesWithoutFTSEachSlot.get(i);
+        return indexesWithoutFTSSlot.get(i);
     }
 	
     
@@ -249,12 +252,12 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     @Override 
     public List<Table> getTables()
     {
-        return listTables;
+        return tables;
     }
 
     @Override
     public Set<Index> getActiveIndexesAtSlot(int i) 
     {
-        return activeIndexesWithouFTSEachSlot.get(i);
+        return activeIndexesWithouFTSSlot.get(i);
     }   
 }
