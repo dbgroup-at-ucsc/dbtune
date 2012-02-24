@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -157,52 +158,50 @@ public class DB2Optimizer extends AbstractOptimizer
      * Returns a SQL statement that can be executed to insert the given index into the {@code 
      * ADVISE_INDEX} table.
      *
+     * @param ps
+     *     prepared statement
      * @param index
      *     an index
-     * @return
-     *     a string containing the  string representation of the given index
+     * @throws SQLException
+     *      if an error occurs while adding the batched insert
      */
-    static String buildAdviseIndexInsertStatement(Index index)
+    static void addAdviseIndexInsertStatement(PreparedStatement ps, Index index)
+        throws SQLException
     {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(INSERT_INTO_ADVISE_INDEX_COLUMNS);
-        sb.append("'" + index.getTable().getSchema().getName() + "', ");
-        sb.append("'" + index.getTable().getName() + "', ");
-        sb.append("'" + buildColumnNamesValue(index) + "', ");
-        sb.append(index.size() + ", ");
+        ps.setString(1, index.getTable().getSchema().getName());
+        ps.setString(2, index.getTable().getName());
+        ps.setString(3, buildColumnNamesValue(index));
+        ps.setInt(4, index.size());
 
         if (index.isPrimary())
-            sb.append("'P', ");
+            ps.setString(5, "P");
         else if (index.isUnique())
-            sb.append("'U', ");
+            ps.setString(5, "U");
         else
-            sb.append("'D', ");
+            ps.setString(5, "D");
 
         if (index.isUnique())
-            sb.append(index.size() + ", ");
+            ps.setInt(6, index.size());
         else
-            sb.append("-1, ");
+            ps.setInt(6, -1);
 
         if (index.isReversible())
-            sb.append("'Y', ");
+            ps.setString(7, "Y");
         else
-            sb.append("'N', ");
+            ps.setString(7, "N");
 
         if (index.isClustered())
-            sb.append("'CLUS', ");
+            ps.setString(8, "CLUS");
         else
-            sb.append("'REG', ");
+            ps.setString(8, "REG");
 
-        sb.append("'" + index.getFullyQualifiedName() + "', ");
-        sb.append("'CREATE INDEX " + index.getFullyQualifiedName() + "', ");
-        sb.append("'N', ");
-        sb.append("0, ");
-        sb.append(index.getId() + ", ");
+        ps.setString(9, index.getFullyQualifiedName());
+        ps.setString(10, "CREATE INDEX " + index.getFullyQualifiedName());
+        ps.setString(11, "N");
+        ps.setString(12, "0");
+        ps.setInt(13, index.getId());
 
-        sb.append(INSERT_INTO_ADVISE_INDEX_REST_OF_VALUES);
-
-        return sb.toString();
+        ps.addBatch();
     }
 
     /**
@@ -527,16 +526,15 @@ public class DB2Optimizer extends AbstractOptimizer
         if (configuration.isEmpty())
             return;
 
-        Statement stmt = connection.createStatement();
+        PreparedStatement ps = connection.prepareStatement(INSERT_INTO_ADVISE_INDEX);
 
-        for (Index index : configuration) {
-            if (index.size() == 0)
-                continue;
-            
-            stmt.execute(buildAdviseIndexInsertStatement(index));
-        }
-        
-        stmt.close();
+        for (Index index : configuration)
+            if (index.size() > 0)
+                addAdviseIndexInsertStatement(ps, index);
+
+        ps.executeBatch();
+        ps.clearBatch();
+        ps.close();
     }
 
     /**
@@ -1113,7 +1111,7 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     // CHECKSTYLE:OFF
-    final static String INSERT_INTO_ADVISE_INDEX_COLUMNS =
+       final static String INSERT_INTO_ADVISE_INDEX =
         "INSERT INTO systools.advise_index (" +
 
         // user metadata... extract it from the system's recommended indexes 
@@ -1154,7 +1152,7 @@ public class DB2Optimizer extends AbstractOptimizer
         "   SYSTEM_REQUIRED, " +
         
         // We use this field to identify an index (also stored locally)
-        "   IID, " +
+        "   iid, " +
         
         // enable the index for what-if analysis
         // 'Y' or 'N'
@@ -1204,47 +1202,58 @@ public class DB2Optimizer extends AbstractOptimizer
         "   RIDTOBLOCK, " +
         "   CONVERTED) " +
         " VALUES (" +
-        "   'DBTune', ";
-
-    final static String INSERT_INTO_ADVISE_INDEX_REST_OF_VALUES =
-        "'Y', " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "'', " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "-1, " +
-        "'', " +
-        "0 , " +
-        "CURRENT TIMESTAMP, " +
-        "CURRENT TIMESTAMP, " +
-        "NULL, " +
-        "'DBTune', " +
-        "'Created by DBTune', " +
-        "'SYSTEM', " +
-        "'SYSTEM', " +
-        "'NULLID', " +
-        "'', " +
-        "'P', " +
-        "1, " +
-        "1, " +
-        "1, " +
-        "1, " +
-        "'', " +
-        "NULL, " +
-        "NULL, " +
-        "'N', " +
-        "'Z')";
+        "   'DBTune'," +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "    ?, " +
+        "   'Y', " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   '', " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   -1, " +
+        "   '', " +
+        "   0 , " +
+        "   CURRENT TIMESTAMP, " +
+        "   CURRENT TIMESTAMP, " +
+        "   NULL, " +
+        "   'DBTune', " +
+        "   'Created by DBTune', " +
+        "   'SYSTEM', " +
+        "   'SYSTEM', " +
+        "   'NULLID', " +
+        "   '', " +
+        "   'P', " +
+        "   1, " +
+        "   1, " +
+        "   1, " +
+        "   1, " +
+        "   '', " +
+        "   NULL, " +
+        "   NULL, " +
+        "   'N', " +
+        "   'Z')";
 
     final static String SELECT_FROM_EXPLAIN =
         "SELECT " +

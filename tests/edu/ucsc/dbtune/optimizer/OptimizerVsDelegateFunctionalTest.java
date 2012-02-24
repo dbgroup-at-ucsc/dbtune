@@ -82,9 +82,9 @@ public class OptimizerVsDelegateFunctionalTest
         System.out.println("Candidates generated: " + conf.size());
 
         int i = 1;
-        int prepareWhatIfCount=0;
-        int explainWhatIfCount=0;
-        int totalWhatIfCount=0;
+        int prepareWhatIfCount = 0;
+        int explainWhatIfCount = 0;
+        int totalWhatIfCount = 0;
         long time;
         long prepareTime;
         long explainTime;

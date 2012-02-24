@@ -72,7 +72,9 @@ public class IBGSpaceComputationVsEagerSpaceComputationFunctionalTest
     @Test
     public void testComparison() throws Exception
     {
-        for (Workload wl : workloads(env.getWorkloadFolders())) {
+        //for (Workload wl : workloads(env.getWorkloadFolders())) {
+
+        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
 
             System.out.println("==========================================");
             System.out.println("Processing workload " + wl.getName() + "\n");
@@ -96,6 +98,6 @@ public class IBGSpaceComputationVsEagerSpaceComputationFunctionalTest
                     assertThat("For query " + sql, inumSpaceIBG.contains(template), is(true));
                     */
             }
-        }
+        //}
     }
 }
