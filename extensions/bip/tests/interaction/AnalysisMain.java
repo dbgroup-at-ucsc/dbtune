@@ -20,12 +20,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import edu.ucsc.dbtune.bip.InteractionComparisonFunctionalTest;
 
@@ -82,29 +77,7 @@ public class AnalysisMain {
 		File candidateFile = Configuration.candidateFile(strategy);
 		DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
 		
-		
-		// Vary the size of candidateSet
-		if (candidateSet.size() > InteractionComparisonFunctionalTest.MAX_NUM_INDEX) {
-    		
-    		List<Integer>                 ids = new ArrayList<Integer>();
-    		Map<Integer, DB2Index> mapIDIndex = new HashMap<Integer, DB2Index>();
-    		
-    		for (Iterator<DB2Index> iter = candidateSet.iterator(); iter.hasNext(); ) {
-    		    DB2Index index = iter.next();    		    
-    		    ids.add(index.getId());
-    		    mapIDIndex.put(index.getId(), index);
-    		}
-    		
-    		Collections.sort(ids);
-    		DB2IndexSet temp = new DB2IndexSet();
-    		for (int count = 0; count < InteractionComparisonFunctionalTest.MAX_NUM_INDEX; 
-    		     count++)
-    		    temp.add(mapIDIndex.get(ids.get(count)));
-    		
-    		candidateSet = temp;
-		}
-		
-		System.out.println(" L107 (Karl, Analysis), candidate set: " + candidateSet.size());
+		System.out.println(" L85 (Karl, Analysis), candidate set: " + candidateSet.size());
 		
 		conn.fixCandidates(candidateSet);
 		logger = new InteractionLogger(conn, candidateSet);	
@@ -117,11 +90,11 @@ public class AnalysisMain {
 		writeIBGs(ibgs, strategy);
 		
 		long time = System.currentTimeMillis() - start;
-		System.out.println("L120 (Karl, Analysis Main), the running time: " + time);
+		System.out.println("L98 (Karl, Analysis Main), the running time: " + time);
 		
 		double[] thresholds = new double[] {
-         //       0.01,
-         //       0.1,
+                0.01,
+                0.1,
                 1.0
         };
 
