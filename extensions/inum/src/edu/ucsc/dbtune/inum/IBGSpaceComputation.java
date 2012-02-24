@@ -48,11 +48,10 @@ public class IBGSpaceComputation implements InumSpaceComputation {
     public void ibg(SQLStatement statement, Optimizer delegate,
             HashSet<Index> indexes, Set<InumPlan> inumSpace)
             throws SQLException {
-        for (Index index : indexes)
-            System.out.println("Index: " + index);
-        SQLStatementPlan sqlPlan = delegate.explain(statement, indexes)
-                .getPlan();
-        System.out.println("Plan: " + sqlPlan);
+        //for (Index index : indexes)
+            //System.out.println("Index: " + index);
+        SQLStatementPlan sqlPlan = delegate.explain(statement, indexes).getPlan();
+        //System.out.println("Plan: " + sqlPlan);
 
         Vector<Index> usedIndexes = new Vector<Index>();
         final Hashtable<Table, HashSet<Index>> tables = new Hashtable<Table, HashSet<Index>>();
@@ -64,7 +63,7 @@ public class IBGSpaceComputation implements InumSpaceComputation {
                 continue;
             usedIndexes.add(usedIndex);
 
-            System.out.println("Use: " + usedIndex);
+            //System.out.println("Use: " + usedIndex);
 
             HashSet<Index> set = tables.get(usedIndex.getTable());
             if (set == null) {
@@ -140,5 +139,6 @@ public class IBGSpaceComputation implements InumSpaceComputation {
         if (sqlPlan.contains(NLJ))
             space.add(new InumPlan(delegate, sqlPlan));
 
+        //System.out.println("Space size: " + space.size());
     }
 }

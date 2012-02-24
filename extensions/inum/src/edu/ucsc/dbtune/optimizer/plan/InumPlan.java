@@ -267,8 +267,8 @@ public class InumPlan extends SQLStatementPlan
         if (o.getDatabaseObjects().size() != 1)
             throw new SQLException("The leaf should have one database object.");
 
-        if (o.getName().equals(TABLE_SCAN))
-            return null;
+        if (!o.getName().equals(INDEX_SCAN))
+            throw new SQLException("The leaf should be an " + INDEX_SCAN);
 
         o.setAccumulatedCost(plan.getRootOperator().getAccumulatedCost());
 
@@ -599,7 +599,6 @@ public class InumPlan extends SQLStatementPlan
     
         InumPlan o = (InumPlan) obj;
     
-        return slots.equals(o.slots)
-                && Math.abs(internalPlanCost - o.internalPlanCost) < 1E-20;
+        return slots.equals(o.slots) && Math.abs(internalPlanCost - o.internalPlanCost) < 1E-20;
     }
 }

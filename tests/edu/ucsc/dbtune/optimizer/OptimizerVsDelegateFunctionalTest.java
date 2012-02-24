@@ -84,6 +84,7 @@ public class OptimizerVsDelegateFunctionalTest
         int i = 1;
         int prepareWhatIfCount=0;
         int explainWhatIfCount=0;
+        int totalWhatIfCount=0;
         long time;
         long prepareTime;
         long explainTime;
@@ -98,25 +99,26 @@ public class OptimizerVsDelegateFunctionalTest
 
             final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
 
-            prepareWhatIfCount = delegate.getWhatIfCount() - explainWhatIfCount;
+            prepareWhatIfCount = delegate.getWhatIfCount() - totalWhatIfCount;
 
             prepareTime = System.currentTimeMillis() - time;
             time = System.currentTimeMillis();
 
             prepared = pSql.explain(conf);
 
-            explainWhatIfCount = delegate.getWhatIfCount() - prepareWhatIfCount;
+            explainWhatIfCount = delegate.getWhatIfCount() - totalWhatIfCount - prepareWhatIfCount;
+            totalWhatIfCount += prepareWhatIfCount + explainWhatIfCount;
 
             explainTime = System.currentTimeMillis() - time;
 
             explained = delegate.explain(sql, conf);
 
-            System.out.println("optimizer: " + explained.getSelectCost());
-            System.out.println("delegate:  " + prepared.getSelectCost());
-            System.out.println("prepare:   " + prepareTime + " milliseconds");
-            System.out.println("wifcount:  " + prepareWhatIfCount);
-            System.out.println("explain:   " + explainTime + " milliseconds");
-            System.out.println("wifcount:  " + explainWhatIfCount);
+            System.out.println("optimizer:  " + explained.getSelectCost());
+            System.out.println("delegate:   " + prepared.getSelectCost() + "\n");
+            System.out.println("prepare:    " + prepareTime + " milliseconds");
+            System.out.println("w-if-count: " + prepareWhatIfCount + "\n");
+            System.out.println("explain:    " + explainTime + " milliseconds");
+            System.out.println("w-if-count: " + explainWhatIfCount + "\n");
             System.out.println("optimizer plan:\n" + explained.getPlan());
             System.out.println("delegate plan:\n" + prepared.getPlan() + "\n");
 

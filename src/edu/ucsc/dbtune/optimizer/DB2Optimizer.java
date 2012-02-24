@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -61,17 +60,10 @@ public class DB2Optimizer extends AbstractOptimizer
      *
      * @param connection
      *     a live connection to DB2
-     * @throws SQLException
-     *      if an error occurs while executing a statement
      */
-    public DB2Optimizer(Connection connection) throws SQLException
+    public DB2Optimizer(Connection connection)
     {
         this.connection = connection;
-
-        Statement stmt = connection.createStatement();
-
-        stmt.execute(DELETE_FROM_ADVISE_INDEX);
-        stmt.close();
     }
     
     /**
@@ -87,8 +79,12 @@ public class DB2Optimizer extends AbstractOptimizer
         double selectCost;
         double updateCost;
 
+        clearAdviseAndExplainTables(connection);
+
         loadOptimizationProfiles(sql, indexes);
         
+        insertIntoAdviseIndexTable(connection, indexes);
+
         plan = getPlan(connection, sql, catalog, indexes);
         used = newHashSet(plan.getIndexes());
 
@@ -108,6 +104,8 @@ public class DB2Optimizer extends AbstractOptimizer
 
         unloadOptimizationProfiles();
 
+        whatIfCount++;
+
         return new ExplainedSQLStatement(
             sql, plan, this, selectCost, updateCost, updateCost, updateCosts, indexes, used, 1);     
     }
@@ -120,17 +118,15 @@ public class DB2Optimizer extends AbstractOptimizer
     {
         Statement stmt = connection.createStatement();
 
-        stmt.execute(DELETE_FROM_ADVISE_INDEX);
+        clearAdviseAndExplainTables(connection);
+
         stmt.execute("SET CURRENT EXPLAIN MODE = RECOMMEND INDEXES");
         stmt.execute(sql.getSQL());
         stmt.execute("SET CURRENT EXPLAIN MODE = NO");
 
-        Set<Index> recommended = readAdviseIndexTable(connection, catalog);
-
-        stmt.execute(DELETE_FROM_ADVISE_INDEX);
         stmt.close();
 
-        return recommended;
+        return readAdviseIndexTable(connection, catalog);
     }
 
     /**
@@ -161,50 +157,52 @@ public class DB2Optimizer extends AbstractOptimizer
      * Returns a SQL statement that can be executed to insert the given index into the {@code 
      * ADVISE_INDEX} table.
      *
-     * @param ps
-     *     prepared statement
      * @param index
      *     an index
-     * @throws SQLException
-     *      if an error occurs while adding the batched insert
+     * @return
+     *     a string containing the  string representation of the given index
      */
-    static void addAdviseIndexInsertStatement(PreparedStatement ps, Index index)
-        throws SQLException
+    static String buildAdviseIndexInsertStatement(Index index)
     {
-        ps.setString(1, index.getTable().getSchema().getName());
-        ps.setString(2, index.getTable().getName());
-        ps.setString(3, buildColumnNamesValue(index));
-        ps.setInt(4, index.size());
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(INSERT_INTO_ADVISE_INDEX_COLUMNS);
+        sb.append("'" + index.getTable().getSchema().getName() + "', ");
+        sb.append("'" + index.getTable().getName() + "', ");
+        sb.append("'" + buildColumnNamesValue(index) + "', ");
+        sb.append(index.size() + ", ");
 
         if (index.isPrimary())
-            ps.setString(5, "P");
+            sb.append("'P', ");
         else if (index.isUnique())
-            ps.setString(5, "U");
+            sb.append("'U', ");
         else
-            ps.setString(5, "D");
+            sb.append("'D', ");
 
         if (index.isUnique())
-            ps.setInt(6, index.size());
+            sb.append(index.size() + ", ");
         else
-            ps.setInt(6, -1);
+            sb.append("-1, ");
 
         if (index.isReversible())
-            ps.setString(7, "Y");
+            sb.append("'Y', ");
         else
-            ps.setString(7, "N");
+            sb.append("'N', ");
 
         if (index.isClustered())
-            ps.setString(8, "CLUS");
+            sb.append("'CLUS', ");
         else
-            ps.setString(8, "REG");
+            sb.append("'REG', ");
 
-        ps.setString(9, index.getFullyQualifiedName());
-        ps.setString(10, "CREATE INDEX " + index.getFullyQualifiedName());
-        ps.setString(11, "N");
-        ps.setString(12, "0");
-        ps.setInt(13, index.getId());
+        sb.append("'" + index.getFullyQualifiedName() + "', ");
+        sb.append("'CREATE INDEX " + index.getFullyQualifiedName() + "', ");
+        sb.append("'N', ");
+        sb.append("0, ");
+        sb.append(index.getId() + ", ");
 
-        ps.addBatch();
+        sb.append(INSERT_INTO_ADVISE_INDEX_REST_OF_VALUES);
+
+        return sb.toString();
     }
 
     /**
@@ -216,10 +214,11 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *      if an error occurs while operating over the {@code ADVISE_INDEX} table
      */
-    static void clearExplainTables(Connection connection) throws SQLException
+    static void clearAdviseAndExplainTables(Connection connection) throws SQLException
     {
         Statement stmt = connection.createStatement();
 
+        stmt.executeUpdate(DELETE_FROM_ADVISE_INDEX);
         stmt.executeUpdate(DELETE_FROM_EXPLAIN_INSTANCE);
         
         /*
@@ -235,8 +234,7 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_OPERATOR");
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_PREDICATE");
         stmt.executeUpdate("DELETE FROM SYSTOOLS.EXPLAIN_STATEMENT");
-
-         */
+        */
 
         stmt.close();
     }
@@ -459,10 +457,6 @@ public class DB2Optimizer extends AbstractOptimizer
             Connection connection, SQLStatement sql, Catalog catalog, Set<Index> indexes)
         throws SQLException
     {
-        clearExplainTables(connection);
-
-        insertIntoAdviseIndexTable(connection, indexes);
-
         Statement stmtOperator = connection.createStatement();
         Statement stmtPredicate = connection.createStatement();
        
@@ -530,116 +524,19 @@ public class DB2Optimizer extends AbstractOptimizer
     static void insertIntoAdviseIndexTable(Connection connection, Set<Index> configuration)
         throws SQLException
     {
-        turnOffIndexes(connection);
-
         if (configuration.isEmpty())
             return;
 
-        Set<Index> indexesNotLoaded = removeAlreadyLoaded(connection, configuration);
-
-        if (indexesNotLoaded.isEmpty())
-            return;
-
-        PreparedStatement ps = connection.prepareStatement(INSERT_INTO_ADVISE_INDEX);
-
-        for (Index index : configuration)
-            if (index.size() > 0)
-                addAdviseIndexInsertStatement(ps, index);
-
-        ps.executeBatch();
-        ps.clearBatch();
-        ps.close();
-    }
-
-    /**
-     * Deactivates all the indexes stored in the ADVISE_INDEX table.
-     *
-     * @param connection
-     *      connection used to communicate with the DBMS
-     * @throws SQLException
-     *      if an error occurs while updating the {@code ADVISE_INDEX} table
-     */
-    static void turnOffIndexes(Connection connection) throws SQLException
-    {
         Statement stmt = connection.createStatement();
 
-        stmt.executeUpdate(TURN_OFF_FROM_ADVISE_INDEX);
-        stmt.close();
-    }
-
-    /**
-     * Returns a set of indexes that haven't been loaded into the ADVISE_INDEX table.
-     *
-     * @param connection
-     *      connection used to communicate with the DBMS
-     * @param configuration
-     *      configuration being filtered
-     * @throws SQLException
-     *      if an error occurs while operating over the {@code ADVISE_INDEX} table
-     */
-    static void turnOnIndexes(Connection connection, Set<Index> configuration) throws SQLException
-    {
-        StringBuilder sql = new StringBuilder();
-
-        sql.append(TURN_ON_FROM_ADVISE_INDEX);
-
-        for (Index i : configuration)
-            sql.append(i.getId()).append(", ");
-
-        sql.delete(sql.length() - 2, sql.length() - 1);
-
-        sql.append(")");
-
-        Statement stmt = connection.createStatement();
-
-        stmt.executeUpdate(sql.toString());
-        stmt.close();
-    }
-
-    /**
-     * Returns a set of indexes that haven't been loaded into the ADVISE_INDEX table.
-     *
-     * @param connection
-     *      connection used to communicate with the DBMS
-     * @param configuration
-     *      configuration being filtered
-     * @return
-     *      a set containing indexes that haven't been loaded into the ADVISE_INDEX table
-     * @throws SQLException
-     *      if an error occurs while operating over the {@code ADVISE_INDEX} table
-     */
-    static Set<Index> removeAlreadyLoaded(Connection connection, Set<Index> configuration)
-        throws SQLException
-    {
-        StringBuilder sql = new StringBuilder();
-
-        sql.append(SELECT_FROM_ADVISE_INDEX);
-
-        for (Index i : configuration)
-            sql.append(i.getId()).append(", ");
-
-        sql.delete(sql.length() - 2, sql.length() - 1);
-
-        sql.append(")");
-
-        Statement stmt = connection.createStatement();
-        ResultSet rs = stmt.executeQuery(sql.toString());
-
-        Set<Index> notInAdviseTable = new HashSet<Index>(configuration);
-
-        while (rs.next()) {
-            Index i = find(configuration, rs.getInt(1));
-
-            if (i == null)
-                throw new SQLException("Something wrong; " + rs.getInt(1) + " should be in set");
-
-            notInAdviseTable.remove(i);
+        for (Index index : configuration) {
+            if (index.size() == 0)
+                continue;
+            
+            stmt.execute(buildAdviseIndexInsertStatement(index));
         }
-
-        rs.close();
+        
         stmt.close();
-
-        return notInAdviseTable;
     }
 
     /**
@@ -656,10 +553,9 @@ public class DB2Optimizer extends AbstractOptimizer
      */
     private void loadOptimizationProfiles(SQLStatement sql, Set<Index> indexes) throws SQLException
     {
-        String escapedSQL = sql.getSQL().replaceAll("'", "''");
-
         if (isFTSDisabled)
-            loadFTSDisabledProfile(escapedSQL, connection, getReferencedTables(indexes));
+            loadFTSDisabledProfile(
+                    sql.getSQL().replaceAll("'", "''"), connection, getReferencedTables(indexes));
     }
 
     /**
@@ -1217,7 +1113,7 @@ public class DB2Optimizer extends AbstractOptimizer
     }
 
     // CHECKSTYLE:OFF
-    final static String INSERT_INTO_ADVISE_INDEX =
+    final static String INSERT_INTO_ADVISE_INDEX_COLUMNS =
         "INSERT INTO systools.advise_index (" +
 
         // user metadata... extract it from the system's recommended indexes 
@@ -1258,7 +1154,7 @@ public class DB2Optimizer extends AbstractOptimizer
         "   SYSTEM_REQUIRED, " +
         
         // We use this field to identify an index (also stored locally)
-        "   iid, " +
+        "   IID, " +
         
         // enable the index for what-if analysis
         // 'Y' or 'N'
@@ -1308,58 +1204,47 @@ public class DB2Optimizer extends AbstractOptimizer
         "   RIDTOBLOCK, " +
         "   CONVERTED) " +
         " VALUES (" +
-        "   'DBTune'," +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "    ?, " +
-        "   'Y', " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   '', " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   -1, " +
-        "   '', " +
-        "   0 , " +
-        "   CURRENT TIMESTAMP, " +
-        "   CURRENT TIMESTAMP, " +
-        "   NULL, " +
-        "   'DBTune', " +
-        "   'Created by DBTune', " +
-        "   'SYSTEM', " +
-        "   'SYSTEM', " +
-        "   'NULLID', " +
-        "   '', " +
-        "   'P', " +
-        "   1, " +
-        "   1, " +
-        "   1, " +
-        "   1, " +
-        "   '', " +
-        "   NULL, " +
-        "   NULL, " +
-        "   'N', " +
-        "   'Z')";
+        "   'DBTune', ";
+
+    final static String INSERT_INTO_ADVISE_INDEX_REST_OF_VALUES =
+        "'Y', " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "'', " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "-1, " +
+        "'', " +
+        "0 , " +
+        "CURRENT TIMESTAMP, " +
+        "CURRENT TIMESTAMP, " +
+        "NULL, " +
+        "'DBTune', " +
+        "'Created by DBTune', " +
+        "'SYSTEM', " +
+        "'SYSTEM', " +
+        "'NULLID', " +
+        "'', " +
+        "'P', " +
+        "1, " +
+        "1, " +
+        "1, " +
+        "1, " +
+        "'', " +
+        "NULL, " +
+        "NULL, " +
+        "'N', " +
+        "'Z')";
 
     final static String SELECT_FROM_EXPLAIN =
         "SELECT " +
@@ -1401,28 +1286,6 @@ public class DB2Optimizer extends AbstractOptimizer
         "         ON o.operator_id = p.operator_id " +             
         " ORDER BY " +
         "          o.operator_id ASC ";
-
-    final static String SELECT_FROM_ADVISE_INDEX =
-        " SELECT " +
-        "   IID " +
-        " FROM " +
-        "   systools.advise_index " +
-        " WHERE " +
-        "   IID IN (";
-
-    final static String TURN_ON_FROM_ADVISE_INDEX =
-        " UPDATE " +
-        "   systools.advise_index " +
-        " SET " +
-        "   USE_INDEX = 'Y' " +
-        " WHERE " +
-        "   IID IN (";
-
-    final static String TURN_OFF_FROM_ADVISE_INDEX =
-        " UPDATE " +
-        "   systools.advise_index " +
-        " SET " +
-        "   USE_INDEX = 'N'";
 
     final static String DELETE_FROM_ADVISE_INDEX = "DELETE FROM SYSTOOLS.ADVISE_INDEX";
 

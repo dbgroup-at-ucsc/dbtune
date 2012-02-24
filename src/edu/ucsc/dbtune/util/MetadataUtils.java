@@ -177,22 +177,11 @@ public final class MetadataUtils
             throw new RuntimeException("Can't look for an index with 3 path elements");
         }
 
-        //System.out.println("Sent: ");
-
-        //for (Index i : indexes)
-            //System.out.println("    [" + i.getId() + "]" + i.getFullyQualifiedName());
-
-
         if (schemaName != null)
             // search by schemaName.indexname first
-            for (Index i : indexes) {
-                //System.out.println(
-                    //"    Checking if " + i.getFullyQualifiedName() +
-                    //" is equal to " + schemaName + "." + indexName);
-
+            for (Index i : indexes)
                 if (i.getSchema().getName().equals(schemaName) && i.getName().equals(indexName))
                     return i;
-            }
 
         // search by the name only
         for (Index i : indexes)
