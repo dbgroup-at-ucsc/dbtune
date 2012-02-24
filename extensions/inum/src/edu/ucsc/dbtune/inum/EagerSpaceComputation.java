@@ -202,7 +202,7 @@ public class EagerSpaceComputation implements InumSpaceComputation
      * @throws SQLException
      *      if there's a table without a corresponding slot in the given inum plan
      */
-    private static List<Index> getMinimumAtomicConfiguration(InumPlan plan) throws SQLException
+    public static List<Index> getMinimumAtomicConfiguration(InumPlan plan) throws SQLException
     {
         List<Index> ios = new ArrayList<Index>();
         

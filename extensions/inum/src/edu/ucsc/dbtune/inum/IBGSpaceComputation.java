@@ -17,6 +17,7 @@ import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Sets.cartesianProduct;
+import static com.google.common.collect.Sets.newHashSet;
 
 import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 
@@ -26,68 +27,50 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
  * @author Rui Wang
  * @author Ivo Jimenez
  */
-public class IBGSpaceComputation implements InumSpaceComputation
-{
+public class IBGSpaceComputation implements InumSpaceComputation {
     private boolean hasPlanWhichDontUseIndex;
+    private InumPlan templateForEmpty;
 
     /**
      * TODO: complete.
-     *
+     * 
      * @param statement
-     *      todo
+     *            todo
      * @param delegate
-     *      todo
+     *            todo
      * @param indexes
-     *      todo
+     *            todo
      * @param inumSpace
-     *      todo
+     *            todo
      * @throws SQLException
-     *      todo
+     *             todo
      */
-    public void ibg(
-            SQLStatement statement,
-            Optimizer delegate,
-            HashSet<Index> indexes,
-            Set<InumPlan> inumSpace)
-        throws SQLException
-    {
-        SQLStatementPlan sqlPlan = delegate.explain(statement, indexes).getPlan();
+    public void ibg(SQLStatement statement, Optimizer delegate,
+            HashSet<Index> indexes, Set<InumPlan> inumSpace)
+            throws SQLException {
+        for (Index index : indexes)
+            System.out.println("Index: " + index);
+        SQLStatementPlan sqlPlan = delegate.explain(statement, indexes)
+                .getPlan();
+        System.out.println("Plan: " + sqlPlan);
 
         Vector<Index> usedIndexes = new Vector<Index>();
         final Hashtable<Table, HashSet<Index>> tables = new Hashtable<Table, HashSet<Index>>();
 
-        /**
-         * TODO.
-         */
-        class A
-        {
-            /**
-             * TODO.
-             *
-             * @param table
-             *      TODO
-             * @return
-             *      TODO
-             */
-            HashSet<Index> getTable(Table table)
-            {
-                HashSet<Index> set = tables.get(table);
-                if (set == null) {
-                    set = new HashSet<Index>();
-                    tables.put(table, set);
-                }
-                return set;
-            }
-        }
-
-        A a = new A();
         // multiple interesting order are used in one table
         boolean conflict = false;
         for (Index usedIndex : sqlPlan.getIndexes()) {
             if (usedIndex instanceof FullTableScanIndex)
                 continue;
             usedIndexes.add(usedIndex);
-            HashSet<Index> set = a.getTable(usedIndex.getTable());
+
+            System.out.println("Use: " + usedIndex);
+
+            HashSet<Index> set = tables.get(usedIndex.getTable());
+            if (set == null) {
+                set = new HashSet<Index>();
+                tables.put(usedIndex.getTable(), set);
+            }
             set.add(usedIndex);
             if (set.size() > 1)
                 conflict = true;
@@ -111,11 +94,12 @@ public class IBGSpaceComputation implements InumSpaceComputation
         } else if (usedIndexes.size() == 0) {
             if (!hasPlanWhichDontUseIndex) {
                 hasPlanWhichDontUseIndex = true;
-//                if (!sqlPlan.contains(NLJ))
-                    inumSpace.add(new InumPlan(delegate, sqlPlan));
+                templateForEmpty = new InumPlan(delegate, sqlPlan);
+                if (!sqlPlan.contains(NLJ))
+                    inumSpace.add(templateForEmpty);
             }
         } else {
-//            if (!sqlPlan.contains(NLJ))
+            if (!sqlPlan.contains(NLJ))
                 inumSpace.add(new InumPlan(delegate, sqlPlan));
             for (Index usedIndex : usedIndexes) {
                 HashSet<Index> set = new HashSet<Index>();
@@ -130,14 +114,13 @@ public class IBGSpaceComputation implements InumSpaceComputation
      * {@inheritDoc}
      */
     @Override
-    public void compute(
-            Set<InumPlan> space, SQLStatement statement, Optimizer delegate, Catalog catalog)
-        throws SQLException
-    {
+    public void compute(Set<InumPlan> space, SQLStatement statement,
+            Optimizer delegate, Catalog catalog) throws SQLException {
         List<Set<Index>> indexesPerTable;
         DerbyInterestingOrdersExtractor interestingOrdersExtractor;
 
-        interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(catalog, true);
+        interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(
+                catalog, true);
         indexesPerTable = interestingOrdersExtractor.extract(statement);
         HashSet<Index> allIndex = new HashSet<Index>();
 
@@ -149,5 +132,13 @@ public class IBGSpaceComputation implements InumSpaceComputation
 
         hasPlanWhichDontUseIndex = false;
         ibg(statement, delegate, allIndex, space);
+        // check NLJ
+        List<Index> minimumAtomic = EagerSpaceComputation
+                .getMinimumAtomicConfiguration(templateForEmpty);
+        SQLStatementPlan sqlPlan = delegate.explain(statement,
+                newHashSet(minimumAtomic)).getPlan();
+        if (sqlPlan.contains(NLJ))
+            space.add(new InumPlan(delegate, sqlPlan));
+
     }
 }
