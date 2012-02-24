@@ -11,7 +11,6 @@ import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.metadata.Index;
 
-
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
@@ -116,7 +115,7 @@ public class DivBIP extends AbstractBIPSolver
         int q;
         
         // for TYPE_Y, TYPE_X
-        for (QueryPlanDesc desc : listQueryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs){
             
             q = desc.getStatementID();
             
@@ -163,7 +162,7 @@ public class DivBIP extends AbstractBIPSolver
         int id;
         int q;
         
-        for (QueryPlanDesc desc : listQueryPlanDescs) {
+        for (QueryPlanDesc desc : queryPlanDescs) {
             
             q = desc.getStatementID();
             
@@ -209,7 +208,7 @@ public class DivBIP extends AbstractBIPSolver
         int id;
         int q;
         
-        for (QueryPlanDesc desc : listQueryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs){
             
             q = desc.getStatementID();
         
@@ -247,7 +246,7 @@ public class DivBIP extends AbstractBIPSolver
         int q;
         
         // atomic constraint
-        for (QueryPlanDesc desc : listQueryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs){
             
             q = desc.getStatementID();
         
@@ -280,7 +279,7 @@ public class DivBIP extends AbstractBIPSolver
         }
         
         // used index constraint
-        for (QueryPlanDesc desc : listQueryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs){
             
             q = desc.getStatementID();
         
@@ -324,7 +323,7 @@ public class DivBIP extends AbstractBIPSolver
         int idY;        
         int q;
         
-        for (QueryPlanDesc desc : listQueryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs){
             
             q = desc.getStatementID();
             expr = cplex.linearNumExpr();

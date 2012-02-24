@@ -9,7 +9,7 @@ import java.util.Random;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
-public class RandomIndexMaterializationSchedule extends SimBIP 
+public class RandomScheduler extends SimBIP 
 {   
     /**
      * This method implements a simple random schedule algorithm 
@@ -38,7 +38,7 @@ public class RandomIndexMaterializationSchedule extends SimBIP
      * maximum number of indexes.
      *  
      */
-    private MaterializationSchedule randomScheduleConstraintNumberIndexesWindow()
+    private Schedule randomScheduleConstraintNumberIndexesWindow()
     {
         // Assume Sdrop = \emptyset
         List<Integer> numberIndexesWindow = new ArrayList<Integer>();
@@ -48,7 +48,7 @@ public class RandomIndexMaterializationSchedule extends SimBIP
             numberIndexesWindow.add(0);
         
         Random generator = new Random(19580427);
-        MaterializationSchedule ms = new MaterializationSchedule(W, Sinit);
+        Schedule ms = new Schedule(W, Sinit);
         
         for (Index index : super.Screate){
             
@@ -81,7 +81,7 @@ public class RandomIndexMaterializationSchedule extends SimBIP
      * given maximum-limit. 
      *  
      */
-    private MaterializationSchedule randomScheduleConstraintCreationCostWindow()
+    private Schedule randomScheduleConstraintCreationCostWindow()
     {
         // Assume Sdrop = \emptyset
         List<Double> creationCostWindow = new ArrayList<Double>();
@@ -92,7 +92,7 @@ public class RandomIndexMaterializationSchedule extends SimBIP
             creationCostWindow.add(0.0);
         
         Random generator = new Random(19580427);
-        MaterializationSchedule ms = new MaterializationSchedule(W, Sinit);
+        Schedule ms = new Schedule(W, Sinit);
         
         for (Index index : super.Screate){
             

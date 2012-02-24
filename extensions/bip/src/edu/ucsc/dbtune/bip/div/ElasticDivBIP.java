@@ -153,7 +153,7 @@ public class ElasticDivBIP extends DivBIP
         int idD;
         int q;
         
-        for (QueryPlanDesc desc : listQueryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs){
             
             q = desc.getStatementID();
         
