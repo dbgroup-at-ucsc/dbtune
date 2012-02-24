@@ -6,12 +6,12 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
-import edu.ucsc.dbtune.bip.core.BIPOutputOnActualOptimizer;
+import edu.ucsc.dbtune.bip.core.BIPOutputOnOptimizer;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-public class InteractionOnOptimizer implements BIPOutputOnActualOptimizer 
+public class InteractionOnOptimizer implements BIPOutputOnOptimizer 
 {
     private Map<Integer, Set<Index>> mapThetaIndexSet;
     Index first, second;

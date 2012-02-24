@@ -57,7 +57,7 @@ public class InteractionLP extends AbstractBIPSolver
         mapIndexListStatements = new HashMap<Index, Set<Integer>>();
         
         int pos = 0;
-        for (QueryPlanDesc desc : listQueryPlanDescs) {
+        for (QueryPlanDesc desc : queryPlanDescs) {
             
             Map<Index, Integer> mapIndexSlotID = new HashMap<Index, Integer>();
             
@@ -118,7 +118,7 @@ public class InteractionLP extends AbstractBIPSolver
                 numCplexCall++;
                 
                 for (int pos : intersectID) {
-                    lsql.add(listQueryPlanDescs.get(pos));
+                    lsql.add(queryPlanDescs.get(pos));
                     listRelationC.add(mapStmtIndexSlotID.get(pos).get(indexc));
                     listRelationD.add(mapStmtIndexSlotID.get(pos).get(indexd));
                 }

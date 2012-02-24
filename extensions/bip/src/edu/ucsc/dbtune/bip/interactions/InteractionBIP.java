@@ -70,7 +70,7 @@ public class InteractionBIP extends AbstractBIPSolver
         int i = 0;
         SQLStatement sql;
         
-        for (QueryPlanDesc desc : listQueryPlanDescs) {
+        for (QueryPlanDesc desc : queryPlanDescs) {
             sql = workload.get(i);
             findInteractions(sql, desc);
             i++;

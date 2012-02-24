@@ -13,9 +13,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,8 +37,8 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
-
 import org.junit.Test;
+
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
@@ -61,11 +59,12 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
     private static Set<Index> optimalCandidates;
     private static Set<Index> powerSetCandidates;
     
-    public static int   MAX_NUM_INDEX = 10;
+    public static int   MAX_NUM_INDEX = 50;
     public static List<Generation.Strategy> strategies = 
                     Arrays.asList(
-                                  //Generation.Strategy.UNION_OPTIMAL,
-                                  Generation.Strategy.POWER_SET);
+                                  Generation.Strategy.UNION_OPTIMAL
+                                  ,Generation.Strategy.POWER_SET
+                                  );
     
     /**     
      * 
@@ -79,7 +78,11 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         db = newDatabaseSystem(en);
         workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
       
-        double[] deltas = new double[] {1.0};
+        double[] deltas = new double[] {
+                                        0.01, 
+                                        0.1, 
+                                        1
+                                        };
         
         // 1. generate candidate indexes
         generateCandidateIndexes();
@@ -110,10 +113,100 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
                 System.out.println("-- Threshold: --- " + delta
                                     + " : " + " f-measure: " + 
                                     result.f_measure(ibg));
+                                    
             }
         }
     }
     
+    /**
+     * @throws Exception
+     *      if fails
+     */    
+    private static InteractionOutput analyze(Generation.Strategy strategy, double delta) 
+                                    throws Exception
+    {   
+        en = Environment.getInstance();
+        db = newDatabaseSystem(en);
+        
+        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        
+        Set<Index> candidates;
+        
+        if (strategy.equals(Generation.Strategy.OPTIMAL_1C))
+            candidates = new HashSet<Index>(oneColumnCandidates);
+        else if (strategy.equals(Generation.Strategy.POWER_SET))
+            candidates = new HashSet<Index>(powerSetCandidates);
+        else 
+            candidates = new HashSet<Index>(optimalCandidates);
+        
+        
+        
+        System.out.println("InteractionComparison, Number of indexes: " + candidates.size() + 
+                           "Number of statements: " + workload.size());
+        
+        //for (Index index : candidates)
+          //  System.out.println("L147, index: " + index.getId() + " " + index);
+        
+        InteractionOutput output;
+        
+        Optimizer io = db.getOptimizer();
+
+        if (!(io instanceof InumOptimizer))
+            throw new Exception("Expecting InumOptimizer instance");
+            
+        LogListener logger = LogListener.getInstance();
+        InteractionBIP bip = new InteractionBIP(delta);            
+        bip.setCandidateIndexes(candidates);
+        bip.setWorkload(workload);
+        bip.setOptimizer((InumOptimizer) io);
+        bip.setLogListenter(logger);
+        bip.setConventionalOptimizer(io.getDelegate());
+        
+        output = (InteractionOutput) bip.solve();
+        System.out.println("Number of interactions: " + output.size());
+        //System.out.println(output);
+        System.out.println(logger.toString());        
+        
+        return output;
+    }
+    
+    
+    private static Set<IndexInteraction> readIBGInteraction(Generation.Strategy s, double t,
+            Set<Index> indexes) throws Exception
+    {   
+        Map<Integer, Index> mapIDIndex = new HashMap<Integer, Index>();
+        
+        for (Index index : indexes)
+            mapIDIndex.put(index.getId(), index);
+        
+        BufferedReader reader = new BufferedReader(
+                                        new FileReader(Configuration.                           
+                                                logInteractionFile(s, AnalysisMode.SERIAL, t)));
+        String line = null;        
+        int id1;
+        int id2;
+        
+        Set<IndexInteraction> result = new HashSet<IndexInteraction>();
+        
+        while((line = reader.readLine()) != null) {         
+            String[] token = line.split("\\|");
+            
+            // {id1, id2}
+            id1 = Integer.parseInt(token[0]);
+            id2 = Integer.parseInt(token[1]);
+            
+            if (!mapIDIndex.containsKey(id1) || !mapIDIndex.containsKey(id2))
+                System.out.println("Runtime error. The inputs to the problems are not identical"
+                                     + " id: " + id1 + " vs. " + id2);
+            
+            // Add interaction
+            IndexInteraction pair = new IndexInteraction(mapIDIndex.get(id1),
+                                                         mapIDIndex.get(id2));
+            result.add(pair);
+        }
+        
+        return result;
+    }   
     /**
      * This function generates candidate indexes of different types, write into a text file
      * for Karl's code to read in.
@@ -123,9 +216,11 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
     private static void generateCandidateIndexes() throws Exception
     {
         String folder = en.getWorkloadsFoldername() + "/tpch-small";
+        CandidateGenerator candGen;
+        
         
         // 1. one column        
-        CandidateGenerator candGen = 
+        candGen = 
             new OneColumnCandidateGenerator(
                     new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())));
         oneColumnCandidates = candGen.generate(workload);
@@ -146,11 +241,17 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         System.out.println("InteractionComparison, Power set candidates: " 
                             + powerSetCandidates.size());
         
+        if (powerSetCandidates.size() > MAX_NUM_INDEX) {
+            Set<Index> temp = getSubSetIndexes(powerSetCandidates, MAX_NUM_INDEX);
+            powerSetCandidates = temp;
+        }
+        
         try {
             writeIndexesToFile(powerSetCandidates, folder  + "/candidate-powerset.txt");            
         } catch (Exception e) {
             throw e;
         }
+       
         
         // 3. optimal
         candGen = 
@@ -206,59 +307,7 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         out.close();
     }
     
-    /**
-     * @throws Exception
-     *      if fails
-     */    
-    private static InteractionOutput analyze(Generation.Strategy strategy, double delta) 
-                                    throws Exception
-    {   
-        en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-        
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
-        
-        Set<Index> candidates;
-        
-        if (strategy.equals(Generation.Strategy.OPTIMAL_1C))
-            candidates = new HashSet<Index>(oneColumnCandidates);
-        else if (strategy.equals(Generation.Strategy.POWER_SET))
-            candidates = new HashSet<Index>(powerSetCandidates);
-        else 
-            candidates = new HashSet<Index>(optimalCandidates);
-        
-        if (candidates.size() > MAX_NUM_INDEX) {
-            Set<Index> temp = getSubSetIndexes(candidates, MAX_NUM_INDEX);
-            candidates = temp;
-        }
-        
-        System.out.println("InteractionComparison, Number of indexes: " + candidates.size() + 
-                           "Number of statements: " + workload.size());
-        /*
-        for (Index index : candidates)
-            System.out.println("L147, index: " + index.getId() + " " + index);
-        */
-        InteractionOutput output;
-        
-        Optimizer io = db.getOptimizer();
-
-        if (!(io instanceof InumOptimizer))
-            throw new Exception("Expecting InumOptimizer instance");
-            
-        LogListener logger = LogListener.getInstance();
-        InteractionBIP bip = new InteractionBIP(delta);            
-        bip.setCandidateIndexes(candidates);
-        bip.setWorkload(workload);
-        bip.setOptimizer((InumOptimizer) io);
-        bip.setLogListenter(logger);
-        bip.setConventionalOptimizer(io.getDelegate());
-        
-        output = (InteractionOutput) bip.solve();
-        System.out.println("Number of interactions: " + output.size());
-        System.out.println(logger.toString());        
-        
-        return output;
-    }
+    
     
     /**
      * Extract a number of {@code maxSize} indexes that have the smallest ID values
@@ -270,60 +319,19 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
      */
     private static Set<Index> getSubSetIndexes(Set<Index> indexes, int maxSize)
     {
-        List<Integer>       ids        = new ArrayList<Integer>();
-        Map<Integer, Index> mapIDIndex = new HashMap<Integer, Index>();
-        
-        int id;
+        int count = 0;
+        Set<Index> result = new HashSet<Index>();
         
         for (Index index : indexes) {
-            id = index.getId();
-            ids.add(id);
-            mapIDIndex.put(id, index);
+            result.add(index);
+            count++;
+            if (count >= maxSize)
+                break;
         }
-        
-        Collections.sort(ids);
-        Set<Index> result = new HashSet<Index>();
-        for (int count = 0; count < maxSize; count++)
-            result.add(mapIDIndex.get(ids.get(count)));
         
         return result;
     }
     
     
-    private static Set<IndexInteraction> readIBGInteraction(Generation.Strategy s, double t,
-            Set<Index> indexes) throws Exception
-    {   
-        Map<Integer, Index> mapIDIndex = new HashMap<Integer, Index>();
-        
-        for (Index index : indexes)
-            mapIDIndex.put(index.getId(), index);
-        
-        BufferedReader reader = new BufferedReader(
-                                        new FileReader(Configuration.                           
-                                                logInteractionFile(s, AnalysisMode.SERIAL, t)));
-        String line = null;        
-        int id1;
-        int id2;
-        
-        Set<IndexInteraction> result = new HashSet<IndexInteraction>();
-        
-        while((line = reader.readLine()) != null) {         
-            String[] token = line.split("\\|");
-            
-            // {id1, id2}
-            id1 = Integer.parseInt(token[0]);
-            id2 = Integer.parseInt(token[1]);
-            
-            if (!mapIDIndex.containsKey(id1) || !mapIDIndex.containsKey(id2))
-                System.out.println("Runtime error. The inputs to the problems are not identical"
-                                     + " id: " + id1 + " vs. " + id2);
-            
-            // Add interaction
-            IndexInteraction pair = new IndexInteraction(mapIDIndex.get(id1),
-                                                         mapIDIndex.get(id2));
-            result.add(pair);
-        }
-        
-        return result;
-    }   
+    
 }
