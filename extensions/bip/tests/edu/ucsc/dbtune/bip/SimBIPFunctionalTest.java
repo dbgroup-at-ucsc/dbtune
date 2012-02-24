@@ -52,9 +52,8 @@ public class SimBIPFunctionalTest
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         
         // 2. powerset
-        CandidateGenerator candGen = 
-            new PowerSetOptimalCandidateGenerator(
-                    new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())), 3);
+        CandidateGenerator candGen = //new PowerSetOptimalCandidateGenerator(
+                    new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));//, 3);
         
         //CandidateGenerator candGen = new PowerSetCandidateGenerator(db.getCatalog(), 2, true);
         Set<Index> indexes = candGen.generate(workload);

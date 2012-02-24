@@ -4,7 +4,6 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -51,7 +50,7 @@ public class OptimizerVsDelegateFunctionalTest
         db = newDatabaseSystem(env);
         optimizer = db.getOptimizer();
         delegate = getBaseOptimizer(optimizer);
-        candGen = new OptimizerCandidateGenerator(delegate);
+        candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
         
         loadWorkloads(db.getConnection());
     }
@@ -83,6 +82,8 @@ public class OptimizerVsDelegateFunctionalTest
         System.out.println("Candidates generated: " + conf.size());
 
         int i = 1;
+        int prepareWhatIfCount=0;
+        int explainWhatIfCount=0;
         long time;
         long prepareTime;
         long explainTime;
@@ -97,10 +98,14 @@ public class OptimizerVsDelegateFunctionalTest
 
             final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
 
+            prepareWhatIfCount = delegate.getWhatIfCount() - explainWhatIfCount;
+
             prepareTime = System.currentTimeMillis() - time;
             time = System.currentTimeMillis();
 
             prepared = pSql.explain(conf);
+
+            explainWhatIfCount = delegate.getWhatIfCount() - prepareWhatIfCount;
 
             explainTime = System.currentTimeMillis() - time;
 
@@ -109,7 +114,9 @@ public class OptimizerVsDelegateFunctionalTest
             System.out.println("optimizer: " + explained.getSelectCost());
             System.out.println("delegate:  " + prepared.getSelectCost());
             System.out.println("prepare:   " + prepareTime + " milliseconds");
-            System.out.println("explain:   " + explainTime + " milliseconds\n");
+            System.out.println("wifcount:  " + prepareWhatIfCount);
+            System.out.println("explain:   " + explainTime + " milliseconds");
+            System.out.println("wifcount:  " + explainWhatIfCount);
             System.out.println("optimizer plan:\n" + explained.getPlan());
             System.out.println("delegate plan:\n" + prepared.getPlan() + "\n");
 

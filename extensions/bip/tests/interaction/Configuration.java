@@ -28,12 +28,13 @@ public abstract class Configuration {
 	public static String dbName = "ONEGB";
 	public static String userName = "db2inst1";
 	public static String password = "db2inst1admin";
-	public static String url = "jdbc:db2://localhost:50000/ONEGB";
+    public static String url = "jdbc:db2://192.168.56.101:50000/test";
 	public static String driverClass = "com.ibm.db2.jcc.DB2Driver";
 	public static String db2Advis = "/home/db2inst1/sqllib/bin/db2advis";	
 	
-	private static File root = 
-		new File("/home/tqtrung/previous_source_code/interaction/src/interaction/results");
+    private static File root =
+        //new File("/home/tqtrung/previous_source_code/interaction/src/interaction/results");
+        new File("/home/ivo/projects/chameleon/bengraph/results/");
 		
 	private static File resultsDir() {
 		return new File (root, subdir);
