@@ -15,12 +15,14 @@ import edu.ucsc.dbtune.metadata.Index;
  * @author tqtrung@soe.ucsc.edu
  *
  */
-public class MaterializationSchedule extends IndexTuningOutput
+public class Schedule extends IndexTuningOutput
 {
-    private int W;
-    private List<List<Index>> listCreateIndexesWindow;
-    private List<List<Index>> listDropIndexesWindow;
+    
+    private List<List<Index>> createdIndexesWindow;
+    private List<List<Index>> droppedIndexesWindow;
+    
     private Set<Index> Sinit;
+    private int        W;
     
     /**
      * Constructor of a materialization schedule, given the number of maintenance window
@@ -31,19 +33,22 @@ public class MaterializationSchedule extends IndexTuningOutput
      * @param Sinit
      *      The set of indexes that are currently materialized in the system     
      */
-    public MaterializationSchedule(int W, Set<Index> Sinit)
+    public Schedule(int W, Set<Index> Sinit)
     {
         this.W = W;
         this.Sinit = Sinit;
         
-        listCreateIndexesWindow = new ArrayList<List<Index>>();
-        listDropIndexesWindow = new ArrayList<List<Index>>();
+        createdIndexesWindow = new ArrayList<List<Index>>();
+        droppedIndexesWindow = new ArrayList<List<Index>>();
         
         for (int w = 0; w < W; w++) {
-            List<Index> listCreateIndexes = new ArrayList<Index>();
-            List<Index> listDropIndexes = new ArrayList<Index>();
-            listCreateIndexesWindow.add(listCreateIndexes);
-            listDropIndexesWindow.add(listDropIndexes);
+            
+            List<Index> createIndexes = new ArrayList<Index>();
+            List<Index> dropIndexes = new ArrayList<Index>();
+            
+            createdIndexesWindow.add(createIndexes);
+            droppedIndexesWindow.add(dropIndexes);
+            
         }
     }
     
@@ -79,7 +84,7 @@ public class MaterializationSchedule extends IndexTuningOutput
      */
     public Set<Index> getMaterializedIndexes(int window)
     {
-        return new HashSet<Index>(listCreateIndexesWindow.get(window));
+        return new HashSet<Index>(createdIndexesWindow.get(window));
     }
     
     /**
@@ -93,7 +98,7 @@ public class MaterializationSchedule extends IndexTuningOutput
      */
     public Set<Index> getDroppedIndexes(int window)
     {
-        return new HashSet<Index>(listDropIndexesWindow.get(window));
+        return new HashSet<Index>(droppedIndexesWindow.get(window));
     }
     
     
@@ -112,26 +117,33 @@ public class MaterializationSchedule extends IndexTuningOutput
     public void addIndexWindow(Index index, int window, int type)
     {
         if (type == SimVariablePool.VAR_CREATE) 
-            listCreateIndexesWindow.get(window).add(index);
+            createdIndexesWindow.get(window).add(index);
         else if  (type == SimVariablePool.VAR_DROP) 
-            listDropIndexesWindow.get(window).add(index);
+            droppedIndexesWindow.get(window).add(index);
         else 
             throw new RuntimeException("The type of index must be created or dropped");
     }
 
     @Override
-    public String toString() {
-        StringBuilder result = new StringBuilder("MaterializationSchedule [W=" + W + "]\n");
-        for (int w = 0; w < this.W; w++) {
+    public String toString() 
+    {   
+        StringBuilder result = new StringBuilder();
+        
+        result.append("MaterializationSchedule [W=" + W + "]\n");
+        
+        for (int w = 0; w < W; w++) {
             
             result.append(" Window " + w + "-th: \n");
-            for (Index index : this.listCreateIndexesWindow.get(w)) 
-                result.append("CREATE INDEX "  + index + " Time: " + index.getCreationCost() + "\n");
             
-            for (Index index : this.listDropIndexesWindow.get(w)) 
+            for (Index index : createdIndexesWindow.get(w)) 
+                result.append("CREATE INDEX "  + index + " Time: " + 
+                               index.getCreationCost() + "\n");
+            
+            for (Index index : droppedIndexesWindow.get(w)) 
                 result.append("DROP INDEX "  + index + "\n");
             
         }
+        
         return result.toString();
     }
 }

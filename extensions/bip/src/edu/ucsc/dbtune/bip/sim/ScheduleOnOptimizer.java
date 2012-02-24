@@ -5,12 +5,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
-import edu.ucsc.dbtune.bip.core.BIPOutputOnActualOptimizer;
+import edu.ucsc.dbtune.bip.core.BIPOutputOnOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-public class MaterializationScheduleOnOptimizer implements BIPOutputOnActualOptimizer 
+public class ScheduleOnOptimizer implements BIPOutputOnOptimizer 
 {
     private double totalCost;
     
@@ -18,10 +18,10 @@ public class MaterializationScheduleOnOptimizer implements BIPOutputOnActualOpti
     public void verify(Optimizer optimizer, IndexTuningOutput bip, Set<SQLStatement> workload) 
                 throws SQLException 
     {
-        if ( !(bip instanceof MaterializationSchedule)) 
+        if ( !(bip instanceof Schedule)) 
             throw new RuntimeException(" The BIP result must be a materialization schedule. ");
      
-        MaterializationSchedule ms = (MaterializationSchedule) bip;
+        Schedule ms = (Schedule) bip;
         // the configuration at each window
         totalCost = 0.0;
         Set<Index> Cw = new HashSet<Index>(ms.getIntialIndexes());
@@ -32,9 +32,9 @@ public class MaterializationScheduleOnOptimizer implements BIPOutputOnActualOpti
             Cw.removeAll(ms.getDroppedIndexes(w));
             
             // compute the actual query cost
-            for (SQLStatement sql : workload) {
+            for (SQLStatement sql : workload)
                 totalCost += optimizer.explain(sql, Cw).getTotalCost();
-            }
+            
         }
     }
     
@@ -47,5 +47,4 @@ public class MaterializationScheduleOnOptimizer implements BIPOutputOnActualOpti
     {
         return totalCost;
     }
-
 }

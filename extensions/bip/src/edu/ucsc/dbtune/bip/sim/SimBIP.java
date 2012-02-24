@@ -146,7 +146,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
     @Override
     protected IndexTuningOutput getOutput()
     { 
-        MaterializationSchedule schedule = new MaterializationSchedule(W, Sinit);
+        Schedule schedule = new Schedule(W, Sinit);
         
         /*
         // Iterate over variables create_{i,w} and drop_{i,w}
@@ -203,7 +203,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
         }
         
         // for TYPE_Y, TYPE_X
-        for (QueryPlanDesc desc : listQueryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs){
             
             int q = desc.getStatementID();
             for (int w = 0; w < W; w++) {
@@ -339,7 +339,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	{
 	    listCwq = new ArrayList<String>(); 
         
-	    for (QueryPlanDesc desc : listQueryPlanDescs){
+	    for (QueryPlanDesc desc : queryPlanDescs){
 	        
 		    int q = desc.getStatementID();
 			for (int w = 0; w < W; w++) {
@@ -383,7 +383,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
      */
 	private void atomicConstraints()
 	{	
-		for (QueryPlanDesc desc : listQueryPlanDescs){
+		for (QueryPlanDesc desc : queryPlanDescs){
             int q = desc.getStatementID();
 		
             for (int w = 0; w < W; w++) {
@@ -427,7 +427,7 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	 */
 	private  void usedIndexAtWindow()
 	{
-	    for (QueryPlanDesc desc : listQueryPlanDescs){
+	    for (QueryPlanDesc desc : queryPlanDescs){
             int q = desc.getStatementID();
         
             for (int w = 0; w < W; w++) {
@@ -512,6 +512,6 @@ public class SimBIP extends AbstractBIPSolver implements ScheduleBIPSolver
 	{
 	    int NUM_VAR_PER_LINE = 10;
         String strListVars = poolVariables.enumerateList(NUM_VAR_PER_LINE);
-        buf.getBin().add(strListVars);	
+        buf.getBin().add(strListVars);
 	}    
 }

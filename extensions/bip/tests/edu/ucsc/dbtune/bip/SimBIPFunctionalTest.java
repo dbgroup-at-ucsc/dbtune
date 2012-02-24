@@ -5,12 +5,11 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
 //import edu.ucsc.dbtune.advisor.candidategeneration.OneColumnCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
-import edu.ucsc.dbtune.bip.sim.MaterializationSchedule;
-import edu.ucsc.dbtune.bip.sim.MaterializationScheduleOnOptimizer;
-import edu.ucsc.dbtune.bip.sim.RandomIndexMaterializationSchedule;
+import edu.ucsc.dbtune.bip.sim.Schedule;
+import edu.ucsc.dbtune.bip.sim.ScheduleOnOptimizer;
+import edu.ucsc.dbtune.bip.sim.RandomScheduler;
 import edu.ucsc.dbtune.bip.sim.SimModel;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
@@ -84,22 +83,23 @@ public class SimBIPFunctionalTest
 
         if (!(io instanceof InumOptimizer))
             throw new Exception("Expecting InumOptimizer instance");
-        
+
+        int numIndexesWindow = 10;
         LogListener logger = LogListener.getInstance();
         SimModel bip = new SimModel();
         bip.setOptimizer((InumOptimizer) io);
         bip.setWorkload(workload);
         bip.setLogListenter(logger);
         bip.setConfigurations(Sinit, Smat);
-        bip.setNumberofIndexesEachWindow(10);
-        bip.setNumberWindows(indexes.size() / 10 + 1);
+        bip.setNumberofIndexesEachWindow(numIndexesWindow);
+        bip.setNumberWindows(indexes.size() / numIndexesWindow + 1);
         
         Set<SQLStatement> sqls = new HashSet<SQLStatement>();
         for (int i = 0; i < workload.size(); i++)
             sqls.add(workload.get(i));
         
-        MaterializationSchedule schedule = new MaterializationSchedule (0, new HashSet<Index>());
-        schedule = (MaterializationSchedule) bip.solve();
+        Schedule schedule = new Schedule (0, new HashSet<Index>());
+        schedule = (Schedule) bip.solve();
         double bipCost, randomCost;
         
         if (schedule != null) {       
@@ -109,7 +109,7 @@ public class SimBIPFunctionalTest
             
             
             // invoke the actual optimizer
-            MaterializationScheduleOnOptimizer mso = new MaterializationScheduleOnOptimizer();
+            ScheduleOnOptimizer mso = new ScheduleOnOptimizer();
             mso.verify(io.getDelegate(), schedule, sqls);
             bipCost = mso.getTotalCost();
             System.out.println(" Cost by BIP: " + bip.getObjValue()
@@ -117,13 +117,13 @@ public class SimBIPFunctionalTest
                     + " The RATIO: " + bip.getObjValue() / bipCost);
             
             // compute the random schedule
-            RandomIndexMaterializationSchedule randomSchedule = new  
-                                        RandomIndexMaterializationSchedule();
+            RandomScheduler randomSchedule = new RandomScheduler();
             randomSchedule.setConfigurations(Sinit, Smat);
             randomSchedule.setNumberofIndexesEachWindow(1);
             randomSchedule.setNumberWindows(indexes.size());
-            mso.verify(io.getDelegate(), (MaterializationSchedule) randomSchedule.solve(), sqls);
+            mso.verify(io.getDelegate(), (Schedule) randomSchedule.solve(), sqls);
             randomCost = mso.getTotalCost();
+            
             System.out.println( "L112, BIP cost: " + bipCost + " vs. RANDOM cost: "
                                 + randomCost + " RATIO: " + bipCost / randomCost);
                              

@@ -9,7 +9,7 @@ import edu.ucsc.dbtune.bip.core.AbstractBIPVariablePool;
 import edu.ucsc.dbtune.bip.core.BIPVariable;
 import edu.ucsc.dbtune.util.Strings;
 
-public class SimVariablePool  extends AbstractBIPVariablePool
+public class SimVariablePool extends AbstractBIPVariablePool
 {
     public static final int  VAR_Y = 0;
     public static final int  VAR_X = 1;
@@ -39,7 +39,8 @@ public class SimVariablePool  extends AbstractBIPVariablePool
      *      The template plan identifier
      *      Only enable when {@code typeVariable} = VAR_Y, VAR_X
      * @param a 
-     *      The identifier of the index if {@code typeVariable} = VAR_X, VAR_PRESENT, VAR_CREATE, VAR_DROP
+     *      The identifier of the index if {@code typeVariable} = VAR_X, VAR_PRESENT, 
+     *      VAR_CREATE, VAR_DROP
      * 
      * @return
      *      The variable name
@@ -47,8 +48,8 @@ public class SimVariablePool  extends AbstractBIPVariablePool
     public SimVariable createAndStore(int typeVariable, int window, int queryId, int k, int a)
     {
         StringBuilder varName = new StringBuilder();
-        varName.append(strHeaderVariable[typeVariable]);
-        varName.append("(");
+        varName.append(strHeaderVariable[typeVariable])
+               .append("(");
         
         List<String> nameComponent = new ArrayList<String>();        
         nameComponent.add(Integer.toString(window));
@@ -59,11 +60,11 @@ public class SimVariablePool  extends AbstractBIPVariablePool
         }
         
         if (typeVariable == VAR_X || typeVariable == VAR_PRESENT || 
-                    typeVariable == VAR_CREATE || typeVariable == VAR_DROP) 
+            typeVariable == VAR_CREATE || typeVariable == VAR_DROP) 
             nameComponent.add(Integer.toString(a));
         
-        varName.append(Strings.concatenate(",", nameComponent));
-        varName.append(")");
+        varName.append(Strings.concatenate(",", nameComponent))
+               .append(")");
          
         // store the variable with the derived name
         SimVariable var = new SimVariable(varName.toString(), typeVariable, window);
