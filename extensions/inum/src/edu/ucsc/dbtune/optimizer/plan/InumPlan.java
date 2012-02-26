@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
@@ -87,7 +86,7 @@ public class InumPlan extends SQLStatementPlan
             if (leaf.getDatabaseObjects().size() != 1)
                 throw new SQLException("Leaf " + leaf + " doesn't refer to any object");
 
-            leafsCost += extractCostOfLeaf(this, leaf);
+            leafsCost += extractCostOfLeafAndRemoveFetch(this, leaf);
 
             slot = new TableAccessSlot(leaf);
 
@@ -259,21 +258,46 @@ public class InumPlan extends SQLStatementPlan
 
         delegate.setFTSDisabled(false);
 
-        if (plan.leafs().size() != 1)
-            throw new SQLException("Plan should have only one leaf");
+        Operator indexScan = null;
 
-        Operator o = Iterables.<Operator>get(plan.leafs(), 0);
+        for (Operator o : plan.toList()) {
+            // find the INDEX_SCAN for the table referenced by the index
+            
+            if (o.getDatabaseObjects().size() != 1)
+                continue;
 
-        if (o.getDatabaseObjects().size() != 1)
-            throw new SQLException("The leaf should have one database object.");
+            DatabaseObject dbo = o.getDatabaseObjects().get(0);
 
-        if (!o.getName().equals(INDEX_SCAN))
-            throw new SQLException("The leaf should be an " + INDEX_SCAN);
+            if (dbo instanceof Index && ((Index) dbo).getTable().equals(index.getTable()))
+                if (indexScan != null)
+                    throw new SQLException(
+                            "More than one INDEX_SCAN for " + index.getTable() + " in " + plan);
+                else
+                    indexScan = o;
+        }
 
-        o.setAccumulatedCost(plan.getRootOperator().getAccumulatedCost());
+        if (indexScan == null)
+            throw new SQLException("Can't find INDEX_SCAN for " + index.getTable() + " in " + plan);
 
-        // create a new Operator to avoid memory leaks (by keeping the whole plan hanging)
-        return new Operator(o);
+        double newIndexScanCost = 0;
+        double costOfChildren = 0;
+
+        if (plan.getChildren(indexScan).size() > 0) {
+            // check if INDEX_SCAN has children and remove them.
+            // Yes, it is possible for INDEX_SCAN to have children.
+            for (Operator child : plan.getChildren(indexScan)) {
+                costOfChildren += child.getAccumulatedCost();
+                plan.remove(child);
+            }
+        }
+
+        newIndexScanCost = extractCostOfLeafAndRemoveFetch(plan, indexScan) - costOfChildren;
+
+        Operator newIndexScan = new Operator(indexScan);
+
+        newIndexScan.setAccumulatedCost(newIndexScanCost);
+
+        return newIndexScan;
     }
 
     /**
@@ -415,6 +439,7 @@ public class InumPlan extends SQLStatementPlan
 
         for (Column c : slot.getColumnsFetched().columns())
             sb.append(c.getName()).append(", ");
+            //sb.append("MAX(").append(c.getName()).append("), ");
 
         sb.delete(sb.length() - 2, sb.length() - 1);
 
@@ -446,7 +471,10 @@ public class InumPlan extends SQLStatementPlan
 
     /**
      * Returns the cost of the given leaf, taking into account that if it's an {@link 
-     * Operator#INDEX_SCAN}, a {@link Operator#FETCH} operator is.
+     * Operator#INDEX_SCAN}, a {@link Operator#FETCH} operator is looked for in all the ascendants 
+     * of it and if found, the cost of the {@link Operator#FETCH} operator is returned. If a {@link 
+     * } operator is found and it's a parent of the {@link Operator#INDEX_SCAN}, it is removed an 
+     * replaced by the index scan. For example: TODO
      *
      * @param sqlPlan
      *      plan which the leaf is contained in
@@ -459,8 +487,12 @@ public class InumPlan extends SQLStatementPlan
      *      siblings; if an error occurs while pulling down the set of columns fetched from {@link
      *      Operator#FETCH} down to the leaf.
      */
-    static double extractCostOfLeaf(SQLStatementPlan sqlPlan, Operator leaf) throws SQLException
+    static double extractCostOfLeafAndRemoveFetch(SQLStatementPlan sqlPlan, Operator leaf)
+        throws SQLException
     {
+        if (!sqlPlan.getChildren(leaf).isEmpty())
+            throw new SQLException("Operator is not a leaf: " + leaf);
+
         if (leaf.getName().equals(Operator.TABLE_SCAN))
             return leaf.getAccumulatedCost();
 
@@ -482,23 +514,38 @@ public class InumPlan extends SQLStatementPlan
             // no FETCH found, or is referring to table distinct from the one the index refers to
             return leaf.getAccumulatedCost();
 
-        if (sqlPlan.getChildren(fetch).size() > 1)
-            throw new SQLException(Operator.FETCH + " shouldn't have siblings in\n" + sqlPlan);
+        if (fetch.getColumnsFetched() == null)
+            throw new SQLException("Column set in FETCH is empty or null: " + fetch);
+
+        double costOfLeafSiblings = 0;
+
+        if (sqlPlan.getChildren(fetch).size() > 1) {
+            // obtain the cost of children of FETCH that are distinct to leaf and remove them
+            for (Operator child : sqlPlan.getChildren(fetch)) {
+                if (!child.equals(leaf)) {
+                    costOfLeafSiblings += child.getAccumulatedCost();
+                    sqlPlan.remove(child);
+                }
+            }
+        }
 
         Operator fetchParent = sqlPlan.getParent(fetch);
 
         if (fetchParent == null)
-            throw new SQLException(Operator.FETCH + " should have a dad in\n" + sqlPlan);
+            throw new SQLException(Operator.FETCH + " should have a dad in " + sqlPlan);
 
         sqlPlan.remove(leaf);
 
-        leaf.setAccumulatedCost(fetch.getAccumulatedCost());
+        leaf.setAccumulatedCost(fetch.getAccumulatedCost() - costOfLeafSiblings);
         leaf.add(fetch.getPredicates());
-        
+
         // we also have to pull the columns fetched down to the slot
         for (Column c : parent.getColumnsFetched().columns())
-            if (!leaf.getColumnsFetched().contains(c))
-                leaf.getColumnsFetched().add(c, parent.getColumnsFetched().isAscending(c));
+            if (leaf.getColumnsFetched() == null)
+                leaf.addColumnsFetched(
+                        new InterestingOrder(c, fetch.getColumnsFetched().isAscending(c)));
+            else if (!leaf.getColumnsFetched().contains(c))
+                leaf.getColumnsFetched().add(c, fetch.getColumnsFetched().isAscending(c));
 
         sqlPlan.remove(fetch);
         sqlPlan.setChild(fetchParent, leaf);

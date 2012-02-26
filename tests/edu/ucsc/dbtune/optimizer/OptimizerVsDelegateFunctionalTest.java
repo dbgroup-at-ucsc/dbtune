@@ -1,10 +1,17 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
+
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -75,11 +82,23 @@ public class OptimizerVsDelegateFunctionalTest
     {
         if (delegate == null) return;
 
+        //Statement stmt = db.getConnection().createStatement();
+        //ResultSet rs = stmt.executeQuery(
+            //"SELECT PKGNAME, PKGSCHEMA " +
+            //"FROM SYSCAT.PACKAGES WHERE QUERYOPT = CURRENT QUERY OPTIMIZATION");
+
+        //while (rs.next())
+            //System.out.println(rs.getString("pkgname") + " " + rs.getString("pkgname"));
+
+        //stmt.execute("SET CURRENT QUERY OPTIMIZATION = 1");
         //for (Workload wl : workloads(env.getWorkloadFolders())) {
         Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
         final Set<Index> conf = candGen.generate(wl);
 
         System.out.println("Candidates generated: " + conf.size());
+
+        for (Index i : conf)
+            System.out.println("   " + i);
 
         int i = 1;
         int prepareWhatIfCount = 0;
@@ -87,14 +106,16 @@ public class OptimizerVsDelegateFunctionalTest
         int totalWhatIfCount = 0;
         long time;
         long prepareTime;
-        long explainTime;
         ExplainedSQLStatement prepared;
         ExplainedSQLStatement explained;
+        List<SQLStatementPlan> optimizerPlans = new ArrayList<SQLStatementPlan>();
+        List<SQLStatementPlan> delegatePlans = new ArrayList<SQLStatementPlan>();
+
+        System.out.println(
+            "query number, optimizer cost, delegate cost, prepare time, " +
+            "prepare what-if count, delegate / optimizer");
 
         for (SQLStatement sql : wl) {
-            System.out.println("------------------------------");
-            System.out.println("Processing statement " + i++ + "\n");
-
             time = System.currentTimeMillis();
 
             final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
@@ -109,20 +130,27 @@ public class OptimizerVsDelegateFunctionalTest
             explainWhatIfCount = delegate.getWhatIfCount() - totalWhatIfCount - prepareWhatIfCount;
             totalWhatIfCount += prepareWhatIfCount + explainWhatIfCount;
 
-            explainTime = System.currentTimeMillis() - time;
-
             explained = delegate.explain(sql, conf);
 
-            System.out.println("optimizer:  " + explained.getSelectCost());
-            System.out.println("delegate:   " + prepared.getSelectCost() + "\n");
-            System.out.println("prepare:    " + prepareTime + " milliseconds");
-            System.out.println("w-if-count: " + prepareWhatIfCount + "\n");
-            System.out.println("explain:    " + explainTime + " milliseconds");
-            System.out.println("w-if-count: " + explainWhatIfCount + "\n");
-            System.out.println("optimizer plan:\n" + explained.getPlan());
-            System.out.println("delegate plan:\n" + prepared.getPlan() + "\n");
+            System.out.println(
+                    i++ + "," +
+                    explained.getSelectCost() + "," +
+                    prepared.getSelectCost() + "," +
+                    prepareTime + "," +
+                    prepareWhatIfCount + "," +
+                    prepared.getSelectCost() / explained.getSelectCost());
+
+            optimizerPlans.add(explained.getPlan());
+            delegatePlans.add(prepared.getPlan());
 
             //assertThat(pSql.explain(conf), is(delegate.explain(sql, conf)));
+        }
+
+        for (i = 0; i < optimizerPlans.size(); i++) {
+            System.out.println("------------------------------");
+            System.out.println("Processing statement " + (i + 1) + "\n");
+            System.out.println("optimizer plan:\n" + optimizerPlans.get(i) + "\n");
+            System.out.println("delegate plan:\n " + delegatePlans.get(i) + "\n");
         }
         //}
     }

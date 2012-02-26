@@ -370,10 +370,19 @@ public class DB2Optimizer extends AbstractOptimizer
 
         Pattern tableReferencePattern = Pattern.compile("Q\\d+\\.");
 
-        for (String strPredicate : predicateList) {
+        for (String predicate : predicateList) {
+
+            String strPredicate = predicate;
 
             if (strPredicate == null || strPredicate.trim().equals(""))
                 continue;
+
+            if (strPredicate.contains("SELECT")) {
+                // predicate contains a subquery; we need to replace $RID$ references, eg.
+                //
+                //     EXISTS(SELECT $RID$ FROM t AS q1 WHERE q1.val1 < q1.val2)
+                strPredicate = strPredicate.replaceAll("\\$RID\\$", "RID()");
+            }
 
             final Matcher matcher = tableReferencePattern.matcher(strPredicate);
 
