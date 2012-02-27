@@ -28,7 +28,8 @@ public class DivVariablePool extends AbstractBIPVariablePool
     
     /**
      * 
-     * Construct the variable name in the form: y(r, q, k), x(r, q, k,i,a), s(r, a), deploy(r)
+     * Construct the variable name in the form: y(r, q, k), x(r, q, k,i,a), s(r, a), deploy(r),
+     * div(r, a), mod(r, a)
      *  
      * @param typeVarible
      *      The type of variable, the value is in the set {y, x, s, deploy}, 
@@ -62,7 +63,8 @@ public class DivVariablePool extends AbstractBIPVariablePool
             nameComponent.add(Integer.toString(k));
         }
         
-        if (typeVariable == VAR_X || typeVariable == VAR_S)
+        if (typeVariable == VAR_X || typeVariable == VAR_S
+            || typeVariable == VAR_DIV || typeVariable == VAR_MOD)
             nameComponent.add(Integer.toString(a));
         
         varName.append(Strings.concatenate(",", nameComponent))
@@ -96,7 +98,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
      * @return
      *      BIP Variable
      */
-    public DivVariable getDivVariable(int typeVariable, int replica, int queryId, int k, int a)
+    public DivVariable get(int typeVariable, int replica, int queryId, int k, int a)
     {   
         DivVariableIndicator iai = new DivVariableIndicator(typeVariable, replica, queryId, k, a);
         return mapHighDimensionVar.get(iai);
