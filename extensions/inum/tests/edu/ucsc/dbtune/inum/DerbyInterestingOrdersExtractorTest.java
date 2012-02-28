@@ -1,13 +1,12 @@
 package edu.ucsc.dbtune.inum;
 
-import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.junit.BeforeClass;
@@ -47,7 +46,7 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testSupported() throws Exception
     {
-        List<Set<Index>> indexesPerTable;
+        Map<Table, Set<InterestingOrder>> indexesPerTable;
         SQLStatement sql;
 
         Table t = catalog.<Table>findByName("schema_0.table_0");
@@ -70,9 +69,9 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(indexesPerTable.size(), is(1));
 
         // two interesting orders, column_0 and empty
-        assertThat(indexesPerTable.get(0).size(), is(1));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
-        assertThat(indexesPerTable.get(0).contains(io), is(true));
+        assertThat(indexesPerTable.get(t).size(), is(1));
+        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(indexesPerTable.get(t).contains(io), is(true));
 
         sql = new SQLStatement(
                 "SELECT " +
@@ -88,9 +87,9 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(indexesPerTable.size(), is(1));
 
         // two interesting orders, column_0 (by implying it from GROUP BY) and the empty one
-        assertThat(indexesPerTable.get(0).size(), is(1));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
-        assertThat(indexesPerTable.get(0).contains(io), is(true));
+        assertThat(indexesPerTable.get(t).size(), is(1));
+        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(indexesPerTable.get(t).contains(io), is(true));
     }
     
     /**
@@ -100,7 +99,7 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testOneRelation() throws Exception
     {
-        List<Set<Index>> indexesPerTable;
+        Map<Table, Set<InterestingOrder>> indexesPerTable;
         SQLStatement sql;
 
         Table t = catalog.<Table>findByName("schema_0.table_0");
@@ -119,8 +118,8 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(indexesPerTable.size(), is(1));
 
         // one interesting order
-        assertThat(indexesPerTable.get(0).size(), is(0));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(indexesPerTable.get(t).size(), is(0));
+        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
     }
     
     /**
@@ -130,7 +129,7 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testOrderBy() throws Exception
     {
-        List<Set<Index>> indexesPerTable;
+        Map<Table, Set<InterestingOrder>> indexesPerTable;
         SQLStatement sql;
 
         Table t = catalog.<Table>findByName("schema_0.table_0");
@@ -153,9 +152,9 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(indexesPerTable.size(), is(1));
 
         // two interesting orders, column_0 and empty
-        assertThat(indexesPerTable.get(0).size(), is(1));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
-        assertThat(indexesPerTable.get(0).contains(io), is(true));
+        assertThat(indexesPerTable.get(t).size(), is(1));
+        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(indexesPerTable.get(t).contains(io), is(true));
     }
         
     /**
@@ -165,7 +164,7 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testOrderByGroupBy() throws Exception
     {
-        List<Set<Index>> indexesPerTable;
+        Map<Table, Set<InterestingOrder>> indexesPerTable;
         SQLStatement sql;
 
         Table t = catalog.<Table>findByName("schema_0.table_0");
@@ -184,18 +183,18 @@ public class DerbyInterestingOrdersExtractorTest
                 "  GROUP BY "  +
                 "     column_0, column_1" +
                 "  ORDER BY " +
-                "     column_0, column_1"
-                ); 
+                "     column_0, column_1");
+
         indexesPerTable = extractor.extract(sql);
 
         // only one table referenced
         assertThat(indexesPerTable.size(), is(1));
 
         // two interesting orders, column_0 and empty
-        assertThat(indexesPerTable.get(0).size(), is(2));
-        assertThat(indexesPerTable.get(0).contains(getFullTableScanIndexInstance(t)), is(false));
-        assertThat(indexesPerTable.get(0).contains(io0), is(true));
-        assertThat(indexesPerTable.get(0).contains(io1), is(true));
+        assertThat(indexesPerTable.get(t).size(), is(2));
+        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(indexesPerTable.get(t).contains(io0), is(true));
+        assertThat(indexesPerTable.get(t).contains(io1), is(true));
     }
     
     /**
@@ -205,7 +204,7 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testJoinPredicates() throws Exception
     {
-        List<Set<Index>> indexesPerTable;
+        Map<Table, Set<InterestingOrder>> indexesPerTable;
         SQLStatement sql;
 
         Table t0 = catalog.<Table>findByName("schema_0.table_0");
@@ -223,29 +222,19 @@ public class DerbyInterestingOrdersExtractorTest
                 "  WHERE " +
                 "     table_0.column_0 = 5 " +
                 "  AND "  +
-                "     table_0.column_0 = table_1.column_1 "
-                ); 
+                "     table_0.column_0 = table_1.column_1 ");
+        
         indexesPerTable = extractor.extract(sql);
 
         // two tables referenced
         assertThat(indexesPerTable.size(), is(2));
         
         // find out the relation that is index by indexsPerTable
-        for (int i = 0; i < 2; i++){
-            assertThat(indexesPerTable.get(i).size(), is(1));
-            for (Index index: indexesPerTable.get(i)) {
-                Table t = index.getTable();
-                if (t.equals(t0)) {
-                    assertThat(indexesPerTable.get(i).contains(getFullTableScanIndexInstance(t0)), 
-                            is(false));
-                    assertThat(indexesPerTable.get(i).contains(io0), is(true));
-                } else if (t.equals(t1)) {
-                    assertThat(indexesPerTable.get(i).contains(getFullTableScanIndexInstance(t1)), 
-                            is(false));
-                    assertThat(indexesPerTable.get(i).contains(io1), is(true));
-                }  
-                break;
-            }
-        }        
+        assertThat(indexesPerTable.get(t0).size(), is(1));
+        assertThat(indexesPerTable.get(t1).size(), is(1));
+        assertThat(indexesPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
+        assertThat(indexesPerTable.get(t0).contains(io0), is(true));
+        assertThat(indexesPerTable.get(t1).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(indexesPerTable.get(t1).contains(io1), is(true));
     }
 }

@@ -12,8 +12,8 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.apache.derby.iapi.error.StandardException;
@@ -72,23 +72,24 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     protected Set<Visitable> astNodes;
     protected boolean defaultAscending;
     
-    /** From, group-by, and order-by list */
+    /** From, group-by, and order-by list. */
     protected FromList from;
     protected GroupByList groupBy;
     protected OrderByList orderBy;
     
-    /** Set of columns that correspond to interesting orders */
+    protected boolean leftOperand;
+    protected boolean rightOperand;
+
+    /** Set of columns that correspond to interesting orders. */
     private Set<Column> columns;
     private Map<Column, Boolean> ascending;
     
-    /** Order by and group by list per table*/
+    /** Order by and group by list per table. */
     private Map<Table, List<Column>> orderByColumnsPerTable;
     private Map<Table, List<Column>> groupByColumnsPerTable;
     
-    /** Binary operand (e.g., R.a > S.b, R.a = 10) extracted by Derby */
+    /** Binary operand (e.g., R.a > S.b, R.a = 10) extracted by Derby. */
     private List<ColumnReference> binaryOperandNodes;    
-    protected boolean leftOperand;
-    protected boolean rightOperand;
 
     static {
         System.setProperty(DERBY_DEBUG_SETTING, STOP_AFTER_PARSING);
@@ -127,7 +128,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      * {@inheritDoc}
      */
     @Override
-    public List<Set<Index>> extract(SQLStatement statement) throws SQLException
+    public Map<Table, Set<InterestingOrder>> extract(SQLStatement statement) throws SQLException
     {
         parse(statement);
 
@@ -216,7 +217,8 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      if a {@code SELECT} statement contains subqueries; if {@link
      *      #extractInterestingOrdersPerTable} fails;
      */
-    private List<Set<Index>> extractInterestingOrders() throws StandardException, SQLException
+    private Map<Table, Set<InterestingOrder>> extractInterestingOrders() throws StandardException, 
+            SQLException
     {
         List<String> tableNames = new ArrayList<String>();
         columns = new HashSet<Column>();
@@ -324,15 +326,16 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
 
     /**
-     * Bind the columns that are referenced in the join predicates
+     * Bind the columns that are referenced in the join predicates.
+     *
      * @param binaryOperandNodes
      *      A list of left and right columns of all the binary operators in the statement
      *      (including join predicate R.a  = S.b, selection predicate R.a > R.c, and
      *      the predicates in the sub-queries)
      * @param tableNames
      *      The list of table names that we can find the columns on
-     *
-     *
+     * @throws SQLException
+     *      if error
      */
     private void bindJoinPredicateColumns(List<ColumnReference> binaryOperandNodes, 
                                           List<String> tableNames) throws SQLException
@@ -355,7 +358,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 // We need to retrieve the table name of each {@ColumnReference} object
                 // to unambiguously identify which relation the column belongs to
                 for (String tblName : tableNames) {
-                    if (tblName.contains(colRef.getTableName()) == true) {
+                    if (tblName.contains(colRef.getTableName())) {
                         colName = tblName + "." + colName;
 
                         try {
@@ -443,14 +446,15 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      * @throws SQLException
      *      when there is error in connecting with databases
      */
-    private List<Set<Index>> extractInterestingOrdersPerTable(
+    private Map<Table, Set<InterestingOrder>> extractInterestingOrdersPerTable(
             List<String> tableNames,
             Set<Column> columns,
             Map<Column, Boolean> ascending)
         throws SQLException
     {
-        Map<Table, Set<Index>> interestingOrdersPerTable = new HashMap<Table, Set<Index>>();
-        Set<Index> interestingOrdersForTable;
+        Map<Table, Set<InterestingOrder>> interestingOrdersPerTable = new HashMap<Table, 
+        Set<InterestingOrder>>();
+        Set<InterestingOrder> interestingOrdersForTable;
         Table table;
 
         // add FTS for each table in the from clause
@@ -459,7 +463,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             table = catalog.<Table>findByName(tblName);
 
             if (interestingOrdersPerTable.get(table) == null)  {
-                interestingOrdersForTable = new HashSet<Index>();
+                interestingOrdersForTable = new HashSet<InterestingOrder>();
                 interestingOrdersPerTable.put(table, interestingOrdersForTable);
             }
         }
@@ -474,7 +478,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             interestingOrdersForTable.add(new InumInterestingOrder(col, ascending.get(col)));
         }
 
-        return new ArrayList<Set<Index>>(interestingOrdersPerTable.values());
+        return interestingOrdersPerTable;
     }
 
     /**
@@ -501,12 +505,12 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
              * {code ColumnReference}, then this operator node corresponds to a join predicate.
              */
             
-            if (leftOperand == true) {
+            if (leftOperand) {
                 
                 // If the left operand is a column, we will investigate the right operand
                 // to determine a join predicate.
                 // Otherwise, we simply skip this BinaryOperator.
-                if (node instanceof ColumnReference){
+                if (node instanceof ColumnReference) {
                     binaryOperandNodes.add((ColumnReference) node);
                     rightOperand = true;
                 } else
@@ -514,11 +518,13 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
                 leftOperand = false;
                 
-            } else if (rightOperand == true) {
+            } else if (rightOperand) {
                 
-                if (node instanceof ColumnReference) // this is matched join predicate
+                if (node instanceof ColumnReference)
+                    // this is matched join predicate
                     binaryOperandNodes.add((ColumnReference) node);
-                else // if not, remove the left operand stored in the list
+                else
+                    // if not, remove the left operand stored in the list
                     binaryOperandNodes.remove(binaryOperandNodes.size() - 1);
 
                 rightOperand = false;
@@ -539,17 +545,18 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                         // of a join node instance
                         else if (select.getFromList().elementAt(i) instanceof HalfOuterJoinNode) {
                             
-                            HalfOuterJoinNode outerJoin = (HalfOuterJoinNode) 
-                                                            select.getFromList().elementAt(i);                            
-                            from.addFromTable((FromBaseTable)outerJoin.getLeftResultSet());
-                            from.addFromTable((FromBaseTable)outerJoin.getRightResultSet());
+                            HalfOuterJoinNode outerJoin =
+                                (HalfOuterJoinNode) select.getFromList().elementAt(i);
+
+                            from.addFromTable((FromBaseTable) outerJoin.getLeftResultSet());
+                            from.addFromTable((FromBaseTable) outerJoin.getRightResultSet());
                         }
                         
                         else if (select.getFromList().elementAt(i) instanceof JoinNode) {
                             
                             JoinNode outerJoin = (JoinNode) select.getFromList().elementAt(i);
-                            from.addFromTable((FromBaseTable)outerJoin.getLeftResultSet());
-                            from.addFromTable((FromBaseTable)outerJoin.getRightResultSet());
+                            from.addFromTable((FromBaseTable) outerJoin.getLeftResultSet());
+                            from.addFromTable((FromBaseTable) outerJoin.getRightResultSet());
                         }
                     }
                 }
