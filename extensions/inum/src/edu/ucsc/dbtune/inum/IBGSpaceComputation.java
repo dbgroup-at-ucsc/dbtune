@@ -7,17 +7,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Sets.cartesianProduct;
-import static com.google.common.collect.Sets.newHashSet;
 
 import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 
@@ -27,7 +24,8 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
  * @author Rui Wang
  * @author Ivo Jimenez
  */
-public class IBGSpaceComputation implements InumSpaceComputation {
+public class IBGSpaceComputation extends AbstractSpaceComputation
+{
     private boolean hasPlanWhichDontUseIndex;
     private InumPlan templateForEmpty;
 
@@ -45,13 +43,14 @@ public class IBGSpaceComputation implements InumSpaceComputation {
      * @throws SQLException
      *             todo
      */
-    public void ibg(SQLStatement statement, Optimizer delegate,
-            HashSet<Index> indexes, Set<InumPlan> inumSpace)
-            throws SQLException {
-        //for (Index index : indexes)
-            //System.out.println("Index: " + index);
+    public void ibg(
+            SQLStatement statement,
+            Optimizer delegate,
+            HashSet<Index> indexes,
+            Set<InumPlan> inumSpace)
+        throws SQLException
+    {
         SQLStatementPlan sqlPlan = delegate.explain(statement, indexes).getPlan();
-        //System.out.println("Plan: " + sqlPlan);
 
         Vector<Index> usedIndexes = new Vector<Index>();
         final Hashtable<Table, HashSet<Index>> tables = new Hashtable<Table, HashSet<Index>>();
@@ -63,8 +62,6 @@ public class IBGSpaceComputation implements InumSpaceComputation {
                 continue;
             usedIndexes.add(usedIndex);
 
-            //System.out.println("Use: " + usedIndex);
-
             HashSet<Index> set = tables.get(usedIndex.getTable());
             if (set == null) {
                 set = new HashSet<Index>();
@@ -74,6 +71,7 @@ public class IBGSpaceComputation implements InumSpaceComputation {
             if (set.size() > 1)
                 conflict = true;
         }
+
         if (conflict) {
             Vector<HashSet<Index>> conflictInterestingOrder = new Vector<HashSet<Index>>();
             Vector<Index> validInterestingOrder = new Vector<Index>();
@@ -90,12 +88,12 @@ public class IBGSpaceComputation implements InumSpaceComputation {
                     set.add(index);
                 ibg(statement, delegate, set, inumSpace);
             }
-        } else if (usedIndexes.size() == 0) {
+        } else if (usedIndexes.isEmpty()) {
             if (!hasPlanWhichDontUseIndex) {
                 hasPlanWhichDontUseIndex = true;
                 templateForEmpty = new InumPlan(delegate, sqlPlan);
-                if (!sqlPlan.contains(NLJ))
-                    inumSpace.add(templateForEmpty);
+                //if (!sqlPlan.contains(NLJ))
+                inumSpace.add(templateForEmpty);
             }
         } else {
             if (!sqlPlan.contains(NLJ))
@@ -113,32 +111,22 @@ public class IBGSpaceComputation implements InumSpaceComputation {
      * {@inheritDoc}
      */
     @Override
-    public void compute(Set<InumPlan> space, SQLStatement statement,
-            Optimizer delegate, Catalog catalog) throws SQLException {
-        List<Set<Index>> indexesPerTable;
-        DerbyInterestingOrdersExtractor interestingOrdersExtractor;
-
-        interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(
-                catalog, true);
-        indexesPerTable = interestingOrdersExtractor.extract(statement);
+    public void computeWithCompleteConfiguration(
+            Set<InumPlan> space,
+            List<Set<Index>> indexesPerTable,
+            SQLStatement statement,
+            Optimizer delegate)
+        throws SQLException
+    {
         HashSet<Index> allIndex = new HashSet<Index>();
+
+        space.clear();
 
         for (Set<Index> set : indexesPerTable)
             for (Index index : set)
                 allIndex.add(index);
 
-        space.clear();
-
         hasPlanWhichDontUseIndex = false;
         ibg(statement, delegate, allIndex, space);
-        // check NLJ
-        List<Index> minimumAtomic = EagerSpaceComputation
-                .getMinimumAtomicConfiguration(templateForEmpty);
-        SQLStatementPlan sqlPlan = delegate.explain(statement,
-                newHashSet(minimumAtomic)).getPlan();
-        if (sqlPlan.contains(NLJ))
-            space.add(new InumPlan(delegate, sqlPlan));
-
-        //System.out.println("Space size: " + space.size());
     }
 }
