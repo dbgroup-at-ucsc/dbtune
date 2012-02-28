@@ -33,8 +33,11 @@ public class TableAccessSlot extends Operator
     {
         super(leaf);
 
+        if (!leaf.getName().equals(TABLE_SCAN) && !leaf.getName().equals(INDEX_SCAN))
+            throw new SQLException("Only instantiate " + INDEX_SCAN + " or " + TABLE_SCAN);
+
         if (leaf.getDatabaseObjects().size() != 1)
-            throw new SQLException("Leaf should contain only one object");
+            throw new SQLException("Leaf should contain one object");
 
         if (leaf.getColumnsFetched() == null || leaf.getColumnsFetched().size() == 0)
             throw new SQLException("No columns fetched for leaf");
@@ -49,7 +52,7 @@ public class TableAccessSlot extends Operator
             throw new SQLException("Can't proceed with object type " + object.getClass().getName());
 
         if (index == null)
-            throw new SQLException("Can't determine object associated to leaf node: " + leaf);
+            throw new SQLException("Can't determine object type associated to leaf node: " + leaf);
 
         name = "TABLE.ACCESS.SLOT";
     }
@@ -120,7 +123,7 @@ public class TableAccessSlot extends Operator
      * @return
      *      whether or not the slot was constructed assuming a FTS on this slot
      */
-    public boolean isFullTableScan()
+    public boolean isCreatedFromFullTableScan()
     {
         return getIndex() instanceof FullTableScanIndex;
     }

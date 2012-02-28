@@ -93,7 +93,7 @@ public class InumPlanFunctionalTest
                 costLeafs = 0;
 
                 for (Operator l : sqlPlan.leafs())
-                    costLeafs += InumPlan.extractCostOfLeaf(sqlPlan, l);
+                    costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(sqlPlan, l);
 
                 System.out.println("---------------------------");
                 System.out.println("   Checking INUM template creation for\n" + sql);

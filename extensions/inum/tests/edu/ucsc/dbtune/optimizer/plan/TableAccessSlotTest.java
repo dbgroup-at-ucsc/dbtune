@@ -2,8 +2,6 @@ package edu.ucsc.dbtune.optimizer.plan;
 
 import java.sql.SQLException;
 
-import edu.ucsc.dbtune.inum.FullTableScanIndex;
-
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -12,9 +10,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
+import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 import static edu.ucsc.dbtune.metadata.Index.ASC;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -44,19 +46,14 @@ public class TableAccessSlotTest
     {
         TableAccessSlot slot;
 
-        Operator tblScan = new Operator(Operator.TABLE_SCAN, 3000, 1);
-        Operator fetch = new Operator(Operator.FETCH, 12000, 1);
-        Operator ridScan = new Operator(Operator.RID_SCAN, 8000, 1);
-        Operator idxScan = new Operator(Operator.INDEX_SCAN, 5000, 1);
-        Operator join = new Operator(Operator.MERGE_SORT_JOIN, 9000, 1);
+        Operator tblScan = new Operator(TABLE_SCAN, 3000, 1);
+        Operator idxScan = new Operator(INDEX_SCAN, 5000, 1);
 
         Table table = catalog.<Table>findByName("schema_0.table_0");
         Index index = catalog.<Index>findByName("schema_0.table_0_index_2");
         InterestingOrder io = new InterestingOrder(table.columns().get(0), ASC);
         
         tblScan.add(table);
-        fetch.add(table);
-        ridScan.add(table);
         idxScan.add(index);
 
         // check a table scan
@@ -72,25 +69,10 @@ public class TableAccessSlotTest
         slot = new TableAccessSlot(tblScan);
 
         assertThat(slot.getTable(), is(table));
-
-        assertThat(
-                slot.getIndex(),
-                is((Index) FullTableScanIndex.getFullTableScanIndexInstance(table)));
-        assertThat(
-                slot.isCompatible(FullTableScanIndex.getFullTableScanIndexInstance(table)),
-                is(true));
-
-        assertThat(
-                slot.isCompatible(FullTableScanIndex.getFullTableScanIndexInstance(table)),
-                is(true));
-
-        // check a non-leaf, eg. a join
-        try {
-            slot = new TableAccessSlot(join);
-            fail("construction should reject an operator without database objects");
-        } catch (SQLException e) {
-            assertThat(e.getMessage(), is("Leaf should contain only one object"));
-        }
+        assertThat(slot.getIndex(), is((Index) getFullTableScanIndexInstance(table)));
+        assertThat(slot.isCompatible(getFullTableScanIndexInstance(table)), is(true));
+        assertThat(slot.isCreatedFromFullTableScan(), is(true));
+        assertThat(slot, is(slot.duplicate()));
 
         // check ixScan
         try {
@@ -105,8 +87,44 @@ public class TableAccessSlotTest
         slot = new TableAccessSlot(idxScan);
 
         assertThat(slot.getTable(), is(table));
-
         assertThat(slot.getIndex(), is(index));
         assertThat(slot.isCompatible(index), is(true));
+        assertThat(slot.isCompatible(getFullTableScanIndexInstance(index.getTable())), is(false));
+        assertThat(slot, is(slot.duplicate()));
+    }
+
+    /**
+     * @throws Exception
+     *      if fails
+     */
+    @Test
+    public void testHashAndEquals() throws Exception
+    {
+        Operator tblScan = new Operator(TABLE_SCAN, 3000, 1);
+        Operator idxScan = new Operator(INDEX_SCAN, 5000, 1);
+
+        Table table = catalog.<Table>findByName("schema_0.table_0");
+        Index index = catalog.<Index>findByName("schema_0.table_0_index_2");
+        InterestingOrder io = new InterestingOrder(table.columns().get(0), ASC);
+        
+        tblScan.addColumnsFetched(io);
+        idxScan.addColumnsFetched(io);
+        tblScan.add(table);
+        idxScan.add(index);
+
+        TableAccessSlot tblScanSlot = new TableAccessSlot(tblScan);
+        TableAccessSlot idxScanSlot = new TableAccessSlot(idxScan);
+
+        assertThat(tblScanSlot, is(tblScanSlot));
+        assertThat(tblScanSlot, is(not(idxScanSlot)));
+
+        assertThat(idxScanSlot, is(idxScanSlot));
+        assertThat(idxScanSlot, is(not(tblScanSlot)));
+
+        assertThat(tblScanSlot.hashCode(), is(tblScanSlot.hashCode()));
+        assertThat(tblScanSlot.hashCode(), is(not(idxScanSlot.hashCode())));
+
+        assertThat(idxScanSlot.hashCode(), is(idxScanSlot.hashCode()));
+        assertThat(idxScanSlot.hashCode(), is(not(tblScanSlot.hashCode())));
     }
 }
