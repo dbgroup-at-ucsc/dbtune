@@ -335,6 +335,26 @@ public class ExplainedSQLStatement
      * {@inheritDoc}
      */
     @Override
+    public int hashCode()
+    {
+        int code = 1;
+
+        code = 37 * code + statement.hashCode();
+        code = 37 * code + (int) Double.doubleToLongBits(selectCost);
+        code = 37 * code + (int) Double.doubleToLongBits(updateCost);
+        code = 37 * code + configuration.hashCode();
+        code = 37 * code + usedConfiguration.hashCode();
+
+        if (plan != null)
+            code = 37 * code + plan.hashCode();
+
+        return code;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean equals(Object obj)
     {
         if (this == obj)
@@ -347,11 +367,9 @@ public class ExplainedSQLStatement
     
         // we don't take into account things that not all optimizer implementations might generate 
         // equally, that is:
-        //   * plan
         //   * baseTableUpdateCost
         //   * indexUpdateCosts
-        // 
-        // the optimizationCount might be different too, but that's OK and it's not significant
+        //   * plan
         if (statement.equals(o.statement) &&
                 selectCost == o.selectCost &&
                 updateCost == o.updateCost &&

@@ -1,17 +1,12 @@
 package edu.ucsc.dbtune.optimizer;
 
-import java.sql.ResultSet;
-import java.sql.Statement;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Comparator;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
 
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -26,8 +21,8 @@ import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 //import static edu.ucsc.dbtune.util.TestUtils.workloads;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 
-//import static org.hamcrest.Matchers.is;
-//import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * Functional test for testing non-dbms optimizers against the corresponding dbms one. The optimizer 
@@ -38,7 +33,7 @@ import static edu.ucsc.dbtune.util.TestUtils.workload;
  *
  * @author Ivo Jimenez
  */
-public class OptimizerVsDelegateFunctionalTest
+public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQLStatement>
 {
     private static DatabaseSystem db;
     private static Environment env;
@@ -82,76 +77,37 @@ public class OptimizerVsDelegateFunctionalTest
     {
         if (delegate == null) return;
 
-        //Statement stmt = db.getConnection().createStatement();
-        //ResultSet rs = stmt.executeQuery(
-            //"SELECT PKGNAME, PKGSCHEMA " +
-            //"FROM SYSCAT.PACKAGES WHERE QUERYOPT = CURRENT QUERY OPTIMIZATION");
-
-        //while (rs.next())
-            //System.out.println(rs.getString("pkgname") + " " + rs.getString("pkgname"));
-
-        //stmt.execute("SET CURRENT QUERY OPTIMIZATION = 1");
         //for (Workload wl : workloads(env.getWorkloadFolders())) {
         Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
-        final Set<Index> conf = candGen.generate(wl);
-
-        System.out.println("Candidates generated: " + conf.size());
-
-        for (Index i : conf)
-            System.out.println("   " + i);
-
-        int i = 1;
-        int prepareWhatIfCount = 0;
-        int explainWhatIfCount = 0;
-        int totalWhatIfCount = 0;
-        long time;
-        long prepareTime;
-        ExplainedSQLStatement prepared;
-        ExplainedSQLStatement explained;
-        List<SQLStatementPlan> optimizerPlans = new ArrayList<SQLStatementPlan>();
-        List<SQLStatementPlan> delegatePlans = new ArrayList<SQLStatementPlan>();
-
-        System.out.println(
-            "query number, optimizer cost, delegate cost, prepare time, " +
-            "prepare what-if count, delegate / optimizer");
+        final Set<Index> allIndexes = candGen.generate(wl);
 
         for (SQLStatement sql : wl) {
-            time = System.currentTimeMillis();
 
             final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
 
-            prepareWhatIfCount = delegate.getWhatIfCount() - totalWhatIfCount;
-
-            prepareTime = System.currentTimeMillis() - time;
-            time = System.currentTimeMillis();
-
-            prepared = pSql.explain(conf);
-
-            explainWhatIfCount = delegate.getWhatIfCount() - totalWhatIfCount - prepareWhatIfCount;
-            totalWhatIfCount += prepareWhatIfCount + explainWhatIfCount;
-
-            explained = delegate.explain(sql, conf);
-
-            System.out.println(
-                    i++ + "," +
-                    explained.getSelectCost() + "," +
-                    prepared.getSelectCost() + "," +
-                    prepareTime + "," +
-                    prepareWhatIfCount + "," +
-                    prepared.getSelectCost() / explained.getSelectCost());
-
-            optimizerPlans.add(explained.getPlan());
-            delegatePlans.add(prepared.getPlan());
-
-            //assertThat(pSql.explain(conf), is(delegate.explain(sql, conf)));
-        }
-
-        for (i = 0; i < optimizerPlans.size(); i++) {
-            System.out.println("------------------------------");
-            System.out.println("Processing statement " + (i + 1) + "\n");
-            System.out.println("optimizer plan:\n" + optimizerPlans.get(i) + "\n");
-            System.out.println("delegate plan:\n " + delegatePlans.get(i) + "\n");
+            assertThat(compare(pSql.explain(allIndexes), delegate.explain(sql, allIndexes)), is(0));
         }
         //}
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compare(ExplainedSQLStatement e1, ExplainedSQLStatement e2)
+    {
+        if (e1.statement.equals(e2.statement) &&
+                (e1.selectCost / e2.selectCost) > 0.95 &&
+                (e1.selectCost / e2.selectCost) < 1.05 &&
+                e1.updateCost == e2.updateCost &&
+                e1.configuration.equals(e2.configuration))
+            return 0;
+
+        System.out.println("Not equal\n" + e1 + "\n\nvs\n\n" + e2);
+
+        if ((e1.selectCost / e2.selectCost) < 0.95)
+            return -1;
+
+        return 1;
     }
 }
