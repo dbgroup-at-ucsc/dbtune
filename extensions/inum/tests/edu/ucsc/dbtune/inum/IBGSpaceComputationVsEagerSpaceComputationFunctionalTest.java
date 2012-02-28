@@ -47,7 +47,7 @@ public class IBGSpaceComputationVsEagerSpaceComputationFunctionalTest
         env = Environment.getInstance();
         db = newDatabaseSystem(env);
         delegate = getBaseOptimizer(db.getOptimizer());
-        candGen = CandidateGenerator.Factory.newCandidateGenerator(env, db.getOptimizer());
+        candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
         ibgComputation = new IBGSpaceComputation();
         eagerComputation = new EagerSpaceComputation();
         
@@ -91,12 +91,10 @@ public class IBGSpaceComputationVsEagerSpaceComputationFunctionalTest
                 ibgComputation.compute(inumSpaceIBG, sql, delegate, db.getCatalog());
                 eagerComputation.compute(inumSpaceEager, sql, delegate, db.getCatalog());
 
-                //assertThat("For query " + sql, inumSpaceIBG.size(), is(inumSpaceEager.size()));
+                assertThat("For query " + sql, inumSpaceIBG.size(), is(inumSpaceEager.size()));
 
-                /*
                 for (InumPlan template : inumSpaceEager)
                     assertThat("For query " + sql, inumSpaceIBG.contains(template), is(true));
-                    */
             }
         //}
     }
