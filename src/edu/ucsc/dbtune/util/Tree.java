@@ -331,6 +331,33 @@ public class Tree<T>
      * {@inheritDoc}
      */
     @Override
+    public int hashCode()
+    {
+        return root.hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+            return true;
+    
+        if (!(obj instanceof Tree<?>))
+            return false;
+    
+        @SuppressWarnings("unchecked")
+        Tree<T> o = (Tree<T>) obj;
+
+        return root.equals(o.root);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String toString()
     {
         return root.print("", true);
@@ -407,17 +434,63 @@ public class Tree<T>
             else
                 sb.append(prefix + (isTail ? "└── " : "├── ") + element + "\n");
 
-            if (children != null) {
-                for (int i = 0; i < children.size() - 1; i++)
-                    sb.append(children.get(i).print(prefix + (isTail ? "    " : "│   "), false));
+            for (int i = 0; i < children.size() - 1; i++)
+                sb.append(children.get(i).print(prefix + (isTail ? "    " : "│   "), false));
 
-                if (children.size() >= 1)
-                    sb.append(
+            if (children.size() >= 1)
+                sb.append(
                         children.get(
                             children.size() - 1).print(prefix + (isTail ? "    " : "│   "), true));
-            }
 
             return sb.toString();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int hashCode()
+        {
+            int code = 1;
+
+            code = 37 * code + element.hashCode();
+
+            if (parent != null)
+                code = 37 * code + parent.getElement().hashCode();
+
+            code = 37 * code + children.hashCode();
+
+            return code;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (this == obj)
+                return true;
+
+            if (!(obj instanceof Entry<?>))
+                return false;
+
+            @SuppressWarnings("unchecked")
+            Entry<T> o = (Entry<T>) obj;
+
+            if (children.size() != o.children.size() ||
+                    (parent != null && o.parent == null) ||
+                    (parent == null && o.parent != null) ||
+                    (parent != null && o.parent != null && 
+                     !parent.getElement().equals(o.parent.getElement())) ||
+                    !element.equals(o.element))
+                return false;
+
+            for (int i = 0; i < children.size(); i++)
+                if (!children.get(i).equals(o.children.get(i)))
+                    return false;
+
+            return true;
         }
     }
 }

@@ -68,6 +68,15 @@ public class SQLStatement
      * {@inheritDoc}
      */
     @Override
+    public int hashCode()
+    {
+        return sql.hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean equals(Object obj)
     {
         if (this == obj)

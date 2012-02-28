@@ -74,6 +74,8 @@ public class TreeTest
 
         Tree<String> copy = new Tree<String>(tree);
 
+        assertThat(tree, is(copy));
+        assertThat(tree.hashCode(), is(copy.hashCode()));
         assertThat(tree.size(), is(copy.size()));
         assertThat(tree.getRootElement(), is(copy.getRootElement()));
 

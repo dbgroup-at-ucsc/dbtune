@@ -3,6 +3,8 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.Double.doubleToLongBits;
+
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 
 /**
@@ -111,7 +113,7 @@ public class Operator
      */
     Operator(Operator o)
     {
-        this.name = o.name;
+        this.name = new String(o.name);
         this.accumulatedCost = o.accumulatedCost;
         this.cardinality = o.cardinality;
         this.objects = new ArrayList<DatabaseObject>(o.objects);
@@ -328,13 +330,8 @@ public class Operator
     {
         int code = 1;
 
-        String s = name;
-        int t = s.lastIndexOf("(id=");
-        if (t > 0)
-            s = s.substring(0, t);
-        
-        code = 37 * code + s.hashCode();
-//        code = 37 * code + (int) Double.doubleToLongBits(accumulatedCost);
+        code = 37 * code + name.hashCode();
+        code = 37 * code + (int) Double.doubleToLongBits(accumulatedCost);
         code = 37 * code + (int) (accumulatedCost * 100);
         code = 37 * code + (int) (cardinality ^ (cardinality >>> 32));
         code = 37 * code + objects.hashCode();
@@ -360,17 +357,11 @@ public class Operator
 
         Operator op = (Operator) o;
 
-//        System.out.println(name.equals(op.name));
-//        System.out.println(accumulatedCost != op.accumulatedCost);
-//        System.out.println(cardinality != op.cardinality);
-//        System.out.println(objects.equals(op.objects));
-//        System.out.println(predicates.equals(op.predicates));
-
-        if (!name.equals(op.name)
-                || Math.abs(accumulatedCost - op.accumulatedCost) > 1E-20
-                || Math.abs(cardinality - op.cardinality) > 1E-20
-                || !objects.equals(op.objects)
-                || !predicates.equals(op.predicates))
+        if (!name.equals(op.name) ||
+                doubleToLongBits(accumulatedCost) != doubleToLongBits(op.accumulatedCost) ||
+                cardinality != op.cardinality ||
+                !predicates.equals(op.predicates) ||
+                !objects.equals(op.objects))
             return false;
 
         if ((columnsFetched == null && op.columnsFetched == null) ||

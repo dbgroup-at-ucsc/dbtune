@@ -49,14 +49,15 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
-     * Creates a SQL statement plan with one (given root) node.
+     * Creates a SQL statement plan with one (given root) node. Every node in the plan is duplicated 
+     * by calling the {@link Operator#duplicate} method.
      *
      * @param other
      *     root of the plan
      */
     public SQLStatementPlan(SQLStatementPlan other)
     {
-        this(other.sql, new Operator(other.getRootOperator()));
+        this(other.sql, other.getRootOperator().duplicate());
 
         copyRecursively(root, other.root);
     }
@@ -108,6 +109,34 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
+     * Finds an operator that is an ascendant of the given one and has the given name.
+     *
+     * @param operator
+     *      operator whose ascendants are looked for on matching the looked
+     * @param name
+     *      name of the operator that is being looked for
+     * @return
+     *      the node that was found; {@code null} otherwise.
+     * @throws NoSuchElementException
+     *      if {@code operator} is not a node in the plan
+     */
+    public Operator findAncestorWithName(Operator operator, String name)
+    {
+        if (!contains(operator))
+            throw new NoSuchElementException("Element " + operator + " not in the plan");
+
+        Operator ascendant = getParent(operator);
+
+        while (ascendant != null)
+            if (ascendant.getName().equals(name))
+                return ascendant;
+            else
+                ascendant = getParent(ascendant);
+
+        return null;
+    }
+
+    /**
      * Returns the operator at the root of the plan.
      *
      * @return
@@ -130,23 +159,6 @@ public class SQLStatementPlan extends Tree<Operator>
         List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
 
         for (Operator op : toList())
-            objects.addAll(op.getDatabaseObjects());
-
-        return objects;
-    }
-
-    /**
-     * Aggregates the set of database objects referenced by all the operators in a list and returns 
-     * it.
-     *
-     * @return
-     *     list of objects referenced by one or more operators in the plan.
-     */
-    public List<DatabaseObject> getDatabaseObjectsAtLeafs()
-    {
-        List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
-
-        for (Operator op : leafs())
             objects.addAll(op.getDatabaseObjects());
 
         return objects;
@@ -301,13 +313,10 @@ public class SQLStatementPlan extends Tree<Operator>
      * Checks if the plan contains the given operator.
      *
      * @param operatorName
-     *      one of the possible defined operator names ({@link Operator})
+     *      name of operator being looked for
      * @return
      *      {@code true} if the operator identified by the given name is contained in this plan; 
      *      {@code false} otherwise
-     * @see Operator#NLJ
-     * @see Operator#HJ
-     * @see Operator#MJ
      */
     public boolean contains(String operatorName)
     {
@@ -315,6 +324,43 @@ public class SQLStatementPlan extends Tree<Operator>
         for (Operator o : toList())
             if (o.getName() == operatorName)
                 return true;
+
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        int code = 1;
+
+        code = 37 * code + super.hashCode();
+        code = 37 * code + sql.hashCode();
+
+        return code;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (!super.equals(obj))
+            return false;
+
+        if (this == obj)
+            return true;
+    
+        if (!(obj instanceof SQLStatementPlan))
+            return false;
+    
+        SQLStatementPlan o = (SQLStatementPlan) obj;
+    
+        if (sql == null && o.sql == null || (sql != null && o.sql != null && sql.equals(o.sql)))
+            return true;
 
         return false;
     }
