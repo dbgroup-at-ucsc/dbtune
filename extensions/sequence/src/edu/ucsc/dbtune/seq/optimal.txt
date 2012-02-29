@@ -18,7 +18,7 @@ STORAGE-CONSTRIANT 10000
 COST
 # Q[query id] indices cost
 Q1 I1 10
-Q1 I1,I2 1
+#Q1 I1,I2 1
 Q2 I2 10
 Q3 I3 10
 Q4 I4 10

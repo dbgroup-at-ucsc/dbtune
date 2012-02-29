@@ -25,7 +25,7 @@ public class SeqCost {
     public SeqQuery[] sequence;
     public SeqIndex[] source;
     public SeqIndex[] destination;
-    int storageConstraint;
+    public int storageConstraint;
 
     private SeqCost() {
     }
@@ -264,7 +264,7 @@ public class SeqCost {
             ExplainedSQLStatement explain = optimizer
                     .explain(q.sql, allIndexes);
             cost = explain.getTotalCost();
-//            Rt.p(allIndexes.size() + " " + cost);
+            // Rt.p(allIndexes.size() + " " + cost);
         } else {
             cost = q.costWithoutIndex;
             HashSet<SeqIndex> h = new HashSet<SeqIndex>();

@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.seq;
+package edu.ucsc.dbtune;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,16 +14,21 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.seq.SeqCost;
+import edu.ucsc.dbtune.seq.SeqGreedySeq;
+import edu.ucsc.dbtune.seq.SeqMerge;
+import edu.ucsc.dbtune.seq.SeqOptimal;
+import edu.ucsc.dbtune.seq.SeqSplit;
 import edu.ucsc.dbtune.seq.def.*;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-public class SeqExperiment {
+public class SeqWhatIfTest2 {
     SeqCost cost;
     SeqConfiguration[] allConfigurations;
 
-    public SeqExperiment() throws Exception {
+    public SeqWhatIfTest2() throws Exception {
         // from file test
         if (false) {
             cost = SeqCost.fromFile(Rt.readResourceAsString(SeqCost.class,
@@ -116,6 +121,6 @@ public class SeqExperiment {
     }
 
     public static void main(String[] args) throws Exception {
-        new SeqExperiment();
+        new SeqWhatIfTest2();
     }
 }
