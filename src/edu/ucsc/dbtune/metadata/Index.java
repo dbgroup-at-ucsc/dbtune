@@ -718,7 +718,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
 
     /**
      * Whether the given index covers this one. An index a is covered by another b if a's columns 
-     * are a subset of b's and they're in the same order and with the same {@link #isAscending 
+     * are a prefix of b's and they're in the same order and with the same {@link #isAscending 
      * ascending} value.
      *
      * @param other
