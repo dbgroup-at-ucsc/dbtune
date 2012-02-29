@@ -1,14 +1,12 @@
 package edu.ucsc.dbtune.inum;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.util.InumPlanSetWithCache;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -19,7 +17,6 @@ import org.junit.Test;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
-import static edu.ucsc.dbtune.util.TestUtils.workloads;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 import static org.hamcrest.Matchers.is;
@@ -33,7 +30,6 @@ public class IBGSpaceComputationVsEagerSpaceComputationFunctionalTest
     private static DatabaseSystem db;
     private static Environment env;
     private static Optimizer delegate;
-    private static CandidateGenerator candGen;
     private static InumSpaceComputation ibgComputation;
     private static InumSpaceComputation eagerComputation;
 
@@ -47,7 +43,6 @@ public class IBGSpaceComputationVsEagerSpaceComputationFunctionalTest
         env = Environment.getInstance();
         db = newDatabaseSystem(env);
         delegate = getBaseOptimizer(db.getOptimizer());
-        candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
         ibgComputation = new IBGSpaceComputation();
         eagerComputation = new EagerSpaceComputation();
         
@@ -72,30 +67,40 @@ public class IBGSpaceComputationVsEagerSpaceComputationFunctionalTest
     @Test
     public void testComparison() throws Exception
     {
+        long time;
+        long ibgTime;
+        long eagerTime;
         //for (Workload wl : workloads(env.getWorkloadFolders())) {
 
-        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
+        Workload wl = workload(env.getWorkloadsFoldername() + "tpch-small");
 
-            System.out.println("==========================================");
-            System.out.println("Processing workload " + wl.getName() + "\n");
+        System.out.println("wlname, stmt, ibg size, eager size, ibg time, eager time");
 
-            final Set<Index> conf = candGen.generate(wl);
+        int i = 1;
 
-            System.out.println("Candidates generated: " + conf.size());
+        for (SQLStatement sql : wl) {
 
-            for (SQLStatement sql : wl) {
+            Set<InumPlan> inumSpaceIBG = new HashSet<InumPlan>();
+            Set<InumPlan> inumSpaceEager = new HashSet<InumPlan>();
 
-                Set<InumPlan> inumSpaceIBG = new InumPlanSetWithCache();
-                Set<InumPlan> inumSpaceEager = new InumPlanSetWithCache();
+            time = System.currentTimeMillis();
+            ibgComputation.compute(inumSpaceIBG, sql, delegate, db.getCatalog());
+            ibgTime = System.currentTimeMillis() - time;
 
-                ibgComputation.compute(inumSpaceIBG, sql, delegate, db.getCatalog());
-                eagerComputation.compute(inumSpaceEager, sql, delegate, db.getCatalog());
+            time = System.currentTimeMillis();
+            eagerComputation.compute(inumSpaceEager, sql, delegate, db.getCatalog());
+            eagerTime = System.currentTimeMillis() - time;
 
-                assertThat("For query " + sql, inumSpaceIBG.size(), is(inumSpaceEager.size()));
+            System.out.println(
+                wl.getName() + "," + i++ + "," + inumSpaceIBG.size() + "," + inumSpaceEager.size() + 
+                "," + ibgTime + "," + eagerTime);
 
-                for (InumPlan template : inumSpaceEager)
-                    assertThat("For query " + sql, inumSpaceIBG.contains(template), is(true));
+            assertThat(inumSpaceIBG.size(), is(inumSpaceEager.size()));
+
+            for (InumPlan template : inumSpaceEager) {
+                assertThat(inumSpaceIBG.contains(template), is(true));
             }
+        }
         //}
     }
 }

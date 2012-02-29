@@ -350,8 +350,6 @@ public class Operator
         if (columnsFetched != null)
             code = 37 * code + columnsFetched.hashCode();
 
-        System.out.println("   Operator.hashCode " + code);
-
         return code;
     }
 

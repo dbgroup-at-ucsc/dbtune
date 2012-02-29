@@ -408,8 +408,9 @@
         </module>
         -->
 
-        <!-- Flag uncommented main() methods (debugging left-overs) -->
+        <!-- Flag uncommented main() methods (debugging left-overs)
         <module name="UncommentedMain"/>
+        -->
 
         <!-- Require long constants to be defined by uppercase L -->
         <module name="UpperEll"/>
