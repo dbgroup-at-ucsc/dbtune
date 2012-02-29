@@ -137,6 +137,21 @@ public class SQLStatementPlanTest
     {
         assertThat(new SQLStatementPlan(plan), is(plan));
         assertThat(new SQLStatementPlan(plan).hashCode(), is(plan.hashCode()));
+
+        // check that elements are duplicated, i.e. new Operator instances are created instead of 
+        // just copying references
+        SQLStatementPlan copy = new SQLStatementPlan(plan);
+
+        List<Operator> planList = plan.toList();
+        List<Operator> copyList = copy.toList();
+
+        assertThat(planList, is(copyList));
+
+        for (int i = 0; i < planList.size(); i++) {
+            assertThat(
+                System.identityHashCode(planList.get(i)) != 
+                System.identityHashCode(copyList.get(i)), is(true));
+        }
     }
 
     /**
@@ -169,35 +184,35 @@ public class SQLStatementPlanTest
     {
         SQLStatementPlan copy = new SQLStatementPlan(plan);
 
-        copy.rename(root, "Ruth");
+        copy.rename(copy.getRootOperator(), "Ruth");
 
         assertThat(copy, is(not(plan)));
         assertThat(copy.hashCode(), is(not(plan.hashCode())));
 
         copy = new SQLStatementPlan(plan);
 
-        copy.assignCost(root, 134.523);
+        copy.assignCost(copy.getRootOperator(), 134.523);
 
         assertThat(copy, is(not(plan)));
         assertThat(copy.hashCode(), is(not(plan.hashCode())));
 
         copy = new SQLStatementPlan(plan);
 
-        copy.removeDatabaseObject(one);
+        copy.removeDatabaseObject(copy.find(one));
 
         assertThat(copy, is(not(plan)));
         assertThat(copy.hashCode(), is(not(plan.hashCode())));
 
         copy = new SQLStatementPlan(plan);
 
-        copy.removePredicates(one);
+        copy.removePredicates(copy.find(one));
 
         assertThat(copy, is(not(plan)));
         assertThat(copy.hashCode(), is(not(plan.hashCode())));
 
         copy = new SQLStatementPlan(plan);
 
-        copy.removeColumnsFetched(two);
+        copy.removeColumnsFetched(copy.find(two));
 
         assertThat(copy, is(not(plan)));
         assertThat(copy.hashCode(), is(not(plan.hashCode())));
