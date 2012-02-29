@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.util;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -26,7 +27,7 @@ import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
  */
 public final class TestUtils
 {
-    private static Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
 
     /**
      * Utility class.
@@ -138,7 +139,7 @@ public final class TestUtils
      * Returns a list of {@link Workload} objects containing all the workloads in the given fully 
      * qualified list of workload names.
      *
-     * @param fullyQualifiedWorkloadNames
+     * @param fullyQualifiedWorkloadFolderNames
      *      for each, an instance of {@link Workload} is created
      * @return
      *      list of workloads
@@ -147,13 +148,16 @@ public final class TestUtils
      * @throws SQLException
      *      if {@link Workload} constructor throws an exception
      */
-    public static List<Workload> workloads(List<String> fullyQualifiedWorkloadNames)
+    public static List<Workload> workloads(List<String> fullyQualifiedWorkloadFolderNames)
         throws IOException, SQLException
     {
         List<Workload> workloads = new ArrayList<Workload>();
 
-        for (String wlName : fullyQualifiedWorkloadNames)
-            workloads.add(workload(wlName));
+        for (String wlFolderName : fullyQualifiedWorkloadFolderNames) {
+            if (new File(wlFolderName).isHidden())
+                continue;
+            workloads.add(workload(wlFolderName));
+        }
 
         return workloads;
     }
@@ -162,7 +166,7 @@ public final class TestUtils
      * Returns a {@link Workload} object containing the workload for the given fully qualified 
      * workload name.
      *
-     * @param fullyQualifiedWorkloadName
+     * @param fullyQualifiedWorkloadFolderName
      *      an instance of {@link Workload} is created for it
      * @return
      *      a workload
@@ -171,12 +175,12 @@ public final class TestUtils
      * @throws SQLException
      *      if {@link Workload} constructor throws an exception
      */
-    public static Workload workload(String fullyQualifiedWorkloadName)
+    public static Workload workload(String fullyQualifiedWorkloadFolderName)
         throws IOException, SQLException
     {
         return new Workload(
-                fullyQualifiedWorkloadName,
-                new FileReader(fullyQualifiedWorkloadName + "/workload.sql"));
+                fullyQualifiedWorkloadFolderName,
+                new FileReader(fullyQualifiedWorkloadFolderName + "/workload.sql"));
     }
 
     /**

@@ -98,11 +98,7 @@ public class IBGSpaceComputationVsEagerSpaceComputationFunctionalTest
                         ibgTime + "," +
                         eagerTime);
 
-                assertThat(inumSpaceIBG.size(), is(inumSpaceEager.size()));
-
-                for (InumPlan template : inumSpaceEager) {
-                    assertThat(inumSpaceIBG.contains(template), is(true));
-                }
+                assertThat(inumSpaceIBG, is(inumSpaceEager));
             }
         }
     }
