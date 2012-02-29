@@ -440,6 +440,10 @@ public class DB2Optimizer extends AbstractOptimizer
             return Operator.FETCH;
         else if (operatorName.equals("RIDSCN"))
             return Operator.RID_SCAN;
+        else if (operatorName.equals("IXAND"))
+            return Operator.INDEX_AND;
+        else if (operatorName.equals("IXOR"))
+            return Operator.INDEX_OR;
         else
             return operatorName;
     }

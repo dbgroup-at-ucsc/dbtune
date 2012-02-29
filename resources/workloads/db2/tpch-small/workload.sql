@@ -95,6 +95,40 @@ group by
 order by
     revenue desc;
 
+--query 09
+select
+    nation,
+    o_year,
+    sum(amount) as sum_profit
+from
+    (
+        select
+            n_name as nation,
+            year(o_orderdate) as o_year,
+            l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
+        from
+            tpch.part,
+            tpch.supplier,
+            tpch.lineitem,
+            tpch.partsupp,
+            tpch.orders,
+            tpch.nation
+        where
+            s_suppkey = l_suppkey
+            and ps_suppkey = l_suppkey
+            and ps_partkey = l_partkey
+            and p_partkey = l_partkey
+            and o_orderkey = l_orderkey
+            and s_nationkey = n_nationkey
+            and p_name like '%thistle%'
+    ) as profit
+group by
+    nation,
+    o_year
+order by
+    nation,
+    o_year desc;
+
 --query 10
 select
     c_custkey,
@@ -128,6 +162,36 @@ group by
 order by
     revenue desc;
 
+--query 12
+select
+    l_shipmode,
+    sum(case
+        when o_orderpriority = '1-URGENT'
+            or o_orderpriority = '2-HIGH'
+            then 1
+        else 0
+    end) as high_line_count,
+    sum(case
+        when o_orderpriority <> '1-URGENT'
+            and o_orderpriority <> '2-HIGH'
+            then 1
+        else 0
+    end) as low_line_count
+from
+    tpch.orders,
+    tpch.lineitem
+where
+    o_orderkey = l_orderkey
+    and l_shipmode in ('FOB', 'REG AIR')
+    and l_commitdate < l_receiptdate
+    and l_shipdate < l_commitdate
+    and l_receiptdate >= '1993-01-01'
+    and l_receiptdate < '1994-01-01' 
+group by
+    l_shipmode
+order by
+    l_shipmode;
+
 --query 13
 select
     c_count,
@@ -149,3 +213,94 @@ group by
 order by
     custdist desc,
     c_count desc;
+
+--query 14
+select
+    100.00 * sum(case
+        when p_type like 'PROMO%'
+            then l_extendedprice * (1 - l_discount)
+        else 0
+    end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
+from
+    tpch.lineitem,
+    tpch.part
+where
+    l_partkey = p_partkey
+    and l_shipdate >= '1993-05-01'
+    and l_shipdate < '1993-06-01';
+
+--query 19
+select
+    sum(l_extendedprice* (1 - l_discount)) as revenue
+from
+    tpch.lineitem,
+    tpch.part
+where
+    (
+        p_partkey = l_partkey
+        and p_brand = 'Brand#13'
+        and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
+        and l_quantity >= 6 and l_quantity <= 6 + 10
+        and p_size between 1 and 5
+        and l_shipmode in ('AIR', 'AIR REG')
+        and l_shipinstruct = 'DELIVER IN PERSON'
+    )
+    or
+    (
+        p_partkey = l_partkey
+        and p_brand = 'Brand#43'
+        and p_container in ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK')
+        and l_quantity >= 11 and l_quantity <= 11 + 10
+        and p_size between 1 and 10
+        and l_shipmode in ('AIR', 'AIR REG')
+        and l_shipinstruct = 'DELIVER IN PERSON'
+    )
+    or
+    (
+        p_partkey = l_partkey
+        and p_brand = 'Brand#55'
+        and p_container in ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
+        and l_quantity >= 27 and l_quantity <= 27 + 10
+        and p_size between 1 and 15
+        and l_shipmode in ('AIR', 'AIR REG')
+        and l_shipinstruct = 'DELIVER IN PERSON'
+    );
+
+--query 20
+select
+    s_name,
+    s_address
+from
+    tpch.supplier,
+    tpch.nation
+where
+    s_suppkey in (
+        select
+            ps_suppkey
+        from
+            tpch.partsupp
+        where
+            ps_partkey in (
+                select
+                    p_partkey
+                from
+                    tpch.part
+                where
+                    p_name like 'ivory%'
+            )
+            and ps_availqty > (
+                select
+                    0.5 * sum(l_quantity)
+                from
+                    tpch.lineitem
+                where
+                    l_partkey = ps_partkey
+                    and l_suppkey = ps_suppkey
+                    and l_shipdate >= '1996-01-01'
+                    and l_shipdate < '1997-01-01'
+            )
+    )
+    and s_nationkey = n_nationkey
+    and n_name = 'KENYA'
+order by
+    s_name;

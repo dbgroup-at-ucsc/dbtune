@@ -47,9 +47,13 @@ public class Operator
     public static final String IS = "INDEX.SCAN";
     /** table scan operator. **/
     public static final String INDEX_SCAN = IS;
+    /** index anding. **/
+    public static final String INDEX_AND = "INDEX.AND";
+    /** index oring. **/
+    public static final String INDEX_OR = "INDEX.OR";
 
     /** row id scan operator. **/
-    public static final String RID_SCAN = "RID_SCAN";
+    public static final String RID_SCAN = "RID.SCAN";
 
     /** fetch operator. **/
     public static final String FETCH = "FETCH";

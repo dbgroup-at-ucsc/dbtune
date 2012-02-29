@@ -77,6 +77,12 @@
       <reference refid="compile.classpath" />
     </ant>
   </target>
+  <target name="run.one" depends="compile.test.all">
+    <ant dir="." antfile="common.xml" target="run.one">
+      <property name="bld.dir" value="${bld.dir}" />
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
   <target name="test" depends="clean,unit.all,functional.all"/>
 
   <!-- packaging -->

@@ -6,9 +6,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import edu.ucsc.dbtune.metadata.ByContentIndex;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
+
+import static com.google.common.collect.Sets.difference;
 
 /**
  * @author Ivo Jimenez
@@ -149,6 +154,45 @@ public final class MetadataUtils
     }
 
     /**
+     * Makes a set of {@link Index} to {@link ByContentIndex}.
+     *
+     * @param indexes
+     *      set of indexes where each will be copied to a ByContentIndex instance
+     * @return
+     *      the index with the given id; {@code null} if not found
+     */
+    public static Set<ByContentIndex> toByContent(Set<Index> indexes)
+    {
+        Set<ByContentIndex> byContentSet = new HashSet<ByContentIndex>();
+
+        for (Index i : indexes)
+            byContentSet.add(new ByContentIndex(i));
+
+        return byContentSet;
+    }
+
+    /**
+     * Returns the set of indexes that are not shared by the sets. The comparison is done using 
+     * {@link Index#equalsContent}.
+     *
+     * @param set1
+     *      set of indexes
+     * @param set2
+     *      set of indexes
+     * @return
+     *      the number of indexes that are not in, both, set1 AND set2
+     */
+    public static int getNumberOfDistinctIndexesByContent(Set<Index> set1, Set<Index> set2)
+    {
+        Set<ByContentIndex> byContentSet1 = toByContent(set1);
+        Set<ByContentIndex> byContentSet2 = toByContent(set2);
+
+        return
+            difference(byContentSet1, byContentSet2).size() +
+            difference(byContentSet2, byContentSet1).size();
+    }
+
+    /**
      * Finds an index by name in a set of indexes. This looks only at the name of the of the index 
      * and not to the whole fully qualified one.
      *
@@ -189,5 +233,45 @@ public final class MetadataUtils
                 return i;
 
         return null;
+    }
+
+    /**
+     * Returns a string containing the set of CREATE statements required to create the given catalog 
+     * on a DBMS.
+     *
+     * @param catalog
+     *      catalog being dumped to a SQL CREATE statement
+     * @return
+     *      the string for the CREATE statements
+     */
+    public static String getCreateStatement(Catalog catalog)
+    {
+        StringBuilder create = new StringBuilder();
+
+        for (Schema sch : catalog) {
+            create.append("CREATE SCHEMA ").append(sch.getName()).append(";\n");
+            for (Table tbl : sch.tables()) {
+                create.append("CREATE TABLE ").append(tbl.getFullyQualifiedName()).append("(\n");
+                for (Column col : tbl)
+                    create.append("  ").append(col.getName()).append(" INT,\n");
+                create.delete(create.length() - 2, create.length() - 0);
+                create.append("\n);\n\n");
+            }
+
+            for (Index idx : sch.indexes()) {
+                create.append("CREATE INDEX ").append(idx.getFullyQualifiedName());
+                create.append(" ON ").append(idx.getTable().getFullyQualifiedName()).append("(");
+
+                for (Column col : idx)
+                    create.append("").append(col.getName()).append(", ");
+
+                create.delete(create.length() - 2, create.length() - 0);
+
+                create.append(");\n");
+            }
+
+        }
+
+        return create.toString();
     }
 }

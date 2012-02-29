@@ -103,7 +103,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
                 e1.configuration.equals(e2.configuration))
             return 0;
 
-        System.out.println("Not equal\n" + e1 + "\n\nvs\n\n" + e2);
+        System.out.println("Optimizer:\n" + e1.getPlan() + "\n\nvs\n\nDelegate:\n" + e2.getPlan());
 
         if ((e1.selectCost / e2.selectCost) < 0.95)
             return -1;
