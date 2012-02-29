@@ -17,7 +17,7 @@ import org.junit.Test;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
+import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -70,37 +70,40 @@ public class IBGSpaceComputationVsEagerSpaceComputationFunctionalTest
         long time;
         long ibgTime;
         long eagerTime;
-        //for (Workload wl : workloads(env.getWorkloadFolders())) {
 
-        Workload wl = workload(env.getWorkloadsFoldername() + "tpch-small");
+        for (Workload wl : workloads(env.getWorkloadFolders())) {
 
-        System.out.println("wlname, stmt, ibg size, eager size, ibg time, eager time");
+            System.out.println("wlname, stmt, ibg size, eager size, ibg time, eager time");
 
-        int i = 1;
+            int i = 1;
 
-        for (SQLStatement sql : wl) {
+            for (SQLStatement sql : wl) {
 
-            Set<InumPlan> inumSpaceIBG = new HashSet<InumPlan>();
-            Set<InumPlan> inumSpaceEager = new HashSet<InumPlan>();
+                Set<InumPlan> inumSpaceIBG = new HashSet<InumPlan>();
+                Set<InumPlan> inumSpaceEager = new HashSet<InumPlan>();
 
-            time = System.currentTimeMillis();
-            ibgComputation.compute(inumSpaceIBG, sql, delegate, db.getCatalog());
-            ibgTime = System.currentTimeMillis() - time;
+                time = System.currentTimeMillis();
+                ibgComputation.compute(inumSpaceIBG, sql, delegate, db.getCatalog());
+                ibgTime = System.currentTimeMillis() - time;
 
-            time = System.currentTimeMillis();
-            eagerComputation.compute(inumSpaceEager, sql, delegate, db.getCatalog());
-            eagerTime = System.currentTimeMillis() - time;
+                time = System.currentTimeMillis();
+                eagerComputation.compute(inumSpaceEager, sql, delegate, db.getCatalog());
+                eagerTime = System.currentTimeMillis() - time;
 
-            System.out.println(
-                wl.getName() + "," + i++ + "," + inumSpaceIBG.size() + "," + inumSpaceEager.size() + 
-                "," + ibgTime + "," + eagerTime);
+                System.out.println(
+                        wl.getName() + "," +
+                        i++ + "," +
+                        inumSpaceIBG.size() + "," +
+                        inumSpaceEager.size() + "," +
+                        ibgTime + "," +
+                        eagerTime);
 
-            assertThat(inumSpaceIBG.size(), is(inumSpaceEager.size()));
+                assertThat(inumSpaceIBG.size(), is(inumSpaceEager.size()));
 
-            for (InumPlan template : inumSpaceEager) {
-                assertThat(inumSpaceIBG.contains(template), is(true));
+                for (InumPlan template : inumSpaceEager) {
+                    assertThat(inumSpaceIBG.contains(template), is(true));
+                }
             }
         }
-        //}
     }
 }

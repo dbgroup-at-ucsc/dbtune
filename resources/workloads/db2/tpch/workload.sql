@@ -142,16 +142,15 @@ order by
     revenue desc;
 
 --query 06
--- NOTE: DB2 uses index intersection
---select
-    --sum(l_extendedprice * l_discount) as revenue
---from
-    --tpch.lineitem
---where
-    --l_shipdate >= '1993-01-01'
-    --and l_shipdate < '1994-01-01'
-    --and l_discount between 0.06 and 0.08 
-    --and l_quantity < 25;
+select
+    sum(l_extendedprice * l_discount) as revenue
+from
+    tpch.lineitem
+where
+    l_shipdate >= '1993-01-01'
+    and l_shipdate < '1994-01-01'
+    and l_discount between 0.06 and 0.08 
+    and l_quantity < 25;
 
 --query 07
 -- TODO: contains two instances of nation
@@ -443,37 +442,36 @@ where
     --s_suppkey;
 
 --query 16
---  TODO: IXAND, i.e. index intersection
---select
-    --p_brand,
-    --p_type,
-    --p_size,
-    --count(distinct ps_suppkey) as supplier_cnt
---from
-    --tpch.partsupp,
-    --tpch.part
---where
-    --p_partkey = ps_partkey
-    --and p_brand <> 'Brand#41'
-    --and p_type not like 'MEDIUM BURNISHED%'
-    --and p_size in (4, 21, 15, 41, 49, 43, 27, 47)
-    --and ps_suppkey not in (
-        --select
-            --s_suppkey
-        --from
-            --tpch.supplier
-        --where
-            --s_comment like '%Customer%Complaints%'
-    --)
---group by
-    --p_brand,
-    --p_type,
-    --p_size
---order by
-    --supplier_cnt desc,
-    --p_brand,
-    --p_type,
-    --p_size;
+select
+    p_brand,
+    p_type,
+    p_size,
+    count(distinct ps_suppkey) as supplier_cnt
+from
+    tpch.partsupp,
+    tpch.part
+where
+    p_partkey = ps_partkey
+    and p_brand <> 'Brand#41'
+    and p_type not like 'MEDIUM BURNISHED%'
+    and p_size in (4, 21, 15, 41, 49, 43, 27, 47)
+    and ps_suppkey not in (
+        select
+            s_suppkey
+        from
+            tpch.supplier
+        where
+            s_comment like '%Customer%Complaints%'
+    )
+group by
+    p_brand,
+    p_type,
+    p_size
+order by
+    supplier_cnt desc,
+    p_brand,
+    p_type,
+    p_size;
 
 --query 17
 -- TODO: lineitem referenced more than once
@@ -568,44 +566,43 @@ where
     );
 
 --query 20
--- TODO: IBGSpaceComputation fails; IXSCAN should be discarded
---select
-    --s_name,
-    --s_address
---from
-    --tpch.supplier,
-    --tpch.nation
---where
-    --s_suppkey in (
-        --select
-            --ps_suppkey
-        --from
-            --tpch.partsupp
-        --where
-            --ps_partkey in (
-                --select
-                    --p_partkey
-                --from
-                    --tpch.part
-                --where
-                    --p_name like 'ivory%'
-            --)
-            --and ps_availqty > (
-                --select
-                    --0.5 * sum(l_quantity)
-                --from
-                    --tpch.lineitem
-                --where
-                    --l_partkey = ps_partkey
-                    --and l_suppkey = ps_suppkey
-                    --and l_shipdate >= '1996-01-01'
-                    --and l_shipdate < '1997-01-01'
-            --)
-    --)
-    --and s_nationkey = n_nationkey
-    --and n_name = 'KENYA'
---order by
-    --s_name;
+select
+    s_name,
+    s_address
+from
+    tpch.supplier,
+    tpch.nation
+where
+    s_suppkey in (
+        select
+            ps_suppkey
+        from
+            tpch.partsupp
+        where
+            ps_partkey in (
+                select
+                    p_partkey
+                from
+                    tpch.part
+                where
+                    p_name like 'ivory%'
+            )
+            and ps_availqty > (
+                select
+                    0.5 * sum(l_quantity)
+                from
+                    tpch.lineitem
+                where
+                    l_partkey = ps_partkey
+                    and l_suppkey = ps_suppkey
+                    and l_shipdate >= '1996-01-01'
+                    and l_shipdate < '1997-01-01'
+            )
+    )
+    and s_nationkey = n_nationkey
+    and n_name = 'KENYA'
+order by
+    s_name;
 
 --query 21
 -- TODO: lineitem referenced more than once
