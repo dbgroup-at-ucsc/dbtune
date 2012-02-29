@@ -369,7 +369,12 @@ public class ExplainedSQLStatement
         // equally, that is:
         //   * baseTableUpdateCost
         //   * indexUpdateCosts
-        //   * plan
+
+        if ((plan != null && o.plan == null) ||
+                (plan == null && o.plan != null) ||
+                !plan.equals(o.plan))
+            return false;
+
         if (statement.equals(o.statement) &&
                 selectCost == o.selectCost &&
                 updateCost == o.updateCost &&

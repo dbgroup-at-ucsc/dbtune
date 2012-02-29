@@ -134,7 +134,9 @@ public class TableAccessSlot extends Operator
     @Override
     public int hashCode()
     {
-        return 37 * super.hashCode() + index.hashCode();
+        int code = 37 * super.hashCode() + index.hashCode();
+        System.out.println("   TableAccessSlot.hashCode: " + code);
+        return code;
     }
 
     /**

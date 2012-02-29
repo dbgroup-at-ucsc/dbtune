@@ -323,7 +323,7 @@ public class InumPlan extends SQLStatementPlan
     @Override
     public int hashCode()
     {
-        return slots.hashCode();
+        return 37 * super.hashCode() + (int) doubleToLongBits(internalPlanCost);
     }
 
     /**
@@ -335,17 +335,12 @@ public class InumPlan extends SQLStatementPlan
         if (!super.equals(obj))
             return false;
 
-        if (this == obj)
-            return true;
-    
         if (!(obj instanceof InumPlan))
             return false;
     
         InumPlan o = (InumPlan) obj;
-    
-        return
-            slots.equals(o.slots) &&
-            doubleToLongBits(internalPlanCost) == doubleToLongBits(o.internalPlanCost);
+
+        return Double.compare(internalPlanCost, o.internalPlanCost) == 0;
     }
 
     /**
@@ -366,8 +361,6 @@ public class InumPlan extends SQLStatementPlan
     protected Operator instantiateOperatorForUnseenIndex(SQLStatement sql, Index index)
         throws SQLException
     {
-        //if (slot.getColumnsFetched())
-
         SQLStatementPlan plan = delegate.explain(sql, Sets.<Index>newHashSet(index)).getPlan();
 
         Operator indexScan = null;

@@ -517,6 +517,7 @@ public abstract class DatabaseObject
     {
         if (!(other instanceof DatabaseObject))
             return false;
+
         DatabaseObject dbo = (DatabaseObject) other;
 
         return 
@@ -529,11 +530,7 @@ public abstract class DatabaseObject
     @Override
     public int hashCode()
     {
-        String s = getFullyQualifiedName();
-        int t = s.lastIndexOf("(id=");
-        if (t > 0)
-            s = s.substring(0, t);
-        return s.hashCode();
+        return getFullyQualifiedName().hashCode();
     }
 
     /**

@@ -3,8 +3,6 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.Double.doubleToLongBits;
-
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 
 /**
@@ -338,11 +336,21 @@ public class Operator
         code = 37 * code + (int) Double.doubleToLongBits(accumulatedCost);
         code = 37 * code + (int) (accumulatedCost * 100);
         code = 37 * code + (int) (cardinality ^ (cardinality >>> 32));
-        code = 37 * code + objects.hashCode();
-        code = 37 * code + predicates.hashCode();
+
+        int listCode = 0;
+        for (DatabaseObject dbo : objects)
+            listCode += dbo.hashCode();
+        code = 37 * code + listCode;
+
+        listCode = 0;
+        for (Predicate p : predicates)
+            listCode += p.hashCode();
+        code = 37 * code + listCode;
 
         if (columnsFetched != null)
             code = 37 * code + columnsFetched.hashCode();
+
+        System.out.println("   Operator.hashCode " + code);
 
         return code;
     }
@@ -362,10 +370,10 @@ public class Operator
         Operator op = (Operator) o;
 
         if (!name.equals(op.name) ||
-                doubleToLongBits(accumulatedCost) != doubleToLongBits(op.accumulatedCost) ||
+                Double.compare(accumulatedCost, op.accumulatedCost) != 0 ||
                 cardinality != op.cardinality ||
-                !predicates.equals(op.predicates) ||
-                !objects.equals(op.objects))
+                !predicates.containsAll(op.predicates) ||
+                !objects.containsAll(op.objects))
             return false;
 
         if ((columnsFetched == null && op.columnsFetched == null) ||

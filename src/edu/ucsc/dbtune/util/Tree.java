@@ -460,6 +460,8 @@ public class Tree<T>
 
             code = 37 * code + children.hashCode();
 
+            System.out.println("   Tree.hashCode: " + code);
+
             return code;
         }
 
