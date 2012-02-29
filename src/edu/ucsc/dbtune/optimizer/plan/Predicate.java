@@ -55,6 +55,9 @@ public class Predicate
     }
 
     /**
+     * A predicate is covered by an index if all the columns referenced by it are contained in the 
+     * given index.
+     *
      * @param index
      *      index that is checked for coverage
      * @return
@@ -65,7 +68,11 @@ public class Predicate
         if (column != null)
             return index.contains(column);
 
-        return predicateText.contains(index.getName());
+        for (Column c : index)
+            if (predicateText.contains(c.getName()))
+                return true;
+
+        return false;
     }
 
     /**

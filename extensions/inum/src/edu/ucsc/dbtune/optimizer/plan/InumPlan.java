@@ -241,8 +241,11 @@ public class InumPlan extends SQLStatementPlan
             return makeOperatorFromSlot(slot);
 
         if (!slot.isCreatedFromFullTableScan() && !slot.isCompatible(index))
-            // the FTS slot is compatible with any index. So if we DON'T have FTS, it means that we 
-            // have to check that the sent index is compatible with the slot
+            // if we DON'T have FTS, we have to check that sent index is compatible
+            return INCOMPATIBLE;
+
+        if (isWhatIfCallAvoidableViaFullTableScan(slot, index))
+            // if we do a what-if call, we know the optimizer will return FTS, so let's not do it
             return INCOMPATIBLE;
 
         return instantiateOperatorForUnseenIndex(buildQueryForUnseenIndex(slot), index);
@@ -428,6 +431,32 @@ public class InumPlan extends SQLStatementPlan
         newIndexScan.setAccumulatedCost(newIndexScanCost);
 
         return newIndexScan;
+    }
+
+    /**
+     * Determines whether a what-if call can be avoided, based on the content of the slot and the 
+     * index being sent.
+     *
+     * @param slot
+     *      slot
+     * @param index
+     *      the index that is checked against the slot
+     * @return
+     *      {@code true} if no what-if call is needed; {@code false} otherwise
+     */
+    static boolean isWhatIfCallAvoidableViaFullTableScan(TableAccessSlot slot, Index index)
+    {
+        if (!slot.isCreatedFromFullTableScan())
+            return false;
+
+        if (slot.getPredicates().isEmpty() && !slot.getColumnsFetched().isCoveredBy(index))
+            return true;
+
+        for (Predicate p : slot.getPredicates())
+            if (p.isCoveredBy(index))
+                return false;
+
+        return true;
     }
 
     /**
