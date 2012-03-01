@@ -21,7 +21,7 @@ Q4 0 0 1
 
 SLOT
 # Q[query id] P[plan id] S[slot id] (full table scan cost) (index,cost) ...
-Q1 0 0 2000 I1,10
-Q2 0 0 2000 I2,10
-Q3 0 0 2000 I3,10
-Q4 0 0 2000 I4,10
+Q1 0 0 20000 I1,10
+Q2 0 0 20000 I2,10
+Q3 0 0 20000 I3,10
+Q4 0 0 20000 I4,10
