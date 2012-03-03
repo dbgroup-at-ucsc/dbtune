@@ -92,7 +92,6 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
             if (!hasPlanWhichDontUseIndex) {
                 hasPlanWhichDontUseIndex = true;
                 templateForEmpty = new InumPlan(delegate, sqlPlan);
-                //if (!sqlPlan.contains(NLJ))
                 inumSpace.add(templateForEmpty);
             }
         } else {
@@ -113,7 +112,7 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
     @Override
     public void computeWithCompleteConfiguration(
             Set<InumPlan> space,
-            List<Set<Index>> indexesPerTable,
+            Set<? extends Index> indexes,
             SQLStatement statement,
             Optimizer delegate)
         throws SQLException
@@ -122,9 +121,8 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
 
         space.clear();
 
-        for (Set<Index> set : indexesPerTable)
-            for (Index index : set)
-                allIndex.add(index);
+        for (Index i : indexes)
+            allIndex.add(i);
 
         hasPlanWhichDontUseIndex = false;
         ibg(statement, delegate, allIndex, space);

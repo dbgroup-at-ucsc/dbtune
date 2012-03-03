@@ -376,7 +376,8 @@ public class Operator
 
         if ((columnsFetched == null && op.columnsFetched == null) ||
             (columnsFetched != null && op.columnsFetched != null &&
-                columnsFetched.equals(op.columnsFetched)))
+                columnsFetched.isCoveredBy(op.columnsFetched) &&
+                op.columnsFetched.isCoveredBy(columnsFetched)))
             return true;
 
         return false;

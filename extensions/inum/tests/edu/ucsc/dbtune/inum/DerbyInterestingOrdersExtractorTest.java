@@ -5,6 +5,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -12,10 +13,16 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static com.google.common.collect.Iterables.get;
+
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
-import static edu.ucsc.dbtune.metadata.Index.ASCENDING;
+import static edu.ucsc.dbtune.metadata.Index.ASC;
+import static edu.ucsc.dbtune.metadata.Index.DESC;
+import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesPerTable;
+
 import static org.hamcrest.Matchers.is;
+
 import static org.junit.Assert.assertThat;
 
 /**
@@ -36,7 +43,7 @@ public class DerbyInterestingOrdersExtractorTest
     public static void beforeClassSetUp()
     {
         catalog = configureCatalog();
-        extractor = new DerbyInterestingOrdersExtractor(catalog, ASCENDING);
+        extractor = new DerbyInterestingOrdersExtractor(catalog);
     }
 
     /**
@@ -44,14 +51,14 @@ public class DerbyInterestingOrdersExtractorTest
      *      when an error occurs
      */
     @Test
-    public void testSupported() throws Exception
+    public void testOrderBy() throws Exception
     {
-        Map<Table, Set<InterestingOrder>> indexesPerTable;
+        Map<Table, Set<Index>> ordersPerTable;
         SQLStatement sql;
+        InterestingOrder io;
 
         Table t = catalog.<Table>findByName("schema_0.table_0");
-        Column c = catalog.<Column>findByName("schema_0.table_0.column_0");
-        InterestingOrder io = new InterestingOrder(c, ASCENDING);
+        io = new InterestingOrder(catalog.<Column>findByName("schema_0.table_0.column_0"), ASC);
 
         sql = new SQLStatement(
                 "SELECT " +
@@ -61,17 +68,54 @@ public class DerbyInterestingOrdersExtractorTest
                 "  WHERE " +
                 "     column_0 = 5 " +
                 "  ORDER BY " +
-                "     column_0");
+                "     column_0, column_1 DESC, column_2 ASC");
 
-        indexesPerTable = extractor.extract(sql);
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
 
-        // only one table referenced
-        assertThat(indexesPerTable.size(), is(1));
+        assertThat(ordersPerTable.size(), is(1));
 
-        // two interesting orders, column_0 and empty
-        assertThat(indexesPerTable.get(t).size(), is(1));
-        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
-        assertThat(indexesPerTable.get(t).contains(io), is(true));
+        assertThat(ordersPerTable.get(t).size(), is(1));
+        assertThat(ordersPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(get(ordersPerTable.get(t), 0).size(), is(1));
+        assertThat(ordersPerTable.get(t).contains(io), is(true));
+
+        sql = new SQLStatement(
+                "SELECT " +
+                "     column_0 " +
+                "  FROM " +
+                "     schema_0.table_0 " +
+                "  WHERE " +
+                "     column_0 = 5 " +
+                "  ORDER BY " +
+                "     column_0 DESC");
+
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+
+        assertThat(ordersPerTable.size(), is(1));
+
+        assertThat(ordersPerTable.get(t).size(), is(1));
+        assertThat(ordersPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(get(ordersPerTable.get(t), 0).size(), is(1));
+        assertThat(ordersPerTable.get(t).contains(io), is(false));
+
+        io = new InterestingOrder(catalog.<Column>findByName("schema_0.table_0.column_0"), DESC);
+
+        assertThat(ordersPerTable.get(t).contains(io), is(true));
+    }
+
+    /**
+     * @throws Exception
+     *      when an error occurs
+     */
+    @Test
+    public void testGroupBy() throws Exception
+    {
+        Map<Table, Set<Index>> ordersPerTable;
+        SQLStatement sql;
+
+        Table t = catalog.<Table>findByName("schema_0.table_0");
+        Column c = catalog.<Column>findByName("schema_0.table_0.column_0");
+        InterestingOrder io = new InterestingOrder(c, ASC);
 
         sql = new SQLStatement(
                 "SELECT " +
@@ -83,13 +127,13 @@ public class DerbyInterestingOrdersExtractorTest
                 "  GROUP BY " +
                 "     column_0");
 
-        // only one table referenced
-        assertThat(indexesPerTable.size(), is(1));
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
 
-        // two interesting orders, column_0 (by implying it from GROUP BY) and the empty one
-        assertThat(indexesPerTable.get(t).size(), is(1));
-        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
-        assertThat(indexesPerTable.get(t).contains(io), is(true));
+        assertThat(ordersPerTable.size(), is(1));
+
+        assertThat(ordersPerTable.get(t).size(), is(1));
+        assertThat(ordersPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(ordersPerTable.get(t).contains(io), is(true));
     }
     
     /**
@@ -97,12 +141,9 @@ public class DerbyInterestingOrdersExtractorTest
      *      when an error occurs
      */
     @Test
-    public void testOneRelation() throws Exception
+    public void testNoOrderByNoGroupBy() throws Exception
     {
-        Map<Table, Set<InterestingOrder>> indexesPerTable;
         SQLStatement sql;
-
-        Table t = catalog.<Table>findByName("schema_0.table_0");
 
         sql = new SQLStatement(
                 "SELECT " +
@@ -112,14 +153,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  WHERE " +
                 "     column_0 = 5 ");
 
-        indexesPerTable = extractor.extract(sql);
-
-        // only one table referenced
-        assertThat(indexesPerTable.size(), is(1));
-
-        // one interesting order
-        assertThat(indexesPerTable.get(t).size(), is(0));
-        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(extractor.extract(sql).size(), is(0));
     }
     
     /**
@@ -127,51 +161,16 @@ public class DerbyInterestingOrdersExtractorTest
      *      when an error occurs
      */
     @Test
-    public void testOrderBy() throws Exception
-    {
-        Map<Table, Set<InterestingOrder>> indexesPerTable;
-        SQLStatement sql;
-
-        Table t = catalog.<Table>findByName("schema_0.table_0");
-        Column c = catalog.<Column>findByName("schema_0.table_0.column_0");
-        InterestingOrder io = new InterestingOrder(c, ASCENDING);
-
-        sql = new SQLStatement(
-                "SELECT " +
-                "     column_0, column_1 " +
-                "  FROM " +
-                "     schema_0.table_0 " +
-                "  WHERE " +
-                "     column_0 = 5 " +
-                "  ORDER BY " +
-                "     column_0, column_1");
-
-        indexesPerTable = extractor.extract(sql);
-
-        // only one table referenced
-        assertThat(indexesPerTable.size(), is(1));
-
-        // two interesting orders, column_0 and empty
-        assertThat(indexesPerTable.get(t).size(), is(1));
-        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
-        assertThat(indexesPerTable.get(t).contains(io), is(true));
-    }
-        
-    /**
-     * @throws Exception
-     *      when an error occurs
-     */
-    @Test
     public void testOrderByGroupBy() throws Exception
     {
-        Map<Table, Set<InterestingOrder>> indexesPerTable;
+        Map<Table, Set<Index>> ordersPerTable;
         SQLStatement sql;
 
         Table t = catalog.<Table>findByName("schema_0.table_0");
         Column c0 = catalog.<Column>findByName("schema_0.table_0.column_0");
         Column c1 = catalog.<Column>findByName("schema_0.table_0.column_1");
-        InterestingOrder io0 = new InterestingOrder(c0, ASCENDING);
-        InterestingOrder io1 = new InterestingOrder(c1, ASCENDING);
+        InterestingOrder io0 = new InterestingOrder(c0, ASC);
+        InterestingOrder io1 = new InterestingOrder(c1, ASC);
         
         sql = new SQLStatement(
                 "SELECT " +
@@ -185,16 +184,14 @@ public class DerbyInterestingOrdersExtractorTest
                 "  ORDER BY " +
                 "     column_0, column_1");
 
-        indexesPerTable = extractor.extract(sql);
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
 
-        // only one table referenced
-        assertThat(indexesPerTable.size(), is(1));
+        assertThat(ordersPerTable.size(), is(1));
 
-        // two interesting orders, column_0 and empty
-        assertThat(indexesPerTable.get(t).size(), is(2));
-        assertThat(indexesPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
-        assertThat(indexesPerTable.get(t).contains(io0), is(true));
-        assertThat(indexesPerTable.get(t).contains(io1), is(true));
+        assertThat(ordersPerTable.get(t).size(), is(2));
+        assertThat(ordersPerTable.get(t).contains(getFullTableScanIndexInstance(t)), is(false));
+        assertThat(ordersPerTable.get(t).contains(io0), is(true));
+        assertThat(ordersPerTable.get(t).contains(io1), is(true));
     }
     
     /**
@@ -204,37 +201,354 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testJoinPredicates() throws Exception
     {
-        Map<Table, Set<InterestingOrder>> indexesPerTable;
+        Map<Table, Set<Index>> ordersPerTable;
+        SQLStatement sql;
+
+        Table t0 = catalog.<Table>findByName("schema_0.table_0");
+        Table t1 = catalog.<Table>findByName("schema_0.table_1");
+        Table t2 = catalog.<Table>findByName("schema_0.table_2");
+        Column c0 = catalog.<Column>findByName("schema_0.table_0.column_0");
+        Column c1 = catalog.<Column>findByName("schema_0.table_1.column_1");
+        Column c2 = catalog.<Column>findByName("schema_0.table_2.column_2");
+        InterestingOrder io0 = new InterestingOrder(c0, ASC);
+        InterestingOrder io1 = new InterestingOrder(c1, ASC);
+        InterestingOrder io2 = new InterestingOrder(c2, ASC);
+        
+        sql = new SQLStatement(
+                "SELECT " +
+                "      table_0.column_0, table_1.column_1 " +
+                "  FROM " +
+                "      schema_0.table_0, schema_0.table_1 " +
+                "  WHERE " +
+                "      table_0.column_0 = 5 " +
+                "  AND table_0.column_0 = table_1.column_1 ");
+        
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+
+        assertThat(ordersPerTable.size(), is(2));
+        
+        assertThat(ordersPerTable.get(t0).size(), is(1));
+        assertThat(ordersPerTable.get(t1).size(), is(1));
+        assertThat(ordersPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
+        assertThat(ordersPerTable.get(t0).contains(io0), is(true));
+        assertThat(ordersPerTable.get(t1).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(ordersPerTable.get(t1).contains(io1), is(true));
+
+        sql = new SQLStatement(
+                "SELECT " +
+                "     table_0.column_0, table_1.column_1 " +
+                "  FROM " +
+                "     schema_0.table_0 join schema_0.table_1 " +
+                "        ON table_0.column_0 = table_1.column_1 " +
+                "  WHERE " +
+                "     table_0.column_0 = 5 ");
+        
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+
+        assertThat(ordersPerTable.size(), is(2));
+
+        assertThat(ordersPerTable.get(t0).size(), is(1));
+        assertThat(ordersPerTable.get(t1).size(), is(1));
+        assertThat(ordersPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
+        assertThat(ordersPerTable.get(t0).contains(io0), is(true));
+        assertThat(ordersPerTable.get(t1).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(ordersPerTable.get(t1).contains(io1), is(true));
+
+        sql = new SQLStatement(
+                "SELECT " +
+                "     table_0.column_0, table_1.column_1 " +
+                "  FROM " +
+                "     schema_0.table_0 " +
+                "        join " +
+                "     schema_0.table_1 " +
+                "           ON table_0.column_0 = table_1.column_1 " +
+                "        left outer join " +
+                "     schema_0.table_2 " +
+                "           ON table_1.column_1 = table_2.column_2 " +
+                "  WHERE " +
+                "     table_0.column_0 = 5 ");
+        
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+
+        assertThat(ordersPerTable.size(), is(3));
+
+        assertThat(ordersPerTable.get(t0).size(), is(1));
+        assertThat(ordersPerTable.get(t1).size(), is(1));
+        assertThat(ordersPerTable.get(t2).size(), is(1));
+        assertThat(ordersPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
+        assertThat(ordersPerTable.get(t0).contains(io0), is(true));
+        assertThat(ordersPerTable.get(t1).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(ordersPerTable.get(t1).contains(io1), is(true));
+        assertThat(ordersPerTable.get(t2).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(ordersPerTable.get(t2).contains(io2), is(true));
+
+        sql = new SQLStatement(
+                "SELECT " +
+                "     table_0.column_0, table_1.column_1 " +
+                "  FROM " +
+                "     schema_0.table_0 " +
+                "        inner join " +
+                "     schema_0.table_1 " +
+                "           ON table_0.column_0 = table_1.column_1 " +
+                "        right outer join " +
+                "     schema_0.table_2 " +
+                "           ON table_1.column_1 = table_2.column_2 " +
+                "  WHERE " +
+                "     table_0.column_0 = 5 ");
+        
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+
+        assertThat(ordersPerTable.size(), is(3));
+
+        assertThat(ordersPerTable.get(t0).size(), is(1));
+        assertThat(ordersPerTable.get(t1).size(), is(1));
+        assertThat(ordersPerTable.get(t2).size(), is(1));
+        assertThat(ordersPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
+        assertThat(ordersPerTable.get(t0).contains(io0), is(true));
+        assertThat(ordersPerTable.get(t1).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(ordersPerTable.get(t1).contains(io1), is(true));
+        assertThat(ordersPerTable.get(t2).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(ordersPerTable.get(t2).contains(io2), is(true));
+    }
+
+    /**
+     * @throws Exception
+     *      when an error occurs
+     */
+    @Test
+    public void testSubQueries() throws Exception
+    {
+        Map<Table, Set<Index>> ordersPerTable;
         SQLStatement sql;
 
         Table t0 = catalog.<Table>findByName("schema_0.table_0");
         Table t1 = catalog.<Table>findByName("schema_0.table_1");
         Column c0 = catalog.<Column>findByName("schema_0.table_0.column_0");
-        Column c1 = catalog.<Column>findByName("schema_0.table_1.column_1");
-        InterestingOrder io0 = new InterestingOrder(c0, ASCENDING);
-        InterestingOrder io1 = new InterestingOrder(c1, ASCENDING);
+        InterestingOrder io0 = new InterestingOrder(c0, ASC);
+        
+        sql = new SQLStatement(
+                "  SELECT " +
+                "      column_0, " +
+                "      count(*) as order_count " +
+                "  FROM " +
+                "      schema_0.table_0 " +
+                "  WHERE " +
+                "          column_1 >= 1000 " +
+                "      and column_1 < 10000 " +
+                "      and exists ( " +
+                "          SELECT " +
+                "              * " +
+                "          FROM " +
+                "              schema_0.table_1 " +
+                "          WHERE " +
+                "              column_2 = 3 " +
+                "      ) " +
+                "  GROUP BY " +
+                "      column_0 " +
+                "  ORDER BY " +
+                "      column_0 ");
+        
+        assertThat(extractor.extract(sql).size(), is(1));
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+
+        assertThat(ordersPerTable.size(), is(1));
+        assertThat(ordersPerTable.keySet().contains(t0), is(true));
+        assertThat(ordersPerTable.keySet().contains(t1), is(false));
+        
+        assertThat(ordersPerTable.get(t0).size(), is(1));
+        assertThat(ordersPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
+        assertThat(ordersPerTable.get(t0).contains(io0), is(true));
+
+        sql = new SQLStatement(
+                "  SELECT " +
+                "      column_0, " +
+                "      count(*) as order_count " +
+                "  FROM " +
+                "      schema_0.table_0, " +
+                "      ( " +
+                "          SELECT " +
+                "              * " +
+                "          FROM " +
+                "              schema_0.table_1 " +
+                "          WHERE " +
+                "              column_2 = 3 " +
+                "      ) as t " +
+                "  WHERE " +
+                "          column_1 >= 1000 " +
+                "      and column_1 < 10000 " +
+                "  GROUP BY " +
+                "      column_0 " +
+                "  ORDER BY " +
+                "      column_0 ");
+
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+
+        assertThat(ordersPerTable.size(), is(1));
+        assertThat(ordersPerTable.keySet().contains(t0), is(true));
+        assertThat(ordersPerTable.keySet().contains(t1), is(false));
+        
+        assertThat(ordersPerTable.get(t0).size(), is(1));
+        assertThat(ordersPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
+        assertThat(ordersPerTable.get(t0).contains(io0), is(true));
+    }
+
+    /**
+     * @throws Exception
+     *      when an error occurs
+     */
+    @Test
+    public void testCorrelated() throws Exception
+    {
+        Map<Table, Set<Index>> ordersPerTable;
+        SQLStatement sql;
+
+        Table t0 = catalog.<Table>findByName("schema_0.table_0");
+        Table t1 = catalog.<Table>findByName("schema_0.table_1");
+        Column c0 = catalog.<Column>findByName("schema_0.table_0.column_1");
+        Column c1 = catalog.<Column>findByName("schema_0.table_1.column_2");
+        InterestingOrder io0 = new InterestingOrder(c0, ASC);
+        InterestingOrder io1 = new InterestingOrder(c1, ASC);
+        
+        sql = new SQLStatement(
+                "  SELECT " +
+                "      column_0, " +
+                "      count(*) as order_count " +
+                "  FROM " +
+                "      schema_0.table_0 " +
+                "  WHERE " +
+                "          column_1 >= 1000 " +
+                "      and column_1 < 10000 " +
+                "      and exists ( " +
+                "          SELECT " +
+                "              * " +
+                "          FROM " +
+                "              schema_0.table_1 " +
+                "          WHERE " +
+                "                  table_1.column_2 = table_0.column_1 " +
+                "              and column_2 < column_3 " +
+                "      ) " +
+                "  GROUP BY " +
+                "      column_1 " +
+                "  ORDER BY " +
+                "      column_1 ");
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+
+        assertThat(ordersPerTable.size(), is(2));
+        assertThat(ordersPerTable.keySet().contains(t0), is(true));
+        assertThat(ordersPerTable.keySet().contains(t1), is(true));
+        
+        assertThat(ordersPerTable.get(t0).size(), is(1));
+        assertThat(ordersPerTable.get(t1).size(), is(1));
+        assertThat(ordersPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
+        assertThat(ordersPerTable.get(t0).contains(io0), is(true));
+        assertThat(ordersPerTable.get(t1).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(ordersPerTable.get(t1).contains(io1), is(true));
+
+        sql = new SQLStatement(
+                "  SELECT " +
+                "      column_0, " +
+                "      count(*) as order_count " +
+                "  FROM " +
+                "      schema_0.table_0, " +
+                "      ( " +
+                "          SELECT " +
+                "              * " +
+                "          FROM " +
+                "              schema_0.table_1 " +
+                "          WHERE " +
+                "                  table_1.column_2 = table_0.column_1 " +
+                "              and column_2 < column_3 " +
+                "      ) as t " +
+                "  WHERE " +
+                "          column_1 >= 1000 " +
+                "      and column_1 < 10000 " +
+                "  GROUP BY " +
+                "      column_1 " +
+                "  ORDER BY " +
+                "      column_1 ");
+
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+
+        assertThat(ordersPerTable.size(), is(2));
+        assertThat(ordersPerTable.keySet().contains(t0), is(true));
+        assertThat(ordersPerTable.keySet().contains(t1), is(true));
+        
+        assertThat(ordersPerTable.get(t0).size(), is(1));
+        assertThat(ordersPerTable.get(t1).size(), is(1));
+        assertThat(ordersPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
+        assertThat(ordersPerTable.get(t0).contains(io0), is(true));
+        assertThat(ordersPerTable.get(t1).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(ordersPerTable.get(t1).contains(io1), is(true));
+    }
+
+    /**
+     * @throws Exception
+     *      when an error occurs
+     */
+    @Test
+    public void testSelectionPredicatesOnColumnsOfTheSameTable() throws Exception
+    {
+        Map<Table, Set<Index>> ordersPerTable;
+        SQLStatement sql;
+
+        Table t1 = catalog.<Table>findByName("schema_0.table_1");
+        Column c1 = catalog.<Column>findByName("schema_0.table_1.column_0");
+        InterestingOrder io1 = new InterestingOrder(c1, ASC);
         
         sql = new SQLStatement(
                 "SELECT " +
-                "     table_0.column_0, table_1.column_1 " +
-                "  FROM " +
-                "     schema_0.table_0, schema_0.table_1 " +
-                "  WHERE " +
-                "     table_0.column_0 = 5 " +
-                "  AND "  +
-                "     table_0.column_0 = table_1.column_1 ");
-        
-        indexesPerTable = extractor.extract(sql);
+                "    * " +
+                "FROM " +
+                "    schema_0.table_1 " +
+                "WHERE " +
+                "    column_2 < column_3 " +
+                "ORDER BY " +
+                "    column_0");
+        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
 
-        // two tables referenced
-        assertThat(indexesPerTable.size(), is(2));
+        assertThat(ordersPerTable.size(), is(1));
+        assertThat(ordersPerTable.keySet().contains(t1), is(true));
         
-        // find out the relation that is index by indexsPerTable
-        assertThat(indexesPerTable.get(t0).size(), is(1));
-        assertThat(indexesPerTable.get(t1).size(), is(1));
-        assertThat(indexesPerTable.get(t0).contains(getFullTableScanIndexInstance(t0)), is(false));
-        assertThat(indexesPerTable.get(t0).contains(io0), is(true));
-        assertThat(indexesPerTable.get(t1).contains(getFullTableScanIndexInstance(t1)), is(false));
-        assertThat(indexesPerTable.get(t1).contains(io1), is(true));
+        assertThat(ordersPerTable.get(t1).size(), is(1));
+        assertThat(ordersPerTable.get(t1).contains(getFullTableScanIndexInstance(t1)), is(false));
+        assertThat(ordersPerTable.get(t1).contains(io1), is(true));
+    }
+
+    /**
+     * @throws Exception
+     *      when an error occurs
+     */
+    @Test
+    public void testSilentFails() throws Exception
+    {
+        SQLStatement sql;
+
+        sql = new SQLStatement(
+                "SELECT " +
+                "    sum(column_0 * (1 - column_1)) as revenue, " +
+                "    column_3 " +
+                " FROM " +
+                "    schema_0.table_1 " +
+                " WHERE " +
+                "    column_2 < column_3 " +
+                " ORDER BY " +
+                "    sum(column_0 * (1 - column_1)) desc");
+
+        // should be one, but aliasing is not supported yet
+        assertThat(extractor.extract(sql).size(), is(0));
+
+        sql = new SQLStatement(
+                "SELECT " +
+                "    sum(column_0 * (1 - column_1)) as revenue, " +
+                "    column_3 " +
+                " FROM " +
+                "    schema_0.table_1 " +
+                " WHERE " +
+                "    column_2 < column_3 " +
+                " GROUP BY " +
+                "    revenue");
+
+        // same as above
+        assertThat(extractor.extract(sql).size(), is(0));
     }
 }

@@ -1,10 +1,7 @@
 package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.Set;
-
-import edu.ucsc.dbtune.metadata.Table;
 
 import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -30,5 +27,5 @@ public interface InterestingOrdersExtractor
      *      refers only one table in the {@code FROM} clause and it doesn't contain neither an 
      *      {@code ORDER BY} nor a {@code GROUP BY} clause.
      */
-    Map<Table, Set<InterestingOrder>> extract(SQLStatement statement) throws SQLException;
+    Set<InterestingOrder> extract(SQLStatement statement) throws SQLException;
 }

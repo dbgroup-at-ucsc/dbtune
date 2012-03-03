@@ -23,6 +23,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
+import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
 /**
  * Common functionality for space computation.
@@ -57,21 +58,13 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
             Set<InumPlan> space, SQLStatement statement, Optimizer delegate, Catalog catalog)
         throws SQLException
     {
-        Map<Table, Set<InterestingOrder>> interestingOrdersPerTable =
-            (new DerbyInterestingOrdersExtractor(catalog, true)).extract(statement);
+        Set<InterestingOrder> interestingOrders =
+            (new DerbyInterestingOrdersExtractor(catalog)).extract(statement);
 
-        List<Set<Index>> indexesPerTable = new ArrayList<Set<Index>>();
+        for (Table table : getReferencedTables(interestingOrders))
+            interestingOrders.add(getFullTableScanIndexInstance(table));
 
-        for (Map.Entry<Table, Set<InterestingOrder>> entry : interestingOrdersPerTable.entrySet())
-        {
-            @SuppressWarnings("unchecked")
-            Set<Index> indexesForTable = (Set<Index>) (Set<?>) entry.getValue();
-
-            indexesForTable.add(getFullTableScanIndexInstance(entry.getKey()));
-            indexesPerTable.add(indexesForTable);
-        }
-
-        computeWithCompleteConfiguration(space, indexesPerTable, statement, delegate);
+        computeWithCompleteConfiguration(space, interestingOrders, statement, delegate);
 
         InumPlan templateForEmpty =
             new InumPlan(delegate, delegate.explain(statement, empty).getPlan());
@@ -97,9 +90,8 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
      *
      * @param space
      *      the space to be computed. {@link Set#clear} is invoked before populating it.
-     * @param indexesPerTable
-     *      list of sets, where each set corresponds to the interesting orders that reference a 
-     *      table
+     * @param indexes
+     *      interesting orders
      * @param statement
      *      SQL statement for which the INUM space is computed
      * @param delegate
@@ -110,7 +102,7 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
      */
     public abstract void computeWithCompleteConfiguration(
             Set<InumPlan> space,
-            List<Set<Index>> indexesPerTable,
+            Set<? extends Index> indexes,
             SQLStatement statement,
             Optimizer delegate)
         throws SQLException;
@@ -189,7 +181,7 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
             throw new SQLException("More than one index for slot for " + table);
 
         if (indexesReferncingTable.size() == 0)
-            return FullTableScanIndex.getFullTableScanIndexInstance(table);
+            return getFullTableScanIndexInstance(table);
 
         return get(indexesReferncingTable, 0);
     }
@@ -210,12 +202,20 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
     {
         List<Index> ios = new ArrayList<Index>();
         
-        for (TableAccessSlot s : plan.getSlots()) {
+        for (Table t : plan.getTables()) {
+
+            TableAccessSlot s = plan.getSlot(t);
             
+            if (s == null)
+                throw new SQLException("No slot for " + t + " in " + plan);
+
             if (s.getColumnsFetched() == null)
                 throw new SQLException("Can't find columns fetched for " + s.getTable());
             
-            ios.add(new InumInterestingOrder(s.getColumnsFetched()));
+            if (s.getColumnsFetched().size() == 0)
+                ios.add(getFullTableScanIndexInstance(t));
+            else
+                ios.add(new InumInterestingOrder(s.getColumnsFetched()));
         }
         
         return ios;

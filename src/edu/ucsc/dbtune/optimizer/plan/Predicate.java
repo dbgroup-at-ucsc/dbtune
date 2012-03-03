@@ -11,7 +11,8 @@ import edu.ucsc.dbtune.metadata.Index;
  */
 public class Predicate 
 {
-    private Column column;
+    private Column columnA;
+    private Column columnB;
     private String predicateText;
     
     /**
@@ -24,12 +25,26 @@ public class Predicate
      */
     public Predicate(Column column, String text)
     {
-        this.column = column;
+        this.columnA = column;
 
         if (text == null)
             throw new RuntimeException("text can't be null");
 
         predicateText = text;
+    }
+    
+    /**
+     * Creates a join predicate.
+     *
+     * @param columnA
+     *      column for which the predicate is defined on
+     * @param columnB
+     *      column for which the predicate is defined on
+     */
+    public Predicate(Column columnA, Column columnB)
+    {
+        this.columnA = columnA;
+        this.columnB = columnB;
     }
     
     /**
@@ -51,7 +66,29 @@ public class Predicate
      */
     public Column getColumn()
     {
-        return column;
+        return columnA;
+    }
+
+    /**
+     * Returns the column over which the join predicate is defined on.
+     *
+     * @return
+     *      the column
+     */
+    public Column getLeftColumn()
+    {
+        return columnA;
+    }
+
+    /**
+     * Returns the column over which the join predicate is defined on.
+     *
+     * @return
+     *      the column
+     */
+    public Column getRightColumn()
+    {
+        return columnB;
     }
 
     /**
@@ -65,12 +102,16 @@ public class Predicate
      */
     public boolean isCoveredBy(Index index)
     {
-        if (column != null)
-            return index.contains(column);
+        if (columnA != null)
+            return index.contains(columnA);
 
-        for (Column c : index)
-            if (predicateText.contains(c.getName()))
-                return true;
+        if (columnB != null)
+            return index.contains(columnB);
+
+        if (predicateText != null)
+            for (Column c : index)
+                if (predicateText.contains(c.getName()))
+                    return true;
 
         return false;
     }
@@ -89,11 +130,15 @@ public class Predicate
     
         Predicate o = (Predicate) obj;
     
-        if (column != null && column.equals(o.column))
+        if (columnA != null && columnA.equals(o.columnA))
             return true;
 
-        if (predicateText.equals(o.predicateText))
+        if (columnB != null && columnB.equals(o.columnB))
             return true;
+
+        if (predicateText != null)
+            if (predicateText.equals(o.predicateText))
+                return true;
 
         return false;
     }
@@ -106,10 +151,13 @@ public class Predicate
     {
         int code = 1;
 
-        if (column != null)
-            code = 37 * code + column.hashCode();
+        if (columnA != null)
+            code = 37 * code + columnA.hashCode();
+        if (columnB != null)
+            code = 37 * code + columnB.hashCode();
 
-        code = 37 * code + predicateText.hashCode();
+        if (predicateText != null)
+            code = 37 * code + predicateText.hashCode();
 
         return code;
     }

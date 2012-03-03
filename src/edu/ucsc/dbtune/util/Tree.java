@@ -471,7 +471,12 @@ public class Tree<T>
             if (parent != null)
                 code = 37 * code + parent.getElement().hashCode();
 
-            code = 37 * code + children.hashCode();
+            // we don't care about order in the children
+            int listCode = 0;
+            for (Entry<T> child : children)
+                listCode += child.hashCode();
+
+            code = 37 * code + listCode;
 
             return code;
         }
@@ -499,8 +504,9 @@ public class Tree<T>
                     !element.equals(o.element))
                 return false;
 
-            for (int i = 0; i < children.size(); i++)
-                if (!children.get(i).equals(o.children.get(i)))
+            // we don't take into account the order of children
+            for (Entry<T> child : o.children)
+                if (!children.contains(child))
                     return false;
 
             return true;
