@@ -5,6 +5,7 @@ import interaction.util.ToDoException;
 
 import java.io.Serializable;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -27,6 +28,26 @@ public class DB2IndexSchema implements Serializable {
 	/* serialization support */
 	private static final long serialVersionUID = 3894859060945294518L;
 	protected DB2IndexSchema() { 
+	}
+	
+	public String getTableName()
+	{
+	    return tableName;
+	}
+	
+	public List<String> getColumnNames()
+	{
+	    return colNames;
+	}
+	
+	public List<Boolean> getAscending()
+	{
+	    List<Boolean> ascending = new ArrayList<Boolean>();
+	    
+	    for (Boolean b : descending)
+	        ascending.add(!b);
+	    
+	    return ascending;
 	}
 	
 	protected DB2IndexSchema(

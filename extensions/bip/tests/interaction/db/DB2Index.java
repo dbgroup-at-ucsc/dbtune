@@ -8,10 +8,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
+import edu.ucsc.dbtune.util.Identifiable;
+
+
+
 /*
  * XXX: this may be inferred by playing with db2advis and watching the ADVISE_INDEX contents
  */
-public class DB2Index implements Serializable {
+public class DB2Index implements Serializable, Identifiable {
 	// serialized fields
 	protected DB2IndexSchema schema;
 	protected int internalID;
@@ -29,6 +33,12 @@ public class DB2Index implements Serializable {
 	private static final long serialVersionUID = 3894859060945294518L;
 	protected DB2Index() {
 	}
+	
+	public DB2IndexSchema getSchema()
+	{
+	    return schema;
+	}
+	
 	
 	public DB2Index(
 			DB2IndexSchema schema0,

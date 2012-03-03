@@ -743,6 +743,16 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
+     * Set the identifier of the object
+     * 
+     * @param id
+     *      the given ID
+     */
+    public void setId(int id)
+    {
+        this.inMemoryID = id;
+    }
+    /**
      * {@inheritDoc}
      */
     @Override

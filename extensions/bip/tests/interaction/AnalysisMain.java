@@ -4,7 +4,9 @@ import interaction.cand.Generation;
 import interaction.cand.Generation.Strategy;
 import interaction.db.*;
 import interaction.ibg.*;
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static interaction.ibg.AnalysisMode.SERIAL;
+import interaction.ibg.log.AnalysisLog;
 import interaction.ibg.log.BasicLog;
 import interaction.ibg.log.InteractionLogger;
 import interaction.ibg.log.BasicLog.InteractionPair;
@@ -22,7 +24,10 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.List;
 
+import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.bip.InteractionComparisonFunctionalTest;
+import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.Workload;
 
 
 /*
@@ -36,8 +41,15 @@ import edu.ucsc.dbtune.bip.InteractionComparisonFunctionalTest;
  * needed for analysis.
  */
 public class AnalysisMain {
-	public static void main(String[] args) {
-		// process arguments
+    
+    private static DatabaseSystem db;
+    private static Environment    en;
+    private static Workload workload;
+    
+    
+	public static void main(String[] args) throws SQLException {
+	    
+    	// process arguments
 		if (args.length > 0) {
 			System.out.println("No arguments are accepted");
 		}
@@ -53,20 +65,105 @@ public class AnalysisMain {
 		}
 	}
 
+	
+	public static void setWorkload(Workload wl)
+	{
+	    workload = wl;
+	}
+	
 	public static void runSteps() throws SQLException, IOException, ClassNotFoundException {
+	    
+	    en = Environment.getInstance();
+        db = newDatabaseSystem(en);
+        
 		// Connect to database
 		DBConnection conn = Main.openConnection();
 		try {
-			SQLWorkload workload = Main.getWorkload();
-			
 			for (Generation.Strategy s : InteractionComparisonFunctionalTest.strategies)
-			    analyze(conn, workload, s);
+			    analyzeINUM(conn, workload, s);
 
 		} finally {
 			conn.commit();
 			conn.close();
 		}
 	}
+	
+	private static void analyzeINUM(DBConnection conn, Workload workload, Generation.Strategy strategy) 
+                throws IOException, ClassNotFoundException, SQLException {
+
+	    long start = System.currentTimeMillis();        
+	    InteractionLogger logger;
+	    SerialIndexBenefitGraph[] ibgs;
+	    File candidateFile = Configuration.candidateFile(strategy);
+	    DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
+
+	    System.out.println(" L85 (Karl, Analysis), candidate set: " + candidateSet.size());
+
+	    SerialIndexBenefitGraph.setCatalog(db.getCatalog());
+	    SerialIndexBenefitGraph.fixCandidates(candidateSet);
+	    conn.fixCandidates(candidateSet);
+	    logger = new InteractionLogger(conn, candidateSet); 
+
+	    //  reset logger and analyze serially
+	    //      then write out the ibgs and analysis
+	    logger.reset();
+	    ibgs = analyzeSerialINUM(conn, workload, candidateSet, logger);
+	    writeAnalysis(strategy, SERIAL, logger.getBasicLog());
+	    writeIBGs(ibgs, strategy);
+
+	    long time = System.currentTimeMillis() - start;
+	    System.out.println("L98 (Karl, Analysis Main), the running time: " + time);
+
+	    BasicLog serial1 = (BasicLog) Files.readObjectFromFile(
+                        Configuration.analysisFile(strategy, SERIAL));
+
+	    for (double t : InteractionComparisonFunctionalTest.deltas) {
+	        serial1.getAnalysisLog(t);
+	        writeInteraction(serial1.interactions(), strategy, SERIAL, t);
+	    }
+
+	    /*
+        PrintWriter out = new PrintWriter(System.out);
+        System.out.println("Serial log:");
+        serial1 = (BasicLog)Files.readObjectFromFile(Configuration.analysisFile(strategy, SERIAL));
+        AnalysisLog serial2 = serial1.getAnalysisLog(0.1);
+        serial2.output(out);
+        System.out.println("List interactions 0.1: " + serial1.interactions());
+        AnalysisLog serial3 = serial1.getAnalysisLog(0.01);
+        serial3.output(out);
+        System.out.println("List interactions 0.01: " + serial1.interactions());
+        */
+	}
+	
+	
+	public static SerialIndexBenefitGraph[] analyzeSerialINUM
+	                (DBConnection conn, Workload workload, DB2IndexSet candidateSet, 
+	                 InteractionLogger logger) 
+                throws SQLException {
+	    
+        SerialIndexBenefitGraph[] ibgs;
+        int i;
+        
+        logger.startTimer();
+        
+        /* analyze queries one at a time, combining their interactions */
+        ibgs = new SerialIndexBenefitGraph[workload.size()];
+        i = 0;
+        for (edu.ucsc.dbtune.workload.SQLStatement sql : workload) {
+            
+            SerialIndexBenefitGraph ibg = SerialIndexBenefitGraph.buildByINUM
+                                        (db.getOptimizer(), sql, candidateSet);
+            
+            SerialIBGAnalyzer analyzer = new SerialIBGAnalyzer(ibg);
+            analyzer.doAnalysis(logger);
+            ibgs[i++] = ibg;
+        }
+        
+        
+        //DB2GreedyScheduler.schedule(candidateSet.bitSet(), new SerialIndexBenefitGraph.ScheduleInfo(ibgs)); 
+
+        return ibgs;
+    }
 	
 	private static void analyze(DBConnection conn, SQLWorkload workload, Generation.Strategy strategy) 
 	                throws IOException, ClassNotFoundException, SQLException {
@@ -78,7 +175,9 @@ public class AnalysisMain {
 		DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
 		
 		System.out.println(" L85 (Karl, Analysis), candidate set: " + candidateSet.size());
-		
+        
+		SerialIndexBenefitGraph.setCatalog(db.getCatalog());
+		SerialIndexBenefitGraph.fixCandidates(candidateSet);
 		conn.fixCandidates(candidateSet);
 		logger = new InteractionLogger(conn, candidateSet);	
 		
@@ -92,46 +191,25 @@ public class AnalysisMain {
 		long time = System.currentTimeMillis() - start;
 		System.out.println("L98 (Karl, Analysis Main), the running time: " + time);
 		
-		double[] thresholds = new double[] {
-                0.01,
-                0.1,
-                1.0
-        };
-
-		BasicLog serial1 = (BasicLog)Files.readObjectFromFile(
+		BasicLog serial1 = (BasicLog) Files.readObjectFromFile(
 		                            Configuration.analysisFile(strategy, SERIAL));
 		
-		for (double t : thresholds) {
+		for (double t : InteractionComparisonFunctionalTest.deltas) {
 		    serial1.getAnalysisLog(t);
 		    writeInteraction(serial1.interactions(), strategy, SERIAL, t);
 		}
 		
-		// test
 		/*
 		PrintWriter out = new PrintWriter(System.out);
-		try {
-			System.out.println("Serial log:");
-			BasicLog serial1 = (BasicLog)Files.readObjectFromFile(Configuration.analysisFile(strategy, SERIAL));
-			AnalysisLog serial2 = serial1.getAnalysisLog(0.1);
-			serial2.output(out);
-			
-			System.out.println("L84 (Analysis Main), the running time: " + time);
-			System.out.println("List interactions: " + serial1.interactions());
-			/*
-			// reset logger and analyze in parallel
-			logger.reset();
-			analyzeParallel(conn, workload, candidateSet, logger);
-			writeAnalysis(strategy, PARALLEL, logger.getBasicLog());
-
-			System.out.println("Parallel log:");
-			BasicLog parallel1 = (BasicLog)Files.readObjectFromFile(Configuration.analysisFile(strategy, PARALLEL));
-			AnalysisLog parallel2 = parallel1.getAnalysisLog(0.1);
-			parallel2.output(out);
-			
-		} finally {
-			out.close();
-		}
-		*/
+		System.out.println("Serial log:");
+		serial1 = (BasicLog)Files.readObjectFromFile(Configuration.analysisFile(strategy, SERIAL));
+		AnalysisLog serial2 = serial1.getAnalysisLog(0.1);
+		serial2.output(out);
+		System.out.println("List interactions 0.1: " + serial1.interactions());
+		AnalysisLog serial3 = serial1.getAnalysisLog(0.01);
+        serial3.output(out);
+        System.out.println("List interactions 0.01: " + serial1.interactions());
+        */
 	}
 
 	public static SerialIndexBenefitGraph[] analyzeSerial(DBConnection conn, SQLWorkload xacts, DB2IndexSet candidateSet, InteractionLogger logger) 
@@ -146,7 +224,7 @@ public class AnalysisMain {
 		i = 0;
 		for (SQLTransaction xact : xacts) {
 			SerialIndexBenefitGraph ibg = SerialIndexBenefitGraph.build(conn, new SQLWorkload(xact), candidateSet);
-			SerialIBGAnalyzer analyzer = new SerialIBGAnalyzer(ibg);
+		    SerialIBGAnalyzer analyzer = new SerialIBGAnalyzer(ibg);
 			analyzer.doAnalysis(logger);
 			ibgs[i++] = ibg;
 		}

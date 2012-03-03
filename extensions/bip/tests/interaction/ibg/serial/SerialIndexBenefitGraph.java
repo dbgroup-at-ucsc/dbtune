@@ -7,6 +7,19 @@ import interaction.workload.*;
 
 import java.io.Serializable;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import java.util.Set;
+
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+import edu.ucsc.dbtune.util.BitArraySet;
 
 public class SerialIndexBenefitGraph implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -26,6 +39,51 @@ public class SerialIndexBenefitGraph implements Serializable {
 	/* getting size of the graph */
 	private final int nodeCount;
 	
+	private static BitArraySet<Index> poolIndexes;
+	private static Catalog catalog;
+	
+	/**
+	 * Set the candidate indexes
+	 * @param indexes
+	 * @throws SQLException 
+	 */
+	public static void fixCandidates(DB2IndexSet indexes) throws SQLException
+	{
+	    poolIndexes = new BitArraySet<Index>();
+	    
+	    for (DB2Index index : indexes)
+	        poolIndexes.add(transformKarlToDBTune(index));    
+	}
+	
+	
+	public static void setCatalog(Catalog cat)
+	{
+	    catalog = cat;
+	}
+	
+	 
+	private static Index transformKarlToDBTune(DB2Index karlIndex) throws SQLException
+	{
+	    List<String>  colNames  = karlIndex.getSchema().getColumnNames();
+	    List<Boolean> ascending = karlIndex.getSchema().getAscending();
+	    
+	    String tableName = karlIndex.getSchema().getTableName();	    
+	    List<Column> columns = new ArrayList<Column>();
+	    Column col;
+	    
+	    for (int i = 0; i < colNames.size(); i ++) {
+	        col = catalog.<Column>findByName("tpch" + "." + tableName + "." + colNames.get(i));
+	        if (col == null)
+	            throw new RuntimeException(" cannot look up column: " + colNames.get(i));
+	        
+	        columns.add(col);
+	    }
+	     
+	    Index index = new Index(columns, ascending, false, false, false);
+	    index.setId(karlIndex.getId());
+	    
+	    return index;
+	}
 	/*
 	 * Creates an IBG 
 	 */
@@ -121,6 +179,99 @@ public class SerialIndexBenefitGraph implements Serializable {
 		double emptyCost = conn.whatifOptimize(xacts, new BitSet(), tempUsedIndexes);
 		return new SerialIndexBenefitGraph(rootNode, emptyCost, allUsedIndexes, nodeCount);
 	}
+	
+	/*
+     * Does construction after everything except the nodes are initialized
+     */
+	
+    public static SerialIndexBenefitGraph buildByINUM(Optimizer optimizer, 
+                        edu.ucsc.dbtune.workload.SQLStatement sql, 
+                        DB2IndexSet candidateSet) throws SQLException {
+        
+        BitSet allUsedIndexes = new BitSet();
+        BitSet tempUsedIndexes = new BitSet();
+        BitSet childBitSet = new BitSet();
+        SerialIBGCoveringNodeFinder coveringNodeFinder = new SerialIBGCoveringNodeFinder();
+        ExplainedSQLStatement stmt;
+        
+        int nodeCount = 0;
+        IBGNode rootNode = new IBGNode(candidateSet.bitSet(), nodeCount++);
+        Queue<IBGNode> queue = new Queue<IBGNode>();
+        queue.add(rootNode);
+        
+        PreparedSQLStatement prepare = optimizer.prepareExplain(sql); 
+        
+        while (!queue.isEmpty()) {
+
+            IBGNode newNode, coveringNode;
+            double totalCost = 0.0;
+        
+            newNode = queue.remove();
+        
+            // get cost and used set (stored into tempUsedIndexes)
+            tempUsedIndexes.clear();
+            coveringNode = coveringNodeFinder.find(rootNode, newNode.config);
+            if (coveringNode != null) {
+                totalCost = coveringNode.cost();
+                coveringNode.addUsedIndexes(tempUsedIndexes);
+            }
+            else {
+                stmt = prepare.explain(transform(newNode.config));
+                totalCost = stmt.getSelectCost();
+                        
+                for (Index index : stmt.getUsedConfiguration())
+                    tempUsedIndexes.set(index.getId());
+                    
+                //totalCost = conn.whatifOptimize(xacts, newNode.config, tempUsedIndexes);
+            }
+        
+            // create the child list
+            // if any IBGNode did not exist yet, add it to the queue
+            // We make sure to keep the child list in the same order as the nodeQueue, so that
+            // analysis and construction can move in lock step. This is done by keeping both
+            // in order of construction.
+            IBGChild firstChild = null;
+            IBGChild lastChild = null;
+            childBitSet.set(newNode.config);
+            for (int u = tempUsedIndexes.nextSetBit(0); u >= 0; u = tempUsedIndexes.nextSetBit(u+1)) {
+                childBitSet.clear(u);
+                IBGNode childNode = find(queue, childBitSet);
+                if (childNode == null) {
+                    allUsedIndexes.set(u);
+                    childNode = new IBGNode((BitSet) childBitSet.clone(), nodeCount++);
+                    queue.add(childNode);
+                }
+                childBitSet.set(u);
+                
+                IBGChild child = new IBGChild(childNode, u);
+                if (firstChild == null) {
+                    firstChild = lastChild = child;
+                }
+                else {
+                    lastChild.next = child;
+                    lastChild = child;
+                }
+            }
+                
+            newNode.expand(totalCost, firstChild);
+        }
+        
+        //double emptyCost = conn.whatifOptimize(xacts, new BitSet(), tempUsedIndexes);
+        double emptyCost = prepare.explain(new HashSet<Index>()).getSelectCost(); 
+        
+        return new SerialIndexBenefitGraph(rootNode, emptyCost, allUsedIndexes, nodeCount);
+    }
+	
+    private static Set<Index> transform(BitSet usedIndexes)
+    {
+        Set<Index> indexes = new HashSet<Index>();
+        
+        for(int i = usedIndexes.nextSetBit(0); i >= 0; i = usedIndexes.nextSetBit(i+1)) 
+            indexes.add(poolIndexes.get(i));
+        
+        return indexes;
+    }
+    
 	
 	/*
 	 * Auxiliary method for buildNodes

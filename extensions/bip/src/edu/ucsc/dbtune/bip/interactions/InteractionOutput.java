@@ -35,6 +35,10 @@ public class InteractionOutput extends IndexTuningOutput
         Set<IndexInteraction> left;
         Set<IndexInteraction> right;
         
+        System.out.println("L38 (InteractionOutput), BIP: " + interactions);
+        System.out.println("L39 (InteractionOutput), IBG: " + other);
+        
+        
         intersect = new HashSet<IndexInteraction>(interactions);
         left      = new HashSet<IndexInteraction>(intersect);
         right     = new HashSet<IndexInteraction>(other);
@@ -47,8 +51,8 @@ public class InteractionOutput extends IndexTuningOutput
         
         right.removeAll(new HashSet<IndexInteraction>(interactions));
         pc = right.size();
-     
-        System.out.println("L51 (InteractionOutput), pa: " + pa + " pb: " + pb + " pc: " + pc);
+        
+        System.out.println("L55 (InteractionOutput), pa: " + pa + " pb: " + pb + " pc: " + pc);
         return (double) (2 * pa) / (2 * pa + pb + pc);
     }
     
