@@ -44,8 +44,6 @@ public class SQLStatementPlan extends Tree<Operator>
         super(root);
 
         this.sql = sql;
-        elements.clear();
-        elements.put(root, this.root);
     }
 
     /**
@@ -59,7 +57,7 @@ public class SQLStatementPlan extends Tree<Operator>
     {
         this(other.sql, other.getRootOperator().duplicate());
 
-        copyRecursively(root, other.root);
+        duplicateRecursively(root, other.root);
     }
 
     /**
@@ -71,7 +69,7 @@ public class SQLStatementPlan extends Tree<Operator>
      * @param otherParent
      *      another entry whose children are copied to {@code thisParent}
      */
-    private void copyRecursively(Entry<Operator> thisParent, Entry<Operator> otherParent)
+    private void duplicateRecursively(Entry<Operator> thisParent, Entry<Operator> otherParent)
     {
         Entry<Operator> thisChild;
 
@@ -80,7 +78,7 @@ public class SQLStatementPlan extends Tree<Operator>
 
             thisParent.getChildren().add(thisChild);
 
-            copyRecursively(thisChild, otherChild);
+            duplicateRecursively(thisChild, otherChild);
         }
 
         elements.put(thisParent.getElement(), thisParent);
@@ -217,6 +215,8 @@ public class SQLStatementPlan extends Tree<Operator>
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
+            throw new NoSuchElementException("Can't find " + op);
 
         op.setName(newName);
 
@@ -240,6 +240,8 @@ public class SQLStatementPlan extends Tree<Operator>
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
+            throw new NoSuchElementException("Can't find " + op);
 
         op.setAccumulatedCost(cost);
 
@@ -260,6 +262,8 @@ public class SQLStatementPlan extends Tree<Operator>
         Entry<Operator> entry = elements.get(op);
 
         if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
             throw new NoSuchElementException("Can't find " + op);
 
         op.removeColumnsFetched();
@@ -282,6 +286,8 @@ public class SQLStatementPlan extends Tree<Operator>
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
+            throw new NoSuchElementException("Can't find " + op);
 
         op.removePredicates();
 
@@ -302,6 +308,8 @@ public class SQLStatementPlan extends Tree<Operator>
         Entry<Operator> entry = elements.get(op);
 
         if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
             throw new NoSuchElementException("Can't find " + op);
 
         op.removeDatabaseObject();

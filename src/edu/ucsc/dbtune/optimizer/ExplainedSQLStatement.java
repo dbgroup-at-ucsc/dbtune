@@ -372,7 +372,7 @@ public class ExplainedSQLStatement
 
         if ((plan != null && o.plan == null) ||
                 (plan == null && o.plan != null) ||
-                !plan.equals(o.plan))
+                (plan != null && o.plan != null && !plan.equals(o.plan)))
             return false;
 
         if (statement.equals(o.statement) &&

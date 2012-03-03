@@ -152,6 +152,19 @@ public class Tree<T>
      * @param value
      *     element searched in the tree
      * @return
+     *     the element found; {@code null} otherwise.
+     */
+    public T find(T value)
+    {
+        return valueOf(find(value, root));
+    }
+
+    /**
+     * whether or not the tree contains the given value.
+     *
+     * @param value
+     *     element searched in the tree
+     * @return
      *     {@code true} if the element is contained; {@code false} otherwise.
      */
     public boolean contains(T value)
