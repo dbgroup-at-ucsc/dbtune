@@ -4,8 +4,8 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
-import edu.ucsc.dbtune.inum.ExhaustiveMatchingStrategy;
 import edu.ucsc.dbtune.inum.InumSpaceComputation;
+import edu.ucsc.dbtune.inum.MatchingStrategy;
 
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 
@@ -25,12 +25,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 public class InumOptimizer extends AbstractOptimizerWithDelegate
 {
     private boolean useInumCache;
-
-    /**
-     * inum space computation. This could be passed as argument of the constructor if other kind of 
-     * computation is needed
-     */
     private InumSpaceComputation inumSpaceComputation;
+    private MatchingStrategy matchingStrategy;
 
     /**
      * Constructs an {@code InumOptimizer}. Relies on the given {@code optimizer} to execute actual 
@@ -55,6 +51,7 @@ public class InumOptimizer extends AbstractOptimizerWithDelegate
 
         try {
             inumSpaceComputation = InumSpaceComputation.Factory.newInumSpaceComputation(env);
+            matchingStrategy = MatchingStrategy.Factory.newMatchingStrategy(env);
         } catch (InstantiationException ex) {
             throw new SQLException(ex);
         }
@@ -88,9 +85,8 @@ public class InumOptimizer extends AbstractOptimizerWithDelegate
      * {@inheritDoc}
      */
     @Override
-    public PreparedSQLStatement prepareExplain(SQLStatement sql) 
-        throws SQLException
+    public PreparedSQLStatement prepareExplain(SQLStatement sql) throws SQLException
     {
-        return new InumPreparedSQLStatement(this, sql, new ExhaustiveMatchingStrategy());
+        return new InumPreparedSQLStatement(this, sql, matchingStrategy);
     }
 }

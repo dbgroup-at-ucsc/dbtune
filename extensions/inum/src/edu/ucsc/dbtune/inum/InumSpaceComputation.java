@@ -9,8 +9,8 @@ import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_EAGER_COMPUTATION;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_IBG_COMPUTATION;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.EAGER;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
 
 /**
  * Computes set of optimal plans that need to be cached for a given statement in order to be able to 
@@ -81,9 +81,9 @@ public interface InumSpaceComputation
         public static InumSpaceComputation newInumSpaceComputation(Environment env)
             throws InstantiationException
         {
-            if (env.getInumSpaceComputation().equals(INUM_EAGER_COMPUTATION))
+            if (env.getInumSpaceComputation().equals(EAGER))
                 return new EagerSpaceComputation();
-            else if (env.getInumSpaceComputation().equals(INUM_IBG_COMPUTATION))
+            else if (env.getInumSpaceComputation().equals(IBG))
                 return new IBGSpaceComputation();
 
             throw new InstantiationException(

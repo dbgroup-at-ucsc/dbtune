@@ -53,7 +53,7 @@ public final class MetadataUtils
      * @return
      *      the set of tables corresponding to one or more indexes in the set
      */
-    public static Map<Table, Set<Index>> getIndexesPerTable(Set<Index> indexes)
+    public static Map<Table, Set<Index>> getIndexesPerTable(Set<? extends Index> indexes)
     {
         Map<Table, Set<Index>> indexesPerTable = new HashMap<Table, Set<Index>>();
         Set<Index> indexesForTable;
@@ -84,7 +84,7 @@ public final class MetadataUtils
      *      the set of indexes, where each references one table in {@code tables}
      */
     public static Set<Index> getIndexesReferencingTables(
-            Collection<Index> indexes, Collection<Table> tables)
+            Collection<? extends Index> indexes, Collection<Table> tables)
     {
         Set<Index> indexesReferencingTables = new HashSet<Index>();
 
@@ -105,7 +105,8 @@ public final class MetadataUtils
      * @return
      *      the set of indexes that reference {@code table}
      */
-    public static Set<Index> getIndexesReferencingTable(Collection<Index> indexes, Table table)
+    public static Set<Index> getIndexesReferencingTable(
+            Collection<? extends Index> indexes, Table table)
     {
         Set<Index> indexesReferencingTable = new HashSet<Index>();
 
@@ -124,7 +125,7 @@ public final class MetadataUtils
      * @return
      *      the set of tables corresponding to one or more indexes in the set
      */
-    public static Set<Table> getReferencedTables(Collection<Index> indexes)
+    public static Set<Table> getReferencedTables(Collection<? extends Index> indexes)
     {
         Set<Table> tables = new HashSet<Table>();
 
@@ -144,7 +145,7 @@ public final class MetadataUtils
      * @return
      *      the index with the given id; {@code null} if not found
      */
-    public static Index find(Set<Index> indexes, int id)
+    public static Index find(Set<? extends Index> indexes, int id)
     {
         for (Index i : indexes)
             if (i.getId() == id)
