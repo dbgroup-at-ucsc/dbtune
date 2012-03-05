@@ -9,7 +9,7 @@ public class SeqInumIndex {
     public String name;
     public Index index;
     public double createCost, dropCost;
-    public int storageCost;
+    public double storageCost;
 
     public SeqInumIndex(int id) {
         this.id = id;

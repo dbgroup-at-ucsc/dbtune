@@ -11,6 +11,7 @@ Q3 1 I3
 Q4 1 I4
 
 SEQ Q1,Q2,Q3,Q4
+STORAGE-CONSTRIANT 1000
 
 PLAN
 # Q[query id] P[plan id] (base cost) slots

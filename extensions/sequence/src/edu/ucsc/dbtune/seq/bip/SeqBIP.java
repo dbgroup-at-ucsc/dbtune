@@ -64,13 +64,13 @@ public class SeqBIP extends AbstractBIPSolver {
             for (IloNumVar var : useIndex)
                 expr.addTerm(1, var);
             cplex.addEq(expr, 1);
-//            Rt.p(expr.toString()+"==1");
+            // Rt.p(expr.toString()+"==1");
             for (int i = 0; i < indexes.length; i++) {
                 expr = cplex.linearNumExpr();
                 expr.addTerm(1, useIndex[i]);
                 expr.addTerm(-1, plan.query.index2present.get(indexes[i]));
                 cplex.addLe(expr, 0);
-//                Rt.p(expr.toString()+"<=0");
+                // Rt.p(expr.toString()+"<=0");
             }
         }
     }
@@ -151,14 +151,22 @@ public class SeqBIP extends AbstractBIPSolver {
             for (InumPlan plan : plans)
                 expr.addTerm(1, plan.active);
             cplex.addEq(expr, 1);
-//            Rt.p(expr.toString()+"==1");
+            // Rt.p(expr.toString()+"==1");
+
+            // add storage constraint
+            expr = cplex.linearNumExpr();
+            for (int i = 0; i < totalIndices; i++) {
+                expr.addTerm(cost.indicesV.get(i).storageCost, this.present[i]);
+            }
+            cplex.addLe(expr, cost.storageConstraint);
+
             // index can't be created and droped at the same step
             for (int i = 0; i < totalIndices; i++) {
                 expr = cplex.linearNumExpr();
                 expr.addTerm(1, this.create[i]);
                 expr.addTerm(1, this.drop[i]);
                 cplex.addLe(expr, 1);
-//                Rt.p(expr.toString()+"<=1");
+                // Rt.p(expr.toString()+"<=1");
             }
         }
     }
@@ -168,7 +176,7 @@ public class SeqBIP extends AbstractBIPSolver {
     int totalQueires;
     int totalIndices;
     Query[] queries;
-    Logger log=Logger.getLogger(SeqBIP.class.getName());
+    Logger log = Logger.getLogger(SeqBIP.class.getName());
 
     public SeqBIP(SeqInumCost cost) throws IloException {
         this.cost = cost;
@@ -191,9 +199,9 @@ public class SeqBIP extends AbstractBIPSolver {
                 this.queries[i].addObjective(expr);
             }
             IloObjective obj = cplex.minimize(expr);
-//            Rt.p("Obj: "+expr.toString());
+            // Rt.p("Obj: "+expr.toString());
             cplex.add(obj);
-            
+
             for (int i = 0; i < totalQueires; i++) {
                 this.queries[i].addConstriant();
                 for (int k = 0; k < totalIndices; k++) {
@@ -202,11 +210,11 @@ public class SeqBIP extends AbstractBIPSolver {
                         expr.addTerm(1, this.queries[j].create[k]);
                         expr.addTerm(-1, this.queries[j].drop[k]);
                     }
-//                    Rt.p(expr.toString()+"="+this.queries[i].present[k]);
+                    // Rt.p(expr.toString()+"="+this.queries[i].present[k]);
                     cplex.addEq(expr, this.queries[i].present[k]);
                 }
             }
-            
+
             cplexVar = new Vector<IloNumVar>();
             for (IloNumVar var : iloVar)
                 cplexVar.add(var);
@@ -219,9 +227,9 @@ public class SeqBIP extends AbstractBIPSolver {
     protected IndexTuningOutput getOutput() {
         SebBIPOutput output = new SebBIPOutput();
         try {
-            output.indexUsed=new Vector[cost.sequence.length];
-            for (int i=0;i<output.indexUsed.length;i++)
-                output.indexUsed[i]=new Vector<SeqInumIndex>();
+            output.indexUsed = new Vector[cost.sequence.length];
+            for (int i = 0; i < output.indexUsed.length; i++)
+                output.indexUsed[i] = new Vector<SeqInumIndex>();
             double[] xval = cplex.getValues(iloVar);
             for (int i = 0; i < xval.length; i++) {
                 String name = iloVar[i].getName();
@@ -230,9 +238,10 @@ public class SeqBIP extends AbstractBIPSolver {
                     int queryId = Integer.parseInt(ss[1]);
                     int indexId = Integer.parseInt(ss[2]);
                     if (Math.abs(valVar[i] - 1) < 1E-5)
-                        output.indexUsed[queryId].add(cost.indicesV.get(indexId));
+                        output.indexUsed[queryId].add(cost.indicesV
+                                .get(indexId));
                 }
-//                Rt.p("%.0f %s", xval[i], name);
+                // Rt.p("%.0f %s", xval[i], name);
                 if (Math.abs(valVar[i] - 1) < 1E-5) {
                 } else if (Math.abs(valVar[i]) < 1E-5) {
                 } else {

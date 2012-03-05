@@ -11,6 +11,7 @@ public class SeqInumCost {
     public Hashtable<String, SeqInumIndex> indices = new Hashtable<String, SeqInumIndex>();
     public Vector<SeqInumIndex> indicesV = new Vector<SeqInumIndex>();
     public SeqInumQuery[] sequence;
+    public double storageConstraint=Double.MAX_VALUE;
 
     public static SeqInumCost fromFile(String table) {
         SeqInumCost cost = new SeqInumCost();
@@ -29,9 +30,9 @@ public class SeqInumCost {
                 if (ss[0].startsWith("I")) {
                     SeqInumIndex index = new SeqInumIndex(cost.indicesV.size());
                     index.name = ss[0];
-                    index.createCost = Integer.parseInt(ss[1]);
-                    index.dropCost = Integer.parseInt(ss[2]);
-                    index.storageCost = Integer.parseInt(ss[3]);
+                    index.createCost = Double.parseDouble(ss[1]);
+                    index.dropCost = Double.parseDouble(ss[2]);
+                    index.storageCost = Double.parseDouble(ss[3]);
                     if (cost.indices.put(index.name, index) != null)
                         throw new Error("duplicate index");
                     cost.indicesV.add(index);
@@ -57,7 +58,9 @@ public class SeqInumCost {
                             throw new Error("query not found");
                         cost.sequence[i] = q;
                     }
-                } else if ("PLAN".equals(ss[0])) {
+                } else if ("STORAGE-CONSTRIANT".equals(ss[0])) {
+                    cost.storageConstraint = Double.parseDouble(ss[1]);
+                 } else if ("PLAN".equals(ss[0])) {
                     readingPlan = true;
                 }
             } else if (!readingSlot) {
