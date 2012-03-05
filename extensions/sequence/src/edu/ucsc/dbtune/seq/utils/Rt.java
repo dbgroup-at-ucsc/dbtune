@@ -84,7 +84,7 @@ public class Rt {
 			Rt.addJavaLibraryPath("lib/java3d/i386");
 	}
 
-	public static boolean showDate = true;
+	public static boolean showDate = false;
 
 	public static String getInfo() {
 		StackTraceElement[] elements = Thread.currentThread().getStackTrace();

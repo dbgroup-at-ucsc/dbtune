@@ -5,6 +5,7 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,9 +58,18 @@ public class SeqWhatIfTest2 {
         en.setProperty("optimizer", "dbms");
         DatabaseSystem db = DatabaseSystem.newDatabaseSystem(en);
         Optimizer optimizer = db.getOptimizer();
+
+        String file = "workload_bip_seq.sql";
+        file = "workload.sql";
         Workload workload = new Workload("", new FileReader(en
                 .getWorkloadsFoldername()
-                + "/tpch/workload_bip_seq.sql"));
+                + "/tpch-small/" + file));
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < workload.size(); i++) {
+            if (i != 1)
+                sb.append(workload.get(i).getSQL() + ";\r\n");
+        }
+        workload = new Workload("", new StringReader(sb.toString()));
 
         CandidateGenerator candGen = new OptimizerCandidateGenerator(
                 getBaseOptimizer(db.getOptimizer()));

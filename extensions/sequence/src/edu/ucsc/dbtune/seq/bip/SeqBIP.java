@@ -41,7 +41,7 @@ public class SeqBIP extends AbstractBIPSolver {
             indexes = new SeqInumIndex[s.costs.size()];
             for (int i = 0; i < useIndex.length; i++) {
                 useIndex[i] = createBinaryVar();
-                String name = "INDEX_" + s.plan.query.id;
+                String name = "INDEX_" + s.plan.query.id + "_" + s.plan.id;
                 if (i < s.costs.size()) {
                     indexes[i] = s.costs.get(i).index;
                     name += "_" + indexes[i].id;
@@ -63,14 +63,16 @@ public class SeqBIP extends AbstractBIPSolver {
             IloLinearNumExpr expr = cplex.linearNumExpr();
             for (IloNumVar var : useIndex)
                 expr.addTerm(1, var);
-            cplex.addEq(expr, 1);
-            // Rt.p(expr.toString()+"==1");
+            cplex.addEq(expr, plan.active);
+            if (showFormulas)
+                Rt.p(expr.toString() + "==" + plan.active);
             for (int i = 0; i < indexes.length; i++) {
                 expr = cplex.linearNumExpr();
                 expr.addTerm(1, useIndex[i]);
                 expr.addTerm(-1, plan.query.index2present.get(indexes[i]));
                 cplex.addLe(expr, 0);
-                // Rt.p(expr.toString()+"<=0");
+                if (showFormulas)
+                    Rt.p(expr.toString() + "<=0");
             }
         }
     }
@@ -140,6 +142,9 @@ public class SeqBIP extends AbstractBIPSolver {
             for (int i = 0; i < totalIndices; i++) {
                 expr.addTerm(cost.indicesV.get(i).createCost, create[i]);
                 expr.addTerm(cost.indicesV.get(i).dropCost, drop[i]);
+                // The purpose of following objective is to
+                // remove a index when it's not necessary
+                expr.addTerm(0.1, present[i]);
             }
         }
 
@@ -151,7 +156,8 @@ public class SeqBIP extends AbstractBIPSolver {
             for (InumPlan plan : plans)
                 expr.addTerm(1, plan.active);
             cplex.addEq(expr, 1);
-            // Rt.p(expr.toString()+"==1");
+            if (showFormulas)
+                Rt.p(expr.toString() + "==1");
 
             // add storage constraint
             expr = cplex.linearNumExpr();
@@ -159,6 +165,8 @@ public class SeqBIP extends AbstractBIPSolver {
                 expr.addTerm(cost.indicesV.get(i).storageCost, this.present[i]);
             }
             cplex.addLe(expr, cost.storageConstraint);
+            if (showFormulas)
+                Rt.p(expr.toString() + "<=" + cost.storageConstraint);
 
             // index can't be created and droped at the same step
             for (int i = 0; i < totalIndices; i++) {
@@ -166,11 +174,13 @@ public class SeqBIP extends AbstractBIPSolver {
                 expr.addTerm(1, this.create[i]);
                 expr.addTerm(1, this.drop[i]);
                 cplex.addLe(expr, 1);
-                // Rt.p(expr.toString()+"<=1");
+                if (showFormulas)
+                    Rt.p(expr.toString() + "<=1");
             }
         }
     }
 
+    public static boolean showFormulas = false;
     SeqInumCost cost;
     IloNumVar[] iloVar = new IloNumVar[0];
     int totalQueires;
@@ -199,7 +209,8 @@ public class SeqBIP extends AbstractBIPSolver {
                 this.queries[i].addObjective(expr);
             }
             IloObjective obj = cplex.minimize(expr);
-            // Rt.p("Obj: "+expr.toString());
+            if (showFormulas)
+                Rt.p("Obj: " + expr.toString());
             cplex.add(obj);
 
             for (int i = 0; i < totalQueires; i++) {
@@ -210,7 +221,10 @@ public class SeqBIP extends AbstractBIPSolver {
                         expr.addTerm(1, this.queries[j].create[k]);
                         expr.addTerm(-1, this.queries[j].drop[k]);
                     }
-                    // Rt.p(expr.toString()+"="+this.queries[i].present[k]);
+                    if (showFormulas)
+                        Rt
+                                .p(expr.toString() + "="
+                                        + this.queries[i].present[k]);
                     cplex.addEq(expr, this.queries[i].present[k]);
                 }
             }
@@ -240,6 +254,35 @@ public class SeqBIP extends AbstractBIPSolver {
                     if (Math.abs(valVar[i] - 1) < 1E-5)
                         output.indexUsed[queryId].add(cost.indicesV
                                 .get(indexId));
+                } else if (name.startsWith("PLAN")) {
+                    String[] ss = name.split("_");
+                    int queryId = Integer.parseInt(ss[1]);
+                    int planId = Integer.parseInt(ss[2]);
+                    if (Math.abs(valVar[i] - 1) < 1E-5)
+                        cost.sequence[queryId].selectedPlan = cost.sequence[queryId].plans[planId];
+                } else if (name.startsWith("INDEX")) {
+                    String[] ss = name.split("_");
+                    int queryId = Integer.parseInt(ss[1]);
+                    int planId = Integer.parseInt(ss[2]);
+                    if (!"FTS".equals(ss[3])) {
+                        int indexId = Integer.parseInt(ss[3]);
+                        if (Math.abs(valVar[i] - 1) < 1E-5) {
+                            for (SeqInumSlot slot : cost.sequence[queryId].plans[planId].slots) {
+                                for (SeqInumSlotIndexCost c : slot.costs) {
+                                    if (c.index.id == indexId)
+                                        slot.selectedIndex = c;
+                                }
+                            }
+                        }
+                    }
+                } else if (name.startsWith("CREATE")) {
+                    String[] ss = name.split("_");
+                    int queryId = Integer.parseInt(ss[1]);
+                    int indexId = Integer.parseInt(ss[2]);
+                    if (Math.abs(valVar[i] - 1) < 1E-5) {
+                        cost.sequence[queryId].transitionCost += cost.indicesV
+                                .get(indexId).createCost;
+                    }
                 }
                 // Rt.p("%.0f %s", xval[i], name);
                 if (Math.abs(valVar[i] - 1) < 1E-5) {

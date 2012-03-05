@@ -12,6 +12,11 @@ public class SeqInumQuery {
     public SeqInumPlan[] plans;
     public SeqInumIndex[] relevantIndices;
 
+    //the following variables are only for debugging purposes 
+    //and should be removed when the system works correctly
+    public SeqInumPlan selectedPlan;
+    public double transitionCost=0;
+    
     public SeqInumQuery(int id) {
         this.id = id;
     }

@@ -26,6 +26,10 @@ import edu.ucsc.dbtune.seq.bip.SebBIPOutput;
 import edu.ucsc.dbtune.seq.bip.SeqBIP;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumSlot;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumSlotIndexCost;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.util.Environment;
@@ -51,9 +55,17 @@ public class BipTest2 extends BIPTestConfiguration {
         en = Environment.getInstance();
         db = newDatabaseSystem(en);
 
+        String file = "workload_bip_seq.sql";
+        file = "workload.sql";
         Workload workload = new Workload("", new FileReader(en
                 .getWorkloadsFoldername()
-                + "/tpch/workload_bip_seq.sql"));
+                + "/tpch-small/" + file));
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < workload.size(); i++) {
+            if (i != 1)
+                sb.append(workload.get(i).getSQL() + ";\r\n");
+        }
+        workload = new Workload("", new StringReader(sb.toString()));
 
         CandidateGenerator candGen = new OptimizerCandidateGenerator(
                 getBaseOptimizer(db.getOptimizer()));
@@ -71,18 +83,27 @@ public class BipTest2 extends BIPTestConfiguration {
             indexes = temp;
         }
 
-        System.out.println("Number of indexes: " + indexes.size()
-                + " number of statements: " + workload.size());
-
-        for (Index index : indexes)
-            System.out.println("Index : " + index);
-
         InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
-
         timer.finish("loading");
         timer.reset();
         SeqInumCost cost = SeqInumCost.fromInum(optimizer, workload, indexes);
+        for (int i = 0; i < cost.sequence.length; i++) {
+            Rt.p("Q" + i + ": ");
+            for (SeqInumPlan plan : cost.sequence[i].plans) {
+                Rt.np("\tPlan: " + plan.internalCost);
+                for (SeqInumSlot slot : plan.slots) {
+                    Rt.np("\t\tSlot: " + slot.fullTableScanCost);
+                    for (SeqInumSlotIndexCost c : slot.costs) {
+                        Rt.np("\t\t\tIndex: " + c.index.name + " " + c.cost);
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < cost.indicesV.size(); i++) {
+            Rt.p("I" + i + ": " + cost.indicesV.get(i).createCost);
+        }
         timer.finish("building INUM");
+        timer.reset();
         SeqBIP bip = new SeqBIP(cost);
         bip.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
@@ -96,7 +117,18 @@ public class BipTest2 extends BIPTestConfiguration {
             }
             System.out.println();
         }
-        Rt.p("cost: " + bip.getObjValue());
+        Rt.p("cost: %,.0f" , bip.getObjValue());
         timer.finish("BIP");
+        for (SeqInumQuery query : cost.sequence) {
+            double c = 0;
+            c += query.selectedPlan.internalCost;
+            for (SeqInumSlot slot : query.selectedPlan.slots) {
+                if (slot.selectedIndex == null)
+                    c += slot.fullTableScanCost;
+                else
+                    c += slot.selectedIndex.cost;
+            }
+            Rt.p("%s q=%,.0f t=%,.0f", query.name, c, query.transitionCost);
+        }
     }
 }

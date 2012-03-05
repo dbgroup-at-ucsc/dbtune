@@ -27,7 +27,7 @@ public class SeqQuery {
 //        if (sql != null)
 //            sb.append("\n" + sql.trim() + "\n");
         for (SeqIndex index : relevantIndices)
-            sb.append(index.toString() + "\n");
+            sb.append(","+index.toString());
         return sb.toString();
     }
 }

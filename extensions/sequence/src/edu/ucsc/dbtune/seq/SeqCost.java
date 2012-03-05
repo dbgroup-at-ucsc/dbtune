@@ -148,7 +148,7 @@ public class SeqCost {
         int indexId = 0;
         for (Index a : indices) {
             SeqIndex index = new SeqIndex();
-            index.name = a.toString();
+            index.name = "I" + indexId;
             index.index = a;
             index.createCost = getCreateIndexCost(optimizer, a);
             index.dropCost = 0;
@@ -160,11 +160,11 @@ public class SeqCost {
         }
 
         costModel.sequence = new SeqQuery[workload.size()];
-        for (int queryId=0;queryId<workload.size();queryId++) {
+        for (int queryId = 0; queryId < workload.size(); queryId++) {
             SeqQuery q = new SeqQuery(queryId);
             q.name = "Q" + queryId;
             q.sql = workload.get(queryId);
-//            Rt.np(sql);
+            // Rt.np(sql);
             SQLStatementPlan sqlPlan = optimizer.explain(q.sql).getPlan();
             q.costWithoutIndex = sqlPlan.getRootOperator().getAccumulatedCost();
 
