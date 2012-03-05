@@ -1,12 +1,17 @@
 package edu.ucsc.dbtune;
 
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -20,9 +25,11 @@ import edu.ucsc.dbtune.seq.SeqMerge;
 import edu.ucsc.dbtune.seq.SeqOptimal;
 import edu.ucsc.dbtune.seq.SeqSplit;
 import edu.ucsc.dbtune.seq.def.*;
+import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 public class SeqWhatIfTest2 {
     SeqCost cost;
@@ -45,66 +52,73 @@ public class SeqWhatIfTest2 {
             }
             SeqMerge merge = new SeqMerge(cost, split.groups);
         }
+        RTimer timer = new RTimer();
         Environment en = Environment.getInstance();
         en.setProperty("optimizer", "dbms");
         DatabaseSystem db = DatabaseSystem.newDatabaseSystem(en);
         Optimizer optimizer = db.getOptimizer();
-        String workloadFile = en
-                .getScriptAtWorkloadsFolder("tpch/workload_seq.sql");
-        String text = Rt.readFile(new File(workloadFile));
-        text = text.substring(0, text.indexOf("exit;"));
-        text = text.replaceAll("--.*\n", "");
+        Workload workload = new Workload("", new FileReader(en
+                .getWorkloadsFoldername()
+                + "/tpch/workload_bip_seq.sql"));
 
-        List<Set<Index>> indexesPerTable;
-        DerbyInterestingOrdersExtractor interestingOrdersExtractor;
+        CandidateGenerator candGen = new OptimizerCandidateGenerator(
+                getBaseOptimizer(db.getOptimizer()));
+        Set<Index> indexes = candGen.generate(workload);
 
-        interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(db
-                .getCatalog(), true);
-        indexesPerTable = interestingOrdersExtractor
-                .extract(new SQLStatement(
-                        "select\n"
-                                + "            n_name as nation,\n"
-                                + "            year(o_orderdate) as o_year,\n"
-                                + "            l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount\n"
-                                + "        from\n" + "            tpch.part,\n"
-                                + "            tpch.supplier,\n"
-                                + "            tpch.lineitem,\n"
-                                + "            tpch.partsupp,\n"
-                                + "            tpch.orders,\n"
-                                + "            tpch.nation\n"
-                                + "        where\n"
-                                + "            s_suppkey = l_suppkey\n"
-                                + "            and ps_suppkey = l_suppkey\n"
-                                + "            and ps_partkey = l_partkey\n"
-                                + "            and p_partkey = l_partkey\n"
-                                + "            and o_orderkey = l_orderkey\n"
-                                + "            and s_nationkey = n_nationkey\n"
-                                + "            and p_name like '%thistle%'"));
-        HashSet<Index> allIndex = new HashSet<Index>();
-        for (Set<Index> set : indexesPerTable)
-            for (Index index : set)
-                allIndex.add(index);
+        // List<Set<Index>> indexesPerTable;
+        // DerbyInterestingOrdersExtractor interestingOrdersExtractor;
+        //
+        // interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(db
+        // .getCatalog(), true);
+        // indexesPerTable = interestingOrdersExtractor
+        // .extract(new SQLStatement(
+        // "select\n"
+        // + "            n_name as nation,\n"
+        // + "            year(o_orderdate) as o_year,\n"
+        // +
+        // "            l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount\n"
+        // + "        from\n" + "            tpch.part,\n"
+        // + "            tpch.supplier,\n"
+        // + "            tpch.lineitem,\n"
+        // + "            tpch.partsupp,\n"
+        // + "            tpch.orders,\n"
+        // + "            tpch.nation\n"
+        // + "        where\n"
+        // + "            s_suppkey = l_suppkey\n"
+        // + "            and ps_suppkey = l_suppkey\n"
+        // + "            and ps_partkey = l_partkey\n"
+        // + "            and p_partkey = l_partkey\n"
+        // + "            and o_orderkey = l_orderkey\n"
+        // + "            and s_nationkey = n_nationkey\n"
+        // + "            and p_name like '%thistle%'"));
+        // HashSet<Index> allIndex = new HashSet<Index>();
+        // for (Set<Index> set : indexesPerTable)
+        // for (Index index : set)
+        // allIndex.add(index);
 
-        Index[] indices = allIndex.toArray(new Index[allIndex.size()]);
-        cost = SeqCost.fromOptimizer(db, optimizer, text.split(";\r?\n?"),
-                indices);
-        int n=0;
+        timer.finish("loading");
+        timer.reset();
+
+        Index[] indices = indexes.toArray(new Index[indexes.size()]);
+        cost = SeqCost.fromOptimizer(db, optimizer, workload, indices);
+        int n = 0;
         for (SeqQuery query : cost.sequence) {
-            System.out.println((n++)+" "+query);
+            System.out.println((n++) + " " + query);
         }
-        n=0;
+        n = 0;
         for (SeqIndex index : cost.indicesV) {
-            System.out.println((n++)+" "+index);
+            System.out.println((n++) + " " + index);
         }
+        timer.finish("calculating create index cost");
+        timer.reset();
 
-        long startTime = System.currentTimeMillis();
         SeqGreedySeq greedySeq = new SeqGreedySeq(cost, cost.sequence,
                 cost.indicesV.toArray(new SeqIndex[cost.indicesV.size()]));
         while (greedySeq.run())
             ;
         greedySeq.finish();
         Rt.np(SeqOptimal.formatBestPathPlain(greedySeq.bestPath));
-        Rt.np("%fs", (System.currentTimeMillis() - startTime) / 1000.0);
+        timer.finish("greedySeq");
         // SeqStep[] steps = SeqOptimal.getOptimalSteps(cost.source,
         // cost.destination, cost.sequence, cost
         // .getAllConfigurations(cost.indicesV));

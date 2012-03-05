@@ -17,6 +17,7 @@ import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.seq.def.*;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 public class SeqCost {
     public Hashtable<String, SeqQuery> queries = new Hashtable<String, SeqQuery>();
@@ -126,8 +127,21 @@ public class SeqCost {
 
     Optimizer optimizer;
 
+    public static double getCreateIndexCost(Optimizer optimizer, Index a)
+            throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("select * from " + a.getTable().getName() + " order by");
+        for (Column col : a) {
+            sql.append(" " + col.getName()
+                    + (a.isAscending(col) ? " asc" : "desc"));
+            break;
+        }
+        SQLStatementPlan sqlPlan = optimizer.explain(sql.toString()).getPlan();
+        return sqlPlan.getRootOperator().getAccumulatedCost();
+    }
+
     public static SeqCost fromOptimizer(DatabaseSystem db, Optimizer optimizer,
-            String[] queries, Index[] indices) throws SQLException {
+            Workload workload, Index[] indices) throws SQLException {
         SeqCost costModel = new SeqCost();
         costModel.optimizer = optimizer;
 
@@ -136,16 +150,7 @@ public class SeqCost {
             SeqIndex index = new SeqIndex();
             index.name = a.toString();
             index.index = a;
-            StringBuilder sql = new StringBuilder();
-            sql.append("select * from " + a.getTable().getName() + " order by");
-            for (Column col : a) {
-                sql.append(" " + col.getName()
-                        + (a.isAscending(col) ? " asc" : "desc"));
-                break;
-            }
-            SQLStatementPlan sqlPlan = optimizer.explain(sql.toString())
-                    .getPlan();
-            index.createCost = sqlPlan.getRootOperator().getAccumulatedCost();
+            index.createCost = getCreateIndexCost(optimizer, a);
             index.dropCost = 0;
             index.storageCost = 0;
             if (costModel.indices.put(index.name, index) != null)
@@ -154,20 +159,19 @@ public class SeqCost {
             indexId++;
         }
 
-        int queryId = 0;
-        costModel.sequence = new SeqQuery[queries.length];
-        for (String sql : queries) {
+        costModel.sequence = new SeqQuery[workload.size()];
+        for (int queryId=0;queryId<workload.size();queryId++) {
             SeqQuery q = new SeqQuery(queryId);
             q.name = "Q" + queryId;
-            q.sql = sql;
-            Rt.np(sql);
-            SQLStatementPlan sqlPlan = optimizer.explain(sql).getPlan();
+            q.sql = workload.get(queryId);
+//            Rt.np(sql);
+            SQLStatementPlan sqlPlan = optimizer.explain(q.sql).getPlan();
             q.costWithoutIndex = sqlPlan.getRootOperator().getAccumulatedCost();
 
             DerbyInterestingOrdersExtractor interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(
                     db.getCatalog(), true);
             List<Set<Index>> indexesPerTable = interestingOrdersExtractor
-                    .extract(new SQLStatement(sql));
+                    .extract(q.sql);
             HashSet<SeqIndex> allIndex = new HashSet<SeqIndex>();
             for (Set<Index> set : indexesPerTable) {
                 for (Index index : set) {
@@ -186,7 +190,6 @@ public class SeqCost {
             // }
             costModel.queries.put(q.name, q);
             costModel.sequence[queryId] = q;
-            queryId++;
         }
 
         costModel.source = new SeqIndex[0];

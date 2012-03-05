@@ -94,7 +94,7 @@ public class SeqBIP extends AbstractBIPSolver {
         }
 
         public void addObjective(IloLinearNumExpr expr) throws IloException {
-            expr.addTerm(p.baseCost, active);
+            expr.addTerm(p.internalCost, active);
             for (Slot slot : slots)
                 slot.addObjective(expr);
         }
