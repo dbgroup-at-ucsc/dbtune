@@ -62,14 +62,14 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
     public static int   MAX_NUM_INDEX = 250;
     public static List<Generation.Strategy> strategies = 
                     Arrays.asList(
-                                  Generation.Strategy.UNION_OPTIMAL
+                                  //Generation.Strategy.UNION_OPTIMAL
                                   //, Generation.Strategy.OPTIMAL_1C
-                                  //, Generation.Strategy.POWER_SET
+                                  Generation.Strategy.POWER_SET
                                   );
     public static double[] deltas = new double[] {
-                                    0.01, 
+                                    //0.01, 
                                     0.1, 
-                                    // 0.2
+                                    //1.0
                                     };
     /**     
      * 
@@ -91,7 +91,7 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         
         // 3. Call Analysis from Karl
         AnalysisMain.setWorkload(workload);
-        AnalysisMain.runSteps();
+        AnalysisMain.runStepsINUM();
         
         InteractionOutput result;
         Set<IndexInteraction> ibg;
@@ -218,7 +218,6 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         String folder = en.getWorkloadsFoldername() + "/tpch-small";
         CandidateGenerator candGen;
         
-        
         // 1. one column        
         candGen = 
             new OneColumnCandidateGenerator(
@@ -251,7 +250,7 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         } catch (Exception e) {
             throw e;
         }
-       
+        
         
         // 3. optimal
         candGen = 
@@ -331,7 +330,4 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         
         return result;
     }
-    
-    
-    
 }

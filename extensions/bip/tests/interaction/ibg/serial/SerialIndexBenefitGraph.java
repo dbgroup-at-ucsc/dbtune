@@ -42,6 +42,7 @@ public class SerialIndexBenefitGraph implements Serializable {
 	private static BitArraySet<Index> poolIndexes;
 	private static Catalog catalog;
 	
+	public static double timeINUM = 0.0;
 	/**
 	 * Set the candidate indexes
 	 * @param indexes
@@ -81,7 +82,6 @@ public class SerialIndexBenefitGraph implements Serializable {
 	     
 	    Index index = new Index(columns, ascending, false, false, false);
 	    index.setId(karlIndex.getId());
-	    
 	    return index;
 	}
 	/*
@@ -200,6 +200,8 @@ public class SerialIndexBenefitGraph implements Serializable {
         queue.add(rootNode);
         
         PreparedSQLStatement prepare = optimizer.prepareExplain(sql); 
+        Set<Index> configIndexes;
+        double startTimer = 0.0;
         
         while (!queue.isEmpty()) {
 
@@ -216,11 +218,21 @@ public class SerialIndexBenefitGraph implements Serializable {
                 coveringNode.addUsedIndexes(tempUsedIndexes);
             }
             else {
-                stmt = prepare.explain(transform(newNode.config));
+                configIndexes = transform(newNode.config);
+                startTimer = System.currentTimeMillis();
+                stmt = prepare.explain(configIndexes);
                 totalCost = stmt.getSelectCost();
-                        
-                for (Index index : stmt.getUsedConfiguration())
-                    tempUsedIndexes.set(index.getId());
+                timeINUM += (System.currentTimeMillis() - startTimer);
+                
+                for (Index index : stmt.getUsedConfiguration()) {
+                    // match by content
+                    for (Index cindex : configIndexes) {
+                        if (cindex.equalsContent(index)) {
+                            tempUsedIndexes.set(cindex.getId());
+                            break;
+                        }   
+                    }    
+                }
                     
                 //totalCost = conn.whatifOptimize(xacts, newNode.config, tempUsedIndexes);
             }
@@ -257,8 +269,9 @@ public class SerialIndexBenefitGraph implements Serializable {
         }
         
         //double emptyCost = conn.whatifOptimize(xacts, new BitSet(), tempUsedIndexes);
+        startTimer = System.currentTimeMillis();
         double emptyCost = prepare.explain(new HashSet<Index>()).getSelectCost(); 
-        
+        timeINUM += (System.currentTimeMillis() - startTimer);
         return new SerialIndexBenefitGraph(rootNode, emptyCost, allUsedIndexes, nodeCount);
     }
 	

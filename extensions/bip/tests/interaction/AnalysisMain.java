@@ -1,5 +1,6 @@
 package interaction;
 
+
 import interaction.cand.Generation;
 import interaction.cand.Generation.Strategy;
 import interaction.db.*;
@@ -73,14 +74,13 @@ public class AnalysisMain {
 	
 	public static void runSteps() throws SQLException, IOException, ClassNotFoundException {
 	    
-	    en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-        
-		// Connect to database
+        SQLWorkload workload = Main.getWorkload();
+		
+        // Connect to database
 		DBConnection conn = Main.openConnection();
 		try {
 			for (Generation.Strategy s : InteractionComparisonFunctionalTest.strategies)
-			    analyzeINUM(conn, workload, s);
+			    analyze(conn, workload, s);
 
 		} finally {
 			conn.commit();
@@ -88,6 +88,22 @@ public class AnalysisMain {
 		}
 	}
 	
+	public static void runStepsINUM() throws SQLException, IOException, ClassNotFoundException {
+        
+        en = Environment.getInstance();
+        db = newDatabaseSystem(en);
+        
+        // Connect to database
+        DBConnection conn = Main.openConnection();
+        try {
+            for (Generation.Strategy s : InteractionComparisonFunctionalTest.strategies)
+                analyzeINUM(conn, workload, s);
+
+        } finally {
+            conn.commit();
+            conn.close();
+        }
+    }
 	private static void analyzeINUM(DBConnection conn, Workload workload, Generation.Strategy strategy) 
                 throws IOException, ClassNotFoundException, SQLException {
 
@@ -97,7 +113,7 @@ public class AnalysisMain {
 	    File candidateFile = Configuration.candidateFile(strategy);
 	    DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
 
-	    System.out.println(" L85 (Karl, Analysis), candidate set: " + candidateSet.size());
+	    System.out.println(" L100 (Karl, Analysis), candidate set: " + candidateSet.size());
 
 	    SerialIndexBenefitGraph.setCatalog(db.getCatalog());
 	    SerialIndexBenefitGraph.fixCandidates(candidateSet);
@@ -112,7 +128,8 @@ public class AnalysisMain {
 	    writeIBGs(ibgs, strategy);
 
 	    long time = System.currentTimeMillis() - start;
-	    System.out.println("L98 (Karl, Analysis Main), the running time: " + time);
+	    System.out.println("L115 (Karl, Analysis Main), the running time: " + time
+	                     + " vs. time for INUM: " + SerialIndexBenefitGraph.timeINUM);
 
 	    BasicLog serial1 = (BasicLog) Files.readObjectFromFile(
                         Configuration.analysisFile(strategy, SERIAL));
@@ -149,8 +166,8 @@ public class AnalysisMain {
         /* analyze queries one at a time, combining their interactions */
         ibgs = new SerialIndexBenefitGraph[workload.size()];
         i = 0;
+        
         for (edu.ucsc.dbtune.workload.SQLStatement sql : workload) {
-            
             SerialIndexBenefitGraph ibg = SerialIndexBenefitGraph.buildByINUM
                                         (db.getOptimizer(), sql, candidateSet);
             
@@ -158,7 +175,6 @@ public class AnalysisMain {
             analyzer.doAnalysis(logger);
             ibgs[i++] = ibg;
         }
-        
         
         //DB2GreedyScheduler.schedule(candidateSet.bitSet(), new SerialIndexBenefitGraph.ScheduleInfo(ibgs)); 
 
@@ -174,10 +190,8 @@ public class AnalysisMain {
 		File candidateFile = Configuration.candidateFile(strategy);
 		DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
 		
-		System.out.println(" L85 (Karl, Analysis), candidate set: " + candidateSet.size());
+		System.out.println(" L192 (Karl, Analysis), candidate set: " + candidateSet.size());
         
-		SerialIndexBenefitGraph.setCatalog(db.getCatalog());
-		SerialIndexBenefitGraph.fixCandidates(candidateSet);
 		conn.fixCandidates(candidateSet);
 		logger = new InteractionLogger(conn, candidateSet);	
 		
@@ -189,7 +203,7 @@ public class AnalysisMain {
 		writeIBGs(ibgs, strategy);
 		
 		long time = System.currentTimeMillis() - start;
-		System.out.println("L98 (Karl, Analysis Main), the running time: " + time);
+		System.out.println("L205 (Karl, Analysis Main), the running time: " + time);
 		
 		BasicLog serial1 = (BasicLog) Files.readObjectFromFile(
 		                            Configuration.analysisFile(strategy, SERIAL));

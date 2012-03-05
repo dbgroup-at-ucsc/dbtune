@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.bip.interactions;
 
 import ilog.concert.IloException;
+import ilog.cplex.IloCplex;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +71,21 @@ public class InteractionBIP extends AbstractBIPSolver
         int i = 0;
         SQLStatement sql;
         
+        try {
+            // start CPLEX
+            cplex = new IloCplex();
+                       
+            // allow the solution differed 5% from the actual optimal value
+            cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
+            // not output the log of CPLEX
+            cplex.setOut(null);
+            // not output the warning
+            cplex.setWarning(null);
+        }
+        catch (IloException e) {
+            System.err.println("Concert exception caught: " + e);
+        }
+        
         for (QueryPlanDesc desc : queryPlanDescs) {
             sql = workload.get(i);
             findInteractions(sql, desc);
@@ -138,7 +154,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 id = mapIndexSlotID.get(indexd);
                 
                 //  call the BIP solution
-                listIIP.add(new RestrictModel(desc, logger, delta, indexc, indexd, 
+                listIIP.add(new RestrictModel(cplex, desc, logger, delta, indexc, indexd, 
                                               candidateIndexesDesc, ic, id));
             }
         }

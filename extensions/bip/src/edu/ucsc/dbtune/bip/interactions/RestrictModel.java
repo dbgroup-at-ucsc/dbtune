@@ -82,7 +82,8 @@ public class RestrictModel
      *     The relation slot ID that contains the second index    
      * 
      */
-    public RestrictModel(final QueryPlanDesc desc, 
+    public RestrictModel(IloCplex cplex,
+                         final QueryPlanDesc desc, 
                          final LogListener logger, 
                          final double delta, final Index indexc, final Index indexd, 
                          final Set<Index> candidateIndexes,
@@ -97,21 +98,7 @@ public class RestrictModel
         this.logger           = logger;
         this.candidateIndexes = candidateIndexes;
         this.cplexVar         = null;
-        
-        try {
-            // start CPLEX
-            cplex = new IloCplex();
-                       
-            // allow the solution differed 5% from the actual optimal value
-            cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
-            // not output the log of CPLEX
-            cplex.setOut(null);
-            // not output the warning
-            cplex.setWarning(null);
-        }
-        catch (IloException e) {
-            System.err.println("Concert exception caught: " + e);
-        }
+        this.cplex            = cplex;
     }
     
     /**
@@ -129,6 +116,9 @@ public class RestrictModel
      */
     public boolean solve(SQLStatement sql, Optimizer optimizer) throws IloException
     {
+        // 1. clear the model of CPLEX object
+        cplex.clearModel();
+        
         // 2. Construct BIP
         logger.setStartTimer();    
         
@@ -139,12 +129,12 @@ public class RestrictModel
         // Construct the formula of Ctheta
         buildQueryExecutionCost();
         
-        // 1. Atomic constraints 
+        // 2.1. Atomic constraints 
         atomicConstraintForINUM();
         atomicConstraintAtheta();
         interactionPrecondition();        
         
-        // 2. Optimal constraints
+        // 2,2. Optimal constraints
         localOptimal();
         atomicConstraintLocalOptimal();
         presentVariableLocalOptimal();
