@@ -4,15 +4,11 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 public class SeqInumQuery {
-    public int id; // for sorting after split and merge
+    public int id;
     public String name;
     public String sql;
     public SeqInumPlan[] plans;
     public SeqInumIndex[] relevantIndices;
-//    public Vector<SeqQueryCostWithIndex> costsWithIndices = new Vector<SeqQueryCostWithIndex>();
-//    public Hashtable<SeqConfiguration, Double> costCache = new Hashtable<SeqConfiguration, Double>();
-
-    public int groupId; // for split
 
     public SeqInumQuery(int id) {
         this.id = id;

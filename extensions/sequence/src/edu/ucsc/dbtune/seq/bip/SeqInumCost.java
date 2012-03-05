@@ -27,7 +27,7 @@ public class SeqInumCost {
             String[] ss = line.split("[ |\t]+");
             if (!readingPlan && !readingSlot) {
                 if (ss[0].startsWith("I")) {
-                    SeqInumIndex index = new SeqInumIndex();
+                    SeqInumIndex index = new SeqInumIndex(cost.indicesV.size());
                     index.name = ss[0];
                     index.createCost = Integer.parseInt(ss[1]);
                     index.dropCost = Integer.parseInt(ss[2]);

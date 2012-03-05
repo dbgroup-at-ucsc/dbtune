@@ -8,8 +8,10 @@ import edu.ucsc.dbtune.seq.SeqGreedySeq;
 import edu.ucsc.dbtune.seq.SeqMerge;
 import edu.ucsc.dbtune.seq.SeqOptimal;
 import edu.ucsc.dbtune.seq.SeqSplit;
+import edu.ucsc.dbtune.seq.bip.SebBIPOutput;
 import edu.ucsc.dbtune.seq.bip.SeqBIP;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.def.SeqConfiguration;
 import edu.ucsc.dbtune.seq.def.SeqIndex;
 import edu.ucsc.dbtune.seq.def.SeqSplitGroup;
@@ -22,13 +24,22 @@ public class BipSeqFunctionalTest2 {
 
     public BipSeqFunctionalTest2() throws Exception {
         {
+            Rt.showDate=false;
             SeqInumCost cost = SeqInumCost.fromFile(Rt.readResourceAsString(
                     SeqInumCost.class, "inum.txt"));
             SeqBIP bip = new SeqBIP(cost);
             LogListener logger = LogListener.getInstance();
             bip.setLogListenter(logger);
             bip.setWorkload(new Workload("", new StringReader("")));
-            bip.solve();
+            SebBIPOutput output= (SebBIPOutput)bip.solve();
+            for (int i=0;i<output.indexUsed.length;i++) {
+                System.out.print("Query "+i+":");
+                for (SeqInumIndex index : output.indexUsed[i]) {
+                    System.out.print(" "+index.name);
+                }
+                System.out.println();
+            }
+            Rt.p("cost: "+bip.getObjValue());
             System.exit(0);
         }
 
