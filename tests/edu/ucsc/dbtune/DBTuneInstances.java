@@ -51,6 +51,7 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
 
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -677,6 +678,33 @@ public final class DBTuneInstances
         when(result.getLong(argument.capture())).thenAnswer(rowLookupAnswer);
         when(result.getDouble(argument.capture())).thenAnswer(rowLookupAnswer);
         when(result.getTimestamp(argument.capture())).thenAnswer(rowLookupAnswer);
+        when(result.getRow()).thenAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock aInvocation) throws Throwable {
+                 return currentIndex.get() - 1;
+            }
+        });
+        when(result.last()).thenAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock aInvocation) throws Throwable {
+                 currentIndex.set(rows.length);
+                 return true;
+            }
+        });
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock aInvocation) throws Throwable {
+                 currentIndex.set(-1);
+                 return null;
+            }
+        }).when(result).beforeFirst();
+        when(result.first()).thenAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock aInvocation) throws Throwable {
+                 currentIndex.set(0);
+                 return true;
+            }
+        });
 
         return result;
     }

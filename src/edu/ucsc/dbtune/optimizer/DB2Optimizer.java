@@ -5,12 +5,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TreeMap;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,9 +34,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
 
-import static edu.ucsc.dbtune.optimizer.plan.Operator.SORT;
-import static edu.ucsc.dbtune.optimizer.plan.Operator.SUBQUERY;
-import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
+
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedSchemas;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
@@ -288,8 +290,12 @@ public class DB2Optimizer extends AbstractOptimizer
                 
                 if (colNameAndAscending.split("\\(")[1].contains("A"))
                     asc = true;
-                else
+                if (colNameAndAscending.split("\\(")[1].contains("D"))
                     asc = false;
+                else {
+                    asc = false;
+                    //System.out.println("Unknown order for " + colName);
+                }
             }
             
             col = catalog.<Column>findByName(
@@ -444,6 +450,8 @@ public class DB2Optimizer extends AbstractOptimizer
             return Operator.INDEX_AND;
         else if (operatorName.equals("IXOR"))
             return Operator.INDEX_OR;
+        else if (operatorName.equals("TEMP"))
+            return Operator.TEMPORARY_TABLE_SCAN;
         else
             return operatorName;
     }
@@ -469,13 +477,20 @@ public class DB2Optimizer extends AbstractOptimizer
             Connection connection, SQLStatement sql, Catalog catalog, Set<Index> indexes)
         throws SQLException
     {
-        Statement stmtOperator = connection.createStatement();
-        Statement stmtPredicate = connection.createStatement();
-       
-        stmtOperator.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
-        stmtOperator.execute(sql.getSQL());
-        stmtOperator.execute("SET CURRENT EXPLAIN MODE = NO");
+        Statement stmt = connection.createStatement();
+
+        stmt.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
+        stmt.execute(sql.getSQL());
+        stmt.execute("SET CURRENT EXPLAIN MODE = NO");
+        stmt.close();
         
+        Statement stmtOperator =
+            connection.createStatement(
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        Statement stmtPredicate =
+            connection.createStatement(
+                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+       
         ResultSet rsOperator = stmtOperator.executeQuery(SELECT_FROM_EXPLAIN);
         ResultSet rsPredicate = stmtPredicate.executeQuery(SELECT_FROM_PREDICATES);
         SQLStatementPlan plan = parsePlan(catalog, rsOperator, rsPredicate, indexes);
@@ -764,7 +779,7 @@ public class DB2Optimizer extends AbstractOptimizer
         dboName = dboName.trim();
 
         if (dboSchema.equalsIgnoreCase("SYSIBM") && dboName.equalsIgnoreCase("GENROW")) {
-            op = new Operator("GENROW", accomulatedCost, cardinality);
+            op = new Operator(TEMPORARY_TABLE_SCAN, accomulatedCost, cardinality);
             return op;
         }
 
@@ -818,7 +833,8 @@ public class DB2Optimizer extends AbstractOptimizer
      * @return
      *     the execution plan
      * @throws SQLException
-     *     if something goes wrong while talking to the DBMS
+     *     if {@code rsOperator} isn't scrollable; if {@code rsOperator} contains no results; if the 
+     *     plan refers to the same table more than once.
      * @see #parseNode
      */
     static SQLStatementPlan parsePlan(
@@ -829,13 +845,16 @@ public class DB2Optimizer extends AbstractOptimizer
         throws SQLException
     {
         Map<Integer, Operator> idToNode;
+        Map<Integer, Integer> childToParent;
         Map<Integer, List<String>> predicateList;
         Operator child;
         Operator parent;
         Operator root;
+        Operator node;
         SQLStatementPlan plan;
         int operatorId;
         int parentId;
+        int nodeCount;
 
         if (!rsOperator.next())
             throw new SQLException("Empty plan");
@@ -843,115 +862,114 @@ public class DB2Optimizer extends AbstractOptimizer
         predicateList = extractOperatorToPredicateListMap(rsPredicate);
         root = parseNode(catalog, rsOperator, predicateList.get(1), indexes);
         plan = new SQLStatementPlan(root);
-        idToNode = new HashMap<Integer, Operator>();
+        idToNode = new TreeMap<Integer, Operator>();
+        childToParent = new HashMap<Integer, Integer>();
         
         idToNode.put(1, root);
+
+        nodeCount = 0;
+
+        if (!rsOperator.last())
+            throw new SQLException("Can't move till the end of the ResultSet");
+
+        nodeCount = rsOperator.getRow();
+
+        rsOperator.beforeFirst();
 
         while (rsOperator.next()) {
             operatorId = rsOperator.getInt("node_id");
             parentId = rsOperator.getInt("parent_id");
             
-            child = parseNode(catalog, rsOperator, predicateList.get(operatorId), indexes);
-            parent = idToNode.get(parentId);
+            node = parseNode(catalog, rsOperator, predicateList.get(operatorId), indexes);
+
+            /* 
+             * Sometimes the same node is used in many places in the tree. For example:
+             *
+             *         315.002
+             *        ^MSJOIN
+             *         (   4)
+             *         975904
+             *         556122
+             *        /--+--\
+             *    19213.1  0.0163952
+             *    TBSCAN    FILTER
+             *    (   5)    (  62)
+             *    484914    484914
+             *    278061    278061
+             *      |         |
+             *    480327    19213.1
+             *    TEMP      TBSCAN
+             *    (   6)    (  63)
+             *    471362    484914
+             *    271199    278061
+             *      |         |
+             *    480327    480327
+             *    GRPBY     TEMP
+             *    (   7)    (   6)
+             *    419316    471362
+             *    264337    271199
+             *      |
+             *    480327
+             *    TBSCAN
+             *    (   8)
+             *    419292
+             *    264337
+             *
+             * Note how node TEMP (id=6) is used two times. This will cause conflicts since we'll be 
+             * adding the same node in the tree twice and with different parents. So we have to 
+             * create a new node with a new ID.
+             */
+            if (childToParent.get(operatorId) != null) {
+                nodeCount++;
+
+                // we add the nodeCount to the main members of the new operator since, internally, 
+                // the SQLStatementPlan hashes the operator's members, thus if we don't modify them, 
+                // the new operator will replace the other one. In terms of the example, even though 
+                // we're creating a new node for TEMP (either of the two), by not modifying it's 
+                // members we're in practice leaving only one
+                node =
+                    new Operator(
+                            node.getName(),
+                            node.getAccumulatedCost() + nodeCount,
+                            node.getCardinality() + nodeCount,
+                            node.getDatabaseObjects(),
+                            node.getPredicates(),
+                            node.getColumnsFetched());
+                operatorId = nodeCount;
+            }
+
+            childToParent.put(operatorId, parentId);
+            idToNode.put(operatorId, node);
+        }
+
+        for (Integer k : idToNode.keySet()) {
+
+            if (k == 1)
+                // ignore the root
+                continue;
+
+            child = idToNode.get(k);
+            parent = idToNode.get(childToParent.get(k));
 
             if (parent == null)
-                throw new SQLException(child + " expecting parent_id=" + parentId);
+                throw new SQLException(
+                    "Inserting " + child + " expecting parent " + childToParent.get(k));
 
-            plan.setChild(parent, child);
-
-            idToNode.put(operatorId, child);
-        }
-
-        // post-process
-        postprocess(plan);
-
-        return plan;
-    }
-
-    /**
-     * Post-processes a plan by (1) replacing GENROW and (2) transforming non-leaf table scans.
-     *
-     * @param plan
-     *      plan to be postprocessed
-     * @throws SQLException
-     *      if an error occurs while post-processing
-     */
-    private static void postprocess(SQLStatementPlan plan) throws SQLException
-    {
-        while (removeGENROW(plan))
-            // remove all occurrences of GENROW
-            plan.getStatement();
-
-        rewriteNonLeafTableScans(plan);
-    }
-
-    /**
-     * @param plan
-     *      plan whose non-leaf table scan operators are to be converted into leafs
-     * @throws SQLException
-     *      if an error occurs while transforming the plan
-     */
-    private static void rewriteNonLeafTableScans(SQLStatementPlan plan) throws SQLException
-    {
-        Operator newSibling;
-        Operator leaf;
-        double leafCost;
-
-        for (Operator o : plan.toList()) {
-
-            if (o.getName().equals(TABLE_SCAN) && o.getDatabaseObjects().size() > 0)
-
-                if (plan.getChildren(o).size() == 0) {
-                    // fine, it is an actual leaf
-                    plan.getChildren(o);
-                } else if (plan.getChildren(o).size() == 1) {
-
-                    newSibling = plan.getChildren(o).get(0);
-
-                    leafCost = o.getAccumulatedCost() - newSibling.getAccumulatedCost();
-
-                    leaf = new Operator(TABLE_SCAN, leafCost, o.getCardinality());
-
-                    leaf.add(o.getDatabaseObjects().get(0));
-                    leaf.addColumnsFetched(o.getColumnsFetched());
-                    leaf.add(o.getPredicates());
-
-                    plan.rename(o, SUBQUERY);
-                    plan.removeDatabaseObject(o);
-                    plan.removeColumnsFetched(o);
-                    plan.removePredicates(o);
-                    plan.setChild(o, leaf);
-                } else {
-                    throw new SQLException(
-                        "Don't know how to handle " + TABLE_SCAN + " with more than one child");
-                }
-        }
-    }
-
-    /**
-     * Renames the first occurence of {@code GENROW} operator (to {@code SORT}) by calling {@link 
-     * #renameClosestJoinAndRemoveBranchComingFrom}.
-     *
-     * @param plan
-     *      plan whose non-leaf table scan operators are to be converted into leafs
-     * @return
-     *      {@code true} if a rename was performed; {@code false} otherwise
-     * @throws SQLException
-     *      if {@link #renameClosestJoinAndRemoveBranchComingFrom} throws an exception
-     */
-    private static boolean removeGENROW(SQLStatementPlan plan) throws SQLException
-    {
-        boolean removed = false;
-
-        for (Operator o : plan.toList()) {
-            if (o.getName().equals("GENROW")) {
-                renameClosestJoinAndRemoveBranchComingFrom(plan, o, SORT);
-                removed = true;
-                break;
+            try {
+                plan.setChild(parent, child);
+            }
+            catch (IllegalArgumentException ex) {
+                throw new SQLException(
+                    "Duplicate operator found; is statement querying the same table more than " +
+                    "once? The DBTune API doesn't handle this case yet", ex);
+            }
+            catch (NoSuchElementException ex) {
+                throw new SQLException(
+                        "Can't find parent of " + child.getName() + ": " + parent, ex);
             }
         }
 
-        return removed;
+        return plan;
     }
 
     /**
@@ -1015,112 +1033,6 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.close();
 
         return recommended;
-    }
-
-    /**
-     * Renames the closest node in the three (bottom-up) that is an ascendant of {@code operator} 
-     * and removes the entire branch that hangs from it (from the point of view of {@code 
-     * operator}). For example, if a plan like the following is given:
-     * <pre>
-     * {@code .
-     *
-     *                 Rows 
-     *                RETURN
-     *                (   1)
-     *                 Cost 
-     *                  I/O 
-     *                  |
-     *                2824.22 
-     *                NLJOIN
-     *                (   2)
-     *                211540 
-     *                207998 
-     *             /----+----\
-     *         9320.87        0.303 
-     *         TBSCAN        TBSCAN
-     *         (   3)        (   4)
-     *         211526       0.0103428 
-     *         207998           0 
-     *           |             |
-     *       6.00122e+06        2 
-     *     TABLE: TPCH       TEMP  
-     *        LINEITEM       (   5)
-     *           Q3         0.0030171 
-     *                          0 
-     *                         |
-     *                          2 
-     *                       TBSCAN
-     *                       (   6)
-     *                     2.95215e-05 
-     *                          0 
-     *                         |
-     *                          2 
-     *                  TABFNC: SYSIBM  
-     *                       GENROW
-     *                         Q1
-     * }
-     * </pre>
-     * <p>
-     * If this method is invoked with {@code plan, genRowOperator, "NLJOIN", "SORT"}, the plan looks 
-     * like the following when this method returns:
-     * <pre>
-     * {@code .
-     *
-     *                 Rows 
-     *                RETURN
-     *                (   1)
-     *                 Cost 
-     *                  I/O 
-     *                  |
-     *                2824.22 
-     *                 SORT
-     *                (   2)
-     *                211540 
-     *                207998 
-     *                  |
-     *                9320.87
-     *                TBSCAN
-     *                (   3)
-     *                211526
-     *                207998
-     *                  |
-     *              6.00122e+06
-     *            TABLE: TPCH
-     *               LINEITEM
-     *                  Q3
-     * }
-     * </pre>
-     *
-     * @param plan
-     *      plan that is modified
-     * @param child
-     *      node whose closest parent named {@code oldName} gets renamed. The branch that comes from 
-     *      this node up to the parent is entirely removed
-     * @param newName
-     *      new name of the parent
-     * @throws SQLException
-     *      if a {@code operatorName} is not found in any ascendant of {@code child}
-     */
-    private static void renameClosestJoinAndRemoveBranchComingFrom(
-            SQLStatementPlan plan, Operator child, String newName)
-        throws SQLException
-    {
-        Operator ascendant = null;
-        Operator shild = child;
-
-        while ((ascendant = plan.getParent(shild)) != null) {
-
-            if (ascendant.isJoin())
-                break;
-
-            shild = ascendant;
-        }
-
-        if (ascendant == null)
-            throw new SQLException("Can't find closest join (ascendant) of " + child);
-
-        plan.rename(ascendant, newName);
-        plan.remove(shild);
     }
 
     // CHECKSTYLE:OFF

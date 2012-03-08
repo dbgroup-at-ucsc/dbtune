@@ -217,6 +217,61 @@ public class DB2OptimizerTest
     }
 
     /**
+     * Checks that the extraction of a plan is done correctly.
+     * @throws Exception
+     *      if the creation of the mock fails
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testMoreThanOneParent() throws Exception
+    {
+        // CHECKSTYLE:OFF
+        ResultSet rs = makeResultSet(
+        Arrays.asList(h[0], h[1],      h[2],        h[3],                        h[4],  h[5],    h[6], h[7]),
+        Arrays.asList(   1, null,  "RETURN",  "schema_0",  null                      ,  10l ,  2000.0,   ""),
+        Arrays.asList(   2,    1,  "GRPBY" ,  "schema_0",  null                      ,  10l ,  2000.0,   ""),
+        Arrays.asList(   3,    1,  "SORT"  ,  "schema_0",  null                      ,  10l ,  1500.0,   ""),
+        Arrays.asList(   4,    2,  "TBSCAN",  "schema_0",  "table_2"                 ,  100l,   700.0,   "+Q1.column_0(A)+Q2.column_3(D)+Q3.column_2"),
+        Arrays.asList(   4,    3,  "IXSCAN",    "SYSTEM",  "schema_0.table_0_index_0",  100l,   700.0,   "+Q2.column_1"));
+
+        ResultSet rs2 = makeResultSet(
+        Arrays.asList(h2[0], h2[1]),
+        Arrays.asList(    1, null),
+        Arrays.asList(    2, null),
+        Arrays.asList(    3, null),
+        Arrays.asList(    4, "Q1.SOME_COL = Q1.SOME_OTHER_COL"),
+        Arrays.asList(    4, "Q1.BAR = 10"),
+        Arrays.asList(    4, "Q1.FOO > 20"),
+        Arrays.asList(    5, "Q2.TAA BETWEEN 10 AND 100000"),
+        Arrays.asList(    5, "Q2.SOME_COL > Q2.OTHER_COL"),
+        Arrays.asList(    5, "EXISTS (SELECT $RID$ FROM Q2.SOME_TABLE)"));
+        // CHECKSTYLE:ON
+
+        SQLStatementPlan plan = DB2Optimizer.parsePlan(cat, rs, rs2, new HashSet<Index>());
+
+        assertThat(plan.size(), is(5));
+        assertThat(plan.getIndexes().size(), is(1));
+        assertThat(plan.getRootOperator().getName(), is("RETURN"));
+
+        assertThat(plan.leafs().size(), is(2));
+
+        for (Operator o : plan.leafs()) {
+
+            if (o.getName().equals(Operator.INDEX_SCAN)) {
+                assertThat(o.getDatabaseObjects().size(), is(1));
+                assertThat(o.getPredicates().size(), is(3));
+            }
+            else if (o.getName().equals(Operator.TABLE_SCAN)) {
+                assertThat(o.getDatabaseObjects().size(), is(1));
+                assertThat(o.getPredicates().size(), is(3));
+            }
+            else {
+                fail("Unexpected operator at leaf: " + o);
+            }
+        }
+    }
+
+    /**
      * Checks that clearing the ADVISE_INDEX and EXPLAIN tables is done correctly.
      *
      * @throws Exception

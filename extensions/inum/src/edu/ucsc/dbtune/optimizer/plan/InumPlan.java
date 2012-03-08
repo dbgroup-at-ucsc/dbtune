@@ -24,6 +24,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
+
+import static edu.ucsc.dbtune.util.InumUtils.preprocess;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
 /**
@@ -78,6 +80,8 @@ public class InumPlan extends SQLStatementPlan
     {
         super(plan);
 
+        preprocess(this);
+
         this.delegate = delegate;
 
         TableAccessSlot slot = null;
@@ -104,7 +108,7 @@ public class InumPlan extends SQLStatementPlan
         }
 
         if (plan.leafs().size() != slots.size())
-            throw new SQLException("One or more leafs haven't been assigned with a slot");
+            throw new SQLException("One or more leafs haven't been assigned with a slot " + this);
 
         internalPlanCost = getRootOperator().getAccumulatedCost() - leafsCost;
     }
@@ -284,12 +288,12 @@ public class InumPlan extends SQLStatementPlan
             operators.add(o);
         }
 
-        if (visited.size() != slots.size())
+        if (visited.size() != getTables().size())
             throw new SQLException(
                 "One or more tables missing in atomic configuration.\n" +
                 "  Tables in atomic " + getReferencedTables(atomicConfiguration) + "\n" +
                 "  Tables in stmt: " + getTables() + "\n" +
-                "  For statement:\n" + getStatement() + "\n" +
+                //"  For statement:\n" + getStatement() + "\n" +
                 "  Plan: \n" + this);
 
         return instantiatePlan(this, operators);
@@ -544,7 +548,7 @@ public class InumPlan extends SQLStatementPlan
             sb.delete(sb.length() - 5, sb.length() - 1);
         }
 
-        if (slot.getIndex().size() > 0) {
+        if (!slot.isCreatedFromFullTableScan()) {
 
             sb.append(" ORDER BY ");
 

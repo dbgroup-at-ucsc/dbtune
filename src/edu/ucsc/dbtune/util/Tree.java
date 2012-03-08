@@ -192,12 +192,12 @@ public class Tree<T>
      *      the value that will be the parent of {@code childValue}
      * @param childValue
      *      the value that will be the child of {@code parentValue}
-     * @throws NoSuchElementException
-     *      if parentValue isn't a member of the tree
      * @return
      *      the entry corresponding to the newly added child
      * @throws IllegalArgumentException
      *      if {@code childValue} is already in the tree.
+     * @throws NoSuchElementException
+     *      if parentValue isn't a member of the tree
      */
     public Entry<T> setChild(T parentValue, T childValue)
     {
