@@ -10,6 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Table;
+
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 import org.apache.derby.iapi.error.StandardException;
 
 import org.apache.derby.iapi.services.context.ContextManager;
@@ -31,14 +37,6 @@ import org.apache.derby.impl.sql.compile.OrderByList;
 import org.apache.derby.impl.sql.compile.QueryTreeNode;
 import org.apache.derby.impl.sql.compile.SelectNode;
 import org.apache.derby.impl.sql.compile.ResultColumn;
-
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
-
-import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
-import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class DerbyReferencedColumnsExtractor implements Visitor
 {
@@ -288,7 +286,7 @@ public class DerbyReferencedColumnsExtractor implements Visitor
     /**
      * {@inheritDoc}
      */
-    public Map<Table, Set<InterestingOrder>> extract(SQLStatement statement) throws SQLException
+    public Map<Table, Set<InumInterestingOrder>> extract(SQLStatement statement) throws SQLException
     {
         parse(statement);
 
@@ -377,8 +375,8 @@ public class DerbyReferencedColumnsExtractor implements Visitor
      *      if a {@code SELECT} statement contains subqueries; if {@link
      *      #extractInterestingOrdersPerTable} fails;
      */
-    private Map<Table, Set<InterestingOrder>> extractInterestingOrders() throws StandardException, 
-            SQLException
+    private Map<Table, Set<InumInterestingOrder>> extractInterestingOrders() throws 
+        StandardException, SQLException
     {
         List<String> tableNames = new ArrayList<String>();
         columns = new HashSet<Column>();
@@ -606,15 +604,15 @@ public class DerbyReferencedColumnsExtractor implements Visitor
      * @throws SQLException
      *      when there is error in connecting with databases
      */
-    private Map<Table, Set<InterestingOrder>> extractInterestingOrdersPerTable(
+    private Map<Table, Set<InumInterestingOrder>> extractInterestingOrdersPerTable(
             List<String> tableNames,
             Set<Column> columns,
             Map<Column, Boolean> ascending)
         throws SQLException
     {
-        Map<Table, Set<InterestingOrder>> interestingOrdersPerTable = new HashMap<Table, 
-        Set<InterestingOrder>>();
-        Set<InterestingOrder> interestingOrdersForTable;
+        Map<Table, Set<InumInterestingOrder>> interestingOrdersPerTable = new HashMap<Table, 
+        Set<InumInterestingOrder>>();
+        Set<InumInterestingOrder> interestingOrdersForTable;
         Table table;
 
         // add FTS for each table in the from clause
@@ -623,7 +621,7 @@ public class DerbyReferencedColumnsExtractor implements Visitor
             table = catalog.<Table>findByName(tblName);
 
             if (interestingOrdersPerTable.get(table) == null)  {
-                interestingOrdersForTable = new HashSet<InterestingOrder>();
+                interestingOrdersForTable = new HashSet<InumInterestingOrder>();
                 interestingOrdersPerTable.put(table, interestingOrdersForTable);
             }
         }

@@ -16,7 +16,6 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.optimizer.plan.Predicate;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -119,16 +118,29 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     }
 
     /**
+     * Extracts the parse tree of a sql statement.
+     *
+     * @param statement
+     *      statement for which the parse tree is extracted
+     * @return
+     *      the parse tree
+     * @throws SQLException
+     *      if syntax error occurs
+     */
+    public SQLStatementParseTree getParseTree(SQLStatement statement) throws SQLException
+    {
+        reset();
+        parse(statement);
+        return parseTree;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
-    public Set<InterestingOrder> extract(SQLStatement statement) throws SQLException
+    public Set<InumInterestingOrder> extract(SQLStatement statement) throws SQLException
     {
-        reset();
-
-        parse(statement);
-
-        return extract(new BoundSQLStatementParseTree(parseTree, catalog));
+        return extract(new BoundSQLStatementParseTree(getParseTree(statement), catalog));
     }
 
     /**
@@ -142,9 +154,9 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      if an error occurs while obtaining the statement AST; if an error occurs while walking
      *      through the statement AST
      */
-    private Set<InterestingOrder> extract(BoundSQLStatementParseTree pt) throws SQLException
+    private Set<InumInterestingOrder> extract(BoundSQLStatementParseTree pt) throws SQLException
     {
-        Set<InterestingOrder> ios = new HashSet<InterestingOrder>();
+        Set<InumInterestingOrder> ios = new HashSet<InumInterestingOrder>();
         
         extract(pt, ios);
 
@@ -162,7 +174,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      if an error occurs while obtaining the statement AST; if an error occurs while walking
      *      through the statement AST
      */
-    private void extract(BoundSQLStatementParseTree pt, Set<InterestingOrder> ioSet)
+    private void extract(BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
         throws SQLException
     {
         extractFromGroupByColumns(pt, ioSet);
@@ -406,34 +418,34 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         }
     }
     private void extractFromGroupByColumns(
-            BoundSQLStatementParseTree pt, Set<InterestingOrder> ioSet)
+            BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
         throws SQLException
     {
         for (Column col : pt.getGroupByColumns())
-            ioSet.add(new InterestingOrder(col, ASC));
+            ioSet.add(new InumInterestingOrder(col, ASC));
     }
-    private void extractFromJoinPredicates(
-            BoundSQLStatementParseTree pt, Set<InterestingOrder> ioSet)
+    public void extractFromJoinPredicates(
+            BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
         throws SQLException
     {
 
         for (Predicate p : pt.getPredicates()) {
             if (!p.getLeftColumn().getTable().equals(p.getRightColumn().getTable())) {
-                ioSet.add(new InterestingOrder(p.getLeftColumn(), ASC));
-                ioSet.add(new InterestingOrder(p.getRightColumn(), ASC));
+                ioSet.add(new InumInterestingOrder(p.getLeftColumn(), ASC));
+                ioSet.add(new InumInterestingOrder(p.getRightColumn(), ASC));
             }
         }
         
     }
     private void extractFromOrderByColumns(
-            BoundSQLStatementParseTree pt, Set<InterestingOrder> ioSet)
+            BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
         throws SQLException
     {
         Set<Table> tablesWithOrderingAlreadyCreated = new HashSet<Table>();
 
         for (Column col : pt.getOrderByColumns().keySet()) {
             if (!tablesWithOrderingAlreadyCreated.contains(col.getTable())) {
-                ioSet.add(new InterestingOrder(col, pt.getOrderByColumns().get(col)));
+                ioSet.add(new InumInterestingOrder(col, pt.getOrderByColumns().get(col)));
                 tablesWithOrderingAlreadyCreated.add(col.getTable());
             }
         }
@@ -760,6 +772,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 try {
                     columns.add(bindColumn(tables, tablesFromUpper, columnName));
                 } catch (SQLException e) {
+                    //System.out.println(e.getMessage());
                     e.getMessage();
                 }
 

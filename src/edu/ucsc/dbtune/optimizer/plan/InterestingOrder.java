@@ -47,8 +47,10 @@ public class InterestingOrder extends Index
         table = column.getTable();
 
         container.remove(this);
-    }
 
+        Index.IN_MEMORY_ID.decrementAndGet();
+    }
+    
     /**
      * Creates an interesting order instance.
      *
@@ -71,8 +73,10 @@ public class InterestingOrder extends Index
 
         // override name
         name = makeName(columns, ascending);
+
+        Index.IN_MEMORY_ID.decrementAndGet();
     }
-    
+
     /**
      * Creates an interesting order instance.
      *
@@ -94,6 +98,8 @@ public class InterestingOrder extends Index
 
         // override name
         name = makeName(columns, ascending);
+
+        Index.IN_MEMORY_ID.decrementAndGet();
     }
 
     /**
