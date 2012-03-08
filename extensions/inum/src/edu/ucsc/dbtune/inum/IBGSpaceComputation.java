@@ -92,7 +92,8 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
             if (!hasPlanWhichDontUseIndex) {
                 hasPlanWhichDontUseIndex = true;
                 templateForEmpty = new InumPlan(delegate, sqlPlan);
-                inumSpace.add(templateForEmpty);
+                if (!sqlPlan.contains(NLJ))
+                    inumSpace.add(templateForEmpty);
             }
         } else {
             if (!sqlPlan.contains(NLJ))

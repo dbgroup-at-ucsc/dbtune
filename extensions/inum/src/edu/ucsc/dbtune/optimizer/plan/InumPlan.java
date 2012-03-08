@@ -252,7 +252,12 @@ public class InumPlan extends SQLStatementPlan
             // if we do a what-if call, we know the optimizer will return FTS, so let's not do it
             return INCOMPATIBLE;
 
-        return instantiateOperatorForUnseenIndex(buildQueryForUnseenIndex(slot), index);
+        Operator o = instantiateOperatorForUnseenIndex(getStatement(), index);
+
+        if (o.equals(INCOMPATIBLE))
+            o = instantiateOperatorForUnseenIndex(buildQueryForUnseenIndex(slot), index);
+
+        return o;
     }
 
     /**
