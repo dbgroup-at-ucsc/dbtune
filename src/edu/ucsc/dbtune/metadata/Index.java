@@ -717,6 +717,29 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
+     * Whether the given index covers this one without taking into account the order. An index a is 
+     * covered by another b if a's columns are contained in b's and they're in the same {@link 
+     * #isAscending ascending} order.
+     *
+     * @param other
+     *     index that may (or not) cover this one.
+     * @return
+     *     {@code true} if this index is covered by the given one; {@code false} otherwise
+     */
+    public boolean isCoveredByIgnoreOrder(Index other)
+    {
+        if (size() == 0 || other.size() < this.size() || !other.columns().containsAll(columns()))
+            return false;
+
+        for (Column col : columns()) {
+            if (isAscending(col) && !other.isAscending(col))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Whether the given index covers this one. An index a is covered by another b if a's columns 
      * are a prefix of b's and with the same {@link #isAscending ascending} value.
      *

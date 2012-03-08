@@ -4,14 +4,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
@@ -58,7 +56,7 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
             Set<InumPlan> space, SQLStatement statement, Optimizer delegate, Catalog catalog)
         throws SQLException
     {
-        Set<InterestingOrder> interestingOrders =
+        Set<InumInterestingOrder> interestingOrders =
             (new DerbyInterestingOrdersExtractor(catalog)).extract(statement);
 
         for (Table table : getReferencedTables(interestingOrders))

@@ -458,8 +458,9 @@ public class InumPlan extends SQLStatementPlan
         if (!slot.isCreatedFromFullTableScan())
             return false;
 
-        if (slot.getPredicates().isEmpty() && !slot.getColumnsFetched().isCoveredBy(index))
-            return true;
+        if (slot.getPredicates().isEmpty() &&                 
+                slot.getColumnsFetched().isCoveredByIgnoreOrder(index))
+            return false;
 
         for (Predicate p : slot.getPredicates())
             if (p.isCoveredBy(index))
