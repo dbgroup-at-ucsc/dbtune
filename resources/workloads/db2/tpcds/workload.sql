@@ -1,4 +1,4 @@
--- query96.tpl
+-- @ID=TEMPLATE_96
 SELECT COUNT(*)
   FROM store_sales,
        household_demographics,
@@ -13,7 +13,7 @@ SELECT COUNT(*)
        AND store.s_store_name = 'ese'
  ORDER BY COUNT(*);
 
--- query7.tpl
+-- @ID=TEMPLATE_07
 SELECT i_item_id,
        AVG(ss_quantity)    agg1,
        AVG(ss_list_price)  agg2,
@@ -37,7 +37,7 @@ SELECT i_item_id,
  GROUP BY i_item_id
  ORDER BY i_item_id;
 
--- query75.tpl
+-- @ID=TEMPLATE_75
 WITH all_sales
      AS (SELECT d_year,
                 i_brand_id,
@@ -122,7 +122,7 @@ SELECT prev_yr.d_year                        AS prev_year,
        AND CAST(curr_yr.sales_cnt AS DECIMAL(17, 2)) / CAST(prev_yr.sales_cnt AS DECIMAL(17, 2)) < 0.9
  ORDER BY sales_cnt_diff;
 
--- query44.tpl
+-- @ID=TEMPLATE_44
 SELECT asceding.rnk,
        i1.i_product_name best_performing,
        i2.i_product_name worst_performing
@@ -161,7 +161,7 @@ SELECT asceding.rnk,
        AND i2.i_item_sk = descending.item_sk
  ORDER BY asceding.rnk;
 
--- query39.tpl
+-- @ID=TEMPLATE_39
 WITH inv
      AS (SELECT w_warehouse_name,
                 w_warehouse_sk,
@@ -279,7 +279,7 @@ SELECT inv1.w_warehouse_sk,
           inv2.mean,
           inv2.cov;
 
--- query80.tpl
+-- @ID=TEMPLATE_80
 WITH ssr
      AS (SELECT s_store_id                                    AS store_id,
                 SUM(ss_ext_sales_price)                       AS sales,
@@ -378,7 +378,7 @@ SELECT channel,
  ORDER BY channel,
           id;
 
--- query32.tpl
+-- @ID=TEMPLATE_32
 SELECT SUM(cs_ext_discount_amt) AS "excess discount amount"
   FROM catalog_sales,
        item,
@@ -396,7 +396,7 @@ SELECT SUM(cs_ext_discount_amt) AS "excess discount amount"
 				         AND d_date <= '2001-06-05'
                                          AND d_date_sk = cs_sold_date_sk);
 
--- query19.tpl
+-- @ID=TEMPLATE_19
 SELECT i_brand_id              brand_id,
        i_brand                 brand,
        i_manufact_id,
@@ -427,7 +427,7 @@ SELECT i_brand_id              brand_id,
           i_manufact_id,
           i_manufact;
 
--- query25.tpl
+-- @ID=TEMPLATE_25
 SELECT i_item_id,
        i_item_desc,
        s_store_id,
@@ -468,7 +468,7 @@ SELECT i_item_id,
           s_store_id,
           s_store_name;
 
--- query78.tpl
+-- @ID=TEMPLATE_78
 WITH ws
      AS (SELECT d_year                 AS ws_sold_year,
                 ws_item_sk,
@@ -553,7 +553,7 @@ SELECT ss_sold_year,
           COALESCE(ws_sp, 0) + COALESCE(cs_sp, 0),
           ROUND(ss_qty / ( COALESCE(ws_qty + cs_qty, 1) ), 2);
 
--- query86.tpl
+-- @ID=TEMPLATE_86
 SELECT SUM(ws_net_paid)                         AS total_sum,
        i_category,
        i_class,
@@ -572,7 +572,7 @@ SELECT SUM(ws_net_paid)                         AS total_sum,
           END,
           rank_within_parent;
 
--- query1.tpl
+-- @ID=TEMPLATE_01
 WITH customer_total_return
      AS (SELECT sr_customer_sk     AS ctr_customer_sk,
                 sr_store_sk        AS ctr_store_sk,
@@ -595,7 +595,7 @@ SELECT c_customer_id
        AND ctr1.ctr_customer_sk = c_customer_sk
  ORDER BY c_customer_id;
 
--- query91.tpl
+-- @ID=TEMPLATE_91
 SELECT cc_call_center_id call_center,
        cc_name           call_center_name,
        cc_manager        manager,
@@ -628,7 +628,7 @@ SELECT cc_call_center_id call_center,
           cd_education_status
  ORDER BY SUM(cr_net_loss) DESC;
 
--- query21.tpl
+-- @ID=TEMPLATE_21
 SELECT *
   FROM(SELECT w_warehouse_name,
               i_item_id,
@@ -659,7 +659,7 @@ SELECT *
  ORDER BY w_warehouse_name,
           i_item_id;
 
--- query43.tpl
+-- @ID=TEMPLATE_43
 SELECT s_store_name,
        s_store_id,
        SUM(CASE
@@ -709,7 +709,7 @@ SELECT s_store_name,
           fri_sales,
           sat_sales;
 
--- query27.tpl
+-- @ID=TEMPLATE_27
 SELECT i_item_id,
        s_state,
        GROUPING(s_state)   g_state,
@@ -736,57 +736,55 @@ SELECT i_item_id,
  ORDER BY i_item_id,
           s_state;
 
--- query94.tpl
--- TODO: WEB_SALES referenced more than once
---SELECT COUNT(DISTINCT ws_order_number) AS "order count",
-       --SUM(ws_ext_ship_cost)           AS "total shipping cost",
-       --SUM(ws_net_profit)              AS "total net profit"
-  --FROM web_sales ws1,
-       --date_dim,
-       --customer_address,
-       --web_site
- --WHERE d_date >= '2002-3-01'
-       --AND d_date <= '2002-5-01'
-       --AND ws1.ws_ship_date_sk = d_date_sk
-       --AND ws1.ws_ship_addr_sk = ca_address_sk
-       --AND ca_state = 'IL'
-       --AND ws1.ws_web_site_sk = web_site_sk
-       --AND web_company_name = 'pri'
-       --AND EXISTS (SELECT *
-                     --FROM web_sales ws2
-                    --WHERE ws1.ws_order_number = ws2.ws_order_number
-                          --AND ws1.ws_warehouse_sk <> ws2.ws_warehouse_sk)
-       --AND NOT EXISTS(SELECT *
-                        --FROM web_returns wr1
-                       --WHERE ws1.ws_order_number = wr1.wr_order_number)
- --ORDER BY COUNT(DISTINCT ws_order_number);
+-- @ID=TEMPLATE_94
+SELECT COUNT(DISTINCT ws_order_number) AS "order count",
+       SUM(ws_ext_ship_cost)           AS "total shipping cost",
+       SUM(ws_net_profit)              AS "total net profit"
+  FROM web_sales ws1,
+       date_dim,
+       customer_address,
+       web_site
+ WHERE d_date >= '2002-3-01'
+       AND d_date <= '2002-5-01'
+       AND ws1.ws_ship_date_sk = d_date_sk
+       AND ws1.ws_ship_addr_sk = ca_address_sk
+       AND ca_state = 'IL'
+       AND ws1.ws_web_site_sk = web_site_sk
+       AND web_company_name = 'pri'
+       AND EXISTS (SELECT *
+                     FROM web_sales ws2
+                    WHERE ws1.ws_order_number = ws2.ws_order_number
+                          AND ws1.ws_warehouse_sk <> ws2.ws_warehouse_sk)
+       AND NOT EXISTS(SELECT *
+                        FROM web_returns wr1
+                       WHERE ws1.ws_order_number = wr1.wr_order_number)
+ ORDER BY COUNT(DISTINCT ws_order_number);
 
--- query45.tpl
--- TODO: WEB_SALES referenced more than once
---SELECT ca_zip,
-       --SUM(ws_sales_price)
-  --FROM web_sales,
-       --customer,
-       --customer_address,
-       --date_dim,
-       --item
- --WHERE ws_bill_customer_sk = c_customer_sk
-       --AND c_current_addr_sk = ca_address_sk
-       --AND ws_item_sk = i_item_sk
-       --AND ( SUBSTR(ca_zip, 1, 5) IN ( '85669', '86197', '88274', '83405',
-                                       --'86475', '85392', '85460', '80348', '81792' )
-              --OR i_item_id IN (SELECT i_item_id
-                                 --FROM item
-                                --WHERE i_item_sk IN ( 2, 3, 5, 7,
-                                                     --11, 13, 17, 19,
-                                                     --23, 29 )) )
-       --AND ws_sold_date_sk = d_date_sk
-       --AND d_qoy = 2
-       --AND d_year = 1999
- --GROUP BY ca_zip
- --ORDER BY ca_zip;
+-- @ID=TEMPLATE_45
+SELECT ca_zip,
+       SUM(ws_sales_price)
+  FROM web_sales,
+       customer,
+       customer_address,
+       date_dim,
+       item
+ WHERE ws_bill_customer_sk = c_customer_sk
+       AND c_current_addr_sk = ca_address_sk
+       AND ws_item_sk = i_item_sk
+       AND ( SUBSTR(ca_zip, 1, 5) IN ( '85669', '86197', '88274', '83405',
+                                       '86475', '85392', '85460', '80348', '81792' )
+              OR i_item_id IN (SELECT i_item_id
+                                 FROM item
+                                WHERE i_item_sk IN ( 2, 3, 5, 7,
+                                                     11, 13, 17, 19,
+                                                     23, 29 )) )
+       AND ws_sold_date_sk = d_date_sk
+       AND d_qoy = 2
+       AND d_year = 1999
+ GROUP BY ca_zip
+ ORDER BY ca_zip;
 
--- query58.tpl
+-- @ID=TEMPLATE_58
 WITH ss_items
      AS (SELECT i_item_id               item_id,
                 SUM(ss_ext_sales_price) ss_item_rev
@@ -851,7 +849,7 @@ SELECT ss_items.item_id,
  ORDER BY item_id,
           ss_item_rev;
 
--- query64.tpl
+-- @ID=TEMPLATE_64
 WITH cs_ui
      AS (SELECT cs_item_sk,
                 SUM(cs_ext_list_price)                                       AS sale,
@@ -971,7 +969,7 @@ SELECT cs1.product_name,
           cs1.store_name,
           cs2.cnt;
 
--- query36.tpl
+-- @ID=TEMPLATE_36
 SELECT SUM(ss_net_profit) / SUM(ss_ext_sales_price)             AS gross_margin,
        i_category,
        i_class,
@@ -994,7 +992,7 @@ SELECT SUM(ss_net_profit) / SUM(ss_ext_sales_price)             AS gross_margin,
           END,
           rank_within_parent;
 
--- query33.tpl
+-- @ID=TEMPLATE_33
 WITH ss
      AS (SELECT i_manufact_id,
                 SUM(ss_ext_sales_price) total_sales
@@ -1059,7 +1057,7 @@ SELECT i_manufact_id,
  GROUP BY i_manufact_id
  ORDER BY total_sales;
 
--- query46.tpl
+-- @ID=TEMPLATE_46
 SELECT c_last_name,
        c_first_name,
        ca_city,
@@ -1101,7 +1099,7 @@ SELECT c_last_name,
           bought_city,
           ss_ticket_number;
 
--- query62.tpl
+-- @ID=TEMPLATE_62
 SELECT SUBSTR(w_warehouse_name, 1, 20),
        sm_type,
        web_name,
@@ -1145,32 +1143,31 @@ SELECT SUBSTR(w_warehouse_name, 1, 20),
           sm_type,
           web_name;
 
--- query16.tpl
--- TODO: CATALOG_SALES referenced more than once
---SELECT COUNT(DISTINCT cs_order_number) AS "order count",
-       --SUM(cs_ext_ship_cost)           AS "total shipping cost",
-       --SUM(cs_net_profit)              AS "total net profit"
-  --FROM catalog_sales cs1,
-       --date_dim,
-       --customer_address,
-       --call_center
- --WHERE d_date >= '2000-3-01'
-       --AND d_date <= '2000-5-01'
-       --AND cs1.cs_ship_date_sk = d_date_sk
-       --AND cs1.cs_ship_addr_sk = ca_address_sk
-       --AND ca_state = 'VA'
-       --AND cs1.cs_call_center_sk = cc_call_center_sk
-       --AND cc_county IN ( 'Williamson County', 'Ziebach County', 'Walker County', 'Ziebach County', 'Ziebach County' )
-       --AND EXISTS (SELECT *
-                     --FROM catalog_sales cs2
-                    --WHERE cs1.cs_order_number = cs2.cs_order_number
-                          --AND cs1.cs_warehouse_sk <> cs2.cs_warehouse_sk)
-       --AND NOT EXISTS(SELECT *
-                        --FROM catalog_returns cr1
-                       --WHERE cs1.cs_order_number = cr1.cr_order_number)
- --ORDER BY COUNT(DISTINCT cs_order_number);
+-- @ID=TEMPLATE_16
+SELECT COUNT(DISTINCT cs_order_number) AS "order count",
+       SUM(cs_ext_ship_cost)           AS "total shipping cost",
+       SUM(cs_net_profit)              AS "total net profit"
+  FROM catalog_sales cs1,
+       date_dim,
+       customer_address,
+       call_center
+ WHERE d_date >= '2000-3-01'
+       AND d_date <= '2000-5-01'
+       AND cs1.cs_ship_date_sk = d_date_sk
+       AND cs1.cs_ship_addr_sk = ca_address_sk
+       AND ca_state = 'VA'
+       AND cs1.cs_call_center_sk = cc_call_center_sk
+       AND cc_county IN ( 'Williamson County', 'Ziebach County', 'Walker County', 'Ziebach County', 'Ziebach County' )
+       AND EXISTS (SELECT *
+                     FROM catalog_sales cs2
+                    WHERE cs1.cs_order_number = cs2.cs_order_number
+                          AND cs1.cs_warehouse_sk <> cs2.cs_warehouse_sk)
+       AND NOT EXISTS(SELECT *
+                        FROM catalog_returns cr1
+                       WHERE cs1.cs_order_number = cr1.cr_order_number)
+ ORDER BY COUNT(DISTINCT cs_order_number);
 
--- query10.tpl
+-- @ID=TEMPLATE_10
 SELECT cd_gender,
        cd_marital_status,
        cd_education_status,
@@ -1229,40 +1226,39 @@ SELECT cd_gender,
           cd_dep_employed_count,
           cd_dep_college_count;
 
--- query63.tpl
--- TODO: issue with the predicate for item (when doing the what-if call, i.e. pluging an index for the ITEM table)
--- SELECT *
-  -- FROM (SELECT i_manager_id,
-               -- SUM(ss_sales_price) sum_sales,
-               -- AVG(ss_sales_price) avg_monthly_sales
-          -- FROM item,
-               -- store_sales,
-               -- date_dim,
-               -- store
-         -- WHERE ss_item_sk = i_item_sk
-               -- AND ss_sold_date_sk = d_date_sk
-               -- AND ss_store_sk = s_store_sk
-               -- AND d_year IN ( 1999 )
-               -- AND (  (  i_category IN ('Books', 'Children', 'Electronics')
-                         -- AND i_class IN ('personal', 'portable', 'refernece', 'self-help')
-                         -- AND i_brand IN ('scholaramalgamalg #14', 'scholaramalgamalg #7', 'exportiunivamalg #9', 'scholaramalgamalg #9')
-                      -- )
-                      -- OR ( i_category IN ('Women', 'Music', 'Men')
-                           -- AND i_class IN ('accessories', 'classical', 'fragrances', 'pants')
-                           -- AND i_brand IN ('amalgimporto #1', 'edu packscholar #1', 'exportiimporto #1', 'importoamalg #1')
-                         -- )
-                   -- )
-         -- GROUP BY i_manager_id,
-                  -- d_moy) tmp1
- -- WHERE CASE
-         -- WHEN avg_monthly_sales > 0 THEN ABS (sum_sales - avg_monthly_sales) / avg_monthly_sales
-         -- ELSE NULL
-       -- END > 0.1
- -- ORDER BY i_manager_id,
-          -- avg_monthly_sales,
-          -- sum_sales;
+-- @ID=TEMPLATE_63
+SELECT *
+  FROM (SELECT i_manager_id,
+               SUM(ss_sales_price) sum_sales,
+               AVG(ss_sales_price) avg_monthly_sales
+          FROM item,
+               store_sales,
+               date_dim,
+               store
+         WHERE ss_item_sk = i_item_sk
+               AND ss_sold_date_sk = d_date_sk
+               AND ss_store_sk = s_store_sk
+               AND d_year IN ( 1999 )
+               AND (  (  i_category IN ('Books', 'Children', 'Electronics')
+                         AND i_class IN ('personal', 'portable', 'refernece', 'self-help')
+                         AND i_brand IN ('scholaramalgamalg #14', 'scholaramalgamalg #7', 'exportiunivamalg #9', 'scholaramalgamalg #9')
+                      )
+                      OR ( i_category IN ('Women', 'Music', 'Men')
+                           AND i_class IN ('accessories', 'classical', 'fragrances', 'pants')
+                           AND i_brand IN ('amalgimporto #1', 'edu packscholar #1', 'exportiimporto #1', 'importoamalg #1')
+                         )
+                   )
+         GROUP BY i_manager_id,
+                  d_moy) tmp1
+ WHERE CASE
+         WHEN avg_monthly_sales > 0 THEN ABS (sum_sales - avg_monthly_sales) / avg_monthly_sales
+         ELSE NULL
+       END > 0.1
+ ORDER BY i_manager_id,
+          avg_monthly_sales,
+          sum_sales;
 
--- query69.tpl
+-- @ID=TEMPLATE_69
 SELECT cd_gender,
        cd_marital_status,
        cd_education_status,
@@ -1309,7 +1305,7 @@ SELECT cd_gender,
           cd_purchase_estimate,
           cd_credit_rating;
 
--- query60.tpl
+-- @ID=TEMPLATE_60
 WITH ss
      AS (SELECT i_item_id,
                 SUM(ss_ext_sales_price) total_sales
@@ -1375,7 +1371,7 @@ SELECT i_item_id,
  ORDER BY i_item_id,
           total_sales;
 
--- query59.tpl
+-- @ID=TEMPLATE_59
 WITH wss
      AS (SELECT d_week_seq,
                 ss_store_sk,
@@ -1460,7 +1456,7 @@ SELECT s_store_name1,
           s_store_id1,
           d_week_seq1;
 
--- query37.tpl
+-- @ID=TEMPLATE_37
 SELECT i_item_id,
        i_item_desc,
        i_current_price
@@ -1481,7 +1477,7 @@ SELECT i_item_id,
           i_current_price
  ORDER BY i_item_id;
 
--- query98.tpl
+-- @ID=TEMPLATE_98
 SELECT i_item_desc,
        i_category,
        i_class,
@@ -1507,60 +1503,59 @@ SELECT i_item_desc,
           i_item_desc,
           revenueratio;
 
--- query85.tpl
--- TODO: CUSTOMER_DEMOGRAPHICS refernced more than once
--- SELECT SUBSTR(r_reason_desc, 1, 20),
-       -- AVG(ws_quantity),
-       -- AVG(wr_refunded_cash),
-       -- AVG(wr_fee)
-  -- FROM web_sales,
-       -- web_returns,
-       -- web_page,
-       -- customer_demographics cd1,
-       -- customer_demographics cd2,
-       -- customer_address,
-       -- date_dim,
-       -- reason
- -- WHERE ws_web_page_sk = wp_web_page_sk
-       -- AND ws_item_sk = wr_item_sk
-       -- AND ws_order_number = wr_order_number
-       -- AND ws_sold_date_sk = d_date_sk
-       -- AND d_year = 2002
-       -- AND cd1.cd_demo_sk = wr_refunded_cdemo_sk
-       -- AND cd2.cd_demo_sk = wr_returning_cdemo_sk
-       -- AND ca_address_sk = wr_refunded_addr_sk
-       -- AND r_reason_sk = wr_reason_sk
-       -- AND ( ( cd1.cd_marital_status = 'D'
-               -- AND cd1.cd_marital_status = cd2.cd_marital_status
-               -- AND cd1.cd_education_status = 'College'
-               -- AND cd1.cd_education_status = cd2.cd_education_status
-               -- AND ws_sales_price BETWEEN 100.00 AND 150.00 )
-              -- OR ( cd1.cd_marital_status = 'S'
-                   -- AND cd1.cd_marital_status = cd2.cd_marital_status
-                   -- AND cd1.cd_education_status = 'Secondary'
-                   -- AND cd1.cd_education_status = cd2.cd_education_status
-                   -- AND ws_sales_price BETWEEN 50.00 AND 100.00 )
-              -- OR ( cd1.cd_marital_status = 'W'
-                   -- AND cd1.cd_marital_status = cd2.cd_marital_status
-                   -- AND cd1.cd_education_status = '2 yr Degree'
-                   -- AND cd1.cd_education_status = cd2.cd_education_status
-                   -- AND ws_sales_price BETWEEN 150.00 AND 200.00 ) )
-       -- AND ( ( ca_country = 'United States'
-               -- AND ca_state IN ( 'TX', 'OH', 'IN' )
-               -- AND ws_net_profit BETWEEN 100 AND 200 )
-              -- OR ( ca_country = 'United States'
-                   -- AND ca_state IN ( 'AR', 'CA', 'NM' )
-                   -- AND ws_net_profit BETWEEN 150 AND 300 )
-              -- OR ( ca_country = 'United States'
-                   -- AND ca_state IN ( 'TX', 'AR', 'ND' )
-                   -- AND ws_net_profit BETWEEN 50 AND 250 ) )
- -- GROUP BY r_reason_desc
- -- ORDER BY SUBSTR(r_reason_desc, 1, 20),
-          -- AVG(ws_quantity),
-          -- AVG(wr_refunded_cash),
-          -- AVG(wr_fee);
+-- @ID=TEMPLATE_85
+SELECT SUBSTR(r_reason_desc, 1, 20),
+       AVG(ws_quantity),
+       AVG(wr_refunded_cash),
+       AVG(wr_fee)
+  FROM web_sales,
+       web_returns,
+       web_page,
+       customer_demographics cd1,
+       customer_demographics cd2,
+       customer_address,
+       date_dim,
+       reason
+ WHERE ws_web_page_sk = wp_web_page_sk
+       AND ws_item_sk = wr_item_sk
+       AND ws_order_number = wr_order_number
+       AND ws_sold_date_sk = d_date_sk
+       AND d_year = 2002
+       AND cd1.cd_demo_sk = wr_refunded_cdemo_sk
+       AND cd2.cd_demo_sk = wr_returning_cdemo_sk
+       AND ca_address_sk = wr_refunded_addr_sk
+       AND r_reason_sk = wr_reason_sk
+       AND ( ( cd1.cd_marital_status = 'D'
+               AND cd1.cd_marital_status = cd2.cd_marital_status
+               AND cd1.cd_education_status = 'College'
+               AND cd1.cd_education_status = cd2.cd_education_status
+               AND ws_sales_price BETWEEN 100.00 AND 150.00 )
+              OR ( cd1.cd_marital_status = 'S'
+                   AND cd1.cd_marital_status = cd2.cd_marital_status
+                   AND cd1.cd_education_status = 'Secondary'
+                   AND cd1.cd_education_status = cd2.cd_education_status
+                   AND ws_sales_price BETWEEN 50.00 AND 100.00 )
+              OR ( cd1.cd_marital_status = 'W'
+                   AND cd1.cd_marital_status = cd2.cd_marital_status
+                   AND cd1.cd_education_status = '2 yr Degree'
+                   AND cd1.cd_education_status = cd2.cd_education_status
+                   AND ws_sales_price BETWEEN 150.00 AND 200.00 ) )
+       AND ( ( ca_country = 'United States'
+               AND ca_state IN ( 'TX', 'OH', 'IN' )
+               AND ws_net_profit BETWEEN 100 AND 200 )
+              OR ( ca_country = 'United States'
+                   AND ca_state IN ( 'AR', 'CA', 'NM' )
+                   AND ws_net_profit BETWEEN 150 AND 300 )
+              OR ( ca_country = 'United States'
+                   AND ca_state IN ( 'TX', 'AR', 'ND' )
+                   AND ws_net_profit BETWEEN 50 AND 250 ) )
+ GROUP BY r_reason_desc
+ ORDER BY SUBSTR(r_reason_desc, 1, 20),
+          AVG(ws_quantity),
+          AVG(wr_refunded_cash),
+          AVG(wr_fee);
 
--- query70.tpl
+-- @ID=TEMPLATE_70
 SELECT SUM(ss_net_profit)                     AS total_sum,
        s_state,
        s_county,
@@ -1590,7 +1585,7 @@ SELECT SUM(ss_net_profit)                     AS total_sum,
           END,
           rank_within_parent;
 
--- query67.tpl
+-- @ID=TEMPLATE_67
 SELECT *
   FROM (SELECT i_category,
                i_class,
@@ -1633,59 +1628,58 @@ SELECT *
           sumsales,
           rk;
 
--- query28.tpl
--- NOTE: STORE_SALES referenced more than once
--- SELECT *
-  -- FROM (SELECT AVG(ss_list_price)            b1_lp,
-               -- COUNT(ss_list_price)          b1_cnt,
-               -- COUNT(DISTINCT ss_list_price) b1_cntd
-          -- FROM store_sales
-         -- WHERE ss_quantity BETWEEN 0 AND 5
-               -- AND ( ss_list_price BETWEEN 137 AND 137 + 10
-                      -- OR ss_coupon_amt BETWEEN 12463 AND 12463 + 1000
-                      -- OR ss_wholesale_cost BETWEEN 11 AND 11 + 20 )) b1,
-       -- (SELECT AVG(ss_list_price)            b2_lp,
-               -- COUNT(ss_list_price)          b2_cnt,
-               -- COUNT(DISTINCT ss_list_price) b2_cntd
-          -- FROM store_sales
-         -- WHERE ss_quantity BETWEEN 6 AND 10
-               -- AND ( ss_list_price BETWEEN 33 AND 33 + 10
-                      -- OR ss_coupon_amt BETWEEN 11715 AND 11715 + 1000
-                      -- OR ss_wholesale_cost BETWEEN 28 AND 28 + 20 )) b2,
-       -- (SELECT AVG(ss_list_price)            b3_lp,
-               -- COUNT(ss_list_price)          b3_cnt,
-               -- COUNT(DISTINCT ss_list_price) b3_cntd
-          -- FROM store_sales
-         -- WHERE ss_quantity BETWEEN 11 AND 15
-               -- AND ( ss_list_price BETWEEN 129 AND 129 + 10
-                      -- OR ss_coupon_amt BETWEEN 976 AND 976 + 1000
-                      -- OR ss_wholesale_cost BETWEEN 15 AND 15 + 20 )) b3,
-       -- (SELECT AVG(ss_list_price)            b4_lp,
-               -- COUNT(ss_list_price)          b4_cnt,
-               -- COUNT(DISTINCT ss_list_price) b4_cntd
-          -- FROM store_sales
-         -- WHERE ss_quantity BETWEEN 16 AND 20
-               -- AND ( ss_list_price BETWEEN 16 AND 16 + 10
-                      -- OR ss_coupon_amt BETWEEN 13211 AND 13211 + 1000
-                      -- OR ss_wholesale_cost BETWEEN 10 AND 10 + 20 )) b4,
-       -- (SELECT AVG(ss_list_price)            b5_lp,
-               -- COUNT(ss_list_price)          b5_cnt,
-               -- COUNT(DISTINCT ss_list_price) b5_cntd
-          -- FROM store_sales
-         -- WHERE ss_quantity BETWEEN 21 AND 25
-               -- AND ( ss_list_price BETWEEN 104 AND 104 + 10
-                      -- OR ss_coupon_amt BETWEEN 5947 AND 5947 + 1000
-                      -- OR ss_wholesale_cost BETWEEN 0 AND 0 + 20 )) b5,
-       -- (SELECT AVG(ss_list_price)            b6_lp,
-               -- COUNT(ss_list_price)          b6_cnt,
-               -- COUNT(DISTINCT ss_list_price) b6_cntd
-          -- FROM store_sales
-         -- WHERE ss_quantity BETWEEN 26 AND 30
-               -- AND ( ss_list_price BETWEEN 27 AND 27 + 10
-                      -- OR ss_coupon_amt BETWEEN 10996 AND 10996 + 1000
-                      -- OR ss_wholesale_cost BETWEEN 32 AND 32 + 20 )) b6;
+-- @ID=TEMPLATE_28
+SELECT *
+  FROM (SELECT AVG(ss_list_price)            b1_lp,
+               COUNT(ss_list_price)          b1_cnt,
+               COUNT(DISTINCT ss_list_price) b1_cntd
+          FROM store_sales
+         WHERE ss_quantity BETWEEN 0 AND 5
+               AND ( ss_list_price BETWEEN 137 AND 137 + 10
+                      OR ss_coupon_amt BETWEEN 12463 AND 12463 + 1000
+                      OR ss_wholesale_cost BETWEEN 11 AND 11 + 20 )) b1,
+       (SELECT AVG(ss_list_price)            b2_lp,
+               COUNT(ss_list_price)          b2_cnt,
+               COUNT(DISTINCT ss_list_price) b2_cntd
+          FROM store_sales
+         WHERE ss_quantity BETWEEN 6 AND 10
+               AND ( ss_list_price BETWEEN 33 AND 33 + 10
+                      OR ss_coupon_amt BETWEEN 11715 AND 11715 + 1000
+                      OR ss_wholesale_cost BETWEEN 28 AND 28 + 20 )) b2,
+       (SELECT AVG(ss_list_price)            b3_lp,
+               COUNT(ss_list_price)          b3_cnt,
+               COUNT(DISTINCT ss_list_price) b3_cntd
+          FROM store_sales
+         WHERE ss_quantity BETWEEN 11 AND 15
+               AND ( ss_list_price BETWEEN 129 AND 129 + 10
+                      OR ss_coupon_amt BETWEEN 976 AND 976 + 1000
+                      OR ss_wholesale_cost BETWEEN 15 AND 15 + 20 )) b3,
+       (SELECT AVG(ss_list_price)            b4_lp,
+               COUNT(ss_list_price)          b4_cnt,
+               COUNT(DISTINCT ss_list_price) b4_cntd
+          FROM store_sales
+         WHERE ss_quantity BETWEEN 16 AND 20
+               AND ( ss_list_price BETWEEN 16 AND 16 + 10
+                      OR ss_coupon_amt BETWEEN 13211 AND 13211 + 1000
+                      OR ss_wholesale_cost BETWEEN 10 AND 10 + 20 )) b4,
+       (SELECT AVG(ss_list_price)            b5_lp,
+               COUNT(ss_list_price)          b5_cnt,
+               COUNT(DISTINCT ss_list_price) b5_cntd
+          FROM store_sales
+         WHERE ss_quantity BETWEEN 21 AND 25
+               AND ( ss_list_price BETWEEN 104 AND 104 + 10
+                      OR ss_coupon_amt BETWEEN 5947 AND 5947 + 1000
+                      OR ss_wholesale_cost BETWEEN 0 AND 0 + 20 )) b5,
+       (SELECT AVG(ss_list_price)            b6_lp,
+               COUNT(ss_list_price)          b6_cnt,
+               COUNT(DISTINCT ss_list_price) b6_cntd
+          FROM store_sales
+         WHERE ss_quantity BETWEEN 26 AND 30
+               AND ( ss_list_price BETWEEN 27 AND 27 + 10
+                      OR ss_coupon_amt BETWEEN 10996 AND 10996 + 1000
+                      OR ss_wholesale_cost BETWEEN 32 AND 32 + 20 )) b6;
 
--- query81.tpl
+-- @ID=TEMPLATE_81
 WITH customer_total_return
      AS (SELECT cr_returning_customer_sk   AS ctr_customer_sk,
                 ca_state                   AS ctr_state,
@@ -1740,7 +1734,7 @@ SELECT c_customer_id,
           ca_location_type,
           ctr_total_return;
 
--- query97.tpl
+-- @ID=TEMPLATE_97
 WITH ssci
      AS (SELECT ss_customer_sk customer_sk,
                 ss_item_sk     item_sk
@@ -1779,7 +1773,7 @@ SELECT SUM(CASE
          ON ( ssci.customer_sk = csci.customer_sk
               AND ssci.item_sk = csci.item_sk );
 
--- query66.tpl
+-- @ID=TEMPLATE_66
 SELECT w_warehouse_name,
        w_warehouse_sq_ft,
        w_city,
@@ -2085,7 +2079,7 @@ SELECT w_warehouse_name,
           YEAR
  ORDER BY w_warehouse_name;
 
--- query90.tpl
+-- @ID=TEMPLATE_90
 SELECT CAST(amc AS DECIMAL(15, 4)) / CAST(pmc AS DECIMAL(15, 4)) am_pm_ratio
   FROM (SELECT COUNT(*) amc
           FROM web_sales,
@@ -2111,7 +2105,7 @@ SELECT CAST(amc AS DECIMAL(15, 4)) / CAST(pmc AS DECIMAL(15, 4)) am_pm_ratio
                AND web_page.wp_char_count BETWEEN 5000 AND 5200) pt
  ORDER BY am_pm_ratio;
 
--- query17.tpl
+-- @ID=TEMPLATE_17
 SELECT i_item_id,
        i_item_desc,
        s_state,
@@ -2155,7 +2149,7 @@ SELECT i_item_id,
           i_item_desc,
           s_state;
 
--- query47.tpl
+-- @ID=TEMPLATE_47
 WITH v1
      AS (SELECT i_category,
                 i_brand,
@@ -2220,7 +2214,7 @@ SELECT *
  ORDER BY sum_sales - avg_monthly_sales,
           s_store_name;
 
--- query95.tpl
+-- @ID=TEMPLATE_95
 WITH ws_wh
      AS (SELECT ws1.ws_order_number,
                 ws1.ws_warehouse_sk wh1,
@@ -2251,27 +2245,26 @@ SELECT COUNT(DISTINCT ws_order_number) AS "order count",
                                     WHERE wr_order_number = ws_wh.ws_order_number)
  ORDER BY COUNT(DISTINCT ws_order_number);
 
--- query92.tpl
--- NOTE: WEB_SALES referenced more than once
--- SELECT SUM(ws_ext_discount_amt) AS "Excess Discount Amount"
-  -- FROM web_sales,
-       -- item,
-       -- date_dim
- -- WHERE i_manufact_id = 675
-       -- AND i_item_sk = ws_item_sk
-       -- AND d_date >= '1998-01-30'
-       -- AND d_date <= '1998-04-30'
-       -- AND d_date_sk = ws_sold_date_sk
-       -- AND ws_ext_discount_amt > (SELECT 1.3 * AVG(ws_ext_discount_amt)
-                                    -- FROM web_sales,
-                                         -- date_dim
-                                   -- WHERE ws_item_sk = i_item_sk
-                                         -- AND d_date <= '1998-01-30'
-                                         -- AND d_date >= '1998-04-30'
-                                         -- AND d_date_sk = ws_sold_date_sk)
- -- ORDER BY SUM(ws_ext_discount_amt);
+-- @ID=TEMPLATE_92
+SELECT SUM(ws_ext_discount_amt) AS "Excess Discount Amount"
+  FROM web_sales,
+       item,
+       date_dim
+ WHERE i_manufact_id = 675
+       AND i_item_sk = ws_item_sk
+       AND d_date >= '1998-01-30'
+       AND d_date <= '1998-04-30'
+       AND d_date_sk = ws_sold_date_sk
+       AND ws_ext_discount_amt > (SELECT 1.3 * AVG(ws_ext_discount_amt)
+                                    FROM web_sales,
+                                         date_dim
+                                   WHERE ws_item_sk = i_item_sk
+                                         AND d_date <= '1998-01-30'
+                                         AND d_date >= '1998-04-30'
+                                         AND d_date_sk = ws_sold_date_sk)
+ ORDER BY SUM(ws_ext_discount_amt);
 
--- query3.tpl
+-- @ID=TEMPLATE_03
 SELECT d_year,
        item.i_brand_id         brand_id,
        item.i_brand            brand,
@@ -2290,56 +2283,7 @@ SELECT d_year,
           ext_price DESC,
           brand_id;
 
--- query51.tpl
--- TODO: issue with SUBQUERY x
---WITH web_v1
-     --AS (SELECT ws_item_sk item_sk,
-                --d_date,
-                --SUM(ws_sales_price) cume_sales
-           --FROM web_sales,
-                --date_dim
-          --WHERE ws_sold_date_sk = d_date_sk
-                --AND d_year = 1998
-                --AND ws_item_sk IS NOT NULL
-          --GROUP BY ws_item_sk,
-                   --d_date),
-     --store_v1
-     --AS (SELECT ss_item_sk item_sk,
-                --d_date,
-                --SUM(ss_sales_price) cume_sales
-           --FROM store_sales,
-                --date_dim
-          --WHERE ss_sold_date_sk = d_date_sk
-                --AND d_year = 1998
-                --AND ss_item_sk IS NOT NULL
-          --GROUP BY ss_item_sk,
-                   --d_date)
---SELECT *
-  --FROM (SELECT x.item_sk,
-               --d_date,
-               --web_sales,
-               --store_sales,
-               --MAX(web_sales)   web_cumulative,
-               --MAX(store_sales) store_cumulative
-          --FROM (SELECT CASE
-                         --WHEN web.item_sk IS NOT NULL THEN web.item_sk
-                         --ELSE store.item_sk
-                       --END              item_sk,
-                       --CASE
-                         ----WHEN web.d_date IS NOT NULL THEN web.d_date
-                         --ELSE store.d_date
-                       --END              d_date,
-                       --web.cume_sales   web_sales,
-                       --store.cume_sales store_sales
-                  --FROM web_v1 web
-                       --FULL OUTER JOIN store_v1 store
-                         --ON ( web.item_sk = store.item_sk
-                              --AND web.d_date = store.d_date ))x)y
- --WHERE web_cumulative > store_cumulative
- --ORDER BY item_sk,
-          --d_date;
-
--- query35.tpl
+-- @ID=TEMPLATE_35
 SELECT ca_state,
        cd_gender,
        cd_marital_status,
@@ -2396,7 +2340,7 @@ SELECT ca_state,
           cd_dep_employed_count,
           cd_dep_college_count;
 
--- query49.tpl
+-- @ID=TEMPLATE_49
 SELECT 'web' AS channel,
        web.item,
        web.return_ratio,
@@ -2507,7 +2451,7 @@ SELECT 'store' AS channel,
           4,
           5;
 
--- query9.tpl
+-- @ID=TEMPLATE_09
 SELECT CASE
          WHEN (SELECT COUNT(*)
                  FROM store_sales
@@ -2561,7 +2505,7 @@ SELECT CASE
   FROM reason
  WHERE r_reason_sk = 1;
 
--- query31.tpl
+-- @ID=TEMPLATE_31
 WITH ss
      AS (SELECT ca_county,
                 d_qoy,
@@ -2633,7 +2577,7 @@ SELECT /* tt */ ss1.ca_county,
                  END
  ORDER BY ss1.ca_county;
 
--- query11.tpl
+-- @ID=TEMPLATE_11
 WITH year_total
      AS (SELECT c_customer_id                                customer_id,
                 c_first_name                                 customer_first_name,
@@ -2720,29 +2664,28 @@ SELECT t_s_secyear.customer_id,
           t_s_secyear.c_birth_country,
           t_s_secyear.c_login;
 
--- query93.tpl
--- NOTE: DATE_DIM referenced more than once
--- SELECT ss_customer_sk,
-       -- SUM(act_sales) sumsales
-  -- FROM (SELECT ss_item_sk,
-               -- ss_ticket_number,
-               -- ss_customer_sk,
-               -- CASE
-                 -- WHEN sr_return_quantity IS NOT NULL THEN ( ss_quantity - sr_return_quantity ) * ss_sales_price
-                 -- ELSE ( ss_quantity * ss_sales_price )
-               -- END act_sales
-          -- FROM store_sales
-               -- LEFT OUTER JOIN store_returns
-                 -- ON ( sr_item_sk = ss_item_sk
-                      -- AND sr_ticket_number = ss_ticket_number ),
-               -- reason
-         -- WHERE sr_reason_sk = r_reason_sk
-               -- AND r_reason_desc = 'reason 67') t
- -- GROUP BY ss_customer_sk
- -- ORDER BY sumsales,
-          -- ss_customer_sk;
+-- @ID=TEMPLATE_93
+SELECT ss_customer_sk,
+       SUM(act_sales) sumsales
+  FROM (SELECT ss_item_sk,
+               ss_ticket_number,
+               ss_customer_sk,
+               CASE
+                 WHEN sr_return_quantity IS NOT NULL THEN ( ss_quantity - sr_return_quantity ) * ss_sales_price
+                 ELSE ( ss_quantity * ss_sales_price )
+               END act_sales
+          FROM store_sales
+               LEFT OUTER JOIN store_returns
+                 ON ( sr_item_sk = ss_item_sk
+                      AND sr_ticket_number = ss_ticket_number ),
+               reason
+         WHERE sr_reason_sk = r_reason_sk
+               AND r_reason_desc = 'reason 67') t
+ GROUP BY ss_customer_sk
+ ORDER BY sumsales,
+          ss_customer_sk;
 
--- query29.tpl
+-- @ID=TEMPLATE_29
 SELECT i_item_id,
        i_item_desc,
        s_store_id,
@@ -2782,7 +2725,7 @@ SELECT i_item_id,
           s_store_id,
           s_store_name;
 
--- query38.tpl
+-- @ID=TEMPLATE_38
 SELECT COUNT(*)
   FROM (SELECT DISTINCT c_last_name,
                         c_first_name,
@@ -2814,7 +2757,7 @@ SELECT COUNT(*)
                AND web_sales.ws_bill_customer_sk = customer.c_customer_sk
                AND d_year = 1999) hot_cust;
 
--- query22.tpl
+-- @ID=TEMPLATE_22
 SELECT i_product_name,
        i_brand,
        i_class,
@@ -2835,7 +2778,7 @@ SELECT i_product_name,
           i_class,
           i_category;
 
--- query89.tpl
+-- @ID=TEMPLATE_89
 SELECT *
   FROM(SELECT i_category,
               i_class,
@@ -2870,27 +2813,26 @@ SELECT *
  ORDER BY sum_sales - avg_monthly_sales,
           s_store_name;
 
--- query15.tpl
--- NOTE: DATE_DIM referenced more than once
--- SELECT ca_zip,
-       -- SUM(cs_sales_price)
-  -- FROM catalog_sales,
-       -- customer,
-       -- customer_address,
-       -- date_dim
- -- WHERE cs_bill_customer_sk = c_customer_sk
-       -- AND c_current_addr_sk = ca_address_sk
-       -- AND ( SUBSTR(ca_zip, 1, 5) IN ( '85669', '86197', '88274', '83405',
-                                       -- '86475', '85392', '85460', '80348', '81792' )
-              -- OR ca_state IN ( 'CA', 'WA', 'GA' )
-              -- OR cs_sales_price > 500 )
-       -- AND cs_sold_date_sk = d_date_sk
-       -- AND d_qoy = 1
-       -- AND d_year = 1998
- -- GROUP BY ca_zip
- -- ORDER BY ca_zip;
+-- @ID=TEMPLATE_15
+SELECT ca_zip,
+       SUM(cs_sales_price)
+  FROM catalog_sales,
+       customer,
+       customer_address,
+       date_dim
+ WHERE cs_bill_customer_sk = c_customer_sk
+       AND c_current_addr_sk = ca_address_sk
+       AND ( SUBSTR(ca_zip, 1, 5) IN ( '85669', '86197', '88274', '83405',
+                                       '86475', '85392', '85460', '80348', '81792' )
+              OR ca_state IN ( 'CA', 'WA', 'GA' )
+              OR cs_sales_price > 500 )
+       AND cs_sold_date_sk = d_date_sk
+       AND d_qoy = 1
+       AND d_year = 1998
+ GROUP BY ca_zip
+ ORDER BY ca_zip;
 
--- query6.tpl
+-- @ID=TEMPLATE_06
 SELECT a.ca_state state,
        COUNT(*)   cnt
   FROM customer_address a,
@@ -2913,28 +2855,27 @@ SELECT a.ca_state state,
 HAVING COUNT(*) >= 10
  ORDER BY cnt;
 
--- query52.tpl
--- NOTE: DATE_DIM referenced more than once
--- SELECT d_year,
-       -- item.i_brand_id         brand_id,
-       -- item.i_brand            brand,
-       -- SUM(ss_ext_sales_price) ext_price
-  -- FROM date_dim,
-       -- store_sales,
-       -- item
- -- WHERE d_date_sk = store_sales.ss_sold_date_sk
-       -- AND store_sales.ss_item_sk = item.i_item_sk
-       -- AND item.i_manager_id = 1
-       -- AND d_moy = 11
-       -- AND d_year = 1998
- -- GROUP BY d_year,
-          -- item.i_brand,
-          -- item.i_brand_id
- -- ORDER BY d_year,
-          -- ext_price DESC,
-          -- brand_id;
+-- @ID=TEMPLATE_52
+SELECT d_year,
+       item.i_brand_id         brand_id,
+       item.i_brand            brand,
+       SUM(ss_ext_sales_price) ext_price
+  FROM date_dim,
+       store_sales,
+       item
+ WHERE d_date_sk = store_sales.ss_sold_date_sk
+       AND store_sales.ss_item_sk = item.i_item_sk
+       AND item.i_manager_id = 1
+       AND d_moy = 11
+       AND d_year = 1998
+ GROUP BY d_year,
+          item.i_brand,
+          item.i_brand_id
+ ORDER BY d_year,
+          ext_price DESC,
+          brand_id;
 
--- query50.tpl
+-- @ID=TEMPLATE_50
 SELECT s_store_name,
        s_company_id,
        s_street_number,
@@ -3002,96 +2943,94 @@ SELECT s_store_name,
           s_state,
           s_zip;
 
--- query42.tpl
--- NOTE: ITEM referenced more than once
--- SELECT d_year,
-       -- item.i_category_id,
-       -- item.i_category,
-       -- SUM(ss_ext_sales_price)
-  -- FROM date_dim,
-       -- store_sales,
-       -- item
- -- WHERE d_date_sk = store_sales.ss_sold_date_sk
-       -- AND store_sales.ss_item_sk = item.i_item_sk
-       -- AND item.i_manager_id = 1
-       -- AND d_moy = 12
-       -- AND d_year = 1998
- -- GROUP BY d_year,
-          -- item.i_category_id,
-          -- item.i_category
- -- ORDER BY SUM(ss_ext_sales_price) DESC,
-          -- d_year,
-          -- item.i_category_id,
-          -- item.i_category;
+-- @ID=TEMPLATE_42
+SELECT d_year,
+       item.i_category_id,
+       item.i_category,
+       SUM(ss_ext_sales_price)
+  FROM date_dim,
+       store_sales,
+       item
+ WHERE d_date_sk = store_sales.ss_sold_date_sk
+       AND store_sales.ss_item_sk = item.i_item_sk
+       AND item.i_manager_id = 1
+       AND d_moy = 12
+       AND d_year = 1998
+ GROUP BY d_year,
+          item.i_category_id,
+          item.i_category
+ ORDER BY SUM(ss_ext_sales_price) DESC,
+          d_year,
+          item.i_category_id,
+          item.i_category;
 
--- query41.tpl
--- NOTE: ITEM referenced more than once
--- SELECT DISTINCT( i_product_name )
-  -- FROM item i1
- -- WHERE i_manufact_id BETWEEN 844 AND 844 + 40
-       -- AND (SELECT COUNT(*) AS item_cnt
-              -- FROM item
-             -- WHERE ( i_manufact = i1.i_manufact
-                     -- AND ( ( i_category = 'Women'
-                             -- AND ( i_color = 'dark'
-                                    -- OR i_color = 'burnished' )
-                             -- AND ( i_units = 'Oz'
-                                    -- OR i_units = 'Pallet' )
-                             -- AND ( i_size = 'small'
-                                    -- OR i_size = 'N/A' ) )
-                            -- OR ( i_category = 'Women'
-                                 -- AND ( i_color = 'blush'
-                                        -- OR i_color = 'white' )
-                                 -- AND ( i_units = 'Box'
-                                        -- OR i_units = 'Bundle' )
-                                 -- AND ( i_size = 'petite'
-                                        -- OR i_size = 'medium' ) )
-                            -- OR ( i_category = 'Men'
-                                 -- AND ( i_color = 'pink'
-                                        -- OR i_color = 'rose' )
-                                 -- AND ( i_units = 'Bunch'
-                                        -- OR i_units = 'Pound' )
-                                 -- AND ( i_size = 'extra large'
-                                        -- OR i_size = 'large' ) )
-                            -- OR ( i_category = 'Men'
-                                 -- AND ( i_color = 'orchid'
-                                        -- OR i_color = 'chocolate' )
-                                 -- AND ( i_units = 'Unknown'
-                                        -- OR i_units = 'Carton' )
-                                 -- AND ( i_size = 'small'
-                                        -- OR i_size = 'N/A' ) ) ) )
-                    -- OR ( i_manufact = i1.i_manufact
-                         -- AND ( ( i_category = 'Women'
-                                 -- AND ( i_color = 'papaya'
-                                        -- OR i_color = 'cornsilk' )
-                                 -- AND ( i_units = 'Cup'
-                                        -- OR i_units = 'Case' )
-                                 -- AND ( i_size = 'small'
-                                        -- OR i_size = 'N/A' ) )
-                                -- OR ( i_category = 'Women'
-                                     -- AND ( i_color = 'red'
-                                            -- OR i_color = 'antique' )
-                                     -- AND ( i_units = 'Lb'
-                                            -- OR i_units = 'Dram' )
-                                     -- AND ( i_size = 'petite'
-                                            -- OR i_size = 'medium' ) )
-                                -- OR ( i_category = 'Men'
-                                     -- AND ( i_color = 'beige'
-                                            -- OR i_color = 'metallic' )
-                                     -- AND ( i_units = 'N/A'
-                                            -- OR i_units = 'Tbl' )
-                                     -- AND ( i_size = 'extra large'
-                                            -- OR i_size = 'large' ) )
-                                -- OR ( i_category = 'Men'
-                                     -- AND ( i_color = 'slate'
-                                            -- OR i_color = 'dim' )
-                                     -- AND ( i_units = 'Dozen'
-                                            -- OR i_units = 'Ton' )
-                                     -- AND ( i_size = 'small'
-                                            -- OR i_size = 'N/A' ) ) ) )) > 0
- -- ORDER BY i_product_name;
+-- @ID=TEMPLATE_41
+SELECT DISTINCT( i_product_name )
+  FROM item i1
+ WHERE i_manufact_id BETWEEN 844 AND 844 + 40
+       AND (SELECT COUNT(*) AS item_cnt
+              FROM item
+             WHERE ( i_manufact = i1.i_manufact
+                     AND ( ( i_category = 'Women'
+                             AND ( i_color = 'dark'
+                                    OR i_color = 'burnished' )
+                             AND ( i_units = 'Oz'
+                                    OR i_units = 'Pallet' )
+                             AND ( i_size = 'small'
+                                    OR i_size = 'N/A' ) )
+                            OR ( i_category = 'Women'
+                                 AND ( i_color = 'blush'
+                                        OR i_color = 'white' )
+                                 AND ( i_units = 'Box'
+                                        OR i_units = 'Bundle' )
+                                 AND ( i_size = 'petite'
+                                        OR i_size = 'medium' ) )
+                            OR ( i_category = 'Men'
+                                 AND ( i_color = 'pink'
+                                        OR i_color = 'rose' )
+                                 AND ( i_units = 'Bunch'
+                                        OR i_units = 'Pound' )
+                                 AND ( i_size = 'extra large'
+                                        OR i_size = 'large' ) )
+                            OR ( i_category = 'Men'
+                                 AND ( i_color = 'orchid'
+                                        OR i_color = 'chocolate' )
+                                 AND ( i_units = 'Unknown'
+                                        OR i_units = 'Carton' )
+                                 AND ( i_size = 'small'
+                                        OR i_size = 'N/A' ) ) ) )
+                    OR ( i_manufact = i1.i_manufact
+                         AND ( ( i_category = 'Women'
+                                 AND ( i_color = 'papaya'
+                                        OR i_color = 'cornsilk' )
+                                 AND ( i_units = 'Cup'
+                                        OR i_units = 'Case' )
+                                 AND ( i_size = 'small'
+                                        OR i_size = 'N/A' ) )
+                                OR ( i_category = 'Women'
+                                     AND ( i_color = 'red'
+                                            OR i_color = 'antique' )
+                                     AND ( i_units = 'Lb'
+                                            OR i_units = 'Dram' )
+                                     AND ( i_size = 'petite'
+                                            OR i_size = 'medium' ) )
+                                OR ( i_category = 'Men'
+                                     AND ( i_color = 'beige'
+                                            OR i_color = 'metallic' )
+                                     AND ( i_units = 'N/A'
+                                            OR i_units = 'Tbl' )
+                                     AND ( i_size = 'extra large'
+                                            OR i_size = 'large' ) )
+                                OR ( i_category = 'Men'
+                                     AND ( i_color = 'slate'
+                                            OR i_color = 'dim' )
+                                     AND ( i_units = 'Dozen'
+                                            OR i_units = 'Ton' )
+                                     AND ( i_size = 'small'
+                                            OR i_size = 'N/A' ) ) ) )) > 0
+ ORDER BY i_product_name;
 
--- query8.tpl
+-- @ID=TEMPLATE_08
 SELECT s_store_name,
        SUM(ss_net_profit)
   FROM store_sales,
@@ -3218,7 +3157,7 @@ SELECT s_store_name,
  GROUP BY s_store_name
  ORDER BY s_store_name;
 
--- query12.tpl
+-- @ID=TEMPLATE_12
 SELECT i_item_desc,
        i_category,
        i_class,
@@ -3244,7 +3183,7 @@ SELECT i_item_desc,
           i_item_desc,
           revenueratio;
 
--- query20.tpl
+-- @ID=TEMPLATE_20
 SELECT i_item_desc,
        i_category,
        i_class,
@@ -3270,7 +3209,7 @@ SELECT i_item_desc,
           i_item_desc,
           revenueratio;
 
--- query88.tpl
+-- @ID=TEMPLATE_88
 SELECT *
   FROM (SELECT COUNT(*) h8_30_to_9
           FROM store_sales,
@@ -3409,7 +3348,7 @@ SELECT *
                            AND household_demographics.hd_vehicle_count <= 4 + 2 ) )
                AND store.s_store_name = 'ese') s8;
 
--- query82.tpl
+-- @ID=TEMPLATE_82
 SELECT i_item_id,
        i_item_desc,
        i_current_price
@@ -3430,7 +3369,7 @@ SELECT i_item_id,
           i_current_price
  ORDER BY i_item_id;
 
--- query23.tpl
+-- @ID=TEMPLATE_23
 WITH frequent_ss_items
      AS (SELECT SUBSTR(i_item_desc, 1, 30) itemdesc,
                 i_item_sk                  item_sk,
@@ -3489,7 +3428,7 @@ SELECT SUM(sales)
                 AND ws_bill_customer_sk IN (SELECT c_customer_sk
                                               FROM best_ss_customer))) y;
 
--- query14.tpl
+-- @ID=TEMPLATE_14
 WITH cross_items
      AS (SELECT i_item_sk ss_item_sk
            FROM item,
@@ -3621,7 +3560,7 @@ SELECT channel,
           i_class_id,
           i_category_id;
 
--- query57.tpl
+-- @ID=TEMPLATE_57
 WITH v1
      AS (SELECT i_category,
                 i_brand,
@@ -3680,7 +3619,7 @@ SELECT *
  ORDER BY sum_sales - avg_monthly_sales,
           cc_name;
 
--- query65.tpl
+-- @ID=TEMPLATE_65
 SELECT s_store_name,
        i_item_desc,
        sc.revenue
@@ -3714,7 +3653,7 @@ SELECT s_store_name,
  ORDER BY s_store_name,
           i_item_desc;
 
--- query71.tpl
+-- @ID=TEMPLATE_71
 SELECT i_brand_id     brand_id,
        i_brand        brand,
        t_hour,
@@ -3763,48 +3702,47 @@ SELECT i_brand_id     brand_id,
  ORDER BY ext_price DESC,
           i_brand_id;
 
--- query34.tpl
--- TODO: issue with predicates when executing the what-if call to plug an index
--- SELECT c_last_name,
-       -- c_first_name,
-       -- c_salutation,
-       -- c_preferred_cust_flag,
-       -- ss_ticket_number,
-       -- cnt
-  -- FROM (SELECT ss_ticket_number,
-               -- ss_customer_sk,
-               -- COUNT(*) cnt
-          -- FROM store_sales,
-               -- date_dim,
-               -- store,
-               -- household_demographics
-         -- WHERE store_sales.ss_sold_date_sk = date_dim.d_date_sk
-               -- -- AND store_sales.ss_store_sk = store.s_store_sk
-               -- AND store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk
-               -- AND ( date_dim.d_dom BETWEEN 1 AND 3
-                      -- OR date_dim.d_dom BETWEEN 25 AND 28 )
-               -- AND ( household_demographics.hd_buy_potential = '501-1000'
-                      -- OR household_demographics.hd_buy_potential = '5001-10000' )
-               -- AND household_demographics.hd_vehicle_count > 0
-               -- AND ( CASE
-                       -- WHEN household_demographics.hd_vehicle_count > 0 THEN household_demographics.hd_dep_count /
-                                                                             -- household_demographics.hd_vehicle_count
-                       -- ELSE NULL
-                     -- END ) > 1.2
-               -- AND date_dim.d_year IN ( 1998, 1998 + 1, 1998 + 2 )
-               -- AND store.s_county IN ( 'Ziebach County', 'Williamson County', 'Walker County', 'Ziebach County',
-                                       -- 'Ziebach County', 'Ziebach County', 'Williamson County', 'Ziebach County' )
-         -- GROUP BY ss_ticket_number,
-                  -- ss_customer_sk) dn,
-       -- customer
- -- WHERE ss_customer_sk = c_customer_sk
-       -- AND cnt BETWEEN 15 AND 20
- -- ORDER BY c_last_name,
-          -- c_first_name,
-          -- c_salutation,
-          -- c_preferred_cust_flag DESC;
+-- @ID=TEMPLATE_34
+SELECT c_last_name,
+       c_first_name,
+       c_salutation,
+       c_preferred_cust_flag,
+       ss_ticket_number,
+       cnt
+  FROM (SELECT ss_ticket_number,
+               ss_customer_sk,
+               COUNT(*) cnt
+          FROM store_sales,
+               date_dim,
+               store,
+               household_demographics
+         WHERE store_sales.ss_sold_date_sk = date_dim.d_date_sk
+               -- AND store_sales.ss_store_sk = store.s_store_sk
+               AND store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk
+               AND ( date_dim.d_dom BETWEEN 1 AND 3
+                      OR date_dim.d_dom BETWEEN 25 AND 28 )
+               AND ( household_demographics.hd_buy_potential = '501-1000'
+                      OR household_demographics.hd_buy_potential = '5001-10000' )
+               AND household_demographics.hd_vehicle_count > 0
+               AND ( CASE
+                       WHEN household_demographics.hd_vehicle_count > 0 THEN household_demographics.hd_dep_count /
+                                                                             household_demographics.hd_vehicle_count
+                       ELSE NULL
+                     END ) > 1.2
+               AND date_dim.d_year IN ( 1998, 1998 + 1, 1998 + 2 )
+               AND store.s_county IN ( 'Ziebach County', 'Williamson County', 'Walker County', 'Ziebach County',
+                                       'Ziebach County', 'Ziebach County', 'Williamson County', 'Ziebach County' )
+         GROUP BY ss_ticket_number,
+                  ss_customer_sk) dn,
+       customer
+ WHERE ss_customer_sk = c_customer_sk
+       AND cnt BETWEEN 15 AND 20
+ ORDER BY c_last_name,
+          c_first_name,
+          c_salutation,
+          c_preferred_cust_flag DESC;
 
--- query48.tpl
+-- @ID=TEMPLATE_48
 SELECT SUM (ss_quantity)
   FROM store_sales,
        store,
@@ -3839,7 +3777,7 @@ SELECT SUM (ss_quantity)
                    AND ca_state IN ( 'WI', 'IA', 'MO' )
                    AND ss_net_profit BETWEEN 50 AND 25000 ) );
 
--- query30.tpl
+-- @ID=TEMPLATE_30
 WITH customer_total_return
      AS (SELECT wr_returning_customer_sk AS ctr_customer_sk,
                 ca_state                 AS ctr_state,
@@ -3888,7 +3826,7 @@ SELECT c_customer_id,
           c_last_review_date,
           ctr_total_return;
 
--- query74.tpl
+-- @ID=TEMPLATE_74
 WITH year_total
      AS (SELECT c_customer_id    customer_id,
                 c_first_name     customer_first_name,
@@ -3952,7 +3890,7 @@ SELECT t_s_secyear.customer_id,
                  END
  ORDER BY 1;
 
--- query87.tpl
+-- @ID=TEMPLATE_87
 SELECT COUNT(*)
   FROM ((SELECT DISTINCT c_last_name,
                          c_first_name,
@@ -3984,7 +3922,7 @@ SELECT COUNT(*)
                 AND web_sales.ws_bill_customer_sk = customer.c_customer_sk
                 AND d_year = 1998)) cool_cust;
 
--- query77.tpl
+-- @ID=TEMPLATE_77
 WITH ss
      AS (SELECT s_store_sk,
                 SUM(ss_ext_sales_price) AS sales,
@@ -4085,7 +4023,7 @@ SELECT channel,
  ORDER BY channel,
           id;
 
--- query73.tpl
+-- @ID=TEMPLATE_73
 SELECT c_last_name,
        c_first_name,
        c_salutation,
@@ -4120,7 +4058,7 @@ SELECT c_last_name,
        AND cnt BETWEEN 1 AND 5
  ORDER BY cnt DESC;
 
--- query84.tpl
+-- @ID=TEMPLATE_84
 SELECT c_customer_id    AS customer_id,
        c_last_name
         || ', '
@@ -4141,7 +4079,7 @@ SELECT c_customer_id    AS customer_id,
        AND sr_cdemo_sk = cd_demo_sk
  ORDER BY c_customer_id;
 
--- query54.tpl
+-- @ID=TEMPLATE_54
 WITH my_customers
      AS (SELECT DISTINCT c_customer_sk,
                          c_current_addr_sk
@@ -4196,7 +4134,7 @@ SELECT segment,
  ORDER BY segment,
           num_customers;
 
--- query55.tpl
+-- @ID=TEMPLATE_55
 SELECT i_brand_id              brand_id,
        i_brand                 brand,
        SUM(ss_ext_sales_price) ext_price
@@ -4213,7 +4151,7 @@ SELECT i_brand_id              brand_id,
  ORDER BY ext_price DESC,
           i_brand_id;
 
--- query56.tpl
+-- @ID=TEMPLATE_56
 WITH ss
      AS (SELECT i_item_id,
                 SUM(ss_ext_sales_price) total_sales
@@ -4278,88 +4216,87 @@ SELECT i_item_id,
  GROUP BY i_item_id
  ORDER BY total_sales;
 
--- query2.tpl
--- TODO: error when executing a what-if call (when executing the statement.executeBatch() call of JDBC)
--- WITH wscs
-     -- AS (SELECT sold_date_sk,
-                -- sales_price
-           -- FROM (SELECT ws_sold_date_sk    sold_date_sk,
-                        -- ws_ext_sales_price sales_price
-                   -- FROM web_sales) x
-         -- UNION ALL
-         -- (SELECT cs_sold_date_sk    sold_date_sk,
-                 -- cs_ext_sales_price sales_price
-            -- FROM catalog_sales)),
-     -- wswscs
-     -- AS (SELECT d_week_seq,
-                -- SUM(CASE
-                      -- WHEN ( d_day_name = 'Sunday' ) THEN sales_price
-                      -- ELSE NULL
-                    -- END) sun_sales,
-                -- SUM(CASE
-                      -- WHEN ( d_day_name = 'Monday' ) THEN sales_price
-                      -- ELSE NULL
-                    -- END) mon_sales,
-                -- SUM(CASE
-                      -- WHEN ( d_day_name = 'Tuesday' ) THEN sales_price
-                      -- ELSE NULL
-                    -- END) tue_sales,
-                -- SUM(CASE
-                      -- WHEN ( d_day_name = 'Wednesday' ) THEN sales_price
-                      -- ELSE NULL
-                    -- END) wed_sales,
-                -- SUM(CASE
-                      -- WHEN ( d_day_name = 'Thursday' ) THEN sales_price
-                      -- ELSE NULL
-                    -- END) thu_sales,
-                -- SUM(CASE
-                      -- WHEN ( d_day_name = 'Friday' ) THEN sales_price
-                      -- ELSE NULL
-                    -- END) fri_sales,
-                -- SUM(CASE
-                      -- WHEN ( d_day_name = 'Saturday' ) THEN sales_price
-                      -- ELSE NULL
-                    -- END) sat_sales
-           -- FROM wscs,
-                -- date_dim
-          -- WHERE d_date_sk = sold_date_sk
-          -- GROUP BY d_week_seq)
--- SELECT d_week_seq1,
-       -- ROUND(sun_sales1 / sun_sales2, 2),
-       -- ROUND(mon_sales1 / mon_sales2, 2),
-       -- ROUND(tue_sales1 / tue_sales2, 2),
-       -- ROUND(wed_sales1 / wed_sales2, 2),
-       -- ROUND(thu_sales1 / thu_sales2, 2),
-       -- ROUND(fri_sales1 / fri_sales2, 2),
-       -- ROUND(sat_sales1 / sat_sales2, 2)
-  -- FROM (SELECT wswscs.d_week_seq d_week_seq1,
-               -- sun_sales         sun_sales1,
-               -- mon_sales         mon_sales1,
-               -- tue_sales         tue_sales1,
-               -- wed_sales         wed_sales1,
-               -- thu_sales         thu_sales1,
-               -- fri_sales         fri_sales1,
-               -- sat_sales         sat_sales1
-          -- FROM wswscs,
-               -- date_dim
-         -- WHERE date_dim.d_week_seq = wswscs.d_week_seq
-               -- AND d_year = 2001) y,
-       -- (SELECT wswscs.d_week_seq d_week_seq2,
-               -- sun_sales         sun_sales2,
-               -- mon_sales         mon_sales2,
-               -- tue_sales         tue_sales2,
-               -- wed_sales         wed_sales2,
-               -- thu_sales         thu_sales2,
-               -- fri_sales         fri_sales2,
-               -- sat_sales         sat_sales2
-          -- FROM wswscs,
-               -- date_dim
-         -- WHERE date_dim.d_week_seq = wswscs.d_week_seq
-               -- AND d_year = 2001 + 1) z
- -- WHERE d_week_seq1 = d_week_seq2 - 53
- -- ORDER BY d_week_seq1;
+-- @ID=TEMPLATE_02
+WITH wscs
+     AS (SELECT sold_date_sk,
+                sales_price
+           FROM (SELECT ws_sold_date_sk    sold_date_sk,
+                        ws_ext_sales_price sales_price
+                   FROM web_sales) x
+         UNION ALL
+         (SELECT cs_sold_date_sk    sold_date_sk,
+                 cs_ext_sales_price sales_price
+            FROM catalog_sales)),
+     wswscs
+     AS (SELECT d_week_seq,
+                SUM(CASE
+                      WHEN ( d_day_name = 'Sunday' ) THEN sales_price
+                      ELSE NULL
+                    END) sun_sales,
+                SUM(CASE
+                      WHEN ( d_day_name = 'Monday' ) THEN sales_price
+                      ELSE NULL
+                    END) mon_sales,
+                SUM(CASE
+                      WHEN ( d_day_name = 'Tuesday' ) THEN sales_price
+                      ELSE NULL
+                    END) tue_sales,
+                SUM(CASE
+                      WHEN ( d_day_name = 'Wednesday' ) THEN sales_price
+                      ELSE NULL
+                    END) wed_sales,
+                SUM(CASE
+                      WHEN ( d_day_name = 'Thursday' ) THEN sales_price
+                      ELSE NULL
+                    END) thu_sales,
+                SUM(CASE
+                      WHEN ( d_day_name = 'Friday' ) THEN sales_price
+                      ELSE NULL
+                    END) fri_sales,
+                SUM(CASE
+                      WHEN ( d_day_name = 'Saturday' ) THEN sales_price
+                      ELSE NULL
+                    END) sat_sales
+           FROM wscs,
+                date_dim
+          WHERE d_date_sk = sold_date_sk
+          GROUP BY d_week_seq)
+SELECT d_week_seq1,
+       ROUND(sun_sales1 / sun_sales2, 2),
+       ROUND(mon_sales1 / mon_sales2, 2),
+       ROUND(tue_sales1 / tue_sales2, 2),
+       ROUND(wed_sales1 / wed_sales2, 2),
+       ROUND(thu_sales1 / thu_sales2, 2),
+       ROUND(fri_sales1 / fri_sales2, 2),
+       ROUND(sat_sales1 / sat_sales2, 2)
+  FROM (SELECT wswscs.d_week_seq d_week_seq1,
+               sun_sales         sun_sales1,
+               mon_sales         mon_sales1,
+               tue_sales         tue_sales1,
+               wed_sales         wed_sales1,
+               thu_sales         thu_sales1,
+               fri_sales         fri_sales1,
+               sat_sales         sat_sales1
+          FROM wswscs,
+               date_dim
+         WHERE date_dim.d_week_seq = wswscs.d_week_seq
+               AND d_year = 2001) y,
+       (SELECT wswscs.d_week_seq d_week_seq2,
+               sun_sales         sun_sales2,
+               mon_sales         mon_sales2,
+               tue_sales         tue_sales2,
+               wed_sales         wed_sales2,
+               thu_sales         thu_sales2,
+               fri_sales         fri_sales2,
+               sat_sales         sat_sales2
+          FROM wswscs,
+               date_dim
+         WHERE date_dim.d_week_seq = wswscs.d_week_seq
+               AND d_year = 2001 + 1) z
+ WHERE d_week_seq1 = d_week_seq2 - 53
+ ORDER BY d_week_seq1;
 
--- query26.tpl
+-- @ID=TEMPLATE_26
 SELECT i_item_id,
        AVG(cs_quantity)    agg1,
        AVG(cs_list_price)  agg2,
@@ -4383,91 +4320,89 @@ SELECT i_item_id,
  GROUP BY i_item_id
  ORDER BY i_item_id;
 
--- query40.tpl
--- NOTE: DATE_DIM referenced more than once
--- SELECT w_state,
-       -- i_item_id,
-       -- SUM(CASE
-             -- WHEN ( CAST(d_date AS DATE) < CAST ('2001-05-21' AS DATE) ) THEN cs_sales_price - COALESCE(cr_refunded_cash
-                                                                                               -- , 0)
-             -- ELSE 0
-           -- END) AS sales_before,
-       -- SUM(CASE
-             -- WHEN ( CAST(d_date AS DATE) >= CAST ('2001-05-21' AS DATE) ) THEN
-             -- cs_sales_price - COALESCE(cr_refunded_cash, 0)
-             -- ELSE 0
-           -- END) AS sales_after
-  -- FROM catalog_sales
-       -- LEFT OUTER JOIN catalog_returns
-         -- ON ( cs_order_number = cr_order_number
-              -- AND cs_item_sk = cr_item_sk ),
-       -- warehouse,
-       -- item,
-       -- date_dim
- -- WHERE i_current_price BETWEEN 0.99 AND 1.49
-       -- AND i_item_sk = cs_item_sk
-       -- AND cs_warehouse_sk = w_warehouse_sk
-       -- AND cs_sold_date_sk = d_date_sk
-       -- AND d_date >= '2001-04-21'
-       -- AND d_date <= '2001-06-21'
- -- GROUP BY w_state,
-          -- i_item_id
- -- ORDER BY w_state,
-          -- i_item_id;
+-- @ID=TEMPLATE_40
+SELECT w_state,
+       i_item_id,
+       SUM(CASE
+             WHEN ( CAST(d_date AS DATE) < CAST ('2001-05-21' AS DATE) ) THEN cs_sales_price - COALESCE(cr_refunded_cash
+                                                                                               , 0)
+             ELSE 0
+           END) AS sales_before,
+       SUM(CASE
+             WHEN ( CAST(d_date AS DATE) >= CAST ('2001-05-21' AS DATE) ) THEN
+             cs_sales_price - COALESCE(cr_refunded_cash, 0)
+             ELSE 0
+           END) AS sales_after
+  FROM catalog_sales
+       LEFT OUTER JOIN catalog_returns
+         ON ( cs_order_number = cr_order_number
+              AND cs_item_sk = cr_item_sk ),
+       warehouse,
+       item,
+       date_dim
+ WHERE i_current_price BETWEEN 0.99 AND 1.49
+       AND i_item_sk = cs_item_sk
+       AND cs_warehouse_sk = w_warehouse_sk
+       AND cs_sold_date_sk = d_date_sk
+       AND d_date >= '2001-04-21'
+       AND d_date <= '2001-06-21'
+ GROUP BY w_state,
+          i_item_id
+ ORDER BY w_state,
+          i_item_id;
 
--- query72.tpl
--- TODO: issue when executing a what-if call (predicates of one of the tables)
--- SELECT i_item_desc,
-       -- w_warehouse_name,
-       -- d1.d_week_seq,
-       -- COUNT(CASE
-               -- WHEN p_promo_sk IS NULL THEN 1
-               -- ELSE 0
-             -- END) no_promo,
-       -- COUNT(CASE
-               -- WHEN p_promo_sk IS NOT NULL THEN 1
-               -- ELSE 0
-             -- END) promo,
-       -- COUNT(*)   total_cnt
-  -- FROM catalog_sales
-       -- JOIN inventory
-         -- ON ( cs_item_sk = inv_item_sk )
-       -- JOIN warehouse
-         -- ON ( w_warehouse_sk = inv_warehouse_sk )
-       -- JOIN item
-         -- ON ( i_item_sk = cs_item_sk )
-       -- JOIN customer_demographics
-         -- ON ( cs_bill_cdemo_sk = cd_demo_sk )
-       -- JOIN household_demographics
-         -- ON ( cs_bill_hdemo_sk = hd_demo_sk )
-       -- JOIN date_dim d1
-         -- ON ( cs_sold_date_sk = d1.d_date_sk )
-       -- JOIN date_dim d2
-         -- ON ( inv_date_sk = d2.d_date_sk )
-       -- JOIN date_dim d3
-         -- ON ( cs_ship_date_sk = d3.d_date_sk )
-       -- LEFT OUTER JOIN promotion
-         -- ON ( cs_promo_sk = p_promo_sk )
-       -- LEFT OUTER JOIN catalog_returns
-         -- ON ( cr_item_sk = cs_item_sk
-              -- AND cr_order_number = cs_order_number )
- -- WHERE d1.d_week_seq = d2.d_week_seq
-       -- AND inv_quantity_on_hand < cs_quantity
-       -- AND d3.d_date > d1.d_date + 5 days
-       -- AND hd_buy_potential = '>10000'
-       -- AND d1.d_year = 1999
-       -- AND hd_buy_potential = '>10000'
-       -- AND cd_marital_status = 'M'
-       -- AND d1.d_year = 1999
- -- GROUP BY i_item_desc,
-          -- w_warehouse_name,
-          -- d1.d_week_seq
- -- ORDER BY total_cnt DESC,
-          -- i_item_desc,
-          -- w_warehouse_name,
-          -- d_week_seq;
+-- @ID=TEMPLATE_72
+SELECT i_item_desc,
+       w_warehouse_name,
+       d1.d_week_seq,
+       COUNT(CASE
+               WHEN p_promo_sk IS NULL THEN 1
+               ELSE 0
+             END) no_promo,
+       COUNT(CASE
+               WHEN p_promo_sk IS NOT NULL THEN 1
+               ELSE 0
+             END) promo,
+       COUNT(*)   total_cnt
+  FROM catalog_sales
+       JOIN inventory
+         ON ( cs_item_sk = inv_item_sk )
+       JOIN warehouse
+         ON ( w_warehouse_sk = inv_warehouse_sk )
+       JOIN item
+         ON ( i_item_sk = cs_item_sk )
+       JOIN customer_demographics
+         ON ( cs_bill_cdemo_sk = cd_demo_sk )
+       JOIN household_demographics
+         ON ( cs_bill_hdemo_sk = hd_demo_sk )
+       JOIN date_dim d1
+         ON ( cs_sold_date_sk = d1.d_date_sk )
+       JOIN date_dim d2
+         ON ( inv_date_sk = d2.d_date_sk )
+       JOIN date_dim d3
+         ON ( cs_ship_date_sk = d3.d_date_sk )
+       LEFT OUTER JOIN promotion
+         ON ( cs_promo_sk = p_promo_sk )
+       LEFT OUTER JOIN catalog_returns
+         ON ( cr_item_sk = cs_item_sk
+              AND cr_order_number = cs_order_number )
+ WHERE d1.d_week_seq = d2.d_week_seq
+       AND inv_quantity_on_hand < cs_quantity
+       AND d3.d_date > d1.d_date + 5 days
+       AND hd_buy_potential = '>10000'
+       AND d1.d_year = 1999
+       AND hd_buy_potential = '>10000'
+       AND cd_marital_status = 'M'
+       AND d1.d_year = 1999
+ GROUP BY i_item_desc,
+          w_warehouse_name,
+          d1.d_week_seq
+ ORDER BY total_cnt DESC,
+          i_item_desc,
+          w_warehouse_name,
+          d_week_seq;
 
--- query53.tpl
+-- @ID=TEMPLATE_53
 SELECT *
   FROM (SELECT i_manufact_id,
                SUM(ss_sales_price) sum_sales,
@@ -4500,7 +4435,7 @@ SELECT *
           sum_sales,
           i_manufact_id;
 
--- query79.tpl
+-- @ID=TEMPLATE_79
 SELECT c_last_name,
        c_first_name,
        SUBSTR(s_city, 1, 30),
@@ -4535,46 +4470,45 @@ SELECT c_last_name,
           SUBSTR(s_city, 1, 30),
           profit;
 
--- query18.tpl
--- TODO: Batch failure.  The batch was submitted, but at least one exception occurred on an individual member of the batch.
--- SELECT i_item_id,
-       -- ca_country,
-       -- ca_state,
-       -- ca_county,
-       -- AVG(CAST(cs_quantity AS NUMERIC(12, 2)))      agg1,
-       -- AVG(CAST(cs_list_price AS NUMERIC(12, 2)))    agg2,
-       -- AVG(CAST(cs_coupon_amt AS NUMERIC(12, 2)))    agg3,
-       -- AVG(CAST(cs_sales_price AS NUMERIC(12, 2)))   agg4,
-       -- AVG(CAST(cs_net_profit AS NUMERIC(12, 2)))    agg5,
-       -- AVG(CAST(c_birth_year AS NUMERIC(12, 2)))     agg6,
-       -- AVG(CAST(cd1.cd_dep_count AS NUMERIC(12, 2))) agg7
-  -- FROM catalog_sales,
-       -- customer_demographics cd1,
-       -- customer_demographics cd2,
-       -- customer,
-       -- customer_address,
-       -- date_dim,
-       -- item
- -- WHERE cs_sold_date_sk = d_date_sk
-       -- AND cs_item_sk = i_item_sk
-       -- AND cs_bill_cdemo_sk = cd1.cd_demo_sk
-       -- AND cs_bill_customer_sk = c_customer_sk
-       -- AND cd1.cd_gender = 'M'
-       -- AND cd1.cd_education_status = 'Advanced Degree'
-       -- AND c_current_cdemo_sk = cd2.cd_demo_sk
-       -- AND c_current_addr_sk = ca_address_sk
-       -- AND c_birth_month IN ( 10, 4, 3, 5,
-                              -- 9, 7 )
-       -- AND d_year = 1998
-       -- AND ca_state IN ( 'VA', 'GA', 'VA', 'WV',
-                         -- 'VA', 'KS', 'AZ' )
- -- GROUP BY ROLLUP ( i_item_id, ca_country, ca_state, ca_county )
- -- ORDER BY ca_country,
-          -- ca_state,
-          -- ca_county,
-          -- i_item_id;
+-- @ID=TEMPLATE_18
+SELECT i_item_id,
+       ca_country,
+       ca_state,
+       ca_county,
+       AVG(CAST(cs_quantity AS NUMERIC(12, 2)))      agg1,
+       AVG(CAST(cs_list_price AS NUMERIC(12, 2)))    agg2,
+       AVG(CAST(cs_coupon_amt AS NUMERIC(12, 2)))    agg3,
+       AVG(CAST(cs_sales_price AS NUMERIC(12, 2)))   agg4,
+       AVG(CAST(cs_net_profit AS NUMERIC(12, 2)))    agg5,
+       AVG(CAST(c_birth_year AS NUMERIC(12, 2)))     agg6,
+       AVG(CAST(cd1.cd_dep_count AS NUMERIC(12, 2))) agg7
+  FROM catalog_sales,
+       customer_demographics cd1,
+       customer_demographics cd2,
+       customer,
+       customer_address,
+       date_dim,
+       item
+ WHERE cs_sold_date_sk = d_date_sk
+       AND cs_item_sk = i_item_sk
+       AND cs_bill_cdemo_sk = cd1.cd_demo_sk
+       AND cs_bill_customer_sk = c_customer_sk
+       AND cd1.cd_gender = 'M'
+       AND cd1.cd_education_status = 'Advanced Degree'
+       AND c_current_cdemo_sk = cd2.cd_demo_sk
+       AND c_current_addr_sk = ca_address_sk
+       AND c_birth_month IN ( 10, 4, 3, 5,
+                              9, 7 )
+       AND d_year = 1998
+       AND ca_state IN ( 'VA', 'GA', 'VA', 'WV',
+                         'VA', 'KS', 'AZ' )
+ GROUP BY ROLLUP ( i_item_id, ca_country, ca_state, ca_county )
+ ORDER BY ca_country,
+          ca_state,
+          ca_county,
+          i_item_id;
 
--- query13.tpl
+-- @ID=TEMPLATE_13
 SELECT AVG(ss_quantity),
        AVG(ss_ext_sales_price),
        AVG(ss_ext_wholesale_cost),
@@ -4619,7 +4553,7 @@ SELECT AVG(ss_quantity),
                    AND ca_state IN ( 'MA', 'MO', 'TX' )
                    AND ss_net_profit BETWEEN 50 AND 250 ) );
 
--- query24.tpl
+-- @ID=TEMPLATE_24
 WITH ssales
      AS (SELECT c_last_name,
                 c_first_name,
@@ -4716,8 +4650,7 @@ SELECT c_last_name,
 HAVING SUM(netpaid) > (SELECT 0.05 * AVG(netpaid)
                          FROM ssales);
 
--- query4.tpl
--- TODO: 
+-- @ID=TEMPLATE_04
 WITH year_total
      AS ((SELECT c_customer_id
                 customer_id
@@ -4819,7 +4752,7 @@ SELECT t_s_secyear.customer_id,
           t_s_secyear.c_birth_country,
           t_s_secyear.c_login;
 
--- query99.tpl
+-- @ID=TEMPLATE_99
 SELECT SUBSTR(w_warehouse_name, 1, 20),
        sm_type,
        cc_name,
@@ -4851,7 +4784,7 @@ SELECT SUBSTR(w_warehouse_name, 1, 20),
        ship_mode,
        call_center,
        date_dim
- WHERE EXTRACT (YEAR FROM d_date) = 1998
+ WHERE YEAR(d_date) = 1998
        AND cs_ship_date_sk = d_date_sk
        AND cs_warehouse_sk = w_warehouse_sk
        AND cs_ship_mode_sk = sm_ship_mode_sk
@@ -4863,7 +4796,7 @@ SELECT SUBSTR(w_warehouse_name, 1, 20),
           sm_type,
           cc_name;
 
--- query68.tpl
+-- @ID=TEMPLATE_68
 SELECT c_last_name,
        c_first_name,
        ca_city,
@@ -4904,7 +4837,7 @@ SELECT c_last_name,
  ORDER BY c_last_name,
           ss_ticket_number;
 
--- query83.tpl
+-- @ID=TEMPLATE_83
 WITH sr_items
      AS (SELECT i_item_id               item_id,
                 SUM(sr_return_quantity) sr_item_qty
@@ -4963,7 +4896,7 @@ SELECT sr_items.item_id,
  ORDER BY sr_items.item_id,
           sr_item_qty;
 
--- query61.tpl
+-- @ID=TEMPLATE_61
 SELECT promotions,
        total,
        CAST(promotions AS DECIMAL(15, 4)) / CAST(total AS DECIMAL(15, 4)) * 100
@@ -5009,7 +4942,7 @@ SELECT promotions,
  ORDER BY promotions,
           total;
 
--- query5.tpl
+-- @ID=TEMPLATE_05
 WITH ssr
      AS (SELECT s_store_id,
                 SUM(sales_price) AS sales,
@@ -5129,7 +5062,7 @@ SELECT channel,
  ORDER BY channel,
           id;
 
--- query76.tpl
+-- @ID=TEMPLATE_76
 SELECT channel,
        col_name,
        d_year,
@@ -5185,3 +5118,51 @@ SELECT channel,
           d_year,
           d_qoy,
           i_category; 
+
+-- @ID=TEMPLATE_51
+--WITH web_v1
+     --AS (SELECT ws_item_sk item_sk,
+                --d_date,
+                --SUM(ws_sales_price) OVER (ORDER BY d_date) cume_sales
+         --FROM   web_sales,
+                --date_dim
+         --WHERE  ws_sold_date_sk = d_date_sk
+                --AND d_year = 1998
+                --AND ws_item_sk IS NOT NULL
+         --GROUP  BY ws_item_sk,
+                   --d_date),
+     --store_v1
+     --AS (SELECT ss_item_sk item_sk,
+                --d_date,
+                --SUM(ss_sales_price) OVER (ORDER BY d_date) cume_sales
+         --FROM   store_sales,
+                --date_dim
+         --WHERE  ss_sold_date_sk = d_date_sk
+                --AND d_year = 1998
+                --AND ss_item_sk IS NOT NULL
+         --GROUP  BY ss_item_sk,
+                   --d_date)
+--SELECT *
+--FROM   (SELECT item_sk,
+               --d_date,
+               --web_sales,
+               --store_sales,
+               --MAX(web_sales) OVER (ORDER BY d_date)   web_cumulative,
+               --MAX(store_sales) OVER (ORDER BY d_date) store_cumulative
+        --FROM   (SELECT CASE
+                         --WHEN web.item_sk IS NOT NULL THEN web.item_sk
+                         --ELSE store.item_sk
+                       --END              item_sk,
+                       --CASE
+                         --WHEN web.d_date IS NOT NULL THEN web.d_date
+                         --ELSE store.d_date
+                       --END              d_date,
+                       --web.cume_sales   web_sales,
+                       --store.cume_sales store_sales
+                --FROM   web_v1 web
+                       --FULL OUTER JOIN store_v1 store
+                         --ON ( web.item_sk = store.item_sk
+                              --AND web.d_date = store.d_date ))x)y
+--WHERE  web_cumulative > store_cumulative
+--ORDER  BY item_sk,
+          --d_date;
