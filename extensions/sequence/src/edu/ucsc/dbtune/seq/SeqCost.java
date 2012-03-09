@@ -15,6 +15,8 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.seq.def.*;
+import edu.ucsc.dbtune.seq.utils.RTimer;
+import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -130,15 +132,32 @@ public class SeqCost {
     public static double getCreateIndexCost(Optimizer optimizer, Index a)
             throws SQLException {
         StringBuilder sql = new StringBuilder();
-        sql.append("select * from " + a.getTable().getName() + " order by");
+        sql.append("select ");
+        boolean first = true;
         for (Column col : a) {
+            if (first)
+                first = false;
+            else
+                sql.append(",");
+            sql.append(col.getName());
+        }
+        sql.append(" from " + a.getTable().getName() + " order by");
+        first = true;
+        for (Column col : a) {
+            if (first)
+                first = false;
+            else
+                sql.append(",");
             sql.append(" " + col.getName()
                     + (a.isAscending(col) ? " asc" : "desc"));
-            break;
         }
+        RTimerN timer = new RTimerN();
         SQLStatementPlan sqlPlan = optimizer.explain(sql.toString()).getPlan();
+        totalWhatIfNanoTime += timer.get();
         return sqlPlan.getRootOperator().getAccumulatedCost();
     }
+
+    public static long totalWhatIfNanoTime = 0;
 
     public static SeqCost fromOptimizer(DatabaseSystem db, Optimizer optimizer,
             Workload workload, Index[] indices) throws SQLException {
@@ -165,7 +184,9 @@ public class SeqCost {
             q.name = "Q" + queryId;
             q.sql = workload.get(queryId);
             // Rt.np(sql);
+            RTimerN timer = new RTimerN();
             SQLStatementPlan sqlPlan = optimizer.explain(q.sql).getPlan();
+            totalWhatIfNanoTime += timer.get();
             q.costWithoutIndex = sqlPlan.getRootOperator().getAccumulatedCost();
 
             DerbyInterestingOrdersExtractor interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(
@@ -264,9 +285,24 @@ public class SeqCost {
             HashSet<Index> allIndexes = new HashSet<Index>();
             for (SeqIndex i : conf.indices)
                 allIndexes.add(i.index);
-            ExplainedSQLStatement explain = optimizer
-                    .explain(q.sql, allIndexes);
-            cost = explain.getTotalCost();
+            try {
+                RTimerN timer = new RTimerN();
+                ExplainedSQLStatement explain = optimizer.explain(q.sql,
+                        allIndexes);
+                totalWhatIfNanoTime += timer.get();
+                cost = explain.getTotalCost();
+            } catch (Exception e) {
+                Rt.p(q.sql.getSQL());
+                for (Index index : allIndexes) {
+                    Rt.p(index);
+                }
+                e.printStackTrace();
+                RTimerN timer = new RTimerN();
+                ExplainedSQLStatement explain = optimizer.explain(q.sql,
+                        allIndexes);
+                totalWhatIfNanoTime += timer.get();
+                cost = explain.getTotalCost();
+            }
             // Rt.p(allIndexes.size() + " " + cost);
         } else {
             cost = q.costWithoutIndex;

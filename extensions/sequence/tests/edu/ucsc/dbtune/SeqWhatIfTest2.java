@@ -27,6 +27,7 @@ import edu.ucsc.dbtune.seq.SeqOptimal;
 import edu.ucsc.dbtune.seq.SeqSplit;
 import edu.ucsc.dbtune.seq.def.*;
 import edu.ucsc.dbtune.seq.utils.RTimer;
+import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -53,27 +54,14 @@ public class SeqWhatIfTest2 {
             }
             SeqMerge merge = new SeqMerge(cost, split.groups);
         }
-        RTimer timer = new RTimer();
+        RTimerN timer = new RTimerN();
         Environment en = Environment.getInstance();
         en.setProperty("optimizer", "dbms");
         DatabaseSystem db = DatabaseSystem.newDatabaseSystem(en);
         Optimizer optimizer = db.getOptimizer();
 
-        String file = "workload_bip_seq.sql";
-        file = "workload.sql";
-        Workload workload = new Workload("", new FileReader(en
-                .getWorkloadsFoldername()
-                + "/tpch-small/" + file));
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < workload.size(); i++) {
-            if (i != 1)
-                sb.append(workload.get(i).getSQL() + ";\r\n");
-        }
-        workload = new Workload("", new StringReader(sb.toString()));
-
-        CandidateGenerator candGen = new OptimizerCandidateGenerator(
-                getBaseOptimizer(db.getOptimizer()));
-        Set<Index> indexes = candGen.generate(workload);
+        Workload workload = BipTest2.getWorkload(en);
+        Set<Index> indexes = BipTest2.getIndexes(workload, db);
 
         // List<Set<Index>> indexesPerTable;
         // DerbyInterestingOrdersExtractor interestingOrdersExtractor;
@@ -106,21 +94,23 @@ public class SeqWhatIfTest2 {
         // for (Index index : set)
         // allIndex.add(index);
 
-        timer.finish("loading");
+//        timer.finish("loading");
         timer.reset();
 
         Index[] indices = indexes.toArray(new Index[indexes.size()]);
         cost = SeqCost.fromOptimizer(db, optimizer, workload, indices);
+        cost.storageConstraint = 2000;
         int n = 0;
         for (SeqQuery query : cost.sequence) {
             System.out.println((n++) + " " + query);
         }
         n = 0;
         for (SeqIndex index : cost.indicesV) {
+            index.storageCost = 1000;
             System.out.println((n++) + " " + index);
         }
-        timer.finish("calculating create index cost");
-        timer.reset();
+        // timer.finish("calculating create index cost");
+        // timer.reset();
 
         SeqGreedySeq greedySeq = new SeqGreedySeq(cost, cost.sequence,
                 cost.indicesV.toArray(new SeqIndex[cost.indicesV.size()]));
@@ -128,7 +118,10 @@ public class SeqWhatIfTest2 {
             ;
         greedySeq.finish();
         Rt.np(SeqOptimal.formatBestPathPlain(greedySeq.bestPath));
-        timer.finish("greedySeq");
+        Rt.p("%d x %d",cost.sequence.length,cost.indicesV.size());
+        Rt.p("GREEDY SEQ tune %.3f",timer.getSecondElapse());
+        Rt.p("WhatIf Call time %.3f",
+                SeqCost.totalWhatIfNanoTime / 1000000000.0);
         // SeqStep[] steps = SeqOptimal.getOptimalSteps(cost.source,
         // cost.destination, cost.sequence, cost
         // .getAllConfigurations(cost.indicesV));

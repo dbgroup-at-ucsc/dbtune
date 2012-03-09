@@ -217,10 +217,12 @@ public class SeqBIP extends AbstractBIPSolver {
                 this.queries[i].addConstriant();
                 for (int k = 0; k < totalIndices; k++) {
                     expr = cplex.linearNumExpr();
-                    for (int j = 0; j <= i; j++) {
-                        expr.addTerm(1, this.queries[j].create[k]);
-                        expr.addTerm(-1, this.queries[j].drop[k]);
-                    }
+                    if (i > 0)
+                        expr.addTerm(1, this.queries[i - 1].present[k]);
+                    // for (int j = 0; j <= i; j++) {
+                    expr.addTerm(1, this.queries[i].create[k]);
+                    expr.addTerm(-1, this.queries[i].drop[k]);
+                    // }
                     if (showFormulas)
                         Rt
                                 .p(expr.toString() + "="
