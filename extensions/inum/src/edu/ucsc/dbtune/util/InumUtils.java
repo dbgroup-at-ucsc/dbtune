@@ -5,9 +5,11 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.inum.InumInterestingOrder;
 
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
@@ -16,11 +18,14 @@ import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Iterables.get;
 
+import static edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor.BoundSQLStatementParseTree;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 
+import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.SORT;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.SUBQUERY;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
@@ -126,6 +131,84 @@ public final class InumUtils
     }
 
     /**
+     * Returns the maximum atomic configuration for the statement. The maximum configuration is the 
+     * set of indexes that contain no attributes other than the join columns used on the statement.
+     * 
+     * @param statement
+     *      SQL statement for which the INUM space is computed
+     * @param catalog
+     *      used to retrieve metadata for objects referenced in the statement
+     * @return
+     *      the maximum atomic configuration for the statement associated with the plan
+     * @throws SQLException
+     *      if there's a table without a corresponding slot in the given inum plan
+     */
+    public static Set<Index> getMaximumAtomicConfiguration(
+            SQLStatement statement, Catalog catalog)
+        throws SQLException
+    {
+        Set<InumInterestingOrder> ios = extractInterestingOrdersFromJoinPredicates(statement, 
+                catalog);
+        Set<Index> max = new HashSet<Index>();
+
+        for (InumInterestingOrder i : ios)
+            max.add(i);
+
+        return max;
+    }
+
+    /**
+     * Extracts interesting orders through the use of the {@link DerbyInterestingOrdersExtractor}.
+     * 
+     * @param statement
+     *      SQL statement for which the INUM space is computed
+     * @param catalog
+     *      used to retrieve metadata for objects referenced in the statement
+     * @return
+     *      the maximum atomic configuration for the statement associated with the plan
+     * @throws SQLException
+     *      if there's a table without a corresponding slot in the given inum plan
+     */
+    public static Set<InumInterestingOrder> extractInterestingOrders(
+            SQLStatement statement, Catalog catalog)
+        throws SQLException
+    {
+        return new DerbyInterestingOrdersExtractor(catalog).extract(statement);
+    }
+
+    /**
+     * Extracts interesting orders through the use of the {@link DerbyInterestingOrdersExtractor}.
+     * 
+     * @param statement
+     *      SQL statement for which the INUM space is computed
+     * @param catalog
+     *      used to retrieve metadata for objects referenced in the statement
+     * @return
+     *      the maximum atomic configuration for the statement associated with the plan
+     * @throws SQLException
+     *      if there's a table without a corresponding slot in the given inum plan
+     */
+    public static Set<InumInterestingOrder> extractInterestingOrdersFromJoinPredicates(
+            SQLStatement statement, Catalog catalog)
+        throws SQLException
+    {
+        DerbyInterestingOrdersExtractor ioExtractor;
+        BoundSQLStatementParseTree parseTree;
+
+        ioExtractor = new DerbyInterestingOrdersExtractor(catalog);
+        parseTree = new BoundSQLStatementParseTree(ioExtractor.getParseTree(statement), catalog);
+
+        Set<InumInterestingOrder> ios = new HashSet<InumInterestingOrder>();
+
+        ioExtractor.extractFromJoinPredicates(parseTree, ios);
+
+        for (BoundSQLStatementParseTree subquery : parseTree.getBoundSubqueries())
+            ioExtractor.extractFromJoinPredicates(subquery, ios);
+
+        return ios;
+    }
+
+    /**
      * Pre-processes a plan by (1) removing temporary table scans and (2) transforming non-leaf 
      * table scans.
      *
@@ -136,10 +219,13 @@ public final class InumUtils
      */
     public static void preprocess(SQLStatementPlan plan) throws SQLException
     {
+        //CHECKSTYLE:OFF
         while (removeTemporaryTables(plan))
-            plan.getStatement();
+            ;
 
-        rewriteNonLeafTableScans(plan);
+        //while (rewriteNonLeafDataAccessOperators(plan))
+            //;
+        //CHECKSTYLE:ON
     }
 
     /**
@@ -157,7 +243,7 @@ public final class InumUtils
     {
         boolean removed = false;
 
-        for (Operator o : plan.toList()) {
+        for (Operator o : plan.leafs()) {
             if (o.getName().equals(TEMPORARY_TABLE_SCAN) && plan.getChildren(o).isEmpty()) {
                 renameClosestJoinAndRemoveBranchComingFrom(plan, o, SORT);
                 removed = true;
@@ -272,45 +358,191 @@ public final class InumUtils
     }
 
     /**
+     * In some cases a plan might have a base-table access operator ({@link INDEX_SCAN} or {@link 
+     * TABLE_SCAN}) that is not a leaf. For example, in DB2, the following query (TPC-H, query 16):
+     * <p>
+     * <pre>
+     * {@code .
+     *
+     * select
+     *     p_brand,
+     *     p_type,
+     *     p_size,
+     *     count(distinct ps_suppkey) as supplier_cnt
+     * from
+     *     tpch.partsupp,
+     *     tpch.part
+     * where
+     *     p_partkey = ps_partkey
+     *     and p_brand &lt;&gt; 'Brand#41'
+     *     and p_type not like 'MEDIUM BURNISHED%'
+     *     and p_size in (4, 21, 15, 41, 49, 43, 27, 47)
+     *     and ps_suppkey not in (
+     *         select
+     *             s_suppkey
+     *         from
+     *             tpch.supplier
+     *         where
+     *             s_comment like '%Customer%Complaints%'
+     *     )
+     * group by
+     *     p_brand,
+     *     p_type,
+     *     p_size
+     * order by
+     *     supplier_cnt desc,
+     *     p_brand,
+     *     p_type,
+     *     p_size;
+     * 
+     *
+     * }
+     * </pre>
+     * <p>
+     * Generates the following plan:
+     * <p>
+     * <pre>
+     * {@code .
+     *
+     *                       HSJOIN
+     *                       (   7)
+     *                      1.193e+06 
+     *                        41538 
+     *               /---------+---------\
+     *           400000                  30506.7 
+     *           TBSCAN                  TBSCAN
+     *           (   8)                  (  12)
+     *         1.17329e+06               7750.16 
+     *            32343                   7617 
+     *         /---+----\                  |
+     *     599.479      800000           200000 
+     *     TBSCAN   TABLE: TPCH      TABLE: TPCH    
+     *     (   9)      PARTSUPP           PART
+     *     419.594        Q6               Q5
+     *       410 
+     *       |
+     *     599.479 
+     *     SORT  
+     *     (  10)
+     *     419.564 
+     *       410 
+     *       |
+     *     599.479 
+     *     TBSCAN
+     *     (  11)
+     *     419.373 
+     *       410 
+     *       |
+     *      10000 
+     * TABLE: TPCH    
+     *    SUPPLIER
+     *       Q3
+     * }
+     * </pre>
+     * <p>
+     * The {@code TBSCAN} (id=8) operator represents the subquery that is applied to the
+     * {@code SUPPLIER} relation, for each distinct value of {@code ps_suppkey}.
+     * <p>
+     * This method renames the non-leaf node to {@link #SUBQUERY} and creates a new leaf node that 
+     * corresponds to the scan of the table. The {@link #SUBQUERY} operator can be thought as a kind 
+     * of single-scan , i.e. both children of {@code SUBQUERY} are scanned once.
+     * <pre>
+     * {@code .
+     *
+     *                       HSJOIN
+     *                       (   7)
+     *                      1.193e+06 
+     *                        41538 
+     *               /---------+---------\
+     *           400000                  30506.7 
+     *           SUBQUERY                TBSCAN
+     *           (   8)                  (  12)
+     *         1.17329e+06               7750.16 
+     *            32343                   7617 
+     *         /---+----\                  |
+     *     599.479     400000             200000 
+     *     TBSCAN      TBSCAN         TABLE: TPCH    
+     *     (   9)      (   13)              PART
+     *     419.594   1.17329e+06            Q5
+     *       410        32343     
+     *       |            |
+     *     599.47      800000    
+     *     SORT      TABLE: TPCH 
+     *     (  10)     PARTSUPP 
+     *     419.564       Q6   
+     *       410 
+     *       |
+     *     599.479 
+     *     TBSCAN
+     *     (  11)
+     *     419.373 
+     *       410 
+     *       |
+     *      10000 
+     * TABLE: TPCH    
+     *    SUPPLIER
+     *       Q3
+     * }
+     * </pre>
+     * <p>
+     * This method operates in a bottom up approach and returns immediately after it performs the 
+     * first rewrite. This with the purpose of avoiding concurrent modification of the members of 
+     * the plan
+     *
      * @param plan
-     *      plan whose non-leaf table scan operators are to be converted into leafs
+     *      plan whose non-leaf table access operators are to be converted into leafs
+     * @return
+     *      {@code true} if the plan was modified; {@code false} otherwise
      * @throws SQLException
-     *      if an error occurs while transforming the plan
+     *      if an non-leaf data access operator has more than one children
      */
-    private static void rewriteNonLeafTableScans(SQLStatementPlan plan) throws SQLException
+    private static boolean rewriteNonLeafDataAccessOperators(SQLStatementPlan plan)
+        throws SQLException
     {
-        Operator newSibling;
-        Operator leaf;
-        double leafCost;
+        for (Operator o : plan.leafs()) {
+            
+            Operator parent;
+            Operator child = o;
 
-        for (Operator o : plan.toList()) {
+            while ((parent = plan.getParent(child)) != null) {
 
-            if (o.getName().equals(TABLE_SCAN) && o.getDatabaseObjects().size() > 0)
+                if (child.isDataAccess() && !child.equals(FETCH)) {
 
-                if (plan.getChildren(o).size() == 0) {
-                    // fine, it is an actual leaf
-                    plan.getChildren(o);
-                } else if (plan.getChildren(o).size() == 1) {
+                    Operator newSibling;
+                    Operator leaf;
+                    double leafCost;
 
-                    newSibling = plan.getChildren(o).get(0);
+                    if (plan.getChildren(child).size() == 1) {
 
-                    leafCost = o.getAccumulatedCost() - newSibling.getAccumulatedCost();
+                        newSibling = plan.getChildren(child).get(0);
 
-                    leaf = new Operator(TABLE_SCAN, leafCost, o.getCardinality());
+                        leafCost = child.getAccumulatedCost() - newSibling.getAccumulatedCost();
 
-                    leaf.add(o.getDatabaseObjects().get(0));
-                    leaf.addColumnsFetched(o.getColumnsFetched());
-                    leaf.add(o.getPredicates());
+                        leaf = new Operator(child.getName(), leafCost, child.getCardinality());
 
-                    plan.rename(o, SUBQUERY);
-                    plan.removeDatabaseObject(o);
-                    plan.removeColumnsFetched(o);
-                    plan.removePredicates(o);
-                    plan.setChild(o, leaf);
-                } else {
-                    throw new SQLException(
-                        "Don't know how to handle " + TABLE_SCAN + " with more than one child");
+                        leaf.add(child.getDatabaseObjects().get(0));
+                        leaf.addColumnsFetched(child.getColumnsFetched());
+                        leaf.add(child.getPredicates());
+
+                        plan.rename(child, SUBQUERY);
+                        plan.removeDatabaseObject(child);
+                        plan.removeColumnsFetched(child);
+                        plan.removePredicates(child);
+                        plan.setChild(child, leaf);
+
+                        return true;
+                    } else if (plan.getChildren(child).size() > 1) {
+                        throw new SQLException(
+                            "Don't know how to handle " + TABLE_SCAN + " with more than one child");
+                    }
+                    // else {} // is fine, it is an actual leaf
                 }
+
+                child = parent;
+            }
+
         }
+
+        return false;
     }
 }

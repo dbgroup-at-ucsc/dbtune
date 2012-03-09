@@ -180,7 +180,7 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
-     * Return the list of tables referenced by the statement.
+     * Returns the list of tables referenced by the statement.
      *
      * @return
      *     the list of referenced tables
@@ -196,6 +196,25 @@ public class SQLStatementPlan extends Tree<Operator>
                 tables.add(((Index) ob).getTable());
 
         return tables;
+    }
+
+    /**
+     * Returns the list of {@link #INDEX_SCAN} and {@link #TABLE_SCAN} operators that are applied to 
+     * a base database object. Operators for which the {@link #getDatabaseObjects} method is empty 
+     * are not considered.
+     *
+     * @return
+     *     the list of referenced tables
+     */
+    public List<Operator> getDataAccessOperators()
+    {
+        List<Operator> operators = new ArrayList<Operator>();
+
+        for (Operator op : toList())
+            if (!op.getDatabaseObjects().isEmpty())
+                operators.add(op);
+
+        return operators;
     }
 
     /**

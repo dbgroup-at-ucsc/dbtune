@@ -107,7 +107,7 @@ public class InumPlan extends SQLStatementPlan
             slots.put(slot.getTable(), slot);
         }
 
-        if (plan.leafs().size() != slots.size())
+        if (leafs().size() != slots.size())
             throw new SQLException("One or more leafs haven't been assigned with a slot " + this);
 
         internalPlanCost = getRootOperator().getAccumulatedCost() - leafsCost;

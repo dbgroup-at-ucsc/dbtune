@@ -324,12 +324,33 @@ public class Operator
     }
 
     /**
+     * Whether or not the operator is one of the join operators defined.
+     *
      * @return
      *      {@code true} if the operator is a join; {@code false} otherwise.
      */
     public boolean isJoin()
     {
         if (name.equals(NLJ) || name.equals(MSJ) || name.equals(HJ) || name.equals(INLJ))
+            return true;
+
+        return false;
+    }
+
+    /**
+     * Whether or not the operator is a table access one, i.e. its type is {@link INDEX_SCAN}, 
+     * {@link FETCH} or {@link TABLE_SCAN}, and the {@link #getDatabaseObjects} method returns a 
+     * non-empty list.
+     *
+     * @return
+     *      {@code true} if the operator is accessing a base table; {@code false} otherwise.
+     */
+    public boolean isDataAccess()
+    {
+        if (getDatabaseObjects().isEmpty())
+            return false;
+
+        if (name.equals(TABLE_SCAN) || name.equals(FETCH) || name.equals(INDEX_SCAN))
             return true;
 
         return false;
