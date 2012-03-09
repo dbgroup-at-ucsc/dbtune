@@ -22,7 +22,9 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
+import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.is;
+
 import static org.junit.Assert.assertThat;
 
 /**
@@ -83,7 +85,10 @@ public class InumPlanFunctionalTest
             
             conf = candGen.generate(wl);
 
+            int i = 0;
+
             for (SQLStatement sql : wl) {
+                i++;
 
                 sqlPlan = optimizer.explain(sql, conf).getPlan();
 
@@ -95,10 +100,6 @@ public class InumPlanFunctionalTest
                 for (Operator l : sqlPlan.leafs())
                     costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(sqlPlan, l);
 
-                System.out.println("---------------------------");
-                System.out.println("   Checking INUM template creation for\n" + sql);
-                System.out.println("\n\n    plan\n" + sqlPlan);
-
                 inumPlan = new InumPlan(optimizer, sqlPlan);
 
                 // check the same number of slots
@@ -106,9 +107,11 @@ public class InumPlanFunctionalTest
 
                 // check the internal cost
                 assertThat(
-                        "Failing Query: " + sql.getSQL() + "\n with plan \n" + sqlPlan,
+                        "Failed on stmt " + i + "\n" +
+                        "   with template: \n" + inumPlan + "\n" +
+                        "   with plan: \n" + sqlPlan,
                         inumPlan.getInternalCost(),
-                        is(sqlPlan.getRootElement().getAccumulatedCost() - costLeafs));
+                        closeTo(sqlPlan.getRootElement().getAccumulatedCost() - costLeafs, 1.0));
 
                 // check the objects being referenced
                 assertThat(

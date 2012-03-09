@@ -40,6 +40,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     private static Optimizer optimizer;
     private static Optimizer delegate;
     private static CandidateGenerator candGen;
+    private int i;
 
     /**
      * @throws Exception
@@ -77,16 +78,33 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     {
         if (delegate == null) return;
 
+        i = 0;
         //for (Workload wl : workloads(env.getWorkloadFolders())) {
         Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
         final Set<Index> allIndexes = candGen.generate(wl);
 
+        System.out.println("wlname, stmt, optimizer cost, delegate cost");
+
         for (SQLStatement sql : wl) {
+            i++;
 
             final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
 
-            assertThat(compare(pSql.explain(allIndexes), delegate.explain(sql, allIndexes)), is(0));
+            ExplainedSQLStatement explainedByOptimizer = pSql.explain(allIndexes);
+            ExplainedSQLStatement explainedByDelegate = delegate.explain(sql, allIndexes);
+
+            assertThat(
+                    "Optimizer: " + explainedByOptimizer + "\n" +
+                    "Delegate: " + explainedByDelegate,
+                    compare(explainedByOptimizer, explainedByDelegate), is(0));
+
+            System.out.println(
+                    wl.getName() + "," +
+                    i + "," +
+                    explainedByOptimizer.getSelectCost() + "," +
+                    explainedByDelegate.getSelectCost() + "\n");
         }
+
         //}
     }
 
@@ -97,15 +115,18 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     public int compare(ExplainedSQLStatement e1, ExplainedSQLStatement e2)
     {
         if (e1.statement.equals(e2.statement) &&
-                (e1.selectCost / e2.selectCost) > 0.95 &&
-                (e1.selectCost / e2.selectCost) < 1.05 &&
+                (e1.selectCost / e2.selectCost) > 0.90 &&
+                (e1.selectCost / e2.selectCost) < 1.10 &&
                 e1.updateCost == e2.updateCost &&
                 e1.configuration.equals(e2.configuration))
             return 0;
 
-        System.out.println("Optimizer:\n" + e1.getPlan() + "\n\nvs\n\nDelegate:\n" + e2.getPlan());
+        System.out.println(
+                "Statement " + i + "\n" +
+                "Optimizer:\n" + e1.getPlan() +
+                "\n\nvs\n\nDelegate:\n" + e2.getPlan());
 
-        if ((e1.selectCost / e2.selectCost) < 0.95)
+        if ((e1.selectCost / e2.selectCost) < 0.90)
             return -1;
 
         return 1;
