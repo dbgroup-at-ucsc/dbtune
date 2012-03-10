@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -12,14 +11,15 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
 
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
-import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
+import static edu.ucsc.dbtune.util.InumUtils.extractInterestingOrders;
+import static edu.ucsc.dbtune.util.InumUtils.getMaximumAtomicConfiguration;
+import static edu.ucsc.dbtune.util.InumUtils.getMinimumAtomicConfiguration;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
@@ -56,8 +56,7 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
             Set<InumPlan> space, SQLStatement statement, Optimizer delegate, Catalog catalog)
         throws SQLException
     {
-        Set<InumInterestingOrder> interestingOrders =
-            (new DerbyInterestingOrdersExtractor(catalog)).extract(statement);
+        Set<InumInterestingOrder> interestingOrders = extractInterestingOrders(statement, catalog);
 
         for (Table table : getReferencedTables(interestingOrders))
             interestingOrders.add(getFullTableScanIndexInstance(table));
@@ -67,17 +66,14 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
         InumPlan templateForEmpty =
             new InumPlan(delegate, delegate.explain(statement, empty).getPlan());
 
-        // check worst-case: empty inumspace, in which case we store the FTS-on-all-slots template
         if (space.isEmpty())
             space.add(templateForEmpty);
         
-        // check NLJ
-        List<Index> minimumAtomic = getMinimumAtomicConfiguration(templateForEmpty);
+        Set<Index> min = getMinimumAtomicConfiguration(templateForEmpty);
+        Set<Index> max = getMaximumAtomicConfiguration(statement, catalog);
         
-        SQLStatementPlan sqlPlan = delegate.explain(statement, newHashSet(minimumAtomic)).getPlan();
-
-        if (sqlPlan.contains(NLJ))
-            space.add(new InumPlan(delegate, sqlPlan));
+        space.add(new InumPlan(delegate, delegate.explain(statement, min).getPlan()));
+        space.add(new InumPlan(delegate, delegate.explain(statement, max).getPlan()));
     }
 
     /**
@@ -135,7 +131,7 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
             boolean isIndexFromOrderFTS = indexFromOrder instanceof FullTableScanIndex;
             
             if (isIndexFromOrderFTS && isIndexFromPlanFTS)
-                // this is fine, because both are full table scans
+                // this is fine
                 continue;
             
             if (isIndexFromOrderFTS && !isIndexFromPlanFTS)
@@ -176,46 +172,11 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
         Set<Index> indexesReferncingTable = getIndexesReferencingTable(indexes, table);
 
         if (indexesReferncingTable.size() > 1)
-            throw new SQLException("More than one index for slot for " + table);
+            throw new SQLException("More than one index on slot for " + table);
 
         if (indexesReferncingTable.size() == 0)
             return getFullTableScanIndexInstance(table);
 
         return get(indexesReferncingTable, 0);
-    }
-
-    /**
-     * Returns the minimum atomic configuration for the given plan. A minimum index for a table and 
-     * a statement is the index that covers all the columns accessed by the statement of a given 
-     * table. Thus, the minimum atomic configuration is the set of covering indexes of a statement.
-     * 
-     * @param plan
-     *      the plan returned by an optimizer
-     * @return
-     *      the atomic configuration for the statement associated with the plan
-     * @throws SQLException
-     *      if there's a table without a corresponding slot in the given inum plan
-     */
-    public static List<Index> getMinimumAtomicConfiguration(InumPlan plan) throws SQLException
-    {
-        List<Index> ios = new ArrayList<Index>();
-        
-        for (Table t : plan.getTables()) {
-
-            TableAccessSlot s = plan.getSlot(t);
-            
-            if (s == null)
-                throw new SQLException("No slot for " + t + " in " + plan);
-
-            if (s.getColumnsFetched() == null)
-                throw new SQLException("Can't find columns fetched for " + s.getTable());
-            
-            if (s.getColumnsFetched().size() == 0)
-                ios.add(getFullTableScanIndexInstance(t));
-            else
-                ios.add(new InumInterestingOrder(s.getColumnsFetched()));
-        }
-        
-        return ios;
     }
 }

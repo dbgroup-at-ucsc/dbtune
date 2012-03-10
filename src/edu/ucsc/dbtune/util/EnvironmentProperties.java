@@ -172,6 +172,8 @@ public final class EnvironmentProperties
     public static final String INUM_MATCHING_STRATEGY = "inum.matching.strategy";
     /** cache for slots? */
     public static final String INUM_SLOT_CACHE = "inum.slot.cache";
+    /** inum-specific algorithm type. */
+    public static final String NONE_MIN_MAX = "none.min.max";
 
 
 

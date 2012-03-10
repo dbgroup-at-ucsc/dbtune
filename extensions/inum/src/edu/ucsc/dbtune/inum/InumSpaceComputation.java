@@ -11,6 +11,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.util.EnvironmentProperties.EAGER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NONE_MIN_MAX;
 
 /**
  * Computes set of optimal plans that need to be cached for a given statement in order to be able to 
@@ -85,6 +86,8 @@ public interface InumSpaceComputation
                 return new EagerSpaceComputation();
             else if (env.getInumSpaceComputation().equals(IBG))
                 return new IBGSpaceComputation();
+            else if (env.getInumSpaceComputation().equals(NONE_MIN_MAX))
+                return new NoneMinMaxSpaceComputation();
 
             throw new InstantiationException(
                     "Unknown space computation option " + env.getInumSpaceComputation());
