@@ -67,6 +67,9 @@ public class InumInterestingOrder extends Index
 
         // override name
         name = makeName(columns, ascending);
+
+        if (getFullyQualifiedName().length() > 128)
+            name = name.substring(0, 127 - getSchema().getFullyQualifiedName().length());
     }
 
     /**
@@ -91,6 +94,9 @@ public class InumInterestingOrder extends Index
 
         // override name
         name = makeName(columns, ascending);
+
+        if (getFullyQualifiedName().length() > 128)
+            name = name.substring(0, 127 - getSchema().getFullyQualifiedName().length());
     }
 
     /**

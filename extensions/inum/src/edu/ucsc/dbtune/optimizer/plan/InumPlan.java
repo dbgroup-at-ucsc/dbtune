@@ -25,7 +25,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 
-import static edu.ucsc.dbtune.util.InumUtils.preprocess;
+import static edu.ucsc.dbtune.util.InumUtils.removeTemporaryTables;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
 /**
@@ -252,12 +252,7 @@ public class InumPlan extends SQLStatementPlan
             // if we do a what-if call, we know the optimizer will return FTS, so let's not do it
             return INCOMPATIBLE;
 
-        Operator o = instantiateOperatorForUnseenIndex(getStatement(), index);
-
-        if (o.equals(INCOMPATIBLE))
-            o = instantiateOperatorForUnseenIndex(buildQueryForUnseenIndex(slot), index);
-
-        return o;
+        return instantiateOperatorForUnseenIndex(getStatement(), index);
     }
 
     /**
@@ -714,5 +709,21 @@ public class InumPlan extends SQLStatementPlan
         plan.assignCost(plan.getRootElement(), cost);
 
         return plan;
+    }
+
+    /**
+     * Pre-processes a plan by removing temporary table scans.
+     *
+     * @param plan
+     *      plan to be preprocessed
+     * @throws SQLException
+     *      if an error occurs while pre-processing
+     */
+    public static void preprocess(SQLStatementPlan plan) throws SQLException
+    {
+        //CHECKSTYLE:OFF
+        while (removeTemporaryTables(plan))
+            ;
+        //CHECKSTYLE:ON
     }
 }

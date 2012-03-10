@@ -198,7 +198,7 @@ public class DB2Optimizer extends AbstractOptimizer
             ps.setString(8, "REG");
 
         ps.setString(9, index.getFullyQualifiedName());
-        ps.setString(10, "CREATE INDEX " + index.getFullyQualifiedName());
+        ps.setString(10, " ");
         ps.setString(11, "N");
         ps.setString(12, "0");
         ps.setInt(13, index.getId());

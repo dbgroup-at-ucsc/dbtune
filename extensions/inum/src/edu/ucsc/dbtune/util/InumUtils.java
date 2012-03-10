@@ -209,26 +209,6 @@ public final class InumUtils
     }
 
     /**
-     * Pre-processes a plan by (1) removing temporary table scans and (2) transforming non-leaf 
-     * table scans.
-     *
-     * @param plan
-     *      plan to be preprocessed
-     * @throws SQLException
-     *      if an error occurs while pre-processing
-     */
-    public static void preprocess(SQLStatementPlan plan) throws SQLException
-    {
-        //CHECKSTYLE:OFF
-        while (removeTemporaryTables(plan))
-            ;
-
-        //while (rewriteNonLeafDataAccessOperators(plan))
-            //;
-        //CHECKSTYLE:ON
-    }
-
-    /**
      * Renames the first occurrence of a {@link TEMPORARY_TABLE_SCAN} leaf operator (to {@link 
      * SORT}) by calling {@link #renameClosestJoinAndRemoveBranchComingFrom}.
      *
@@ -239,7 +219,7 @@ public final class InumUtils
      * @throws SQLException
      *      if {@link #renameClosestJoinAndRemoveBranchComingFrom} throws an exception
      */
-    private static boolean removeTemporaryTables(SQLStatementPlan plan) throws SQLException
+    public static boolean removeTemporaryTables(SQLStatementPlan plan) throws SQLException
     {
         boolean removed = false;
 
@@ -496,7 +476,7 @@ public final class InumUtils
      * @throws SQLException
      *      if an non-leaf data access operator has more than one children
      */
-    private static boolean rewriteNonLeafDataAccessOperators(SQLStatementPlan plan)
+    public static boolean rewriteNonLeafDataAccessOperators(SQLStatementPlan plan)
         throws SQLException
     {
         for (Operator o : plan.leafs()) {
