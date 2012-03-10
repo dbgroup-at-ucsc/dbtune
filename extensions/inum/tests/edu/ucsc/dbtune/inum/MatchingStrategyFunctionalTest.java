@@ -21,12 +21,11 @@ import org.junit.Test;
 import static com.google.common.collect.Iterables.get;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
+//import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
 import static edu.ucsc.dbtune.util.MathUtils.combinations;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
-//import static edu.ucsc.dbtune.util.TestUtils.workloads;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
+import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
 import static org.hamcrest.Matchers.is;
 
@@ -102,51 +101,46 @@ public class MatchingStrategyFunctionalTest
                 one.getClass().getName() + " time, " +
                 two.getClass().getName() + " time");
 
-        //for (Workload wl : workloads(env.getWorkloadFolders())) {
-        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
+        for (Workload wl : workloads(env.getWorkloadFolders())) {
 
-        if (env.getInumSpaceComputation().equals(IBG) && wl.getName().contains("tpcds"))
-            // issue #234
-            return;
+            Set<Index> conf = candGen.generate(wl);
 
-        Set<Index> conf = candGen.generate(wl);
+            queryNumber = 1;
 
-        queryNumber = 1;
+            for (SQLStatement sql : wl) {
 
-        for (SQLStatement sql : wl) {
+                Set<InumPlan> inumSpace = new InumPlanSetWithCache();
 
-            Set<InumPlan> inumSpace = new InumPlanSetWithCache();
+                computation.compute(inumSpace, sql, delegate, db.getCatalog());
 
-            computation.compute(inumSpace, sql, delegate, db.getCatalog());
+                time = System.nanoTime();
+                new ExhaustiveMatchingStrategy().match(inumSpace, conf).getInstantiatedPlan();
+                cacheWarmingTime = System.nanoTime() - time;
 
-            time = System.nanoTime();
-            new ExhaustiveMatchingStrategy().match(inumSpace, conf).getInstantiatedPlan();
-            cacheWarmingTime = System.nanoTime() - time;
+                time = System.nanoTime();
+                planFromTwo = two.match(inumSpace, conf).getInstantiatedPlan();
+                twoTime = System.nanoTime() - time;
 
-            time = System.nanoTime();
-            planFromTwo = two.match(inumSpace, conf).getInstantiatedPlan();
-            twoTime = System.nanoTime() - time;
-            
-            time = System.nanoTime();
-            planFromOne = one.match(inumSpace, conf).getInstantiatedPlan();
-            oneTime = System.nanoTime() - time;
+                time = System.nanoTime();
+                planFromOne = one.match(inumSpace, conf).getInstantiatedPlan();
+                oneTime = System.nanoTime() - time;
 
-            assertThat(
-                    "Workload: " + wl.getName() + "\n" +
-                    "Statement: " + queryNumber + "\n" +
-                    "MatchingStrategy one: " + one.getClass().getName() + "\n" +
-                    "MatchingStrategy one: " + two.getClass().getName() + "\n" +
-                    "Instantiated plan one:\n" + planFromOne + "\n" +
-                    "Instantiated plan two:\n" + planFromTwo,
-                    planFromOne, is(planFromTwo));
+                assertThat(
+                        "Workload: " + wl.getName() + "\n" +
+                        "Statement: " + queryNumber + "\n" +
+                        "MatchingStrategy one: " + one.getClass().getName() + "\n" +
+                        "MatchingStrategy one: " + two.getClass().getName() + "\n" +
+                        "Instantiated plan one:\n" + planFromOne + "\n" +
+                        "Instantiated plan two:\n" + planFromTwo,
+                        planFromOne, is(planFromTwo));
 
-            System.out.println(
-                    wl.getName() + "," +
-                    queryNumber++ + "," +
-                    cacheWarmingTime + "," +
-                    twoTime + "," +
-                    oneTime);
+                System.out.println(
+                        wl.getName() + "," +
+                        queryNumber++ + "," +
+                        cacheWarmingTime + "," +
+                        oneTime + "," +
+                        twoTime);
+            }
         }
-        //}
     }
 }

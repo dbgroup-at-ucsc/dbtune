@@ -26,8 +26,7 @@ import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.MathUtils.combinations;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
-//import static edu.ucsc.dbtune.util.TestUtils.workloads;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
+import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
 import static org.hamcrest.Matchers.closeTo;
 
@@ -81,7 +80,7 @@ public class InumSpaceComputationFunctionalTest
 
         available.add(new EagerSpaceComputation());
         available.add(new IBGSpaceComputation());
-        //available.add(new NoneMinMaxSpaceComputation());
+        available.add(new NoneMinMaxSpaceComputation());
 
         for (Set<InumSpaceComputation> twoComputations : combinations(available, 2))
             compare(get(twoComputations, 0), get(twoComputations, 1));
@@ -109,6 +108,7 @@ public class InumSpaceComputationFunctionalTest
         List<MatchingStrategy.Result> oneResults = new ArrayList<MatchingStrategy.Result>();
         List<MatchingStrategy.Result> twoResults = new ArrayList<MatchingStrategy.Result>();
 
+        System.out.println("-------------------------------------------------------------");
         System.out.println(
             "wlname, stmt, " +
             one.getClass().getName() + " size," +
@@ -120,74 +120,69 @@ public class InumSpaceComputationFunctionalTest
             one.getClass().getName() + " matching time," +
             two.getClass().getName() + " matching time");
 
-        //for (Workload wl : workloads(env.getWorkloadFolders())) {
-        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
+        for (Workload wl : workloads(env.getWorkloadFolders())) {
 
-        if (wl.getName().contains("tpcds") &&
-                (one.getClass().getName().contains("IBGSpaceComputation") || 
-                 two.getClass().getName().contains("IBGSpaceComputation")))
-            // issue #234
-            return;
+            int i = 0;
 
-        int i = 0;
+            Set<Index> allIndexes = candGen.generate(wl);
 
-        Set<Index> allIndexes = candGen.generate(wl);
+            for (SQLStatement sql : wl) {
+                i++;
 
-        for (SQLStatement sql : wl) {
-            i++;
+                System.out.println("For statement " + i);
 
-            Set<InumPlan> inumSpaceOne = new HashSet<InumPlan>();
-            Set<InumPlan> inumSpaceTwo = new HashSet<InumPlan>();
+                Set<InumPlan> inumSpaceOne = new HashSet<InumPlan>();
+                Set<InumPlan> inumSpaceTwo = new HashSet<InumPlan>();
 
-            time = System.currentTimeMillis();
-            one.compute(inumSpaceOne, sql, delegate, db.getCatalog());
-            oneTime = System.currentTimeMillis() - time;
-            time = System.currentTimeMillis();
-            two.compute(inumSpaceTwo, sql, delegate, db.getCatalog());
-            twoTime = System.currentTimeMillis() - time;
-            time = System.currentTimeMillis();
-            oneResult = matching.match(inumSpaceOne, allIndexes);
-            oneMatchTime = System.currentTimeMillis() - time;
-            time = System.currentTimeMillis();
-            twoResult = matching.match(inumSpaceTwo, allIndexes);
-            twoMatchTime = System.currentTimeMillis() - time;
+                time = System.currentTimeMillis();
+                one.compute(inumSpaceOne, sql, delegate, db.getCatalog());
+                oneTime = System.currentTimeMillis() - time;
+                time = System.currentTimeMillis();
+                two.compute(inumSpaceTwo, sql, delegate, db.getCatalog());
+                twoTime = System.currentTimeMillis() - time;
+                time = System.currentTimeMillis();
+                oneResult = matching.match(inumSpaceOne, allIndexes);
+                oneMatchTime = System.currentTimeMillis() - time;
+                time = System.currentTimeMillis();
+                twoResult = matching.match(inumSpaceTwo, allIndexes);
+                twoMatchTime = System.currentTimeMillis() - time;
 
-            System.out.println(
-                    wl.getName() + "," +
-                    i + "," +
-                    inumSpaceOne.size() + "," +
-                    inumSpaceTwo.size() + "," +
-                    oneTime + "," +
-                    twoTime + "," +
-                    oneResult.getBestCost() + "," +
-                    twoResult.getBestCost() + "," +
-                    oneMatchTime + "," +
-                    twoMatchTime);
+                System.out.println(
+                        wl.getName() + "," +
+                        i + "," +
+                        inumSpaceOne.size() + "," +
+                        inumSpaceTwo.size() + "," +
+                        oneTime + "," +
+                        twoTime + "," +
+                        oneResult.getBestCost() + "," +
+                        twoResult.getBestCost() + "," +
+                        oneMatchTime + "," +
+                        twoMatchTime);
 
-            oneResults.add(oneResult);
-            twoResults.add(twoResult);
+                oneResults.add(oneResult);
+                twoResults.add(twoResult);
 
-            assertThat(
-                "Workload: " + wl.getName() + "\n" +
-                "Statement: " + i + "\n" +
-                "SpaceComputation one: " + one.getClass().getName() + "\n" +
-                "SpaceComputation one: " + two.getClass().getName() + "\n" +
-                "Template one:\n" + oneResult.getBestTemplate() + "\n" +
-                "Template two:\n" + twoResult.getBestTemplate() + "\n" +
-                "Instantiated plan one:\n" + oneResult.getInstantiatedPlan() + "\n" +
-                "Instantiated plan two:\n" + twoResult.getInstantiatedPlan(),
-                oneResult.getBestCost(), closeTo(twoResult.getBestCost(), 0.10));
-        }
-        //}
+                assertThat(
+                        "Workload: " + wl.getName() + "\n" +
+                        "Statement: " + i + "\n" +
+                        "SpaceComputation one: " + one.getClass().getName() + "\n" +
+                        "SpaceComputation one: " + two.getClass().getName() + "\n" +
+                        "Template one:\n" + oneResult.getBestTemplate() + "\n" +
+                        "Template two:\n" + twoResult.getBestTemplate() + "\n" +
+                        "Instantiated plan one:\n" + oneResult.getInstantiatedPlan() + "\n" +
+                        "Instantiated plan two:\n" + twoResult.getInstantiatedPlan(),
+                        oneResult.getBestCost(), closeTo(twoResult.getBestCost(), 0.10));
+            }
 
-        System.out.println("------------------------------");
-        System.out.println("Plans");
-        System.out.println("------------------------------");
-        for (int j = 0; j < oneResults.size(); j++) {
-            System.out.println(
-                    "One Result for statement " + (j + 1) + ":\n" + oneResults.get(j));
-            System.out.println(
-                    "Two Result for statement " + (j + 1) + ":\n" + twoResults.get(j));
+            System.out.println("-------------------------------------------------------------");
+            System.out.println("Plans");
+            System.out.println("-------------------------------------------------------------");
+            for (int j = 0; j < oneResults.size(); j++) {
+                System.out.println(
+                        "One Result for statement " + (j + 1) + ":\n" + oneResults.get(j));
+                System.out.println(
+                        "Two Result for statement " + (j + 1) + ":\n" + twoResults.get(j));
+            }
         }
     }
 }

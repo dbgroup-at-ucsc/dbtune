@@ -6,7 +6,6 @@ import java.util.Set;
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
-
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -16,12 +15,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
-//import static edu.ucsc.dbtune.util.TestUtils.workloads;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
+import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
 import static org.hamcrest.Matchers.is;
+
 import static org.junit.Assert.assertThat;
 
 /**
@@ -79,33 +80,38 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
         if (delegate == null) return;
 
         i = 0;
-        //for (Workload wl : workloads(env.getWorkloadFolders())) {
-        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
-        final Set<Index> allIndexes = candGen.generate(wl);
+        for (Workload wl : workloads(env.getWorkloadFolders())) {
 
-        System.out.println("wlname, stmt, optimizer cost, delegate cost");
+            if (env.getOptimizer().equals(INUM) &&
+                    !env.getCandidateGenerator().equals(OPTIMIZER) &&
+                    !wl.getName().contains("tpch-small"))
+                // INUM estimates are correct only for optimal and tpch-small
+                continue;
 
-        for (SQLStatement sql : wl) {
-            i++;
+            final Set<Index> allIndexes = candGen.generate(wl);
 
-            final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
+            System.out.println("wlname, stmt, optimizer cost, delegate cost");
 
-            ExplainedSQLStatement explainedByOptimizer = pSql.explain(allIndexes);
-            ExplainedSQLStatement explainedByDelegate = delegate.explain(sql, allIndexes);
+            for (SQLStatement sql : wl) {
+                i++;
 
-            assertThat(
-                    "Optimizer: " + explainedByOptimizer + "\n" +
-                    "Delegate: " + explainedByDelegate,
-                    compare(explainedByOptimizer, explainedByDelegate), is(0));
+                final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
 
-            System.out.println(
-                    wl.getName() + "," +
-                    i + "," +
-                    explainedByOptimizer.getSelectCost() + "," +
-                    explainedByDelegate.getSelectCost() + "\n");
+                ExplainedSQLStatement explainedByOptimizer = pSql.explain(allIndexes);
+                ExplainedSQLStatement explainedByDelegate = delegate.explain(sql, allIndexes);
+
+                assertThat(
+                        "Optimizer: " + explainedByOptimizer + "\n" +
+                        "Delegate: " + explainedByDelegate,
+                        compare(explainedByOptimizer, explainedByDelegate), is(0));
+
+                System.out.println(
+                        wl.getName() + "," +
+                        i + "," +
+                        explainedByOptimizer.getSelectCost() + "," +
+                        explainedByDelegate.getSelectCost());
+            }
         }
-
-        //}
     }
 
     /**
