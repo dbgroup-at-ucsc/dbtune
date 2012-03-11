@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import static java.lang.Math.min;
+
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -42,8 +44,8 @@ public final class InumVsOptimizerExperiment
     private static final Random R                  = new Random(System.currentTimeMillis());
 
     private static Set<Index> allIndexes;
-    private static ExplainedSQLStatement prepared;
-    private static ExplainedSQLStatement explained;
+    private static ExplainedSQLStatement explainedByInum;
+    private static ExplainedSQLStatement explainedByOptimizer;
     private static DatabaseSystem db;
     private static Environment env;
     private static Optimizer optimizer;
@@ -51,14 +53,11 @@ public final class InumVsOptimizerExperiment
     private static SQLStatement currentSql;
     private static CandidateGenerator candGen;
     private static Workload wl;
-    private static int prepareWhatIfCount;
-    private static int explainWhatIfCount;
-    private static int totalWhatIfCount;
     private static int numberOfSubsets;
     private static long time;
     private static long prepareTime;
-    private static long explainTimePrepared;
-    private static long explainTimeExplained;
+    private static long inumTime;
+    private static long optimizerTime;
     private static StringBuilder crashReport;
 
     //############################################################################
@@ -68,18 +67,18 @@ public final class InumVsOptimizerExperiment
     /**
      * Option for the subset enumeration.
      */
-    private static String subsetOption = ONE;
+    private static String subsetOption = POWERSET_PER_TABLE;
 
     /**
      * Name of the workload to run the experiment on.
      */
-    private static String workloadName = "tpch";
+    private static String workloadName = "tpcds-small";
 
     /**
      * Number of maximum what-if calls on a statement. If {@link #numberOfSubsets} is less than this 
      * number, then {@link #numberOfSubsets} is the stop count.
      */
-    private static int stopCount = 500;
+    private static int maxNumberOfWhatIfCallsPerStatement = 500;
 
     //############################################################################
 
@@ -162,29 +161,39 @@ public final class InumVsOptimizerExperiment
 
         System.out.println("Candidates generated: " + allIndexes.size());
 
+        //CHECKSTYLE:OFF
         System.out.println(
-                "workload name, " +
-                "query number, " +
-                "candidate subsets for query, " +
-                "candidate set size, " +
-                "INUM prepare time, " +
-                "INUM cost, " +
-                "optimizer cost, " +
-                "INUM explain time, " +
-                "optimizer explain time, " +
+                "workload name, " +                                                 // A
+                "query number, " +                                                  // B
+                "candidate subsets for query, " +                                   // C
+                "candidate set size, " +                                            // D
+                "INUM prepare time, " +                                             // E
+                "INUM cost, " +                                                     // F
+                "optimizer cost, " +                                                // G
+                "cost ratio (optimizer cost / INUM cost), " +                       // H
+                "optimizer cost / (optimizer cost / STDEV(cost ratio)), " +         // I
+                "INUM explain time, " +                                             // J
+                "optimizer explain time, " +                                        // K
+                "explain time ratio (optimizer explain time/ INUM explain time)," + // L
+                "optimizer explain time / AVG INUM per-whatif explain time," +      // M
                 "indexes used by INUM, " +
                 "indexes used by optimizer, " +
                 "difference in index usage, " +
                 "optimizer using index intersection or union, " +
                 "optimizer using NLJ, " +
-                "optimizer / INUM");
+                "INUM using NLJ");
 
-        int i = 0;
-        int j;
+        int queryNumber = 0;
+        int whatIfCallNumber = 0;
+        int totalNumberOfWhatIfCalls = 0;
+        int entriesForStmt = 0;
+        int indexForEntry = 0;
+        int startedAt = 0;
+        int stoppedAt = 0;
 
         for (SQLStatement sql : wl) {
             currentSql = sql;
-            i++;
+            queryNumber++;
 
             try {
                 time = System.nanoTime();
@@ -193,55 +202,95 @@ public final class InumVsOptimizerExperiment
 
                 prepareTime = System.nanoTime() - time;
 
-                j = 0;
+                totalNumberOfWhatIfCalls += whatIfCallNumber;
+                whatIfCallNumber = 0;
 
                 for (Set<Index> conf : subsets()) {
 
-                    j++;
+                    whatIfCallNumber++;
 
                     time = System.nanoTime();
-
-                    prepared = pSql.explain(conf);
-
-                    explainTimePrepared = System.nanoTime() - time;
-
-                    explainWhatIfCount =
-                        delegate.getWhatIfCount() - totalWhatIfCount - prepareWhatIfCount;
-
-                    totalWhatIfCount += prepareWhatIfCount + explainWhatIfCount;
-
+                    explainedByInum = pSql.explain(conf);
+                    inumTime = System.nanoTime() - time;
                     time = System.nanoTime();
+                    explainedByOptimizer = delegate.explain(sql, conf);
+                    optimizerTime = System.nanoTime() - time;
 
-                    explained = delegate.explain(sql, conf);
-
-                    explainTimeExplained = System.nanoTime() - time;
-
-                    totalWhatIfCount--;
+                    entriesForStmt = min(numberOfSubsets, maxNumberOfWhatIfCallsPerStatement);
+                    startedAt = totalNumberOfWhatIfCalls + 1;
+                    stoppedAt = totalNumberOfWhatIfCalls + entriesForStmt;
+                    indexForEntry = startedAt + whatIfCallNumber - 1;
 
                     System.out.println(
                             wl.getName() + "," +
-                            i + "," +
-                            prepareTime + "," +
+                            queryNumber + "," +
                             numberOfSubsets + "," +
                             conf.size() + "," +
-                            explained.getSelectCost() + "," +
-                            prepared.getSelectCost() + "," +
-                            explainTimePrepared + "," +
-                            explainTimeExplained + "," +
-                            prepared.getUsedConfiguration().size() + "," +
-                            explained.getUsedConfiguration().size() + "," +
+                            prepareTime + "," +
+                            explainedByInum.getSelectCost() + "," +
+                            explainedByOptimizer.getSelectCost() + "," +
+                            "=G" + indexForEntry + "/F" + indexForEntry + "," +
+                            "=G" + indexForEntry + "/G" + (stoppedAt + 1) + "," + // < G(last+1) is G from below
+                            inumTime + "," +
+                            optimizerTime + "," +
+                            "=K" + indexForEntry + "/J" + indexForEntry + "," +
+                            "=K" + indexForEntry + "/L" + (stoppedAt + 1) + "," + // < L(last+1) is L from below
+                            explainedByInum.getUsedConfiguration().size() + "," +
+                            explainedByOptimizer.getUsedConfiguration().size() + "," +
                             getNumberOfDistinctIndexesByContent(
-                                prepared.getUsedConfiguration(),
-                                explained.getUsedConfiguration()) + "," +
-                            ((explained.getPlan().contains(INDEX_AND) || 
-                              explained.getPlan().contains(INDEX_OR)) ? "Y" : "N") + "," +
-                            (explained.getPlan().contains(NESTED_LOOP_JOIN) ? "Y" : "N") + "," +
-                            prepared.getSelectCost() / explained.getSelectCost());
+                                explainedByInum.getUsedConfiguration(),
+                                explainedByOptimizer.getUsedConfiguration()) + "," +
+                            ((explainedByOptimizer.getPlan().contains(INDEX_AND) || 
+                              explainedByOptimizer.getPlan().contains(INDEX_OR)) ? "Y" : "N") + "," +
+                            (explainedByOptimizer.getPlan().contains(NESTED_LOOP_JOIN) ? "Y" : "N") + "," +
+                            (explainedByInum.getPlan().contains(NESTED_LOOP_JOIN) ? "Y" : "N"));
 
-                    if (j == stopCount)
+                    if (whatIfCallNumber == maxNumberOfWhatIfCallsPerStatement)
                         break;
                 }
-            //CHECKSTYLE:OFF
+                /*
+                  A - TOTAL
+                  B - Statement
+                  C - INUM prepare time (once)
+
+                  Cost :
+
+                  D - INUM cost (AVERAGE(inum-cost_i))
+                  E - optimizer cost (AVERAGE(optimizer-cost_i))
+                  F - cost ratio (AVERAGE(optimizer-cost_i / inum-cost_i))
+                  G - INUM cost deviation (STDEV(inum-cost_i))
+                  H - deviation ratio (AVERAGE(optimizer-cost_i) / AVERAGE(optimizer-cost_i / STDEV(inum-cost)))
+
+                  Time:
+
+                  I - INUM explain time (AVERAGE(INUM-explain-time_i))
+                  J - optimizer explain time (AVERAGE(optimizer-explain-time_i))
+                  K - explain time ratio (AVERAGE(optimizer-explain-time_i / INUM-explain-time_i))
+                  L - INUM avg what-if (INUM prepare / #what-if calls + avg explain)
+                  M - Overall ratio (AVERAGE(optimizer explain time / (INUM prepare / #what-if calls + avg explain)))
+
+                */
+
+                if (startedAt == 0)
+                    startedAt = 1;
+
+                System.out.println(
+                        "TOTAL," +                                                               // A
+                        queryNumber + "," +                                                      // B
+                        prepareTime + "," +                                                      // C
+                        "=AVERAGE(F" + startedAt + ":F" + stoppedAt + ")," +                     // D
+                        "=AVERAGE(G" + startedAt + ":G" + stoppedAt + ")," +                     // E
+                        "=AVERAGE(H" + startedAt + ":H" + stoppedAt + ")," +                     // F
+                        "=IF(STDEV(H" + startedAt + ":H" + stoppedAt + ")<1; 1; STDEV(H" + startedAt + ":H" + stoppedAt + "))," + // G
+                        "=G" + stoppedAt + "/AVERAGE(I" + startedAt + ":I" + stoppedAt + ")," + // H
+                        "=AVERAGE(J" + startedAt + ":J" + stoppedAt + ")," +                     // I
+                        "=AVERAGE(K" + startedAt + ":K" + stoppedAt + ")," +                     // J
+                        "=AVERAGE(L" + startedAt + ":L" + stoppedAt + ")," +                     // K
+                        "=" + prepareTime / entriesForStmt + " + I" + (stoppedAt + 1) + "," +    // L
+                        "=AVERAGE(M" + startedAt + ":M" + stoppedAt + ")");                      // M
+
+                // we need to add one for the aggregate
+                totalNumberOfWhatIfCalls++;
             } catch (Exception ex) {
             //CHECKSTYLE:ON
                 StringWriter sw = new StringWriter();
@@ -249,7 +298,7 @@ public final class InumVsOptimizerExperiment
                 crashReport
                     .append("------------------------------")
                     .append("Workload " + wl.getName() + "\n")
-                    .append("Statement " + i + "\n")
+                    .append("Statement " + queryNumber + "\n")
                     .append("SQL " + sql.getSQL() + "\n")
                     .append("Error msg: " + ex.getMessage() + "\n")
                     .append("Stack:\n" + sw.toString() + "\n");
@@ -345,10 +394,8 @@ public final class InumVsOptimizerExperiment
             powerSetLimit = 16;
         else if (tables.size() == 2)
             powerSetLimit = 8;
-        else if (tables.size() == 3)
-            powerSetLimit = 4;
         else
-            powerSetLimit = 3;
+            powerSetLimit = 4;
 
         for (Table table : tables) {
 
