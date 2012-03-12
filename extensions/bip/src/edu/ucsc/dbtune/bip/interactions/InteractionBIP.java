@@ -36,15 +36,29 @@ public class InteractionBIP extends AbstractBIPSolver
     
     protected double delta;
     protected int    numCplexCall;
+    protected boolean isApproximation;
+    
     
     public InteractionBIP(double delta)
     {
         this.delta        = delta;
         this.numCplexCall = 0;
-        
+        this.isApproximation = false;
         this.cacheInteractingPairs = new HashMap<IndexInteraction, Integer>();
     }
 	
+    /**
+     * Set whether to use the approximation strategy
+     * 
+     * @param isApprox
+     *      {@code true} if we use the approximation strategy,
+     *      {@code false} otherwise.
+     *      
+     */
+    public void setApproximiationStrategy(boolean isApprox)
+    {
+        this.isApproximation = isApprox;
+    }
     /**
      * Set the conventional optimizer that will be used to verify the correctness of BIP solution
      * @param optimizer
@@ -91,6 +105,8 @@ public class InteractionBIP extends AbstractBIPSolver
             findInteractions(sql, desc);
             i++;
         }
+        
+        System.out.println("L95, number of CPLEX calls: " + numCplexCall);
         
         return getOutput();
     }
@@ -155,7 +171,7 @@ public class InteractionBIP extends AbstractBIPSolver
                 
                 //  call the BIP solution
                 listIIP.add(new RestrictModel(cplex, desc, logger, delta, indexc, indexd, 
-                                              candidateIndexesDesc, ic, id));
+                                              candidateIndexesDesc, ic, id, isApproximation));
             }
         }
         
@@ -191,7 +207,6 @@ public class InteractionBIP extends AbstractBIPSolver
         }
         
         numCplexCall += listIIP.size();
-        
     }
     
     

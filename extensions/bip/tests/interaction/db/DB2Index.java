@@ -291,7 +291,7 @@ public class DB2Index implements Serializable, Identifiable {
 	 * 
 	 */
     public static DB2Index constructIndexFromDBTune 
-                    (String dbName, String tableName, 
+                    (String dbName, String tableName, String tableOwner, 
                     List<String> colNames, List<Boolean> descending,
                     int id)  throws SQLException 
     {
@@ -306,8 +306,7 @@ public class DB2Index implements Serializable, Identifiable {
         
         // construct the object
         String indexName = indexNameBase + id;
-        String indexOwner = "DB2INST1";
-        String tableOwner = "TPCH";
+        String indexOwner = "DB2INST1";        
         String indexExists = "N";
         int systemRequired = 0;
         

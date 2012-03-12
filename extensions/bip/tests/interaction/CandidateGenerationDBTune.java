@@ -19,18 +19,12 @@ public class CandidateGenerationDBTune
 {    
     private static Environment    en;
     
-    
-    public static void readIndexesFromDBTune()  throws Exception
-    {
-        en = Environment.getInstance();
-        readIndexesFromDBTune(Generation.Strategy.UNION_OPTIMAL);
-        readIndexesFromDBTune(Generation.Strategy.POWER_SET);
-    }
-    
-    private static void readIndexesFromDBTune(Generation.Strategy strategy)
+    public static void readIndexesFromDBTune(Generation.Strategy strategy, String dbName,
+                                             String tableOwner)
                 throws Exception
     {
-        String folder = en.getWorkloadsFoldername() + "/tpch-small";
+        en = Environment.getInstance();
+        String folder = en.getWorkloadsFoldername() + "/tpcds-small";
         String fileName;
         
         if (strategy.equals(Generation.Strategy.OPTIMAL_1C))
@@ -39,8 +33,7 @@ public class CandidateGenerationDBTune
             fileName = folder  + "/candidate-powerset.txt";
         else
             fileName = folder  + "/candidate-optimal.txt";
-        
-        
+                
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
         String line = null;
         
@@ -69,11 +62,11 @@ public class CandidateGenerationDBTune
                     descending.add(false);
             }
             
-            candidateSet.add(DB2Index.constructIndexFromDBTune("ONEGB", tableName, 
+            candidateSet.add(DB2Index.constructIndexFromDBTune(dbName, tableName, tableOwner, 
                                     colNames, descending, id));
         }
         
-        System.out.println("L54, candidate set: " + candidateSet.size());
+        System.out.println("L78, candidate set: " + candidateSet.size());
         File optimalCandidateFile = Configuration.candidateFile(strategy);     
         writeCandidates(optimalCandidateFile, candidateSet);
     }

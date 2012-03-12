@@ -52,14 +52,15 @@ public class RestrictModel
     protected int    numConstraints;
     protected double doiOptimizer;
     protected double doiBIP;
+      
     
     protected IloLinearNumExpr exprIteraction1;
     
     protected IloCplex        cplex;
     protected List<IloNumVar> cplexVar;
     
-    protected LogListener logger;
-    
+    protected LogListener logger;    
+    protected boolean     isApproximation;
     protected Map<Integer, Map<Integer, Double>>    mapThetaVarCoef;
     
     /**
@@ -87,7 +88,7 @@ public class RestrictModel
                          final LogListener logger, 
                          final double delta, final Index indexc, final Index indexd, 
                          final Set<Index> candidateIndexes,
-                         final int ic, final int id)
+                         final int ic, final int id, final boolean isApproximation)
     {
         this.delta            = delta;
         this.iC               = ic;
@@ -99,6 +100,7 @@ public class RestrictModel
         this.candidateIndexes = candidateIndexes;
         this.cplexVar         = null;
         this.cplex            = cplex;
+        this.isApproximation  = isApproximation;
     }
     
     /**
@@ -595,8 +597,14 @@ public class RestrictModel
     {   
         IloLinearNumExpr expr;        
         int idU;
+        double approxCoef;        
+        int q;
         
-        int q = desc.getStatementID();
+        q = desc.getStatementID();        
+        if (isApproximation)
+            approxCoef = 1.2;
+        else 
+            approxCoef = 1.0;
         
         // construct C^opt_t
         for (int theta : listTheta) {
@@ -612,10 +620,10 @@ public class RestrictModel
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) 
                     for (Index index : desc.getIndexesAtSlot(i)) {
                         idU = poolVariables.get(theta, VAR_U, q, t, index.getId()).getId();
-                        expr.addTerm(-desc.getAccessCost(t, index), cplexVar.get(idU));
+                        expr.addTerm(-approxCoef * desc.getAccessCost(t, index), cplexVar.get(idU));
                     }
                 
-                cplex.addLe(expr, desc.getInternalPlanCost(t), "local_" + numConstraints);
+                cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
                 numConstraints++;
             }
         }

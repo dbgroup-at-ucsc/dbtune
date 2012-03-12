@@ -48,14 +48,16 @@ public class SerialIndexBenefitGraph implements Serializable {
 	 * @param indexes
 	 * @throws SQLException 
 	 */
-	public static void fixCandidates(DB2IndexSet indexes) throws SQLException
+	public static void fixCandidates(DB2IndexSet indexes, String tableOwner) throws SQLException
 	{
 	    poolIndexes = new BitArraySet<Index>();
 	    
 	    for (DB2Index index : indexes)
-	        poolIndexes.add(transformKarlToDBTune(index));    
+	        poolIndexes.add(transformKarlToDBTune(index, tableOwner));    
 	}
 	
+	// TODO: implements a work-around function that remove useless indexes
+	// given a statement
 	
 	public static void setCatalog(Catalog cat)
 	{
@@ -63,7 +65,7 @@ public class SerialIndexBenefitGraph implements Serializable {
 	}
 	
 	 
-	private static Index transformKarlToDBTune(DB2Index karlIndex) throws SQLException
+	private static Index transformKarlToDBTune(DB2Index karlIndex, String tableOwner) throws SQLException
 	{
 	    List<String>  colNames  = karlIndex.getSchema().getColumnNames();
 	    List<Boolean> ascending = karlIndex.getSchema().getAscending();
@@ -73,7 +75,7 @@ public class SerialIndexBenefitGraph implements Serializable {
 	    Column col;
 	    
 	    for (int i = 0; i < colNames.size(); i ++) {
-	        col = catalog.<Column>findByName("tpch" + "." + tableName + "." + colNames.get(i));
+	        col = catalog.<Column>findByName(tableOwner + "." + tableName + "." + colNames.get(i));
 	        if (col == null)
 	            throw new RuntimeException(" cannot look up column: " + colNames.get(i));
 	        
@@ -122,6 +124,7 @@ public class SerialIndexBenefitGraph implements Serializable {
 		BitSet tempUsedIndexes = new BitSet();
 		BitSet childBitSet = new BitSet();
 		SerialIBGCoveringNodeFinder coveringNodeFinder = new SerialIBGCoveringNodeFinder();
+		
 		
 		int nodeCount = 0;
 		IBGNode rootNode = new IBGNode(candidateSet.bitSet(), nodeCount++);
@@ -195,6 +198,11 @@ public class SerialIndexBenefitGraph implements Serializable {
         ExplainedSQLStatement stmt;
         
         int nodeCount = 0;
+        
+        // T0DO: reduce the size of candidate sets
+        // the idea is to compute the gamma factor, and remove "useless" indexes
+        // work-around by calling from fixCandidates() method
+        
         IBGNode rootNode = new IBGNode(candidateSet.bitSet(), nodeCount++);
         Queue<IBGNode> queue = new Queue<IBGNode>();
         queue.add(rootNode);

@@ -47,64 +47,34 @@ public class AnalysisMain {
     private static Environment    en;
     private static Workload workload;
     
-    
-	public static void main(String[] args) throws SQLException {
-	    
-    	// process arguments
-		if (args.length > 0) {
-			System.out.println("No arguments are accepted");
-		}
-		
-		// do the steps
-		try {
-			runSteps();
-		} catch (Throwable t) {	
-			t.printStackTrace();
-		} finally { 	
-			// ensures that all threads exit
-			System.exit(0);
-		}
-	}
-
-	
+    // INUM's implementation	
 	public static void setWorkload(Workload wl)
 	{
 	    workload = wl;
 	}
 	
-	public static void runSteps() throws SQLException, IOException, ClassNotFoundException {
-	    
-        SQLWorkload workload = Main.getWorkload();
-		
-        // Connect to database
-		DBConnection conn = Main.openConnection();
-		try {
-			for (Generation.Strategy s : InteractionComparisonFunctionalTest.strategies)
-			    analyze(conn, workload, s);
-
-		} finally {
-			conn.commit();
-			conn.close();
-		}
-	}
 	
-	public static void runStepsINUM() throws SQLException, IOException, ClassNotFoundException {
-        
+	public static void runStepsINUM(String tableOwner) throws Exception
+	{   
         en = Environment.getInstance();
         db = newDatabaseSystem(en);
         
         // Connect to database
-        DBConnection conn = Main.openConnection();
+        DBConnection conn = new DBConnection();
+        
         try {
             for (Generation.Strategy s : InteractionComparisonFunctionalTest.strategies)
-                analyzeINUM(conn, workload, s);
+                analyzeINUM(conn, workload, s, tableOwner);
 
         } finally {
-            conn.commit();
-            conn.close();
+            //conn.commit();
+            //conn.close();
         }
     }
-	private static void analyzeINUM(DBConnection conn, Workload workload, Generation.Strategy strategy) 
+	
+	private static void analyzeINUM(DBConnection conn, Workload workload, 
+	                                Generation.Strategy strategy,
+	                                String tableOwner)
                 throws IOException, ClassNotFoundException, SQLException {
 
 	    long start = System.currentTimeMillis();        
@@ -113,22 +83,22 @@ public class AnalysisMain {
 	    File candidateFile = Configuration.candidateFile(strategy);
 	    DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
 
-	    System.out.println(" L100 (Karl, Analysis), candidate set: " + candidateSet.size());
-
+	    System.out.println(" L84 (Karl, Analysis), candidate set: " + candidateSet.size());
+	   
 	    SerialIndexBenefitGraph.setCatalog(db.getCatalog());
-	    SerialIndexBenefitGraph.fixCandidates(candidateSet);
-	    conn.fixCandidates(candidateSet);
+	    SerialIndexBenefitGraph.fixCandidates(candidateSet, tableOwner);
+	    //conn.fixCandidates(candidateSet);
 	    logger = new InteractionLogger(conn, candidateSet); 
 
 	    //  reset logger and analyze serially
-	    //      then write out the ibgs and analysis
+	    //   then write out the ibgs and analysis
 	    logger.reset();
-	    ibgs = analyzeSerialINUM(conn, workload, candidateSet, logger);
+	    ibgs = analyzeSerialINUM(workload, candidateSet, logger);
 	    writeAnalysis(strategy, SERIAL, logger.getBasicLog());
 	    writeIBGs(ibgs, strategy);
 
 	    long time = System.currentTimeMillis() - start;
-	    System.out.println("L115 (Karl, Analysis Main), the running time: " + time
+	    System.out.println("L99 (Karl, Analysis Main), the running time: " + time
 	                     + " vs. time for INUM: " + SerialIndexBenefitGraph.timeINUM);
 
 	    BasicLog serial1 = (BasicLog) Files.readObjectFromFile(
@@ -154,14 +124,16 @@ public class AnalysisMain {
 	
 	
 	public static SerialIndexBenefitGraph[] analyzeSerialINUM
-	                (DBConnection conn, Workload workload, DB2IndexSet candidateSet, 
+	                (Workload workload, DB2IndexSet candidateSet, 
 	                 InteractionLogger logger) 
                 throws SQLException {
 	    
         SerialIndexBenefitGraph[] ibgs;
         int i;
         
+        // reset timer
         logger.startTimer();
+        SerialIndexBenefitGraph.timeINUM = 0.0;
         
         /* analyze queries one at a time, combining their interactions */
         ibgs = new SerialIndexBenefitGraph[workload.size()];
@@ -181,6 +153,42 @@ public class AnalysisMain {
         return ibgs;
     }
 	
+	// OLD CODE
+	public static void main(String[] args) throws SQLException {
+        
+        // process arguments
+        if (args.length > 0) {
+            System.out.println("No arguments are accepted");
+        }
+        
+        // do the steps
+        try {
+            runSteps();
+        } catch (Throwable t) { 
+            t.printStackTrace();
+        } finally {     
+            // ensures that all threads exit
+            System.exit(0);
+        }
+    }
+
+	public static void runSteps() throws SQLException, IOException, ClassNotFoundException {
+        
+        SQLWorkload workload = Main.getWorkload();
+        
+        // Connect to database
+        DBConnection conn = Main.openConnection();
+        try {
+            for (Generation.Strategy s : InteractionComparisonFunctionalTest.strategies)
+                analyze(conn, workload, s);
+
+        } finally {
+            conn.commit();
+            conn.close();
+        }
+    }
+    
+
 	private static void analyze(DBConnection conn, SQLWorkload workload, Generation.Strategy strategy) 
 	                throws IOException, ClassNotFoundException, SQLException {
 		
