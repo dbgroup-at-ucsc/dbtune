@@ -57,6 +57,7 @@ public class SeqWhatIfTest2 {
         RTimerN timer = new RTimerN();
         Environment en = Environment.getInstance();
         en.setProperty("optimizer", "dbms");
+        en.setProperty("optimizer", "inum");
         DatabaseSystem db = DatabaseSystem.newDatabaseSystem(en);
         Optimizer optimizer = db.getOptimizer();
 
@@ -94,20 +95,24 @@ public class SeqWhatIfTest2 {
         // for (Index index : set)
         // allIndex.add(index);
 
-//        timer.finish("loading");
+        // timer.finish("loading");
         timer.reset();
 
         Index[] indices = indexes.toArray(new Index[indexes.size()]);
         cost = SeqCost.fromOptimizer(db, optimizer, workload, indices);
         cost.storageConstraint = 2000;
-        int n = 0;
-        for (SeqQuery query : cost.sequence) {
-            System.out.println((n++) + " " + query);
-        }
-        n = 0;
-        for (SeqIndex index : cost.indicesV) {
+        for (SeqIndex index : cost.indicesV)
             index.storageCost = 1000;
-            System.out.println((n++) + " " + index);
+        if (false) {
+            int n = 0;
+            for (SeqQuery query : cost.sequence) {
+                System.out.println((n++) + " " + query);
+            }
+            n = 0;
+            for (SeqIndex index : cost.indicesV) {
+                index.storageCost = 1000;
+                System.out.println((n++) + " " + index);
+            }
         }
         // timer.finish("calculating create index cost");
         // timer.reset();
@@ -117,9 +122,14 @@ public class SeqWhatIfTest2 {
         while (greedySeq.run())
             ;
         greedySeq.finish();
-        Rt.np(SeqOptimal.formatBestPathPlain(greedySeq.bestPath));
-        Rt.p("%d x %d",cost.sequence.length,cost.indicesV.size());
-        Rt.p("GREEDY SEQ tune %.3f",timer.getSecondElapse());
+        if (false)
+            Rt.np(SeqOptimal.formatBestPathPlain(greedySeq.bestPath));
+        Rt.p("%d x %d", cost.sequence.length, cost.indicesV.size());
+        Rt
+                .p(
+                        "GREEDY cost: %,.0f",
+                        greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStep);
+        Rt.p("GREEDY SEQ time %.3f", timer.getSecondElapse());
         Rt.p("WhatIf Call time %.3f",
                 SeqCost.totalWhatIfNanoTime / 1000000000.0);
         // SeqStep[] steps = SeqOptimal.getOptimalSteps(cost.source,

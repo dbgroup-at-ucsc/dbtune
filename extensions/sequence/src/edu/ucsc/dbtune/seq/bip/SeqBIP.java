@@ -20,6 +20,7 @@ import java.util.Vector;
 import java.util.logging.Logger;
 
 import edu.ucsc.dbtune.seq.bip.def.*;
+import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
@@ -196,6 +197,10 @@ public class SeqBIP extends AbstractBIPSolver {
 
     @Override
     protected final void buildBIP() {
+        if (false) {
+            buildBIPOneByOne();
+            return;
+        }
         super.numConstraints = 0;
         try {
             this.queries = new Query[totalQueires];
@@ -209,9 +214,9 @@ public class SeqBIP extends AbstractBIPSolver {
                 this.queries[i].addObjective(expr);
             }
             IloObjective obj = cplex.minimize(expr);
+            cplex.add(obj);
             if (showFormulas)
                 Rt.p("Obj: " + expr.toString());
-            cplex.add(obj);
 
             for (int i = 0; i < totalQueires; i++) {
                 this.queries[i].addConstriant();
@@ -229,6 +234,54 @@ public class SeqBIP extends AbstractBIPSolver {
                                         + this.queries[i].present[k]);
                     cplex.addEq(expr, this.queries[i].present[k]);
                 }
+            }
+
+            cplexVar = new Vector<IloNumVar>();
+            for (IloNumVar var : iloVar)
+                cplexVar.add(var);
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected final void buildBIPOneByOne() {
+        super.numConstraints = 0;
+        try {
+            this.queries = new Query[totalQueires];
+            for (int i = 0; i < totalQueires; i++) {
+                this.queries[i] = new Query(cost.sequence[i]);
+            }
+            cplex.add(iloVar);
+
+            IloLinearNumExpr exprObj = cplex.linearNumExpr();
+            for (int i = 0; i < totalQueires; i++) {
+                this.queries[i].addObjective(exprObj);
+                IloObjective obj = cplex.minimize(exprObj);
+                cplex.add(obj);
+                if (showFormulas)
+                    Rt.p("Obj: " + exprObj.toString());
+
+                this.queries[i].addConstriant();
+                for (int k = 0; k < totalIndices; k++) {
+                    IloLinearNumExpr expr = cplex.linearNumExpr();
+                    if (i > 0)
+                        expr.addTerm(1, this.queries[i - 1].present[k]);
+                    // for (int j = 0; j <= i; j++) {
+                    expr.addTerm(1, this.queries[i].create[k]);
+                    expr.addTerm(-1, this.queries[i].drop[k]);
+                    // }
+                    if (showFormulas)
+                        Rt
+                                .p(expr.toString() + "="
+                                        + this.queries[i].present[k]);
+                    cplex.addEq(expr, this.queries[i].present[k]);
+                }
+                RTimerN timer = new RTimerN();
+                cplex.solve();
+                Rt.np("queries=%d time=%.3f cost=%.2f", i, timer
+                        .getSecondElapse(), cplex.getObjValue());
+                if (i < totalQueires - 1)
+                    cplex.remove(obj);
             }
 
             cplexVar = new Vector<IloNumVar>();

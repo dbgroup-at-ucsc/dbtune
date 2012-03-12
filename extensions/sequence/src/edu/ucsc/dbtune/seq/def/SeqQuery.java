@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.seq.def;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class SeqQuery {
@@ -11,6 +12,7 @@ public class SeqQuery {
     public SQLStatement sql;
     public double costWithoutIndex;
     public SeqIndex[] relevantIndices;
+    public InumPreparedSQLStatement inum;
     public Vector<SeqQueryCostWithIndex> costsWithIndices = new Vector<SeqQueryCostWithIndex>();
     public Hashtable<SeqConfiguration, Double> costCache = new Hashtable<SeqConfiguration, Double>();
 

@@ -122,21 +122,25 @@ public class BipTest2 extends BIPTestConfiguration {
         // timer.finish("loading");
         timer.reset();
         SeqInumCost cost = SeqInumCost.fromInum(optimizer, workload, indexes);
-        for (int i = 0; i < cost.sequence.length; i++) {
-            Rt.p("Q" + i + ": ");
-            for (SeqInumPlan plan : cost.sequence[i].plans) {
-                Rt.np("\tPlan: " + plan.internalCost);
-                for (SeqInumSlot slot : plan.slots) {
-                    Rt.np("\t\tSlot: " + slot.fullTableScanCost);
-                    for (SeqInumSlotIndexCost c : slot.costs) {
-                        Rt.np("\t\t\tIndex: " + c.index.name + " " + c.cost);
+        if (false) {
+            for (int i = 0; i < cost.sequence.length; i++) {
+                Rt.p("Q" + i + ": ");
+                for (SeqInumPlan plan : cost.sequence[i].plans) {
+                    Rt.np("\tPlan: " + plan.internalCost);
+                    for (SeqInumSlot slot : plan.slots) {
+                        Rt.np("\t\tSlot: " + slot.fullTableScanCost);
+                        for (SeqInumSlotIndexCost c : slot.costs) {
+                            Rt
+                                    .np("\t\t\tIndex: " + c.index.name + " "
+                                            + c.cost);
+                        }
                     }
                 }
             }
-        }
-        for (int i = 0; i < cost.indicesV.size(); i++) {
-            Rt.p("I" + i + ": " + cost.indicesV.get(i).createCost);
-            cost.indicesV.get(i).storageCost = 1000;
+            for (int i = 0; i < cost.indicesV.size(); i++) {
+                Rt.p("I" + i + ": " + cost.indicesV.get(i).createCost);
+                cost.indicesV.get(i).storageCost = 1000;
+            }
         }
         Rt.p("%d x %d", cost.sequence.length, cost.indicesV.size());
         Rt.p("INUM time: %.3f", timer.getSecondElapse());
@@ -148,35 +152,37 @@ public class BipTest2 extends BIPTestConfiguration {
         bip.setLogListenter(logger);
         bip.setWorkload(new Workload("", new StringReader("")));
         SebBIPOutput output = (SebBIPOutput) bip.solve();
-        for (int i = 0; i < output.indexUsed.length; i++) {
-            System.out.print("Query " + i + ":");
-            for (SeqInumIndex index : output.indexUsed[i]) {
-                System.out.print(" " + index.name);
+        if (false)
+            for (int i = 0; i < output.indexUsed.length; i++) {
+                System.out.print("Query " + i + ":");
+                for (SeqInumIndex index : output.indexUsed[i]) {
+                    System.out.print(" " + index.name);
+                }
+                System.out.println();
             }
-            System.out.println();
-        }
         Rt.p("%d x %d", cost.sequence.length, cost.indicesV.size());
         Rt.p("cost: %,.0f", bip.getObjValue());
         Rt.p("BIP time: %.3f", timer.getSecondElapse());
-        for (SeqInumQuery query : cost.sequence) {
-            double c = 0;
-            c += query.selectedPlan.internalCost;
-            HashSet<Index> indexs = new HashSet<Index>();
-            for (SeqInumSlot slot : query.selectedPlan.slots) {
-                if (slot.selectedIndex == null)
-                    c += slot.fullTableScanCost;
-                else {
-                    c += slot.selectedIndex.cost;
-                    indexs.add(slot.selectedIndex.index.index);
+        if (false)
+            for (SeqInumQuery query : cost.sequence) {
+                double c = 0;
+                c += query.selectedPlan.internalCost;
+                HashSet<Index> indexs = new HashSet<Index>();
+                for (SeqInumSlot slot : query.selectedPlan.slots) {
+                    if (slot.selectedIndex == null)
+                        c += slot.fullTableScanCost;
+                    else {
+                        c += slot.selectedIndex.cost;
+                        indexs.add(slot.selectedIndex.index.index);
+                    }
                 }
+                double db2cost = db2optimizer.explain(query.sql, indexs)
+                        .getTotalCost();
+                Rt.p("%s q=%,.0f db2=%,.0f t=%,.0f", query.name, c, db2cost,
+                        query.transitionCost);
+                if (Math.abs(c - db2cost) > 1)
+                    Rt.error("%.2f%%", c / db2cost * 100);
             }
-            double db2cost = db2optimizer.explain(query.sql, indexs)
-                    .getTotalCost();
-            Rt.p("%s q=%,.0f db2=%,.0f t=%,.0f", query.name, c, db2cost,
-                    query.transitionCost);
-            if (Math.abs(c - db2cost) > 1)
-                Rt.error("%.2f%%", c / db2cost * 100);
-        }
 
         SeqCost.totalWhatIfNanoTime = 0;
         db.getConnection().close();
@@ -184,7 +190,8 @@ public class BipTest2 extends BIPTestConfiguration {
     }
 
     public static void main(String[] args) throws Exception {
-        times = 5;
-        test();
+        for (times = 11; times <= 20; times++) {
+            test();
+        }
     }
 }
