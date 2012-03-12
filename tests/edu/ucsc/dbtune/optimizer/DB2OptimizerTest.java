@@ -6,8 +6,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -21,7 +19,6 @@ import org.junit.Test;
 import static com.google.common.collect.Lists.newArrayList;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
-import static edu.ucsc.dbtune.DBTuneInstances.configurePowerSet;
 import static edu.ucsc.dbtune.DBTuneInstances.makeResultSet;
 import static edu.ucsc.dbtune.metadata.Index.ASC;
 import static edu.ucsc.dbtune.metadata.Index.DESC;
@@ -45,7 +42,6 @@ import static org.mockito.Mockito.when;
  */
 public class DB2OptimizerTest
 {
-    private static Map<String, Set<Index>> configurations;
     private static Catalog cat;
     private static Column a;
     private static Column b;
@@ -66,8 +62,6 @@ public class DB2OptimizerTest
         a = cat.<Column>findByName("schema_0.table_0.column_0");
         b = cat.<Column>findByName("schema_0.table_0.column_1");
         c = cat.<Column>findByName("schema_0.table_0.column_2");
-
-        configurations = configurePowerSet(cat);
 
         h = new String[8];
 
@@ -186,21 +180,22 @@ public class DB2OptimizerTest
 
         ResultSet rs2 = makeResultSet(
         Arrays.asList(h2[0], h2[1]),
-        Arrays.asList(   1, null),
-        Arrays.asList(   2, null),
-        Arrays.asList(   3, null),
-        Arrays.asList(   4, "Q1.SOME_COL = Q1.SOME_OTHER_COL"),
-        Arrays.asList(   4, "Q1.BAR = 10"),
-        Arrays.asList(   4, "Q1.FOO > 20"),
-        Arrays.asList(   5, "Q2.TAA BETWEEN 10 AND 100000"),
-        Arrays.asList(   5, "Q2.SOME_COL > Q2.OTHER_COL"));
+        Arrays.asList(    1, null),
+        Arrays.asList(    2, null),
+        Arrays.asList(    3, null),
+        Arrays.asList(    4, "Q1.SOME_COL = Q1.SOME_OTHER_COL"),
+        Arrays.asList(    4, "Q1.BAR = 10"),
+        Arrays.asList(    4, "Q1.FOO > 20"),
+        Arrays.asList(    5, "Q2.TAA BETWEEN 10 AND 100000"),
+        Arrays.asList(    5, "Q2.SOME_COL > Q2.OTHER_COL"),
+        Arrays.asList(    5, "EXISTS (SELECT $RID$ FROM Q2.SOME_TABLE)"));
+        // CHECKSTYLE:ON
 
         SQLStatementPlan plan = DB2Optimizer.parsePlan(cat, rs, rs2, new HashSet<Index>());
 
         assertThat(plan.size(), is(5));
         assertThat(plan.getIndexes().size(), is(1));
         assertThat(plan.getRootOperator().getName(), is("RETURN"));
-        // CHECKSTYLE:ON
 
         assertThat(plan.leafs().size(), is(2));
 
@@ -208,7 +203,63 @@ public class DB2OptimizerTest
 
             if (o.getName().equals(Operator.INDEX_SCAN)) {
                 assertThat(o.getDatabaseObjects().size(), is(1));
-                assertThat(o.getPredicates().size(), is(2));
+                assertThat(o.getPredicates().size(), is(3));
+                assertThat(o.getPredicates().get(2).getText().contains("RID()"), is(true));
+            }
+            else if (o.getName().equals(Operator.TABLE_SCAN)) {
+                assertThat(o.getDatabaseObjects().size(), is(1));
+                assertThat(o.getPredicates().size(), is(3));
+            }
+            else {
+                fail("Unexpected operator at leaf: " + o);
+            }
+        }
+    }
+
+    /**
+     * Checks that the extraction of a plan is done correctly.
+     * @throws Exception
+     *      if the creation of the mock fails
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testMoreThanOneParent() throws Exception
+    {
+        // CHECKSTYLE:OFF
+        ResultSet rs = makeResultSet(
+        Arrays.asList(h[0], h[1],      h[2],        h[3],                        h[4],  h[5],    h[6], h[7]),
+        Arrays.asList(   1, null,  "RETURN",  "schema_0",  null                      ,  10l ,  2000.0,   ""),
+        Arrays.asList(   2,    1,  "GRPBY" ,  "schema_0",  null                      ,  10l ,  2000.0,   ""),
+        Arrays.asList(   3,    1,  "SORT"  ,  "schema_0",  null                      ,  10l ,  1500.0,   ""),
+        Arrays.asList(   4,    2,  "TBSCAN",  "schema_0",  "table_2"                 ,  100l,   700.0,   "+Q1.column_0(A)+Q2.column_3(D)+Q3.column_2"),
+        Arrays.asList(   4,    3,  "IXSCAN",    "SYSTEM",  "schema_0.table_0_index_0",  100l,   700.0,   "+Q2.column_1"));
+
+        ResultSet rs2 = makeResultSet(
+        Arrays.asList(h2[0], h2[1]),
+        Arrays.asList(    1, null),
+        Arrays.asList(    2, null),
+        Arrays.asList(    3, null),
+        Arrays.asList(    4, "Q1.SOME_COL = Q1.SOME_OTHER_COL"),
+        Arrays.asList(    4, "Q1.BAR = 10"),
+        Arrays.asList(    4, "Q1.FOO > 20"),
+        Arrays.asList(    5, "Q2.TAA BETWEEN 10 AND 100000"),
+        Arrays.asList(    5, "Q2.SOME_COL > Q2.OTHER_COL"),
+        Arrays.asList(    5, "EXISTS (SELECT $RID$ FROM Q2.SOME_TABLE)"));
+        // CHECKSTYLE:ON
+
+        SQLStatementPlan plan = DB2Optimizer.parsePlan(cat, rs, rs2, new HashSet<Index>());
+
+        assertThat(plan.size(), is(5));
+        assertThat(plan.getIndexes().size(), is(1));
+        assertThat(plan.getRootOperator().getName(), is("RETURN"));
+
+        assertThat(plan.leafs().size(), is(2));
+
+        for (Operator o : plan.leafs()) {
+
+            if (o.getName().equals(Operator.INDEX_SCAN)) {
+                assertThat(o.getDatabaseObjects().size(), is(1));
+                assertThat(o.getPredicates().size(), is(3));
             }
             else if (o.getName().equals(Operator.TABLE_SCAN)) {
                 assertThat(o.getDatabaseObjects().size(), is(1));
@@ -229,19 +280,17 @@ public class DB2OptimizerTest
     @Test
     public void testClearAdviseAndExplainTables() throws Exception
     {
-        /*
         Connection con = mock(Connection.class);
         Statement stmt = mock(Statement.class);
 
         when(stmt.executeUpdate(anyString())).thenReturn(0);
         when(con.createStatement()).thenReturn(stmt);
 
-        //DB2Optimizer.clearAdviseAndExplainTables(con);
+        DB2Optimizer.clearAdviseAndExplainTables(con);
 
         verify(stmt, times(1)).executeUpdate(DELETE_FROM_ADVISE_INDEX);
         verify(stmt, times(1)).executeUpdate(DELETE_FROM_EXPLAIN_INSTANCE);
         verify(stmt, times(1)).close();
-        */
     }
 
     /**
@@ -251,7 +300,6 @@ public class DB2OptimizerTest
     @Test
     public void testBuildColumnNamesValue() throws Exception
     {
-        /*
         Index idx;
 
         idx = new Index(a, ASC);
@@ -277,107 +325,18 @@ public class DB2OptimizerTest
                 DB2Optimizer.buildColumnNamesValue(idx),
                 is(equalToIgnoringCase("-column_0+column_1-column_2")));
         cat.schemas().get(0).remove(idx);
-        */
     }
 
-    /**
-     * @throws Exception
-     *      if error
-     */
-    @Test
-    public void testBuildAdviseIndexInsertStatement() throws Exception
-    {
-        // TODO
-    }
-
-    /**
-     * @throws Exception
-     *      if error
-     */
-    @Test
-    public void testInsertIntoAdviseTable() throws Exception
-    {
-        /*
-        Connection con = mock(Connection.class);
-        Statement stmt = mock(Statement.class);
-
-        con = mock(Connection.class);
-        stmt = mock(Statement.class);
-
-        when(stmt.execute(anyString())).thenReturn(true);
-        when(con.createStatement()).thenReturn(stmt);
-
-        DB2Optimizer.insertIntoAdviseIndexTable(con, configurations.get("abcd"));
-
-        verify(stmt, times(4)).execute(anyString());
-        verify(stmt, times(1)).close();
-
-        for (Index idx : configurations.get("abcd"))
-            verify(stmt, times(1)).execute(DB2Optimizer.buildAdviseIndexInsertStatement(idx));
-
-        con = mock(Connection.class);
-        stmt = mock(Statement.class);
-
-        when(stmt.execute(anyString())).thenReturn(true);
-        when(con.createStatement()).thenReturn(stmt);
-
-        DB2Optimizer.insertIntoAdviseIndexTable(con, configurations.get("a"));
-
-        verify(stmt, times(1)).execute(anyString());
-        verify(stmt, times(1)).close();
-
-        for (Index idx : configurations.get("a"))
-            verify(stmt, times(1)).execute(DB2Optimizer.buildAdviseIndexInsertStatement(idx));
-            */
-    }
-
-    /**
-     * @throws Exception
-     *      if error
-     */
-    @Test
-    public void testExtractColumnsUsedByOperator() throws Exception
-    {
-        // TODO
-    }
-
-    /**
-     * @throws Exception
-     *      if error
-     */
-    @Test
-    public void testExtractOperatorToPredicateListMap() throws Exception
-    {
-        // TODO
-    }
-
-    /**
-     * @throws Exception
-     *      if error
-     */
-    @Test
-    public void testExtractPredicatesUsedByOperator() throws Exception
-    {
-        // TODO
-    }
-
-    /**
-     * @throws Exception
-     *      if error
-     */
-    @Test
-    public void testParseColumnNames() throws Exception
-    {
-        // TODO
-    }
-
-    /**
-     * @throws Exception
-     *      if error
-     */
-    @Test
-    public void testReadAdviseIndexTable() throws Exception
-    {
-        // TODO
-    }
+    // TODO:
+    //    * BuildAdviseIndexInsertStatement
+    //    * InsertIntoAdviseTable
+    //    * ExtractColumnsUsedByOperator
+    //    * ExtractOperatorToPredicateListMap
+    //    * ExtractPredicatesUsedByOperator
+    //    * ParseColumnNames
+    //    * ReadAdviseIndexTable
+    //    * renameClosestJoinAndRemoveBranchComingFrom
+    //    * removeGENROW
+    //    * rewriteNonLeafTableScans
+    //    * optimization profiles
 }

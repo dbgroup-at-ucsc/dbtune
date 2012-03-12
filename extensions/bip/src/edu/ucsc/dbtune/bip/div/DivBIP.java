@@ -37,8 +37,9 @@ public class DivBIP extends AbstractBIPSolver
      */
     public DivBIP(int Nreplicas, int loadfactor, double B)
     {
-        this.Nreplicas = Nreplicas;
+        this.Nreplicas  = Nreplicas;
         this.loadfactor = loadfactor;
+        
         this.B = B;
     }
     
@@ -55,21 +56,16 @@ public class DivBIP extends AbstractBIPSolver
     {
         DivConfiguration conf = new DivConfiguration(Nreplicas);
         
-        // Iterate over variables s_{i,w}
-        // Iterate over variables create_{i,w} and drop_{i,w}
-        /*
-        for (Entry<String, Integer> pairVarVal : super.mapVariableValue.entrySet()) {
-            if (pairVarVal.getValue() == 1) {
-                String name = pairVarVal.getKey();
-                DivVariable divVar = (DivVariable) this.poolVariables.get(name);
+        // Iterate over variables s^r_{i,w}
+        for (int i = 0; i < poolVariables.variables().size(); i++)
+            if (valVar[i] == 1) {
+                DivVariable var = (DivVariable) poolVariables.variables().get(i);
                 
-                if (divVar.getType() == DivVariablePool.VAR_S){
-                    Index index = this.mapVarSToIndex.get(name);
-                    // TODO: only record the normal indexes
-                    conf.addMaterializedIndexAtReplica(divVar.getReplica(), index);
+                if (var.getType() == VAR_S) {
+                    Index index = mapVarSToIndex.get(var.getName());
+                    conf.addIndexReplica(var.getReplica(), index);
                 }
             }
-        }*/
         
         return conf;
     }
@@ -133,16 +129,11 @@ public class DivBIP extends AbstractBIPSolver
         }
         
         // for TYPE_S
-        for (Index index : candidateIndexes) {   
-            
+        for (Index index : candidateIndexes)
             for (int r = 0; r < Nreplicas; r++) {
-                
-                DivVariable var = poolVariables.createAndStore(VAR_S, r, index.getId(),  
-                                                                        0, 0);
+                DivVariable var = poolVariables.createAndStore(VAR_S, r, index.getId(), 0, 0);
                 mapVarSToIndex.put(var.getName(), index);
-                
             }
-        }
         
         super.createCplexVariable(poolVariables.variables());
     }
@@ -168,28 +159,18 @@ public class DivBIP extends AbstractBIPSolver
             
             for (int r = 0; r < Nreplicas; r++) {
 
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    
-                    id = poolVariables.getDivVariable(VAR_Y, r, q, k, 0).getId();
-                    expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(id));
-                    
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
+                    id = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+                    expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(id));                    
                 }                
                         
                 // Index access cost                            
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                        
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++)
                         for (Index index : desc.getIndexesAtSlot(i)) {
-                            
-                            id = poolVariables.getDivVariable(VAR_X,r, q, k, index.getId())
-                                              .getId();
+                            id = poolVariables.get(VAR_X,r, q, k, index.getId()).getId();
                             expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(id));
-                            
                         }
-                        
-                    }
-                }
             }
         }
         
@@ -208,7 +189,7 @@ public class DivBIP extends AbstractBIPSolver
         int id;
         int q;
         
-        for (QueryPlanDesc desc : queryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs) {
             
             q = desc.getStatementID();
         
@@ -218,10 +199,8 @@ public class DivBIP extends AbstractBIPSolver
                 
                 // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    
-                    id = poolVariables.getDivVariable(VAR_Y, r, q, k, 0).getId();
+                    id = poolVariables.get(VAR_Y, r, q, k, 0).getId();
                     expr.addTerm(1, cplexVar.get(id));
-                    
                 }
                 
                 cplex.addLe(expr, 1);
@@ -255,7 +234,7 @@ public class DivBIP extends AbstractBIPSolver
                 // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     
-                    idY = poolVariables.getDivVariable(DivVariablePool.VAR_Y, r, q, k, 0).getId();
+                    idY = poolVariables.get(DivVariablePool.VAR_Y, r, q, k, 0).getId();
                     
                     for (int i = 0; i < desc.getNumberOfSlots(); i++) {            
                     
@@ -263,10 +242,7 @@ public class DivBIP extends AbstractBIPSolver
                         expr.addTerm(-1, cplexVar.get(idY));
                         
                         for (Index index : desc.getIndexesAtSlot(i)) { 
-                            
-                            idX = poolVariables.getDivVariable(VAR_X, r, q, k, index.getId())
-                                               .getId();
-                            
+                            idX = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();                            
                             expr.addTerm(1, cplexVar.get(idX));
                         }
                         
@@ -279,25 +255,18 @@ public class DivBIP extends AbstractBIPSolver
         }
         
         // used index constraint
-        for (QueryPlanDesc desc : queryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs) {
             
             q = desc.getStatementID();
-        
-            for (int r = 0; r < Nreplicas; r++) {
-                
-                // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {            
-                        
-                        
-                        for (Index index : desc.getIndexesAtSlot(i)) { 
+            
+         // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
+            for (int r = 0; r < Nreplicas; r++)
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++)   
+                        for (Index index : desc.getIndexesAtSlot(i)) {
                             
-                            idX = poolVariables.getDivVariable(VAR_X, r, q, k, index.getId())
-                                               .getId();
-                            
-                            idS = poolVariables.getDivVariable(VAR_S, r, q, k, index.getId())
-                                               .getId();
+                            idX = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
+                            idS = poolVariables.get(VAR_S, r, q, k, index.getId()).getId();
                             
                             expr = cplex.linearNumExpr();
                             expr.addTerm(1, cplexVar.get(idX));
@@ -306,9 +275,7 @@ public class DivBIP extends AbstractBIPSolver
                             numConstraints++;
                             
                         }
-                    }
-                }       
-            }
+            
         }
     }
     
@@ -323,20 +290,17 @@ public class DivBIP extends AbstractBIPSolver
         int idY;        
         int q;
         
-        for (QueryPlanDesc desc : queryPlanDescs){
+        for (QueryPlanDesc desc : queryPlanDescs) {
             
             q = desc.getStatementID();
             expr = cplex.linearNumExpr();
             
-            for (int r = 0; r < Nreplicas; r++) {
-                
+            for (int r = 0; r < Nreplicas; r++)
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    
-                    idY = poolVariables.getDivVariable(VAR_Y, r, q, k, 0).getId();
+                    idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
                     expr.addTerm(1, cplexVar.get(idY));
-                    
                 }
-            }
+            
             
             cplex.addEq(expr, loadfactor);            
             numConstraints++;
@@ -357,11 +321,9 @@ public class DivBIP extends AbstractBIPSolver
 
             expr = cplex.linearNumExpr();
             
-            for (Index index : candidateIndexes) {               
-                
-                idS = poolVariables.getDivVariable(VAR_S, r, index.getId(), 0, 0).getId();                
+            for (Index index : candidateIndexes) {  
+                idS = poolVariables.get(VAR_S, r, index.getId(), 0, 0).getId();                
                 expr.addTerm(index.getBytes(), cplexVar.get(idS));
-                
             }
             
             cplex.addLe(expr, B);

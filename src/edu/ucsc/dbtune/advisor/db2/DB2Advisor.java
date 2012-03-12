@@ -34,9 +34,6 @@ public class DB2Advisor
         final String cmd = getCmd(advisorPath, budget, workloadFile, false);
         final String cleanCmd = getCmd(advisorPath, budget, workloadFile, true);
 
-        System.out.println("Running db2advis on " + workloadFile);
-        System.out.println("command = " + cleanCmd);
-
         Process prcs = Runtime.getRuntime().exec(cmd);
         
         FileInfo info;
@@ -56,7 +53,6 @@ public class DB2Advisor
                 prcs.waitFor();
                 break;
             } catch (InterruptedException e) {
-                System.out.println("InterruptedException"+ " Cause: " + e.toString());
             }
         }
         int rc = prcs.exitValue();
@@ -106,7 +102,6 @@ public class DB2Advisor
             double total = 0;
             for (IndexInfo info : indexList) 
                 total += info.megabytes;
-            System.out.println("Total size = " + total);
             return (int) Math.round(total);
         }
         
@@ -141,7 +136,6 @@ public class DB2Advisor
                         String indexName = createMatcher.group(1);
                         double indexMegabytes = Double.parseDouble(headerMatcher.group(1));
                         indexList.add(new IndexInfo(indexName, indexMegabytes));
-                        System.out.println(indexMegabytes + "\t" + indexName + "\t" + line);
                     }
                 }
                 str += line + "\n";

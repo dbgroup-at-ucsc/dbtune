@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 
@@ -18,8 +19,10 @@ import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
  *
  * @author Ivo Jimenez
  */
-public class InumInterestingOrder extends InterestingOrder
+public class InumInterestingOrder extends Index
 {
+    protected Table table;
+
     /**
      * Invoked only by {@link FullTableScanIndex}.
      *
@@ -34,13 +37,92 @@ public class InumInterestingOrder extends InterestingOrder
      */
     InumInterestingOrder(Schema schema, Table table, String indexName) throws SQLException
     {
-        super(table.columns().get(0), ASCENDING);
+        this(table.columns().get(0), ASCENDING);
 
         this.name = indexName;
         this.table = table;
         this.remove(table.columns().get(0));
 
         container.remove(this);
+    }
+
+    /**
+     * Creates an interesting order instance.
+     *
+     * @param columns
+     *     column that will define the index
+     * @param ascending
+     *     whether or not the column is sorted in ascending or ascending order.
+     * @throws SQLException
+     *      if the schema of the table is null or can't be retrieved
+     */
+    public InumInterestingOrder(List<Column> columns, List<Boolean> ascending) throws SQLException
+    {
+        super("temporary", columns, ascending);
+
+        container.remove(this);
+
+        // we know the list has at least one column; it's a precondition of the super constructor
+        table = columns.get(0).getTable();
+
+        // override name
+        name = makeName(columns, ascending);
+
+        if (getFullyQualifiedName().length() > 128)
+            name = name.substring(0, 127 - getSchema().getFullyQualifiedName().length());
+    }
+
+    /**
+     * Creates an interesting order instance.
+     *
+     * @param columns
+     *     column that will define the index
+     * @param ascending
+     *     whether or not the column is sorted in ascending or ascending order.
+     * @throws SQLException
+     *      if the schema of the table is null or can't be retrieved
+     */
+    public InumInterestingOrder(List<Column> columns, Map<Column, Boolean> ascending)
+        throws SQLException
+    {
+        super("temporary", columns, ascending);
+
+        container.remove(this);
+
+        // we know the list has at least one column; it's a precondition of the super constructor
+        table = columns.get(0).getTable();
+
+        // override name
+        name = makeName(columns, ascending);
+
+        if (getFullyQualifiedName().length() > 128)
+            name = name.substring(0, 127 - getSchema().getFullyQualifiedName().length());
+    }
+
+    /**
+     * copy constructor.
+     *
+     * @param io
+     *      other object
+     * @throws SQLException
+     *      if error
+     */
+    public InumInterestingOrder(InumInterestingOrder io) throws SQLException
+    {
+        this(((Index) io).columns(), io.ascendingColumn);
+    }
+
+    /**
+     * copy constructor.
+     *
+     * @param io
+     *      other object
+     * @throws SQLException
+     *      if error
+     */
+    public InumInterestingOrder(InterestingOrder io) throws SQLException
+    {
+        this(((Index) io).columns(), io.getAscending());
     }
 
     /**
@@ -55,31 +137,77 @@ public class InumInterestingOrder extends InterestingOrder
      */
     public InumInterestingOrder(Column column, boolean ascending) throws SQLException
     {
-        super(column, ascending);
+        super(column.getTable().getSchema(), makeName(column, ascending));
+
+        add(column, ascending);
+
+        table = column.getTable();
+
+        container.remove(this);
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Table getTable()
+    {
+        return this.table;
     }
 
     /**
-     * Creates an index containing the given columns and ascending values. The name of the index is 
-     * defaulted to {@code "dbtune_" + getId() + "_index"}. The index is assumed to be {@link 
-     * SECONDARY},  {@link NON_UNIQUE} and {@link UNCLUSTERED}
+     * Creates the name of an index.
+     *
+     * @param column
+     *     column that will define the index
+     * @param ascending
+     *     indicates whether or not the column is sorted in ascending or ascending order.
+     * @return
+     *      then name of the index
+     */
+    private static String makeName(Column column, boolean ascending)
+    {
+        return column.getName() + "_" + (ascending ? "a" : "d") + "_";
+    }
+
+    /**
+     * Creates the name of an index.
      *
      * @param columns
-     *     columns that will define the index
+     *      column that will define the index
      * @param ascending
-     *     indicates whether or not the corresponding column is sorted in ascending or ascending 
-     *     order.
-     * @throws SQLException
-     *     if column list empty; if schema already contains an index with the defaulted name; if not 
-     *     all of the columns in the list correspond to the same table.
+     *      whether or not the column is sorted in ascending or ascending order.
+     * @return
+     *      then name of the index
      */
-    public InumInterestingOrder(List<Column> columns, Map<Column, Boolean> ascending)
-        throws SQLException
+    private static String makeName(List<Column> columns, Map<Column, Boolean> ascending)
     {
-        super(columns, ascending);
+        StringBuilder str = new StringBuilder();
+
+        for (Column c : columns)
+            str.append(makeName(c, ascending.get(c)));
+
+        return str.toString();
     }
     
-    public InumInterestingOrder(InterestingOrder io) throws SQLException
+    /**
+     * Creates the name of an index.
+     *
+     * @param columns
+     *      column that will define the index
+     * @param ascending
+     *      whether or not the column is sorted in ascending or ascending order.
+     * @return
+     *      then name of the index
+     */
+    private static String makeName(List<Column> columns, List<Boolean> ascending)
     {
-        super(io.columns(),io.getAscending());
+        StringBuilder str = new StringBuilder();
+
+        for (int i = 0; i < columns.size(); i++)
+            str.append(makeName(columns.get(i), ascending.get(i)));
+
+        return str.toString();
     }
 }

@@ -1,38 +1,50 @@
 package edu.ucsc.dbtune.inum;
 
+import java.io.PrintWriter;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.plan.Predicate;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.apache.derby.iapi.error.StandardException;
+
 import org.apache.derby.iapi.services.context.ContextManager;
+import org.apache.derby.iapi.services.sanity.SanityManager;
+
 import org.apache.derby.iapi.sql.compile.Visitable;
 import org.apache.derby.iapi.sql.compile.Visitor;
 import org.apache.derby.iapi.sql.conn.LanguageConnectionContext;
+
 import org.apache.derby.impl.jdbc.EmbedConnection;
+
 import org.apache.derby.impl.sql.compile.BinaryRelationalOperatorNode;
 import org.apache.derby.impl.sql.compile.ColumnReference;
 import org.apache.derby.impl.sql.compile.CursorNode;
 import org.apache.derby.impl.sql.compile.FromBaseTable;
-import org.apache.derby.impl.sql.compile.FromList;
+import org.apache.derby.impl.sql.compile.FromSubquery;
 import org.apache.derby.impl.sql.compile.GroupByList;
-import org.apache.derby.impl.sql.compile.HalfOuterJoinNode;
 import org.apache.derby.impl.sql.compile.JoinNode;
 import org.apache.derby.impl.sql.compile.OrderByList;
 import org.apache.derby.impl.sql.compile.QueryTreeNode;
+import org.apache.derby.impl.sql.compile.ResultSetNode;
 import org.apache.derby.impl.sql.compile.SelectNode;
+import org.apache.derby.impl.sql.compile.SubqueryNode;
+import org.apache.derby.impl.sql.compile.ValueNode;
+
+import static edu.ucsc.dbtune.metadata.Index.ASC;
 
 /**
  * Extracts interesting orders by parsing a query using the Derby SQL parser. Supports any SQL
@@ -67,86 +79,119 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     private static final String STOP_AFTER_PARSING =  "StopAfterParsing";
     private static final String STOPPED_AFTER_PARSING = "42Z55";
     private static final Connection CON;
+    private static ContextManager cm;
+    private static LanguageConnectionContext lcc;
 
     protected Catalog catalog;
     protected Set<Visitable> astNodes;
     protected boolean defaultAscending;
     
-    /** From, group-by, and order-by list */
-    protected FromList from;
-    protected GroupByList groupBy;
-    protected OrderByList orderBy;
-    
-    /** Set of columns that correspond to interesting orders */
-    private Set<Column> columns;
-    private Map<Column, Boolean> ascending;
-    
-    /** Order by and group by list per table*/
-    private Map<Table, List<Column>> orderByColumnsPerTable;
-    private Map<Table, List<Column>> groupByColumnsPerTable;
-    
-    /** Binary operand (e.g., R.a > S.b, R.a = 10) extracted by Derby */
-    private List<ColumnReference> binaryOperandNodes;    
-    protected boolean leftOperand;
-    protected boolean rightOperand;
+    private SQLStatementParseTree parseTree;
 
     static {
         System.setProperty(DERBY_DEBUG_SETTING, STOP_AFTER_PARSING);
 
         try {
             Class.forName(DRIVER_NAME);
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
 
         try {
             CON = (EmbedConnection) DriverManager.getConnection(CONNECTION_URL);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        //SanityManager.SET_DEBUG_STREAM(new PrintWriter(System.out));
+        SanityManager.SET_DEBUG_STREAM(new PrintWriter(System.out));
+
+        cm = ((EmbedConnection) CON).getContextManager();
+        lcc = (LanguageConnectionContext) cm.getContext(LANG_CONNECTION);
     }
 
     /**
      * @param catalog
      *      used to retrieve database metadata
-     * @param mode
-     *      the default value assigned to columns appearing in {@code GROUP BY} but not in the
-     *      {@code ORDER BY} clause. Possible values are {@link Index#ASCENDING} and {@link
-     *      Index#DESCENDING}
      */
-    public DerbyInterestingOrdersExtractor(Catalog catalog, boolean mode)
+    public DerbyInterestingOrdersExtractor(Catalog catalog)
     {
         this.catalog = catalog;
-        this.defaultAscending = mode;
+    }
+
+    /**
+     * Extracts the parse tree of a sql statement.
+     *
+     * @param statement
+     *      statement for which the parse tree is extracted
+     * @return
+     *      the parse tree
+     * @throws SQLException
+     *      if syntax error occurs
+     */
+    public SQLStatementParseTree getParseTree(SQLStatement statement) throws SQLException
+    {
+        reset();
+        parse(statement);
+        return parseTree;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<Set<Index>> extract(SQLStatement statement) throws SQLException
+    public Set<InumInterestingOrder> extract(SQLStatement statement) throws SQLException
     {
-        parse(statement);
-
-        try {
-            return extractInterestingOrders();
-        }
-        catch (StandardException e) {
-            throw new SQLException("An error occurred while iterating the from list", e);
-        }
+        return extract(new BoundSQLStatementParseTree(getParseTree(statement), catalog));
     }
 
     /**
-     * Determines if this instance is defaultAscending.
+     * Extracts the interesting orders from a {@link BoundSQLStatementParseTree}.
      *
-     * @return The defaultAscending.
+     * @param pt
+     *      a bound parse tree
+     * @return
+     *      a list of interesting orders.
+     * @throws SQLException
+     *      if an error occurs while obtaining the statement AST; if an error occurs while walking
+     *      through the statement AST
      */
-    public boolean isDefaultAscending()
+    private Set<InumInterestingOrder> extract(BoundSQLStatementParseTree pt) throws SQLException
     {
-        return this.defaultAscending;
+        Set<InumInterestingOrder> ios = new HashSet<InumInterestingOrder>();
+        
+        extract(pt, ios);
+
+        return ios;
+    }
+
+    /**
+     * Extracts recursively interesting orders from a {@link BoundSQLStatementParseTree}.
+     *
+     * @param pt
+     *      a bound parse tree
+     * @param ioSet
+     *      a Set of interesting orders, where new detected orders are added
+     * @throws SQLException
+     *      if an error occurs while obtaining the statement AST; if an error occurs while walking
+     *      through the statement AST
+     */
+    private void extract(BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
+        throws SQLException
+    {
+        extractFromGroupByColumns(pt, ioSet);
+        extractFromOrderByColumns(pt, ioSet);
+        extractFromJoinPredicates(pt, ioSet);
+
+        for (BoundSQLStatementParseTree subquery : pt.getBoundSubqueries())
+            extract(subquery, ioSet);
+    }
+
+    /**
+     * Gets the extractor ready for processing a statement.
+     */
+    public void reset()
+    {
+        astNodes = new HashSet<Visitable>();
+        parseTree = new SQLStatementParseTree();
     }
 
     /**
@@ -164,317 +209,24 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      */
     protected void parse(SQLStatement stmt) throws SQLException
     {
-        ContextManager cm;
-        LanguageConnectionContext lcc;
-        QueryTreeNode qt;
-
         try {
             CON.prepareStatement(stmt.getSQL());
-        }
-        catch (SQLException se) {
+        } catch (SQLException se) {
             String sqlState = se.getSQLState();
 
             if (!STOPPED_AFTER_PARSING.equals(sqlState))
                 throw se;
         }
 
-        cm = ((EmbedConnection) CON).getContextManager();
-        lcc = (LanguageConnectionContext) cm.getContext(LANG_CONNECTION);
-        qt = (QueryTreeNode) lcc.getLastQueryTree();
+        QueryTreeNode qt = (QueryTreeNode) lcc.getLastQueryTree();
 
-        astNodes = new HashSet<Visitable>();
-        from = null;
-        groupBy = null;
-        orderBy = null;
-        binaryOperandNodes = new ArrayList<ColumnReference>();
-        leftOperand = false;
-        rightOperand = false;
         try {
             visit(qt);
-        }
-        catch (StandardException e) {
+        } catch (StandardException e) {
             throw new SQLException("An error occurred while walking the query AST", e);
         }
 
         //qt.treePrint(); // useful for debugging; prints to stdout
-    }
-
-    /**
-     * Extracts the interesting orders from the previously populated {@link #from}, {@link #groupBy}
-     * and {@link #orderBy} members. At the same time, this method binds database object names to
-     * their in-memory representation (by consulting the {@link Catalog} object that was provided to
-     * the constructor).
-     * <p>
-     * For columns specified in the {@code GROUP BY} but not contained in the {@code ORDER BY}, the
-     * default sorting order is given by {@link #isDefaultAscending}.
-     *
-     * @return
-     *      a list of sets of interesting orders, one per every table referenced in the statement
-     * @throws StandardException
-     *      if an error occurs while iterating the from list
-     * @throws SQLException
-     *      if a {@code SELECT} statement contains subqueries; if {@link
-     *      #extractInterestingOrdersPerTable} fails;
-     */
-    private List<Set<Index>> extractInterestingOrders() throws StandardException, SQLException
-    {
-        List<String> tableNames = new ArrayList<String>();
-        columns = new HashSet<Column>();
-        ascending = new HashMap<Column, Boolean>();
-        groupByColumnsPerTable = new HashMap<Table, List<Column>>();
-        orderByColumnsPerTable = new HashMap<Table, List<Column>>();
-
-        if (from == null || from.size() == 0)
-            throw new SQLException("null or empty FROM list");
-
-        for (int i = 0; i < from.size(); i++) {
-            
-            if (from.elementAt(i) instanceof FromBaseTable)
-                tableNames.add(((FromBaseTable) from.elementAt(i)).getTableName().toString());
-        }
-        
-        if (orderBy != null)
-            bindOrderByColumns(orderBy, tableNames);
-        
-        if (groupBy != null)
-            bindGroupByColumns(groupBy, tableNames);
-        
-        if (binaryOperandNodes.size() > 0)
-            bindJoinPredicateColumns(binaryOperandNodes, tableNames);
-
-        return extractInterestingOrdersPerTable(tableNames, columns, ascending);
-    }
-    
-    
-    /**
-     * Bind columns referenced in the order-by into the corresponding database objects.
-     * We only add the first column in the order-by clause
-     * 
-     * @param orderBy
-     *      The list of order-by columns
-     * @param tableNames
-     *      The list of table names in the from-clause
-     */
-    private void bindOrderByColumns(OrderByList orderBy, List<String> tableNames)
-    {
-        // only consider the first column in the order-by clause
-        String colName = orderBy.getOrderByColumn(0).getColumnExpression().getColumnName();
-        Column col = bindColumn(tableNames, colName);
-        List<Column> orderByColumns;
-        
-        if (col != null) {
-            columns.add(col);
-            ascending.put(col, orderBy.getOrderByColumn(0).isAscending());
-        }
-
-        for (int i = 0; i < orderBy.size(); i++) {
-            
-            colName = orderBy.getOrderByColumn(i).getColumnExpression().getColumnName();
-            col = bindColumn(tableNames, colName);
-            
-            if (col == null)
-                continue;
-
-            ascending.put(col, isDefaultAscending());
-
-            orderByColumns = orderByColumnsPerTable.get(col.getTable());
-
-            if (orderByColumns == null) {
-                orderByColumns = new ArrayList<Column>();
-                orderByColumnsPerTable.put(col.getTable(), orderByColumns);
-            }
-
-            orderByColumns.add(col);
-        }
-    }
-
-    /**
-     * Bind columns in the given group-by list into the corresponding database object.
-     *
-     * @param groupBy
-     *      The list of group-by columns
-     * @param tableNames
-     *      The list of table names in the from-clause
-     */
-    private void bindGroupByColumns(GroupByList groupBy, List<String> tableNames)
-    {
-        String colName;
-        Column col;
-        List<Column> groupByColumns;
-
-        for (int i = 0; i < groupBy.size(); i++) {
-            colName = groupBy.getGroupByColumn(i).getColumnExpression().getColumnName();
-            col = bindColumn(tableNames, colName);
-            if (col == null)
-                continue;
-
-            if (columns.add(col))
-                ascending.put(col, isDefaultAscending());
-
-            groupByColumns = groupByColumnsPerTable.get(col.getTable());
-
-            if (groupByColumns == null) {
-                groupByColumns = new ArrayList<Column>();
-                groupByColumnsPerTable.put(col.getTable(), groupByColumns);
-            }
-
-            groupByColumns.add(col);
-        }
-    }
-
-
-    /**
-     * Bind the columns that are referenced in the join predicates
-     * @param binaryOperandNodes
-     *      A list of left and right columns of all the binary operators in the statement
-     *      (including join predicate R.a  = S.b, selection predicate R.a > R.c, and
-     *      the predicates in the sub-queries)
-     * @param tableNames
-     *      The list of table names that we can find the columns on
-     *
-     *
-     */
-    private void bindJoinPredicateColumns(List<ColumnReference> binaryOperandNodes, 
-                                          List<String> tableNames) throws SQLException
-    {
-        String colName;
-        Column col;
-        List<Column> columnBinaryOperator = new ArrayList<Column>();
-
-        for (ColumnReference colRef: binaryOperandNodes) {
-            
-            colName = colRef.getColumnName();
-            col = null;
-            
-            // p_partkey = ps_partkey
-            if (colRef.getTableName() == null)
-                col = bindColumn(tableNames, colName);
-            
-            else {
-                // table_0.column_0 = table_1.column_0
-                // We need to retrieve the table name of each {@ColumnReference} object
-                // to unambiguously identify which relation the column belongs to
-                for (String tblName : tableNames) {
-                    if (tblName.contains(colRef.getTableName()) == true) {
-                        colName = tblName + "." + colName;
-
-                        try {
-                            col = catalog.<Column>findByName(colName);
-                        } catch (SQLException e) {
-                            // the column might belong to subqueries
-                            e = null;
-                        }
-                        break;
-                    }
-                }
-            }
-
-            columnBinaryOperator.add(col);
-        }
-
-        // postprocess {@code columnBinaryOperator}
-        // the two consecutive columns must be not null and belong to different relations
-        for (int i = 0; i < columnBinaryOperator.size(); i += 2) {
-            
-            Column leftCol = columnBinaryOperator.get(i);
-            Column rightCol = columnBinaryOperator.get(i + 1);
-
-            // the predicate belongs to subqueries
-            if (leftCol == null || rightCol == null)
-                continue;
-
-            // this is an actual join predicate (i.e., columns belonging to different relations) 
-            if (!(leftCol.getTable()).equals(rightCol.getTable())) {
-                
-                if (columns.add(leftCol))
-                    ascending.put(leftCol, isDefaultAscending());
-
-                if (columns.add(rightCol))
-                    ascending.put(rightCol, isDefaultAscending());
-            }
-        }
-    }
-
-    /**
-     * Binds database object names to their in-memory representation (by consulting the {@link
-     * Catalog} object that was provided to the constructor). This method assumes that the SQL text
-     * is well written, i.e. that there are no ambiguities with respect to the column names referred
-     * in the {@code ORDER BY} and {@code GROUP BY} clauses.
-     *
-     * @param tableNames
-     *      each element corresponds to a table in the {@code FROM} clause
-     * @param colName
-     *      corresponds to a column in the {@code GROUP BY} or {@code ORDER BY} clause
-     * @return
-     *      A {@Column} object or NULL if the column is not a part of all the tables
-     *      in @code tableNames}
-     */
-    protected Column bindColumn(List<String> tableNames, String colName)
-    {
-        Column col = null;
-
-        for (String tblName : tableNames) {
-            
-            try {
-                col = catalog.<Column>findByName(tblName + "." + colName);
-            }
-            catch (SQLException e) {
-                // it's OK not to find it, as long as we find it in a subsequent iteration
-                e = null;
-            }
-            if (col != null)
-                break;
-        }
-
-        return col;
-    }
-
-    /**
-     * Extract interesting orders.
-     *
-     * @param tableNames
-     *      List of table names referenced in the from-clause
-     * @param columns
-     *      The set of columns that are referenced by from, order by, and group by clause
-     * @param ascending
-     *      The ascending order of each interesting column
-     * @return
-     *      A set of interesting orders
-     * @throws SQLException
-     *      when there is error in connecting with databases
-     */
-    private List<Set<Index>> extractInterestingOrdersPerTable(
-            List<String> tableNames,
-            Set<Column> columns,
-            Map<Column, Boolean> ascending)
-        throws SQLException
-    {
-        Map<Table, Set<Index>> interestingOrdersPerTable = new HashMap<Table, Set<Index>>();
-        Set<Index> interestingOrdersForTable;
-        Table table;
-
-        // add FTS for each table in the from clause
-        for (String tblName : tableNames) {
-            
-            table = catalog.<Table>findByName(tblName);
-
-            if (interestingOrdersPerTable.get(table) == null)  {
-                interestingOrdersForTable = new HashSet<Index>();
-                interestingOrdersPerTable.put(table, interestingOrdersForTable);
-            }
-        }
-
-        for (Column col : columns) {
-            table = col.getTable();
-
-            if (!interestingOrdersPerTable.containsKey(table))
-                throw new SQLException("Can't find " + table + " in the from list");
-
-            interestingOrdersForTable = interestingOrdersPerTable.get(table);
-            interestingOrdersForTable.add(new InumInterestingOrder(col, ascending.get(col)));
-        }
-
-        return new ArrayList<Set<Index>>(interestingOrdersPerTable.values());
     }
 
     /**
@@ -492,86 +244,87 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     {
         if (!astNodes.contains(node)) {
             astNodes.add(node);
-            
-            /**
-             * The algorithm to derive the columns in the join predicates work as follows:
-             * Whenever we encounter {@code BinaryRelationalOperatorNode} object, we are expected
-             * to receive the next two nodes are the left operand and right operand.
-             * We then need to check if both the left and right operand are of type
-             * {code ColumnReference}, then this operator node corresponds to a join predicate.
-             */
-            
-            if (leftOperand == true) {
-                
-                // If the left operand is a column, we will investigate the right operand
-                // to determine a join predicate.
-                // Otherwise, we simply skip this BinaryOperator.
-                if (node instanceof ColumnReference){
-                    binaryOperandNodes.add((ColumnReference) node);
-                    rightOperand = true;
-                } else
-                    rightOperand = false;
 
-                leftOperand = false;
-                
-            } else if (rightOperand == true) {
-                
-                if (node instanceof ColumnReference) // this is matched join predicate
-                    binaryOperandNodes.add((ColumnReference) node);
-                else // if not, remove the left operand stored in the list
-                    binaryOperandNodes.remove(binaryOperandNodes.size() - 1);
+            if (node instanceof CursorNode) {
+                SelectNode select = (SelectNode) ((CursorNode) node).getResultSetNode();
 
-                rightOperand = false;
-            }            
-            
-            else if (node instanceof SelectNode) {
-                
-                final SelectNode select = (SelectNode) node;
-                if (from == null)
-                    from = select.getFromList();
-                else {
-                    
-                    for (int i = 0; i < select.getFromList().size(); i++) {
-                        
-                        if (select.getFromList().elementAt(i) instanceof FromBaseTable)
-                            from.addFromTable((FromBaseTable) select.getFromList().elementAt(i));
-                        // Extract the table from the left and right result set
-                        // of a join node instance
-                        else if (select.getFromList().elementAt(i) instanceof HalfOuterJoinNode) {
-                            
-                            HalfOuterJoinNode outerJoin = (HalfOuterJoinNode) 
-                                                            select.getFromList().elementAt(i);                            
-                            from.addFromTable((FromBaseTable)outerJoin.getLeftResultSet());
-                            from.addFromTable((FromBaseTable)outerJoin.getRightResultSet());
-                        }
-                        
-                        else if (select.getFromList().elementAt(i) instanceof JoinNode) {
-                            
-                            JoinNode outerJoin = (JoinNode) select.getFromList().elementAt(i);
-                            from.addFromTable((FromBaseTable)outerJoin.getLeftResultSet());
-                            from.addFromTable((FromBaseTable)outerJoin.getRightResultSet());
-                        }
-                    }
-                }
-                
-                if (groupBy == null)
-                    groupBy = select.getGroupByList();
-                
-            } else if (node instanceof CursorNode) {
-                
-                if (orderBy == null)
-                    orderBy = ((CursorNode) node).getOrderByList();
-                
+                if (select.getFromList() != null)
+                    select.getFromList().accept(this);
+
+                process(select.getGroupByList());
+
+                process(((CursorNode) node).getOrderByList());
+
+                if (select.getWhereClause() != null)
+                    select.getWhereClause().accept(this);
+
+            } else if (node instanceof FromBaseTable) {
+                process((FromBaseTable) node);
+            } else if (node instanceof FromSubquery) {
+                process((FromSubquery) node);
+            } else if (node instanceof JoinNode) {
+                if (((JoinNode) node).getJoinClause() != null)
+                    ((JoinNode) node).getJoinClause().accept(this);
             } else if (node instanceof BinaryRelationalOperatorNode) {
-                
-                leftOperand = true;
-                rightOperand = false;
-            } 
-                
-            node.accept(this);
+                process((BinaryRelationalOperatorNode) node);
+                node.accept(this);
+            } else if (node instanceof SubqueryNode) {
+                parseTree.addSubquery(process(((SubqueryNode) node).getResultSet()));
+            }
         }
 
         return node;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean skipChildren(Visitable node) throws StandardException
+    {
+        return node instanceof SubqueryNode;
+    }
+
+    /**
+     * Processes recursively and returns the subquery contained in the given {@link ResultSetNode}.
+     *
+     * @param subquery
+     *      a result set node
+     * @return
+     *      the parsed query
+     * @throws StandardException
+     *      if {@link #parse(SelectNode)} throws an error
+     */
+    public SQLStatementParseTree process(ResultSetNode subquery) throws StandardException
+    {
+        return (new DerbyInterestingOrdersExtractor(catalog)).parse((SelectNode) subquery);
+    }
+
+    /**
+     * Processes the from and where clauses of the subquery.
+     *
+     * @param subquery
+     *      a result set node
+     * @return
+     *      the parsed query
+     * @throws StandardException
+     *      if {@link #parse(SelectNode)} throws an error
+     */
+    public SQLStatementParseTree parse(SelectNode subquery) throws StandardException
+    {
+        reset();
+
+        if (subquery.getFromList() != null) {
+            subquery.getFromList().accept(this);
+            visit(subquery.getWhereClause());
+        }
+
+        if (subquery.getWhereClause() != null) {
+            subquery.getWhereClause().accept(this);
+            visit(subquery.getWhereClause());
+        }
+
+        return parseTree;
     }
 
     /**
@@ -592,12 +345,652 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         return false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean skipChildren(Visitable node) throws StandardException
+    // CHECKSTYLE:OFF
+    private void process(FromBaseTable baseTable) throws StandardException
     {
-        return false;
+        // views aren't replaced yet, so they'll be treated as base tables
+        parseTree.addFromListTableName(baseTable.getTableName().toString());
+    }
+    private void process(FromSubquery fromSubquery) throws StandardException
+    {
+        parseTree.addSubquery(process(fromSubquery.getSubquery()));
+    }
+    private void process(GroupByList gb)
+    {
+        if (gb == null)
+            return;
+
+        for (int i = 0; i < gb.size(); i++)
+            if (gb.getGroupByColumn(i).getColumnExpression().getColumnName() == null)
+                continue;
+            else if (gb.getGroupByColumn(i).getColumnExpression().getTableName() != null)
+                parseTree.addGroupByColumnName(
+                        gb.getGroupByColumn(i).getColumnExpression().getTableName() + "." +
+                        gb.getGroupByColumn(i).getColumnExpression().getColumnName());
+            else
+                parseTree.addGroupByColumnName(
+                        gb.getGroupByColumn(i).getColumnExpression().getColumnName());
+    }
+    private void process(OrderByList ob)
+    {
+        if (ob == null)
+            return;
+
+        for (int i = 0; i < ob.size(); i++)
+            if (ob.getOrderByColumn(i).getColumnExpression().getColumnName() == null)
+                continue;
+            else if (ob.getOrderByColumn(i).getColumnExpression().getTableName() != null)
+                parseTree.addOrderByColumnName(
+                        ob.getOrderByColumn(i).getColumnExpression().getTableName() + "." +
+                        ob.getOrderByColumn(i).getColumnExpression().getColumnName(),
+                        ob.getOrderByColumn(i).isAscending());
+            else
+                parseTree.addOrderByColumnName(
+                        ob.getOrderByColumn(i).getColumnExpression().getColumnName(),
+                        ob.getOrderByColumn(i).isAscending());
+    }
+    private void process(BinaryRelationalOperatorNode bro) throws StandardException
+    {
+        ValueNode l = bro.getLeftOperand();
+        ValueNode r = bro.getRightOperand();
+
+        if (l instanceof ColumnReference && r instanceof ColumnReference) {
+            ColumnReference leftRef = ((ColumnReference) l);
+            ColumnReference rightRef = ((ColumnReference) r);
+
+            if (leftRef.getColumnName() == null || rightRef.getColumnName() == null)
+                return;
+
+            String leftColumnName;
+            String rightColumnName;
+
+            if (leftRef.getTableName() != null)
+                leftColumnName = leftRef.getTableName() + "." + leftRef.getColumnName();
+            else
+                leftColumnName = leftRef.getColumnName();
+
+            if (rightRef.getTableName() != null)
+                rightColumnName = rightRef.getTableName() + "." + rightRef.getColumnName();
+            else
+                rightColumnName = rightRef.getColumnName();
+
+            parseTree.addPredicateText(leftColumnName, rightColumnName);
+        }
+    }
+    private void extractFromGroupByColumns(
+            BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
+        throws SQLException
+    {
+        for (Column col : pt.getGroupByColumns())
+            ioSet.add(new InumInterestingOrder(col, ASC));
+    }
+    public void extractFromJoinPredicates(
+            BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
+        throws SQLException
+    {
+
+        for (Predicate p : pt.getPredicates()) {
+            if (!p.getLeftColumn().getTable().equals(p.getRightColumn().getTable())) {
+                ioSet.add(new InumInterestingOrder(p.getLeftColumn(), ASC));
+                ioSet.add(new InumInterestingOrder(p.getRightColumn(), ASC));
+            }
+        }
+        
+    }
+    private void extractFromOrderByColumns(
+            BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
+        throws SQLException
+    {
+        Set<Table> tablesWithOrderingAlreadyCreated = new HashSet<Table>();
+
+        for (Column col : pt.getOrderByColumns().keySet()) {
+            if (!tablesWithOrderingAlreadyCreated.contains(col.getTable())) {
+                ioSet.add(new InumInterestingOrder(col, pt.getOrderByColumns().get(col)));
+                tablesWithOrderingAlreadyCreated.add(col.getTable());
+            }
+        }
+    }
+    // CHECKSTYLE:ON
+
+    /**
+     * @author Ivo Jimenez
+     */
+    public static class SQLStatementParseTree
+    {
+        private List<SQLStatementParseTree> subqueries;
+        private List<String> tableNamesInFrom;
+        private List<String> columnNamesInSelect;
+        private List<String> columnNamesInGroupBy;
+        private Map<String, Boolean> columnNamesInOrderBy;
+        private List<PredicateText> predicateText;
+
+        /**
+         */
+        public SQLStatementParseTree()
+        {
+            subqueries = new ArrayList<SQLStatementParseTree>();
+            tableNamesInFrom = new ArrayList<String>();
+            columnNamesInSelect = new ArrayList<String>();
+            columnNamesInOrderBy = new LinkedHashMap<String, Boolean>();
+            columnNamesInGroupBy = new ArrayList<String>();
+            predicateText = new ArrayList<PredicateText>();
+        }
+
+        /**
+         * Copy constructor.
+         *
+         * @param other
+         *      other parse tree
+         */
+        public SQLStatementParseTree(SQLStatementParseTree other)
+        {
+            subqueries = new ArrayList<SQLStatementParseTree>();
+
+            for (SQLStatementParseTree pt : other.getSubqueries())
+                subqueries.add(pt);
+
+            tableNamesInFrom = new ArrayList<String>(other.tableNamesInFrom);
+            columnNamesInSelect = new ArrayList<String>();
+            columnNamesInOrderBy = new LinkedHashMap<String, Boolean>(other.columnNamesInOrderBy);
+            columnNamesInGroupBy = new ArrayList<String>(other.columnNamesInGroupBy);
+            predicateText = new ArrayList<PredicateText>(other.predicateText);
+        }
+
+        /**
+         * Gets the subqueries for this instance.
+         *
+         * @return The subqueries.
+         */
+        public List<SQLStatementParseTree> getSubqueries()
+        {
+            return subqueries;
+        }
+
+        /**
+         * Gets the subqueries for this instance.
+         *
+         * @return The subqueries.
+         */
+        public List<PredicateText> getPredicateText()
+        {
+            return predicateText;
+        }
+
+        /**
+         * Gets the tableNames for this instance.
+         *
+         * @return The tableNames.
+         */
+        public List<String> getFromListTableNames()
+        {
+            return tableNamesInFrom;
+        }
+
+        /**
+         * Gets the columnNamesInSelect for this instance.
+         *
+         * @return The columnNamesInSelect.
+         */
+        public List<String> getSelectColumnNames()
+        {
+            return columnNamesInSelect;
+        }
+
+        /**
+         * Gets the columnNamesInOrderBy for this instance.
+         *
+         * @return The columnNamesInOrderBy.
+         */
+        public Map<String, Boolean> getOrderByColumnNames()
+        {
+            return this.columnNamesInOrderBy;
+        }
+
+        /**
+         * Gets the columnNamesInGroupBy for this instance.
+         *
+         * @return The columnNamesInGroupBy.
+         */
+        public List<String> getGroupByColumnNames()
+        {
+            return columnNamesInGroupBy;
+        }
+
+        /**
+         * Adds a new subquery.
+         *
+         * @param subquery
+         *      a subquery for this statement
+         */
+        public void addSubquery(SQLStatementParseTree subquery)
+        {
+            subqueries.add(subquery);
+        }
+
+        /**
+         * Adds the name of a table for this instance.
+         *
+         * @param tableName
+         *      name of the table
+         */
+        public void addFromListTableName(String tableName)
+        {
+            tableNamesInFrom.add(tableName);
+        }
+
+        /**
+         * Adds the name of a column in the select for this instance.
+         *
+         * @param columnName
+         *      column names in select clause
+         */
+        public void addSelectColumnName(String columnName)
+        {
+            columnNamesInSelect.add(columnName);
+        }
+
+        /**
+         * Adds the name of a column to the order by.
+         *
+         * @param columnName
+         *      column names in order by
+         * @param ascending
+         *      ascending value
+         */
+        public void addOrderByColumnName(String columnName, boolean ascending)
+        {
+            columnNamesInOrderBy.put(columnName, ascending);
+        }
+
+        /**
+         * Adds the name of a column to the group by.
+         *
+         * @param columnName
+         *      column names in group by
+         */
+        public void addGroupByColumnName(String columnName)
+        {
+            columnNamesInGroupBy.add(columnName);
+        }
+
+        /**
+         * Adds the text of a predicate, along with the operator.
+         *
+         * @param a
+         *      left operand in predicate
+         * @param b
+         *      right operand in predicate
+         */
+        public void addPredicateText(String a, String b)
+        {
+            predicateText.add(new PredicateText(a, b));
+        }
+    }
+
+    /**
+     * @author Ivo Jimenez
+     */
+    public static class PredicateText
+    {
+        private String columnA;
+        private String columnB;
+
+        /**
+         * Text for a join predicate.
+         *
+         * @param columnA
+         *      first column
+         * @param columnB
+         *      second column
+         */
+        public PredicateText(String columnA, String columnB)
+        {
+            this.columnA = columnA;
+            this.columnB = columnB;
+        }
+
+        /**
+         * Gets the columnA for this instance.
+         *
+         * @return The columnA.
+         */
+        public String getColumnA()
+        {
+            return this.columnA;
+        }
+
+        /**
+         * Gets the columnB for this instance.
+         *
+         * @return The columnB.
+         */
+        public String getColumnB()
+        {
+            return this.columnB;
+        }
+    }
+
+    /**
+     */
+    public static class BoundSQLStatementParseTree extends SQLStatementParseTree
+    {
+        private List<Table> tables;
+        private List<Column> columnsInSelect;
+        private Map<Column, Boolean> columnsInOrderBy;
+        private List<Column> columnsInGroupBy;
+        private List<BoundSQLStatementParseTree> boundSubqueries;
+        private List<Predicate> predicates;
+        private Catalog catalog;
+
+        /**
+         * Constructor.
+         *
+         * @param pt
+         *      a parse tree
+         * @param catalog
+         *      the catalog used to get metadata when binding
+         * @throws SQLException
+         *      if an object can't be bound
+         */
+        public BoundSQLStatementParseTree(SQLStatementParseTree pt, Catalog catalog)
+            throws SQLException
+        {
+            super(pt);
+
+            this.catalog = catalog;
+
+            boundSubqueries = new ArrayList<BoundSQLStatementParseTree>();
+
+            tables = bindTables(getFromListTableNames());
+
+            for (SQLStatementParseTree subquery : getSubqueries())
+                boundSubqueries.add(new BoundSQLStatementParseTree(subquery, catalog, tables));
+
+            columnsInSelect = bindColumns(tables, new ArrayList<Table>(), getSelectColumnNames());
+            columnsInGroupBy = bindColumns(tables, new ArrayList<Table>(), getGroupByColumnNames());
+            columnsInOrderBy = bindColumns(tables, new ArrayList<Table>(), getOrderByColumnNames());
+
+            predicates = bindPredicates(tables, new ArrayList<Table>(), getPredicateText());
+
+        }
+
+        /**
+         * Constructor for subqueries.
+         *
+         * @param pt
+         *      a parse tree
+         * @param catalog
+         *      the catalog used to get metadata when binding
+         * @param tablesFromUpper
+         *      tables from one level up
+         * @throws SQLException
+         *      if an object can't be bound
+         */
+        public BoundSQLStatementParseTree(
+                SQLStatementParseTree pt, Catalog catalog, List<Table> tablesFromUpper)
+            throws SQLException
+        {
+            super(pt);
+
+            this.catalog = catalog;
+
+            boundSubqueries = new ArrayList<BoundSQLStatementParseTree>();
+
+            tables = bindTables(getFromListTableNames());
+
+            for (SQLStatementParseTree subquery : getSubqueries())
+                boundSubqueries.add(new BoundSQLStatementParseTree(subquery, catalog, tables));
+
+            columnsInSelect = bindColumns(tables, tablesFromUpper, getSelectColumnNames());
+            columnsInGroupBy = bindColumns(tables, tablesFromUpper, getGroupByColumnNames());
+            columnsInOrderBy = bindColumns(tables, tablesFromUpper, getOrderByColumnNames());
+
+            predicates = bindPredicates(tables, tablesFromUpper, getPredicateText());
+        }
+
+        /**
+         * Binds a column list.
+         *
+         * @param tables
+         *      list of tables where to find column namesj
+         * @param tablesFromUpper
+         *      tables from one level up
+         * @param columnNames
+         *      list of column names
+         * @throws SQLException
+         *      if an object can't be bound
+         * @return
+         *      the list of columns bound
+         */
+        private List<Column> bindColumns(
+                List<Table> tables, List<Table> tablesFromUpper, List<String> columnNames)
+            throws SQLException
+        {
+            List<Column> columns = new ArrayList<Column>();
+
+            for (String columnName : columnNames)
+                try {
+                    columns.add(bindColumn(tables, tablesFromUpper, columnName));
+                } catch (SQLException e) {
+                    //System.out.println(e.getMessage());
+                    e.getMessage();
+                }
+
+            return columns;
+        }
+
+        /**
+         * Binds a column that may or may not be fully qualified. If it's not, it is search on every 
+         * table.
+         *
+         * @param tables
+         *      list of tables where to optionally look for, if the name of the column is not fully 
+         *      qualified
+         * @param tablesFromUpper
+         *      tables from one level up
+         * @param columnName
+         *      name of the column to bind
+         * @return
+         *      the corresponding column object
+         * @throws SQLException
+         *      if the column is not found; if more than one column matches
+         */
+        private Column bindColumn(
+                List<Table> tables, List<Table> tablesFromUpper, String columnName)
+            throws SQLException
+        {
+            List<Table> allTables = new ArrayList<Table>();
+            Column column = null;
+
+            allTables.addAll(tables);
+            allTables.addAll(tablesFromUpper);
+
+            // first with fully qualified name
+            if (columnName.split("\\.").length == 3) {
+                // we have "schema.table.column"
+                column = catalog.<Column>findByName(columnName);
+
+            } else if (columnName.split("\\.").length == 2) {
+                // we have "table.column"
+                String tableName = columnName.split("\\.")[0];
+                String colName = columnName.split("\\.")[1];
+
+                for (Table table : allTables) {
+                    if (table.getName().equalsIgnoreCase(tableName))
+                        column = table.findColumn(colName);
+
+                    if (column != null)
+                        break;
+                }
+            }
+
+            if (column != null)
+                return column;
+
+            // then try to search the first onefrom column names
+            for (Table table : allTables) {
+                if (table.findColumn(columnName) != null &&
+                        !tablesFromUpper.contains(table) &&
+                        column != null)
+                    throw new SQLException("More than one table with " + columnName + " as member");
+
+                column = table.findColumn(columnName);
+
+                if (column != null)
+                    break;
+            }
+
+            if (column == null)
+                throw new SQLException("Can't find " + columnName + " in catalog");
+
+            return column;
+        }
+
+        /**
+         * Binds a column list.
+         *
+         * @param tables
+         *      list of tables where to find column namesj
+         * @param tablesFromUpper
+         *      tables from one level up
+         * @param columnNames
+         *      list of column names
+         * @throws SQLException
+         *      if an object can't be bound
+         * @return
+         *      the list of columns bound
+         */
+        private Map<Column, Boolean> bindColumns(
+                List<Table> tables, List<Table> tablesFromUpper, Map<String, Boolean> columnNames)
+            throws SQLException
+        {
+            Map<Column, Boolean> columns = new LinkedHashMap<Column, Boolean>();
+
+            for (Map.Entry<String, Boolean> entry : columnNames.entrySet())
+                try {
+                    columns.put(
+                            bindColumn(tables, tablesFromUpper, entry.getKey()), entry.getValue());
+                } catch (SQLException e) {
+                    e.getMessage();
+                }
+
+            return columns;
+        }
+
+        /**
+         * Binds a column list.
+         *
+         * @param tableNames
+         *      list of table names, fully qualified
+         * @throws SQLException
+         *      if an object can't be bound
+         * @return
+         *      the list of tables bound
+         */
+        private List<Table> bindTables(List<String> tableNames) throws SQLException
+        {
+            List<Table> tables = new ArrayList<Table>();
+
+            for (String tableName : tableNames) {
+                Table table = catalog.<Table>findByName(tableName);
+
+                if (table == null)
+                    throw new SQLException("Can't find " + tableName + " in catalog");
+
+                tables.add(table);
+            }
+
+            return tables;
+        }
+
+        /**
+         * Binds a list of join predicates.
+         *
+         * @param tables
+         *      list of tables where to find column namesj
+         * @param tablesFromUpper
+         *      tables from one level up
+         * @param predicateText
+         *      list of predicate text, where column names are fully qualified
+         * @throws SQLException
+         *      if an object can't be bound
+         * @return
+         *      the list of predicates bound
+         */
+        private List<Predicate> bindPredicates(
+                List<Table> tables, List<Table> tablesFromUpper, List<PredicateText> predicateText)
+            throws SQLException
+        {
+            List<Predicate> predicates = new ArrayList<Predicate>();
+
+            for (PredicateText pt : predicateText)
+                predicates.add(
+                        new Predicate(
+                            bindColumn(tables, tablesFromUpper, pt.getColumnA()),
+                            bindColumn(tables, tablesFromUpper, pt.getColumnB())));
+
+            return predicates;
+        }
+
+        /**
+         * Returns bound subqueries.
+         *
+         * @return
+         *      subqueries
+         */
+        public List<BoundSQLStatementParseTree> getBoundSubqueries()
+        {
+            return this.boundSubqueries;
+        }
+
+        /**
+         * Gets the predicates for this instance.
+         *
+         * @return The predicates.
+         */
+        public List<Predicate> getPredicates()
+        {
+            return this.predicates;
+        }
+
+        /**
+         * Gets the tables for this instance.
+         *
+         * @return The tables.
+         */
+        public List<Table> getTables()
+        {
+            return this.tables;
+        }
+
+        /**
+         * Gets the columnsInSelect for this instance.
+         *
+         * @return The columnsInSelect.
+         */
+        public List<Column> getSelectColumns()
+        {
+            return this.columnsInSelect;
+        }
+
+        /**
+         * Gets the columnsInOrderBy for this instance.
+         *
+         * @return The columnsInOrderBy.
+         */
+        public Map<Column, Boolean> getOrderByColumns()
+        {
+            return this.columnsInOrderBy;
+        }
+
+        /**
+         * Gets the columnsInGroupBy for this instance.
+         *
+         * @return The columnsInGroupBy.
+         */
+        public List<Column> getGroupByColumns()
+        {
+            return this.columnsInGroupBy;
+        }
     }
 }

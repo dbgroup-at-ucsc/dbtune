@@ -37,7 +37,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     public static final boolean DESC           = false;
 
     /** used to uniquely identify each instance of the class. */
-    static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
+    public static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
     // CHECKSTYLE:ON
 
     protected List<Boolean> ascendingColumn;
@@ -65,7 +65,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      */
     public Index(Column column, boolean ascending) throws SQLException
     {
-        this("dbtune_" + (IN_MEMORY_ID.get() + 1) + "_index",
+        this("dbtune_" + IN_MEMORY_ID.get() + "_index",
                 column, ascending, SECONDARY, NON_UNIQUE, UNCLUSTERED);
     }
 
@@ -126,7 +126,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     public Index(List<Column> columns, Map<Column, Boolean> ascending)
         throws SQLException
     {
-        this("dbtune_" + (IN_MEMORY_ID.get() + 1) + "_index", columns, ascending);
+        this("dbtune_" + IN_MEMORY_ID.get() + "_index", columns, ascending);
     }
 
     /**
@@ -253,8 +253,8 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
             boolean unique,
             boolean clustered) throws SQLException
     {
-        this("dbtune_" + (IN_MEMORY_ID.get() + 1) + "_index", columns, 
-                ascending, primary, unique, clustered);
+        this("dbtune_" + IN_MEMORY_ID.get() + "_index", columns, ascending, primary, unique, 
+                clustered);
     }
    
 
@@ -717,9 +717,31 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     }
 
     /**
+     * Whether the given index covers this one without taking into account the order. An index a is 
+     * covered by another b if a's columns are contained in b's and they're in the same {@link 
+     * #isAscending ascending} order.
+     *
+     * @param other
+     *     index that may (or not) cover this one.
+     * @return
+     *     {@code true} if this index is covered by the given one; {@code false} otherwise
+     */
+    public boolean isCoveredByIgnoreOrder(Index other)
+    {
+        if (size() == 0 || other.size() < this.size() || !other.columns().containsAll(columns()))
+            return false;
+
+        for (Column col : columns()) {
+            if (isAscending(col) && !other.isAscending(col))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Whether the given index covers this one. An index a is covered by another b if a's columns 
-     * are a subset of b's and they're in the same order and with the same {@link #isAscending 
-     * ascending} value.
+     * are a prefix of b's and with the same {@link #isAscending ascending} value.
      *
      * @param other
      *     index that may (or not) cover this one.
@@ -740,6 +762,17 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         }
 
         return true;
+    }
+
+    /**
+     * Set the identifier of the object.
+     * 
+     * @param id
+     *      the given ID
+     */
+    public void setId(int id)
+    {
+        this.inMemoryID = id;
     }
 
     /**

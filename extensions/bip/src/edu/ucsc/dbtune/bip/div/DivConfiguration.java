@@ -7,7 +7,7 @@ import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
 
-public class DivConfiguration  extends IndexTuningOutput
+public class DivConfiguration extends IndexTuningOutput
 {
     private int               nReplicas;
     private List<List<Index>> indexReplicas;
@@ -23,10 +23,9 @@ public class DivConfiguration  extends IndexTuningOutput
         this.nReplicas = nReplicas;
         indexReplicas = new ArrayList<List<Index>>();
         
-        for (int r = 0; r < this.nReplicas; r++) {
-            List<Index> listIndexes = new ArrayList<Index>();
-            indexReplicas.add(listIndexes);
-        }
+        for (int r = 0; r < this.nReplicas; r++)
+            indexReplicas.add(new ArrayList<Index>());
+        
     }
     
     
@@ -38,7 +37,7 @@ public class DivConfiguration  extends IndexTuningOutput
      * @param index
      *      The index that is materialized
      */
-    public void addMaterializedIndexAtReplica(int r, Index index)
+    public void addIndexReplica(int r, Index index)
     {
         indexReplicas.get(r).add(index);
     }

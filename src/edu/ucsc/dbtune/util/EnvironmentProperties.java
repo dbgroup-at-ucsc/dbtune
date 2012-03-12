@@ -149,24 +149,35 @@ public final class EnvironmentProperties
     public static final String TEMP_DIR = "temp.dir";
 
 
+    // ALGORITHMS
+    /** a greedy algorithm. */
+    public static final String GREEDY = "greedy";
+    /** an exhaustive or brute-force algorithm. */
+    public static final String EXHAUSTIVE = "exhaustive";
+
+
+
+    // EVALUATION
+    /** lazy evaluation of a computation. */
+    public static final String LAZY = "lazy";
+    /** eager evaluation of a computation. */
+    public static final String EAGER = "eager";
+
+
     
     // INUM
-    /**
-     *  Space computation option.
-     */
+    /** Space computation option. */
     public static final String INUM_SPACE_COMPUTATION = "inum.space.computation";
-    /** ibg-based space computation. */
-    public static final String INUM_IBG_COMPUTATION = IBG;
-    /** eager space computation. */
-    public static final String INUM_EAGER_COMPUTATION = "eager";
-    /** lazy computation of the INUM space. */
-    public static final String INUM_LAZY_COMPUTATION = "lazy";
+    /** Space computation option. */
+    public static final String INUM_MATCHING_STRATEGY = "inum.matching.strategy";
     /** cache for slots? */
     public static final String INUM_SLOT_CACHE = "inum.slot.cache";
+    /** inum-specific algorithm type. */
+    public static final String NONE_MIN_MAX = "none.min.max";
+
 
 
     // WFIT
-
     /**
      * Specifies an upper bound on the number of indexes that are monitored by an instance of WFA 
      * and is used within function {@code chooseCands} (as referenced in page 169 (Figure 6.5) of 

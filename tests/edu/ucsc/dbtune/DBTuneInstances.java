@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune;
 
+import java.io.StringReader;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -21,6 +23,9 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.PGOptimizer;
+
+import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Identifiable;
@@ -32,17 +37,21 @@ import org.mockito.stubbing.Answer;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.Environment.extractDriver;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DBMS;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.EAGER;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.EXHAUSTIVE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.GREEDY;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_MATCHING_STRATEGY;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SLOT_CACHE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SPACE_COMPUTATION;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_URL;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_EAGER_COMPUTATION;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SLOT_CACHE;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SPACE_COMPUTATION;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
 
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -58,6 +67,7 @@ public final class DBTuneInstances
     protected static final String DB_PWD     = "password";
     protected static final String DB_TBL     = "R";
     protected static final String DB_CREATOR = "123";
+    protected static final Random R          = new Random();
 
     /**
      * Utility class.
@@ -174,7 +184,7 @@ public final class DBTuneInstances
      */
     public static Environment configureAny()
     {
-        switch(new Random().nextInt(3)) {
+        switch(R.nextInt(3)) {
             case 0:
                 return configureDB2();
             case 1:
@@ -225,8 +235,9 @@ public final class DBTuneInstances
     public static Environment configureINUMOptimizer(Environment cfg)
     {
         cfg.setProperty(OPTIMIZER, INUM);
-        cfg.setProperty(INUM_SLOT_CACHE, "ON");
-        cfg.setProperty(INUM_SPACE_COMPUTATION, INUM_EAGER_COMPUTATION);
+        cfg.setProperty(INUM_SLOT_CACHE, R.nextInt(2) == 0 ? "OFF" : "ON");
+        cfg.setProperty(INUM_SPACE_COMPUTATION, R.nextInt(2) == 0 ? EAGER : IBG);
+        cfg.setProperty(INUM_MATCHING_STRATEGY, R.nextInt(2) == 0 ? GREEDY : EXHAUSTIVE);
         return cfg;
     }
 
@@ -611,6 +622,27 @@ public final class DBTuneInstances
         }
     }
 
+    /**
+     * Returns 10 plans that query the TPCDS database.
+     *
+     * @param sch
+     *      schema the is referenced in the queries
+     * @return
+     *      list with 3 plans
+     * @throws Exception
+     *      if fails
+     * @see #PLANS_JSON
+     */
+    public static List<SQLStatementPlan> configurePlans(Schema sch) throws Exception
+    {
+        List<SQLStatementPlan> plans = new ArrayList<SQLStatementPlan>();
+
+        for (String jsonPlan : PLANS_JSON.split("QUERYPLAN"))
+            plans.add(PGOptimizer.parseJSON(new StringReader(jsonPlan), null));
+
+        return plans;
+    }
+
     //CHECKSTYLE:OFF
     /**
      * Taken from: http://bit.ly/vR8ujB
@@ -646,8 +678,283 @@ public final class DBTuneInstances
         when(result.getLong(argument.capture())).thenAnswer(rowLookupAnswer);
         when(result.getDouble(argument.capture())).thenAnswer(rowLookupAnswer);
         when(result.getTimestamp(argument.capture())).thenAnswer(rowLookupAnswer);
+        when(result.getRow()).thenAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock aInvocation) throws Throwable {
+                 return currentIndex.get() - 1;
+            }
+        });
+        when(result.last()).thenAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock aInvocation) throws Throwable {
+                 currentIndex.set(rows.length);
+                 return true;
+            }
+        });
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock aInvocation) throws Throwable {
+                 currentIndex.set(-1);
+                 return null;
+            }
+        }).when(result).beforeFirst();
+        when(result.first()).thenAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock aInvocation) throws Throwable {
+                 currentIndex.set(0);
+                 return true;
+            }
+        });
 
         return result;
     }
+
+    private static final String PLANS_JSON =
+        " [                                                                                         " +
+        "   {                                                                                       " +
+        "     \"Plan\": {                                                                             " +
+        "       \"Node Type\": \"Sort\",                                                                " +
+        "       \"Startup Cost\": 15.00,                                                              " +
+        "       \"Total Cost\": 15.01,                                                                " +
+        "       \"Plan Rows\": 2,                                                                     " +
+        "       \"Plan Width\": 8,                                                                    " +
+        "       \"Output\": [\"(count(*))\", \"column_1\", \"column_2\"],                                   " +
+        "       \"Sort Key\": [\"table_0.column_1\", \"table_0.column_2\"],                               " +
+        "       \"Plans\": [                                                                          " +
+        "         {                                                                                 " +
+        "           \"Node Type\": \"Aggregate\",                                                       " +
+        "           \"Strategy\": \"Hashed\",                                                           " +
+        "           \"Parent Relationship\": \"Outer\",                                                 " +
+        "           \"Startup Cost\": 14.97,                                                          " +
+        "           \"Total Cost\": 14.99,                                                            " +
+        "           \"Plan Rows\": 2,                                                                 " +
+        "           \"Plan Width\": 8,                                                                " +
+        "           \"Output\": [\"count(*)\", \"column_1\", \"column_2\"],                                 " +
+        "           \"Plans\": [                                                                      " +
+        "             {                                                                             " +
+        "               \"Node Type\": \"Bitmap Heap Scan\",                                            " +
+        "               \"Parent Relationship\": \"Outer\",                                             " +
+        "               \"Relation Name\": \"table_0\",                                                 " +
+        "               \"Schema\": \"schema_0\",                                                       " +
+        "               \"Alias\": \"table_0\",                                                         " +
+        "               \"Startup Cost\": 4.34,                                                       " +
+        "               \"Total Cost\": 14.91,                                                        " +
+        "               \"Plan Rows\": 9,                                                             " +
+        "               \"Plan Width\": 8,                                                            " +
+        "               \"Output\": [\"column_0\", \"column_1\", \"column_2\", \"column_3\"],                 " +
+        "               \"Recheck Cond\": \"((table_0.column_0 >= 10) AND (table_0.column_0 < 2000))\", " +
+        "               \"Plans\": [                                                                  " +
+        "                 {                                                                         " +
+        "                   \"Node Type\": \"Bitmap Index Scan\",                                       " +
+        "                   \"Parent Relationship\": \"Outer\",                                         " +
+        "                   \"Index Name\": \"table_0_index_7\",                                        " +
+        "                   \"Startup Cost\": 0.00,                                                   " +
+        "                   \"Total Cost\": 4.34,                                                     " +
+        "                   \"Plan Rows\": 9,                                                         " +
+        "                   \"Plan Width\": 0,                                                        " +
+        "                   \"Index Cond\": \"((table_0.column_0 >= 10) AND (table_0.column_0 < 2000))\"" +
+        "                 }                                                                         " +
+        "               ]                                                                           " +
+        "             }                                                                             " +
+        "           ]                                                                               " +
+        "         }                                                                                 " +
+        "       ]                                                                                   " +
+        "     }                                                                                     " +
+        "   }                                                                                       " +
+        " ] " +
+        "QUERYPLAN " +
+        " [                                                                                                                            " +
+        "   {                                                                                                                          " +
+        "     \"Plan\": {                                                                                                                " +
+        "       \"Node Type\": \"Group\",                                                                                                  " +
+        "       \"Startup Cost\": 61.03,                                                                                                 " +
+        "       \"Total Cost\": 61.61,                                                                                                   " +
+        "       \"Plan Rows\": 78,                                                                                                       " +
+        "       \"Plan Width\": 8,                                                                                                       " +
+        "       \"Output\": [\"table_0.column_2\", \"table_0.column_3\"],                                                                    " +
+        "       \"Plans\": [                                                                                                             " +
+        "         {                                                                                                                    " +
+        "           \"Node Type\": \"Sort\",                                                                                               " +
+        "           \"Parent Relationship\": \"Outer\",                                                                                    " +
+        "           \"Startup Cost\": 61.03,                                                                                             " +
+        "           \"Total Cost\": 61.22,                                                                                               " +
+        "           \"Plan Rows\": 78,                                                                                                   " +
+        "           \"Plan Width\": 8,                                                                                                   " +
+        "           \"Output\": [\"table_0.column_2\", \"table_0.column_3\"],                                                                " +
+        "           \"Sort Key\": [\"table_0.column_2\", \"table_0.column_3\"],                                                              " +
+        "           \"Plans\": [                                                                                                         " +
+        "             {                                                                                                                " +
+        "               \"Node Type\": \"Hash Join\",                                                                                      " +
+        "               \"Parent Relationship\": \"Outer\",                                                                                " +
+        "               \"Join Type\": \"Inner\",                                                                                          " +
+        "               \"Startup Cost\": 23.44,                                                                                         " +
+        "               \"Total Cost\": 58.57,                                                                                           " +
+        "               \"Plan Rows\": 78,                                                                                               " +
+        "               \"Plan Width\": 8,                                                                                               " +
+        "               \"Output\": [\"table_0.column_2\", \"table_0.column_3\"],                                                            " +
+        "               \"Hash Cond\": \"(table_1.column_0 = table_0.column_0)\",                                                          " +
+        "               \"Plans\": [                                                                                                     " +
+        "                 {                                                                                                            " +
+        "                   \"Node Type\": \"Seq Scan\",                                                                                   " +
+        "                   \"Parent Relationship\": \"Outer\",                                                                            " +
+        "                   \"Relation Name\": \"table_1\",                                                                                " +
+        "                   \"Schema\": \"schema_0\",                                                                                      " +
+        "                   \"Alias\": \"table_1\",                                                                                        " +
+        "                   \"Startup Cost\": 0.00,                                                                                      " +
+        "                   \"Total Cost\": 27.70,                                                                                       " +
+        "                   \"Plan Rows\": 1770,                                                                                         " +
+        "                   \"Plan Width\": 4,                                                                                           " +
+        "                   \"Output\": [\"table_1.column_0\", \"table_1.column_1\", \"table_1.column_2\", \"table_1.column_3\"]                 " +
+        "                 },                                                                                                           " +
+        "                 {                                                                                                            " +
+        "                   \"Node Type\": \"Hash\",                                                                                       " +
+        "                   \"Parent Relationship\": \"Inner\",                                                                            " +
+        "                   \"Startup Cost\": 23.32,                                                                                     " +
+        "                   \"Total Cost\": 23.32,                                                                                       " +
+        "                   \"Plan Rows\": 9,                                                                                            " +
+        "                   \"Plan Width\": 16,                                                                                          " +
+        "                   \"Output\": [\"table_0.column_2\", \"table_0.column_3\", \"table_0.column_0\", \"table_2.column_0\"],                " +
+        "                   \"Plans\": [                                                                                                 " +
+        "                     {                                                                                                        " +
+        "                       \"Node Type\": \"Nested Loop\",                                                                            " +
+        "                       \"Parent Relationship\": \"Outer\",                                                                        " +
+        "                       \"Join Type\": \"Inner\",                                                                                  " +
+        "                       \"Startup Cost\": 4.32,                                                                                  " +
+        "                       \"Total Cost\": 23.32,                                                                                   " +
+        "                       \"Plan Rows\": 9,                                                                                        " +
+        "                       \"Plan Width\": 16,                                                                                      " +
+        "                       \"Output\": [\"table_0.column_2\", \"table_0.column_3\", \"table_0.column_0\", \"table_2.column_0\"],            " +
+        "                       \"Plans\": [                                                                                             " +
+        "                         {                                                                                                    " +
+        "                           \"Node Type\": \"Index Scan\",                                                                         " +
+        "                           \"Parent Relationship\": \"Outer\",                                                                    " +
+        "                           \"Scan Direction\": \"Forward\",                                                                       " +
+        "                           \"Index Name\": \"table_2_index_43\",                                                                  " +
+        "                           \"Relation Name\": \"table_2\",                                                                        " +
+        "                           \"Schema\": \"schema_0\",                                                                              " +
+        "                           \"Alias\": \"table_2\",                                                                                " +
+        "                           \"Startup Cost\": 0.00,                                                                              " +
+        "                           \"Total Cost\": 8.37,                                                                                " +
+        "                           \"Plan Rows\": 1,                                                                                    " +
+        "                           \"Plan Width\": 4,                                                                                   " +
+        "                           \"Output\": [\"table_2.column_0\", \"table_2.column_1\", \"table_2.column_2\", \"table_2.column_3\"],        " +
+        "                           \"Index Cond\": \"((table_2.column_0 >= 10) AND (table_2.column_0 < 2000) AND (table_2.column_2 = 3))\"" +
+        "                         },                                                                                                   " +
+        "                         {                                                                                                    " +
+        "                           \"Node Type\": \"Bitmap Heap Scan\",                                                                   " +
+        "                           \"Parent Relationship\": \"Inner\",                                                                    " +
+        "                           \"Relation Name\": \"table_0\",                                                                        " +
+        "                           \"Schema\": \"schema_0\",                                                                              " +
+        "                           \"Alias\": \"table_0\",                                                                                " +
+        "                           \"Startup Cost\": 4.32,                                                                              " +
+        "                           \"Total Cost\": 14.84,                                                                               " +
+        "                           \"Plan Rows\": 9,                                                                                    " +
+        "                           \"Plan Width\": 12,                                                                                  " +
+        "                           \"Output\": [\"table_0.column_0\", \"table_0.column_1\", \"table_0.column_2\", \"table_0.column_3\"],        " +
+        "                           \"Recheck Cond\": \"(table_0.column_0 = table_2.column_0)\",                                           " +
+        "                           \"Plans\": [                                                                                         " +
+        "                             {                                                                                                " +
+        "                               \"Node Type\": \"Bitmap Index Scan\",                                                              " +
+        "                               \"Parent Relationship\": \"Outer\",                                                                " +
+        "                               \"Index Name\": \"table_0_index_7\",                                                               " +
+        "                               \"Startup Cost\": 0.00,                                                                          " +
+        "                               \"Total Cost\": 4.32,                                                                            " +
+        "                               \"Plan Rows\": 9,                                                                                " +
+        "                               \"Plan Width\": 0,                                                                               " +
+        "                               \"Index Cond\": \"(table_0.column_0 = table_2.column_0)\"                                          " +
+        "                             }                                                                                                " +
+        "                           ]                                                                                                  " +
+        "                         }                                                                                                    " +
+        "                       ]                                                                                                      " +
+        "                     }                                                                                                        " +
+        "                   ]                                                                                                          " +
+        "                 }                                                                                                            " +
+        "               ]                                                                                                              " +
+        "             }                                                                                                                " +
+        "           ]                                                                                                                  " +
+        "         }                                                                                                                    " +
+        "       ]                                                                                                                      " +
+        "     }                                                                                                                        " +
+        "   }                                                                                                                          " +
+        " ] " +
+        "QUERYPLAN " +
+        " [                                                                                                            " +
+        "   {                                                                                                          " +
+        "     \"Plan\": {                                                                                                " +
+        "       \"Node Type\": \"Sort\",                                                                                   " +
+        "       \"Startup Cost\": 18.55,                                                                                 " +
+        "       \"Total Cost\": 18.56,                                                                                   " +
+        "       \"Plan Rows\": 2,                                                                                        " +
+        "       \"Plan Width\": 4,                                                                                       " +
+        "       \"Output\": [\"(count(*))\", \"table_1.column_2\"],                                                          " +
+        "       \"Sort Key\": [\"table_1.column_2\"],                                                                      " +
+        "       \"Plans\": [                                                                                             " +
+        "         {                                                                                                    " +
+        "           \"Node Type\": \"Seq Scan\",                                                                           " +
+        "           \"Parent Relationship\": \"InitPlan\",                                                                 " +
+        "           \"Subplan Name\": \"InitPlan 1 (returns $0)\",                                                         " +
+        "           \"Relation Name\": \"table_2\",                                                                        " +
+        "           \"Schema\": \"schema_0\",                                                                              " +
+        "           \"Alias\": \"table_2\",                                                                                " +
+        "           \"Startup Cost\": 0.00,                                                                              " +
+        "           \"Total Cost\": 32.12,                                                                               " +
+        "           \"Plan Rows\": 9,                                                                                    " +
+        "           \"Plan Width\": 8,                                                                                   " +
+        "           \"Filter\": \"(table_2.column_0 = table_2.column_2)\"                                                  " +
+        "         },                                                                                                   " +
+        "         {                                                                                                    " +
+        "           \"Node Type\": \"Aggregate\",                                                                          " +
+        "           \"Strategy\": \"Hashed\",                                                                              " +
+        "           \"Parent Relationship\": \"Outer\",                                                                    " +
+        "           \"Startup Cost\": 14.95,                                                                             " +
+        "           \"Total Cost\": 14.97,                                                                               " +
+        "           \"Plan Rows\": 2,                                                                                    " +
+        "           \"Plan Width\": 4,                                                                                   " +
+        "           \"Output\": [\"count(*)\", \"table_1.column_2\"],                                                        " +
+        "           \"Plans\": [                                                                                         " +
+        "             {                                                                                                " +
+        "               \"Node Type\": \"Result\",                                                                         " +
+        "               \"Parent Relationship\": \"Outer\",                                                                " +
+        "               \"Startup Cost\": 4.34,                                                                          " +
+        "               \"Total Cost\": 14.91,                                                                           " +
+        "               \"Plan Rows\": 9,                                                                                " +
+        "               \"Plan Width\": 4,                                                                               " +
+        "               \"Output\": [\"table_1.column_0\", \"table_1.column_1\", \"table_1.column_2\", \"table_1.column_3\"],    " +
+        "               \"One-Time Filter\": \"$0\",                                                                       " +
+        "               \"Plans\": [                                                                                     " +
+        "                 {                                                                                            " +
+        "                   \"Node Type\": \"Bitmap Heap Scan\",                                                           " +
+        "                   \"Parent Relationship\": \"Outer\",                                                            " +
+        "                   \"Relation Name\": \"table_1\",                                                                " +
+        "                   \"Schema\": \"schema_0\",                                                                      " +
+        "                   \"Alias\": \"table_1\",                                                                        " +
+        "                   \"Startup Cost\": 4.34,                                                                      " +
+        "                   \"Total Cost\": 14.91,                                                                       " +
+        "                   \"Plan Rows\": 9,                                                                            " +
+        "                   \"Plan Width\": 4,                                                                           " +
+        "                   \"Output\": [\"table_1.column_0\", \"table_1.column_1\", \"table_1.column_2\", \"table_1.column_3\"]," +
+        "                   \"Recheck Cond\": \"((table_1.column_0 >= 50000) AND (table_1.column_0 < 100000))\",           " +
+        "                   \"Plans\": [                                                                                 " +
+        "                     {                                                                                        " +
+        "                       \"Node Type\": \"Bitmap Index Scan\",                                                      " +
+        "                       \"Parent Relationship\": \"Outer\",                                                        " +
+        "                       \"Index Name\": \"table_1_index_26\",                                                      " +
+        "                       \"Startup Cost\": 0.00,                                                                  " +
+        "                       \"Total Cost\": 4.34,                                                                    " +
+        "                       \"Plan Rows\": 9,                                                                        " +
+        "                       \"Plan Width\": 0,                                                                       " +
+        "                       \"Index Cond\": \"((table_1.column_0 >= 50000) AND (table_1.column_0 < 100000))\"          " +
+        "                     }                                                                                        " +
+        "                   ]                                                                                          " +
+        "                 }                                                                                            " +
+        "               ]                                                                                              " +
+        "             }                                                                                                " +
+        "           ]                                                                                                  " +
+        "         }                                                                                                    " +
+        "       ]                                                                                                      " +
+        "     }                                                                                                        " +
+        "   }                                                                                                          " +
+        " ]";
+
     //CHECKSTYLE:ON
 }

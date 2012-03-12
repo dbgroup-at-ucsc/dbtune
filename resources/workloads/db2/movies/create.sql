@@ -159,19 +159,3 @@ CREATE UNIQUE INDEX movies.creditcards_creditnum_userid_credittype ON movies.cre
 CREATE UNIQUE INDEX movies.movies_moiveid_title_yearofr            ON movies.movies      (movieid, title, yearofr);
 CREATE UNIQUE INDEX movies.actors_afirstname_alastname_dateofb     ON movies.actors      (afirstname, alastname, dateofb);
 CREATE UNIQUE INDEX movies.queue_times                             ON movies.queue       (times);
-
-RUNSTATS ON TABLE movies.ratings
-
-RUNSTATS ON TABLE movies.queue
-
-RUNSTATS ON TABLE movies.casts
-
-RUNSTATS ON TABLE movies.actors
-
-RUNSTATS ON TABLE movies.genres
-
-RUNSTATS ON TABLE movies.movies
-
-RUNSTATS ON TABLE movies.creditcards
-
-RUNSTATS ON TABLE movies.users

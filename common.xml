@@ -112,6 +112,18 @@
     </junit>
   </target>
 
+  <target name="run.one" depends="argument-checking" description="Run One Class' main.">
+    <echo message="Running main method from ${class}"/>
+    <java classname="${class}" fork="no">
+      <classpath>
+        <path refid="compile.classpath"/>
+        <pathelement location="${bld.dir}/classes"/>
+        <pathelement location="${bld.dir}/tests"/>
+      </classpath>
+      <sysproperty key="java.library.path" path="${lib.dir}"/>
+    </java>
+  </target>
+
   <target name="jar" description="Generates a JAR file">
     <echo message="Generating jar"/>
     <jar destfile="${bld.dir}/${project}-${version}.jar" basedir="${bld.dir}/classes" />

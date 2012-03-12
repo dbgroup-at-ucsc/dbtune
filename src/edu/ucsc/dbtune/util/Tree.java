@@ -152,6 +152,19 @@ public class Tree<T>
      * @param value
      *     element searched in the tree
      * @return
+     *     the element found; {@code null} otherwise.
+     */
+    public T find(T value)
+    {
+        return valueOf(find(value, root));
+    }
+
+    /**
+     * whether or not the tree contains the given value.
+     *
+     * @param value
+     *     element searched in the tree
+     * @return
      *     {@code true} if the element is contained; {@code false} otherwise.
      */
     public boolean contains(T value)
@@ -179,12 +192,12 @@ public class Tree<T>
      *      the value that will be the parent of {@code childValue}
      * @param childValue
      *      the value that will be the child of {@code parentValue}
-     * @throws NoSuchElementException
-     *      if parentValue isn't a member of the tree
      * @return
      *      the entry corresponding to the newly added child
      * @throws IllegalArgumentException
      *      if {@code childValue} is already in the tree.
+     * @throws NoSuchElementException
+     *      if parentValue isn't a member of the tree
      */
     public Entry<T> setChild(T parentValue, T childValue)
     {
@@ -331,6 +344,33 @@ public class Tree<T>
      * {@inheritDoc}
      */
     @Override
+    public int hashCode()
+    {
+        return root.hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+            return true;
+    
+        if (!(obj instanceof Tree<?>))
+            return false;
+    
+        @SuppressWarnings("unchecked")
+        Tree<T> o = (Tree<T>) obj;
+
+        return root.equals(o.root);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String toString()
     {
         return root.print("", true);
@@ -407,17 +447,69 @@ public class Tree<T>
             else
                 sb.append(prefix + (isTail ? "└── " : "├── ") + element + "\n");
 
-            if (children != null) {
-                for (int i = 0; i < children.size() - 1; i++)
-                    sb.append(children.get(i).print(prefix + (isTail ? "    " : "│   "), false));
+            for (int i = 0; i < children.size() - 1; i++)
+                sb.append(children.get(i).print(prefix + (isTail ? "    " : "│   "), false));
 
-                if (children.size() >= 1)
-                    sb.append(
+            if (children.size() >= 1)
+                sb.append(
                         children.get(
                             children.size() - 1).print(prefix + (isTail ? "    " : "│   "), true));
-            }
 
             return sb.toString();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int hashCode()
+        {
+            int code = 1;
+
+            code = 37 * code + element.hashCode();
+
+            if (parent != null)
+                code = 37 * code + parent.getElement().hashCode();
+
+            // we don't care about order in the children
+            int listCode = 0;
+            for (Entry<T> child : children)
+                listCode += child.hashCode();
+
+            code = 37 * code + listCode;
+
+            return code;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (this == obj)
+                return true;
+
+            if (!(obj instanceof Entry<?>))
+                return false;
+
+            @SuppressWarnings("unchecked")
+            Entry<T> o = (Entry<T>) obj;
+
+            if (children.size() != o.children.size() ||
+                    (parent != null && o.parent == null) ||
+                    (parent == null && o.parent != null) ||
+                    (parent != null && o.parent != null && 
+                     !parent.getElement().equals(o.parent.getElement())) ||
+                    !element.equals(o.element))
+                return false;
+
+            // we don't take into account the order of children
+            for (Entry<T> child : o.children)
+                if (!children.contains(child))
+                    return false;
+
+            return true;
         }
     }
 }

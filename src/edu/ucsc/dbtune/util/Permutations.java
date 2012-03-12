@@ -18,9 +18,9 @@ import java.util.List;
  * while (c.hasNext()) {
  *  List<Children> perm = c.next();
  *  for (int i = 0; i < perm.size(); i++) {
- *    System.out.print(perm.get(i) +  );
+ *    print(perm.get(i) +  );
  *  }
- * System.out.println();
+ * println();
  * }
  * </pre></blockquote>
  * This will print out:

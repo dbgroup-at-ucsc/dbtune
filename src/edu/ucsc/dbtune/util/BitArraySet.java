@@ -299,6 +299,18 @@ public class BitArraySet<E extends Identifiable> extends AbstractSet<E> implemen
     }
 
     /**
+     * Get the element at the i^{th} position of the underlying bit array.
+     * 
+     * @param i
+     *      the position to be retrieved
+     * @return
+     *      The element at position i or NULL if the position is not in the set.
+     */
+    public E get(int i)
+    {
+        return elements.get(i);
+    }
+    /**
      * An iterator of the bit array that provides a {@link Iterator#remove} implementation.
      *
      * @author Ivo Jimenez

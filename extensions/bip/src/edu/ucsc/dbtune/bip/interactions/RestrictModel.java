@@ -52,14 +52,15 @@ public class RestrictModel
     protected int    numConstraints;
     protected double doiOptimizer;
     protected double doiBIP;
+      
     
     protected IloLinearNumExpr exprIteraction1;
     
     protected IloCplex        cplex;
     protected List<IloNumVar> cplexVar;
     
-    protected LogListener logger;
-    
+    protected LogListener logger;    
+    protected boolean     isApproximation;
     protected Map<Integer, Map<Integer, Double>>    mapThetaVarCoef;
     
     /**
@@ -82,11 +83,12 @@ public class RestrictModel
      *     The relation slot ID that contains the second index    
      * 
      */
-    public RestrictModel(final QueryPlanDesc desc, 
+    public RestrictModel(IloCplex cplex,
+                         final QueryPlanDesc desc, 
                          final LogListener logger, 
                          final double delta, final Index indexc, final Index indexd, 
                          final Set<Index> candidateIndexes,
-                         final int ic, final int id)
+                         final int ic, final int id, final boolean isApproximation)
     {
         this.delta            = delta;
         this.iC               = ic;
@@ -97,21 +99,8 @@ public class RestrictModel
         this.logger           = logger;
         this.candidateIndexes = candidateIndexes;
         this.cplexVar         = null;
-        
-        try {
-            // start CPLEX
-            cplex = new IloCplex();
-                       
-            // allow the solution differed 5% from the actual optimal value
-            cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
-            // not output the log of CPLEX
-            cplex.setOut(null);
-            // not output the warning
-            cplex.setWarning(null);
-        }
-        catch (IloException e) {
-            System.err.println("Concert exception caught: " + e);
-        }
+        this.cplex            = cplex;
+        this.isApproximation  = isApproximation;
     }
     
     /**
@@ -129,6 +118,9 @@ public class RestrictModel
      */
     public boolean solve(SQLStatement sql, Optimizer optimizer) throws IloException
     {
+        // 1. clear the model of CPLEX object
+        cplex.clearModel();
+        
         // 2. Construct BIP
         logger.setStartTimer();    
         
@@ -139,12 +131,12 @@ public class RestrictModel
         // Construct the formula of Ctheta
         buildQueryExecutionCost();
         
-        // 1. Atomic constraints 
+        // 2.1. Atomic constraints 
         atomicConstraintForINUM();
         atomicConstraintAtheta();
         interactionPrecondition();        
         
-        // 2. Optimal constraints
+        // 2,2. Optimal constraints
         localOptimal();
         atomicConstraintLocalOptimal();
         presentVariableLocalOptimal();
@@ -605,8 +597,14 @@ public class RestrictModel
     {   
         IloLinearNumExpr expr;        
         int idU;
+        double approxCoef;        
+        int q;
         
-        int q = desc.getStatementID();
+        q = desc.getStatementID();        
+        if (isApproximation)
+            approxCoef = 1.2;
+        else 
+            approxCoef = 1.0;
         
         // construct C^opt_t
         for (int theta : listTheta) {
@@ -622,10 +620,10 @@ public class RestrictModel
                 for (int i = 0; i < desc.getNumberOfSlots(); i++) 
                     for (Index index : desc.getIndexesAtSlot(i)) {
                         idU = poolVariables.get(theta, VAR_U, q, t, index.getId()).getId();
-                        expr.addTerm(-desc.getAccessCost(t, index), cplexVar.get(idU));
+                        expr.addTerm(-approxCoef * desc.getAccessCost(t, index), cplexVar.get(idU));
                     }
                 
-                cplex.addLe(expr, desc.getInternalPlanCost(t), "local_" + numConstraints);
+                cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
                 numConstraints++;
             }
         }

@@ -47,7 +47,7 @@ public class InteractionOutput extends IndexTuningOutput
         
         right.removeAll(new HashSet<IndexInteraction>(interactions));
         pc = right.size();
-     
+        
         System.out.println("L51 (InteractionOutput), pa: " + pa + " pb: " + pb + " pc: " + pc);
         return (double) (2 * pa) / (2 * pa + pb + pc);
     }

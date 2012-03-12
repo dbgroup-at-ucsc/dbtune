@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
 import java.sql.SQLException;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,11 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Iterables;
+import static java.lang.Double.doubleToLongBits;
+
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
-
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
@@ -22,8 +21,11 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
+
+import static edu.ucsc.dbtune.util.InumUtils.removeTemporaryTables;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
 /**
@@ -41,6 +43,9 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
  */
 public class InumPlan extends SQLStatementPlan
 {
+    /** used to represent an incompatible instantiation. */
+    public static final Operator INCOMPATIBLE = new Operator("INUM_INCOMPATIBLE", -1, -1);
+
     /**
      * Convenience object that maps tables to slots. This is done so that the {@link
      * #getAccessSlots} and {@link #plugIntoSlots} method can run efficiently
@@ -51,12 +56,12 @@ public class InumPlan extends SQLStatementPlan
      * The cost of the internal nodes of a plan; the paper refers to it as {@latex.inline
      * $\\beta_k$}.
      */
-    private double internalPlanCost;
+    protected double internalPlanCost;
 
     /**
      * We use this optimizer for doing what-if calls to compute index access cost.
      */
-    private Optimizer delegate;
+    protected Optimizer delegate;
 
     /**
      * Creates a new instance of an INUM plan.
@@ -75,6 +80,8 @@ public class InumPlan extends SQLStatementPlan
     {
         super(plan);
 
+        preprocess(this);
+
         this.delegate = delegate;
 
         TableAccessSlot slot = null;
@@ -87,7 +94,7 @@ public class InumPlan extends SQLStatementPlan
             if (leaf.getDatabaseObjects().size() != 1)
                 throw new SQLException("Leaf " + leaf + " doesn't refer to any object");
 
-            leafsCost += extractCostOfLeaf(this, leaf);
+            leafsCost += extractCostOfLeafAndRemoveFetch(this, leaf);
 
             slot = new TableAccessSlot(leaf);
 
@@ -100,8 +107,8 @@ public class InumPlan extends SQLStatementPlan
             slots.put(slot.getTable(), slot);
         }
 
-        if (plan.leafs().size() != slots.size())
-            throw new SQLException("One or more leafs haven't been assigned with a slot");
+        if (leafs().size() != slots.size())
+            throw new SQLException("One or more leafs haven't been assigned with a slot " + this);
 
         internalPlanCost = getRootOperator().getAccumulatedCost() - leafsCost;
     }
@@ -205,7 +212,7 @@ public class InumPlan extends SQLStatementPlan
     {
         Operator o = instantiate(index);
 
-        if (o == null)
+        if (o.equals(INCOMPATIBLE))
             return Double.POSITIVE_INFINITY;
 
         return o.getAccumulatedCost();
@@ -219,7 +226,12 @@ public class InumPlan extends SQLStatementPlan
      * @throws SQLException
      *      if the plan doesn't contain a slot for {@code index.getTable()}
      * @return
-     *      a new operator that results from plugging the index in the corresponding slot
+     *      a new operator that results from plugging the index in the corresponding slot. The 
+     *      operator can be a {@link Operator#TABLE_SCAN} or {@link Operator#INDEX_SCAN}, depending 
+     *      on what is the interesting order that was used to build this slot. Specifically, {@link 
+     *      Operator#TABLE_SCAN} is returned when the given index is an instance of {@link 
+     *      FullTableScanIndex} and the slot was also built with it. Otherwise, the index is checked 
+     *      to see if it's compatible with the slot and if isn't, {@link INCOMPATIBLE} is returned. 
      */
     public Operator instantiate(Index index) throws SQLException
     {
@@ -230,81 +242,17 @@ public class InumPlan extends SQLStatementPlan
 
         if (slot.getIndex().equals(index) || slot.getIndex().equalsContent(index))
             // if we have the same index as when we built the template
-            return makeOperator(slot);
+            return makeOperatorFromSlot(slot);
 
-        if (!slot.isFullTableScan() && !slot.isCompatible(index))
-            // the FTS slot is compatible with any index. So if we dont have a FTS we have to check 
-            // that the sent index is compatible with the slot
-            return null;
+        if (!slot.isCreatedFromFullTableScan() && !slot.isCompatible(index))
+            // if we DON'T have FTS, we have to check that sent index is compatible
+            return INCOMPATIBLE;
 
-        return instantiateOperatorForUnseenIndex(buildQueryForUnseenIndex(slot), index);
-    }
+        if (isWhatIfCallAvoidableViaFullTableScan(slot, index))
+            // if we do a what-if call, we know the optimizer will return FTS, so let's not do it
+            return INCOMPATIBLE;
 
-    /**
-     * @param sql
-     *      statement to be explained in order to obtain an {@link Operator#INDEX_SCAN} operator
-     * @param index
-     *      the index being sent as the hypothetical configuration
-     * @return
-     *      an {@link Operator#INDEX_SCAN} operator
-     * @throws SQLException
-     *      if the statement can't be explained
-     */
-    public Operator instantiateOperatorForUnseenIndex(SQLStatement sql, Index index)
-        throws SQLException
-    {
-        delegate.setFTSDisabled(true);
-
-        SQLStatementPlan plan = delegate.explain(sql, Sets.<Index>newHashSet(index)).getPlan();
-
-        delegate.setFTSDisabled(false);
-
-        if (plan.leafs().size() != 1)
-            throw new SQLException("Plan should have only one leaf");
-
-        Operator o = Iterables.<Operator>get(plan.leafs(), 0);
-
-        if (o.getDatabaseObjects().size() != 1)
-            throw new SQLException("The leaf should have one database object.");
-
-        if (!o.getName().equals(INDEX_SCAN))
-            throw new SQLException("The leaf should be an " + INDEX_SCAN);
-
-        o.setAccumulatedCost(plan.getRootOperator().getAccumulatedCost());
-
-        // create a new Operator to avoid memory leaks (by keeping the whole plan hanging)
-        return new Operator(o);
-    }
-
-    /**
-     * instantiates an operator out of a slot.
-     *
-     * @param slot
-     *      slot
-     * @return
-     *      a {@link Operator#TABLE_SCAN} operator if the slot is using a {@link 
-     *      FullTableScanIndex}; a {@link Operator#INDEX_SCAN} if the slot uses an {@link Index}.
-     */
-    private static Operator makeOperator(TableAccessSlot slot)
-    {
-        DatabaseObject dbo;
-        String name;
-
-        if (slot.getIndex() instanceof FullTableScanIndex) {
-            name = TABLE_SCAN;
-            dbo = slot.getTable();
-        } else {
-            name = INDEX_SCAN;
-            dbo = slot.getIndex();
-        }
-
-        Operator op = new Operator(name, slot.getAccumulatedCost(), slot.getCardinality());
-
-        op.add(dbo);
-        op.addColumnsFetched(slot.getColumnsFetched());
-        op.add(slot.getPredicates());
-
-        return op;
+        return instantiateOperatorForUnseenIndex(getStatement(), index);
     }
 
     /**
@@ -333,19 +281,19 @@ public class InumPlan extends SQLStatementPlan
 
             Operator o = instantiate(i);
 
-            if (o == null)
+            if (o.equals(INCOMPATIBLE))
                 // index i is not compatible to its corresponding slot
                 return null;
 
             operators.add(o);
         }
 
-        if (visited.size() != slots.size())
+        if (visited.size() != getTables().size())
             throw new SQLException(
                 "One or more tables missing in atomic configuration.\n" +
                 "  Tables in atomic " + getReferencedTables(atomicConfiguration) + "\n" +
                 "  Tables in stmt: " + getTables() + "\n" +
-                "  For statement:\n" + getStatement() + "\n" +
+                //"  For statement:\n" + getStatement() + "\n" +
                 "  Plan: \n" + this);
 
         return instantiatePlan(this, operators);
@@ -374,6 +322,177 @@ public class InumPlan extends SQLStatementPlan
     public Collection<TableAccessSlot> getSlots()
     {
         return slots.values();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return 37 * super.hashCode() + (int) doubleToLongBits(internalPlanCost);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (!super.equals(obj))
+            return false;
+
+        if (!(obj instanceof InumPlan))
+            return false;
+    
+        InumPlan o = (InumPlan) obj;
+
+        return Double.compare(internalPlanCost, o.internalPlanCost) == 0;
+    }
+
+    /**
+     * Executes a what-if call on the given index in order to determine if the corresponding slot 
+     * would use it.
+     *
+     * @param sql
+     *      statement to be explained in order to obtain an {@link Operator#INDEX_SCAN} operator
+     * @param index
+     *      the index being sent as the hypothetical configuration
+     * @return
+     *      an {@link Operator#INDEX_SCAN} operator; {@link INCOMPATIBLE} if the given index is not 
+     *      used in the what-if call.
+     * @throws SQLException
+     *      if the statement can't be explained
+     * @see #buildQueryForUnseenIndex
+     */
+    protected Operator instantiateOperatorForUnseenIndex(SQLStatement sql, Index index)
+        throws SQLException
+    {
+        SQLStatementPlan plan = delegate.explain(sql, Sets.<Index>newHashSet(index)).getPlan();
+
+        Operator indexScan = null;
+        Operator fetch = null;
+        Operator otherFetch = null;
+
+        for (Operator o : plan.toList()) {
+
+            if (!o.getName().equals(INDEX_SCAN))
+                continue;
+
+            if (o.getDatabaseObjects().size() != 1)
+                throw new SQLException(INDEX_SCAN + " should be referring to a DB object");
+
+            DatabaseObject dbo = o.getDatabaseObjects().get(0);
+
+            if (dbo instanceof Index && index.getTable().equals(((Index) dbo).getTable())) {
+
+                if (indexScan != null) {
+                    // it is possible to find more than one INDEX_SCAN that refers {@code index}, 
+                    // since some optimizers scan the same index more than once. As long as the 
+                    // INDEX_SCANs are all referring to the SAME index, it's OK
+                    if (!index.equals(dbo)) {
+                        throw new SQLException(
+                            "Other " + INDEX_SCAN + " for " + index.getTable() + " in " + plan);
+                    } else {
+                        // check that they're sharing the same FETCH parent, otherwise 
+                        // extractCostOfLeafAndRemoveFetch won't return the appropriate costh
+                        otherFetch = plan.findAncestorWithName(o, FETCH);
+
+                        if ((fetch != null && otherFetch == null) ||
+                                (fetch == null && otherFetch != null) ||
+                                (fetch != null && otherFetch != null && !fetch.equals(otherFetch)))
+                            throw new SQLException("Haven't implemented this case yet");
+
+                        dbo.getName();
+                    }
+                } else {
+                    indexScan = o;
+                    fetch = plan.findAncestorWithName(o, FETCH);
+                }
+            }
+        }
+
+        if (indexScan == null)
+            // plan is not using the index, so the index is not compatible with this slot
+            return INCOMPATIBLE;
+
+        double newIndexScanCost = 0;
+        double costOfChildren = 0;
+
+        if (plan.getChildren(indexScan).size() > 0) {
+            // check if INDEX_SCAN has children and remove them. Yes, it is
+            // possible for INDEX_SCAN to have children.
+            for (Operator child : plan.getChildren(indexScan)) {
+                costOfChildren += child.getAccumulatedCost();
+                plan.remove(child);
+            }
+        }
+
+        newIndexScanCost = extractCostOfLeafAndRemoveFetch(plan, indexScan) - costOfChildren;
+
+        Operator newIndexScan = new Operator(indexScan);
+
+        newIndexScan.setAccumulatedCost(newIndexScanCost);
+
+        return newIndexScan;
+    }
+
+    /**
+     * Determines whether a what-if call can be avoided, based on the content of the slot and the 
+     * index being sent.
+     *
+     * @param slot
+     *      slot
+     * @param index
+     *      the index that is checked against the slot
+     * @return
+     *      {@code true} if no what-if call is needed; {@code false} otherwise
+     */
+    static boolean isWhatIfCallAvoidableViaFullTableScan(TableAccessSlot slot, Index index)
+    {
+        if (!slot.isCreatedFromFullTableScan())
+            return false;
+
+        if (slot.getPredicates().isEmpty() &&                 
+                slot.getColumnsFetched().isCoveredByIgnoreOrder(index))
+            return false;
+
+        for (Predicate p : slot.getPredicates())
+            if (p.isCoveredBy(index))
+                return false;
+
+        return true;
+    }
+
+    /**
+     * Instantiates an operator out of a slot.
+     *
+     * @param slot
+     *      slot
+     * @return
+     *      a {@link Operator#TABLE_SCAN} operator if the slot is using a {@link 
+     *      FullTableScanIndex}; a {@link Operator#INDEX_SCAN} if the slot uses an {@link Index}.
+     */
+    static Operator makeOperatorFromSlot(TableAccessSlot slot)
+    {
+        DatabaseObject dbo;
+        String name;
+
+        if (slot.isCreatedFromFullTableScan()) {
+            name = TABLE_SCAN;
+            dbo = slot.getTable();
+        } else {
+            name = INDEX_SCAN;
+            dbo = slot.getIndex();
+        }
+
+        Operator op = new Operator(name, slot.getAccumulatedCost(), slot.getCardinality());
+
+        op.add(dbo);
+        op.addColumnsFetched(slot.getColumnsFetched());
+        op.add(slot.getPredicates());
+
+        return op;
     }
 
     /**
@@ -430,7 +549,7 @@ public class InumPlan extends SQLStatementPlan
             sb.delete(sb.length() - 5, sb.length() - 1);
         }
 
-        if (slot.getIndex().size() > 0) {
+        if (!slot.isCreatedFromFullTableScan()) {
 
             sb.append(" ORDER BY ");
 
@@ -446,7 +565,10 @@ public class InumPlan extends SQLStatementPlan
 
     /**
      * Returns the cost of the given leaf, taking into account that if it's an {@link 
-     * Operator#INDEX_SCAN}, a {@link Operator#FETCH} operator is.
+     * Operator#INDEX_SCAN}, a {@link Operator#FETCH} operator is looked for in all the ascendants 
+     * of it and, if found, the cost of the {@link Operator#FETCH} operator is returned. If a {@link 
+     * Operator#FETCH} operator is found and it's a parent of the {@link Operator#INDEX_SCAN}, it is 
+     * removed an replaced by the index scan. For example: TODO
      *
      * @param sqlPlan
      *      plan which the leaf is contained in
@@ -459,46 +581,59 @@ public class InumPlan extends SQLStatementPlan
      *      siblings; if an error occurs while pulling down the set of columns fetched from {@link
      *      Operator#FETCH} down to the leaf.
      */
-    static double extractCostOfLeaf(SQLStatementPlan sqlPlan, Operator leaf) throws SQLException
+    static double extractCostOfLeafAndRemoveFetch(SQLStatementPlan sqlPlan, Operator leaf)
+        throws SQLException
     {
-        if (leaf.getName().equals(Operator.TABLE_SCAN))
+        if (!sqlPlan.getChildren(leaf).isEmpty())
+            throw new SQLException("Operator is not a leaf: " + leaf);
+
+        if (leaf.getName().equals(TABLE_SCAN))
             return leaf.getAccumulatedCost();
 
-        Operator fetch = null;
-        Operator parent = sqlPlan.getParent(leaf);
+        Operator fetch = sqlPlan.findAncestorWithName(leaf, FETCH);
+
+        if (fetch == null)
+            // no FETCH found
+            return leaf.getAccumulatedCost();
+
         Index index = (Index) leaf.getDatabaseObjects().get(0);
 
-        while (parent != null) {
-
-            if (parent.getName().equals(Operator.FETCH)) {
-                fetch = parent;
-                break;
-            } else {
-                parent = sqlPlan.getParent(parent);
-            }
-        }
-        
-        if (fetch == null || !fetch.getDatabaseObjects().get(0).equals(index.getTable()))
-            // no FETCH found, or is referring to table distinct from the one the index refers to
+        if (!fetch.getDatabaseObjects().get(0).equals(index.getTable()))
+            // FETCH is referring to a distinct table
             return leaf.getAccumulatedCost();
 
-        if (sqlPlan.getChildren(fetch).size() > 1)
-            throw new SQLException(Operator.FETCH + " shouldn't have siblings in\n" + sqlPlan);
+        if (fetch.getColumnsFetched() == null || fetch.getColumnsFetched().size() == 0)
+            throw new SQLException("Column set in FETCH is empty or null: " + fetch);
+
+        double costOfLeafSiblings = 0;
+
+        if (sqlPlan.getChildren(fetch).size() > 1) {
+            // obtain the cost of children of FETCH that are distinct to leaf and remove them
+            for (Operator child : sqlPlan.getChildren(fetch)) {
+                if (!child.equals(leaf)) {
+                    costOfLeafSiblings += child.getAccumulatedCost();
+                    sqlPlan.remove(child);
+                }
+            }
+        }
 
         Operator fetchParent = sqlPlan.getParent(fetch);
 
         if (fetchParent == null)
-            throw new SQLException(Operator.FETCH + " should have a dad in\n" + sqlPlan);
+            throw new SQLException(FETCH + " should have an ancestor in " + sqlPlan);
 
         sqlPlan.remove(leaf);
 
-        leaf.setAccumulatedCost(fetch.getAccumulatedCost());
+        leaf.setAccumulatedCost(fetch.getAccumulatedCost() - costOfLeafSiblings);
         leaf.add(fetch.getPredicates());
-        
+
         // we also have to pull the columns fetched down to the slot
-        for (Column c : parent.getColumnsFetched().columns())
-            if (!leaf.getColumnsFetched().contains(c))
-                leaf.getColumnsFetched().add(c, parent.getColumnsFetched().isAscending(c));
+        for (Column c : fetch.getColumnsFetched().columns())
+            if (leaf.getColumnsFetched() == null)
+                leaf.addColumnsFetched(
+                        new InterestingOrder(c, fetch.getColumnsFetched().isAscending(c)));
+            else if (!leaf.getColumnsFetched().contains(c))
+                leaf.getColumnsFetched().add(c, fetch.getColumnsFetched().isAscending(c));
 
         sqlPlan.remove(fetch);
         sqlPlan.setChild(fetchParent, leaf);
@@ -518,7 +653,7 @@ public class InumPlan extends SQLStatementPlan
      * @throws SQLException
      *      if the leaf turns out to be the root operator
      */
-    private static void replaceLeafBySlot(
+    static void replaceLeafBySlot(
             SQLStatementPlan sqlPlan, Operator leaf, TableAccessSlot slot)
         throws SQLException
     {
@@ -542,7 +677,7 @@ public class InumPlan extends SQLStatementPlan
      *      an instance of a plan based on the given template, where each leaf is an {@link 
      *      Operator#TABLE_SCAN} or a {@link Operator#INDEX_SCAN}
      */
-    private static SQLStatementPlan instantiatePlan(
+    static SQLStatementPlan instantiatePlan(
             InumPlan templatePlan,
             List<Operator> instantiatedOperators)
     {
@@ -577,28 +712,18 @@ public class InumPlan extends SQLStatementPlan
     }
 
     /**
-     * {@inheritDoc}
+     * Pre-processes a plan by removing temporary table scans.
+     *
+     * @param plan
+     *      plan to be preprocessed
+     * @throws SQLException
+     *      if an error occurs while pre-processing
      */
-    @Override
-    public int hashCode()
+    public static void preprocess(SQLStatementPlan plan) throws SQLException
     {
-        return slots.hashCode();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj)
-            return true;
-    
-        if (!(obj instanceof InumPlan))
-            return false;
-    
-        InumPlan o = (InumPlan) obj;
-    
-        return slots.equals(o.slots) && Math.abs(internalPlanCost - o.internalPlanCost) < 1E-20;
+        //CHECKSTYLE:OFF
+        while (removeTemporaryTables(plan))
+            ;
+        //CHECKSTYLE:ON
     }
 }

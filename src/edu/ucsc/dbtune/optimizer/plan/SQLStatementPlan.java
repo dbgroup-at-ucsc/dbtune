@@ -44,21 +44,20 @@ public class SQLStatementPlan extends Tree<Operator>
         super(root);
 
         this.sql = sql;
-        elements.clear();
-        elements.put(root, this.root);
     }
 
     /**
-     * Creates a SQL statement plan with one (given root) node.
+     * Creates a SQL statement plan with one (given root) node. Every node in the plan is duplicated 
+     * by calling the {@link Operator#duplicate} method.
      *
      * @param other
      *     root of the plan
      */
     public SQLStatementPlan(SQLStatementPlan other)
     {
-        this(other.sql, new Operator(other.getRootOperator()));
+        this(other.sql, other.getRootOperator().duplicate());
 
-        copyRecursively(root, other.root);
+        duplicateRecursively(root, other.root);
     }
 
     /**
@@ -70,7 +69,7 @@ public class SQLStatementPlan extends Tree<Operator>
      * @param otherParent
      *      another entry whose children are copied to {@code thisParent}
      */
-    private void copyRecursively(Entry<Operator> thisParent, Entry<Operator> otherParent)
+    private void duplicateRecursively(Entry<Operator> thisParent, Entry<Operator> otherParent)
     {
         Entry<Operator> thisChild;
 
@@ -79,7 +78,7 @@ public class SQLStatementPlan extends Tree<Operator>
 
             thisParent.getChildren().add(thisChild);
 
-            copyRecursively(thisChild, otherChild);
+            duplicateRecursively(thisChild, otherChild);
         }
 
         elements.put(thisParent.getElement(), thisParent);
@@ -105,6 +104,34 @@ public class SQLStatementPlan extends Tree<Operator>
     public void setStatement(SQLStatement sql)
     {
         this.sql = sql;
+    }
+
+    /**
+     * Finds an operator that is an ascendant of the given one and has the given name.
+     *
+     * @param operator
+     *      operator whose ascendants are looked for on matching the looked
+     * @param name
+     *      name of the operator that is being looked for
+     * @return
+     *      the node that was found; {@code null} otherwise.
+     * @throws NoSuchElementException
+     *      if {@code operator} is not a node in the plan
+     */
+    public Operator findAncestorWithName(Operator operator, String name)
+    {
+        if (!contains(operator))
+            throw new NoSuchElementException("Element " + operator + " not in the plan");
+
+        Operator ascendant = getParent(operator);
+
+        while (ascendant != null)
+            if (ascendant.getName().equals(name))
+                return ascendant;
+            else
+                ascendant = getParent(ascendant);
+
+        return null;
     }
 
     /**
@@ -136,23 +163,6 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
-     * Aggregates the set of database objects referenced by all the operators in a list and returns 
-     * it.
-     *
-     * @return
-     *     list of objects referenced by one or more operators in the plan.
-     */
-    public List<DatabaseObject> getDatabaseObjectsAtLeafs()
-    {
-        List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
-
-        for (Operator op : leafs())
-            objects.addAll(op.getDatabaseObjects());
-
-        return objects;
-    }
-
-    /**
      * Returns the set of indexes referenced by the plan.
      *
      * @return
@@ -170,7 +180,7 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
-     * Return the list of tables referenced by the statement.
+     * Returns the list of tables referenced by the statement.
      *
      * @return
      *     the list of referenced tables
@@ -189,6 +199,25 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
+     * Returns the list of {@link #INDEX_SCAN} and {@link #TABLE_SCAN} operators that are applied to 
+     * a base database object. Operators for which the {@link #getDatabaseObjects} method is empty 
+     * are not considered.
+     *
+     * @return
+     *     the list of referenced tables
+     */
+    public List<Operator> getDataAccessOperators()
+    {
+        List<Operator> operators = new ArrayList<Operator>();
+
+        for (Operator op : toList())
+            if (!op.getDatabaseObjects().isEmpty())
+                operators.add(op);
+
+        return operators;
+    }
+
+    /**
      * Renames the given operator.
      *
      * @param op
@@ -204,6 +233,8 @@ public class SQLStatementPlan extends Tree<Operator>
         Entry<Operator> entry = elements.get(op);
 
         if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
             throw new NoSuchElementException("Can't find " + op);
 
         op.setName(newName);
@@ -228,6 +259,8 @@ public class SQLStatementPlan extends Tree<Operator>
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
+            throw new NoSuchElementException("Can't find " + op);
 
         op.setAccumulatedCost(cost);
 
@@ -248,6 +281,8 @@ public class SQLStatementPlan extends Tree<Operator>
         Entry<Operator> entry = elements.get(op);
 
         if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
             throw new NoSuchElementException("Can't find " + op);
 
         op.removeColumnsFetched();
@@ -270,6 +305,8 @@ public class SQLStatementPlan extends Tree<Operator>
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
+            throw new NoSuchElementException("Can't find " + op);
 
         op.removePredicates();
 
@@ -291,6 +328,8 @@ public class SQLStatementPlan extends Tree<Operator>
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
+            throw new NoSuchElementException("Can't find " + op);
 
         op.removeDatabaseObject();
 
@@ -301,13 +340,10 @@ public class SQLStatementPlan extends Tree<Operator>
      * Checks if the plan contains the given operator.
      *
      * @param operatorName
-     *      one of the possible defined operator names ({@link Operator})
+     *      name of operator being looked for
      * @return
      *      {@code true} if the operator identified by the given name is contained in this plan; 
      *      {@code false} otherwise
-     * @see Operator#NLJ
-     * @see Operator#HJ
-     * @see Operator#MJ
      */
     public boolean contains(String operatorName)
     {
@@ -315,6 +351,43 @@ public class SQLStatementPlan extends Tree<Operator>
         for (Operator o : toList())
             if (o.getName() == operatorName)
                 return true;
+
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        int code = 1;
+
+        code = 37 * code + super.hashCode();
+        code = 37 * code + sql.hashCode();
+
+        return code;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (!super.equals(obj))
+            return false;
+
+        if (this == obj)
+            return true;
+    
+        if (!(obj instanceof SQLStatementPlan))
+            return false;
+    
+        SQLStatementPlan o = (SQLStatementPlan) obj;
+    
+        if (sql == null && o.sql == null || (sql != null && o.sql != null && sql.equals(o.sql)))
+            return true;
 
         return false;
     }

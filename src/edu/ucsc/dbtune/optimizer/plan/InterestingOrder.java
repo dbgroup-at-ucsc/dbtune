@@ -47,8 +47,10 @@ public class InterestingOrder extends Index
         table = column.getTable();
 
         container.remove(this);
-    }
 
+        Index.IN_MEMORY_ID.decrementAndGet();
+    }
+    
     /**
      * Creates an interesting order instance.
      *
@@ -71,8 +73,20 @@ public class InterestingOrder extends Index
 
         // override name
         name = makeName(columns, ascending);
+
+        Index.IN_MEMORY_ID.decrementAndGet();
     }
-    
+
+    /**
+     * Creates an interesting order instance.
+     *
+     * @param columns
+     *     column that will define the index
+     * @param ascending
+     *     whether or not the column is sorted in ascending or ascending order.
+     * @throws SQLException
+     *      if the schema of the table is null or can't be retrieved
+     */
     public InterestingOrder(List<Column> columns, List<Boolean> ascending) throws SQLException
     {
         super("temporary", columns, ascending);
@@ -84,6 +98,8 @@ public class InterestingOrder extends Index
 
         // override name
         name = makeName(columns, ascending);
+
+        Index.IN_MEMORY_ID.decrementAndGet();
     }
 
     /**
@@ -130,6 +146,16 @@ public class InterestingOrder extends Index
         return str.toString();
     }
     
+    /**
+     * Creates the name of an index.
+     *
+     * @param columns
+     *      column that will define the index
+     * @param ascending
+     *      whether or not the column is sorted in ascending or ascending order.
+     * @return
+     *      then name of the index
+     */
     private static String makeName(List<Column> columns, List<Boolean> ascending)
     {
         StringBuilder str = new StringBuilder();

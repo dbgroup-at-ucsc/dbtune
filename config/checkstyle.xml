@@ -390,7 +390,7 @@
         <!-- Ensures that exception classes are immutable -->
         <module name="MutableException"/>
 
-        <!-- Flag overly complex constructions -->
+        <!-- Flag overly complex constructions
         <module name="ClassFanOutComplexity">
           <property name="max" value="27"/>
         </module>
@@ -398,8 +398,9 @@
           <property name="max" value="41"/>
         </module>
         <module name="NPathComplexity">
-          <property name="max" value="390"/>
+          <property name="max" value="900"/>
         </module>
+        -->
 
         <!-- Identify TODOs - already done by Eclipse
         <module name="TodoComment">
@@ -407,8 +408,9 @@
         </module>
         -->
 
-        <!-- Flag uncommented main() methods (debugging left-overs) -->
+        <!-- Flag uncommented main() methods (debugging left-overs)
         <module name="UncommentedMain"/>
+        -->
 
         <!-- Require long constants to be defined by uppercase L -->
         <module name="UpperEll"/>

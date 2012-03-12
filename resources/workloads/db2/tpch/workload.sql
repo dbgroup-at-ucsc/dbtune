@@ -22,52 +22,6 @@ order by
     l_returnflag,
     l_linestatus;
 
---query 02
--- TODO: one or more relation referenced more than once
---select
---  s_acctbal,
---  s_name,
---  n_name,
---  p_partkey,
---  p_mfgr,
---  s_address,
---  s_phone,
---  s_comment
---from
---  tpch.part,
---  tpch.supplier,
---  tpch.partsupp,
---  tpch.nation,
---  tpch.region
---where
---  p_partkey = ps_partkey
---  and s_suppkey = ps_suppkey
---  and p_size = 38
---  and p_type like '%STEEL'
---  and s_nationkey = n_nationkey
---  and n_regionkey = r_regionkey
---  and r_name = 'ASIA'
---  and ps_supplycost = (
---      select
---          min(ps_supplycost)
---      from
---          tpch.partsupp,
---          tpch.supplier,
---          tpch.nation,
---          tpch.region
---      where
---          p_partkey = ps_partkey
---          and s_suppkey = ps_suppkey
---          and s_nationkey = n_nationkey
---          and n_regionkey = r_regionkey
---          and r_name = 'ASIA'
---  )
---order by
---  s_acctbal desc,
---  n_name,
---  s_name,
---  p_partkey;
-
 --query 03
 select
     l_orderkey,
@@ -142,16 +96,271 @@ order by
     revenue desc;
 
 --query 06
--- NOTE: DB2 uses index intersection
+select
+    sum(l_extendedprice * l_discount) as revenue
+from
+    tpch.lineitem
+where
+    l_shipdate >= '1993-01-01'
+    and l_shipdate < '1994-01-01'
+    and l_discount between 0.06 and 0.08 
+    and l_quantity < 25;
+
+--query 09
+select
+    nation,
+    o_year,
+    sum(amount) as sum_profit
+from
+    (
+        select
+            n_name as nation,
+            year(o_orderdate) as o_year,
+            l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
+        from
+            tpch.part,
+            tpch.supplier,
+            tpch.lineitem,
+            tpch.partsupp,
+            tpch.orders,
+            tpch.nation
+        where
+            s_suppkey = l_suppkey
+            and ps_suppkey = l_suppkey
+            and ps_partkey = l_partkey
+            and p_partkey = l_partkey
+            and o_orderkey = l_orderkey
+            and s_nationkey = n_nationkey
+            and p_name like '%thistle%'
+    ) as profit
+group by
+    nation,
+    o_year
+order by
+    nation,
+    o_year desc;
+
+--query 10
+select
+    c_custkey,
+    c_name,
+    sum(l_extendedprice * (1 - l_discount)) as revenue,
+    c_acctbal,
+    n_name,
+    c_address,
+    c_phone,
+    c_comment
+from
+    tpch.customer,
+    tpch.orders,
+    tpch.lineitem,
+    tpch.nation
+where
+    c_custkey = o_custkey
+    and l_orderkey = o_orderkey
+    and o_orderdate >= '1993-11-01'
+    and o_orderdate < '1994-2-01'
+    and l_returnflag = 'R'
+    and c_nationkey = n_nationkey
+group by
+    c_custkey,
+    c_name,
+    c_acctbal,
+    c_phone,
+    n_name,
+    c_address,
+    c_comment
+order by
+    revenue desc;
+
+--query 12
+select
+    l_shipmode,
+    sum(case
+        when o_orderpriority = '1-URGENT'
+            or o_orderpriority = '2-HIGH'
+            then 1
+        else 0
+    end) as high_line_count,
+    sum(case
+        when o_orderpriority <> '1-URGENT'
+            and o_orderpriority <> '2-HIGH'
+            then 1
+        else 0
+    end) as low_line_count
+from
+    tpch.orders,
+    tpch.lineitem
+where
+    o_orderkey = l_orderkey
+    and l_shipmode in ('FOB', 'REG AIR')
+    and l_commitdate < l_receiptdate
+    and l_shipdate < l_commitdate
+    and l_receiptdate >= '1993-01-01'
+    and l_receiptdate < '1994-01-01' 
+group by
+    l_shipmode
+order by
+    l_shipmode;
+
+--query 13
+select
+    c_count,
+    count(*) as custdist
+from
+    (
+        select
+            c_custkey,
+            count(o_orderkey)
+        from
+            tpch.customer left outer join tpch.orders on
+                c_custkey = o_custkey
+                and o_comment not like '%special%packages%'
+        group by
+            c_custkey
+    ) as c_orders (c_custkey, c_count)
+group by
+    c_count
+order by
+    custdist desc,
+    c_count desc;
+
+--query 14
+select
+    100.00 * sum(case
+        when p_type like 'PROMO%'
+            then l_extendedprice * (1 - l_discount)
+        else 0
+    end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
+from
+    tpch.lineitem,
+    tpch.part
+where
+    l_partkey = p_partkey
+    and l_shipdate >= '1993-05-01'
+    and l_shipdate < '1993-06-01';
+
+--query 19
+select
+    sum(l_extendedprice* (1 - l_discount)) as revenue
+from
+    tpch.lineitem,
+    tpch.part
+where
+    (
+        p_partkey = l_partkey
+        and p_brand = 'Brand#13'
+        and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
+        and l_quantity >= 6 and l_quantity <= 6 + 10
+        and p_size between 1 and 5
+        and l_shipmode in ('AIR', 'AIR REG')
+        and l_shipinstruct = 'DELIVER IN PERSON'
+    )
+    or
+    (
+        p_partkey = l_partkey
+        and p_brand = 'Brand#43'
+        and p_container in ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK')
+        and l_quantity >= 11 and l_quantity <= 11 + 10
+        and p_size between 1 and 10
+        and l_shipmode in ('AIR', 'AIR REG')
+        and l_shipinstruct = 'DELIVER IN PERSON'
+    )
+    or
+    (
+        p_partkey = l_partkey
+        and p_brand = 'Brand#55'
+        and p_container in ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
+        and l_quantity >= 27 and l_quantity <= 27 + 10
+        and p_size between 1 and 15
+        and l_shipmode in ('AIR', 'AIR REG')
+        and l_shipinstruct = 'DELIVER IN PERSON'
+    );
+
+--query 20
+select
+    s_name,
+    s_address
+from
+    tpch.supplier,
+    tpch.nation
+where
+    s_suppkey in (
+        select
+            ps_suppkey
+        from
+            tpch.partsupp
+        where
+            ps_partkey in (
+                select
+                    p_partkey
+                from
+                    tpch.part
+                where
+                    p_name like 'ivory%'
+            )
+            and ps_availqty > (
+                select
+                    0.5 * sum(l_quantity)
+                from
+                    tpch.lineitem
+                where
+                    l_partkey = ps_partkey
+                    and l_suppkey = ps_suppkey
+                    and l_shipdate >= '1996-01-01'
+                    and l_shipdate < '1997-01-01'
+            )
+    )
+    and s_nationkey = n_nationkey
+    and n_name = 'KENYA'
+order by
+    s_name;
+
+--query 02
+-- TODO: one or more relation referenced more than once
 --select
-    --sum(l_extendedprice * l_discount) as revenue
+--  s_acctbal,
+--  s_name,
+--  n_name,
+--  p_partkey,
+--  p_mfgr,
+--  s_address,
+--  s_phone,
+--  s_comment
 --from
-    --tpch.lineitem
+--  tpch.part,
+--  tpch.supplier,
+--  tpch.partsupp,
+--  tpch.nation,
+--  tpch.region
 --where
-    --l_shipdate >= '1993-01-01'
-    --and l_shipdate < '1994-01-01'
-    --and l_discount between 0.06 and 0.08 
-    --and l_quantity < 25;
+--  p_partkey = ps_partkey
+--  and s_suppkey = ps_suppkey
+--  and p_size = 38
+--  and p_type like '%STEEL'
+--  and s_nationkey = n_nationkey
+--  and n_regionkey = r_regionkey
+--  and r_name = 'ASIA'
+--  and ps_supplycost = (
+--      select
+--          min(ps_supplycost)
+--      from
+--          tpch.partsupp,
+--          tpch.supplier,
+--          tpch.nation,
+--          tpch.region
+--      where
+--          p_partkey = ps_partkey
+--          and s_suppkey = ps_suppkey
+--          and s_nationkey = n_nationkey
+--          and n_regionkey = r_regionkey
+--          and r_name = 'ASIA'
+--  )
+--order by
+--  s_acctbal desc,
+--  n_name,
+--  s_name,
+--  p_partkey;
 
 --query 07
 -- TODO: contains two instances of nation
@@ -235,73 +444,6 @@ order by
 --order by
 --  o_year;
 
---query 09
-select
-    nation,
-    o_year,
-    sum(amount) as sum_profit
-from
-    (
-        select
-            n_name as nation,
-            year(o_orderdate) as o_year,
-            l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
-        from
-            tpch.part,
-            tpch.supplier,
-            tpch.lineitem,
-            tpch.partsupp,
-            tpch.orders,
-            tpch.nation
-        where
-            s_suppkey = l_suppkey
-            and ps_suppkey = l_suppkey
-            and ps_partkey = l_partkey
-            and p_partkey = l_partkey
-            and o_orderkey = l_orderkey
-            and s_nationkey = n_nationkey
-            and p_name like '%thistle%'
-    ) as profit
-group by
-    nation,
-    o_year
-order by
-    nation,
-    o_year desc;
-
---query 10
-select
-    c_custkey,
-    c_name,
-    sum(l_extendedprice * (1 - l_discount)) as revenue,
-    c_acctbal,
-    n_name,
-    c_address,
-    c_phone,
-    c_comment
-from
-    tpch.customer,
-    tpch.orders,
-    tpch.lineitem,
-    tpch.nation
-where
-    c_custkey = o_custkey
-    and l_orderkey = o_orderkey
-    and o_orderdate >= '1993-11-01'
-    and o_orderdate < '1994-2-01'
-    and l_returnflag = 'R'
-    and c_nationkey = n_nationkey
-group by
-    c_custkey,
-    c_name,
-    c_acctbal,
-    c_phone,
-    n_name,
-    c_address,
-    c_comment
-order by
-    revenue desc;
-
 --query 11
 -- TODO: supplier, partsupp referenced more than once
 --select
@@ -331,73 +473,6 @@ order by
 --      )
 --order by
 --  value desc;
-
---query 12
-select
-    l_shipmode,
-    sum(case
-        when o_orderpriority = '1-URGENT'
-            or o_orderpriority = '2-HIGH'
-            then 1
-        else 0
-    end) as high_line_count,
-    sum(case
-        when o_orderpriority <> '1-URGENT'
-            and o_orderpriority <> '2-HIGH'
-            then 1
-        else 0
-    end) as low_line_count
-from
-    tpch.orders,
-    tpch.lineitem
-where
-    o_orderkey = l_orderkey
-    and l_shipmode in ('FOB', 'REG AIR')
-    and l_commitdate < l_receiptdate
-    and l_shipdate < l_commitdate
-    and l_receiptdate >= '1993-01-01'
-    and l_receiptdate < '1994-01-01' 
-group by
-    l_shipmode
-order by
-    l_shipmode;
-
---query 13
-select
-    c_count,
-    count(*) as custdist
-from
-    (
-        select
-            c_custkey,
-            count(o_orderkey)
-        from
-            tpch.customer left outer join tpch.orders on
-                c_custkey = o_custkey
-                and o_comment not like '%special%packages%'
-        group by
-            c_custkey
-    ) as c_orders (c_custkey, c_count)
-group by
-    c_count
-order by
-    custdist desc,
-    c_count desc;
-
---query 14
-select
-    100.00 * sum(case
-        when p_type like 'PROMO%'
-            then l_extendedprice * (1 - l_discount)
-        else 0
-    end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
-from
-    tpch.lineitem,
-    tpch.part
-where
-    l_partkey = p_partkey
-    and l_shipdate >= '1993-05-01'
-    and l_shipdate < '1993-06-01';
 
 --query 15
 --  NOTE: the view has been added as a subquery
@@ -443,16 +518,13 @@ where
     --s_suppkey;
 
 --query 16
---  TODO: IXAND, i.e. index intersection
+-- TODO: One or more leafs haven't been assigned with a slot
 --select
     --p_brand,
     --p_type,
     --p_size,
     --count(distinct ps_suppkey) as supplier_cnt
---from
-    --tpch.partsupp,
-    --tpch.part
---where
+--from tpch.partsupp, tpch.part where
     --p_partkey = ps_partkey
     --and p_brand <> 'Brand#41'
     --and p_type not like 'MEDIUM BURNISHED%'
@@ -529,83 +601,6 @@ where
 --order by
 --  o_totalprice desc,
 --  o_orderdate;
-
---query 19
-select
-    sum(l_extendedprice* (1 - l_discount)) as revenue
-from
-    tpch.lineitem,
-    tpch.part
-where
-    (
-        p_partkey = l_partkey
-        and p_brand = 'Brand#13'
-        and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
-        and l_quantity >= 6 and l_quantity <= 6 + 10
-        and p_size between 1 and 5
-        and l_shipmode in ('AIR', 'AIR REG')
-        and l_shipinstruct = 'DELIVER IN PERSON'
-    )
-    or
-    (
-        p_partkey = l_partkey
-        and p_brand = 'Brand#43'
-        and p_container in ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK')
-        and l_quantity >= 11 and l_quantity <= 11 + 10
-        and p_size between 1 and 10
-        and l_shipmode in ('AIR', 'AIR REG')
-        and l_shipinstruct = 'DELIVER IN PERSON'
-    )
-    or
-    (
-        p_partkey = l_partkey
-        and p_brand = 'Brand#55'
-        and p_container in ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
-        and l_quantity >= 27 and l_quantity <= 27 + 10
-        and p_size between 1 and 15
-        and l_shipmode in ('AIR', 'AIR REG')
-        and l_shipinstruct = 'DELIVER IN PERSON'
-    );
-
---query 20
--- TODO: IBGSpaceComputation fails; IXSCAN should be discarded
---select
-    --s_name,
-    --s_address
---from
-    --tpch.supplier,
-    --tpch.nation
---where
-    --s_suppkey in (
-        --select
-            --ps_suppkey
-        --from
-            --tpch.partsupp
-        --where
-            --ps_partkey in (
-                --select
-                    --p_partkey
-                --from
-                    --tpch.part
-                --where
-                    --p_name like 'ivory%'
-            --)
-            --and ps_availqty > (
-                --select
-                    --0.5 * sum(l_quantity)
-                --from
-                    --tpch.lineitem
-                --where
-                    --l_partkey = ps_partkey
-                    --and l_suppkey = ps_suppkey
-                    --and l_shipdate >= '1996-01-01'
-                    --and l_shipdate < '1997-01-01'
-            --)
-    --)
-    --and s_nationkey = n_nationkey
-    --and n_name = 'KENYA'
---order by
-    --s_name;
 
 --query 21
 -- TODO: lineitem referenced more than once

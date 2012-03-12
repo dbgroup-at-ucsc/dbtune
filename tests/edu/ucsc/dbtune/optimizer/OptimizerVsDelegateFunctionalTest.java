@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.util.Comparator;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -14,13 +15,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
-//import static edu.ucsc.dbtune.util.TestUtils.workloads;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
+import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
-//import static org.hamcrest.Matchers.is;
-//import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.is;
+
+import static org.junit.Assert.assertThat;
 
 /**
  * Functional test for testing non-dbms optimizers against the corresponding dbms one. The optimizer 
@@ -31,13 +34,14 @@ import static edu.ucsc.dbtune.util.TestUtils.workload;
  *
  * @author Ivo Jimenez
  */
-public class OptimizerVsDelegateFunctionalTest
+public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQLStatement>
 {
     private static DatabaseSystem db;
     private static Environment env;
     private static Optimizer optimizer;
     private static Optimizer delegate;
     private static CandidateGenerator candGen;
+    private int i;
 
     /**
      * @throws Exception
@@ -75,55 +79,62 @@ public class OptimizerVsDelegateFunctionalTest
     {
         if (delegate == null) return;
 
-        //for (Workload wl : workloads(env.getWorkloadFolders())) {
-        Workload wl = workload(env.getWorkloadsFoldername() + "/tpch-small");
-        final Set<Index> conf = candGen.generate(wl);
+        i = 0;
+        for (Workload wl : workloads(env.getWorkloadFolders())) {
 
-        System.out.println("Candidates generated: " + conf.size());
+            if (env.getOptimizer().equals(INUM) &&
+                    !env.getCandidateGenerator().equals(OPTIMIZER) &&
+                    !wl.getName().contains("tpch-small"))
+                // INUM estimates are correct only for optimal and tpch-small
+                continue;
 
-        int i = 1;
-        int prepareWhatIfCount=0;
-        int explainWhatIfCount=0;
-        int totalWhatIfCount=0;
-        long time;
-        long prepareTime;
-        long explainTime;
-        ExplainedSQLStatement prepared;
-        ExplainedSQLStatement explained;
+            final Set<Index> allIndexes = candGen.generate(wl);
 
-        for (SQLStatement sql : wl) {
-            System.out.println("------------------------------");
-            System.out.println("Processing statement " + i++ + "\n");
+            System.out.println("wlname, stmt, optimizer cost, delegate cost");
 
-            time = System.currentTimeMillis();
+            for (SQLStatement sql : wl) {
+                i++;
 
-            final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
+                final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
 
-            prepareWhatIfCount = delegate.getWhatIfCount() - totalWhatIfCount;
+                ExplainedSQLStatement explainedByOptimizer = pSql.explain(allIndexes);
+                ExplainedSQLStatement explainedByDelegate = delegate.explain(sql, allIndexes);
 
-            prepareTime = System.currentTimeMillis() - time;
-            time = System.currentTimeMillis();
+                assertThat(
+                        "Optimizer: " + explainedByOptimizer + "\n" +
+                        "Delegate: " + explainedByDelegate,
+                        compare(explainedByOptimizer, explainedByDelegate), is(0));
 
-            prepared = pSql.explain(conf);
-
-            explainWhatIfCount = delegate.getWhatIfCount() - totalWhatIfCount - prepareWhatIfCount;
-            totalWhatIfCount += prepareWhatIfCount + explainWhatIfCount;
-
-            explainTime = System.currentTimeMillis() - time;
-
-            explained = delegate.explain(sql, conf);
-
-            System.out.println("optimizer:  " + explained.getSelectCost());
-            System.out.println("delegate:   " + prepared.getSelectCost() + "\n");
-            System.out.println("prepare:    " + prepareTime + " milliseconds");
-            System.out.println("w-if-count: " + prepareWhatIfCount + "\n");
-            System.out.println("explain:    " + explainTime + " milliseconds");
-            System.out.println("w-if-count: " + explainWhatIfCount + "\n");
-            System.out.println("optimizer plan:\n" + explained.getPlan());
-            System.out.println("delegate plan:\n" + prepared.getPlan() + "\n");
-
-            //assertThat(pSql.explain(conf), is(delegate.explain(sql, conf)));
+                System.out.println(
+                        wl.getName() + "," +
+                        i + "," +
+                        explainedByOptimizer.getSelectCost() + "," +
+                        explainedByDelegate.getSelectCost());
+            }
         }
-        //}
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compare(ExplainedSQLStatement e1, ExplainedSQLStatement e2)
+    {
+        if (e1.statement.equals(e2.statement) &&
+                (e1.selectCost / e2.selectCost) > 0.90 &&
+                (e1.selectCost / e2.selectCost) < 1.10 &&
+                e1.updateCost == e2.updateCost &&
+                e1.configuration.equals(e2.configuration))
+            return 0;
+
+        System.out.println(
+                "Statement " + i + "\n" +
+                "Optimizer:\n" + e1.getPlan() +
+                "\n\nvs\n\nDelegate:\n" + e2.getPlan());
+
+        if ((e1.selectCost / e2.selectCost) < 0.90)
+            return -1;
+
+        return 1;
     }
 }

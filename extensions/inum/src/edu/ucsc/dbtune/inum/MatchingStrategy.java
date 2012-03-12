@@ -6,6 +6,10 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.util.Environment;
+
+import static edu.ucsc.dbtune.util.EnvironmentProperties.EXHAUSTIVE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.GREEDY;
 
 /**
  * This represents the matching logic that determines the optimality of reused plans. Given a set of 
@@ -33,6 +37,40 @@ public interface MatchingStrategy
      */
     Result match(Set<InumPlan> inumSpace, Set<Index> configuration)
         throws SQLException;
+
+    /**
+     */
+    public abstract class Factory
+    {
+        /**
+         * utility class.
+         */
+        private Factory()
+        {
+        }
+
+        /**
+         * Creates a matching strategy.
+         *
+         * @param env
+         *      used to access the type of matching strategy to instantiate.
+         * @return
+         *      a new matching strategy
+         * @throws InstantiationException
+         *      if throws an exception
+         */
+        public static MatchingStrategy newMatchingStrategy(Environment env)
+            throws InstantiationException
+        {
+            if (env.getInumMatchingStrategy().equals(GREEDY))
+                return new GreedyMatchingStrategy();
+            else if (env.getInumMatchingStrategy().equals(EXHAUSTIVE))
+                return new ExhaustiveMatchingStrategy();
+
+            throw new InstantiationException(
+                    "Unknown matching strategy option " + env.getInumMatchingStrategy());
+        }
+    }
 
     /**
      * The result of a matching operation.

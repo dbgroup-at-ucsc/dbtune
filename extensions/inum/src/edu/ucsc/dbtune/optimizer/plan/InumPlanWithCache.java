@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.Map;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -15,7 +15,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public class InumPlanWithCache extends InumPlan
 {
-    private HashMap<String, Operator> slotCache;
+    private Map<String, Operator> slotCache;
 
     /**
      * Constructor.
@@ -25,7 +25,7 @@ public class InumPlanWithCache extends InumPlan
      * @param slotCache
      *      global cache being used
      */
-    public InumPlanWithCache(InumPlan template, HashMap<String, Operator> slotCache)
+    public InumPlanWithCache(InumPlan template, Map<String, Operator> slotCache)
     {
         super(template);
 

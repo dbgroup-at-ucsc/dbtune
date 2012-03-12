@@ -15,6 +15,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.CANDIDATE_GENERATOR;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DB2;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.FILE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_MATCHING_STRATEGY;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SLOT_CACHE;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM_SPACE_COMPUTATION;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_DRIVER;
@@ -391,6 +392,16 @@ public class Environment
     public String getInumSpaceComputation()
     {
         return getOrThrowIfNullOrEmpty(configuration, INUM_SPACE_COMPUTATION);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#INUM_MATCHING_STRATEGY}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public String getInumMatchingStrategy()
+    {
+        return getOrThrowIfNullOrEmpty(configuration, INUM_MATCHING_STRATEGY);
     }
 
     /**
