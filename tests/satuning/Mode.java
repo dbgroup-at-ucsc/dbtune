@@ -3,8 +3,6 @@ package satuning;
 
 import java.io.File;
 
-import org.apache.commons.cli.ParseException;
-
 import satuning.admin.InstantAdmin;
 
 public enum Mode {
@@ -193,12 +191,14 @@ public enum Mode {
 		}
 	};
 
+    /*
 	public static Mode parseMode(String modeString) throws ParseException {
 		for (Mode m : values()) 
 			if (modeString.equals(m.toString())) 
 				return m;
 		throw new ParseException("invalid mode: \""+modeString+"\"");
 	}
+    */
 	
 	public static String options() {
 		StringBuilder sb = new StringBuilder();

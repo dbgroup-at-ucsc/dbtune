@@ -35,7 +35,7 @@ import satuning.util.Files;
 public class Main {	
 	public static void main(String[] args) {
 		try {
-			Configuration.processArgs(args);
+            //Configuration.processArgs(args);
 			if (Configuration.logging) {
 				runLogging(Configuration.mode);
 			}

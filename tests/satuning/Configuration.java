@@ -2,13 +2,6 @@ package satuning;
 
 import java.io.File;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-
 public abstract class Configuration {
 	// Experiment settings
 	// These are defaults
@@ -73,6 +66,7 @@ public abstract class Configuration {
 		return new File(subdir(), "candidatePool-"+string);	
 	}
 	
+    /*
 	public static void processArgs(String[] args) {
 		Options o = new Options();
 		
@@ -157,4 +151,5 @@ public abstract class Configuration {
 
 		return true;
 	}
+    */
 }
