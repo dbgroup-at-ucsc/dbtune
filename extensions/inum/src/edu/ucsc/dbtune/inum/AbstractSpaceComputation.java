@@ -2,7 +2,6 @@ package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
@@ -21,7 +20,6 @@ import static edu.ucsc.dbtune.util.InumUtils.extractInterestingOrders;
 import static edu.ucsc.dbtune.util.InumUtils.getMaximumAtomicConfiguration;
 import static edu.ucsc.dbtune.util.InumUtils.getMinimumAtomicConfiguration;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
-import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
 /**
  * Common functionality for space computation.
@@ -58,17 +56,11 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
     {
         Set<InumInterestingOrder> interestingOrders = extractInterestingOrders(statement, catalog);
 
-        for (Table table : getReferencedTables(interestingOrders))
-            interestingOrders.add(getFullTableScanIndexInstance(table));
-
         computeWithCompleteConfiguration(space, interestingOrders, statement, delegate);
 
         InumPlan templateForEmpty =
             new InumPlan(delegate, delegate.explain(statement, empty).getPlan());
 
-        if (space.isEmpty())
-            space.add(templateForEmpty);
-        
         Set<Index> min = getMinimumAtomicConfiguration(templateForEmpty);
         Set<Index> max = getMaximumAtomicConfiguration(statement, catalog);
         
@@ -119,7 +111,7 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
      *      it, i.e. if the plan is not atomic; if the plan is using a materialized index
      */
     public static boolean isUsingAllInterestingOrders(
-            SQLStatementPlan plan, List<Index> interestingOrders)
+            SQLStatementPlan plan, Collection<Index> interestingOrders)
         throws SQLException
     {
         for (Table table : plan.getTables()) {

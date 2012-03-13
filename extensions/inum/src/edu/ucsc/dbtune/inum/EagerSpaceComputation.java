@@ -16,6 +16,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static com.google.common.collect.Sets.cartesianProduct;
 import static com.google.common.collect.Sets.newHashSet;
 
+import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesPerTable;
 
@@ -47,8 +48,10 @@ public class EagerSpaceComputation extends AbstractSpaceComputation
 
         List<Set<Index>> indexesPerTable = new ArrayList<Set<Index>>();
 
-        for (Map.Entry<Table, Set<Index>> e : getIndexesPerTable(indexes).entrySet())
+        for (Map.Entry<Table, Set<Index>> e : getIndexesPerTable(indexes).entrySet()) {
+            e.getValue().add(getFullTableScanIndexInstance(e.getKey()));
             indexesPerTable.add(e.getValue());
+        }
 
         for (List<Index> atomic : cartesianProduct(indexesPerTable)) {
 

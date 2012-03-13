@@ -85,7 +85,8 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
             if (env.getOptimizer().equals(INUM) &&
                     !env.getCandidateGenerator().equals(OPTIMIZER) &&
                     !wl.getName().contains("tpch-small"))
-                // INUM estimates are correct only for optimal and tpch-small
+                // INUM estimates are exactly correct only for optimal and tpch-small
+                //      for all others, the error is sometimes bigger than 10%
                 continue;
 
             final Set<Index> allIndexes = candGen.generate(wl);

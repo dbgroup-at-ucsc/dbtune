@@ -129,8 +129,6 @@ public class InumSpaceComputationFunctionalTest
             for (SQLStatement sql : wl) {
                 i++;
 
-                System.out.println("For statement " + i);
-
                 Set<InumPlan> inumSpaceOne = new HashSet<InumPlan>();
                 Set<InumPlan> inumSpaceTwo = new HashSet<InumPlan>();
 
@@ -171,9 +169,10 @@ public class InumSpaceComputationFunctionalTest
                         "Template two:\n" + twoResult.getBestTemplate() + "\n" +
                         "Instantiated plan one:\n" + oneResult.getInstantiatedPlan() + "\n" +
                         "Instantiated plan two:\n" + twoResult.getInstantiatedPlan(),
-                        oneResult.getBestCost(), closeTo(twoResult.getBestCost(), 0.10));
+                        oneResult.getBestCost(), closeTo(twoResult.getBestCost(), 1.0));
             }
 
+            /*
             System.out.println("-------------------------------------------------------------");
             System.out.println("Plans");
             System.out.println("-------------------------------------------------------------");
@@ -183,6 +182,7 @@ public class InumSpaceComputationFunctionalTest
                 System.out.println(
                         "Two Result for statement " + (j + 1) + ":\n" + twoResults.get(j));
             }
+            */
         }
     }
 }

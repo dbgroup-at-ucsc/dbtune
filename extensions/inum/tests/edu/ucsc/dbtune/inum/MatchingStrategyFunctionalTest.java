@@ -21,7 +21,6 @@ import org.junit.Test;
 import static com.google.common.collect.Iterables.get;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-//import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
 import static edu.ucsc.dbtune.util.MathUtils.combinations;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
