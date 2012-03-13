@@ -67,12 +67,12 @@ public final class InumVsOptimizerExperiment
     /**
      * Option for the subset enumeration.
      */
-    private static String subsetOption = POWERSET_PER_TABLE;
+    private static String subsetOption = ONE;
 
     /**
      * Name of the workload to run the experiment on.
      */
-    private static String workloadName = "tpcds-small";
+    private static String workloadName = "tpch";
 
     /**
      * Number of maximum what-if calls on a statement. If {@link #numberOfSubsets} is less than this 
@@ -268,7 +268,6 @@ public final class InumVsOptimizerExperiment
                   K - explain time ratio (AVERAGE(optimizer-explain-time_i / INUM-explain-time_i))
                   L - INUM avg what-if (INUM prepare / #what-if calls + avg explain)
                   M - Overall ratio (AVERAGE(optimizer explain time / (INUM prepare / #what-if calls + avg explain)))
-
                 */
 
                 if (startedAt == 0)
@@ -306,6 +305,7 @@ public final class InumVsOptimizerExperiment
             }
         }
         System.out.println(crashReport.toString());
+
         afterClass();
     }
 
