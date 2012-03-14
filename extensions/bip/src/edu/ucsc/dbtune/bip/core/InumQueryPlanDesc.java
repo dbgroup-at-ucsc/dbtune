@@ -137,7 +137,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
             
             // normal index (not the full table scan index)
             for (Index index : candidateIndexes) 
-                if (index.getTable().equals(table)){     
+                if (index.getTable().equals(table) && !(index instanceof FullTableScanIndex)){     
                     indexes.add(index);
                     indexesWithoutFTS.add(index);
                 }
