@@ -142,7 +142,8 @@ public class SeqCost {
                 sql.append(",");
             sql.append(col.getName());
         }
-        sql.append(" from " + a.getTable().getName() + " order by");
+        sql.append(" from " + a.getSchema().getName() + "."
+                + a.getTable().getName() + " order by");
         first = true;
         for (Column col : a) {
             if (first)
@@ -150,15 +151,20 @@ public class SeqCost {
             else
                 sql.append(",");
             sql.append(" " + col.getName()
-                    + (a.isAscending(col) ? " asc" : "desc"));
+                    + (a.isAscending(col) ? " asc" : " desc"));
         }
         RTimerN timer = new RTimerN();
+//        Rt.p(sql);
         SQLStatementPlan sqlPlan = optimizer.explain(sql.toString()).getPlan();
-        totalWhatIfNanoTime += timer.get();
+        totalCreateIndexNanoTime += timer.get();
+//        Rt.p("%,d",totalCreateIndexNanoTime);
         return sqlPlan.getRootOperator().getAccumulatedCost();
     }
 
     public static long totalWhatIfNanoTime = 0;
+    public static long totalCreateIndexNanoTime = 0;
+    public static long plugInTime = 0;
+    
 
     public static SeqCost fromOptimizer(DatabaseSystem db, Optimizer optimizer,
             Workload workload, Index[] indices) throws SQLException {
@@ -197,21 +203,24 @@ public class SeqCost {
                         .getAccumulatedCost();
             }
             totalWhatIfNanoTime += timer.get();
+            plugInTime += timer.get();
 
-            DerbyInterestingOrdersExtractor interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(
-                    db.getCatalog(), true);
-            List<Set<Index>> indexesPerTable = interestingOrdersExtractor
-                    .extract(q.sql);
-            HashSet<SeqIndex> allIndex = new HashSet<SeqIndex>();
-            for (Set<Index> set : indexesPerTable) {
-                for (Index index : set) {
-                    SeqIndex seqIndex = costModel.indices.get(index.toString());
-                    if (seqIndex != null)
-                        allIndex.add(seqIndex);
-                }
-            }
+            // DerbyInterestingOrdersExtractor interestingOrdersExtractor = new
+            // DerbyInterestingOrdersExtractor(
+            // db.getCatalog(), true);
+            // List<Set<Index>> indexesPerTable = interestingOrdersExtractor
+            // .extract(q.sql);
+            // HashSet<SeqIndex> allIndex = new HashSet<SeqIndex>();
+            // for (Set<Index> set : indexesPerTable) {
+            // for (Index index : set) {
+            // SeqIndex seqIndex = costModel.indices.get(index.toString());
+            // if (seqIndex != null)
+            // allIndex.add(seqIndex);
+            // }
+            // }
 
-            q.relevantIndices = allIndex.toArray(new SeqIndex[allIndex.size()]);
+            // q.relevantIndices = allIndex.toArray(new
+            // SeqIndex[allIndex.size()]);
             // for (int i = 0; i < rs.length; i++) {
             // SeqIndex index = costModel.indices.get(rs[i]);
             // if (index == null)

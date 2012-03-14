@@ -25,6 +25,7 @@ import edu.ucsc.dbtune.seq.SeqGreedySeq;
 import edu.ucsc.dbtune.seq.SeqMerge;
 import edu.ucsc.dbtune.seq.SeqOptimal;
 import edu.ucsc.dbtune.seq.SeqSplit;
+import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.def.*;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
@@ -122,13 +123,20 @@ public class SeqWhatIfTest2 {
         while (greedySeq.run())
             ;
         greedySeq.finish();
-        if (false)
+        if (true)
             Rt.np(SeqOptimal.formatBestPathPlain(greedySeq.bestPath));
         Rt.p("%d x %d", cost.sequence.length, cost.indicesV.size());
         Rt
                 .p(
                         "GREEDY cost: %,.0f",
                         greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStep);
+        perf_cost = greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStep;
+        perf_inumTime = timer.getSecondElapse();
+        perf_algorithmTime = perf_inumTime
+                - (SeqCost.totalWhatIfNanoTime / 1000000000.0);
+        perf_createIndexCostTime = SeqCost.totalCreateIndexNanoTime / 1000000000.0;
+        perf_inumTime -= perf_createIndexCostTime;
+        perf_pluginTime = SeqCost.plugInTime/ 1000000000.0;
         Rt.p("GREEDY SEQ time %.3f", timer.getSecondElapse());
         Rt.p("WhatIf Call time %.3f",
                 SeqCost.totalWhatIfNanoTime / 1000000000.0);
@@ -146,6 +154,12 @@ public class SeqWhatIfTest2 {
 
         db.getConnection().close();
     }
+
+    public static double perf_cost;
+    public static double perf_inumTime;
+    public static double perf_algorithmTime;
+    public static double perf_createIndexCostTime;
+    public static double perf_pluginTime;
 
     public static void main(String[] args) throws Exception {
         new SeqWhatIfTest2();

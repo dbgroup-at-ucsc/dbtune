@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,7 +40,6 @@ import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.BeforeClass;
@@ -54,61 +54,64 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 public class BipTest2 extends BIPTestConfiguration {
     private static DatabaseSystem db;
     private static Environment en;
-    static int times = 3;
+    static int times = 1;
+    static int indexSize = 10;
 
     public static Workload getWorkload(Environment en) throws IOException,
             SQLException {
         String file = "/tpch/workload_bip_seq.sql";
         file = "/tpch-small/workload.sql";
+        file = "/tpcds-small/workload.sql";
         Workload workload = new Workload("", new FileReader(en
                 .getWorkloadsFoldername()
                 + file));
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < workload.size(); i++) {
-            if (i != 1 && i != workload.size() - 1) {
-                for (int j = 0; j < times; j++)
-                    sb.append(workload.get(i).getSQL() + ";\r\n");
-            }
+            // if (i != 1 && i != workload.size() - 1) {
+            for (int j = 0; j < times; j++)
+                sb.append(workload.get(i).getSQL() + ";\r\n");
+            // }
         }
         return new Workload("", new StringReader(sb.toString()));
     }
 
     public static Set<Index> getIndexes(Workload workload, DatabaseSystem db)
-            throws SQLException {
+            throws Exception {
+        // Rt.runAndShowCommand("db2 connect to test");
+        // HashSet<Index> set=new HashSet<Index>();
+        // for (int i = 0; i <= 9; i++) {
+        // Rt.runAndShowCommand("db2 set current query optimization = "+i);
         CandidateGenerator candGen = new OptimizerCandidateGenerator(
                 getBaseOptimizer(db.getOptimizer()));
         Set<Index> indexes = candGen.generate(workload);
+        // set.addAll(indexes);
+        // Rt.p(indexes.size());
+        // }
+        // System.exit(0);
 
         // CandidateGenerator candGen = new PowerSetOptimalCandidateGenerator(
         // new OptimizerCandidateGenerator(getBaseOptimizer(db
         // .getOptimizer())), 3);
         // Set<Index> indexes = candGen.generate(workload);
-        // for (Index index : indexes) {
-        // if (index
-        // .toString()
-        // .equals(
-        // "[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPMODE(A)]")) {
-        // Rt.p("remove " + index);
-        // indexes.remove(index);
-        // break;
-        // }
-        // }
-        // int size = 50;
-        // if (indexes.size() >= size) {
-        // Set<Index> temp = new HashSet<Index>();
-        // int count = 0;
-        // for (Index index : indexes) {
-        // temp.add(index);
-        // count++;
-        // if (count >= size)
-        // break;
-        // }
-        // indexes = temp;
-        // }
+        int size = indexSize;
+        if (indexes.size() >= size) {
+            Set<Index> temp = new HashSet<Index>();
+            int count = 0;
+            for (Index index : indexes) {
+                temp.add(index);
+                count++;
+                if (count >= size)
+                    break;
+            }
+            indexes = temp;
+        }
         return indexes;
     }
 
     public static void test() throws Exception {
+        SeqCost.totalWhatIfNanoTime = 0;
+        SeqCost.totalCreateIndexNanoTime = 0;
+        SeqInumCost.plugInTime = 0;
         RTimerN timer = new RTimerN();
 
         en = Environment.getInstance();
@@ -143,16 +146,28 @@ public class BipTest2 extends BIPTestConfiguration {
             }
         }
         Rt.p("%d x %d", cost.sequence.length, cost.indicesV.size());
+        double inumTime = timer.getSecondElapse();
+        double inumCreateIndexCostTime = SeqCost.totalCreateIndexNanoTime / 1000000000.0;
+        inumTime -= inumCreateIndexCostTime;
+        double inumPluginTime = SeqInumCost.plugInTime;
         Rt.p("INUM time: %.3f", timer.getSecondElapse());
         timer.reset();
         cost.storageConstraint = 2000;
+        for (int i = 0; i < cost.indicesV.size(); i++) {
+            cost.indicesV.get(i).storageCost = 1000;
+        }
         SeqBIP bip = new SeqBIP(cost);
         bip.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
         bip.setLogListenter(logger);
         bip.setWorkload(new Workload("", new StringReader("")));
         SebBIPOutput output = (SebBIPOutput) bip.solve();
-        if (false)
+        double bipTime = timer.getSecondElapse();
+        double bipCost = bip.getObjValue();
+        Rt.p("%d x %d", cost.sequence.length, cost.indicesV.size());
+        Rt.p("cost: %,.0f", bip.getObjValue());
+        Rt.p("BIP time: %.3f", timer.getSecondElapse());
+        if (true)
             for (int i = 0; i < output.indexUsed.length; i++) {
                 System.out.print("Query " + i + ":");
                 for (SeqInumIndex index : output.indexUsed[i]) {
@@ -160,10 +175,7 @@ public class BipTest2 extends BIPTestConfiguration {
                 }
                 System.out.println();
             }
-        Rt.p("%d x %d", cost.sequence.length, cost.indicesV.size());
-        Rt.p("cost: %,.0f", bip.getObjValue());
-        Rt.p("BIP time: %.3f", timer.getSecondElapse());
-        if (false)
+        if (true)
             for (SeqInumQuery query : cost.sequence) {
                 double c = 0;
                 c += query.selectedPlan.internalCost;
@@ -183,15 +195,47 @@ public class BipTest2 extends BIPTestConfiguration {
                 if (Math.abs(c - db2cost) > 1)
                     Rt.error("%.2f%%", c / db2cost * 100);
             }
-
+        SeqWhatIfTest2.perf_createIndexCostTime=0;
+        SeqWhatIfTest2.perf_pluginTime=0;
+        SeqWhatIfTest2.perf_inumTime=0;
+        SeqWhatIfTest2.perf_algorithmTime=0;
         SeqCost.totalWhatIfNanoTime = 0;
+        SeqCost.totalCreateIndexNanoTime = 0;
+        SeqCost.plugInTime=0;
         db.getConnection().close();
         SeqWhatIfTest2.main(null);
+        Rt.p("inumPluginTime: " + inumPluginTime);
+        Rt.p("pluginTime: " + SeqWhatIfTest2.perf_pluginTime);
+        String log = String
+                .format(
+                        "%d x %d, %.3f,%.3f, %.3f,%.3f, %.3f,%.3f, %.3f,%.3f, \"%,.0f\",\"%,.0f\"",
+                        cost.sequence.length, cost.indicesV.size(),//
+                        inumCreateIndexCostTime, //
+                        SeqWhatIfTest2.perf_createIndexCostTime, //
+                        inumPluginTime, //
+                        SeqWhatIfTest2.perf_pluginTime,//
+                        inumTime, //
+                        SeqWhatIfTest2.perf_inumTime,//
+                        bipTime,//
+                        SeqWhatIfTest2.perf_algorithmTime, //
+                        bipCost,//
+                        SeqWhatIfTest2.perf_cost);
+        sb.append(log + "\r\n");
+        Rt.np("query x index, reateCostTime, pluginTime, "
+                + "inumTime, time, cost");
+        Rt.np(sb);
     }
 
+    public static StringBuilder sb = new StringBuilder();
+
     public static void main(String[] args) throws Exception {
-        for (times = 11; times <= 20; times++) {
+        // times = 1;
+        for (indexSize = 10; indexSize <= 60; indexSize += 10) {
             test();
         }
+
+        // for (times = 1; times <= 20; times++) {
+        // test();
+        // }
     }
 }

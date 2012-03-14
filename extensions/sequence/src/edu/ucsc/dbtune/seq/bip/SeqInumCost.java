@@ -12,6 +12,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.bip.def.*;
+import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -64,9 +65,11 @@ public class SeqInumCost {
                     SeqInumSlot slot = new SeqInumSlot(plan);
                     slot.fullTableScanCost = Double.MAX_VALUE;
                     for (Index index : desc.getIndexesAtSlot(i)) {
+                        RTimerN timer = new RTimerN();
                         if (index instanceof FullTableScanIndex) {
                             slot.fullTableScanCost = desc.getAccessCost(k,
                                     index);
+//                            Rt.p(index);
                         } else {
                             SeqInumSlotIndexCost c = new SeqInumSlotIndexCost();
                             c.index = map2.get(index);
@@ -74,8 +77,11 @@ public class SeqInumCost {
                                 throw new SQLException("Can't map index "
                                         + index.toString());
                             c.cost = desc.getAccessCost(k, index);
+//                            Rt.p(index);
                             slot.costs.add(c);
                         }
+                        plugInTime += timer.getSecondElapse();
+//                        Rt.p("%f %f",timer.getSecondElapse(),plugInTime);
                     }
                     plan.slots[i] = slot;
                 }
@@ -84,6 +90,8 @@ public class SeqInumCost {
         }
         return cost;
     }
+
+    public static double plugInTime = 0;
 
     public static SeqInumCost fromFile(String table) {
         SeqInumCost cost = new SeqInumCost();
