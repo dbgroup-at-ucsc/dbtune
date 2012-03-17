@@ -1,7 +1,9 @@
 package edu.ucsc.dbtune.inum;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -69,37 +71,19 @@ public class MatchingStrategyFunctionalTest
         available.add(new GreedyMatchingStrategy());
         available.add(new ExhaustiveMatchingStrategy());
 
-        for (Set<MatchingStrategy> twoMatchings : combinations(available, 2))
-            compare(get(twoMatchings, 0), get(twoMatchings, 1));
-    }
-
-    /**
-     * @param one
-     *      the matching being tested
-     * @param two
-     *      another matching being tested
-     * @throws Exception
-     *      if something goes wrong
-     */
-    public static void compare(
-            MatchingStrategy one, MatchingStrategy two)
-        throws Exception
-    {
-        SQLStatementPlan planFromOne;
-        SQLStatementPlan planFromTwo;
+        SQLStatementPlan plan;
+        StringBuilder report;
         long cacheWarmingTime;
-        long oneTime;
-        long twoTime;
         long time;
+        long matchTime;
         int queryNumber;
 
-        System.out.println(
-                "workload name, " +
-                "query number, " +
-                "cache warming time (using exhaustive), " +
-                one.getClass().getName() + " time, " +
-                two.getClass().getName() + " time");
+        report = new StringBuilder();
+        report.append("workload name, query number, cache warming time (using exhaustive), ");
 
+        for (MatchingStrategy s : available)
+            report.append(s.getClass().getName() + " time,");
+        
         for (Workload wl : workloads(env.getWorkloadFolders())) {
 
             Set<Index> conf = candGen.generate(wl);
@@ -109,6 +93,8 @@ public class MatchingStrategyFunctionalTest
             for (SQLStatement sql : wl) {
 
                 Set<InumPlan> inumSpace = new InumPlanSetWithCache();
+                Map<MatchingStrategy, SQLStatementPlan> plans =
+                    new HashMap<MatchingStrategy, SQLStatementPlan>();
 
                 computation.compute(inumSpace, sql, delegate, db.getCatalog());
 
@@ -116,29 +102,30 @@ public class MatchingStrategyFunctionalTest
                 new ExhaustiveMatchingStrategy().match(inumSpace, conf).getInstantiatedPlan();
                 cacheWarmingTime = System.nanoTime() - time;
 
-                time = System.nanoTime();
-                planFromTwo = two.match(inumSpace, conf).getInstantiatedPlan();
-                twoTime = System.nanoTime() - time;
+                report.append(wl.getName() + "," + queryNumber++ + "," + cacheWarmingTime + ",");
 
-                time = System.nanoTime();
-                planFromOne = one.match(inumSpace, conf).getInstantiatedPlan();
-                oneTime = System.nanoTime() - time;
+                for (MatchingStrategy s : available) {
+                    time = System.nanoTime();
+                    plan = s.match(inumSpace, conf).getInstantiatedPlan();
+                    matchTime = System.nanoTime() - time;
+                    report.append(matchTime + ",");
+                    plans.put(s, plan);
+                }
 
-                assertThat(
-                        "Workload: " + wl.getName() + "\n" +
-                        "Statement: " + queryNumber + "\n" +
-                        "MatchingStrategy one: " + one.getClass().getName() + "\n" +
-                        "MatchingStrategy one: " + two.getClass().getName() + "\n" +
-                        "Instantiated plan one:\n" + planFromOne + "\n" +
-                        "Instantiated plan two:\n" + planFromTwo,
-                        planFromOne, is(planFromTwo));
+                for (Set<MatchingStrategy> pair : combinations(available, 2)) {
+                    MatchingStrategy one = get(pair, 0);
+                    MatchingStrategy two = get(pair, 1);
+                    assertThat(
+                            "Workload: " + wl.getName() + "\n" +
+                            "Statement: " + queryNumber + "\n" +
+                            "MatchingStrategy one: " + one.getClass().getName() + "\n" +
+                            "MatchingStrategy one: " + two.getClass().getName() + "\n" +
+                            "Instantiated plan one:\n" + plans.get(one) + "\n" +
+                            "Instantiated plan two:\n" + plans.get(two),
+                            plans.get(one), is(plans.get(two)));
+                }
 
-                System.out.println(
-                        wl.getName() + "," +
-                        queryNumber++ + "," +
-                        cacheWarmingTime + "," +
-                        oneTime + "," +
-                        twoTime);
+                report.append("\n");
             }
         }
     }
