@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -33,8 +34,8 @@ public class ExplainedSQLStatement
     /** execution cost (for selects) or the select shell cost for updates. */
     protected double selectCost;
 
-    /** update cost. */
-    protected double updateCost;
+    /** updated table. */
+    protected Table updatedTable;
 
     /** cost of updating the base table. */
     protected double baseTableUpdateCost;
@@ -63,11 +64,12 @@ public class ExplainedSQLStatement
      *      SQLCategory#NOT_SELECT} statements, this cost corresponds only to the SELECT shell
      * @param optimizer
      *      optimizer that explained the statement
-     * @param updateCost
-     *      since {@link #getSelectCost} returns only the {@code SELECT} shell cost, update 
-     *      statements have to get assigned with the actual update cost separately.
      * @param baseTableUpdateCost
-     *      for update statements, the cost of updating the base table
+     *      since {@link #getSelectCost} returns only the {@code SELECT} shell cost, update 
+     *      statements have to get assigned with the actual update cost separately. Thus, for update 
+     *      statements, the cost of updating the base table
+     * @param updatedTable
+     *      for update statements, the base table being updated
      * @param indexUpdateCosts
      *      for update statements, a Map of incurred update costs, where each element corresponds to 
      *      an index contained in {@link #getUpdatedConfiguration}. Implicitly, this also determines 
@@ -81,8 +83,8 @@ public class ExplainedSQLStatement
      *      number of optimization calls done on the underlaying DBMS optimizer
      * @throws SQLException
      *      if the statement is a {@link SQLCategory#NOT_SELECT} one and the update costs ({@code 
-     *      baseTableUpdateCost}, {@code updateCost} and {@code indexUpdateCosts}) are inconsistent 
-     *      among them. That is, if the arguments cause that {@link #getUpdateCost}
+     *      baseTableUpdateCost}; if not all the updated indexes in {@code indexUpdateCosts} refer 
+     *      to {@code updatedTable}
      * @throws NullPointerException
      *      if any of {@code indexUpdateCosts}, {@code configuration} or {@code usedConfiguration} 
      *      is null
@@ -92,7 +94,7 @@ public class ExplainedSQLStatement
             SQLStatementPlan plan,
             Optimizer optimizer,
             double selectCost,
-            double updateCost,
+            Table updatedTable,
             double baseTableUpdateCost,
             Map<Index, Double> indexUpdateCosts,
             Set<Index> configuration,
@@ -104,7 +106,7 @@ public class ExplainedSQLStatement
         this.plan = plan;
         this.optimizer = optimizer;
         this.selectCost = selectCost;
-        this.updateCost = updateCost;
+        this.updatedTable = updatedTable;
         this.baseTableUpdateCost = baseTableUpdateCost;
         this.indexUpdateCosts = indexUpdateCosts;
         this.configuration = configuration;
@@ -114,8 +116,9 @@ public class ExplainedSQLStatement
         if (indexUpdateCosts == null || configuration == null || usedConfiguration == null)
             throw new NullPointerException("Null arguments");
 
-        if (getUpdateCost() != getBaseTableUpdateCost() + getUpdateCost(getUpdatedConfiguration()))
-            throw new SQLException("Inconsistent assignment of update costs");
+        for (Index i : indexUpdateCosts.keySet())
+            if (!updatedTable.equals(i.getTable()))
+                throw new SQLException("Not all updated indexes are over the same table");
     }
 
     /**
@@ -130,7 +133,7 @@ public class ExplainedSQLStatement
         this.plan = other.plan;
         this.optimizer = other.optimizer;
         this.selectCost = other.selectCost;
-        this.updateCost = other.updateCost;
+        this.updatedTable = other.updatedTable;
         this.baseTableUpdateCost = other.baseTableUpdateCost;
         this.indexUpdateCosts = other.indexUpdateCosts;
         this.configuration = other.configuration;
@@ -162,7 +165,19 @@ public class ExplainedSQLStatement
      */
     public double getUpdateCost()
     {
-        return updateCost;
+        return getBaseTableUpdateCost() + getUpdateCost(getUpdatedConfiguration());
+    }
+
+    /**
+     * Returns the table that the update operates on.
+     *
+     * @return
+     *     the updated base table. If the statement is a {@link SQLCategory#SELECT} statement, the 
+     *     value returned is {@code null}.
+     */
+    public Table getUpdatedTable()
+    {
+        return updatedTable;
     }
 
     /**
@@ -341,9 +356,13 @@ public class ExplainedSQLStatement
 
         code = 37 * code + statement.hashCode();
         code = 37 * code + (int) Double.doubleToLongBits(selectCost);
-        code = 37 * code + (int) Double.doubleToLongBits(updateCost);
+        code = 37 * code + (int) Double.doubleToLongBits(baseTableUpdateCost);
         code = 37 * code + configuration.hashCode();
         code = 37 * code + usedConfiguration.hashCode();
+        code = 37 * code + indexUpdateCosts.hashCode();
+
+        if (updatedTable != null)
+            code = 37 * code + updatedTable.hashCode();
 
         if (plan != null)
             code = 37 * code + plan.hashCode();
@@ -375,9 +394,13 @@ public class ExplainedSQLStatement
                 (plan != null && o.plan != null && !plan.equals(o.plan)))
             return false;
 
+        if (updatedTable != null && !updatedTable.equals(o.updatedTable))
+            return false;
+
         if (statement.equals(o.statement) &&
                 selectCost == o.selectCost &&
-                updateCost == o.updateCost &&
+                baseTableUpdateCost == o.baseTableUpdateCost &&
+                indexUpdateCosts.equals(o.indexUpdateCosts) &&
                 configuration.equals(o.configuration) &&
                 usedConfiguration.equals(o.usedConfiguration))
             return true;

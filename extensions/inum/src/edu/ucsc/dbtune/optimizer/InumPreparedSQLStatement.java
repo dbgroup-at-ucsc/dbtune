@@ -82,7 +82,7 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
             result.getInstantiatedPlan(),
             getOptimizer(),
             result.getBestCost(),
-            0,
+            null,
             0,
             empty,
             configuration,

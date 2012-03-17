@@ -77,10 +77,11 @@ public class DB2Optimizer extends AbstractOptimizer
         throws SQLException
     {
         Set<Index> used;
-        Map<Index, Double> updateCosts;
+        Map<Index, Double> updateCostPerIndex;
         SQLStatementPlan plan;
+        Table updatedTable;
         double selectCost;
-        double updateCost;
+        double baseTableUpdateCost;
 
         clearAdviseAndExplainTables(connection);
 
@@ -92,25 +93,28 @@ public class DB2Optimizer extends AbstractOptimizer
         used = newHashSet(plan.getIndexes());
 
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
-            updateCost = getUpdateCost(plan);
-            updateCosts = new HashMap<Index, Double>();
+            updatedTable = getUpdatedTable(plan);
+            baseTableUpdateCost = getBaseTableUpdateCost(plan);
             // XXX: issue #142
-            // updateCosts = getUpdatedIndexes(connection);
+            // updateCostPerIndex = getUpdatedIndexes(updatedTable, baseTableUpdateCost, indexes);
+            updateCostPerIndex = new HashMap<Index, Double>();
         } else {
-            updateCost = 0.0;
-            updateCosts = new HashMap<Index, Double>();
+            baseTableUpdateCost = 0.0;
+            updatedTable = null;
+            updateCostPerIndex = new HashMap<Index, Double>();
         }
 
         plan.setStatement(sql);
 
-        selectCost = plan.getRootOperator().getAccumulatedCost() - updateCost;
+        selectCost = plan.getRootOperator().getAccumulatedCost() - baseTableUpdateCost;
 
         unloadOptimizationProfiles();
 
         whatIfCount++;
 
         return new ExplainedSQLStatement(
-            sql, plan, this, selectCost, updateCost, updateCost, updateCosts, indexes, used, 1);     
+            sql, plan, this, selectCost, updatedTable, baseTableUpdateCost,
+            updateCostPerIndex, indexes, used, 1);
     }
 
     /**
@@ -516,7 +520,7 @@ public class DB2Optimizer extends AbstractOptimizer
      *      if the plan doesn't contain exactly 3 nodes (i.e. the number of operators in any 
      *      execution plan of an update)
      */
-    private static double getUpdateCost(SQLStatementPlan sqlPlan) throws SQLException
+    private static double getBaseTableUpdateCost(SQLStatementPlan sqlPlan) throws SQLException
     {
         double updateOpCost = -1;
         double childOpCost = -1;
@@ -536,6 +540,38 @@ public class DB2Optimizer extends AbstractOptimizer
             throw new SQLException("Something went wrong for the UPDATE");
 
         return updateOpCost - childOpCost;
+    }
+
+    /**
+     * Extracts the table that is being updated by the plan.
+     *
+     * @param sqlPlan
+     *      the plan
+     * @return
+     *      the updated table
+     * @throws SQLException
+     *      if the plan doesn't contain exactly 3 nodes (i.e. the number of operators in any 
+     *      execution plan of an update)
+     */
+    private static Table getUpdatedTable(SQLStatementPlan sqlPlan) throws SQLException
+    {
+        Table t = null;
+
+        for (Operator o : sqlPlan.toList())
+            if (o.getName().toLowerCase().contains("update")) {
+                if (o.getDatabaseObjects().size() != 1)
+                    throw new SQLException("Can't identify object being updated");
+
+                if (!(o.getDatabaseObjects().get(0) instanceof Table))
+                    throw new SQLException("Object associated with update is not a table");
+
+                t = (Table) o.getDatabaseObjects().get(0);
+            }
+
+        if (t == null)
+            throw new SQLException("Can't identify updated table");
+
+        return t;
     }
 
     /**
