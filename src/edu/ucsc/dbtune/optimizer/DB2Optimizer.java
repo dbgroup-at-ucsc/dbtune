@@ -37,6 +37,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
+import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedSchemas;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
@@ -95,9 +96,7 @@ public class DB2Optimizer extends AbstractOptimizer
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
             updatedTable = getUpdatedTable(plan);
             baseTableUpdateCost = getBaseTableUpdateCost(plan);
-            // XXX: issue #142
-            // updateCostPerIndex = getUpdatedIndexes(updatedTable, baseTableUpdateCost, indexes);
-            updateCostPerIndex = new HashMap<Index, Double>();
+            updateCostPerIndex = getUpdatedIndexes(updatedTable, baseTableUpdateCost, indexes);
         } else {
             baseTableUpdateCost = 0.0;
             updatedTable = null;
@@ -540,6 +539,30 @@ public class DB2Optimizer extends AbstractOptimizer
             throw new SQLException("Something went wrong for the UPDATE");
 
         return updateOpCost - childOpCost;
+    }
+
+    /**
+     * Obtains the update cost for each index, which corresponds to the cost of the base table being 
+     * updated.
+     *
+     * @param updatedTable
+     *      table that is updated
+     * @param baseTableUpdateCost
+     *      cost of doing the update over the base table
+     * @param indexes
+     *      set of indexes considered in the what-if call
+     * @return
+     *      map of costs for each updated index
+     */
+    private static Map<Index, Double> getUpdatedIndexes(
+            Table updatedTable, double baseTableUpdateCost, Set<Index> indexes)
+    {
+        Map<Index, Double> updateCostPerIndex = new HashMap<Index, Double>();
+
+        for (Index i : getIndexesReferencingTable(indexes, updatedTable))
+            updateCostPerIndex.put(i, baseTableUpdateCost);
+
+        return updateCostPerIndex;
     }
 
     /**

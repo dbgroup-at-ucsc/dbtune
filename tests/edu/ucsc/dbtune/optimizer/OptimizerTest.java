@@ -339,13 +339,9 @@ public class OptimizerTest
         assertThat(sqlp.getUsedConfiguration().isEmpty(), is(false));
         assertThat(sqlp.getUsedConfiguration().size(), is(1));
         assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
-
-        // XXX: issue #142 is causing this to fail for DB2Optimizer {
-        if (!(opt instanceof DB2Optimizer)) {
+        assertThat(sqlp.getUpdatedTable(), is(idxa.getTable()));
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(false));
         assertThat(sqlp.getUpdatedConfiguration(), is(conf));
-        }
-        // }
         assertThat(sqlp.getOptimizationCount(), is(1));
         }
         // }
