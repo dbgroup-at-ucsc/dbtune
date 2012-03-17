@@ -48,7 +48,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
      *      The variable name
      */
     public DivVariable createAndStore(int typeVariable, int replica, int queryId, 
-                                              int k, int a)
+                                      int k, int a)
     {
         StringBuilder varName = new StringBuilder();
         
@@ -73,7 +73,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
         DivVariable var = new DivVariable(varName.toString(), typeVariable, replica);
         add(var);
         
-        // Create a mapping from 
+        // Create a mapping  
         DivVariableIndicator iai = new DivVariableIndicator(typeVariable, replica, queryId, k, a);
         mapHighDimensionVar.put(iai, var);
         

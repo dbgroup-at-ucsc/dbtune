@@ -115,6 +115,23 @@ public abstract class AbstractBIPSolver implements BIPSolver
     }
     
     /**
+     * Export the CPLEX into the specified file
+     * 
+     * @param file
+     *      The path to the file that stores this BIP.
+     *       
+     */
+    public void exportCplexToFile(String file)
+    {
+        try {
+            cplex.exportModel(file);
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    
+    /**
      * Retrieve the objective value returned by BIP
      * 
      * @return

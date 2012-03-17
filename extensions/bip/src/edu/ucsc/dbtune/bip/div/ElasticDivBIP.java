@@ -63,7 +63,7 @@ public class ElasticDivBIP extends DivBIP
     public ElasticDivBIP(int Nreplicas, int loadfactor, double B, int Ndeploys, double upperCDeploy,
                         Map<Index, Set<Integer>> materializedIndexReplica) 
     {
-        super(Nreplicas, loadfactor, B);
+        //super(Nreplicas, loadfactor, B);
         
         // the set of indexes materialized in the initial configuraiton
         this.materializedIndexReplica = materializedIndexReplica;
@@ -100,7 +100,7 @@ public class ElasticDivBIP extends DivBIP
             constructVariablesElastic();
             
             // 2. Construct the query cost at each replica
-            queryCostReplica();
+            totalCost();
             
             // 3. Atomic constraints
             if (!isExpand)

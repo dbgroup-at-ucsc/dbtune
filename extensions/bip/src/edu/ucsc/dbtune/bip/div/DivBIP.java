@@ -9,40 +9,59 @@ import java.util.Map;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
 
-public class DivBIP extends AbstractBIPSolver
+public class DivBIP extends AbstractBIPSolver implements Divergent
 {  
     protected int    Nreplicas;
     protected int    loadfactor;    
     protected double B;
+    protected double beta;
     
     protected DivVariablePool   poolVariables;    
     protected Map<String,Index> mapVarSToIndex;
     
+    protected boolean isImbalanceReplica;
     
     /**
-     * Construct a BIP-based solution to Divergent Index Tuning problem.
-     * 
-     * @param Nreplicas
-     *      The number of replica to deploy           
-     * @param loadfactor
-     *      The load balancing factor (e.g., m in the paper)
-     * @param B
-     *      The space budget imposed at each replica
+     * Initial the default value for input parameters
      */
-    public DivBIP(int Nreplicas, int loadfactor, double B)
+    public DivBIP()
     {
-        this.Nreplicas  = Nreplicas;
-        this.loadfactor = loadfactor;
-        
-        this.B = B;
+        isImbalanceReplica = false;
     }
     
+    @Override
+    public void setLoadBalanceFactor(int m) 
+    {
+        this.loadfactor = m;
+    }
+
+
+    @Override
+    public void setNumberReplicas(int n)
+    {
+        Nreplicas  = n;
+    }
+
+
+    @Override
+    public void setReplicaImbalanceFactor(int beta) 
+    {
+        this.beta = beta;
+        this.isImbalanceReplica = true;
+    }
+
+    @Override
+    public void setSpaceBudget(double B) 
+    {
+        this.B = B;
+    }
     
     /**
      * Reads the value of variables corresponding to the presence of indexes
@@ -63,7 +82,8 @@ public class DivBIP extends AbstractBIPSolver
                 
                 if (var.getType() == VAR_S) {
                     Index index = mapVarSToIndex.get(var.getName());
-                    conf.addIndexReplica(var.getReplica(), index);
+                    if (!(index instanceof FullTableScanIndex))
+                        conf.addIndexReplica(var.getReplica(), index);
                 }
             }
         
@@ -81,7 +101,7 @@ public class DivBIP extends AbstractBIPSolver
             constructVariables();
             
             // 2. Construct the query cost at each replica
-            queryCostReplica();
+            totalCost();
             
             // 3. Atomic constraints
             atomicInternalPlanConstraints();
@@ -92,6 +112,10 @@ public class DivBIP extends AbstractBIPSolver
             
             // 5. Space constraints
             spaceConstraints();
+            
+            // 6. Imbalance replica constraints (if any)
+            if (isImbalanceReplica)
+                imbalanceReplicaConstraints();
             
         }     
         catch (IloException e) {
@@ -131,7 +155,7 @@ public class DivBIP extends AbstractBIPSolver
         // for TYPE_S
         for (Index index : candidateIndexes)
             for (int r = 0; r < Nreplicas; r++) {
-                DivVariable var = poolVariables.createAndStore(VAR_S, r, index.getId(), 0, 0);
+                DivVariable var = poolVariables.createAndStore(VAR_S, r, 0, 0, index.getId());
                 mapVarSToIndex.put(var.getName(), index);
             }
         
@@ -141,13 +165,13 @@ public class DivBIP extends AbstractBIPSolver
     
     /**
      * Build cost function of each query in each window w
-     * Cqr = \sum_{k \in [1, Kq]} \beta_{qk} y(r,q,k) + 
-     *      + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} 
-     *      x(r,q,k,i,a) \gamma_{q,k,i,a}
+     * cost(q,r) = \sum_{k \in [1, Kq]} \beta_{qk} y(r,q,k) + 
+     *            + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} 
+     *              x(r,q,k,i,a) \gamma_{q,k,i,a}
      *     
      * @throws IloException 
      */
-    protected void queryCostReplica() throws IloException
+    protected void totalCost() throws IloException
     {         
         IloLinearNumExpr expr = cplex.linearNumExpr(); 
         int id;
@@ -168,7 +192,7 @@ public class DivBIP extends AbstractBIPSolver
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
                     for (int i = 0; i < desc.getNumberOfSlots(); i++)
                         for (Index index : desc.getIndexesAtSlot(i)) {
-                            id = poolVariables.get(VAR_X,r, q, k, index.getId()).getId();
+                            id = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
                             expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(id));
                         }
             }
@@ -180,8 +204,10 @@ public class DivBIP extends AbstractBIPSolver
     
     
     /**
-     * Constraints on internal plans: different from INUM
-     * @throws IloException 
+     * Atomic constraints: only one template plan is chosen to compute {@code cost(q,r)}.
+     * 
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX.
      */
     protected void atomicInternalPlanConstraints() throws IloException
     {   
@@ -212,8 +238,11 @@ public class DivBIP extends AbstractBIPSolver
     
     /**
      * 
-     * Index access cost and the presence of an index constraint
-     * @throws IloException 
+     * Atomic constraint: at most one index is selected to plug into a slot. 
+     * Present of an index: a is recommended if it is used to compute at least one cost(q,r)
+     * 
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX. 
      * 
      */
     protected void atomicAcessCostConstraints() throws IloException
@@ -259,14 +288,14 @@ public class DivBIP extends AbstractBIPSolver
             
             q = desc.getStatementID();
             
-         // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
+            // s(a,r ) >= x(r, q, k, a)
             for (int r = 0; r < Nreplicas; r++)
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
                     for (int i = 0; i < desc.getNumberOfSlots(); i++)   
                         for (Index index : desc.getIndexesAtSlot(i)) {
                             
                             idX = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
-                            idS = poolVariables.get(VAR_S, r, q, k, index.getId()).getId();
+                            idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
                             
                             expr = cplex.linearNumExpr();
                             expr.addTerm(1, cplexVar.get(idX));
@@ -280,8 +309,10 @@ public class DivBIP extends AbstractBIPSolver
     }
     
     /**
-     * Top-m best cost constraints
-     * @throws IloException 
+     * Top-m best cost constraints.
+     * 
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX. 
      * 
      */
     protected void topMBestCostConstraints() throws IloException
@@ -308,8 +339,10 @@ public class DivBIP extends AbstractBIPSolver
     }
     
     /**
-     * Impose space constraint on the materialized indexes at all window times
-     * @throws IloException 
+     * Impose space constraint on the materialized indexes at all window times.
+     * 
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX. 
      * 
      */
     protected void spaceConstraints() throws IloException
@@ -322,12 +355,17 @@ public class DivBIP extends AbstractBIPSolver
             expr = cplex.linearNumExpr();
             
             for (Index index : candidateIndexes) {  
-                idS = poolVariables.get(VAR_S, r, index.getId(), 0, 0).getId();                
+                idS = poolVariables.get(VAR_S, r, 0, 0 , index.getId()).getId();                
                 expr.addTerm(index.getBytes(), cplexVar.get(idS));
             }
             
             cplex.addLe(expr, B);
             numConstraints++;               
         }
+    }
+
+    protected void imbalanceReplicaConstraints()
+    {
+        
     }
 }

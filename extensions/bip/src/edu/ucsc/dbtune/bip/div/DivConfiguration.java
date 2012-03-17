@@ -49,14 +49,16 @@ public class DivConfiguration extends IndexTuningOutput
         StringBuilder result = new StringBuilder();
         
         result.append("Divergent Configuration")
-              .append("[Nreplicas=" + nReplicas);
+              .append("[Nreplicas=" + nReplicas)
+              .append("\n");
+        
                         
         for (int r = 0; r < nReplicas; r++) {
             
             result.append("Replica " + r + "-th: \n");
             
             for (Index index : indexReplicas.get(r))
-                result.append(" CREATE INDEX "  + index + "\n");
+                result.append(" CREATE INDEX "  + index + index.getId() + "\n");
             
             result.append("\n");
         }
