@@ -132,7 +132,12 @@ public class DB2Optimizer extends AbstractOptimizer
 
         stmt.close();
 
-        return readAdviseIndexTable(connection, catalog);
+        Set<Index> recommended = readAdviseIndexTable(connection, catalog);
+
+        for (Index i : recommended)
+            i.setCreationCost(getCreationCost(this, new HashSet<Index>(), i));
+
+        return recommended;
     }
 
     /**
@@ -1092,6 +1097,37 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.close();
 
         return recommended;
+    }
+
+    /**
+     * Returns the index creation cost for a given index.
+     *
+     * @param optimizer
+     *      used to execute what-if calls
+     * @param indexes
+     *      set of indexes that are assumed to exist when retrieving the cost
+     * @param index
+     *      index for which the creation cost is retrieved
+     * @return
+     *     the creation cost
+     * @throws SQLException
+     *     if something goes wrong while doing the what-if call
+     */
+    private static double getCreationCost(Optimizer optimizer, Set<Index> indexes, Index index)
+        throws SQLException
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("SELECT *");
+        sb.append("  FROM ").append(index.getTable().getFullyQualifiedName());
+        sb.append("  ORDER BY ");
+
+        for (Column c : index.columns())
+            sb.append(c.getName()).append(index.isAscending(c) ? " ASC, " : " DESC, ");
+
+        sb.delete(sb.length() - 2, sb.length() - 1);
+
+        return optimizer.explain(sb.toString(), indexes).getSelectCost();
     }
 
     // CHECKSTYLE:OFF
