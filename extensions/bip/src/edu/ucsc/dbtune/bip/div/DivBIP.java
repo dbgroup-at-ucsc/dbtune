@@ -3,46 +3,51 @@ package edu.ucsc.dbtune.bip.div;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
 
-public class DivBIP extends AbstractBIPSolver
+public class DivBIP extends AbstractBIPSolver implements Divergent
 {  
-    protected int    Nreplicas;
+    protected int    nReplicas;
     protected int    loadfactor;    
     protected double B;
+    protected double beta;
     
     protected DivVariablePool   poolVariables;    
     protected Map<String,Index> mapVarSToIndex;
     
     
-    /**
-     * Construct a BIP-based solution to Divergent Index Tuning problem.
-     * 
-     * @param Nreplicas
-     *      The number of replica to deploy           
-     * @param loadfactor
-     *      The load balancing factor (e.g., m in the paper)
-     * @param B
-     *      The space budget imposed at each replica
-     */
-    public DivBIP(int Nreplicas, int loadfactor, double B)
+    @Override
+    public void setLoadBalanceFactor(int m) 
     {
-        this.Nreplicas  = Nreplicas;
-        this.loadfactor = loadfactor;
-        
+        this.loadfactor = m;
+    }
+
+
+    @Override
+    public void setNumberReplicas(int n)
+    {
+        nReplicas  = n;
+    }
+
+    @Override
+    public void setSpaceBudget(double B) 
+    {
         this.B = B;
     }
-    
     
     /**
      * Reads the value of variables corresponding to the presence of indexes
@@ -54,7 +59,7 @@ public class DivBIP extends AbstractBIPSolver
     @Override
     protected IndexTuningOutput getOutput() 
     {
-        DivConfiguration conf = new DivConfiguration(Nreplicas);
+        DivConfiguration conf = new DivConfiguration(nReplicas, loadfactor);
         
         // Iterate over variables s^r_{i,w}
         for (int i = 0; i < poolVariables.variables().size(); i++)
@@ -63,7 +68,8 @@ public class DivBIP extends AbstractBIPSolver
                 
                 if (var.getType() == VAR_S) {
                     Index index = mapVarSToIndex.get(var.getName());
-                    conf.addIndexReplica(var.getReplica(), index);
+                    if (!(index instanceof FullTableScanIndex))
+                        conf.addIndexReplica(var.getReplica(), index);
                 }
             }
         
@@ -81,11 +87,10 @@ public class DivBIP extends AbstractBIPSolver
             constructVariables();
             
             // 2. Construct the query cost at each replica
-            queryCostReplica();
+            totalCost();
             
             // 3. Atomic constraints
-            atomicInternalPlanConstraints();
-            atomicAcessCostConstraints();      
+            atomicConstraints();      
             
             // 4. Top-m best cost 
             topMBestCostConstraints();
@@ -108,180 +113,193 @@ public class DivBIP extends AbstractBIPSolver
         poolVariables = new DivVariablePool();
         mapVarSToIndex = new HashMap<String, Index>();
         
-        int q;
-        
-        // for TYPE_Y, TYPE_X
-        for (QueryPlanDesc desc : queryPlanDescs){
-            
-            q = desc.getStatementID();
-            
-            for (int r = 0; r < Nreplicas; r++) {
-                
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-                    poolVariables.createAndStore(VAR_Y, r, q, k, 0);
-                    
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++)  
-                        for (Index index : desc.getIndexesAtSlot(i)) 
-                            poolVariables.createAndStore(VAR_X, r, q, k, index.getId());
-                       
-            }
-        }
+        // variable for each query descriptions
+        for (int r = 0; r < nReplicas; r++)
+            for (QueryPlanDesc desc : queryPlanDescs)
+                constructVariables(r, desc.getStatementID(), desc);
         
         // for TYPE_S
-        for (Index index : candidateIndexes)
-            for (int r = 0; r < Nreplicas; r++) {
-                DivVariable var = poolVariables.createAndStore(VAR_S, r, index.getId(), 0, 0);
+        for (int r = 0; r < nReplicas; r++) 
+            for (Index index : candidateIndexes) {
+                DivVariable var = poolVariables.createAndStore(VAR_S, r, 0, 0, index.getId());
                 mapVarSToIndex.put(var.getName(), index);
             }
         
         super.createCplexVariable(poolVariables.variables());
     }
     
+    /**
+     * Construct variables for the query expression of the given query
+     * 
+     * @param r
+     *      The replica ID
+     * @param q
+     *      The query ID
+     * @param desc
+     *      The query plan description.
+     *      
+     */
+    protected void constructVariables(int r, int q, QueryPlanDesc desc)
+    {
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            poolVariables.createAndStore(VAR_Y, r, q, k, 0);
+            
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++)  
+                for (Index index : desc.getIndexesAtSlot(i)) 
+                    poolVariables.createAndStore(VAR_X, r, q, k, index.getId());
+    }
+    
     
     /**
      * Build cost function of each query in each window w
-     * Cqr = \sum_{k \in [1, Kq]} \beta_{qk} y(r,q,k) + 
-     *      + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} 
-     *      x(r,q,k,i,a) \gamma_{q,k,i,a}
+     * cost(q,r) = \sum_{k \in [1, Kq]} \beta_{qk} y(r,q,k) + 
+     *            + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} 
+     *              x(r,q,k,i,a) \gamma_{q,k,i,a}
      *     
      * @throws IloException 
      */
-    protected void queryCostReplica() throws IloException
+    protected void totalCost() throws IloException
     {         
-        IloLinearNumExpr expr = cplex.linearNumExpr(); 
+        IloLinearNumExpr obj = cplex.linearNumExpr(); 
+        
+        for (int r = 0; r < nReplicas; r++)
+            for (QueryPlanDesc desc : queryPlanDescs) 
+                obj.add(queryExpr(r, desc.getStatementID(), desc));
+        
+        cplex.addMinimize(obj);
+    }
+    
+    /**
+     * Formulate the expression of a query on a particular replica
+     * 
+     * @param r
+     *      The replica ID
+     * @param q
+     *      The query ID
+     * @param desc
+     *      The query plan description.
+     *      
+     * @return
+     *      The linear expression of the query
+     *      
+     * @throws IloException
+     */
+    protected IloLinearNumExpr queryExpr(int r, int q, QueryPlanDesc desc) 
+              throws IloException
+    {
         int id;
-        int q;
+        IloLinearNumExpr expr = cplex.linearNumExpr();
         
-        for (QueryPlanDesc desc : queryPlanDescs) {
-            
-            q = desc.getStatementID();
-            
-            for (int r = 0; r < Nreplicas; r++) {
-
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
-                    id = poolVariables.get(VAR_Y, r, q, k, 0).getId();
-                    expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(id));                    
-                }                
-                        
-                // Index access cost                            
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++)
-                        for (Index index : desc.getIndexesAtSlot(i)) {
-                            id = poolVariables.get(VAR_X,r, q, k, index.getId()).getId();
-                            expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(id));
-                        }
-            }
-        }
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
+            id = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(id));                    
+        }                
+                    
+        // Index access cost                            
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++)
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    id = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
+                    expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(id));
+                }    
         
-        cplex.addMinimize(expr);
+        return expr;
+    }
+    
+    /**
+     * Construct the set of atomic constraints.
+     * 
+     * @throws IloException
+     */
+    protected void atomicConstraints() throws IloException
+    {
+        for (int r = 0; r < nReplicas; r++)
+            for (QueryPlanDesc desc : queryPlanDescs)
+                atomicConstraints(r, desc.getStatementID(), desc);
     }
     
     
     
     /**
-     * Constraints on internal plans: different from INUM
-     * @throws IloException 
+     * Atomic constraints:
+     *   
+     *  Only one template plan is chosen to compute {@code cost(q,r)}.
+     *  At most one index is selected to plug into a slot. 
+     *  An index a is recommended if it is used to compute at least one cost(q,r)
+     *  
+     * @param r
+     *     Replica ID
+     * @param q
+     *     Statement ID
+     * @param desc
+     *     The query plan description        
+     *  
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX.
      */
-    protected void atomicInternalPlanConstraints() throws IloException
+    protected void atomicConstraints(int r, int q, QueryPlanDesc desc) throws IloException
     {   
-        IloLinearNumExpr expr; 
-        int id;
-        int q;
+        IloLinearNumExpr expr;
+        int idY;
+        int idX;
+        int idS;
         
-        for (QueryPlanDesc desc : queryPlanDescs) {
+        // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
+        expr = cplex.linearNumExpr();
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            expr.addTerm(1, cplexVar.get(idY));
+        }
+        
+        cplex.addLe(expr, 1, "atomic_internal_" + numConstraints);
+        numConstraints++;
+        
+        // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
             
-            q = desc.getStatementID();
-        
-            for (int r = 0; r < Nreplicas; r++) {
-                
+            idY = poolVariables.get(DivVariablePool.VAR_Y, r, q, k, 0).getId();
+            
+            for (int i = 0; i < desc.getNumberOfSlots(); i++) {            
+            
                 expr = cplex.linearNumExpr();
+                expr.addTerm(-1, cplexVar.get(idY));
                 
-                // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    id = poolVariables.get(VAR_Y, r, q, k, 0).getId();
-                    expr.addTerm(1, cplexVar.get(id));
+                for (Index index : desc.getIndexesAtSlot(i)) { 
+                    idX = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();                            
+                    expr.addTerm(1, cplexVar.get(idX));
                 }
                 
-                cplex.addLe(expr, 1);
+                cplex.addEq(expr, 0, "atomic_constraint_" + numConstraints);
                 numConstraints++;
                 
             }
         }
+        
+        // used index
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++)   
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    
+                    idX = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
+                    idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                    
+                    expr = cplex.linearNumExpr();
+                    expr.addTerm(1, cplexVar.get(idX));
+                    expr.addTerm(-1, cplexVar.get(idS));
+                    cplex.addLe(expr, 0, "index_present_" + numConstraints);
+                    numConstraints++;
+                    
+                }
+
     }
     
-    /**
-     * 
-     * Index access cost and the presence of an index constraint
-     * @throws IloException 
-     * 
-     */
-    protected void atomicAcessCostConstraints() throws IloException
-    {   
-        IloLinearNumExpr expr; 
-        int idY;
-        int idX;
-        int idS;
-        int q;
-        
-        // atomic constraint
-        for (QueryPlanDesc desc : queryPlanDescs){
-            
-            q = desc.getStatementID();
-        
-            for (int r = 0; r < Nreplicas; r++) {
-                
-                // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    
-                    idY = poolVariables.get(DivVariablePool.VAR_Y, r, q, k, 0).getId();
-                    
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {            
-                    
-                        expr = cplex.linearNumExpr();
-                        expr.addTerm(-1, cplexVar.get(idY));
-                        
-                        for (Index index : desc.getIndexesAtSlot(i)) { 
-                            idX = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();                            
-                            expr.addTerm(1, cplexVar.get(idX));
-                        }
-                        
-                        cplex.addEq(expr, 0, "atomic_constraint_" + numConstraints);
-                        numConstraints++;
-                        
-                    }
-                }       
-            }
-        }
-        
-        // used index constraint
-        for (QueryPlanDesc desc : queryPlanDescs) {
-            
-            q = desc.getStatementID();
-            
-         // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
-            for (int r = 0; r < Nreplicas; r++)
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++)   
-                        for (Index index : desc.getIndexesAtSlot(i)) {
-                            
-                            idX = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
-                            idS = poolVariables.get(VAR_S, r, q, k, index.getId()).getId();
-                            
-                            expr = cplex.linearNumExpr();
-                            expr.addTerm(1, cplexVar.get(idX));
-                            expr.addTerm(-1, cplexVar.get(idS));
-                            cplex.addLe(expr, 0, "atomic_constraint_" + numConstraints);
-                            numConstraints++;
-                            
-                        }
-            
-        }
-    }
     
     /**
-     * Top-m best cost constraints
-     * @throws IloException 
+     * Top-m best cost constraints.
+     * 
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX. 
      * 
      */
     protected void topMBestCostConstraints() throws IloException
@@ -295,21 +313,23 @@ public class DivBIP extends AbstractBIPSolver
             q = desc.getStatementID();
             expr = cplex.linearNumExpr();
             
-            for (int r = 0; r < Nreplicas; r++)
+            for (int r = 0; r < nReplicas; r++)
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
                     expr.addTerm(1, cplexVar.get(idY));
                 }
             
             
-            cplex.addEq(expr, loadfactor);            
+            cplex.addEq(expr, loadfactor, "top_m_" + numConstraints);            
             numConstraints++;
         }
     }
     
     /**
-     * Impose space constraint on the materialized indexes at all window times
-     * @throws IloException 
+     * Impose space constraint on the materialized indexes at all window times.
+     * 
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX. 
      * 
      */
     protected void spaceConstraints() throws IloException
@@ -317,17 +337,81 @@ public class DivBIP extends AbstractBIPSolver
         IloLinearNumExpr expr; 
         int idS;       
         
-        for (int r = 0; r < Nreplicas; r++) {
+        for (int r = 0; r < nReplicas; r++) {
 
             expr = cplex.linearNumExpr();
             
             for (Index index : candidateIndexes) {  
-                idS = poolVariables.get(VAR_S, r, index.getId(), 0, 0).getId();                
+                idS = poolVariables.get(VAR_S, r, 0, 0 , index.getId()).getId();                
                 expr.addTerm(index.getBytes(), cplexVar.get(idS));
             }
             
-            cplex.addLe(expr, B);
+            cplex.addLe(expr, B, "space_" + numConstraints);
             numConstraints++;               
         }
     }
+
+        /**
+     * Recalculate the total cost returned by CPLEX
+     *  
+     */
+    public void costFromCplex() throws Exception
+    {   
+        int id;
+        int q;
+        
+        // get variables assignment
+        getMapVariableValue();
+        /*
+        for (int i = 0; i < valVar.length; i++)
+            if (valVar[i] == 1)
+                System.out.println(poolVariables.variables().get(i).getName());
+        */
+        
+        // run over each replica
+        double cost;
+        double costReplica;
+        DivConfiguration output = (DivConfiguration) getOutput();
+        
+        for (int r = 0; r < nReplicas; r++) {
+            
+            costReplica = 0.0;
+            System.out.println(" replica: " + r);
+            List<Double> costs = new ArrayList<Double>();
+            List<Double> costInums = new ArrayList<Double>();
+            Set<Index>   conf = output.indexesAtReplica(r);
+            
+            for (QueryPlanDesc desc : queryPlanDescs) {
+                cost = 0.0;
+                q = desc.getStatementID();
+                
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
+                    id = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+                    cost += (desc.getInternalPlanCost(k) * valVar[id]);                    
+                }                
+                        
+                // Index access cost                            
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++)
+                        for (Index index : desc.getIndexesAtSlot(i)) {
+                            id = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
+                            cost += (desc.getAccessCost(k, index) * valVar[id]);
+                        }
+                
+                costs.add(cost);
+                costReplica += cost;
+            }
+            
+            for (int i = 0; i < workload.size(); i++) {
+                cost = inumOptimizer.prepareExplain(workload.get(i)).explain(conf).getTotalCost();
+                costInums.add(cost);
+            }
+          
+            System.out.println("query cost (CPLEX): " + costs);
+            System.out.println("query cost (INUM): " + costInums);
+            System.out.println(" cost replica: " + costReplica);
+            
+        }
+    }
+    
 }

@@ -63,7 +63,7 @@ public class ElasticDivBIP extends DivBIP
     public ElasticDivBIP(int Nreplicas, int loadfactor, double B, int Ndeploys, double upperCDeploy,
                         Map<Index, Set<Integer>> materializedIndexReplica) 
     {
-        super(Nreplicas, loadfactor, B);
+        //super(Nreplicas, loadfactor, B);
         
         // the set of indexes materialized in the initial configuraiton
         this.materializedIndexReplica = materializedIndexReplica;
@@ -78,7 +78,7 @@ public class ElasticDivBIP extends DivBIP
             isExpand = true;
             // Expand replica cases
             // swap between Nreplicas and Ndeploys
-            this.Nreplicas = this.inputNdeploys;
+            this.nReplicas = this.inputNdeploys;
             this.Ndeploys = this.inputNreplicas;
         } else
             isExpand = false;
@@ -86,7 +86,7 @@ public class ElasticDivBIP extends DivBIP
         // Expand replica cases
         // swap between Nreplicas and Ndeploys
         if (Ndeploys > Nreplicas)
-            this.Nreplicas = Ndeploys;
+            this.nReplicas = Ndeploys;
     }
     
     
@@ -100,15 +100,16 @@ public class ElasticDivBIP extends DivBIP
             constructVariablesElastic();
             
             // 2. Construct the query cost at each replica
-            queryCostReplica();
+            totalCost();
             
             // 3. Atomic constraints
             if (!isExpand)
                 atomicInternalPlanShrinkReplicas();
             else 
-                atomicInternalPlanConstraints();
+                ;
+                //atomicInternalPlanConstraints();
             
-            atomicAcessCostConstraints();      
+            //atomicAcessCostConstraints();      
             
             // 4. Number of replicas constraint
             if (!isExpand) 
@@ -133,7 +134,7 @@ public class ElasticDivBIP extends DivBIP
         
         // for TYPE_DEPLOY for shrink replicas
         if (isExpand == false)
-            for (int r = 0; r < Nreplicas; r++) {
+            for (int r = 0; r < nReplicas; r++) {
                DivVariable var = poolVariables.createAndStore(VAR_DEPLOY, r, 0, 0, 0);
                mapVarDeployToReplica.put(var.getName(), r);
             }
@@ -141,7 +142,7 @@ public class ElasticDivBIP extends DivBIP
         
         // for div_a and mod_a
         for (Index index : candidateIndexes)            
-            for (int r = 0; r < Nreplicas; r++) {                
+            for (int r = 0; r < nReplicas; r++) {                
                 poolVariables.createAndStore(VAR_DIV, r, index.getId(), 0, 0);                 
                 poolVariables.createAndStore(VAR_MOD, r, index.getId(), 0, 0);
             }
@@ -165,7 +166,7 @@ public class ElasticDivBIP extends DivBIP
             
             q = desc.getStatementID();
         
-            for (int r = 0; r < Nreplicas; r++) {
+            for (int r = 0; r < nReplicas; r++) {
                 
                 expr = cplex.linearNumExpr();
                 idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
@@ -195,7 +196,7 @@ public class ElasticDivBIP extends DivBIP
         IloLinearNumExpr expr = cplex.linearNumExpr();        
         int idD;
         
-        for (int r = 0; r < Nreplicas; r++){
+        for (int r = 0; r < nReplicas; r++){
             idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
             expr.addTerm(1, cplexVar.get(idD));
         }
@@ -227,7 +228,7 @@ public class ElasticDivBIP extends DivBIP
         for (Index index : candidateIndexes) {
             initialReplicas = materializedIndexReplica.get(index);
             
-            for (int r = 0; r < Nreplicas; r++) {
+            for (int r = 0; r < nReplicas; r++) {
                 idDiv = poolVariables.get(VAR_DIV, r, 0, 0, index.getId()).getId();
                 idMod = poolVariables.get(VAR_MOD, r, 0, 0, index.getId()).getId();
                 idS   = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
@@ -259,7 +260,7 @@ public class ElasticDivBIP extends DivBIP
     protected IndexTuningOutput getOutput() 
     {
         
-        DivConfiguration conf = new DivConfiguration(Nreplicas);
+        DivConfiguration conf = new DivConfiguration(nReplicas, loadfactor);
         /*
         Map<Integer, Integer> mapDeployedReplicas = new HashMap<Integer, Integer>();
         

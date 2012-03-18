@@ -28,7 +28,7 @@ public interface QueryPlanDesc
      *      The set of candidate indexes   
      * 
      * {\bf Note: }The index full table scan is placed at the last position in the list of indexes
-     * at each slot. The {@code candidateIndexes} does not contain full table scan indexes.  
+     * at each slot.   
      *     
      * @throws SQLException
      *      when there is error in connecting with {@code optimizer} 
