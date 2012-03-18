@@ -10,7 +10,7 @@ public class SortableIndexAcessCost implements Comparable<SortableIndexAcessCost
 	/**
 	 * Constructor
 	 */
-	SortableIndexAcessCost(double gamma, Index index)
+	public SortableIndexAcessCost(double gamma, Index index)
 	{
 		this.gamma = gamma;
 		this.index = index;

@@ -1,5 +1,9 @@
 package edu.ucsc.dbtune.bip.div;
 
+/**
+ * A standard set of parameters that a Divergent Index Tuning problem handles. 
+ *
+ */
 public interface Divergent 
 {
     /**
@@ -19,14 +23,6 @@ public interface Divergent
      */
     public void setLoadBalanceFactor(int m);
     
-    /**
-     * Set the replica imbalance factor. That is, the total cost of one replica does not exceed
-     * {@code beta} times the code of other replica.
-     *  
-     * @param beta
-     *      The factor
-     */
-    public void setReplicaImbalanceFactor(int beta);
     
     /**
      * Set the maximum space budget imposed on each replica, which the total size of materialized 

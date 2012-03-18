@@ -16,9 +16,10 @@ public class DivVariablePool extends AbstractBIPVariablePool
     public static final int VAR_DEPLOY = 3;
     public static final int VAR_DIV    = 4;
     public static final int VAR_MOD    = 5;
+    public static final int VAR_U      = 6;
     
     public static final int VAR_DEFAULT = 100;    
-    private String[] strHeaderVariable = {"y", "x", "s", "deploy", "div", "mod"};
+    private String[] strHeaderVariable = {"y", "x", "s", "deploy", "div", "mod", "u"};
     private Map<DivVariableIndicator, DivVariable> mapHighDimensionVar;
     
     public DivVariablePool()
@@ -36,13 +37,13 @@ public class DivVariablePool extends AbstractBIPVariablePool
      * @param replica
      *      The replica ID
      * @param queryId
-     *      The identifier of the processing query if {@code typeVariable = VAR_Y, VAR_X};
+     *      The identifier of the processing query if {@code typeVariable = VAR_Y, VAR_X, VAR_U};
      * @param k
      *      The template plan identifier
-     *      Only enable when {@code typeVariable = VAR_X, VAR_Y}
+     *      Only enable when {@code typeVariable = VAR_X, VAR_Y, VAR_U}
      * @param a 
      *      The index ID
-     *      Enable when {@code typeVariable = VAR_X, VAR_S}
+     *      Enable when {@code typeVariable = VAR_X, VAR_S, VAR_U}
      * 
      * @return
      *      The variable name
@@ -58,12 +59,12 @@ public class DivVariablePool extends AbstractBIPVariablePool
         List<String> nameComponent = new ArrayList<String>();        
         nameComponent.add(Integer.toString(replica));        
         
-        if (typeVariable == VAR_X || typeVariable == VAR_Y) {
+        if (typeVariable == VAR_X || typeVariable == VAR_Y ||typeVariable == VAR_U) {
             nameComponent.add(Integer.toString(queryId));
             nameComponent.add(Integer.toString(k));
         }
         
-        if (typeVariable == VAR_X || typeVariable == VAR_S
+        if (typeVariable == VAR_X || typeVariable == VAR_S ||typeVariable == VAR_U
             || typeVariable == VAR_DIV || typeVariable == VAR_MOD)
             nameComponent.add(Integer.toString(a));
         
@@ -103,4 +104,6 @@ public class DivVariablePool extends AbstractBIPVariablePool
         DivVariableIndicator iai = new DivVariableIndicator(typeVariable, replica, queryId, k, a);
         return mapHighDimensionVar.get(iai);
     }
+    
+    
 }
