@@ -130,9 +130,9 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.execute(sql.getSQL());
         stmt.execute("SET CURRENT EXPLAIN MODE = NO");
 
-        stmt.close();
-
         Set<Index> recommended = readAdviseIndexTable(connection, catalog);
+
+        clearAdviseAndExplainTables(connection);
 
         for (Index i : recommended)
             i.setCreationCost(getCreationCost(this, new HashSet<Index>(), i));
@@ -269,6 +269,7 @@ public class DB2Optimizer extends AbstractOptimizer
     {
         if (colNamesInExplainStream == null || colNamesInExplainStream.trim().equals(""))
             return null;
+
         // +Q4.PS_SUPPLYCOST(A)+Q4.PS_PARTKEY
         Table table;
         Column col;
@@ -278,12 +279,12 @@ public class DB2Optimizer extends AbstractOptimizer
         Map<Column, Boolean>  ascending = new HashMap<Column, Boolean>();
         boolean asc;
         
-        if (dbo instanceof Index) 
+        if (dbo instanceof Index)
             table = ((Index) dbo).getTable();
         else if (dbo instanceof Table)
             table = (Table) dbo;
-        else 
-            throw new SQLException(" The database object must be either index or table");
+        else
+            throw new SQLException("The database object must be either index or table");
         
         for (String tblAndColNameAndAscending : colNamesAndAscending) {
             if (tblAndColNameAndAscending.contains("RID") || tblAndColNameAndAscending.equals(""))
@@ -1063,8 +1064,12 @@ public class DB2Optimizer extends AbstractOptimizer
         boolean unique = false;
         boolean clustered = false;
         boolean primary = false;
+        int pageSize = -1;
 
         while (rs.next()) {
+            if (pageSize == -1)
+                pageSize = getPageSizeForTableSpaceReferencedInAdviseIndexTable(connection);
+
             schema = catalog.findSchema(rs.getString("tbcreator").trim());
             table = schema.findTable(rs.getString("tbname").trim());
             columns = new ArrayList<Column>();
@@ -1090,6 +1095,9 @@ public class DB2Optimizer extends AbstractOptimizer
 
             index = new Index(columns, ascending, primary, unique, clustered);
 
+            index.setBytes(rs.getInt("nleaf") * pageSize);
+            // XXX: a more sophisticated way of calculating size: http://ibm.co/xsH4QC
+
             recommended.add(index);
         }
 
@@ -1105,7 +1113,7 @@ public class DB2Optimizer extends AbstractOptimizer
      * @param optimizer
      *      used to execute what-if calls
      * @param indexes
-     *      set of indexes that are assumed to exist when retrieving the cost
+     *      set of indexes that are assumed to exist when the index is created
      * @param index
      *      index for which the creation cost is retrieved
      * @return
@@ -1128,6 +1136,56 @@ public class DB2Optimizer extends AbstractOptimizer
         sb.delete(sb.length() - 2, sb.length() - 1);
 
         return optimizer.explain(sb.toString(), indexes).getSelectCost();
+    }
+
+    /**
+     * Returns the page size (in bytes) of the table space referenced in the {@code ADVISE_INDEX} 
+     * table.
+     *
+     * @param connection
+     *      connection used to communicate with the DBMS
+     * @return
+     *      the page size for the tablespace
+     * @throws SQLException
+     *      if more than one table space is referenced in the {@code ADVISE_INDEX} table and none of 
+     *      them have the same page size assigned to them; if a JDBC error occurs while 
+     *      communicating to the DBMS.
+     */
+    private static int getPageSizeForTableSpaceReferencedInAdviseIndexTable(Connection connection)
+        throws SQLException
+    {
+        Statement stmt = connection.createStatement();
+
+        ResultSet rs = stmt.executeQuery(
+                "SELECT " +
+                "    DISTINCT tbspaceid, " +
+                "             pagesize " +
+                "  FROM " +
+                "    syscat.tablespaces " +
+                "  WHERE " +
+                "    tbspaceid IN (" +
+                "       SELECT " +
+                "           tbspaceid " +
+                "         FROM " +
+                "           syscat.tables t, " +
+                "           systools.advise_index ai" +
+                "         WHERE " +
+                "                t.tabname = ai.tbname " +
+                "   )");
+
+        if (!rs.next())
+            throw new SQLException("No indexes in ADVISE_INDEX table");
+
+        int pageSize = rs.getInt(2);
+
+        while (rs.next())
+            if (pageSize != rs.getInt(2))
+                throw new SQLException(
+                    "Can't determine what page size to use: " + pageSize + " or " + rs.getInt(2));
+
+        stmt.close();
+
+        return pageSize;
     }
 
     // CHECKSTYLE:OFF
@@ -1284,7 +1342,7 @@ public class DB2Optimizer extends AbstractOptimizer
         "     s1.object_name   AS object_name," +
         "     s1.stream_count  AS cardinality, " +
         "     o.total_cost     AS cost, " +
-        "     cast(cast(s1.column_names AS CLOB(2097152)) AS VARCHAR(255)) " +
+        "     cast(cast(s1.column_names AS CLOB(2097152)) AS VARCHAR(2048)) " +
         "                      AS column_names " +
         "  FROM " +
         "     systools.explain_operator o " +

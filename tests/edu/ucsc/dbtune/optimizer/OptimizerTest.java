@@ -375,8 +375,10 @@ public class OptimizerTest
 
         // XXX: issues #240, #241 is causing this to fail for all except DB2Optimizer {
         if (getBaseOptimizer(opt) instanceof DB2Optimizer) {
-        for (Index i : rec)
+        for (Index i : rec) {
             assertThat(i.getCreationCost(), is(greaterThan(0.0)));
+            assertThat(i.getBytes(), is(greaterThan(0l)));
+        }
         }
 
         // XXX: issue #106, #144, #247 is causing this to fail for these {
