@@ -154,17 +154,17 @@ public class SeqCost {
                     + (a.isAscending(col) ? " asc" : " desc"));
         }
         RTimerN timer = new RTimerN();
-//        Rt.p(sql);
+        // Rt.p(sql);
         SQLStatementPlan sqlPlan = optimizer.explain(sql.toString()).getPlan();
         totalCreateIndexNanoTime += timer.get();
-//        Rt.p("%,d",totalCreateIndexNanoTime);
+        // Rt.p("%,d",totalCreateIndexNanoTime);
         return sqlPlan.getRootOperator().getAccumulatedCost();
     }
 
     public static long totalWhatIfNanoTime = 0;
     public static long totalCreateIndexNanoTime = 0;
     public static long plugInTime = 0;
-    
+    public static int plugInCount = 0;
 
     public static SeqCost fromOptimizer(DatabaseSystem db, Optimizer optimizer,
             Workload workload, Index[] indices) throws SQLException {
@@ -195,13 +195,19 @@ public class SeqCost {
             if (optimizer instanceof edu.ucsc.dbtune.optimizer.InumOptimizer) {
                 q.inum = (InumPreparedSQLStatement) optimizer
                         .prepareExplain(q.sql);
+                Rt.p("GREEDY INUM populate time: " + timer.getSecondElapse());
+                totalWhatIfNanoTime += timer.get();
+                timer.reset();
                 q.costWithoutIndex = q.inum.explain(new HashSet<Index>())
                         .getTotalCost();
             } else {
                 SQLStatementPlan sqlPlan = optimizer.explain(q.sql).getPlan();
                 q.costWithoutIndex = sqlPlan.getRootOperator()
                         .getAccumulatedCost();
+                if (true)
+                    throw new Error();
             }
+            Rt.p("GREEDY INUM plugin time: " + timer.getSecondElapse());
             totalWhatIfNanoTime += timer.get();
             plugInTime += timer.get();
 
@@ -307,12 +313,15 @@ public class SeqCost {
                 RTimerN timer = new RTimerN();
                 if (q.inum != null) {
                     cost = q.inum.explain(allIndexes).getTotalCost();
+                    Rt.p("GREEDY INUM plugin time: " + timer.getSecondElapse());
                 } else {
                     ExplainedSQLStatement explain = optimizer.explain(q.sql,
                             allIndexes);
                     cost = explain.getTotalCost();
                 }
                 totalWhatIfNanoTime += timer.get();
+                plugInTime += timer.get();
+                plugInCount++;
             } catch (Exception e) {
                 Rt.p(q.sql.getSQL());
                 for (Index index : allIndexes) {

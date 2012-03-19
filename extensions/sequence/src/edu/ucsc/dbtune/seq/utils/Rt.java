@@ -1807,7 +1807,7 @@ public class Rt {
 		}.start();
 	}
 
-	private static void showInputStream(final InputStream is,
+	public static void showInputStream(final InputStream is,
 			final StringBuilder sb) {
 		new Thread() {
 			@Override

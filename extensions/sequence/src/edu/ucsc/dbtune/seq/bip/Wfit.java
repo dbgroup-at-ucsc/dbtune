@@ -2,33 +2,28 @@ package edu.ucsc.dbtune.seq.bip;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloNumVarType;
 import ilog.concert.IloObjective;
-import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.util.ArrayList;
+import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Logger;
 
-import edu.ucsc.dbtune.seq.bip.def.*;
-import edu.ucsc.dbtune.seq.utils.RTimerN;
-import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumSlot;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumSlotIndexCost;
+import edu.ucsc.dbtune.seq.utils.RTimerN;
+import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
-/**
- * @author Rui Wang
- */
-public class SeqBIP extends AbstractBIPSolver {
+public class Wfit extends AbstractBIPSolver {
     class Slot {
         InumPlan plan;
         SeqInumSlot s;
@@ -186,10 +181,10 @@ public class SeqBIP extends AbstractBIPSolver {
     IloNumVar[] iloVar = new IloNumVar[0];
     int totalQueires;
     int totalIndices;
-    Query[] queries;
+    Vector<Query> queries = new Vector<Query>();
     Logger log = Logger.getLogger(SeqBIP.class.getName());
 
-    public SeqBIP(SeqInumCost cost) throws IloException {
+    public Wfit(SeqInumCost cost) throws IloException {
         this.cost = cost;
         this.totalQueires = cost.queries.size();
         this.totalIndices = cost.indices.size();
@@ -197,45 +192,9 @@ public class SeqBIP extends AbstractBIPSolver {
 
     @Override
     protected final void buildBIP() {
-        if (false) {
-            buildBIPOneByOne();
-            return;
-        }
-        super.numConstraints = 0;
         try {
-            this.queries = new Query[totalQueires];
-            for (int i = 0; i < totalQueires; i++) {
-                this.queries[i] = new Query(cost.queries.get(i));
-            }
-            cplex.add(iloVar);
-
-            IloLinearNumExpr expr = cplex.linearNumExpr();
-            for (int i = 0; i < totalQueires; i++) {
-                this.queries[i].addObjective(expr);
-            }
-            IloObjective obj = cplex.minimize(expr);
-            cplex.add(obj);
-            if (showFormulas)
-                Rt.p("Obj: " + expr.toString());
-
-            for (int i = 0; i < totalQueires; i++) {
-                this.queries[i].addConstriant();
-                for (int k = 0; k < totalIndices; k++) {
-                    expr = cplex.linearNumExpr();
-                    if (i > 0)
-                        expr.addTerm(1, this.queries[i - 1].present[k]);
-                    // for (int j = 0; j <= i; j++) {
-                    expr.addTerm(1, this.queries[i].create[k]);
-                    expr.addTerm(-1, this.queries[i].drop[k]);
-                    // }
-                    if (showFormulas)
-                        Rt
-                                .p(expr.toString() + "="
-                                        + this.queries[i].present[k]);
-                    cplex.addEq(expr, this.queries[i].present[k]);
-                }
-            }
-
+            super.numConstraints = 0;
+            exprObj = cplex.linearNumExpr();
             cplexVar = new Vector<IloNumVar>();
             for (IloNumVar var : iloVar)
                 cplexVar.add(var);
@@ -244,45 +203,50 @@ public class SeqBIP extends AbstractBIPSolver {
         }
     }
 
-    protected final void buildBIPOneByOne() {
-        super.numConstraints = 0;
+    IloLinearNumExpr exprObj;
+    IloObjective lastObj = null;
+
+    public void addQuery(SQLStatement statement) throws SQLException {
         try {
-            this.queries = new Query[totalQueires];
-            for (int i = 0; i < totalQueires; i++) {
-                this.queries[i] = new Query(cost.queries.get(i));
-            }
+            RTimerN timer = new RTimerN();
+            Query q = new Query(cost.addQuery(statement));
+            double inumTime = timer.getSecondElapse();
+            timer.reset();
+            this.queries.add(q);
+            totalQueires = this.queries.size();
             cplex.add(iloVar);
+            if (lastObj != null)
+                cplex.remove(lastObj);
 
-            IloLinearNumExpr exprObj = cplex.linearNumExpr();
-            for (int i = 0; i < totalQueires; i++) {
-                this.queries[i].addObjective(exprObj);
-                IloObjective obj = cplex.minimize(exprObj);
-                cplex.add(obj);
+            q.addObjective(exprObj);
+            IloObjective obj = cplex.minimize(exprObj);
+            lastObj = obj;
+            cplex.add(obj);
+            if (showFormulas)
+                Rt.p("Obj: " + exprObj.toString());
+
+            q.addConstriant();
+            for (int k = 0; k < totalIndices; k++) {
+                IloLinearNumExpr expr = cplex.linearNumExpr();
+                if (this.queries.size() > 1)
+                    expr
+                            .addTerm(1, this.queries
+                                    .get(this.queries.size() - 2).present[k]);
+                // for (int j = 0; j <= i; j++) {
+                expr.addTerm(1, q.create[k]);
+                expr.addTerm(-1, q.drop[k]);
+                // }
                 if (showFormulas)
-                    Rt.p("Obj: " + exprObj.toString());
-
-                this.queries[i].addConstriant();
-                for (int k = 0; k < totalIndices; k++) {
-                    IloLinearNumExpr expr = cplex.linearNumExpr();
-                    if (i > 0)
-                        expr.addTerm(1, this.queries[i - 1].present[k]);
-                    // for (int j = 0; j <= i; j++) {
-                    expr.addTerm(1, this.queries[i].create[k]);
-                    expr.addTerm(-1, this.queries[i].drop[k]);
-                    // }
-                    if (showFormulas)
-                        Rt
-                                .p(expr.toString() + "="
-                                        + this.queries[i].present[k]);
-                    cplex.addEq(expr, this.queries[i].present[k]);
-                }
-                RTimerN timer = new RTimerN();
-                cplex.solve();
-                Rt.np("queries=%d time=%.3f cost=%.2f", i, timer
-                        .getSecondElapse(), cplex.getObjValue());
-                if (i < totalQueires - 1)
-                    cplex.remove(obj);
+                    Rt.p(expr.toString() + "=" + q.present[k]);
+                cplex.addEq(expr, q.present[k]);
             }
+            cplex.solve();
+            double bipTime = timer.getSecondElapse();
+            Rt
+                    .np(
+                            "queries=%d inumTime=%.3f bipTime=%.3f totalTime=%.3f cost=%.2f",
+                            this.queries.size(), inumTime, bipTime, inumTime
+                                    + bipTime, cplex.getObjValue());
 
             cplexVar = new Vector<IloNumVar>();
             for (IloNumVar var : iloVar)
@@ -307,14 +271,15 @@ public class SeqBIP extends AbstractBIPSolver {
                     int queryId = Integer.parseInt(ss[1]);
                     int indexId = Integer.parseInt(ss[2]);
                     if (Math.abs(valVar[i] - 1) < 1E-5)
-                        output.indexUsed[queryId].add(cost.indices
-                                .get(indexId));
+                        output.indexUsed[queryId]
+                                .add(cost.indices.get(indexId));
                 } else if (name.startsWith("PLAN")) {
                     String[] ss = name.split("_");
                     int queryId = Integer.parseInt(ss[1]);
                     int planId = Integer.parseInt(ss[2]);
                     if (Math.abs(valVar[i] - 1) < 1E-5)
-                        cost.queries.get(queryId).selectedPlan = cost.queries.get(queryId).plans[planId];
+                        cost.queries.get(queryId).selectedPlan = cost.queries
+                                .get(queryId).plans[planId];
                 } else if (name.startsWith("INDEX")) {
                     String[] ss = name.split("_");
                     int queryId = Integer.parseInt(ss[1]);
