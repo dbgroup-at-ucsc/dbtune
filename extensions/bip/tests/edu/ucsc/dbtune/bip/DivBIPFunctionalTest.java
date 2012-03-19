@@ -58,7 +58,7 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         
         List<DivConstraint> constraints = new ArrayList<DivConstraint>();
         constraints.add(iReplica);
-        constraints.add(iFailure);
+        //constraints.add(iFailure);
         ConstraintDivBIP div = new ConstraintDivBIP(constraints);
         
         

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
+import edu.ucsc.dbtune.bip.core.BIPVariable;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
@@ -110,6 +111,9 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      */
     protected void constructVariables() throws IloException
     {   
+        // reset variable counter
+        BIPVariable.resetIdGenerator();
+        
         DivVariable var;
         
         poolVariables = new DivVariablePool();
@@ -216,16 +220,44 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     protected void atomicConstraints() throws IloException
     {
         for (int r = 0; r < nReplicas; r++)
-            for (QueryPlanDesc desc : queryPlanDescs)
-                atomicConstraints(r, desc.getStatementID(), desc);
+            for (QueryPlanDesc desc : queryPlanDescs) {
+                internalAtomicConstraint(r, desc.getStatementID(), desc);
+                slotAtomicConstraints(r, desc.getStatementID(), desc);
+            }
     }
     
-    
+        
+    /**
+     * Internal atomic constraints: only one template plan is chosen to compute {@code cost(q,r)}.
+     *  
+     * @param r
+     *     Replica ID
+     * @param q
+     *     Statement ID
+     * @param desc
+     *     The query plan description        
+     *  
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX.
+     */
+    protected void internalAtomicConstraint(int r, int q, QueryPlanDesc desc) throws IloException
+    {
+        IloLinearNumExpr expr;
+        int idY;
+       
+        // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
+        expr = cplex.linearNumExpr();
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            expr.addTerm(1, cplexVar.get(idY));
+        }
+        
+        cplex.addLe(expr, 1, "atomic_internal_" + numConstraints);
+        numConstraints++;
+    }
     
     /**
-     * Atomic constraints:
-     *   
-     *  Only one template plan is chosen to compute {@code cost(q,r)}.
+     * Slot atomic constraints:
      *  At most one index is selected to plug into a slot. 
      *  An index a is recommended if it is used to compute at least one cost(q,r)
      *  
@@ -239,22 +271,12 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      * @throws IloException
      *      If there is error in formulating the expression in CPLEX.
      */
-    protected void atomicConstraints(int r, int q, QueryPlanDesc desc) throws IloException
-    {   
+    protected void slotAtomicConstraints(int r, int q, QueryPlanDesc desc) throws IloException
+    {
         IloLinearNumExpr expr;
         int idY;
         int idX;
         int idS;
-        
-        // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
-        expr = cplex.linearNumExpr();
-        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-            idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
-            expr.addTerm(1, cplexVar.get(idY));
-        }
-        
-        cplex.addLe(expr, 1, "atomic_internal_" + numConstraints);
-        numConstraints++;
         
         // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
@@ -292,9 +314,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                     numConstraints++;
                     
                 }
-
     }
-    
     
     /**
      * Top-m best cost constraints.
