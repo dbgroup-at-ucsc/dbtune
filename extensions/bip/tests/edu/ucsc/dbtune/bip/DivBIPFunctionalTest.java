@@ -50,10 +50,17 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         int Nreplicas = 3;
         int loadfactor = 2;
         double B;
-        DivConstraint constraint = new DivConstraint(ConstraintDivBIP.IMBALANCE_REPLICA, 2.5);
+        
+        // imbalance replica
+        DivConstraint iReplica = new DivConstraint(ConstraintDivBIP.IMBALANCE_REPLICA, 2.5);
+        // node failure
+        DivConstraint iFailure = new DivConstraint(ConstraintDivBIP.NODE_FAILURE, 4);
+        
         List<DivConstraint> constraints = new ArrayList<DivConstraint>();
-        constraints.add(constraint);
+        constraints.add(iReplica);
+        constraints.add(iFailure);
         ConstraintDivBIP div = new ConstraintDivBIP(constraints);
+        
         
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-small");
         CandidateGenerator candGen = 
@@ -65,7 +72,7 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         System.out.println("L59, number of candidate: " + candidates.size());
         
         // At most three indexes are deployed at one replica
-        B = 10;
+        B = 3;
         
         Optimizer io = db.getOptimizer();
 

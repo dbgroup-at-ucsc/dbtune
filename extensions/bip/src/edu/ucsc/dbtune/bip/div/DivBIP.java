@@ -24,7 +24,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     protected int    nReplicas;
     protected int    loadfactor;    
     protected double B;
-    protected double beta;
     
     protected DivVariablePool   poolVariables;    
     protected Map<String,Index> mapVarSToIndex;
@@ -85,6 +84,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         try {
             // 1. Add variables into list
             constructVariables();
+            super.createCplexVariable(poolVariables.variables());
             
             // 2. Construct the query cost at each replica
             totalCost();
@@ -110,6 +110,8 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      */
     protected void constructVariables() throws IloException
     {   
+        DivVariable var;
+        
         poolVariables = new DivVariablePool();
         mapVarSToIndex = new HashMap<String, Index>();
         
@@ -121,11 +123,10 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         // for TYPE_S
         for (int r = 0; r < nReplicas; r++) 
             for (Index index : candidateIndexes) {
-                DivVariable var = poolVariables.createAndStore(VAR_S, r, 0, 0, index.getId());
+                var = poolVariables.createAndStore(VAR_S, r, 0, 0, index.getId());
                 mapVarSToIndex.put(var.getName(), index);
             }
         
-        super.createCplexVariable(poolVariables.variables());
     }
     
     /**
@@ -351,7 +352,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         }
     }
 
-        /**
+     /**
      * Recalculate the total cost returned by CPLEX
      *  
      */
@@ -413,5 +414,4 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             
         }
     }
-    
 }
