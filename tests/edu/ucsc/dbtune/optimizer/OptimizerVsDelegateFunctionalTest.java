@@ -123,9 +123,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     {
         if (e1.statement.equals(e2.statement) &&
                 (e1.selectCost / e2.selectCost) > 0.90 &&
-                (e1.selectCost / e2.selectCost) < 1.10 &&
-                e1.updateCost == e2.updateCost &&
-                e1.configuration.equals(e2.configuration))
+                (e1.selectCost / e2.selectCost) < 1.10)
             return 0;
 
         System.out.println(

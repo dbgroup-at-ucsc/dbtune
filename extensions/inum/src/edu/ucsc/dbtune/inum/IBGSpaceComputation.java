@@ -72,8 +72,7 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
                 ibg(statement, delegate, conf, inumSpace);
             }
         } else {
-            if (!sqlPlan.contains(NLJ) &&
-                    isUsingAllInterestingOrders(sqlPlan, sqlPlan.getIndexes()))
+            if (!sqlPlan.contains(NLJ))
                 inumSpace.add(new InumPlan(delegate, sqlPlan));
 
             for (Index usedIndex : sqlPlan.getIndexes()) {
@@ -98,18 +97,6 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
             Optimizer delegate)
         throws SQLException
     {
-        HashSet<Index> allIndexes = new HashSet<Index>();
-
-        space.clear();
-
-        // add FTS-everywhere
-        space.add(
-            new InumPlan(
-                delegate, delegate.explain(statement, new HashSet<Index>()).getPlan()));
-
-        for (Index i : indexes)
-            allIndexes.add(i);
-
-        ibg(statement, delegate, allIndexes, space);
+        ibg(statement, delegate, new HashSet<Index>(indexes), space);
     }
 }

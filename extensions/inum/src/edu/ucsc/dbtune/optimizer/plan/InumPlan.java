@@ -252,7 +252,7 @@ public class InumPlan extends SQLStatementPlan
             // if we do a what-if call, we know the optimizer will return FTS, so let's not do it
             return INCOMPATIBLE;
 
-        return instantiateOperatorForUnseenIndex(getStatement(), index);
+        return instantiateOperatorForUnseenIndex(slot, index);
     }
 
     /**
@@ -353,8 +353,8 @@ public class InumPlan extends SQLStatementPlan
      * Executes a what-if call on the given index in order to determine if the corresponding slot 
      * would use it.
      *
-     * @param sql
-     *      statement to be explained in order to obtain an {@link Operator#INDEX_SCAN} operator
+     * @param slot
+     *      slot for which the operator is being instantiated
      * @param index
      *      the index being sent as the hypothetical configuration
      * @return
@@ -364,76 +364,22 @@ public class InumPlan extends SQLStatementPlan
      *      if the statement can't be explained
      * @see #buildQueryForUnseenIndex
      */
-    protected Operator instantiateOperatorForUnseenIndex(SQLStatement sql, Index index)
+    protected Operator instantiateOperatorForUnseenIndex(TableAccessSlot slot, Index index)
         throws SQLException
     {
-        SQLStatementPlan plan = delegate.explain(sql, Sets.<Index>newHashSet(index)).getPlan();
+        SQLStatementPlan plan =
+            delegate.explain(
+                    buildQueryForUnseenIndex(slot), Sets.<Index>newHashSet(index)).getPlan();
 
-        Operator indexScan = null;
-        Operator fetch = null;
-        Operator otherFetch = null;
-
-        for (Operator o : plan.toList()) {
-
-            if (!o.getName().equals(INDEX_SCAN))
-                continue;
-
-            if (o.getDatabaseObjects().size() != 1)
-                throw new SQLException(INDEX_SCAN + " should be referring to a DB object");
-
-            DatabaseObject dbo = o.getDatabaseObjects().get(0);
-
-            if (dbo instanceof Index && index.getTable().equals(((Index) dbo).getTable())) {
-
-                if (indexScan != null) {
-                    // it is possible to find more than one INDEX_SCAN that refers {@code index}, 
-                    // since some optimizers scan the same index more than once. As long as the 
-                    // INDEX_SCANs are all referring to the SAME index, it's OK
-                    if (!index.equals(dbo)) {
-                        throw new SQLException(
-                            "Other " + INDEX_SCAN + " for " + index.getTable() + " in " + plan);
-                    } else {
-                        // check that they're sharing the same FETCH parent, otherwise 
-                        // extractCostOfLeafAndRemoveFetch won't return the appropriate costh
-                        otherFetch = plan.findAncestorWithName(o, FETCH);
-
-                        if ((fetch != null && otherFetch == null) ||
-                                (fetch == null && otherFetch != null) ||
-                                (fetch != null && otherFetch != null && !fetch.equals(otherFetch)))
-                            throw new SQLException("Haven't implemented this case yet");
-
-                        dbo.getName();
-                    }
-                } else {
-                    indexScan = o;
-                    fetch = plan.findAncestorWithName(o, FETCH);
-                }
-            }
-        }
-
-        if (indexScan == null)
-            // plan is not using the index, so the index is not compatible with this slot
+        if (!plan.contains(INDEX_SCAN))
             return INCOMPATIBLE;
 
-        double newIndexScanCost = 0;
-        double costOfChildren = 0;
+        Operator op = makeOperatorFromSlot(slot);
 
-        if (plan.getChildren(indexScan).size() > 0) {
-            // check if INDEX_SCAN has children and remove them. Yes, it is
-            // possible for INDEX_SCAN to have children.
-            for (Operator child : plan.getChildren(indexScan)) {
-                costOfChildren += child.getAccumulatedCost();
-                plan.remove(child);
-            }
-        }
+        op.setName(INDEX_SCAN);
+        op.setAccumulatedCost(plan.getRootOperator().getAccumulatedCost());
 
-        newIndexScanCost = extractCostOfLeafAndRemoveFetch(plan, indexScan) - costOfChildren;
-
-        Operator newIndexScan = new Operator(indexScan);
-
-        newIndexScan.setAccumulatedCost(newIndexScanCost);
-
-        return newIndexScan;
+        return op;
     }
 
     /**

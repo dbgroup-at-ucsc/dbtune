@@ -44,8 +44,6 @@ public class ExhaustiveSpaceComputation extends AbstractSpaceComputation
             Optimizer delegate)
         throws SQLException
     {
-        space.clear();
-
         List<Set<Index>> indexesPerTable = new ArrayList<Set<Index>>();
 
         for (Map.Entry<Table, Set<Index>> e : getIndexesPerTable(indexes).entrySet()) {
@@ -57,13 +55,8 @@ public class ExhaustiveSpaceComputation extends AbstractSpaceComputation
 
             SQLStatementPlan sqlPlan = delegate.explain(statement, newHashSet(atomic)).getPlan();
 
-            if (sqlPlan.contains(NLJ))
-                continue;
-
-            if (!isUsingAllInterestingOrders(sqlPlan, atomic))
-                continue;
-
-            space.add(new InumPlan(delegate, sqlPlan));
+            if (!sqlPlan.contains(NLJ))
+                space.add(new InumPlan(delegate, sqlPlan));
         }
     }
 }

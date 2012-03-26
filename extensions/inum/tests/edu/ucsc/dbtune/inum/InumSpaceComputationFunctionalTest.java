@@ -82,7 +82,6 @@ public class InumSpaceComputationFunctionalTest
 
         available.add(new ExhaustiveSpaceComputation());
         available.add(new IBGSpaceComputation());
-        available.add(new NoneMinMaxSpaceComputation());
 
         long time;
         long computationTime;
@@ -109,10 +108,6 @@ public class InumSpaceComputationFunctionalTest
 
             for (SQLStatement sql : wl) {
                 i++;
-
-                if (wl.getName().endsWith("tpch") && i == 12)
-                    // IBG and Eager produce distinct templates on this particular query
-                    continue;
 
                 List<Set<InumPlan>> spaces = new ArrayList<Set<InumPlan>>();
                 Map<InumSpaceComputation, MatchingStrategy.Result> results =
@@ -155,8 +150,6 @@ public class InumSpaceComputationFunctionalTest
                         results.get(one).getBestCost(),
                         closeTo(
                             results.get(two).getBestCost(), results.get(one).getBestCost() * 0.05));
-                            //0.05));
-
                 }
 
                 report.append("\n");

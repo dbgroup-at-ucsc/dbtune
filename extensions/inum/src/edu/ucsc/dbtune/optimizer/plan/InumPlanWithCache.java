@@ -36,16 +36,17 @@ public class InumPlanWithCache extends InumPlan
      * {@inheritDoc}
      */
     @Override
-    public Operator instantiateOperatorForUnseenIndex(SQLStatement sql, Index index)
+    public Operator instantiateOperatorForUnseenIndex(TableAccessSlot slot, Index index)
         throws SQLException
     {
+        SQLStatement sql = buildQueryForUnseenIndex(slot);
         String key = index + sql.getSQL();
 
         Operator cachedOperator = slotCache.get(key);
 
         if (cachedOperator == null) {
 
-            cachedOperator = super.instantiateOperatorForUnseenIndex(sql, index);
+            cachedOperator = super.instantiateOperatorForUnseenIndex(slot, index);
 
             slotCache.put(key, cachedOperator);
         }
