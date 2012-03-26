@@ -21,9 +21,9 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesPerTable;
 
 /**
- * An implementation of the INUM space computation that populates it eagerly without any kind of 
- * optimization. This is in contrast to other more sophisticated strategies such as the ones 
- * outlined in [1], like <i>Lazy</i> and <i>Cost-based</i> evaluation.
+ * An implementation of the INUM space computation that populates it exhaustively without any kind 
+ * of optimization. This is in contrast to other more sophisticated strategies such as the ones 
+ * outlined in [1], like <i>Lazy</i> and <i>Cost-based</i>.
  *
  * @author Ivo Jimenez
  * @author Quoc Trung Tran
@@ -31,7 +31,7 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesPerTable;
  *          [1] Efficient use of the query optimizer for automated physical design
  *      </a>
  */
-public class EagerSpaceComputation extends AbstractSpaceComputation
+public class ExhaustiveSpaceComputation extends AbstractSpaceComputation
 {
     /**
      * {@inheritDoc}

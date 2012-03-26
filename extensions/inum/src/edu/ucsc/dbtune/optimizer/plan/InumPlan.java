@@ -293,7 +293,6 @@ public class InumPlan extends SQLStatementPlan
                 "One or more tables missing in atomic configuration.\n" +
                 "  Tables in atomic " + getReferencedTables(atomicConfiguration) + "\n" +
                 "  Tables in stmt: " + getTables() + "\n" +
-                //"  For statement:\n" + getStatement() + "\n" +
                 "  Plan: \n" + this);
 
         return instantiatePlan(this, operators);

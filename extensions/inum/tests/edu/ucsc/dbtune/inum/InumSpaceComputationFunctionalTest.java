@@ -80,7 +80,7 @@ public class InumSpaceComputationFunctionalTest
     {
         List<InumSpaceComputation> available = new ArrayList<InumSpaceComputation>();
 
-        available.add(new EagerSpaceComputation());
+        available.add(new ExhaustiveSpaceComputation());
         available.add(new IBGSpaceComputation());
         available.add(new NoneMinMaxSpaceComputation());
 
