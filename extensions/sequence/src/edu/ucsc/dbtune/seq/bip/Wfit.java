@@ -5,6 +5,7 @@ import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloNumVarType;
 import ilog.concert.IloObjective;
+import ilog.concert.IloRange;
 
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -205,12 +206,13 @@ public class Wfit extends AbstractBIPSolver {
 
     IloLinearNumExpr exprObj;
     IloObjective lastObj = null;
+    double inumTime = 0;
 
     public void addQuery(SQLStatement statement) throws SQLException {
         try {
             RTimerN timer = new RTimerN();
             Query q = new Query(cost.addQuery(statement));
-            double inumTime = timer.getSecondElapse();
+            inumTime += timer.getSecondElapse();
             timer.reset();
             this.queries.add(q);
             totalQueires = this.queries.size();
@@ -240,6 +242,14 @@ public class Wfit extends AbstractBIPSolver {
                     Rt.p(expr.toString() + "=" + q.present[k]);
                 cplex.addEq(expr, q.present[k]);
             }
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void solveQuery() {
+        try {
+            RTimerN timer = new RTimerN();
             cplex.solve();
             double bipTime = timer.getSecondElapse();
             Rt
@@ -247,7 +257,43 @@ public class Wfit extends AbstractBIPSolver {
                             "queries=%d inumTime=%.3f bipTime=%.3f totalTime=%.3f cost=%.2f",
                             this.queries.size(), inumTime, bipTime, inumTime
                                     + bipTime, cplex.getObjValue());
+            inumTime = 0;
+            cplexVar = new Vector<IloNumVar>();
+            for (IloNumVar var : iloVar)
+                cplexVar.add(var);
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
 
+    public void allPossibility() {
+        try {
+            Query q = queries.lastElement();
+            if (totalIndices > 31)
+                throw new Error();
+            int total = (int) Math.pow(2, totalIndices);
+            IloRange[] ranges = new IloRange[totalIndices];
+            RTimerN timer2 = new RTimerN();
+            for (int i = 0; i < total; i++) {
+                for (int j = 0; j < totalIndices; j++) {
+                    if (ranges[j] != null)
+                        cplex.remove(ranges[j]);
+                    IloLinearNumExpr expr = cplex.linearNumExpr();
+                    expr.addTerm(1, q.present[j]);
+                    ranges[j] = cplex
+                            .addEq(expr, ((i & (1 << j)) != 0) ? 1 : 0);
+                }
+                RTimerN timer = new RTimerN();
+                cplex.solve();
+                double bipTime = timer.getSecondElapse();
+                Rt.np("bipTime=%.3f cost=%.2f", bipTime, cplex
+                        .getObjValue());
+//                for (int j = 0; j < totalIndices; j++) {
+//                    Rt.p("%d %.0f",j,cplex.getValue(q.present[j]));
+//                }
+            }
+            Rt.np("totalTime=%.3f",timer2.getSecondElapse());
+            inumTime = 0;
             cplexVar = new Vector<IloNumVar>();
             for (IloNumVar var : iloVar)
                 cplexVar.add(var);

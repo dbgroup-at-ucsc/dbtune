@@ -29,7 +29,10 @@ import edu.ucsc.dbtune.workload.Workload;
 
 public class WfitTest2 {
     public static void testBIP() throws Exception {
-        BipTest2.times=10;
+        BipTest2.times = 10;
+//        BipTest2.times = 1;
+//        BipTest2.indexSize = 40;
+        BipTest2.indexSize = 10;
         RTimerN timer = new RTimerN();
         BipTest2.en = Environment.getInstance();
         BipTest2.db = newDatabaseSystem(BipTest2.en);
@@ -51,10 +54,7 @@ public class WfitTest2 {
         for (int i = 0; i < workload.size(); i++) {
             wfit.addQuery(workload.get(i));
         }
+        wfit.allPossibility();
         System.exit(0);
-    }
-
-    public static void main(String[] args) throws Exception {
-        testBIP();
     }
 }
