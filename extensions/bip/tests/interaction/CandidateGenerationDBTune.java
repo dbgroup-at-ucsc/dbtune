@@ -20,11 +20,13 @@ public class CandidateGenerationDBTune
     private static Environment    en;
     
     public static void readIndexesFromDBTune(Generation.Strategy strategy, String dbName,
-                                             String tableOwner)
+                                             String tableOwner, String subfolder)
                 throws Exception
     {
         en = Environment.getInstance();
-        String folder = en.getWorkloadsFoldername() + "/tpcds-small";
+        //String folder = en.getWorkloadsFoldername() + "/tpcds-small";
+        String folder = en.getWorkloadsFoldername() + subfolder;
+        System.out.println("L29, subfolder: " + folder);
         String fileName;
         
         if (strategy.equals(Generation.Strategy.OPTIMAL_1C))
