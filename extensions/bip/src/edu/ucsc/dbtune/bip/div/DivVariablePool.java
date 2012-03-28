@@ -16,15 +16,17 @@ public class DivVariablePool extends AbstractBIPVariablePool
     public static final int VAR_DEPLOY = 3;
     public static final int VAR_DIV    = 4;
     public static final int VAR_MOD    = 5;
-    public static final int VAR_U      = 6;
-    public static final int VAR_SUM_Y  = 7;
-    public static final int VAR_COMBINE_Y = 8;
-    public static final int VAR_COMBINE_X = 9;
+    public static final int VAR_YO     = 6;
+    public static final int VAR_XO     = 7;
+    public static final int VAR_U      = 8;
+    public static final int VAR_SUM_Y  = 9;
+    public static final int VAR_COMBINE_Y = 10;
+    public static final int VAR_COMBINE_X = 11;
     
     public static final int VAR_DEFAULT = 100;    
     private String[] strHeaderVariable = {"y", "x", "s",                      // basic  
                                           "deploy", "div", "mod",             // elastic
-                                          "u",                                // imbalance factor
+                                          "yo", "xo", "u",                    // imbalance factor
                                           "sum_y", "combine_y", "combine_x"}; // node failure
     
     private Map<DivVariableIndicator, DivVariable> mapHighDimensionVar;
@@ -36,39 +38,33 @@ public class DivVariablePool extends AbstractBIPVariablePool
     
     /**
      * 
-     * Construct the variable name in the form: 
-     *  y(r, q, k), x(r, q, k, i, a), s(r, a),
-     *  deploy(r), div(r, a), mod(r, a), 
-     *  u(r, q, k, i, a), 
-     *  sum_y(r, q), combine_y(r, q, k), combine_x(r, q, k, i, a)
+     * Construct the variable name.   
      *  
      * @param typeVarible
      *      The type of variable 
      * @param replica
      *      The replica ID
      * @param queryId
-     *      The identifier of the processing query if {@code typeVariable = 
-     *                                                  VAR_Y, VAR_X, 
-     *                                                  VAR_U, 
-     *                                                  VAR_SUM_Y,
-     *                                                  VAR_COMBINE_Y, VAR_COMBINE_X};
+     *      The identifier of the processing query 
      * @param k
      *      The template plan identifier
-     *      Only enable when {@code typeVariable = VAR_X, VAR_Y, 
-     *                                             VAR_U,
-     *                                             VAR_COMBINE_X, VAR_COMBINE_Y}
      * @param a 
      *      The index ID
-     *      Enable when {@code typeVariable = VAR_X, VAR_S, 
-     *                                        VAR_U,
-     *                                        VAR_COMBINE_X}
      * 
      * @return
-     *      The variable name
+     *      The variable object
      */
     public DivVariable createAndStore(int typeVariable, int replica, int queryId, 
                                       int k, int a)
     {
+        // Name of variables in the form:
+        //
+        // y(r, q, k), x(r, q, k, i, a), s(r, a),
+        // deploy(r), div(r, a), mod(r, a), 
+        // yo(r, q, k), xo(r, q, k, i, a), u(r, q, k, i, a), 
+        // sum_y(r, q), combine_y(r, q, k), combine_x(r, q, k, i, a)
+        //
+        
         StringBuilder varName = new StringBuilder();
         
         varName.append(strHeaderVariable[typeVariable])
@@ -78,7 +74,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
         nameComponent.add(Integer.toString(replica));        
         
         if (typeVariable == VAR_X || typeVariable == VAR_Y 
-            || typeVariable == VAR_U
+            || typeVariable == VAR_XO || typeVariable == VAR_YO || typeVariable == VAR_U
             || typeVariable == VAR_COMBINE_X || typeVariable == VAR_COMBINE_Y) {
             
             nameComponent.add(Integer.toString(queryId));
@@ -91,7 +87,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
         
         if (typeVariable == VAR_X || typeVariable == VAR_S 
             || typeVariable == VAR_DIV || typeVariable == VAR_MOD
-            || typeVariable == VAR_U
+            || typeVariable == VAR_XO || typeVariable == VAR_U
             || typeVariable == VAR_COMBINE_X)
             nameComponent.add(Integer.toString(a));
         
@@ -112,7 +108,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
      * Get the corresponding variable
      * 
      * @param typeVariable
-     *      either Y, X, S, or deploy
+     *      the type of variables defined in the model
      * @param replica
      *      replica ID
      * @queryId     
@@ -131,6 +127,4 @@ public class DivVariablePool extends AbstractBIPVariablePool
         DivVariableIndicator iai = new DivVariableIndicator(typeVariable, replica, queryId, k, a);
         return mapHighDimensionVar.get(iai);
     }
-    
-    
 }

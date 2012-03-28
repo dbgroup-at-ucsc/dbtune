@@ -91,7 +91,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         // allow the solution differed 5% from the actual optimal value
         cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
         // not output the log of CPLEX
-        cplex.setOut(null);
+        //cplex.setOut(null);
         // not output the warning
         cplex.setWarning(null);
         

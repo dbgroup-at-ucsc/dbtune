@@ -2,6 +2,9 @@ package edu.ucsc.dbtune.bip.div;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
+import ilog.concert.IloLinearNumExprIterator;
+import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex.DoubleParam;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +23,13 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
 
+/**
+ * Reference {@link http://www-01.ibm.com/support/docview.wss?uid=swg21400034} for tuning 
+ * CPLEX solver.
+ * 
+ * @author Quoc Trung Tran
+ *
+ */
 public class DivBIP extends AbstractBIPSolver implements Divergent
 {  
     protected int    nReplicas;
@@ -83,6 +93,18 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         numConstraints = 0;
         
         try {
+            // Dual Simplex = 2
+            // Sifting is a simple form of column generation well suited for models 
+            // where the number of variables dramatically exceeds the number of constraints. 
+            // Concurrentopt works with multiple processors, running a different algorithm 
+            // on each processor and stopping as soon as one of them finds an optimal solution
+            //cplex.setParam(IntParam.NodeAlg, IloCplex.Algorithm.Dual);
+            //cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Sifting);            
+            //cplex.setParam(IntParam.SiftAlg, 2);
+            
+            // epsilon in linerization
+            cplex.setParam(DoubleParam.EpLin, 1e-1);
+            
             // 1. Add variables into list
             constructVariables();
             super.createCplexVariable(poolVariables.variables());
@@ -167,10 +189,23 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     protected void totalCost() throws IloException
     {         
         IloLinearNumExpr obj = cplex.linearNumExpr(); 
+        IloLinearNumExpr expr; 
+        IloNumVar        var;
+        double           coef;
+        
+        IloLinearNumExprIterator iter;
         
         for (int r = 0; r < nReplicas; r++)
-            for (QueryPlanDesc desc : queryPlanDescs) 
-                obj.add(queryExpr(r, desc.getStatementID(), desc));
+            for (QueryPlanDesc desc : queryPlanDescs) {
+                expr = queryExpr(r, desc.getStatementID(), desc);
+                iter = expr.linearIterator();
+                
+                while (iter.hasNext()) {
+                    var = iter.nextNumVar();
+                    coef = iter.getValue();
+                    obj.addTerm(var, coef / loadfactor);
+                }
+            }
         
         cplex.addMinimize(obj);
     }

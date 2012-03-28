@@ -7,6 +7,10 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_COMBINE_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_COMBINE_Y;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
+
+import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_XO;
+import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_YO;
+
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloLinearNumExprIterator;
@@ -14,12 +18,15 @@ import ilog.concert.IloNumVar;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.interactions.SortableIndexAcessCost;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Sets;
 
 public class ConstraintDivBIP extends DivBIP
 {
@@ -62,8 +69,11 @@ public class ConstraintDivBIP extends DivBIP
                 if (c.getType() == IMBALANCE_REPLICA)
                     imbalanceReplicaConstraints(c.getFactor());
                 else if (c.getType() == NODE_FAILURE)
-                    this.nodeFailures(c.getFactor());
+                    nodeFailures(c.getFactor());
             }
+            
+            // atomic constraints for local optimal 
+            atomicLocalOptimalConstraints();
             
         }     
         catch (IloException e) {
@@ -96,6 +106,16 @@ public class ConstraintDivBIP extends DivBIP
      */
     protected void constructConstraintVariables(int r, int q, QueryPlanDesc desc)
     {       
+        // YO: y for local optimal
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            poolVariables.createAndStore(VAR_YO, r, q, k, 0);
+            
+        // XO: x for local optimal
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++)  
+                for (Index index : desc.getIndexesAtSlot(i)) 
+                    poolVariables.createAndStore(VAR_XO, r, q, k, index.getId());
+        
         // U variables for the local optimal
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
             for (int i = 0; i < desc.getNumberOfSlots(); i++)  
@@ -103,8 +123,20 @@ public class ConstraintDivBIP extends DivBIP
                     poolVariables.createAndStore(VAR_U, r, q, k, index.getId());
         
         // variable sum_q(r, q) = \sum_{k = 1}^{K_q} y^r_{qk}
-        poolVariables.createAndStore(VAR_SUM_Y, r, q, 0, 0);
-        
+        poolVariables.createAndStore(VAR_SUM_Y, r, q, 0, 0);    
+    }
+    
+    /**
+     * 
+     * Construct variables to handle node failures.
+     * 
+     * @param r
+     *   Todo
+     * @param q
+     * @param desc
+     */
+    protected void constructNodeFailureVariables(int r, int q, QueryPlanDesc desc)
+    {
         // combined variables to handle node failures
         // that is, the variables corresponding to query q in replica r
         // w.r.t. the failure node r_f # r.
@@ -121,7 +153,112 @@ public class ConstraintDivBIP extends DivBIP
                         if (failID != r)
                             poolVariables.createAndStore(VAR_COMBINE_X, combineReplicaID(r, failID),
                                                          q, k, index.getId());
+    }
+    
+    
+    /**
+     * Construct the set of atomic constraints.
+     * 
+     * @throws IloException
+     */
+    protected void atomicLocalOptimalConstraints() throws IloException
+    {
+        for (int r = 0; r < nReplicas; r++)
+            for (QueryPlanDesc desc : queryPlanDescs) {
+                internalAtomicLocalOptimalConstraint(r, desc.getStatementID(), desc);
+                slotAtomicLocalOptimalConstraints(r, desc.getStatementID(), desc);
+            }
+    }
+    
         
+    /**
+     * Internal atomic constraints: only one template plan is chosen to compute {@code cost(q,r)}.
+     *  
+     * @param r
+     *     Replica ID
+     * @param q
+     *     Statement ID
+     * @param desc
+     *     The query plan description        
+     *  
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX.
+     */
+    protected void internalAtomicLocalOptimalConstraint(int r, int q, QueryPlanDesc desc) throws IloException
+    {
+        IloLinearNumExpr expr;
+        int idY;
+       
+        // \sum_{k \in [1, Kq]}y^{r}_{qk} = 1
+        expr = cplex.linearNumExpr();
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            idY = poolVariables.get(VAR_YO, r, q, k, 0).getId();
+            expr.addTerm(1, cplexVar.get(idY));
+        }
+        
+        cplex.addLe(expr, 1, "atomic_internal_local_optimal_" + numConstraints);
+        numConstraints++;
+    }
+    
+    /**
+     * Slot atomic constraints:
+     *  At most one index is selected to plug into a slot. 
+     *  An index a is recommended if it is used to compute at least one cost(q,r)
+     *  
+     * @param r
+     *     Replica ID
+     * @param q
+     *     Statement ID
+     * @param desc
+     *     The query plan description        
+     *  
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX.
+     */
+    protected void slotAtomicLocalOptimalConstraints(int r, int q, QueryPlanDesc desc) 
+                    throws IloException
+    {
+        IloLinearNumExpr expr;
+        int idY;
+        int idX;
+        int idS;
+        
+        // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            
+            idY = poolVariables.get(DivVariablePool.VAR_YO, r, q, k, 0).getId();
+            
+            for (int i = 0; i < desc.getNumberOfSlots(); i++) {            
+            
+                expr = cplex.linearNumExpr();
+                expr.addTerm(-1, cplexVar.get(idY));
+                
+                for (Index index : desc.getIndexesAtSlot(i)) { 
+                    idX = poolVariables.get(VAR_XO, r, q, k, index.getId()).getId();                            
+                    expr.addTerm(1, cplexVar.get(idX));
+                }
+                
+                cplex.addEq(expr, 0, "atomic_constraint_local_optimal" + numConstraints);
+                numConstraints++;
+                
+            }
+        }
+        
+        // used index
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++)   
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    
+                    idX = poolVariables.get(VAR_XO, r, q, k, index.getId()).getId();
+                    idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                    
+                    expr = cplex.linearNumExpr();
+                    expr.addTerm(1, cplexVar.get(idX));
+                    expr.addTerm(-1, cplexVar.get(idS));
+                    cplex.addLe(expr, 0, "index_present_local_optimal" + numConstraints);
+                    numConstraints++;
+                    
+                }
     }
     
     /**
@@ -131,36 +268,107 @@ public class ConstraintDivBIP extends DivBIP
     {   
         IloLinearNumExpr exprReplica;
         IloLinearNumExpr expr;
+        IloLinearNumExpr exprOptimal;
+        
+        List<List<IloLinearNumExpr>> exprQuery        = new ArrayList<List<IloLinearNumExpr>>();
+        List<List<IloLinearNumExpr>> exprQueryOptimal = new ArrayList<List<IloLinearNumExpr>>();
         
         List<IloLinearNumExpr> exprs = new ArrayList<IloLinearNumExpr>();
         
-        // local optimal
+        // imbalance constraint
         for (int r = 0; r < nReplicas; r++) {
            
             exprReplica = cplex.linearNumExpr(); 
+            List<IloLinearNumExpr> exprQueryReplica        = new ArrayList<IloLinearNumExpr>();
+            List<IloLinearNumExpr> exprQueryReplicaOptimal = new ArrayList<IloLinearNumExpr>();
             
             for (QueryPlanDesc desc : queryPlanDescs) {
                 
-                expr = super.queryExpr(r, desc.getStatementID(), desc);
+                expr        = super.queryExpr(r, desc.getStatementID(), desc);
+                exprOptimal = queryExprOptimal(r, desc.getStatementID(), desc);
+                
+                exprQueryReplica.add(expr);
+                exprQueryReplicaOptimal.add(exprOptimal);
+                
+                
                 
                 // constraint for the local optimal
-                localOptimal(r, desc.getStatementID(), desc, expr);
+                localOptimal(r, desc.getStatementID(), desc, exprOptimal);
                 presentVariableLocalOptimal(r, desc.getStatementID(), desc);
                 selectingIndexAtEachSlot(r, desc.getStatementID(), desc);
-                // construct formula for the replica
                 
+                // construct formula for the replica
                 exprReplica.add(expr);
             
             }
             
             exprs.add(exprReplica);
+        
+            exprQuery.add(exprQueryReplica);
+            exprQueryOptimal.add(exprQueryReplicaOptimal);
         }
+        
         
         // for each pair of replicas, impose the imbalance factor constraint 
         for (int r1 = 0; r1 < nReplicas - 1; r1++)
             for (int r2 = r1 + 1; r2 < nReplicas; r2++) 
                 imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);           
+    
+        // constraint for top-m best cost
+        // cost(q,r) <= cost_opt(q,r)
+        // sum_(r \in [1, N]} cost(q,r) <= sum_any_m of cost_opt(q,r)
+        for (int q = 0; q < queryPlanDescs.size(); q++) {
+            
+            List<IloLinearNumExpr> exprQueryReplica        = new ArrayList<IloLinearNumExpr>();
+            List<IloLinearNumExpr> exprQueryReplicaOptimal = new ArrayList<IloLinearNumExpr>();
+            
+            for (int r = 0; r < nReplicas; r++) {
+                exprQueryReplica.add(exprQuery.get(r).get(q));
+                exprQueryReplicaOptimal.add(exprQueryOptimal.get(r).get(q));
+            }
+        
+            topMBestCostExplicit(exprQueryReplica, exprQueryReplicaOptimal);
+        }
+        
     }
+    
+    /**
+     * Formulate the expression of a query on a particular replica
+     * 
+     * @param r
+     *      The replica ID
+     * @param q
+     *      The query ID
+     * @param desc
+     *      The query plan description.
+     *      
+     * @return
+     *      The linear expression of the query
+     *      
+     * @throws IloException
+     */
+    protected IloLinearNumExpr queryExprOptimal(int r, int q, QueryPlanDesc desc) 
+              throws IloException
+    {
+        int id;
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
+            id = poolVariables.get(VAR_YO, r, q, k, 0).getId();
+            expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(id));                    
+        }                
+                    
+        // Index access cost                            
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++)
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    id = poolVariables.get(VAR_XO, r, q, k, index.getId()).getId();
+                    expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(id));
+                }    
+        
+        return expr;
+    }
+    
     
     /**
      * Add the constraint on the imbalance for the given two expressions 
@@ -169,7 +377,7 @@ public class ConstraintDivBIP extends DivBIP
      * @param expr1
      *      The expression of the first replica     
      * @param expr2
-     *      The expresssion of the second replica
+     *      The expression of the second replica
      * @param factor
      *      The imbalance factor.
      */
@@ -209,6 +417,233 @@ public class ConstraintDivBIP extends DivBIP
         }
         cplex.addLe(expr, 0, "imbalance_replica_" + numConstraints);
         numConstraints++;
+    }
+    
+    
+    /**
+     * Impose the constrains for top-m best cost explicitly: (1) each query cost, cost(q,r) does not
+     * exceed the local optimal cost, cost_opt(q,r), and (2) the sum of query cost across replicas
+     * does not exceed the sum of any m elements of cost_opt(q,r).
+     * 
+     * @param listQueryCost
+     *      The list of query cost formulas over all replicas
+     * @param listQueryOptimal
+     *      The list of optimal query cost formulas over all replicas
+     * 
+     * @throws IloException
+     */
+    protected void topMBestCostExplicit(List<IloLinearNumExpr> listQueryCost,
+                                        List<IloLinearNumExpr> listQueryOptimal) throws IloException
+    {
+        IloLinearNumExpr expr;
+        IloLinearNumExpr exprCrossReplica;
+        IloLinearNumExpr exprTopm;
+        IloNumVar        var;
+        
+        IloLinearNumExprIterator iter;
+        
+        int    numQuery;
+        double coef;
+        
+        numQuery = listQueryCost.size();
+        
+        // sum of query q over all replicas
+        exprCrossReplica = cplex.linearNumExpr();
+        
+        for (int i = 0; i < numQuery; i++) {
+            expr = cplex.linearNumExpr();
+            expr.add(listQueryCost.get(i));
+            
+            iter = listQueryOptimal.get(i).linearIterator();
+            while (iter.hasNext()) {
+                var = iter.nextNumVar();
+                coef = iter.getValue();
+                expr.addTerm(var, -coef);
+            }
+            cplex.addLe(expr, 0, "query_optimal" + numConstraints);
+            numConstraints++;
+     
+            // sum of q over all replicas
+            exprCrossReplica.add(listQueryCost.get(i));
+        }
+        
+        // enumerate all subset of size m
+        Set<Integer> positions = new HashSet<Integer>();
+        for (int i = 0; i < numQuery; i++)
+            positions.add(i);
+        
+        Sets<Integer> s = new Sets<Integer>();
+        Set<Set<Integer>> positionSizeM = s.powerSet(positions, super.loadfactor);
+        
+        for (Set<Integer> position : positionSizeM) {
+            
+            exprTopm = cplex.linearNumExpr();
+            exprTopm.add(exprCrossReplica);
+            
+            for (Integer p : position) {
+                
+                iter = listQueryOptimal.get(p).linearIterator();
+                while (iter.hasNext()) {
+                    var = iter.nextNumVar();
+                    coef = iter.getValue();
+                    exprTopm.addTerm(var, -coef);
+                }
+                
+            }
+            
+            cplex.addLe(exprTopm, 0, "top_m_explicit_" + numConstraints);
+            numConstraints++;
+        }
+    }
+    
+    /**
+     * This set of constraints ensure {@code cost_opt(q, X} is not greater than the local optimal cost 
+     * of using any template plan.
+     *   
+     * @throws IloException 
+     * 
+     */
+    protected void localOptimal(int r, int q, QueryPlanDesc desc, IloLinearNumExpr exprQuery)
+                   throws IloException
+    {   
+        IloLinearNumExpr expr;        
+        int idU;
+        double approxCoef;        
+        
+        if (isApproximation)
+            approxCoef = 1.1;
+        else 
+            approxCoef = 1.0;
+        
+        // local optimal
+        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) {
+            
+            expr = cplex.linearNumExpr();
+            expr.add(exprQuery);    
+                        
+            for (int i = 0; i < desc.getNumberOfSlots(); i++) 
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
+                    expr.addTerm(-approxCoef * desc.getAccessCost(t, index), cplexVar.get(idU));
+                }
+            
+            cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
+            numConstraints++;
+        }
+        
+        // atomic constraint
+        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+                expr = cplex.linearNumExpr();
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
+                    expr.addTerm(1, cplexVar.get(idU));           
+                }
+                
+                cplex.addEq(expr, 1, "atomic_U" + numConstraints);
+                numConstraints++;
+            }
+        
+    }
+            
+    
+    
+    /**
+     * Constraint on the present of {@code VAR_U} variables.
+     * 
+     * For example, a variable corresponding to some index {@code a} must be {@code 0}
+     * if {@code a} is not recommended.
+     * 
+     * @throws IloException 
+     * 
+     */
+    protected void presentVariableLocalOptimal(int r, int q, QueryPlanDesc desc) throws IloException
+    {   
+        IloLinearNumExpr expr;
+        int idU;
+        int idS;
+            
+        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+                // not constraint FTS variables
+                for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
+                    idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
+                    idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                    expr = cplex.linearNumExpr();
+                    expr.addTerm(1, cplexVar.get(idU));
+                    expr.addTerm(-1, cplexVar.get(idS));            
+                    cplex.addLe(expr, 0, "U_present_" + numConstraints);
+                    numConstraints++;
+                                        
+                }         
+            }
+    }
+    
+    /**
+     * 
+     * The constraints ensure the index with the small index access cost is used
+     * to compute {@code cost(q, r)} 
+     * 
+     * @throws IloException 
+     * 
+     */
+    protected void selectingIndexAtEachSlot(int r, int q, QueryPlanDesc desc) throws IloException
+    {  
+        
+        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++) 
+                selectingIndexAtEachSlot(r, q, t, i, desc);
+    }
+    
+    protected void selectingIndexAtEachSlot(int r, int q, int t, int i, QueryPlanDesc desc) 
+                   throws IloException
+    {
+        int idU;
+        int idS;        
+        int idFTS, numIndex;
+     
+        // Sort index access cost
+        List<SortableIndexAcessCost> listSortedIndex  = new ArrayList<SortableIndexAcessCost>();
+                
+        for (Index index : desc.getIndexesAtSlot(i)) {
+            SortableIndexAcessCost sac = new SortableIndexAcessCost 
+                                            (desc.getAccessCost(t, index), index);
+            listSortedIndex.add(sac);                       
+        }                   
+            
+        numIndex = desc.getIndexesAtSlot(i).size();
+        idFTS = desc.getIndexesAtSlot(i).get(numIndex - 1).getId();
+            
+        // sort in the increasing order of the index access cost
+        Collections.sort(listSortedIndex);
+                               
+        List<Integer> varIDs = new ArrayList<Integer>();
+        
+        for (SortableIndexAcessCost sac : listSortedIndex) {  
+            
+            Index index = sac.getIndex();
+            idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
+            varIDs.add(idU);
+                    
+            if (index.getId() == idFTS) {
+                IloLinearNumExpr exprInternal = cplex.linearNumExpr();
+                for (int varID : varIDs)
+                    exprInternal.addTerm(1, cplexVar.get(varID));
+                
+                cplex.addEq(exprInternal, 1, "FTS_" + numConstraints);
+                numConstraints++;
+                break; // the remaining variables will be assigned value 0 
+            } else {                                    
+                IloLinearNumExpr exprInternal = cplex.linearNumExpr();
+                for (int varID : varIDs)
+                    exprInternal.addTerm(1, cplexVar.get(varID));
+                    
+                idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                exprInternal.addTerm(-1, cplexVar.get(idS));
+                cplex.addGe(exprInternal, 0, "select_index_" + numConstraints); 
+                numConstraints++;
+            }   
+        }   
     }
     
     /**
@@ -415,156 +850,6 @@ public class ConstraintDivBIP extends DivBIP
     protected int combineReplicaID(int id, int failID)
     {
         return (id * 1000 + failID);
-    }
-    
-    /**
-     * This set of constraints ensure {@code cost(q, X} is not greater than the local optimal cost 
-     * of using any template plan.
-     *   
-     * @throws IloException 
-     * 
-     */
-    protected void localOptimal(int r, int q, QueryPlanDesc desc, IloLinearNumExpr exprQuery)
-                   throws IloException
-    {   
-        IloLinearNumExpr expr;        
-        int idU;
-        double approxCoef;        
-        
-        if (isApproximation)
-            approxCoef = 1.1;
-        else 
-            approxCoef = 1.0;
-        
-        // local optimal
-        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) {
-            
-            expr = cplex.linearNumExpr();
-            expr.add(exprQuery);    
-                        
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) 
-                for (Index index : desc.getIndexesAtSlot(i)) {
-                    idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
-                    expr.addTerm(-approxCoef * desc.getAccessCost(t, index), cplexVar.get(idU));
-                }
-            
-            cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
-            numConstraints++;
-        }
-        
-        // atomic constraint
-        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                expr = cplex.linearNumExpr();
-                for (Index index : desc.getIndexesAtSlot(i)) {
-                    idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
-                    expr.addTerm(1, cplexVar.get(idU));           
-                }
-                
-                cplex.addEq(expr, 1, "atomic_U" + numConstraints);
-                numConstraints++;
-            }
-        
-    }
-            
-    
-    
-    /**
-     * Constraint on the present of {@code VAR_U} variables.
-     * 
-     * For example, a variable corresponding to some index {@code a} must be {@code 0}
-     * if {@code a} is not recommended.
-     * 
-     * @throws IloException 
-     * 
-     */
-    protected void presentVariableLocalOptimal(int r, int q, QueryPlanDesc desc) throws IloException
-    {   
-        IloLinearNumExpr expr;
-        int idU;
-        int idS;
-            
-        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                // not constraint FTS variables
-                for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
-                    idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
-                    idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
-                    expr = cplex.linearNumExpr();
-                    expr.addTerm(1, cplexVar.get(idU));
-                    expr.addTerm(-1, cplexVar.get(idS));            
-                    cplex.addLe(expr, 0, "U_present_" + numConstraints);
-                    numConstraints++;
-                                        
-                }         
-            }
-    }
-    
-    /**
-     * 
-     * The constraints ensure the index with the small index access cost is used
-     * to compute {@code cost(q, r)} 
-     * 
-     * @throws IloException 
-     * 
-     */
-    protected void selectingIndexAtEachSlot(int r, int q, QueryPlanDesc desc) throws IloException
-    {  
-        
-        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) 
-                selectingIndexAtEachSlot(r, q, t, i, desc);
-    }
-    
-    protected void selectingIndexAtEachSlot(int r, int q, int t, int i, QueryPlanDesc desc) 
-                   throws IloException
-    {
-        int idU;
-        int idS;        
-        int idFTS, numIndex;
-     
-        // Sort index access cost
-        List<SortableIndexAcessCost> listSortedIndex  = new ArrayList<SortableIndexAcessCost>();
-                
-        for (Index index : desc.getIndexesAtSlot(i)) {
-            SortableIndexAcessCost sac = new SortableIndexAcessCost 
-                                            (desc.getAccessCost(t, index), index);
-            listSortedIndex.add(sac);                       
-        }                   
-            
-        numIndex = desc.getIndexesAtSlot(i).size();
-        idFTS = desc.getIndexesAtSlot(i).get(numIndex - 1).getId();
-            
-        // sort in the increasing order of the index access cost
-        Collections.sort(listSortedIndex);
-                               
-        List<Integer> varIDs = new ArrayList<Integer>();
-        
-        for (SortableIndexAcessCost sac : listSortedIndex) {  
-            
-            Index index = sac.getIndex();
-            idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
-            varIDs.add(idU);
-                    
-            if (index.getId() == idFTS) {
-                IloLinearNumExpr exprInternal = cplex.linearNumExpr();
-                for (int varID : varIDs)
-                    exprInternal.addTerm(1, cplexVar.get(varID));
-                
-                cplex.addEq(exprInternal, 1, "FTS_" + numConstraints);
-                numConstraints++;
-                break; // the remaining variables will be assigned value 0 
-            } else {                                    
-                IloLinearNumExpr exprInternal = cplex.linearNumExpr();
-                for (int varID : varIDs)
-                    exprInternal.addTerm(1, cplexVar.get(varID));
-                    
-                idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
-                exprInternal.addTerm(-1, cplexVar.get(idS));
-                cplex.addGe(exprInternal, 0, "select_index_" + numConstraints); 
-                numConstraints++;
-            }   
-        }   
     }
     
     
