@@ -52,6 +52,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected InumOptimizer inumOptimizer;    
     protected LogListener   logger;
     protected double        objVal;
+    protected double        gapObj;
     
     @Override    
     public void setWorkload(Workload wl)
@@ -88,6 +89,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         
         // start CPLEX
         cplex = new IloCplex();
+        
         // allow the solution differed 5% from the actual optimal value
         cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
         // not output the log of CPLEX
@@ -105,7 +107,13 @@ public abstract class AbstractBIPSolver implements BIPSolver
         if (cplex.solve()) {
             getMapVariableValue();
             result = getOutput();
+            // getBestObjValue(): Accesses the currently best known bound of all the remaining 
+            // open nodes in a branch-and-cut tree.
+            //
+            // getObjValue(): Returns the objective value of the current solution. 
+            //
             objVal = cplex.getObjValue();
+            gapObj = 1 - cplex.getBestObjValue() / objVal;
         } else {
             objVal = UNKNOWN_OBJ_VALUE;
         }
@@ -142,6 +150,16 @@ public abstract class AbstractBIPSolver implements BIPSolver
         return objVal;
     }
     
+    /**
+     * Retrieve the relative gap between the returned solution and the optimal solution
+     * 
+     * @return
+     *      The relative value (in term of percentage)
+     */
+    public double getObjectiveGap()
+    {
+        return gapObj;
+    }
     /**
      * Set the listener that logs the running time (for experimental purpose)
      * 
