@@ -50,14 +50,16 @@ public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration
         divergentNormal();
         
         // imbalance replica
-        DivConstraint iReplica = new DivConstraint(ConstraintDivBIP.IMBALANCE_REPLICA, 2.5);
+        DivConstraint iReplica = new DivConstraint(ConstraintDivBIP.IMBALANCE_REPLICA, 3);
+        DivConstraint iQuery = new DivConstraint(ConstraintDivBIP.IMBALANCE_QUERY, 3);
         List<DivConstraint> constraints = new ArrayList<DivConstraint>();
         constraints.add(iReplica);
+        constraints.add(iQuery);
         
         // intial div object
         ConstraintDivBIP div = new ConstraintDivBIP(constraints);
         
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-small");
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-debug");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);
@@ -81,11 +83,12 @@ public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration
         div.setLogListenter(logger);
         
         IndexTuningOutput output = div.solve();
-        div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpcds-small/test.lp");
+        div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpcds-debug/test.lp");
         System.out.println(logger.toString());
         if (output != null) {
             System.out.println("In test, result: " 
-                              + " obj value: " + div.getObjValue());
+                              + " obj value: " + div.getObjValue()
+                              + " different from optimal value: " + div.getObjectiveGap());
             div.costFromCplex();
             
             /*

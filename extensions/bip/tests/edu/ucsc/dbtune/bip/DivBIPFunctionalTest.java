@@ -78,8 +78,8 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         System.out.println(logger.toString());
         if (output != null) {
             System.out.println("In test, result: " 
-                              + " obj value: " + div.getObjValue());
-            //div.costFromCplex();
+                    + " obj value: " + div.getObjValue()
+                    + " different from optimal value: " + div.getObjectiveGap());
             
             /*
             // run on actual optimize

@@ -15,6 +15,7 @@ import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloLinearNumExprIterator;
 import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex.DoubleParam;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,7 +32,8 @@ import edu.ucsc.dbtune.util.Sets;
 public class ConstraintDivBIP extends DivBIP
 {
     public static int IMBALANCE_REPLICA = 1001;
-    public static int NODE_FAILURE      = 1002;
+    public static int IMBALANCE_QUERY   = 1002;
+    public static int NODE_FAILURE      = 1003;
     
     protected boolean isApproximation;
     protected List<DivConstraint> constraints;
@@ -47,7 +49,10 @@ public class ConstraintDivBIP extends DivBIP
     {
         numConstraints = 0;
         
-        try {
+        try {            
+            // time limit
+            cplex.setParam(DoubleParam.TiLim, 300);
+            
             // 1. Add variables into list
             constructVariables();
             createCplexVariable(poolVariables.variables());
@@ -70,6 +75,8 @@ public class ConstraintDivBIP extends DivBIP
                     imbalanceReplicaConstraints(c.getFactor());
                 else if (c.getType() == NODE_FAILURE)
                     nodeFailures(c.getFactor());
+                else if (c.getType() == IMBALANCE_QUERY)
+                    imbalanceQueryConstraints(c.getFactor());
             }
             
             // atomic constraints for local optimal 
@@ -88,8 +95,10 @@ public class ConstraintDivBIP extends DivBIP
         
         // variable for each query descriptions
         for (int r = 0; r < nReplicas; r++)
-            for (QueryPlanDesc desc : queryPlanDescs) 
+            for (QueryPlanDesc desc : queryPlanDescs) {
                 constructConstraintVariables(r, desc.getStatementID(), desc);
+                constructBinaryProductVariables(r, desc.getStatementID(), desc);
+            }
         
     }
     
@@ -135,23 +144,21 @@ public class ConstraintDivBIP extends DivBIP
      * @param q
      * @param desc
      */
-    protected void constructNodeFailureVariables(int r, int q, QueryPlanDesc desc)
+    protected void constructBinaryProductVariables(int r, int q, QueryPlanDesc desc)
     {
-        // combined variables to handle node failures
-        // that is, the variables corresponding to query q in replica r
-        // w.r.t. the failure node r_f # r.
+        // combined variables to handle product of two binary variables
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) 
-            for (int failID = 0; failID < nReplicas; failID++)
-                if (failID != r)
-                    poolVariables.createAndStore(VAR_COMBINE_Y, combineReplicaID(r, failID), 
+            for (int r2 = 0; r2 < nReplicas; r2++)
+                if (r2 != r)
+                    poolVariables.createAndStore(VAR_COMBINE_Y, combineReplicaID(r, r2), 
                                                  q, k, 0);
             
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
             for (int i = 0; i < desc.getNumberOfSlots(); i++)  
                 for (Index index : desc.getIndexesAtSlot(i)) 
-                    for (int failID = 0; failID < nReplicas; failID++)
-                        if (failID != r)
-                            poolVariables.createAndStore(VAR_COMBINE_X, combineReplicaID(r, failID),
+                    for (int r2 = 0; r2 < nReplicas; r2++)
+                        if (r2 != r)
+                            poolVariables.createAndStore(VAR_COMBINE_X, combineReplicaID(r, r2),
                                                          q, k, index.getId());
     }
     
@@ -289,8 +296,6 @@ public class ConstraintDivBIP extends DivBIP
                 
                 exprQueryReplica.add(expr);
                 exprQueryReplicaOptimal.add(exprOptimal);
-                
-                
                 
                 // constraint for the local optimal
                 localOptimal(r, desc.getStatementID(), desc, exprOptimal);
@@ -647,24 +652,141 @@ public class ConstraintDivBIP extends DivBIP
     }
     
     /**
-     * Impose the imbalance constraints when any one of the replicas fail.
+     * Construct a set of imbalance query constraints. That is, the cost of top-m best place
+     * for every query does not exceed beta times.
      * 
      * @param beta
-     *      The imbalance factor,
-     *      
-     * @throws IloException
+     *      The query imbalance factor
+     * @throws IloException 
      */
-    protected void nodeFailures(double beta) throws IloException
-    {
+    protected void imbalanceQueryConstraints(double beta) throws IloException
+    {   
+        // sum_y = sum of y^j_{qk} over all template plans
         for (int r = 0; r < nReplicas; r++)
             for (QueryPlanDesc desc : queryPlanDescs)
                 sumYConstraint(r, desc.getStatementID(), desc);
         
-        for (int failR = 0; failR < nReplicas; failR++)
-            nodeFailureConstraint(failR, beta);
-        
+        // query imbalance constraint
+        for (QueryPlanDesc desc : queryPlanDescs)
+            for (int r1 = 0; r1 < nReplicas; r1++)
+                for (int r2 = r1 + 1; r2 < nReplicas; r2++)
+                    imbalanceQueryConstraint(desc, r1, r2, beta);
+            
     }
     
+    /**
+     * Build the imbalance query constraint for the given query w.r.t. two replicas
+     * 
+     * @param desc
+     *      The query on which we impose the imbalance constraint
+     * @param r1
+     *      The ID of the first replica
+     * @param r2
+     *      The ID of the second replica
+     * @throws IloException 
+     */
+    protected void imbalanceQueryConstraint(QueryPlanDesc desc, int r1, int r2, double beta) throws IloException
+    {  
+        int q = desc.getStatementID();
+        
+        // constraints for the combine variables
+        constraintCombineVariable(desc, r1, r2, q);
+        constraintCombineVariable(desc, r2, r1, q);
+        
+        // query imbalance constraint
+        imbalanceQueryConstraintOrder(desc, r1, r2, beta);
+        imbalanceQueryConstraintOrder(desc, r2, r1, beta);         
+    }
+    
+    /**
+     * Build the imbalance query constraint for the given query w.r.t. two replicas in the order
+     * 
+     * @param desc
+     *      The query on which we impose the imbalance constraint
+     * @param r1
+     *      The ID of the first replica
+     * @param r2
+     *      The ID of the second replica
+     * @throws IloException 
+     */
+    protected void imbalanceQueryConstraintOrder(QueryPlanDesc desc, int r1, int r2, double beta) 
+                   throws IloException
+    {
+        int q = desc.getStatementID();
+        int idCombine;
+        
+        IloLinearNumExpr expr2; 
+        IloNumVar        var;
+        double           coef;
+        IloLinearNumExprIterator iter;
+        
+        expr2 = super.queryExpr(r2, q, desc);
+        
+        // Y2 * expr1 <= \beta * expr2
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
+            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r1, r2), q, k, 0).getId();
+            expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(idCombine));                    
+        }                
+                    
+        // Index access cost                            
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++)
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    idCombine = poolVariables.get(VAR_COMBINE_X, combineReplicaID(r1, r2), 
+                                           q, k, index.getId()).getId();
+                    expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(idCombine));
+                }   
+        
+        // add -beta time of expr2 
+        // get iterator over exprs[r2]
+        iter = expr2.linearIterator();
+        while (iter.hasNext()) {
+            var = iter.nextNumVar();
+            coef = iter.getValue();
+            expr.addTerm(var, - beta * coef);
+        }
+        cplex.addLe(expr, 0, "imbalance_query_" + numConstraints);
+        numConstraints++;
+    }
+    
+    /**
+     * Implement the constraint for combined variables defined on the given query plan description.
+     * @param desc
+     *  todo
+     * @param r
+     * @param q
+     * @throws IloException 
+     */
+    protected void constraintCombineVariable(QueryPlanDesc desc, int r1, int r2, int q) throws IloException
+    {
+        int idCombine;
+        int idY;
+        int idX;
+        int idSumY;
+        
+        // Y2 (r1) 
+        idSumY = poolVariables.get(VAR_SUM_Y, r2, q, 0, 0).getId();
+        
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r1, r2), q, k, 0).getId();
+            idY       = poolVariables.get(VAR_Y, r1, q, k, 0).getId();
+            constraintCombineVariable(idCombine, idSumY, idY);
+        }
+        
+        // Index access cost                            
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++)
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    
+                    idCombine = poolVariables.get(VAR_COMBINE_X, combineReplicaID(r1, r2), 
+                                           q, k, index.getId()).getId();
+                    idX       = poolVariables.get(VAR_X, r1, q, k, index.getId()).getId();
+                    constraintCombineVariable(idCombine, idSumY, idX);
+                }
+    }
+     
     /**
      * Constraint the variable of type {@code VAR_SUM_Y} to be the summation of corresponding variables
      * of type {@code VAR_Y}
@@ -696,6 +818,87 @@ public class ConstraintDivBIP extends DivBIP
         cplex.addEq(expr, 0, "sum_y" + numConstraints);
         numConstraints++;
     }
+    
+    
+    /**
+     * Impose the set of constraints when replacing the produce of two binary variables 
+     * {@code idFirst} and {@code idSecond} by {@code idCombine}.
+     *  
+     * @param idCombine
+     *      The ID of the combined variable
+     * @param idFirst
+     *      The ID of the first variable
+     * @param idSecond
+     *      The ID of the second variable
+     *      
+     * @throws IloException
+     */
+    private void constraintCombineVariable(int idCombine, int idFirst, int idSecond)
+                throws IloException
+    {
+        IloLinearNumExpr expr;
+        
+        // combine <= idFirst
+        expr = cplex.linearNumExpr();
+        expr.addTerm(1, cplexVar.get(idCombine));            
+        expr.addTerm(-1, cplexVar.get(idFirst));
+        cplex.addLe(expr, 0, "combine_" + numConstraints);
+        numConstraints++;
+        
+        // combine <= idSecond
+        expr = cplex.linearNumExpr();
+        expr.addTerm(1, cplexVar.get(idCombine));            
+        expr.addTerm(-1, cplexVar.get(idSecond));
+        cplex.addLe(expr, 0, "combine_" + numConstraints);
+        numConstraints++;
+        
+        // combine >= idFirst + idSecond - 1
+        expr = cplex.linearNumExpr();
+        expr.addTerm(1, cplexVar.get(idCombine));            
+        expr.addTerm(-1, cplexVar.get(idFirst));
+        expr.addTerm(-1, cplexVar.get(idSecond));
+        cplex.addGe(expr, -1, "combine_" + numConstraints);
+        numConstraints++;
+    }
+    
+    /**
+     * Construct a ``pseudo'' ID of a replica that is a combination of a replica with the identifier
+     * {@code id} and a replica {@code failID} that is failed.
+     * 
+     * @param id
+     *      The replica that is alive
+     * @param failID
+     *      The replica that fails.
+     *      
+     * @return
+     *      The 'pseudo'' ID 
+     */
+    protected int combineReplicaID(int id, int failID)
+    {
+        return (id * 1000 + failID);
+    }
+    
+    /**
+     * Impose the imbalance constraints when any one of the replicas fail.
+     * 
+     * @param beta
+     *      The imbalance factor,
+     *      
+     * @throws IloException
+     */
+    protected void nodeFailures(double beta) throws IloException
+    {
+        for (int r = 0; r < nReplicas; r++)
+            for (QueryPlanDesc desc : queryPlanDescs)
+                sumYConstraint(r, desc.getStatementID(), desc);
+        
+        for (int failR = 0; failR < nReplicas; failR++)
+            nodeFailureConstraint(failR, beta);
+        
+    }
+    
+    
+    
     /**
      * Construct the set of imbalance factor when the replica with the ID {@code failR} fails.
      * 
@@ -793,65 +996,5 @@ public class ConstraintDivBIP extends DivBIP
         
         return expr;
     }
-    
-    /**
-     * Impose the set of constraints when replacing the produce of two binary variables 
-     * {@code idFirst} and {@code idSecond} by {@code idCombine}.
-     *  
-     * @param idCombine
-     *      The ID of the combined varible
-     * @param idFirst
-     *      The ID of the first variable
-     * @param idSecond
-     *      The ID of the second variable
-     *      
-     * @throws IloException
-     */
-    private void constraintCombineVariable(int idCombine, int idFirst, int idSecond)
-                throws IloException
-    {
-        IloLinearNumExpr expr;
-        
-        // combine <= idFirst
-        expr = cplex.linearNumExpr();
-        expr.addTerm(1, cplexVar.get(idCombine));            
-        expr.addTerm(-1, cplexVar.get(idFirst));
-        cplex.addLe(expr, 0, "combine_" + numConstraints);
-        numConstraints++;
-        
-        // combine <= idSecond
-        expr = cplex.linearNumExpr();
-        expr.addTerm(1, cplexVar.get(idCombine));            
-        expr.addTerm(-1, cplexVar.get(idSecond));
-        cplex.addLe(expr, 0, "combine_" + numConstraints);
-        numConstraints++;
-        
-        // combine >= idFirst + idSecond - 1
-        expr = cplex.linearNumExpr();
-        expr.addTerm(1, cplexVar.get(idCombine));            
-        expr.addTerm(-1, cplexVar.get(idFirst));
-        expr.addTerm(-1, cplexVar.get(idSecond));
-        cplex.addGe(expr, -1, "combine_" + numConstraints);
-        numConstraints++;
-    }
-    
-    /**
-     * Construct a ``pseudo'' ID of a replica that is a combination of a replica with the identifier
-     * {@code id} and a replica {@code failID} that is failed.
-     * 
-     * @param id
-     *      The replica that is alive
-     * @param failID
-     *      The replica that fails.
-     *      
-     * @return
-     *      The 'pseudo'' ID 
-     */
-    protected int combineReplicaID(int id, int failID)
-    {
-        return (id * 1000 + failID);
-    }
-    
-    
 }
         
