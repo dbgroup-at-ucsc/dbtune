@@ -1,158 +1,121 @@
 package edu.ucsc.dbtune.advisor.db2;
 
+import java.sql.CallableStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.Set;
+
+import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.Advisor;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
+
 /**
- * Generates a recommendation according to the db2advis program
+ * Generates a recommendation according to the db2advis program.
  * 
- * This is a typical invocation:
- * 
- *    db2advis -d karlsch -i workload.txt -m I -l -1 -k OFF -f -o recommendation.txt -a karlsch/****
- * 
- * Where
- *   -d karlsch = use database "karlsch"
- *   -i workload.txt = use queries in workload.txt
- *   -m I = recommend indexes
- *   -l -1 = no space budget
- *   -k OFF = no workload compression
- *   -f = drop previously existing simulated catalog tables (???)
- *   -o recommendation.xml = put recommendation into recommendation.xml
- *   -a karlsch/**** = username/password
- *   
- * The workload file must be an SQL file with semicolon-delimited queries 
- * We don't create an output xml file ... just read the db2advis output directly 
+ * @author Ivo Jimenez
  */
-//todo(Huascar) make it a stateful object rather than leaving it like a util class.
-public class DB2Advisor
+public class DB2Advisor extends Advisor
 {
-    /*
-    private static final Pattern INDEX_HEADER_PATTERN    = Pattern.compile("^-- index\\[\\d+\\],\\s+(.+)MB");
-    private static final Pattern INDEX_STATEMENT_PATTERN = Pattern.compile("^\\s*CREATE.+(IDX\\d*)\\\"");
-    private static final Pattern START_INDEXES_PATTERN   = Pattern.compile("^-- LIST OF RECOMMENDED INDEXES");
-    private static final Pattern END_INDEXES_PATTERN     = Pattern.compile("^-- RECOMMENDED EXISTING INDEXES");
+    private DatabaseSystem dbms;
 
-    public static FileInfo createAdvisorFile(Connection conn, String advisorPath, int budget, File workloadFile) throws IOException, SQLException
+    /**
+     * constructor.
+     * 
+     * @param dbms
+     *      system connected representing a DB2 instance
+     * @throws SQLException
+     *      if the underlaying DBMS is not a DB2 instance
+     */
+    public DB2Advisor(DatabaseSystem dbms)
+        throws SQLException
     {
-        final String cmd = getCmd(advisorPath, budget, workloadFile, false);
-        final String cleanCmd = getCmd(advisorPath, budget, workloadFile, true);
-
-        Process prcs = Runtime.getRuntime().exec(cmd);
-        
-        FileInfo info;
-        InputStream in   = new BufferedInputStream(prcs.getInputStream());
-        InputStream err  = new BufferedInputStream(prcs.getErrorStream());
-        String errString = "";
-        try {
-            info        = new FileInfo(in);
-            errString   = Files.readStream(err);
-        } finally {
-            in.close();
-            err.close();
-        }
-        
-        while (true) {
-            try {
-                prcs.waitFor();
-                break;
-            } catch (InterruptedException e) {
-            }
-        }
-        int rc = prcs.exitValue();
-        if (rc != 0){
-            throw new SQLException("db2advis returned code "+rc+"\n"+errString);
-        }
-        
-        return info;
+        this.dbms = dbms;
     }
 
-    private static String getCmd(String advisorPath, int budget, File inFile, boolean clean)
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void process(Workload workload) throws SQLException
     {
-        throw new RuntimeException("not implemented yet"); // will fix later
+        Statement stmt = dbms.getConnection().createStatement();
 
-        final String db   = Environment.getInstance().getDatabaseName();
-        final String pw   = Environment.getInstance().getPassword();
-        final String user = Environment.getInstance().getUsername();
-        
-        return advisorPath
-               +" -d "+db
-               +" -a "+user+"/"+(clean?"****":pw)
-               +" -i "+inFile
-               +" -l "+budget
-               +" -m I -f -k OFF";
+        stmt.execute("DELETE FROM systools.advise_index");
+        stmt.execute("DELETE FROM systools.advise_workload");
+
+        int i = 0;
+
+        for (SQLStatement sql : workload)
+            stmt.execute(
+                    "INSERT INTO systools.advise_workload VALUES(" +
+                    "   'dbtuneworkload'," +
+                    "    " + i++ + ", " +
+                    "   '" + sql.getSQL().replace("'", "''") + "'," +
+                    "   '',1,0,0,0,0,'')");
+
+        stmt.close();
     }
-    
-    public static class FileInfo
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void process(SQLStatement sql) throws SQLException
     {
-        List<IndexInfo> indexList;
-        
-        @SuppressWarnings("unused")
-        private String output;
-        
-        private FileInfo(InputStream stream) throws IOException, SQLException
-        {
-            indexList = new ArrayList<IndexInfo>();
-            output    = processFile(stream, indexList);
-        }
-        
-        public Configuration getCandidates(Connection conn) throws SQLException
-        {
-            throw new SQLException("not implemented yet");
-        }
-        
-        public int getMegabytes()
-        {
-            double total = 0;
-            for (IndexInfo info : indexList) 
-                total += info.megabytes;
-            return (int) Math.round(total);
-        }
-        
-        private static String processFile(InputStream stream, List<IndexInfo> indexList) throws IOException, SQLException
-        { 
-            List<String> lines = Files.getLines(stream); // splits the file into individual lines
-            Iterator<String> iter   = lines.iterator();
-            Matcher headerMatcher   = INDEX_HEADER_PATTERN.matcher("");
-            Matcher startMatcher    = START_INDEXES_PATTERN.matcher("");
-            Matcher endMatcher      = END_INDEXES_PATTERN.matcher("");
-            Matcher createMatcher   = INDEX_STATEMENT_PATTERN.matcher("");
-            while (iter.hasNext()) {
-                String line = iter.next();
-                startMatcher.reset(line);
-                if (startMatcher.find())
-                    break;
-            }
+        throw new SQLException("Can't recommend single statements");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Set<Index> getRecommendation() throws SQLException
+    {
+        int budget = Environment.getInstance().getSpaceBudget();
+
+        CallableStatement stmt =
+            dbms.getConnection().prepareCall(
+                "CALL SYSPROC.DESIGN_ADVISOR(" +
+                "   ?, ?, ?, blob(' " +
+                "      <?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "      <plist version=\"1.0\"> " +
+                "         <dict> " +
+                "            <key>CMD_OPTIONS</key>" +
+                "            <string>" +
+                "               -workload  dbtuneworkload " +
+                "               -disklimit " + budget +
+                "               -type      I " +
+                "               -compress  OFF " +
+                "               -drop" +
+                "            </string>" +
+                "         </dict>" +
+                "      </plist>'), " +
+                "   NULL, ?, ?)");
+
+        stmt.setInt(1, 1);
+        stmt.setInt(2, 0);
+        stmt.setString(3, "en_US");
+        stmt.registerOutParameter(4, Types.BLOB);
+        stmt.registerOutParameter(5, Types.BLOB);
+        stmt.execute();
+
+        // get size of recommendation
+        /*
+        ResultSet rs = stmt.getResultSet();
+
+        double space = 0;
+        while (rs.next())
+            space += rs.getDouble("diskuse");
             
-            String str = "";
-            while (iter.hasNext()) {
-                String line = iter.next();
-                endMatcher.reset(line);
-                if (endMatcher.find())
-                    break;
-                else {
-                    headerMatcher.reset(line);
-                    if (headerMatcher.find()) {
-                        createMatcher.reset(iter.next()); // advanced iterator! 
-                        if (!createMatcher.find())
-                            throw new SQLException("Unexpected advisor file format");
-                        
-                        String indexName = createMatcher.group(1);
-                        double indexMegabytes = Double.parseDouble(headerMatcher.group(1));
-                        indexList.add(new IndexInfo(indexName, indexMegabytes));
-                    }
-                }
-                str += line + "\n";
-            }
-            return str;
-        }
+        rs.close();
+        stmt.close();
+        */
+
+        return DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog());
     }
-    
-    private static class IndexInfo
-    {
-        String name;
-        double megabytes;
-        
-        IndexInfo(String n, double m) {
-            name = n;
-            megabytes = m;
-        }
-    }
-    */
 }

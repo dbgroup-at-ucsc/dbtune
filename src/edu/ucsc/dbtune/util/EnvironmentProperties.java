@@ -112,6 +112,12 @@ public final class EnvironmentProperties
 
 
     /**
+     * Budget, in megabytes, for physical design.
+     */
+    public static final String SPACE_BUDGET = "space.budget";
+
+
+    /**
      * Type of candidate generator to use. Two generators can be specified (separating them with 
      * comma) if the one accepts another generator as a construction parameter. By convention, a 
      * generator in the right is the parameter of the one in the left.

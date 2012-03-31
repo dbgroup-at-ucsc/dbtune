@@ -32,17 +32,17 @@ CREATE TABLE movies.users (
     email       VARCHAR(30),
     password    VARCHAR(20),
     ufirstname  VARCHAR(20),
-    ulastname   VARCHAR(20),
-    PRIMARY KEY (userid)
+    ulastname   VARCHAR(20)
+    --PRIMARY KEY (userid)
 );
 
 CREATE TABLE movies.creditcards (
     userid      INTEGER NOT NULL,
     creditnum   BIGINT,
     credittype  VARCHAR(16),
-    expdate     DATE,
-    PRIMARY KEY (userid),
-    FOREIGN KEY (userid) REFERENCES movies.users(userid) ON DELETE CASCADE
+    expdate     DATE
+    --PRIMARY KEY (userid),
+    --FOREIGN KEY (userid) REFERENCES movies.users(userid) ON DELETE CASCADE
 );
 
 CREATE TABLE movies.movies (
@@ -50,50 +50,50 @@ CREATE TABLE movies.movies (
     title       VARCHAR(50),
     yearofr     DATE,
     summary     VARCHAR(1024),
-    url         VARCHAR(50) DEFAULT 'unknown',
-    PRIMARY KEY (movieid)
+    url         VARCHAR(50) DEFAULT 'unknown'
+    --PRIMARY KEY (movieid)
 );
 
 CREATE TABLE movies.genres (
     mgenre      VARCHAR(20) NOT NULL,
-    movieid     INTEGER NOT NULL,
-    PRIMARY KEY (mgenre, movieid),
-    FOREIGN KEY (movieid) REFERENCES movies.movies(movieid) ON DELETE CASCADE
+    movieid     INTEGER NOT NULL
+    --PRIMARY KEY (mgenre, movieid),
+    --FOREIGN KEY (movieid) REFERENCES movies.movies(movieid) ON DELETE CASCADE
 );
 
 CREATE TABLE movies.actors (
     aid         INTEGER NOT NULL,
     afirstname  VARCHAR(20),
     alastname   VARCHAR(20),
-    dateofb     DATE,
-    PRIMARY KEY (aid)
+    dateofb     DATE
+    --PRIMARY KEY (aid)
 );
 
 CREATE TABLE movies.casts (
     aid         INTEGER NOT NULL,
-    movieid     INTEGER NOT NULL,
-    PRIMARY KEY (aid, movieid),
-    FOREIGN KEY (aid) REFERENCES movies.actors(aid) ON DELETE CASCADE,
-    FOREIGN KEY (movieid) REFERENCES movies.movies(movieid) ON DELETE CASCADE
+    movieid     INTEGER NOT NULL
+    --PRIMARY KEY (aid, movieid),
+    --FOREIGN KEY (aid) REFERENCES movies.actors(aid) ON DELETE CASCADE,
+    --FOREIGN KEY (movieid) REFERENCES movies.movies(movieid) ON DELETE CASCADE
 );
 
 CREATE TABLE movies.queue (
     userid      INTEGER NOT NULL,
     movieid     INTEGER NOT NULL,
     position    INTEGER NOT NULL,
-    times       timestamp NOT NULL,
-    PRIMARY KEY (times, movieid, userid),
-    FOREIGN KEY (movieid) REFERENCES movies.movies(movieid) ON DELETE CASCADE,
-    FOREIGN KEY (userid) REFERENCES movies.users(userid) ON DELETE CASCADE
+    times       timestamp NOT NULL
+    --PRIMARY KEY (times, movieid, userid),
+    --FOREIGN KEY (movieid) REFERENCES movies.movies(movieid) ON DELETE CASCADE,
+    --FOREIGN KEY (userid) REFERENCES movies.users(userid) ON DELETE CASCADE
 );
 
 CREATE TABLE movies.ratings (
     userid      INTEGER NOT NULL,
     movieid     INTEGER,
     rate        INTEGER,
-    review      VARCHAR(256) NOT NULL,
-    FOREIGN KEY (userid) REFERENCES movies.users(userid) ON DELETE CASCADE,
-    FOREIGN KEY (movieid) REFERENCES movies.movies(movieid) ON DELETE CASCADE
+    review      VARCHAR(256) NOT NULL
+    --FOREIGN KEY (userid) REFERENCES movies.users(userid) ON DELETE CASCADE,
+    --FOREIGN KEY (movieid) REFERENCES movies.movies(movieid) ON DELETE CASCADE
 );
 
 INSERT INTO movies.users(userid, email, password, ufirstname, ulastname) VALUES (1,'john.doe@unknown.com', '123456','john','doe');

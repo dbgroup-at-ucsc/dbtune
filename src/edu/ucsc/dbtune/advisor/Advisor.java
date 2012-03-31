@@ -5,6 +5,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 /**
  * Represents an advisor that recommends physical design modifications.
@@ -14,7 +15,18 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 public abstract class Advisor
 {
     /**
-     * Adds a query to the set of queries that are considered for recommendation.
+     * Adds the statements contained in a workload to the set of statements that are considered for 
+     * recommendation.
+     *
+     * @param workload
+     *      sql statements
+     * @throws SQLException
+     *      if the given statements can't be processed
+     */
+    public abstract void process(Workload workload) throws SQLException;
+
+    /**
+     * Adds an element to the set of statements that are considered for recommendation.
      *
      * @param sql
      *      sql statement

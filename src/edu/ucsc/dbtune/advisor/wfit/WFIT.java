@@ -11,6 +11,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 /**
  * XXX #110 class Selector from Karl's repository should replace WFIT, since that's were the truly 
@@ -47,6 +48,22 @@ public class WFIT extends Advisor
                 maxNumIndexes);
         this.overheads = new ArrayList<Double>();
         this.configurations = new ArrayList<Set<Index>>();
+    }
+
+    /**
+     * Adds the statements contained in a workload to the set of statements that are considered for 
+     * recommendation.
+     *
+     * @param workload
+     *      sql statements
+     * @throws SQLException
+     *      if the given statements can't be processed
+     */
+    @Override
+    public void process(Workload workload) throws SQLException
+    {
+        for (SQLStatement sql : workload)
+            process(sql);
     }
 
     /**

@@ -122,13 +122,14 @@ public class DB2Optimizer extends AbstractOptimizer
     @Override
     public Set<Index> recommendIndexes(SQLStatement sql) throws SQLException
     {
-        Statement stmt = connection.createStatement();
-
         clearAdviseAndExplainTables(connection);
+
+        Statement stmt = connection.createStatement();
 
         stmt.execute("SET CURRENT EXPLAIN MODE = RECOMMEND INDEXES");
         stmt.execute(sql.getSQL());
         stmt.execute("SET CURRENT EXPLAIN MODE = NO");
+        stmt.close();
 
         Set<Index> recommended = readAdviseIndexTable(connection, catalog);
 
@@ -850,12 +851,11 @@ public class DB2Optimizer extends AbstractOptimizer
 
         Schema schema = catalog.findSchema(dboSchema);
 
-        if (schema != null)
-            // it's a table
-            dbo = schema.findTable(dboName);
-        else if (dboSchema.equalsIgnoreCase("SYSTEM"))
+        if (schema == null && dboSchema.equalsIgnoreCase("SYSTEM"))
             // SYSTEM means that it's in the ADVISE_INDEX table; at least that's what we can infer
             dbo = catalog.findByQualifiedName(dboName);
+        else if (schema != null)
+            dbo = schema.findByQualifiedName(dboName);
         else
             throw new SQLException("Impossible to look for " + dboSchema + "." + dboName);
 
@@ -1050,7 +1050,7 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    private static Set<Index> readAdviseIndexTable(Connection connection, Catalog catalog)
+    public static Set<Index> readAdviseIndexTable(Connection connection, Catalog catalog)
         throws SQLException
     {
         Statement stmt = connection.createStatement();
