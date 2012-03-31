@@ -3,15 +3,13 @@ package edu.ucsc.dbtune.bip.div;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 
-
-import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-
-import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_DEPLOY;
@@ -20,75 +18,52 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_MOD;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 
-public class ElasticDivBIP extends DivBIP 
+public class ElasticDivBIP extends DivBIP implements ElasticDivergent
 {  
-    private int     Ndeploys;
-    private int     inputNdeploys;
-    private int     inputNreplicas;
-    private boolean isExpand;
-    
-    private double  upperCDeploy;
-    
-    private Map<String, Integer> mapVarDeployToReplica;
-    
-    /** Map index to the set of replicas that this index is deploy at the initial
-     * setting. */
-    private Map<Index, Set<Integer>> materializedIndexReplica;
-    
+    private int     nDeploys;
+    private int     nDeployVar;
+    private double  deployCost;
     
     /** 
-     * Shrink Replicas Divergent index tuning
-     *     
-     * @param listWorkload
-     *      Each entry of this list is a list of SQL Statements that belong to a same schema
-     * @param candidateIndexes
-     *      List of candidate indexes (the same at each replica)
-     * @param mapIndexesReplicasInitialSetUp
-     *      The mapping of indexes materialized at each replica in the inital configuration     
-     * @param Nreplicas
-     *      The number of replicas
-     * @param Ndeploys
-     *      The number of replicas to deploy ( <= Nreplicas)     
-     * @param loadfactor
-     *      Load balancing factor
-     * @param upperCdeploy
-     *      The maximum deployment cost
-     * 
-     * @return
-     *      A set of indexes to be materialized at each replica
-     * @throws SQLException 
-     * 
-     * {\b Note}: {@code listPreparators} will be removed when this class is fully implemented
-     */
-    public ElasticDivBIP(int Nreplicas, int loadfactor, double B, int Ndeploys, double upperCDeploy,
-                        Map<Index, Set<Integer>> materializedIndexReplica) 
-    {
-        //super(Nreplicas, loadfactor, B);
-        
-        // the set of indexes materialized in the initial configuraiton
-        this.materializedIndexReplica = materializedIndexReplica;
-
-        // numbers
-        this.Ndeploys       = Ndeploys;        
-        this.inputNdeploys  = Ndeploys;
-        this.inputNreplicas = Nreplicas;
-        this.upperCDeploy   = upperCDeploy;
-        
-        if (Ndeploys > Nreplicas) {
-            isExpand = true;
-            // Expand replica cases
-            // swap between Nreplicas and Ndeploys
-            this.nReplicas = this.inputNdeploys;
-            this.Ndeploys = this.inputNreplicas;
-        } else
-            isExpand = false;
-        
-        // Expand replica cases
-        // swap between Nreplicas and Ndeploys
-        if (Ndeploys > Nreplicas)
-            this.nReplicas = Ndeploys;
-    }
+     * Map index to the set of replicas that this index is deploy at the initial
+     * setting. 
+     **/
+    private Map<Index, Set<Integer>> initialIndexReplica;
     
+    
+    @Override
+    public void setDeployCost(double cost) 
+    {
+        deployCost = cost;
+    }
+
+    @Override
+    public void setInitialConfiguration(DivConfiguration div) 
+    {
+        nReplicas  = div.getNumberReplicas();
+        loadfactor = div.getLoadFactor();
+        
+        initialIndexReplica = new HashMap<Index, Set<Integer>>();
+        
+        for (int r = 0; r < div.getNumberReplicas(); r++) 
+            for (Index index : div.indexesAtReplica(r)) {
+                
+                Set<Integer> replicas = initialIndexReplica.get(index);
+                if (replicas == null)
+                    replicas = new HashSet<Integer>();
+                
+                replicas.add(r);
+                initialIndexReplica.put(index, replicas);
+            
+            }
+    }
+
+    @Override
+    public void setNumberDeployReplicas(int n) 
+    {
+        nDeploys = n;
+        nDeployVar = (nReplicas > nDeploys) ? nReplicas : nDeploys;
+    }
     
     @Override
     protected void buildBIP()  
@@ -98,87 +73,110 @@ public class ElasticDivBIP extends DivBIP
         try {
             // 1. Add variables into list
             constructVariablesElastic();
+            createCplexVariable(poolVariables.variables());
             
             // 2. Construct the query cost at each replica
             totalCost();
             
             // 3. Atomic constraints
-            if (!isExpand)
-                atomicInternalPlanShrinkReplicas();
-            else 
-                ;
-                //atomicInternalPlanConstraints();
-            
-            //atomicAcessCostConstraints();      
+            atomicConstraints();
             
             // 4. Number of replicas constraint
-            if (!isExpand) 
-                shrinkReplicas();
+            numReplicaConstraint();
+       
+            // 5. Index deploy
+            indexDeployReplica();
             
-            // 5. Deployment cost
+            // 6. Deployment cost
             deployCostConstraints();
             
-            // 6. Top-m best cost 
+            // 7. Top-m best cost 
             topMBestCostConstraints();    
+        
+            // 8. space constraints
+            spaceConstraints();
         }
         catch (IloException e) {
             e.printStackTrace();
         }
     }
    
+    /**
+     * Construct variables for the elastic divergent index tuning problem.
+     * 
+     * @throws IloException
+     */
     private void constructVariablesElastic() throws IloException
     {
         super.constructVariables();
-        
-        mapVarDeployToReplica = new HashMap<String, Integer>();
-        
-        // for TYPE_DEPLOY for shrink replicas
-        if (isExpand == false)
-            for (int r = 0; r < nReplicas; r++) {
-               DivVariable var = poolVariables.createAndStore(VAR_DEPLOY, r, 0, 0, 0);
-               mapVarDeployToReplica.put(var.getName(), r);
-            }
-
+         
+        for (int r = 0; r < nDeployVar; r++) 
+            poolVariables.createAndStore(VAR_DEPLOY, r, 0, 0, 0);
         
         // for div_a and mod_a
         for (Index index : candidateIndexes)            
             for (int r = 0; r < nReplicas; r++) {                
-                poolVariables.createAndStore(VAR_DIV, r, index.getId(), 0, 0);                 
-                poolVariables.createAndStore(VAR_MOD, r, index.getId(), 0, 0);
+                poolVariables.createAndStore(VAR_DIV, r, 0, 0, index.getId());                 
+                poolVariables.createAndStore(VAR_MOD, r, 0, 0, index.getId());
             }
     }
     
     
     /**
-     * Constraints on internal plans: 
-     *      \sum_{k \in [1, Kq]} y^r_{qk} <= deploy_r
-     * @throws IloException 
-     *      
+     * Internal atomic constraints: only one template plan is chosen to compute {@code cost(q,r)}.
+     * In addition, if replica r is not deploy, {@code cost(q,r) = 0}.
+     *  
+     * @param r
+     *     Replica ID
+     * @param q
+     *     Statement ID
+     * @param desc
+     *     The query plan description        
+     *  
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX.
      */
-    protected void atomicInternalPlanShrinkReplicas() throws IloException
-    {   
-        IloLinearNumExpr expr; 
+    @Override
+    protected void internalAtomicConstraint(int r, int q, QueryPlanDesc desc) throws IloException
+    {
+        IloLinearNumExpr expr;
         int idY;
         int idD;
-        int q;
         
-        for (QueryPlanDesc desc : queryPlanDescs){
-            
-            q = desc.getStatementID();
+        // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
+        expr = cplex.linearNumExpr();
+        idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
+        expr.addTerm(-1, cplexVar.get(idD));
         
-            for (int r = 0; r < nReplicas; r++) {
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            expr.addTerm(1, cplexVar.get(idY));
+        }
+        
+        cplex.addLe(expr, 0, "atomic_internal_" + numConstraints);
+        numConstraints++;
+    }
+    
+    /**
+     * An index is not used if the corresponding replica is not deployed.
+     * 
+     * @throws IloException
+     */
+    protected void indexDeployReplica() throws IloException
+    {
+        IloLinearNumExpr expr;
+        int idD;
+        int idS;
+        
+        for (int r = 0; r < nReplicas; r++) {
+            idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
+            for (Index index : candidateIndexes) {
+                idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
                 
                 expr = cplex.linearNumExpr();
-                idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
+                expr.addTerm(1, cplexVar.get(idS));
                 expr.addTerm(-1, cplexVar.get(idD));
-                
-                // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
-                    expr.addTerm(1, cplexVar.get(idY));
-                }
-                
-                cplex.addLe(expr, 0);
+                cplex.addLe(expr, 0, "deploy_" + numConstraints);
                 numConstraints++;
             }
         }
@@ -191,27 +189,26 @@ public class ElasticDivBIP extends DivBIP
      * @throws IloException 
      * 
      */
-    protected void shrinkReplicas() throws IloException
+    protected void numReplicaConstraint() throws IloException
     {   
         IloLinearNumExpr expr = cplex.linearNumExpr();        
         int idD;
         
-        for (int r = 0; r < nReplicas; r++){
+        for (int r = 0; r < nDeployVar; r++){
             idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
             expr.addTerm(1, cplexVar.get(idD));
         }
         
-        cplex.addLe(expr, Ndeploys);
+        cplex.addLe(expr, nDeploys);
         numConstraints++;
     }
     
     /**
      * Deploy cost to materialize indexes:
      *      2 div^r_a + mod^r_a - s^r_a = 1 - s^r_{a, 0}     
-     *      Cdeploy = \sum_{r \in [1, Nreplicas} \sum_{a \in Ccand} div^r_a cost(a)
-     *      
+     *      cost = \sum_{r \in [1, Nreplicas} \sum_{a \in Ccand} div^r_a cost(a)
+     * Here, s^r_{a, 0} is given as a part of the input
      * 
-     * {\b Note}:  s^r_{a, 0} is given as a part of the input
      * @throws IloException 
      */
     protected void deployCostConstraints() throws IloException
@@ -226,9 +223,16 @@ public class ElasticDivBIP extends DivBIP
         int rhs; // 1 - s^r_{a,0}
         
         for (Index index : candidateIndexes) {
-            initialReplicas = materializedIndexReplica.get(index);
+            
+            if (index instanceof FullTableScanIndex)
+                continue;
+            
+            initialReplicas = initialIndexReplica.get(index);
+            if (initialReplicas == null)
+                initialReplicas = new HashSet<Integer>();
             
             for (int r = 0; r < nReplicas; r++) {
+                
                 idDiv = poolVariables.get(VAR_DIV, r, 0, 0, index.getId()).getId();
                 idMod = poolVariables.get(VAR_MOD, r, 0, 0, index.getId()).getId();
                 idS   = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
@@ -241,47 +245,10 @@ public class ElasticDivBIP extends DivBIP
                 cplex.addEq(expr, rhs);
                 
                 exprDeploy.addTerm(index.getCreationCost(), cplexVar.get(idDiv));
+            
             }
         }
         
-        cplex.addLe(exprDeploy, upperCDeploy);  
-    }
-
-    
-   
-    /**
-     * The method reads the value of variables corresponding to the presence of indexes
-     * at each replica and returns this list of indexes to materialize at each replica
-     * 
-     * @return
-     *      List of indexes to be materialized at each replica
-     */
-    @Override
-    protected IndexTuningOutput getOutput() 
-    {
-        
-        DivConfiguration conf = new DivConfiguration(nReplicas, loadfactor);
-        /*
-        Map<Integer, Integer> mapDeployedReplicas = new HashMap<Integer, Integer>();
-        
-        for (Entry<String, Integer> pairVarVal : super.mapVariableValue.entrySet()) {
-            if (pairVarVal.getValue() == 1) {
-                DivVariable divVar = (DivVariable) this.poolVariables.get(pairVarVal.getKey());
-                if (divVar.getType() == DivVariablePool.VAR_DEPLOY){
-                    mapDeployedReplicas.put(new Integer(divVar.getReplica()), new Integer(1));
-                }
-                if (divVar.getType() == DivVariablePool.VAR_S){
-                    // only the replicas that will be deployed
-                    if (mapDeployedReplicas.containsKey(new Integer(divVar.getReplica())) == false) {
-                        continue;
-                    }
-                    // TODO: only record the normal indexes
-                    conf.addMaterializedIndexAtReplica(divVar.getReplica(), mapVarSToIndex.get(pairVarVal.getKey()));
-                    
-                }
-            }
-        } 
-        */
-        return conf;
-    }
+        cplex.addLe(exprDeploy, deployCost);  
+    }    
 }

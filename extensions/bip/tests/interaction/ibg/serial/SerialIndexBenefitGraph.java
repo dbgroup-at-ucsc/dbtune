@@ -43,6 +43,8 @@ public class SerialIndexBenefitGraph implements Serializable {
 	private static Catalog catalog;
 	
 	public static double timeINUM = 0.0;
+	public static double timeMatching = 0.0;
+	
 	/**
 	 * Set the candidate indexes
 	 * @param indexes
@@ -207,10 +209,18 @@ public class SerialIndexBenefitGraph implements Serializable {
         Queue<IBGNode> queue = new Queue<IBGNode>();
         queue.add(rootNode);
         
-        PreparedSQLStatement prepare = optimizer.prepareExplain(sql); 
-        Set<Index> configIndexes;
-        double startTimer = 0.0;
+        double startInum = 0.0;
+        double startMatching = 0.0;
+        double timeMatchingStep = 0.0;
         
+        // TODO: time to populate INUM space
+        startInum = System.currentTimeMillis();
+        PreparedSQLStatement prepare = optimizer.prepareExplain(sql); 
+        timeINUM += (System.currentTimeMillis() - startInum);
+        // end computing time to populate INUM space
+        
+        Set<Index> configIndexes;
+                
         while (!queue.isEmpty()) {
 
             IBGNode newNode, coveringNode;
@@ -227,10 +237,14 @@ public class SerialIndexBenefitGraph implements Serializable {
             }
             else {
                 configIndexes = transform(newNode.config);
-                startTimer = System.currentTimeMillis();
+                // TODO: Matching time ---------------------------------------------------
+                startMatching = System.currentTimeMillis();
                 stmt = prepare.explain(configIndexes);
                 totalCost = stmt.getSelectCost();
-                timeINUM += (System.currentTimeMillis() - startTimer);
+                timeMatchingStep =  System.currentTimeMillis() - startMatching;
+                timeMatching += timeMatchingStep;
+                timeINUM += timeMatchingStep;
+                // ----------------------------------------------------------------------
                 
                 for (Index index : stmt.getUsedConfiguration()) {
                     // match by content
@@ -277,9 +291,13 @@ public class SerialIndexBenefitGraph implements Serializable {
         }
         
         //double emptyCost = conn.whatifOptimize(xacts, new BitSet(), tempUsedIndexes);
-        startTimer = System.currentTimeMillis();
+        // TODO: time for matching strategy ---------------------------------------------- 
+        startMatching = System.currentTimeMillis();
         double emptyCost = prepare.explain(new HashSet<Index>()).getSelectCost(); 
-        timeINUM += (System.currentTimeMillis() - startTimer);
+        timeMatchingStep =  System.currentTimeMillis() - startMatching;
+        timeMatching += timeMatchingStep;
+        timeINUM += timeMatchingStep;
+        // ----------------------------------------------------------------------------
         return new SerialIndexBenefitGraph(rootNode, emptyCost, allUsedIndexes, nodeCount);
     }
 	

@@ -206,7 +206,7 @@ public class OptimizerTest
         assertThat(cost1, is(cost2));
 
         try {
-        // XXX: issue #106 is causing this to fail for MySQLOptimizer {
+        // XXX: issue #106, #144, #247 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
                 !(opt instanceof IBGOptimizer) &&
                 !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
@@ -307,7 +307,7 @@ public class OptimizerTest
         assertThat(sqlp.getOptimizationCount(), is(1));
 
         try {
-        // XXX: issue #106 is causing this to fail for MySQLOptimizer {
+        // XXX: issue #106, #144, #247 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
                 !(opt instanceof IBGOptimizer) &&
                 !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
@@ -339,13 +339,9 @@ public class OptimizerTest
         assertThat(sqlp.getUsedConfiguration().isEmpty(), is(false));
         assertThat(sqlp.getUsedConfiguration().size(), is(1));
         assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
-
-        // XXX: issue #142 is causing this to fail for DB2Optimizer {
-        if (!(opt instanceof DB2Optimizer)) {
+        assertThat(sqlp.getUpdatedTable(), is(idxa.getTable()));
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(false));
         assertThat(sqlp.getUpdatedConfiguration(), is(conf));
-        }
-        // }
         assertThat(sqlp.getOptimizationCount(), is(1));
         }
         // }
@@ -369,11 +365,6 @@ public class OptimizerTest
     protected static void checkRecommendIndexes(Optimizer opt) throws Exception
     {
         try {
-        // XXX: issue #105 is causing this to fail for MySQLOptimizer {
-        if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) &&
-                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
-        {
         SQLStatement sql;
         Set<Index> rec;
         
@@ -382,6 +373,19 @@ public class OptimizerTest
 
         assertThat(rec.isEmpty(), is(false));
 
+        // XXX: issues #240, #241 is causing this to fail for all except DB2Optimizer {
+        if (getBaseOptimizer(opt) instanceof DB2Optimizer) {
+        for (Index i : rec) {
+            assertThat(i.getCreationCost(), is(greaterThan(0.0)));
+            assertThat(i.getBytes(), is(greaterThan(0l)));
+        }
+        }
+
+        // XXX: issue #106, #144, #247 is causing this to fail for these {
+        if (!(opt instanceof MySQLOptimizer) &&
+                !(opt instanceof IBGOptimizer) &&
+                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
+        {
         sql = new SQLStatement("UPDATE one_table.tbl SET a = -1 WHERE a = 5");
         rec = opt.recommendIndexes(sql);
 
@@ -532,7 +536,7 @@ public class OptimizerTest
         assertThat(exp2, is(exp2));
 
         try {
-        // issue #106 is causing this to fail for MySQLOptimizer {
+        // XXX: issue #106, #144, #247 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
                 !(opt instanceof IBGOptimizer) &&
                 !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))

@@ -57,6 +57,7 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
     private static String         folder;
     private static String         dbName;
     private static String         tableOwner;
+    private static String         subFolder;
     
     private static Set<Index> oneColumnCandidates;  
     private static Set<Index> optimalCandidates;
@@ -65,9 +66,9 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
     public static int   MAX_NUM_INDEX = 300;
     public static List<Generation.Strategy> strategies = 
                     Arrays.asList( 
-                                  Generation.Strategy.UNION_OPTIMAL
+                            // Generation.Strategy.UNION_OPTIMAL
                                   //, Generation.Strategy.OPTIMAL_1C
-                                  // , Generation.Strategy.POWER_SET
+                                  Generation.Strategy.POWER_SET
                                   );
     public static double[] deltas = new double[] {
                                     //0.01, 
@@ -81,12 +82,24 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
     @BeforeClass
     public static void beforeClassSetUp() throws Exception
     {
+        
         en = Environment.getInstance();
         db = newDatabaseSystem(en);
-        workload = workload(en.getWorkloadsFoldername() + "/tpcds-small");
-        folder = en.getWorkloadsFoldername() + "/tpcds-small";
+        subFolder = "tpcds-small";
+        workload = workload(en.getWorkloadsFoldername() + subFolder);
+        folder = en.getWorkloadsFoldername() + subFolder;
         dbName = "TEST";
         tableOwner = "TPCDS";
+        
+        /*
+        en = Environment.getInstance();
+        db = newDatabaseSystem(en);
+        subFolder = "tpch-small";
+        workload = workload(en.getWorkloadsFoldername() + subFolder);
+        folder = en.getWorkloadsFoldername() + subFolder;
+        dbName = "TEST";
+        tableOwner = "TPCH";
+        */
     }
     
     /**     
@@ -102,18 +115,20 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         
         // 2. Ask Karl's to read from text file and write into his binary object
         for (Generation.Strategy s : strategies)  
-            CandidateGenerationDBTune.readIndexesFromDBTune(s, dbName, tableOwner);
+            CandidateGenerationDBTune.readIndexesFromDBTune(s, dbName, tableOwner, subFolder);
         
         // 3. Call Analysis from Karl
         AnalysisMain.setWorkload(workload);
         AnalysisMain.runStepsINUM(tableOwner);
-
+    
+        /*
         InteractionOutput result;
         Set<IndexInteraction> ibg;
         
         for (Generation.Strategy s : strategies) 
             for (double delta : deltas) {
                 result = analyze(s, delta);
+                
                 
                 if (s.equals(Generation.Strategy.UNION_OPTIMAL))
                     ibg = readIBGInteraction(s, delta, optimalCandidates);
@@ -127,7 +142,9 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
                 System.out.println("-- Threshold: --- " + delta
                                     + " : " + " f-measure: " + 
                                     result.f_measure(ibg));
+                                    
             }
+            */
     }
     
     /**
@@ -269,6 +286,7 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
             
             try {
                 writeIndexesToFile(optimalCandidates, folder  + "/candidate-optimal.txt");            
+                System.out.println(" write to file: " + (folder + "/candidate-optimal.txt"));
             } catch (Exception e) {
                 throw e;
             }

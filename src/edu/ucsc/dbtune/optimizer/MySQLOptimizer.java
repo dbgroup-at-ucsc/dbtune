@@ -61,7 +61,7 @@ public class MySQLOptimizer extends AbstractOptimizer
         drop(configuration, connection);
 
         return new ExplainedSQLStatement(
-            sql, plan, this, cost, 0.0, 0.0, new HashMap<Index, Double>(), configuration, used, 1);
+            sql, plan, this, cost, null, 0.0, new HashMap<Index, Double>(), configuration, used, 1);
     }
 
     /**

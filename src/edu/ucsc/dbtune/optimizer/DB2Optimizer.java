@@ -37,6 +37,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
+import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedSchemas;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
@@ -77,10 +78,11 @@ public class DB2Optimizer extends AbstractOptimizer
         throws SQLException
     {
         Set<Index> used;
-        Map<Index, Double> updateCosts;
+        Map<Index, Double> updateCostPerIndex;
         SQLStatementPlan plan;
+        Table updatedTable;
         double selectCost;
-        double updateCost;
+        double baseTableUpdateCost;
 
         clearAdviseAndExplainTables(connection);
 
@@ -92,25 +94,26 @@ public class DB2Optimizer extends AbstractOptimizer
         used = newHashSet(plan.getIndexes());
 
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
-            updateCost = getUpdateCost(plan);
-            updateCosts = new HashMap<Index, Double>();
-            // XXX: issue #142
-            // updateCosts = getUpdatedIndexes(connection);
+            updatedTable = getUpdatedTable(plan);
+            baseTableUpdateCost = getBaseTableUpdateCost(plan);
+            updateCostPerIndex = getUpdatedIndexes(updatedTable, baseTableUpdateCost, indexes);
         } else {
-            updateCost = 0.0;
-            updateCosts = new HashMap<Index, Double>();
+            baseTableUpdateCost = 0.0;
+            updatedTable = null;
+            updateCostPerIndex = new HashMap<Index, Double>();
         }
 
         plan.setStatement(sql);
 
-        selectCost = plan.getRootOperator().getAccumulatedCost() - updateCost;
+        selectCost = plan.getRootOperator().getAccumulatedCost() - baseTableUpdateCost;
 
         unloadOptimizationProfiles();
 
         whatIfCount++;
 
         return new ExplainedSQLStatement(
-            sql, plan, this, selectCost, updateCost, updateCost, updateCosts, indexes, used, 1);     
+            sql, plan, this, selectCost, updatedTable, baseTableUpdateCost,
+            updateCostPerIndex, indexes, used, 1);
     }
 
     /**
@@ -127,9 +130,14 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.execute(sql.getSQL());
         stmt.execute("SET CURRENT EXPLAIN MODE = NO");
 
-        stmt.close();
+        Set<Index> recommended = readAdviseIndexTable(connection, catalog);
 
-        return readAdviseIndexTable(connection, catalog);
+        clearAdviseAndExplainTables(connection);
+
+        for (Index i : recommended)
+            i.setCreationCost(getCreationCost(this, new HashSet<Index>(), i));
+
+        return recommended;
     }
 
     /**
@@ -261,6 +269,7 @@ public class DB2Optimizer extends AbstractOptimizer
     {
         if (colNamesInExplainStream == null || colNamesInExplainStream.trim().equals(""))
             return null;
+
         // +Q4.PS_SUPPLYCOST(A)+Q4.PS_PARTKEY
         Table table;
         Column col;
@@ -270,12 +279,12 @@ public class DB2Optimizer extends AbstractOptimizer
         Map<Column, Boolean>  ascending = new HashMap<Column, Boolean>();
         boolean asc;
         
-        if (dbo instanceof Index) 
+        if (dbo instanceof Index)
             table = ((Index) dbo).getTable();
         else if (dbo instanceof Table)
             table = (Table) dbo;
-        else 
-            throw new SQLException(" The database object must be either index or table");
+        else
+            throw new SQLException("The database object must be either index or table");
         
         for (String tblAndColNameAndAscending : colNamesAndAscending) {
             if (tblAndColNameAndAscending.contains("RID") || tblAndColNameAndAscending.equals(""))
@@ -516,7 +525,7 @@ public class DB2Optimizer extends AbstractOptimizer
      *      if the plan doesn't contain exactly 3 nodes (i.e. the number of operators in any 
      *      execution plan of an update)
      */
-    private static double getUpdateCost(SQLStatementPlan sqlPlan) throws SQLException
+    private static double getBaseTableUpdateCost(SQLStatementPlan sqlPlan) throws SQLException
     {
         double updateOpCost = -1;
         double childOpCost = -1;
@@ -536,6 +545,62 @@ public class DB2Optimizer extends AbstractOptimizer
             throw new SQLException("Something went wrong for the UPDATE");
 
         return updateOpCost - childOpCost;
+    }
+
+    /**
+     * Obtains the update cost for each index, which corresponds to the cost of the base table being 
+     * updated.
+     *
+     * @param updatedTable
+     *      table that is updated
+     * @param baseTableUpdateCost
+     *      cost of doing the update over the base table
+     * @param indexes
+     *      set of indexes considered in the what-if call
+     * @return
+     *      map of costs for each updated index
+     */
+    private static Map<Index, Double> getUpdatedIndexes(
+            Table updatedTable, double baseTableUpdateCost, Set<Index> indexes)
+    {
+        Map<Index, Double> updateCostPerIndex = new HashMap<Index, Double>();
+
+        for (Index i : getIndexesReferencingTable(indexes, updatedTable))
+            updateCostPerIndex.put(i, baseTableUpdateCost);
+
+        return updateCostPerIndex;
+    }
+
+    /**
+     * Extracts the table that is being updated by the plan.
+     *
+     * @param sqlPlan
+     *      the plan
+     * @return
+     *      the updated table
+     * @throws SQLException
+     *      if the plan doesn't contain exactly 3 nodes (i.e. the number of operators in any 
+     *      execution plan of an update)
+     */
+    private static Table getUpdatedTable(SQLStatementPlan sqlPlan) throws SQLException
+    {
+        Table t = null;
+
+        for (Operator o : sqlPlan.toList())
+            if (o.getName().toLowerCase().contains("update")) {
+                if (o.getDatabaseObjects().size() != 1)
+                    throw new SQLException("Can't identify object being updated");
+
+                if (!(o.getDatabaseObjects().get(0) instanceof Table))
+                    throw new SQLException("Object associated with update is not a table");
+
+                t = (Table) o.getDatabaseObjects().get(0);
+            }
+
+        if (t == null)
+            throw new SQLException("Can't identify updated table");
+
+        return t;
     }
 
     /**
@@ -999,8 +1064,12 @@ public class DB2Optimizer extends AbstractOptimizer
         boolean unique = false;
         boolean clustered = false;
         boolean primary = false;
+        int pageSize = -1;
 
         while (rs.next()) {
+            if (pageSize == -1)
+                pageSize = getPageSizeForTableSpaceReferencedInAdviseIndexTable(connection);
+
             schema = catalog.findSchema(rs.getString("tbcreator").trim());
             table = schema.findTable(rs.getString("tbname").trim());
             columns = new ArrayList<Column>();
@@ -1026,6 +1095,9 @@ public class DB2Optimizer extends AbstractOptimizer
 
             index = new Index(columns, ascending, primary, unique, clustered);
 
+            index.setBytes(rs.getInt("nleaf") * pageSize);
+            // XXX: a more sophisticated way of calculating size: http://ibm.co/xsH4QC
+
             recommended.add(index);
         }
 
@@ -1033,6 +1105,87 @@ public class DB2Optimizer extends AbstractOptimizer
         stmt.close();
 
         return recommended;
+    }
+
+    /**
+     * Returns the index creation cost for a given index.
+     *
+     * @param optimizer
+     *      used to execute what-if calls
+     * @param indexes
+     *      set of indexes that are assumed to exist when the index is created
+     * @param index
+     *      index for which the creation cost is retrieved
+     * @return
+     *     the creation cost
+     * @throws SQLException
+     *     if something goes wrong while doing the what-if call
+     */
+    private static double getCreationCost(Optimizer optimizer, Set<Index> indexes, Index index)
+        throws SQLException
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("SELECT *");
+        sb.append("  FROM ").append(index.getTable().getFullyQualifiedName());
+        sb.append("  ORDER BY ");
+
+        for (Column c : index.columns())
+            sb.append(c.getName()).append(index.isAscending(c) ? " ASC, " : " DESC, ");
+
+        sb.delete(sb.length() - 2, sb.length() - 1);
+
+        return optimizer.explain(sb.toString(), indexes).getSelectCost();
+    }
+
+    /**
+     * Returns the page size (in bytes) of the table space referenced in the {@code ADVISE_INDEX} 
+     * table.
+     *
+     * @param connection
+     *      connection used to communicate with the DBMS
+     * @return
+     *      the page size for the tablespace
+     * @throws SQLException
+     *      if more than one table space is referenced in the {@code ADVISE_INDEX} table and none of 
+     *      them have the same page size assigned to them; if a JDBC error occurs while 
+     *      communicating to the DBMS.
+     */
+    private static int getPageSizeForTableSpaceReferencedInAdviseIndexTable(Connection connection)
+        throws SQLException
+    {
+        Statement stmt = connection.createStatement();
+
+        ResultSet rs = stmt.executeQuery(
+                "SELECT " +
+                "    DISTINCT tbspaceid, " +
+                "             pagesize " +
+                "  FROM " +
+                "    syscat.tablespaces " +
+                "  WHERE " +
+                "    tbspaceid IN (" +
+                "       SELECT " +
+                "           tbspaceid " +
+                "         FROM " +
+                "           syscat.tables t, " +
+                "           systools.advise_index ai" +
+                "         WHERE " +
+                "                t.tabname = ai.tbname " +
+                "   )");
+
+        if (!rs.next())
+            throw new SQLException("No indexes in ADVISE_INDEX table");
+
+        int pageSize = rs.getInt(2);
+
+        while (rs.next())
+            if (pageSize != rs.getInt(2))
+                throw new SQLException(
+                    "Can't determine what page size to use: " + pageSize + " or " + rs.getInt(2));
+
+        stmt.close();
+
+        return pageSize;
     }
 
     // CHECKSTYLE:OFF
@@ -1189,7 +1342,7 @@ public class DB2Optimizer extends AbstractOptimizer
         "     s1.object_name   AS object_name," +
         "     s1.stream_count  AS cardinality, " +
         "     o.total_cost     AS cost, " +
-        "     cast(cast(s1.column_names AS CLOB(2097152)) AS VARCHAR(255)) " +
+        "     cast(cast(s1.column_names AS CLOB(2097152)) AS VARCHAR(2048)) " +
         "                      AS column_names " +
         "  FROM " +
         "     systools.explain_operator o " +

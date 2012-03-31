@@ -67,7 +67,6 @@ public class ExplainedSQLStatementTest
         Index c;
         double selectCost;
         double costA;
-        double updateCost;
         double baseTableCost;
         int count;
 
@@ -90,7 +89,7 @@ public class ExplainedSQLStatementTest
 
         estmt =
             new ExplainedSQLStatement(
-                    sql, null, optimizer, selectCost, 0.0, 0.0, emptyIndexCosts, conf, used, count);
+                sql, null, optimizer, selectCost, null, 0.0, emptyIndexCosts, conf, used, count);
 
         assertThat(estmt.getConfiguration(), is(conf));
         assertThat(estmt.getSelectCost(), is(selectCost));
@@ -113,7 +112,6 @@ public class ExplainedSQLStatementTest
         sql = new SQLStatement("UPDATE one_table.tbl SET a = 1 WHERE a = 5 AND b = 3");
         indexCosts = new HashMap<Index, Double>();
         updated = new HashSet<Index>();
-        updateCost = 200.0;
         baseTableCost = 150.0;
         costA = 50.0;
 
@@ -122,15 +120,15 @@ public class ExplainedSQLStatementTest
 
         estmt =
             new ExplainedSQLStatement(
-                sql, null, optimizer, selectCost, updateCost,
-                baseTableCost, indexCosts, conf, used, count);
+                sql, null, optimizer, selectCost, a.getTable(), baseTableCost,
+                indexCosts, conf, used, count);
 
         assertThat(estmt.getConfiguration(), is(conf));
         assertThat(estmt.getOptimizationCount(), is(count));
         assertThat(estmt.getStatement(), is(sql));
         assertThat(estmt.getSelectCost(), is(selectCost));
         assertThat(estmt.getUpdateCost(), is(baseTableCost + costA));
-        assertThat(estmt.getTotalCost(), is(selectCost + updateCost));
+        assertThat(estmt.getTotalCost(), is(selectCost + baseTableCost + costA));
         assertThat(estmt.getUpdateCost(conf), is(costA));
         assertThat(estmt.getUpdateCost(a), is(costA));
         assertThat(estmt.getUpdateCost(b), is(0.0));
@@ -142,8 +140,8 @@ public class ExplainedSQLStatementTest
         // equals
         ExplainedSQLStatement estmt2 =
             new ExplainedSQLStatement(
-                sql, null, optimizer, selectCost, updateCost,
-                baseTableCost, indexCosts, conf, used, count);
+                sql, null, optimizer, selectCost, a.getTable(), baseTableCost,
+                indexCosts, conf, used, count);
 
         assertThat(estmt, is(estmt2));
     }

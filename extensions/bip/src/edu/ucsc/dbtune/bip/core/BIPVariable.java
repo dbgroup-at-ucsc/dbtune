@@ -19,6 +19,11 @@ public class BIPVariable
     /** used to uniquely identify each instance of the class. */
     public static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
     
+    public static void resetIdGenerator()
+    {
+        IN_MEMORY_ID = new AtomicInteger(0);
+    }
+    
     /**
      * Construct a {@code BIPVariable} object with the given name and type
      * @param _name

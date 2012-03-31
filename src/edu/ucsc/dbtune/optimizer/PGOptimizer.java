@@ -110,16 +110,17 @@ public class PGOptimizer extends AbstractOptimizer
         Set<Index>          usedConf;
         List<Index>         list;
         Statement           stmt;
+        Table               updatedTable;
         String              indexPositions;
         String              indexOverhead;
         Map<Index, Double>  indexUpdateCosts;
         double[]            updateCosts;
-        double              aggregatedUpdateCost;
         double              selectCost;
 
         stmt = connection.createStatement();
         list = new ArrayList<Index>(indexes);
         rs = stmt.executeQuery("EXPLAIN INDEXES " + toString(list) + " " + sql.getSQL());
+        updatedTable = null;
 
         if (!rs.next())
             throw new SQLException("No result from EXPLAIN statement");
@@ -151,11 +152,11 @@ public class PGOptimizer extends AbstractOptimizer
             throw new SQLException(updateCosts.length + " costs for " + indexes.size() + "indexes");
 
         indexUpdateCosts = new HashMap<Index, Double>();
-        aggregatedUpdateCost = 0.0;
 
         for (int i = 0; i < updateCosts.length; i++) {
+            if (updatedTable == null)
+                list.get(i).getTable();
             indexUpdateCosts.put(list.get(i), updateCosts[i]);
-            aggregatedUpdateCost += updateCosts[i];
         }
 
         // plan
@@ -168,7 +169,7 @@ public class PGOptimizer extends AbstractOptimizer
         stmt.close();
 
         return new ExplainedSQLStatement(
-            sql, sqlPlan, this, selectCost, aggregatedUpdateCost, 0.0,
+            sql, sqlPlan, this, selectCost, updatedTable, 0.0,
             indexUpdateCosts, indexes, usedConf, 1);
     }
 

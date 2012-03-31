@@ -4,7 +4,8 @@ import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.BeforeClass;
@@ -14,8 +15,8 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
-
-import edu.ucsc.dbtune.bip.div.DivBIP;
+import edu.ucsc.dbtune.bip.div.ConstraintDivBIP;
+import edu.ucsc.dbtune.bip.div.DivConstraint;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
@@ -23,7 +24,7 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
-public class DivBIPFunctionalTest extends BIPTestConfiguration 
+public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration 
 {
     private static DatabaseSystem db;
     private static Environment    en;
@@ -48,16 +49,24 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         // parameter setting for divergent design tuning
         divergentNormal();
         
-        DivBIP div = new DivBIP();
+        // imbalance replica
+        DivConstraint iReplica = new DivConstraint(ConstraintDivBIP.IMBALANCE_REPLICA, 3);
+        DivConstraint iQuery = new DivConstraint(ConstraintDivBIP.IMBALANCE_QUERY, 3);
+        List<DivConstraint> constraints = new ArrayList<DivConstraint>();
+        constraints.add(iReplica);
+        constraints.add(iQuery);
         
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-small");
+        // intial div object
+        ConstraintDivBIP div = new ConstraintDivBIP(constraints);
+        
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-debug");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);
        
         for (Index index : candidates)
             index.setBytes(1);
-        System.out.println("L59, number of candidate: " + candidates.size());
+        System.out.println("L75, number of candidate: " + candidates.size());
         
         Optimizer io = db.getOptimizer();
 
@@ -74,12 +83,13 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         div.setLogListenter(logger);
         
         IndexTuningOutput output = div.solve();
-        div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpcds-small/test.lp");
+        div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpcds-debug/test.lp");
         System.out.println(logger.toString());
         if (output != null) {
             System.out.println("In test, result: " 
-                    + " obj value: " + div.getObjValue()
-                    + " different from optimal value: " + div.getObjectiveGap());
+                              + " obj value: " + div.getObjValue()
+                              + " different from optimal value: " + div.getObjectiveGap());
+            div.costFromCplex();
             
             /*
             // run on actual optimize
@@ -134,19 +144,6 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         }
     }
     
-    public static void divergentUnlimitSpace()
-    {
-        Nreplicas = 3;
-        loadfactor = 2;
-        B = 70;
-    }
-    
-    public static void optimalDesign()
-    {
-        Nreplicas = 1;
-        loadfactor = 1;
-        B = 5;
-    }
     
     public static void divergentNormal()
     {

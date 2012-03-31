@@ -388,7 +388,6 @@ public class Operator
 
         code = 37 * code + name.hashCode();
         code = 37 * code + (int) Double.doubleToLongBits(accumulatedCost);
-        code = 37 * code + (int) (accumulatedCost * 100);
         code = 37 * code + (int) (cardinality ^ (cardinality >>> 32));
 
         int listCode = 0;

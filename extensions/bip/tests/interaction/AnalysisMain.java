@@ -83,7 +83,8 @@ public class AnalysisMain {
 	    File candidateFile = Configuration.candidateFile(strategy);
 	    DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
 
-	    System.out.println(" L84 (Karl, Analysis), candidate set: " + candidateSet.size());
+	    System.out.println(" L84 (Karl, Analysis), candidate set: " + candidateSet.size()
+	                        + " table owner: " + tableOwner);
 	   
 	    SerialIndexBenefitGraph.setCatalog(db.getCatalog());
 	    SerialIndexBenefitGraph.fixCandidates(candidateSet, tableOwner);
@@ -98,8 +99,9 @@ public class AnalysisMain {
 	    writeIBGs(ibgs, strategy);
 
 	    long time = System.currentTimeMillis() - start;
-	    System.out.println("L99 (Karl, Analysis Main), the running time: " + time
-	                     + " vs. time for INUM: " + SerialIndexBenefitGraph.timeINUM);
+	    System.out.println("L99 (Karl, Analysis Main), the running time: " + time + "\n"
+	                     + " Time for INUM: " + SerialIndexBenefitGraph.timeINUM
+	                     + " Time for Matching Strategy: " + SerialIndexBenefitGraph.timeMatching);
 
 	    BasicLog serial1 = (BasicLog) Files.readObjectFromFile(
                         Configuration.analysisFile(strategy, SERIAL));
@@ -116,10 +118,12 @@ public class AnalysisMain {
         AnalysisLog serial2 = serial1.getAnalysisLog(0.1);
         serial2.output(out);
         System.out.println("List interactions 0.1: " + serial1.interactions());
+        */
+        /*
         AnalysisLog serial3 = serial1.getAnalysisLog(0.01);
         serial3.output(out);
         System.out.println("List interactions 0.01: " + serial1.interactions());
-        */
+         */
 	}
 	
 	
@@ -131,9 +135,12 @@ public class AnalysisMain {
         SerialIndexBenefitGraph[] ibgs;
         int i;
         
-        // reset timer
+        System.out.println(" workload: " + workload.size());
+        // TODO: reset timer
         logger.startTimer();
         SerialIndexBenefitGraph.timeINUM = 0.0;
+        SerialIndexBenefitGraph.timeMatching = 0.0;
+        // ----------------------------------
         
         /* analyze queries one at a time, combining their interactions */
         ibgs = new SerialIndexBenefitGraph[workload.size()];
