@@ -63,12 +63,12 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
     private static Set<Index> optimalCandidates;
     private static Set<Index> powerSetCandidates;
     
-    public static int   MAX_NUM_INDEX = 300;
+    public static int   MAX_NUM_INDEX = 700;
     public static List<Generation.Strategy> strategies = 
                     Arrays.asList( 
-                            // Generation.Strategy.UNION_OPTIMAL
+                                //Generation.Strategy.UNION_OPTIMAL
                                   //, Generation.Strategy.OPTIMAL_1C
-                                  Generation.Strategy.POWER_SET
+                                Generation.Strategy.POWER_SET
                                   );
     public static double[] deltas = new double[] {
                                     //0.01, 
@@ -90,7 +90,7 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         folder = en.getWorkloadsFoldername() + subFolder;
         dbName = "TEST";
         tableOwner = "TPCDS";
-        
+     
         /*
         en = Environment.getInstance();
         db = newDatabaseSystem(en);
@@ -99,7 +99,7 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         folder = en.getWorkloadsFoldername() + subFolder;
         dbName = "TEST";
         tableOwner = "TPCH";
-        */
+       */
     }
     
     /**     
