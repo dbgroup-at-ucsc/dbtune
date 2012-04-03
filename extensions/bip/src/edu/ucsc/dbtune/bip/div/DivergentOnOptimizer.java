@@ -34,7 +34,7 @@ public class DivergentOnOptimizer implements BIPOutputOnOptimizer
             for (int r = 0; r < div.getNumberReplicas(); r++)
                 cost.add(optimizer.explain(sql, div.indexesAtReplica(r)).getTotalCost());
             
-            System.out.println("L39, cost: " + cost);
+            //System.out.println("L39, cost: " + cost);
             // get top-m best cost
             Collections.sort(cost);
             

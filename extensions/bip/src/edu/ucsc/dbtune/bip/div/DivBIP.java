@@ -22,6 +22,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 /**
  * Reference {@link http://www-01.ibm.com/support/docview.wss?uid=swg21400034} for tuning 
@@ -38,7 +39,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     
     protected DivVariablePool   poolVariables;    
     protected Map<String,Index> mapVarSToIndex;
-    
     
     @Override
     public void setLoadBalanceFactor(int m) 
@@ -179,37 +179,99 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     
     
     /**
-     * Build cost function of each query in each window w
-     * cost(q,r) = \sum_{k \in [1, Kq]} \beta_{qk} y(r,q,k) + 
-     *            + \sum_{ k \in [1, Kq] \\ i \in [1, n] \\ a \in S_i \cup I_{\emptyset} 
-     *              x(r,q,k,i,a) \gamma_{q,k,i,a}
+     * Build the total cost formula, which is the summation of the costs of all replicas.      
      *     
      * @throws IloException 
+     *      when there is error in calling {@code IloCplex} class
      */
     protected void totalCost() throws IloException
     {         
-        IloLinearNumExpr obj = cplex.linearNumExpr(); 
-        IloLinearNumExpr expr; 
-        IloNumVar        var;
-        double           coef;
-        
-        IloLinearNumExprIterator iter;
-        
-        for (int r = 0; r < nReplicas; r++)
-            for (QueryPlanDesc desc : queryPlanDescs) {
-                expr = queryExpr(r, desc.getStatementID(), desc);
-                iter = expr.linearIterator();
-                
-                while (iter.hasNext()) {
-                    var = iter.nextNumVar();
-                    coef = iter.getValue();
-                    obj.addTerm(var, coef / loadfactor);
-                }
-            }
-        
+        IloLinearNumExpr obj = cplex.linearNumExpr();
+
+        for (int r = 0; r < nReplicas; r++) 
+            obj.add(replicaCost(r));
+            
         cplex.addMinimize(obj);
     }
     
+    /**
+     * Build the cost at each replica.
+     * 
+     * CostReplica(r) = \sum_{q \in Q} cost(q,r) / loadfactor : query statement
+     *                + \sum_{q \in Qshell} cost(q,r)         : query shell in update statement
+     *                + \sum_{u \in Q} \sum_{a \in Cand} cost(u, a, r) \times s_a^r
+     *                                                        : update cost
+     */
+    protected IloLinearNumExpr replicaCost(int r) throws IloException
+    {
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        
+        // query component
+        for (QueryPlanDesc desc : queryPlanDescs) 
+            expr.add(modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+                               getFactorStatement(desc)
+                               )
+                    );
+        
+        // update component
+        for (QueryPlanDesc desc : queryPlanDescs) 
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                expr.add(updateCost(r, desc.getStatementID(), desc));
+        
+        return expr;
+    }
+    
+    /**
+     * Retrieve the balance factor of the given statement.
+     * 
+     * If the this is a query statement, the {@code factor = 1 / loadfactor}
+     * else if this is a query shell from the update statement, then {@code factor = 1.0}
+     * 
+     * @param desc
+     *      The given query plan description
+     *      
+     * @return
+     *      The factor
+     */
+    protected double getFactorStatement(QueryPlanDesc desc)
+    {
+        return (desc.getSQLCategory().isSame(NOT_SELECT)) ? 
+                1.0 :  (double) 1 / loadfactor;
+    }
+    
+    /**
+     * Build the update cost formula for the given query on the given replica 
+     * 
+     * @param r
+     *      The replica ID
+     * @param q
+     *      The statement ID
+     * @param desc
+     *      The query plan description
+     *      
+     * @return
+     *      The update cost formulas
+     *      
+     * @throws IloException
+     */
+    protected IloLinearNumExpr updateCost(int r, int q, QueryPlanDesc desc) throws IloException
+    {
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        int idS;
+        double  cost;
+        
+        for (Index index : candidateIndexes) {
+            
+            cost = desc.getUpdateCost(index);
+            
+            if (cost != 0.0) {
+                idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                expr.addTerm(cplexVar.get(idS), cost);
+            }
+        }
+        
+        return expr;
+    }
     /**
      * Formulate the expression of a query on a particular replica
      * 
@@ -363,6 +425,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         IloLinearNumExpr expr; 
         int idY;        
         int q;
+        int rhs;
         
         for (QueryPlanDesc desc : queryPlanDescs) {
             
@@ -375,8 +438,8 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                     expr.addTerm(1, cplexVar.get(idY));
                 }
             
-            
-            cplex.addEq(expr, loadfactor, "top_m_" + numConstraints);            
+            rhs = (desc.getSQLCategory().isSame(NOT_SELECT)) ? nReplicas : loadfactor;
+            cplex.addEq(expr, rhs, "top_m_" + numConstraints);            
             numConstraints++;
         }
     }
@@ -398,13 +461,45 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             expr = cplex.linearNumExpr();
             
             for (Index index : candidateIndexes) {  
-                idS = poolVariables.get(VAR_S, r, 0, 0 , index.getId()).getId();                
-                expr.addTerm(index.getBytes(), cplexVar.get(idS));
+                // not consider FTS index
+                if (!(index instanceof FullTableScanIndex)) {
+                    idS = poolVariables.get(VAR_S, r, 0, 0 , index.getId()).getId();                
+                    expr.addTerm(index.getBytes(), cplexVar.get(idS));
+                }
             }
             
             cplex.addLe(expr, B, "space_" + numConstraints);
             numConstraints++;               
         }
+    }
+    
+    /**
+     * Modify all the coefficient in the formula by multiply with given factor
+     * 
+     * @param expr
+     *      The expression that is modified
+     * @param factor
+     *      The factor to multiple with existing coefficient
+     *      
+     * @return
+     *      The expression with modifying coefficient
+     * @throws IloException
+     */
+    protected IloLinearNumExpr modifyCoef(IloLinearNumExpr expr, double factor) throws IloException
+    {
+        IloNumVar        var;
+        double           coef;
+        IloLinearNumExprIterator iter;
+        IloLinearNumExpr result = cplex.linearNumExpr();
+        
+        iter = expr.linearIterator();
+        while (iter.hasNext()) {
+            var = iter.nextNumVar();
+            coef = iter.getValue();
+            result.addTerm(var, factor * coef);
+        }
+        
+        return result;
     }
 
      /**

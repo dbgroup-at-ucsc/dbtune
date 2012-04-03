@@ -5,6 +5,7 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.BeforeClass;
@@ -16,11 +17,13 @@ import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 
 import edu.ucsc.dbtune.bip.div.DivBIP;
+import edu.ucsc.dbtune.bip.div.DivergentOnOptimizer;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 public class DivBIPFunctionalTest extends BIPTestConfiguration 
@@ -31,6 +34,7 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
     private static int Nreplicas;
     private static int loadfactor;
     private static double B;
+    private static long totalIndexSize;
     
     /**
      * Setup for the test.
@@ -44,21 +48,23 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
     
     @Test
     public void testDivergentDesign() throws Exception
-    {  
-        // parameter setting for divergent design tuning
-        divergentNormal();
-        
+    {   
         DivBIP div = new DivBIP();
         
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-small");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);
-       
-        for (Index index : candidates)
-            index.setBytes(1);
-        System.out.println("L59, number of candidate: " + candidates.size());
         
+        totalIndexSize = 0;
+        for (Index index : candidates)
+            totalIndexSize += index.getBytes();
+        
+        System.out.println("L59, number of candidate: " + candidates.size() + " size: " 
+                            + totalIndexSize);
+        
+        // parameter setting for divergent design tuning
+        divergentNormal();
         Optimizer io = db.getOptimizer();
 
         if (!(io instanceof InumOptimizer))
@@ -78,10 +84,12 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         System.out.println(logger.toString());
         if (output != null) {
             System.out.println("In test, result: " 
-                    + " obj value: " + div.getObjValue()
-                    + " different from optimal value: " + div.getObjectiveGap());
+                    + " obj value: " + div.getObjValue() + "\n"
+                    + " different from optimal value: " + div.getObjectiveGap() + "\n"
+                    );
+                    //+ " solution: " + output);
             
-            /*
+            
             // run on actual optimize
             Set<SQLStatement> sqls = new HashSet<SQLStatement>();
             for (int i = 0; i < workload.size(); i++)
@@ -92,7 +100,7 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
             double costDB2 = doo.getTotalCost() / loadfactor;
             System.out.println("L90, cost on DB2: " + costDB2
                                 + " COST RATIO: " + (double) costDB2 / div.getObjValue());
-            */
+            
             /*
             // test
             DivConfiguration divconf = (DivConfiguration) output;
@@ -152,6 +160,10 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
     {
         Nreplicas = 3;
         loadfactor = 2;
-        B = 3;
+        // at most 1GB
+        //B = Math.min(Math.pow(2, 29), totalIndexSize / 3);
+        B = Math.pow(2, 30);
+         
+        System.out.println("L161, B: " + B);
     }
 }

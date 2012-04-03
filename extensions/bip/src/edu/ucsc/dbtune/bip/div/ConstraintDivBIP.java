@@ -11,10 +11,10 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_XO;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_YO;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
+
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloLinearNumExprIterator;
-import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex.DoubleParam;
 
 import java.util.ArrayList;
@@ -69,7 +69,12 @@ public class ConstraintDivBIP extends DivBIP
             // 5. Space constraints
             super.spaceConstraints();
             
-            // 6. additional constraints
+            // 6. if we have additional constraints
+            // need to impose top-m best cost constraints
+            if (constraints.size() > 0)
+                topMBestCostExplicit();
+            
+            // 7. additional constraints
             for (DivConstraint c : constraints) {
                 if (c.getType() == IMBALANCE_REPLICA)
                     imbalanceReplicaConstraints(c.getFactor());
@@ -79,8 +84,7 @@ public class ConstraintDivBIP extends DivBIP
                     imbalanceQueryConstraints(c.getFactor());
             }
             
-            // atomic constraints for local optimal 
-            atomicLocalOptimalConstraints();
+            
             
         }     
         catch (IloException e) {
@@ -133,6 +137,43 @@ public class ConstraintDivBIP extends DivBIP
         
         // variable sum_q(r, q) = \sum_{k = 1}^{K_q} y^r_{qk}
         poolVariables.createAndStore(VAR_SUM_Y, r, q, 0, 0);    
+    }
+    
+    /**
+     * Impose the top m best cost explicit
+     * 
+     * @throws IloException
+     */
+    protected void topMBestCostExplicit() throws IloException
+    {   
+        IloLinearNumExpr exprOptimal;
+        
+        List<IloLinearNumExpr> exprOptimals;
+        List<IloLinearNumExpr> exprQueries;
+
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            
+            exprOptimals = new ArrayList<IloLinearNumExpr>();
+            exprQueries = new ArrayList<IloLinearNumExpr>();
+            
+            for (int r = 0; r < nReplicas; r++) {
+                
+                exprOptimal = queryExprOptimal(r, desc.getStatementID(), desc);
+                exprOptimals.add(exprOptimal);
+                exprQueries.add(super.queryExpr(r, desc.getStatementID(), desc));
+                
+                // constraint for the local optimal
+                localOptimal(r, desc.getStatementID(), desc, exprOptimal);
+                presentVariableLocalOptimal(r, desc.getStatementID(), desc);
+                selectingIndexAtEachSlot(r, desc.getStatementID(), desc);
+                
+                // atomic constraints for local optimal
+                internalAtomicLocalOptimalConstraint(r, desc.getStatementID(), desc);
+                slotAtomicLocalOptimalConstraints(r, desc.getStatementID(), desc);    
+            }
+            
+            topMBestCostExplicit(desc, exprQueries, exprOptimals);
+        }
     }
     
     /**
@@ -191,7 +232,8 @@ public class ConstraintDivBIP extends DivBIP
      * @throws IloException
      *      If there is error in formulating the expression in CPLEX.
      */
-    protected void internalAtomicLocalOptimalConstraint(int r, int q, QueryPlanDesc desc) throws IloException
+    protected void internalAtomicLocalOptimalConstraint(int r, int q, QueryPlanDesc desc) 
+              throws IloException
     {
         IloLinearNumExpr expr;
         int idY;
@@ -203,7 +245,7 @@ public class ConstraintDivBIP extends DivBIP
             expr.addTerm(1, cplexVar.get(idY));
         }
         
-        cplex.addLe(expr, 1, "atomic_internal_local_optimal_" + numConstraints);
+        cplex.addEq(expr, 1, "atomic_internal_local_optimal_" + numConstraints);
         numConstraints++;
     }
     
@@ -273,69 +315,17 @@ public class ConstraintDivBIP extends DivBIP
      */
     protected void imbalanceReplicaConstraints(double beta) throws IloException
     {   
-        IloLinearNumExpr exprReplica;
-        IloLinearNumExpr expr;
-        IloLinearNumExpr exprOptimal;
-        
-        List<List<IloLinearNumExpr>> exprQuery        = new ArrayList<List<IloLinearNumExpr>>();
-        List<List<IloLinearNumExpr>> exprQueryOptimal = new ArrayList<List<IloLinearNumExpr>>();
-        
         List<IloLinearNumExpr> exprs = new ArrayList<IloLinearNumExpr>();
         
-        // imbalance constraint
-        for (int r = 0; r < nReplicas; r++) {
-           
-            exprReplica = cplex.linearNumExpr(); 
-            List<IloLinearNumExpr> exprQueryReplica        = new ArrayList<IloLinearNumExpr>();
-            List<IloLinearNumExpr> exprQueryReplicaOptimal = new ArrayList<IloLinearNumExpr>();
-            
-            for (QueryPlanDesc desc : queryPlanDescs) {
-                
-                expr        = super.queryExpr(r, desc.getStatementID(), desc);
-                exprOptimal = queryExprOptimal(r, desc.getStatementID(), desc);
-                
-                exprQueryReplica.add(expr);
-                exprQueryReplicaOptimal.add(exprOptimal);
-                
-                // constraint for the local optimal
-                localOptimal(r, desc.getStatementID(), desc, exprOptimal);
-                presentVariableLocalOptimal(r, desc.getStatementID(), desc);
-                selectingIndexAtEachSlot(r, desc.getStatementID(), desc);
-                
-                // construct formula for the replica
-                exprReplica.add(expr);
-            
-            }
-            
-            exprs.add(exprReplica);
-        
-            exprQuery.add(exprQueryReplica);
-            exprQueryOptimal.add(exprQueryReplicaOptimal);
-        }
-        
+        for (int r = 0; r < nReplicas; r++) 
+            exprs.add(super.replicaCost(r));
         
         // for each pair of replicas, impose the imbalance factor constraint 
         for (int r1 = 0; r1 < nReplicas - 1; r1++)
             for (int r2 = r1 + 1; r2 < nReplicas; r2++) 
-                imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);           
-    
-        // constraint for top-m best cost
-        // cost(q,r) <= cost_opt(q,r)
-        // sum_(r \in [1, N]} cost(q,r) <= sum_any_m of cost_opt(q,r)
-        for (int q = 0; q < queryPlanDescs.size(); q++) {
-            
-            List<IloLinearNumExpr> exprQueryReplica        = new ArrayList<IloLinearNumExpr>();
-            List<IloLinearNumExpr> exprQueryReplicaOptimal = new ArrayList<IloLinearNumExpr>();
-            
-            for (int r = 0; r < nReplicas; r++) {
-                exprQueryReplica.add(exprQuery.get(r).get(q));
-                exprQueryReplicaOptimal.add(exprQueryOptimal.get(r).get(q));
-            }
-        
-            topMBestCostExplicit(exprQueryReplica, exprQueryReplicaOptimal);
-        }
-        
+                imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);
     }
+    
     
     /**
      * Formulate the expression of a query on a particular replica
@@ -380,77 +370,59 @@ public class ConstraintDivBIP extends DivBIP
      * (usually the load at two replicas)
      * 
      * @param expr1
-     *      The expression of the first replica     
+     *      The first expression     
      * @param expr2
-     *      The expression of the second replica
+     *      The second expression
      * @param factor
      *      The imbalance factor.
      */
-    protected void imbalanceConstraint(IloLinearNumExpr expr1, IloLinearNumExpr expr2, double beta)
+    protected void imbalanceConstraint(IloLinearNumExpr expr1, IloLinearNumExpr expr2, 
+                                              double beta)
                    throws IloException
     {
         IloLinearNumExpr expr;
-        IloNumVar        var;
-        double           coef;
-        
-        IloLinearNumExprIterator iter;
         
         // r1 - \beta x r2 <= 0
         expr = cplex.linearNumExpr();
-        expr.add(expr1);
-        
-        // get iterator over exprs[r2]
-        iter = expr2.linearIterator();
-        while (iter.hasNext()) {
-            var = iter.nextNumVar();
-            coef = iter.getValue();
-            expr.addTerm(var, - beta * coef);
-        }
+        expr.add(expr1); 
+        expr.add(modifyCoef(expr2, -beta));
         cplex.addLe(expr, 0, "imbalance_replica_" + numConstraints);
         numConstraints++;
         
         // r2 - \beta x r1 <= 0
         expr = cplex.linearNumExpr();
         expr.add(expr2);
-        
-        // get iterator over exprs[r1]
-        iter = expr1.linearIterator();
-        while (iter.hasNext()) {
-            var = iter.nextNumVar();
-            coef = iter.getValue();
-            expr.addTerm(var, - beta * coef);
-        }
+        expr.add(modifyCoef(expr1, -beta));
         cplex.addLe(expr, 0, "imbalance_replica_" + numConstraints);
         numConstraints++;
     }
     
     
     /**
-     * Impose the constrains for top-m best cost explicitly: (1) each query cost, cost(q,r) does not
-     * exceed the local optimal cost, cost_opt(q,r), and (2) the sum of query cost across replicas
-     * does not exceed the sum of any m elements of cost_opt(q,r).
+     * Impose the constrains for top-m best cost explicitly
+     * <p>
+     * <ol> Each query cost, cost(q,r) does not exceed the local optimal cost, and 
+     * <ol> the sum of query cost across replicas does not exceed the sum of any 
+     * {@code m} elements of {@code cost_opt(q,r)}
+     * </p>
      * 
-     * @param listQueryCost
-     *      The list of query cost formulas over all replicas
+     * @param exprCrossReplica
+     *      The query cost formula over all replicas
      * @param listQueryOptimal
      *      The list of optimal query cost formulas over all replicas
      * 
      * @throws IloException
      */
-    protected void topMBestCostExplicit(List<IloLinearNumExpr> listQueryCost,
-                                        List<IloLinearNumExpr> listQueryOptimal) throws IloException
+    protected void topMBestCostExplicit(QueryPlanDesc desc,
+                                        List<IloLinearNumExpr> listQueryCost,
+                                        List<IloLinearNumExpr> listQueryOptimal) 
+                   throws IloException
     {
         IloLinearNumExpr expr;
         IloLinearNumExpr exprCrossReplica;
         IloLinearNumExpr exprTopm;
-        IloNumVar        var;
         
-        IloLinearNumExprIterator iter;
-        
-        int    numQuery;
-        double coef;
-        
-        numQuery = listQueryCost.size();
+        int numQuery = listQueryCost.size();
         
         // sum of query q over all replicas
         exprCrossReplica = cplex.linearNumExpr();
@@ -459,18 +431,18 @@ public class ConstraintDivBIP extends DivBIP
             expr = cplex.linearNumExpr();
             expr.add(listQueryCost.get(i));
             
-            iter = listQueryOptimal.get(i).linearIterator();
-            while (iter.hasNext()) {
-                var = iter.nextNumVar();
-                coef = iter.getValue();
-                expr.addTerm(var, -coef);
-            }
+            expr.add(modifyCoef(listQueryOptimal.get(i), -1)); 
             cplex.addLe(expr, 0, "query_optimal" + numConstraints);
             numConstraints++;
      
             // sum of q over all replicas
             exprCrossReplica.add(listQueryCost.get(i));
         }
+        
+        // if the query shell from update, DO NOT need to have explicit 
+        // top-m best cost constraints
+        if (desc.getSQLCategory().isSame(NOT_SELECT))
+            return;
         
         // enumerate all subset of size m
         Set<Integer> positions = new HashSet<Integer>();
@@ -485,16 +457,8 @@ public class ConstraintDivBIP extends DivBIP
             exprTopm = cplex.linearNumExpr();
             exprTopm.add(exprCrossReplica);
             
-            for (Integer p : position) {
-                
-                iter = listQueryOptimal.get(p).linearIterator();
-                while (iter.hasNext()) {
-                    var = iter.nextNumVar();
-                    coef = iter.getValue();
-                    exprTopm.addTerm(var, -coef);
-                }
-                
-            }
+            for (Integer p : position)
+                exprTopm.add(this.modifyCoef(listQueryOptimal.get(p), -1));
             
             cplex.addLe(exprTopm, 0, "top_m_explicit_" + numConstraints);
             numConstraints++;
@@ -550,9 +514,7 @@ public class ConstraintDivBIP extends DivBIP
             }
         
     }
-            
-    
-    
+     
     /**
      * Constraint on the present of {@code VAR_U} variables.
      * 
@@ -562,7 +524,8 @@ public class ConstraintDivBIP extends DivBIP
      * @throws IloException 
      * 
      */
-    protected void presentVariableLocalOptimal(int r, int q, QueryPlanDesc desc) throws IloException
+    protected void presentVariableLocalOptimal(int r, int q, QueryPlanDesc desc) 
+                  throws IloException
     {   
         IloLinearNumExpr expr;
         int idU;
@@ -600,6 +563,15 @@ public class ConstraintDivBIP extends DivBIP
                 selectingIndexAtEachSlot(r, q, t, i, desc);
     }
     
+    /**
+     * todo
+     * @param r
+     * @param q
+     * @param t
+     * @param i
+     * @param desc
+     * @throws IloException
+     */
     protected void selectingIndexAtEachSlot(int r, int q, int t, int i, QueryPlanDesc desc) 
                    throws IloException
     {
@@ -685,7 +657,8 @@ public class ConstraintDivBIP extends DivBIP
      *      The ID of the second replica
      * @throws IloException 
      */
-    protected void imbalanceQueryConstraint(QueryPlanDesc desc, int r1, int r2, double beta) throws IloException
+    protected void imbalanceQueryConstraint(QueryPlanDesc desc, int r1, int r2, double beta) 
+             throws IloException
     {  
         int q = desc.getStatementID();
         
@@ -716,9 +689,6 @@ public class ConstraintDivBIP extends DivBIP
         int idCombine;
         
         IloLinearNumExpr expr2; 
-        IloNumVar        var;
-        double           coef;
-        IloLinearNumExprIterator iter;
         
         expr2 = super.queryExpr(r2, q, desc);
         
@@ -740,16 +710,12 @@ public class ConstraintDivBIP extends DivBIP
                 }   
         
         // add -beta time of expr2 
-        // get iterator over exprs[r2]
-        iter = expr2.linearIterator();
-        while (iter.hasNext()) {
-            var = iter.nextNumVar();
-            coef = iter.getValue();
-            expr.addTerm(var, - beta * coef);
-        }
+        // get iterator over exprs
+        expr.add(modifyCoef(expr2, -beta));
         cplex.addLe(expr, 0, "imbalance_query_" + numConstraints);
         numConstraints++;
     }
+    
     
     /**
      * Implement the constraint for combined variables defined on the given query plan description.
@@ -759,7 +725,8 @@ public class ConstraintDivBIP extends DivBIP
      * @param q
      * @throws IloException 
      */
-    protected void constraintCombineVariable(QueryPlanDesc desc, int r1, int r2, int q) throws IloException
+    protected void constraintCombineVariable(QueryPlanDesc desc, int r1, int r2, int q) 
+                throws IloException
     {
         int idCombine;
         int idY;
