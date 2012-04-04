@@ -95,10 +95,9 @@ public final class InumUtils
     }
 
     /**
-     * Returns the minimum atomic configuration for the given plan. A minimum index for a table and 
-     * a statement is the set of indexes that cover all the columns accessed by the statement of a 
-     * given table. Thus, the minimum atomic configuration is the set of covering indexes of a 
-     * statement.
+     * Returns the covering atomic configuration for the given plan. A covering index for a table 
+     * referenced in a statement covers all the columns accessed by it. Thus, the covering atomic 
+     * configuration is the set of covering indexes for a statement.
      * 
      * @param plan
      *      the plan returned by an optimizer
@@ -107,27 +106,36 @@ public final class InumUtils
      * @throws SQLException
      *      if there's a table without a corresponding slot in the given inum plan
      */
-    public static Set<Index> getMinimumAtomicConfiguration(InumPlan plan) throws SQLException
+    public static Set<Index> getCoveringAtomicConfiguration(InumPlan plan) throws SQLException
     {
         Set<Index> min = new HashSet<Index>();
         
-        for (Table t : plan.getTables()) {
-
-            TableAccessSlot s = plan.getSlot(t);
-            
-            if (s == null)
+        for (Table t : plan.getTables())
+            if (plan.getSlot(t) == null)
                 throw new SQLException("No slot for " + t + " in " + plan);
-
-            if (s.getColumnsFetched() == null)
-                throw new SQLException("Can't find columns fetched for " + s.getTable());
-            
-            if (s.getColumnsFetched().size() == 0)
-                min.add(getFullTableScanIndexInstance(t));
             else
-                min.add(new InumInterestingOrder(s.getColumnsFetched()));
-        }
+                min.add(getCoveringIndex(plan.getSlot(t)));
         
         return min;
+    }
+
+    /**
+     * @param slot
+     *      slot for which a covering index is created
+     * @return
+     *      the index that covers the columns accessed by the slot
+     * @throws SQLException
+     *      if the FTS for the slot doesn't exist
+     */
+    public static InumInterestingOrder getCoveringIndex(TableAccessSlot slot) throws SQLException
+    {
+        if (slot.getColumnsFetched() == null)
+            throw new SQLException("Can't find columns fetched for " + slot.getTable());
+
+        if (slot.getColumnsFetched().size() == 0)
+            return getFullTableScanIndexInstance(slot.getTable());
+
+        return new InumInterestingOrder(slot.getColumnsFetched());
     }
 
     /**
@@ -525,4 +533,79 @@ public final class InumUtils
 
         return false;
     }
+
+    /**
+     * Instantiates an operator for an unseen index.
+    protected Operator instantiateOperatorForUnseenIndex(SQLStatement sql, Index index)
+        throws SQLException
+    {
+        SQLStatementPlan plan = delegate.explain(sql, Sets.<Index>newHashSet(index)).getPlan();
+
+        Operator indexScan = null;
+        Operator fetch = null;
+        Operator otherFetch = null;
+
+        for (Operator o : plan.toList()) {
+
+            if (!o.getName().equals(INDEX_SCAN))
+                continue;
+
+            if (o.getDatabaseObjects().size() != 1)
+                throw new SQLException(INDEX_SCAN + " should be referring to a DB object");
+
+            DatabaseObject dbo = o.getDatabaseObjects().get(0);
+
+            if (dbo instanceof Index && index.getTable().equals(((Index) dbo).getTable())) {
+
+                if (indexScan != null) {
+                    // it is possible to find more than one INDEX_SCAN that refers {@code index}, 
+                    // since some optimizers scan the same index more than once. As long as the 
+                    // INDEX_SCANs are all referring to the SAME index, it's OK
+                    if (!index.equals(dbo)) {
+                        throw new SQLException(
+                            "Other " + INDEX_SCAN + " for " + index.getTable() + " in " + plan);
+                    } else {
+                        // check that they're sharing the same FETCH parent, otherwise 
+                        // extractCostOfLeafAndRemoveFetch won't return the appropriate costh
+                        otherFetch = plan.findAncestorWithName(o, FETCH);
+
+                        if ((fetch != null && otherFetch == null) ||
+                                (fetch == null && otherFetch != null) ||
+                                (fetch != null && otherFetch != null && !fetch.equals(otherFetch)))
+                            throw new SQLException("Haven't implemented this case yet");
+
+                        dbo.getName();
+                    }
+                } else {
+                    indexScan = o;
+                    fetch = plan.findAncestorWithName(o, FETCH);
+                }
+            }
+        }
+
+        if (indexScan == null)
+            // plan is not using the index, so the index is not compatible with this slot
+            return INCOMPATIBLE;
+
+        double newIndexScanCost = 0;
+        double costOfChildren = 0;
+
+        if (plan.getChildren(indexScan).size() > 0) {
+            // check if INDEX_SCAN has children and remove them. Yes, it is
+            // possible for INDEX_SCAN to have children.
+            for (Operator child : plan.getChildren(indexScan)) {
+                costOfChildren += child.getAccumulatedCost();
+                plan.remove(child);
+            }
+        }
+
+        newIndexScanCost = extractCostOfLeafAndRemoveFetch(plan, indexScan) - costOfChildren;
+
+        Operator newIndexScan = new Operator(indexScan);
+
+        newIndexScan.setAccumulatedCost(newIndexScanCost);
+
+        return newIndexScan;
+    }
+     */
 }

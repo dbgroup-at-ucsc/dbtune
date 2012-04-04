@@ -363,7 +363,7 @@ public class InumPlan extends SQLStatementPlan
      * @throws SQLException
      *      if the statement can't be explained
      * @see #buildQueryForUnseenIndex
-     */
+    */
     protected Operator instantiateOperatorForUnseenIndex(TableAccessSlot slot, Index index)
         throws SQLException
     {

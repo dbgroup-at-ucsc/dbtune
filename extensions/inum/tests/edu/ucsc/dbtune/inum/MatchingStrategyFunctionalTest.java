@@ -9,6 +9,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
@@ -56,6 +57,9 @@ public class MatchingStrategyFunctionalTest
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
         computation = InumSpaceComputation.Factory.newInumSpaceComputation(env);
 
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            throw new Exception("Expecting INUM optimizer");
+        
         loadWorkloads(db.getConnection());
     }
 

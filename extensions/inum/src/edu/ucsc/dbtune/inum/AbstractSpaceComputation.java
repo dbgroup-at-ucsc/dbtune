@@ -16,7 +16,9 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static com.google.common.collect.Iterables.get;
 
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import static edu.ucsc.dbtune.util.InumUtils.extractInterestingOrders;
+import static edu.ucsc.dbtune.util.InumUtils.getCoveringAtomicConfiguration;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 
 /**
@@ -54,10 +56,23 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
     {
         space.clear();
 
-        space.add(new InumPlan(delegate, delegate.explain(statement, empty).getPlan()));
+        // add FTS-on-all-slots template
+        InumPlan templateForEmpty =
+            new InumPlan(delegate, delegate.explain(statement, empty).getPlan());
 
+        space.add(templateForEmpty);
+
+        // obtain plans for all the extracted interesting orders
         computeWithCompleteConfiguration(
                 space, extractInterestingOrders(statement, catalog), statement, delegate);
+
+        // NLJ heuristic referred in the INUM paper
+        Set<Index> covering = getCoveringAtomicConfiguration(templateForEmpty);
+
+        SQLStatementPlan planForCovering = delegate.explain(statement, covering).getPlan();
+
+        if (planForCovering.contains(NLJ))
+            space.add(new InumPlan(delegate, planForCovering));
     }
 
     /**

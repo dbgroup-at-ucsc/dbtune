@@ -5,12 +5,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.util.Environment;
@@ -44,6 +46,7 @@ public class InumSpaceComputationFunctionalTest
     private static Optimizer delegate;
     private static MatchingStrategy matching;
     private static CandidateGenerator candGen;
+    private static Random r;
 
     /**
      * @throws Exception
@@ -57,6 +60,10 @@ public class InumSpaceComputationFunctionalTest
         delegate = getBaseOptimizer(db.getOptimizer());
         matching = MatchingStrategy.Factory.newMatchingStrategy(env);
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
+        r = new Random(System.currentTimeMillis());
+        
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            throw new Exception("Expecting INUM optimizer");
         
         loadWorkloads(db.getConnection());
     }
@@ -108,6 +115,9 @@ public class InumSpaceComputationFunctionalTest
 
             for (SQLStatement sql : wl) {
                 i++;
+
+                if (r.nextInt(100) > 5)
+                    continue;
 
                 List<Set<InumPlan>> spaces = new ArrayList<Set<InumPlan>>();
                 Map<InumSpaceComputation, MatchingStrategy.Result> results =

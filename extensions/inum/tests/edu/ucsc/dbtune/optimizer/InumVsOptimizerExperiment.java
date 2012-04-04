@@ -67,12 +67,12 @@ public final class InumVsOptimizerExperiment
     /**
      * Option for the subset enumeration.
      */
-    private static String subsetOption = ONE;
+    private static String subsetOption = POWERSET;
 
     /**
      * Name of the workload to run the experiment on.
      */
-    private static String workloadName = "tpch";
+    private static String workloadName = "tpcds-small";
 
     /**
      * Number of maximum what-if calls on a statement. If {@link #numberOfSubsets} is less than this 
@@ -101,6 +101,9 @@ public final class InumVsOptimizerExperiment
         delegate = getBaseOptimizer(optimizer);
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
         crashReport = new StringBuilder();
+
+        if (!(optimizer instanceof InumOptimizer))
+            throw new Exception("Expecting INUM optimizer");
         
         loadWorkloads(db.getConnection());
     }
