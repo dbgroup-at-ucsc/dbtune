@@ -8,7 +8,9 @@ doc/
 manifest.mf
 nbproject/
 nbbuild.xml
+*.properties
 resources/*/*/*/*.txt
+resources/*/*/*/*.lp
 *.sw*
 .checkstyle
 .classpath
