@@ -2,8 +2,6 @@ package edu.ucsc.dbtune.bip.div;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloLinearNumExprIterator;
-import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex.DoubleParam;
 
 import java.util.ArrayList;
@@ -104,6 +102,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             
             // epsilon in linerization
             cplex.setParam(DoubleParam.EpLin, 1e-1);
+            UtilConstraintBuilder.cplex = cplex;
             
             // 1. Add variables into list
             constructVariables();
@@ -208,7 +207,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         // query component
         for (QueryPlanDesc desc : queryPlanDescs) 
-            expr.add(modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+            expr.add(UtilConstraintBuilder.modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
                                getFactorStatement(desc)
                                )
                     );
@@ -473,34 +472,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         }
     }
     
-    /**
-     * Modify all the coefficient in the formula by multiply with given factor
-     * 
-     * @param expr
-     *      The expression that is modified
-     * @param factor
-     *      The factor to multiple with existing coefficient
-     *      
-     * @return
-     *      The expression with modifying coefficient
-     * @throws IloException
-     */
-    protected IloLinearNumExpr modifyCoef(IloLinearNumExpr expr, double factor) throws IloException
-    {
-        IloNumVar        var;
-        double           coef;
-        IloLinearNumExprIterator iter;
-        IloLinearNumExpr result = cplex.linearNumExpr();
-        
-        iter = expr.linearIterator();
-        while (iter.hasNext()) {
-            var = iter.nextNumVar();
-            coef = iter.getValue();
-            result.addTerm(var, factor * coef);
-        }
-        
-        return result;
-    }
+    
 
      /**
      * Recalculate the total cost returned by CPLEX
