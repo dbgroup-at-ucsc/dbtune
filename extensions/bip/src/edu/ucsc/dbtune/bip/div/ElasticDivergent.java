@@ -26,5 +26,5 @@ public interface ElasticDivergent
      * @param cost
      *      The maximum of deployment cost.
      */
-    void setDeployCost(double cost);
+    void setUpperDeployCost(double cost);
 }

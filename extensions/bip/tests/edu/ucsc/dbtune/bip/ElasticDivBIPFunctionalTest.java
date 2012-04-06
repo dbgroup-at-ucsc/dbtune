@@ -83,7 +83,7 @@ public class ElasticDivBIPFunctionalTest
         elastic.setSpaceBudget(B);
         elastic.setLogListenter(logger);
         
-        elastic.setDeployCost(0.0);
+        elastic.setUpperDeployCost(0.0);
         elastic.setInitialConfiguration(initial);
         elastic.setNumberDeployReplicas(2);
         

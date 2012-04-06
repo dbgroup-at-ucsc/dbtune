@@ -22,7 +22,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
 {  
     private int     nDeploys;
     private int     nDeployVar;
-    private double  deployCost;
+    private double  upperDeployCost;
     
     /** 
      * Map index to the set of replicas that this index is deploy at the initial
@@ -32,9 +32,9 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
     
     
     @Override
-    public void setDeployCost(double cost) 
+    public void setUpperDeployCost(double cost) 
     {
-        deployCost = cost;
+        upperDeployCost = cost;
     }
 
     @Override
@@ -48,12 +48,12 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         for (int r = 0; r < div.getNumberReplicas(); r++) 
             for (Index index : div.indexesAtReplica(r)) {
                 
-                Set<Integer> replicas = initialIndexReplica.get(index);
-                if (replicas == null)
-                    replicas = new HashSet<Integer>();
+                Set<Integer> replicaIDs = initialIndexReplica.get(index);
+                if (replicaIDs == null)
+                    replicaIDs = new HashSet<Integer>();
                 
-                replicas.add(r);
-                initialIndexReplica.put(index, replicas);
+                replicaIDs.add(r);
+                initialIndexReplica.put(index, replicaIDs);
             
             }
     }
@@ -143,7 +143,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         int idY;
         int idD;
         
-        // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
+        // \sum_{k \in [1, Kq]}y^{r}_{qk} <= deploy_r
         expr = cplex.linearNumExpr();
         idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
         expr.addTerm(-1, cplexVar.get(idD));
@@ -249,6 +249,6 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             }
         }
         
-        cplex.addLe(exprDeploy, deployCost);  
+        cplex.addLe(exprDeploy, upperDeployCost);  
     }    
 }
