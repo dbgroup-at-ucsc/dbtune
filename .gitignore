@@ -1,10 +1,13 @@
 build/
-extensions/*/build/
-bin
-bin/
+bin/edu
+bin/interaction/
+config/dbtune-test.cfg
 derby.log
 doc
 doc/
+extensions/*/build/
+extensions/bip/bin/
+extensions/inum/bin/
 manifest.mf
 nbproject/
 nbbuild.xml

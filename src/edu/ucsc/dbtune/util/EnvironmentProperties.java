@@ -27,7 +27,14 @@ public final class EnvironmentProperties
     /**
      * Name of the configuration properties file.
      */
-    public static final String FILE = System.getProperty("user.dir") + "/config/dbtune.cfg";
+    public static final String FILE;
+
+    static {
+        if (System.getenv("DBTUNECONFIG") == null)
+            FILE = System.getProperty("user.dir") + "/config/dbtune.cfg";
+        else
+            FILE = System.getenv("DBTUNECONFIG");
+    }
 
 
 
