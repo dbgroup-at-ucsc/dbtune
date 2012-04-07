@@ -94,7 +94,7 @@ public class DB2Optimizer extends AbstractOptimizer
         used = newHashSet(plan.getIndexes());
 
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
-            updatedTable = getUpdatedTable(plan);
+            updatedTable = getUpdatedTable(connection, catalog, plan);
             baseTableUpdateCost = getBaseTableUpdateCost(plan);
             updateCostPerIndex = getUpdatedIndexes(updatedTable, baseTableUpdateCost, indexes);
         } else {
@@ -575,6 +575,10 @@ public class DB2Optimizer extends AbstractOptimizer
     /**
      * Extracts the table that is being updated by the plan.
      *
+     * @param connection
+     *     connection used to communicate with the DBMS
+     * @param catalog
+     *      to do the binding
      * @param sqlPlan
      *      the plan
      * @return
@@ -583,25 +587,43 @@ public class DB2Optimizer extends AbstractOptimizer
      *      if the plan doesn't contain exactly 3 nodes (i.e. the number of operators in any 
      *      execution plan of an update)
      */
-    private static Table getUpdatedTable(SQLStatementPlan sqlPlan) throws SQLException
+    private static Table getUpdatedTable(
+            Connection connection, Catalog catalog, SQLStatementPlan sqlPlan)
+        throws SQLException
     {
-        Table t = null;
+        if (!sqlPlan.contains("UPDATE"))
+            throw new SQLException("Plan should contain UPDATE operator");
+
+        // For the particular case of updates, the EXPLAIN_STREAM doesn't have the parent-child 
+        // relationship as the {@link SELECT_FROM_EXPLAIN} query expect it, so we have to execute 
+        // another query to identify the table that is associated to the UPDATE operator
+        Statement stmt = connection.createStatement();
+        ResultSet rs = stmt.executeQuery(SELECT_FROM_EXPLAIN_FOR_UPDATE);
+
+        if (!rs.next())
+            throw new SQLException("No output for SELECT_FROM_EXPLAIN_FOR_UPDATE query");
+
+        String dboSchema = rs.getString("object_schema");
+        String dboName = rs.getString("object_name");
+
+        if (rs.next())
+            throw new SQLException(
+                    "SELECT_FROM_EXPLAIN_FOR_UPDATE should reference one database object only");
+
+        rs.close();
+        stmt.close();
+
+        DatabaseObject dbo =
+            extractDatabaseObjectReferenced(catalog, new HashSet<Index>(), dboSchema, dboName);
+
+        if (!(dbo instanceof Table))
+            throw new SQLException("Object associated with UPDATE should be a table");
 
         for (Operator o : sqlPlan.toList())
-            if (o.getName().toLowerCase().contains("update")) {
-                if (o.getDatabaseObjects().size() != 1)
-                    throw new SQLException("Can't identify object being updated");
+            if (o.getName().equals("UPDATE"))
+                sqlPlan.assignDatabaseObject(o, dbo);
 
-                if (!(o.getDatabaseObjects().get(0) instanceof Table))
-                    throw new SQLException("Object associated with update is not a table");
-
-                t = (Table) o.getDatabaseObjects().get(0);
-            }
-
-        if (t == null)
-            throw new SQLException("Can't identify updated table");
-
-        return t;
+        return (Table) dbo;
     }
 
     /**
@@ -849,6 +871,42 @@ public class DB2Optimizer extends AbstractOptimizer
             return op;
         }
 
+        dbo = extractDatabaseObjectReferenced(catalog, indexes, dboSchema, dboName);
+
+        op.add(dbo);
+
+        columnsFetched = extractColumnsUsedByOperator(columnNames, dbo, catalog);
+
+        if (columnsFetched != null)
+            op.addColumnsFetched(columnsFetched);
+
+        op.add(extractPredicatesUsedByOperator(predicateList, catalog));
+
+        return op;
+    }
+
+    /**
+     * Extracts the database object referenced by an operator.
+     *
+     * @param catalog
+     *      used to retrieve metadata
+     * @param indexes
+     *      indexes sent for the what-if call
+     * @param dboSchema
+     *      schema
+     * @param dboName
+     *      name of the object referenced
+     * @return
+     *      the corresponding object
+     * @throws SQLException
+     *      if the object can't be found
+     */
+    static DatabaseObject extractDatabaseObjectReferenced(
+            Catalog catalog, Set<Index> indexes, String dboSchema, String dboName)
+        throws SQLException
+    {
+        DatabaseObject dbo;
+
         Schema schema = catalog.findSchema(dboSchema);
 
         if (schema == null && dboSchema.equalsIgnoreCase("SYSTEM"))
@@ -867,16 +925,7 @@ public class DB2Optimizer extends AbstractOptimizer
             throw new SQLException(
                     "Can't find object with schema " + dboSchema + " and name " + dboName);
 
-        op.add(dbo);        
-
-        columnsFetched = extractColumnsUsedByOperator(columnNames, dbo, catalog);
-
-        if (columnsFetched != null)
-            op.addColumnsFetched(columnsFetched);
-
-        op.add(extractPredicatesUsedByOperator(predicateList, catalog));
-
-        return op;
+        return dbo;
     }
 
     /**
@@ -1360,6 +1409,25 @@ public class DB2Optimizer extends AbstractOptimizer
         "          AND s1.object_name IS NOT NULL " +
         "  ORDER BY " +
         "     o.operator_id ASC";
+
+    final static String SELECT_FROM_EXPLAIN_FOR_UPDATE =
+        "SELECT " +
+        "     o.operator_id   AS node_id, " +
+        "     o.operator_type AS operator_name, " +
+        "     s.object_schema AS object_schema, " +
+        "     s.object_name   AS object_name," +
+        "     s.stream_count  AS cardinality, " +
+        "     o.total_cost    AS cost, " +
+        "     cast(cast(s.column_names AS CLOB(2097152)) AS VARCHAR(2048)) " +
+        "                      AS column_names " +
+        "  FROM " +
+        "     systools.explain_operator o, " +
+        "     systools.explain_stream s    " +
+        " WHERE " +
+        "       o.operator_id   = s.source_id" +
+        "   AND o.operator_type = 'UPDATE'" +
+        "   AND s.target_id     = -1 ";
+
 
     final static String SELECT_FROM_PREDICATES =
         " SELECT " +
