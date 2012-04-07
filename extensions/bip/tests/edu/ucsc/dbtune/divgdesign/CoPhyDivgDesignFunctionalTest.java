@@ -41,7 +41,7 @@ public class CoPhyDivgDesignFunctionalTest
     @Test
     public void testDivergentDesign() throws Exception
     {   
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch");
         nReplicas = 3;
         loadfactor = 2;
         B = Math.pow(2, 28);
@@ -59,7 +59,8 @@ public class CoPhyDivgDesignFunctionalTest
         
         System.out.println("DB2 Divergent Design \n"
                             + " Running time: " + (System.currentTimeMillis() - start) + "\n"
-                            + " The objective value: " + divg.getTotalCost());
+                            + " The objective value: " + divg.getTotalCost() + "\n"
+                            + " Number of iterations: " + divg.getNumberOfIterations());
         System.out.println(" configuration: " + indexesAtReplica);
     }
 }

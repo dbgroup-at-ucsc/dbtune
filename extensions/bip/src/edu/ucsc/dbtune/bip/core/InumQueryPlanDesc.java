@@ -72,6 +72,10 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	private static Map<SQLStatement, QueryPlanDesc> instances = new 
 	                                            HashMap<SQLStatement, QueryPlanDesc>();
 	
+	/** A map in order not to populate template plans if it has been done before */
+	public static Map<SQLStatement, InumPreparedSQLStatement> preparedStmts = new
+	                                            HashMap<SQLStatement, InumPreparedSQLStatement>();
+	
 	/**
      * Returns the single instance of this class corresponding to the given statement.
      *
@@ -114,7 +118,12 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         Set<InumPlan> templatePlans;
         
         // 1. Get the template plans from INUM
-        preparedStmt  = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
+        preparedStmt = preparedStmts.get(stmt);
+        if (preparedStmt == null) {
+            preparedStmt  = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
+            preparedStmts.put(stmt, preparedStmt);
+        }
+        
         templatePlans = preparedStmt.getTemplatePlans();
         
         // 2. Number of slots and indexes in each slot

@@ -24,6 +24,7 @@ public abstract class DivgDesign
     
     // constrol knobs
     protected int maxIters;
+    protected int iter;
     protected double epsilon;
     
     // statement and indexes at each replica
@@ -65,7 +66,7 @@ public abstract class DivgDesign
         this.m = loadfactor;
         this.B = B;
 
-        this.maxIters = 6;
+        this.maxIters = 30;
         this.epsilon = 0.05;
         
         // process 
@@ -87,10 +88,11 @@ public abstract class DivgDesign
         // 2. repeat the while loop while the improvement is high 
         // or exceeds the number of iterations
         double relativeGap = 0.0;
-        int    iter = 0;
+        
         double previousCost = 0.0;
         System.out.println("BEFORE THE LOOP ");
         
+        iter = 0;
         while (iter < maxIters) {
             
             // recommend index at each replica
@@ -118,6 +120,11 @@ public abstract class DivgDesign
             previousCost = totalCost;
             iter++;
         }
+    }
+    
+    public int getNumberOfIterations()
+    {
+        return iter;
     }
     
     

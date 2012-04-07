@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.divgdesign;
 
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.preparedStmts;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
+
 public class CoPhyDivgDesign extends DivgDesign 
 {    
     private DatabaseSystem db;
@@ -32,6 +34,7 @@ public class CoPhyDivgDesign extends DivgDesign
     
     private CoPhy cophy;  
     private Map<SQLStatement, Set<Index>> recommendedIndexStmt;
+    
     
     public CoPhyDivgDesign(DatabaseSystem db, InumOptimizer  io, LogListener logger)
     {
@@ -84,16 +87,21 @@ public class CoPhyDivgDesign extends DivgDesign
     protected List<QueryCostAtPartition> statementCosts(SQLStatement sql)
             throws SQLException 
     {
-        InumPreparedSQLStatement inumStmt = (InumPreparedSQLStatement)
-                                 io.prepareExplain(sql);
+        InumPreparedSQLStatement inumStmt;
         
+        // retrieve from the cache first
+        inumStmt = preparedStmts.get(sql);
+        if (inumStmt == null) {
+            inumStmt  = (InumPreparedSQLStatement) io.prepareExplain(sql);
+            preparedStmts.put(sql, inumStmt);
+        }
+       
         // iterate over every replica 
         // and compute the cost
         List<QueryCostAtPartition> costs = new ArrayList<QueryCostAtPartition>();
         double cost;
         
-        for (int i = 0; i < n; i++) {
-            
+        for (int i = 0; i < n; i++) {            
             cost = inumStmt.explain(indexesAtReplica.get(i)).getTotalCost();
             costs.add(new QueryCostAtPartition(i, cost));
         }
