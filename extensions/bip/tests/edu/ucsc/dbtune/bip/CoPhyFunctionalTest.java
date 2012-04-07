@@ -48,7 +48,7 @@ public class CoPhyFunctionalTest
     @Test
     public void testCoPhy() throws Exception
     {   
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         candidates = candGen.generate(workload);
@@ -78,21 +78,34 @@ public class CoPhyFunctionalTest
         IndexTuningOutput output = cophy.solve();
         
         if (output != null) {
+            
+            totalIndexSize = 0;
+            for (Index index : output.getRecommendation())
+                totalIndexSize += index.getBytes();
+            
             System.out.println(" Objective value: " + cophy.getObjValue()
                                 + "\n Running time: " + logger.toString());
             System.out.println(" Recommended indexes: " + output.getRecommendation().size() + "\n" 
+                               + " total size: " + totalIndexSize
                                + output.getRecommendation());
-            /*
+            
             double costCoPhy, costDB2;
             
             List<Double> costCoPhys = new ArrayList<Double>();
             List<Double> costDB2s = new ArrayList<Double>();
             
             // compare with DB2Advis
+            long start = System.currentTimeMillis();
             DB2Advisor db2advis = new DB2Advisor(db);
-            db2advis.process(workload);            
-        
+            db2advis.process(workload);                    
             Set<Index> db2Indexes = db2advis.getRecommendation();
+            totalIndexSize = 0;
+            for (Index index : db2Indexes)
+                totalIndexSize += index.getBytes();
+            
+            System.out.println("Time to run DB2 Advisor: " + (System.currentTimeMillis() - start)
+                                + " total index size: " + totalIndexSize);
+            
             ExplainedSQLStatement cophyExplain;
             ExplainedSQLStatement db2Explain;
             
@@ -100,7 +113,6 @@ public class CoPhyFunctionalTest
             costDB2 = 0;
             for (int i = 0; i < workload.size(); i++) {
                 
-                System.out.println(" ---- query " + i + "\n");                
                 cophyExplain =  io.getDelegate().explain(workload.get(i), 
                                                         output.getRecommendation());
                 
@@ -114,8 +126,9 @@ public class CoPhyFunctionalTest
                 costDB2 += db2Explain.getTotalCost();
             }
             
-            System.out.println(" cost DB2: " + costDB2 + " vs. cost CoPhy: " + costCoPhy);
-            */
+            System.out.println(" cost DB2: " + costDB2 + " vs. cost CoPhy: " + costCoPhy
+                    + " ratio CoPhy / DB2: " + ((double) costCoPhy / costDB2));
+            
         }
         
     }
