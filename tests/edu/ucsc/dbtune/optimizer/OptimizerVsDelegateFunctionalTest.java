@@ -76,7 +76,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     @Test
     public void testPreparedSQLStatement() throws Exception
     {
-        if (delegate == null) return;
+        if (optimizer == delegate) return;
 
         for (Workload wl : workloads(env.getWorkloadFolders())) {
 

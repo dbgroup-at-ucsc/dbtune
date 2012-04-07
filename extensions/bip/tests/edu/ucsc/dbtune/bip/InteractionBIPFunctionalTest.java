@@ -50,7 +50,10 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
      */
     @Test
     public void testInteraction() throws Exception
-    {   
+    {
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
+
         System.out.println(" In test interaction ");
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         /*

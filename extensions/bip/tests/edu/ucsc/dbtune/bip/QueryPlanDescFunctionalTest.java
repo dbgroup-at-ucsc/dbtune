@@ -33,10 +33,13 @@ public class QueryPlanDescFunctionalTest
         
     @Test
     public void testPlanDescriptionGeneration() throws Exception
-    {   
+    {
         en = Environment.getInstance();
         db = newDatabaseSystem(en);
         
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
+
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-small");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));

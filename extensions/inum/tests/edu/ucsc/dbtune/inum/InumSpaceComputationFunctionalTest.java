@@ -62,9 +62,6 @@ public class InumSpaceComputationFunctionalTest
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
         r = new Random(System.currentTimeMillis());
         
-        if (!(db.getOptimizer() instanceof InumOptimizer))
-            throw new Exception("Expecting INUM optimizer");
-        
         loadWorkloads(db.getConnection());
     }
 
@@ -85,6 +82,9 @@ public class InumSpaceComputationFunctionalTest
     @Test
     public void testComputation() throws Exception
     {
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
+        
         List<InumSpaceComputation> available = new ArrayList<InumSpaceComputation>();
 
         available.add(new ExhaustiveSpaceComputation());

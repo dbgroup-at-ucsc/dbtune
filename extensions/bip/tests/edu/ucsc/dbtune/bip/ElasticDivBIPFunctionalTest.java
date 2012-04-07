@@ -40,6 +40,10 @@ public class ElasticDivBIPFunctionalTest
     @Test
     public void testShrinkReplicaDivergentDesign() throws Exception
     {   
+
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
+
         int Nreplicas = 4;
         int loadfactor = 2;
         double B;

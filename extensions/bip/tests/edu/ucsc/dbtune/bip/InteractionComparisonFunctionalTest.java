@@ -109,7 +109,9 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
      */
     @Test
     public void testInteraction() throws Exception
-    {   
+    {
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
         // 1. generate candidate indexes
         generateCandidateIndexes();
         

@@ -47,6 +47,9 @@ public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration
     @Test
     public void testDivergentDesign() throws Exception
     {  
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
+
         // parameter setting for divergent design tuning
         Nreplicas = 4;
         loadfactor = 2;

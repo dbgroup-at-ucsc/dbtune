@@ -50,9 +50,14 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
     
     @Test
     public void testDivergentDesign() throws Exception
-    {   
-        workload = workload(en.getWorkloadsFoldername() + "/tpch");
-        CandidateGenerator candGen = 
+    {
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
+
+        DivBIP div = new DivBIP();
+        
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        CandidateGenerator candGen =
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         candidates = candGen.generate(workload);
         

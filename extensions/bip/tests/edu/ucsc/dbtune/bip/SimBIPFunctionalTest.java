@@ -47,6 +47,8 @@ public class SimBIPFunctionalTest
         en  = Environment.getInstance();
         db = newDatabaseSystem(en);
         
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
         System.out.println(" In test scheduling ");
         Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         
