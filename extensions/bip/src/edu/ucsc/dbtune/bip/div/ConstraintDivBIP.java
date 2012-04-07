@@ -34,6 +34,7 @@ public class ConstraintDivBIP extends DivBIP
     public static int IMBALANCE_REPLICA = 1001;
     public static int IMBALANCE_QUERY   = 1002;
     public static int NODE_FAILURE      = 1003;
+    public static int UPDATE_COST_BOUND = 1004;
    
     protected boolean isSumYConstraint;
     protected List<DivConstraint> constraints;
@@ -49,11 +50,16 @@ public class ConstraintDivBIP extends DivBIP
     protected void buildBIP() 
     {
         numConstraints = 0;
-        
+                
         try {            
             // time limit
             cplex.setParam(DoubleParam.TiLim, 300);
             UtilConstraintBuilder.cplex = cplex;
+        
+            if (constraints.size() == 1 && constraints.get(0).getType() == UPDATE_COST_BOUND) {
+                buildBIPUpdateCostBound(constraints.get(0).getFactor());
+                return; 
+            }
             
             // 1. Add variables into list
             constructVariables();
@@ -93,6 +99,89 @@ public class ConstraintDivBIP extends DivBIP
         catch (IloException e) {
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * This function build the BIP for the update cost bound constraint:
+     * The cost to perform update is constrained by an upper bound value
+     * 
+     */
+    protected void buildBIPUpdateCostBound(double delta)  throws IloException
+    {        
+     
+        // 1. Add variables into list
+        super.constructVariables();
+        super.createCplexVariable(poolVariables.variables());
+        
+        // 2. Construct the query cost at each replica
+        totalCostQueryOnly();
+            
+        // 3. Atomic constraints
+        atomicConstraints();      
+            
+        // 4. Top-m best cost 
+        topMBestCostConstraints();
+            
+        // 5. Space constraints
+        spaceConstraints();
+            
+        // 6. Update cost constraints
+        boundUpdateCostConstraint(delta);
+    }
+    
+    
+    /**
+     * Construct the total cost formulas containing query statements only.
+     * 
+     * @throws IloException
+     */
+    protected void totalCostQueryOnly() throws IloException
+    {
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+       
+        for (QueryPlanDesc desc : queryPlanDescs) { 
+         
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+            
+            for (int r = 0; r < nReplicas; r++)
+                expr.add(UtilConstraintBuilder.modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+                               getFactorStatement(desc)
+                               )
+                    );
+        }
+        
+        cplex.addMinimize(expr);
+    }
+    
+    /**
+     * Build the constraint on bounding the update cost. 
+     * 
+     * @throws IloException
+     */
+    protected void boundUpdateCostConstraint(double delta) throws IloException
+    {
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            
+            if (!desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+            
+            for (int r = 0; r < nReplicas; r++) {
+                // query shell
+                expr.add(UtilConstraintBuilder.modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+                                                          getFactorStatement(desc)
+                                                          )
+                        );
+                
+                // update cost
+                expr.add(updateCost(r, desc.getStatementID(), desc));
+            }
+        }
+        
+        // upper bound
+        cplex.addLe(expr, delta);
     }
     
     @Override

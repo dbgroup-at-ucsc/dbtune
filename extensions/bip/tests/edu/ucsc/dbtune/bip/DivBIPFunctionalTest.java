@@ -31,10 +31,12 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
     private static DatabaseSystem db;
     private static Environment    en;
     
-    private static int Nreplicas;
+    private static int nReplicas;
     private static int loadfactor;
     private static double B;
     private static long totalIndexSize;
+    private static Set<Index> candidates;
+    private static Workload workload;
     
     /**
      * Setup for the test.
@@ -49,12 +51,10 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
     @Test
     public void testDivergentDesign() throws Exception
     {   
-        DivBIP div = new DivBIP();
-        
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-small");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
-        Set<Index> candidates = candGen.generate(workload);
+        candidates = candGen.generate(workload);
         
         totalIndexSize = 0;
         for (Index index : candidates)
@@ -63,8 +63,21 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         System.out.println("L59, number of candidate: " + candidates.size() + " size: " 
                             + totalIndexSize);
         
-        // parameter setting for divergent design tuning
-        divergentNormal();
+        loadfactor = 2;
+        B = Math.pow(2, 28);
+        
+        int arrNReplicas[] = {3};
+        
+        for (int i = 0; i < arrNReplicas.length; i++) {
+            nReplicas = arrNReplicas[i];
+            testDiv();
+        }
+    }
+    
+    public static void testDiv() throws Exception
+    {
+        DivBIP div = new DivBIP();
+        
         Optimizer io = db.getOptimizer();
 
         if (!(io instanceof InumOptimizer))
@@ -74,13 +87,13 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         div.setCandidateIndexes(candidates);
         div.setWorkload(workload); 
         div.setOptimizer((InumOptimizer) io);
-        div.setNumberReplicas(Nreplicas);
+        div.setNumberReplicas(nReplicas);
         div.setLoadBalanceFactor(loadfactor);
         div.setSpaceBudget(B);
         div.setLogListenter(logger);
         
         IndexTuningOutput output = div.solve();
-        div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpcds-small/test.lp");
+        div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpch/test.lp");
         System.out.println(logger.toString());
         if (output != null) {
             System.out.println("In test, result: " 
@@ -144,21 +157,21 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
     
     public static void divergentUnlimitSpace()
     {
-        Nreplicas = 3;
+        nReplicas = 3;
         loadfactor = 2;
         B = 70;
     }
     
     public static void optimalDesign()
     {
-        Nreplicas = 1;
+        nReplicas = 1;
         loadfactor = 1;
         B = 5;
     }
     
     public static void divergentNormal()
     {
-        Nreplicas = 3;
+        nReplicas = 5;
         loadfactor = 2;
         // at most 1GB
         //B = Math.min(Math.pow(2, 29), totalIndexSize / 3);
