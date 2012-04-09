@@ -9,7 +9,6 @@ import java.util.Set;
 import edu.ucsc.dbtune.inum.MatchingStrategy;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
-import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -51,9 +50,6 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
         throws SQLException
     {
         super(optimizer, sql);
-
-        if (getSQLStatement().getSQLCategory().isSame(SQLCategory.NOT_SELECT))
-            throw new RuntimeException("Can process SELECT statements only");
 
         this.matchingStrategy = matchingStrategy;
 

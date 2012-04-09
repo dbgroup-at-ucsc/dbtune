@@ -205,11 +205,9 @@ public class OptimizerTest
 
         assertThat(cost1, is(cost2));
 
-        try {
         // XXX: issue #106, #144, #247 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) &&
-                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
+                !(opt instanceof IBGOptimizer) )
         {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql);
@@ -254,10 +252,6 @@ public class OptimizerTest
         assertThat(sqlp.getOptimizationCount(), is(1));
         }
         // }
-        } catch (ClassNotFoundException e) {
-            // fine, inum package not in classpath
-            e.getMessage();
-        }
     }
 
     /**
@@ -306,11 +300,9 @@ public class OptimizerTest
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        try {
         // XXX: issue #106, #144, #247 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) &&
-                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
+                !(opt instanceof IBGOptimizer))
         {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
@@ -348,10 +340,6 @@ public class OptimizerTest
 
         idxa.getSchema().remove(idxa);
         idxb.getSchema().remove(idxb);
-        } catch (ClassNotFoundException e) {
-            // fine, inum package not in classpath
-            e.getMessage();
-        }
     }
 
     /**
@@ -364,7 +352,6 @@ public class OptimizerTest
      */
     protected static void checkRecommendIndexes(Optimizer opt) throws Exception
     {
-        try {
         SQLStatement sql;
         Set<Index> rec;
         
@@ -383,8 +370,7 @@ public class OptimizerTest
 
         // XXX: issue #106, #144, #247 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) &&
-                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
+                !(opt instanceof IBGOptimizer))
         {
         sql = new SQLStatement("UPDATE one_table.tbl SET a = -1 WHERE a = 5");
         rec = opt.recommendIndexes(sql);
@@ -392,10 +378,6 @@ public class OptimizerTest
         assertThat(rec.isEmpty(), is(false));
         }
         // }
-        } catch (ClassNotFoundException e) {
-            // fine, inum package not in classpath
-            e.getMessage();
-        }
     }
 
     // protected static void checkAnalysisTime(Optimizer opt) throws Exception
@@ -535,11 +517,9 @@ public class OptimizerTest
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp2));
 
-        try {
         // XXX: issue #106, #144, #247 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) &&
-                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
+                !(opt instanceof IBGOptimizer))
         {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         stmt = opt.prepareExplain(sql);
@@ -550,10 +530,6 @@ public class OptimizerTest
         exp2 = stmt.explain(new HashSet<Index>());
         }
         // }
-        } catch (ClassNotFoundException e) {
-            // fine, inum package not in classpath
-            e.getMessage();
-        }
 
         // what-if call
         sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");

@@ -78,13 +78,14 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     {
         if (optimizer == delegate) return;
 
+        System.out.println("wlname, stmt, optimizer cost, delegate cost");
+
         for (Workload wl : workloads(env.getWorkloadFolders())) {
 
             final Set<Index> allIndexes = candGen.generate(wl);
 
-            System.out.println("wlname, stmt, optimizer cost, delegate cost");
-
             i = 0;
+
             for (SQLStatement sql : wl) {
                 i++;
 
@@ -93,6 +94,8 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
                 ExplainedSQLStatement explainedByOptimizer = pSql.explain(allIndexes);
                 ExplainedSQLStatement explainedByDelegate = delegate.explain(sql, allIndexes);
 
+                // over-estimations by a delegate are allowed, while under-estimations are 
+                // considered a failure
                 assertThat(
                         "Optimizer: " + explainedByOptimizer + "\n" +
                         "Delegate: " + explainedByDelegate,

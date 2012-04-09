@@ -35,6 +35,7 @@ import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
 
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.UPDATE;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
@@ -528,24 +529,25 @@ public class DB2Optimizer extends AbstractOptimizer
      */
     private static double getBaseTableUpdateCost(SQLStatementPlan sqlPlan) throws SQLException
     {
-        double updateOpCost = -1;
-        double childOpCost = -1;
+        if (sqlPlan.size() < 3)
+            throw new SQLException("UPDATE plan should have at least 3 but has " + sqlPlan.size());
 
-        if (sqlPlan.size() != 3)
-            throw new SQLException("UPDATE plan should have 3 nodes but has " + sqlPlan.size());
+        Operator root = sqlPlan.getRootOperator();
 
-        for (Operator o : sqlPlan.toList())
-            if (o.getName().toLowerCase().contains("return"))
-                continue;
-            else if (o.getName().toLowerCase().contains("update"))
-                updateOpCost = o.getAccumulatedCost();
-            else
-                childOpCost = o.getAccumulatedCost();
+        if (sqlPlan.getChildren(root).size() != 1)
+            throw new SQLException("Root should have only one children");
 
-        if (updateOpCost == -1 || childOpCost == -1)
-            throw new SQLException("Something went wrong for the UPDATE");
+        Operator update = sqlPlan.getChildren(root).get(0);
 
-        return updateOpCost - childOpCost;
+        if (!update.getName().equals(UPDATE))
+            throw new SQLException("Child of root should be " + UPDATE);
+
+        if (sqlPlan.getChildren(update).size() != 1)
+            throw new SQLException(UPDATE + " should have only one children");
+
+        Operator select = sqlPlan.getChildren(update).get(0);
+
+        return update.getAccumulatedCost() - select.getAccumulatedCost();
     }
 
     /**
@@ -603,8 +605,8 @@ public class DB2Optimizer extends AbstractOptimizer
         if (!rs.next())
             throw new SQLException("No output for SELECT_FROM_EXPLAIN_FOR_UPDATE query");
 
-        String dboSchema = rs.getString("object_schema");
-        String dboName = rs.getString("object_name");
+        String dboSchema = rs.getString("object_schema").trim();
+        String dboName = rs.getString("object_name").trim();
 
         if (rs.next())
             throw new SQLException(

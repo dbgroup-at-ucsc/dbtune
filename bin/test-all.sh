@@ -4,17 +4,17 @@
 #
 # it must be run from the dbtune root folder
 
-DB2_CONFIG="jdbc.url=jdbc:db2://192.168.56.101:50000/test\n\
+DB2_CONFIG="jdbc.url=jdbc:db2://localhost:50000/test\n\
 workloads.dir=resources/test-workloads/db2/\n\
 username=db2inst1\n\
 password=db2inst1admin\n"
 
-MYSQL_CONFIG="jdbc.url=jdbc:mysql://192.168.56.102:3306/\n\
+MYSQL_CONFIG="jdbc.url=jdbc:mysql://localhost:3306/\n\
 workloads.dir=resources/test-workloads/mysql/\n\
 username=dbtune\n\
 password=dbtuneadmin\n"
 
-POSTGRES_CONFIG="jdbc.url=jdbc:postgresql://192.168.56.103:5432/\n\
+POSTGRES_CONFIG="jdbc.url=jdbc:postgresql://localhost:5432/\n\
 workloads.dir=resources/test-workloads/mysql/\n\
 username=dbtune\n\
 password=dbtuneadmin\n"
@@ -39,16 +39,6 @@ ant -lib lib functional.all
 
 ANTRETURNCODE=$?
  
-if [ $ANTRETURNCODE -ne 0 ];then
-    echo "BUILD ERROR"
-    exit 1;
-fi
-
-cat bin/base.cfg > $DBTUNECONFIG
-echo -e $DB2_CONFIG >> $DBTUNECONFIG
-echo -e $IBG_CONFIG >> $DBTUNECONFIG
-ant -lib lib functional.all
-
 if [ $ANTRETURNCODE -ne 0 ];then
     echo "BUILD ERROR"
     exit 1;

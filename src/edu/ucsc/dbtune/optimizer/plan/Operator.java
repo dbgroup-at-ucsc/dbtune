@@ -56,6 +56,9 @@ public class Operator
     /** fetch operator. **/
     public static final String FETCH = "FETCH";
 
+    /** update operator. **/
+    public static final String UPDATE = "UPDATE";
+
     /** sort operator. **/
     public static final String SORT = "SORT";
 
