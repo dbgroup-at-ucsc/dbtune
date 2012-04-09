@@ -108,8 +108,7 @@ public abstract class DivgDesign
             calculateTotalCostAndRepartition();
             
             // check if we trap in the local optimal
-            relativeGap = (double) Math.abs(totalCost - previousCost) 
-                                   /  Math.max(totalCost, previousCost);
+            relativeGap = Math.abs(totalCost - previousCost) /  Math.max(totalCost, previousCost);
             System.out.println("L105, iteraction #" + iter
                                 + " relative gap: " + relativeGap);
             
@@ -207,7 +206,7 @@ public abstract class DivgDesign
                 Collections.sort(costs);
                 
                 for (int k = 0; k < m; k++) {
-                    totalCost += (double) costs.get(k).getCost() / m;
+                    totalCost += costs.get(k).getCost() / m;
                     partitionIDs.add(costs.get(k).getPartitionID());
                 }
                 

@@ -50,7 +50,7 @@ public class SimBIPFunctionalTest
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
         System.out.println(" In test scheduling ");
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
         
         // 2. powerset
         CandidateGenerator candGen = //new PowerSetOptimalCandidateGenerator(

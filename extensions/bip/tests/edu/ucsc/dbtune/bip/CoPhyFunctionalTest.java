@@ -47,7 +47,12 @@ public class CoPhyFunctionalTest
     
     @Test
     public void testCoPhy() throws Exception
-    {   
+    {
+        Optimizer io = db.getOptimizer();
+
+        if (!(io instanceof InumOptimizer))
+            return;
+
         workload = workload(en.getWorkloadsFoldername() + "/tpch");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
@@ -63,10 +68,6 @@ public class CoPhyFunctionalTest
         B = Math.pow(2, 28);
         
         CoPhy cophy = new CoPhy();
-        Optimizer io = db.getOptimizer();
-
-        if (!(io instanceof InumOptimizer))
-            throw new Exception("Expecting InumOptimizer instance");
                 
         LogListener logger = LogListener.getInstance();
         cophy.setCandidateIndexes(candidates);

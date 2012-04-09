@@ -55,7 +55,7 @@ public class InteractionBIPFunctionalTest extends BIPTestConfiguration
             return;
 
         System.out.println(" In test interaction ");
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
         /*
         CandidateGenerator candGen =
             new PowerSetOptimalCandidateGenerator(

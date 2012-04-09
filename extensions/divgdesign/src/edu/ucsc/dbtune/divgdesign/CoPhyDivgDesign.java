@@ -1,8 +1,5 @@
 package edu.ucsc.dbtune.divgdesign;
 
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
-import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.preparedStmts;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +22,7 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
+import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.preparedStmts;
 
 public class CoPhyDivgDesign extends DivgDesign 
 {    
@@ -48,11 +46,10 @@ public class CoPhyDivgDesign extends DivgDesign
     }
     
     @Override
-    protected Set<Index> getRecommendation(List<SQLStatement> sqls)
-            throws Exception 
-    {   
-        CandidateGenerator candGen = 
-            new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+    protected Set<Index> getRecommendation(List<SQLStatement> sqls) throws Exception
+    {
+        CandidateGenerator candGen =
+            new OptimizerCandidateGenerator(db.getOptimizer().getDelegate());
         
         Set<Index> candidates = new HashSet<Index>();
         Set<Index> candidate  = new HashSet<Index>();

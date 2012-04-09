@@ -94,7 +94,7 @@ public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
         
         en = Environment.getInstance();
         db = newDatabaseSystem(en);
-        subFolder = "tpch-500-counts";
+        subFolder = "tpch-10-counts";
         workload = workload(en.getWorkloadsFoldername() + subFolder);
         folder = en.getWorkloadsFoldername() + subFolder;
         dbName = "TEST";

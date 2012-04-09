@@ -54,9 +54,7 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
 
-        DivBIP div = new DivBIP();
-        
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch");
         CandidateGenerator candGen =
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         candidates = candGen.generate(workload);

@@ -40,17 +40,17 @@ public class CoPhyDivgDesignFunctionalTest
     
     @Test
     public void testDivergentDesign() throws Exception
-    {   
-        workload = workload(en.getWorkloadsFoldername() + "/tpch");
-        nReplicas = 3;
-        loadfactor = 2;
-        B = Math.pow(2, 28);
-        
+    {
         Optimizer io = db.getOptimizer();
         LogListener logger = LogListener.getInstance();
         
         if (!(io instanceof InumOptimizer))
-            throw new Exception("Expecting InumOptimizer instance");
+            return;
+        
+        workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        nReplicas = 3;
+        loadfactor = 2;
+        B = Math.pow(2, 28);
         
         // DivDesisgn
         double start = System.currentTimeMillis();

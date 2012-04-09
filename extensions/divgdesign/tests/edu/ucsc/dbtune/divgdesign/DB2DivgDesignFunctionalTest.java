@@ -38,7 +38,7 @@ public class DB2DivgDesignFunctionalTest
         en = Environment.getInstance();
         db = newDatabaseSystem(en);
         
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch");
         nReplicas = 3;
         loadfactor = 2;
         B = Math.pow(2, 28);
