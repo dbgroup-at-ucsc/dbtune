@@ -420,8 +420,16 @@ public class DB2Optimizer extends AbstractOptimizer
             final String secondTableReference = matcher.group();
 
             if (firstTableReference.equals(secondTableReference)) {
-                // we found something like Q1.L_QUANTITY = Q1.L_PRICE
-                predicates.add(new Predicate(null, strPredicate.replaceAll("Q\\d+\\.", "")));
+                // we found something like Q1.L_QUANTITY = Q1.L_PRICE or a multi-predicate, which 
+                // sometimes includes SELECTIVITY hints, eg.:
+                //    (((Q7.SS_NET_PROFIT >= 0 SELECTIVITY 1.000000) AND (Q7.SS_NET_PROFIT <= 2000 
+                //    SELECTIVITY 1.000000) SELECTIVITY 1.000000) OR SELECTIVITY 1.000000)
+                predicates.add(
+                        new Predicate(
+                            null,
+                            strPredicate.
+                                replaceAll("Q\\d+\\.", "").
+                                replaceAll("SELECTIVITY \\d*\\.\\d*\\)", "\\)")));
             }
 
             // ignore since we have found a join predicate and we only care about predicates that 
@@ -1434,7 +1442,7 @@ public class DB2Optimizer extends AbstractOptimizer
     final static String SELECT_FROM_PREDICATES =
         " SELECT " +
         "   o.operator_id   AS node_id, " +
-        "   CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(255)) " +
+        "   CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(2048)) " +
         "                   AS predicate_text " +
         " FROM " +
         "   systools.explain_operator o " +
