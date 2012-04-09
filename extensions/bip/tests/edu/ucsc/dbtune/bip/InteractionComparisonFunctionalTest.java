@@ -49,7 +49,7 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
  *
  * @author Quoc Trung Tran
  */
-public class InteractionComparisonFunctionalTest extends BIPTestConfiguration
+public class InteractionComparisonFunctionalTest
 {  
     private static DatabaseSystem db;
     private static Environment    en;    

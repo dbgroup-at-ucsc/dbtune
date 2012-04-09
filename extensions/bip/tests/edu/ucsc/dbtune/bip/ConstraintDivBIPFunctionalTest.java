@@ -25,7 +25,7 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
-public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration 
+public class ConstraintDivBIPFunctionalTest 
 {
     private static DatabaseSystem db;
     private static Environment    en;

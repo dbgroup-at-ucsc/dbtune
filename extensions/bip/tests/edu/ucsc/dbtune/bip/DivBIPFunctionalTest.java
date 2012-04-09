@@ -26,7 +26,7 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
-public class DivBIPFunctionalTest extends BIPTestConfiguration 
+public class DivBIPFunctionalTest 
 {
     private static DatabaseSystem db;
     private static Environment    en;
