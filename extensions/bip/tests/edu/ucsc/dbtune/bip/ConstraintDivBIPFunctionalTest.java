@@ -55,16 +55,23 @@ public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration
         loadfactor = 2;
         B = Math.pow(2, 28);
         
-        imbalanceReplicaConstraint();
-        runConstraintBIP();
+        // set of imbalance factor values
+        double deltas[] = {2, 1.5, 1.05};
+        
+        for (double delta : deltas) {
+            System.out.println(" IMBALANCE FACTOR: " + delta + "------------");
+            //imbalanceReplicaConstraint(delta);
+            imbalanceQueryConstraint(delta);
+            runConstraintBIP();
+        }
     }
     
     /**
      * Initialize the object to handle imbalance replica constraints
      */
-    private static void imbalanceReplicaConstraint()
+    private static void imbalanceReplicaConstraint(double delta)
     {
-        DivConstraint iReplica = new DivConstraint(ConstraintDivBIP.IMBALANCE_REPLICA, 1.5);
+        DivConstraint iReplica = new DivConstraint(ConstraintDivBIP.IMBALANCE_REPLICA, delta);
         List<DivConstraint> constraints = new ArrayList<DivConstraint>();
         constraints.add(iReplica);
         
@@ -75,9 +82,9 @@ public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration
     /**
      * Initialize the object to handle imbalance query constraints
      */
-    private static void imbalanceQueryConstraint()
+    private static void imbalanceQueryConstraint(double delta)
     {
-        DivConstraint iQuery = new DivConstraint(ConstraintDivBIP.IMBALANCE_QUERY, 1.5);
+        DivConstraint iQuery = new DivConstraint(ConstraintDivBIP.IMBALANCE_QUERY, delta);
         List<DivConstraint> constraints = new ArrayList<DivConstraint>();
         constraints.add(iQuery);
         
@@ -108,7 +115,8 @@ public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);
         
-        System.out.println("L75, number of candidate: " + candidates.size());
+        System.out.println("L75, number of candidate: " + candidates.size()
+                    + " workload size: " + workload.size());
                 
         Optimizer io = db.getOptimizer();
 
@@ -131,10 +139,8 @@ public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration
             System.out.println("In test, result: " 
                               + " obj value: " + div.getObjValue()
                               + " different from optimal value: " + div.getObjectiveGap());
-            div.costFromCplex(); 
+            //div.costFromCplex(); 
         } else 
             System.out.println(" NO SOLUTION ");
     }
-    
-    
 }

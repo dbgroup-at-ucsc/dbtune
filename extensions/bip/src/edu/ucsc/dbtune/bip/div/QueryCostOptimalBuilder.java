@@ -52,7 +52,7 @@ public class QueryCostOptimalBuilder
         this.poolVariables = poolVariables;
         
         numConstraints = 0;
-        isApproximation = true;
+        isApproximation = false;
     }
     
     /**

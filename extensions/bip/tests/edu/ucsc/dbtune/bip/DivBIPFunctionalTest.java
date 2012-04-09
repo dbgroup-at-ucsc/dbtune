@@ -54,7 +54,7 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
 
-        workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         CandidateGenerator candGen =
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         candidates = candGen.generate(workload);
@@ -69,12 +69,30 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         loadfactor = 2;
         B = Math.pow(2, 28);
         
-        int arrNReplicas[] = {3};
+        int arrNReplicas[] = {2, 3, 4, 5};
+        int arrLoadFactor[] = {1, 2, 2, 3};
         
+        boolean isTestOne = true;
+        
+        // divergent design
         for (int i = 0; i < arrNReplicas.length; i++) {
+            
             nReplicas = arrNReplicas[i];
+            loadfactor = arrLoadFactor[i];
+        
+            if (isTestOne && nReplicas != 3)
+                continue;
+                
+            System.out.println(" DIV-BIP, # replicas = " + nReplicas
+                                + ", load factor = " + loadfactor);
             testDiv();
         }
+    
+        // uniform design
+        System.out.println(" DIV-BIP UNIFORM ");
+        nReplicas = 1;
+        loadfactor = 1;
+        testDiv();
     }
     
     public static void testDiv() throws Exception
@@ -96,8 +114,9 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
         div.setLogListenter(logger);
         
         IndexTuningOutput output = div.solve();
-        div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpch/test.lp");
+        //div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpch/test.lp");
         System.out.println(logger.toString());
+        
         if (output != null) {
             System.out.println("In test, result: " 
                     + " obj value: " + div.getObjValue() + "\n"
@@ -115,6 +134,7 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
             
             double costDB2 = doo.getTotalCost() / loadfactor;
             System.out.println("L90, cost on DB2: " + costDB2
+                                + " cost INUM: " + div.getObjValue()
                                 + " COST RATIO: " + (double) costDB2 / div.getObjValue());
             
             /*
@@ -153,9 +173,9 @@ public class DivBIPFunctionalTest extends BIPTestConfiguration
               
             }
             */
-        } else {
+        } else 
             System.out.println(" NO SOLUTION ");
-        }
+        
     }
     
     public static void divergentUnlimitSpace()
