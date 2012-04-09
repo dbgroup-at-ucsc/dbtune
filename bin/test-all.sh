@@ -4,17 +4,17 @@
 #
 # it must be run from the dbtune root folder
 
-DB2_CONFIG="jdbc.url=jdbc:db2://localhost:50000/test\n\
+DB2_CONFIG="jdbc.url=jdbc:db2://128.114.59.9:50000/test\n\
 workloads.dir=resources/test-workloads/db2/\n\
 username=db2inst1\n\
 password=db2inst1admin\n"
 
-MYSQL_CONFIG="jdbc.url=jdbc:mysql://localhost:3306/\n\
+MYSQL_CONFIG="jdbc.url=jdbc:mysql://128.114.59.9:3306/\n\
 workloads.dir=resources/test-workloads/mysql/\n\
 username=dbtune\n\
 password=dbtuneadmin\n"
 
-POSTGRES_CONFIG="jdbc.url=jdbc:postgresql://localhost:5432/\n\
+POSTGRES_CONFIG="jdbc.url=jdbc:postgresql://128.114.59.9:5432/\n\
 workloads.dir=resources/test-workloads/mysql/\n\
 username=dbtune\n\
 password=dbtuneadmin\n"
