@@ -54,7 +54,7 @@ public class DivBIPFunctionalTest
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
 
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch");
         CandidateGenerator candGen =
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         candidates = candGen.generate(workload);
