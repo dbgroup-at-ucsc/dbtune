@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.divgdesign;
+package tests.edu.ucsc.dbtune.divgdesign;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import src.edu.ucsc.dbtune.divgdesign.DB2DivgDesign;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
@@ -46,7 +48,7 @@ public class DB2DivgDesignFunctionalTest
         // DB2Advis
         db2advis = new DB2Advisor(db);
     }
-    /*
+    
     @Test
     public void testDivergentDesign() throws Exception
     {   
@@ -60,7 +62,7 @@ public class DB2DivgDesignFunctionalTest
                             + " The objective value: " + divg.getTotalCost());
         System.out.println(" configuration: " + indexesAtReplica);
     }
-    */
+    
     
     @Test
     public void testUniformDesign() throws Exception

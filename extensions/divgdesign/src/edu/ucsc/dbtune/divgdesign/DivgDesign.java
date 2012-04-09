@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.divgdesign;
+package src.edu.ucsc.dbtune.divgdesign;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -44,6 +44,17 @@ public abstract class DivgDesign
     }
     
     /**
+     * Retrieve the number of iterations that have been performed
+     * 
+     * @return
+     *      The number of iterations
+     */
+    public int getNumberOfIterations()
+    {
+        return iter;
+    }
+    
+    /**
      * Recommend the divergent configuration. 
      *
      * @param workload
@@ -58,7 +69,7 @@ public abstract class DivgDesign
      * @throws SQLException
      *      if the given statements can't be processed
      */
-    protected List<Set<Index>> recommend(Workload workload, int nReplicas, int loadfactor, double B)
+    public List<Set<Index>> recommend(Workload workload, int nReplicas, int loadfactor, double B)
                                throws Exception
     {
         this.workload = workload;
@@ -79,7 +90,7 @@ public abstract class DivgDesign
     /**
      * The main method that implements DivDesign algorithm. 
      */
-    private void process() throws Exception
+    protected void process() throws Exception
     {
         // 1. initialize partitioning statements into replicas
         // using random method.
@@ -88,20 +99,14 @@ public abstract class DivgDesign
         // 2. repeat the while loop while the improvement is high 
         // or exceeds the number of iterations
         double relativeGap = 0.0;
-        
         double previousCost = 0.0;
-        System.out.println("BEFORE THE LOOP ");
         
         iter = 0;
         while (iter < maxIters) {
             
             // recommend index at each replica
-            for (int i = 0; i < n; i++) {
-                long start = System.currentTimeMillis();
+            for (int i = 0; i < n; i++)
                 indexesAtReplica.set(i, getRecommendation(i));
-                System.out.println("L99, time to get recommendation: "  + i + " : "
-                                    + (System.currentTimeMillis() - start));
-            }
             
             
             // calculate the total cost and repartitions statements 
@@ -121,10 +126,7 @@ public abstract class DivgDesign
         }
     }
     
-    public int getNumberOfIterations()
-    {
-        return iter;
-    }
+    
     
     
     
@@ -133,7 +135,7 @@ public abstract class DivgDesign
      * 
      *      
      */
-    private void initializePartition()
+    protected void initializePartition()
     {
         // partition
         stmtIDInPartitions = new ArrayList<Set<Integer>>();
@@ -149,24 +151,24 @@ public abstract class DivgDesign
         // randomly assign statements to partitions
         SQLStatement sql;
         Random random = new Random(19580427);
-        Set<Integer> partition;
+        Set<Integer> replicaIDsForStatement;
         
         for (int j = 0; j < workload.size(); j++) {
             
             sql = workload.get(j);
             
-            partition = new HashSet<Integer>();
+            replicaIDsForStatement = new HashSet<Integer>();
             
             // update statement ==> send to all partitions
             if (sql.getSQLCategory().isSame(NOT_SELECT))
                 for (int i = 0; i < n; i++)
-                    partition.add(i);
+                    replicaIDsForStatement.add(i);
             else 
             // randomly place the statement into m replicas   
-                while (partition.size() < m)
-                    partition.add(random.nextInt(n));
+                while (replicaIDsForStatement.size() < m)
+                    replicaIDsForStatement.add(random.nextInt(n));
             
-            for (Integer i : partition)
+            for (Integer i : replicaIDsForStatement)
                 stmtIDInPartitions.get(i).add(j);
             
         }        
@@ -175,7 +177,7 @@ public abstract class DivgDesign
     /**
      * Caculate the total cost and repartition statements
      */
-    private void calculateTotalCostAndRepartition() throws Exception
+    protected void calculateTotalCostAndRepartition() throws Exception
     {
         List<QueryCostAtPartition> costs; 
         List<Integer>  partitionIDs;
@@ -210,6 +212,11 @@ public abstract class DivgDesign
                     partitionIDs.add(costs.get(k).getPartitionID());
                 }
                 
+                // One trick by Jeff:
+                // For one query q that has the same costs w.r.t. two replicas r1, r2
+                // We should place q into the one that has the least totalCost so far
+                // or randomly pick the replica 
+                
             }
             
             // repartition the query
@@ -226,7 +233,7 @@ public abstract class DivgDesign
      *      The partition ID
      * @return
      */
-    private Set<Index> getRecommendation(int partitionID) throws Exception
+    protected Set<Index> getRecommendation(int partitionID) throws Exception
     {   
         List<SQLStatement> sqls = new ArrayList<SQLStatement>();
         

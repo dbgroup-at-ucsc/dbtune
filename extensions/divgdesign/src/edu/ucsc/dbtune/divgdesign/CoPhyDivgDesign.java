@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.divgdesign;
+package src.edu.ucsc.dbtune.divgdesign;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -24,6 +24,7 @@ import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.preparedStmts;
 
+
 public class CoPhyDivgDesign extends DivgDesign 
 {    
     private DatabaseSystem db;
@@ -32,7 +33,8 @@ public class CoPhyDivgDesign extends DivgDesign
     
     private CoPhy cophy;  
     private Map<SQLStatement, Set<Index>> recommendedIndexStmt;
-    
+    private CandidateGenerator candGen;
+    private long runningTime;
     
     public CoPhyDivgDesign(DatabaseSystem db, InumOptimizer  io, LogListener logger)
     {
@@ -43,31 +45,74 @@ public class CoPhyDivgDesign extends DivgDesign
         // initialize data structures
         cophy = new CoPhy();        
         recommendedIndexStmt = new HashMap<SQLStatement, Set<Index>>();
+        candGen = new OptimizerCandidateGenerator(db.getOptimizer().getDelegate());
+    }
+    
+    /**
+     * Get the running time of the algorithm. Note that we do not count the time to generate 
+     * candidate indexes for each statement.
+     * 
+     * @return
+     *      The running time
+     */
+    public long getRunningTime()
+    {
+        return runningTime;
+    }
+    
+    
+    @Override
+    public List<Set<Index>> recommend(Workload workload, int nReplicas, int loadfactor, double B)
+                               throws Exception
+    {
+        this.workload = workload;
+        this.n = nReplicas;
+        this.m = loadfactor;
+        this.B = B;
+        
+        // generate candidate indexes for each stmt
+        generateCandidateIndexes();
+        
+        maxIters = 30;
+        epsilon = 0.05;
+        
+        long start = System.currentTimeMillis();
+        // process 
+        process();
+        runningTime = System.currentTimeMillis() - start;
+        
+        // return recommended indexes at every replica
+        return indexesAtReplica;
+    }
+    
+    /**
+     * Generate candidate indexes for each statement
+     * 
+     * @throws Exception
+     */
+    protected void generateCandidateIndexes() throws Exception
+    {
+        Set<Index> candidate;
+        Workload wl;
+        
+        for (SQLStatement sql : workload) {
+            
+            wl = new Workload(Lists.newArrayList(sql));
+            candidate = candGen.generate(wl);                
+            recommendedIndexStmt.put(sql, candidate);
+            
+        }
     }
     
     @Override
-    protected Set<Index> getRecommendation(List<SQLStatement> sqls) throws Exception
+    protected Set<Index> getRecommendation(List<SQLStatement> sqls)
+            throws Exception 
     {
-        CandidateGenerator candGen =
-            new OptimizerCandidateGenerator(db.getOptimizer().getDelegate());
-        
         Set<Index> candidates = new HashSet<Index>();
-        Set<Index> candidate  = new HashSet<Index>();
         
         // check if we already generate candidate for this statement before
-        for (SQLStatement sql : sqls) {
-            
-            candidate = recommendedIndexStmt.get(sql);
-            
-            if (candidate == null) {
-                
-                Workload wl = new Workload(Lists.newArrayList(sql));
-                candidate = candGen.generate(wl);                
-                recommendedIndexStmt.put(sql, candidate);
-                
-            }
-            candidates.addAll(candidate);
-        }
+        for (SQLStatement sql : sqls)
+            candidates.addAll(recommendedIndexStmt.get(sql));
         
         Optimizer io = db.getOptimizer();
         Workload wlPartition = new Workload(sqls);
