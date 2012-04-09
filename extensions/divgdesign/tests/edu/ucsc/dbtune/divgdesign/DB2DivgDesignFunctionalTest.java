@@ -37,6 +37,7 @@ public class DB2DivgDesignFunctionalTest
     @BeforeClass
     public static void beforeClassSetUp() throws Exception
     {
+        /*
         en = Environment.getInstance();
         db = newDatabaseSystem(en);
         
@@ -47,11 +48,13 @@ public class DB2DivgDesignFunctionalTest
         
         // DB2Advis
         db2advis = new DB2Advisor(db);
+        */
     }
     
     @Test
     public void testDivergentDesign() throws Exception
     {   
+        /*
         // DivDesisgn
         double start = System.currentTimeMillis();
         DB2DivgDesign divg = new DB2DivgDesign(db2advis, getBaseOptimizer(db.getOptimizer()));
@@ -61,12 +64,14 @@ public class DB2DivgDesignFunctionalTest
                             + " Running time: " + (System.currentTimeMillis() - start) + "\n"
                             + " The objective value: " + divg.getTotalCost());
         System.out.println(" configuration: " + indexesAtReplica);
+        */
     }
     
     
     @Test
     public void testUniformDesign() throws Exception
     {   
+        /*
         nReplicas = 1;
         loadfactor = 1;
        
@@ -79,5 +84,6 @@ public class DB2DivgDesignFunctionalTest
                             + " Running time: " + (System.currentTimeMillis() - start) + "\n"
                             + " The objective value: " + divg.getTotalCost());
         System.out.println(" configuration: " + indexesAtReplica);
+        */
     }
 }
