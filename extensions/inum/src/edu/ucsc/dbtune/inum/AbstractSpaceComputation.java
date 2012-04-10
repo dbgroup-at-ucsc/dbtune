@@ -8,6 +8,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
@@ -57,8 +58,7 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
         space.clear();
 
         // add FTS-on-all-slots template
-        InumPlan templateForEmpty =
-            new InumPlan(delegate, delegate.explain(statement, empty).getPlan());
+        InumPlan templateForEmpty = new InumPlan(delegate, delegate.explain(statement, empty));
 
         space.add(templateForEmpty);
 
@@ -69,10 +69,10 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
         // NLJ heuristic referred in the INUM paper
         Set<Index> covering = getCoveringAtomicConfiguration(templateForEmpty);
 
-        SQLStatementPlan planForCovering = delegate.explain(statement, covering).getPlan();
+        ExplainedSQLStatement coveringExplainedStmt = delegate.explain(statement, covering);
 
-        if (planForCovering.contains(NLJ))
-            space.add(new InumPlan(delegate, planForCovering));
+        if (coveringExplainedStmt.getPlan().contains(NLJ))
+            space.add(new InumPlan(delegate, coveringExplainedStmt));
     }
 
     /**

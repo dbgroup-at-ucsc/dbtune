@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Sets.cartesianProduct;
@@ -49,12 +49,13 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
         if (indexes.isEmpty())
             return;
 
-        SQLStatementPlan sqlPlan = delegate.explain(statement, indexes).getPlan();
+        ExplainedSQLStatement estmt = delegate.explain(statement, indexes);
 
         List<Set<Index>> intersectedIndexes = new ArrayList<Set<Index>>();
         Set<Index> notIntersectedIndexes = new HashSet<Index>();
 
-        for (Set<Index> indexesForTable : getIndexesPerTable(sqlPlan.getIndexes()).values()) {
+        for (Set<Index> indexesForTable : getIndexesPerTable(estmt.getPlan().getIndexes()).values()) 
+        {
             if (indexesForTable.size() > 1)
                 intersectedIndexes.add(indexesForTable);
             else
@@ -72,10 +73,10 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
                 ibg(statement, delegate, conf, inumSpace);
             }
         } else {
-            if (!sqlPlan.contains(NLJ))
-                inumSpace.add(new InumPlan(delegate, sqlPlan));
+            if (!estmt.getPlan().contains(NLJ))
+                inumSpace.add(new InumPlan(delegate, estmt));
 
-            for (Index usedIndex : sqlPlan.getIndexes()) {
+            for (Index usedIndex : estmt.getPlan().getIndexes()) {
                 Set<Index> conf = new HashSet<Index>();
 
                 conf.addAll(indexes);

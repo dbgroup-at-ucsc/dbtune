@@ -36,7 +36,7 @@ public class InumPlanWithCache extends InumPlan
      * {@inheritDoc}
      */
     @Override
-    public Operator instantiateOperatorForUnseenIndex(TableAccessSlot slot, Index index)
+    public Operator instantiate(TableAccessSlot slot, Index index)
         throws SQLException
     {
         SQLStatement sql = buildQueryForUnseenIndex(slot);
@@ -46,7 +46,7 @@ public class InumPlanWithCache extends InumPlan
 
         if (cachedOperator == null) {
 
-            cachedOperator = super.instantiateOperatorForUnseenIndex(slot, index);
+            cachedOperator = super.instantiate(slot, index);
 
             slotCache.put(key, cachedOperator);
         }

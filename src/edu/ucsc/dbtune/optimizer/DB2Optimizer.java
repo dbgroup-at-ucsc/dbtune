@@ -34,6 +34,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
 
+import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.UPDATE;
 
@@ -882,6 +884,11 @@ public class DB2Optimizer extends AbstractOptimizer
         }
 
         dbo = extractDatabaseObjectReferenced(catalog, indexes, dboSchema, dboName);
+
+        if (op.getName().equals(INDEX_SCAN) && !(dbo instanceof Index))
+            throw new SQLException("Object for " + INDEX_SCAN + " should be of type Index");
+        if (op.getName().equals(TABLE_SCAN) && !(dbo instanceof Table))
+            throw new SQLException("Object for " + TABLE_SCAN + " should be of type Table");
 
         op.add(dbo);
 

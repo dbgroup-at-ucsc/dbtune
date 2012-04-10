@@ -18,15 +18,16 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
-
 import static edu.ucsc.dbtune.util.InumUtils.removeTemporaryTables;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 /**
  * Extends {@link SQLStatementPlan} class in order to add INUM-specific functionality. Specifically,
@@ -64,21 +65,32 @@ public class InumPlan extends SQLStatementPlan
     protected Optimizer delegate;
 
     /**
+     * For UPDATE statements, this is the cost, from the internal plan cost, that corresponds to 
+     * doing the update.
+     */
+    protected double baseTableUpdateCost;
+
+    /**
+     * For UPDATE statements, this is the table being updated.
+     */
+    protected Table updatedTable;
+
+    /**
      * Creates a new instance of an INUM plan.
      *
      * @param delegate
      *      to do what-if optimization later on
-     * @param plan
-     *      a regular execution plan produced by a Optimizer implementations (through the {@link
-     *      edu.ucsc.dbtune.optimizer.Optimizer#explain} or {@link
-     *      edu.ucsc.dbtune.optimizer.PreparedSQLStatement#explain} methods)
+     * @param explainedStatement
+     *      an explained statement produced by an Optimizer implementations (through the {@link
+     *      edu.ucsc.dbtune.optimizer.Optimizer#explain} or methods)
      * @throws SQLException
      *      if the plan is referencing a table more than once or if one of the leafs doesn't refer 
      *      any database object.
      */
-    public InumPlan(Optimizer delegate, SQLStatementPlan plan) throws SQLException
+    public InumPlan(Optimizer delegate, ExplainedSQLStatement explainedStatement)
+        throws SQLException
     {
-        super(plan);
+        super(explainedStatement.getPlan());
 
         preprocess(this);
 
@@ -110,7 +122,12 @@ public class InumPlan extends SQLStatementPlan
         if (leafs().size() != slots.size())
             throw new SQLException("One or more leafs haven't been assigned with a slot " + this);
 
-        internalPlanCost = getRootOperator().getAccumulatedCost() - leafsCost;
+        if (explainedStatement.getStatement().getSQLCategory().isSame(NOT_SELECT)) {
+            updatedTable = explainedStatement.getUpdatedTable();
+            baseTableUpdateCost = explainedStatement.getBaseTableUpdateCost();
+        }
+
+        internalPlanCost = explainedStatement.getSelectCost() - leafsCost;
     }
 
     /**
@@ -133,6 +150,8 @@ public class InumPlan extends SQLStatementPlan
 
         internalPlanCost = other.internalPlanCost;
         delegate = other.delegate;
+        updatedTable = other.updatedTable;
+        baseTableUpdateCost = other.baseTableUpdateCost;
     }
 
     /**
@@ -172,6 +191,30 @@ public class InumPlan extends SQLStatementPlan
     public double getInternalCost()
     {
         return internalPlanCost;
+    }
+
+    /**
+     * Returns the table that the update operates on.
+     *
+     * @return
+     *     the updated base table. If the statement is a {@link SQLCategory#SELECT} statement, the 
+     *     value returned is {@code null}.
+     */
+    public Table getUpdatedTable()
+    {
+        return updatedTable;
+    }
+
+    /**
+     * Returns the update cost associated to the cost of updating the base table.
+     *
+     * @return
+     *     the update cost of the base table. If the statement is a {@link SQLCategory#SELECT} 
+     *     statement, the value returned is zero.
+     */
+    public double getBaseTableUpdateCost()
+    {
+        return baseTableUpdateCost;
     }
 
     /**
@@ -252,7 +295,11 @@ public class InumPlan extends SQLStatementPlan
             // if we do a what-if call, we know the optimizer will return FTS, so let's not do it
             return INCOMPATIBLE;
 
-        return instantiateOperatorForUnseenIndex(slot, index);
+        Operator op;
+
+        op = instantiate(slot, index);
+
+        return op;
     }
 
     /**
@@ -295,7 +342,7 @@ public class InumPlan extends SQLStatementPlan
                 "  Tables in stmt: " + getTables() + "\n" +
                 "  Plan: \n" + this);
 
-        return instantiatePlan(this, operators);
+        return instantiate(this, operators);
     }
 
     /**
@@ -364,7 +411,7 @@ public class InumPlan extends SQLStatementPlan
      *      if the statement can't be explained
      * @see #buildQueryForUnseenIndex
     */
-    protected Operator instantiateOperatorForUnseenIndex(TableAccessSlot slot, Index index)
+    protected Operator instantiate(TableAccessSlot slot, Index index)
         throws SQLException
     {
         SQLStatementPlan plan =
@@ -378,6 +425,8 @@ public class InumPlan extends SQLStatementPlan
 
         op.setName(INDEX_SCAN);
         op.setAccumulatedCost(plan.getRootOperator().getAccumulatedCost());
+        op.removeDatabaseObject();
+        op.add(index);
 
         return op;
     }
@@ -622,7 +671,7 @@ public class InumPlan extends SQLStatementPlan
      *      an instance of a plan based on the given template, where each leaf is an {@link 
      *      Operator#TABLE_SCAN} or a {@link Operator#INDEX_SCAN}
      */
-    static SQLStatementPlan instantiatePlan(
+    static SQLStatementPlan instantiate(
             InumPlan templatePlan,
             List<Operator> instantiatedOperators)
     {
@@ -651,7 +700,7 @@ public class InumPlan extends SQLStatementPlan
 
         cost += templatePlan.getInternalCost();
 
-        plan.assignCost(plan.getRootElement(), cost);
+        plan.assignCost(plan.getRootElement(), cost + templatePlan.getBaseTableUpdateCost());
 
         return plan;
     }

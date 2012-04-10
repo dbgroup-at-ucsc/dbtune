@@ -384,14 +384,7 @@ public class ExplainedSQLStatement
     
         ExplainedSQLStatement o = (ExplainedSQLStatement) obj;
     
-        // we don't take into account things that not all optimizer implementations might generate 
-        // equally, that is:
-        //   * baseTableUpdateCost
-        //   * indexUpdateCosts
-
-        if ((plan != null && o.plan == null) ||
-                (plan == null && o.plan != null) ||
-                (plan != null && o.plan != null && !plan.equals(o.plan)))
+        if (plan != null && !plan.equals(o.plan))
             return false;
 
         if (updatedTable != null && !updatedTable.equals(o.updatedTable))
@@ -416,17 +409,27 @@ public class ExplainedSQLStatement
     {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("Cost: " + getSelectCost() + "\n");
+        sb.append("\nSelect cost: " + getSelectCost() + "\n");
 
-        sb.append("All:\n");
+        if (statement.getSQLCategory().isSame(NOT_SELECT)) {
+            sb.append("Base update cost: " + getBaseTableUpdateCost() + "\n");
+
+            sb.append("Index update costs " + "\n");
+            for (Index i : getUpdatedConfiguration())
+                sb.append("   " + i + ": " + getUpdateCost(i) + "\n");
+        }
+
+        sb.append("\nAll:\n");
 
         if (getConfiguration().size() > 0)
             sb.append(getConfiguration());
 
-        sb.append("Used:\n");
+        sb.append("\nUsed:\n");
 
         if (getUsedConfiguration().size() > 0)
             sb.append(getUsedConfiguration());
+
+        sb.append("\nPlan:\n" + getPlan());
 
         return sb.toString();
     }

@@ -8,9 +8,9 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
-import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Sets.cartesianProduct;
@@ -53,10 +53,10 @@ public class ExhaustiveSpaceComputation extends AbstractSpaceComputation
 
         for (List<Index> atomic : cartesianProduct(indexesPerTable)) {
 
-            SQLStatementPlan sqlPlan = delegate.explain(statement, newHashSet(atomic)).getPlan();
+            ExplainedSQLStatement atomicExplained = delegate.explain(statement, newHashSet(atomic));
 
-            if (!sqlPlan.contains(NLJ))
-                space.add(new InumPlan(delegate, sqlPlan));
+            if (!atomicExplained.getPlan().contains(NLJ))
+                space.add(new InumPlan(delegate, atomicExplained));
         }
     }
 }

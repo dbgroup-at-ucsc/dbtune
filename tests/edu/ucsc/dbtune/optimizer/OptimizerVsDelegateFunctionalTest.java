@@ -14,6 +14,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static com.google.common.collect.Iterables.get;
+
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
@@ -40,6 +42,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     private static Optimizer optimizer;
     private static Optimizer delegate;
     private static CandidateGenerator candGen;
+    private static PreparedSQLStatement pSql;
     private int i;
 
     /**
@@ -89,7 +92,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
             for (SQLStatement sql : wl) {
                 i++;
 
-                final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
+                pSql = optimizer.prepareExplain(sql);
 
                 ExplainedSQLStatement explainedByOptimizer = pSql.explain(allIndexes);
                 ExplainedSQLStatement explainedByDelegate = delegate.explain(sql, allIndexes);
@@ -117,19 +120,22 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     @Override
     public int compare(ExplainedSQLStatement e1, ExplainedSQLStatement e2)
     {
-        if (e1.statement.equals(e2.statement) &&
-                (e1.selectCost / e2.selectCost) > 0.90 &&
-                (e1.selectCost / e2.selectCost) < 1.10)
+        double ratio =
+            (e1.selectCost + e1.baseTableUpdateCost) /
+            (e2.selectCost + e2.baseTableUpdateCost);
+
+        if (e1.statement.equals(e2.statement) && ratio > 0.90 && ratio < 1.10)
             return 0;
 
-        if ((e1.selectCost / e2.selectCost) > 1.10)
+        if (ratio > 1.10)
             return 1;
 
         System.out.println(
                 "### Error\n" +
                 "Statement " + i + "\n" +
                 "Optimizer:\n" + e1.getPlan() +
-                "\n\nvs\n\nDelegate:\n" + e2.getPlan());
+                "\n\nvs\n\nDelegate:\n" + e2.getPlan() +
+                "\nTemplate:\n" + get(((InumPreparedSQLStatement) pSql).getTemplatePlans(), 0));
 
         return -1;
     }
