@@ -32,6 +32,7 @@ UPDATE tpch.lineitem
  WHERE tpch.lineitem.l_commitdate BETWEEN 'Tue May 24 21:09:40 PDT 1994' AND
                                           'Fri Jun 17 21:09:40 PDT 1994';
 
+--XXX: issue #
 --UPDATE tpch.partsupp
    --SET ps_supplycost = ps_supplycost - 0.000001
  --WHERE tpch.partsupp.ps_supplycost BETWEEN
