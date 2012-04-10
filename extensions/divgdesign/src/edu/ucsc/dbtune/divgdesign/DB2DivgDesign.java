@@ -1,4 +1,4 @@
-package src.edu.ucsc.dbtune.divgdesign;
+package edu.ucsc.dbtune.divgdesign;
 
 import java.sql.SQLException;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package tests.edu.ucsc.dbtune.divgdesign;
+package edu.ucsc.dbtune.divgdesign;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
@@ -9,7 +9,7 @@ import java.util.Set;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import src.edu.ucsc.dbtune.divgdesign.DB2DivgDesign;
+import edu.ucsc.dbtune.divgdesign.DB2DivgDesign;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
