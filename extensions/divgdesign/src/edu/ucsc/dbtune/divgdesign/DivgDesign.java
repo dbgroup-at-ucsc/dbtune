@@ -55,6 +55,16 @@ public abstract class DivgDesign
     }
     
     /**
+     * Retrieve the recommendation, including indexes at each replica
+     * 
+     * @return
+     *      The recommendation by the algorithm. 
+     */
+    public List<Set<Index>> getRecommendation()
+    {
+        return indexesAtReplica;
+    }
+    /**
      * Recommend the divergent configuration. 
      *
      * @param workload
@@ -69,8 +79,8 @@ public abstract class DivgDesign
      * @throws SQLException
      *      if the given statements can't be processed
      */
-    public List<Set<Index>> recommend(Workload workload, int nReplicas, int loadfactor, double B)
-                               throws Exception
+    public void recommend(Workload workload, int nReplicas, int loadfactor, double B)
+                         throws Exception
     {
         this.workload = workload;
         this.n = nReplicas;
@@ -82,9 +92,6 @@ public abstract class DivgDesign
         
         // process 
         process();
-        
-        // return recommended indexes at every replica
-        return indexesAtReplica;
     }
      
     /**
@@ -107,15 +114,14 @@ public abstract class DivgDesign
             // recommend index at each replica
             for (int i = 0; i < n; i++)
                 indexesAtReplica.set(i, getRecommendation(i));
-            
-            
+                        
             // calculate the total cost and repartitions statements 
             calculateTotalCostAndRepartition();
             
             // check if we trap in the local optimal
             relativeGap = Math.abs(totalCost - previousCost) /  Math.max(totalCost, previousCost);
-            System.out.println("L105, iteraction #" + iter
-                                + " relative gap: " + relativeGap);
+            //System.out.println("L105, iteraction #" + iter
+              //                  + " relative gap: " + relativeGap);
             
             // we have only one replica, do not need to repartition
             if (relativeGap < epsilon || n == 1)
@@ -150,7 +156,8 @@ public abstract class DivgDesign
             
         // randomly assign statements to partitions
         SQLStatement sql;
-        Random random = new Random(19580427);
+        //Random random = new Random(19580427);
+        Random random = new Random();
         Set<Integer> replicaIDsForStatement;
         
         for (int j = 0; j < workload.size(); j++) {
@@ -175,7 +182,7 @@ public abstract class DivgDesign
     }
     
     /**
-     * Caculate the total cost and repartition statements
+     * Calculate the total cost and repartition statements
      */
     protected void calculateTotalCostAndRepartition() throws Exception
     {
@@ -198,9 +205,10 @@ public abstract class DivgDesign
             // update statement
             if (sql.getSQLCategory().isSame(NOT_SELECT)) {
                 
-                totalCost += costs.get(0).getCost();
-                for (int i = 0; i < n; i++)
+                for (int i = 0; i < n; i++) {
                     partitionIDs.add(i);
+                    totalCost += costs.get(i).getCost();
+                }
                 
             }
             else {

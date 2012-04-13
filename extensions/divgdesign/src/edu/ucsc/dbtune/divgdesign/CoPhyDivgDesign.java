@@ -2,20 +2,17 @@ package edu.ucsc.dbtune.divgdesign;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.caliper.internal.guava.collect.Lists;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.indexadvisor.CoPhy;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -23,6 +20,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.preparedStmts;
+import static edu.ucsc.dbtune.bip.util.LogListener.EVENT_POPULATING_INUM;
 
 
 public class CoPhyDivgDesign extends DivgDesign 
@@ -33,10 +31,11 @@ public class CoPhyDivgDesign extends DivgDesign
     
     private CoPhy cophy;  
     private Map<SQLStatement, Set<Index>> recommendedIndexStmt;
-    private CandidateGenerator candGen;
-    private long runningTime;
+    private double timeInum;
+    private double timeAnalysis;
     
-    public CoPhyDivgDesign(DatabaseSystem db, InumOptimizer  io, LogListener logger)
+    public CoPhyDivgDesign(DatabaseSystem db, InumOptimizer  io, LogListener logger,
+                           Map<SQLStatement, Set<Index>> recommendedIndexStmt)
     {
         this.db = db;
         this.io = io;
@@ -44,66 +43,55 @@ public class CoPhyDivgDesign extends DivgDesign
         
         // initialize data structures
         cophy = new CoPhy();        
-        recommendedIndexStmt = new HashMap<SQLStatement, Set<Index>>();
-        candGen = new OptimizerCandidateGenerator(db.getOptimizer().getDelegate());
+        this.recommendedIndexStmt = recommendedIndexStmt;
     }
     
     /**
-     * Get the running time of the algorithm. Note that we do not count the time to generate 
-     * candidate indexes for each statement.
+     * Get the running time to populate INUM space
      * 
      * @return
-     *      The running time
+     *      The running time (in milliseconds)
      */
-    public long getRunningTime()
+    public double getInumTime()
     {
-        return runningTime;
+        return timeInum;
     }
     
+    /**
+     * Get the running time to analyze including formulating BIP and repartitioning 
+     * 
+     * @return
+     *      The running time (in milliseconds)
+     */
+    public double getAnalysisTime()
+    {
+        return timeAnalysis;
+    }
     
     @Override
-    public List<Set<Index>> recommend(Workload workload, int nReplicas, int loadfactor, double B)
-                               throws Exception
+    public void recommend(Workload workload, int nReplicas, int loadfactor, double B)
+                          throws Exception
     {
         this.workload = workload;
         this.n = nReplicas;
         this.m = loadfactor;
         this.B = B;
         
-        // generate candidate indexes for each stmt
-        generateCandidateIndexes();
-        
         maxIters = 30;
         epsilon = 0.05;
         
         long start = System.currentTimeMillis();
+        long runningTime = 0;
         // process 
         process();
         runningTime = System.currentTimeMillis() - start;
         
-        // return recommended indexes at every replica
-        return indexesAtReplica;
+        // record the INUM time and analysis time
+        timeInum = logger.getRunningTime(EVENT_POPULATING_INUM);
+        timeAnalysis = runningTime - timeInum;
     }
     
-    /**
-     * Generate candidate indexes for each statement
-     * 
-     * @throws Exception
-     */
-    protected void generateCandidateIndexes() throws Exception
-    {
-        Set<Index> candidate;
-        Workload wl;
-        
-        for (SQLStatement sql : workload) {
-            
-            wl = new Workload(Lists.newArrayList(sql));
-            candidate = candGen.generate(wl);                
-            recommendedIndexStmt.put(sql, candidate);
-            
-        }
-    }
-    
+       
     @Override
     protected Set<Index> getRecommendation(List<SQLStatement> sqls)
             throws Exception 
@@ -130,7 +118,8 @@ public class CoPhyDivgDesign extends DivgDesign
             throws SQLException 
     {
         InumPreparedSQLStatement inumStmt;
-        
+        ExplainedSQLStatement explain;
+       
         // retrieve from the cache first
         inumStmt = preparedStmts.get(sql);
         if (inumStmt == null) {
@@ -142,9 +131,18 @@ public class CoPhyDivgDesign extends DivgDesign
         // and compute the cost
         List<QueryCostAtPartition> costs = new ArrayList<QueryCostAtPartition>();
         double cost;
-        
-        for (int i = 0; i < n; i++) {            
-            cost = inumStmt.explain(indexesAtReplica.get(i)).getTotalCost();
+     
+        for (int i = 0; i < n; i++) {
+            
+            explain = inumStmt.explain(indexesAtReplica.get(i));
+            cost = explain.getTotalCost();
+            
+            /*
+            // NOT take into account the base table update cost
+            if (sql.getSQLCategory().isSame(NOT_SELECT))
+                cost -= explain.getBaseTableUpdateCost();
+            */
+            
             costs.add(new QueryCostAtPartition(i, cost));
         }
             
