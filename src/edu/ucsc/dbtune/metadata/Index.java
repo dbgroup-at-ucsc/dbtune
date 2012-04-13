@@ -441,7 +441,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      * @param other
      *     other index being copied into the new one
      */
-    protected Index(Index other)
+    public Index(Index other)
     {
         super(other);
 
