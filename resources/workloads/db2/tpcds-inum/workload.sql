@@ -168,7 +168,7 @@ SELECT i_item_desc,
        i_class,
        i_current_price,
        SUM(ss_ext_sales_price)                                 AS itemrevenue,
-       SUM(ss_ext_sales_price) * 100 / SUM(ss_ext_sales_price) AS revenueratio
+       CASE WHEN SUM(ss_ext_sales_price) > 0 THEN SUM(ss_ext_sales_price) * 100 / SUM(ss_ext_sales_price) ELSE 0 END AS revenueratio
   FROM tpcds.store_sales,
        tpcds.item,
        tpcds.date_dim
@@ -294,7 +294,7 @@ SELECT i_item_desc,
        i_class,
        i_current_price,
        SUM(ws_ext_sales_price)                                      AS itemrevenue,
-       SUM(ws_ext_sales_price) * 100 / SUM(ws_ext_sales_price) AS revenueratio
+       CASE WHEN SUM(ws_ext_sales_price) > 0 THEN SUM(ws_ext_sales_price) * 100 / SUM(ws_ext_sales_price) ELSE 0 END AS revenueratio
   FROM tpcds.web_sales,
        tpcds.item,
        tpcds.date_dim
@@ -320,7 +320,7 @@ SELECT i_item_desc,
        i_class,
        i_current_price,
        SUM(cs_ext_sales_price)                                      AS itemrevenue,
-       SUM(cs_ext_sales_price) * 100 / SUM(cs_ext_sales_price) AS revenueratio
+       CASE WHEN SUM(cs_ext_sales_price) > 0 THEN SUM(cs_ext_sales_price) * 100 / SUM(cs_ext_sales_price) ELSE 0 END AS revenueratio
   FROM tpcds.catalog_sales,
        tpcds.item,
        tpcds.date_dim
@@ -498,7 +498,7 @@ SELECT SUBSTR(w_warehouse_name, 1, 20),
           sm_type,
           cc_name;
 
----- @ID=TEMPLATE_63
+-- @ID=TEMPLATE_63
 SELECT *
   FROM (SELECT i_manager_id,
 	       SUM(ss_sales_price) sum_sales,
@@ -530,7 +530,7 @@ SELECT *
 	  avg_monthly_sales,
 	  sum_sales;
 
----- @ID=TEMPLATE_37
+-- @ID=TEMPLATE_37
 SELECT i_item_id,
        i_item_desc,
        i_current_price
@@ -586,7 +586,7 @@ SELECT SUM (ss_quantity)
 		   AND ca_state IN ( 'WI', 'IA', 'MO' )
 		   AND ss_net_profit BETWEEN 50 AND 25000 ) );
 
----- @ID=TEMPLATE_73
+-- @ID=TEMPLATE_73
 SELECT c_last_name,
        c_first_name,
        c_salutation,
@@ -620,7 +620,7 @@ SELECT c_last_name,
        AND cnt BETWEEN 1 AND 5
  ORDER BY cnt DESC;
 
----- @ID=TEMPLATE_53
+-- @ID=TEMPLATE_53
 SELECT *
   FROM (SELECT i_manufact_id,
 	       SUM(ss_sales_price) sum_sales,
@@ -653,7 +653,7 @@ SELECT *
 	  sum_sales,
 	  i_manufact_id;
 
----- @ID=TEMPLATE_79
+-- @ID=TEMPLATE_79
 SELECT c_last_name,
        c_first_name,
        SUBSTR(s_city, 1, 30),
