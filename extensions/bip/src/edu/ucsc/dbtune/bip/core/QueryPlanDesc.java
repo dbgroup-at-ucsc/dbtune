@@ -85,6 +85,15 @@ public interface QueryPlanDesc
      * placed.     
      */
     double getAccessCost(int k, Index index);
+    
+    /**
+     * Retrieve the base table update cost (which is a constant)
+     * 
+     * @return
+     *      The base table update cost if the statement is an UPDATE,
+     *      0, otherwise
+     */
+    double getBaseTableUpdateCost();
 
     /**
      * Retrieve the statement ID

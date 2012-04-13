@@ -67,7 +67,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	
 	/** List of referenced tables */
 	List<Table> tables;
-		
+	
     /** A map to manage each statement corresponding to one instance of this class*/
 	private static Map<SQLStatement, QueryPlanDesc> instances = new 
 	                                            HashMap<SQLStatement, QueryPlanDesc>();
@@ -75,6 +75,8 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	/** A map in order not to populate template plans if it has been done before */
 	public static Map<SQLStatement, InumPreparedSQLStatement> preparedStmts = new
 	                                            HashMap<SQLStatement, InumPreparedSQLStatement>();
+	
+	private double baseTableUpdateCost;
 	
 	/**
      * Returns the single instance of this class corresponding to the given statement.
@@ -109,7 +111,16 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         this.stmt = stmt;    
     }
     
-     
+    @Override 
+    public double getBaseTableUpdateCost()
+    {
+        if (stmt.getSQLCategory().isSame(NOT_SELECT))
+            return baseTableUpdateCost;
+        else 
+            return 0.0;
+    }
+    
+    
     @Override
     public void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidates) 
                                       throws SQLException
@@ -258,8 +269,10 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	    ExplainedSQLStatement inumExplain = preparedStmt.explain(candidates);
 	    
 	    for (int i = 0; i < n; i++)
-	        for (Index index : indexSlot.get(i))
+	        for (Index index : indexSlot.get(i)) 
 	            indexUpdateCosts.put(index, inumExplain.getUpdateCost(index));
+	    
+	    baseTableUpdateCost = inumExplain.getBaseTableUpdateCost();
 	}
 	
 	
