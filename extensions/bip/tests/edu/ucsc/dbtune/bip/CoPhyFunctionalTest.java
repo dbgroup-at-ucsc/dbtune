@@ -14,16 +14,18 @@ import org.junit.Test;
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
-import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.indexadvisor.CoPhy;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
+
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 public class CoPhyFunctionalTest 
 {
@@ -53,7 +55,7 @@ public class CoPhyFunctionalTest
         if (!(io instanceof InumOptimizer))
             return;
 
-        workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         candidates = candGen.generate(workload);
@@ -64,7 +66,6 @@ public class CoPhyFunctionalTest
         
         System.out.println("L51, number of candidate: " + candidates.size() + " size: " 
                             + totalIndexSize);
-        
         B = Math.pow(2, 28);
         
         CoPhy cophy = new CoPhy();
@@ -87,49 +88,30 @@ public class CoPhyFunctionalTest
             System.out.println(" Objective value: " + cophy.getObjValue()
                                 + "\n Running time: " + logger.toString());
             System.out.println(" Recommended indexes: " + output.getRecommendation().size() + "\n" 
-                               + " total size: " + totalIndexSize
-                               + output.getRecommendation());
+                               + " total size: " + totalIndexSize);
+                               
             
-            double costCoPhy, costDB2;
-            
+            double costCoPhy = 0.0;            
             List<Double> costCoPhys = new ArrayList<Double>();
-            List<Double> costDB2s = new ArrayList<Double>();
-            
-            // compare with DB2Advis
-            long start = System.currentTimeMillis();
-            DB2Advisor db2advis = new DB2Advisor(db);
-            db2advis.process(workload);                    
-            Set<Index> db2Indexes = db2advis.getRecommendation();
-            totalIndexSize = 0;
-            for (Index index : db2Indexes)
-                totalIndexSize += index.getBytes();
-            
-            System.out.println("Time to run DB2 Advisor: " + (System.currentTimeMillis() - start)
-                                + " total index size: " + totalIndexSize);
-            
             ExplainedSQLStatement cophyExplain;
-            ExplainedSQLStatement db2Explain;
-            
-            costCoPhy = 0;
-            costDB2 = 0;
+            InumPreparedSQLStatement inumStmt;
             for (int i = 0; i < workload.size(); i++) {
                 
-                cophyExplain =  io.getDelegate().explain(workload.get(i), 
-                                                        output.getRecommendation());
-                
-                db2Explain =  io.getDelegate().explain(workload.get(i), 
-                                                       db2Indexes);
+                inumStmt  = (InumPreparedSQLStatement) io.prepareExplain(workload.get(i));
+                cophyExplain =  inumStmt.explain(output.getRecommendation());
                                                   
-                costCoPhys.add(cophyExplain.getTotalCost());
-                costDB2s.add(db2Explain.getTotalCost());
+                costCoPhys.add(cophyExplain.getTotalCost());       
                 
                 costCoPhy += cophyExplain.getTotalCost();
-                costDB2 += db2Explain.getTotalCost();
+                if (workload.get(i).getSQLCategory().isSame(NOT_SELECT)) 
+                    costCoPhy -= cophyExplain.getBaseTableUpdateCost();
+                 
             }
             
-            System.out.println(" cost DB2: " + costDB2 + " vs. cost CoPhy: " + costCoPhy
-                    + " ratio CoPhy / DB2: " + ((double) costCoPhy / costDB2));
-            
+            System.out.println(" cost in INUM: " + costCoPhy
+                                + " vs. cost by CPLEX: " + cophy.getObjValue()
+                                + " RATIO: " + ((double) costCoPhy / cophy.getObjValue()));
+             
         }
         
     }

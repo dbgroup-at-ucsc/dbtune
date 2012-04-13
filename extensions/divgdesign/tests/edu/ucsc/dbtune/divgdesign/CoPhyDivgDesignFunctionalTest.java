@@ -1,109 +1,144 @@
 package edu.ucsc.dbtune.divgdesign;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
 
-import java.util.HashSet;
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.junit.BeforeClass;
+
 import org.junit.Test;
+
+import com.google.caliper.internal.guava.collect.Lists;
 
 import edu.ucsc.dbtune.divgdesign.CoPhyDivgDesign;
 
-import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.bip.div.DivConfiguration;
-import edu.ucsc.dbtune.bip.div.DivergentOnOptimizer;
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.bip.DivTestSetting;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
-import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
-public class CoPhyDivgDesignFunctionalTest 
-{
-    private static DatabaseSystem db;
-    private static Environment    en;
+
+/**
+ * Test the usage of CoPhy in DivgDesign
+ * 
+ * @author Quoc Trung Tran
+ *
+ */
+public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
+{   
+    private static int maxIters;
+    private static Map<SQLStatement, Set<Index>> recommendedIndexStmt;
     
-    private static int nReplicas;
-    private static int loadfactor;
-    private static double B;
-    
-    private static Workload workload;
-    
-    /**
-     * Setup for the test.
-     */
-    @BeforeClass
-    public static void beforeClassSetUp() throws Exception
-    {
-        en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-    }
     
     @Test
-    public void testDivergentDesign() throws Exception
+    public void testCoPhyDiv() throws Exception
     {   
-        workload = workload(en.getWorkloadsFoldername() + "/tpch");
-        nReplicas = 3;
-        loadfactor = 2;
-        B = Math.pow(2, 28);
+        // 1. Set common parameters
+        setCommonParameters();
         
+        // 2. Generate candidate indexes
+        generateCandidates();
+        maxIters = 5;
         
-        int arrNReplicas[] = {2, 3, 4, 5};
-        int arrLoadFactor[] = {1, 2, 2, 3};
-        
-        // divergent design
+        // 3. Call CoPhy Design
         for (int i = 0; i < arrNReplicas.length; i++) {
             
             nReplicas = arrNReplicas[i];
             loadfactor = arrLoadFactor[i];
+            
+            if (isTestOne && nReplicas != 4)
+                continue;
+            
+            System.out.println("--------------------------------------------");
             System.out.println(" DIVGDESIGN-COPHY, # replicas = " + nReplicas
-                                + ", load factor = " + loadfactor);
+                    + ", load factor = " + loadfactor
+                    + ", B = " + B);
+            
             testDiv();
+            System.out.println("--------------------------------------------");
         }
     }
     
     
+    /**
+     * Generate candidate indexes for each statement
+     * 
+     * @throws Exception
+     */
+    protected void generateCandidates() throws Exception
+    {
+        Set<Index> candidate;
+        Workload wl;
+        CandidateGenerator candGen =
+            new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        
+        recommendedIndexStmt = new HashMap<SQLStatement, Set<Index>>();
+        
+        for (SQLStatement sql : workload) {
+            
+            wl = new Workload(Lists.newArrayList(sql));
+            candidate = candGen.generate(wl);                
+            recommendedIndexStmt.put(sql, candidate);
+            
+        }
+    }
+    
+    /**
+     * Run the CoPhyDiv algorithm.
+     * 
+     * @throws Exception
+     */
     private static void testDiv() throws Exception
     {
-        Optimizer io = db.getOptimizer();
-        LogListener logger = LogListener.getInstance();
+        LogListener logger; 
+        List<CoPhyDivgDesign> divgs = new ArrayList<CoPhyDivgDesign>();
         
-        if (!(io instanceof InumOptimizer))
-            return;
+        // run at most {@code maxIters} times
+        int minPosition = -1;
+        double minCost = -1;
+        CoPhyDivgDesign divg;
         
-        workload = workload(en.getWorkloadsFoldername() + "/tpch");
-        nReplicas = 3;
-        loadfactor = 2;
-        B = Math.pow(2, 28);
+        for (int iter = 0; iter < maxIters; iter++) {
+            
+            logger = LogListener.getInstance();
+            divg = new CoPhyDivgDesign(db, (InumOptimizer) io, logger, recommendedIndexStmt);
+            divg.recommend(workload, nReplicas, loadfactor, B);
+            
+            divgs.add(divg);
+            
+            if (iter == 0 || minCost > divg.getTotalCost()) {
+                minPosition = iter;
+                minCost = divg.getTotalCost();
+            } 
+        }
         
+        // get the best among these runs
+        double timeAnalysis = 0.0;
+        double timeInum = 0.0;
+        for (CoPhyDivgDesign div : divgs) {
+            timeInum += div.getInumTime();
+            timeAnalysis += div.getAnalysisTime();
+            System.out.println("cost: " + div.getTotalCost()
+                            + " Number of iterations: " + div.getNumberOfIterations()
+                            + " INUM time : " + div.getInumTime()
+                            + " Analysis time: " + div.getAnalysisTime());
+            
+        }
         
-        CoPhyDivgDesign divg = new CoPhyDivgDesign(db, (InumOptimizer) io, logger);
-        List<Set<Index>> indexesAtReplica = divg.recommend(workload, nReplicas, loadfactor, B);
+        System.out.println(" min iteration: " + minPosition + " cost: " + minCost);
+        divg = divgs.get(minPosition);
         
-        DivConfiguration output = new DivConfiguration(nReplicas, loadfactor);
-        for (int r = 0; r < nReplicas; r++)
-            for (Index index : indexesAtReplica.get(r))
-                output.addIndexReplica(r, index);
-        
-        // run on actual optimize
-        Set<SQLStatement> sqls = new HashSet<SQLStatement>();
-        for (int i = 0; i < workload.size(); i++)
-            sqls.add(workload.get(i));
-        DivergentOnOptimizer doo = new DivergentOnOptimizer();
-        doo.verify(io.getDelegate(), output, sqls);
-        
-        double costDB2 = doo.getTotalCost() / loadfactor;
-        
-        System.out.println("DB2 Divergent Design \n"
-                            + " Running time: " + divg.getRunningTime() + "\n"
-                            + " The objective value: " + divg.getTotalCost() + "\n"
-                            + " Number of iterations: " + divg.getNumberOfIterations() + "\n"
-                            + " Cost DB2: " + costDB2
-                            + " ratio: " + (double) costDB2 / divg.getTotalCost());
+        System.out.println("CoPhy Divergent Design \n"
+                            + " Running time: " + (timeInum + timeAnalysis) + "\n"
+                            + " The objective value: " + divg.getTotalCost()
+                            );
     }
 }
