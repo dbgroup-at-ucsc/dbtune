@@ -12,6 +12,7 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_XO;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_YO;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
+import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
@@ -37,12 +38,14 @@ public class ConstraintDivBIP extends DivBIP
     public static int UPDATE_COST_BOUND = 1004;
    
     protected boolean isSumYConstraint;
+    protected boolean isApproximation;
     protected List<DivConstraint> constraints;
     protected QueryCostOptimalBuilder queryOptimalBuilder;
     
     public ConstraintDivBIP(List<DivConstraint> constraints)
     {  
         isSumYConstraint = false;
+        isApproximation  = true;
         this.constraints = constraints;
     }
     
@@ -53,13 +56,8 @@ public class ConstraintDivBIP extends DivBIP
                 
         try {            
             // time limit
-            cplex.setParam(DoubleParam.TiLim, 300);
+            cplex.setParam(DoubleParam.TiLim, 900);
             UtilConstraintBuilder.cplex = cplex;
-        
-            if (constraints.size() == 1 && constraints.get(0).getType() == UPDATE_COST_BOUND) {
-                buildBIPUpdateCostBound(constraints.get(0).getFactor());
-                return; 
-            }
             
             // 1. Add variables into list
             constructVariables();
@@ -77,6 +75,11 @@ public class ConstraintDivBIP extends DivBIP
             // 5. Space constraints
             super.spaceConstraints();
             
+            if (constraints.size() == 1 && constraints.get(0).getType() == UPDATE_COST_BOUND) {
+                boundUpdateCostConstraint(constraints.get(0).getFactor());
+                return; 
+            }
+            
             // 6. if we have additional constraints
             // need to impose top-m best cost constraints
             if (constraints.size() > 0) {
@@ -84,6 +87,10 @@ public class ConstraintDivBIP extends DivBIP
                 queryOptimalBuilder = new QueryCostOptimalBuilder(cplex, cplexVar, poolVariables);
                 UtilConstraintBuilder.cplexVar = cplexVar;
                 topMBestCostExplicit();
+                
+                // get the constant for imbalance factor constraint
+                // = min of internal plan cost
+                setConstantImbalanceConstraint();
             }
             
             // 7. additional constraints
@@ -99,34 +106,6 @@ public class ConstraintDivBIP extends DivBIP
         catch (IloException e) {
             e.printStackTrace();
         }
-    }
-    
-    /**
-     * This function build the BIP for the update cost bound constraint:
-     * The cost to perform update is constrained by an upper bound value
-     * 
-     */
-    protected void buildBIPUpdateCostBound(double delta)  throws IloException
-    {        
-     
-        // 1. Add variables into list
-        super.constructVariables();
-        super.createCplexVariable(poolVariables.variables());
-        
-        // 2. Construct the query cost at each replica
-        totalCostQueryOnly();
-            
-        // 3. Atomic constraints
-        atomicConstraints();      
-            
-        // 4. Top-m best cost 
-        topMBestCostConstraints();
-            
-        // 5. Space constraints
-        spaceConstraints();
-            
-        // 6. Update cost constraints
-        boundUpdateCostConstraint(delta);
     }
     
     
@@ -152,6 +131,31 @@ public class ConstraintDivBIP extends DivBIP
         }
         
         cplex.addMinimize(expr);
+    }
+    
+    
+    /**
+     * Each imbalance constraint is in the form: {replica_i <= \alpha \times replica_j + constant
+     * where the constant is determined as the mininum of the internal plan cost 
+     */
+    protected void setConstantImbalanceConstraint()
+    {
+        double min = 999999999;
+        
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+            
+            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) 
+                if (min > desc.getInternalPlanCost(k))
+                    min = desc.getInternalPlanCost(k);
+        }
+        
+        UtilConstraintBuilder.constantRHS = min;
+        System.out.println(" constant in imbalance constraint: " 
+                            + UtilConstraintBuilder.constantRHS);
+            
     }
     
     /**
@@ -180,8 +184,10 @@ public class ConstraintDivBIP extends DivBIP
             }
         }
         
+        double totalBaseTableUpdateCost = super.getTotalBaseTableUpdateCost();
+        
         // upper bound
-        cplex.addLe(expr, delta);
+        cplex.addLe(expr, delta - totalBaseTableUpdateCost);
     }
     
     @Override
@@ -266,7 +272,6 @@ public class ConstraintDivBIP extends DivBIP
     protected void topMBestCostExplicit() throws IloException
     {   
         
-        
         List<IloLinearNumExpr> exprOptimals;
         List<IloLinearNumExpr> exprQueries;
 
@@ -342,13 +347,17 @@ public class ConstraintDivBIP extends DivBIP
         Sets<Integer> s = new Sets<Integer>();
         Set<Set<Integer>> positionSizeM = s.powerSet(positions, super.loadfactor);
         
+        double factor = -1;
+        if (isApproximation)
+            factor = -1.1;
+        
         for (Set<Integer> position : positionSizeM) {
             
             exprTopm = cplex.linearNumExpr();
             exprTopm.add(exprCrossReplica);
             
             for (Integer p : position)
-                exprTopm.add(UtilConstraintBuilder.modifyCoef(listQueryOptimal.get(p), -1));
+                exprTopm.add(UtilConstraintBuilder.modifyCoef(listQueryOptimal.get(p), factor));
             
             cplex.addLe(exprTopm, 0, "top_m_explicit_" + numConstraints);
             numConstraints++;
@@ -373,7 +382,6 @@ public class ConstraintDivBIP extends DivBIP
     
     
     
-    
     /**
      * Construct a set of imbalance query constraints. That is, the cost of top-m best place
      * for every query does not exceed beta times.
@@ -386,14 +394,18 @@ public class ConstraintDivBIP extends DivBIP
     {   
         // sum_y = sum of y^j_{qk} over all template plans
         for (int r = 0; r < nReplicas; r++)
-            for (QueryPlanDesc desc : queryPlanDescs)
-                sumYConstraint(r, desc.getStatementID(), desc);
+            for (QueryPlanDesc desc : queryPlanDescs) {
+                // only consider for SELECT statement
+                if (desc.getSQLCategory().isSame(SELECT))
+                    sumYConstraint(r, desc.getStatementID(), desc);
+            }
         
         // query imbalance constraint
         for (QueryPlanDesc desc : queryPlanDescs)
             for (int r1 = 0; r1 < nReplicas; r1++)
                 for (int r2 = r1 + 1; r2 < nReplicas; r2++)
-                    imbalanceQueryConstraint(desc, r1, r2, beta);
+                    if (desc.getSQLCategory().isSame(SELECT))
+                        imbalanceQueryConstraint(desc, r1, r2, beta);
             
     }
     

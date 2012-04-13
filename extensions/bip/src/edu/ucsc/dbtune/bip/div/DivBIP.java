@@ -2,9 +2,9 @@ package edu.ucsc.dbtune.bip.div;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
-import ilog.cplex.IloCplex.DoubleParam;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +33,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
 {  
     protected int    nReplicas;
     protected int    loadfactor;    
-    protected double B;
+    protected double B; 
     
     protected DivVariablePool   poolVariables;    
     protected Map<String,Index> mapVarSToIndex;
@@ -57,6 +57,24 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         this.B = B;
     }
     
+    /**
+     * Retrieve the (constant) base table update cost
+     * 
+     * @return
+     *      The base table update cost.
+     */
+    public double getTotalBaseTableUpdateCost()
+    {
+        double totalBaseTableUpdateCost = 0.0;
+        
+        // base update cost on one replicas
+        for (QueryPlanDesc desc : queryPlanDescs)
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                totalBaseTableUpdateCost += desc.getBaseTableUpdateCost();
+            
+        // need to time the number of replica
+        return totalBaseTableUpdateCost * nReplicas;
+    }
     /**
      * Reads the value of variables corresponding to the presence of indexes
      * at each replica and returns indexes to materialize at each replica.
@@ -101,7 +119,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             //cplex.setParam(IntParam.SiftAlg, 2);
             
             // epsilon in linerization
-            cplex.setParam(DoubleParam.EpLin, 1e-1);
+            //cplex.setParam(DoubleParam.EpLin, 1e-1);
             UtilConstraintBuilder.cplex = cplex;
             
             // 1. Add variables into list
@@ -186,10 +204,10 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     protected void totalCost() throws IloException
     {         
         IloLinearNumExpr obj = cplex.linearNumExpr();
-
+        
         for (int r = 0; r < nReplicas; r++) 
             obj.add(replicaCost(r));
-            
+        
         cplex.addMinimize(obj);
     }
     
@@ -214,7 +232,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         // update component
         for (QueryPlanDesc desc : queryPlanDescs) 
-            if (desc.getSQLCategory().isSame(NOT_SELECT))
+            if (desc.getSQLCategory().isSame(NOT_SELECT)) 
                 expr.add(updateCost(r, desc.getStatementID(), desc));
         
         return expr;
@@ -261,6 +279,9 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         for (Index index : candidateIndexes) {
             
+            if (index instanceof FullTableScanIndex)
+                continue;
+            
             cost = desc.getUpdateCost(index);
             
             if (cost != 0.0) {
@@ -271,6 +292,8 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         return expr;
     }
+    
+    
     /**
      * Formulate the expression of a query on a particular replica
      * 
@@ -473,8 +496,66 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     }
     
     
+    /**
+     * Retrieve the update cost, computed by INUM including the cost for the query shell
+     * and the update indexes (NOT including the cost to update base tables)
+     * 
+     * @return
+     *      The update cost
+     */
+    public double getUpdateCost() throws Exception
+    {
+        // get variables assignment
+        getMapVariableValue();
+        
+        // run over each replica
+        double cost;
+        int id;
+        int q;
+        int idS;
+        
+        cost = 0.0;
+        
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            
+            if (!desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+            
+            q = desc.getStatementID();
+        
+            
+            for (int r = 0; r < nReplicas; r++) {
+                // query shell cost
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
+                    id = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+                    cost += (desc.getInternalPlanCost(k) * valVar[id]);                    
+                }                
+                        
+                // Index access cost                            
+                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+                    for (int i = 0; i < desc.getNumberOfSlots(); i++)
+                        for (Index index : desc.getIndexesAtSlot(i)) {
+                            id = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
+                            cost += (desc.getAccessCost(k, index) * valVar[id]);
+                        }
+                
+                // update cost
+                for (Index index : candidateIndexes) {
+                    
+                    if (index instanceof FullTableScanIndex)
+                        continue;
+                    
+                    idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                    cost += desc.getUpdateCost(index) * valVar[idS];
+                    
+                }
+            }
+        }
+        
+        return cost;
+    }
 
-     /**
+    /**
      * Recalculate the total cost returned by CPLEX
      *  
      */
@@ -485,11 +566,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         // get variables assignment
         getMapVariableValue();
-        /*
-        for (int i = 0; i < valVar.length; i++)
-            if (valVar[i] == 1)
-                System.out.println(poolVariables.variables().get(i).getName());
-        */
         
         // run over each replica
         double cost;
@@ -536,4 +612,150 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             
         }
     }
+    
+    /**
+     * Compute the query cost from the result of CPLEX.
+     * 
+     * @param r
+     *  todo
+     * @param q
+     * @param desc
+     * @return
+     */
+    public double costQuery(int r, int q, QueryPlanDesc desc)
+    {
+        double cost;
+        int id;
+        
+        cost = 0.0;
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
+            id = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            cost += (desc.getInternalPlanCost(k) * valVar[id]);                    
+        }                
+                
+        // Index access cost                            
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(); i++)
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    id = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
+                    cost += (desc.getAccessCost(k, index) * valVar[id]);
+                }
+        
+        return cost;
+    }
+    
+    /**
+     * Compute the cost to update affected indexes.  
+     * @param r
+     * @param q
+     * @param desc
+     */
+    public double costUpdateIndexes(int r, QueryPlanDesc desc)
+    {
+        int idS;
+        double cost = 0.0;
+        
+        for (Index index : candidateIndexes) {
+            
+            if (index instanceof FullTableScanIndex)
+                continue;
+            
+            idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+            cost += valVar[idS] * desc.getUpdateCost(index);
+            
+        }
+        
+        return cost;
+    }
+   
+    /**
+     * Compute the max imbalance replica and query factor.
+     * 
+     */
+    public void computeImbalanceFactor() throws Exception
+    {
+        // get variables assignment
+        getMapVariableValue();
+        
+        // run over each replica
+        double costReplica;
+        List<Double> replicas = new ArrayList<Double>();
+        
+        // replica
+        for (int r = 0; r < nReplicas; r++) {
+            
+            costReplica = 0.0;
+            for (QueryPlanDesc desc : queryPlanDescs) {
+                costReplica += costQuery(r, desc.getStatementID(), desc);
+            
+                if (desc.getSQLCategory().isSame(NOT_SELECT))
+                    costReplica += this.costUpdateIndexes(r, desc);
+            }
+            
+            // add the base update cost
+            costReplica += getTotalBaseTableUpdateCost() / nReplicas;             
+            replicas.add(costReplica);
+        }
+        
+        System.out.println(" Max imbalance REPLICA: " + maxRatioInList(replicas));
+        
+        // query
+        List<Double> costs = new ArrayList<Double>();
+        
+        double maxRatio = -1;
+        double ratio;
+        double cost;
+        
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            
+            // only consider select statement
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+            
+            costs = new ArrayList<Double>();
+            for (int r = 0; r < nReplicas; r++)  {
+                cost = costQuery(r, desc.getStatementID(), desc);
+                if (cost > 0)
+                    costs.add(cost);
+            }
+        
+            Collections.sort(costs);
+            
+            ratio = maxRatioInList(costs);
+            if (ratio > maxRatio)
+               maxRatio = ratio;
+                        
+        }
+        
+        System.out.println(" Max imbalance QUERY: " + maxRatio);
+    }
+    
+    /**
+     * Compute the maximum ratio between any two elements in the list.
+     * 
+     * @param costs
+     *      The list of value
+     * @return
+     *      The maximum ratio
+     */
+    public double maxRatioInList(List<Double> costs)
+    {
+        double maxRatio = -1;
+        double ratio;
+        
+        for (int r1 = 0; r1 < costs.size(); r1++)
+            for (int r2 = r1 + 1; r2 < costs.size(); r2++) {
+                
+                ratio = (double) costs.get(r1) / costs.get(r2);
+                if (ratio > maxRatio)
+                    maxRatio = ratio;
+                
+                ratio = (double) costs.get(r2) / costs.get(r1);
+                if (ratio > maxRatio)
+                    maxRatio = ratio;
+            }
+        
+        return maxRatio;
+    }
+    
 }
