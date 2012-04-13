@@ -19,6 +19,7 @@ public class UtilConstraintBuilder
     public static IloCplex cplex;
     public static List<IloNumVar> cplexVar;
     public static int numConstraints = 0;
+    public static double constantRHS = 0;
     
     /**
      * Impose the set of constraints when replacing the produce of two binary variables 
@@ -79,18 +80,18 @@ public class UtilConstraintBuilder
     {
         IloLinearNumExpr expr;
         
-        // r1 - \beta x r2 <= 0
+        // r1 - \beta x r2 <= constantRHS
         expr = cplex.linearNumExpr();
         expr.add(expr1); 
         expr.add(modifyCoef(expr2, -beta));
-        cplex.addLe(expr, 0, "imbalance_replica_" + numConstraints);
+        cplex.addLe(expr, constantRHS, "imbalance_replica_" + numConstraints);
         numConstraints++;
         
-        // r2 - \beta x r1 <= 0
+        // r2 - \beta x r1 <= constantRHS
         expr = cplex.linearNumExpr();
         expr.add(expr2);
         expr.add(modifyCoef(expr1, -beta));
-        cplex.addLe(expr, 0, "imbalance_replica_" + numConstraints);
+        cplex.addLe(expr, constantRHS, "imbalance_replica_" + numConstraints);
         numConstraints++;
     }
     

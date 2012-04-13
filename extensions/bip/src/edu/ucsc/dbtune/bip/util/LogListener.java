@@ -80,6 +80,25 @@ public class LogListener
             mapEventTime.put(new Integer(event), time);
         }
     }
+    
+    /**
+     * Get the running time of a particular event (e.g., populate INUM space)
+     * 
+     * @param event
+     *      The event ID
+     * @return
+     *      The running time or 0.0 if this event has not been recorded.
+     */
+    public double getRunningTime(int event)
+    {
+        Double found = mapEventTime.get(event);
+        if (found != null) 
+            return found;
+        else {
+            System.out.println(" This event has not been recorded");
+            return 0.0;
+        }
+    }
 
     @Override
     public String toString() 
@@ -88,22 +107,22 @@ public class LogListener
         str.append("LogListener: \n"); 
         double totalTime = 0.0;
         
-        Object found = mapEventTime.get(new Integer(EVENT_POPULATING_INUM));
+        Double found = mapEventTime.get(EVENT_POPULATING_INUM);
         if (found != null) {
             str.append("Time to populate INUM space: " + (Double) found + " millis. \n");
-            totalTime += (Double) found;
+            totalTime += found;
         }
         
-        found = mapEventTime.get(new Integer(EVENT_FORMULATING_BIP));
+        found = mapEventTime.get(EVENT_FORMULATING_BIP);
         if (found != null) {
             str.append("Time to formulate BIP: " + (Double) found + " millis. \n");
-            totalTime += (Double) found;
+            totalTime += found;
         }
         
-        found = mapEventTime.get(new Integer(EVENT_SOLVING_BIP));
+        found = mapEventTime.get(EVENT_SOLVING_BIP);
         if (found != null) {
             str.append("Time to solve BIP: " + (Double) found + " millis. \n");
-            totalTime += (Double) found;
+            totalTime += found;
         }
         
         str.append("Total processing time: " + totalTime + " millis. \n");
