@@ -11,9 +11,12 @@ import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
+
 public class DivergentOnOptimizer implements BIPOutputOnOptimizer 
 {
     private double totalCost;
+    private double updateCost;
     
     @Override
     public void verify(Optimizer optimizer, IndexTuningOutput bip,
@@ -25,6 +28,7 @@ public class DivergentOnOptimizer implements BIPOutputOnOptimizer
         DivConfiguration div = (DivConfiguration) bip;
         
         totalCost = 0.0;
+        updateCost = 0.0;
         
         // for each statement, find top-m replicas that yield the top-m best costs
         for (SQLStatement sql : workload) {
@@ -34,12 +38,20 @@ public class DivergentOnOptimizer implements BIPOutputOnOptimizer
             for (int r = 0; r < div.getNumberReplicas(); r++)
                 cost.add(optimizer.explain(sql, div.indexesAtReplica(r)).getTotalCost());
             
-            //System.out.println("L39, cost: " + cost);
-            // get top-m best cost
-            Collections.sort(cost);
-            
-            for (int k = 0; k < div.getLoadFactor(); k++)
-                totalCost += cost.get(k);
+            // update statement
+            if (sql.getSQLCategory().isSame(NOT_SELECT)) 
+                for (int k = 0; k < cost.size(); k++) {
+                    totalCost += cost.get(k);
+                    updateCost += cost.get(k); 
+                }
+            // select statement
+            else {
+                // get top-m best cost
+                Collections.sort(cost);
+                
+                for (int k = 0; k < div.getLoadFactor(); k++)
+                    totalCost += (cost.get(k) / div.getLoadFactor());
+            }
         }
     }
     
@@ -53,4 +65,13 @@ public class DivergentOnOptimizer implements BIPOutputOnOptimizer
         return totalCost;
     }
 
+    /**
+     * Retrieve the total update cost of using the actual optimizer
+     * @return
+     *      The total cost
+     */
+    public double getUpdateCost()
+    {
+        return updateCost;
+    }
 }
