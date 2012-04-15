@@ -32,13 +32,15 @@ public class DivBIPFunctionalTest extends DivTestSetting
     protected static long totalIndexSize;
     protected static Set<Index> candidates;
     
-    
     @Test
     public void testDivergentDesign() throws Exception
     {
         // 1. Set common parameters
         setCommonParameters();
         
+        if (!(io instanceof InumOptimizer))
+            return;
+
         // 2. Generate candidate indexes
         generateCandidates();
         

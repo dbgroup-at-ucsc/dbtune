@@ -55,7 +55,7 @@ public class CoPhyFunctionalTest
         if (!(io instanceof InumOptimizer))
             return;
 
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         candidates = candGen.generate(workload);

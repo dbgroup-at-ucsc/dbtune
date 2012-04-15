@@ -40,7 +40,7 @@ public class QueryPlanDescFunctionalTest
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
 
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);

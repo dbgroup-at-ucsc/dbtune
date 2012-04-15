@@ -109,19 +109,19 @@ public class LogListener
         
         Double found = mapEventTime.get(EVENT_POPULATING_INUM);
         if (found != null) {
-            str.append("Time to populate INUM space: " + (Double) found + " millis. \n");
+            str.append("Time to populate INUM space: " + found + " millis. \n");
             totalTime += found;
         }
         
         found = mapEventTime.get(EVENT_FORMULATING_BIP);
         if (found != null) {
-            str.append("Time to formulate BIP: " + (Double) found + " millis. \n");
+            str.append("Time to formulate BIP: " + found + " millis. \n");
             totalTime += found;
         }
         
         found = mapEventTime.get(EVENT_SOLVING_BIP);
         if (found != null) {
-            str.append("Time to solve BIP: " + (Double) found + " millis. \n");
+            str.append("Time to solve BIP: " + found + " millis. \n");
             totalTime += found;
         }
         

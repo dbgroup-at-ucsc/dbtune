@@ -50,7 +50,7 @@ public class ElasticDivBIPFunctionalTest
         
         DivBIP div = new DivBIP();
         
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch");
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);

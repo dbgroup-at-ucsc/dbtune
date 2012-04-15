@@ -43,6 +43,9 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
     {   
         // 1. Set common parameters
         setCommonParameters();
+
+        if (!(io instanceof InumOptimizer))
+            return;
         
         // 2. Generate candidate indexes
         generateCandidates();

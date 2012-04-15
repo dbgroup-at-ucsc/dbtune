@@ -53,10 +53,7 @@ public class DivTestSetting
         db = newDatabaseSystem(en);        
         io = db.getOptimizer();
         
-        if (!(io instanceof InumOptimizer))
-            return;
-
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
         
         nReplicas  = 4;
         loadfactor = 2;
