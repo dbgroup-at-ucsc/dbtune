@@ -21,6 +21,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
+import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
+import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
 /**
  * An implementation of {@link QueryPlanDesc} interface. There's only one single object of 
@@ -114,6 +116,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     @Override 
     public double getBaseTableUpdateCost()
     {
+        // UPDATE, INSERT, DELETE all have base table update cost
         if (stmt.getSQLCategory().isSame(NOT_SELECT))
             return baseTableUpdateCost;
         else 
@@ -141,9 +144,13 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         assignIndexesToSlot(candidates, templatePlans);
                 
         // 3. Cost from INUM
-        getPlanCostsFromInum(templatePlans);
+        // only applicable for SELECT and UPDATE statement
+        // do not process for INSERT and DELETE
+        if (stmt.getSQLCategory().isSame(SELECT) || stmt.getSQLCategory().isSame(UPDATE))
+            getPlanCostsFromInum(templatePlans);
         
         // 4. Get the update costs if the statement is not SELECT statement
+        // including base table & index update cost
         if (stmt.getSQLCategory().isSame(NOT_SELECT))
             getUpdateCostsFromInum(preparedStmt, candidates);
         

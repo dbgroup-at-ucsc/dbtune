@@ -1,11 +1,16 @@
 package edu.ucsc.dbtune.bip;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
@@ -35,11 +40,16 @@ public class DivTestSetting
     protected static boolean isTestOne;
     protected static boolean isExportToFile;
     protected static boolean isTestCost;
+    protected static boolean isShowRecommendation;
+    protected static boolean isApproximation;
     
     protected static DivBIP div;
     
     protected int arrNReplicas[] = {2, 3, 4, 5};
     protected int arrLoadFactor[] = {1, 2, 2, 3};
+    
+    protected static long totalIndexSize;
+    protected static Set<Index> candidates;
     
     
     /**
@@ -53,15 +63,21 @@ public class DivTestSetting
         db = newDatabaseSystem(en);        
         io = db.getOptimizer();
         
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
+        if (!(io instanceof InumOptimizer))
+            return;
         
-        nReplicas  = 4;
-        loadfactor = 2;
-        isTestOne  = true;
-        isExportToFile = true;
-        isTestCost = true;
+        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        //workload = workload(en.getWorkloadsFoldername() + "/tpch-mix-div");
         
-        B   = Math.pow(2, 28);
+        nReplicas  = 5;
+        loadfactor = 3;
+        isTestOne  = false;
+        isExportToFile = false;
+        isTestCost = false;
+        isShowRecommendation = false;
+        isApproximation = false;
+        
+        B   = Math.pow(2, 29);
         div = new DivBIP();
     }
     
@@ -95,4 +111,49 @@ public class DivTestSetting
                                 + (double) db2cost / inumcost);
         }
     }
+    
+    /**
+     * Compute the query execution cost for statements in the given workload
+     * 
+     * @param conf
+     *      A configuration
+     *      
+     * @throws Exception
+     */
+    protected static List<Double> computeQueryCostsInum(Set<Index> conf) throws Exception
+    {
+        InumPreparedSQLStatement inumPrepared;        
+        double inumCost;
+        List<Double> costs = new ArrayList<Double>();
+        
+        for (SQLStatement sql : workload) {
+            
+            inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
+            inumCost = inumPrepared.explain(conf).getTotalCost();
+            costs.add(inumCost);
+            
+        }
+        
+        return costs;
+    }
+    
+    /**
+     * Generate candidate indexes
+     */
+    protected static void generateCandidates() throws Exception
+    {
+        CandidateGenerator candGen =
+            new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        candidates = candGen.generate(workload);
+        
+        // Calculate the total size (for solely information)
+        totalIndexSize = 0;
+        for (Index index : candidates)
+            totalIndexSize += index.getBytes();
+        
+        System.out.println("Number of statements: " + workload.size() + "\n"
+                            + "Number of candidate: " + candidates.size() + "\n" 
+                            + "Total size: " + totalIndexSize);
+    }
+    
 }

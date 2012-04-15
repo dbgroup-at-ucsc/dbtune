@@ -13,6 +13,13 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_YO;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
+import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
+import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
+import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
+
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.modifyCoef;
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.imbalanceConstraint;
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.constantRHSImbalanceConstraint;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
@@ -42,10 +49,11 @@ public class ConstraintDivBIP extends DivBIP
     protected List<DivConstraint> constraints;
     protected QueryCostOptimalBuilder queryOptimalBuilder;
     
-    public ConstraintDivBIP(List<DivConstraint> constraints)
+    
+    public ConstraintDivBIP(final List<DivConstraint> constraints, final boolean isApproximation)
     {  
         isSumYConstraint = false;
-        isApproximation  = true;
+        this.isApproximation  = isApproximation;
         this.constraints = constraints;
     }
     
@@ -84,23 +92,24 @@ public class ConstraintDivBIP extends DivBIP
             // need to impose top-m best cost constraints
             if (constraints.size() > 0) {
                 // initial auxiliaries classes
-                queryOptimalBuilder = new QueryCostOptimalBuilder(cplex, cplexVar, poolVariables);
+                queryOptimalBuilder = new QueryCostOptimalBuilder(cplex, cplexVar, 
+                                                                  poolVariables, isApproximation);
                 UtilConstraintBuilder.cplexVar = cplexVar;
-                topMBestCostExplicit();
-                
-                // get the constant for imbalance factor constraint
-                // = min of internal plan cost
-                setConstantImbalanceConstraint();
+                topMBestCostExplicit();                
             }
             
             // 7. additional constraints
             for (DivConstraint c : constraints) {
-                if (c.getType() == IMBALANCE_REPLICA)
+                if (c.getType() == IMBALANCE_REPLICA) {
+                    setConstantReplicaImbalanceConstraint(c.getFactor());
                     imbalanceReplicaConstraints(c.getFactor());
+                }
                 else if (c.getType() == NODE_FAILURE)
                     nodeFailures(c.getFactor());
-                else if (c.getType() == IMBALANCE_QUERY)
-                    imbalanceQueryConstraints(c.getFactor());
+                else if (c.getType() == IMBALANCE_QUERY) {
+                    setConstantQueryImbalanceConstraint();
+                    imbalanceQueryConstraints(c.getFactor());                    
+                }
             }
         }     
         catch (IloException e) {
@@ -124,10 +133,8 @@ public class ConstraintDivBIP extends DivBIP
                 continue;
             
             for (int r = 0; r < nReplicas; r++)
-                expr.add(UtilConstraintBuilder.modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
-                               getFactorStatement(desc)
-                               )
-                    );
+                expr.add(modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+                         getFactorStatement(desc)));
         }
         
         cplex.addMinimize(expr);
@@ -135,11 +142,11 @@ public class ConstraintDivBIP extends DivBIP
     
     
     /**
-     * Each imbalance constraint is in the form: {replica_i <= \alpha \times replica_j + constant
+     * Each imbalance constraint is in the form: {cost(q,r_i) <= \alpha \times cost(q,r_j) + constant
      * where the constant is determined as the mininum of the internal plan cost 
      */
-    protected void setConstantImbalanceConstraint()
-    {
+    protected void setConstantQueryImbalanceConstraint()
+    {   
         double min = 999999999;
         
         for (QueryPlanDesc desc : queryPlanDescs) {
@@ -152,9 +159,26 @@ public class ConstraintDivBIP extends DivBIP
                     min = desc.getInternalPlanCost(k);
         }
         
-        UtilConstraintBuilder.constantRHS = min;
-        System.out.println(" constant in imbalance constraint: " 
-                            + UtilConstraintBuilder.constantRHS);
+        constantRHSImbalanceConstraint = min;
+        System.out.println(" constant in QUERY imbalance constraint: " 
+                            + UtilConstraintBuilder.constantRHSImbalanceConstraint);
+            
+    }
+    
+    /**
+     * Each imbalance constraint is in the form: {replica_i <= \beta \times replica_j + constant
+     * where the constant is determined as {@code \beta - 1} \times cost_update_base_table_one_relica,
+     * since in the formula of the cost, we do not take into account this component.
+     * 
+     * @param beta
+     *      The imbalance replica factor
+     *  
+     */
+    protected void setConstantReplicaImbalanceConstraint(double beta)
+    {   
+        constantRHSImbalanceConstraint = (beta - 1) *  getTotalBaseTableUpdateCost() / nReplicas;
+        System.out.println(" constant in REPLICA imbalance constraint: " 
+                            + UtilConstraintBuilder.constantRHSImbalanceConstraint);
             
     }
     
@@ -174,13 +198,12 @@ public class ConstraintDivBIP extends DivBIP
             
             for (int r = 0; r < nReplicas; r++) {
                 // query shell
-                expr.add(UtilConstraintBuilder.modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
-                                                          getFactorStatement(desc)
-                                                          )
-                        );
+                if (desc.getSQLCategory().isSame(UPDATE))
+                    expr.add(modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+                            getFactorStatement(desc)));
                 
                 // update cost
-                expr.add(updateCost(r, desc.getStatementID(), desc));
+                expr.add(indexUpdateCost(r, desc.getStatementID(), desc));
             }
         }
         
@@ -275,7 +298,11 @@ public class ConstraintDivBIP extends DivBIP
         List<IloLinearNumExpr> exprOptimals;
         List<IloLinearNumExpr> exprQueries;
 
+        // only applicable for SELECT and UPDATE statement
         for (QueryPlanDesc desc : queryPlanDescs) {
+            
+            if (desc.getSQLCategory().isSame(INSERT) || desc.getSQLCategory().isSame(DELETE))
+                continue;
             
             exprOptimals = new ArrayList<IloLinearNumExpr>();
             exprQueries = new ArrayList<IloLinearNumExpr>();
@@ -326,10 +353,10 @@ public class ConstraintDivBIP extends DivBIP
             expr = cplex.linearNumExpr();
             expr.add(listQueryCost.get(i));
             
-            expr.add(UtilConstraintBuilder.modifyCoef(listQueryOptimal.get(i), -1)); 
+            expr.add(modifyCoef(listQueryOptimal.get(i), -1)); 
             cplex.addLe(expr, 0, "query_optimal" + numConstraints);
             numConstraints++;
-     
+            
             // sum of q over all replicas
             exprCrossReplica.add(listQueryCost.get(i));
         }
@@ -357,10 +384,11 @@ public class ConstraintDivBIP extends DivBIP
             exprTopm.add(exprCrossReplica);
             
             for (Integer p : position)
-                exprTopm.add(UtilConstraintBuilder.modifyCoef(listQueryOptimal.get(p), factor));
+                exprTopm.add(modifyCoef(listQueryOptimal.get(p), factor));
             
             cplex.addLe(exprTopm, 0, "top_m_explicit_" + numConstraints);
             numConstraints++;
+            
         }
     }
     
@@ -377,7 +405,7 @@ public class ConstraintDivBIP extends DivBIP
         // for each pair of replicas, impose the imbalance factor constraint 
         for (int r1 = 0; r1 < nReplicas - 1; r1++)
             for (int r2 = r1 + 1; r2 < nReplicas; r2++) 
-                UtilConstraintBuilder.imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);
+                imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);
     }
     
     
