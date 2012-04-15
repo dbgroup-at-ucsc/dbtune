@@ -45,14 +45,15 @@ public class QueryCostOptimalBuilder
      *      List of Div variables 
      */
     public QueryCostOptimalBuilder(IloCplex cplex, final List<IloNumVar> cplexVar, 
-                                   final DivVariablePool poolVariables)
+                                   final DivVariablePool poolVariables,
+                                   final boolean isApproximation)
     {
         this.cplex = cplex;
         this.cplexVar = cplexVar;
         this.poolVariables = poolVariables;
         
         numConstraints = 0;
-        isApproximation = true;
+        this.isApproximation = isApproximation;
     }
     
     /**

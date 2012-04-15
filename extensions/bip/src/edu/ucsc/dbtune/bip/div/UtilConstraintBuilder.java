@@ -19,7 +19,7 @@ public class UtilConstraintBuilder
     public static IloCplex cplex;
     public static List<IloNumVar> cplexVar;
     public static int numConstraints = 0;
-    public static double constantRHS = 0;
+    public static double constantRHSImbalanceConstraint = 0;
     
     /**
      * Impose the set of constraints when replacing the produce of two binary variables 
@@ -75,7 +75,7 @@ public class UtilConstraintBuilder
      *      The imbalance factor.
      */
     public static void imbalanceConstraint(IloLinearNumExpr expr1, IloLinearNumExpr expr2, 
-                                       double beta)
+                                          double beta)
                    throws IloException
     {
         IloLinearNumExpr expr;
@@ -84,14 +84,14 @@ public class UtilConstraintBuilder
         expr = cplex.linearNumExpr();
         expr.add(expr1); 
         expr.add(modifyCoef(expr2, -beta));
-        cplex.addLe(expr, constantRHS, "imbalance_replica_" + numConstraints);
+        cplex.addLe(expr, constantRHSImbalanceConstraint, "imbalance_replica_" + numConstraints);
         numConstraints++;
         
         // r2 - \beta x r1 <= constantRHS
         expr = cplex.linearNumExpr();
         expr.add(expr2);
         expr.add(modifyCoef(expr1, -beta));
-        cplex.addLe(expr, constantRHS, "imbalance_replica_" + numConstraints);
+        cplex.addLe(expr, constantRHSImbalanceConstraint, "imbalance_replica_" + numConstraints);
         numConstraints++;
     }
     
@@ -123,5 +123,62 @@ public class UtilConstraintBuilder
         
         return result;
     }
+    
+    /**
+     * Compute the value of the given expression
+     * @param expr
+     *      the given expression
+     *      
+     * @return
+     *      The value
+     *      
+     * @throws Exception 
+     */
+    public static double computeVal(IloLinearNumExpr expr) throws Exception
+    {
+        IloNumVar        var;
+        double           coef;
+        IloLinearNumExprIterator iter;
+        
+        double cost = 0.0;
+        
+        iter = expr.linearIterator();
+        while (iter.hasNext()) {
+            var = iter.nextNumVar();
+            coef = iter.getValue();            
+            cost += coef * cplex.getValue(var);
+        }
+        
+        return cost;
+    }
+    
+    /**
+     * Compute the maximum ratio between any two elements in the list.
+     * 
+     * @param costs
+     *      The list of value
+     * @return
+     *      The maximum ratio
+     */
+    public static double maxRatioInList(List<Double> costs)
+    {
+        double maxRatio = -1;
+        double ratio;
+        
+        for (int r1 = 0; r1 < costs.size(); r1++)
+            for (int r2 = r1 + 1; r2 < costs.size(); r2++) {
+                
+                ratio = (double) costs.get(r1) / costs.get(r2);
+                if (ratio > maxRatio)
+                    maxRatio = ratio;
+                
+                ratio = (double) costs.get(r2) / costs.get(r1);
+                if (ratio > maxRatio)
+                    maxRatio = ratio;
+            }
+        
+        return maxRatio;
+    }
+    
     
 }
