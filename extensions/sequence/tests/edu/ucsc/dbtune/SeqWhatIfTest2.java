@@ -131,12 +131,12 @@ public class SeqWhatIfTest2 {
                         "GREEDY cost: %,.0f",
                         greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStep);
         perf_cost = greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStep;
-        perf_inumTime = timer.getSecondElapse();
-        perf_algorithmTime = perf_inumTime
-                - (SeqCost.totalWhatIfNanoTime / 1000000000.0);
+        perf_allTime = timer.getSecondElapse();
+        perf_algorithmTime = perf_allTime
+                - ((SeqCost.totalWhatIfNanoTime + SeqCost.totalCreateIndexNanoTime) / 1000000000.0);
         perf_createIndexCostTime = SeqCost.totalCreateIndexNanoTime / 1000000000.0;
-        perf_inumTime -= perf_createIndexCostTime;
-        perf_pluginTime = SeqCost.plugInTime/ 1000000000.0;
+        perf_pluginTime = SeqCost.plugInTime / 1000000000.0;
+        perf_populateTime = SeqCost.populateTime;
         Rt.p("GREEDY SEQ time %.3f", timer.getSecondElapse());
         Rt.p("WhatIf Call time %.3f",
                 SeqCost.totalWhatIfNanoTime / 1000000000.0);
@@ -156,10 +156,11 @@ public class SeqWhatIfTest2 {
     }
 
     public static double perf_cost;
-    public static double perf_inumTime;
+    public static double perf_allTime;
     public static double perf_algorithmTime;
     public static double perf_createIndexCostTime;
     public static double perf_pluginTime;
+    public static double perf_populateTime;
 
     public static void main(String[] args) throws Exception {
         new SeqWhatIfTest2();

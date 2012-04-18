@@ -36,10 +36,12 @@ public class SeqInumCost {
         queries.add(q);
 
         RTimerN timer = new RTimerN();
-        QueryPlanDesc desc = InumQueryPlanDesc
+        InumQueryPlanDesc desc = (InumQueryPlanDesc)InumQueryPlanDesc
                 .getQueryPlanDescInstance(statement);
         // Populate the INUM space
         desc.generateQueryPlanDesc(optimizer, inumIndices);
+        plugInTime+=desc.pluginTime/1000000000.0;
+        populateTime+=desc.populateTime/1000000000.0;
         // Rt.p("BIP INUM populate time: " + timer.getSecondElapse());
         q.plans = new SeqInumPlan[desc.getNumberOfTemplatePlans()];
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
@@ -68,7 +70,7 @@ public class SeqInumCost {
                         // .p("BIP INUM plugin time: "
                         // + timer.getSecondElapse());
                     }
-                    plugInTime += timer.getSecondElapse();
+//                    plugInTime += timer.getSecondElapse();
                     plugInCount++;
                     // Rt.p("%f %f",timer.getSecondElapse(),plugInTime);
                 }
@@ -105,6 +107,7 @@ public class SeqInumCost {
     }
 
     public static double plugInTime = 0;
+    public static double populateTime = 0;
     public static int plugInCount = 0;
     public static int plugInFCount = 0;
 

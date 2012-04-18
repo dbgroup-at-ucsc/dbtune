@@ -101,7 +101,8 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         this.tables = null;
     }
     
-     
+    public long populateTime;
+    public long pluginTime;
     @Override
     public void generateQueryPlanDesc(InumOptimizer optimizer, Set<Index> candidateIndexes) 
                                       throws SQLException
@@ -118,8 +119,10 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         
         activeIndexesWithouFTSSlot = new ArrayList<Set<Index>>();
         
+        long time=System.nanoTime();
         preparedStmt  = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
         templatePlans = preparedStmt.getTemplatePlans();
+        populateTime=System.nanoTime()-time;
                      
         for (InumPlan plan : templatePlans) {
             tables = plan.getTables();
@@ -129,6 +132,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         // 1. Set up the number of slots & list of indexes in each slot
         n = tables.size();    
         
+        time=System.nanoTime();
         for (Table table : tables) {    
             
             List<Index> indexes           = new ArrayList<Index>();         
@@ -197,6 +201,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
             active.add(fts);
             indexesSlot.set(i, active);     
         }
+         pluginTime=System.nanoTime()-time;
     }
      
 	

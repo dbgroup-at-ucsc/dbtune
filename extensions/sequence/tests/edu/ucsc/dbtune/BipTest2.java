@@ -74,7 +74,7 @@ public class BipTest2 extends BIPTestConfiguration {
             ) {
                 for (int j = 0; j < times; j++)
                     sb.append(workload.get(i).getSQL() + ";\r\n");
-//                break;
+                // break;
             }
         }
         return new Workload("", new StringReader(sb.toString()));
@@ -116,6 +116,7 @@ public class BipTest2 extends BIPTestConfiguration {
     public static void testBIP() throws Exception {
         SeqCost.totalWhatIfNanoTime = 0;
         SeqCost.totalCreateIndexNanoTime = 0;
+        SeqInumCost.populateTime = 0;
         SeqInumCost.plugInTime = 0;
         RTimerN timer = new RTimerN();
 
@@ -151,9 +152,9 @@ public class BipTest2 extends BIPTestConfiguration {
             }
         }
         Rt.p("%d x %d", cost.queries.size(), cost.indices.size());
-        double inumTime = timer.getSecondElapse();
+        double allTime = timer.getSecondElapse();
         double inumCreateIndexCostTime = SeqCost.totalCreateIndexNanoTime / 1000000000.0;
-        inumTime -= inumCreateIndexCostTime;
+        double inumPopulateTime = SeqInumCost.populateTime;
         double inumPluginTime = SeqInumCost.plugInTime;
         Rt.p("INUM time: %.3f", timer.getSecondElapse());
         timer.reset();
@@ -168,6 +169,7 @@ public class BipTest2 extends BIPTestConfiguration {
         bip.setWorkload(new Workload("", new StringReader("")));
         SebBIPOutput output = (SebBIPOutput) bip.solve();
         double bipTime = timer.getSecondElapse();
+        allTime += bipTime;
         double bipCost = bip.getObjValue();
         Rt.p("%d x %d", cost.queries.size(), cost.indices.size());
         Rt.p("cost: %,.0f", bip.getObjValue());
@@ -208,7 +210,8 @@ public class BipTest2 extends BIPTestConfiguration {
         rx.createChild("createIndexCostTime", inumCreateIndexCostTime);
         rx.createChild("inumPluginTime", inumPluginTime);
         rx.createChild("inumPluginCount", SeqCost.plugInCount);
-        rx.createChild("inumTime", inumTime);
+        rx.createChild("inumPopulateTime", inumPopulateTime);
+        rx.createChild("allTime", allTime);
         rx.createChild("time", bipTime);
         rx.createChild("cost", bipCost);
         Rt.write(new File("/tmp/t.xml"), rx.getXml().toString());
@@ -218,11 +221,12 @@ public class BipTest2 extends BIPTestConfiguration {
     static void testGREEDY() throws Exception {
         SeqWhatIfTest2.perf_createIndexCostTime = 0;
         SeqWhatIfTest2.perf_pluginTime = 0;
-        SeqWhatIfTest2.perf_inumTime = 0;
+        SeqWhatIfTest2.perf_allTime = 0;
         SeqWhatIfTest2.perf_algorithmTime = 0;
         SeqCost.totalWhatIfNanoTime = 0;
         SeqCost.totalCreateIndexNanoTime = 0;
         SeqCost.plugInTime = 0;
+        SeqCost.populateTime = 0;
         SeqWhatIfTest2 t = new SeqWhatIfTest2();
         Rx rx = new Rx("data");
         rx.createChild("queryCount", t.cost.sequence.length);
@@ -230,8 +234,9 @@ public class BipTest2 extends BIPTestConfiguration {
         rx.createChild("createIndexCostTime",
                 SeqWhatIfTest2.perf_createIndexCostTime);
         rx.createChild("inumPluginTime", SeqWhatIfTest2.perf_pluginTime);
+        rx.createChild("inumPopulateTime", SeqWhatIfTest2.perf_populateTime);
         rx.createChild("inumPluginCount", SeqCost.plugInCount);
-        rx.createChild("inumTime", SeqWhatIfTest2.perf_inumTime);
+        rx.createChild("allTime", SeqWhatIfTest2.perf_allTime);
         rx.createChild("time", SeqWhatIfTest2.perf_algorithmTime);
         rx.createChild("cost", SeqWhatIfTest2.perf_cost);
         Rt.write(new File("/tmp/t.xml"), rx.getXml().toString());
@@ -258,7 +263,7 @@ public class BipTest2 extends BIPTestConfiguration {
     public static StringBuilder sb = new StringBuilder();
 
     public static void main(String[] args) throws Exception {
-        WfitTest2.testBIP();
+        // WfitTest2.testBIP();
         times = Integer.parseInt(args[0]);
         indexSize = Integer.parseInt(args[1]);
         if ("bip".equals(args[2]))

@@ -34,7 +34,8 @@ public class BipVsGreedyTest2 {
     int indexCount;
     double inumCreateIndexCostTime;
     double inumPluginTime;
-    double inumTime;
+    double inumPopulateTime;
+    double allTime;
     double bipTime;
     double bipCost;
 
@@ -61,7 +62,8 @@ public class BipVsGreedyTest2 {
         inumCreateIndexCostTime = rx
                 .getChildDoubleContent("createIndexCostTime");
         inumPluginTime = rx.getChildDoubleContent("inumPluginTime");
-        inumTime = rx.getChildDoubleContent("inumTime");
+        inumPopulateTime = rx.getChildDoubleContent("inumPopulateTime");
+        allTime = rx.getChildDoubleContent("allTime");
         bipTime = rx.getChildDoubleContent("time");
         bipCost = rx.getChildDoubleContent("cost");
     }
@@ -73,26 +75,28 @@ public class BipVsGreedyTest2 {
         for (indexSize = 10; indexSize <= 60; indexSize += 10) {
             run(true, queryTimes, indexSize);
             String log = String.format(
-                    "%d x %d,BIP,\t\t%.3f,\t%.3f,\t%.3f,\t%.3f,\t \"%,.0f\"",
+                    "%d x %d,BIP,\t\t%.3f,\t%.3f,\t%.3f,\t%.3f,\t%.3f,\t \"%,.0f\"",
                     queryCount, indexCount,//
                     inumCreateIndexCostTime, //
+                    inumPopulateTime, //
                     inumPluginTime, //
-                    inumTime, //
+                    allTime, //
                     bipTime,//
                     bipCost);
             sb.append(log + "\n");
             Rt
-                    .np("query x index,\talgorithm,\t createCostTime,\t pluginTime,\t "
-                            + "inumTime,\t time,\t cost");
+                    .np("query x index,\talgorithm,\t createCostTime,\t populateTime,\t pluginTime,\t "
+                            + "allTime,\t algorithmTime,\t cost");
             Rt.np(sb);
             run(false, queryTimes, indexSize);
             log = String
                     .format(
-                            "%d x %d,GREEDY,\t\t%.3f,\t%.3f,\t%.3f,\t%.3f,\t \"%,.0f\"",
+                            "%d x %d,GREEDY,\t\t%.3f,\t%.3f,\t%.3f,\t%.3f,\t%.3f,\t \"%,.0f\"",
                             queryCount, indexCount,//
                             inumCreateIndexCostTime, //
+                             inumPopulateTime, //
                             inumPluginTime, //
-                            inumTime, //
+                            allTime, //
                             bipTime,//
                             bipCost);
             sb.append(log + "\n");

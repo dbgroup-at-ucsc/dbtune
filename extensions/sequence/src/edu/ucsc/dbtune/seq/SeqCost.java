@@ -161,6 +161,7 @@ public class SeqCost {
         return sqlPlan.getRootOperator().getAccumulatedCost();
     }
 
+    public static double populateTime = 0;
     public static long totalWhatIfNanoTime = 0;
     public static long totalCreateIndexNanoTime = 0;
     public static long plugInTime = 0;
@@ -195,6 +196,7 @@ public class SeqCost {
             if (optimizer instanceof edu.ucsc.dbtune.optimizer.InumOptimizer) {
                 q.inum = (InumPreparedSQLStatement) optimizer
                         .prepareExplain(q.sql);
+                populateTime+=timer.getSecondElapse();
                 Rt.p("GREEDY INUM populate time: " + timer.getSecondElapse());
                 totalWhatIfNanoTime += timer.get();
                 timer.reset();
@@ -313,7 +315,7 @@ public class SeqCost {
                 RTimerN timer = new RTimerN();
                 if (q.inum != null) {
                     cost = q.inum.explain(allIndexes).getTotalCost();
-                    Rt.p("GREEDY INUM plugin time: " + timer.getSecondElapse());
+//                    Rt.p("GREEDY INUM plugin time: " + timer.getSecondElapse());
                 } else {
                     ExplainedSQLStatement explain = optimizer.explain(q.sql,
                             allIndexes);
