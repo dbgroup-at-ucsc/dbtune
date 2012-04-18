@@ -1,0 +1,28 @@
+# I[index id] (cost to create) (cost to drop) (storage cost)
+I1 1000 0 1000
+I2 1000 0 1000
+I3 1000 0 1000
+I4 1000 0 1000
+
+# Q[query id] (plans) (relevant indices)
+Q1 1 I1
+Q2 1 I2
+Q3 1 I3
+Q4 1 I4
+
+SEQ Q1,Q2,Q3,Q4
+STORAGE-CONSTRIANT 1000
+
+PLAN
+# Q[query id] P[plan id] (base cost) slots
+Q1 0 0 1
+Q2 0 0 1
+Q3 0 0 1
+Q4 0 0 1
+
+SLOT
+# Q[query id] P[plan id] S[slot id] (full table scan cost) (index,cost) ...
+Q1 0 0 20000 I1,10
+Q2 0 0 20000 I2,10
+Q3 0 0 20000 I3,10
+Q4 0 0 20000 I4,10
