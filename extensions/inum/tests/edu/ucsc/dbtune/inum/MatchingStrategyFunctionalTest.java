@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
@@ -42,6 +44,7 @@ public class MatchingStrategyFunctionalTest
     private static Optimizer delegate;
     private static CandidateGenerator candGen;
     private static InumSpaceComputation computation;
+    private static Random r;
 
     /**
      * @throws Exception
@@ -55,6 +58,7 @@ public class MatchingStrategyFunctionalTest
         delegate = getBaseOptimizer(db.getOptimizer());
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
         computation = InumSpaceComputation.Factory.newInumSpaceComputation(env);
+        r = new Random(System.currentTimeMillis());
 
         loadWorkloads(db.getConnection());
     }
@@ -66,6 +70,9 @@ public class MatchingStrategyFunctionalTest
     @Test
     public void testMatching() throws Exception
     {
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
+        
         List<MatchingStrategy> available = new ArrayList<MatchingStrategy>();
 
         available.add(new GreedyMatchingStrategy());
@@ -92,6 +99,11 @@ public class MatchingStrategyFunctionalTest
 
             for (SQLStatement sql : wl) {
 
+                queryNumber++;
+
+                if (r.nextInt(100) > 5)
+                    continue;
+
                 Set<InumPlan> inumSpace = new InumPlanSetWithCache();
                 Map<MatchingStrategy, SQLStatementPlan> plans =
                     new HashMap<MatchingStrategy, SQLStatementPlan>();
@@ -102,7 +114,7 @@ public class MatchingStrategyFunctionalTest
                 new ExhaustiveMatchingStrategy().match(inumSpace, conf).getInstantiatedPlan();
                 cacheWarmingTime = System.nanoTime() - time;
 
-                report.append(wl.getName() + "," + queryNumber++ + "," + cacheWarmingTime + ",");
+                report.append(wl.getName() + "," + queryNumber + "," + cacheWarmingTime + ",");
 
                 for (MatchingStrategy s : available) {
                     time = System.nanoTime();

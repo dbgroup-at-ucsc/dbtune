@@ -136,7 +136,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
     protected IndexTuningOutput getOutput()
     { 
         Schedule schedule = new Schedule(W, Sinit);
-
+        /*
         for (int i = 0; i < poolVariables.variables().size(); i++) {
             
             if (valVar[i] == 1) {
@@ -152,7 +152,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
             }
             
         }   
-        
+        */
         return schedule;
     }
     

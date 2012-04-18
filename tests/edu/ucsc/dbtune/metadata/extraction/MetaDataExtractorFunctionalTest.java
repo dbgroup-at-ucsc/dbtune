@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.metadata.extraction;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -10,13 +12,13 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Strings;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newConnection;
 import static edu.ucsc.dbtune.DatabaseSystem.newExtractor;
 import static edu.ucsc.dbtune.metadata.DatabaseObject.NON_ID;
-import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 
 import static org.hamcrest.Matchers.is;
@@ -67,7 +69,16 @@ public class MetaDataExtractorFunctionalTest
         loadWorkloads(con);
 
         cat = newExtractor(env).extract(con);
+    }
 
+
+    /**
+     * @throws Exception
+     *      if fails
+     */
+    @AfterClass
+    public static void afterClass() throws Exception
+    {
         con.close();
     }
 
@@ -408,5 +419,29 @@ public class MetaDataExtractorFunctionalTest
     @Test
     public void testPages()
     {
+    }
+
+    /**
+     * Checks if tables from the workloads used in tests aren't empty.
+     *
+     * @throws Exception
+     *      if fails
+     */
+    @Test
+    public void testTablesAreNotEmpty() throws Exception
+    {
+        Statement stmt = con.createStatement();
+
+        for (Schema sch : cat.schemas()) {
+            for (Table tbl : sch.tables()) {
+                ResultSet rs =
+                    stmt.executeQuery("SELECT COUNT(*) FROM " + tbl.getFullyQualifiedName());
+                assertThat(rs.next(), is(true));
+                assertThat("for table " + tbl.getFullyQualifiedName(), rs.getInt(1), is(not(0)));
+                rs.close();
+            }
+        }
+
+        stmt.close();
     }
 }

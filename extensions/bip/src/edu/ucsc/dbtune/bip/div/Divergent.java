@@ -1,10 +1,12 @@
 package edu.ucsc.dbtune.bip.div;
 
+import edu.ucsc.dbtune.bip.indexadvisor.ConstraintIndexAdvisor;
+
 /**
  * A standard set of parameters that a Divergent Index Tuning problem handles. 
  *
  */
-public interface Divergent 
+public interface Divergent extends ConstraintIndexAdvisor
 {
     /**
      * Set the number of replicas to deploy
@@ -22,14 +24,4 @@ public interface Divergent
      *      The load balancing
      */
     public void setLoadBalanceFactor(int m);
-    
-    
-    /**
-     * Set the maximum space budget imposed on each replica, which the total size of materialized 
-     * indexes does not exceed.
-     *  
-     * @param B
-     *      The space budget
-     */
-    public void setSpaceBudget(double B);
 }

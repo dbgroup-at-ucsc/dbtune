@@ -2,23 +2,24 @@ package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Iterables.get;
-import static com.google.common.collect.Sets.newHashSet;
 
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import static edu.ucsc.dbtune.util.InumUtils.extractInterestingOrders;
-import static edu.ucsc.dbtune.util.InumUtils.getMaximumAtomicConfiguration;
-import static edu.ucsc.dbtune.util.InumUtils.getMinimumAtomicConfiguration;
+import static edu.ucsc.dbtune.util.InumUtils.getCoveringAtomicConfiguration;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 
 /**
@@ -28,7 +29,7 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
  */
 public abstract class AbstractSpaceComputation implements InumSpaceComputation
 {
-    private static Set<Index> empty = newHashSet();
+    private static Set<Index> empty = new HashSet<Index>();
 
     /**
      * Computes the INUM space by extracting interesting orders using the {@link 
@@ -54,18 +55,24 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
             Set<InumPlan> space, SQLStatement statement, Optimizer delegate, Catalog catalog)
         throws SQLException
     {
-        Set<InumInterestingOrder> interestingOrders = extractInterestingOrders(statement, catalog);
+        space.clear();
 
-        computeWithCompleteConfiguration(space, interestingOrders, statement, delegate);
+        // add FTS-on-all-slots template
+        InumPlan templateForEmpty = new InumPlan(delegate, delegate.explain(statement, empty));
 
-        InumPlan templateForEmpty =
-            new InumPlan(delegate, delegate.explain(statement, empty).getPlan());
+        space.add(templateForEmpty);
 
-        Set<Index> min = getMinimumAtomicConfiguration(templateForEmpty);
-        Set<Index> max = getMaximumAtomicConfiguration(statement, catalog);
-        
-        space.add(new InumPlan(delegate, delegate.explain(statement, min).getPlan()));
-        space.add(new InumPlan(delegate, delegate.explain(statement, max).getPlan()));
+        // obtain plans for all the extracted interesting orders
+        computeWithCompleteConfiguration(
+                space, extractInterestingOrders(statement, catalog), statement, delegate);
+
+        // NLJ heuristic referred in the INUM paper
+        Set<Index> covering = getCoveringAtomicConfiguration(templateForEmpty);
+
+        ExplainedSQLStatement coveringExplainedStmt = delegate.explain(statement, covering);
+
+        if (coveringExplainedStmt.getPlan().contains(NLJ))
+            space.add(new InumPlan(delegate, coveringExplainedStmt));
     }
 
     /**

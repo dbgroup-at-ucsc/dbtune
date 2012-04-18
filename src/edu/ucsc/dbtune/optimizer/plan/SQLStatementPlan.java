@@ -255,7 +255,7 @@ public class SQLStatementPlan extends Tree<Operator>
         // elements is a hash table and if we rename the operator we need to do it with care since 
         // by modifying the name of the operator we modify its hashCode. So what we do here is to
         // first remove the value from the hash
-        Entry<Operator> entry = elements.get(op);
+        Entry<Operator> entry = elements.remove(op);
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
@@ -278,7 +278,7 @@ public class SQLStatementPlan extends Tree<Operator>
         // elements is a hash table and if we rename the operator we need to do it with care since 
         // by modifying the name of the operator we modify its hashCode. So what we do here is to
         // first remove the value from the hash
-        Entry<Operator> entry = elements.get(op);
+        Entry<Operator> entry = elements.remove(op);
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
@@ -301,7 +301,7 @@ public class SQLStatementPlan extends Tree<Operator>
         // elements is a hash table and if we rename the operator we need to do it with care since 
         // by modifying the name of the operator we modify its hashCode. So what we do here is to
         // first remove the value from the hash
-        Entry<Operator> entry = elements.get(op);
+        Entry<Operator> entry = elements.remove(op);
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
@@ -314,7 +314,7 @@ public class SQLStatementPlan extends Tree<Operator>
     }
 
     /**
-     * Assigns the cost to the given operator.
+     * Removes the database object associated with the operator.
      *
      * @param op
      *      operator whose database object is to be removed
@@ -324,7 +324,7 @@ public class SQLStatementPlan extends Tree<Operator>
         // elements is a hash table and if we rename the operator we need to do it with care since 
         // by modifying the name of the operator we modify its hashCode. So what we do here is to
         // first remove the value from the hash
-        Entry<Operator> entry = elements.get(op);
+        Entry<Operator> entry = elements.remove(op);
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
@@ -332,6 +332,31 @@ public class SQLStatementPlan extends Tree<Operator>
             throw new NoSuchElementException("Can't find " + op);
 
         op.removeDatabaseObject();
+
+        elements.put(op, entry);
+    }
+
+    /**
+     * Assigns the database object to the given operator.
+     *
+     * @param op
+     *      operator whose database object is to be removed
+     * @param dbo
+     *      database object
+     */
+    public void assignDatabaseObject(Operator op, DatabaseObject dbo)
+    {
+        // elements is a hash table and if we rename the operator we need to do it with care since 
+        // by modifying the name of the operator we modify its hashCode. So what we do here is to
+        // first remove the value from the hash
+        Entry<Operator> entry = elements.remove(op);
+
+        if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
+            throw new NoSuchElementException("Can't find " + op);
+
+        op.add(dbo);
 
         elements.put(op, entry);
     }
@@ -349,7 +374,7 @@ public class SQLStatementPlan extends Tree<Operator>
     {
         // TODO: make this more efficient by using a Map<String,Boolean>
         for (Operator o : toList())
-            if (o.getName() == operatorName)
+            if (o.getName().equals(operatorName))
                 return true;
 
         return false;

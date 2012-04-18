@@ -9,7 +9,7 @@ import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-import static edu.ucsc.dbtune.util.EnvironmentProperties.EAGER;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.EXHAUSTIVE;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.NONE_MIN_MAX;
 
@@ -23,7 +23,7 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.NONE_MIN_MAX;
  * <p>
  * Fortunately, there are ways to optimize the performance of INUM construction by abstracting this 
  * mechanism and enable different implementations, so that it's still efficient to do what-if 
- * analysis on INUM. Alternatives to this can range from <i>Eager evaluation</i> to others more 
+ * analysis on INUM. Alternatives to this can range from <i>exhaustive evaluation</i> to others more 
  * sophisticated techniques such as the ones outlined in [1], like <i>Lazy</i> or <i>cost-based 
  * evaluation</i>.
  *
@@ -82,8 +82,8 @@ public interface InumSpaceComputation
         public static InumSpaceComputation newInumSpaceComputation(Environment env)
             throws InstantiationException
         {
-            if (env.getInumSpaceComputation().equals(EAGER))
-                return new EagerSpaceComputation();
+            if (env.getInumSpaceComputation().equals(EXHAUSTIVE))
+                return new ExhaustiveSpaceComputation();
             else if (env.getInumSpaceComputation().equals(IBG))
                 return new IBGSpaceComputation();
             else if (env.getInumSpaceComputation().equals(NONE_MIN_MAX))

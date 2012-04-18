@@ -91,6 +91,17 @@ public class Workload implements Iterable<SQLStatement>
 
         this.name = name;
     }
+    
+    /**
+     * Construct a workload with a given set of statements
+     * 
+     * @param sqls
+     *      A set of statements
+     */
+    public Workload(List<SQLStatement> sqls)
+    {
+        this.sqls = sqls;
+    }
 
     /**
      * Returns the statement at the given position (zero-indexing).

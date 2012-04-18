@@ -87,6 +87,17 @@ public class DivConfiguration extends IndexTuningOutput
         indexReplicas.get(r).add(index);
     }
 
+    @Override
+    public Set<Index> getRecommendation()
+    {
+        throw new RuntimeException("This method is not enabled in this subclass");
+    }
+    
+    @Override
+    public void setIndexes(Set<Index> s)
+    {
+        throw new RuntimeException("This method is not enabled in this subclass");
+    }
 
     @Override
     public String toString() 

@@ -14,13 +14,14 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static com.google.common.collect.Iterables.get;
+
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 
 import static org.junit.Assert.assertThat;
@@ -41,6 +42,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     private static Optimizer optimizer;
     private static Optimizer delegate;
     private static CandidateGenerator candGen;
+    private static PreparedSQLStatement pSql;
     private int i;
 
     /**
@@ -77,34 +79,31 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     @Test
     public void testPreparedSQLStatement() throws Exception
     {
-        if (delegate == null) return;
+        if (optimizer == delegate) return;
 
-        i = 0;
+        System.out.println("wlname, stmt, optimizer cost, delegate cost");
+
         for (Workload wl : workloads(env.getWorkloadFolders())) {
-
-            if (env.getOptimizer().equals(INUM) &&
-                    !env.getCandidateGenerator().equals(OPTIMIZER) &&
-                    !wl.getName().contains("tpch-small"))
-                // INUM estimates are exactly correct only for optimal and tpch-small
-                //      for all others, the error is sometimes bigger than 10%
-                continue;
 
             final Set<Index> allIndexes = candGen.generate(wl);
 
-            System.out.println("wlname, stmt, optimizer cost, delegate cost");
+            i = 0;
 
             for (SQLStatement sql : wl) {
                 i++;
 
-                final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
+                pSql = optimizer.prepareExplain(sql);
 
                 ExplainedSQLStatement explainedByOptimizer = pSql.explain(allIndexes);
                 ExplainedSQLStatement explainedByDelegate = delegate.explain(sql, allIndexes);
 
+                // over-estimations by a delegate are allowed, while under-estimations are 
+                // considered a failure
                 assertThat(
                         "Optimizer: " + explainedByOptimizer + "\n" +
                         "Delegate: " + explainedByDelegate,
-                        compare(explainedByOptimizer, explainedByDelegate), is(0));
+                        compare(explainedByOptimizer, explainedByDelegate),
+                        is(greaterThanOrEqualTo(0)));
 
                 System.out.println(
                         wl.getName() + "," +
@@ -121,21 +120,23 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     @Override
     public int compare(ExplainedSQLStatement e1, ExplainedSQLStatement e2)
     {
-        if (e1.statement.equals(e2.statement) &&
-                (e1.selectCost / e2.selectCost) > 0.90 &&
-                (e1.selectCost / e2.selectCost) < 1.10 &&
-                e1.updateCost == e2.updateCost &&
-                e1.configuration.equals(e2.configuration))
+        double ratio =
+            (e1.selectCost + e1.baseTableUpdateCost) /
+            (e2.selectCost + e2.baseTableUpdateCost);
+
+        if (e1.statement.equals(e2.statement) && ratio > 0.90 && ratio < 1.10)
             return 0;
 
+        if (ratio > 1.10)
+            return 1;
+
         System.out.println(
+                "### Error\n" +
                 "Statement " + i + "\n" +
                 "Optimizer:\n" + e1.getPlan() +
-                "\n\nvs\n\nDelegate:\n" + e2.getPlan());
+                "\n\nvs\n\nDelegate:\n" + e2.getPlan() +
+                "\nTemplate:\n" + get(((InumPreparedSQLStatement) pSql).getTemplatePlans(), 0));
 
-        if ((e1.selectCost / e2.selectCost) < 0.90)
-            return -1;
-
-        return 1;
+        return -1;
     }
 }

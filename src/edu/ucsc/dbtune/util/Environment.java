@@ -24,6 +24,7 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.MYSQL;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.SPACE_BUDGET;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.SUPPORTED_OPTIMIZERS;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.TEMP_DIR;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME;
@@ -231,6 +232,17 @@ public class Environment
     public String getWorkloadsFoldername()
     {
         return getOrThrowIfNullOrEmpty(configuration, WORKLOADS_FOLDERNAME);
+    }
+
+    /**
+     * @return {@link EnvironmentProperties#SPACE_BUDGET}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public int getSpaceBudget()
+    {
+        String budget = getOrThrowIfNullOrEmpty(configuration, SPACE_BUDGET);
+        return Integer.valueOf(budget);
     }
 
     /**

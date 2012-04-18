@@ -1,154 +1,173 @@
 package edu.ucsc.dbtune.bip;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.ConstraintDivBIP;
+import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConstraint;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
-import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.Workload;
 
-public class ConstraintDivBIPFunctionalTest extends BIPTestConfiguration 
+import static edu.ucsc.dbtune.bip.div.ConstraintDivBIP.IMBALANCE_QUERY;
+import static edu.ucsc.dbtune.bip.div.ConstraintDivBIP.IMBALANCE_REPLICA;
+import static edu.ucsc.dbtune.bip.div.ConstraintDivBIP.UPDATE_COST_BOUND;
+
+
+public class ConstraintDivBIPFunctionalTest  extends DivBIPFunctionalTest
 {
-    private static DatabaseSystem db;
-    private static Environment    en;
-    
-    private static int Nreplicas;
-    private static int loadfactor;
-    private static double B;
-    
-    /**
-     * Setup for the test.
-     */
-    @BeforeClass
-    public static void beforeClassSetUp() throws Exception
-    {
-        en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-    }
+    private static ConstraintDivBIP constraintDiv;
+    private static int nReplicaUnif;
+    private static int typeConstraint;
     
     @Test
-    public void testDivergentDesign() throws Exception
-    {  
-        // parameter setting for divergent design tuning
-        divergentNormal();
+    public void testConstraintDiv() throws Exception
+    {
+        // 1. Set common parameters
+        setCommonParameters();
         
-        // imbalance replica
-        DivConstraint iReplica = new DivConstraint(ConstraintDivBIP.IMBALANCE_REPLICA, 3);
-        DivConstraint iQuery = new DivConstraint(ConstraintDivBIP.IMBALANCE_QUERY, 3);
-        List<DivConstraint> constraints = new ArrayList<DivConstraint>();
-        constraints.add(iReplica);
-        constraints.add(iQuery);
-        
-        // intial div object
-        ConstraintDivBIP div = new ConstraintDivBIP(constraints);
-        
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-debug");
-        CandidateGenerator candGen = 
-            new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
-        Set<Index> candidates = candGen.generate(workload);
-       
-        for (Index index : candidates)
-            index.setBytes(1);
-        System.out.println("L75, number of candidate: " + candidates.size());
-        
-        Optimizer io = db.getOptimizer();
-
         if (!(io instanceof InumOptimizer))
-            throw new Exception("Expecting InumOptimizer instance");
+            return;
+
+        // 2. Generate candidate indexes
+        generateCandidates();
+        
+        typeConstraint = UPDATE_COST_BOUND;
+        nReplicaUnif = nReplicas - 1;
+        
+        if (typeConstraint == UPDATE_COST_BOUND) {
+            updateCostConstraints();
+            return; 
+        }
+        
+        // set of imbalance factor values
+        double deltas[] = {2, 1.5, 1.05};
+        
+        for (double delta : deltas) {
+            
+            System.out.println(" IMBALANCE FACTOR: " + delta + " space: "+ B + "------------" );
+            
+            if (typeConstraint == IMBALANCE_REPLICA)
+                imbalanceReplicaConstraint(delta);
+            else if (typeConstraint == IMBALANCE_QUERY)
+                imbalanceQueryConstraint(delta);
+            
+            runConstraintBIP(constraintDiv);
+        }
+    }
+    
+    /**
+     * Handle update cost constraint
+     * @throws Exception
+     */
+    private static void updateCostConstraints() throws Exception
+    {   
+        div = new DivBIP();     
                 
         LogListener logger = LogListener.getInstance();
         div.setCandidateIndexes(candidates);
         div.setWorkload(workload); 
         div.setOptimizer((InumOptimizer) io);
-        div.setNumberReplicas(Nreplicas);
+        div.setNumberReplicas(1);
+        div.setLoadBalanceFactor(1);
+        div.setSpaceBudget(B);
+        div.setLogListenter(logger);
+        
+        div.solve();
+        
+        // get the query cost & update cost
+        double queryCost;
+        double updateCost;
+        double boundUpdateCost;
+        double totalCostUniform;
+        
+        // update index cost 
+        updateCost = div.getUpdateCost();
+        queryCost  = div.getObjValue() - updateCost;
+        // take into account the base table update cost
+        updateCost += div.getTotalBaseTableUpdateCost();
+        boundUpdateCost = nReplicaUnif  * updateCost * 1.4;
+        totalCostUniform = queryCost + updateCost * nReplicaUnif;
+                
+        System.out.println("L142, DIV-UNIF, query cost: " + queryCost + "\n"
+                            + " update cost: " + updateCost + "\n"
+                            + " update base table cost: " + div.getTotalBaseTableUpdateCost() + "\n"
+                            + " bound cost: " + boundUpdateCost + "\n"
+                            + " TOTAL COST: " + totalCostUniform);
+        
+        // bound update cost
+        boundUpdateCost(boundUpdateCost);
+        runConstraintBIP(constraintDiv);
+    }
+    
+    /**
+     * Initialize the object to handle imbalance replica constraints
+     */
+    private static void imbalanceReplicaConstraint(double delta)
+    {
+        DivConstraint iReplica = new DivConstraint(ConstraintDivBIP.IMBALANCE_REPLICA, delta);
+        List<DivConstraint> constraints = new ArrayList<DivConstraint>();
+        constraints.add(iReplica);
+        
+        constraintDiv = new ConstraintDivBIP(constraints);
+    }
+    
+    
+    /**
+     * Initialize the object to handle imbalance query constraints
+     */
+    private static void imbalanceQueryConstraint(double delta)
+    {
+        DivConstraint iQuery = new DivConstraint(ConstraintDivBIP.IMBALANCE_QUERY, delta);
+        List<DivConstraint> constraints = new ArrayList<DivConstraint>();
+        constraints.add(iQuery);
+        
+        constraintDiv = new ConstraintDivBIP(constraints);
+    }
+    
+    /**
+     * Initialize the object to handle bound update query cost
+     */
+    private static void boundUpdateCost(double delta)
+    {
+        DivConstraint iQuery = new DivConstraint(ConstraintDivBIP.UPDATE_COST_BOUND, delta);
+        List<DivConstraint> constraints = new ArrayList<DivConstraint>();
+        constraints.add(iQuery);
+        
+        constraintDiv = new ConstraintDivBIP(constraints);
+    }
+    
+    /**
+     * Run the BIP 
+     * 
+     * @throws Exception
+     */
+    private static void runConstraintBIP(ConstraintDivBIP div) throws Exception
+    {           
+        io = db.getOptimizer();
+
+        LogListener logger = LogListener.getInstance();
+        div.setCandidateIndexes(candidates);
+        div.setWorkload(workload); 
+        div.setOptimizer((InumOptimizer) io);
+        div.setNumberReplicas(nReplicas);
         div.setLoadBalanceFactor(loadfactor);
         div.setSpaceBudget(B);
         div.setLogListenter(logger);
         
         IndexTuningOutput output = div.solve();
-        div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpcds-debug/test.lp");
+        
+        if (isExportToFile)
+            div.exportCplexToFile(en.getWorkloadsFoldername() + "test.lp");
+        
         System.out.println(logger.toString());
         if (output != null) {
-            System.out.println("In test, result: " 
-                              + " obj value: " + div.getObjValue()
-                              + " different from optimal value: " + div.getObjectiveGap());
-            div.costFromCplex();
-            
-            /*
-            // run on actual optimize
-            Set<SQLStatement> sqls = new HashSet<SQLStatement>();
-            for (int i = 0; i < workload.size(); i++)
-                sqls.add(workload.get(i));
-            DivergentOnOptimizer doo = new DivergentOnOptimizer();
-            doo.verify(io.getDelegate(), output, sqls);
-            
-            double costDB2 = doo.getTotalCost() / loadfactor;
-            System.out.println("L90, cost on DB2: " + costDB2
-                                + " COST RATIO: " + (double) costDB2 / div.getObjValue());
-            */
-            /*
-            // test
-            DivConfiguration divconf = (DivConfiguration) output;
-            Set<Index> conf = divconf.indexesAtReplica(0);
-            System.out.println(" Configuration: " + conf);
-            System.out.println(" query INUM DB2 INUM/DB2 ");
-            double costInum, costDB2, ratio;
-            
-            for (int i = 0; i < workload.size(); i++){
-                
-                System.out.println(" ---- query " + i + "\n");
-                InumPreparedSQLStatement inumStmt = (InumPreparedSQLStatement)
-                                                io.prepareExplain(workload.get(i));
-                ExplainedSQLStatement inumExplain = inumStmt.explain(conf);
-                ExplainedSQLStatement db2Explain =  io.getDelegate().explain(workload.get(i), conf);
-                                                  
-                costInum = inumExplain.getTotalCost();
-                costDB2  = db2Explain.getTotalCost();
-                
-                ratio = costInum / costDB2;
-                
-                if (ratio >= 1.5 || ratio <= 0.5 && i == 1) {                    
-                    System.out.println(i 
-                                       + " " + costInum
-                                       + " " + costDB2
-                                       + " " + (costInum / costDB2));
-                    System.out.println(" template \n");
-                    for (InumPlan plan : inumStmt.getTemplatePlans())
-                        System.out.println(plan);
-                    System.out.println(" instantiated INUM: \n " + inumExplain.getPlan());
-                    
-                    System.out.println(" instantiated DB2: \n" + db2Explain.getPlan());                    
-              }
-              
-            }
-            */
-        } else {
+            System.out.println("The obj value: " + div.getObjValue() + "\n"
+                               + " Different from optimal value: " + div.getObjectiveGap());
+        } else 
             System.out.println(" NO SOLUTION ");
-        }
-    }
-    
-    
-    public static void divergentNormal()
-    {
-        Nreplicas = 3;
-        loadfactor = 2;
-        B = 3;
     }
 }

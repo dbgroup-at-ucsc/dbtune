@@ -100,8 +100,11 @@ public class AnalysisMain {
 
 	    long time = System.currentTimeMillis() - start;
 	    System.out.println("L99 (Karl, Analysis Main), the running time: " + time + "\n"
-	                     + " Time for INUM: " + SerialIndexBenefitGraph.timeINUM
-	                     + " Time for Matching Strategy: " + SerialIndexBenefitGraph.timeMatching);
+	                     + " Time for Populating space: "  + SerialIndexBenefitGraph.timePopulating + "\n"
+	                     + " Time for Plugging indexes: "  + SerialIndexBenefitGraph.timePlugging + "\n"
+	                     + " Time for Matching Strategy: " + SerialIndexBenefitGraph.timeMatching + "\n"
+	                     + " Number of matching: " + SerialIndexBenefitGraph.numMatching);
+	                
 
 	    BasicLog serial1 = (BasicLog) Files.readObjectFromFile(
                         Configuration.analysisFile(strategy, SERIAL));
@@ -136,12 +139,14 @@ public class AnalysisMain {
         int i;
         
         System.out.println(" workload: " + workload.size());
-        // TODO: reset timer
+        // Reset timer
         logger.startTimer();
-        SerialIndexBenefitGraph.timeINUM = 0.0;
-        SerialIndexBenefitGraph.timeMatching = 0.0;
+        SerialIndexBenefitGraph.timePopulating = 0.0;
+        SerialIndexBenefitGraph.timeMatching   = 0.0;
+        SerialIndexBenefitGraph.timePlugging   = 0.0;
+        SerialIndexBenefitGraph.numMatching  = 0;
         // ----------------------------------
-        
+               
         /* analyze queries one at a time, combining their interactions */
         ibgs = new SerialIndexBenefitGraph[workload.size()];
         i = 0;

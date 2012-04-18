@@ -162,59 +162,6 @@ SELECT SUBSTR(w_warehouse_name, 1, 20),
           sm_type,
           web_name;
 
--- @ID=TEMPLATE_63
-SELECT *
-  FROM (SELECT i_manager_id,
-               SUM(ss_sales_price) sum_sales,
-               AVG(ss_sales_price) avg_monthly_sales
-          FROM tpcds.item,
-               tpcds.store_sales,
-               tpcds.date_dim,
-               tpcds.store
-         WHERE ss_item_sk = i_item_sk
-               AND ss_sold_date_sk = d_date_sk
-               AND ss_store_sk = s_store_sk
-               AND d_year IN ( 1999 )
-               AND (  (  i_category IN ('Books', 'Children', 'Electronics')
-                         AND i_class IN ('personal', 'portable', 'refernece', 'self-help')
-                         AND i_brand IN ('scholaramalgamalg #14', 'scholaramalgamalg #7', 'exportiunivamalg #9', 'scholaramalgamalg #9')
-                      )
-                      OR ( i_category IN ('Women', 'Music', 'Men')
-                           AND i_class IN ('accessories', 'classical', 'fragrances', 'pants')
-                           AND i_brand IN ('amalgimporto #1', 'edu packscholar #1', 'exportiimporto #1', 'importoamalg #1')
-                         )
-                   )
-         GROUP BY i_manager_id,
-                  d_moy) tmp1
- WHERE CASE
-         WHEN avg_monthly_sales > 0 THEN ABS (sum_sales - avg_monthly_sales) / avg_monthly_sales
-         ELSE NULL
-       END > 0.1
- ORDER BY i_manager_id,
-          avg_monthly_sales,
-          sum_sales;
-
--- @ID=TEMPLATE_37
-SELECT i_item_id,
-       i_item_desc,
-       i_current_price
-  FROM tpcds.item,
-       tpcds.inventory,
-       tpcds.date_dim,
-       tpcds.catalog_sales
- WHERE i_current_price BETWEEN 24 AND 24 + 30
-       AND inv_item_sk = i_item_sk
-       AND d_date_sk = inv_date_sk
-       AND d_date >= '2001-02-08'
-       AND d_date <= '2001-04-08'
-       AND i_manufact_id IN ( 946, 774, 749, 744 )
-       AND inv_quantity_on_hand BETWEEN 100 AND 500
-       AND cs_item_sk = i_item_sk
- GROUP BY i_item_id,
-          i_item_desc,
-          i_current_price
- ORDER BY i_item_id;
-
 -- @ID=TEMPLATE_98
 SELECT i_item_desc,
        i_category,
@@ -414,75 +361,6 @@ SELECT i_item_id,
           i_current_price
  ORDER BY i_item_id;
 
--- @ID=TEMPLATE_48
-SELECT SUM (ss_quantity)
-  FROM tpcds.store_sales,
-       tpcds.store,
-       tpcds.customer_demographics,
-       tpcds.customer_address,
-       tpcds.date_dim
- WHERE s_store_sk = ss_store_sk
-       AND ss_sold_date_sk = d_date_sk
-       AND d_year = 1998
-       AND ( ( cd_demo_sk = ss_cdemo_sk
-               AND cd_marital_status = 'M'
-               AND cd_education_status = 'Primary'
-               AND ss_sales_price BETWEEN 100.00 AND 150.00 )
-              OR ( cd_demo_sk = ss_cdemo_sk
-                   AND cd_marital_status = 'M'
-                   AND cd_education_status = 'Primary'
-                   AND ss_sales_price BETWEEN 50.00 AND 100.00 )
-              OR ( cd_demo_sk = ss_cdemo_sk
-                   AND cd_marital_status = 'M'
-                   AND cd_education_status = 'Primary'
-                   AND ss_sales_price BETWEEN 150.00 AND 200.00 ) )
-       AND ( ( ss_addr_sk = ca_address_sk
-               AND ca_country = 'United States'
-               AND ca_state IN ( 'TX', 'GA', 'MI' )
-               AND ss_net_profit BETWEEN 0 AND 2000 )
-              OR ( ss_addr_sk = ca_address_sk
-                   AND ca_country = 'United States'
-                   AND ca_state IN ( 'ND', 'OR', 'OH' )
-                   AND ss_net_profit BETWEEN 150 AND 3000 )
-              OR ( ss_addr_sk = ca_address_sk
-                   AND ca_country = 'United States'
-                   AND ca_state IN ( 'WI', 'IA', 'MO' )
-                   AND ss_net_profit BETWEEN 50 AND 25000 ) );
-
--- @ID=TEMPLATE_73
-SELECT c_last_name,
-       c_first_name,
-       c_salutation,
-       c_preferred_cust_flag,
-       ss_ticket_number,
-       cnt
-  FROM (SELECT ss_ticket_number,
-               ss_customer_sk,
-               COUNT(*) cnt
-          FROM tpcds.store_sales,
-               tpcds.date_dim,
-               tpcds.store,
-               tpcds.household_demographics
-         WHERE ss_sold_date_sk = d_date_sk
-               AND ss_store_sk = s_store_sk
-               AND ss_hdemo_sk = hd_demo_sk
-               AND d_dom BETWEEN 1 AND 2
-               AND ( hd_buy_potential = '1001-5000'
-                      OR hd_buy_potential = '0-500' )
-               AND hd_vehicle_count > 0
-               AND CASE
-                     WHEN hd_vehicle_count > 0 THEN hd_dep_count / hd_vehicle_count
-                     ELSE NULL
-                   END > 1
-               AND d_year IN ( 1999, 1999 + 1, 1999 + 2 )
-               AND s_county IN ( 'Williamson County', 'Ziebach County', 'Walker County', 'Ziebach County' )
-         GROUP BY ss_ticket_number,
-                  ss_customer_sk) dj,
-       tpcds.customer
- WHERE ss_customer_sk = c_customer_sk
-       AND cnt BETWEEN 1 AND 5
- ORDER BY cnt DESC;
-
 -- @ID=TEMPLATE_84
 SELECT c_customer_id    AS customer_id,
        c_last_name
@@ -576,74 +454,6 @@ SELECT w_state,
  ORDER BY w_state,
           i_item_id;
 
--- @ID=TEMPLATE_53
-SELECT *
-  FROM (SELECT i_manufact_id,
-               SUM(ss_sales_price) sum_sales,
-               AVG(ss_sales_price) avg_quarterly_sales
-          FROM tpcds.item,
-               tpcds.store_sales,
-               tpcds.date_dim,
-               tpcds.store
-         WHERE ss_item_sk = i_item_sk
-               AND ss_sold_date_sk = d_date_sk
-               AND ss_store_sk = s_store_sk
-               AND d_year IN ( 1999 )
-               AND ( ( i_category IN ( 'Books', 'Children', 'Electronics' )
-                       AND i_class IN ( 'personal', 'portable', 'reference', 'self-help' )
-                       AND i_brand IN ( 'scholaramalgamalg #14', 'scholaramalgamalg #7', 'exportiunivamalg #9',
-                                        'scholaramalgamalg #9'
-                                      ) )
-                      OR ( i_category IN ( 'Women', 'Music', 'Men' )
-                           AND i_class IN ( 'accessories', 'classical', 'fragrances', 'pants' )
-                           AND i_brand IN ( 'amalgimporto #1', 'edu packscholar #1', 'exportiimporto #1',
-                                            'importoamalg #1' ) )
-                   )
-         GROUP BY i_manufact_id,
-                  d_qoy) tmp1
- WHERE CASE
-         WHEN avg_quarterly_sales > 0 THEN ABS (sum_sales - avg_quarterly_sales) / avg_quarterly_sales
-         ELSE NULL
-       END > 0.1
- ORDER BY avg_quarterly_sales,
-          sum_sales,
-          i_manufact_id;
-
--- @ID=TEMPLATE_79
-SELECT c_last_name,
-       c_first_name,
-       SUBSTR(s_city, 1, 30),
-       ss_ticket_number,
-       amt,
-       profit
-  FROM (SELECT ss_ticket_number,
-               ss_customer_sk,
-               s_city,
-               SUM(ss_coupon_amt) amt,
-               SUM(ss_net_profit) profit
-          FROM tpcds.store_sales,
-               tpcds.date_dim,
-               tpcds.store,
-               tpcds.household_demographics
-         WHERE ss_sold_date_sk = d_date_sk
-               AND ss_store_sk = s_store_sk
-               AND ss_hdemo_sk = hd_demo_sk
-               AND ( hd_dep_count = 1
-                      OR hd_vehicle_count > 0 )
-               AND d_dow = 1
-               AND d_year IN ( 1999, 1999 + 1, 1999 + 2 )
-               AND s_number_employees BETWEEN 200 AND 295
-         GROUP BY ss_ticket_number,
-                  ss_customer_sk,
-                  ss_addr_sk,
-                  s_city) ms,
-       tpcds.customer
- WHERE ss_customer_sk = c_customer_sk
- ORDER BY c_last_name,
-          c_first_name,
-          SUBSTR(s_city, 1, 30),
-          profit;
-
 -- @ID=TEMPLATE_99
 SELECT SUBSTR(w_warehouse_name, 1, 20),
        sm_type,
@@ -687,3 +497,193 @@ SELECT SUBSTR(w_warehouse_name, 1, 20),
  ORDER BY SUBSTR(w_warehouse_name, 1, 20),
           sm_type,
           cc_name;
+
+---- @ID=TEMPLATE_63
+SELECT *
+  FROM (SELECT i_manager_id,
+	       SUM(ss_sales_price) sum_sales,
+	       AVG(ss_sales_price) avg_monthly_sales
+	  FROM tpcds.item,
+	       tpcds.store_sales,
+	       tpcds.date_dim,
+	       tpcds.store
+	 WHERE ss_item_sk = i_item_sk
+	       AND ss_sold_date_sk = d_date_sk
+	       AND ss_store_sk = s_store_sk
+	       AND d_year IN ( 1999 )
+	       AND (  (  i_category IN ('Books', 'Children', 'Electronics')
+			 AND i_class IN ('personal', 'portable', 'refernece', 'self-help')
+			 AND i_brand IN ('scholaramalgamalg #14', 'scholaramalgamalg #7', 'exportiunivamalg #9', 'scholaramalgamalg #9')
+		      )
+		      OR ( i_category IN ('Women', 'Music', 'Men')
+			   AND i_class IN ('accessories', 'classical', 'fragrances', 'pants')
+			   AND i_brand IN ('amalgimporto #1', 'edu packscholar #1', 'exportiimporto #1', 'importoamalg #1')
+			 )
+		   )
+	 GROUP BY i_manager_id,
+		  d_moy) tmp1
+ WHERE CASE
+	 WHEN avg_monthly_sales > 0 THEN ABS (sum_sales - avg_monthly_sales) / avg_monthly_sales
+	 ELSE NULL
+       END > 0.1
+ ORDER BY i_manager_id,
+	  avg_monthly_sales,
+	  sum_sales;
+
+---- @ID=TEMPLATE_37
+SELECT i_item_id,
+       i_item_desc,
+       i_current_price
+  FROM tpcds.item,
+       tpcds.inventory,
+       tpcds.date_dim,
+       tpcds.catalog_sales
+ WHERE i_current_price BETWEEN 24 AND 24 + 30
+       AND inv_item_sk = i_item_sk
+       AND d_date_sk = inv_date_sk
+       AND d_date >= '2001-02-08'
+       AND d_date <= '2001-04-08'
+       AND i_manufact_id IN ( 946, 774, 749, 744 )
+       AND inv_quantity_on_hand BETWEEN 100 AND 500
+       AND cs_item_sk = i_item_sk
+ GROUP BY i_item_id,
+	  i_item_desc,
+	  i_current_price
+ ORDER BY i_item_id;
+
+-- @ID=TEMPLATE_48
+SELECT SUM (ss_quantity)
+  FROM tpcds.store_sales,
+       tpcds.store,
+       tpcds.customer_demographics,
+       tpcds.customer_address,
+       tpcds.date_dim
+ WHERE s_store_sk = ss_store_sk
+       AND ss_sold_date_sk = d_date_sk
+       AND d_year = 1998
+       AND ( ( cd_demo_sk = ss_cdemo_sk
+	       AND cd_marital_status = 'M'
+	       AND cd_education_status = 'Primary'
+	       AND ss_sales_price BETWEEN 100.00 AND 150.00 )
+	      OR ( cd_demo_sk = ss_cdemo_sk
+		   AND cd_marital_status = 'M'
+		   AND cd_education_status = 'Primary'
+		   AND ss_sales_price BETWEEN 50.00 AND 100.00 )
+	      OR ( cd_demo_sk = ss_cdemo_sk
+		   AND cd_marital_status = 'M'
+		   AND cd_education_status = 'Primary'
+		   AND ss_sales_price BETWEEN 150.00 AND 200.00 ) )
+       AND ( ( ss_addr_sk = ca_address_sk
+	       AND ca_country = 'United States'
+	       AND ca_state IN ( 'TX', 'GA', 'MI' )
+	       AND ss_net_profit BETWEEN 0 AND 2000 )
+	      OR ( ss_addr_sk = ca_address_sk
+		   AND ca_country = 'United States'
+		   AND ca_state IN ( 'ND', 'OR', 'OH' )
+		   AND ss_net_profit BETWEEN 150 AND 3000 )
+	      OR ( ss_addr_sk = ca_address_sk
+		   AND ca_country = 'United States'
+		   AND ca_state IN ( 'WI', 'IA', 'MO' )
+		   AND ss_net_profit BETWEEN 50 AND 25000 ) );
+
+---- @ID=TEMPLATE_73
+SELECT c_last_name,
+       c_first_name,
+       c_salutation,
+       c_preferred_cust_flag,
+       ss_ticket_number,
+       cnt
+  FROM (SELECT ss_ticket_number,
+	       ss_customer_sk,
+	       COUNT(*) cnt
+	  FROM tpcds.store_sales,
+	       tpcds.date_dim,
+	       tpcds.store,
+	       tpcds.household_demographics
+	 WHERE ss_sold_date_sk = d_date_sk
+	       AND ss_store_sk = s_store_sk
+	       AND ss_hdemo_sk = hd_demo_sk
+	       AND d_dom BETWEEN 1 AND 2
+	       AND ( hd_buy_potential = '1001-5000'
+		      OR hd_buy_potential = '0-500' )
+	       AND hd_vehicle_count > 0
+	       AND CASE
+		     WHEN hd_vehicle_count > 0 THEN hd_dep_count / hd_vehicle_count
+		     ELSE NULL
+		   END > 1
+	       AND d_year IN ( 1999, 1999 + 1, 1999 + 2 )
+	       AND s_county IN ( 'Williamson County', 'Ziebach County', 'Walker County', 'Ziebach County' )
+	 GROUP BY ss_ticket_number,
+		  ss_customer_sk) dj,
+       tpcds.customer
+ WHERE ss_customer_sk = c_customer_sk
+       AND cnt BETWEEN 1 AND 5
+ ORDER BY cnt DESC;
+
+---- @ID=TEMPLATE_53
+SELECT *
+  FROM (SELECT i_manufact_id,
+	       SUM(ss_sales_price) sum_sales,
+	       AVG(ss_sales_price) avg_quarterly_sales
+	  FROM tpcds.item,
+	       tpcds.store_sales,
+	       tpcds.date_dim,
+	       tpcds.store
+	 WHERE ss_item_sk = i_item_sk
+	       AND ss_sold_date_sk = d_date_sk
+	       AND ss_store_sk = s_store_sk
+	       AND d_year IN ( 1999 )
+	       AND ( ( i_category IN ( 'Books', 'Children', 'Electronics' )
+		       AND i_class IN ( 'personal', 'portable', 'reference', 'self-help' )
+		       AND i_brand IN ( 'scholaramalgamalg #14', 'scholaramalgamalg #7', 'exportiunivamalg #9',
+					'scholaramalgamalg #9'
+				      ) )
+		      OR ( i_category IN ( 'Women', 'Music', 'Men' )
+			   AND i_class IN ( 'accessories', 'classical', 'fragrances', 'pants' )
+			   AND i_brand IN ( 'amalgimporto #1', 'edu packscholar #1', 'exportiimporto #1',
+					    'importoamalg #1' ) )
+		   )
+	 GROUP BY i_manufact_id,
+		  d_qoy) tmp1
+ WHERE CASE
+	 WHEN avg_quarterly_sales > 0 THEN ABS (sum_sales - avg_quarterly_sales) / avg_quarterly_sales
+	 ELSE NULL
+       END > 0.1
+ ORDER BY avg_quarterly_sales,
+	  sum_sales,
+	  i_manufact_id;
+
+---- @ID=TEMPLATE_79
+SELECT c_last_name,
+       c_first_name,
+       SUBSTR(s_city, 1, 30),
+       ss_ticket_number,
+       amt,
+       profit
+  FROM (SELECT ss_ticket_number,
+	       ss_customer_sk,
+	       s_city,
+	       SUM(ss_coupon_amt) amt,
+	       SUM(ss_net_profit) profit
+	  FROM tpcds.store_sales,
+	       tpcds.date_dim,
+	       tpcds.store,
+	       tpcds.household_demographics
+	 WHERE ss_sold_date_sk = d_date_sk
+	       AND ss_store_sk = s_store_sk
+	       AND ss_hdemo_sk = hd_demo_sk
+	       AND ( hd_dep_count = 1
+		      OR hd_vehicle_count > 0 )
+	       AND d_dow = 1
+	       AND d_year IN ( 1999, 1999 + 1, 1999 + 2 )
+	       AND s_number_employees BETWEEN 200 AND 295
+	 GROUP BY ss_ticket_number,
+		  ss_customer_sk,
+		  ss_addr_sk,
+		  s_city) ms,
+       tpcds.customer
+ WHERE ss_customer_sk = c_customer_sk
+ ORDER BY c_last_name,
+	  c_first_name,
+	  SUBSTR(s_city, 1, 30),
+	  profit;

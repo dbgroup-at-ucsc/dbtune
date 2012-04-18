@@ -1,7 +1,14 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.util.Set;
+
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.SQLCategory;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -9,6 +16,7 @@ import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
+import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
 /**
  * Functional test for optimizer implementations. The optimizer being tested is specified by the 
@@ -25,6 +33,7 @@ public class OptimizerFunctionalTest
 {
     private static DatabaseSystem db;
     private static Optimizer opt;
+    private static Environment env;
 
     /**
      * @throws Exception
@@ -33,7 +42,8 @@ public class OptimizerFunctionalTest
     @BeforeClass
     public static void beforeClass() throws Exception
     {
-        db  = newDatabaseSystem(Environment.getInstance());
+        env = Environment.getInstance();
+        db  = newDatabaseSystem(env);
         opt = db.getOptimizer();
 
         loadWorkloads(db.getConnection());
@@ -137,5 +147,30 @@ public class OptimizerFunctionalTest
     public void testSanity() throws Exception
     {
         OptimizerTest.checkSanity(db.getCatalog(), opt);
+    }
+
+    /**
+     * Checks that all supported workloads can be explained through the Optimizer interface.
+     *
+     * @throws Exception
+     *      if fails
+     */
+    @Test
+    public void testSupported() throws Exception
+    {
+        CandidateGenerator candGen = CandidateGenerator.Factory.newCandidateGenerator(env, opt);
+        
+        for (Workload wl : workloads(env.getWorkloadFolders())) {
+
+            final Set<Index> allIndexes = candGen.generate(wl);
+
+            for (SQLStatement sql : wl)
+                if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT) &&
+                        (opt instanceof MySQLOptimizer || opt instanceof IBGOptimizer))
+                    // XXX: issue #106, #144
+                    continue;
+                else
+                    opt.explain(sql, allIndexes);
+        }
     }
 }

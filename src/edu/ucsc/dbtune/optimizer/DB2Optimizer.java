@@ -34,7 +34,10 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
 
+import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.UPDATE;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
@@ -94,7 +97,7 @@ public class DB2Optimizer extends AbstractOptimizer
         used = newHashSet(plan.getIndexes());
 
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
-            updatedTable = getUpdatedTable(plan);
+            updatedTable = getUpdatedTable(connection, catalog, plan);
             baseTableUpdateCost = getBaseTableUpdateCost(plan);
             updateCostPerIndex = getUpdatedIndexes(updatedTable, baseTableUpdateCost, indexes);
         } else {
@@ -122,13 +125,14 @@ public class DB2Optimizer extends AbstractOptimizer
     @Override
     public Set<Index> recommendIndexes(SQLStatement sql) throws SQLException
     {
-        Statement stmt = connection.createStatement();
-
         clearAdviseAndExplainTables(connection);
+
+        Statement stmt = connection.createStatement();
 
         stmt.execute("SET CURRENT EXPLAIN MODE = RECOMMEND INDEXES");
         stmt.execute(sql.getSQL());
         stmt.execute("SET CURRENT EXPLAIN MODE = NO");
+        stmt.close();
 
         Set<Index> recommended = readAdviseIndexTable(connection, catalog);
 
@@ -418,8 +422,16 @@ public class DB2Optimizer extends AbstractOptimizer
             final String secondTableReference = matcher.group();
 
             if (firstTableReference.equals(secondTableReference)) {
-                // we found something like Q1.L_QUANTITY = Q1.L_PRICE
-                predicates.add(new Predicate(null, strPredicate.replaceAll("Q\\d+\\.", "")));
+                // we found something like Q1.L_QUANTITY = Q1.L_PRICE or a multi-predicate, which 
+                // sometimes includes SELECTIVITY hints, eg.:
+                //    (((Q7.SS_NET_PROFIT >= 0 SELECTIVITY 1.000000) AND (Q7.SS_NET_PROFIT <= 2000 
+                //    SELECTIVITY 1.000000) SELECTIVITY 1.000000) OR SELECTIVITY 1.000000)
+                predicates.add(
+                        new Predicate(
+                            null,
+                            strPredicate.
+                                replaceAll("Q\\d+\\.", "").
+                                replaceAll("SELECTIVITY \\d*\\.\\d*\\)", "\\)")));
             }
 
             // ignore since we have found a join predicate and we only care about predicates that 
@@ -527,24 +539,25 @@ public class DB2Optimizer extends AbstractOptimizer
      */
     private static double getBaseTableUpdateCost(SQLStatementPlan sqlPlan) throws SQLException
     {
-        double updateOpCost = -1;
-        double childOpCost = -1;
+        if (sqlPlan.size() < 3)
+            throw new SQLException("UPDATE plan should have at least 3 but has " + sqlPlan.size());
 
-        if (sqlPlan.size() != 3)
-            throw new SQLException("UPDATE plan should have 3 nodes but has " + sqlPlan.size());
+        Operator root = sqlPlan.getRootOperator();
 
-        for (Operator o : sqlPlan.toList())
-            if (o.getName().toLowerCase().contains("return"))
-                continue;
-            else if (o.getName().toLowerCase().contains("update"))
-                updateOpCost = o.getAccumulatedCost();
-            else
-                childOpCost = o.getAccumulatedCost();
+        if (sqlPlan.getChildren(root).size() != 1)
+            throw new SQLException("Root should have only one children");
 
-        if (updateOpCost == -1 || childOpCost == -1)
-            throw new SQLException("Something went wrong for the UPDATE");
+        Operator update = sqlPlan.getChildren(root).get(0);
 
-        return updateOpCost - childOpCost;
+        if (!update.getName().equals(UPDATE))
+            throw new SQLException("Child of root should be " + UPDATE);
+
+        if (sqlPlan.getChildren(update).size() != 1)
+            throw new SQLException(UPDATE + " should have only one children");
+
+        Operator select = sqlPlan.getChildren(update).get(0);
+
+        return update.getAccumulatedCost() - select.getAccumulatedCost();
     }
 
     /**
@@ -574,6 +587,10 @@ public class DB2Optimizer extends AbstractOptimizer
     /**
      * Extracts the table that is being updated by the plan.
      *
+     * @param connection
+     *     connection used to communicate with the DBMS
+     * @param catalog
+     *      to do the binding
      * @param sqlPlan
      *      the plan
      * @return
@@ -582,25 +599,43 @@ public class DB2Optimizer extends AbstractOptimizer
      *      if the plan doesn't contain exactly 3 nodes (i.e. the number of operators in any 
      *      execution plan of an update)
      */
-    private static Table getUpdatedTable(SQLStatementPlan sqlPlan) throws SQLException
+    private static Table getUpdatedTable(
+            Connection connection, Catalog catalog, SQLStatementPlan sqlPlan)
+        throws SQLException
     {
-        Table t = null;
+        if (!sqlPlan.contains("UPDATE"))
+            throw new SQLException("Plan should contain UPDATE operator");
+
+        // For the particular case of updates, the EXPLAIN_STREAM doesn't have the parent-child 
+        // relationship as the {@link SELECT_FROM_EXPLAIN} query expect it, so we have to execute 
+        // another query to identify the table that is associated to the UPDATE operator
+        Statement stmt = connection.createStatement();
+        ResultSet rs = stmt.executeQuery(SELECT_FROM_EXPLAIN_FOR_UPDATE);
+
+        if (!rs.next())
+            throw new SQLException("No output for SELECT_FROM_EXPLAIN_FOR_UPDATE query");
+
+        String dboSchema = rs.getString("object_schema").trim();
+        String dboName = rs.getString("object_name").trim();
+
+        if (rs.next())
+            throw new SQLException(
+                    "SELECT_FROM_EXPLAIN_FOR_UPDATE should reference one database object only");
+
+        rs.close();
+        stmt.close();
+
+        DatabaseObject dbo =
+            extractDatabaseObjectReferenced(catalog, new HashSet<Index>(), dboSchema, dboName);
+
+        if (!(dbo instanceof Table))
+            throw new SQLException("Object associated with UPDATE should be a table");
 
         for (Operator o : sqlPlan.toList())
-            if (o.getName().toLowerCase().contains("update")) {
-                if (o.getDatabaseObjects().size() != 1)
-                    throw new SQLException("Can't identify object being updated");
+            if (o.getName().equals("UPDATE"))
+                sqlPlan.assignDatabaseObject(o, dbo);
 
-                if (!(o.getDatabaseObjects().get(0) instanceof Table))
-                    throw new SQLException("Object associated with update is not a table");
-
-                t = (Table) o.getDatabaseObjects().get(0);
-            }
-
-        if (t == null)
-            throw new SQLException("Can't identify updated table");
-
-        return t;
+        return (Table) dbo;
     }
 
     /**
@@ -848,14 +883,54 @@ public class DB2Optimizer extends AbstractOptimizer
             return op;
         }
 
+        dbo = extractDatabaseObjectReferenced(catalog, indexes, dboSchema, dboName);
+
+        if (op.getName().equals(INDEX_SCAN) && !(dbo instanceof Index))
+            throw new SQLException("Object for " + INDEX_SCAN + " should be of type Index");
+        if (op.getName().equals(TABLE_SCAN) && !(dbo instanceof Table))
+            throw new SQLException("Object for " + TABLE_SCAN + " should be of type Table");
+
+        op.add(dbo);
+
+        columnsFetched = extractColumnsUsedByOperator(columnNames, dbo, catalog);
+
+        if (columnsFetched != null)
+            op.addColumnsFetched(columnsFetched);
+
+        op.add(extractPredicatesUsedByOperator(predicateList, catalog));
+
+        return op;
+    }
+
+    /**
+     * Extracts the database object referenced by an operator.
+     *
+     * @param catalog
+     *      used to retrieve metadata
+     * @param indexes
+     *      indexes sent for the what-if call
+     * @param dboSchema
+     *      schema
+     * @param dboName
+     *      name of the object referenced
+     * @return
+     *      the corresponding object
+     * @throws SQLException
+     *      if the object can't be found
+     */
+    static DatabaseObject extractDatabaseObjectReferenced(
+            Catalog catalog, Set<Index> indexes, String dboSchema, String dboName)
+        throws SQLException
+    {
+        DatabaseObject dbo;
+
         Schema schema = catalog.findSchema(dboSchema);
 
-        if (schema != null)
-            // it's a table
-            dbo = schema.findTable(dboName);
-        else if (dboSchema.equalsIgnoreCase("SYSTEM"))
+        if (schema == null && dboSchema.equalsIgnoreCase("SYSTEM"))
             // SYSTEM means that it's in the ADVISE_INDEX table; at least that's what we can infer
             dbo = catalog.findByQualifiedName(dboName);
+        else if (schema != null)
+            dbo = schema.findByQualifiedName(dboName);
         else
             throw new SQLException("Impossible to look for " + dboSchema + "." + dboName);
 
@@ -867,16 +942,7 @@ public class DB2Optimizer extends AbstractOptimizer
             throw new SQLException(
                     "Can't find object with schema " + dboSchema + " and name " + dboName);
 
-        op.add(dbo);        
-
-        columnsFetched = extractColumnsUsedByOperator(columnNames, dbo, catalog);
-
-        if (columnsFetched != null)
-            op.addColumnsFetched(columnsFetched);
-
-        op.add(extractPredicatesUsedByOperator(predicateList, catalog));
-
-        return op;
+        return dbo;
     }
 
     /**
@@ -1050,7 +1116,7 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *     if something goes wrong while talking to the DBMS
      */
-    private static Set<Index> readAdviseIndexTable(Connection connection, Catalog catalog)
+    public static Set<Index> readAdviseIndexTable(Connection connection, Catalog catalog)
         throws SQLException
     {
         Statement stmt = connection.createStatement();
@@ -1361,10 +1427,29 @@ public class DB2Optimizer extends AbstractOptimizer
         "  ORDER BY " +
         "     o.operator_id ASC";
 
+    final static String SELECT_FROM_EXPLAIN_FOR_UPDATE =
+        "SELECT " +
+        "     o.operator_id   AS node_id, " +
+        "     o.operator_type AS operator_name, " +
+        "     s.object_schema AS object_schema, " +
+        "     s.object_name   AS object_name," +
+        "     s.stream_count  AS cardinality, " +
+        "     o.total_cost    AS cost, " +
+        "     cast(cast(s.column_names AS CLOB(2097152)) AS VARCHAR(2048)) " +
+        "                      AS column_names " +
+        "  FROM " +
+        "     systools.explain_operator o, " +
+        "     systools.explain_stream s    " +
+        " WHERE " +
+        "       o.operator_id   = s.source_id" +
+        "   AND o.operator_type = 'UPDATE'" +
+        "   AND s.target_id     = -1 ";
+
+
     final static String SELECT_FROM_PREDICATES =
         " SELECT " +
         "   o.operator_id   AS node_id, " +
-        "   CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(255)) " +
+        "   CAST(CAST(p.predicate_text AS CLOB(2097152)) AS VARCHAR(2048)) " +
         "                   AS predicate_text " +
         " FROM " +
         "   systools.explain_operator o " +

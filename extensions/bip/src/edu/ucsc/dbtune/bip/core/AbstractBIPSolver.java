@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.bip.core;
 
-
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloNumVarType;
@@ -46,7 +45,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected List<IloNumVar> cplexVar; 
     protected double[]        valVar;
     
-    protected Environment   environment = Environment.getInstance();
+    protected Environment environment = Environment.getInstance();
     
     protected int           numConstraints;
     protected InumOptimizer inumOptimizer;    
@@ -93,7 +92,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         // allow the solution differed 5% from the actual optimal value
         cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
         // not output the log of CPLEX
-        //cplex.setOut(null);
+        cplex.setOut(null);
         // not output the warning
         cplex.setWarning(null);
         
@@ -114,9 +113,8 @@ public abstract class AbstractBIPSolver implements BIPSolver
             //
             objVal = cplex.getObjValue();
             gapObj = 1 - cplex.getBestObjValue() / objVal;
-        } else {
+        } else 
             objVal = UNKNOWN_OBJ_VALUE;
-        }
         
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         return result;            
@@ -183,12 +181,14 @@ public abstract class AbstractBIPSolver implements BIPSolver
      */
     protected void populatePlanDescriptionForStatements() throws SQLException
     {   
-        queryPlanDescs            = new ArrayList<QueryPlanDesc>();
-        Set<Table> workloadTables = new HashSet<Table>();
+        Set<Table> workloadTables;
         
-        for (int i = 0; i < workload.size(); i++) {            
+        workloadTables = new HashSet<Table>();
+        queryPlanDescs = new ArrayList<QueryPlanDesc>();
+        
+        for (int i = 0; i < workload.size(); i++) {
             // Set the corresponding SQL statement
-            QueryPlanDesc desc =  InumQueryPlanDesc.getQueryPlanDescInstance(workload.get(i));
+            QueryPlanDesc desc = InumQueryPlanDesc.getQueryPlanDescInstance(workload.get(i));
             // Populate the INUM space 
             desc.generateQueryPlanDesc(inumOptimizer, candidateIndexes);            
             queryPlanDescs.add(desc);
@@ -263,5 +263,5 @@ public abstract class AbstractBIPSolver implements BIPSolver
      *      The output formatted for a particular problem 
      *      (e.g., MaterializationSchedule for Scheduling Index Materialization problem)
      */
-    protected abstract IndexTuningOutput getOutput();
+    protected abstract IndexTuningOutput getOutput() throws Exception;
 }

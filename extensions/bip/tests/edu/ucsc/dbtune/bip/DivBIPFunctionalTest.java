@@ -1,157 +1,178 @@
 package edu.ucsc.dbtune.bip;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
 
-
+import java.util.HashSet;
 import java.util.Set;
-
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import edu.ucsc.dbtune.DatabaseSystem;
+
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 
 import edu.ucsc.dbtune.bip.div.DivBIP;
+import edu.ucsc.dbtune.bip.div.DivConfiguration;
+
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.Workload;
 
-public class DivBIPFunctionalTest extends BIPTestConfiguration 
-{
-    private static DatabaseSystem db;
-    private static Environment    en;
-    
-    private static int Nreplicas;
-    private static int loadfactor;
-    private static double B;
-    
-    /**
-     * Setup for the test.
-     */
-    @BeforeClass
-    public static void beforeClassSetUp() throws Exception
-    {
-        en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-    }
+
+/**
+ * Test the functionality of Divergent Design using BIP.
+ * 
+ * @author Quoc Trung Tran
+ *
+ */
+public class DivBIPFunctionalTest extends DivTestSetting
+{   
+    protected static long totalIndexSize;
+    protected static Set<Index> candidates;
     
     @Test
     public void testDivergentDesign() throws Exception
-    {  
-        // parameter setting for divergent design tuning
-        divergentNormal();
+    {
+        // 1. Set common parameters
+        setCommonParameters();
         
-        DivBIP div = new DivBIP();
+        if (!(io instanceof InumOptimizer))
+            return;
+
+        // 2. Generate candidate indexes
+        generateCandidates();
         
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-small");
-        CandidateGenerator candGen = 
+        // 3. Call divergent design
+        for (int i = 0; i < arrNReplicas.length; i++) {
+            
+            nReplicas = arrNReplicas[i];
+            loadfactor = arrLoadFactor[i];
+        
+            if (isTestOne && nReplicas != 4)
+                continue;
+                
+            System.out.println("----------------------------------------");
+            System.out.println(" DIV-BIP, # replicas = " + nReplicas
+                                + ", load factor = " + loadfactor
+                                + ", space = " + B);
+            testDiv();
+            System.out.println("----------------------------------------");
+        }
+            
+        
+        // 4. Call Uniform design       
+        nReplicas = 1;
+        loadfactor = 1;
+        
+        System.out.println("----------------------------------------");
+        System.out.println(" DIV-UNIF-BIP, # replicas = " + nReplicas
+                            + ", load factor = " + loadfactor);
+        
+        testDiv();
+        
+        // get the query cost & update cost
+        double queryCost;
+        double updateCost;
+        double totalCostUniform;
+        
+        // update index cost & query shell in update statement 
+        updateCost = div.getUpdateCost();
+        // query-only cost
+        queryCost  = div.getObjValue() - updateCost;
+        // add the constant update-base table cost
+        updateCost += div.getTotalBaseTableUpdateCost();
+        
+        // UNIF for the case with more than one replica
+        for (int i = 0; i < arrNReplicas.length; i++) {
+            System.out.println("----------------------------------------");
+            totalCostUniform = queryCost + updateCost * arrNReplicas[i];            
+            System.out.println(" DIV-UNIF, # replicas: " + arrNReplicas[i] + "\n"
+                                + " query cost: " + queryCost + "\n"
+                                + " update base table (one replica): " + 
+                                div.getTotalBaseTableUpdateCost() + "\n"
+                                + " update cost (one replica): " + updateCost + "\n"
+                                + " TOTAL COST: " + totalCostUniform);
+            System.out.println("----------------------------------------");
+        }
+           
+        System.out.println("----------------------------------------");
+    }
+    
+    /**
+     * Generate candidate indexes
+     */
+    protected static void generateCandidates() throws Exception
+    {
+        CandidateGenerator candGen =
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
-        Set<Index> candidates = candGen.generate(workload);
-       
+        candidates = candGen.generate(workload);
+        
+        // Calculate the total size (for solely information)
+        totalIndexSize = 0;
         for (Index index : candidates)
-            index.setBytes(1);
-        System.out.println("L59, number of candidate: " + candidates.size());
+            totalIndexSize += index.getBytes();
+        
+        System.out.println("Number of statements: " + workload.size() + "\n"
+                            + "Number of candidate: " + candidates.size() + "\n" 
+                            + "Total size: " + totalIndexSize);
+    }
+    
+    
+    /**
+     * Run the BIP with the parameters set by other functions
+     * @throws Exception
+     */
+    protected static void testDiv() throws Exception
+    {
+        div = new DivBIP();
         
         Optimizer io = db.getOptimizer();
-
-        if (!(io instanceof InumOptimizer))
-            throw new Exception("Expecting InumOptimizer instance");
                 
         LogListener logger = LogListener.getInstance();
         div.setCandidateIndexes(candidates);
         div.setWorkload(workload); 
         div.setOptimizer((InumOptimizer) io);
-        div.setNumberReplicas(Nreplicas);
+        div.setNumberReplicas(nReplicas);
         div.setLoadBalanceFactor(loadfactor);
         div.setSpaceBudget(B);
         div.setLogListenter(logger);
         
         IndexTuningOutput output = div.solve();
-        div.exportCplexToFile(en.getWorkloadsFoldername() + "/tpcds-small/test.lp");
         System.out.println(logger.toString());
+        
+        if (isExportToFile)
+            div.exportCplexToFile(en.getWorkloadsFoldername() + "test.lp");
+        
+        double totalCostBIP;
+        
         if (output != null) {
-            System.out.println("In test, result: " 
-                    + " obj value: " + div.getObjValue()
-                    + " different from optimal value: " + div.getObjectiveGap());
+            System.out.println("CPLEX result: " 
+                    + " obj value: " + div.getObjValue() + "\n"
+                    + " different from optimal value: " + div.getObjectiveGap() + "\n"
+                    + " base table update cost: " + div.getTotalBaseTableUpdateCost());
+           
+            // add the update-base-table-constant costs
+            totalCostBIP = div.getObjValue() + div.getTotalBaseTableUpdateCost();            
+            System.out.println(" TOTAL COST(INUM): " + totalCostBIP);
             
-            /*
-            // run on actual optimize
-            Set<SQLStatement> sqls = new HashSet<SQLStatement>();
-            for (int i = 0; i < workload.size(); i++)
-                sqls.add(workload.get(i));
-            DivergentOnOptimizer doo = new DivergentOnOptimizer();
-            doo.verify(io.getDelegate(), output, sqls);
+            // show imbalance query & replica
+            div.computeImbalanceFactor();   
             
-            double costDB2 = doo.getTotalCost() / loadfactor;
-            System.out.println("L90, cost on DB2: " + costDB2
-                                + " COST RATIO: " + (double) costDB2 / div.getObjValue());
-            */
-            /*
-            // test
-            DivConfiguration divconf = (DivConfiguration) output;
-            Set<Index> conf = divconf.indexesAtReplica(0);
-            System.out.println(" Configuration: " + conf);
-            System.out.println(" query INUM DB2 INUM/DB2 ");
-            double costInum, costDB2, ratio;
-            
-            for (int i = 0; i < workload.size(); i++){
-                
-                System.out.println(" ---- query " + i + "\n");
-                InumPreparedSQLStatement inumStmt = (InumPreparedSQLStatement)
-                                                io.prepareExplain(workload.get(i));
-                ExplainedSQLStatement inumExplain = inumStmt.explain(conf);
-                ExplainedSQLStatement db2Explain =  io.getDelegate().explain(workload.get(i), conf);
-                                                  
-                costInum = inumExplain.getTotalCost();
-                costDB2  = db2Explain.getTotalCost();
-                
-                ratio = costInum / costDB2;
-                
-                if (ratio >= 1.5 || ratio <= 0.5 && i == 1) {                    
-                    System.out.println(i 
-                                       + " " + costInum
-                                       + " " + costDB2
-                                       + " " + (costInum / costDB2));
-                    System.out.println(" template \n");
-                    for (InumPlan plan : inumStmt.getTemplatePlans())
-                        System.out.println(plan);
-                    System.out.println(" instantiated INUM: \n " + inumExplain.getPlan());
-                    
-                    System.out.println(" instantiated DB2: \n" + db2Explain.getPlan());                    
-              }
-              
+            if (isTestCost) {
+                Set<Index> conf;
+                DivConfiguration divConf = (DivConfiguration) output;
+                conf = divConf.indexesAtReplica(0);
+               
+                // query cost
+                computeQueryCosts(conf);
+                // empty configuration
+                computeQueryCosts(new HashSet<Index>());
             }
-            */
-        } else {
+            
+        } else 
             System.out.println(" NO SOLUTION ");
-        }
-    }
-    
-    public static void divergentUnlimitSpace()
-    {
-        Nreplicas = 3;
-        loadfactor = 2;
-        B = 70;
-    }
-    
-    public static void optimalDesign()
-    {
-        Nreplicas = 1;
-        loadfactor = 1;
-        B = 5;
-    }
-    
-    public static void divergentNormal()
-    {
-        Nreplicas = 3;
-        loadfactor = 2;
-        B = 3;
+        
     }
 }

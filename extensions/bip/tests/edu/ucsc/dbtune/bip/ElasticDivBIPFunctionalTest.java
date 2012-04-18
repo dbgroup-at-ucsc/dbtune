@@ -40,13 +40,17 @@ public class ElasticDivBIPFunctionalTest
     @Test
     public void testShrinkReplicaDivergentDesign() throws Exception
     {   
+
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
+
         int Nreplicas = 4;
         int loadfactor = 2;
         double B;
         
         DivBIP div = new DivBIP();
         
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpcds-small");
+        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);
@@ -83,7 +87,7 @@ public class ElasticDivBIPFunctionalTest
         elastic.setSpaceBudget(B);
         elastic.setLogListenter(logger);
         
-        elastic.setDeployCost(0.0);
+        elastic.setUpperDeployCost(0.0);
         elastic.setInitialConfiguration(initial);
         elastic.setNumberDeployReplicas(2);
         

@@ -299,6 +299,33 @@ public final class Strings
     }
 
     /**
+     * Returns a string containing the create statement of the given index.
+     *
+     * @param index
+     *      index for which a SQL create statement is created
+     * @return
+     *      string containing the create statement
+     */
+    public static String getCreateStatement(Index index)
+    {
+        StringBuilder sql = new StringBuilder();
+
+        sql.append("CREATE INDEX " + index.getFullyQualifiedName());
+        sql.append(" ON " + index.getTable().getFullyQualifiedName() + " (");
+
+        for (Column col : index)
+            sql.append(col.getName()).
+                append(index.isAscending(col) ? " ASC" : " DESC").
+                append(",");
+
+        sql.delete(sql.length() - 1, sql.length());
+
+        sql.append(")");
+
+        return sql.toString();
+    }
+
+    /**
      * Concatenate a list of input strings using the given connector to return one output string.
      * Eg: join("+", (("a"), ("bc")) = "a + bc"
      * 

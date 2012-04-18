@@ -6,7 +6,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.BitArraySet;
+//import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -188,7 +188,7 @@ public class OptimizerTest
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        conf  = new BitArraySet<Index>();
+        conf  = new HashSet<Index>();
         sqlp  = opt.explain(sql, conf);
         cost2 = sqlp.getSelectCost();
         
@@ -205,11 +205,9 @@ public class OptimizerTest
 
         assertThat(cost1, is(cost2));
 
-        try {
-        // XXX: issue #106, #144, #247 is causing this to fail for these {
+        // XXX: issue #106, #144 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) &&
-                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
+                !(opt instanceof IBGOptimizer) )
         {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql);
@@ -254,10 +252,6 @@ public class OptimizerTest
         assertThat(sqlp.getOptimizationCount(), is(1));
         }
         // }
-        } catch (ClassNotFoundException e) {
-            // fine, inum package not in classpath
-            e.getMessage();
-        }
     }
 
     /**
@@ -284,7 +278,7 @@ public class OptimizerTest
         cost1 = opt.explain(sql).getSelectCost();
         idxa = new Index(cat.<Column>findByName("one_table.tbl.a"), DESCENDING);
         idxb = new Index(cat.<Column>findByName("one_table.tbl.b"), DESCENDING);
-        conf = new BitArraySet<Index>();
+        conf = new HashSet<Index>();
 
         conf.add(idxb);
         conf.add(idxa);
@@ -306,11 +300,9 @@ public class OptimizerTest
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        try {
-        // XXX: issue #106, #144, #247 is causing this to fail for these {
+        // XXX: issue #106, #144 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) &&
-                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
+                !(opt instanceof IBGOptimizer))
         {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
@@ -322,6 +314,9 @@ public class OptimizerTest
         assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxa))));
         assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
+        assertThat(sqlp.getUpdateCost(idxa), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdateCost(idxb), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdatedConfiguration(), is(conf));
 
         // XXX: issue #139 is causing this to fail for PGOptimizer {
         if (!(opt instanceof PGOptimizer)) {
@@ -348,10 +343,6 @@ public class OptimizerTest
 
         idxa.getSchema().remove(idxa);
         idxb.getSchema().remove(idxb);
-        } catch (ClassNotFoundException e) {
-            // fine, inum package not in classpath
-            e.getMessage();
-        }
     }
 
     /**
@@ -364,7 +355,6 @@ public class OptimizerTest
      */
     protected static void checkRecommendIndexes(Optimizer opt) throws Exception
     {
-        try {
         SQLStatement sql;
         Set<Index> rec;
         
@@ -381,10 +371,9 @@ public class OptimizerTest
         }
         }
 
-        // XXX: issue #106, #144, #247 is causing this to fail for these {
+        // XXX: issue #106, #144 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) &&
-                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
+                !(opt instanceof IBGOptimizer))
         {
         sql = new SQLStatement("UPDATE one_table.tbl SET a = -1 WHERE a = 5");
         rec = opt.recommendIndexes(sql);
@@ -392,10 +381,6 @@ public class OptimizerTest
         assertThat(rec.isEmpty(), is(false));
         }
         // }
-        } catch (ClassNotFoundException e) {
-            // fine, inum package not in classpath
-            e.getMessage();
-        }
     }
 
     // protected static void checkAnalysisTime(Optimizer opt) throws Exception
@@ -439,7 +424,7 @@ public class OptimizerTest
         sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         col  = cat.<Column>findByName("one_table.tbl.a");
         idx  = new Index(col, DESCENDING);
-        conf = new BitArraySet<Index>();
+        conf = new HashSet<Index>();
 
         conf.add(idx);
 
@@ -481,7 +466,7 @@ public class OptimizerTest
         colB = cat.<Column>findByName("one_table.tbl.b");
         idxA = new Index(colA, DESCENDING);
         idxB = new Index(colB, DESCENDING);
-        conf = new BitArraySet<Index>();
+        conf = new HashSet<Index>();
 
         conf.add(idxA);
 
@@ -533,13 +518,11 @@ public class OptimizerTest
 
         assertThat(exp1, is(notNullValue()));
         assertThat(exp2, is(notNullValue()));
-        assertThat(exp2, is(exp2));
+        assertThat(exp2, is(exp1));
 
-        try {
-        // XXX: issue #106, #144, #247 is causing this to fail for these {
+        // XXX: issue #106, #144 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) &&
-                !Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(opt))
+                !(opt instanceof IBGOptimizer))
         {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         stmt = opt.prepareExplain(sql);
@@ -548,12 +531,12 @@ public class OptimizerTest
 
         exp1 = opt.explain(sql);
         exp2 = stmt.explain(new HashSet<Index>());
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2, is(exp1));
         }
         // }
-        } catch (ClassNotFoundException e) {
-            // fine, inum package not in classpath
-            e.getMessage();
-        }
 
         // what-if call
         sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
@@ -562,7 +545,7 @@ public class OptimizerTest
         assertThat(stmt, is(notNullValue()));
 
         idxa = new Index(cat.<Column>findByName("one_table.tbl.a"), DESCENDING);
-        conf = new BitArraySet<Index>();
+        conf = new HashSet<Index>();
 
         conf.add(idxa);
 
@@ -571,14 +554,14 @@ public class OptimizerTest
 
         assertThat(exp1, is(notNullValue()));
         assertThat(exp2, is(notNullValue()));
-        assertThat(exp2, is(exp2));
+        assertThat(exp2, is(exp1));
 
         col  = cat.<Column>findByName("one_table.tbl.b");
         idxb = new Index(col, DESCENDING);
 
         conf.add(idxb);
 
-        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5 AND b = 2");
+        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         stmt = opt.prepareExplain(sql);
 
         assertThat(stmt, is(notNullValue()));
@@ -588,7 +571,7 @@ public class OptimizerTest
 
         assertThat(exp1, is(notNullValue()));
         assertThat(exp2, is(notNullValue()));
-        assertThat(exp2, is(exp2));
+        assertThat(exp2, is(exp1));
 
         conf.remove(idxa);
 
@@ -597,7 +580,25 @@ public class OptimizerTest
 
         assertThat(exp1, is(notNullValue()));
         assertThat(exp2, is(notNullValue()));
-        assertThat(exp2, is(exp2));
+        assertThat(exp2, is(exp1));
+
+        // XXX: issue #106, #144 is causing this to fail for these {
+        if (!(opt instanceof MySQLOptimizer) &&
+                !(opt instanceof IBGOptimizer))
+        {
+        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql, conf);
+        exp2 = stmt.explain(conf);
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2, is(exp1));
+        }
+        // }
 
         idxa.getSchema().remove(idxa);
         idxb.getSchema().remove(idxb);

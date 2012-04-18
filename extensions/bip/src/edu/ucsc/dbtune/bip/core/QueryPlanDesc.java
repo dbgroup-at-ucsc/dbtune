@@ -7,6 +7,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.workload.SQLCategory;
 
 /**
  * This interface corresponds to a statement in the given workload. It serves as a cache that 
@@ -84,6 +85,15 @@ public interface QueryPlanDesc
      * placed.     
      */
     double getAccessCost(int k, Index index);
+    
+    /**
+     * Retrieve the base table update cost (which is a constant)
+     * 
+     * @return
+     *      The base table update cost if the statement is an UPDATE,
+     *      0, otherwise
+     */
+    double getBaseTableUpdateCost();
 
     /**
      * Retrieve the statement ID
@@ -139,4 +149,25 @@ public interface QueryPlanDesc
      *      of the query.
      */
     Set<Index> getActiveIndexesAtSlot(int i);
+    
+    /**
+     * Retrieve the SQL type of the statement (e.g., SELECT, UPDATE statement)
+     * 
+     * @return
+     *      The category of the statement. 
+     */
+    SQLCategory getSQLCategory();
+    
+    /**
+     * Returns the update cost for the given index. This cost doesn't include the {@code SELECT} 
+     * shell cost, i.e. the cost of retrieving the tuples that will be affected by the update.
+     *
+     * @param index
+     *      a {@link edu.ucsc.dbtune.metadata.Index} object.
+     * @return
+     *      maintenance cost for the given index; zero if the statement isn't an update or if the 
+     *      {@link #getUpdatedConfiguration updated configuration} assigned to the statement doesn't 
+     *      contain the given index.
+     */
+    public double getUpdateCost(Index index);
 }

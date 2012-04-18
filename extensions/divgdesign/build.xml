@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<project name="dbtune-divgdesign">
+  <path id="compile.classpath">
+    <fileset dir="${lib.dir}" includes="*.jar"/>
+    <fileset dir="../../${lib.dir}" includes="*.jar"/>
+    <pathelement path="../../build/classes"/>
+  </path>
+  <target name="compile">
+    <ant dir="../../" antfile="common.xml" target="compile">
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+  <target name="compile.test">
+    <ant dir="../../" antfile="common.xml" target="compile.test">
+      <reference refid="compile.classpath" />
+    </ant>
+  </target>
+</project>

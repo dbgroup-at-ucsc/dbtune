@@ -37,7 +37,6 @@ import org.mockito.stubbing.Answer;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.Environment.extractDriver;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.DBMS;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.EAGER;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.EXHAUSTIVE;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.GREEDY;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
@@ -236,7 +235,7 @@ public final class DBTuneInstances
     {
         cfg.setProperty(OPTIMIZER, INUM);
         cfg.setProperty(INUM_SLOT_CACHE, R.nextInt(2) == 0 ? "OFF" : "ON");
-        cfg.setProperty(INUM_SPACE_COMPUTATION, R.nextInt(2) == 0 ? EAGER : IBG);
+        cfg.setProperty(INUM_SPACE_COMPUTATION, R.nextInt(2) == 0 ? EXHAUSTIVE : IBG);
         cfg.setProperty(INUM_MATCHING_STRATEGY, R.nextInt(2) == 0 ? GREEDY : EXHAUSTIVE);
         return cfg;
     }

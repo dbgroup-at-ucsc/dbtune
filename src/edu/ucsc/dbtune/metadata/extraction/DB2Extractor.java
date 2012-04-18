@@ -31,7 +31,16 @@ public class DB2Extractor extends GenericJDBCExtractor
     @Override
     protected void extractCatalog(Catalog catalog, Connection connection) throws SQLException
     {
-        // nothing to add
+        Statement stm = connection.createStatement();
+        ResultSet rs = stm.executeQuery("SELECT current server FROM sysibm.sysdummy1");
+
+        if (!rs.next())
+            throw new SQLException("Impossible to determine catalog name for DB2 instance");
+
+        catalog.setName(rs.getString(1));
+
+        rs.close();
+        stm.close();
     }
 
     /**

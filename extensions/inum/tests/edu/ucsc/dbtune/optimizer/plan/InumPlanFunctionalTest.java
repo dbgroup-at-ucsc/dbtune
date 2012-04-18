@@ -8,6 +8,7 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -72,7 +73,7 @@ public class InumPlanFunctionalTest
     @Test
     public void testConstruction() throws Exception
     {
-        SQLStatementPlan sqlPlan;
+        ExplainedSQLStatement eStmt;
         InumPlan inumPlan;
         Set<Index> conf;
         double costLeafs;
@@ -90,35 +91,35 @@ public class InumPlanFunctionalTest
             for (SQLStatement sql : wl) {
                 i++;
 
-                sqlPlan = optimizer.explain(sql, conf).getPlan();
+                eStmt = optimizer.explain(sql, conf);
 
-                if (!isPlanSuitableForInum(sqlPlan))
+                if (!isPlanSuitableForInum(eStmt.getPlan()))
                     continue;
 
                 costLeafs = 0;
 
-                for (Operator l : sqlPlan.leafs())
-                    costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(sqlPlan, l);
+                for (Operator l : eStmt.getPlan().leafs())
+                    costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(eStmt.getPlan(), l);
 
-                inumPlan = new InumPlan(optimizer, sqlPlan);
+                inumPlan = new InumPlan(optimizer, eStmt);
 
-                // check the same number of slots
-                assertThat(inumPlan.getSlots().size(), is(sqlPlan.getTables().size()));
-
-                // check the internal cost
+                assertThat(inumPlan.getSlots().size(), is(eStmt.getPlan().getTables().size()));
+                assertThat(inumPlan.getBaseTableUpdateCost(), is(eStmt.getBaseTableUpdateCost()));
+                assertThat(inumPlan.getUpdatedTable(), is(eStmt.getUpdatedTable()));
+                assertThat(inumPlan.getStatement(), is(eStmt.getStatement()));
                 assertThat(
-                        "Failed on stmt " + i + "\n" +
-                        "   with template: \n" + inumPlan + "\n" +
-                        "   with plan: \n" + sqlPlan,
-                        inumPlan.getInternalCost(),
-                        closeTo(sqlPlan.getRootElement().getAccumulatedCost() - costLeafs, 1.0));
+                    "Failed on stmt " + i + "\n" +
+                    "   with template: \n" + inumPlan + "\n" +
+                    "   with plan: \n" + eStmt.getPlan(),
+                    inumPlan.getInternalCost(),
+                    closeTo(eStmt.getSelectCost() - costLeafs, 1.0));
 
                 // check the objects being referenced
                 assertThat(
-                        sqlPlan.getTables().containsAll(inumPlan.getTables()),
+                        eStmt.getPlan().getTables().containsAll(inumPlan.getTables()),
                         is(true));
                 assertThat(
-                        sqlPlan.getIndexes().containsAll(inumPlan.getIndexes()),
+                        eStmt.getPlan().getIndexes().containsAll(inumPlan.getIndexes()),
                         is(true));
             }
         }

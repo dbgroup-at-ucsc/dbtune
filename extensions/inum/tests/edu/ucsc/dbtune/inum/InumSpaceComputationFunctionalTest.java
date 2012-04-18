@@ -5,12 +5,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.util.Environment;
@@ -44,6 +46,7 @@ public class InumSpaceComputationFunctionalTest
     private static Optimizer delegate;
     private static MatchingStrategy matching;
     private static CandidateGenerator candGen;
+    private static Random r;
 
     /**
      * @throws Exception
@@ -57,6 +60,7 @@ public class InumSpaceComputationFunctionalTest
         delegate = getBaseOptimizer(db.getOptimizer());
         matching = MatchingStrategy.Factory.newMatchingStrategy(env);
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
+        r = new Random(System.currentTimeMillis());
         
         loadWorkloads(db.getConnection());
     }
@@ -78,11 +82,13 @@ public class InumSpaceComputationFunctionalTest
     @Test
     public void testComputation() throws Exception
     {
+        if (!(db.getOptimizer() instanceof InumOptimizer))
+            return;
+        
         List<InumSpaceComputation> available = new ArrayList<InumSpaceComputation>();
 
-        available.add(new EagerSpaceComputation());
+        available.add(new ExhaustiveSpaceComputation());
         available.add(new IBGSpaceComputation());
-        available.add(new NoneMinMaxSpaceComputation());
 
         long time;
         long computationTime;
@@ -110,8 +116,7 @@ public class InumSpaceComputationFunctionalTest
             for (SQLStatement sql : wl) {
                 i++;
 
-                if (wl.getName().endsWith("tpch") && i == 12)
-                    // IBG and Eager produce distinct templates on this particular query
+                if (r.nextInt(100) > 5)
                     continue;
 
                 List<Set<InumPlan>> spaces = new ArrayList<Set<InumPlan>>();
@@ -155,8 +160,6 @@ public class InumSpaceComputationFunctionalTest
                         results.get(one).getBestCost(),
                         closeTo(
                             results.get(two).getBestCost(), results.get(one).getBestCost() * 0.05));
-                            //0.05));
-
                 }
 
                 report.append("\n");
