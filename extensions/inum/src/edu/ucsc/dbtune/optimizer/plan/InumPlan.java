@@ -27,7 +27,10 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 import static edu.ucsc.dbtune.util.InumUtils.removeTemporaryTables;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
-import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
+import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
+import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
+import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
+import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 
 /**
  * Extends {@link SQLStatementPlan} class in order to add INUM-specific functionality. Specifically,
@@ -92,41 +95,21 @@ public class InumPlan extends SQLStatementPlan
     {
         super(explainedStatement.getPlan());
 
-        preprocess(this);
-
         this.delegate = delegate;
 
-        TableAccessSlot slot = null;
+        preprocess(this);
+
         double leafsCost = 0;
 
         slots = new HashMap<Table, TableAccessSlot>();
 
-        for (Operator leaf : leafs()) {
+        if (explainedStatement.getStatement().getSQLCategory().isSame(SELECT) ||
+                explainedStatement.getStatement().getSQLCategory().isSame(UPDATE))
+            // no need to make slots for DELETE/INSERT; we assume they don't have a query shell
+            leafsCost = replaceLeafsBySlots();
 
-            if (leaf.getDatabaseObjects().size() != 1)
-                throw new SQLException("Leaf " + leaf + " doesn't refer to any object");
-
-            leafsCost += extractCostOfLeafAndRemoveFetch(this, leaf);
-
-            slot = new TableAccessSlot(leaf);
-
-            if (slots.get(slot.getTable()) != null)
-                // we don't allow more than one slot for a table
-                throw new SQLException(slot.getTable() + " referenced more than once");
-
-            replaceLeafBySlot(this, leaf, slot);
-
-            slots.put(slot.getTable(), slot);
-        }
-
-        if (leafs().size() != slots.size())
-            throw new SQLException("One or more leafs haven't been assigned with a slot " + this);
-
-        if (explainedStatement.getStatement().getSQLCategory().isSame(NOT_SELECT)) {
-            updatedTable = explainedStatement.getUpdatedTable();
-            baseTableUpdateCost = explainedStatement.getBaseTableUpdateCost();
-        }
-
+        updatedTable = explainedStatement.getUpdatedTable();
+        baseTableUpdateCost = explainedStatement.getBaseTableUpdateCost();
         internalPlanCost = explainedStatement.getSelectCost() - leafsCost;
     }
 
@@ -152,6 +135,47 @@ public class InumPlan extends SQLStatementPlan
         delegate = other.delegate;
         updatedTable = other.updatedTable;
         baseTableUpdateCost = other.baseTableUpdateCost;
+    }
+
+    /**
+     * Replaces the leafs of this plan by access slots.
+     *
+     * @return
+     *      the sum of costs of the leafs
+     * @throws SQLException
+     *      if a leaf is not {@link INDEX_SCAN} or {@link TABLE_SCAN}; if a leaf doesn't refer to an 
+     *      object; if one or more leafs can't be assigned with a slot
+     */
+    private double replaceLeafsBySlots() throws SQLException
+    {
+        TableAccessSlot slot = null;
+        double leafsCost = 0;
+
+        for (Operator leaf : leafs()) {
+
+            if (!leaf.getName().equals(INDEX_SCAN) && !leaf.getName().equals(TABLE_SCAN))
+                throw new SQLException("Leaf should be " + INDEX_SCAN + " or " + TABLE_SCAN);
+
+            if (leaf.getDatabaseObjects().size() != 1)
+                throw new SQLException("Leaf " + leaf + " doesn't refer to any object");
+
+            leafsCost += extractCostOfLeafAndRemoveFetch(this, leaf);
+
+            slot = new TableAccessSlot(leaf);
+
+            if (slots.get(slot.getTable()) != null)
+                // we don't allow more than one slot for a table
+                throw new SQLException(slot.getTable() + " referenced more than once");
+
+            replaceLeafBySlot(this, leaf, slot);
+
+            slots.put(slot.getTable(), slot);
+        }
+
+        if (leafs().size() != slots.size())
+            throw new SQLException("One or more leafs haven't been assigned with a slot " + this);
+
+        return leafsCost;
     }
 
     /**
@@ -278,6 +302,10 @@ public class InumPlan extends SQLStatementPlan
      */
     public Operator instantiate(Index index) throws SQLException
     {
+        if (getStatement().getSQLCategory().isSame(DELETE) || 
+                getStatement().getSQLCategory().isSame(INSERT))
+            new Operator(TABLE_SCAN, 0, 0);
+
         TableAccessSlot slot = slots.get(index.getTable());
 
         if (slot == null)
@@ -335,7 +363,7 @@ public class InumPlan extends SQLStatementPlan
             operators.add(o);
         }
 
-        if (visited.size() != getTables().size())
+        if (visited.size() != getSlots().size())
             throw new SQLException(
                 "One or more tables missing in atomic configuration.\n" +
                 "  Tables in atomic " + getReferencedTables(atomicConfiguration) + "\n" +

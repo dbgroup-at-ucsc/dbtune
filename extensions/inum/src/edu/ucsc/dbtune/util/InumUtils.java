@@ -33,6 +33,9 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTables;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
+import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
+
 /**
  * @author Ivo Jimenez
  */
@@ -232,11 +235,20 @@ public final class InumUtils
         boolean removed = false;
 
         for (Operator o : plan.leafs()) {
+
+            if (plan.getStatement().getSQLCategory().isSame(INSERT) ||
+                    plan.getStatement().getSQLCategory().isSame(DELETE)) {
+                // no need to look for a join
+                plan.remove(o);
+                break;
+            }
+
             if (o.getName().equals(TEMPORARY_TABLE_SCAN) && plan.getChildren(o).isEmpty()) {
                 renameClosestJoinAndRemoveBranchComingFrom(plan, o, SORT);
                 removed = true;
                 break;
             }
+
         }
 
         return removed;
@@ -339,7 +351,8 @@ public final class InumUtils
         }
 
         if (ascendant == null)
-            throw new SQLException("Can't find closest join (ascendant) of " + child);
+            throw new SQLException(
+                "In\n" + plan + "\n\nCan't find closest join (ascendant) of " + child);
 
         plan.rename(ascendant, newName);
         plan.remove(shild);

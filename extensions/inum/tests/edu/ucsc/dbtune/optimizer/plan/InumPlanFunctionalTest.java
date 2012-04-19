@@ -23,6 +23,11 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
+import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
+import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
+import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
+
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.is;
 
@@ -80,9 +85,7 @@ public class InumPlanFunctionalTest
 
         for (Workload wl : workloads(env.getWorkloadFolders())) {
 
-            System.out.println("==============================");
             System.out.println("Checking workload " + wl.getName());
-            System.out.println("==============================");
             
             conf = candGen.generate(wl);
 
@@ -97,13 +100,18 @@ public class InumPlanFunctionalTest
                     continue;
 
                 costLeafs = 0;
-
-                for (Operator l : eStmt.getPlan().leafs())
-                    costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(eStmt.getPlan(), l);
+                
+                if (sql.getSQLCategory().isSame(SELECT) || sql.getSQLCategory().isSame(UPDATE))
+                    for (Operator l : eStmt.getPlan().leafs())
+                        costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(eStmt.getPlan(), l);
 
                 inumPlan = new InumPlan(optimizer, eStmt);
 
-                assertThat(inumPlan.getSlots().size(), is(eStmt.getPlan().getTables().size()));
+                if (sql.getSQLCategory().isSame(INSERT) || sql.getSQLCategory().isSame(DELETE))
+                    assertThat(inumPlan.getSlots().size(), is(0));
+                else
+                    assertThat(inumPlan.getSlots().size(), is(eStmt.getPlan().getTables().size()));
+
                 assertThat(inumPlan.getBaseTableUpdateCost(), is(eStmt.getBaseTableUpdateCost()));
                 assertThat(inumPlan.getUpdatedTable(), is(eStmt.getUpdatedTable()));
                 assertThat(inumPlan.getStatement(), is(eStmt.getStatement()));

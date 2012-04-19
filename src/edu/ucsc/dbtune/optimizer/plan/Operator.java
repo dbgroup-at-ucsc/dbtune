@@ -12,6 +12,9 @@ import edu.ucsc.dbtune.metadata.DatabaseObject;
  */
 public class Operator
 {
+    /** delete operator. **/
+    public static final String DELETE = "DELETE";
+
     /** NLJ operator. **/
     public static final String NLJ = "NESTED.LOOP.JOIN";
     /** NLJ operator. **/
@@ -49,6 +52,9 @@ public class Operator
     public static final String INDEX_AND = "INDEX.AND";
     /** index oring. **/
     public static final String INDEX_OR = "INDEX.OR";
+    /** insert operator. **/
+    public static final String INSERT = "INSERT";
+
 
     /** row id scan operator. **/
     public static final String RID_SCAN = "RID.SCAN";

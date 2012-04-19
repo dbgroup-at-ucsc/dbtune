@@ -1,0 +1,4 @@
+DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 1;
+DELETE FROM TPCH.LINEITEM WHERE L_ORDERKEY = 5988;
+INSERT INTO tpch.lineitem VALUES(75,17693,195,2,11,17717.59,0.07,0.08,'R','F','1992-11-16','1992-10-18','1992-11-28','DELIVER IN PERSON','RAIL','deposits about the fluffily');
+INSERT INTO tpch.orders VALUES(5739,136213,'F',113549.90,'1993-09-25','5-LOW','Clerk#000000392',0,'urts. requests along the dependencies haggle quickly final, eve');

@@ -17,6 +17,7 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.util.Environment;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.metadata.SQLTypes.isDateTimeLiteral;
 import static edu.ucsc.dbtune.metadata.SQLTypes.isString;
 
 
@@ -138,7 +139,7 @@ public class RefreshFunctionTPCHGeneration
         
         for (Column col : table.columns()){
             
-            if (isString(col.getDataType())) {
+            if (isString(col.getDataType()) || isDateTimeLiteral(col.getDataType())) {
                 result += "\'";
                 result += elements[pos];
                 result += "\'";
