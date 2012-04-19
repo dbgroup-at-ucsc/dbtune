@@ -105,7 +105,8 @@ public class InumPlan extends SQLStatementPlan
 
         if (explainedStatement.getStatement().getSQLCategory().isSame(SELECT) ||
                 explainedStatement.getStatement().getSQLCategory().isSame(UPDATE))
-            // no need to make slots for DELETE/INSERT; we assume they don't have a query shell
+            // no need to make slots for DELETE/INSERT;
+            // we assume they don't have a query shell
             leafsCost = replaceLeafsBySlots();
 
         updatedTable = explainedStatement.getUpdatedTable();
@@ -125,11 +126,17 @@ public class InumPlan extends SQLStatementPlan
 
         slots = new HashMap<Table, TableAccessSlot>();
 
-        for (Operator o : leafs())
-            if (!(o instanceof TableAccessSlot))
+        for (Operator o : leafs()) {
+            if (!(o instanceof TableAccessSlot) && 
+                    !other.getStatement().getSQLCategory().isSame(DELETE) &&
+                    !other.getStatement().getSQLCategory().isSame(INSERT))
+                // we may have leafs that are not slots, but only for INSERT/DELETE
                 throw new RuntimeException("Leaf should be a " + TableAccessSlot.class.getName());
-            else
+
+            if (other.getStatement().getSQLCategory().isSame(SELECT) || 
+                    other.getStatement().getSQLCategory().isSame(UPDATE))
                 slots.put(((TableAccessSlot) o).getTable(), (TableAccessSlot) o);
+        }
 
         internalPlanCost = other.internalPlanCost;
         delegate = other.delegate;
@@ -304,6 +311,7 @@ public class InumPlan extends SQLStatementPlan
     {
         if (getStatement().getSQLCategory().isSame(DELETE) || 
                 getStatement().getSQLCategory().isSame(INSERT))
+            // we instantiate an "empty" operator, just to be consistent with the plugging mechanism
             new Operator(TABLE_SCAN, 0, 0);
 
         TableAccessSlot slot = slots.get(index.getTable());

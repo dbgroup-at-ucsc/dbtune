@@ -14,7 +14,9 @@ nbbuild.xml
 *.properties
 resources/*/*/*/*.txt
 resources/*/*/*/*.lp
+resources/*/*/*.lp
 *.sw*
+.bin
 .checkstyle
 .classpath
 .ctags
