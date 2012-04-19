@@ -1,15 +1,11 @@
 package edu.ucsc.dbtune.bip;
 
 
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
-
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Test;
 
 
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 
 import edu.ucsc.dbtune.bip.div.DivBIP;
@@ -26,12 +22,10 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
  * 
  * @author Quoc Trung Tran
  *
+ *
  */
 public class DivBIPFunctionalTest extends DivTestSetting
 {   
-    protected static long totalIndexSize;
-    protected static Set<Index> candidates;
-    
     @Test
     public void testDivergentDesign() throws Exception
     {
@@ -78,7 +72,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
         double totalCostUniform;
         
         // update index cost & query shell in update statement 
-        updateCost = div.getUpdateCost();
+        updateCost = div.getUpdateCostFromCplex();
         // query-only cost
         queryCost  = div.getObjValue() - updateCost;
         // add the constant update-base table cost
@@ -89,42 +83,27 @@ public class DivBIPFunctionalTest extends DivTestSetting
             System.out.println("----------------------------------------");
             totalCostUniform = queryCost + updateCost * arrNReplicas[i];            
             System.out.println(" DIV-UNIF, # replicas: " + arrNReplicas[i] + "\n"
-                                + " query cost: " + queryCost + "\n"
-                                + " update base table (one replica): " + 
-                                div.getTotalBaseTableUpdateCost() + "\n"
-                                + " update cost (one replica): " + updateCost + "\n"
-                                + " TOTAL COST: " + totalCostUniform);
+                                + " TOTAL COST: " + totalCostUniform + "\n"
+                                + " QUERY cost: " + queryCost + "\n"
+                                + " UPDATE cost: " + (updateCost * arrNReplicas[i]) + "\n"
+                                + " ---- Detailed UPDATE cost (ONE Replica0: \n" 
+                                + "         - query shell & update indexes: " +
+                                             div.getUpdateCostFromCplex() + "\n"
+                                + "         - base table                  : " 
+                                +         div.getTotalBaseTableUpdateCost() + "\n");
+            
             System.out.println("----------------------------------------");
         }
            
         System.out.println("----------------------------------------");
     }
-    
-    /**
-     * Generate candidate indexes
-     */
-    protected static void generateCandidates() throws Exception
-    {
-        CandidateGenerator candGen =
-            new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
-        candidates = candGen.generate(workload);
-        
-        // Calculate the total size (for solely information)
-        totalIndexSize = 0;
-        for (Index index : candidates)
-            totalIndexSize += index.getBytes();
-        
-        System.out.println("Number of statements: " + workload.size() + "\n"
-                            + "Number of candidate: " + candidates.size() + "\n" 
-                            + "Total size: " + totalIndexSize);
-    }
-    
+   
     
     /**
      * Run the BIP with the parameters set by other functions
      * @throws Exception
      */
-    protected static void testDiv() throws Exception
+    public static void testDiv() throws Exception
     {
         div = new DivBIP();
         
@@ -148,17 +127,36 @@ public class DivBIPFunctionalTest extends DivTestSetting
         double totalCostBIP;
         
         if (output != null) {
-            System.out.println("CPLEX result: " 
-                    + " obj value: " + div.getObjValue() + "\n"
-                    + " different from optimal value: " + div.getObjectiveGap() + "\n"
-                    + " base table update cost: " + div.getTotalBaseTableUpdateCost());
-           
+            
+            double updateCost = div.getUpdateCostFromCplex();
+            double queryCost = div.getObjValue() - updateCost;
+            
+            updateCost += div.getTotalBaseTableUpdateCost();
             // add the update-base-table-constant costs
-            totalCostBIP = div.getObjValue() + div.getTotalBaseTableUpdateCost();            
+            totalCostBIP = div.getObjValue() + div.getTotalBaseTableUpdateCost();
+            
+            System.out.println("CPLEX result: " 
+                    + " TOTAL cost: " + totalCostBIP + "\n"
+                    + " QUERY cost:  " + queryCost   + "\n"
+                    + " UPDATE cost: " + updateCost  + "\n"
+                    + " ----- Update cost details: "  + "\n"
+                    + "          + query shell & update indexes: " 
+                                        + div.getUpdateCostFromCplex() + "\n"
+                    + "          + update base table:             "
+                                        + div.getTotalBaseTableUpdateCost() + "\n"
+                    + " ----- CPLEX info: \n"
+                    + "          + obj value: " + div.getObjValue() + "\n"
+                    + "          + gap from the optimal: " + div.getObjectiveGap() + "\n");
+            
+            if (isShowRecommendation)
+                System.out.println("----Output: " + output);
+           
+                        
             System.out.println(" TOTAL COST(INUM): " + totalCostBIP);
             
             // show imbalance query & replica
-            div.computeImbalanceFactor();   
+            System.out.println(" IMBALANCE REPLICA: " + div.getMaxImbalanceReplica());
+            System.out.println(" IMBALANCE QUERY: " + div.getMaxImbalanceQuery());   
             
             if (isTestCost) {
                 Set<Index> conf;

@@ -48,7 +48,7 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
             return;
         
         // 2. Generate candidate indexes
-        generateCandidates();
+        generateCandidatesCoPhy();
         maxIters = 5;
         
         // 3. Call CoPhy Design
@@ -76,7 +76,7 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
      * 
      * @throws Exception
      */
-    protected void generateCandidates() throws Exception
+    protected void generateCandidatesCoPhy() throws Exception
     {
         Set<Index> candidate;
         Workload wl;
@@ -140,7 +140,9 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         divg = divgs.get(minPosition);
         
         System.out.println("CoPhy Divergent Design \n"
-                            + " Running time: " + (timeInum + timeAnalysis) + "\n"
+                            + " INUM time: " + timeInum + "\n"
+                            + " ANALYSIS time: " + timeAnalysis + "\n"
+                            + " TOTAL running time: " + (timeInum + timeAnalysis) + "\n"
                             + " The objective value: " + divg.getTotalCost()
                             );
     }

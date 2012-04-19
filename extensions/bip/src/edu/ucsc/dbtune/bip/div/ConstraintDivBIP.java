@@ -43,8 +43,7 @@ public class ConstraintDivBIP extends DivBIP
     public static int IMBALANCE_QUERY   = 1002;
     public static int NODE_FAILURE      = 1003;
     public static int UPDATE_COST_BOUND = 1004;
-   
-    protected boolean isSumYConstraint;
+    
     protected boolean isApproximation;
     protected List<DivConstraint> constraints;
     protected QueryCostOptimalBuilder queryOptimalBuilder;
@@ -52,7 +51,6 @@ public class ConstraintDivBIP extends DivBIP
     
     public ConstraintDivBIP(final List<DivConstraint> constraints, final boolean isApproximation)
     {  
-        isSumYConstraint = false;
         this.isApproximation  = isApproximation;
         this.constraints = constraints;
     }
@@ -451,11 +449,7 @@ public class ConstraintDivBIP extends DivBIP
      * @throws IloException
      */
     protected void sumYConstraint(int r, int q, QueryPlanDesc desc) throws IloException
-    {
-        // the constraint has been implemented before
-        if (isSumYConstraint)
-            return;
-        
+    {   
         int idY;
         int idSumY;
         
@@ -471,8 +465,6 @@ public class ConstraintDivBIP extends DivBIP
         
         cplex.addEq(expr, 0, "sum_y" + numConstraints);
         numConstraints++;
-        // mark this constraint has been implemented
-        isSumYConstraint = true;
     }
     
     /**
@@ -579,7 +571,7 @@ public class ConstraintDivBIP extends DivBIP
         
         // add -beta time of expr2 
         // get iterator over exprs
-        expr.add(UtilConstraintBuilder.modifyCoef(expr2, -beta));
+        expr.add(modifyCoef(expr2, -beta));
         cplex.addLe(expr, 0, "imbalance_query_" + numConstraints);
         numConstraints++;
     }

@@ -66,8 +66,8 @@ public class DivTestSetting
         if (!(io instanceof InumOptimizer))
             return;
         
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
-        //workload = workload(en.getWorkloadsFoldername() + "/tpch-mix-div");
+        //workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch-mix-div");
         
         nReplicas  = 5;
         loadfactor = 3;

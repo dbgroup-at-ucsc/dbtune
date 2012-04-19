@@ -17,7 +17,7 @@ import static edu.ucsc.dbtune.bip.div.ConstraintDivBIP.IMBALANCE_REPLICA;
 import static edu.ucsc.dbtune.bip.div.ConstraintDivBIP.UPDATE_COST_BOUND;
 
 
-public class ConstraintDivBIPFunctionalTest  extends DivBIPFunctionalTest
+public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
 {
     private static ConstraintDivBIP constraintDiv;
     private static int nReplicaUnif;
@@ -36,7 +36,7 @@ public class ConstraintDivBIPFunctionalTest  extends DivBIPFunctionalTest
         generateCandidates();
         
         typeConstraint = UPDATE_COST_BOUND;
-        nReplicaUnif = nReplicas - 1;
+        nReplicaUnif = 2;
         
         if (typeConstraint == UPDATE_COST_BOUND) {
             updateCostConstraints();
@@ -44,7 +44,8 @@ public class ConstraintDivBIPFunctionalTest  extends DivBIPFunctionalTest
         }
         
         // set of imbalance factor values
-        double deltas[] = {2, 1.5, 1.05};
+        //double deltas[] = {2, 1.5, 1.05};
+        double deltas[] = {1.05};
         
         for (double delta : deltas) {
             
@@ -85,22 +86,28 @@ public class ConstraintDivBIPFunctionalTest  extends DivBIPFunctionalTest
         double totalCostUniform;
         
         // update index cost 
-        updateCost = div.getUpdateCost();
+        updateCost = div.getUpdateCostFromCplex();
         queryCost  = div.getObjValue() - updateCost;
         // take into account the base table update cost
         updateCost += div.getTotalBaseTableUpdateCost();
-        boundUpdateCost = nReplicaUnif  * updateCost * 1.4;
+        boundUpdateCost = nReplicaUnif  * updateCost;
         totalCostUniform = queryCost + updateCost * nReplicaUnif;
                 
-        System.out.println("L142, DIV-UNIF, query cost: " + queryCost + "\n"
-                            + " update cost: " + updateCost + "\n"
-                            + " update base table cost: " + div.getTotalBaseTableUpdateCost() + "\n"
-                            + " bound cost: " + boundUpdateCost + "\n"
-                            + " TOTAL COST: " + totalCostUniform);
+        System.out.println("DIV-UNIF, TOTAL COST: " + totalCostUniform  + "\n"
+        		            + " QUERY cost: " + queryCost + "\n"
+        		            + " UPDATE cost: " + updateCost + "\n"
+        		            + " BOUND update cost: " + boundUpdateCost
+        		            );
+        
+        double deltas[] = {1.5, 1, 0.8};
+        //double deltas[] = {0.8};
         
         // bound update cost
-        boundUpdateCost(boundUpdateCost);
-        runConstraintBIP(constraintDiv);
+        for (double delta : deltas) {
+            System.out.println("=========== delta " + delta);
+            boundUpdateCost(boundUpdateCost * delta);
+            runConstraintBIP(constraintDiv);
+        }  
     }
     
     /**
@@ -112,7 +119,7 @@ public class ConstraintDivBIPFunctionalTest  extends DivBIPFunctionalTest
         List<DivConstraint> constraints = new ArrayList<DivConstraint>();
         constraints.add(iReplica);
         
-        constraintDiv = new ConstraintDivBIP(constraints);
+        constraintDiv = new ConstraintDivBIP(constraints, isApproximation);
     }
     
     
@@ -125,7 +132,7 @@ public class ConstraintDivBIPFunctionalTest  extends DivBIPFunctionalTest
         List<DivConstraint> constraints = new ArrayList<DivConstraint>();
         constraints.add(iQuery);
         
-        constraintDiv = new ConstraintDivBIP(constraints);
+        constraintDiv = new ConstraintDivBIP(constraints, isApproximation);
     }
     
     /**
@@ -137,7 +144,7 @@ public class ConstraintDivBIPFunctionalTest  extends DivBIPFunctionalTest
         List<DivConstraint> constraints = new ArrayList<DivConstraint>();
         constraints.add(iQuery);
         
-        constraintDiv = new ConstraintDivBIP(constraints);
+        constraintDiv = new ConstraintDivBIP(constraints, isApproximation);
     }
     
     /**
@@ -163,10 +170,38 @@ public class ConstraintDivBIPFunctionalTest  extends DivBIPFunctionalTest
         if (isExportToFile)
             div.exportCplexToFile(en.getWorkloadsFoldername() + "test.lp");
         
+        
         System.out.println(logger.toString());
         if (output != null) {
-            System.out.println("The obj value: " + div.getObjValue() + "\n"
-                               + " Different from optimal value: " + div.getObjectiveGap());
+            
+            double updateCost = div.getUpdateCostFromCplex();
+            double queryCost = div.getObjValue() - updateCost;
+            
+            updateCost += div.getTotalBaseTableUpdateCost();
+            // add the update-base-table-constant costs
+            double totalCostBIP = div.getObjValue() + div.getTotalBaseTableUpdateCost();
+            
+            System.out.println(" ------------- \n"
+                    + " Number of replicas: " + nReplicas + " load factor: " + loadfactor + "\n" 
+                    + " TOTAL cost: " + totalCostBIP + "\n"
+                    + " QUERY cost:  " + queryCost   + "\n"
+                    + " UPDATE cost: " + updateCost  + "\n"
+                    + " ----- Update cost details: "  + "\n"
+                    + "          + query shell & update indexes: " 
+                                        + div.getUpdateCostFromCplex() + "\n"
+                    + "          + update base table:             "
+                                        + div.getTotalBaseTableUpdateCost() + "\n"
+                    + " ----- CPLEX info: \n"
+                    + "          + obj value: " + div.getObjValue() + "\n"
+                    + "          + gap from the optimal: " + div.getObjectiveGap() + "\n");
+                    
+
+            // show imbalance query & replica
+            System.out.println(" IMBALANCE REPLICA: " + div.getMaxImbalanceReplica());
+            System.out.println(" IMBALANCE QUERY: " + div.getMaxImbalanceQuery());
+            
+            if (isShowRecommendation)
+                System.out.println(" solution: " + output);
         } else 
             System.out.println(" NO SOLUTION ");
     }

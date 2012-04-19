@@ -218,7 +218,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         for (int r = 0; r < nReplicas; r++) 
             obj.add(replicaCost(r));
         
-        cplex.addMinimize(obj);
+        cplex.addMinimize(obj);        
     }
     
     /**
@@ -523,21 +523,21 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
        double cost = 0.0;
        IloLinearNumExpr expr;
        
-       for (int r = 0; r < nReplicas; r++) {
+       for (int r = 0; r < nReplicas; r++)
            for (QueryPlanDesc desc : super.queryPlanDescs) {
 
                if (!desc.getSQLCategory().isSame(NOT_SELECT))
                    continue;
                
                // query shell
-               expr = queryExpr(r, desc.getStatementID(), desc);
+               expr = modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+                                 getFactorStatement(desc));
                
                // update index access cost
                expr.add(indexUpdateCost(r, desc.getStatementID(), desc));
                
                cost += computeVal(expr);
            }
-       }
        
        return cost;
     }
