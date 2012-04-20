@@ -57,8 +57,9 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 public class DATTest2 {
     public static DatabaseSystem db;
     public static Environment en;
-    static int querySize = 20;
-    static int indexSize = 10;
+    public static int querySize = 20;
+    public static int indexSize = 10;
+    public static String testSet = "tpch-500-counts";
 
     public static Workload getWorkload(Environment en) throws IOException,
             SQLException {
@@ -66,9 +67,11 @@ public class DATTest2 {
         file = "/tpch-small/workload.sql";
         file = "/tpcds-small/workload.sql";
         file = "/tpch-500-counts/workload.sql";
+        file = "/" + testSet + "/workload.sql";
         Workload workload = new Workload("", new FileReader(en
                 .getWorkloadsFoldername()
                 + file));
+        Rt.np("workload size: " + workload.size());
         StringBuilder sb = new StringBuilder();
         int count = 0;
         all: while (true) {
@@ -117,8 +120,10 @@ public class DATTest2 {
     }
 
     public static SeqInumCost loadCost() throws Exception {
-        File file = new File("/home/wangrui/workspace/cache/tpch100_"
-                + querySize + "_" + indexSize + ".xml");
+        File dir = new File("/home/wangrui/workspace/cache", testSet);
+        dir.mkdir();
+        File file = new File(dir, "tpch100_" + querySize + "_" + indexSize
+                + ".xml");
         SeqInumCost cost = null;
         if (file.exists()) {
             Rt.p("loading from cache " + file.getAbsolutePath());
@@ -156,94 +161,63 @@ public class DATTest2 {
         SeqInumCost.plugInTime = 0;
         RTimerN timer = new RTimerN();
 
-        // timer.finish("loading");
-        timer.reset();
         SeqInumCost cost = loadCost();
-        if (false) {
-            for (int i = 0; i < cost.queries.size(); i++) {
-                Rt.p("Q" + i + ": ");
-                for (SeqInumPlan plan : cost.queries.get(i).plans) {
-                    Rt.np("\tPlan: " + plan.internalCost);
-                    for (SeqInumSlot slot : plan.slots) {
-                        Rt.np("\t\tSlot: " + slot.fullTableScanCost);
-                        for (SeqInumSlotIndexCost c : slot.costs) {
-                            Rt
-                                    .np("\t\t\tIndex: " + c.index.name + " "
-                                            + c.cost);
-                        }
-                    }
-                }
-            }
-            for (int i = 0; i < cost.indices.size(); i++) {
-                Rt.p("I" + i + ": " + cost.indices.get(i).createCost);
-                cost.indices.get(i).storageCost = 1000;
-            }
-        }
         Rt.p("%d x %d", cost.queries.size(), cost.indices.size());
-        double allTime = timer.getSecondElapse();
-        double inumCreateIndexCostTime = SeqCost.totalCreateIndexNanoTime / 1000000000.0;
-        double inumPopulateTime = SeqInumCost.populateTime;
-        double inumPluginTime = SeqInumCost.plugInTime;
-        Rt.p("INUM time: %.3f", timer.getSecondElapse());
-        timer.reset();
+        Rt.np("Create index cost");
         for (int i = 0; i < cost.indices.size(); i++) {
-            Rt.np("Create index cost: %,f", cost.indices.get(i).createCost);
+            Rt.np("%,.0f", cost.indices.get(i).createCost);
         }
-        double[] windowConstraints = new double[4];
+        double[] windowConstraints = new double[10];
         for (int i = 0; i < windowConstraints.length; i++)
-            windowConstraints[i] = 10000000;
+            windowConstraints[i] = 1000000;
         DAT dat = new DAT(cost, windowConstraints, 1, 1);
         // dat.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
         dat.setLogListenter(logger);
         dat.setWorkload(new Workload("", new StringReader("")));
-        DATOutput output = (DATOutput) dat.solve();
-        double datTime = timer.getSecondElapse();
-        allTime += datTime;
+        // DATOutput output = (DATOutput) dat.solve();
+        System.out.print("alpha, beta\t");
+        for (int i = 0; i < windowConstraints.length; i++) {
+            System.out.print("window "+i + "\t");
+        }
+        System.out.println("TransCost");
+        System.out.print("constraint\t");
+        for (int i = 0; i < windowConstraints.length; i++) {
+            System.out.print(windowConstraints[i] + "\t");
+        }
+        System.out.println("");
+        DATOutput baseline = (DATOutput) dat.baseline();
+        System.out.print("cophy\t");
+        for (int i = 0; i < windowConstraints.length; i++) {
+            System.out.print(baseline.ws[i].cost + "\t");
+        }
+        System.out.println(baseline.totalCost);
+        double alpha=1;
+        for (double belta = Math.pow(2,-7); belta <= Math.pow(2, 7); belta *= 2) {
+            dat = new DAT(cost, windowConstraints, alpha, belta);
+            // dat.setOptimizer(optimizer);
+            dat.setLogListenter(logger);
+            dat.setWorkload(new Workload("", new StringReader("")));
+            DATOutput output = (DATOutput) dat.solve();
+            System.out.print(alpha+", "+ belta + "\t");
+            for (int i = 0; i < windowConstraints.length; i++) {
+                System.out.print(output.ws[i].cost + "\t");
+            }
+            System.out.println(output.totalCost);
+        }
+
         double datCost = dat.getObjValue();
         Rt.p("%d x %d", cost.queries.size(), cost.indices.size());
         Rt.p("cost: %,.0f", dat.getObjValue());
-        Rt.p("BIP time: %.3f", timer.getSecondElapse());
-        if (true)
-            for (int i = 0; i < output.indexUsed.length; i++) {
-                System.out.print("Query " + i + ":");
-                for (SeqInumIndex index : output.indexUsed[i]) {
-                    System.out.print(" " + index.name);
-                }
-                System.out.println();
-            }
-        // if (false)
-        // for (SeqInumQuery query : cost.queries) {
-        // double c = 0;
-        // c += query.selectedPlan.internalCost;
-        // HashSet<Index> indexs = new HashSet<Index>();
-        // for (SeqInumSlot slot : query.selectedPlan.slots) {
-        // if (slot.selectedIndex == null)
-        // c += slot.fullTableScanCost;
-        // else {
-        // c += slot.selectedIndex.cost;
-        // indexs.add(slot.selectedIndex.index.index);
-        // }
-        // }
-        // double db2cost = db2optimizer.explain(query.sql, indexs)
-        // .getTotalCost();
-        // Rt.p("%s q=%,.0f db2=%,.0f t=%,.0f", query.name, c, db2cost,
-        // query.transitionCost);
-        // if (Math.abs(c - db2cost) > 1)
-        // Rt.error("%.2f%%", c / db2cost * 100);
-        // }
+        Rt.p("time: %.3f", timer.getSecondElapse());
+        // output.print();
+        // baseline.print();
         if (db != null)
             db.getConnection().close();
 
         Rx rx = new Rx("data");
         rx.createChild("queryCount", cost.queries.size());
         rx.createChild("indexCount", cost.indices.size());
-        rx.createChild("createIndexCostTime", inumCreateIndexCostTime);
-        rx.createChild("inumPluginTime", inumPluginTime);
-        rx.createChild("inumPluginCount", SeqCost.plugInCount);
-        rx.createChild("inumPopulateTime", inumPopulateTime);
-        rx.createChild("allTime", allTime);
-        rx.createChild("time", datTime);
         rx.createChild("cost", datCost);
         Rt.np(rx.getXml().toString());
 
@@ -252,8 +226,17 @@ public class DATTest2 {
     public static StringBuilder sb = new StringBuilder();
 
     public static void main(String[] args) throws Exception {
-        querySize = 100;
+        testSet = "tpch-small";
+        querySize = 10;
         indexSize = 200;
+//        testSet = "tpch-500-counts";
+//
+//        querySize = 100;
+//        indexSize = 200;
+//
+//        querySize = 50;
+//        indexSize = 50;
+
         testBIP();
     }
 }
