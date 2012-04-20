@@ -33,10 +33,10 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
             return;
 
         // 2. Generate candidate indexes
-        generateCandidates();
+        generateOptimalCandidates();
         
         typeConstraint = UPDATE_COST_BOUND;
-        nReplicaUnif = 2;
+        nReplicaUnif = 1;
         
         if (typeConstraint == UPDATE_COST_BOUND) {
             updateCostConstraints();
@@ -44,8 +44,8 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
         }
         
         // set of imbalance factor values
-        //double deltas[] = {2, 1.5, 1.05};
-        double deltas[] = {1.05};
+        double deltas[] = {2, 1.5, 1.05};
+        //double deltas[] = {1.05};
         
         for (double delta : deltas) {
             
@@ -99,7 +99,7 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
         		            + " BOUND update cost: " + boundUpdateCost
         		            );
         
-        double deltas[] = {1.5, 1, 0.8};
+        double deltas[] = {1.5, 1, 0.5};
         //double deltas[] = {0.8};
         
         // bound update cost

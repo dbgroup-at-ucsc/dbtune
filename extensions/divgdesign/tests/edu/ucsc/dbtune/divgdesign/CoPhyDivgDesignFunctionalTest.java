@@ -5,6 +5,7 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,12 +19,15 @@ import edu.ucsc.dbtune.divgdesign.CoPhyDivgDesign;
 
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
 import edu.ucsc.dbtune.bip.DivTestSetting;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
+
+import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
 
 /**
@@ -48,8 +52,8 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
             return;
         
         // 2. Generate candidate indexes
-        generateCandidatesCoPhy();
-        maxIters = 5;
+        generateOptimalCandidatesCoPhy();
+        maxIters = 1;
         
         // 3. Call CoPhy Design
         for (int i = 0; i < arrNReplicas.length; i++) {
@@ -72,11 +76,11 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
     
     
     /**
-     * Generate candidate indexes for each statement
+     * Generate optimal candidate indexes for each statement
      * 
      * @throws Exception
      */
-    protected void generateCandidatesCoPhy() throws Exception
+    protected void generateOptimalCandidatesCoPhy() throws Exception
     {
         Set<Index> candidate;
         Workload wl;
@@ -88,7 +92,42 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         for (SQLStatement sql : workload) {
             
             wl = new Workload(Lists.newArrayList(sql));
-            candidate = candGen.generate(wl);                
+            
+            if (sql.getSQLCategory().isSame(SELECT))
+                candidate = candGen.generate(wl);
+            else 
+                candidate = new HashSet<Index>();
+            
+            recommendedIndexStmt.put(sql, candidate);
+            
+        }
+    }
+    
+    /**
+     * Generate powerset candidate indexes for each statement
+     * 
+     * @throws Exception
+     */
+    protected void generatePowersetCandidatesCoPhy() throws Exception
+    {
+        Set<Index> candidate;
+        Workload wl;
+        CandidateGenerator candGen = 
+            new PowerSetOptimalCandidateGenerator(
+                    new OptimizerCandidateGenerator
+                        (getBaseOptimizer(db.getOptimizer())), 2);
+        
+        recommendedIndexStmt = new HashMap<SQLStatement, Set<Index>>();
+        
+        for (SQLStatement sql : workload) {
+            
+            wl = new Workload(Lists.newArrayList(sql));
+            
+            if (sql.getSQLCategory().isSame(SELECT))
+                candidate = candGen.generate(wl);
+            else 
+                candidate = new HashSet<Index>();
+            
             recommendedIndexStmt.put(sql, candidate);
             
         }

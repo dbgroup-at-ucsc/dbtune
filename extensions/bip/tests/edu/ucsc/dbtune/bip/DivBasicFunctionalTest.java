@@ -37,7 +37,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
         
         // 2. Generate candidate indexes
         workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
-        generateCandidates();
+        generateOptimalCandidates();
         nReplicas = 3;
         loadfactor = 2;
         B = Math.pow(2, 28); 

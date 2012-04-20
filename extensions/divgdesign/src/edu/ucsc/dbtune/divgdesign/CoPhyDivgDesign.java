@@ -22,6 +22,9 @@ import edu.ucsc.dbtune.workload.Workload;
 import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.preparedStmts;
 import static edu.ucsc.dbtune.bip.util.LogListener.EVENT_POPULATING_INUM;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
+import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
+import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.INDEX_UPDATE_COST_FACTOR;
 
 public class CoPhyDivgDesign extends DivgDesign 
 {    
@@ -126,21 +129,45 @@ public class CoPhyDivgDesign extends DivgDesign
             inumStmt  = (InumPreparedSQLStatement) io.prepareExplain(sql);
             preparedStmts.put(sql, inumStmt);
         }
+        
        
         // iterate over every replica 
         // and compute the cost
         List<QueryCostAtPartition> costs = new ArrayList<QueryCostAtPartition>();
         double cost;
-     
+        double baseTableCost;
+        double indexUpdateCost;
+        
         for (int i = 0; i < n; i++) {
             
             explain = inumStmt.explain(indexesAtReplica.get(i));
             cost = explain.getTotalCost();
             
+            // temporary take get select cost out of the cost
+            if (sql.getSQLCategory().isSame(INSERT) || 
+                    sql.getSQLCategory().isSame(DELETE)) {
+                // cost of base table & update cost
+                cost -= explain.getSelectCost();
+                baseTableCost = explain.getBaseTableUpdateCost();
+                indexUpdateCost = cost - baseTableCost;
+                indexUpdateCost *= INDEX_UPDATE_COST_FACTOR;
+                
+                cost = baseTableCost + indexUpdateCost;                
+            }
+            
+            cost *= sql.getStatementWeight();
+            
             /*
-            // NOT take into account the base table update cost
-            if (sql.getSQLCategory().isSame(NOT_SELECT))
-                cost -= explain.getBaseTableUpdateCost();
+            if (sql.getSQLCategory().isSame(DELETE) ||
+                    sql.getSQLCategory().isSame(INSERT) ) {
+                System.out.println(sql.getSQLCategory() + "\n"
+                                    + " replica = " + i + " cost = " + cost + "\n"
+                                    + " base table cost: " + explain.getBaseTableUpdateCost()
+                                    + "\n"
+                                    + " configuration: " + indexesAtReplica.get(i).size()
+                                    + "\n"
+                                    + explain.getPlan());
+            }
             */
             
             costs.add(new QueryCostAtPartition(i, cost));

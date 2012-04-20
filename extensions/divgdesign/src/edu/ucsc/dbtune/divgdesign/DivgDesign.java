@@ -264,7 +264,8 @@ public abstract class DivgDesign
               throws Exception;
     
     /**
-     * Retrieve the cost of the given statement w.r.t. the configuration at each replica
+     * Retrieve the cost of the given statement w.r.t. the configuration at each replica.
+     * (Also take into account the weight)
      *     
      * @param sql
      *      The SQL statement

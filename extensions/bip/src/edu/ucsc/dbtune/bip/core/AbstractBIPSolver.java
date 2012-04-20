@@ -24,6 +24,8 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
+import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
+import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
 /**
  * This class abstracts the common methods shared by different BIP solvers
@@ -194,8 +196,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
             queryPlanDescs.add(desc);
             
             // Add referenced tables of each statement
-            // into the ``global'' set {@code listWorkloadTables}
-            workloadTables.addAll(desc.getTables());
+            // to generate FTS, for SELECT, UPDATE statement only
+            if (desc.getSQLCategory().isSame(SELECT) 
+                   || desc.getSQLCategory().isSame(UPDATE))
+                workloadTables.addAll(desc.getTables());
         }
         
         // Add full table scan indexes into the candidate index set

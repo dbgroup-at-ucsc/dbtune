@@ -36,7 +36,10 @@ public class DivBIPFunctionalTest extends DivTestSetting
             return;
 
         // 2. Generate candidate indexes
-        generateCandidates();
+        if (isCandidatePowerset)
+            generatePowersetCandidates();
+        else 
+            generateOptimalCandidates();
         
         // 3. Call divergent design
         for (int i = 0; i < arrNReplicas.length; i++) {
@@ -86,7 +89,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
                                 + " TOTAL COST: " + totalCostUniform + "\n"
                                 + " QUERY cost: " + queryCost + "\n"
                                 + " UPDATE cost: " + (updateCost * arrNReplicas[i]) + "\n"
-                                + " ---- Detailed UPDATE cost (ONE Replica0: \n" 
+                                + " ---- Detailed UPDATE cost (ONE Replica): \n" 
                                 + "         - query shell & update indexes: " +
                                              div.getUpdateCostFromCplex() + "\n"
                                 + "         - base table                  : " 
