@@ -170,4 +170,12 @@ public interface QueryPlanDesc
      *      contain the given index.
      */
     public double getUpdateCost(Index index);
+    
+    /**
+     * Returns the weight of the statement
+     * 
+     * @return
+     *      The weight (or the frequency) of the statement
+     */
+    public double getStatementWeight();
 }

@@ -201,7 +201,8 @@ public class ConstraintDivBIP extends DivBIP
                             getFactorStatement(desc)));
                 
                 // update cost
-                expr.add(indexUpdateCost(r, desc.getStatementID(), desc));
+                expr.add(modifyCoef(indexUpdateCost(r, desc.getStatementID(), desc),
+                        desc.getStatementWeight()));
             }
         }
         

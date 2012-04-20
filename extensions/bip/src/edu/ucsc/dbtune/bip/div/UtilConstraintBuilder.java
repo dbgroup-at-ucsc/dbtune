@@ -109,6 +109,10 @@ public class UtilConstraintBuilder
      */
     public static IloLinearNumExpr modifyCoef(IloLinearNumExpr expr, double factor) throws IloException
     {
+        // not modify the coefficient
+        if (factor == 1.0)
+            return expr;
+        
         IloNumVar        var;
         double           coef;
         IloLinearNumExprIterator iter;
