@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.seq.bip;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.Hashtable;
 import java.util.Set;
@@ -14,10 +15,11 @@ import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.bip.def.*;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.seq.utils.Rx;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
-public class SeqInumCost {
+public class SeqInumCost implements Serializable {
     public Hashtable<String, SeqInumQuery> queryHash = new Hashtable<String, SeqInumQuery>();
     public Hashtable<String, SeqInumIndex> indexHash = new Hashtable<String, SeqInumIndex>();
     public Vector<SeqInumIndex> indices = new Vector<SeqInumIndex>();
@@ -26,6 +28,33 @@ public class SeqInumCost {
     InumOptimizer optimizer;
     Set<Index> inumIndices;
     Hashtable<Index, SeqInumIndex> indexToInumIndex = new Hashtable<Index, SeqInumIndex>();
+
+    public void save(Rx rx) {
+        for (SeqInumQuery query : queries) {
+            query.save(rx.createChild("query"));
+        }
+        for (SeqInumIndex index : indices) {
+            index.save(rx.createChild("index"));
+        }
+    }
+
+    public static SeqInumCost loadFromXml(Rx rx) {
+        SeqInumCost cost = new SeqInumCost();
+        int queryId = 0;
+        for (Rx r : rx.findChilds("index")) {
+            SeqInumIndex index = new SeqInumIndex(r);
+            if (cost.indexHash.put(index.name, index) != null)
+                throw new Error("duplicate index");
+            cost.indices.add(index);
+        }
+        cost.queries = new Vector<SeqInumQuery>();
+        for (Rx r : rx.findChilds("query")) {
+            SeqInumQuery q = new SeqInumQuery(cost, r);
+            cost.queryHash.put(q.name, q);
+            cost.queries.add(q);
+        }
+        return cost;
+    }
 
     public SeqInumQuery addQuery(SQLStatement statement) throws SQLException {
         int id = queries.size();
@@ -36,12 +65,12 @@ public class SeqInumCost {
         queries.add(q);
 
         RTimerN timer = new RTimerN();
-        InumQueryPlanDesc desc = (InumQueryPlanDesc)InumQueryPlanDesc
+        InumQueryPlanDesc desc = (InumQueryPlanDesc) InumQueryPlanDesc
                 .getQueryPlanDescInstance(statement);
         // Populate the INUM space
         desc.generateQueryPlanDesc(optimizer, inumIndices);
-        plugInTime+=desc.pluginTime/1000000000.0;
-        populateTime+=desc.populateTime/1000000000.0;
+        plugInTime += desc.pluginTime / 1000000000.0;
+        populateTime += desc.populateTime / 1000000000.0;
         // Rt.p("BIP INUM populate time: " + timer.getSecondElapse());
         q.plans = new SeqInumPlan[desc.getNumberOfTemplatePlans()];
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
@@ -70,7 +99,7 @@ public class SeqInumCost {
                         // .p("BIP INUM plugin time: "
                         // + timer.getSecondElapse());
                     }
-//                    plugInTime += timer.getSecondElapse();
+                    // plugInTime += timer.getSecondElapse();
                     plugInCount++;
                     // Rt.p("%f %f",timer.getSecondElapse(),plugInTime);
                 }

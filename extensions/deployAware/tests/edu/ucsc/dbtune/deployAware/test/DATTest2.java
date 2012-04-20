@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune;
+package edu.ucsc.dbtune.deployAware.test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,6 +23,8 @@ import edu.ucsc.dbtune.bip.sim.Schedule;
 import edu.ucsc.dbtune.bip.sim.ScheduleOnOptimizer;
 import edu.ucsc.dbtune.bip.sim.SimModel;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.deployAware.DAT;
+import edu.ucsc.dbtune.deployAware.DATOutput;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
@@ -52,10 +54,10 @@ import static edu.ucsc.dbtune.bip.sim.SimVariablePool.VAR_Y;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 
-public class BipTest2 {
+public class DATTest2 {
     public static DatabaseSystem db;
     public static Environment en;
-    static int times = 1;
+    static int querySize = 20;
     static int indexSize = 10;
 
     public static Workload getWorkload(Environment en) throws IOException,
@@ -63,17 +65,18 @@ public class BipTest2 {
         String file = "/tpch/workload_bip_seq.sql";
         file = "/tpch-small/workload.sql";
         file = "/tpcds-small/workload.sql";
+        file = "/tpch-500-counts/workload.sql";
         Workload workload = new Workload("", new FileReader(en
                 .getWorkloadsFoldername()
                 + file));
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < workload.size(); i++) {
-            if (i != 0
-            // && i != workload.size() - 1
-            ) {
-                for (int j = 0; j < times; j++)
-                    sb.append(workload.get(i).getSQL() + ";\r\n");
-                // break;
+        int count = 0;
+        all: while (true) {
+            for (int i = 0; i < workload.size(); i++) {
+                sb.append(workload.get(i).getSQL() + ";\r\n");
+                count++;
+                if (count >= querySize)
+                    break all;
             }
         }
         return new Workload("", new StringReader(sb.toString()));
@@ -99,6 +102,7 @@ public class BipTest2 {
         // Set<Index> indexes = candGen.generate(workload);
         int size = indexSize;
         if (indexes.size() >= size) {
+            Rt.np("Reduce index size from " + indexes.size() + " to " + size);
             Set<Index> temp = new HashSet<Index>();
             int count = 0;
             for (Index index : indexes) {
@@ -112,6 +116,39 @@ public class BipTest2 {
         return indexes;
     }
 
+    public static SeqInumCost loadCost() throws Exception {
+        File file = new File("/home/wangrui/workspace/cache/tpch100_"
+                + querySize + "_" + indexSize + ".xml");
+        SeqInumCost cost = null;
+        if (file.exists()) {
+            Rt.p("loading from cache " + file.getAbsolutePath());
+            Rx rx = Rx.findRoot(Rt.readFile(file));
+            cost = SeqInumCost.loadFromXml(rx);
+        } else {
+            en = Environment.getInstance();
+            db = newDatabaseSystem(en);
+
+            Workload workload = DATTest2.getWorkload(en);
+            Set<Index> indexes = DATTest2.getIndexes(workload, db);
+
+            InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
+            DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
+
+            cost = SeqInumCost.fromInum(optimizer, workload, indexes);
+            for (int i = 0; i < cost.queries.size(); i++) {
+                cost.queries.get(i).sql = null;
+            }
+            for (int i = 0; i < cost.indices.size(); i++) {
+                cost.indices.get(i).index = null;
+            }
+            Rx root = new Rx("workload");
+            cost.save(root);
+            String xml = root.getXml();
+            Rt.write(file, xml);
+        }
+        return cost;
+    }
+
     public static void testBIP() throws Exception {
         SeqCost.totalWhatIfNanoTime = 0;
         SeqCost.totalCreateIndexNanoTime = 0;
@@ -119,17 +156,9 @@ public class BipTest2 {
         SeqInumCost.plugInTime = 0;
         RTimerN timer = new RTimerN();
 
-        en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-
-        Workload workload = BipTest2.getWorkload(en);
-        Set<Index> indexes = BipTest2.getIndexes(workload, db);
-
-        InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
-        DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
         // timer.finish("loading");
         timer.reset();
-        SeqInumCost cost = SeqInumCost.fromInum(optimizer, workload, indexes);
+        SeqInumCost cost = loadCost();
         if (false) {
             for (int i = 0; i < cost.queries.size(); i++) {
                 Rt.p("Q" + i + ": ");
@@ -157,21 +186,23 @@ public class BipTest2 {
         double inumPluginTime = SeqInumCost.plugInTime;
         Rt.p("INUM time: %.3f", timer.getSecondElapse());
         timer.reset();
-        cost.storageConstraint = 2000;
         for (int i = 0; i < cost.indices.size(); i++) {
-            cost.indices.get(i).storageCost = 1000;
+            Rt.np("Create index cost: %,f", cost.indices.get(i).createCost);
         }
-        SeqBIP bip = new SeqBIP(cost);
-        bip.setOptimizer(optimizer);
+        double[] windowConstraints = new double[4];
+        for (int i = 0; i < windowConstraints.length; i++)
+            windowConstraints[i] = 10000000;
+        DAT dat = new DAT(cost, windowConstraints, 1, 1);
+        // dat.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
-        bip.setLogListenter(logger);
-        bip.setWorkload(new Workload("", new StringReader("")));
-        SebBIPOutput output = (SebBIPOutput) bip.solve();
-        double bipTime = timer.getSecondElapse();
-        allTime += bipTime;
-        double bipCost = bip.getObjValue();
+        dat.setLogListenter(logger);
+        dat.setWorkload(new Workload("", new StringReader("")));
+        DATOutput output = (DATOutput) dat.solve();
+        double datTime = timer.getSecondElapse();
+        allTime += datTime;
+        double datCost = dat.getObjValue();
         Rt.p("%d x %d", cost.queries.size(), cost.indices.size());
-        Rt.p("cost: %,.0f", bip.getObjValue());
+        Rt.p("cost: %,.0f", dat.getObjValue());
         Rt.p("BIP time: %.3f", timer.getSecondElapse());
         if (true)
             for (int i = 0; i < output.indexUsed.length; i++) {
@@ -181,27 +212,28 @@ public class BipTest2 {
                 }
                 System.out.println();
             }
-        if (true)
-            for (SeqInumQuery query : cost.queries) {
-                double c = 0;
-                c += query.selectedPlan.internalCost;
-                HashSet<Index> indexs = new HashSet<Index>();
-                for (SeqInumSlot slot : query.selectedPlan.slots) {
-                    if (slot.selectedIndex == null)
-                        c += slot.fullTableScanCost;
-                    else {
-                        c += slot.selectedIndex.cost;
-                        indexs.add(slot.selectedIndex.index.index);
-                    }
-                }
-                double db2cost = db2optimizer.explain(query.sql, indexs)
-                        .getTotalCost();
-                Rt.p("%s q=%,.0f db2=%,.0f t=%,.0f", query.name, c, db2cost,
-                        query.transitionCost);
-                if (Math.abs(c - db2cost) > 1)
-                    Rt.error("%.2f%%", c / db2cost * 100);
-            }
-        db.getConnection().close();
+        // if (false)
+        // for (SeqInumQuery query : cost.queries) {
+        // double c = 0;
+        // c += query.selectedPlan.internalCost;
+        // HashSet<Index> indexs = new HashSet<Index>();
+        // for (SeqInumSlot slot : query.selectedPlan.slots) {
+        // if (slot.selectedIndex == null)
+        // c += slot.fullTableScanCost;
+        // else {
+        // c += slot.selectedIndex.cost;
+        // indexs.add(slot.selectedIndex.index.index);
+        // }
+        // }
+        // double db2cost = db2optimizer.explain(query.sql, indexs)
+        // .getTotalCost();
+        // Rt.p("%s q=%,.0f db2=%,.0f t=%,.0f", query.name, c, db2cost,
+        // query.transitionCost);
+        // if (Math.abs(c - db2cost) > 1)
+        // Rt.error("%.2f%%", c / db2cost * 100);
+        // }
+        if (db != null)
+            db.getConnection().close();
 
         Rx rx = new Rx("data");
         rx.createChild("queryCount", cost.queries.size());
@@ -211,65 +243,17 @@ public class BipTest2 {
         rx.createChild("inumPluginCount", SeqCost.plugInCount);
         rx.createChild("inumPopulateTime", inumPopulateTime);
         rx.createChild("allTime", allTime);
-        rx.createChild("time", bipTime);
-        rx.createChild("cost", bipCost);
-        Rt.write(new File("/tmp/t.xml"), rx.getXml().toString());
+        rx.createChild("time", datTime);
+        rx.createChild("cost", datCost);
+        Rt.np(rx.getXml().toString());
 
-    }
-
-    static void testGREEDY() throws Exception {
-        SeqWhatIfTest2.perf_createIndexCostTime = 0;
-        SeqWhatIfTest2.perf_pluginTime = 0;
-        SeqWhatIfTest2.perf_allTime = 0;
-        SeqWhatIfTest2.perf_algorithmTime = 0;
-        SeqCost.totalWhatIfNanoTime = 0;
-        SeqCost.totalCreateIndexNanoTime = 0;
-        SeqCost.plugInTime = 0;
-        SeqCost.populateTime = 0;
-        SeqWhatIfTest2 t = new SeqWhatIfTest2();
-        Rx rx = new Rx("data");
-        rx.createChild("queryCount", t.cost.sequence.length);
-        rx.createChild("indexCount", t.cost.indicesV.size());
-        rx.createChild("createIndexCostTime",
-                SeqWhatIfTest2.perf_createIndexCostTime);
-        rx.createChild("inumPluginTime", SeqWhatIfTest2.perf_pluginTime);
-        rx.createChild("inumPopulateTime", SeqWhatIfTest2.perf_populateTime);
-        rx.createChild("inumPluginCount", SeqCost.plugInCount);
-        rx.createChild("allTime", SeqWhatIfTest2.perf_allTime);
-        rx.createChild("time", SeqWhatIfTest2.perf_algorithmTime);
-        rx.createChild("cost", SeqWhatIfTest2.perf_cost);
-        Rt.write(new File("/tmp/t.xml"), rx.getXml().toString());
-        // String log = String
-        // .format(
-        // "%d x %d,\t\t%.3f,%.3f,\t%.3f,%.3f,\t%.3f,%.3f,\t%.3f,%.3f,\t \"%,.0f\",\"%,.0f\"",
-        // cost.sequence.length, cost.indicesV.size(),//
-        // inumCreateIndexCostTime, //
-        // SeqWhatIfTest2.perf_createIndexCostTime, //
-        // inumPluginTime, //
-        // SeqWhatIfTest2.perf_pluginTime,//
-        // inumTime, //
-        // SeqWhatIfTest2.perf_inumTime,//
-        // bipTime,//
-        // SeqWhatIfTest2.perf_algorithmTime, //
-        // bipCost,//
-        // SeqWhatIfTest2.perf_cost);
-        // sb.append(log + "\r\n");
-        // Rt.np("query x index,\t createCostTime,\t pluginTime,\t "
-        // + "inumTime,\t time,\t cost");
-        // Rt.np(sb);
     }
 
     public static StringBuilder sb = new StringBuilder();
 
     public static void main(String[] args) throws Exception {
-        // WfitTest2.testBIP();
-        times = Integer.parseInt(args[0]);
-        indexSize = Integer.parseInt(args[1]);
-        if ("bip".equals(args[2]))
-            testBIP();
-        else if ("greedy".equals(args[2]))
-            testGREEDY();
-        else
-            throw new Error();
+        querySize = 100;
+        indexSize = 200;
+        testBIP();
     }
 }

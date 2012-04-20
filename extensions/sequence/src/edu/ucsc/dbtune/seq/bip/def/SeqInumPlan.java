@@ -1,6 +1,11 @@
 package edu.ucsc.dbtune.seq.bip.def;
 
-public class SeqInumPlan {
+import java.io.Serializable;
+
+import edu.ucsc.dbtune.seq.bip.SeqInumCost;
+import edu.ucsc.dbtune.seq.utils.Rx;
+
+public class SeqInumPlan implements Serializable {
     public SeqInumQuery query;
     public int id;
     public double internalCost;
@@ -9,5 +14,24 @@ public class SeqInumPlan {
     public SeqInumPlan(SeqInumQuery query,int id) {
         this.query = query;
         this.id=id;
+    }
+    
+    public void save(Rx rx) {
+        rx.createChild("id",id);
+        rx.createChild("internalCost",internalCost);
+        for (SeqInumSlot slot : slots) {
+            slot.save(rx.createChild("slot"));
+        }
+    }
+    
+    public SeqInumPlan(SeqInumCost cost,SeqInumQuery query,Rx rx) {
+        this.query = query;
+        id=rx.getChildIntContent("id");
+        internalCost=rx.getChildDoubleContent("internalCost");
+        Rx[] rs=rx.findChilds("slot");
+        slots=new SeqInumSlot[rs.length];
+        for (int i=0;i<rs.length;i++) {
+            slots[i]=new SeqInumSlot(cost,this,rs[i]);
+        }
     }
 }
