@@ -2,7 +2,9 @@ package edu.ucsc.dbtune.util;
 
 import java.sql.SQLException;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor;
@@ -13,6 +15,7 @@ import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
+import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
@@ -26,15 +29,15 @@ import static edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor.BoundSQLState
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 
 import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.HJ;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.MSJ;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.SORT;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.SUBQUERY;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTables;
-
-import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
-import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 
 /**
  * @author Ivo Jimenez
@@ -46,6 +49,55 @@ public final class InumUtils
      */
     private InumUtils()
     {
+    }
+
+    /**
+     * Converts the leaf into a table scan, scanning the given table.
+     *
+     * @param plan
+     *      plan on which this operation is executed
+     * @param table
+     *      table being scanned by the operator
+     * @param cost
+     *      cost of the operator
+     * @throws SQLException
+     *      if the plan doesn't have only one leaf
+     */
+    public static void makeLeafATableScan(SQLStatementPlan plan, Table table, double cost)
+        throws SQLException
+    {
+        if (plan.leafs().size() != 1)
+            throw new SQLException("Expecting only one leaf");
+
+        for (Operator o : plan.leafs()) {
+            plan.rename(o, TABLE_SCAN);
+
+            if (o.getDatabaseObjects().size() > 0)
+                plan.removeDatabaseObject(o);
+
+            plan.assignCost(o, cost);
+            plan.assignDatabaseObject(o, table);
+            plan.assignColumnsFetched(o, new InterestingOrder(table.columns().get(0), true));
+        }
+    }
+
+    /**
+     * Removes the leafs and subtracts their cost to every node in the remaining plan.
+     *
+     * @param plan
+     *      plan on which this operation is executed
+     */
+    public static void removeLeafsAndSubstractTheirCost(SQLStatementPlan plan)
+    {
+        double leafsCost = 0.0;
+
+        for (Operator o : plan.leafs()) {
+            leafsCost += o.getAccumulatedCost();
+            plan.remove(o);
+        }
+
+        for (Operator o : plan.toList())
+            plan.assignCost(o, o.getAccumulatedCost() - leafsCost);
     }
 
     /**
@@ -220,6 +272,35 @@ public final class InumUtils
     }
 
     /**
+     * Extracts the list of tables referenced by a statement by parsing the SQL text.
+     *
+     * @param statement
+     *      SQL statement being parsed in order to extract table references
+     * @param catalog
+     *      used to retrieve metadata for objects referenced in the statement
+     * @return
+     *      the tables referenced in the statement
+     * @throws SQLException
+     *      if there's a problem while parsing the SQL text
+     */
+    public static List<Table> extractTablesReferencedByStatement(
+            SQLStatement statement, Catalog catalog)
+        throws SQLException
+    {
+        List<Table> tables = new ArrayList<Table>();
+        DerbyInterestingOrdersExtractor ioExtractor;
+        BoundSQLStatementParseTree parseTree;
+
+        ioExtractor = new DerbyInterestingOrdersExtractor(catalog);
+        parseTree = new BoundSQLStatementParseTree(ioExtractor.getParseTree(statement), catalog);
+
+        for (Table t : parseTree.getTables())
+            tables.add(t);
+
+        return tables;
+    }
+
+    /**
      * Renames the first occurrence of a {@link TEMPORARY_TABLE_SCAN} leaf operator (to {@link 
      * SORT}) by calling {@link #renameClosestJoinAndRemoveBranchComingFrom}.
      *
@@ -232,26 +313,19 @@ public final class InumUtils
      */
     public static boolean removeTemporaryTables(SQLStatementPlan plan) throws SQLException
     {
-        boolean removed = false;
-
         for (Operator o : plan.leafs()) {
+            if (!o.getName().equals(TEMPORARY_TABLE_SCAN))
+                continue;
 
-            if (plan.getStatement().getSQLCategory().isSame(INSERT) ||
-                    plan.getStatement().getSQLCategory().isSame(DELETE)) {
-                // no need to look for a join
-                plan.remove(o);
-                break;
-            }
-
-            if (o.getName().equals(TEMPORARY_TABLE_SCAN) && plan.getChildren(o).isEmpty()) {
+            if (plan.contains(MSJ) || plan.contains(HJ) || plan.contains(NLJ))
                 renameClosestJoinAndRemoveBranchComingFrom(plan, o, SORT);
-                removed = true;
-                break;
-            }
+            else
+                plan.remove(o);
 
+            return true;
         }
 
-        return removed;
+        return false;
     }
 
     /**
@@ -546,79 +620,4 @@ public final class InumUtils
 
         return false;
     }
-
-    /**
-     * Instantiates an operator for an unseen index.
-    protected Operator instantiateOperatorForUnseenIndex(SQLStatement sql, Index index)
-        throws SQLException
-    {
-        SQLStatementPlan plan = delegate.explain(sql, Sets.<Index>newHashSet(index)).getPlan();
-
-        Operator indexScan = null;
-        Operator fetch = null;
-        Operator otherFetch = null;
-
-        for (Operator o : plan.toList()) {
-
-            if (!o.getName().equals(INDEX_SCAN))
-                continue;
-
-            if (o.getDatabaseObjects().size() != 1)
-                throw new SQLException(INDEX_SCAN + " should be referring to a DB object");
-
-            DatabaseObject dbo = o.getDatabaseObjects().get(0);
-
-            if (dbo instanceof Index && index.getTable().equals(((Index) dbo).getTable())) {
-
-                if (indexScan != null) {
-                    // it is possible to find more than one INDEX_SCAN that refers {@code index}, 
-                    // since some optimizers scan the same index more than once. As long as the 
-                    // INDEX_SCANs are all referring to the SAME index, it's OK
-                    if (!index.equals(dbo)) {
-                        throw new SQLException(
-                            "Other " + INDEX_SCAN + " for " + index.getTable() + " in " + plan);
-                    } else {
-                        // check that they're sharing the same FETCH parent, otherwise 
-                        // extractCostOfLeafAndRemoveFetch won't return the appropriate costh
-                        otherFetch = plan.findAncestorWithName(o, FETCH);
-
-                        if ((fetch != null && otherFetch == null) ||
-                                (fetch == null && otherFetch != null) ||
-                                (fetch != null && otherFetch != null && !fetch.equals(otherFetch)))
-                            throw new SQLException("Haven't implemented this case yet");
-
-                        dbo.getName();
-                    }
-                } else {
-                    indexScan = o;
-                    fetch = plan.findAncestorWithName(o, FETCH);
-                }
-            }
-        }
-
-        if (indexScan == null)
-            // plan is not using the index, so the index is not compatible with this slot
-            return INCOMPATIBLE;
-
-        double newIndexScanCost = 0;
-        double costOfChildren = 0;
-
-        if (plan.getChildren(indexScan).size() > 0) {
-            // check if INDEX_SCAN has children and remove them. Yes, it is
-            // possible for INDEX_SCAN to have children.
-            for (Operator child : plan.getChildren(indexScan)) {
-                costOfChildren += child.getAccumulatedCost();
-                plan.remove(child);
-            }
-        }
-
-        newIndexScanCost = extractCostOfLeafAndRemoveFetch(plan, indexScan) - costOfChildren;
-
-        Operator newIndexScan = new Operator(indexScan);
-
-        newIndexScan.setAccumulatedCost(newIndexScanCost);
-
-        return newIndexScan;
-    }
-     */
 }

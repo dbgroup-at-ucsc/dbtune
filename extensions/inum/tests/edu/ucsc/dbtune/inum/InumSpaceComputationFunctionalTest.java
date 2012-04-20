@@ -31,8 +31,10 @@ import static edu.ucsc.dbtune.util.MathUtils.combinations;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
+import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 
 import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.is;
 
 import static org.junit.Assert.assertThat;
 
@@ -133,6 +135,9 @@ public class InumSpaceComputationFunctionalTest
                     time = System.currentTimeMillis();
                     c.compute(space, sql, delegate, db.getCatalog());
                     computationTime = System.currentTimeMillis() - time;
+
+                    if (sql.getSQLCategory().isSame(INSERT))
+                        assertThat(space.size(), is(1));
 
                     report.append(space.size()).append(",").append(computationTime).append(",");
 

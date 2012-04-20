@@ -696,6 +696,31 @@ public class OptimizerTest
         assertThat(exp1, is(notNullValue()));
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp1));
+
+        sql  = new SQLStatement("INSERT INTO one_table.tbl VALUES(1,2,3,4)");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql);
+        exp2 = stmt.explain(new HashSet<Index>());
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(
+            "not equal:\n" + exp1 + "\nVS VS VS\n" + exp2, exp2.equalsIgnorePlan(exp1), is(true));
+
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql);
+        exp2 = stmt.explain(new HashSet<Index>());
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2.equalsIgnorePlan(exp1), is(true));
         }
         // }
 
@@ -758,6 +783,30 @@ public class OptimizerTest
         assertThat(exp1, is(notNullValue()));
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp1));
+
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql, conf);
+        exp2 = stmt.explain(conf);
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2.equalsIgnorePlan(exp1), is(true));
+
+        sql  = new SQLStatement("INSERT INTO one_table.tbl VALUES(1,2,3,4)");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql, conf);
+        exp2 = stmt.explain(conf);
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2.equalsIgnorePlan(exp1), is(true));
         }
         // }
 

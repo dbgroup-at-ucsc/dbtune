@@ -20,17 +20,13 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.util.InumUtils;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
-import static edu.ucsc.dbtune.util.InumUtils.removeTemporaryTables;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
-import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
-import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
-import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
-import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 
 /**
  * Extends {@link SQLStatementPlan} class in order to add INUM-specific functionality. Specifically,
@@ -48,7 +44,7 @@ import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 public class InumPlan extends SQLStatementPlan
 {
     /** used to represent an incompatible instantiation. */
-    public static final Operator INCOMPATIBLE = new Operator("INUM_INCOMPATIBLE", -1, -1);
+    private static final Operator INCOMPATIBLE = new Operator("INUM_INCOMPATIBLE", -1, -1);
 
     /**
      * Convenience object that maps tables to slots. This is done so that the {@link
@@ -96,22 +92,22 @@ public class InumPlan extends SQLStatementPlan
         super(explainedStatement.getPlan());
 
         this.delegate = delegate;
+        this.updatedTable = explainedStatement.getUpdatedTable();
+        this.baseTableUpdateCost = explainedStatement.getBaseTableUpdateCost();
 
-        preprocess(this);
+        if (!explainedStatement.getPlan().contains(TABLE_SCAN) &&               
+                !explainedStatement.getPlan().contains(INDEX_SCAN))
+            // we need at least one data-access operator slot
+            InumUtils.makeLeafATableScan(
+                    this, this.updatedTable, explainedStatement.getSelectCost());
 
-        double leafsCost = 0;
+        //CHECKSTYLE:OFF
+        while (InumUtils.removeTemporaryTables(this));
+        //CHECKSTYLE:ON
 
-        slots = new HashMap<Table, TableAccessSlot>();
+        double leafsCost = replaceLeafsBySlots();
 
-        if (explainedStatement.getStatement().getSQLCategory().isSame(SELECT) ||
-                explainedStatement.getStatement().getSQLCategory().isSame(UPDATE))
-            // no need to make slots for DELETE/INSERT;
-            // we assume they don't have a query shell
-            leafsCost = replaceLeafsBySlots();
-
-        updatedTable = explainedStatement.getUpdatedTable();
-        baseTableUpdateCost = explainedStatement.getBaseTableUpdateCost();
-        internalPlanCost = explainedStatement.getSelectCost() - leafsCost;
+        this.internalPlanCost = explainedStatement.getSelectCost() - leafsCost;
     }
 
     /**
@@ -127,15 +123,10 @@ public class InumPlan extends SQLStatementPlan
         slots = new HashMap<Table, TableAccessSlot>();
 
         for (Operator o : leafs()) {
-            if (!(o instanceof TableAccessSlot) && 
-                    !other.getStatement().getSQLCategory().isSame(DELETE) &&
-                    !other.getStatement().getSQLCategory().isSame(INSERT))
-                // we may have leafs that are not slots, but only for INSERT/DELETE
+            if (!(o instanceof TableAccessSlot))
                 throw new RuntimeException("Leaf should be a " + TableAccessSlot.class.getName());
 
-            if (other.getStatement().getSQLCategory().isSame(SELECT) || 
-                    other.getStatement().getSQLCategory().isSame(UPDATE))
-                slots.put(((TableAccessSlot) o).getTable(), (TableAccessSlot) o);
+            slots.put(((TableAccessSlot) o).getTable(), (TableAccessSlot) o);
         }
 
         internalPlanCost = other.internalPlanCost;
@@ -158,6 +149,8 @@ public class InumPlan extends SQLStatementPlan
         TableAccessSlot slot = null;
         double leafsCost = 0;
 
+        this.slots = new HashMap<Table, TableAccessSlot>();
+
         for (Operator leaf : leafs()) {
 
             if (!leaf.getName().equals(INDEX_SCAN) && !leaf.getName().equals(TABLE_SCAN))
@@ -179,8 +172,11 @@ public class InumPlan extends SQLStatementPlan
             slots.put(slot.getTable(), slot);
         }
 
-        if (leafs().size() != slots.size())
-            throw new SQLException("One or more leafs haven't been assigned with a slot " + this);
+        if (leafs().size() != slots.size()) {
+            System.out.println("leafs: " + leafs());
+            System.out.println("slots: " + slots);
+            throw new SQLException("One or more leafs haven't been assigned with a slot \n" + this);
+        }
 
         return leafsCost;
     }
@@ -309,11 +305,6 @@ public class InumPlan extends SQLStatementPlan
      */
     public Operator instantiate(Index index) throws SQLException
     {
-        if (getStatement().getSQLCategory().isSame(DELETE) || 
-                getStatement().getSQLCategory().isSame(INSERT))
-            // we instantiate an "empty" operator, just to be consistent with the plugging mechanism
-            new Operator(TABLE_SCAN, 0, 0);
-
         TableAccessSlot slot = slots.get(index.getTable());
 
         if (slot == null)
@@ -739,21 +730,5 @@ public class InumPlan extends SQLStatementPlan
         plan.assignCost(plan.getRootElement(), cost + templatePlan.getBaseTableUpdateCost());
 
         return plan;
-    }
-
-    /**
-     * Pre-processes a plan by removing temporary table scans.
-     *
-     * @param plan
-     *      plan to be preprocessed
-     * @throws SQLException
-     *      if an error occurs while pre-processing
-     */
-    public static void preprocess(SQLStatementPlan plan) throws SQLException
-    {
-        //CHECKSTYLE:OFF
-        while (removeTemporaryTables(plan))
-            ;
-        //CHECKSTYLE:ON
     }
 }

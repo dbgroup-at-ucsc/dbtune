@@ -230,7 +230,7 @@ public class SQLStatementPlan extends Tree<Operator>
         // elements is a hash table and if we rename the operator we need to do it with care since 
         // by modifying the name of the operator we modify its hashCode. So what we do here is to
         // first remove the value from the hash
-        Entry<Operator> entry = elements.get(op);
+        Entry<Operator> entry = elements.remove(op);
 
         if (entry == null)
             throw new NoSuchElementException("Can't find " + op);
@@ -238,6 +238,31 @@ public class SQLStatementPlan extends Tree<Operator>
             throw new NoSuchElementException("Can't find " + op);
 
         op.setName(newName);
+
+        elements.put(op, entry);
+    }
+
+    /**
+     * Assigns the columns fetched to the given operator.
+     *
+     * @param op
+     *      operator to be renamed
+     * @param cf
+     *      columns fetched
+     */
+    public void assignColumnsFetched(Operator op, InterestingOrder cf)
+    {
+        // elements is a hash table and if we rename the operator we need to do it with care since 
+        // by modifying the name of the operator we modify its hashCode. So what we do here is to
+        // first remove the value from the hash
+        Entry<Operator> entry = elements.remove(op);
+
+        if (entry == null)
+            throw new NoSuchElementException("Can't find " + op);
+        if (System.identityHashCode(entry.getElement()) != System.identityHashCode(op))
+            throw new NoSuchElementException("Can't find " + op);
+
+        op.addColumnsFetched(cf);
 
         elements.put(op, entry);
     }

@@ -21,6 +21,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import static edu.ucsc.dbtune.util.InumUtils.extractInterestingOrders;
 import static edu.ucsc.dbtune.util.InumUtils.getCoveringAtomicConfiguration;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
+import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 
 /**
  * Common functionality for space computation.
@@ -61,6 +62,10 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
         InumPlan templateForEmpty = new InumPlan(delegate, delegate.explain(statement, empty));
 
         space.add(templateForEmpty);
+
+        if (statement.getSQLCategory().isSame(INSERT))
+            // no need to explore more
+            return;
 
         // obtain plans for all the extracted interesting orders
         computeWithCompleteConfiguration(

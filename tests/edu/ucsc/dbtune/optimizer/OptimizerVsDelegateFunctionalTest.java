@@ -133,6 +133,14 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
         System.out.println(
                 "### Error\n" +
                 "Statement " + i + "\n" +
+                "Optimizer total cost: " + e1.getTotalCost() + "\n" +
+                "Delegate total cost: " + e2.getTotalCost() + "\n" +
+                "Optimizer base table update cost: " + e1.getBaseTableUpdateCost() + "\n" +
+                "Delegate base table update cost: " + e2.getBaseTableUpdateCost() + "\n" +
+                "Optimizer select cost: " + e1.getSelectCost() + "\n" +
+                "Delegate select cost: " + e2.getSelectCost() + "\n" +
+                "Optimizer base table update cost: " + e1.getBaseTableUpdateCost() + "\n" +
+                "Delegate base table update cost: " + e2.getBaseTableUpdateCost() + "\n" +
                 "Optimizer:\n" + e1.getPlan() +
                 "\n\nvs\n\nDelegate:\n" + e2.getPlan() +
                 "\nTemplate:\n" + get(((InumPreparedSQLStatement) pSql).getTemplatePlans(), 0));
