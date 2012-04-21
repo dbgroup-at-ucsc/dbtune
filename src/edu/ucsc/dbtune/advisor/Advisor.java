@@ -23,7 +23,11 @@ public abstract class Advisor
      * @throws SQLException
      *      if the given statements can't be processed
      */
-    public abstract void process(Workload workload) throws SQLException;
+    public void process(Workload workload) throws SQLException
+    {
+        for (SQLStatement sql : workload)
+            process(sql);
+    }
 
     /**
      * Adds an element to the set of statements that are considered for recommendation.
