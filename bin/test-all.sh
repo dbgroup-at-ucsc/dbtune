@@ -46,6 +46,18 @@ fi
 
 cat bin/base.cfg > $DBTUNECONFIG
 echo -e $DB2_CONFIG >> $DBTUNECONFIG
+echo -e $IBG_CONFIG >> $DBTUNECONFIG
+ant -lib lib functional.all
+
+ANTRETURNCODE=$?
+ 
+if [ $ANTRETURNCODE -ne 0 ];then
+    echo "BUILD ERROR"
+    exit 1;
+fi
+
+cat bin/base.cfg > $DBTUNECONFIG
+echo -e $DB2_CONFIG >> $DBTUNECONFIG
 echo -e $INUM_CONFIG >> $DBTUNECONFIG
 ant -lib lib functional.all
 

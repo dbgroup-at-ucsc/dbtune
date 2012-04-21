@@ -259,19 +259,26 @@ public final class MetadataUtils
                 create.append("\n);\n\n");
             }
 
-            for (Index idx : sch.indexes()) {
-                create.append("CREATE INDEX ").append(idx.getFullyQualifiedName());
-                create.append(" ON ").append(idx.getTable().getFullyQualifiedName()).append("(");
-
-                for (Column col : idx)
-                    create.append("").append(col.getName()).append(", ");
-
-                create.delete(create.length() - 2, create.length() - 0);
-
-                create.append(");\n");
-            }
-
+            for (Index i : sch.indexes())
+                create.append(getCreateStatement(i));
         }
+
+        return create.toString();
+    }
+
+    public static String getCreateStatement(Index index)
+    {
+        StringBuilder create = new StringBuilder();
+
+        create.append("CREATE INDEX ").append(index.getFullyQualifiedName());
+        create.append(" ON ").append(index.getTable().getFullyQualifiedName()).append("(");
+
+        for (Column col : index)
+            create.append("").append(col.getName()).append(", ");
+
+        create.delete(create.length() - 2, create.length() - 0);
+
+        create.append(");\n");
 
         return create.toString();
     }
