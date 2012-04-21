@@ -95,7 +95,7 @@ public class IBGAnalyzer
         nodeQueue = new IBGNodeQueue();
         revisitQueue = new IBGNodeQueue();
         allUsedIndexes = new BitArraySet<Index>();
-        rootBitSet = new BitArraySet<Index>(ibgCons.rootNode().getConfiguration());
+        rootBitSet = new BitArraySet<Index>(ibg.rootNode().getConfiguration());
         visitedNodes = new BitArraySet<IndexBenefitGraph.Node>();
 
         // seed the queue with the root node

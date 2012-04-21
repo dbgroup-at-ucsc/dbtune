@@ -29,6 +29,7 @@ public class IBGDoiFinder extends DefaultDoiFinder
     /**
      * {@inheritDoc}
      */
+    @Override
     public InteractionBank degreeOfInteraction(PreparedSQLStatement sql, Set<Index> s)
         throws SQLException
     {
