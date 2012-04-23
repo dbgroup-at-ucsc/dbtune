@@ -219,7 +219,11 @@ public final class DBTuneInstances
      */
     public static Environment configureIBGOptimizer(Environment cfg)
     {
-        cfg.setProperty(OPTIMIZER, IBG);
+        if (cfg.getProperty(OPTIMIZER) == null || cfg.getProperty(OPTIMIZER).equals(""))
+            cfg.setProperty(OPTIMIZER, IBG);
+        else
+            cfg.setProperty(OPTIMIZER, cfg.getProperty(OPTIMIZER) + "," + IBG);
+
         return cfg;
     }
 
@@ -233,7 +237,11 @@ public final class DBTuneInstances
      */
     public static Environment configureINUMOptimizer(Environment cfg)
     {
-        cfg.setProperty(OPTIMIZER, INUM);
+        if (cfg.getProperty(OPTIMIZER) == null || cfg.getProperty(OPTIMIZER).equals(""))
+            cfg.setProperty(OPTIMIZER, INUM);
+        else
+            cfg.setProperty(OPTIMIZER, cfg.getProperty(OPTIMIZER) + "," + INUM);
+
         cfg.setProperty(INUM_SLOT_CACHE, R.nextInt(2) == 0 ? "OFF" : "ON");
         cfg.setProperty(INUM_SPACE_COMPUTATION, R.nextInt(2) == 0 ? EXHAUSTIVE : IBG);
         cfg.setProperty(INUM_MATCHING_STRATEGY, R.nextInt(2) == 0 ? GREEDY : EXHAUSTIVE);

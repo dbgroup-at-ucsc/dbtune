@@ -55,7 +55,7 @@ public final class TestUtils
         Optimizer baseOptimizer = optimizer.getDelegate();
 
         while (baseOptimizer.getDelegate() != null)
-            baseOptimizer = optimizer.getDelegate();
+            baseOptimizer = baseOptimizer.getDelegate();
 
         return baseOptimizer;
     }

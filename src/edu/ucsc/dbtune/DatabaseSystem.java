@@ -190,14 +190,19 @@ public class DatabaseSystem
         else
             throw new SQLException("Unable to find optimizer for " + env.getVendor());
 
-        if (env.getOptimizer().equals(DBMS))
-            return optimizer;
-        else if (env.getOptimizer().equals(IBG))
-            return new IBGOptimizer(optimizer);
-        else if (env.getOptimizer().equals(INUM))
-            return newOptimizer("edu.ucsc.dbtune.optimizer.InumOptimizer", optimizer, env);
-        else
-            throw new SQLException("Unknown optimizer option: " + env.getOptimizer());
+        String[] optimizers = env.getOptimizer().split(",");
+
+        for (String optimizerConf : optimizers)
+            if (optimizerConf.equals(IBG))
+              optimizer = new IBGOptimizer(optimizer);
+            else if (optimizerConf.equals(INUM))
+              optimizer = newOptimizer("edu.ucsc.dbtune.optimizer.InumOptimizer", optimizer, env);
+            else if (optimizerConf != null &&
+                    !optimizerConf.equals("") &&
+                    !optimizerConf.equals(DBMS))
+                throw new SQLException("Unknown optimizer option: " + optimizerConf);
+        
+        return optimizer;
     }
 
     /**

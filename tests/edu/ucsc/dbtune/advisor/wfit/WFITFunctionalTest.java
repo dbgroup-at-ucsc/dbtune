@@ -86,6 +86,5 @@ public class WFITFunctionalTest
                     System.out.println("   " + getCreateStatement(i));
             }
         }
-
     }
 }

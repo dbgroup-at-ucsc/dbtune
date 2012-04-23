@@ -78,8 +78,8 @@ public class DivTestSetting
         
         
         
-        //workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-benchmark-mix");
+        workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
+        //workload = workload(en.getWorkloadsFoldername() + "/tpch-benchmark-mix");
         //workload = workload(en.getWorkloadsFoldername() + "/tpch-mix-div");
         
         // TODO: issue #210, extract the weight of statements
@@ -181,7 +181,8 @@ public class DivTestSetting
         
         // extra workload
         if (isExtraWorkload) {
-            Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-extra");
+            //Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-extra");
+            Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-inum");
             
             for (SQLStatement sql : wlExtra)
                 if (sql.getSQLCategory().isSame(SELECT))
