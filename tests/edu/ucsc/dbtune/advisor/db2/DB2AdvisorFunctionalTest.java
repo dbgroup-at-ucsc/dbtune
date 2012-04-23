@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import edu.ucsc.dbtune.DatabaseSystem;
+
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 
@@ -89,7 +90,7 @@ public class DB2AdvisorFunctionalTest
 
         DB2Advisor db2advis = new DB2Advisor(db);
 
-        db2advis.process(workload(env.getWorkloadsFoldername() + "/movies"));
+        db2advis.process(workload(env.getWorkloadsFoldername() + "/tpch-inum"));
         assertThat(db2advis.getRecommendation().isEmpty(), is(false));
     }
 }
