@@ -8,6 +8,7 @@ import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 /**
  * Generate the set of candidate indexes that contain only one column; The candidates considered to 
@@ -29,6 +30,21 @@ public class OneColumnCandidateGenerator extends AbstractCandidateGenerator
     public OneColumnCandidateGenerator(CandidateGenerator delegate)
     {
         this.delegate = delegate;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final Set<ByContentIndex> generateByContent(Workload workload) throws SQLException
+    {
+        Set<ByContentIndex> oneColumnIndexes = new HashSet<ByContentIndex>();
+
+        for (Index index : delegate.generate(workload))
+            for (Column col : index.columns())
+                oneColumnIndexes.add(new ByContentIndex(col, index.isAscending(col)));
+
+        return oneColumnIndexes;
     }
 
     /**

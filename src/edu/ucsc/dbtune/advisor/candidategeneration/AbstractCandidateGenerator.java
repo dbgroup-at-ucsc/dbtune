@@ -51,7 +51,7 @@ public abstract class AbstractCandidateGenerator implements CandidateGenerator
      * @throws SQLException
      *      if the generation of candidates can't be done
      */
-    public final Set<ByContentIndex> generateByContent(Workload workload) throws SQLException
+    public Set<ByContentIndex> generateByContent(Workload workload) throws SQLException
     {
         Set<ByContentIndex> generated = new HashSet<ByContentIndex>();
 
