@@ -1179,9 +1179,15 @@ public class DB2Optimizer extends AbstractOptimizer
 
             index = new Index(columns, ascending, primary, unique, clustered);
 
+            if (rs.getString("reverse_scans").trim().equals("Y"))
+                index.setScanOption(Index.REVERSIBLE);
+            else
+                index.setScanOption(Index.NON_REVERSIBLE);
+
             index.setBytes(rs.getInt("nleaf") * pageSize);
             // XXX: a more sophisticated way of calculating size: http://ibm.co/xsH4QC
 
+            index.setName(index.getName());
             recommended.add(index);
         }
 

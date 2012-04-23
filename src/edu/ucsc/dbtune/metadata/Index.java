@@ -798,18 +798,12 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
         if (this.size() != o.size())
             return false;
 
-        if (!isCoveredBy(o))
-            return false;
+        for (int i = 0; i < size(); i++) {
+            if (containees.get(i) != o.containees.get(i))
+                return false;
 
-        // we begin where isCoveredBy() was left (i.e. in the size()'nth column of this index)
-        if (size() > 0) {
-            for (int i = size() - 1; i < o.size(); i++) {
-                if (containees.get(i) != o.containees.get(i))
-                    return false;
-
-                if (ascendingColumn.get(i) != o.ascendingColumn.get(i))
-                    return false;
-            }
+            if (ascendingColumn.get(i) != o.ascendingColumn.get(i))
+                return false;
         }
 
         if (type != o.type ||

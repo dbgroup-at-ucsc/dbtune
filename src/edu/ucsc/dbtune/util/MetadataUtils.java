@@ -274,11 +274,20 @@ public final class MetadataUtils
         create.append(" ON ").append(index.getTable().getFullyQualifiedName()).append("(");
 
         for (Column col : index)
-            create.append("").append(col.getName()).append(", ");
+            create
+                .append("")
+                .append(col.getName())
+                .append(index.isAscending(col) ? " ASC" : " DESC")
+                .append(", ");
 
         create.delete(create.length() - 2, create.length() - 0);
 
-        create.append(");\n");
+        create.append(")");
+
+        if (index.getScanOption() == Index.REVERSIBLE)
+            create.append(" ALLOW REVERSE SCANS");
+
+        create.append("\n");
 
         return create.toString();
     }
