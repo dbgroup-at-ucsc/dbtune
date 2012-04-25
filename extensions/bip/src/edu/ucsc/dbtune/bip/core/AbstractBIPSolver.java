@@ -2,7 +2,6 @@ package edu.ucsc.dbtune.bip.core;
 
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
-import ilog.concert.IloNumVarType;
 import ilog.cplex.IloCplex;
 
 import java.io.IOException;
@@ -226,29 +225,15 @@ public abstract class AbstractBIPSolver implements BIPSolver
      */
     protected void createCplexVariable(List<BIPVariable> vars) throws IloException
     {   
-        IloNumVarType[] type;
-        double[]        lb;
-        double[]        ub;
-        int             size;
+        int size;
+        IloNumVar[] iloVar;
         
-        size = vars.size();
-        type = new IloNumVarType[size];
-        lb   = new double[size];
-        ub   = new double[size];
-        
-        // initial variables as Binary Type
-        for (int i = 0; i < size; i++) {
-            type[i] = IloNumVarType.Int;
-            lb[i]   = 0.0;
-            ub[i]   = 1.0;
-        }
-            
-        IloNumVar[] iloVar = cplex.numVarArray(size, lb, ub, type);
+        size = vars.size();            
+        iloVar = cplex.boolVarArray(size);        
         cplex.add(iloVar);
         
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) 
             iloVar[i].setName(vars.get(i).getName());
-        }
         
         cplexVar = new ArrayList<IloNumVar>(Arrays.asList(iloVar));
     }
