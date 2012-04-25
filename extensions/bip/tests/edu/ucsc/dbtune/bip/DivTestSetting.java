@@ -43,12 +43,14 @@ public class DivTestSetting
     protected static int nReplicas;
     protected static int loadfactor;
     protected static double B;    
+    protected static double[] lB;
     
     protected static boolean isTestOne;
     protected static boolean isExportToFile;
     protected static boolean isTestCost;
     protected static boolean isShowRecommendation;
     protected static boolean isApproximation;
+    protected static boolean isOneBudget;
     
     
     protected static DivBIP div;
@@ -60,7 +62,9 @@ public class DivTestSetting
     protected static Set<Index> candidates;
     protected static boolean isCandidatePowerset;
     protected static double fQuery;
+    protected static double fUpdate;
     protected static boolean isExtraWorkload;
+    protected static boolean isAdvancedFeature;
     
     /**
      * Set common parameter (e.g., workload, number of replicas, etc. )
@@ -76,22 +80,31 @@ public class DivTestSetting
         if (!(io instanceof InumOptimizer))
             return;
         
-        
-        
+
         workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
         //workload = workload(en.getWorkloadsFoldername() + "/tpch-benchmark-mix");
         //workload = workload(en.getWorkloadsFoldername() + "/tpch-mix-div");
-        
+                
         // TODO: issue #210, extract the weight of statements
         // temporary set the INSERT/DELETE with weight = 100
-        fQuery = 5.0;
+        fQuery = 1.0;
+        fUpdate = 1500;
+        
         for (SQLStatement sql : workload)
-            if (sql.getSQLCategory().isSame(INSERT))
-                sql.setStatementWeight(3500);
+            if (sql.getSQLCategory().isSame(INSERT)) {
+                
+                if (sql.getSQL().contains("orders")) 
+                    sql.setStatementWeight(fUpdate);
+                else 
+                    sql.setStatementWeight(fUpdate * 3.5);
+                
+            }   
             else if (sql.getSQLCategory().isSame(DELETE))
-                sql.setStatementWeight(1500);
+                sql.setStatementWeight(fUpdate);
             else 
                 sql.setStatementWeight(fQuery);
+        
+        // list of space constraints
         
         nReplicas  = 4;
         loadfactor = 2;
@@ -101,10 +114,17 @@ public class DivTestSetting
         isShowRecommendation = false;
         isApproximation = false;
         isCandidatePowerset = false;
-        isExtraWorkload = true;
+        isExtraWorkload = false;
+        isOneBudget = true;
+        isAdvancedFeature = false;
         
-        B   = Math.pow(2, 29);
+        B   = Math.pow(2, 28);
         div = new DivBIP();
+        
+        // 0.25x, 0.5x, 1x, 2x, 10x
+        lB  = new double[] { Math.pow(2, 28), Math.pow(2, 29), Math.pow(2, 30), Math.pow(2, 31),
+                Math.pow(2, 34)};
+        
     }
     
     /**
