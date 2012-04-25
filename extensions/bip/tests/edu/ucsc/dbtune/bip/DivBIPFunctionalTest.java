@@ -42,63 +42,99 @@ public class DivBIPFunctionalTest extends DivTestSetting
             generateOptimalCandidates();
         
         // 3. Call divergent design
-        for (int i = 0; i < arrNReplicas.length; i++) {
+        for (double B1 : lB) {
             
-            nReplicas = arrNReplicas[i];
-            loadfactor = arrLoadFactor[i];
-        
-            if (isTestOne && nReplicas != 4)
-                continue;
+            B = B1;
+            
+            System.out.println(" Space:  " + B + "============\n");
+            
+            for (int i = 0; i < arrNReplicas.length; i++) {
                 
-            System.out.println("----------------------------------------");
-            System.out.println(" DIV-BIP, # replicas = " + nReplicas
-                                + ", load factor = " + loadfactor
-                                + ", space = " + B);
-            testDiv();
-            System.out.println("----------------------------------------");
-        }
+                nReplicas = arrNReplicas[i];
+                loadfactor = arrLoadFactor[i];
             
-        
-        // 4. Call Uniform design       
-        nReplicas = 1;
-        loadfactor = 1;
-        
-        System.out.println("----------------------------------------");
-        System.out.println(" DIV-UNIF-BIP, # replicas = " + nReplicas
-                            + ", load factor = " + loadfactor);
-        
-        testDiv();
-        
-        // get the query cost & update cost
-        double queryCost;
-        double updateCost;
-        double totalCostUniform;
-        
-        // update index cost & query shell in update statement 
-        updateCost = div.getUpdateCostFromCplex();
-        // query-only cost
-        queryCost  = div.getObjValue() - updateCost;
-        // add the constant update-base table cost
-        updateCost += div.getTotalBaseTableUpdateCost();
-        
-        // UNIF for the case with more than one replica
-        for (int i = 0; i < arrNReplicas.length; i++) {
-            System.out.println("----------------------------------------");
-            totalCostUniform = queryCost + updateCost * arrNReplicas[i];            
-            System.out.println(" DIV-UNIF, # replicas: " + arrNReplicas[i] + "\n"
-                                + " TOTAL COST: " + totalCostUniform + "\n"
-                                + " QUERY cost: " + queryCost + "\n"
-                                + " UPDATE cost: " + (updateCost * arrNReplicas[i]) + "\n"
-                                + " ---- Detailed UPDATE cost (ONE Replica): \n" 
-                                + "         - query shell & update indexes: " +
-                                             div.getUpdateCostFromCplex() + "\n"
-                                + "         - base table                  : " 
-                                +         div.getTotalBaseTableUpdateCost() + "\n");
+                if (isTestOne && nReplicas != 4)
+                    continue;
+                    
+                System.out.println("----------------------------------------");
+                System.out.println(" DIV-BIP, # replicas = " + nReplicas
+                                    + ", load factor = " + loadfactor
+                                    + ", space = " + B);
+                testDiv();
+                System.out.println("----------------------------------------");
+                
+                if (isAdvancedFeature) {
+                    // run four more times and get the average of imbalance query & replica
+                    double avgImbalanceQuery;
+                    double avgImbalanceReplica;
+                    
+                    avgImbalanceQuery = div.getMaxImbalanceQuery();
+                    avgImbalanceReplica = div.getMaxImbalanceReplica();
+                    
+                    for (int iterImbalance = 0; iterImbalance < 4; iterImbalance++) {
+                        testDiv();
+                        avgImbalanceQuery += div.getMaxImbalanceQuery();
+                        avgImbalanceReplica += div.getMaxImbalanceReplica();
+                    }
+                    
+                    System.out.println("================== Number of replicas: " +  nReplicas
+                                        + " AVG Imbalance QUERY: "
+                                        + (double) avgImbalanceQuery / 5);
+                    System.out.println("================== Number of replicas: " +  nReplicas
+                                        + " AVG Imbalance REPLICA: "
+                                        + (double) avgImbalanceReplica / 5);
+                }
+            }
+            
+            // 4. Call Uniform design
+            // turn off if we are in advanced feature mode
+            if (!isAdvancedFeature) {
+                nReplicas = 1;
+                loadfactor = 1;
+                
+                System.out.println("----------------------------------------");
+                System.out.println(" DIV-UNIF-BIP, # replicas = " + nReplicas
+                                    + ", load factor = " + loadfactor
+                                    + ", space = " + B);
+                
+                testDiv();
+                
+                // get the query cost & update cost
+                double queryCost;
+                double updateCost;
+                double totalCostUniform;
+                
+                // update index cost & query shell in update statement 
+                updateCost = div.getUpdateCostFromCplex();
+                // query-only cost
+                queryCost  = div.getObjValue() - updateCost;
+                // add the constant update-base table cost
+                updateCost += div.getTotalBaseTableUpdateCost();
+                
+                // UNIF for the case with more than one replica
+                for (int i = 0; i < arrNReplicas.length; i++) {
+                    System.out.println("----------------------------------------");
+                    totalCostUniform = queryCost + updateCost * arrNReplicas[i];            
+                    System.out.println(" DIV-UNIF, # replicas: " + arrNReplicas[i] + "\n"
+                                        + " TOTAL COST: " + totalCostUniform + "\n"
+                                        + " QUERY cost: " + queryCost + "\n"
+                                        + " UPDATE cost: " + (updateCost * arrNReplicas[i]) + "\n"
+                                        + " ---- Detailed UPDATE cost (ONE Replica): \n" 
+                                        + "         - query shell & update indexes: " +
+                                                     div.getUpdateCostFromCplex() + "\n"
+                                        + "         - base table                  : " 
+                                        +         div.getTotalBaseTableUpdateCost() + "\n");
+                    
+                    System.out.println("----------------------------------------");
+                }
+            }
+            
             
             System.out.println("----------------------------------------");
+         
+            if (isOneBudget)
+                break;
         }
-           
-        System.out.println("----------------------------------------");
     }
    
     

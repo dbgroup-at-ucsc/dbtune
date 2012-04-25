@@ -35,28 +35,43 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
         // 2. Generate candidate indexes
         generateOptimalCandidates();
         
-        typeConstraint = UPDATE_COST_BOUND;
-        nReplicaUnif = 1;
+        typeConstraint = IMBALANCE_QUERY;
+        nReplicaUnif = 2;
         
         if (typeConstraint == UPDATE_COST_BOUND) {
             updateCostConstraints();
             return; 
         }
         
-        // set of imbalance factor values
-        double deltas[] = {2, 1.5, 1.05};
-        //double deltas[] = {1.05};
+        int[] imbalanceQR = {IMBALANCE_QUERY, IMBALANCE_REPLICA};
         
-        for (double delta : deltas) {
+        for (int t : imbalanceQR) {
             
-            System.out.println(" IMBALANCE FACTOR: " + delta + " space: "+ B + "------------" );
+            typeConstraint = t;
             
-            if (typeConstraint == IMBALANCE_REPLICA)
-                imbalanceReplicaConstraint(delta);
-            else if (typeConstraint == IMBALANCE_QUERY)
-                imbalanceQueryConstraint(delta);
+            if (typeConstraint == IMBALANCE_QUERY) {
+                System.out.println("\n\n\n----------------"
+                           + " IMBALANCE QUERY ---\n \n");
+            } else 
+                System.out.println("\n\n\n----------------"
+                        + " IMBALANCE REPLICA ---\n \n");
             
-            runConstraintBIP(constraintDiv);
+            // set of imbalance factor values
+            double deltas[] = {2, 1.5, 1.05};
+            //double deltas[] = {1.05};
+            
+            for (double delta : deltas) {
+                
+                System.out.println(" IMBALANCE FACTOR: " + delta + " space: "+ B + "------------" );
+                
+                if (typeConstraint == IMBALANCE_REPLICA)
+                    imbalanceReplicaConstraint(delta);
+                else if (typeConstraint == IMBALANCE_QUERY)
+                    imbalanceQueryConstraint(delta);
+                
+                runConstraintBIP(constraintDiv);
+            }
+            
         }
     }
     
@@ -99,7 +114,7 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
         		            + " BOUND update cost: " + boundUpdateCost
         		            );
         
-        double deltas[] = {1.5, 1, 0.5};
+        double deltas[] = {1.5, 1, 0.8, 0.6};
         //double deltas[] = {0.8};
         
         // bound update cost

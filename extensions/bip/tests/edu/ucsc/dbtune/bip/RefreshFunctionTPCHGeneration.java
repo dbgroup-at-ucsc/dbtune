@@ -40,10 +40,10 @@ public class RefreshFunctionTPCHGeneration
     public void testInsertUpdateGeneration() throws Exception
     {
         // delete statements
-        constructDeleteStmts();
+        //constructDeleteStmts();
         
         // insert statements
-        constructInsertStmts();
+        //constructInsertStmts();
     }
     
     

@@ -91,7 +91,7 @@ public class InteractionComparisonFunctionalTest
         dbName = "TEST";
         tableOwner = "TPCDS";
      */
-        
+        /*
         en = Environment.getInstance();
         db = newDatabaseSystem(en);
         subFolder = "tpch-10-counts";
@@ -99,7 +99,7 @@ public class InteractionComparisonFunctionalTest
         folder = en.getWorkloadsFoldername() + subFolder;
         dbName = "TEST";
         tableOwner = "TPCH";
-    
+    */
     }
     
     /**     
@@ -110,6 +110,7 @@ public class InteractionComparisonFunctionalTest
     @Test
     public void testInteraction() throws Exception
     {
+        /*
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
         // 1. generate candidate indexes
@@ -122,7 +123,8 @@ public class InteractionComparisonFunctionalTest
         // 3. Call Analysis from Karl
         AnalysisMain.setWorkload(workload);
         AnalysisMain.runStepsINUM(tableOwner);
-    
+        */
+        
         /*
         InteractionOutput result;
         Set<IndexInteraction> ibg;

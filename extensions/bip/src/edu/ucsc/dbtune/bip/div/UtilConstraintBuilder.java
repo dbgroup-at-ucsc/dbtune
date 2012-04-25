@@ -155,6 +155,11 @@ public class UtilConstraintBuilder
                 cost += coef * cplex.getValue(var);
         }
         
+        // issue #281: some variables are assigned value small value (e.g., 3.5976098620712736E-12)
+        // workaround: cast very small value to 0
+        if (cost < 0.01)
+            cost = 0.0;
+        
         return cost;
     }
     
