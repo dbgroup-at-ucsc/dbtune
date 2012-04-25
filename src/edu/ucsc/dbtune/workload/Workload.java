@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.workload;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.sql.SQLException;
@@ -93,7 +95,30 @@ public class Workload implements Iterable<SQLStatement>
     }
     
     /**
-     * Construct a workload with a given set of statements
+     * Construct a workload extracted from the given file.
+     * 
+     * @param workloadFile
+     *      a plain text file containing SQL statements
+     * @throws IOException
+     *     if an error occurs while retrieving information from the given reader
+     * @throws SQLException
+     *     if a statement can't get a category assigned to it
+     */
+    public Workload(String workloadFile) throws IOException, SQLException
+    {
+        this("temp", new FileReader(workloadFile));
+
+        File f = new File(workloadFile);
+
+        if (f.getName().split(".").length == 1)
+            this.name = f.getName();
+        else
+            for (int i = 0; i < f.getName().split(".").length - 1; i++)
+                this.name += f.getName().split(".")[i];
+    }
+    
+    /**
+     * Construct a workload with a given set of statements.
      * 
      * @param sqls
      *      A set of statements

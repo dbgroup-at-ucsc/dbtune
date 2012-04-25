@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
@@ -75,9 +74,7 @@ public class WFITFunctionalTest
             if (!wl.getName().endsWith("tpch-10-counts"))
                 continue;
 
-            DB2Advisor db2advis = new DB2Advisor(db);
-            db2advis.process(wl);
-            WFIT wfit = new WFIT((IBGOptimizer) db.getOptimizer(), db2advis.getRecommendation());
+            WFIT wfit = new WFIT((IBGOptimizer) db.getOptimizer());
 
             for (SQLStatement sql : wl) {
                 wfit.process(sql);
