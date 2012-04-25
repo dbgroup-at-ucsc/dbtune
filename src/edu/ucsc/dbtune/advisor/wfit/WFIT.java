@@ -12,6 +12,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -31,16 +32,18 @@ public class WFIT extends Advisor
      *
      * @param optimizer
      *      used to execute what-if calls
-     * @param pool
-     *      candidate pool
      */
-    public WFIT(IBGOptimizer optimizer, Set<Index> pool)
+    public WFIT(Optimizer optimizer)
     {
-        this.ibgOptimizer = optimizer;
-        this.pool = pool;
+        if (!(optimizer instanceof IBGOptimizer))
+            throw new RuntimeException(
+                    "Expecting IBGOptimizer; found: " + optimizer.getClass().getName());
+
+        this.ibgOptimizer = (IBGOptimizer) optimizer;
 
         selector = new Selector();
         doiFinder = new IBGDoiFinder();
+        pool = new HashSet<Index>();
     }
 
     /**
@@ -55,10 +58,15 @@ public class WFIT extends Advisor
     @Override
     public void process(SQLStatement sql) throws SQLException
     {
+        pool.addAll(ibgOptimizer.recommendIndexes(sql));
+
         int whatIfCountBefore = ibgOptimizer.getWhatIfCount();
+
         IBGPreparedSQLStatement pStmt = (IBGPreparedSQLStatement) ibgOptimizer.prepareExplain(sql);
         ExplainedSQLStatement eStmt = pStmt.explain(pool);
+
         int whatIfCountAfter = ibgOptimizer.getWhatIfCount();
+
         InteractionBank bank = doiFinder.degreeOfInteraction(pStmt, pool);
 
         selector.analyzeQuery(
