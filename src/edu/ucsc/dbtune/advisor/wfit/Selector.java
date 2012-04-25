@@ -6,6 +6,7 @@ import edu.ucsc.dbtune.advisor.wfit.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 
+//CHECKSTYLE:OFF
 public class Selector {
 	private final IndexStatistics idxStats;
 	private final WorkFunctionAlgorithm wfa;
@@ -31,8 +32,8 @@ public class Selector {
 	public AnalyzedQuery analyzeQuery(ProfiledQuery qinfo) {
 		// add the query to the statistics repository
 		idxStats.addQuery(qinfo, matSet);
-		
-		reorganizeCandidates(qinfo.candidateSet);
+
+        reorganizeCandidates(qinfo.candidateSet);
 		
 		wfa.newTask(qinfo);
 		
@@ -128,3 +129,4 @@ public class Selector {
 		}
 	}
 }
+//CHECKSTYLE:ON

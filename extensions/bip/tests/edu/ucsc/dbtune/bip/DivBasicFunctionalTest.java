@@ -31,10 +31,13 @@ public class DivBasicFunctionalTest extends DivTestSetting
     {
         // 1. Set common parameters
         setCommonParameters();
+
+        if (!(io instanceof InumOptimizer))
+            return;
         
         // 2. Generate candidate indexes
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-small");
-        generateCandidates();
+        workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
+        generateOptimalCandidates();
         nReplicas = 3;
         loadfactor = 2;
         B = Math.pow(2, 28); 

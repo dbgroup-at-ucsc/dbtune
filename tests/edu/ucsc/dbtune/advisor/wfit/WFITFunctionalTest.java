@@ -1,14 +1,21 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import edu.ucsc.dbtune.DatabaseSystem;
+
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.MetadataUtils.getCreateStatement;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
+import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
 /**
  * Functional test for the WFIT use case.
@@ -59,5 +66,22 @@ public class WFITFunctionalTest
     @Test
     public void testWFIT() throws Exception
     {
+        if (!(db.getOptimizer() instanceof IBGOptimizer))
+            return;
+
+        for (Workload wl : workloads(env.getWorkloadFolders())) {
+
+            if (!wl.getName().endsWith("tpch-10-counts"))
+                continue;
+
+            WFIT wfit = new WFIT((IBGOptimizer) db.getOptimizer());
+
+            for (SQLStatement sql : wl) {
+                wfit.process(sql);
+                System.out.println("Recommendation: ");
+                for (Index i : wfit.getRecommendation())
+                    System.out.println("   " + getCreateStatement(i));
+            }
+        }
     }
 }

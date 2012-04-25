@@ -14,6 +14,7 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
+//CHECKSTYLE:OFF
 public class ProfiledQuery implements Serializable {
 	private static final long serialVersionUID = 1L;
 	ProfiledQuery() { }
@@ -78,3 +79,4 @@ public class ProfiledQuery implements Serializable {
 		return maintenanceCost;
 	}
 }
+//CHECKSTYLE:ON

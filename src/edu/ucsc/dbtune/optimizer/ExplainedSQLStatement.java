@@ -371,6 +371,38 @@ public class ExplainedSQLStatement
     }
 
     /**
+     * Same as {@link #equals} but ignores the execution plan.
+     *
+     * @param obj
+     *      other object being compared
+     * @return
+     *      {@code true} if equals; {@code false} otherwise.
+     */
+    public boolean equalsIgnorePlan(Object obj)
+    {
+        if (this == obj)
+            return true;
+    
+        if (!(obj instanceof ExplainedSQLStatement))
+            return false;
+    
+        ExplainedSQLStatement o = (ExplainedSQLStatement) obj;
+    
+        if (updatedTable != null && !updatedTable.equals(o.updatedTable))
+            return false;
+
+        if (statement.equals(o.statement) &&
+                selectCost == o.selectCost &&
+                baseTableUpdateCost == o.baseTableUpdateCost &&
+                indexUpdateCosts.equals(o.indexUpdateCosts) &&
+                configuration.equals(o.configuration) &&
+                usedConfiguration.equals(o.usedConfiguration))
+            return true;
+        
+        return false;
+    }
+    
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -387,18 +419,7 @@ public class ExplainedSQLStatement
         if (plan != null && !plan.equals(o.plan))
             return false;
 
-        if (updatedTable != null && !updatedTable.equals(o.updatedTable))
-            return false;
-
-        if (statement.equals(o.statement) &&
-                selectCost == o.selectCost &&
-                baseTableUpdateCost == o.baseTableUpdateCost &&
-                indexUpdateCosts.equals(o.indexUpdateCosts) &&
-                configuration.equals(o.configuration) &&
-                usedConfiguration.equals(o.usedConfiguration))
-            return true;
-        
-        return false;
+        return equalsIgnorePlan(obj);
     }
     
     /**

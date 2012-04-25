@@ -34,7 +34,9 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
 
+import static edu.ucsc.dbtune.optimizer.plan.Operator.DELETE;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.INSERT;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.UPDATE;
@@ -43,6 +45,8 @@ import static edu.ucsc.dbtune.util.MetadataUtils.find;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedSchemas;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
+
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 /**
  * Interface to the DB2 optimizer.
@@ -96,6 +100,8 @@ public class DB2Optimizer extends AbstractOptimizer
         plan = getPlan(connection, sql, catalog, indexes);
         used = newHashSet(plan.getIndexes());
 
+        plan.setStatement(sql);
+
         if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)) {
             updatedTable = getUpdatedTable(connection, catalog, plan);
             baseTableUpdateCost = getBaseTableUpdateCost(plan);
@@ -105,8 +111,6 @@ public class DB2Optimizer extends AbstractOptimizer
             updatedTable = null;
             updateCostPerIndex = new HashMap<Index, Double>();
         }
-
-        plan.setStatement(sql);
 
         selectCost = plan.getRootOperator().getAccumulatedCost() - baseTableUpdateCost;
 
@@ -540,20 +544,24 @@ public class DB2Optimizer extends AbstractOptimizer
     private static double getBaseTableUpdateCost(SQLStatementPlan sqlPlan) throws SQLException
     {
         if (sqlPlan.size() < 3)
-            throw new SQLException("UPDATE plan should have at least 3 but has " + sqlPlan.size());
+            throw new SQLException(
+                "NOT_SELECT plan should have at least 3 nodes but has " + sqlPlan.size());
 
         Operator root = sqlPlan.getRootOperator();
 
         if (sqlPlan.getChildren(root).size() != 1)
-            throw new SQLException("Root should have only one children");
+            throw new SQLException("Root should have only one child");
 
         Operator update = sqlPlan.getChildren(root).get(0);
 
-        if (!update.getName().equals(UPDATE))
-            throw new SQLException("Child of root should be " + UPDATE);
+        if (!update.getName().equals(UPDATE) &&
+                !update.getName().equals(INSERT) &&
+                !update.getName().equals(DELETE))
+            throw new SQLException(
+                "Child of root should be " + UPDATE + ", " + INSERT + " or " + DELETE);
 
         if (sqlPlan.getChildren(update).size() != 1)
-            throw new SQLException(UPDATE + " should have only one children");
+            throw new SQLException("Write operator should have only one child");
 
         Operator select = sqlPlan.getChildren(update).get(0);
 
@@ -603,8 +611,8 @@ public class DB2Optimizer extends AbstractOptimizer
             Connection connection, Catalog catalog, SQLStatementPlan sqlPlan)
         throws SQLException
     {
-        if (!sqlPlan.contains("UPDATE"))
-            throw new SQLException("Plan should contain UPDATE operator");
+        if (!sqlPlan.contains(UPDATE) && !sqlPlan.contains(INSERT) && !sqlPlan.contains(DELETE))
+            throw new SQLException("Plan should contain a " + NOT_SELECT + " operator");
 
         // For the particular case of updates, the EXPLAIN_STREAM doesn't have the parent-child 
         // relationship as the {@link SELECT_FROM_EXPLAIN} query expect it, so we have to execute 
@@ -629,11 +637,21 @@ public class DB2Optimizer extends AbstractOptimizer
             extractDatabaseObjectReferenced(catalog, new HashSet<Index>(), dboSchema, dboName);
 
         if (!(dbo instanceof Table))
-            throw new SQLException("Object associated with UPDATE should be a table");
+            throw new SQLException("Object associated with " + NOT_SELECT + " should be a table");
+
+        boolean isAssigned = false;
 
         for (Operator o : sqlPlan.toList())
-            if (o.getName().equals("UPDATE"))
+            if (o.getName().equals(UPDATE) ||
+                    o.getName().equals(INSERT) ||
+                    o.getName().equals(DELETE)) {
+                isAssigned = true;
                 sqlPlan.assignDatabaseObject(o, dbo);
+            }
+
+        if (!isAssigned)
+            throw new SQLException(
+                    "Can't find " + NOT_SELECT + " operator to associate with " + dbo);
 
         return (Table) dbo;
     }
@@ -1161,9 +1179,15 @@ public class DB2Optimizer extends AbstractOptimizer
 
             index = new Index(columns, ascending, primary, unique, clustered);
 
+            if (rs.getString("reverse_scans").trim().equals("Y"))
+                index.setScanOption(Index.REVERSIBLE);
+            else
+                index.setScanOption(Index.NON_REVERSIBLE);
+
             index.setBytes(rs.getInt("nleaf") * pageSize);
             // XXX: a more sophisticated way of calculating size: http://ibm.co/xsH4QC
 
+            index.setName(index.getName());
             recommended.add(index);
         }
 
@@ -1442,7 +1466,9 @@ public class DB2Optimizer extends AbstractOptimizer
         "     systools.explain_stream s    " +
         " WHERE " +
         "       o.operator_id   = s.source_id" +
-        "   AND o.operator_type = 'UPDATE'" +
+        "   AND (o.operator_type = 'UPDATE'" +
+        "         OR o.operator_type = 'INSERT' " +
+        "         OR o.operator_type = 'DELETE')" +
         "   AND s.target_id     = -1 ";
 
 

@@ -1,32 +1,35 @@
 package edu.ucsc.dbtune.advisor.candidategeneration;
 
-import edu.ucsc.dbtune.advisor.candidategeneration.AbstractCandidateGenerator;
 import java.sql.SQLException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.derby.iapi.error.StandardException;
-import edu.ucsc.dbtune.util.Sets;
-
 import edu.ucsc.dbtune.inum.DerbyReferencedColumnsExtractor;
 import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.workload.Workload;
-import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.util.Sets;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
-public class PowerSetCandidateGenerator extends AbstractCandidateGenerator 
+import org.apache.derby.iapi.error.StandardException;
+
+/**
+ * @author Quoc Trung Tran
+ */
+public class PowerSetCandidateGenerator extends AbstractCandidateGenerator
 {
     private DerbyReferencedColumnsExtractor extractor;
     private int maxCols;
     
     /**
      * Construct a generator with a given catalog and a default ascending order of the column
-     * in the derived indexes
+     * in the derived indexes.
      * 
      * @param catalog
      *      The catalog to bind columns in the queries to database objects
@@ -41,18 +44,18 @@ public class PowerSetCandidateGenerator extends AbstractCandidateGenerator
         extractor = new DerbyReferencedColumnsExtractor(catalog, defaultAscending);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Set<ByContentIndex> generateByContent(Workload workload) 
-            throws SQLException 
+    public Set<ByContentIndex> generateByContent(SQLStatement sql) throws SQLException
     {
         Map<Column, Boolean> ascending = new HashMap<Column, Boolean>();
         
-        for (int i = 0; i < workload.size(); i++) {
-            try {
-                ascending.putAll(extractor.getReferencedColumn(workload.get(i))); 
-            } catch (StandardException e) {
-                throw new SQLException("An error occurred while iterating the from list", e);
-            }
+        try {
+            ascending.putAll(extractor.getReferencedColumn(sql));
+        } catch (StandardException e) {
+            throw new SQLException("An error occurred while iterating the from list", e);
         }
         
         Set<Column> columns = ascending.keySet();
@@ -76,7 +79,7 @@ public class PowerSetCandidateGenerator extends AbstractCandidateGenerator
         Sets<Column> sets = new Sets<Column>();
         Set<ByContentIndex> indexes = new HashSet<ByContentIndex>(); 
         
-        for (Set<Column> setColumnPerTable : columnsPerTable.values()){
+        for (Set<Column> setColumnPerTable : columnsPerTable.values()) {
         
             for (int k = 1; k <= maxCols; k++) {
                 

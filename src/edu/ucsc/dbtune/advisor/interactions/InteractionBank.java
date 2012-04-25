@@ -41,7 +41,7 @@ public class InteractionBank
         lowerBounds = new double[maxId][];
 
         for (int i = 0; i < maxId; i++)
-            lowerBounds[i] = new double[i];
+            lowerBounds[i] = new double[i + 1];
     }
     
     /**
@@ -61,8 +61,8 @@ public class InteractionBank
         assert newValue >= 0;
         assert !i1.equals(i2);
 
-        int id1 = i1.getId();
-        int id2 = i2.getId();
+        int id1 = i1.getId() - 1;
+        int id2 = i2.getId() - 1;
 
         // doi is a symmetric relation, thus we use the upper part of the matrix only. We accomplish 
         // this by ordering the id's of the given indexes in descending order, i.e. first we use the 
@@ -91,9 +91,9 @@ public class InteractionBank
         assert !i1.equals(i2);
 
         if (i1.getId() < i2.getId())
-            return lowerBounds[i2.getId()][i1.getId()];
+            return lowerBounds[i2.getId() - 1][i1.getId() - 1];
         else
-            return lowerBounds[i1.getId()][i2.getId()];
+            return lowerBounds[i1.getId() - 1][i2.getId() - 1];
     }
 
     /**
@@ -106,7 +106,7 @@ public class InteractionBank
      */
     void assignBenefit(Index i, double newValue)
     {
-        bestBenefit[i.getId()] = Math.max(newValue, bestBenefit[i.getId()]);
+        bestBenefit[i.getId() - 1] = Math.max(newValue, bestBenefit[i.getId() - 1]);
     }
     
     /**
@@ -120,7 +120,7 @@ public class InteractionBank
      */
     public final double bestBenefit(Index i)
     {
-        return bestBenefit[i.getId()];
+        return bestBenefit[i.getId() - 1];
     }
     
     /**

@@ -8,7 +8,6 @@ import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 /**
  * The class uses an Optimizer (specifically the {@link Optimizer#recommendedIndexes} method) to
@@ -40,13 +39,12 @@ public class OptimizerCandidateGenerator extends AbstractCandidateGenerator
      * {@inheritDoc}
      */
     @Override
-    public Set<ByContentIndex> generateByContent(Workload workload) throws SQLException
+    public Set<ByContentIndex> generateByContent(SQLStatement statement) throws SQLException
     {
         Set<ByContentIndex> indexes = new HashSet<ByContentIndex>();
 
-        for (SQLStatement stmt : workload)
-            for (Index idx : optimizer.recommendIndexes(stmt))
-                indexes.add(new ByContentIndex(idx));
+        for (Index idx : optimizer.recommendIndexes(statement))
+            indexes.add(new ByContentIndex(idx));
 
         return indexes;
     }

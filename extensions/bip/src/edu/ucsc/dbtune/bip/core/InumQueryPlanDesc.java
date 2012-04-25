@@ -23,6 +23,8 @@ import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInsta
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
+import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
+import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 
 /**
  * An implementation of {@link QueryPlanDesc} interface. There's only one single object of 
@@ -70,6 +72,9 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	/** List of referenced tables */
 	List<Table> tables;
 	
+	/** The frequency of the statement */
+	private double fq;
+	
     /** A map to manage each statement corresponding to one instance of this class*/
 	private static Map<SQLStatement, QueryPlanDesc> instances = new 
 	                                            HashMap<SQLStatement, QueryPlanDesc>();
@@ -80,6 +85,8 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	
 	private double baseTableUpdateCost;
 	
+	/** An index update cost = this_factor * base_table_cost (for INSERT/DELETE) */
+	public static double INDEX_UPDATE_COST_FACTOR = 1.0;
 	/**
      * Returns the single instance of this class corresponding to the given statement.
      *
@@ -111,6 +118,13 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     {
         this.stmtID = InumQueryPlanDesc.STMT_ID.getAndIncrement();
         this.stmt = stmt;    
+        this.fq = stmt.getStatementWeight();
+    }
+    
+    @Override
+    public double getStatementWeight()
+    {
+        return fq;
     }
     
     public long populateTime;
@@ -137,20 +151,20 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         // 1. Get the template plans from INUM
         preparedStmt = preparedStmts.get(stmt);
         if (preparedStmt == null) {
-            preparedStmt  = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
+            preparedStmt = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
             preparedStmts.put(stmt, preparedStmt);
         }
         
         templatePlans = preparedStmt.getTemplatePlans();
         
         // 2. Number of slots and indexes in each slot
-        assignIndexesToSlot(candidates, templatePlans);
-                
-        // 3. Cost from INUM
-        // only applicable for SELECT and UPDATE statement
-        // do not process for INSERT and DELETE
-        if (stmt.getSQLCategory().isSame(SELECT) || stmt.getSQLCategory().isSame(UPDATE))
+        // 3. Template plan cost
+        // only for SELECT and UPDATE statements
+        if (stmt.getSQLCategory().isSame(SELECT) 
+                  || stmt.getSQLCategory().isSame(UPDATE)) {
+            assignIndexesToSlot(candidates, templatePlans);
             getPlanCostsFromInum(templatePlans);
+        }
         
         // 4. Get the update costs if the statement is not SELECT statement
         // including base table & index update cost
@@ -278,9 +292,38 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	    indexUpdateCosts = new HashMap<Index, Double>();
 	    ExplainedSQLStatement inumExplain = preparedStmt.explain(candidates);
 	    
-	    for (int i = 0; i < n; i++)
-	        for (Index index : indexSlot.get(i)) 
-	            indexUpdateCosts.put(index, inumExplain.getUpdateCost(index));
+	    double cost;
+	    
+	    // since we don't have slot in INSERT/DELETE statement,
+	    // we will get indexes from the given set of candidate indexes
+	    if (stmt.getSQLCategory().isSame(INSERT) || 
+	            stmt.getSQLCategory().isSame(DELETE)) {
+	        
+	        for (Index index : candidates) {
+	            
+	            cost = inumExplain.getUpdateCost(index);
+	            
+	            if (cost > 0) {
+	                
+	                cost *= INDEX_UPDATE_COST_FACTOR;
+	                /*
+	                System.out.println(" Stmt type: " + stmt.getSQLCategory()
+	                            + " total cost: " + inumExplain.getTotalCost()
+	                            + " select cost: " + inumExplain.getSelectCost()
+	                            + " base table cost: " + inumExplain.getBaseTableUpdateCost()
+	                            + " index update cost: " + cost);
+	                            */
+	            }
+	            
+	            
+	            indexUpdateCosts.put(index, cost);
+	        }
+	        
+	    } else {
+	        for (int i = 0; i < n; i++)
+	            for (Index index : indexSlot.get(i)) 
+	                indexUpdateCosts.put(index, inumExplain.getUpdateCost(index));
+	    }
 	    
 	    baseTableUpdateCost = inumExplain.getBaseTableUpdateCost();
 	}

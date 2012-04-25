@@ -101,7 +101,12 @@ public class CandidatePool implements Serializable {
             for (Index idx : this) if (idx.getId() == i) return idx;
 			return null;
 		}
-	}
+
+        public String toString()
+        {
+            return "" + bs;
+        }
+    }
 	
 	/*
 	 * Iterator for a snapshot of the candidate set

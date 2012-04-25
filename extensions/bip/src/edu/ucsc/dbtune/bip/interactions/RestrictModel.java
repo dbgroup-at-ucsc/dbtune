@@ -170,6 +170,7 @@ public class RestrictModel
             isInteracting = cplex.solve();
         } 
         
+        
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         
         //if (isInteracting) 

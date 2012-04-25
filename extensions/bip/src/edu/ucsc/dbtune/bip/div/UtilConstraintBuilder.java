@@ -109,6 +109,10 @@ public class UtilConstraintBuilder
      */
     public static IloLinearNumExpr modifyCoef(IloLinearNumExpr expr, double factor) throws IloException
     {
+        // not modify the coefficient
+        if (factor == 1.0)
+            return expr;
+        
         IloNumVar        var;
         double           coef;
         IloLinearNumExprIterator iter;
@@ -146,8 +150,15 @@ public class UtilConstraintBuilder
         while (iter.hasNext()) {
             var = iter.nextNumVar();
             coef = iter.getValue();            
-            cost += coef * cplex.getValue(var);
+            
+            if (coef > 0.0 && cplex.getValue(var) > 0)
+                cost += coef * cplex.getValue(var);
         }
+        
+        // issue #281: some variables are assigned value small value (e.g., 3.5976098620712736E-12)
+        // workaround: cast very small value to 0
+        if (cost < 0.01)
+            cost = 0.0;
         
         return cost;
     }

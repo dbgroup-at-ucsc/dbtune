@@ -23,6 +23,8 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
+
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.is;
 
@@ -80,9 +82,7 @@ public class InumPlanFunctionalTest
 
         for (Workload wl : workloads(env.getWorkloadFolders())) {
 
-            System.out.println("==============================");
             System.out.println("Checking workload " + wl.getName());
-            System.out.println("==============================");
             
             conf = candGen.generate(wl);
 
@@ -97,22 +97,27 @@ public class InumPlanFunctionalTest
                     continue;
 
                 costLeafs = 0;
-
-                for (Operator l : eStmt.getPlan().leafs())
-                    costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(eStmt.getPlan(), l);
-
+                
                 inumPlan = new InumPlan(optimizer, eStmt);
 
-                assertThat(inumPlan.getSlots().size(), is(eStmt.getPlan().getTables().size()));
+                if (sql.getSQLCategory().isSame(NOT_SELECT)) {
+                    assertThat(inumPlan.getSlots().size(), is(1));
+                } else {
+                    for (Operator l : eStmt.getPlan().leafs())
+                        costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(eStmt.getPlan(), l);
+
+                    assertThat(inumPlan.getSlots().size(), is(eStmt.getPlan().getTables().size()));
+                    assertThat(
+                            "Failed on stmt " + i + "\n" +
+                            "   with template: \n" + inumPlan + "\n" +
+                            "   with plan: \n" + eStmt.getPlan(),
+                            inumPlan.getInternalCost(),
+                            closeTo(eStmt.getSelectCost() - costLeafs, 1.0));
+                }
+
                 assertThat(inumPlan.getBaseTableUpdateCost(), is(eStmt.getBaseTableUpdateCost()));
                 assertThat(inumPlan.getUpdatedTable(), is(eStmt.getUpdatedTable()));
                 assertThat(inumPlan.getStatement(), is(eStmt.getStatement()));
-                assertThat(
-                    "Failed on stmt " + i + "\n" +
-                    "   with template: \n" + inumPlan + "\n" +
-                    "   with plan: \n" + eStmt.getPlan(),
-                    inumPlan.getInternalCost(),
-                    closeTo(eStmt.getSelectCost() - costLeafs, 1.0));
 
                 // check the objects being referenced
                 assertThat(

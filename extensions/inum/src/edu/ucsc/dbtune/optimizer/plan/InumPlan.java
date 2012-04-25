@@ -20,14 +20,13 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.util.InumUtils;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
-import static edu.ucsc.dbtune.util.InumUtils.removeTemporaryTables;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
-import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 /**
  * Extends {@link SQLStatementPlan} class in order to add INUM-specific functionality. Specifically,
@@ -45,7 +44,7 @@ import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 public class InumPlan extends SQLStatementPlan
 {
     /** used to represent an incompatible instantiation. */
-    public static final Operator INCOMPATIBLE = new Operator("INUM_INCOMPATIBLE", -1, -1);
+    private static final Operator INCOMPATIBLE = new Operator("INUM_INCOMPATIBLE", -1, -1);
 
     /**
      * Convenience object that maps tables to slots. This is done so that the {@link
@@ -92,16 +91,70 @@ public class InumPlan extends SQLStatementPlan
     {
         super(explainedStatement.getPlan());
 
-        preprocess(this);
-
         this.delegate = delegate;
+        this.updatedTable = explainedStatement.getUpdatedTable();
+        this.baseTableUpdateCost = explainedStatement.getBaseTableUpdateCost();
 
-        TableAccessSlot slot = null;
-        double leafsCost = 0;
+        if (!explainedStatement.getPlan().contains(TABLE_SCAN) &&               
+                !explainedStatement.getPlan().contains(INDEX_SCAN))
+            // we need at least one data-access operator slot
+            InumUtils.makeLeafATableScan(
+                    this, this.updatedTable, explainedStatement.getSelectCost());
+
+        //CHECKSTYLE:OFF
+        while (InumUtils.removeTemporaryTables(this));
+        //CHECKSTYLE:ON
+
+        double leafsCost = replaceLeafsBySlots();
+
+        this.internalPlanCost = explainedStatement.getSelectCost() - leafsCost;
+    }
+
+    /**
+     * copy constructor.
+     *
+     * @param other
+     *      plan being copied
+     */
+    InumPlan(InumPlan other)
+    {
+        super(other);
 
         slots = new HashMap<Table, TableAccessSlot>();
 
+        for (Operator o : leafs()) {
+            if (!(o instanceof TableAccessSlot))
+                throw new RuntimeException("Leaf should be a " + TableAccessSlot.class.getName());
+
+            slots.put(((TableAccessSlot) o).getTable(), (TableAccessSlot) o);
+        }
+
+        internalPlanCost = other.internalPlanCost;
+        delegate = other.delegate;
+        updatedTable = other.updatedTable;
+        baseTableUpdateCost = other.baseTableUpdateCost;
+    }
+
+    /**
+     * Replaces the leafs of this plan by access slots.
+     *
+     * @return
+     *      the sum of costs of the leafs
+     * @throws SQLException
+     *      if a leaf is not {@link INDEX_SCAN} or {@link TABLE_SCAN}; if a leaf doesn't refer to an 
+     *      object; if one or more leafs can't be assigned with a slot
+     */
+    private double replaceLeafsBySlots() throws SQLException
+    {
+        TableAccessSlot slot = null;
+        double leafsCost = 0;
+
+        this.slots = new HashMap<Table, TableAccessSlot>();
+
         for (Operator leaf : leafs()) {
+
+            if (!leaf.getName().equals(INDEX_SCAN) && !leaf.getName().equals(TABLE_SCAN))
+                throw new SQLException("Leaf should be " + INDEX_SCAN + " or " + TABLE_SCAN);
 
             if (leaf.getDatabaseObjects().size() != 1)
                 throw new SQLException("Leaf " + leaf + " doesn't refer to any object");
@@ -119,39 +172,13 @@ public class InumPlan extends SQLStatementPlan
             slots.put(slot.getTable(), slot);
         }
 
-        if (leafs().size() != slots.size())
-            throw new SQLException("One or more leafs haven't been assigned with a slot " + this);
-
-        if (explainedStatement.getStatement().getSQLCategory().isSame(NOT_SELECT)) {
-            updatedTable = explainedStatement.getUpdatedTable();
-            baseTableUpdateCost = explainedStatement.getBaseTableUpdateCost();
+        if (leafs().size() != slots.size()) {
+            System.out.println("leafs: " + leafs());
+            System.out.println("slots: " + slots);
+            throw new SQLException("One or more leafs haven't been assigned with a slot \n" + this);
         }
 
-        internalPlanCost = explainedStatement.getSelectCost() - leafsCost;
-    }
-
-    /**
-     * copy constructor.
-     *
-     * @param other
-     *      plan being copied
-     */
-    InumPlan(InumPlan other)
-    {
-        super(other);
-
-        slots = new HashMap<Table, TableAccessSlot>();
-
-        for (Operator o : leafs())
-            if (!(o instanceof TableAccessSlot))
-                throw new RuntimeException("Leaf should be a " + TableAccessSlot.class.getName());
-            else
-                slots.put(((TableAccessSlot) o).getTable(), (TableAccessSlot) o);
-
-        internalPlanCost = other.internalPlanCost;
-        delegate = other.delegate;
-        updatedTable = other.updatedTable;
-        baseTableUpdateCost = other.baseTableUpdateCost;
+        return leafsCost;
     }
 
     /**
@@ -335,7 +362,7 @@ public class InumPlan extends SQLStatementPlan
             operators.add(o);
         }
 
-        if (visited.size() != getTables().size())
+        if (visited.size() != getSlots().size())
             throw new SQLException(
                 "One or more tables missing in atomic configuration.\n" +
                 "  Tables in atomic " + getReferencedTables(atomicConfiguration) + "\n" +
@@ -703,21 +730,5 @@ public class InumPlan extends SQLStatementPlan
         plan.assignCost(plan.getRootElement(), cost + templatePlan.getBaseTableUpdateCost());
 
         return plan;
-    }
-
-    /**
-     * Pre-processes a plan by removing temporary table scans.
-     *
-     * @param plan
-     *      plan to be preprocessed
-     * @throws SQLException
-     *      if an error occurs while pre-processing
-     */
-    public static void preprocess(SQLStatementPlan plan) throws SQLException
-    {
-        //CHECKSTYLE:OFF
-        while (removeTemporaryTables(plan))
-            ;
-        //CHECKSTYLE:ON
     }
 }

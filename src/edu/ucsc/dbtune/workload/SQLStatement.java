@@ -13,7 +13,11 @@ public class SQLStatement
 
     /** literal contents of the statement. */
     private String sql;
-
+    
+    /** The frequency of the statement in the workload */
+    private double fq;
+    
+    
     /**
      * Constructs a {@code SQLStatement}. The constructor tries to infer the category of the 
      * statement using the {@link SQLCategory#from} method.
@@ -39,6 +43,9 @@ public class SQLStatement
     {
         this.category = category;
         this.sql      = sql;
+        
+        // the default weight of the statement is 1.0
+        fq = 1.0;
     }
 
     /**
@@ -64,6 +71,28 @@ public class SQLStatement
         return sql;
     }
 
+    
+    /**
+     * Retrieves the weight of the statement
+     * 
+     * @return
+     *      The weight of this statement
+     */
+    public double getStatementWeight()
+    {
+        return fq;
+    }
+    
+    /**
+     * Set the weight for the statement
+     * 
+     * @param fq
+     *      The weight
+     */
+    public void setStatementWeight(double fq)
+    {
+        this.fq = fq;
+    }
     /**
      * {@inheritDoc}
      */

@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Permutations;
-import edu.ucsc.dbtune.workload.Workload;
+
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * Generate the set of candidate indexes that contain all subsets of columns of indexes obtained 
@@ -45,7 +45,7 @@ public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerato
      * {@inheritDoc}
      */
     @Override
-    public Set<ByContentIndex> generateByContent(Workload workload)
+    public Set<ByContentIndex> generateByContent(SQLStatement sql)
         throws SQLException
     {
         Set<ByContentIndex>  indexes = new HashSet<ByContentIndex>();
@@ -55,10 +55,12 @@ public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerato
         
         int max;
         
-        for (Index index : delegate.generate(workload)) {
+        for (Index index : delegate.generate(sql)) {
             
-            max = maxCols > (index.columns().size() - 1)
-                            ? (index.columns().size() - 1): maxCols;
+            if (maxCols > (index.columns().size() - 1))
+                max = index.columns().size() - 1;
+            else
+                max = maxCols;
           
             for (int num = 1; num <= max; num++) {
                 

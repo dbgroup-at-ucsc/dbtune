@@ -43,7 +43,7 @@ public class ElasticDivBIPFunctionalTest
 
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
-
+        /*
         int Nreplicas = 4;
         int loadfactor = 2;
         double B;
@@ -97,5 +97,6 @@ public class ElasticDivBIPFunctionalTest
         System.out.println(logger);
         System.out.println("before: " + initial);
         System.out.println("after: " + after);
+        */
     }
 }

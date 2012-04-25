@@ -4,10 +4,12 @@ import java.sql.CallableStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.Advisor;
+import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.util.Environment;
@@ -34,6 +36,10 @@ public class DB2Advisor extends Advisor
     public DB2Advisor(DatabaseSystem dbms)
         throws SQLException
     {
+        if (!(dbms.getOptimizer() instanceof DB2Optimizer) &&
+                !(dbms.getOptimizer().getDelegate() instanceof DB2Optimizer))
+            throw new SQLException("Expecting DB2Optimizer");
+
         this.dbms = dbms;
     }
 
@@ -78,7 +84,7 @@ public class DB2Advisor extends Advisor
     {
         int budget = Environment.getInstance().getSpaceBudget();
 
-        CallableStatement stmt =
+        CallableStatement cstmt =
             dbms.getConnection().prepareCall(
                 "CALL SYSPROC.DESIGN_ADVISOR(" +
                 "   ?, ?, ?, blob(' " +
@@ -91,31 +97,33 @@ public class DB2Advisor extends Advisor
                 "               -disklimit " + budget +
                 "               -type      I " +
                 "               -compress  OFF " +
+                //"               -qualifier tpcds " +
                 "               -drop" +
                 "            </string>" +
                 "         </dict>" +
                 "      </plist>'), " +
                 "   NULL, ?, ?)");
 
-        stmt.setInt(1, 1);
-        stmt.setInt(2, 0);
-        stmt.setString(3, "en_US");
-        stmt.registerOutParameter(4, Types.BLOB);
-        stmt.registerOutParameter(5, Types.BLOB);
-        stmt.execute();
+        cstmt.setInt(1, 1);
+        cstmt.setInt(2, 0);
+        cstmt.setString(3, "en_US");
+        cstmt.registerOutParameter(4, Types.BLOB);
+        cstmt.registerOutParameter(5, Types.BLOB);
+        cstmt.execute();
 
-        // get size of recommendation
-        /*
-        ResultSet rs = stmt.getResultSet();
+        Set<ByContentIndex> unique = new HashSet<ByContentIndex>();
 
-        double space = 0;
-        while (rs.next())
-            space += rs.getDouble("diskuse");
-            
-        rs.close();
-        stmt.close();
-        */
+        for (Index i : DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog()))
+            unique.add(new ByContentIndex(i));
 
-        return DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog());
+        //double space = 0;
+        //for (Index i : unique)
+            //space += i.getBytes();
+
+        //System.out.println("Count:  " + unique.size());
+        //System.out.println("Budget: " + budget);
+        //System.out.println("Actual: " + space / 1000000);
+
+        return new HashSet<Index>(unique);
     }
 }

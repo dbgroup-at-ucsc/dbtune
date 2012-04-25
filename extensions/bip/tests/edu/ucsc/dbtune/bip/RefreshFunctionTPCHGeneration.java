@@ -17,6 +17,7 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.util.Environment;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.metadata.SQLTypes.isDateTimeLiteral;
 import static edu.ucsc.dbtune.metadata.SQLTypes.isString;
 
 
@@ -62,10 +63,16 @@ public class RefreshFunctionTPCHGeneration
         lines = readFile(fileName);
         
         keys = new ArrayList<Integer>();
-        for (String line : lines) {
-            elements = line.split("\\|");
-            keys.add(Integer.parseInt(elements[0]));
+        
+        for (int i = 0; i < 50; i++) {
+            elements = lines.get(i).split("\\|");
+            keys.add(Integer.parseInt(elements[0]));    
         }
+                    
+        //for (String line : lines) {
+          //  elements = line.split("\\|");
+          //  keys.add(Integer.parseInt(elements[0]));        
+        //}
         
         // construct delete statements
         sb = new StringBuilder();
@@ -100,8 +107,11 @@ public class RefreshFunctionTPCHGeneration
         tabName = "tpch.lineitem";
         table = db.getCatalog().<Table>findByName(tabName);
         
-        for (String line : lineLI) 
-            sb.append(insertRow(tabName, line, table));
+        for (int i = 0; i < 50; i++) 
+            sb.append(insertRow(tabName, lineLI.get(i), table));
+        
+        //for (String line : lineLI) 
+          //  sb.append(insertRow(tabName, line, table));
         
         // ORDERS
         fileName = en.getWorkloadsFoldername() + "/tpch-inserts-deletes/orders.tbl.u1";
@@ -110,8 +120,11 @@ public class RefreshFunctionTPCHGeneration
         tabName = "tpch.orders";
         table = db.getCatalog().<Table>findByName(tabName);
         
-        for (String line : lineOrder) 
-            sb.append(insertRow(tabName, line, table));
+        for (int i = 0; i < 50; i++) 
+            sb.append(insertRow(tabName, lineOrder.get(i), table));
+        
+        //for (String line : lineOrder) 
+          //  sb.append(insertRow(tabName, line, table));
         
         // write to file
         fileName = en.getWorkloadsFoldername() + "/tpch-inserts/workload.sql";
@@ -138,7 +151,7 @@ public class RefreshFunctionTPCHGeneration
         
         for (Column col : table.columns()){
             
-            if (isString(col.getDataType())) {
+            if (isString(col.getDataType()) || isDateTimeLiteral(col.getDataType())) {
                 result += "\'";
                 result += elements[pos];
                 result += "\'";
@@ -231,7 +244,7 @@ public class RefreshFunctionTPCHGeneration
     protected static void writeToFile(String fileName, StringBuilder sb) throws IOException
     {
         PrintWriter out;
-        out = new PrintWriter(new FileWriter(fileName));
+        out = new PrintWriter(new FileWriter(fileName, false));
         out.print(sb);
         out.close();
     }

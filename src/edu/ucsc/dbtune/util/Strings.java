@@ -351,4 +351,37 @@ public final class Strings
 
         return result.toString();
     }
+
+    /**
+     * Escapes XML characters (except '"') in a string. i.e.:
+     * "   &quot;
+     * '   &apos;
+     * <   &lt;
+     * >   &gt;
+     * &   &amp;
+     * 
+     * @param toEscape
+     *      string to be properly escaped
+     * @return
+     *      The escaped string
+     */ 
+    public static String escapeXMLCharacters(String toEscape)
+    {   
+        StringBuilder result = new StringBuilder();
+
+        for (char ch : toEscape.toCharArray())
+            if (ch == '\'')
+                result.append("&apos;");
+            else if (ch == '<')
+                result.append("&lt;");
+            else if (ch == '>')
+                result.append("&gt;");
+            else if (ch == '&')
+                result.append("&amp;");
+            else
+                result.append(ch);
+
+        return result.toString();
+                    
+    }
 }

@@ -124,6 +124,19 @@ public class Environment
     }
 
     /**
+     * Returns a property from the underlying {@link Properties} object.
+     *
+     * @param property
+     *     name of the property
+     * @return
+     *     value of the property
+     */
+    public String getProperty(String property)
+    {
+        return configuration.getProperty(property);
+    }
+
+    /**
      * Checks if a property is null or empty and throws a {@link NoSuchMethodException} if it is.
      *
      * @param properties
@@ -216,12 +229,13 @@ public class Environment
      */
     public String getOptimizer() throws IllegalArgumentException
     {
-        String opt = getOrThrowIfNullOrEmpty(configuration, OPTIMIZER);
+        String opts = getOrThrowIfNullOrEmpty(configuration, OPTIMIZER);
 
-        if (!SUPPORTED_OPTIMIZERS.contains(opt))
-            throw new IllegalArgumentException("Bad optimizer option " + opt);
+        for (String opt : opts.split(","))
+            if (!SUPPORTED_OPTIMIZERS.contains(opt))
+                throw new IllegalArgumentException("Bad optimizer option " + opt);
 
-        return opt;
+        return opts;
     }
 
     /**

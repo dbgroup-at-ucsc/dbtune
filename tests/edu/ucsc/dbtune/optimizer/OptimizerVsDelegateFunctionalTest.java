@@ -1,12 +1,14 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.util.Comparator;
+import java.util.Random;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -43,6 +45,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     private static Optimizer delegate;
     private static CandidateGenerator candGen;
     private static PreparedSQLStatement pSql;
+    private static Random r;
     private int i;
 
     /**
@@ -57,6 +60,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
         optimizer = db.getOptimizer();
         delegate = getBaseOptimizer(optimizer);
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
+        r = new Random(System.currentTimeMillis());
         
         loadWorkloads(db.getConnection());
     }
@@ -92,6 +96,13 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
             for (SQLStatement sql : wl) {
                 i++;
 
+                if (optimizer instanceof IBGOptimizer &&
+                        (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT) ||
+                         r.nextInt(100) > 5))
+                    continue;
+
+                System.out.print(wl.getName() + "," + i + ",");
+
                 pSql = optimizer.prepareExplain(sql);
 
                 ExplainedSQLStatement explainedByOptimizer = pSql.explain(allIndexes);
@@ -100,16 +111,12 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
                 // over-estimations by a delegate are allowed, while under-estimations are 
                 // considered a failure
                 assertThat(
-                        "Optimizer: " + explainedByOptimizer + "\n" +
-                        "Delegate: " + explainedByDelegate,
                         compare(explainedByOptimizer, explainedByDelegate),
                         is(greaterThanOrEqualTo(0)));
 
-                System.out.println(
-                        wl.getName() + "," +
-                        i + "," +
+                System.out.print(
                         explainedByOptimizer.getSelectCost() + "," +
-                        explainedByDelegate.getSelectCost());
+                        explainedByDelegate.getSelectCost() + "\n");
             }
         }
     }
@@ -133,9 +140,16 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
         System.out.println(
                 "### Error\n" +
                 "Statement " + i + "\n" +
+                "Optimizer total cost: " + e1.getTotalCost() + "\n" +
+                "Delegate total cost: " + e2.getTotalCost() + "\n" +
+                "Optimizer base table update cost: " + e1.getBaseTableUpdateCost() + "\n" +
+                "Delegate base table update cost: " + e2.getBaseTableUpdateCost() + "\n" +
+                "Optimizer select cost: " + e1.getSelectCost() + "\n" +
+                "Delegate select cost: " + e2.getSelectCost() + "\n" +
+                "Optimizer base table update cost: " + e1.getBaseTableUpdateCost() + "\n" +
+                "Delegate base table update cost: " + e2.getBaseTableUpdateCost() + "\n" +
                 "Optimizer:\n" + e1.getPlan() +
-                "\n\nvs\n\nDelegate:\n" + e2.getPlan() +
-                "\nTemplate:\n" + get(((InumPreparedSQLStatement) pSql).getTemplatePlans(), 0));
+                "\n\nvs\n\nDelegate:\n" + e2.getPlan());
 
         return -1;
     }

@@ -77,7 +77,8 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         // base update cost on one replicas
         for (QueryPlanDesc desc : queryPlanDescs)
             if (desc.getSQLCategory().isSame(NOT_SELECT))
-                totalBaseTableUpdateCost += desc.getBaseTableUpdateCost();
+                totalBaseTableUpdateCost += 
+                        (desc.getBaseTableUpdateCost() * desc.getStatementWeight());
             
         // need to time the number of replica
         return totalBaseTableUpdateCost * nReplicas;
@@ -218,7 +219,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         for (int r = 0; r < nReplicas; r++) 
             obj.add(replicaCost(r));
         
-        cplex.addMinimize(obj);
+        cplex.addMinimize(obj);        
     }
     
     /**
@@ -238,12 +239,14 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         for (QueryPlanDesc desc : queryPlanDescs) 
             if (desc.getSQLCategory().isSame(SELECT) || desc.getSQLCategory().isSame(UPDATE))
                 expr.add(modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
-                                   getFactorStatement(desc)));
+                                   getFactorStatement(desc) * desc.getStatementWeight()
+                                   ));
         
         // update component of NOT_SELECT statement
         for (QueryPlanDesc desc : queryPlanDescs) 
             if (desc.getSQLCategory().isSame(NOT_SELECT)) 
-                expr.add(indexUpdateCost(r, desc.getStatementID(), desc));
+                expr.add(modifyCoef(indexUpdateCost(r, desc.getStatementID(), desc),
+                        desc.getStatementWeight()));
         
         return expr;
     }
@@ -277,7 +280,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      The query plan description
      *      
      * @return
-     *      The update cost formulas
+     *      The update cost formulas (NOT take into account the frequency)
      *      
      * @throws IloException
      */
@@ -316,7 +319,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      The query plan description.
      *      
      * @return
-     *      The linear expression of the query
+     *      The linear expression of the query (NOT take into account the frequency)
      *      
      * @throws IloException
      */
@@ -475,7 +478,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                     expr.addTerm(1, cplexVar.get(idY));
                 }
             
-            rhs = (desc.getSQLCategory().isSame(NOT_SELECT)) ? nReplicas : loadfactor;
+            rhs = (desc.getSQLCategory().isSame(UPDATE)) ? nReplicas : loadfactor;
             cplex.addEq(expr, rhs, "top_m_" + numConstraints);            
             numConstraints++;
         }
@@ -523,21 +526,26 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
        double cost = 0.0;
        IloLinearNumExpr expr;
        
-       for (int r = 0; r < nReplicas; r++) {
+       for (int r = 0; r < nReplicas; r++)
            for (QueryPlanDesc desc : super.queryPlanDescs) {
 
                if (!desc.getSQLCategory().isSame(NOT_SELECT))
                    continue;
                
-               // query shell
-               expr = queryExpr(r, desc.getStatementID(), desc);
+               expr = cplex.linearNumExpr();
+               
+               // query shell of UPDATE statement
+               if (desc.getSQLCategory().isSame(UPDATE))
+                   expr = modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+                           getFactorStatement(desc) * desc.getStatementWeight()
+                           );
                
                // update index access cost
-               expr.add(indexUpdateCost(r, desc.getStatementID(), desc));
+               expr.add(modifyCoef(indexUpdateCost(r, desc.getStatementID(), desc),
+                       desc.getStatementWeight()));
                
                cost += computeVal(expr);
            }
-       }
        
        return cost;
     }
@@ -586,13 +594,23 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             queries = new ArrayList<Double>();
             
             for (int r = 0; r < nReplicas; r++) {
+                
                 val = computeVal(queryExpr(r, desc.getStatementID(), desc));
                 
-                if (val > 0)
+                if (val > 0.0)
                     queries.add(val);
+                
             }
            
             ratio = maxRatioInList(queries);
+            if (ratio > 10000) {
+                System.out.println("WATCH-OUT list: " + queries + " ratio: " + ratio);
+            }
+            
+            if (queries.size() != loadfactor)
+                throw new RuntimeException("We expect to obtain exactly"
+                          + loadfactor + " value of cost(q,r) that are greater than 0");
+            
             maxRatio = (maxRatio > ratio) ? maxRatio : ratio;
         }
         
@@ -615,13 +633,21 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         for (QueryPlanDesc desc : super.queryPlanDescs) {
             
-            expr = queryExpr(r, desc.getStatementID(), desc);
-            val  = 0.0;
+            expr = cplex.linearNumExpr();
+            
+            // query shell of SELECT or UPDATE statement
+            if (desc.getSQLCategory().isSame(SELECT) ||
+                    desc.getSQLCategory().isSame(UPDATE))
+                expr = modifyCoef(queryExpr(r, desc.getStatementID(), desc),
+                                desc.getStatementWeight());
+            
+            val = 0.0;
             
             // update index access cost
             if (desc.getSQLCategory().isSame(NOT_SELECT)) {
-                expr.add(indexUpdateCost(r, desc.getStatementID(), desc));
-                val += desc.getBaseTableUpdateCost();
+                expr.add(modifyCoef(indexUpdateCost(r, desc.getStatementID(), desc),
+                        desc.getStatementWeight()));
+                val += desc.getBaseTableUpdateCost() * desc.getStatementWeight();
             }
             
             val += computeVal(expr);

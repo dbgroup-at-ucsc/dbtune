@@ -14,6 +14,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.metadata.Index.DESCENDING;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.DELETE;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.INSERT;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
+import static edu.ucsc.dbtune.optimizer.plan.Operator.UPDATE;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 
 import static org.hamcrest.Matchers.greaterThan;
@@ -187,6 +191,7 @@ public class OptimizerTest
         assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
+        assertThat(sqlp.getPlan().contains(TABLE_SCAN), is(true));
 
         conf  = new HashSet<Index>();
         sqlp  = opt.explain(sql, conf);
@@ -202,6 +207,7 @@ public class OptimizerTest
         assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
+        assertThat(sqlp.getPlan().contains(TABLE_SCAN), is(true));
 
         assertThat(cost1, is(cost2));
 
@@ -209,12 +215,13 @@ public class OptimizerTest
         if (!(opt instanceof MySQLOptimizer) &&
                 !(opt instanceof IBGOptimizer) )
         {
-        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
+        sql  = new SQLStatement("UPDATE one_table.tbl SET a = 3 WHERE a = 5");
         sqlp = opt.explain(sql);
 
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
         assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getPlan().contains(UPDATE), is(true));
 
         // XXX: issue #139 is causing this to fail for PGOptimizer {
         if (!(opt instanceof PGOptimizer)) {
@@ -235,6 +242,95 @@ public class OptimizerTest
         assertThat(sqlp, notNullValue());
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
         assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
+
+        // XXX: issue #139 is causing this to fail for PGOptimizer {
+        if (!(opt instanceof PGOptimizer)) {
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getPlan().contains(UPDATE), is(true));
+        }
+        // }
+
+        assertThat(sqlp.getBaseTableUpdateCost(), is(sqlp.getUpdateCost()));
+
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getOptimizationCount(), is(1));
+
+        sql  = new SQLStatement("INSERT INTO one_table.tbl VALUES(1,2,3,4)");
+        sqlp = opt.explain(sql);
+
+        assertThat(sqlp, notNullValue());
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.INSERT), is(true));
+        assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getPlan().contains(INSERT), is(true));
+
+        // XXX: issue #139 is causing this to fail for PGOptimizer {
+        if (!(opt instanceof PGOptimizer)) {
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        }
+        // }
+
+        assertThat(sqlp.getBaseTableUpdateCost(), is(sqlp.getUpdateCost()));
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getOptimizationCount(), is(1));
+
+        sqlp = opt.explain(sql, conf);
+
+        assertThat(sqlp, notNullValue());
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.INSERT), is(true));
+        assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getPlan().contains(INSERT), is(true));
+
+        // XXX: issue #139 is causing this to fail for PGOptimizer {
+        if (!(opt instanceof PGOptimizer)) {
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        }
+        // }
+
+        assertThat(sqlp.getBaseTableUpdateCost(), is(sqlp.getUpdateCost()));
+
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getOptimizationCount(), is(1));
+
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        sqlp = opt.explain(sql);
+
+        assertThat(sqlp, notNullValue());
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.DELETE), is(true));
+        assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getPlan().contains(DELETE), is(true));
+
+        // XXX: issue #139 is causing this to fail for PGOptimizer {
+        if (!(opt instanceof PGOptimizer)) {
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        }
+        // }
+
+        assertThat(sqlp.getBaseTableUpdateCost(), is(sqlp.getUpdateCost()));
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
+        assertThat(sqlp.getOptimizationCount(), is(1));
+
+        sqlp = opt.explain(sql, conf);
+
+        assertThat(sqlp, notNullValue());
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.DELETE), is(true));
+        assertThat(sqlp.getSelectCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getPlan().contains(DELETE), is(true));
 
         // XXX: issue #139 is causing this to fail for PGOptimizer {
         if (!(opt instanceof PGOptimizer)) {
@@ -311,6 +407,71 @@ public class OptimizerTest
         assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.UPDATE), is(true));
         assertThat(sqlp.getSelectCost(), greaterThan(0.0));
         assertThat(sqlp.getSelectCost(), is(cost2));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxa))));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
+        assertThat(sqlp.getUpdateCost(idxa), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdateCost(idxb), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdatedConfiguration(), is(conf));
+
+        // XXX: issue #139 is causing this to fail for PGOptimizer {
+        if (!(opt instanceof PGOptimizer)) {
+        assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        }
+        // }
+
+        assertThat(
+            sqlp.getUpdateCost(),
+            is(sqlp.getBaseTableUpdateCost() + sqlp.getUpdateCost(sqlp.getUpdatedConfiguration())));
+        assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getSelectCost())));
+        assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getUpdateCost())));
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getConfiguration(), is(conf));
+        assertThat(sqlp.getUsedConfiguration().isEmpty(), is(false));
+        assertThat(sqlp.getUsedConfiguration().size(), is(1));
+        assertThat(sqlp.getUsedConfiguration().contains(idxa), is(true));
+        assertThat(sqlp.getUpdatedTable(), is(idxa.getTable()));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(false));
+        assertThat(sqlp.getUpdatedConfiguration(), is(conf));
+        assertThat(sqlp.getOptimizationCount(), is(1));
+
+        sql  = new SQLStatement("INSERT INTO one_table.tbl VALUES(1,2,3,4)");
+        sqlp = opt.explain(sql, conf);
+
+        assertThat(sqlp, notNullValue());
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.INSERT), is(true));
+        assertThat(sqlp.getSelectCost(), greaterThan(0.0));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxa))));
+        assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
+        assertThat(sqlp.getUpdateCost(idxa), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdateCost(idxb), is(greaterThan(0.0)));
+        assertThat(sqlp.getUpdatedConfiguration(), is(conf));
+
+        // XXX: issue #139 is causing this to fail for PGOptimizer {
+        if (!(opt instanceof PGOptimizer)) {
+        assertThat(sqlp.getBaseTableUpdateCost(), is(greaterThan(0.0)));
+        }
+        // }
+
+        assertThat(
+            sqlp.getUpdateCost(),
+            is(sqlp.getBaseTableUpdateCost() + sqlp.getUpdateCost(sqlp.getUpdatedConfiguration())));
+        assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getSelectCost())));
+        assertThat(sqlp.getTotalCost(), is(greaterThan(sqlp.getUpdateCost())));
+        assertThat(sqlp.getTotalCost(), is(sqlp.getSelectCost() + sqlp.getUpdateCost()));
+        assertThat(sqlp.getConfiguration(), is(conf));
+        assertThat(sqlp.getUpdatedTable(), is(idxa.getTable()));
+        assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(false));
+        assertThat(sqlp.getUpdatedConfiguration(), is(conf));
+        assertThat(sqlp.getOptimizationCount(), is(1));
+
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        sqlp = opt.explain(sql, conf);
+
+        assertThat(sqlp, notNullValue());
+        assertThat(sqlp.getStatement().getSQLCategory().isSame(SQLCategory.DELETE), is(true));
+        assertThat(sqlp.getSelectCost(), greaterThan(0.0));
         assertThat(sqlp.getUpdateCost(), is(greaterThan(0.0)));
         assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxa))));
         assertThat(sqlp.getUpdateCost(), is(greaterThan(sqlp.getUpdateCost(idxb))));
@@ -535,6 +696,31 @@ public class OptimizerTest
         assertThat(exp1, is(notNullValue()));
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp1));
+
+        sql  = new SQLStatement("INSERT INTO one_table.tbl VALUES(1,2,3,4)");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql);
+        exp2 = stmt.explain(new HashSet<Index>());
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(
+            "not equal:\n" + exp1 + "\nVS VS VS\n" + exp2, exp2.equalsIgnorePlan(exp1), is(true));
+
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql);
+        exp2 = stmt.explain(new HashSet<Index>());
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2.equalsIgnorePlan(exp1), is(true));
         }
         // }
 
@@ -597,6 +783,30 @@ public class OptimizerTest
         assertThat(exp1, is(notNullValue()));
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp1));
+
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql, conf);
+        exp2 = stmt.explain(conf);
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2.equalsIgnorePlan(exp1), is(true));
+
+        sql  = new SQLStatement("INSERT INTO one_table.tbl VALUES(1,2,3,4)");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql, conf);
+        exp2 = stmt.explain(conf);
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(exp2.equalsIgnorePlan(exp1), is(true));
         }
         // }
 

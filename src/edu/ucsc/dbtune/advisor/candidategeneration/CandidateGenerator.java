@@ -6,6 +6,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 import static com.google.common.collect.Lists.reverse;
@@ -33,6 +34,18 @@ public interface CandidateGenerator
      *      if the generation of candidates can't be done
      */
     Set<Index> generate(Workload workload) throws SQLException;
+
+    /**
+     * Generates candidates for the given statement.
+     *
+     * @param statement
+     *      the workload for which to generate candidates
+     * @return
+     *      a candidate set for the given statement
+     * @throws SQLException
+     *      if the generation of candidates can't be done
+     */
+    Set<Index> generate(SQLStatement statement) throws SQLException;
 
     /**
      */
