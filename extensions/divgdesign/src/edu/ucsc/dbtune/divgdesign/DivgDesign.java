@@ -31,7 +31,9 @@ public abstract class DivgDesign
     protected List<Set<Integer>> stmtIDInPartitions;
     protected List<Set<Index>> indexesAtReplica;
     protected double totalCost;
-    
+    protected double updateCost;
+    protected double queryCost;
+        
     /**
      * Retrieve the total cost of the recommended configuration.
      * 
@@ -41,6 +43,28 @@ public abstract class DivgDesign
     public double getTotalCost()
     {
         return totalCost;
+    }
+    
+    /**
+     * Retrieve the total query cost
+     * 
+     * @return
+     *      The query cost
+     */
+    public double getQueryCost()
+    {
+        return queryCost;
+    }
+    
+    /**
+     * Retrieve the total update cost
+     * 
+     * @return
+     *      The update cost
+     */
+    public double getUpdateCost()
+    {
+        return updateCost;
     }
     
     /**
@@ -196,6 +220,8 @@ public abstract class DivgDesign
         
         // calculate the total cost
         totalCost = 0.0;
+        updateCost = 0.0;
+        queryCost = 0.0;
         for (int j = 0; j < workload.size(); j++) {
             
             sql   = workload.get(j);
@@ -208,6 +234,7 @@ public abstract class DivgDesign
                 for (int i = 0; i < n; i++) {
                     partitionIDs.add(i);
                     totalCost += costs.get(i).getCost();
+                    updateCost += costs.get(i).getCost();
                 }
                 
             }
@@ -217,6 +244,7 @@ public abstract class DivgDesign
                 
                 for (int k = 0; k < m; k++) {
                     totalCost += costs.get(k).getCost() / m;
+                    queryCost += costs.get(k).getCost() / m;
                     partitionIDs.add(costs.get(k).getPartitionID());
                 }
                 

@@ -150,7 +150,9 @@ public class UtilConstraintBuilder
         while (iter.hasNext()) {
             var = iter.nextNumVar();
             coef = iter.getValue();            
-            cost += coef * cplex.getValue(var);
+            
+            if (coef > 0.0 && cplex.getValue(var) > 0)
+                cost += coef * cplex.getValue(var);
         }
         
         return cost;

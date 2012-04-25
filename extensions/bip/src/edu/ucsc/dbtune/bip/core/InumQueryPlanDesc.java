@@ -86,7 +86,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	private double baseTableUpdateCost;
 	
 	/** An index update cost = this_factor * base_table_cost (for INSERT/DELETE) */
-	public static double INDEX_UPDATE_COST_FACTOR = 10.0;
+	public static double INDEX_UPDATE_COST_FACTOR = 1.0;
 	/**
      * Returns the single instance of this class corresponding to the given statement.
      *

@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.divgdesign;
 
 
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,21 +57,30 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         maxIters = 1;
         
         // 3. Call CoPhy Design
-        for (int i = 0; i < arrNReplicas.length; i++) {
+        for (double B1 : lB) {
             
-            nReplicas = arrNReplicas[i];
-            loadfactor = arrLoadFactor[i];
+            B = B1;
+            System.out.println(" Space:  " + B + "============\n");
             
-            if (isTestOne && nReplicas != 4)
-                continue;
+            for (int i = 0; i < arrNReplicas.length; i++) {
+                
+                nReplicas = arrNReplicas[i];
+                loadfactor = arrLoadFactor[i];
+                
+                if (isTestOne && nReplicas != 4)
+                    continue;
+                
+                System.out.println("--------------------------------------------");
+                System.out.println(" DIVGDESIGN-COPHY, # replicas = " + nReplicas
+                        + ", load factor = " + loadfactor
+                        + ", B = " + B);
+                
+                testDiv();
+                System.out.println("--------------------------------------------");
+            }
             
-            System.out.println("--------------------------------------------");
-            System.out.println(" DIVGDESIGN-COPHY, # replicas = " + nReplicas
-                    + ", load factor = " + loadfactor
-                    + ", B = " + B);
-            
-            testDiv();
-            System.out.println("--------------------------------------------");
+            if (isOneBudget)
+                break;
         }
     }
     
@@ -88,10 +98,23 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         
         recommendedIndexStmt = new HashMap<SQLStatement, Set<Index>>();
+        List<SQLStatement> sqls;
+        Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-extra");
         
         for (SQLStatement sql : workload) {
+        
+            sqls = new ArrayList<SQLStatement>();
+            sqls.add(sql);
             
-            wl = new Workload(Lists.newArrayList(sql));
+            // extra workload
+            if (isExtraWorkload) {
+                for (SQLStatement e : wlExtra)
+                    if (e.getSQLCategory().isSame(SELECT))
+                        sqls.add(e);
+                
+            }
+            
+            wl = new Workload(sqls);
             
             if (sql.getSQLCategory().isSame(SELECT))
                 candidate = candGen.generate(wl);
@@ -182,7 +205,9 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
                             + " INUM time: " + timeInum + "\n"
                             + " ANALYSIS time: " + timeAnalysis + "\n"
                             + " TOTAL running time: " + (timeInum + timeAnalysis) + "\n"
-                            + " The objective value: " + divg.getTotalCost()
+                            + " The objective value: " + divg.getTotalCost() + "\n"
+                            + "      QUERY cost:    " + divg.getQueryCost()  + "\n"
+                            + "      UPDATE cost:   " + divg.getUpdateCost() + "\n"
                             );
     }
 }

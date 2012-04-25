@@ -594,13 +594,23 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             queries = new ArrayList<Double>();
             
             for (int r = 0; r < nReplicas; r++) {
+                
                 val = computeVal(queryExpr(r, desc.getStatementID(), desc));
                 
-                if (val > 0)
+                if (val > 0.0)
                     queries.add(val);
+                
             }
            
             ratio = maxRatioInList(queries);
+            if (ratio > 10000) {
+                System.out.println("WATCH-OUT list: " + queries + " ratio: " + ratio);
+            }
+            
+            if (queries.size() != loadfactor)
+                throw new RuntimeException("We expect to obtain exactly"
+                          + loadfactor + " value of cost(q,r) that are greater than 0");
+            
             maxRatio = (maxRatio > ratio) ? maxRatio : ratio;
         }
         
