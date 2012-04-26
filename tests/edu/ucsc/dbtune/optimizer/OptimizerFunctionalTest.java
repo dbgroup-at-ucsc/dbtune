@@ -166,8 +166,8 @@ public class OptimizerFunctionalTest
 
             for (SQLStatement sql : wl)
                 if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT) &&
-                        (opt instanceof MySQLOptimizer || opt instanceof IBGOptimizer))
-                    // XXX: issue #106, #144
+                        (opt instanceof MySQLOptimizer))
+                    // XXX: issue #106
                     continue;
                 else
                     opt.explain(sql, allIndexes);

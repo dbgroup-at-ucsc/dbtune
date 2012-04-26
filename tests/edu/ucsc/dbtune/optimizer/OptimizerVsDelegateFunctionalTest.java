@@ -16,10 +16,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static com.google.common.collect.Iterables.get;
-
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
@@ -96,9 +94,9 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
             for (SQLStatement sql : wl) {
                 i++;
 
-                if (optimizer instanceof IBGOptimizer &&
-                        (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT) ||
-                         r.nextInt(100) > 5))
+                if (r.nextInt(100) > 5 ||
+                        (optimizer instanceof MySQLOptimizer &&
+                        sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)))
                     continue;
 
                 System.out.print(wl.getName() + "," + i + ",");

@@ -127,7 +127,7 @@ public class IndexBenefitGraphConstructorTest
     public void testEmptyCost() throws Exception
     {
         IndexBenefitGraph ibg =
-            IndexBenefitGraphConstructor.construct(delegate, select, confs.get("abcd"));
+            IndexBenefitGraphConstructor.construct(delegate, select, 80.0, confs.get("abcd"));
 
         assertThat(ibg.emptyCost(), is(80.0));
     }
@@ -142,7 +142,7 @@ public class IndexBenefitGraphConstructorTest
     @Test
     public void testNumberOfWhatIfCalls() throws Exception
     {
-        verify(delegate, times(1)).explain(select);
+        verify(delegate, times(0)).explain(select);
         verify(delegate, times(6)).explain(eq(select), (Set<Index>) anySet());
     }
 
@@ -156,7 +156,7 @@ public class IndexBenefitGraphConstructorTest
     public void testConstructedIBG() throws Exception
     {
         IndexBenefitGraph ibg =
-            IndexBenefitGraphConstructor.construct(delegate, select, confs.get("abcd"));
+            IndexBenefitGraphConstructor.construct(delegate, select, 80.0, confs.get("abcd"));
         IBGNodeTest.cat = cat;
         IBGNodeTest.ibg = ibg;
         IBGNodeTest.beforeClass();

@@ -8,10 +8,11 @@ import java.util.Set;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder.FindResult;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraph.Node;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
+
+import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
 
 /**
  * Prepared statements that are produced by the {@link IBGOptimizer}.
@@ -118,52 +119,41 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
     public ExplainedSQLStatement explain(Set<Index> configuration)
         throws SQLException
     {
+        int optimizationCount = 0;
+
         if (ibg == null) {
             // time to build the IBG
             int oldOptimizationCount = optimizer.getWhatIfCount();
-            ibg = ((IBGOptimizer) optimizer).buildIBG(sql, configuration);
-            int optimizationCount = optimizer.getWhatIfCount() - oldOptimizationCount;
+            ExplainedSQLStatement eStmt = optimizer.explain(sql);
+            optimizationCount = optimizer.getWhatIfCount() - oldOptimizationCount;
+
+            this.ibg = construct(optimizer, sql, eStmt.getSelectCost(), configuration);
+            this.updatedTable = eStmt.getUpdatedTable();
+            this.baseTableUpdateCost = eStmt.getBaseTableUpdateCost();
             
             universe = new BitArraySet<Index>(configuration);
-            Node rootNode = ibg.rootNode();
-            
-            return new ExplainedSQLStatement(
-                    getSQLStatement(),
-                    null,
-                    getOptimizer(),
-                    rootNode.cost(),
-                    null,
-                    0.0,
-                    new HashMap<Index, Double>(),
-                    universe,
-                    new BitArraySet<Index>(rootNode.getUsedIndexes()),
-                    optimizationCount);
         }
         
         if (!getUniverse().containsAll(configuration))
             throw new SQLException(
                 "Configuration " + configuration + " not contained in statement's" + getUniverse());
 
-        if (configuration.isEmpty()) {
-            double cost = getIndexBenefitGraph().emptyCost();
-
+        if (configuration.isEmpty())
             return new ExplainedSQLStatement(
                     getSQLStatement(),
                     null,
                     getOptimizer(),
-                    cost,
-                    null,
-                    0.0,
+                    getIndexBenefitGraph().emptyCost(),
+                    getUpdatedTable(),
+                    getBaseTableUpdateCost(),
                     new HashMap<Index, Double>(),
                     configuration,
-                    new HashSet<Index>(), 
-                    0);
-        } 
+                    new HashSet<Index>(),
+                    optimizationCount);
 
         FindResult result = NODE_FINDER.find(getIndexBenefitGraph(), configuration);
 
         if (result == null)
-            // this is the case where the IBG is incomplete
             throw new SQLException("IBG construction has not completed yet");
             
         return new ExplainedSQLStatement(
@@ -171,11 +161,11 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
                 null,
                 optimizer,
                 result.getCost(),
-                null,
-                0.0,
-                new HashMap<Index, Double>(),
+                getUpdatedTable(),
+                getBaseTableUpdateCost(),
+                getIndexUpdateCosts(configuration),
                 configuration,
                 result.getUsedConfiguration(),
-                0);
+                optimizationCount);
     }
 }

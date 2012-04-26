@@ -9,7 +9,6 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.DefaultQueue;
-import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -50,13 +49,8 @@ public final class IndexBenefitGraphConstructor
     private Set<Index> used;
     private BitArraySet<Index> children;
 
-    /*
-     * Every node in the graph is a descendant of rootNode
-     */
+    /* Every node in the graph is a descendant of rootNode */
     private IndexBenefitGraph.Node rootNode;
-
-    /* cost without indexes */
-    private double emptyCost;
 
     /* the queue of pending nodes to expand */
     private DefaultQueue<IndexBenefitGraph.Node> queue;
@@ -212,6 +206,8 @@ public final class IndexBenefitGraphConstructor
      *     used to make what-if optimization calls
      * @param sql
      *      statement being explained
+     * @param emptyCost
+     *      select cost of statement without any indexes
      * @param conf
      *      configuration to take into account
      * @return
@@ -220,22 +216,17 @@ public final class IndexBenefitGraphConstructor
      *      if the what-if optimization call executed by the {@link Optimizer} fails
      */
     private IndexBenefitGraph constructIBG(
-            Optimizer delegate, SQLStatement sql, Set<Index> conf)
+            Optimizer delegate, SQLStatement sql, double emptyCost, Set<Index> conf)
         throws SQLException
     {
-        this.optimizer = delegate;
         this.sql = sql;
+        this.optimizer = delegate;
         this.configuration = conf;
-
-        if (sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT))
-            throw new SQLException("Can't handle " + sql.getSQLCategory() + " statements");
-
-        nodeCount = 0;
-        used = new BitArraySet<Index>();
-        children = new BitArraySet<Index>();
-        queue = new DefaultQueue<IndexBenefitGraph.Node>();
-        rootNode = new IndexBenefitGraph.Node(conf, nodeCount++);
-        emptyCost = optimizer.explain(sql).getSelectCost();
+        this.nodeCount = 0;
+        this.used = new BitArraySet<Index>();
+        this.children = new BitArraySet<Index>();
+        this.queue = new DefaultQueue<IndexBenefitGraph.Node>();
+        this.rootNode = new IndexBenefitGraph.Node(conf, nodeCount++);
 
         queue.add(rootNode);
 
@@ -259,6 +250,8 @@ public final class IndexBenefitGraphConstructor
      *     used to make what-if optimization calls
      * @param sql
      *     statement being explained
+     * @param emptyCost
+     *      select cost of statement without any indexes
      * @param conf
      *     configuration to take into account
      * @return
@@ -267,10 +260,10 @@ public final class IndexBenefitGraphConstructor
      *      if the what-if optimization call executed by the {@link Optimizer} fails
      */
     public static IndexBenefitGraph construct(
-            Optimizer delegate, SQLStatement sql, Set<Index> conf)
+            Optimizer delegate, SQLStatement sql, double emptyCost, Set<Index> conf)
         throws SQLException
     {
-        return (new IndexBenefitGraphConstructor()).constructIBG(delegate, sql, conf);
+        return (new IndexBenefitGraphConstructor()).constructIBG(delegate, sql, emptyCost, conf);
     }
 
     //CHECKSTYLE:OFF

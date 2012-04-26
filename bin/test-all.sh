@@ -20,7 +20,8 @@ username=dbtune\n\
 password=dbtuneadmin\n"
 
 OPT_CONFIG="optimizer=dbms"
-IBG_CONFIG="optimizer=ibg"
+IBG_CONFIG="optimizer=inum"
+INUM_CONFIG="optimizer=ibg"
 IBG_ON_INUM_CONFIG="optimizer=inum,ibg"
 INUM_ON_IBG_CONFIG="optimizer=ibg,inum"
 
@@ -62,6 +63,8 @@ echo -e $DB2_CONFIG >> $DBTUNECONFIG
 echo -e $INUM_CONFIG >> $DBTUNECONFIG
 ant -lib lib functional.all
 
+ANTRETURNCODE=$?
+
 if [ $ANTRETURNCODE -ne 0 ];then
     echo "BUILD ERROR"
     exit 1;
@@ -71,6 +74,8 @@ cat bin/base.cfg > $DBTUNECONFIG
 echo -e $DB2_CONFIG >> $DBTUNECONFIG
 echo -e $IBG_ON_INUM_CONFIG >> $DBTUNECONFIG
 ant -lib lib functional.all
+
+ANTRETURNCODE=$?
 
 if [ $ANTRETURNCODE -ne 0 ];then
     echo "BUILD ERROR"

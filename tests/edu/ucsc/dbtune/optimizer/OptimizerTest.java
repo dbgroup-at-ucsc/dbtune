@@ -6,7 +6,6 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
-//import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -18,7 +17,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.DELETE;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INSERT;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.UPDATE;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -211,9 +210,8 @@ public class OptimizerTest
 
         assertThat(cost1, is(cost2));
 
-        // XXX: issue #106, #144 is causing this to fail for these {
-        if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer) )
+        // XXX: issue #106 is causing this to fail for these {
+        if (!(opt instanceof MySQLOptimizer))
         {
         sql  = new SQLStatement("UPDATE one_table.tbl SET a = 3 WHERE a = 5");
         sqlp = opt.explain(sql);
@@ -396,9 +394,8 @@ public class OptimizerTest
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        // XXX: issue #106, #144 is causing this to fail for these {
-        if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer))
+        // XXX: issue #106 is causing this to fail for these {
+        if (!(opt instanceof MySQLOptimizer))
         {
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         sqlp = opt.explain(sql, conf);
@@ -532,9 +529,8 @@ public class OptimizerTest
         }
         }
 
-        // XXX: issue #106, #144 is causing this to fail for these {
-        if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer))
+        // XXX: issue #106 is causing this to fail for these {
+        if (!(opt instanceof MySQLOptimizer))
         {
         sql = new SQLStatement("UPDATE one_table.tbl SET a = -1 WHERE a = 5");
         rec = opt.recommendIndexes(sql);
@@ -681,49 +677,6 @@ public class OptimizerTest
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp1));
 
-        // XXX: issue #106, #144 is causing this to fail for these {
-        if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer))
-        {
-        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
-        stmt = opt.prepareExplain(sql);
-
-        assertThat(stmt, is(notNullValue()));
-
-        exp1 = opt.explain(sql);
-        exp2 = stmt.explain(new HashSet<Index>());
-
-        assertThat(exp1, is(notNullValue()));
-        assertThat(exp2, is(notNullValue()));
-        assertThat(exp2, is(exp1));
-
-        sql  = new SQLStatement("INSERT INTO one_table.tbl VALUES(1,2,3,4)");
-        stmt = opt.prepareExplain(sql);
-
-        assertThat(stmt, is(notNullValue()));
-
-        exp1 = opt.explain(sql);
-        exp2 = stmt.explain(new HashSet<Index>());
-
-        assertThat(exp1, is(notNullValue()));
-        assertThat(exp2, is(notNullValue()));
-        assertThat(
-            "not equal:\n" + exp1 + "\nVS VS VS\n" + exp2, exp2.equalsIgnorePlan(exp1), is(true));
-
-        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
-        stmt = opt.prepareExplain(sql);
-
-        assertThat(stmt, is(notNullValue()));
-
-        exp1 = opt.explain(sql);
-        exp2 = stmt.explain(new HashSet<Index>());
-
-        assertThat(exp1, is(notNullValue()));
-        assertThat(exp2, is(notNullValue()));
-        assertThat(exp2.equalsIgnorePlan(exp1), is(true));
-        }
-        // }
-
         // what-if call
         sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
         stmt = opt.prepareExplain(sql);
@@ -768,10 +721,51 @@ public class OptimizerTest
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp1));
 
-        // XXX: issue #106, #144 is causing this to fail for these {
-        if (!(opt instanceof MySQLOptimizer) &&
-                !(opt instanceof IBGOptimizer))
-        {
+        // same as above but with UPDATEs
+
+        if (opt instanceof MySQLOptimizer)
+            // XXX: issue #106 is causing this to fail for these
+            return;
+
+        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql);
+        exp2 = stmt.explain(new HashSet<Index>());
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(
+            "not equal:\n" + exp1 + "\nVS VS VS\n" + exp2, exp2.equalsIgnorePlan(exp1), is(true));
+
+        sql  = new SQLStatement("INSERT INTO one_table.tbl VALUES(1,2,3,4)");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql);
+        exp2 = stmt.explain(new HashSet<Index>());
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(
+            "not equal:\n" + exp1 + "\nVS VS VS\n" + exp2, exp2.equalsIgnorePlan(exp1), is(true));
+
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        stmt = opt.prepareExplain(sql);
+
+        assertThat(stmt, is(notNullValue()));
+
+        exp1 = opt.explain(sql);
+        exp2 = stmt.explain(new HashSet<Index>());
+
+        assertThat(exp1, is(notNullValue()));
+        assertThat(exp2, is(notNullValue()));
+        assertThat(
+            "not equal:\n" + exp1 + "\nVS VS VS\n" + exp2, exp2.equalsIgnorePlan(exp1), is(true));
+
         sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
         stmt = opt.prepareExplain(sql);
 
@@ -807,8 +801,6 @@ public class OptimizerTest
         assertThat(exp1, is(notNullValue()));
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2.equalsIgnorePlan(exp1), is(true));
-        }
-        // }
 
         idxa.getSchema().remove(idxa);
         idxb.getSchema().remove(idxb);
