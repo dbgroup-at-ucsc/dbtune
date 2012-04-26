@@ -23,6 +23,7 @@ public class ProfiledQuery implements Serializable {
 	
 	public String sql;
     public Snapshot candidateSet;
+    public Set<Index> pool;
 	public IndexBenefitGraph ibg;
     public ExplainedSQLStatement explainInfo;
 	public InteractionBank bank;
@@ -32,6 +33,7 @@ public class ProfiledQuery implements Serializable {
             String sql0,
             ExplainedSQLStatement explainInfo0,
             Snapshot candidateSet0,
+            Set<Index> pool0,
             IndexBenefitGraph ibg0,
             InteractionBank bank0,
             int whatifCount0)
@@ -39,6 +41,7 @@ public class ProfiledQuery implements Serializable {
 		sql = sql0;
 		explainInfo = explainInfo0;
 		candidateSet = candidateSet0;
+        pool = pool0;
 		ibg = ibg0;
 		bank = bank0;
 		whatifCount = whatifCount0;
@@ -48,7 +51,7 @@ public class ProfiledQuery implements Serializable {
 		double plan = planCost(config);
 		double maint = maintenanceCost(config);
 		double total = plan + maint;
-		//Debug.println("cost = "+plan+" (plan) + "+maint+" (maint) = "+total);
+        //System.out.println("cost = "+plan+" (plan) + "+maint+" (maint) = "+total);
 		return total;
 	}
 	
@@ -67,16 +70,28 @@ public class ProfiledQuery implements Serializable {
 	}
 	
 	private double maintenanceCost(BitSet config) {
-        if (!explainInfo.getStatement().getSQLCategory().isSame(SELECT))
+        if (explainInfo.getStatement().getSQLCategory().isSame(SELECT))
             return 0;
 		
 		double maintenanceCost = 0;
-		for (Index index : candidateSet) {
-			if (config.get(index.getId())) {
-                maintenanceCost += explainInfo.getUpdateCost(index);
-			}
-		}
-		return maintenanceCost;
+        Index idx;
+
+        for (int i = config.nextSetBit(0); i >= 0; i = config.nextSetBit(i+1))
+            if ((idx = findIndex(pool, i)) == null)
+                throw new RuntimeException("Can't find index with ID " + i + " in pool");
+            else
+                maintenanceCost += explainInfo.getUpdateCost(idx);
+
+        return maintenanceCost;
 	}
+    
+    private Index findIndex(Set<Index> indexes, int indexId)
+    {
+        for (Index idx : pool)
+            if (idx.getId() == indexId)
+                return idx;
+
+        return null;
+    }
 }
 //CHECKSTYLE:ON

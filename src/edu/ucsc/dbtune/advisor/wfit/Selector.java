@@ -30,7 +30,7 @@ public class Selector {
 	 * Perform the per-query tasks that are done after profiling
 	 */
 	public AnalyzedQuery analyzeQuery(ProfiledQuery qinfo) {
-		// add the query to the statistics repository
+        // add the query to the statistics repository
 		idxStats.addQuery(qinfo, matSet);
 
         reorganizeCandidates(qinfo.candidateSet);
@@ -81,7 +81,7 @@ public class Selector {
 	}
 
 	public double currentCost(ProfiledQuery qinfo) {
-		return qinfo.cost(matSet.bitSet());
+        return qinfo.cost(matSet.bitSet());
 	}
 
 	public double drop(Index index) {

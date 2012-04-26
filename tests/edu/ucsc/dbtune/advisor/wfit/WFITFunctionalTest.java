@@ -1,21 +1,20 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.MetadataUtils.getCreateStatement;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
-import static edu.ucsc.dbtune.util.TestUtils.workloads;
+
+import static org.hamcrest.Matchers.is;
+
+import static org.junit.Assert.assertThat;
 
 /**
  * Functional test for the WFIT use case.
@@ -58,30 +57,36 @@ public class WFITFunctionalTest
 
     /**
      * The test has to check first just one query and one index. We need to make sure that the index 
-     * gets recommended and dropped consistently to what we expect.
+     * gets recommended and dropped.
      *
      * @throws Exception
-     *      if an i/o error occurrs; if a DBMS communication failure occurs
+     *      if fails
      */
     @Test
-    public void testWFIT() throws Exception
+    public void testBasic() throws Exception
     {
         if (!(db.getOptimizer() instanceof IBGOptimizer))
             return;
 
-        for (Workload wl : workloads(env.getWorkloadFolders())) {
+        WFIT wfit = new WFIT((IBGOptimizer) db.getOptimizer());
 
-            if (!wl.getName().endsWith("tpch-10-counts"))
-                continue;
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
 
-            WFIT wfit = new WFIT((IBGOptimizer) db.getOptimizer());
+        assertThat(wfit.getRecommendation().isEmpty(), is(true));
 
-            for (SQLStatement sql : wl) {
-                wfit.process(sql);
-                System.out.println("Recommendation: ");
-                for (Index i : wfit.getRecommendation())
-                    System.out.println("   " + getCreateStatement(i));
-            }
-        }
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        assertThat(wfit.getRecommendation().size(), is(1));
+
+        wfit.process(new SQLStatement("UPDATE one_table.tbl set a = 3 where a < 0"));
+
+        assertThat(wfit.getRecommendation().isEmpty(), is(true));
+
+        WFALog log =
+            WFALog.generateDynamic(
+                wfit.qinfos.toArray(new AnalyzedQuery[0]),
+                wfit.recs.toArray(new BitSet[0]));
+
+        log.dump();
     }
 }

@@ -1,13 +1,16 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.advisor.interactions.DegreeOfInteractionFinder;
 import edu.ucsc.dbtune.advisor.interactions.IBGDoiFinder;
 import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
+import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
@@ -15,6 +18,8 @@ import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
+
+import static edu.ucsc.dbtune.util.MetadataUtils.toByContent;
 
 /**
  *
@@ -26,6 +31,8 @@ public class WFIT extends Advisor
     private Selector selector;
     private Set<Index> pool;
     private DegreeOfInteractionFinder doiFinder;
+    public List<AnalyzedQuery> qinfos;
+    public List<BitSet> recs;
 
     /**
      * Creates a WFIT advisor.
@@ -39,11 +46,13 @@ public class WFIT extends Advisor
             throw new RuntimeException(
                     "Expecting IBGOptimizer; found: " + optimizer.getClass().getName());
 
-        this.ibgOptimizer = (IBGOptimizer) optimizer;
+        ibgOptimizer = (IBGOptimizer) optimizer;
 
         selector = new Selector();
         doiFinder = new IBGDoiFinder();
         pool = new HashSet<Index>();
+        qinfos = new ArrayList<AnalyzedQuery>();
+        recs = new ArrayList<BitSet>();
     }
 
     /**
@@ -58,7 +67,7 @@ public class WFIT extends Advisor
     @Override
     public void process(SQLStatement sql) throws SQLException
     {
-        pool.addAll(ibgOptimizer.recommendIndexes(sql));
+        pool.addAll(toByContent(ibgOptimizer.recommendIndexes(sql)));
 
         int whatIfCountBefore = ibgOptimizer.getWhatIfCount();
 
@@ -69,14 +78,23 @@ public class WFIT extends Advisor
 
         InteractionBank bank = doiFinder.degreeOfInteraction(pStmt, pool);
 
-        selector.analyzeQuery(
-            new ProfiledQuery(
-                sql.getSQL(),
-                eStmt,
-                getSnapshot(pool),
-                pStmt.getIndexBenefitGraph(),
-                bank,
-                whatIfCountAfter - whatIfCountBefore));
+        qinfos.add(
+                selector.analyzeQuery(
+                    new ProfiledQuery(
+                        sql.getSQL(),
+                        eStmt,
+                        getSnapshot(pool),
+                        pool,
+                        pStmt.getIndexBenefitGraph(),
+                        bank,
+                        whatIfCountAfter - whatIfCountBefore)));
+
+        BitSet rec = new BitSet();
+
+        for (Index idx : selector.getRecommendation())
+            rec.set(idx.getId());
+
+        recs.add(rec);
     }
 
     /**
@@ -114,7 +132,7 @@ public class WFIT extends Advisor
         Set<Index> recommendation = new HashSet<Index>();
 
         for (Index idx : selector.getRecommendation())
-            recommendation.add(idx);
+            recommendation.add(new ByContentIndex(idx));
 
         return recommendation;
     }

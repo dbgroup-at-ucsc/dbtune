@@ -263,15 +263,10 @@ public class ExplainedSQLStatement
      * statement.
      *
      * @return
-     *     the execution plan.
-     * @throws NullPointerException
-     *     if the plan wasn't given when constructing this object
+     *     the execution plan. {@code null} if the plan wasn't passed to the constructor
      */
     public SQLStatementPlan getPlan()
     {
-        if (plan == null)
-            throw new NullPointerException("Plan not given to constructor");
-
         return plan;
     }
 
