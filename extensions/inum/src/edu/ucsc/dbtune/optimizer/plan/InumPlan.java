@@ -70,11 +70,6 @@ public class InumPlan extends SQLStatementPlan
     protected double baseTableUpdateCost;
 
     /**
-     * For UPDATE statements, this is the table being updated.
-     */
-    protected Table updatedTable;
-
-    /**
      * Creates a new instance of an INUM plan.
      *
      * @param delegate
@@ -92,14 +87,13 @@ public class InumPlan extends SQLStatementPlan
         super(explainedStatement.getPlan());
 
         this.delegate = delegate;
-        this.updatedTable = explainedStatement.getUpdatedTable();
         this.baseTableUpdateCost = explainedStatement.getBaseTableUpdateCost();
 
         if (!explainedStatement.getPlan().contains(TABLE_SCAN) &&               
                 !explainedStatement.getPlan().contains(INDEX_SCAN))
             // we need at least one data-access operator slot
             InumUtils.makeLeafATableScan(
-                    this, this.updatedTable, explainedStatement.getSelectCost());
+                    this, explainedStatement.getUpdatedTable(), explainedStatement.getSelectCost());
 
         //CHECKSTYLE:OFF
         while (InumUtils.removeTemporaryTables(this));
@@ -131,8 +125,19 @@ public class InumPlan extends SQLStatementPlan
 
         internalPlanCost = other.internalPlanCost;
         delegate = other.delegate;
-        updatedTable = other.updatedTable;
         baseTableUpdateCost = other.baseTableUpdateCost;
+    }
+
+    /**
+     * Returns the update cost associated to the cost of updating the base table.
+     *
+     * @return
+     *     the update cost of the base table. If the statement is a {@link SQLCategory#SELECT} 
+     *     statement, the value returned is zero.
+     */
+    public double getBaseTableUpdateCost()
+    {
+        return baseTableUpdateCost;
     }
 
     /**
@@ -218,30 +223,6 @@ public class InumPlan extends SQLStatementPlan
     public double getInternalCost()
     {
         return internalPlanCost;
-    }
-
-    /**
-     * Returns the table that the update operates on.
-     *
-     * @return
-     *     the updated base table. If the statement is a {@link SQLCategory#SELECT} statement, the 
-     *     value returned is {@code null}.
-     */
-    public Table getUpdatedTable()
-    {
-        return updatedTable;
-    }
-
-    /**
-     * Returns the update cost associated to the cost of updating the base table.
-     *
-     * @return
-     *     the update cost of the base table. If the statement is a {@link SQLCategory#SELECT} 
-     *     statement, the value returned is zero.
-     */
-    public double getBaseTableUpdateCost()
-    {
-        return baseTableUpdateCost;
     }
 
     /**
@@ -727,7 +708,7 @@ public class InumPlan extends SQLStatementPlan
 
         cost += templatePlan.getInternalCost();
 
-        plan.assignCost(plan.getRootElement(), cost + templatePlan.getBaseTableUpdateCost());
+        plan.assignCost(plan.getRootElement(), cost + templatePlan.baseTableUpdateCost);
 
         return plan;
     }

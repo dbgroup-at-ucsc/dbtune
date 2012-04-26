@@ -20,6 +20,17 @@ public abstract class AbstractOptimizerWithDelegate extends AbstractOptimizer
      * The {@link Optimizer} that the {@link IBGOptimizer} uses for actual what-if calls.
      */
     protected Optimizer delegate;
+
+    /**
+     * Constructs an optimizer that uses the given delegate.
+     *
+     * @param delegate
+     *      a DBMS-specific implementation of an {@link Optimizer} type.
+     */
+    public AbstractOptimizerWithDelegate(Optimizer delegate)
+    {
+        this.delegate = delegate;
+    }
     
     /**
      * {@inheritDoc}

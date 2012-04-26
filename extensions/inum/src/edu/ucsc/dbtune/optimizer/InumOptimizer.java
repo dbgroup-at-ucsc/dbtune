@@ -42,7 +42,7 @@ public class InumOptimizer extends AbstractOptimizerWithDelegate
      */
     public InumOptimizer(Optimizer optimizer, Environment env) throws SQLException
     {
-        this.delegate = optimizer;
+        super(optimizer);
 
         if (env.getInumSlotCache())
             useInumCache = true;

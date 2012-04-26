@@ -54,6 +54,10 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
 
         this.matchingStrategy = matchingStrategy;
 
+        ExplainedSQLStatement eStmt = optimizer.explain(sql);
+
+        baseTableUpdateCost = eStmt.getBaseTableUpdateCost();
+        updatedTable = eStmt.getUpdatedTable();
         inumSpace = optimizer.computeInumSpace(sql);
     }
 
@@ -76,21 +80,14 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
 
         Map<Index, Double> indexUpdateCosts = new HashMap<Index, Double>();
 
-        if (sql.getSQLCategory().isSame(NOT_SELECT))
-            for (Index i : configuration)
-                // we're approximating the index update cost, by assuming that the cost of updating 
-                // an index isn't higher than that of updating the base table
-                if (i.getTable().equals(result.getBestTemplate().getUpdatedTable()))
-                    indexUpdateCosts.put(i, result.getBestTemplate().getBaseTableUpdateCost());
-
         return new ExplainedSQLStatement(
             sql,
             result.getInstantiatedPlan(),
             getOptimizer(),
-            result.getBestCost() - result.getBestTemplate().getBaseTableUpdateCost(),
-            result.getBestTemplate().getUpdatedTable(),
-            result.getBestTemplate().getBaseTableUpdateCost(),
-            indexUpdateCosts,
+            result.getBestCost() - getBaseTableUpdateCost(),
+            getUpdatedTable(),
+            getBaseTableUpdateCost(),
+            getIndexUpdateCosts(configuration),
             configuration,
             new HashSet<Index>(result.getInstantiatedPlan().getIndexes()),
             0);
