@@ -9,6 +9,7 @@ import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.OptimizerUtils;
 import edu.ucsc.dbtune.util.TestUtils;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -30,7 +31,7 @@ public class RInumPerf {
         env = Environment.getInstance();
         db = DatabaseSystem.newDatabaseSystem(env);
         optimizer = db.getOptimizer();
-        delegate = TestUtils.getBaseOptimizer(optimizer);
+        delegate = OptimizerUtils.getBaseOptimizer(optimizer);
         candGen = new OptimizerCandidateGenerator(delegate);
         if (!(optimizer instanceof edu.ucsc.dbtune.optimizer.InumOptimizer))
             throw new Error();

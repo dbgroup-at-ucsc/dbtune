@@ -16,6 +16,8 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
+
 /**
  * Generates a recommendation according to the db2advis program.
  * 
@@ -36,8 +38,7 @@ public class DB2Advisor extends Advisor
     public DB2Advisor(DatabaseSystem dbms)
         throws SQLException
     {
-        if (!(dbms.getOptimizer() instanceof DB2Optimizer) &&
-                !(dbms.getOptimizer().getDelegate() instanceof DB2Optimizer))
+        if (!(getBaseOptimizer(dbms.getOptimizer()) instanceof DB2Optimizer))
             throw new SQLException("Expecting DB2Optimizer");
 
         this.dbms = dbms;

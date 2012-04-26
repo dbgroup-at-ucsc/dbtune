@@ -17,7 +17,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 
 public class DB2DivgDesignFunctionalTest 
 {

@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.divgdesign;
 
 
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 import java.util.ArrayList;

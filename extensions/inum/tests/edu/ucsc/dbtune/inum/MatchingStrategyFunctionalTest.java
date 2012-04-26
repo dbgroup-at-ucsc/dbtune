@@ -26,7 +26,7 @@ import static com.google.common.collect.Iterables.get;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.MathUtils.combinations;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
 

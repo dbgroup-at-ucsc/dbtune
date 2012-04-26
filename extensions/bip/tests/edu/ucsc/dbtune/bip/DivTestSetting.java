@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.bip;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 

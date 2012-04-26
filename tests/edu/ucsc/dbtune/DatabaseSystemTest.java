@@ -27,7 +27,7 @@ import static edu.ucsc.dbtune.DBTuneInstances.configureIBGOptimizer;
 import static edu.ucsc.dbtune.DBTuneInstances.configureINUMOptimizer;
 import static edu.ucsc.dbtune.DBTuneInstances.configureMySQL;
 import static edu.ucsc.dbtune.DBTuneInstances.configurePG;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;

@@ -29,7 +29,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_OR;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.NESTED_LOOP_JOIN;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 import static edu.ucsc.dbtune.util.MetadataUtils.getNumberOfDistinctIndexesByContent;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 

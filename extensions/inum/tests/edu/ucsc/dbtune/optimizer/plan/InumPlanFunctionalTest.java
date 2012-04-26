@@ -19,7 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
@@ -116,7 +116,6 @@ public class InumPlanFunctionalTest
                 }
 
                 assertThat(inumPlan.getBaseTableUpdateCost(), is(eStmt.getBaseTableUpdateCost()));
-                assertThat(inumPlan.getUpdatedTable(), is(eStmt.getUpdatedTable()));
                 assertThat(inumPlan.getStatement(), is(eStmt.getStatement()));
 
                 // check the objects being referenced
