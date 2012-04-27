@@ -549,7 +549,101 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
        
        return cost;
     }
-
+    
+    /**
+     * Compute the node failure factor when one node fails
+     * 
+     * @return
+     *      The max ratio
+     *      
+     * @throws Exception
+     */
+    public double getMaxNodeFailure() throws Exception
+    {
+        List<Double> queryReplica;
+        List<List<Double>> queries;
+        
+        queries = new ArrayList<List<Double>>();
+        
+        // get the query execution costs
+        for (QueryPlanDesc desc : super.queryPlanDescs) {
+            
+            // consider select-statement only
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+        
+            queryReplica = new ArrayList<Double>();
+            
+            for (int r = 0; r < nReplicas; r++) 
+                queryReplica.add(computeVal(queryExpr(r, desc.getStatementID(), desc)));
+            
+            queries.add(queryReplica);
+        }
+        
+        
+        // query 1: replica 0, replica 1
+        // query 2: replica 0, replica 1
+        // query 3: replica 0, replica 1
+        // .....................
+        double maxRatio = -1;
+        double ratio;
+        
+        for (int rFail = 0; rFail < nReplicas; rFail++) {
+            ratio = computeMaxIncreaseLoadRatio(rFail, queries);
+            maxRatio = (maxRatio > ratio) ? maxRatio : ratio;                   
+        }
+        
+        return maxRatio;
+    }
+    
+    /**
+     * Compute the increase load of other replica when replica {@code rFail} fails.
+     *  
+     * @param rFail
+     *  todo
+     * @param queries
+     * @param increasLoads
+     */
+    private double computeMaxIncreaseLoadRatio(int rFail, List<List<Double>> queries)
+    {
+        List<Double> increaseLoad = new ArrayList<Double>();
+        
+        for (int r = 0; r < nReplicas; r++)
+            increaseLoad.add(0.0);
+        
+        double cost;
+        int q = 0;
+        
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+            
+            if (queries.get(q).get(rFail) > 0) {
+                // distribute this to other replica that has value greater than 0
+                for (int r = 0; r < nReplicas; r++) {
+                    
+                    if (r == rFail)
+                        continue;
+                    
+                    // avoid small value
+                    if (queries.get(q).get(r) > 0.1) {
+                        cost = increaseLoad.get(r) + queries.get(q).get(r);
+                        increaseLoad.set(r, cost);
+                    }    
+                }
+            }
+            
+            q++;
+        }
+        
+        List<Double> costs = new ArrayList<Double>();
+        for (double d : increaseLoad)
+            if (d > 0.0)
+                costs.add(d);
+        
+        return maxRatioInList(costs);
+    }
     
     /**
      * Retrieve the max imbalance replica cost
@@ -563,10 +657,17 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         List<Double> replicas = new ArrayList<Double>();
         
         double updateBaseTableCost = getTotalBaseTableUpdateCost() / nReplicas;
+        double cost;
         
-        for (int r = 0; r < nReplicas; r++)
-            replicas.add(computeVal(replicaCost(r)) + updateBaseTableCost);
-        
+        for (int r = 0; r < nReplicas; r++) {
+            
+            cost = computeVal(replicaCost(r)) + updateBaseTableCost;
+            
+            if (cost > 0.0)
+                replicas.add(cost);
+            
+        }
+       
         return maxRatioInList(replicas);
     }
     

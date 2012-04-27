@@ -633,19 +633,22 @@ public class ConstraintDivBIP extends DivBIP
             if (r != failR) {
                 
                 expr = cplex.linearNumExpr();
-                for (QueryPlanDesc desc : queryPlanDescs)
-                    expr.add(increadLoadQuery(r, desc.getStatementID(), desc, failR));
                 
+                // only consider query statements to the increased load
+                for (QueryPlanDesc desc : queryPlanDescs) {
+                    if (desc.getSQLCategory().isSame(SELECT))
+                        expr.add(increadLoadQuery(r, desc.getStatementID(), desc, failR));
+                }
                 exprs.add(expr);
             }
         
         for (int r1 = 0; r1 < exprs.size() - 1; r1++)
             for (int r2 = r1 + 1; r2 < exprs.size(); r2++)
-                UtilConstraintBuilder.imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);
+                imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);
     }
     
     /**
-     * Compute the increase in the load of processing query {@code d} at the given replica {@code r}
+     * Compute the increase in the load of processing query {@code desc} at the given replica {@code r}
      * assuming that replica with the identifier {@code failR} has been failed.
      *  
      * @param r
