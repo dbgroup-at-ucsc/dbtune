@@ -27,11 +27,52 @@ public class DivConfiguration extends IndexTuningOutput
         this.loadfactor = m;
         indexReplicas   = new ArrayList<Set<Index>>();
         
-        for (int r = 0; r < this.nReplicas; r++)
+        for (int r = 0; r < nReplicas; r++)
             indexReplicas.add(new HashSet<Index>());
         
     }
     
+    /**
+     * Copy constructor 
+     * 
+     * @param divConf
+     *      The source configuration to be copied.
+     *      
+     */
+    public DivConfiguration(DivConfiguration divConf) 
+    {
+        this.nReplicas = divConf.nReplicas;
+        this.loadfactor = divConf.loadfactor;
+        
+        indexReplicas   = new ArrayList<Set<Index>>();
+        
+        for (int r = 0; r < nReplicas; r++) 
+            indexReplicas.add(new HashSet<Index>(divConf.indexesAtReplica(r)));
+        
+    }
+    
+    /**
+     * This acts similar to a copy constructor, except removing empty replicas
+     * 
+     * 
+     * @param divConf
+     *  todo
+     */
+    public void copyAndRemoveEmptyConfiguration(DivConfiguration divConf) 
+    {
+        nReplicas = 0;
+        loadfactor = divConf.loadfactor;
+        
+        indexReplicas   = new ArrayList<Set<Index>>();
+        
+        for (int r = 0; r < divConf.nReplicas; r++) {
+            if (divConf.indexesAtReplica(r).size() > 0) {
+                indexReplicas.add(new HashSet<Index>(divConf.indexesAtReplica(r)));
+                nReplicas++;
+            }
+        }        
+    }
+
     /**
      * Retrieve the number of replicas in the system
      *  
@@ -117,6 +158,33 @@ public class DivConfiguration extends IndexTuningOutput
                 result.append(" CREATE INDEX "  + index + index.getId() + "\n");
             
             result.append("\n");
+        }
+        
+        return result.toString();
+    }
+    
+    /**
+     * Return a string contains a short description (only index ID) of the recommendation.
+     * 
+     * @return
+     *      The string description
+     */
+    public String briefDescription()
+    {
+        StringBuilder result = new StringBuilder();
+    
+        result.append("Divergent Configuration")
+              .append("[Nreplicas=" + nReplicas)
+              .append("\n");
+                  
+        for (int r = 0; r < nReplicas; r++) {
+      
+            result.append("[");
+      
+            for (Index index : indexReplicas.get(r))
+                result.append(index.getId() + ",");
+                       
+            result.append("]\n");
         }
         
         return result.toString();
