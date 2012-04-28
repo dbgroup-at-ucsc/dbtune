@@ -1,12 +1,11 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.Advisor;
+import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.advisor.interactions.DegreeOfInteractionFinder;
 import edu.ucsc.dbtune.advisor.interactions.IBGDoiFinder;
 import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
@@ -16,9 +15,9 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm.transitionCost;
 import static edu.ucsc.dbtune.util.MetadataUtils.toByContent;
 
 /**
@@ -31,8 +30,8 @@ public class WFIT extends Advisor
     private Selector selector;
     private Set<Index> pool;
     private DegreeOfInteractionFinder doiFinder;
-    public List<AnalyzedQuery> qinfos;
-    public List<BitSet> recs;
+    private RecommendationStatistics stats;
+    private BitSet previousState;
 
     /**
      * Creates a WFIT advisor.
@@ -51,8 +50,8 @@ public class WFIT extends Advisor
         selector = new Selector();
         doiFinder = new IBGDoiFinder();
         pool = new HashSet<Index>();
-        qinfos = new ArrayList<AnalyzedQuery>();
-        recs = new ArrayList<BitSet>();
+        stats = new RecommendationStatistics("WFIT");
+        previousState = new BitSet();
     }
 
     /**
@@ -78,23 +77,25 @@ public class WFIT extends Advisor
 
         InteractionBank bank = doiFinder.degreeOfInteraction(pStmt, pool);
 
-        qinfos.add(
-                selector.analyzeQuery(
-                    new ProfiledQuery(
-                        sql.getSQL(),
-                        eStmt,
-                        getSnapshot(pool),
-                        pool,
-                        pStmt.getIndexBenefitGraph(),
-                        bank,
-                        whatIfCountAfter - whatIfCountBefore)));
+        selector.analyzeQuery(
+                new ProfiledQuery(
+                    sql.getSQL(),
+                    eStmt,
+                    getSnapshot(pool),
+                    pool,
+                    pStmt.getIndexBenefitGraph(),
+                    bank,
+                    whatIfCountAfter - whatIfCountBefore));
 
-        BitSet rec = new BitSet();
-
+        BitSet newState = new BitSet();
         for (Index idx : selector.getRecommendation())
-            rec.set(idx.getId());
+            newState.set(idx.getId());
+        
+        stats.addNewEntry(
+                eStmt, selector.getRecommendation(),
+                transitionCost(getSnapshot(pool), previousState, newState));
 
-        recs.add(rec);
+        previousState = newState;
     }
 
     /**
@@ -119,12 +120,7 @@ public class WFIT extends Advisor
     }
 
     /**
-     * Returns the configuration obtained by the Advisor.
-     * 
-     * @return a {@code Set<Index>} object containing the information related
-     *         to the recommendation produced by the advisor.
-     * @throws SQLException
-     *             if the given statement can't be processed
+     * {@inheritDoc}
      */
     @Override
     public Set<Index> getRecommendation() throws SQLException
@@ -138,13 +134,11 @@ public class WFIT extends Advisor
     }
 
     /**
-     * @param i
-     *      i
-     * @return
-     *      return
+     * {@inheritDoc}
      */
-    public PreparedSQLStatement getStatement(int i)
+    @Override
+    public RecommendationStatistics getRecommendationStatistics()
     {
-        throw new RuntimeException("Not yet");
+        return stats;
     }
 }

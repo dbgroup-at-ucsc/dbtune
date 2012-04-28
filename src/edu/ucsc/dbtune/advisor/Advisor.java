@@ -21,7 +21,7 @@ public abstract class Advisor
      * @param workload
      *      sql statements
      * @throws SQLException
-     *      if the given statements can't be processed
+     *      if the given workload can't be processed
      */
     public void process(Workload workload) throws SQLException
     {
@@ -43,10 +43,21 @@ public abstract class Advisor
      * Returns the configuration obtained by the Advisor.
      *
      * @return
-     *      a {@code Configuration} object containing the information related to
-     *      the recommendation produced by the advisor.
+     *      a set of indexes recommended for the statements given so far. This might differ from 
+     *      invocation to invocation, depending on what the {@link #process} method is internally 
+     *      doing.
+     * @throws SQLException
+     *      if the recommendation can't be retrieved
+     */
+    public abstract Set<Index> getRecommendation() throws SQLException;
+
+    /**
+     * Returns statistics about the recommendation done by the advisor.
+     *
+     * @return
+     *      a POJO containing the information related to the recommendation produced by the advisor.
      * @throws SQLException
      *      if the given statement can't be processed
      */
-    public abstract Set<Index> getRecommendation() throws SQLException;
+    public abstract RecommendationStatistics getRecommendationStatistics() throws SQLException;
 }

@@ -81,12 +81,5 @@ public class WFITFunctionalTest
         wfit.process(new SQLStatement("UPDATE one_table.tbl set a = 3 where a < 0"));
 
         assertThat(wfit.getRecommendation().isEmpty(), is(true));
-
-        WFALog log =
-            WFALog.generateDynamic(
-                wfit.qinfos.toArray(new AnalyzedQuery[0]),
-                wfit.recs.toArray(new BitSet[0]));
-
-        log.dump();
     }
 }

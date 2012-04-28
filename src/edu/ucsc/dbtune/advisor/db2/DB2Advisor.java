@@ -9,6 +9,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.Advisor;
+import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
@@ -126,5 +127,14 @@ public class DB2Advisor extends Advisor
         //System.out.println("Actual: " + space / 1000000);
 
         return new HashSet<Index>(unique);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RecommendationStatistics getRecommendationStatistics()
+    {
+        throw new RuntimeException("Not yet");
     }
 }
