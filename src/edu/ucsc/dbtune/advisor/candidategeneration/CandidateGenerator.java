@@ -87,7 +87,7 @@ public interface CandidateGenerator
                     throw new InstantiationException(
                             "Can't instantiate " + POWERSET + " without another generator");
                 else if (generatorOption.equals(POWERSET))
-                    cg = new PowerSetOptimalCandidateGenerator(cg, 2);
+                    cg = new PowerSetOptimalCandidateGenerator(opt, cg, 2);
                 else if (generatorOption.equals(OPTIMIZER) && opt == null)
                     throw new InstantiationException(
                             "Can't instantiate " + OPTIMIZER + " generator without an optimizer");
