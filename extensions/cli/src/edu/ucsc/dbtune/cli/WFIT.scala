@@ -15,8 +15,8 @@ class WFIT(db: Database) extends edu.ucsc.dbtune.advisor.wfit.WFIT(db.DBMS.getOp
   }
 }
 
-case class Stop
-case class Process
+case class Stop()
+case class Process()
 
 class WFITActor(wfit: edu.ucsc.dbtune.advisor.wfit.WFIT, workloadFile: String) extends Actor {
   def act = {

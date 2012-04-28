@@ -35,11 +35,11 @@
   <target name="scala.compile" description="Compile Scala source.">
     <taskdef resource="scala/tools/ant/antlib.xml">
       <classpath>
-        <pathelement location="${lib.dir}/scala-library-2.8.1.jar"/>
+        <pathelement location="${lib.dir}/scala-library-2.9.2.jar"/>
       </classpath>
     </taskdef>
     <echo message="Compiling ${project}"/>
-    <scalac srcdir="${src.dir}" destdir="${bld.dir}/classes" addParams="-make:changed" >
+    <scalac srcdir="${src.dir}" destdir="${bld.dir}/classes">
       <classpath refid="compile.classpath"/>
       <include name="**/*.scala" />
     </scalac>
@@ -48,11 +48,11 @@
   <target name="scala.compile.test" description="Compile Scala test source">
     <taskdef resource="scala/tools/ant/antlib.xml">
       <classpath>
-        <pathelement location="${lib.dir}/scala-library-2.8.1.jar"/>
+        <pathelement location="${lib.dir}/scala-library-2.9.2.jar"/>
       </classpath>
     </taskdef>
     <echo message="Compiling ${project} tests"/>
-    <scalac srcdir="${tst.dir}" destdir="${bld.dir}/tests" addParams="-make:changed" >
+    <scalac srcdir="${tst.dir}" destdir="${bld.dir}/tests">
       <classpath>
         <path refid="compile.classpath"/>
         <pathelement location="${bld.dir}/classes"/>
