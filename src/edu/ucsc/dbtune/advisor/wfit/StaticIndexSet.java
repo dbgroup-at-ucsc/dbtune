@@ -32,6 +32,7 @@ public class StaticIndexSet implements Iterable<Index> {
         return arr.length;
     }
     
+    @Override
     public java.util.Iterator<Index> iterator() {
         return new Iterator();
     }
@@ -39,16 +40,19 @@ public class StaticIndexSet implements Iterable<Index> {
     private class Iterator implements java.util.Iterator<Index> {
         private int i = 0;
         
+        @Override
         public boolean hasNext() {
             return i < arr.length;
         }
 
+        @Override
         public Index next() {
             if (i >= arr.length)
                 throw new java.util.NoSuchElementException();
             return arr[i++];
         }
 
+        @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }

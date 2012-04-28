@@ -215,11 +215,13 @@ public class DefaultQueue<E> extends AbstractQueue<E> implements Queue<E>
     }
 
     // CHECKSTYLE:OFF
+    @Override
     public E poll()
     {
         return remove();
     }
 
+    @Override
     public E remove()
     {
         if (count == 0)
@@ -233,11 +235,13 @@ public class DefaultQueue<E> extends AbstractQueue<E> implements Queue<E>
         return ret;
     }
 
+    @Override
     public E element()
     {
         return peek();
     }
     
+    @Override
     public E peek()
     {
         if (count == 0)

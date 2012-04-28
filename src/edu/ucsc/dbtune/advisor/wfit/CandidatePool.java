@@ -85,6 +85,7 @@ public class CandidatePool implements Serializable {
             bs.set(0, maxId+1);
         }
         
+        @Override
         public java.util.Iterator<Index> iterator() {
             return new Iterator(first);
         }
@@ -102,6 +103,7 @@ public class CandidatePool implements Serializable {
             return null;
         }
 
+        @Override
         public String toString()
         {
             return "" + bs;
@@ -118,10 +120,12 @@ public class CandidatePool implements Serializable {
             next = start;
         }
 
+        @Override
         public boolean hasNext() {
             return next != null;
         }
 
+        @Override
         public Index next() {
             if (next == null)
                 throw new java.util.NoSuchElementException();
@@ -130,6 +134,7 @@ public class CandidatePool implements Serializable {
             return current;
         }
 
+        @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }

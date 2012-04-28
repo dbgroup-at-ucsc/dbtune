@@ -99,6 +99,7 @@ public class  Permutations<E> implements java.util.Iterator<List<E>>{
     /**
     * @return true, unless we have already returned the last permutation.
     */
+    @Override
     public boolean hasNext(){
         return this.hasMore;
     }
@@ -158,6 +159,7 @@ public class  Permutations<E> implements java.util.Iterator<List<E>>{
     * next() returns a plain Object. 
     * Users must cast the returned object to (Object[]).
     */
+    @Override
     public List<E> next(){
         if (!this.hasMore){ 
             return null;
@@ -201,6 +203,7 @@ public class  Permutations<E> implements java.util.Iterator<List<E>>{
         return -1;
     }
         
+    @Override
     public void remove() {
                 throw new UnsupportedOperationException();
         }

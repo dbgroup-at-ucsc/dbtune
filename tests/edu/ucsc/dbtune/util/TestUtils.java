@@ -15,7 +15,6 @@ import java.util.Set;
 
 import com.google.common.collect.Iterables;
 
-import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;

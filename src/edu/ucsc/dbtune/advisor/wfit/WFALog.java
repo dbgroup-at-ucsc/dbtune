@@ -56,23 +56,23 @@ public class WFALog implements Serializable {
 
     public void dump() {
         int i = 0;
-        int c = 0;
-        int w = 0;
+        //int c = 0;
+        //int w = 0;
         for (Entry e : list) {
             System.out.println("QUERY " + i);
             System.out.println("   "+"qcost\t"+e.queryCost+"\t"
                                     +"tcost\t"+e.transitionCost+"\t"
-                                    +"ncost\t"+e.nullCost+"\t"
-                                    +"cands\t"+(e.numCandidates-c)+"\t"
-                                    +"whatif\t"+(e.numWhatif-w));
+                                    +"ncost\t"+e.nullCost+"\t");
+                                    //+"cands\t"+(e.numCandidates-c)+"\t"
+                                    //+"whatif\t"+(e.numWhatif-w));
             System.out.print("   partitions: ");
             for (BitSet bs : e.partition) System.out.print(bs + " ");
             System.out.println();
             System.out.println("   rec: " + e.recommendation);
             System.out.println();
             
-            c = e.numCandidates;
-            w = e.numWhatif;
+            //c = e.numCandidates;
+            //w = e.numWhatif;
             ++i;
         }
     }

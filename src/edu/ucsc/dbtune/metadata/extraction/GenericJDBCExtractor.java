@@ -56,6 +56,7 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
      * @see DatabaseMetaData#getCatalogTerm
      * @see DatabaseMetaData#getCatalogs
      */
+    @Override
     public Catalog extract(Connection connection) throws SQLException
     {
         Catalog catalog = new Catalog(connection.getCatalog());

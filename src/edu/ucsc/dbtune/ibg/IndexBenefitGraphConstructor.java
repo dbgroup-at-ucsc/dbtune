@@ -281,6 +281,7 @@ public final class IndexBenefitGraphConstructor
         {
         }
 
+        @Override
         public void run()
         {
             while (true) {

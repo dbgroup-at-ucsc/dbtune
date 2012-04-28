@@ -22,6 +22,7 @@ public class DynamicIndexSet implements Iterable<Index> {
         bs.clear(index.getId());
     }
 
+    @Override
     public Iterator<Index> iterator() {
         return set.iterator();
     }

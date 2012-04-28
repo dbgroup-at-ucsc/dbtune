@@ -136,6 +136,7 @@ public class BitArraySet<E extends Identifiable> extends AbstractSet<E> implemen
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean containsAll(Collection<?> c)
     {
         if (c instanceof BitArraySet<?>) {
@@ -178,6 +179,7 @@ public class BitArraySet<E extends Identifiable> extends AbstractSet<E> implemen
     /**
      * {@inheritDoc}
      */
+    @Override
     public Iterator<E> iterator()
     {
         return new BitArraySetIterator(bitSet, elements.values().iterator());
@@ -338,6 +340,7 @@ public class BitArraySet<E extends Identifiable> extends AbstractSet<E> implemen
         /**
          * {@inheritDoc}
          */
+        @Override
         public E next()
         {
             current = delegate.next();
@@ -347,6 +350,7 @@ public class BitArraySet<E extends Identifiable> extends AbstractSet<E> implemen
         /**
          * {@inheritDoc}
          */
+        @Override
         public void remove()
         {
             delegate.remove();
@@ -356,6 +360,7 @@ public class BitArraySet<E extends Identifiable> extends AbstractSet<E> implemen
         /**
          * {@inheritDoc}
          */
+        @Override
         public boolean hasNext()
         {
             return delegate.hasNext();

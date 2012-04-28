@@ -26,5 +26,6 @@ public interface IncrementallyIdentifiable extends Identifiable
      * @return
      *      the numeric identifier of the object
      */
+    @Override
     int getId();
 }

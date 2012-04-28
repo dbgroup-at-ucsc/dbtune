@@ -159,6 +159,7 @@ public class IndexPartitions {
             return 1L << size();
         }
         
+        @Override
         public java.util.Iterator<Index> iterator() {
             return map.values().iterator();
         }

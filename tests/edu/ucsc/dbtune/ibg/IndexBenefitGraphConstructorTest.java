@@ -74,7 +74,8 @@ public class IndexBenefitGraphConstructorTest
         final ArgumentCaptor<Set> setArg = ArgumentCaptor.forClass(Set.class);
 
         Answer explainAnswer = new Answer() {
-            public Object answer(InvocationOnMock aInvocation) throws Exception
+            @Override
+			public Object answer(InvocationOnMock aInvocation) throws Exception
             {
                 Set<Index> sentConf = (Set<Index>) setArg.getValue();
                 if (sentConf.equals(confs.get("abcd")))

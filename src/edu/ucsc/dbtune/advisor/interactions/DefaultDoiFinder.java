@@ -38,6 +38,7 @@ public class DefaultDoiFinder implements DegreeOfInteractionFinder
     /**
      * {@inheritDoc}
      */
+    @Override
     public InteractionBank degreeOfInteraction(PreparedSQLStatement sql, Set<Index> s)
         throws SQLException
     {

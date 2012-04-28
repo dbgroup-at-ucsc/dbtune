@@ -9,6 +9,7 @@ public class BitSet extends java.util.BitSet {
         super();
     }
     
+    @Override
     public BitSet clone() {
         return (BitSet) super.clone();
     }
