@@ -157,9 +157,6 @@ public abstract class DivgDesign
     }
     
     
-    
-    
-    
     /**
      * Create an initial partitioning of the input workload
      * 
