@@ -1,5 +1,74 @@
 
+SELECT 1626,
+       COUNT(*)
+FROM   tpch.lineitem
+WHERE  l_tax BETWEEN 1.1417632866243643E-4 AND 0.010151030695495365;
 
+SELECT 1630,
+       COUNT(*)
+FROM   tpch.lineitem,
+       tpch.orders
+WHERE  o_totalprice BETWEEN 16603.41553699638 AND 102226.13520319841
+       AND o_orderdate BETWEEN 'Sat Apr 04 01:27:41 PST 1998' AND 'Sun Apr 26 02:27:41 PDT 1998'
+       AND o_orderkey = l_orderkey;
+
+SELECT 1631,
+       COUNT(*)
+FROM   tpch.lineitem
+WHERE  l_tax BETWEEN 0.049168944323960115 AND 0.0636291210033138
+       AND l_quantity BETWEEN 37.675691870329636 AND 46.620490824134805;
+
+SELECT 1635,
+       COUNT(*)
+FROM   tpch.lineitem,
+       tpch.orders
+WHERE  o_orderdate BETWEEN 'Fri Jun 26 21:23:12 PDT 1998' AND 'Thu Jul 02 21:23:12 PDT 1998'
+       AND o_totalprice BETWEEN 126274.83691525484 AND 131766.55449200873
+       AND o_orderkey = l_orderkey;
+
+SELECT 1637,
+       COUNT(*)
+FROM   tpch.orders
+WHERE  o_totalprice BETWEEN 327750.0491902049 AND 330042.11699712434;
+
+SELECT 1638,
+       COUNT(*)
+FROM   tpch.lineitem
+WHERE  l_shipdate BETWEEN 'Thu Jun 13 10:16:59 PDT 1996' AND 'Sat May 03 10:16:59 PDT 1997'
+       AND l_discount BETWEEN 0.05946297582945621 AND 0.07942087241620747;
+
+SELECT 1640,
+       COUNT(*)
+FROM   tpch.lineitem
+WHERE  l_commitdate BETWEEN 'Sat Aug 29 19:01:27 PDT 1998' AND 'Wed Sep 09 19:01:27 PDT 1998';
+
+SELECT 1655,
+       COUNT(*)
+FROM   tpch.lineitem
+WHERE  l_discount BETWEEN 0.07022171634764578 AND 0.0869144310964004
+       AND l_receiptdate BETWEEN 'Wed May 15 01:27:13 PDT 1996' AND 'Mon Feb 24 00:27:13 PST 1997';
+
+SELECT 1657,
+       COUNT(*)
+FROM   tpch.supplier,
+       tpch.partsupp,
+       tpch.lineitem
+WHERE  ps_availqty BETWEEN 4362 AND 4390
+       AND ps_supplycost BETWEEN 616.7925239670286 AND 795.4181603973065
+       AND ps_partkey = l_partkey
+       AND ps_suppkey = l_suppkey
+       AND s_suppkey = ps_suppkey;
+
+SELECT 1660,
+       COUNT(*)
+FROM   tpch.partsupp,
+       tpch.lineitem,
+       tpch.orders
+WHERE  o_totalprice BETWEEN 132682.92227143972 AND 215342.5763260556
+       AND o_orderdate BETWEEN 'Thu May 01 16:12:26 PDT 1997' AND 'Fri May 09 16:12:26 PDT 1997'
+       AND o_orderkey = l_orderkey
+       AND ps_partkey = l_partkey
+       AND ps_suppkey = l_suppkey;
 
 SELECT 1672,
        COUNT(*)
@@ -631,16 +700,15 @@ WHERE  l_tax BETWEEN 0.004443446666703999 AND 0.013511649194103945
        AND l_extendedprice BETWEEN 55492.30464162413 AND 70543.40723972487; 
 
 
+UPDATE tpch.lineitem
+   SET l_tax = l_tax - 0.000001
+ WHERE tpch.lineitem.l_extendedprice BETWEEN
+       65522.37840623342 AND 66256.94369066914;
 
 UPDATE tpch.orders
    SET o_shippriority = o_shippriority - 1
  WHERE tpch.orders.o_orderdate BETWEEN 'Thu Apr 07 05:46:45 PDT 1994' AND
                                        'Thu Apr 14 05:46:45 PDT 1994';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity - 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Fri Oct 25 19:36:34 PDT 1996' AND 'Mon Oct 28 18:36:34 PST 1996';
 
 UPDATE tpch.partsupp
    SET ps_supplycost = ps_supplycost - 0.000001
@@ -656,7 +724,26 @@ UPDATE tpch.partsupp
  WHERE tpch.partsupp.ps_availqty BETWEEN 6777 AND 6844;
 
 
+UPDATE tpch.lineitem
+   SET l_tax = l_tax - 0.000001
+ WHERE tpch.lineitem.l_extendedprice BETWEEN
+       52830.786489814825 AND 53552.16450816543;
 
+UPDATE tpch.orders
+   SET o_totalprice = o_totalprice + 0.000001
+ WHERE tpch.orders.o_orderdate BETWEEN 'Tue Dec 03 21:19:36 PST 1996' AND
+                                       'Thu Dec 19 21:19:36 PST 1996';
 
+UPDATE tpch.partsupp
+   SET ps_supplycost = ps_supplycost + 0.000001
+ WHERE tpch.partsupp.ps_availqty BETWEEN 8524 AND 8565;
 
+UPDATE tpch.lineitem
+   SET l_tax = l_tax + 0.000001
+ WHERE tpch.lineitem.l_shipdate BETWEEN 'Wed Oct 15 20:43:12 PDT 1997' AND
+                                        'Thu Oct 16 20:43:12 PDT 1997';
 
+UPDATE tpch.orders
+   SET o_shippriority = o_shippriority + 1
+ WHERE tpch.orders.o_orderdate BETWEEN 'Fri Oct 20 05:05:53 PDT 1995' AND
+                                       'Sun Nov 05 04:05:53 PST 1995';
