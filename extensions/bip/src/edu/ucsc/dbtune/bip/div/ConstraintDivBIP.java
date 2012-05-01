@@ -37,13 +37,12 @@ import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Sets;
 
+import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_QUERY;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_REPLICA;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_FAILURE;
+
 public class ConstraintDivBIP extends DivBIP
-{
-    public static int IMBALANCE_REPLICA = 1001;
-    public static int IMBALANCE_QUERY   = 1002;
-    public static int NODE_FAILURE      = 1003;
-    public static int UPDATE_COST_BOUND = 1004;
-    
+{   
     protected boolean isApproximation;
     protected List<DivConstraint> constraints;
     protected QueryCostOptimalBuilder queryOptimalBuilder;

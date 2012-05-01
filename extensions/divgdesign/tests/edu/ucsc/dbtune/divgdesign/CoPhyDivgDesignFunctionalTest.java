@@ -57,6 +57,7 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         generateOptimalCandidatesCoPhy();
         maxIters = 5;
         
+        /*
         // 3. Call CoPhy Design
         for (double B1 : lB) {
             
@@ -83,6 +84,7 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
             if (isOneBudget)
                 break;
         }
+        */
     }
     
     
@@ -106,14 +108,6 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         
             sqls = new ArrayList<SQLStatement>();
             sqls.add(sql);
-            
-            // extra workload
-            if (isExtraWorkload) {
-                for (SQLStatement e : wlExtra)
-                    if (e.getSQLCategory().isSame(SELECT))
-                        sqls.add(e);
-                
-            }
             
             wl = new Workload(sqls);
             

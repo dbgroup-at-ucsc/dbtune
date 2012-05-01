@@ -119,10 +119,9 @@ public final class EnvironmentProperties
 
 
     /**
-     * Budget, in megabytes, for physical design.
+     * A list of space budget, in megabytes, for physical design
      */
     public static final String SPACE_BUDGET = "space.budget";
-
 
     /**
      * Type of candidate generator to use. Two generators can be specified (separating them with 
@@ -233,6 +232,36 @@ public final class EnvironmentProperties
      *  
      */
     public static final String CPLEX_SHOW_OUTPUT = "cplex.show.output";
+    
+    /**
+     * The number of replicas to deploy divergent index tuning
+     *  
+     */
+    public static final String NUMBER_OF_REPLICA = "number.of.replica";
+    
+    
+    /**
+     * List of space budgets (in MB) for physical designs
+     *  
+     */
+    public static final String LIST_SPACE_BUDGET = "list.space.budget";
+    
+    /**
+     * List of imbalance constraints
+     *  
+     */
+    public static final String IMBALANCE_CONSTRAINT = "imbalance.constraint";
+    
+    /**
+     * List of imbalance factors
+     *  
+     */
+    public static final String IMBALANCE_FACTOR = "imbalance.factor";
+    
+    public static final String IMBALANCE_QUERY = "imbalance.query";
+    public static final String IMBALANCE_REPLICA = "imbalance.replica";
+    public static final String NODE_FAILURE = "node.failure";
+    
     
     /**
      * Never invoked.

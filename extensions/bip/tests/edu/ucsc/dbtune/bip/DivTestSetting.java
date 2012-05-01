@@ -10,15 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Test;
+
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
-import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
@@ -45,31 +41,28 @@ public class DivTestSetting
     protected static int nReplicas;
     protected static int loadfactor;
     protected static double B;    
-    protected static double[] lB;
     
-    protected static boolean isTestOne;
-    protected static boolean isExportToFile;
-    protected static boolean isTestCost;
-    protected static boolean isShowRecommendation;
-    protected static boolean isApproximation;
-    protected static boolean isOneBudget;
-    protected static boolean isDB2Cost;
+    protected static List<Double> listBudgets;
+    protected static List<Integer> listNumberReplicas;
     
     protected static DivBIP div;
     protected static DivConfiguration divConf;
     
-    protected static int arrNReplicas[] = {2, 3, 4, 5};
-    protected static int arrLoadFactor[] = {1, 2, 2, 3};
-    
-    protected static long totalIndexSize;
     protected static Set<Index> candidates;
-    protected static boolean isCandidatePowerset;
     protected static double fQuery;
     protected static double fUpdate;
-    protected static boolean isExtraWorkload;
-    protected static boolean isAdvancedFeature;
+    
     
     protected static String folder;
+    
+    
+    // for Debugging purpose only
+    protected static boolean isExportToFile;
+    protected static boolean isTestCost;
+    protected static boolean isShowRecommendation;
+    protected static boolean isDB2Cost;
+    protected static long totalIndexSize;
+    protected static boolean isGetAverage;
     
     /**
      * Retrieve the environment parameters set in {@code dbtune.cfg} file
@@ -87,12 +80,10 @@ public class DivTestSetting
         
         if (!(io instanceof InumOptimizer))
             return;
-        
-        //folder = en.getWorkloadsFoldername() + "/tpcds-inum";
+
         //folder = en.getWorkloadsFoldername() + "/tpch-inum";
         folder = en.getWorkloadsFoldername() + "/tpch-benchmark-mix";
         //folder = en.getWorkloadsFoldername() + "/tpch-mix-div";
-        //folder = en.getWorkloadsFoldername() + "/tpch-small";
         workload = workload(folder);
         
         isLoadEnvironmentParameter = true;
@@ -123,24 +114,103 @@ public class DivTestSetting
             else 
                 sql.setStatementWeight(fQuery);
         
-        // list of space constraints        
-        nReplicas  = 4;
-        loadfactor = 2;
-        isTestOne  = true;
-        isOneBudget = true;
-        isExportToFile = true;
+        // debugging purpose
+        isExportToFile = false;
         isTestCost = false;
-        isShowRecommendation = true;
-        isApproximation = false;
-        isExtraWorkload = false;        
-        isAdvancedFeature = false;
+        isShowRecommendation = false;        
+        isGetAverage = true;
         isDB2Cost = false;
         
         div = new DivBIP();
-        // 0.25x, 0.5x, 1x, 10x
-        double dbSize = Math.pow(2, 30);       
-        B = dbSize * 0.5;
-        lB  = new double[] {0.25 * dbSize, 0.5 * dbSize, dbSize, 16 * dbSize};
+        
+        // space budget
+        double oneMB = Math.pow(2, 20);
+        listBudgets = new ArrayList<Double>();
+        for (Integer b : en.getListSpaceBudgets()) 
+            listBudgets.add(b * oneMB);
+        
+        // number of replicas
+        listNumberReplicas = new ArrayList<Integer>(en.getListNumberOfReplicas());
+        
+        
+        // default value of B, nreplica, and loadfactor
+        B = listBudgets.get(0);
+        nReplicas = listNumberReplicas.get(0);
+        loadfactor = (int) Math.ceil( (double) nReplicas / 2);
+    }
+    
+    
+    /**
+     * Compute the query execution cost for statements in the given workload
+     * 
+     * @param conf
+     *      A configuration
+     *      
+     * @throws Exception
+     */
+    protected static double computeWorkloadCostDB2(Workload workload, Set<Index> conf) 
+                            throws Exception
+    {   
+        double db2Cost;
+        double cost;
+        
+        db2Cost = 0.0;
+
+        for (SQLStatement sql : workload) {
+            cost = io.getDelegate().explain(sql, conf).getTotalCost();
+            db2Cost += cost * sql.getStatementWeight();
+        }
+        
+        return db2Cost;
+    }
+
+    
+    /**
+     * Compute the query execution cost for statements in the given workload
+     * 
+     * @param conf
+     *      A configuration
+     *      
+     * @throws Exception
+     */
+    protected static List<Double> computeQueryCostsDB2(SQLStatement sql,
+                                                       DivConfiguration divConf) 
+                                                       throws Exception
+    {
+        double cost;
+        List<Double> costs = new ArrayList<Double>();
+        
+        for (int r = 0; r < nReplicas; r++) {   
+            cost = io.getDelegate().explain(sql, divConf.indexesAtReplica(r)).getTotalCost();
+            costs.add(cost);
+        }
+        
+        return costs;
+    }
+    
+    /**
+     * Compute the query execution cost for statements in the given workload
+     * 
+     * @param conf
+     *      A configuration
+     *      
+     * @throws Exception
+     */
+    protected static List<Double> computeQueryCostsInum(Set<Index> conf) throws Exception
+    {
+        InumPreparedSQLStatement inumPrepared;        
+        double inumCost;
+        List<Double> costs = new ArrayList<Double>();
+        
+        for (SQLStatement sql : workload)  {
+            
+            inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
+            inumCost = inumPrepared.explain(conf).getTotalCost();
+            costs.add(inumCost);
+            
+        }
+        
+        return costs;
     }
     
     /**
@@ -178,81 +248,4 @@ public class DivTestSetting
         }
     }
 
-    /**
-     * Compute the query execution cost for statements in the given workload
-     * 
-     * @param conf
-     *      A configuration
-     *      
-     * @throws Exception
-     */
-    protected static double computeWorkloadCostDB2(Workload workload, Set<Index> conf) throws Exception
-    {   
-        double db2Cost;
-        double cost;
-        
-        db2Cost = 0.0;
-        //System.out.println(" Size of recommendation: " + conf.size());
-        for (SQLStatement sql : workload) {
-            cost = io.getDelegate().explain(sql, conf).getTotalCost();
-            db2Cost += cost * sql.getStatementWeight();
-            /*
-            System.out.println(sql.getSQLCategory() + 
-                        " cost = " + cost + "  weight = " 
-                        + sql.getStatementWeight()
-                        //+ " QUERY SHELL cost = " + io.getDelegate().explain(sql, conf).getSelectCost()
-            );
-            */
-        }
-        
-        return db2Cost;
-    }
-
-    
-    /**
-     * Compute the query execution cost for statements in the given workload
-     * 
-     * @param conf
-     *      A configuration
-     *      
-     * @throws Exception
-     */
-    protected static List<Double> computeQueryCostsDB2(SQLStatement sql, DivConfiguration divConf) 
-                throws Exception
-    {
-        double cost;
-        List<Double> costs = new ArrayList<Double>();
-        
-        for (int r = 0; r < nReplicas; r++) {   
-            cost = io.getDelegate().explain(sql, divConf.indexesAtReplica(r)).getTotalCost();
-            costs.add(cost);
-        }
-        
-        return costs;
-    }
-    
-    /**
-     * Compute the query execution cost for statements in the given workload
-     * 
-     * @param conf
-     *      A configuration
-     *      
-     * @throws Exception
-     */
-    protected static List<Double> computeQueryCostsInum(Set<Index> conf) throws Exception
-    {
-        InumPreparedSQLStatement inumPrepared;        
-        double inumCost;
-        List<Double> costs = new ArrayList<Double>();
-        
-        for (SQLStatement sql : workload)  {
-            
-            inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
-            inumCost = inumPrepared.explain(conf).getTotalCost();
-            costs.add(inumCost);
-            
-        }
-        
-        return costs;
-    }
 }
