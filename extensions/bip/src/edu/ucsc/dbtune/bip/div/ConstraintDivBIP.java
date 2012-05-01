@@ -93,13 +93,13 @@ public class ConstraintDivBIP extends DivBIP
             
             // 7. additional constraints
             for (DivConstraint c : constraints) {
-                if (c.getType() == IMBALANCE_REPLICA) {
+                if (c.getType().equals(IMBALANCE_REPLICA)) {
                     setConstantReplicaImbalanceConstraint(c.getFactor());
                     imbalanceReplicaConstraints(c.getFactor());
                 }
-                else if (c.getType() == NODE_FAILURE)
+                else if (c.getType().equals(NODE_FAILURE))
                     nodeFailures(c.getFactor());
-                else if (c.getType() == IMBALANCE_QUERY) {
+                else if (c.getType().equals(IMBALANCE_QUERY)) {
                     setConstantQueryImbalanceConstraint();
                     imbalanceQueryConstraints(c.getFactor());                    
                 }
