@@ -147,13 +147,15 @@ public class UtilConstraintBuilder
      */
     public static double computeVal(IloLinearNumExpr expr) throws Exception
     {
-        IloNumVar        var;
-        double           coef;
         IloLinearNumExprIterator iter;
         
-        double cost = 0.0;
+        IloNumVar var;
+        double coef;
+        double cost;
         
+        cost = 0.0;        
         iter = expr.linearIterator();
+        
         while (iter.hasNext()) {
             var = iter.nextNumVar();
             coef = iter.getValue();            
@@ -164,7 +166,7 @@ public class UtilConstraintBuilder
         
         // issue #281: some variables are assigned value small value (e.g., 3.5976098620712736E-12)
         // workaround: cast very small value to 0
-        if (cost < 0.01)
+        if (cost < 1.0)
             cost = 0.0;
         
         return cost;

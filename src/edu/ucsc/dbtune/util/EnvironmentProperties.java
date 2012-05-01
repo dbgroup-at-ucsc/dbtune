@@ -142,8 +142,7 @@ public final class EnvironmentProperties
      * @see PowerSetOptimalCandidateGenerator
      */
     public static final String POWERSET = "powerset";
-
-
+    
 
     /**
      * Folder for previously defined workloads. By convention, this folder contains many sub-folders 
@@ -218,6 +217,23 @@ public final class EnvironmentProperties
      */
     public static final String WFIT_INDEX_STATISTICS_WINDOW = "index.statistics.window";
 
+    /**
+     * The maximum time (in seconds) that is set for the CPLEX solver to run
+     */
+    public static final String CPLEX_MAX_TIME = "cplex.max.time";
+    
+    /**
+     * The error tolerance (in percentage) scale that allows the CPLEX solver to stop
+     * whenever the solution is within this given factor of the optimal value 
+     */
+    public static final String CPLEX_MAX_EP_GAP = "cplex.max.ep.gap"; 
+    
+    /**
+     * The boolean value is turned on/off to show the output
+     *  
+     */
+    public static final String CPLEX_SHOW_OUTPUT = "cplex.show.output";
+    
     /**
      * Never invoked.
      */

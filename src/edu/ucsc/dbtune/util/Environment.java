@@ -35,9 +35,15 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.WFIT_NUM_PARTITION_ITER
 import static edu.ucsc.dbtune.util.EnvironmentProperties.WORKLOADS_FOLDERNAME;
 import static edu.ucsc.dbtune.util.Strings.toBoolean;
 
+import static edu.ucsc.dbtune.util.EnvironmentProperties.CPLEX_MAX_TIME;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.CPLEX_MAX_EP_GAP;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.CPLEX_SHOW_OUTPUT;
+
+
 /**
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
+ * @author Quoc Trung Tran
  */
 public class Environment
 {
@@ -439,4 +445,42 @@ public class Environment
     {
         return toBoolean(getOrThrowIfNullOrEmpty(configuration, INUM_SLOT_CACHE));
     }
+    
+    /**
+     * @return {@link EnvironmentProperties#CPLEX_MAX_TIME}
+     * @throws NumberFormatException
+     *      unable to return the overhead factor due to the stated reason.
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public int getMaxCplexRunningTime() throws NumberFormatException
+    {
+        return Integer.valueOf(
+                getOrThrowIfNullOrEmpty(configuration, CPLEX_MAX_TIME));
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#CPLEX_MAX_EP_GAP}
+     * @throws NumberFormatException
+     *      unable to return the overhead factor due to the stated reason.
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public double getMaxCplexEpGap() throws NumberFormatException
+    {
+        return Double.valueOf(
+                getOrThrowIfNullOrEmpty(configuration, CPLEX_MAX_EP_GAP));
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#CPLEX_SHOW_OUTPUT}
+     * 
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public boolean getIsShowCPlexOutput() throws NoSuchElementException 
+    {
+        return toBoolean(getOrThrowIfNullOrEmpty(configuration, CPLEX_SHOW_OUTPUT));
+    }
+    
 }

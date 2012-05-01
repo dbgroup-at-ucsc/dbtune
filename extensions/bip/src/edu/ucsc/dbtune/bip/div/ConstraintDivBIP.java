@@ -23,7 +23,7 @@ import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.constantRHSImbalance
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
-import ilog.cplex.IloCplex.DoubleParam;
+
 
 import java.util.ArrayList;
 
@@ -60,9 +60,7 @@ public class ConstraintDivBIP extends DivBIP
     {
         numConstraints = 0;
                 
-        try {            
-            // time limit
-            cplex.setParam(DoubleParam.TiLim, 900);
+        try {
             UtilConstraintBuilder.cplex = cplex;
             
             // 1. Add variables into list
@@ -73,18 +71,16 @@ public class ConstraintDivBIP extends DivBIP
             super.totalCost();
             
             // 3. Atomic constraints
-            super.atomicConstraints();      
+            super.atomicConstraints();
             
-            // 4. Top-m best cost 
+            // 4. Used index constraints
+            super.usedIndexConstraints();
+            
+            // 5. Top-m best cost 
             super.topMBestCostConstraints();
             
-            // 5. Space constraints
+            // 6. Space constraints
             super.spaceConstraints();
-            
-            if (constraints.size() == 1 && constraints.get(0).getType() == UPDATE_COST_BOUND) {
-                boundUpdateCostConstraint(constraints.get(0).getFactor());
-                return; 
-            }
             
             // 6. if we have additional constraints
             // need to impose top-m best cost constraints
