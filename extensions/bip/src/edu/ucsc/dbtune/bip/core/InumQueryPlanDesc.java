@@ -119,6 +119,10 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         this.stmtID = InumQueryPlanDesc.STMT_ID.getAndIncrement();
         this.stmt = stmt;    
         this.fq = stmt.getStatementWeight();
+        
+        // initialize default value
+        Kq = 0;
+        n = 0;
     }
     
     @Override
@@ -255,10 +259,10 @@ public class InumQueryPlanDesc implements QueryPlanDesc
                 for (int j = numIndex - 1; j > -1; j--) {
                     index = indexSlot.get(i).get(j);                    
                     cost = plan.plug(index);                    
-
+                    
                     if (cost == Double.POSITIVE_INFINITY)
                         cost = InumQueryPlanDesc.BIP_MAX_VALUE;
-             
+                    
                     if (j == numIndex - 1) 
                         costFTS = cost;
                     else if (cost < costFTS) 
@@ -431,6 +435,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
         StringBuilder sb = new StringBuilder();
         
         sb.append("InumQueryPlanDesc \n" + "Number of template plans:" + Kq + "\n");
+        sb.append(" Weight = " + getStatementWeight() + "\n");
         sb.append("Number of slots: " + n + "\n");
         sb.append("Internal plan costs: " + beta + "\n");
         sb.append("Index access costs: " + accessCostPerPlan + "\n");
