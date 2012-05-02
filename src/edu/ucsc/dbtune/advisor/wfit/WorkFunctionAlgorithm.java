@@ -9,6 +9,7 @@ import edu.ucsc.dbtune.advisor.wfit.IndexPartitions.Subset;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 
+//CHECKSTYLE:OFF
 public class WorkFunctionAlgorithm {
     TotalWorkValues wf = new TotalWorkValues();
     SubMachine[] submachines = new SubMachine[0];
@@ -51,13 +52,13 @@ public class WorkFunctionAlgorithm {
     }
     
     public void dump(String msg) {
-        //Debug.println(msg);
-        for (int i = 0; i < submachines.length; i++) {
-            //Debug.println("SUBMACHINE " + i);
-            submachines[i].dump(wf);
-            //Debug.println();
-        }
-        //Debug.println("----");
+        //System.out.println(msg);
+        //for (int i = 0; i < submachines.length; i++) {
+            //System.out.println("SUBMACHINE " + i);
+            //submachines[i].dump(wf);
+            //System.out.println();
+        //}
+        //System.out.println("----");
     }
     
     public void newTask(ProfiledQuery qinfo) {
@@ -277,29 +278,26 @@ public class WorkFunctionAlgorithm {
         }
         
         public void dump(TotalWorkValues wf) {
-            /*
-            Debug.print("Index IDs : [ ");
-            for (int id : indexIds) Debug.print(id + " ");
-            Debug.print("]   ");
+            //System.out.print("Index IDs : [ ");
+            //for (int id : indexIds) System.out.print(id + " ");
+            //System.out.print("]   ");
 
-            Debug.print("REC : [ ");
-            for (int id : indexIds) if (currentBitSet.get(id)) Debug.print(id + " ");
-            Debug.println("]");
-            */
-            
-//          Debug.println("Current workfunction values ...");
-//          for (int s = 0; s < numStates; s++) {
-//              Debug.print("   [ ");
-//              for (int i = 0; i < indexIds.length; i++) {
-//                  String id = "" + indexIds[i];
-//                  if (((s >> i) & 1) == 1)
-//                      Debug.print(id);
-//                  else 
-//                      for (int k = 0; k < id.length(); k++) Debug.print(" ");
-//                  Debug.print(" ");
-//              }
-//              Debug.println("] = " + wf.get(subsetNum, s));
-//          }
+            //System.out.print("REC : [ ");
+            //for (int id : indexIds) if (currentBitSet.get(id)) System.out.print(id + " ");
+            //System.out.println("]");
+
+            //System.out.println("Current workfunction values ...");
+            //for (int s = 0; s < numStates; s++) {
+                //System.out.print("   [ ");
+                //for (int i = 0; i < indexIds.length; i++) {
+                    //String id = "" + indexIds[i];
+                    //if (((s >> i) & 1) == 1)
+                        //System.out.print(id);
+                    //else for (int k = 0; k < id.length(); k++) System.out.print(" ");
+                    //System.out.print(" ");
+                //}
+                //System.out.println("] = " + wf.get(subsetNum, s));
+            //}
         }
         
         // process a positive or negative vote for the index
@@ -580,3 +578,4 @@ public class WorkFunctionAlgorithm {
         return trace;
     }
 }
+//CHECKSTYLE:ON

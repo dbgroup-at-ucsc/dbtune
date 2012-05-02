@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.util;
 
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -139,7 +140,7 @@ public final class MetadataUtils
      * Finds an index by id in a set of indexes.
      *
      * @param indexes
-     *      set of indexes where one with the given name is being looked for
+     *      set of indexes where one with the given id is being looked for
      * @param id
      *      id of the index being looked for
      * @return
@@ -152,6 +153,50 @@ public final class MetadataUtils
                 return i;
 
         return null;
+    }
+
+    /**
+     * Converts a bitSet to a set of indexes.
+     *
+     * @param bs
+     *      bitset containing ids of indexes being looked for
+     * @param indexes
+     *      set of indexes where one with the given id is being looked for
+     * @return
+     *      the index with the given id; {@code null} if not found
+     */
+    public static Set<Index> convert(BitSet bs, Set<Index> indexes)
+    {
+        Set<Index> indexSet = new HashSet<Index>();
+
+        for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
+            Index index = find(indexes, i);
+
+            if (index == null)
+                throw new RuntimeException("Can't find index with id " + i);
+
+            indexSet.add(index);
+        }
+
+        return indexSet;
+    }
+
+    /**
+     * Makes a set of {@link ByContentIndex} to {@link Index}.
+     *
+     * @param indexes
+     *      set of indexes where each will be copied to a ByContentIndex instance
+     * @return
+     *      the index with the given id; {@code null} if not found
+     */
+    public static Set<Index> toPlain(Set<ByContentIndex> indexes)
+    {
+        Set<Index> plainSet = new HashSet<Index>();
+
+        for (Index i : indexes)
+            plainSet.add(i);
+
+        return plainSet;
     }
 
     /**
@@ -266,6 +311,14 @@ public final class MetadataUtils
         return create.toString();
     }
 
+    /**
+     * Generates the SQL create statement (standard) for the given index.
+     *
+     * @param index
+     *      the index for which the statement is being generated
+     * @return
+     *      the create statement
+     */
     public static String getCreateStatement(Index index)
     {
         StringBuilder create = new StringBuilder();

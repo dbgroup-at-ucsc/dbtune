@@ -12,6 +12,7 @@ import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 
+import static edu.ucsc.dbtune.util.MetadataUtils.find;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
 //CHECKSTYLE:OFF
@@ -58,7 +59,7 @@ public class ProfiledQuery implements Serializable {
     private double planCost(BitSet config) {
         Set<Index> configSet = new HashSet<Index>();
         for (int i = config.nextSetBit(0); i >= 0; i = config.nextSetBit(i+1)) {
-            Index idx = candidateSet.findIndexId(i);
+            Index idx = find(pool, i);
 
             if (idx == null)
                 throw new RuntimeException("Can't find index with ID " + i + " in pool");
@@ -77,21 +78,12 @@ public class ProfiledQuery implements Serializable {
         Index idx;
 
         for (int i = config.nextSetBit(0); i >= 0; i = config.nextSetBit(i+1))
-            if ((idx = findIndex(pool, i)) == null)
+            if ((idx = find(pool, i)) == null)
                 throw new RuntimeException("Can't find index with ID " + i + " in pool");
             else
                 maintenanceCost += explainInfo.getUpdateCost(idx);
 
         return maintenanceCost;
-    }
-    
-    private Index findIndex(Set<Index> indexes, int indexId)
-    {
-        for (Index idx : pool)
-            if (idx.getId() == indexId)
-                return idx;
-
-        return null;
     }
 }
 //CHECKSTYLE:ON

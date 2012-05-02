@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.wfit.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
@@ -14,17 +16,35 @@ public class Selector {
     private StaticIndexSet hotSet;
     private final DynamicIndexSet userHotSet;
     private IndexPartitions hotPartitions;
+    private List<ProfiledQuery> qinfos;
     private int maxHotSetSize = Environment.getInstance().getMaxNumIndexes(); // hotSet size
     private int maxNumStates = Environment.getInstance().getMaxNumStates();
+    private int queryCount;
     
     public Selector() {
         idxStats = new IndexStatistics();
-        wfa = new WorkFunctionAlgorithm();
-        hotSet = new StaticIndexSet();
         userHotSet = new DynamicIndexSet();
         matSet = new DynamicIndexSet();
-        hotPartitions = new IndexPartitions(hotSet); 
+        qinfos = new ArrayList<ProfiledQuery>();
+        queryCount = 0;
+
+        hotSet = new StaticIndexSet();
+        hotPartitions = new IndexPartitions(hotSet);
+        wfa = new WorkFunctionAlgorithm();
     }
+
+    public Selector(Set<Index> initialSet) {
+        idxStats = new IndexStatistics();
+        matSet = new DynamicIndexSet();
+        userHotSet = new DynamicIndexSet();
+        qinfos = new ArrayList<ProfiledQuery>();
+        queryCount = 0;
+
+        hotSet = new StaticIndexSet(initialSet.toArray(new Index[0]));
+        hotPartitions = new IndexPartitions(hotSet);
+        wfa = new WorkFunctionAlgorithm(hotPartitions, true);
+    }
+
 
     /*
      * Perform the per-query tasks that are done after profiling
@@ -36,8 +56,16 @@ public class Selector {
         reorganizeCandidates(qinfo.candidateSet);
         
         wfa.newTask(qinfo);
+
+        queryCount++;
+        qinfos.add(qinfo);
         
         return new AnalyzedQuery(qinfo, hotPartitions.bitSetArray());
+    }
+
+    public double getCost(int queryId, BitSet bs)
+    {
+        return qinfos.get(queryId).cost(bs);
     }
     
     /*
@@ -45,6 +73,14 @@ public class Selector {
      */
     public List<Index> getRecommendation() {
         return wfa.getRecommendation();
+    }
+    
+    /*
+     * Called by main thread to get a recommendation
+     */
+    public BitSet[] getOptimalScheduleRecommendation() {
+        return wfa.getTrace().optimalSchedule(
+                hotPartitions, queryCount, qinfos.toArray(new ProfiledQuery[0]));
     }
     
     public void positiveVote(Index index, Snapshot candSet) {
@@ -96,6 +132,11 @@ public class Selector {
             return index.getCreationCost();
         }
         return 0;
+    }
+
+    public int getQueryCount()
+    {
+        return queryCount;
     }
     
     /* 

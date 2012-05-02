@@ -18,6 +18,7 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm.transitionCost;
+import static edu.ucsc.dbtune.util.MetadataUtils.convert;
 import static edu.ucsc.dbtune.util.MetadataUtils.toByContent;
 
 /**
@@ -50,6 +51,29 @@ public class WFIT extends Advisor
         selector = new Selector();
         doiFinder = new IBGDoiFinder();
         pool = new HashSet<Index>();
+        stats = new RecommendationStatistics("WFIT");
+        previousState = new BitSet();
+    }
+
+    /**
+     * Creates a WFIT advisor.
+     *
+     * @param optimizer
+     *      used to execute what-if calls
+     * @param initialSet
+     *      initial candidate set
+     */
+    public WFIT(Optimizer optimizer, Set<Index> initialSet)
+    {
+        if (!(optimizer instanceof IBGOptimizer))
+            throw new RuntimeException(
+                    "Expecting IBGOptimizer; found: " + optimizer.getClass().getName());
+
+        ibgOptimizer = (IBGOptimizer) optimizer;
+
+        selector = new Selector(initialSet);
+        doiFinder = new IBGDoiFinder();
+        pool = new HashSet<Index>(initialSet);
         stats = new RecommendationStatistics("WFIT");
         previousState = new BitSet();
     }
@@ -92,7 +116,7 @@ public class WFIT extends Advisor
             newState.set(idx.getId());
         
         stats.addNewEntry(
-                eStmt, selector.getRecommendation(),
+                eStmt.getTotalCost(), selector.getRecommendation(),
                 transitionCost(getSnapshot(pool), previousState, newState));
 
         previousState = newState;
@@ -140,5 +164,37 @@ public class WFIT extends Advisor
     public RecommendationStatistics getRecommendationStatistics()
     {
         return stats;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public RecommendationStatistics getOptimalRecommendationStatistics()
+    {
+        RecommendationStatistics optStats = new RecommendationStatistics("OPT");
+        BitSet[] optimalSchedule = selector.getOptimalScheduleRecommendation();
+
+        BitSet prevState = new BitSet();
+
+        int i = 0;
+
+        for (BitSet bs : optimalSchedule) {
+
+            BitSet newState = new BitSet();
+
+            newState.set(bs);
+
+            try {
+                optStats.addNewEntry(
+                        selector.getCost(i, bs), convert(optimalSchedule[i], pool),
+                        transitionCost(getSnapshot(pool), prevState, newState));
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            prevState = newState;
+        }
+
+        return optStats;
     }
 }

@@ -8,6 +8,7 @@ doc/
 extensions/*/build/
 extensions/bip/bin/
 extensions/inum/bin/
+extensions/*/.cache
 manifest.mf
 nbproject/
 nbbuild.xml

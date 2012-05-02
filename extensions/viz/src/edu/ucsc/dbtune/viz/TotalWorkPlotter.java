@@ -39,10 +39,9 @@ public class TotalWorkPlotter implements Plotter
     {
         XYSeriesCollection c = new XYSeriesCollection();
 
-        int i = 1;
-
         for (RecommendationStatistics rs : recommendationStats) {
             XYSeries xyseries = new XYSeries(rs.getAlgorithmName());
+            int i = 1;
             for (RecommendationStatistics.Entry e : rs)
                 xyseries.add(i++, e.getTotalWork());
             c.addSeries(xyseries);

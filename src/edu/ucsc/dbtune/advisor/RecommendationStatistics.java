@@ -7,7 +7,6 @@ import java.util.List;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics.Entry;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 
 /**
  * Holds information about the advising process.
@@ -31,23 +30,23 @@ public class RecommendationStatistics implements Iterable<Entry>
 
     /**
      * Adds a new entry to the statistics.
-     * @param statement
-     *      statement that the entry corresponds to
+     *
+     * @param totalCost
+     *      the cost of exeucting the statement
      * @param indexes
      *      indexes that the entry corresponds to
      * @param transitionCost
      *      transitionCost that the entry corresponds to
      */
     public void addNewEntry(
-            ExplainedSQLStatement statement,
+            double totalCost,
             Collection<Index> indexes,
             double transitionCost)
     {
         Entry e = new Entry();
 
-        totalWorkSum += statement.getTotalCost() + transitionCost;
+        totalWorkSum += totalCost + transitionCost;
 
-        e.statement = statement;
         e.indexes = indexes;
         e.transitionCost = transitionCost;
         e.totalWork = totalWorkSum;
@@ -80,10 +79,10 @@ public class RecommendationStatistics implements Iterable<Entry>
     public static class Entry
     {
         private Collection<Index> indexes;
-        private ExplainedSQLStatement statement;
         private double benefit;
         private double transitionCost;
         private double totalWork;
+        private double totalCost;
 
         /**
          * Gets the indexes for this instance.
@@ -100,19 +99,9 @@ public class RecommendationStatistics implements Iterable<Entry>
          *
          * @return The statement.
          */
-        public ExplainedSQLStatement getStatement()
-        {
-            return this.statement;
-        }
-
-        /**
-         * Gets the statement for this instance.
-         *
-         * @return The statement.
-         */
         public double getCost()
         {
-            return this.statement.getTotalCost();
+            return this.totalCost;
         }
 
         /**
