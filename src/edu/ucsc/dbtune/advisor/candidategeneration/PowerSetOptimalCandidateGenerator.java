@@ -10,9 +10,11 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Permutations;
 
 import edu.ucsc.dbtune.workload.SQLStatement;
+import static edu.ucsc.dbtune.util.MetadataUtils.toByContent;
 
 /**
  * Generate the set of candidate indexes that contain all subsets of columns of indexes obtained 
@@ -23,6 +25,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerator 
 {
     private CandidateGenerator delegate;
+    private Optimizer optimizer;
     private int maxCols;
     
     /**
@@ -35,10 +38,13 @@ public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerato
      *      the maximum number of columns in an index. If zero or negative, the size of an index is 
      *      taken as the maximum number of columns that an index has
      */
-    public PowerSetOptimalCandidateGenerator(CandidateGenerator delegate, int maxCols)
+    public PowerSetOptimalCandidateGenerator(Optimizer optimizer, 
+                                             CandidateGenerator delegate,
+                                             int maxCols)
     {
         this.delegate = delegate;
         this.maxCols  = maxCols;
+        this.optimizer = optimizer;
     }
     
     /**
@@ -54,7 +60,10 @@ public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerato
         Map<Column, Boolean> ascendingIndex;
         
         int max;
-        
+        StringBuilder query;
+        String asc;
+        Set<Index> recommendation;
+       
         for (Index index : delegate.generate(sql)) {
             
             if (maxCols > (index.columns().size() - 1))
@@ -71,12 +80,38 @@ public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerato
                     
                     idxCols = per.next();
                     
-                    for (Column col : idxCols)
+                    query = new StringBuilder();
+                    query.append(" SELECT ");
+                    for (Column col : idxCols) {
                         ascendingIndex.put(col, index.isAscending(col));
+                        query.append(col.getName() + " , ");
+                    }
                     
-                    Index idx = new Index(idxCols, ascendingIndex);
-                    indexes.add(new ByContentIndex(idx));
+                    query.delete(query.length() - 2, query.length());
+                    query.append("\n FROM " + index.getTable().getFullyQualifiedName());
+                    query.append("\n ORDER BY ");
                     
+                    for (Column col : idxCols) {
+                        asc = index.isAscending(col) ? " ASC " : " DESC ";
+                        query.append(col.getName() + asc + " , ");
+                    }
+                    
+                    query.delete(query.length() - 2, query.length());
+                    
+                    //Index idx = new Index(idxCols, ascendingIndex);
+                    // indexes.add(new ByContentIndex(idx));
+                    // String query = 
+                    // "select " + columns + " from " + index.getTableName() 
+                    // + " order by " + columns;
+                    recommendation = optimizer.recommendIndexes(query.toString());
+                    
+                    /*
+                    if (recommendation.size() != 1) 
+                        throw new RuntimeException(" We expect the optimizer to recommend"
+                                + " one index for the query: " + query.toString()
+                                + "\n recommendation: " + recommendation);
+                    */
+                    indexes.addAll(toByContent(recommendation));
                 }
             }  
             

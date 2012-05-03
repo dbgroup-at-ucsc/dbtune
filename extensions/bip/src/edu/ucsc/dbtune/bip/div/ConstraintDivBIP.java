@@ -23,7 +23,7 @@ import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.constantRHSImbalance
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
-import ilog.cplex.IloCplex.DoubleParam;
+
 
 import java.util.ArrayList;
 
@@ -37,13 +37,12 @@ import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Sets;
 
+import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_QUERY;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_REPLICA;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_FAILURE;
+
 public class ConstraintDivBIP extends DivBIP
-{
-    public static int IMBALANCE_REPLICA = 1001;
-    public static int IMBALANCE_QUERY   = 1002;
-    public static int NODE_FAILURE      = 1003;
-    public static int UPDATE_COST_BOUND = 1004;
-    
+{   
     protected boolean isApproximation;
     protected List<DivConstraint> constraints;
     protected QueryCostOptimalBuilder queryOptimalBuilder;
@@ -60,9 +59,7 @@ public class ConstraintDivBIP extends DivBIP
     {
         numConstraints = 0;
                 
-        try {            
-            // time limit
-            cplex.setParam(DoubleParam.TiLim, 900);
+        try {
             UtilConstraintBuilder.cplex = cplex;
             
             // 1. Add variables into list
@@ -73,18 +70,16 @@ public class ConstraintDivBIP extends DivBIP
             super.totalCost();
             
             // 3. Atomic constraints
-            super.atomicConstraints();      
+            super.atomicConstraints();
             
-            // 4. Top-m best cost 
+            // 4. Used index constraints
+            super.usedIndexConstraints();
+            
+            // 5. Top-m best cost 
             super.topMBestCostConstraints();
             
-            // 5. Space constraints
+            // 6. Space constraints
             super.spaceConstraints();
-            
-            if (constraints.size() == 1 && constraints.get(0).getType() == UPDATE_COST_BOUND) {
-                boundUpdateCostConstraint(constraints.get(0).getFactor());
-                return; 
-            }
             
             // 6. if we have additional constraints
             // need to impose top-m best cost constraints
@@ -98,13 +93,13 @@ public class ConstraintDivBIP extends DivBIP
             
             // 7. additional constraints
             for (DivConstraint c : constraints) {
-                if (c.getType() == IMBALANCE_REPLICA) {
+                if (c.getType().equals(IMBALANCE_REPLICA)) {
                     setConstantReplicaImbalanceConstraint(c.getFactor());
                     imbalanceReplicaConstraints(c.getFactor());
                 }
-                else if (c.getType() == NODE_FAILURE)
+                else if (c.getType().equals(NODE_FAILURE))
                     nodeFailures(c.getFactor());
-                else if (c.getType() == IMBALANCE_QUERY) {
+                else if (c.getType().equals(IMBALANCE_QUERY)) {
                     setConstantQueryImbalanceConstraint();
                     imbalanceQueryConstraints(c.getFactor());                    
                 }
@@ -633,19 +628,22 @@ public class ConstraintDivBIP extends DivBIP
             if (r != failR) {
                 
                 expr = cplex.linearNumExpr();
-                for (QueryPlanDesc desc : queryPlanDescs)
-                    expr.add(increadLoadQuery(r, desc.getStatementID(), desc, failR));
                 
+                // only consider query statements to the increased load
+                for (QueryPlanDesc desc : queryPlanDescs) {
+                    if (desc.getSQLCategory().isSame(SELECT))
+                        expr.add(increadLoadQuery(r, desc.getStatementID(), desc, failR));
+                }
                 exprs.add(expr);
             }
         
         for (int r1 = 0; r1 < exprs.size() - 1; r1++)
             for (int r2 = r1 + 1; r2 < exprs.size(); r2++)
-                UtilConstraintBuilder.imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);
+                imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);
     }
     
     /**
-     * Compute the increase in the load of processing query {@code d} at the given replica {@code r}
+     * Compute the increase in the load of processing query {@code desc} at the given replica {@code r}
      * assuming that replica with the identifier {@code failR} has been failed.
      *  
      * @param r

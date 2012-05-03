@@ -262,7 +262,7 @@ public class InteractionComparisonFunctionalTest
         // 2. powerset
         if (strategies.contains(Generation.Strategy.POWER_SET)) {
             candGen = 
-                new PowerSetOptimalCandidateGenerator(
+                new PowerSetOptimalCandidateGenerator(db.getOptimizer(),
                         new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())), 3);
             powerSetCandidates = candGen.generate(workload);
             System.out.println("InteractionComparison, Power set candidates: " 

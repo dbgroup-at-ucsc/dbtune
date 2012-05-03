@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.divgdesign;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,9 @@ import static edu.ucsc.dbtune.bip.util.LogListener.EVENT_POPULATING_INUM;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.INDEX_UPDATE_COST_FACTOR;
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.maxRatioInList;
 
 public class CoPhyDivgDesign extends DivgDesign 
 {    
@@ -174,6 +177,79 @@ public class CoPhyDivgDesign extends DivgDesign
         }
             
         return costs;
+    }
+    
+    /**
+     * Compute the maximum imbalance query
+     * 
+     * @return
+     */
+    public double getImbalanceQuery() throws SQLException
+    {
+        List<QueryCostAtPartition> costs;
+        List<Double> values;
+        double maxRatio = -1;
+        double ratio; 
+        
+        for (int i = 0; i < workload.size(); i++) {
+            
+            if (workload.get(i).getSQLCategory().isSame(NOT_SELECT))
+                continue;
+            
+            costs = statementCosts(workload.get(i));
+            
+            // an query statement, get the top-m best cost
+            Collections.sort(costs);
+            
+            values = new ArrayList<Double>();
+            for (int j = 0; j < m; j++)
+                values.add(costs.get(j).getCost());
+            
+            ratio = maxRatioInList(values);
+            maxRatio = (maxRatio > ratio) ? maxRatio : ratio; 
+            
+        }
+        
+        return maxRatio;
+    }
+    
+    public double getImbalanceReplica() throws SQLException
+    {
+        List<Double> replicas = new ArrayList<Double>();
+        for (int i = 0; i < n; i++)
+            replicas.add(0.0);
+        
+        List<QueryCostAtPartition> costs;
+        SQLStatement sql;
+        double newCost;
+        int pID;
+        
+        for (int j = 0; j < workload.size(); j++) {
+        
+            sql   = workload.get(j);
+            costs = statementCosts(sql);
+            
+            
+            // update statement
+            if (sql.getSQLCategory().isSame(NOT_SELECT))
+                for (int i = 0; i < n; i++) { 
+                    newCost = replicas.get(i) + costs.get(i).getCost();
+                    replicas.set(i, newCost);
+                }
+            else {
+                // an query statement, get the top-m best cost
+                Collections.sort(costs);
+                
+                for (int k = 0; k < m; k++) {                    
+                    pID = costs.get(k).getPartitionID();
+                    newCost = replicas.get(pID) + costs.get(k).getCost() / m;
+                    replicas.set(pID, newCost);
+                }
+            }
+        }
+        
+        
+        return maxRatioInList(replicas);
     }
 
 }

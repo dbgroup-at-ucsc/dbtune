@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.bip.core;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
+import ilog.cplex.IloCplex.DoubleParam;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -91,11 +92,16 @@ public abstract class AbstractBIPSolver implements BIPSolver
         cplex = new IloCplex();
         
         // allow the solution differed 5% from the actual optimal value
-        cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
+        cplex.setParam(IloCplex.DoubleParam.EpGap, environment.getMaxCplexEpGap());
+        // the running time
+        cplex.setParam(DoubleParam.TiLim, environment.getMaxCplexRunningTime());
         // not output the log of CPLEX
-        cplex.setOut(null);
+        if (!environment.getIsShowCPlexOutput())
+            cplex.setOut(null);
         // not output the warning
         cplex.setWarning(null);
+      
+        //cplex.setParam(DoubleParam.EpLin, 1e-1);
         
         buildBIP();       
         logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);

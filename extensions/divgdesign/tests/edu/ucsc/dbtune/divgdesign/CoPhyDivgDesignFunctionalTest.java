@@ -47,15 +47,17 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
     public void testCoPhyDiv() throws Exception
     {   
         // 1. Set common parameters
-        setCommonParameters();
+        getEnvironmentParameters();
+        setParameters();
 
         if (!(io instanceof InumOptimizer))
             return;
         
         // 2. Generate candidate indexes
         generateOptimalCandidatesCoPhy();
-        maxIters = 1;
+        maxIters = 5;
         
+        /*
         // 3. Call CoPhy Design
         for (double B1 : lB) {
             
@@ -82,6 +84,7 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
             if (isOneBudget)
                 break;
         }
+        */
     }
     
     
@@ -106,14 +109,6 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
             sqls = new ArrayList<SQLStatement>();
             sqls.add(sql);
             
-            // extra workload
-            if (isExtraWorkload) {
-                for (SQLStatement e : wlExtra)
-                    if (e.getSQLCategory().isSame(SELECT))
-                        sqls.add(e);
-                
-            }
-            
             wl = new Workload(sqls);
             
             if (sql.getSQLCategory().isSame(SELECT))
@@ -136,7 +131,7 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         Set<Index> candidate;
         Workload wl;
         CandidateGenerator candGen = 
-            new PowerSetOptimalCandidateGenerator(
+            new PowerSetOptimalCandidateGenerator(db.getOptimizer(),
                     new OptimizerCandidateGenerator
                         (getBaseOptimizer(db.getOptimizer())), 2);
         
@@ -208,6 +203,9 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
                             + " The objective value: " + divg.getTotalCost() + "\n"
                             + "      QUERY cost:    " + divg.getQueryCost()  + "\n"
                             + "      UPDATE cost:   " + divg.getUpdateCost() + "\n"
+                            + " IMBALANCE QUERY  :   " + divg.getImbalanceQuery() + "\n"
+                            + " IMBALANCE REPLICA  :   " + divg.getImbalanceReplica() + "\n"
+                            + " NODE FAILURE: " + div.getMaxNodeFailure()
                             );
     }
 }

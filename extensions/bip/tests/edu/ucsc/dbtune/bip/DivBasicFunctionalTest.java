@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.bip;
 
-
 import java.util.List;
 import java.util.Set;
 
@@ -16,6 +15,7 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
+import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 
 /**
  * This test aims for the correctness of DivBIP; i.e., the cost computed by CPLEX
@@ -30,24 +30,29 @@ public class DivBasicFunctionalTest extends DivTestSetting
     public void testBasicDiv() throws Exception
     {
         // 1. Set common parameters
-        setCommonParameters();
+        getEnvironmentParameters();
+        setParameters();
 
         if (!(io instanceof InumOptimizer))
             return;
         
         // 2. Generate candidate indexes
         workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
-        generateOptimalCandidates();
+        candidates = readCandidateIndexes(); 
         nReplicas = 3;
         loadfactor = 2;
         B = Math.pow(2, 28); 
                     
         // basic case
         testDiv();
-        
-        
     }
     
+    /**
+     * Running DIV-BIP, and guarantee the query cost computed by INUM and CPLEX
+     * is the same (with some small tolerance)
+     * 
+     * @throws Exception
+     */
     private static void testDiv() throws Exception
     {
         div = new DivBIP();
@@ -65,7 +70,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
         System.out.println(logger.toString());
         
         if (isExportToFile)
-            div.exportCplexToFile(en.getWorkloadsFoldername() + "test.lp");
+            div.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
         
         double totalCostBIP;
         
@@ -74,7 +79,6 @@ public class DivBasicFunctionalTest extends DivTestSetting
                     + " obj value: " + div.getObjValue() + "\n"
                     + " different from optimal value: " + div.getObjectiveGap() + "\n"
                     + " base table update cost: " + div.getTotalBaseTableUpdateCost());
-            
             
             // add the update-base-table-constant costs
             totalCostBIP = div.getObjValue() + div.getTotalBaseTableUpdateCost();            
@@ -96,6 +100,8 @@ public class DivBasicFunctionalTest extends DivTestSetting
                     
                     if (costCplex.get(q) > 0) {
                         delta = Math.abs(costCplex.get(q) - costInum.get(q));
+                        System.out.println(" cost cplex: " + costCplex.get(q)
+                                    + " verus. cost INUM: " + costInum.get(q));
                         assertThat(delta <= tolerance, is(true));
                     }
                     
@@ -105,5 +111,4 @@ public class DivBasicFunctionalTest extends DivTestSetting
         } else 
             System.out.println(" NO SOLUTION ");
     }
-
 }

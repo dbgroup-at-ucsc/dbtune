@@ -119,10 +119,9 @@ public final class EnvironmentProperties
 
 
     /**
-     * Budget, in megabytes, for physical design.
+     * A list of space budget, in megabytes, for physical design
      */
     public static final String SPACE_BUDGET = "space.budget";
-
 
     /**
      * Type of candidate generator to use. Two generators can be specified (separating them with 
@@ -142,8 +141,7 @@ public final class EnvironmentProperties
      * @see PowerSetOptimalCandidateGenerator
      */
     public static final String POWERSET = "powerset";
-
-
+    
 
     /**
      * Folder for previously defined workloads. By convention, this folder contains many sub-folders 
@@ -218,6 +216,53 @@ public final class EnvironmentProperties
      */
     public static final String WFIT_INDEX_STATISTICS_WINDOW = "index.statistics.window";
 
+    /**
+     * The maximum time (in seconds) that is set for the CPLEX solver to run
+     */
+    public static final String CPLEX_MAX_TIME = "cplex.max.time";
+    
+    /**
+     * The error tolerance (in percentage) scale that allows the CPLEX solver to stop
+     * whenever the solution is within this given factor of the optimal value 
+     */
+    public static final String CPLEX_MAX_EP_GAP = "cplex.max.ep.gap"; 
+    
+    /**
+     * The boolean value is turned on/off to show the output
+     *  
+     */
+    public static final String CPLEX_SHOW_OUTPUT = "cplex.show.output";
+    
+    /**
+     * The number of replicas to deploy divergent index tuning
+     *  
+     */
+    public static final String NUMBER_OF_REPLICA = "number.of.replica";
+    
+    
+    /**
+     * List of space budgets (in MB) for physical designs
+     *  
+     */
+    public static final String LIST_SPACE_BUDGET = "list.space.budget";
+    
+    /**
+     * List of imbalance constraints
+     *  
+     */
+    public static final String IMBALANCE_CONSTRAINT = "imbalance.constraint";
+    
+    /**
+     * List of imbalance factors
+     *  
+     */
+    public static final String IMBALANCE_FACTOR = "imbalance.factor";
+    
+    public static final String IMBALANCE_QUERY = "imbalance.query";
+    public static final String IMBALANCE_REPLICA = "imbalance.replica";
+    public static final String NODE_FAILURE = "node.failure";
+    
+    
     /**
      * Never invoked.
      */

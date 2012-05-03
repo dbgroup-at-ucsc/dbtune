@@ -16,6 +16,7 @@ import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 
+
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
@@ -98,7 +99,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         // Iterate over variables s^r_{i,w}
         for (IloNumVar cVar : cplexVar) {
-            if (cplex.getValue(cVar) == 1) {
+            if (cplex.getValue(cVar) > 0) {
                 
                 DivVariable var = (DivVariable) poolVariables.get(cVar.getName());
                 
@@ -119,18 +120,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     {
         numConstraints = 0;
         
-        try {
-            // Dual Simplex = 2
-            // Sifting is a simple form of column generation well suited for models 
-            // where the number of variables dramatically exceeds the number of constraints. 
-            // Concurrentopt works with multiple processors, running a different algorithm 
-            // on each processor and stopping as soon as one of them finds an optimal solution
-            //cplex.setParam(IntParam.NodeAlg, IloCplex.Algorithm.Dual);
-            //cplex.setParam(IntParam.RootAlg, IloCplex.Algorithm.Sifting);            
-            //cplex.setParam(IntParam.SiftAlg, 2);
-            
-            // epsilon in linerization
-            //cplex.setParam(DoubleParam.EpLin, 1e-1);
+        try {            
             UtilConstraintBuilder.cplex = cplex;
             
             // 1. Add variables into list
@@ -141,18 +131,20 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             totalCost();
             
             // 3. Atomic constraints
-            atomicConstraints();      
+            atomicConstraints();
             
-            // 4. Top-m best cost 
+            // 4. Use index constraint
+            usedIndexConstraints();
+            
+            // 5. Top-m best cost 
             topMBestCostConstraints();
             
-            // 5. Space constraints
+            // 6. Space constraints
             spaceConstraints();
-            
         }     
         catch (IloException e) {
             e.printStackTrace();
-        }
+        }      
     }
     
     /**
@@ -361,7 +353,8 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     
         
     /**
-     * Internal atomic constraints: only one template plan is chosen to compute {@code cost(q,r)}.
+     * Internal atomic constraints: 
+     *      - Only one template plan is chosen to compute {@code cost(q,r)}.
      *  
      * @param r
      *     Replica ID
@@ -391,8 +384,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     
     /**
      * Slot atomic constraints:
-     *  At most one index is selected to plug into a slot. 
-     *  An index a is recommended if it is used to compute at least one cost(q,r)
+     *      - At most one index is selected to plug into a slot. 
      *  
      * @param r
      *     Replica ID
@@ -409,7 +401,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         IloLinearNumExpr expr;
         int idY;
         int idX;
-        int idS;
         
         // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
@@ -430,7 +421,40 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 numConstraints++;
                 
             }
-        }
+        }        
+    }
+
+    /**
+     * Construct the set of atomic constraints.
+     * 
+     * @throws IloException
+     */
+    protected void usedIndexConstraints() throws IloException
+    {
+        for (int r = 0; r < nReplicas; r++)
+            for (QueryPlanDesc desc : queryPlanDescs) 
+                usedIndexConstraints(r, desc.getStatementID(), desc);
+    }
+    
+    /**
+     *  
+     *  An index a is recommended if it is used to compute at least one cost(q,r)
+     *  
+     * @param r
+     *     Replica ID
+     * @param q
+     *     Statement ID
+     * @param desc
+     *     The query plan description        
+     *  
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX.
+     */
+    protected void usedIndexConstraints(int r, int q, QueryPlanDesc desc) throws IloException
+    {
+        IloLinearNumExpr expr;
+        int idX;
+        int idS;
         
         // used index
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
@@ -448,7 +472,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                     
                 }
     }
-    
+
     /**
      * Top-m best cost constraints.
      * 
@@ -549,7 +573,101 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
        
        return cost;
     }
-
+    
+    /**
+     * Compute the node failure factor when one node fails
+     * 
+     * @return
+     *      The max ratio
+     *      
+     * @throws Exception
+     */
+    public double getMaxNodeFailure() throws Exception
+    {
+        List<Double> queryReplica;
+        List<List<Double>> queries;
+        
+        queries = new ArrayList<List<Double>>();
+        
+        // get the query execution costs
+        for (QueryPlanDesc desc : super.queryPlanDescs) {
+            
+            // consider select-statement only
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+        
+            queryReplica = new ArrayList<Double>();
+            
+            for (int r = 0; r < nReplicas; r++) 
+                queryReplica.add(computeVal(queryExpr(r, desc.getStatementID(), desc)));
+            
+            queries.add(queryReplica);
+        }
+        
+        
+        // query 1: replica 0, replica 1
+        // query 2: replica 0, replica 1
+        // query 3: replica 0, replica 1
+        // .....................
+        double maxRatio = -1;
+        double ratio;
+        
+        for (int rFail = 0; rFail < nReplicas; rFail++) {
+            ratio = computeMaxIncreaseLoadRatio(rFail, queries);
+            maxRatio = (maxRatio > ratio) ? maxRatio : ratio;                   
+        }
+        
+        return maxRatio;
+    }
+    
+    /**
+     * Compute the increase load of other replica when replica {@code rFail} fails.
+     *  
+     * @param rFail
+     *  todo
+     * @param queries
+     * @param increasLoads
+     */
+    private double computeMaxIncreaseLoadRatio(int rFail, List<List<Double>> queries)
+    {
+        List<Double> increaseLoad = new ArrayList<Double>();
+        
+        for (int r = 0; r < nReplicas; r++)
+            increaseLoad.add(0.0);
+        
+        double cost;
+        int q = 0;
+        
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+            
+            if (queries.get(q).get(rFail) > 0) {
+                // distribute this to other replica that has value greater than 0
+                for (int r = 0; r < nReplicas; r++) {
+                    
+                    if (r == rFail)
+                        continue;
+                    
+                    // avoid small value
+                    if (queries.get(q).get(r) > 0.1) {
+                        cost = increaseLoad.get(r) + queries.get(q).get(r);
+                        increaseLoad.set(r, cost);
+                    }    
+                }
+            }
+            
+            q++;
+        }
+        
+        List<Double> costs = new ArrayList<Double>();
+        for (double d : increaseLoad)
+            if (d > 0.0)
+                costs.add(d);
+        
+        return maxRatioInList(costs);
+    }
     
     /**
      * Retrieve the max imbalance replica cost
@@ -563,10 +681,17 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         List<Double> replicas = new ArrayList<Double>();
         
         double updateBaseTableCost = getTotalBaseTableUpdateCost() / nReplicas;
+        double cost;
         
-        for (int r = 0; r < nReplicas; r++)
-            replicas.add(computeVal(replicaCost(r)) + updateBaseTableCost);
-        
+        for (int r = 0; r < nReplicas; r++) {
+            
+            cost = computeVal(replicaCost(r)) + updateBaseTableCost;
+            
+            if (cost > 0.0)
+                replicas.add(cost);
+            
+        }
+       
         return maxRatioInList(replicas);
     }
     
@@ -656,5 +781,4 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         return queries;
     }
-    
 }

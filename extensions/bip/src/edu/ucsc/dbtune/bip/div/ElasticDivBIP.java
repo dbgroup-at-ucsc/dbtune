@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.bip.div;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -21,11 +22,11 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 public class ElasticDivBIP extends DivBIP implements ElasticDivergent
 {  
     private int     nDeploys;
-    private int     nDeployVar;
+    private int     nDeployVars;
     private double  upperDeployCost;
     
     /** 
-     * Map index to the set of replicas that this index is deploy at the initial
+     * Map index to the set of replicas that this index is deployed at the initial
      * setting. 
      **/
     private Map<Index, Set<Integer>> initialIndexReplica;
@@ -53,8 +54,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
                     replicaIDs = new HashSet<Integer>();
                 
                 replicaIDs.add(r);
-                initialIndexReplica.put(index, replicaIDs);
-            
+                initialIndexReplica.put(index, replicaIDs);                
             }
     }
 
@@ -62,7 +62,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
     public void setNumberDeployReplicas(int n) 
     {
         nDeploys = n;
-        nDeployVar = (nReplicas > nDeploys) ? nReplicas : nDeploys;
+        nDeployVars = (nReplicas > nDeploys) ? nReplicas : nDeploys;
     }
     
     @Override
@@ -110,7 +110,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
     {
         super.constructVariables();
          
-        for (int r = 0; r < nDeployVar; r++) 
+        for (int r = 0; r < nDeployVars; r++) 
             poolVariables.createAndStore(VAR_DEPLOY, r, 0, 0, 0);
         
         // for div_a and mod_a
@@ -194,7 +194,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         IloLinearNumExpr expr = cplex.linearNumExpr();        
         int idD;
         
-        for (int r = 0; r < nDeployVar; r++){
+        for (int r = 0; r < nDeployVars; r++){
             idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
             expr.addTerm(1, cplexVar.get(idD));
         }
@@ -250,5 +250,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         }
         
         cplex.addLe(exprDeploy, upperDeployCost);  
-    }    
+    }   
+    
+    
 }

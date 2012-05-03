@@ -1,6 +1,13 @@
 package edu.ucsc.dbtune.bip.div;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+
+import edu.ucsc.dbtune.metadata.Index;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
@@ -140,13 +147,15 @@ public class UtilConstraintBuilder
      */
     public static double computeVal(IloLinearNumExpr expr) throws Exception
     {
-        IloNumVar        var;
-        double           coef;
         IloLinearNumExprIterator iter;
         
-        double cost = 0.0;
+        IloNumVar var;
+        double coef;
+        double cost;
         
+        cost = 0.0;        
         iter = expr.linearIterator();
+        
         while (iter.hasNext()) {
             var = iter.nextNumVar();
             coef = iter.getValue();            
@@ -157,7 +166,7 @@ public class UtilConstraintBuilder
         
         // issue #281: some variables are assigned value small value (e.g., 3.5976098620712736E-12)
         // workaround: cast very small value to 0
-        if (cost < 0.01)
+        if (cost < 1.0)
             cost = 0.0;
         
         return cost;
@@ -189,6 +198,167 @@ public class UtilConstraintBuilder
             }
         
         return maxRatio;
+    }
+    
+    
+    /**
+     * Compute the cost to deploy from the {@code oldConf} to {@code newConf}. 
+     * 
+     * @param sourceConf
+     *      The old configuration.
+     * @param destinationConf
+     *      The new configuration to deploy.
+     * 
+     * @return
+     *      Deployment cost
+     */
+    public static double computeDeploymentCost(DivConfiguration sourceConf, 
+                                               DivConfiguration destinationConf)
+         
+    {
+        double deploymentCost;
+        
+        deploymentCost = 0.0;
+        
+        //System.out.println(" Source: \n" + sourceConf.briefDescription() + "\n"
+          //                  + " Destination: \n" + destinationConf.briefDescription());
+        // The algorithm works as follows
+        // For each configuration {@code target} of {@code destinationConf} 
+        //     + Find the most ``match'' {@code source} in {@code sourceConf}
+        //     + Compute the cost to transfer {@code source} to {@code target|
+        // If (destiationConf.size() > sourceconf.size())
+        //     + The remaining replica is computed based on its creation cost
+        
+        
+        // Our current assumption: destinationConfg.size() < sourceConf.size()
+        // i.e., shrinking replicas
+        // TODO: handle expanding replicas
+        
+        List<Integer> listHasMatchedID;
+        List<Integer> listTargetIDDecreaseNumberIndexes;
+        List<SortableObject> lso;
+        int sourceID;
+        
+        listHasMatchedID = new ArrayList<Integer>();
+        listTargetIDDecreaseNumberIndexes = new ArrayList<Integer>();
+        lso = new ArrayList<SortableObject>();
+        
+        
+        // sort each replica in terms of the number of replicas that each has.
+        for (int targetID = 0; targetID < destinationConf.getNumberReplicas(); targetID++){
+            
+            SortableObject o = new SortableObject(targetID, 
+                                    destinationConf.indexesAtReplica(targetID).size());
+            lso.add(o);
+        }
+        Collections.sort(lso);
+        
+        for (int i = lso.size() - 1; i > -1; i--) 
+            listTargetIDDecreaseNumberIndexes.add(lso.get(i).getID());
+        
+        
+        for (int targetID : listTargetIDDecreaseNumberIndexes){
+         
+            sourceID = findMatchReplica(targetID, listHasMatchedID, 
+                                             sourceConf, destinationConf);
+            
+            if (sourceID == -1)
+                throw new RuntimeException("Haven't handled the scenarios " +
+                        "with expanding replicas yet.");
+            
+            //System.out.println(" source ID = " + sourceID
+              //                  + " \n " + " target ID = " + targetID);
+            deploymentCost += computeTransferCost(sourceConf.indexesAtReplica(sourceID), 
+                                                  destinationConf.indexesAtReplica(targetID));
+            
+            listHasMatchedID.add(sourceID);
+        }
+                    
+        return deploymentCost;
+    }
+    
+    /**
+     * Find the matching ID for the given {@code targetID} replica.
+     * 
+     * @param targetID
+     *      The target replica that needs to be matched.           
+     * @param listHasMatchedID
+     *      A list of replicas in the source that have been matched to some replica     
+     *      of the target
+     * @param sourceConf
+     *      The source configuration
+     * @param destinationConf
+     *      The target configuration
+     *      
+     * @return
+     *      The matching replica ID of source, 
+     *      or -1, if we cannot find.
+     */
+    private static int findMatchReplica(int targetID, List<Integer> listHasMatchedID, 
+                                 DivConfiguration sourceConf, 
+                                 DivConfiguration destinationConf)
+    {
+        int idMaxMatching;
+        int numMaxMatching; 
+        
+        numMaxMatching = -1;
+        idMaxMatching = -1;
+        Set<Index> intersection;
+        Set<Index> destination;
+        
+        destination = new HashSet<Index>(destinationConf.indexesAtReplica(targetID));
+        
+        for (int sourceID = 0; sourceID < sourceConf.getNumberReplicas(); sourceID++) {
+             
+            if (listHasMatchedID.contains(sourceID))
+                continue;
+            
+            intersection = new HashSet<Index>(sourceConf.indexesAtReplica(sourceID));
+            intersection.retainAll(destination);
+            
+            if (intersection.size() > 0 && 
+                   intersection.size() > numMaxMatching) {
+                numMaxMatching = intersection.size();
+                idMaxMatching = sourceID;
+            }
+            
+        }
+        
+        return idMaxMatching;
+    }
+    
+    
+    /**
+     * Compute the transfer cost from the {@code source} configuration to {@code destination}
+     * configuration.
+     *  
+     * @param source
+     *      The source configuration
+     * @param destination
+     *      The destination configuration, on which we are going to deploy
+     *       
+     * @return
+     *      The transfer cost
+     */
+    private static double computeTransferCost(Set<Index> source, Set<Index> destination)
+    {
+        // There are three types of operations
+        // 
+        //   + Index remains in the system: cost = 0
+        //   + Index is dropped           : cost = 0
+        //   + Index is materialized      : cost = createCost(index)
+        // 
+        double transferCost = 0.0;        
+        Set<Index>  materializedIndexes;
+        
+        // contains only index in {@dest} and NOT in {@source}
+        materializedIndexes = new HashSet<Index>(destination);
+        materializedIndexes.removeAll(source);
+        
+        for (Index index : materializedIndexes)
+            transferCost += index.getCreationCost();
+        
+        return transferCost;
     }
     
     

@@ -35,9 +35,18 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.WFIT_NUM_PARTITION_ITER
 import static edu.ucsc.dbtune.util.EnvironmentProperties.WORKLOADS_FOLDERNAME;
 import static edu.ucsc.dbtune.util.Strings.toBoolean;
 
+import static edu.ucsc.dbtune.util.EnvironmentProperties.CPLEX_MAX_TIME;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.CPLEX_MAX_EP_GAP;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.CPLEX_SHOW_OUTPUT;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.LIST_SPACE_BUDGET;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NUMBER_OF_REPLICA;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_CONSTRAINT;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_FACTOR;
+
 /**
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
+ * @author Quoc Trung Tran
  */
 public class Environment
 {
@@ -438,5 +447,102 @@ public class Environment
     public boolean getInumSlotCache()
     {
         return toBoolean(getOrThrowIfNullOrEmpty(configuration, INUM_SLOT_CACHE));
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#CPLEX_MAX_TIME}
+     * @throws NumberFormatException
+     *      unable to return the overhead factor due to the stated reason.
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public int getMaxCplexRunningTime() throws NumberFormatException
+    {
+        return Integer.valueOf(
+                getOrThrowIfNullOrEmpty(configuration, CPLEX_MAX_TIME));
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#CPLEX_MAX_EP_GAP}
+     * @throws NumberFormatException
+     *      unable to return the overhead factor due to the stated reason.
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public double getMaxCplexEpGap() throws NumberFormatException
+    {
+        return Double.valueOf(
+                getOrThrowIfNullOrEmpty(configuration, CPLEX_MAX_EP_GAP));
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#CPLEX_SHOW_OUTPUT}
+     * 
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public boolean getIsShowCPlexOutput() throws NoSuchElementException 
+    {
+        return toBoolean(getOrThrowIfNullOrEmpty(configuration, CPLEX_SHOW_OUTPUT));
+    }
+    
+    
+    /**
+     * @return {@link EnvironmentProperties#LIST_SPACE_BUDGET}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public List<Integer> getListSpaceBudgets()
+    {
+        List<Integer> spaces = new ArrayList<Integer>();
+        
+        for (String budget : Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, LIST_SPACE_BUDGET).split(",")))
+            spaces.add(Integer.valueOf(budget.trim()));
+            
+        return spaces; 
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#NUMBER_OF_REPLICA}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public List<Integer> getListNumberOfReplicas()
+    {
+        List<Integer> replicas = new ArrayList<Integer>();
+        
+        for (String n : Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, NUMBER_OF_REPLICA).split(",")))
+            replicas.add(Integer.valueOf(n.trim()));
+            
+        return replicas; 
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#IMBALANCE_CONSTRAINT}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public List<String> getListImbalanceConstraints()
+    {
+        return Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, IMBALANCE_CONSTRAINT).split(",")); 
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#IMBALANCE_FACTOR}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public List<Double> getListImbalanceFactors()
+    {
+        List<Double> factors = new ArrayList<Double>();
+        
+        for (String factor : Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, IMBALANCE_FACTOR).split(",")))
+            factors.add(Double.valueOf(factor.trim()));
+            
+        return factors;
     }
 }
