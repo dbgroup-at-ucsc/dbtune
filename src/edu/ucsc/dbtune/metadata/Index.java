@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.metadata;
 
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,8 +16,15 @@ import edu.ucsc.dbtune.util.Objects;
  *
  * @author Ivo Jimenez
  */
-public class Index extends DatabaseObject implements Iterable<Column>, IncrementallyIdentifiable
+public class Index extends DatabaseObject implements 
+                                Iterable<Column>, IncrementallyIdentifiable
 {
+    /**
+     * Default the number
+     */
+    private static final long serialVersionUID = 1L;
+    
+    
     // CHECKSTYLE:OFF
     public static final int     UNKNOWN        = 0;
     public static final int     B_TREE         = 1;

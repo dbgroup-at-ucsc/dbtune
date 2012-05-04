@@ -10,6 +10,11 @@ import java.sql.SQLException;
 public class ByContentIndex extends Index
 {
     /**
+     * Default value
+     */
+    private static final long serialVersionUID = 1L;
+
+    /**
      * Creates an index containing the given column. The name of the index is defaulted to {@code 
      * table + "_" + columnName + "_" + ascending + "_index"}. The index is assumed to be {@link 
      * SECONDARY},  {@link NON_UNIQUE} and {@link UNCLUSTERED}.

@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.metadata;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +24,13 @@ import java.util.List;
  *
  * @author Ivo Jimenez
  */
-public abstract class DatabaseObject
+public abstract class DatabaseObject implements Serializable
 {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     /** the value used to represent a non-assigned ID. */
     public static final int NON_ID = -1;
     

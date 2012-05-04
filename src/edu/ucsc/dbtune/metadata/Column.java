@@ -9,8 +9,14 @@ import static edu.ucsc.dbtune.metadata.SQLTypes.isValidType;
  *
  * @author Ivo Jimenez
  */
-public class Column extends DatabaseObject
+public class Column extends DatabaseObject 
 {
+    /**
+     * Default value
+     */
+    private static final long serialVersionUID = 1L;
+    
+    
     int     type;
     boolean isNull;
     boolean isDefault;

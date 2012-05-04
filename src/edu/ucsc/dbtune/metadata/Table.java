@@ -14,6 +14,11 @@ import edu.ucsc.dbtune.util.Objects;
  */
 public class Table extends DatabaseObject implements Iterable<Column>
 {
+    /**
+     * Default value
+     */
+    private static final long serialVersionUID = 1L;
+
     protected int type;
 
     public static final int REGULAR = 1;

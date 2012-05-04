@@ -4,10 +4,12 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.workload.SQLCategory;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * This interface corresponds to a statement in the given workload. It serves as a cache that 
@@ -178,4 +180,16 @@ public interface QueryPlanDesc
      *      The weight (or the frequency) of the statement
      */
     public double getStatementWeight();
+    
+    /**
+     * Retrieve the full table scan indexes from this plan description
+     * @return
+     */
+    public Set<FullTableScanIndex> getFullTableScanIndexes();
+
+    /**
+     * Set the SQL statement that this object corresponds to 
+     * @param sql
+     */
+    public void setStatement(SQLStatement sql);
 }
