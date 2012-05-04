@@ -14,6 +14,11 @@ import java.util.Set;
 public class Schema extends DatabaseObject
 {
     /**
+     * Default value
+     */
+    private static final long serialVersionUID = 1L;
+
+    /**
      * constructs a new schema whose name is given
      *
      * @param name

@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.bip.core;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,8 +36,18 @@ import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
  * @author Quoc Trung Tran
  *
  */
-public class InumQueryPlanDesc implements QueryPlanDesc 
+public class InumQueryPlanDesc implements QueryPlanDesc, Serializable 
 {	
+    /**
+     * Default value
+     */
+    private static final long serialVersionUID = 1L;
+    
+
+    /**
+     * The maximum value that corresponds to INFTY
+     * In order for CPLEX solver to run 
+     */
     public static double BIP_MAX_VALUE = 99999999;
     
     /** The corresponding SQL statement of this object */
@@ -72,9 +83,6 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	/** List of referenced tables */
 	List<Table> tables;
 	
-	/** The frequency of the statement */
-	private double fq;
-	
     /** A map to manage each statement corresponding to one instance of this class*/
 	private static Map<SQLStatement, QueryPlanDesc> instances = new 
 	                                            HashMap<SQLStatement, QueryPlanDesc>();
@@ -87,6 +95,14 @@ public class InumQueryPlanDesc implements QueryPlanDesc
 	
 	/** An index update cost = this_factor * base_table_cost (for INSERT/DELETE) */
 	public static double INDEX_UPDATE_COST_FACTOR = 1.0;
+	
+	
+	@Override
+	public void setStatement(SQLStatement stmt)
+	{
+	    this.stmt = stmt;
+	}
+	
 	/**
      * Returns the single instance of this class corresponding to the given statement.
      *
@@ -118,7 +134,6 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     {
         this.stmtID = InumQueryPlanDesc.STMT_ID.getAndIncrement();
         this.stmt = stmt;    
-        this.fq = stmt.getStatementWeight();
         
         // initialize default value
         Kq = 0;
@@ -128,7 +143,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc
     @Override
     public double getStatementWeight()
     {
-        return fq;
+        return stmt.getStatementWeight();
     }
     
     @Override 
@@ -352,6 +367,23 @@ public class InumQueryPlanDesc implements QueryPlanDesc
             indexSlot.set(i, active);     
         }
 	}  
+	
+	/**
+	 * Retrieve the list of full table scan indexes referenced in this plan description 
+	 */
+	@Override
+	public Set<FullTableScanIndex> getFullTableScanIndexes()
+	{
+	    Set<FullTableScanIndex> fts = new HashSet<FullTableScanIndex>();
+	    int pos;
+	    
+	    for (int i = 0; i < n; i++) {
+	        pos = indexSlot.get(i).size() - 1;
+	        fts.add((FullTableScanIndex) indexSlot.get(i).get(pos));
+	    }
+	    
+	    return fts;
+	}
 	
     @Override
 	public int getNumberOfTemplatePlans()

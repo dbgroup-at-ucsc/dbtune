@@ -1,13 +1,20 @@
 package edu.ucsc.dbtune.workload;
 
+import java.io.Serializable;
+
 /**
  * Represents a SQL statement. Each {@code SQLStatement} object is tied to a {@code String} object 
  * that contains the actual literal contents of the SQL statement.
  *
  * @author Ivo Jimenez
  */
-public class SQLStatement
+public class SQLStatement implements Serializable
 {
+    /**
+     *  Default 
+     */
+    private static final long serialVersionUID = 1L;
+
     /** category of statement. */
     private SQLCategory category;
 

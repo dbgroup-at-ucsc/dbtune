@@ -5,27 +5,27 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.DoubleParam;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.inum.FullTableScanIndex;
-import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
-import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
-import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
-import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
+
 
 /**
  * This class abstracts the common methods shared by different BIP solvers
@@ -54,6 +54,8 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected LogListener   logger;
     protected double        objVal;
     protected double        gapObj;
+    
+    protected String fileQueryPlanDesc;
     
     @Override    
     public void setWorkload(Workload wl)
@@ -142,7 +144,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
             e.printStackTrace();
         }
     }
-    
+     
     
     /**
      * Retrieve the objective value returned by BIP
@@ -175,7 +177,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     {
         this.logger = logger;
     }
-     
+    
     
     /**
      * Communicate with INUM to populate the query plan description 
@@ -188,32 +190,79 @@ public abstract class AbstractBIPSolver implements BIPSolver
      */
     protected void populatePlanDescriptionForStatements() throws SQLException
     {   
-        Set<Table> workloadTables;
+        File file;
         
-        workloadTables = new HashSet<Table>();
-        queryPlanDescs = new ArrayList<QueryPlanDesc>();
+        queryPlanDescs = new ArrayList<QueryPlanDesc>();        
+        fileQueryPlanDesc = environment.getWorkloadsFoldername() + 
+                            "/query-plan-desc.bin";
+       
+        file = new File(fileQueryPlanDesc);
         
-        for (int i = 0; i < workload.size(); i++) {
-            // Set the corresponding SQL statement
-            QueryPlanDesc desc = InumQueryPlanDesc.getQueryPlanDescInstance(workload.get(i));
-            // Populate the INUM space 
-            desc.generateQueryPlanDesc(inumOptimizer, candidateIndexes);            
-            queryPlanDescs.add(desc);
+        if (file.exists())  
+            // read from the bin file
+            readQueryPlanDescsFromFile();
+        else {
+        
+            for (int i = 0; i < workload.size(); i++) {
+                
+                System.out.println("stmt: " + workload.get(i));
+                // Set the corresponding SQL statement
+                QueryPlanDesc desc = InumQueryPlanDesc.getQueryPlanDescInstance(workload.get(i));
+                // Populate the INUM space 
+                desc.generateQueryPlanDesc(inumOptimizer, candidateIndexes);            
+                queryPlanDescs.add(desc);
+            }
             
-            // Add referenced tables of each statement
-            // to generate FTS, for SELECT, UPDATE statement only
-            if (desc.getSQLCategory().isSame(SELECT) 
-                   || desc.getSQLCategory().isSame(UPDATE))
-                workloadTables.addAll(desc.getTables());
+            serializeQueryPlanDesc();
         }
         
-        // Add full table scan indexes into the candidate index set
-        for (Table table : workloadTables) {
-            FullTableScanIndex scanIdx = getFullTableScanIndexInstance(table);
-            candidateIndexes.add(scanIdx);
-        }
+        for (QueryPlanDesc desc : queryPlanDescs)
+            candidateIndexes.addAll(desc.getFullTableScanIndexes());
     }
     
+    /**
+     * todo
+     *  
+     *  
+     */
+    protected void serializeQueryPlanDesc() throws SQLException 
+    {    
+        ObjectOutputStream write;
+        
+        try {
+            write = new ObjectOutputStream(new FileOutputStream(fileQueryPlanDesc));
+            write.writeObject(queryPlanDescs);
+        } catch(IOException e) {
+            throw new SQLException(e);
+        }
+           
+    }
+        
+    /**
+     *  todo
+     *  @throws SQLException
+     *  
+     */
+    @SuppressWarnings("unchecked")
+    protected void readQueryPlanDescsFromFile() throws SQLException
+    {
+        ObjectInputStream in;
+            
+        try {
+            in = new ObjectInputStream(new FileInputStream(fileQueryPlanDesc));
+            queryPlanDescs = (List<QueryPlanDesc>) in.readObject();
+            
+            // reassign the statement with the corresponding weight
+            for (int i = 0; i < queryPlanDescs.size(); i++)
+                queryPlanDescs.get(i).setStatement(workload.get(i));
+            
+        } catch(IOException e) {
+            throw new SQLException(e);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(e);
+        }
+    }
+        
     /**
      * Retrieve the assignment of variables by CPLEX
      * @throws Exception
