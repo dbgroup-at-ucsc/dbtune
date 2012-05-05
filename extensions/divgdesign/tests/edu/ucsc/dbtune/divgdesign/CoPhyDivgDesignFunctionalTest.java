@@ -99,7 +99,8 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         
         recommendedIndexStmt = new HashMap<SQLStatement, Set<Index>>();
         List<SQLStatement> sqls;
-        Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-extra");
+        //Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-extra");
+        Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-10-counts");
         
         for (SQLStatement sql : workload) {
         
