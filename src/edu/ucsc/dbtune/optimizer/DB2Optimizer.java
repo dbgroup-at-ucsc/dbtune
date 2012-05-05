@@ -1108,9 +1108,9 @@ public class DB2Optimizer extends AbstractOptimizer
                 plan.setChild(parent, child);
             }
             catch (IllegalArgumentException ex) {
-                throw new SQLException(
-                    "Duplicate operator found; is statement querying the same table more than " +
-                    "once? The DBTune API doesn't handle this case yet", ex);
+                //throw new SQLException(
+                    //"Duplicate operator found; is statement querying the same table more than " +
+                    //"once? The DBTune API doesn't handle this case yet", ex);
             }
             catch (NoSuchElementException ex) {
                 throw new SQLException(

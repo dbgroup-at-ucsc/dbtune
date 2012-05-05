@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -22,7 +23,6 @@ import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -139,7 +139,7 @@ public class PGOptimizer extends AbstractOptimizer
         if (!indexPositions.equals(""))
             usedConf = getUsedConfiguration(list, toIntegerArray(indexPositions.split(" ")));
         else
-            usedConf = new BitArraySet<Index>();
+            usedConf = new HashSet<Index>();
 
         // update costs
         indexOverhead = rs.getString("index_overhead").trim();
@@ -228,7 +228,7 @@ public class PGOptimizer extends AbstractOptimizer
         rs.close();
         stmt.close();
 
-        return new BitArraySet<Index>(indexes);
+        return new HashSet<Index>(indexes);
     }
 
     /**
@@ -289,7 +289,7 @@ public class PGOptimizer extends AbstractOptimizer
      */
     private static Set<Index> getUsedConfiguration(List<Index> indexes, int[] positions)
     {
-        Set<Index> usedConf = new BitArraySet<Index>();
+        Set<Index> usedConf = new HashSet<Index>();
 
         for (int position : positions)
             usedConf.add(indexes.get(position));

@@ -5,13 +5,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -55,7 +55,7 @@ public class MySQLOptimizer extends AbstractOptimizer
         create(configuration, connection);
 
         plan = getPlan(sql);
-        used = new BitArraySet<Index>(plan.getIndexes());
+        used = new HashSet<Index>(plan.getIndexes());
         cost = getCost();
 
         drop(configuration, connection);

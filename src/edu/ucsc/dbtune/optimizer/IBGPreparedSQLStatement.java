@@ -9,7 +9,6 @@ import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder.FindResult;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor.construct;
@@ -32,7 +31,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
     private IndexBenefitGraph ibg;
 
     /** The universe of indexes from which actual explains will occur. */
-    private BitArraySet<Index> universe;
+    private Set<Index> universe;
 
     /**
      * Constructcs a prepared statement.
@@ -64,7 +63,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             IBGOptimizer optimizer,
             SQLStatement sql,
             IndexBenefitGraph ibg,
-            BitArraySet<Index> universe)
+            Set<Index> universe)
     {
         super(optimizer, sql);
 
@@ -100,7 +99,7 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
      * @return
      *      the universe from which the prepared statement was generated.
      */
-    public BitArraySet<Index> getUniverse()
+    public Set<Index> getUniverse()
     {
         return universe;
     }
@@ -124,19 +123,19 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
         if (ibg == null) {
             // time to build the IBG
             int oldOptimizationCount = optimizer.getWhatIfCount();
+
             ExplainedSQLStatement eStmt = optimizer.explain(sql);
             optimizationCount = optimizer.getWhatIfCount() - oldOptimizationCount;
 
             this.ibg = construct(optimizer, sql, eStmt.getSelectCost(), configuration);
             this.updatedTable = eStmt.getUpdatedTable();
             this.baseTableUpdateCost = eStmt.getBaseTableUpdateCost();
-            
-            universe = new BitArraySet<Index>(configuration);
+            this.universe = new HashSet<Index>(configuration);
         }
-        
+
         if (!getUniverse().containsAll(configuration))
             throw new SQLException(
-                "Configuration " + configuration + " not contained in statement's" + getUniverse());
+                "Configuration " + configuration + " not contained in: " + getUniverse());
 
         if (configuration.isEmpty())
             return new ExplainedSQLStatement(

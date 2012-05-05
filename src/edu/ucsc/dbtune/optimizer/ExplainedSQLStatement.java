@@ -1,13 +1,13 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
@@ -293,7 +293,7 @@ public class ExplainedSQLStatement
      */
     public Set<Index> getConfiguration()
     {
-        return new BitArraySet<Index>(configuration);
+        return new HashSet<Index>(configuration);
     }
 
     /**
@@ -306,7 +306,7 @@ public class ExplainedSQLStatement
      */
     public Set<Index> getUsedConfiguration()
     {
-        return new BitArraySet<Index>(usedConfiguration);
+        return new HashSet<Index>(usedConfiguration);
     }
 
     /**
@@ -319,7 +319,7 @@ public class ExplainedSQLStatement
      */
     public Set<Index> getUpdatedConfiguration()
     {
-        return new BitArraySet<Index>(indexUpdateCosts.keySet());
+        return new HashSet<Index>(indexUpdateCosts.keySet());
     }
 
     /**
