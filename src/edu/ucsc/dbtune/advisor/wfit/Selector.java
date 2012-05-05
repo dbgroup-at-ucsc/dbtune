@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import edu.ucsc.dbtune.advisor.wfit.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 
@@ -16,11 +15,12 @@ public class Selector {
     private StaticIndexSet hotSet;
     private final DynamicIndexSet userHotSet;
     private IndexPartitions hotPartitions;
-    private List<ProfiledQuery> qinfos;
     private int maxHotSetSize = Environment.getInstance().getMaxNumIndexes(); // hotSet size
     private int maxNumStates = Environment.getInstance().getMaxNumStates();
+    private List<ProfiledQuery> qinfos;
+    private List<BitSet> recs;
     private int queryCount;
-    
+
     public Selector() {
         idxStats = new IndexStatistics();
         userHotSet = new DynamicIndexSet();
@@ -59,6 +59,11 @@ public class Selector {
 
         queryCount++;
         qinfos.add(qinfo);
+
+        BitSet rec = new BitSet();
+        for (Index idx : wfa.getRecommendation())
+            rec.set(idx.getId());
+        recs.add(rec);
         
         return new AnalyzedQuery(qinfo, hotPartitions.bitSetArray());
     }
@@ -71,7 +76,7 @@ public class Selector {
     /*
      * Called by main thread to get a recommendation
      */
-    public List<Index> getRecommendation() {
+    public Set<Index> getRecommendation() {
         return wfa.getRecommendation();
     }
     
@@ -83,7 +88,7 @@ public class Selector {
                 hotPartitions, queryCount, qinfos.toArray(new ProfiledQuery[0]));
     }
     
-    public void positiveVote(Index index, Snapshot candSet) {
+    public void positiveVote(Index index, Set<Index> candSet) {
         // get it in the hot set
         if (!userHotSet.contains(index)) {
             userHotSet.add(index);
@@ -97,6 +102,17 @@ public class Selector {
         // Now the index is being monitored by WFA
         // Just need to bias the statistics in its favor
         wfa.vote(index, true);
+    }
+
+    public void dump(Set<Index> snapshot)
+    {
+        WFALog log =
+            WFALog.generateFixed(
+                    qinfos.toArray(new ProfiledQuery[0]),
+                    recs.toArray(new BitSet[0]),
+                    snapshot,
+                    hotPartitions);
+        log.dump();
     }
     
     public void negativeVote(Index index) {     
@@ -142,7 +158,7 @@ public class Selector {
     /* 
      * common code between positiveVote and processQuery 
      */
-    private void reorganizeCandidates(Snapshot candSet) {
+    private void reorganizeCandidates(Set<Index> candSet) {
         // determine the hot set
         DynamicIndexSet reqIndexes = new DynamicIndexSet();
         for (Index index : userHotSet) reqIndexes.add(index);

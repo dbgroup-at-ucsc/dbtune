@@ -2,11 +2,13 @@ package edu.ucsc.dbtune.advisor.wfit;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.advisor.wfit.CandidatePool.Snapshot;
-import edu.ucsc.dbtune.advisor.wfit.BitSet;
 
+import static edu.ucsc.dbtune.util.MetadataUtils.find;
+
+//CHECKSTYLE:OFF
 public class IndexPartitions {
     private static final int MAXIMUM_INDEX_COUNT = Integer.MAX_VALUE / 2;
     private final int indexCount;
@@ -24,7 +26,7 @@ public class IndexPartitions {
         }
     }
 
-    public IndexPartitions(Snapshot snapshot, BitSet[] partitionBitSets) {
+    public IndexPartitions(Set<Index> indexes, BitSet[] partitionBitSets) {
         // create subsets
         int indexCount0 = 0;
         int stateCount0 = 0;
@@ -32,7 +34,7 @@ public class IndexPartitions {
         for (BitSet bs : partitionBitSets) {
             Subset subset = null;
             for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
-                Index idx = snapshot.findIndexId(i);
+                Index idx = find(indexes, i);
                 if (idx != null) {
                     if (subset != null)
                         subset = new Subset(subset, new Subset(idx));
@@ -263,3 +265,4 @@ public class IndexPartitions {
         }
     }
 }
+//CHECKSTYLE:ON

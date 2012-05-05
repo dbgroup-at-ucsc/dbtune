@@ -1,10 +1,9 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Set;
 
-import edu.ucsc.dbtune.advisor.wfit.CandidatePool.Snapshot;
 import edu.ucsc.dbtune.advisor.wfit.IndexPartitions.Subset;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
@@ -52,13 +51,13 @@ public class WorkFunctionAlgorithm {
     }
     
     public void dump(String msg) {
-        //System.out.println(msg);
-        //for (int i = 0; i < submachines.length; i++) {
-            //System.out.println("SUBMACHINE " + i);
-            //submachines[i].dump(wf);
-            //System.out.println();
-        //}
-        //System.out.println("----");
+        System.out.println(msg);
+        for (int i = 0; i < submachines.length; i++) {
+            System.out.println("SUBMACHINE " + i);
+            submachines[i].dump(wf);
+            System.out.println();
+        }
+        System.out.println("----");
     }
     
     public void newTask(ProfiledQuery qinfo) {
@@ -105,13 +104,13 @@ public class WorkFunctionAlgorithm {
         dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + index.getId());
     }
 
-    public List<Index> getRecommendation() {
-        ArrayList<Index> rec = new ArrayList<Index>(Environment.getInstance().getMaxNumIndexes());
-        for (SubMachine subm : submachines) {
+    public Set<Index> getRecommendation() {
+        Set<Index> rec = new HashSet<Index>();
+
+        for (SubMachine subm : submachines)
             for (Index index : subm.subset)
                 if (subm.currentBitSet.get(index.getId()))
                     rec.add(index);
-        }
         return rec;
     }
 
@@ -217,7 +216,7 @@ public class WorkFunctionAlgorithm {
         return false;
     }
     
-    public static double transitionCost(Snapshot candidateSet, BitSet x, BitSet y) {
+    public static double transitionCost(Set<Index> candidateSet, BitSet x, BitSet y) {
         double transition = 0;
         for (Index index : candidateSet) {
             int id = index.getId();
@@ -278,26 +277,27 @@ public class WorkFunctionAlgorithm {
         }
         
         public void dump(TotalWorkValues wf) {
-            //System.out.print("Index IDs : [ ");
-            //for (int id : indexIds) System.out.print(id + " ");
-            //System.out.print("]   ");
+            System.out.print("Index IDs : [ ");
+            for (int id : indexIds) System.out.print(id + " ");
+            System.out.print("]   ");
 
-            //System.out.print("REC : [ ");
-            //for (int id : indexIds) if (currentBitSet.get(id)) System.out.print(id + " ");
-            //System.out.println("]");
-
-            //System.out.println("Current workfunction values ...");
-            //for (int s = 0; s < numStates; s++) {
-                //System.out.print("   [ ");
-                //for (int i = 0; i < indexIds.length; i++) {
-                    //String id = "" + indexIds[i];
-                    //if (((s >> i) & 1) == 1)
-                        //System.out.print(id);
-                    //else for (int k = 0; k < id.length(); k++) System.out.print(" ");
-                    //System.out.print(" ");
-                //}
-                //System.out.println("] = " + wf.get(subsetNum, s));
-            //}
+            System.out.print("REC : [ ");
+            for (int id : indexIds) if (currentBitSet.get(id)) System.out.print(id + " ");
+            System.out.println("]");
+            
+          //System.out.println("Current workfunction values ...");
+          //for (int s = 0; s < numStates; s++) {
+              //System.out.print("   [ ");
+              //for (int i = 0; i < indexIds.length; i++) {
+                  //String id = "" + indexIds[i];
+                  //if (((s >> i) & 1) == 1)
+                      //System.out.print(id);
+                  //else 
+                      //for (int k = 0; k < id.length(); k++) System.out.print(" ");
+                  //System.out.print(" ");
+              //}
+              //System.out.println("] = " + wf.get(subsetNum, s));
+          //}
         }
         
         // process a positive or negative vote for the index
@@ -512,57 +512,11 @@ public class WorkFunctionAlgorithm {
             cap = newCap;
         }
     }
-//
-//  public java.util.Iterator<Index> iterator() {
-//      return new IndexIterator();
-//  }
-//  
-//  private class IndexIterator implements java.util.Iterator<Index> {
-//      // if not null, this iterator has a next element, which is what next() will return
-//      java.util.Iterator<Index> subIterator;
-//      
-//      // the subset that subIterator is over
-//      int subsetNum;
-//      
-//      public IndexIterator() {
-//          subIterator = null;
-//          for (subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
-//              if (submachines[subsetNum].subset.size() > 0) {
-//                  subIterator = submachines[subsetNum].subset.iterator();
-//                  break;
-//              }
-//          }
-//      }
-//      
-//      
-//      public boolean hasNext() {
-//          return subIterator != null;
-//      }
-//
-//      public Index next() {
-//          if (subIterator == null)
-//              throw new java.util.NoSuchElementException();
-//          
-//          Index nextIndex = subIterator.next();
-//          if (!subIterator.hasNext()) {
-//              subIterator = null;
-//              for (subsetNum++; subsetNum < submachines.length; subsetNum++) {
-//                  if (submachines[subsetNum].subset.size() > 0) {
-//                      subIterator = submachines[subsetNum].subset.iterator();
-//                      break;
-//                  }
-//              }
-//          }
-//          return nextIndex;
-//      }
-//
-//      public void remove() {
-//          throw new UnsupportedOperationException();
-//      }
-//  };
     
     // given a schedule over a set of candidates and queries, get the total work
-    public static double getScheduleCost(Snapshot candidateSet, int queryCount, ProfiledQuery[] qinfos, BitSet[] schedule) {
+    public static double getScheduleCost(
+            Set<Index> candidateSet, int queryCount, ProfiledQuery[] qinfos, BitSet[] schedule)
+    {
         double cost = 0;
         BitSet prevState = new BitSet();
         for (int q = 0; q < queryCount; q++) {

@@ -28,12 +28,4 @@ public class BitSet extends java.util.BitSet {
             return (t.equals(this));
         }
     }
-    
-    // probably better in some cases, worse in others
-//  public final boolean subsetOf(BitSet b) {
-//      for (int i = this.nextSetBit(0); i >= 0; i = this.nextSetBit(i+1))
-//          if (!b.get(i))
-//              return false;
-//      return true;
-//  }
 }

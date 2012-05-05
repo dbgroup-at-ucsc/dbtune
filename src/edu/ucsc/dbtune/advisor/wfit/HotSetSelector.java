@@ -1,14 +1,13 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.advisor.wfit.CandidatePool.Snapshot;
+import java.util.Set;
 
+import edu.ucsc.dbtune.metadata.Index;
+
+//CHECKSTYLE:OFF
 public class HotSetSelector {
-    public static StaticIndexSet chooseHotSet(Snapshot candSet, 
-                                              StaticIndexSet oldHotSet, 
-                                              DynamicIndexSet requiredIndexSet,
-                                              BenefitFunction benefitFunc, 
-                                              int maxSize) {
+    public static StaticIndexSet chooseHotSet(Set<Index> candSet, StaticIndexSet oldHotSet, 
+            DynamicIndexSet requiredIndexSet, BenefitFunction benefitFunc, int maxSize) {
         int numToChoose = maxSize - requiredIndexSet.size();
         if (numToChoose <= 0) {
             return new StaticIndexSet(requiredIndexSet.toArray());
@@ -44,3 +43,4 @@ public class HotSetSelector {
         }
     }
 }
+//CHECKSTYLE:ON

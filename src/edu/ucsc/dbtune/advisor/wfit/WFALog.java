@@ -3,8 +3,9 @@ package edu.ucsc.dbtune.advisor.wfit;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.LinkedList;
+import java.util.Set;
 
-import edu.ucsc.dbtune.advisor.wfit.CandidatePool.Snapshot;
+import edu.ucsc.dbtune.metadata.Index;
 
 //CHECKSTYLE:OFF
 public class WFALog implements Serializable {
@@ -31,10 +32,9 @@ public class WFALog implements Serializable {
         Entry e = new Entry();
         e.queryCost = queryCost;
         e.transitionCost = transitionCost;
-        e.nullCost = qinfo.profileInfo.ibg.emptyCost();
         e.partition = qinfo.partition;
         e.recommendation = recommendation;
-        e.numCandidates = qinfo.profileInfo.candidateSet.maxInternalId() + 1;
+        e.numCandidates = qinfo.profileInfo.candidateSet.size();
         e.numWhatif = qinfo.profileInfo.whatifCount;
         list.add(e);
     }
@@ -45,10 +45,9 @@ public class WFALog implements Serializable {
         Entry e = new Entry();
         e.queryCost = queryCost;
         e.transitionCost = transitionCost;
-        e.nullCost = qinfo.ibg.emptyCost();
         e.partition = partition;
         e.recommendation = recommendation;
-        e.numCandidates = qinfo.candidateSet.maxInternalId() + 1;
+        e.numCandidates = qinfo.candidateSet.size();
         e.numWhatif = whatifCount;
         list.add(e);
     }
@@ -115,7 +114,7 @@ public class WFALog implements Serializable {
     }
     
     // write whole log for an experiment with a fixed candidate set
-    public static WFALog generateFixed(ProfiledQuery[] qinfos, BitSet[] recs, Snapshot snapshot, IndexPartitions parts) {
+    public static WFALog generateFixed(ProfiledQuery[] qinfos, BitSet[] recs, Set<Index> snapshot, IndexPartitions parts) {
         int queryCount = qinfos.length;
         WFALog log = new WFALog();
 
@@ -132,7 +131,8 @@ public class WFALog implements Serializable {
         return log;
     }
 
-    public static WFALog generateDual(ProfiledQuery[] qinfos, BitSet[] optRecs, BitSet[] wfitRecs, Snapshot snapshot, IndexPartitions parts) {
+    public static WFALog generateDual(ProfiledQuery[] qinfos, BitSet[] optRecs, BitSet[] wfitRecs, 
+            Set<Index> snapshot, IndexPartitions parts) {
         int queryCount = qinfos.length;
         WFALog log = new WFALog();
 
