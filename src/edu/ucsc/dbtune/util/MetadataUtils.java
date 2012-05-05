@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.util;
 
+import java.sql.SQLException;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
@@ -156,32 +157,6 @@ public final class MetadataUtils
     }
 
     /**
-     * Converts a bitSet to a set of indexes.
-     *
-     * @param bs
-     *      bitset containing ids of indexes being looked for
-     * @param indexes
-     *      set of indexes where one with the given id is being looked for
-     * @return
-     *      the index with the given id; {@code null} if not found
-     */
-    public static Set<Index> convert(BitSet bs, Set<Index> indexes)
-    {
-        Set<Index> indexSet = new HashSet<Index>();
-
-        for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
-            Index index = find(indexes, i);
-
-            if (index == null)
-                throw new RuntimeException("Can't find index with id " + i);
-
-            indexSet.add(index);
-        }
-
-        return indexSet;
-    }
-
-    /**
      * Makes a set of {@link ByContentIndex} to {@link Index}.
      *
      * @param indexes
@@ -206,15 +181,45 @@ public final class MetadataUtils
      *      set of indexes where each will be copied to a ByContentIndex instance
      * @return
      *      the index with the given id; {@code null} if not found
+     * @throws SQLException
+     *      if the index can't be removed
      */
-    public static Set<ByContentIndex> toByContent(Set<Index> indexes)
+    public static Set<ByContentIndex> toByContent(Set<Index> indexes) throws SQLException
     {
         Set<ByContentIndex> byContentSet = new HashSet<ByContentIndex>();
 
-        for (Index i : indexes)
+        for (Index i : indexes) {
+            i.getSchema().remove(i);
             byContentSet.add(new ByContentIndex(i));
+        }
 
         return byContentSet;
+    }
+
+    /**
+     * Converts a bitSet to a set of indexes.
+     *
+     * @param bs
+     *      bitset containing ids of indexes being looked for
+     * @param indexes
+     *      set of indexes where one with the given id is being looked for
+     * @return
+     *      the index with the given id; {@code null} if not found
+     */
+    public static Set<Index> toSet(BitSet bs, Set<Index> indexes)
+    {
+        Set<Index> indexSet = new HashSet<Index>();
+
+        for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
+            Index index = find(indexes, i);
+
+            if (index == null)
+                throw new RuntimeException("Can't find index with id " + i);
+
+            indexSet.add(index);
+        }
+
+        return indexSet;
     }
 
     /**
@@ -227,8 +232,11 @@ public final class MetadataUtils
      *      set of indexes
      * @return
      *      the number of indexes that are not in, both, set1 AND set2
+     * @throws SQLException
+     *      if the index can't be removed
      */
     public static int getNumberOfDistinctIndexesByContent(Set<Index> set1, Set<Index> set2)
+        throws SQLException
     {
         Set<ByContentIndex> byContentSet1 = toByContent(set1);
         Set<ByContentIndex> byContentSet2 = toByContent(set2);

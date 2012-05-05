@@ -14,6 +14,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
@@ -26,7 +27,6 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
 
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
-import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Identifiable;
 
@@ -344,122 +344,52 @@ public final class DBTuneInstances
     /**
      * Creates the IBG that is used as sample in {@link IndexBenefitGraph}.
      *
-     * @param cat
-     *      the catalog from which the graph is constructed
+     * @param indexes
+     *      map of indexes
      * @return
      *      the configured graph
      */
-    public static IndexBenefitGraph configureIndexBenefitGraph(Catalog cat)
+    public static IndexBenefitGraph configureIndexBenefitGraph(Map<String, Set<Index>> indexes)
     {
-        List<Index> indexes = cat.schemas().get(0).indexes();
+        Set<Index> abcd = indexes.get("abcd");
+        Set<Index> abc = indexes.get("abc");
+        Set<Index> bcd = indexes.get("bcd");
+        Set<Index> ac = indexes.get("ac");
+        Set<Index> bc = indexes.get("bc");
+        Set<Index> cd = indexes.get("cd");
+        Set<Index> a = indexes.get("a");
+        Set<Index> b = indexes.get("b");
+        Set<Index> c = indexes.get("c");
+        Set<Index> d = indexes.get("d");
 
-        IndexBenefitGraph.Node root;
-        IndexBenefitGraph.Node node1;
-        IndexBenefitGraph.Node node2;
-        IndexBenefitGraph.Node node3;
-        IndexBenefitGraph.Node node4;
-        IndexBenefitGraph.Node node5;
-        IndexBenefitGraph.Node node6;
-        IndexBenefitGraph.Node node7;
-        IndexBenefitGraph.Node.Child child1;
-        IndexBenefitGraph.Node.Child child2;
-        IndexBenefitGraph.Node.Child child3;
-        IndexBenefitGraph.Node.Child child4;
-        IndexBenefitGraph.Node.Child child5;
-        IndexBenefitGraph.Node.Child child6;
-        IndexBenefitGraph.Node.Child child7;
-        IndexBenefitGraph.Node.Child child8;
-        Set<Index> rootibs;
-        Set<Index> ibs;
-        Set<Index> ibs1;
-        Set<Index> ibs2;
-        Set<Index> ibs3;
-        Set<Index> ibs4;
-        Set<Index> ibs5;
-        Set<Index> ibs6;
-        Set<Index> ibs7;
+        IndexBenefitGraph.Node abcdNode  = new IndexBenefitGraph.Node(abcd, 0);
+        IndexBenefitGraph.Node abcNode = new IndexBenefitGraph.Node(abc, 1);
+        IndexBenefitGraph.Node bcdNode = new IndexBenefitGraph.Node(bcd, 2);
+        IndexBenefitGraph.Node acNode = new IndexBenefitGraph.Node(ac, 3);
+        IndexBenefitGraph.Node bcNode = new IndexBenefitGraph.Node(bc, 4);
+        IndexBenefitGraph.Node cdNode = new IndexBenefitGraph.Node(cd, 5);
+        IndexBenefitGraph.Node cNode = new IndexBenefitGraph.Node(c, 6);
+        IndexBenefitGraph.Node dNode = new IndexBenefitGraph.Node(d, 7);
 
-        rootibs = new BitArraySet<Index>();
-        ibs     = new BitArraySet<Index>();
-        ibs1    = new BitArraySet<Index>();
-        ibs2    = new BitArraySet<Index>();
-        ibs3    = new BitArraySet<Index>();
-        ibs4    = new BitArraySet<Index>();
-        ibs5    = new BitArraySet<Index>();
-        ibs6    = new BitArraySet<Index>();
-        ibs7    = new BitArraySet<Index>();
+        abcdNode.addChild(abcNode, Iterables.get(d, 0));
+        abcdNode.addChild(bcdNode, Iterables.get(a, 0));
+        abcNode.addChild(acNode, Iterables.get(b, 0));
+        abcNode.addChild(bcNode, Iterables.get(a, 0));
+        bcdNode.addChild(cdNode, Iterables.get(b, 0));
+        bcNode.addChild(cNode, Iterables.get(c, 0));
+        cdNode.addChild(dNode, Iterables.get(c, 0));
+        cdNode.addChild(cNode, Iterables.get(d, 0));
 
-        rootibs.add(indexes.get(0));
-        rootibs.add(indexes.get(1));
-        rootibs.add(indexes.get(2));
-        rootibs.add(indexes.get(3));
+        abcdNode.setCost(20);
+        abcNode.setCost(45);
+        bcdNode.setCost(50);
+        acNode.setCost(80);
+        bcNode.setCost(50);
+        cdNode.setCost(65);
+        cNode.setCost(80);
+        dNode.setCost(80);
 
-        ibs1.add(indexes.get(0));
-        ibs1.add(indexes.get(1));
-        ibs1.add(indexes.get(2));
-
-        ibs2.add(indexes.get(1));
-        ibs2.add(indexes.get(2));
-        ibs2.add(indexes.get(3));
-
-        ibs3.add(indexes.get(0));
-        ibs3.add(indexes.get(2));
-
-        ibs4.add(indexes.get(1));
-        ibs4.add(indexes.get(2));
-
-        ibs5.add(indexes.get(2));
-        ibs5.add(indexes.get(3));
-
-        ibs6.add(indexes.get(2));
-
-        ibs7.add(indexes.get(3));
-
-        root  = new IndexBenefitGraph.Node(rootibs, 0);
-        node1 = new IndexBenefitGraph.Node(ibs1, 1);
-        node2 = new IndexBenefitGraph.Node(ibs2, 2);
-        node3 = new IndexBenefitGraph.Node(ibs3, 3);
-        node4 = new IndexBenefitGraph.Node(ibs4, 4);
-        node5 = new IndexBenefitGraph.Node(ibs5, 5);
-        node6 = new IndexBenefitGraph.Node(ibs6, 6);
-        node7 = new IndexBenefitGraph.Node(ibs7, 7);
-
-        child1 = new IndexBenefitGraph.Node.Child(node1, indexes.get(3));
-        child2 = new IndexBenefitGraph.Node.Child(node2, indexes.get(0));
-        child3 = new IndexBenefitGraph.Node.Child(node3, indexes.get(1));
-        child4 = new IndexBenefitGraph.Node.Child(node4, indexes.get(0));
-        child5 = new IndexBenefitGraph.Node.Child(node5, indexes.get(1));
-        child6 = new IndexBenefitGraph.Node.Child(node6, indexes.get(1));
-        child7 = new IndexBenefitGraph.Node.Child(node6, indexes.get(3));
-        child8 = new IndexBenefitGraph.Node.Child(node7, indexes.get(2));
-
-        root.expand(0, child1);
-        child1.getNode().expand(0, child3);
-        child2.getNode().expand(0, child5);
-        child4.getNode().expand(0, child6);
-        child5.getNode().expand(0, child7);
-
-        child1.setNext(child2);
-        child3.setNext(child4);
-        child7.setNext(child8);
-
-        root.setCost(20);
-        node1.setCost(45);
-        node2.setCost(50);
-        node3.setCost(80);
-        node4.setCost(50);
-        node5.setCost(65);
-        node6.setCost(80);
-        node7.setCost(80);
-
-        // all indexes in ibg
-
-        ibs.add(indexes.get(0));
-        ibs.add(indexes.get(1));
-        ibs.add(indexes.get(2));
-        ibs.add(indexes.get(3));
-
-        return new IndexBenefitGraph(root, 80);
+        return new IndexBenefitGraph(abcdNode, 80);
     }
 
     /**
@@ -474,21 +404,21 @@ public final class DBTuneInstances
         Map<String, Set<Index>> map = new HashMap<String, Set<Index>>();
         List<Index> indexes = cat.schemas().get(0).indexes();
 
-        BitArraySet<Index> e = new BitArraySet<Index>();
-        BitArraySet<Index> a = new BitArraySet<Index>();
-        BitArraySet<Index> b = new BitArraySet<Index>();
-        BitArraySet<Index> c = new BitArraySet<Index>();
-        BitArraySet<Index> d = new BitArraySet<Index>();
-        BitArraySet<Index> ab = new BitArraySet<Index>();
-        BitArraySet<Index> ac = new BitArraySet<Index>();
-        BitArraySet<Index> ad = new BitArraySet<Index>();
-        BitArraySet<Index> bc = new BitArraySet<Index>();
-        BitArraySet<Index> bd = new BitArraySet<Index>();
-        BitArraySet<Index> cd = new BitArraySet<Index>();
-        BitArraySet<Index> abc = new BitArraySet<Index>();
-        BitArraySet<Index> acd = new BitArraySet<Index>();
-        BitArraySet<Index> bcd = new BitArraySet<Index>();
-        BitArraySet<Index> abcd = new BitArraySet<Index>();
+        Set<Index> e = new HashSet<Index>();
+        Set<Index> a = new HashSet<Index>();
+        Set<Index> b = new HashSet<Index>();
+        Set<Index> c = new HashSet<Index>();
+        Set<Index> d = new HashSet<Index>();
+        Set<Index> ab = new HashSet<Index>();
+        Set<Index> ac = new HashSet<Index>();
+        Set<Index> ad = new HashSet<Index>();
+        Set<Index> bc = new HashSet<Index>();
+        Set<Index> bd = new HashSet<Index>();
+        Set<Index> cd = new HashSet<Index>();
+        Set<Index> abc = new HashSet<Index>();
+        Set<Index> acd = new HashSet<Index>();
+        Set<Index> bcd = new HashSet<Index>();
+        Set<Index> abcd = new HashSet<Index>();
 
         a.add(indexes.get(0));
 
@@ -575,9 +505,9 @@ public final class DBTuneInstances
      * @return
      *      a list of identifiable integers
      */
-    public static Set<Identifiable> configureBitArraySetOfIdentifiables(int numOfElements)
+    public static Set<Identifiable> configureHashSetOfIdentifiables(int numOfElements)
     {
-        Set<Identifiable> bas = new BitArraySet<Identifiable>();
+        Set<Identifiable> bas = new HashSet<Identifiable>();
 
         for (int i = 0; i < numOfElements; i++) {
             bas.add(new DBTuneInstances.TrivialIdentifiable(i));
