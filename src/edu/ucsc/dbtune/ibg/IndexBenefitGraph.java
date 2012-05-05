@@ -1,9 +1,11 @@
 package edu.ucsc.dbtune.ibg;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.BitArraySet;
 import edu.ucsc.dbtune.util.Identifiable;
 
 /**
@@ -116,9 +118,9 @@ public class IndexBenefitGraph
      * @return
      *     the corresponding node if found; {@code null} otherwise
      */
-    public final Node find(BitArraySet<Index> bitSet)
+    public final Node find(Set<Index> bitSet)
     {
-        return finder.findFast(rootNode(), bitSet, null);
+        return finder.find(rootNode(), bitSet);
     }
 
     /**
@@ -130,6 +132,7 @@ public class IndexBenefitGraph
     {
         /** Configuration that this node is about. */
         private final Set<Index> config;
+        private final Set<Index> used;
 
         /** id for the node that is unique within the enclosing IBG. */
         private final int id;
@@ -141,16 +144,8 @@ public class IndexBenefitGraph
          */
         private volatile double cost;
 
-        /**
-         * Linked list of children. Note: don't access until isExpanded() returns true
-         */
-        private volatile Child firstChild;
-
-        /**
-         * Used indexes.
-         * Don't access until isExpanded() returns true
-         */
-        private volatile Set<Index> usedIndexes;
+        /** edges to children nodes. */
+        private List<Edge> edges;
 
         /**
          * @param config0
@@ -160,11 +155,11 @@ public class IndexBenefitGraph
          */
         public Node(Set<Index> config0, int id0)
         {
-            config      = config0;
-            id          = id0;
-            cost        = -1.0;
-            firstChild  = null;
-            usedIndexes = new BitArraySet<Index>();
+            config = new HashSet<Index>(config0);
+            id = id0;
+            cost = -1.0;
+            edges = new ArrayList<Edge>();
+            used = new HashSet<Index>();
         }
 
         /**
@@ -175,7 +170,7 @@ public class IndexBenefitGraph
          */
         public final Set<Index> getConfiguration()
         {
-            return config;
+            return new HashSet<Index>(config);
         }
 
         /**
@@ -202,22 +197,20 @@ public class IndexBenefitGraph
         }
 
         /**
-         * Set the cost and list of children (one for each used index).
+         * Adds a children.
          *
-         * @param cost
-         *     the cost assigned to the node.
-         * @param firstChild
-         *     the first child in the list of childs
+         * @param child
+         *     new children
+         * @param usedIndex
+         *     index corresponding to the edge that goes from the parent to the given child
          */
-        public final void expand(double cost, Child firstChild)
+        public final void addChild(Node child, Index usedIndex)
         {
             assert !isExpanded();
-            assert cost >= 0;
 
-            // volatile assignments must be ordered with "state" assigned last
-            this.cost = cost;
-            this.firstChild = firstChild;
-            addUsedIndexes(usedIndexes);
+            edges.add(new Edge(child, usedIndex));
+
+            used.add(usedIndex);
         }
 
         /**
@@ -227,7 +220,7 @@ public class IndexBenefitGraph
         public final Set<Index> getUsedIndexes()
         {
             assert isExpanded();
-            return usedIndexes;
+            return new HashSet<Index>(used);
         }
 
         /**
@@ -243,80 +236,19 @@ public class IndexBenefitGraph
         }
 
         /**
-         * Get the head of the child list.
+         * Get the children nodes.
          *
          * @return
-         *      the first child in the linked list
+         *      the children nodes
          */
-        public final Child firstChild()
+        public final List<Node> getChildren()
         {
-            assert isExpanded();
-            return firstChild; 
-        }
+            List<Node> nodes = new ArrayList<Node>();
 
-        /**
-         * Add each of the used indexes in this node to the given IndexBitSet.
-         *
-         * @param other
-         *      other configuration
-         */
-        public final void addUsedIndexes(Set<Index> other)
-        {
-            assert isExpanded();
+            for (Edge e : edges)
+                nodes.add(e.node);
 
-            for (Child ch = firstChild; ch != null; ch = ch.next)
-                other.add(ch.usedIndex);
-        }
-
-        /**
-         * Remove each of the used indexes in this node from the given IndexBitSet.
-         *
-         * @param other
-         *      other configuration
-         */
-        public void clearUsedIndexes(Set<Index> other)
-        {
-            assert isExpanded();
-
-            for (Child ch = firstChild; ch != null; ch = ch.next)
-                other.remove(ch.usedIndex);
-        }
-
-        /**
-         * return true if each of the used indexes are in the given IndexBitSet.
-         *
-         * @param other
-         *      other configuration
-         * @return
-         *      {@code true} if each of the used indexes are in the given configuration; {@code 
-         *      false} otherwise.
-         */
-        public boolean usedSetIsSubsetOf(Set<Index> other)
-        {
-            assert isExpanded();
-
-            for (Child ch = firstChild; ch != null; ch = ch.next)
-                if (!other.contains(ch.usedIndex))
-                    return false;
-            return true;
-        }
-
-        /**
-         * return true if the given id of an index is in the used set.
-         *
-         * @param id
-         *     the id of an index.
-         * @return
-         *      {@code true} if the given id is in the used set; {@code false} otherwise.
-         */
-        public boolean usedSetContains(Index id)
-        {
-            assert isExpanded();
-
-            for (Child ch = firstChild; ch != null; ch = ch.next)
-                if (id == ch.usedIndex)
-                    return true;
-            return false;
+            return nodes;
         }
 
         /**
@@ -332,47 +264,23 @@ public class IndexBenefitGraph
 
         /**
          */
-        public static class Child
+        public static class Edge
         {
-            /** the internal id of the index assigned to the edge of this child. */
+            //private final Node from;
+            //private final Node to;
+            private final Node node;
             private final Index usedIndex;
 
-            /** the actual child node. */
-            private final Node node;
-
-            /** the next child in the linked list. */
-            private Child next;
-
             /**
-             * @param node0
-             *     node corresponding to the child
-             * @param usedIndex0
-             *     index used on the edge
+             * @param node
+             *     node that the edge points to
+             * @param usedIndex
+             *     index assigned to the edge
              */
-            public Child(Node node0, Index usedIndex0)
+            public Edge(Node node, Index usedIndex)
             {
-                node = node0;
-                usedIndex = usedIndex0;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public boolean equals(Object other)
-            {
-                if (other == this)
-                    return true;
-
-                if (!(other instanceof Child))
-                    return false;
-
-                Child ibgchild = (Child) other;
-
-                if (ibgchild.usedIndex == usedIndex && ibgchild.node.id == node.id)
-                    return true;
-
-                return false;
+                this.node = node;
+                this.usedIndex = usedIndex;
             }
 
             /**
@@ -384,59 +292,16 @@ public class IndexBenefitGraph
             {
                 return this.usedIndex;
             }
+        }
 
-            /**
-             * Gets the node for this instance.
-             *
-             * @return The node.
-             */
-            public Node getNode()
-            {
-                return this.node;
-            }
-
-            /**
-             * Sets the next for this instance.
-             *
-             * @param next The next.
-             */
-            public void setNext(Child next)
-            {
-                this.next = next;
-            }
-
-            /**
-             * Gets the next for this instance.
-             *
-             * @return The next.
-             */
-            public Child getNext()
-            {
-                return this.next;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public int hashCode()
-            {
-                return node.hashCode();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public String toString()
-            {
-                String str = "idx:" + usedIndex + "-to-node:" + node.id;
-
-                for (Child ch = next; ch != null; ch = ch.next)
-                    str += "|idx:" + ch.usedIndex + "-to-node:" + ch.node.id;
-
-                return str;
-            }
+        /**
+         * Gets the edges for this instance.
+         *
+         * @return The edges.
+         */
+        public List<Edge> getEdges()
+        {
+            return this.edges;
         }
 
         /**
@@ -453,23 +318,10 @@ public class IndexBenefitGraph
 
             Node o = (Node) other;
 
-            if (!config.equals(o.config) || cost != o.cost)
-                return false;
+            if (id == o.id)
+                return true;
 
-            if (id != o.id)
-                return false;
-
-            Child ch;
-            Child cho;
-
-            for (ch = firstChild, cho = o.firstChild; ch != null; ch = ch.next, cho = cho.next)
-                if (cho == null || !cho.equals(ch))
-                    return false;
-
-            if (cho != null)
-                return false;
-
-            return true;
+            return false;
         }
 
         /**
@@ -478,7 +330,7 @@ public class IndexBenefitGraph
         @Override
         public int hashCode()
         {
-            return config.hashCode();
+            return new Integer(id).hashCode();
         }
 
         /**
@@ -487,11 +339,48 @@ public class IndexBenefitGraph
         @Override
         public String toString()
         {
-            return "ID: " + id + "; config: " + config + "; cost: " + cost + "; edges: " + 
-                firstChild;
+            StringBuilder str = new StringBuilder();
+
+            str.append(
+                "ID: " + id + "; config: " + config + "; cost: " + cost + "; edges: " + edges);
+
+            return str.toString();
         }
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        StringBuilder str = new StringBuilder();
+        
+        str.append(print(rootNode));
+
+        return str.toString();
+    }
+
+    /**
+     * prints the node in a string.
+     *
+     * @param node
+     *      node to be printed
+     * @return
+     *      string
+     */
+    private String print(IndexBenefitGraph.Node node)
+    {
+        StringBuilder str = new StringBuilder();
+
+        str.append(node + "\n");
+
+        //for (IndexBenefitGraph.Node.Child ch = node.firstChild.next; ch != null; ch = ch.next)
+            //str.append(print(ch.getNode()));
+
+        return str.toString();
+    }
+
     /**
      * Assigns the value of the empty cost. Only used by {@link MonotonicEnforcer}.
      *

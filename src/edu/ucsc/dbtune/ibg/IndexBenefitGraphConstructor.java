@@ -1,14 +1,14 @@
 package edu.ucsc.dbtune.ibg;
 
 import java.sql.SQLException;
+import java.util.Deque;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.util.BitArraySet;
-import edu.ucsc.dbtune.util.DefaultQueue;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -35,7 +35,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public final class IndexBenefitGraphConstructor
 {
-    /* 
+    /**
      * parameters of the construction.
      */
     protected SQLStatement sql;
@@ -45,18 +45,11 @@ public final class IndexBenefitGraphConstructor
     /* Counter for assigning unique node IDs */
     private int nodeCount;
 
-    /* temporary bit sets allocated once to allow reuse... only used in buildNode() */ 
-    private Set<Index> used;
-    private BitArraySet<Index> children;
-
     /* Every node in the graph is a descendant of rootNode */
     private IndexBenefitGraph.Node rootNode;
 
     /* the queue of pending nodes to expand */
-    private DefaultQueue<IndexBenefitGraph.Node> queue;
-
-    /* a monitor for waiting on a node expansion */
-    private final Object nodeExpansionMonitor = new Object();
+    private Deque<IndexBenefitGraph.Node> queue;
 
     /* an object that allows for covering node searches */
     private final IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
@@ -66,32 +59,6 @@ public final class IndexBenefitGraphConstructor
      */
     private IndexBenefitGraphConstructor()
     {
-    }
-
-    /**
-     * @return the {@link Node root node}.
-     */
-    public IndexBenefitGraph.Node rootNode()
-    {
-        return rootNode;
-    }
-
-    /**
-     * Wait for a specific node to be expanded.
-     *
-     * @param node
-     *      a node to be expanded.
-     */
-    public void waitUntilExpanded(IndexBenefitGraph.Node node)
-    {
-        synchronized (nodeExpansionMonitor) {
-            while (!node.isExpanded())
-                try {
-                    nodeExpansionMonitor.wait();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-        }
     }
 
     /**
@@ -107,6 +74,7 @@ public final class IndexBenefitGraphConstructor
      */
     private boolean buildNode() throws SQLException
     {
+        Set<Index> used;
         IndexBenefitGraph.Node newNode;
         IndexBenefitGraph.Node coveringNode;
         ExplainedSQLStatement stmt;
@@ -118,12 +86,11 @@ public final class IndexBenefitGraphConstructor
         newNode = queue.remove();
 
         // get cost and used set (stored into used)
-        used.clear();
         coveringNode = coveringNodeFinder.find(rootNode, newNode.getConfiguration());
         if (coveringNode != null) {
             totalCost = coveringNode.cost();
-            coveringNode.addUsedIndexes(used);
             used = new HashSet<Index>();
+            used.addAll(coveringNode.getUsedIndexes());
         } else {
             stmt = optimizer.explain(sql, newNode.getConfiguration());
             totalCost = stmt.getSelectCost();
@@ -135,39 +102,28 @@ public final class IndexBenefitGraphConstructor
         // We make sure to keep the child list in the same order as the nodeQueue, so that
         // analysis and construction can move in lock step. This is done by keeping both
         // in order of construction.
-        IndexBenefitGraph.Node.Child firstChild = null;
-        IndexBenefitGraph.Node.Child lastChild = null;
-        children.clear();
+        Set<Index> children = new HashSet<Index>();
         children.addAll(newNode.getConfiguration());
 
         for (Index u : used) {
 
-            children.remove(u);
+            if (!children.remove(u))
+                throw new RuntimeException("Couldn't remove index " + u + " from children set"); 
+
             IndexBenefitGraph.Node childNode = find(queue, children);
 
             if (childNode == null) {
-                childNode =
-                    new IndexBenefitGraph.Node(new BitArraySet<Index>(children), nodeCount++);
+                childNode = new IndexBenefitGraph.Node(new HashSet<Index>(children), nodeCount++);
                 queue.add(childNode);
             }
 
-            children.add(u);
+            if (!children.add(u))
+                throw new RuntimeException("Couldn't add index " + u + " to children set"); 
 
-            IndexBenefitGraph.Node.Child child = new IndexBenefitGraph.Node.Child(childNode, u);
-
-            if (firstChild == null)
-                firstChild = child;
-            else
-                lastChild.setNext(child);
-
-            lastChild = child;
+            newNode.addChild(childNode, u);
         }
 
-        // Expand the node and notify waiting threads
-        synchronized (nodeExpansionMonitor) {
-            newNode.expand(totalCost, firstChild);
-            nodeExpansionMonitor.notifyAll();
-        }
+        newNode.setCost(totalCost);
 
         return !queue.isEmpty();
     }
@@ -184,14 +140,11 @@ public final class IndexBenefitGraphConstructor
      *      a node corresponding to the given configuration; {@code null} if not found.
      */
     private static IndexBenefitGraph.Node find(
-            DefaultQueue<IndexBenefitGraph.Node> queue, Set<Index> configuration)
+            Deque<IndexBenefitGraph.Node> queue, Set<Index> configuration)
     {
-        for (int i = 0; i < queue.count(); i++) {
-            IndexBenefitGraph.Node node = queue.fetch(i);
-
+        for (IndexBenefitGraph.Node node : queue)
             if (node.getConfiguration().equals(configuration))
                 return node;
-        }
 
         return null;
     }
@@ -221,22 +174,17 @@ public final class IndexBenefitGraphConstructor
     {
         this.sql = sql;
         this.optimizer = delegate;
-        this.configuration = conf;
+        this.configuration = new HashSet<Index>(conf);
         this.nodeCount = 0;
-        this.used = new BitArraySet<Index>();
-        this.children = new BitArraySet<Index>();
-        this.queue = new DefaultQueue<IndexBenefitGraph.Node>();
+        this.queue = new LinkedList<IndexBenefitGraph.Node>();
         this.rootNode = new IndexBenefitGraph.Node(conf, nodeCount++);
 
-        queue.add(rootNode);
+        this.queue.add(rootNode);
 
-        ThreadIBGConstruction ibgConstruction = new ThreadIBGConstruction();
-        Thread ibgContructionThread = new Thread(ibgConstruction);
-        ibgContructionThread.setName("IBG Construction");
-        ibgContructionThread.start();
+        boolean hasMoreNodesToExpand = true;
 
-        ibgConstruction.startConstruction(this);
-        ibgConstruction.waitUntilDone();
+        while (hasMoreNodesToExpand)
+            hasMoreNodesToExpand = buildNode();
 
         IndexBenefitGraph ibg = new IndexBenefitGraph(rootNode, emptyCost);
 
@@ -265,79 +213,4 @@ public final class IndexBenefitGraphConstructor
     {
         return (new IndexBenefitGraphConstructor()).constructIBG(delegate, sql, emptyCost, conf);
     }
-
-    //CHECKSTYLE:OFF
-    private static class ThreadIBGConstruction implements Runnable
-    {
-        private IndexBenefitGraphConstructor ibgCons = null;
-
-        private Object taskMonitor = new Object();
-        private State state = State.IDLE;
-
-        private enum State
-        { IDLE, PENDING, DONE };
-
-        public ThreadIBGConstruction()
-        {
-        }
-
-        @Override
-        public void run()
-        {
-            while (true) {
-                synchronized (taskMonitor) {
-                    while (state != State.PENDING) {
-                        try {
-                            taskMonitor.wait();
-                        } catch (InterruptedException e) { }
-                    }
-                }
-
-                try {
-                    boolean success;
-                    do {
-                        success = ibgCons.buildNode();
-                    } while (success);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-
-                synchronized (taskMonitor) {
-                    state = State.DONE;
-                    taskMonitor.notify();
-                }
-            }
-        }
-
-        /*
-         * tells the construction thread to start constructing an IBG, and returns immediately
-         */
-        public void startConstruction(IndexBenefitGraphConstructor ibgCons0)
-        {
-            synchronized (taskMonitor) {
-                if (state == State.PENDING) {
-                    throw new RuntimeException("unexpected state in IBG startConstruction");
-                }
-
-                ibgCons = ibgCons0;
-                state = State.PENDING;
-                taskMonitor.notify();
-            }
-        }
-
-        public void waitUntilDone()
-        {
-            synchronized (taskMonitor) {
-                while (state == State.PENDING) {
-                    try {
-                        taskMonitor.wait();
-                    } catch (InterruptedException e) { }
-                }
-
-                ibgCons = null;
-                state = State.IDLE;
-            }
-        }
-    }
-    //CHECKSTYLE:ON
 }

@@ -1,9 +1,11 @@
 package edu.ucsc.dbtune.ibg;
 
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
  * @author Karl Schnaitter
@@ -11,8 +13,8 @@ import edu.ucsc.dbtune.util.BitArraySet;
  */
 public class IBGCoveringNodeFinder
 {
-    private final Set<IndexBenefitGraph.Node> visited = new BitArraySet<IndexBenefitGraph.Node>();
-    private final IBGNodeStack  pending = new IBGNodeStack();
+    private final Set<IndexBenefitGraph.Node> visited = new HashSet<IndexBenefitGraph.Node>();
+    private final Deque<IndexBenefitGraph.Node> pending = new LinkedList<IndexBenefitGraph.Node>();
 
     /**
      * find the cost of a particular index configuration in the given {@code ibg}.
@@ -27,73 +29,17 @@ public class IBGCoveringNodeFinder
      */
     public final FindResult find(IndexBenefitGraph ibg, Set<Index> config)
     {
-        if (config.isEmpty()) {
-            return new FindResult(null, ibg.emptyCost());
-        } else {
-            final IndexBenefitGraph.Node foundNode = findFast(ibg.rootNode(), config, null);
+        if (config.isEmpty())
+            return new FindResult(new HashSet<Index>(), ibg.emptyCost());
 
-            if (foundNode != null) {
-                // Obtain used indexes
-                Set<Index> usedBitSet = new BitArraySet<Index>();
-                foundNode.addUsedIndexes(usedBitSet);
-                // Create the corresponding configuration
-                Set<Index> usedConfiguration = new BitArraySet<Index>(usedBitSet);
-                return new FindResult(usedConfiguration, foundNode.cost());
-            } else {
-                return new FindResult(null, 0.0);
-            }
-        }
-    }
- 
-    /**
-     * Returns an IBG node, assuming that a guessed node's actual configuration is a superset of the 
-     * given configuration. That is, if {@latex.inline config $\\triangleleft$ guessed}, the guessed 
-     * node is used as the root from which the search begins. If it isn't, {@code root} is used to 
-     * begin the search, which is equivalent to invoking {@code findFast(root, conf, null)} or 
-     * {@code find(root,conf)}.
-     *
-     * @param root
-     *      the {@code graph}'s root node.
-     * @param conf
-     *      an index configuration.
-     * @param guess
-     *      a guessed {@link Node}. Might be null if the guessing is intended to begin at the 
-     *      root.
-     * @return
-     *     a found {@link Node node}. <strong>IMPORTANT</strong>: this method may return
-     *     {@code null} if the covering node is in an unexpanded part of the IBG.
-     */
-    public IndexBenefitGraph.Node findFast(
-            IndexBenefitGraph.Node root,
-            Set<Index> conf,
-            IndexBenefitGraph.Node guess)
-    {
-        visited.clear();
+        final IndexBenefitGraph.Node foundNode = find(ibg.rootNode(), config);
 
-        IndexBenefitGraph.Node currentNode =
-            (guess != null && guess.getConfiguration().containsAll(conf)) ? guess : root;
+        if (foundNode == null)
+            return null;
 
-        while (true) {
-            // stop if an unexpanded node is found. An unexpanded node means that the IBG 
-            // construction hasn't finished yet, so whoever it's invoking this method will have to 
-            // call it back again later
-            if (!currentNode.isExpanded()) {
-                return null;
-            }
-
-            IndexBenefitGraph.Node.Child ch = currentNode.firstChild();
-
-            while (true) {
-                if (ch == null) {
-                    return currentNode;
-                } else if (!conf.contains(ch.getUsedIndex())) {
-                    currentNode = ch.getNode();
-                    break;
-                } else {
-                    ch = ch.getNext();
-                }
-            }
-        }
+        Set<Index> used = new HashSet<Index>();
+        used.addAll(foundNode.getUsedIndexes());
+        return new FindResult(used, foundNode.cost());
     }
 
     /**
@@ -104,19 +50,19 @@ public class IBGCoveringNodeFinder
      * @param config
      *      index configuration.
      * @return
-     *      found node in the graph. <strong>IMPORTANT</strong>: may return {@code null}.
+     *      found node in the graph. <strong>IMPORTANT</strong>: may return {@code null}, if the 
+     *      node for the given configuration wasn't found.
      */
-    public IndexBenefitGraph.Node find(
-            IndexBenefitGraph.Node rootNode,
-            Set<Index> config)
+    public IndexBenefitGraph.Node find(IndexBenefitGraph.Node rootNode, Set<Index> config)
     {
         visited.clear();
         pending.clear();
 
-        pending.addNode(rootNode);
+        pending.add(rootNode);
 
-        while (pending.hasNext()) {
-            IndexBenefitGraph.Node node = pending.next();
+        IndexBenefitGraph.Node node;
+
+        while ((node = pending.poll()) != null) {
 
             if (visited.contains(node))
                 continue;
@@ -131,12 +77,12 @@ public class IBGCoveringNodeFinder
             if (!node.getConfiguration().containsAll(config))
                 continue;
 
-            // return if we have found covering node
-            if (node.usedSetIsSubsetOf(config))
+            // return if we have found a covering node
+            if (config.containsAll(node.getUsedIndexes()))
                 return node;
 
             // this node has children that might be covering nodes...
-            pending.addChildren(node.firstChild());
+            pending.addAll(node.getChildren());
         }
 
         return null;

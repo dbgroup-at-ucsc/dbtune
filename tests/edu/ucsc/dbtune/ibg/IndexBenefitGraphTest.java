@@ -1,16 +1,18 @@
 package edu.ucsc.dbtune.ibg;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.BitArraySet;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 import static edu.ucsc.dbtune.DBTuneInstances.configureIndexBenefitGraph;
+import static edu.ucsc.dbtune.DBTuneInstances.configurePowerSet;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -34,7 +36,7 @@ public class IndexBenefitGraphTest
     public static void beforeClass() throws Exception
     {
         cat = configureCatalog();
-        ibg = configureIndexBenefitGraph(cat);
+        ibg = configureIndexBenefitGraph(configurePowerSet(cat));
     }
 
     /**
@@ -44,10 +46,10 @@ public class IndexBenefitGraphTest
     @Test
     public void testBasic() throws Exception
     {
-        BitArraySet<Index> bs = new BitArraySet<Index>();
+        Set<Index> bs = new HashSet<Index>();
         List<Index> conf = cat.schemas().get(0).indexes();
 
-        bs = new BitArraySet<Index>();
+        bs = new HashSet<Index>();
 
         bs.add(conf.get(0));
         bs.add(conf.get(1));

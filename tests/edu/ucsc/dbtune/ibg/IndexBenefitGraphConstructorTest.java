@@ -146,27 +146,4 @@ public class IndexBenefitGraphConstructorTest
         verify(delegate, times(0)).explain(select);
         verify(delegate, times(6)).explain(eq(select), (Set<Index>) anySet());
     }
-
-    /**
-     * Empty, to avoid JUnit complains.
-     *
-     * @throws Exception
-     *      if an error occurs
-     */
-    @Test
-    public void testConstructedIBG() throws Exception
-    {
-        IndexBenefitGraph ibg =
-            IndexBenefitGraphConstructor.construct(delegate, select, 80.0, confs.get("abcd"));
-        IBGNodeTest.cat = cat;
-        IBGNodeTest.ibg = ibg;
-        IBGNodeTest.beforeClass();
-        IBGNodeTest.checkExpansion();
-        IBGNodeTest.checkInternalBitSet();
-        IBGNodeTest.checkCostAssignment();
-        IBGNodeTest.checkStructure();
-        IBGNodeTest.checkEdges();
-        IBGNodeTest.checkUsedAndClearIndexes();
-        IBGNodeTest.checkContainment();
-    }
 }

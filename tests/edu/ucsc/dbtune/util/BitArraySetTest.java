@@ -2,12 +2,10 @@ package edu.ucsc.dbtune.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.DBTuneInstances.configureBitArraySetOfIdentifiables;
 import static edu.ucsc.dbtune.DBTuneInstances.configureListOfIdentifiables;
 import static edu.ucsc.dbtune.util.CollectionTest.checkAdd;
 import static edu.ucsc.dbtune.util.CollectionTest.checkAddAll;
@@ -69,34 +67,6 @@ public class BitArraySetTest
         checkSize(new BitArraySet<Identifiable>(), listIdentifiables);
         checkToArray(new BitArraySet<Identifiable>(), listIdentifiables);
         checkToArrayT(new BitArraySet<Identifiable>(), listIdentifiables);
-    }
-
-    /**
-     */
-    @Test
-    public void testAgainstItself()
-    {
-        Set<Identifiable> bas = configureBitArraySetOfIdentifiables(100);
-        Set<Identifiable> intersection = new BitArraySet<Identifiable>();
-
-        intersection.add(listIdentifiables.get(0));
-        intersection.add(listIdentifiables.get(1));
-        intersection.add(listIdentifiables.get(3));
-        intersection.add(listIdentifiables.get(5));
-
-        checkAdd(new BitArraySet<Identifiable>(), bas);
-        checkAddAll(new BitArraySet<Identifiable>(), bas);
-        checkClear(new BitArraySet<Identifiable>(), bas);
-        checkContains(new BitArraySet<Identifiable>(), bas);
-        checkContainsAll(new BitArraySet<Identifiable>(), bas);
-        checkEquals(new BitArraySet<Identifiable>(), bas);
-        checkIsEmpty(new BitArraySet<Identifiable>(), bas);
-        checkRemove(new BitArraySet<Identifiable>(), bas);
-        checkRemoveAll(new BitArraySet<Identifiable>(), bas);
-        checkRetainAll(new BitArraySet<Identifiable>(), bas, intersection);
-        checkSize(new BitArraySet<Identifiable>(), bas);
-        checkToArray(new BitArraySet<Identifiable>(), bas);
-        checkToArrayT(new BitArraySet<Identifiable>(), bas);
     }
 
     /**
