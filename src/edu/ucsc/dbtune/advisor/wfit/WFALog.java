@@ -114,7 +114,9 @@ public class WFALog implements Serializable {
     }
     
     // write whole log for an experiment with a fixed candidate set
-    public static WFALog generateFixed(ProfiledQuery[] qinfos, BitSet[] recs, Set<Index> snapshot, IndexPartitions parts) {
+    public static WFALog generateFixed(
+            ProfiledQuery[] qinfos, BitSet[] recs, Set<Index> snapshot, IndexPartitions parts, int 
+            minId) {
         int queryCount = qinfos.length;
         WFALog log = new WFALog();
 
@@ -124,7 +126,8 @@ public class WFALog implements Serializable {
             BitSet state = recs[q];
             BitSet prevState = q == 0 ? new BitSet() : recs[q-1];
             double queryCost = qinfo.cost(state);
-            double transitionCost = WorkFunctionAlgorithm.transitionCost(snapshot, prevState, state);
+            double transitionCost = WorkFunctionAlgorithm.transitionCost(snapshot, prevState, state, 
+                    minId);
             log.add(qinfo, partBitSets, state, queryCost, transitionCost, qinfo.whatifCount);
         }
         
@@ -132,7 +135,7 @@ public class WFALog implements Serializable {
     }
 
     public static WFALog generateDual(ProfiledQuery[] qinfos, BitSet[] optRecs, BitSet[] wfitRecs, 
-            Set<Index> snapshot, IndexPartitions parts) {
+            Set<Index> snapshot, IndexPartitions parts, int minId) {
         int queryCount = qinfos.length;
         WFALog log = new WFALog();
 
@@ -171,15 +174,17 @@ public class WFALog implements Serializable {
             materialized3.andNot(indicesToDrop);
             
             double queryCost = qinfo.cost(materialized3);
-            double transitionCost = WorkFunctionAlgorithm.transitionCost(snapshot, materialized1, materialized2) +
-                                    WorkFunctionAlgorithm.transitionCost(snapshot, materialized2, materialized3);
+            double transitionCost =
+                WorkFunctionAlgorithm.transitionCost(snapshot, materialized1, materialized2, minId) 
+                +
+                WorkFunctionAlgorithm.transitionCost(snapshot, materialized2, materialized3, minId);
             log.add(qinfo, partBitSets, materialized3.clone(), queryCost, transitionCost, qinfo.whatifCount);
         }
         
         return log;
     }
 
-    public static WFALog generateDynamic(AnalyzedQuery[] qinfos, BitSet[] recs) {
+    public static WFALog generateDynamic(AnalyzedQuery[] qinfos, BitSet[] recs, int minId) {
         int queryCount = qinfos.length;
         WFALog log = new WFALog();
         
@@ -188,7 +193,9 @@ public class WFALog implements Serializable {
             BitSet state = recs[q];
             BitSet prevState = q == 0 ? new BitSet() : recs[q-1];
             double queryCost = qinfo.profileInfo.cost(state);
-            double transitionCost = WorkFunctionAlgorithm.transitionCost(qinfo.profileInfo.candidateSet, prevState, state);
+            double transitionCost = 
+                WorkFunctionAlgorithm.transitionCost(qinfo.profileInfo.candidateSet, prevState, 
+                        state, minId);
             log.add(qinfo, state, queryCost, transitionCost);
         }
         

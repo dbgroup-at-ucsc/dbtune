@@ -81,13 +81,10 @@ public class WfaTrace {
             // get the best final state
             int bestSuccessor = -1;
 
-            System.out.println("   State count: " + stateCount);
             double bestValue = Double.POSITIVE_INFINITY;
             for (int stateNum = 0; stateNum < stateCount; stateNum++) {
                 double value = wfValues.get(queryCount).get(subsetNum, stateNum);
 
-                System.out.println("   Value (" + stateNum + "): " + + value);
-                System.out.println("   BestValue (" + stateNum + "): " + bestValue);
                 // use non-strict inequality to favor states with more indices
                 // this is a mild hack to get more intuitive schedules
                 if (value <= bestValue) {

@@ -4,22 +4,29 @@ import java.util.Iterator;
 
 import edu.ucsc.dbtune.metadata.Index;
 
+//CHECKSTYLE:OFF
 public class DynamicIndexSet implements Iterable<Index> {
     private java.util.Set<Index> set = new java.util.HashSet<Index>();
     private BitSet bs = new BitSet();
+    private int minId;
+
+    public DynamicIndexSet(int minId)
+    {
+        this.minId = minId;
+    }
     
     public void add(Index index) {
         set.add(index);
-        bs.set(index.getId());
+        bs.set(index.getId()-minId);
     }
     
     public boolean contains(Index index) {
-        return bs.get(index.getId());
+        return bs.get(index.getId()-minId);
     }
     
     public void remove(Index index) {
         set.remove(index);
-        bs.clear(index.getId());
+        bs.clear(index.getId()-minId);
     }
 
     @Override
@@ -44,3 +51,4 @@ public class DynamicIndexSet implements Iterable<Index> {
         return bs.clone();
     }
 }
+//CHECKSTYLE:ON

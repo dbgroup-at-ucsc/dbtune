@@ -2,6 +2,7 @@ package edu.ucsc.dbtune.advisor.wfit;
 
 import edu.ucsc.dbtune.metadata.Index;
 
+//CHECKSTYLE:OFF
 public class StaticIndexSet implements Iterable<Index> {
     private Index[] arr;
     
@@ -58,3 +59,4 @@ public class StaticIndexSet implements Iterable<Index> {
         }
     }
 }
+//CHECKSTYLE:ON

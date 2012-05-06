@@ -18,33 +18,36 @@ public class Selector {
     private int maxHotSetSize = Environment.getInstance().getMaxNumIndexes(); // hotSet size
     private int maxNumStates = Environment.getInstance().getMaxNumStates();
     private List<ProfiledQuery> qinfos;
-    private List<BitSet> recs;
     private int queryCount;
-
-    public Selector() {
-        idxStats = new IndexStatistics();
-        userHotSet = new DynamicIndexSet();
-        matSet = new DynamicIndexSet();
+    private int minId;
+    
+    public Selector(int minId)
+    {
+        idxStats = new IndexStatistics(minId);
+        matSet = new DynamicIndexSet(minId);
+        userHotSet = new DynamicIndexSet(minId);
         qinfos = new ArrayList<ProfiledQuery>();
         queryCount = 0;
+        this.minId = minId;
 
         hotSet = new StaticIndexSet();
-        hotPartitions = new IndexPartitions(hotSet);
-        wfa = new WorkFunctionAlgorithm();
+        hotPartitions = new IndexPartitions(hotSet, minId);
+        wfa = new WorkFunctionAlgorithm(minId);
     }
 
-    public Selector(Set<Index> initialSet) {
-        idxStats = new IndexStatistics();
-        matSet = new DynamicIndexSet();
-        userHotSet = new DynamicIndexSet();
+    public Selector(Set<Index> initialSet, int minId)
+    {
+        idxStats = new IndexStatistics(minId);
+        matSet = new DynamicIndexSet(minId);
+        userHotSet = new DynamicIndexSet(minId);
         qinfos = new ArrayList<ProfiledQuery>();
         queryCount = 0;
+        this.minId = minId;
 
         hotSet = new StaticIndexSet(initialSet.toArray(new Index[0]));
-        hotPartitions = new IndexPartitions(hotSet);
-        wfa = new WorkFunctionAlgorithm(hotPartitions, true);
+        hotPartitions = new IndexPartitions(hotSet, minId);
+        wfa = new WorkFunctionAlgorithm(hotPartitions, true, minId);
     }
-
 
     /*
      * Perform the per-query tasks that are done after profiling
@@ -60,17 +63,23 @@ public class Selector {
         queryCount++;
         qinfos.add(qinfo);
 
-        BitSet rec = new BitSet();
-        for (Index idx : wfa.getRecommendation())
-            rec.set(idx.getId());
-        recs.add(rec);
-        
         return new AnalyzedQuery(qinfo, hotPartitions.bitSetArray());
     }
 
     public double getCost(int queryId, BitSet bs)
     {
         return qinfos.get(queryId).cost(bs);
+    }
+    
+    /**
+     * Returns an array of bit sets, where each corresponds to a candidate set partition.
+     *
+     * @return
+     *      array of bit set objects
+     */
+    public BitSet[] getStablePartitioning()
+    {
+        return hotPartitions.bitSetArray();
     }
     
     /*
@@ -102,17 +111,6 @@ public class Selector {
         // Now the index is being monitored by WFA
         // Just need to bias the statistics in its favor
         wfa.vote(index, true);
-    }
-
-    public void dump(Set<Index> snapshot)
-    {
-        WFALog log =
-            WFALog.generateFixed(
-                    qinfos.toArray(new ProfiledQuery[0]),
-                    recs.toArray(new BitSet[0]),
-                    snapshot,
-                    hotPartitions);
-        log.dump();
     }
     
     public void negativeVote(Index index) {     
@@ -160,7 +158,7 @@ public class Selector {
      */
     private void reorganizeCandidates(Set<Index> candSet) {
         // determine the hot set
-        DynamicIndexSet reqIndexes = new DynamicIndexSet();
+        DynamicIndexSet reqIndexes = new DynamicIndexSet(minId);
         for (Index index : userHotSet) reqIndexes.add(index);
         for (Index index : matSet) reqIndexes.add(index);
         StaticIndexSet newHotSet = 
@@ -168,8 +166,8 @@ public class Selector {
         
         // determine new partitioning
         // store into local variable, since we might reject it
-        IndexPartitions newHotPartitions = 
-            InteractionSelector.choosePartitions(newHotSet, hotPartitions, idxStats, maxNumStates);
+        IndexPartitions newHotPartitions = InteractionSelector.choosePartitions(newHotSet, 
+                hotPartitions, idxStats, maxNumStates, minId);
         
         // commit hot set
         hotSet = newHotSet;

@@ -30,6 +30,25 @@ public final class MetadataUtils
     }
 
     /**
+     * Returns the minimum id.
+     *
+     * @param indexes
+     *      a collection of indexes
+     * @return
+     *      the minimum id
+     */
+    public static int getMinimumId(Collection<Index> indexes)
+    {
+        int minId = Integer.MAX_VALUE;
+
+        for (Index i : indexes)
+            if (i.getId() < minId)
+                minId = i.getId();
+
+        return minId;
+    }
+
+    /**
      * Returns the set of schemas referenced by the given collection of tables.
      *
      * @param tables
@@ -246,11 +265,13 @@ public final class MetadataUtils
     {
         Set<Index> indexSet = new HashSet<Index>();
 
+        int minId = getMinimumId(indexes);
+
         for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
-            Index index = find(indexes, i);
+            Index index = find(indexes, i + minId);
 
             if (index == null)
-                throw new RuntimeException("Can't find index with id " + i);
+                throw new RuntimeException("Can't find index with id " + (i + minId));
 
             indexSet.add(index);
         }

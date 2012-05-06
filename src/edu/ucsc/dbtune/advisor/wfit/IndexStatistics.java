@@ -6,13 +6,16 @@ import java.util.Map;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 
+//CHECKSTYLE:OFF
 public class IndexStatistics implements BenefitFunction, DoiFunction {
     double currentTimeStamp = 0;
     Map<Index,Window> benefitWindows = new HashMap<Index,Window>();
     Map<IndexPair,Window> doiWindows = new HashMap<IndexPair,Window>();
     IndexPair tempPair = new IndexPair(null, null); // for lookups
+    private int minId;
     
-    public IndexStatistics() {
+    public IndexStatistics(int minId) {
+        this.minId = minId;
     }
 
     public void addQuery(ProfiledQuery qinfo, DynamicIndexSet matSet) {
@@ -33,9 +36,9 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
         
         // not the most efficient double loop, but an ok compromise for now
         for (Index a : candSet) {
-            int id1 = a.getId();
+            int id1 = a.getId()-minId;
             for (Index b : candSet) {
-                int id2 = b.getId();
+                int id2 = b.getId()-minId;
                 if (id1 >= id2)
                     continue;
                 
@@ -172,3 +175,4 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
         }
     }       
 }
+//CHECKSTYLE:ON

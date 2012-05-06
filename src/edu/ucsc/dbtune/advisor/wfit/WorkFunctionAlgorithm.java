@@ -16,6 +16,7 @@ public class WorkFunctionAlgorithm {
     // for tracking history
     private boolean keepHistory;
     private WfaTrace trace;
+    private int minId;
     
     //
     // temporary workspace
@@ -24,30 +25,26 @@ public class WorkFunctionAlgorithm {
     private CostVector tempCostVector = new CostVector();
     private BitSet tempBitSet = new BitSet();
 
-    public WorkFunctionAlgorithm(IndexPartitions parts, boolean keepHistory0) {
-        if (parts != null) {
-            repartition(parts);
-            if (keepHistory0) {
-                trace = new WfaTrace(parts, wf);
-            }
+    public WorkFunctionAlgorithm(IndexPartitions parts, boolean keepHistory0, int minId)
+    {
+        repartition(parts);
+
+        if (keepHistory0) {
+            trace = new WfaTrace(parts, wf);
             keepHistory = keepHistory0;
         }
-        else {
-            //Debug.assertion(!keepHistory0, "may only keep history if given the initial 
-            //partition");
-            keepHistory = false;
-        }
-        
         
         dump("INITIAL");
+        this.minId = minId;
     }
     
-    public WorkFunctionAlgorithm(IndexPartitions parts) {
-        this(parts, false);
+    public WorkFunctionAlgorithm(IndexPartitions parts, int minId) {
+        this(parts, false, minId);
     }
-    
-    public WorkFunctionAlgorithm() {
-        this(null);
+
+    public WorkFunctionAlgorithm(int minId) {
+        this.minId = minId;
+        keepHistory = false;
     }
     
     public void dump(String msg) {
@@ -101,7 +98,7 @@ public class WorkFunctionAlgorithm {
             if (subm.subset.contains(index))
                 subm.vote(wf, index, isPositive);
 
-        dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + index.getId());
+        dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + (index.getId()-minId));
     }
 
     public Set<Index> getRecommendation() {
@@ -109,7 +106,7 @@ public class WorkFunctionAlgorithm {
 
         for (SubMachine subm : submachines)
             for (Index index : subm.subset)
-                if (subm.currentBitSet.get(index.getId()))
+                if (subm.currentBitSet.get(index.getId()-minId))
                     rec.add(index);
         return rec;
     }
@@ -141,12 +138,13 @@ public class WorkFunctionAlgorithm {
             int i = 0;
             for (Index index : newSubset) {
                 if (isRecommended(index)) {
-                    recBitSet.set(index.getId());
+                    recBitSet.set(index.getId()-minId);
                     recStateNum |= (1 << i);
                 }
                 ++i;
             }
-            SubMachine newSubmachine = new SubMachine(newSubset, newSubsetNum, recStateNum, recBitSet);
+            SubMachine newSubmachine = new SubMachine(newSubset, newSubsetNum, recStateNum, 
+                    recBitSet, minId);
             submachines2[newSubsetNum] = newSubmachine;
 
             // find overlapping subsets (required to recompute work function)
@@ -165,7 +163,7 @@ public class WorkFunctionAlgorithm {
                 i = 0;
                 for (Index index : newSubmachine.subset) {
                     int mask = (1 << (i++));
-                    if (0 != (stateNum & mask) && !oldHotSet.get(index.getId()))
+                    if (0 != (stateNum & mask) && !oldHotSet.get(index.getId()-minId))
                         value += index.getCreationCost();
                 }
                 
@@ -210,16 +208,16 @@ public class WorkFunctionAlgorithm {
     private boolean isRecommended(Index idx) {
         // not sure which submachine has the index, so check them all
         for (SubMachine subm : submachines) {
-            if (subm.currentBitSet.get(idx.getId()))
+            if (subm.currentBitSet.get(idx.getId()-minId))
                 return true;
         }
         return false;
     }
     
-    public static double transitionCost(Set<Index> candidateSet, BitSet x, BitSet y) {
+    public static double transitionCost(Set<Index> candidateSet, BitSet x, BitSet y, int minId) {
         double transition = 0;
         for (Index index : candidateSet) {
-            int id = index.getId();
+            int id = index.getId()-minId;
             if (y.get(id) && !x.get(id))
                 transition += index.getCreationCost();
         }
@@ -252,8 +250,10 @@ public class WorkFunctionAlgorithm {
         private int currentState;
         private BitSet currentBitSet;
         private int[] indexIds;
+        private int minId;
         
-        SubMachine(IndexPartitions.Subset subset0, int subsetNum0, int state0, BitSet bs0) {
+        SubMachine(IndexPartitions.Subset subset0, int subsetNum0, int state0, BitSet bs0, int 
+                minId) {
             subset = subset0;
             subsetNum = subsetNum0;
             numIndexes = subset0.size();
@@ -264,8 +264,9 @@ public class WorkFunctionAlgorithm {
             indexIds = new int[numIndexes];
             int i = 0;
             for (Index index : subset0) {
-                indexIds[i++] = index.getId();
+                indexIds[i++] = index.getId()-minId;
             }
+            this.minId = minId;
         }
         
         // return position of id in indexIds if exists, else -1
@@ -306,8 +307,8 @@ public class WorkFunctionAlgorithm {
             // find the position in indexIds
             int indexIdsPos;
             int stateMask;
-            for (indexIdsPos = 0; indexIdsPos < numIndexes; indexIdsPos++) 
-                if (indexIds[indexIdsPos] == index.getId())
+            for (indexIdsPos = 0; indexIdsPos < numIndexes; indexIdsPos++) if (indexIds[indexIdsPos] 
+                    == index.getId()-minId)
                     break;
             if (indexIdsPos >= numIndexes) {
                 //Debug.logError("could not process vote: index not found in subset");
@@ -319,11 +320,11 @@ public class WorkFunctionAlgorithm {
                     
             // register the vote in the recommendation
             if (isPositive) {
-                currentBitSet.set(index.getId());
+                currentBitSet.set(index.getId()-minId);
                 currentState |= stateMask;
             }
             else {
-                currentBitSet.clear(index.getId());
+                currentBitSet.clear(index.getId()-minId);
                 currentState ^= stateMask;
             }
             
@@ -512,16 +513,17 @@ public class WorkFunctionAlgorithm {
             cap = newCap;
         }
     }
-    
+
     // given a schedule over a set of candidates and queries, get the total work
     public static double getScheduleCost(
-            Set<Index> candidateSet, int queryCount, ProfiledQuery[] qinfos, BitSet[] schedule)
+            Set<Index> candidateSet, int queryCount, ProfiledQuery[] qinfos, BitSet[] schedule, int 
+            minId)
     {
         double cost = 0;
         BitSet prevState = new BitSet();
         for (int q = 0; q < queryCount; q++) {
             BitSet state = schedule[q];
-            cost += transitionCost(candidateSet, prevState, state);
+            cost += transitionCost(candidateSet, prevState, state, minId);
             cost += qinfos[q].cost(state);
             prevState = state;
         }

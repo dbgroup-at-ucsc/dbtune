@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Set;
@@ -13,24 +14,32 @@ public class IndexPartitions {
     private static final int MAXIMUM_INDEX_COUNT = Integer.MAX_VALUE / 2;
     private final int indexCount;
     private int stateCount;
+    private int minId;
     private SubsetList subsets;
     
-    public IndexPartitions(StaticIndexSet indexes) {
+    public IndexPartitions(StaticIndexSet indexes, int minId) {
         if (indexes.size() > MAXIMUM_INDEX_COUNT)
             throw new IllegalArgumentException("Cannot create partitions for " + indexes.size() + "indexes");
         indexCount = indexes.size();
         stateCount = indexes.size() * 2;
         subsets = new SubsetList();
         for (Index index : indexes) {
-            subsets.add(new Subset(index)); 
+            subsets.add(new Subset(index));
         }
+        this.minId = minId;
     }
 
-    public IndexPartitions(Set<Index> indexes, BitSet[] partitionBitSets) {
+    public int getMinId()
+    {
+        return minId;
+    }
+
+    public IndexPartitions(Set<Index> indexes, BitSet[] partitionBitSets, int minId) {
         // create subsets
         int indexCount0 = 0;
         int stateCount0 = 0;
         subsets = new SubsetList();
+        this.minId = minId;
         for (BitSet bs : partitionBitSets) {
             Subset subset = null;
             for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
@@ -124,29 +133,35 @@ public class IndexPartitions {
         
         private int[] indexIds;
         
+        private Set<Index> set = new HashSet<Index>();
         private java.util.TreeMap<Integer,Index> map = new java.util.TreeMap<Integer,Index>();
         
         Subset(Index index) {
-            map.put(index.getId(), index);
-            indexIds = new int[] { index.getId() };
-            sumIndexIds = minIndexIds = index.getId();
+            map.put(index.getId()-minId, index);
+            set.add(index);
+            indexIds = new int[] { index.getId()-minId };
+            sumIndexIds = minIndexIds = index.getId()-minId;
         }
 
         Subset(Subset s1, Subset s2) {
-            for (Index idx : s1)
-                map.put(idx.getId(), idx);
-            for (Index idx : s2)
-                map.put(idx.getId(), idx);
+            for (Index idx : s1) {
+                map.put(idx.getId()-minId, idx);
+                set.add(idx);
+            }
+            for (Index idx : s2) {
+                map.put(idx.getId()-minId, idx);
+                set.add(idx);
+            }
             
             indexIds = new int[map.size()];
-            { int i = 0; for (Index idx : map.values()) indexIds[i++] = idx.getId(); }
+            { int i = 0; for (Index idx : map.values()) indexIds[i++] = idx.getId()-minId; }
             
             sumIndexIds = s1.sumIndexIds + s2.sumIndexIds;
             minIndexIds = Math.min(s1.minIndexIds, s2.minIndexIds);
         }
 
         public final boolean contains(Index index) {
-            return map.containsKey(index.getId());
+            return set.contains(index);
         }
 
         public final boolean contains(int id) {
@@ -194,7 +209,7 @@ public class IndexPartitions {
         
         public BitSet bitSet() {
             BitSet bs = new BitSet();
-            for (Index x : this) bs.set(x.getId());
+            for (Index x : this) bs.set(x.getId()-minId);
             return bs;
         }
         

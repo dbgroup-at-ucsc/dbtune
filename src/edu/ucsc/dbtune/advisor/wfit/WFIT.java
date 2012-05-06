@@ -9,20 +9,18 @@ import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.advisor.interactions.DegreeOfInteractionFinder;
 import edu.ucsc.dbtune.advisor.interactions.IBGDoiFinder;
 import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
-import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
-import edu.ucsc.dbtune.optimizer.IBGPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-import static edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm.transitionCost;
-import static edu.ucsc.dbtune.util.MetadataUtils.convert;
-import static edu.ucsc.dbtune.util.MetadataUtils.toByContent;
+import static edu.ucsc.dbtune.util.MetadataUtils.getMinimumId;
+//import static edu.ucsc.dbtune.util.MetadataUtils.toSet;
+//import static edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm.transitionCost;
 
 /**
- *
  * @author Ivo Jimenez
  */
 public class WFIT extends Advisor
@@ -32,7 +30,8 @@ public class WFIT extends Advisor
     private Set<Index> pool;
     private DegreeOfInteractionFinder doiFinder;
     private RecommendationStatistics stats;
-    private BitSet previousState;
+    //private BitSet previousState;
+    private boolean isCandidateSetFixed;
 
     /**
      * Creates a WFIT advisor.
@@ -42,17 +41,10 @@ public class WFIT extends Advisor
      */
     public WFIT(Optimizer optimizer)
     {
-        if (!(optimizer instanceof IBGOptimizer))
-            throw new RuntimeException(
-                    "Expecting IBGOptimizer; found: " + optimizer.getClass().getName());
+        this(optimizer, new HashSet<Index>());
 
-        ibgOptimizer = (IBGOptimizer) optimizer;
-
-        selector = new Selector();
-        doiFinder = new IBGDoiFinder();
-        pool = new HashSet<Index>();
-        stats = new RecommendationStatistics("WFIT");
-        previousState = new BitSet();
+        isCandidateSetFixed = false;
+        selector = new Selector(Index.IN_MEMORY_ID.get());
     }
 
     /**
@@ -71,11 +63,13 @@ public class WFIT extends Advisor
 
         ibgOptimizer = (IBGOptimizer) optimizer;
 
-        selector = new Selector(initialSet);
+        int minId = getMinimumId(initialSet);
+        selector = new Selector(initialSet, minId);
         doiFinder = new IBGDoiFinder();
         pool = new HashSet<Index>(initialSet);
-        stats = new RecommendationStatistics("WFIT");
-        previousState = new BitSet();
+        //stats = new WFITRecommendationStatistics("WFIT");
+        //previousState = new BitSet();
+        isCandidateSetFixed = true;
     }
 
     /**
@@ -90,57 +84,52 @@ public class WFIT extends Advisor
     @Override
     public void process(SQLStatement sql) throws SQLException
     {
-        pool.addAll(toByContent(ibgOptimizer.recommendIndexes(sql)));
+        if (!isCandidateSetFixed)
+            if (pool.addAll(ibgOptimizer.recommendIndexes(sql)))
+                System.out.println("added new: " + pool);
 
-        int whatIfCountBefore = ibgOptimizer.getWhatIfCount();
-
-        IBGPreparedSQLStatement pStmt = (IBGPreparedSQLStatement) ibgOptimizer.prepareExplain(sql);
+        PreparedSQLStatement  pStmt = ibgOptimizer.prepareExplain(sql);
         ExplainedSQLStatement eStmt = pStmt.explain(pool);
+        InteractionBank       bank  = doiFinder.degreeOfInteraction(pStmt, pool);
 
-        int whatIfCountAfter = ibgOptimizer.getWhatIfCount();
-
-        InteractionBank bank = doiFinder.degreeOfInteraction(pStmt, pool);
+        System.out.println("bank:\n" + bank);
 
         selector.analyzeQuery(
                 new ProfiledQuery(
                     sql.getSQL(),
+                    pStmt,
                     eStmt,
-                    getSnapshot(pool),
                     pool,
-                    pStmt.getIndexBenefitGraph(),
                     bank,
-                    whatIfCountAfter - whatIfCountBefore));
+                    0));
 
-        BitSet newState = new BitSet();
-        for (Index idx : selector.getRecommendation())
-            newState.set(idx.getId());
-        
-        stats.addNewEntry(
-                eStmt.getTotalCost(), selector.getRecommendation(),
-                transitionCost(getSnapshot(pool), previousState, newState));
-
-        previousState = newState;
+        addRecommendationStatisticsEntry(eStmt);
     }
 
     /**
-     * Creates a {@link CandidatePool.Snapshot} out of a index set.
+     * Adds a new entry to the running {@link RecommendationStatistics} objects.
      *
-     * @param indexes
-     *      set from which the snapshot is created
-     * @return
-     *      the snapshot
-     * @throws SQLException
-     *      if an error occurs while adding indexes to the snapshot
+     * @param eStatement
+     *      statement that has just been added to WFIT
      */
-    private CandidatePool.Snapshot getSnapshot(Set<Index> indexes)
-        throws SQLException
+    private void addRecommendationStatisticsEntry(ExplainedSQLStatement eStatement)
     {
-        CandidatePool pool = new CandidatePool();
+        BitSet newState = new BitSet();
 
-        for (Index i : indexes)
-            pool.addIndex(i);
+        for (Index idx : selector.getRecommendation())
+            newState.set(idx.getId());
+        
+        //WFITRecommendationStatistics.Entry e =
+            //(WFITRecommendationStatistics.Entry)
+            //stats.addNewEntry(
+                //eStatement.getTotalCost(),
+                //eStatement.getConfiguration(),
+                //selector.getRecommendation(),
+                //transitionCost(getSnapshot(pool), previousState, newState));
 
-        return pool.getSnapshot();
+        //e.setCandidatePartitioning(getStablePartitioning(selector.getStablePartitioning()));
+
+        //previousState = newState;
     }
 
     /**
@@ -149,12 +138,7 @@ public class WFIT extends Advisor
     @Override
     public Set<Index> getRecommendation() throws SQLException
     {
-        Set<Index> recommendation = new HashSet<Index>();
-
-        for (Index idx : selector.getRecommendation())
-            recommendation.add(new ByContentIndex(idx));
-
-        return recommendation;
+        return selector.getRecommendation();
     }
 
     /**
@@ -167,11 +151,15 @@ public class WFIT extends Advisor
     }
 
     /**
-     * {@inheritDoc}
+     * The statistics corresponding to the idealized {@code OPT} algorithm.
+     *
+     * @return
+     *      recommendation statistics for {@code OPT}
      */
     public RecommendationStatistics getOptimalRecommendationStatistics()
     {
-        RecommendationStatistics optStats = new RecommendationStatistics("OPT");
+        /*
+        RecommendationStatistics optStats = new WFITRecommendationStatistics("OPT");
         BitSet[] optimalSchedule = selector.getOptimalScheduleRecommendation();
 
         BitSet prevState = new BitSet();
@@ -184,17 +172,39 @@ public class WFIT extends Advisor
 
             newState.set(bs);
 
-            try {
+            WFITRecommendationStatistics.Entry e =
+                (WFITRecommendationStatistics.Entry)
                 optStats.addNewEntry(
-                        selector.getCost(i, bs), convert(optimalSchedule[i], pool),
-                        transitionCost(getSnapshot(pool), prevState, newState));
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
+                    selector.getCost(i, bs),
+                    pool,
+                    convert(optimalSchedule[i], pool),
+                    transitionCost(getSnapshot(pool), prevState, newState));
+
+            e.setCandidatePartitioning(getStablePartitioning(selector.getStablePartitioning()));
 
             prevState = newState;
         }
 
         return optStats;
+        */
+        return null;
     }
+
+    /**
+     * Converts a bit array into a set partition of indexes.
+     *
+     * @param bitSets
+     *      an array of bit set objects
+     * @return
+     *      a set of sets of indexes
+    private Set<Set<Index>> getStablePartitioning(BitSet[] bitSets)
+    {
+        Set<Set<Index>> partitioning = new HashSet<Set<Index>>();
+
+        for (BitSet bs : bitSets)
+            partitioning.add(new HashSet<Index>(toSet(bs, pool)));
+
+        return partitioning;
+    }
+     */
 }

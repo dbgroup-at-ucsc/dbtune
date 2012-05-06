@@ -4,6 +4,7 @@ import edu.ucsc.dbtune.advisor.wfit.IndexPartitions.Subset;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 
+//CHECKSTYLE:OFF
 public class InteractionSelector {
     private static final int PARTITION_ITERATIONS = 
         Environment.getInstance().getNumPartitionIterations();
@@ -11,14 +12,16 @@ public class InteractionSelector {
     /*
      * Note that when this is called, hotSet and hotPartitions are out of sync!
      */
-    public static IndexPartitions choosePartitions(StaticIndexSet newHotSet, IndexPartitions oldPartitions,
-                                                   DoiFunction doiFunc, int maxNumStates) {
+    public static IndexPartitions choosePartitions(
+            StaticIndexSet newHotSet, IndexPartitions oldPartitions,
+            DoiFunction doiFunc, int maxNumStates, int minId) 
+    {
         java.util.Random rand = new java.util.Random();
         IndexPartitions bestPartitions;
         double bestCost;
     
         /* initialize bestPartitions with singleton sets */ 
-        bestPartitions = new IndexPartitions(newHotSet);
+        bestPartitions = new IndexPartitions(newHotSet, minId);
 
         /* nothing to do if merging is disabled by maxNumStates = 0 */
         if (maxNumStates <= 0)
@@ -40,7 +43,7 @@ public class InteractionSelector {
         bestCost = partitionCost(bestPartitions, doiFunc);
         
         for (int attempts = 0; attempts < PARTITION_ITERATIONS; attempts++) {
-            IndexPartitions currentPartitions = new IndexPartitions(newHotSet);
+            IndexPartitions currentPartitions = new IndexPartitions(newHotSet, minId);
             while (true) {
                 double currentSubsetCount = currentPartitions.subsetCount();
                 double currentStateCount = currentPartitions.wfaStateCount();
@@ -136,3 +139,4 @@ public class InteractionSelector {
         return weight;
     }
 }
+//CHECKSTYLE:ON
