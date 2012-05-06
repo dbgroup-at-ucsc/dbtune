@@ -3,6 +3,8 @@ package edu.ucsc.dbtune.inum;
 import java.sql.SQLException;
 import java.util.Set;
 
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
+
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
@@ -26,5 +28,5 @@ public interface InterestingOrdersExtractor
      *      refers only one table in the {@code FROM} clause and it doesn't contain neither an 
      *      {@code ORDER BY} nor a {@code GROUP BY} clause.
      */
-    Set<InumInterestingOrder> extract(SQLStatement statement) throws SQLException;
+    Set<ColumnOrdering> extract(SQLStatement statement) throws SQLException;
 }

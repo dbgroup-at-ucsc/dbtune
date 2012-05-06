@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -250,7 +251,7 @@ public class SQLStatementPlan extends Tree<Operator>
      * @param cf
      *      columns fetched
      */
-    public void assignColumnsFetched(Operator op, InterestingOrder cf)
+    public void assignColumnsFetched(Operator op, ColumnOrdering cf)
     {
         // elements is a hash table and if we rename the operator we need to do it with care since 
         // by modifying the name of the operator we modify its hashCode. So what we do here is to

@@ -9,13 +9,12 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
-import edu.ucsc.dbtune.inum.InumInterestingOrder;
 
 import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
-import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
@@ -28,6 +27,8 @@ import static com.google.common.collect.Iterables.get;
 import static edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor.BoundSQLStatementParseTree;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 
+import static edu.ucsc.dbtune.metadata.ColumnOrdering.ASC;
+
 import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.HJ;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.MSJ;
@@ -37,6 +38,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.SUBQUERY;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
 
+import static edu.ucsc.dbtune.util.MetadataUtils.findEquivalentOrCreateNew;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTables;
 
 /**
@@ -77,7 +79,7 @@ public final class InumUtils
 
             plan.assignCost(o, cost);
             plan.assignDatabaseObject(o, table);
-            plan.assignColumnsFetched(o, new InterestingOrder(table.columns().get(0), true));
+            plan.assignColumnsFetched(o, new ColumnOrdering(table.columns().get(0), ASC));
         }
     }
 
@@ -182,7 +184,7 @@ public final class InumUtils
      * @throws SQLException
      *      if the FTS for the slot doesn't exist
      */
-    public static InumInterestingOrder getCoveringIndex(TableAccessSlot slot) throws SQLException
+    public static Index getCoveringIndex(TableAccessSlot slot) throws SQLException
     {
         if (slot.getColumnsFetched() == null)
             throw new SQLException("Can't find columns fetched for " + slot.getTable());
@@ -190,7 +192,7 @@ public final class InumUtils
         if (slot.getColumnsFetched().size() == 0)
             return getFullTableScanIndexInstance(slot.getTable());
 
-        return new InumInterestingOrder(slot.getColumnsFetched());
+        return findEquivalentOrCreateNew(slot.getColumnsFetched());
     }
 
     /**
@@ -210,12 +212,11 @@ public final class InumUtils
             SQLStatement statement, Catalog catalog)
         throws SQLException
     {
-        Set<InumInterestingOrder> ios = extractInterestingOrdersFromJoinPredicates(statement, 
-                catalog);
+        Set<ColumnOrdering> ios = extractInterestingOrdersFromJoinPredicates(statement, catalog);
         Set<Index> max = new HashSet<Index>();
 
-        for (InumInterestingOrder i : ios)
-            max.add(i);
+        for (ColumnOrdering i : ios)
+            max.add(findEquivalentOrCreateNew(i));
 
         return max;
     }
@@ -232,7 +233,7 @@ public final class InumUtils
      * @throws SQLException
      *      if there's a table without a corresponding slot in the given inum plan
      */
-    public static Set<InumInterestingOrder> extractInterestingOrders(
+    public static Set<ColumnOrdering> extractInterestingOrders(
             SQLStatement statement, Catalog catalog)
         throws SQLException
     {
@@ -251,7 +252,7 @@ public final class InumUtils
      * @throws SQLException
      *      if there's a table without a corresponding slot in the given inum plan
      */
-    public static Set<InumInterestingOrder> extractInterestingOrdersFromJoinPredicates(
+    public static Set<ColumnOrdering> extractInterestingOrdersFromJoinPredicates(
             SQLStatement statement, Catalog catalog)
         throws SQLException
     {
@@ -261,7 +262,7 @@ public final class InumUtils
         ioExtractor = new DerbyInterestingOrdersExtractor(catalog);
         parseTree = new BoundSQLStatementParseTree(ioExtractor.getParseTree(statement), catalog);
 
-        Set<InumInterestingOrder> ios = new HashSet<InumInterestingOrder>();
+        Set<ColumnOrdering> ios = new HashSet<ColumnOrdering>();
 
         ioExtractor.extractFromJoinPredicates(parseTree, ios);
 

@@ -19,6 +19,7 @@ import org.junit.Test;
 import static com.google.common.collect.Lists.newArrayList;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
+import static edu.ucsc.dbtune.DBTuneInstances.configureCatalogWithoutIndexes;
 import static edu.ucsc.dbtune.DBTuneInstances.makeResultSet;
 import static edu.ucsc.dbtune.metadata.Index.ASC;
 import static edu.ucsc.dbtune.metadata.Index.DESC;
@@ -300,14 +301,15 @@ public class DB2OptimizerTest
     @Test
     public void testBuildColumnNamesValue() throws Exception
     {
+        Catalog catWithout = configureCatalogWithoutIndexes();
         Index idx;
 
-        idx = new Index(a, ASC);
+        idx = new Index(catWithout.<Column>findByName("schema_0.table_0.column_0"), ASC);
 
         assertThat(DB2Optimizer.buildColumnNamesValue(idx), is(equalToIgnoringCase("+column_0")));
         cat.schemas().get(0).remove(idx);
 
-        idx = new Index(a, DESC);
+        idx = new Index(catWithout.<Column>findByName("schema_0.table_0.column_0"), DESC);
 
         assertThat(DB2Optimizer.buildColumnNamesValue(idx), is(equalToIgnoringCase("-column_0")));
         cat.schemas().get(0).remove(idx);

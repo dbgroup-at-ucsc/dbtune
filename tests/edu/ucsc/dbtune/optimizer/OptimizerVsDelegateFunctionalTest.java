@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.util.Comparator;
-import java.util.Random;
+//import java.util.Random;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -43,7 +43,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     private static Optimizer delegate;
     private static CandidateGenerator candGen;
     private static PreparedSQLStatement pSql;
-    private static Random r;
+    //private static Random r;
     private int i;
 
     /**
@@ -58,7 +58,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
         optimizer = db.getOptimizer();
         delegate = getBaseOptimizer(optimizer);
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
-        r = new Random(System.currentTimeMillis());
+        //r = new Random(System.currentTimeMillis());
         
         loadWorkloads(db.getConnection());
     }
@@ -87,6 +87,9 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
 
         for (Workload wl : workloads(env.getWorkloadFolders())) {
 
+            if (!wl.getName().endsWith("tpcds-inum"))
+                continue;
+
             final Set<Index> allIndexes = candGen.generate(wl);
 
             i = 0;
@@ -94,9 +97,8 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
             for (SQLStatement sql : wl) {
                 i++;
 
-                if (r.nextInt(100) > 5 ||
-                        (optimizer instanceof MySQLOptimizer &&
-                        sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT)))
+                if (optimizer instanceof MySQLOptimizer && 
+                        sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT))
                     continue;
 
                 System.out.print(wl.getName() + "," + i + ",");

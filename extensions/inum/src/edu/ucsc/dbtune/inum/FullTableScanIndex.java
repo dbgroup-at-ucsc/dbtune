@@ -19,10 +19,12 @@ import edu.ucsc.dbtune.metadata.Table;
  * @see edu.ucsc.dbtune.optimizer.plan.InumPlan
  * @see edu.ucsc.dbtune.optimizer.plan.TableAccessSlot
  */
-public final class FullTableScanIndex extends InumInterestingOrder
+public final class FullTableScanIndex extends Index
 {
     private static Map<Table, Index> instances = new HashMap<Table, Index>();
     
+    protected Table table;
+
     /**
      * Creates an object corresponding to the given table. There's only one object per table.
      *
@@ -33,7 +35,9 @@ public final class FullTableScanIndex extends InumInterestingOrder
      */
     private FullTableScanIndex(Table table) throws SQLException
     {
-        super(table.getSchema(), table, table.getName() + "_full_table_scan");
+        super(table.getName() + "_full_table_scan", table.getSchema());
+
+        this.table = table;
     }
 
     /**
@@ -85,9 +89,18 @@ public final class FullTableScanIndex extends InumInterestingOrder
      * {@inheritDoc}
      */
     @Override
+    public Table getTable()
+    {
+        return table;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int hashCode()
     {
-        return table.hashCode();
+        return super.getFullyQualifiedName().hashCode();
     }
 
     /**
@@ -96,9 +109,6 @@ public final class FullTableScanIndex extends InumInterestingOrder
     @Override
     public boolean equals(Object other)
     {
-        if (other == this)
-            return true;
-
         if (!(other instanceof FullTableScanIndex))
             return false;
 

@@ -14,7 +14,7 @@ import java.util.Set;
 public class Schema extends DatabaseObject
 {
     /**
-     * constructs a new schema whose name is given
+     * constructs a new schema whose name is given.
      *
      * @param name
      *     name of the schema
@@ -29,7 +29,7 @@ public class Schema extends DatabaseObject
     }
 
     /**
-     * copy constructor
+     * copy constructor.
      *
      * @param other
      *     other schema being copied
@@ -40,7 +40,7 @@ public class Schema extends DatabaseObject
     }
 
     /**
-     * Returns the schema's base configuration
+     * Returns the schema's base configuration.
      *
      * @return
      *     configuration corresponding to the schema
@@ -49,8 +49,7 @@ public class Schema extends DatabaseObject
     {
         List<Index> indexes = new ArrayList<Index>();
 
-        for (DatabaseObject dbo : containees)
-        {
+        for (DatabaseObject dbo : containees) {
             Index index;
 
             if (dbo instanceof Index)
@@ -107,6 +106,23 @@ public class Schema extends DatabaseObject
     }
 
     /**
+     * Finds the index whose ordering matches the given argument.
+     *
+     * @param co
+     *     ordering being checked against the index
+     * @return
+     *     the index that with the same ordering as the one given; {@code null} if none found.
+     */
+    public Index findIndex(ColumnOrdering co)
+    {
+        for (Index i : indexes())
+            if (co.isSameOrdering(i))
+                return i;
+
+        return null;
+    }
+
+    /**
      * Finds the index whose name matches the given argument. Convenience method that accomplishes 
      * what {@link #find} does but without requiring the user to cast. In other words, the following 
      * is true {@code findIndex("name") == (Index)find("name")}.
@@ -131,8 +147,7 @@ public class Schema extends DatabaseObject
     {
         List<Index> list = new ArrayList<Index>();
 
-        for (DatabaseObject dbo : containees)
-        {
+        for (DatabaseObject dbo : containees) {
             Index index;
 
             if (dbo instanceof Index)
@@ -156,8 +171,7 @@ public class Schema extends DatabaseObject
     {
         List<Table> list = new ArrayList<Table>();
 
-        for (DatabaseObject dbo : containees)
-        {
+        for (DatabaseObject dbo : containees) {
             Table table;
 
             if (dbo instanceof Table)
@@ -177,7 +191,7 @@ public class Schema extends DatabaseObject
     @Override
     public DatabaseObject newContainee(String name) throws SQLException
     {
-        return new Index(this,name);
+        throw new SQLException("not supported yet");
     }
 
     /**

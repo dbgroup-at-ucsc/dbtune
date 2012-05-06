@@ -15,6 +15,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.Predicate;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -44,7 +45,7 @@ import org.apache.derby.impl.sql.compile.SelectNode;
 import org.apache.derby.impl.sql.compile.SubqueryNode;
 import org.apache.derby.impl.sql.compile.ValueNode;
 
-import static edu.ucsc.dbtune.metadata.Index.ASC;
+import static edu.ucsc.dbtune.metadata.ColumnOrdering.ASC;
 
 /**
  * Extracts interesting orders by parsing a query using the Derby SQL parser. Supports any SQL
@@ -138,7 +139,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      * {@inheritDoc}
      */
     @Override
-    public Set<InumInterestingOrder> extract(SQLStatement statement) throws SQLException
+    public Set<ColumnOrdering> extract(SQLStatement statement) throws SQLException
     {
         return extract(new BoundSQLStatementParseTree(getParseTree(statement), catalog));
     }
@@ -154,9 +155,9 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      if an error occurs while obtaining the statement AST; if an error occurs while walking
      *      through the statement AST
      */
-    private Set<InumInterestingOrder> extract(BoundSQLStatementParseTree pt) throws SQLException
+    private Set<ColumnOrdering> extract(BoundSQLStatementParseTree pt) throws SQLException
     {
-        Set<InumInterestingOrder> ios = new HashSet<InumInterestingOrder>();
+        Set<ColumnOrdering> ios = new HashSet<ColumnOrdering>();
         
         extract(pt, ios);
 
@@ -174,7 +175,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *      if an error occurs while obtaining the statement AST; if an error occurs while walking
      *      through the statement AST
      */
-    private void extract(BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
+    private void extract(BoundSQLStatementParseTree pt, Set<ColumnOrdering> ioSet)
         throws SQLException
     {
         extractFromGroupByColumns(pt, ioSet);
@@ -418,34 +419,37 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         }
     }
     private void extractFromGroupByColumns(
-            BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
+            BoundSQLStatementParseTree pt, Set<ColumnOrdering> ioSet)
         throws SQLException
     {
         for (Column col : pt.getGroupByColumns())
-            ioSet.add(new InumInterestingOrder(col, ASC));
+            ioSet.add(new ColumnOrdering(col, ASC));
     }
     public void extractFromJoinPredicates(
-            BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
+            BoundSQLStatementParseTree pt, Set<ColumnOrdering> ioSet)
         throws SQLException
     {
 
         for (Predicate p : pt.getPredicates()) {
             if (!p.getLeftColumn().getTable().equals(p.getRightColumn().getTable())) {
-                ioSet.add(new InumInterestingOrder(p.getLeftColumn(), ASC));
-                ioSet.add(new InumInterestingOrder(p.getRightColumn(), ASC));
+                ioSet.add(new ColumnOrdering(p.getLeftColumn(), ASC));
+                ioSet.add(new ColumnOrdering(p.getRightColumn(), ASC));
             }
         }
         
     }
     private void extractFromOrderByColumns(
-            BoundSQLStatementParseTree pt, Set<InumInterestingOrder> ioSet)
+            BoundSQLStatementParseTree pt, Set<ColumnOrdering> ioSet)
         throws SQLException
     {
         Set<Table> tablesWithOrderingAlreadyCreated = new HashSet<Table>();
 
         for (Column col : pt.getOrderByColumns().keySet()) {
             if (!tablesWithOrderingAlreadyCreated.contains(col.getTable())) {
-                ioSet.add(new InumInterestingOrder(col, pt.getOrderByColumns().get(col)));
+                if (pt.getOrderByColumns().get(col))
+                    ioSet.add(new ColumnOrdering(col, ColumnOrdering.ASC));
+                else
+                    ioSet.add(new ColumnOrdering(col, ColumnOrdering.DESC));
                 tablesWithOrderingAlreadyCreated.add(col.getTable());
             }
         }

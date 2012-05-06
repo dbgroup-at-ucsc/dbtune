@@ -20,6 +20,7 @@ import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInsta
 import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import static edu.ucsc.dbtune.util.InumUtils.extractInterestingOrders;
 import static edu.ucsc.dbtune.util.InumUtils.getCoveringAtomicConfiguration;
+import static edu.ucsc.dbtune.util.MetadataUtils.convert;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 
@@ -69,7 +70,7 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
 
         // obtain plans for all the extracted interesting orders
         computeWithCompleteConfiguration(
-                space, extractInterestingOrders(statement, catalog), statement, delegate);
+                space, convert(extractInterestingOrders(statement, catalog)), statement, delegate);
 
         // NLJ heuristic referred in the INUM paper
         Set<Index> covering = getCoveringAtomicConfiguration(templateForEmpty);

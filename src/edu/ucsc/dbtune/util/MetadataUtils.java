@@ -10,6 +10,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
@@ -44,6 +45,35 @@ public final class MetadataUtils
             schemas.add(t.getSchema());
 
         return schemas;
+    }
+
+    /**
+     * Partitions a set of indexes based on the table they refer.
+     *
+     * @param orderings
+     *      a collection of orderings
+     * @return
+     *      the set of tables corresponding to one or more indexes in the set
+     */
+    public static Map<Table, Set<ColumnOrdering>> getOrderingsPerTable(
+            Collection<ColumnOrdering> orderings)
+    {
+        Map<Table, Set<ColumnOrdering>> indexesPerTable = new HashMap<Table, Set<ColumnOrdering>>();
+        Set<ColumnOrdering> indexesForTable;
+
+        for (ColumnOrdering i : orderings) {
+
+            indexesForTable = indexesPerTable.get(i.getTable());
+
+            if (indexesForTable == null) {
+                indexesForTable = new HashSet<ColumnOrdering>();
+                indexesPerTable.put(i.getTable(), indexesForTable);
+            }
+
+            indexesForTable.add(i);
+        }
+
+        return indexesPerTable;
     }
 
     /**
@@ -153,6 +183,53 @@ public final class MetadataUtils
                 return i;
 
         return null;
+    }
+
+    /**
+     * Finds an existing index with the given ordering. If none is found then the
+     * 
+     * @param ordering
+     *      orders that are converted
+     * @return
+     *      the equivalent index or a new one with the given ordering
+     * @throws SQLException
+     *      if an error occurs while instantiating the index
+     */
+    public static Index findEquivalentOrCreateNew(ColumnOrdering ordering)
+        throws SQLException
+    {
+        Schema sch = ordering.getColumns().get(0).getTable().getSchema();
+
+        Index existing = sch.findIndex(ordering);
+
+        if (existing != null)
+            return existing;
+
+        return new Index(ordering);
+    }
+
+    /**
+     * Converts column orders to indexes.
+     * 
+     * @param orderings
+     *      orders that are converted
+     * @return
+     *      set of indexes
+     * @throws SQLException
+     *      if an error occurs while instantiating indexes
+     */
+    public static Set<Index> convert(Set<ColumnOrdering> orderings)
+        throws SQLException
+    {
+        Set<Index> indexes = new HashSet<Index>();
+
+        if (orderings.isEmpty())
+            return indexes;
+
+        for (ColumnOrdering co : orderings)
+            indexes.add(findEquivalentOrCreateNew(co));
+
+        return indexes;
     }
 
     /**

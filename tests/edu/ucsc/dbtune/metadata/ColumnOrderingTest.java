@@ -79,24 +79,24 @@ public class ColumnOrderingTest
         assertThat(co.getOrdering(columns.get(0)), is(ANY));
         assertThat(get(co.getOrderings().entrySet(), 0).getValue(), is(ANY));
 
-        // with a list of ordering values
-        List<Integer> oVals = new ArrayList<Integer>();
+        // with a list of booleans values
+        List<Boolean> oVals = new ArrayList<Boolean>();
 
-        oVals.add(ASC);
-        oVals.add(DESC);
-        oVals.add(ANY);
-        oVals.add(ASC);
-        oVals.add(DESC);
-        oVals.add(ANY);
+        oVals.add(true);
+        oVals.add(false);
+        oVals.add(false);
+        oVals.add(true);
+        oVals.add(false);
+        oVals.add(false);
 
         co = new ColumnOrdering(columns, oVals);
 
         assertThat(co.getOrdering(columns.get(0)), is(ASC));
         assertThat(co.getOrdering(columns.get(1)), is(DESC));
-        assertThat(co.getOrdering(columns.get(2)), is(ANY));
+        assertThat(co.getOrdering(columns.get(2)), is(DESC));
         assertThat(co.getOrdering(columns.get(3)), is(ASC));
         assertThat(co.getOrdering(columns.get(4)), is(DESC));
-        assertThat(co.getOrdering(columns.get(5)), is(ANY));
+        assertThat(co.getOrdering(columns.get(5)), is(DESC));
 
         // with a map
         Map<Column, Integer> oValsMap = new HashMap<Column, Integer>();
@@ -140,7 +140,7 @@ public class ColumnOrderingTest
         }
 
         try {
-            new ColumnOrdering(columns, new ArrayList<Integer>());
+            new ColumnOrdering(columns, new ArrayList<Boolean>());
         } catch (SQLException ex) {
             // ok, code throw exception
             ex.getMessage();

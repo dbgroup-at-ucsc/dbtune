@@ -1,10 +1,13 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -12,8 +15,6 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
-import static edu.ucsc.dbtune.metadata.Index.ASC;
-import static edu.ucsc.dbtune.metadata.Index.DESC;
 import static edu.ucsc.dbtune.optimizer.plan.InumPlan.buildQueryForUnseenIndex;
 import static edu.ucsc.dbtune.optimizer.plan.InumPlan.makeOperatorFromSlot;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
@@ -53,7 +54,7 @@ public class InumPlanTest
         when(slot.getTable()).thenReturn(table);
         when(slot.getIndex()).thenReturn(index);
 
-        InterestingOrder io = new InterestingOrder(table.columns().get(0), ASC);
+        ColumnOrdering io = new ColumnOrdering(table.columns().get(0), ColumnOrdering.ASC);
 
         when(slot.getColumnsFetched()).thenReturn(io);
 
@@ -69,9 +70,19 @@ public class InumPlanTest
                 sql.getSQL().contains(c.getName() + (index.isAscending(c) ? " ASC" : " DESC")),
                 is(true));
 
-        io.add(table.columns().get(1), DESC);
-        io.add(table.columns().get(2), ASC);
-        io.add(table.columns().get(3), DESC);
+        List<Column> columns = new ArrayList<Column>();
+        Map<Column, Integer> orderings = new HashMap<Column, Integer>();
+
+        columns.add(table.columns().get(0));
+        orderings.put(table.columns().get(0), ColumnOrdering.ASC);
+        columns.add(table.columns().get(1));
+        orderings.put(table.columns().get(1), ColumnOrdering.DESC);
+        columns.add(table.columns().get(2));
+        orderings.put(table.columns().get(2), ColumnOrdering.ASC);
+        columns.add(table.columns().get(3));
+        orderings.put(table.columns().get(3), ColumnOrdering.DESC);
+
+        ColumnOrdering io2 = new ColumnOrdering(columns, orderings);
 
         List<Predicate> predicates = new ArrayList<Predicate>();
 
@@ -83,7 +94,7 @@ public class InumPlanTest
         slot = mock(TableAccessSlot.class);
 
         when(slot.getTable()).thenReturn(table);
-        when(slot.getIndex()).thenReturn(io);
+        when(slot.getIndex()).thenReturn(new Index(io2));
         when(slot.getColumnsFetched()).thenReturn(io);
         when(slot.getPredicates()).thenReturn(predicates);
 
@@ -94,14 +105,6 @@ public class InumPlanTest
         assertThat(sql.getSQL().contains("WHERE"), is(true));
         assertThat(sql.getSQL().contains("ORDER"), is(true));
         assertThat(sql.getSQL().contains("RID()"), is(true));
-
-        for (Column c : io.columns()) {
-            assertThat(
-                sql.getSQL().contains(c.getName()), is(true));
-            assertThat(
-                sql.getSQL().contains(c.getName() + (io.isAscending(c) ? " ASC" : " DESC")),
-                is(true));
-        }
 
         assertThat(sql.getSQL().contains("A > 10"), is(true));
         assertThat(sql.getSQL().contains("B > 10"), is(true));
@@ -120,7 +123,7 @@ public class InumPlanTest
 
         Table table = catalog.<Table>findByName("schema_0.table_0");
         Index index = catalog.<Index>findByName("schema_0.table_0_index_2");
-        InterestingOrder io = new InterestingOrder(table.columns().get(0), ASC);
+        ColumnOrdering io = new ColumnOrdering(table.columns().get(0), ColumnOrdering.ASC);
         
         tblScan.addColumnsFetched(io);
         idxScan.addColumnsFetched(io);

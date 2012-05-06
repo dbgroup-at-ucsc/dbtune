@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
@@ -28,10 +28,8 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
-import static edu.ucsc.dbtune.metadata.Index.NON_UNIQUE;
-import static edu.ucsc.dbtune.metadata.Index.SECONDARY;
 import static edu.ucsc.dbtune.metadata.Index.SYNCHRONIZED;
-import static edu.ucsc.dbtune.metadata.Index.UNCLUSTERED;
+import static edu.ucsc.dbtune.util.MetadataUtils.findEquivalentOrCreateNew;
 import static edu.ucsc.dbtune.util.Strings.compareVersion;
 import static edu.ucsc.dbtune.util.Strings.toBooleanList;
 import static edu.ucsc.dbtune.util.Strings.toDoubleArrayFromIndexed;
@@ -188,7 +186,6 @@ public class PGOptimizer extends AbstractOptimizer
         Index     index;
         boolean   isSync;
         int[]     positions;
-        String    indexName;
 
         indexes = new ArrayList<Index>();
         stmt    = connection.createStatement();
@@ -208,13 +205,12 @@ public class PGOptimizer extends AbstractOptimizer
             if (table == null)
                 throw new SQLException("Can't find table with id " + rs.getInt("reloid"));
 
-            isSync    = rs.getString("sync").charAt(0) == 'Y';
+            isSync = rs.getString("sync").charAt(0) == 'Y';
             positions = toIntegerArray(rs.getString("atts").split(" "));
-            isDesc    = toBooleanList(rs.getString("desc").split(" "));
-            columns   = getReferencedColumns(table, positions);
-            indexName = "sat_index_" + new Random().nextInt(10000);
+            isDesc = toBooleanList(rs.getString("desc").split(" "));
+            columns = getReferencedColumns(table, positions);
 
-            index = new Index(indexName, columns, isDesc, SECONDARY, NON_UNIQUE, UNCLUSTERED);
+            index = findEquivalentOrCreateNew(new ColumnOrdering(columns, isDesc));
 
             if (isSync)
                 index.setScanOption(SYNCHRONIZED);

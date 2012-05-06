@@ -5,8 +5,10 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -212,18 +214,20 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
      */
     protected void extractIndexes(Catalog catalog, Connection connection) throws SQLException
     {
-        Map<Integer, Column> indexToColumns;
+        Map<Integer, Column> ordinalToColumns;
+        Map<Column, Boolean> ascendingValues;
 
         DatabaseMetaData meta;
-        ResultSet        rs;
-        Column           column;
-        Index            index;
-        String           columnName;
-        String           indexName;
-        int              type;
-        boolean          isUnique;
-        boolean          isClustered;
-        boolean          isPrimary = false;
+        ResultSet rs;
+        Column column;
+        Index index;
+        String currentIndexName;
+        String nextIndexName;
+        String columnName;
+        boolean isUnique = false;
+        boolean isClustered = false;
+        boolean isPrimary = false;
+        int type;
 
         meta = connection.getMetaData();
 
@@ -233,9 +237,11 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
         for (Schema sch : catalog.schemas()) {
             for (Table table : sch.tables()) {
 
-                indexToColumns = new HashMap<Integer, Column>();
-                indexName      = "";
-                index          = null;
+                ordinalToColumns = new TreeMap<Integer, Column>();
+                ascendingValues = new HashMap<Column, Boolean>();
+                nextIndexName = "";
+                currentIndexName = "";
+                index = null;
 
                 if (!swappedTerms)
                     rs = meta.getIndexInfo(null, sch.getName(), table.getName(), false, true);
@@ -244,17 +250,17 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
 
                 while (rs.next()) {
                     type = rs.getShort("TYPE");
+                    nextIndexName = rs.getString("index_name");
 
                     if (type == DatabaseMetaData.tableIndexStatistic) {
                         table.setPages(rs.getInt("pages"));
                         table.setCardinality(rs.getInt("cardinality"));
-                    } else {
+                        continue;
+                    }
 
-                        if (!indexName.equals(rs.getString("index_name"))) {
+                    if (!currentIndexName.equals(nextIndexName)) {
 
-                            if (index != null)
-                                for (int i = 0; i < indexToColumns.size(); i++)
-                                    index.add(indexToColumns.get(i + 1));
+                        if (!ordinalToColumns.isEmpty()) {
 
                             type = rs.getShort("type");
 
@@ -264,29 +270,50 @@ public abstract class GenericJDBCExtractor implements MetadataExtractor
                                 isClustered = false;
 
                             isUnique  = !rs.getBoolean("non_unique");
-                            indexName = rs.getString("index_name");
-                            index     = new Index(sch, indexName, isPrimary, isClustered, isUnique);
 
-                            indexToColumns = new HashMap<Integer, Column>();
+                            index =
+                                new Index(
+                                        currentIndexName,
+                                        new ArrayList<Column>(ordinalToColumns.values()),
+                                        ascendingValues,
+                                        isPrimary,
+                                        isClustered,
+                                        isUnique);
 
                             index.setMaterialized(true);
+
+                            ordinalToColumns.clear();
+                            ascendingValues.clear();
                         }
 
-                        columnName = rs.getString("column_name");
-                        column     = table.findColumn(columnName);
-
-                        if (column == null)
-                            throw new SQLException(
-                                    "Column " + columnName + " not in " + table.getName());
-
-                        indexToColumns.put(rs.getInt("ordinal_position"), column);
+                        currentIndexName = nextIndexName;
                     }
+
+                    columnName = rs.getString("column_name");
+                    column = table.findColumn(columnName);
+
+                    if (column == null)
+                        throw new SQLException(
+                                "Column " + columnName + " not in " + table.getName());
+
+                    ordinalToColumns.put(rs.getInt("ordinal_position"), column);
+                    ascendingValues.put(
+                            column, rs.getString("asc_or_desc").equals("A") ? true : false);
                 }
 
                 // add the columns of the last index
-                if (index != null)
-                    for (int i = 0; i < indexToColumns.size(); i++)
-                        index.add(indexToColumns.get(i + 1));
+                if (!ordinalToColumns.isEmpty()) {
+                    index =
+                        new Index(
+                                currentIndexName,
+                                new ArrayList<Column>(ordinalToColumns.values()),
+                                ascendingValues,
+                                isPrimary,
+                                isClustered,
+                                isUnique);
+
+                    index.setMaterialized(true);
+                }
 
                 rs.close();
             }

@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.sql.SQLException;
 
 import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
@@ -11,7 +12,7 @@ import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
-import static edu.ucsc.dbtune.metadata.Index.ASC;
+import static edu.ucsc.dbtune.metadata.ColumnOrdering.ASC;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.TABLE_SCAN;
 
@@ -51,7 +52,7 @@ public class TableAccessSlotTest
 
         Table table = catalog.<Table>findByName("schema_0.table_0");
         Index index = catalog.<Index>findByName("schema_0.table_0_index_2");
-        InterestingOrder io = new InterestingOrder(table.columns().get(0), ASC);
+        ColumnOrdering io = new ColumnOrdering(table.columns().get(0), ASC);
         
         tblScan.add(table);
         idxScan.add(index);
@@ -105,7 +106,7 @@ public class TableAccessSlotTest
 
         Table table = catalog.<Table>findByName("schema_0.table_0");
         Index index = catalog.<Index>findByName("schema_0.table_0_index_2");
-        InterestingOrder io = new InterestingOrder(table.columns().get(0), ASC);
+        ColumnOrdering io = new ColumnOrdering(table.columns().get(0), ASC);
         
         tblScan.addColumnsFetched(io);
         idxScan.addColumnsFetched(io);

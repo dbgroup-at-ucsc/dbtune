@@ -5,6 +5,7 @@ import java.util.List;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
@@ -40,7 +41,7 @@ public class SQLStatementPlanTest
     private Table tbl3;
     private Index index2;
     private List<Predicate> predicates;
-    private InterestingOrder interestingOrder;
+    private ColumnOrdering columnOrdering;
 
     /**
      * @throws Exception
@@ -61,8 +62,10 @@ public class SQLStatementPlanTest
         tbl3 = catalog.<Table>findByName("schema_0.table_2");
         index2 = catalog.schemas().get(0).indexes().get(0);
         predicates = new ArrayList<Predicate>();
-        interestingOrder =
-            new InterestingOrder(catalog.<Column>findByName("schema_0.table_2.column_0"), ASC);
+        columnOrdering =
+            new ColumnOrdering(
+                catalog.<Column>findByName("schema_0.table_2.column_0"),
+                ASC ? ColumnOrdering.ASC : ColumnOrdering.DESC);
 
         predicates.add(new Predicate(null, "A > B"));
         predicates.add(new Predicate(null, "B > C"));
@@ -70,7 +73,7 @@ public class SQLStatementPlanTest
         one.add(tbl1);
         one.add(predicates);
         two.add(index2);
-        two.addColumnsFetched(interestingOrder);
+        two.addColumnsFetched(columnOrdering);
         three.add(tbl3);
 
         plan = new SQLStatementPlan(sql, root);

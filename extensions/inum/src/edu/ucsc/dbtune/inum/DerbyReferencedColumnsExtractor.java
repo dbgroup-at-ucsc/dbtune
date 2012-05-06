@@ -12,6 +12,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.Table;
 
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -35,9 +36,10 @@ import org.apache.derby.impl.sql.compile.HalfOuterJoinNode;
 import org.apache.derby.impl.sql.compile.JoinNode;
 import org.apache.derby.impl.sql.compile.OrderByList;
 import org.apache.derby.impl.sql.compile.QueryTreeNode;
-import org.apache.derby.impl.sql.compile.SelectNode;
 import org.apache.derby.impl.sql.compile.ResultColumn;
+import org.apache.derby.impl.sql.compile.SelectNode;
 
+//CHECKSTYLE:OFF
 public class DerbyReferencedColumnsExtractor implements Visitor
 {
     private Set<ColumnReference> columnsInPredicate;
@@ -286,7 +288,7 @@ public class DerbyReferencedColumnsExtractor implements Visitor
     /**
      * {@inheritDoc}
      */
-    public Map<Table, Set<InumInterestingOrder>> extract(SQLStatement statement) throws SQLException
+    public Map<Table, Set<ColumnOrdering>> extract(SQLStatement statement) throws SQLException
     {
         parse(statement);
 
@@ -375,8 +377,8 @@ public class DerbyReferencedColumnsExtractor implements Visitor
      *      if a {@code SELECT} statement contains subqueries; if {@link
      *      #extractInterestingOrdersPerTable} fails;
      */
-    private Map<Table, Set<InumInterestingOrder>> extractInterestingOrders() throws 
-        StandardException, SQLException
+    private Map<Table, Set<ColumnOrdering>> extractInterestingOrders() throws StandardException, 
+            SQLException
     {
         List<String> tableNames = new ArrayList<String>();
         columns = new HashSet<Column>();
@@ -604,15 +606,15 @@ public class DerbyReferencedColumnsExtractor implements Visitor
      * @throws SQLException
      *      when there is error in connecting with databases
      */
-    private Map<Table, Set<InumInterestingOrder>> extractInterestingOrdersPerTable(
+    private Map<Table, Set<ColumnOrdering>> extractInterestingOrdersPerTable(
             List<String> tableNames,
             Set<Column> columns,
             Map<Column, Boolean> ascending)
         throws SQLException
     {
-        Map<Table, Set<InumInterestingOrder>> interestingOrdersPerTable = new HashMap<Table, 
-        Set<InumInterestingOrder>>();
-        Set<InumInterestingOrder> interestingOrdersForTable;
+        Map<Table, Set<ColumnOrdering>> interestingOrdersPerTable = new HashMap<Table, 
+        Set<ColumnOrdering>>();
+        Set<ColumnOrdering> interestingOrdersForTable;
         Table table;
 
         // add FTS for each table in the from clause
@@ -621,7 +623,7 @@ public class DerbyReferencedColumnsExtractor implements Visitor
             table = catalog.<Table>findByName(tblName);
 
             if (interestingOrdersPerTable.get(table) == null)  {
-                interestingOrdersForTable = new HashSet<InumInterestingOrder>();
+                interestingOrdersForTable = new HashSet<ColumnOrdering>();
                 interestingOrdersPerTable.put(table, interestingOrdersForTable);
             }
         }
@@ -633,7 +635,10 @@ public class DerbyReferencedColumnsExtractor implements Visitor
                 throw new SQLException("Can't find " + table + " in the from list");
 
             interestingOrdersForTable = interestingOrdersPerTable.get(table);
-            interestingOrdersForTable.add(new InumInterestingOrder(col, ascending.get(col)));
+            if (ascending.get(col))
+                interestingOrdersForTable.add(new ColumnOrdering(col, ColumnOrdering.ASC));
+            else
+                interestingOrdersForTable.add(new ColumnOrdering(col, ColumnOrdering.DESC));
         }
 
         return interestingOrdersPerTable;
@@ -666,3 +671,4 @@ public class DerbyReferencedColumnsExtractor implements Visitor
         return false;
     }
 }
+//CHECKSTYLE:ON

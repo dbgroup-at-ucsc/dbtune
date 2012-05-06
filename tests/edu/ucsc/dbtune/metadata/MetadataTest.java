@@ -1,25 +1,18 @@
 package edu.ucsc.dbtune.metadata;
 
-import org.junit.Test;
 import org.junit.BeforeClass;
-
-import edu.ucsc.dbtune.metadata.Catalog;
-import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.DatabaseObject;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
-import edu.ucsc.dbtune.metadata.Table;
-
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
 import static edu.ucsc.dbtune.metadata.DatabaseObject.NON_ID;
 
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
+import static org.junit.Assert.assertThat;
+
+//CHECKSTYLE:OFF
 /**
  * Test for general metadata operations
  */
@@ -223,32 +216,6 @@ public class MetadataTest
     }
 
     /**
-     * Tests that objects that are created by using a fully qualified name are created correctly. 
-     * Also tests {@link Catalog#createObject} and {@link}
-     */
-    @Test
-    public void testCreationWithFullyQualifiedNames() throws Exception
-    {
-        Schema sch = catalog.<Schema>create("schema_3");
-        Table tbl = new Table(sch,"table_0");
-        Index idx = catalog.<Index>create("schema_3.table_0_index_0");
-        Column col = catalog.<Column>create("schema_3.table_0.column_0");
-
-        assertThat(sch, is(notNullValue()));
-        assertThat(tbl, is(notNullValue()));
-        assertThat(idx, is(notNullValue()));
-        assertThat(col, is(notNullValue()));
-
-        try {
-            Table t = catalog.<Table>create("schema_3.table_1");
-            assertThat(t.getFullyQualifiedName(), is("schema_3.table_1"));
-            fail("catalog.<Table>create() should have thrown exception");
-        } catch (ClassCastException ex) {
-            assertThat(ex.getMessage(), is("edu.ucsc.dbtune.metadata.Index cannot be cast to edu.ucsc.dbtune.metadata.Table"));
-        }
-    }
-
-    /**
      * Test unassignment of ID. Since no dbobject was assigned an ID explicitly in the construction 
      * of them, their ID should be {@link NON_ID}
      */
@@ -269,3 +236,4 @@ public class MetadataTest
      *   - toString
      */
 }
+//CHECKSTYLE:ON

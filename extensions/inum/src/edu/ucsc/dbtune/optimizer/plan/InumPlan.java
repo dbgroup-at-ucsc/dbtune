@@ -15,6 +15,7 @@ import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -534,7 +535,7 @@ public class InumPlan extends SQLStatementPlan
 
         sb.append("SELECT ");
 
-        for (Column c : slot.getColumnsFetched().columns())
+        for (Column c : slot.getColumnsFetched().getColumns())
             sb.append(c.getName()).append(", ");
 
         sb.delete(sb.length() - 2, sb.length() - 1);
@@ -630,12 +631,19 @@ public class InumPlan extends SQLStatementPlan
         leaf.add(fetch.getPredicates());
 
         // we also have to pull the columns fetched down to the slot
-        for (Column c : fetch.getColumnsFetched().columns())
-            if (leaf.getColumnsFetched() == null)
-                leaf.addColumnsFetched(
-                        new InterestingOrder(c, fetch.getColumnsFetched().isAscending(c)));
-            else if (!leaf.getColumnsFetched().contains(c))
-                leaf.getColumnsFetched().add(c, fetch.getColumnsFetched().isAscending(c));
+        List<Column> columns =
+            new ArrayList<Column>(fetch.getColumnsFetched().getColumns());
+        Map<Column, Integer> orderings =
+            new HashMap<Column, Integer>(fetch.getColumnsFetched().getOrderings());
+
+        if (leaf.getColumnsFetched() != null)
+            for (Column c : leaf.getColumnsFetched().getColumns())
+                if (!columns.contains(c)) {
+                    columns.add(c);
+                    orderings.put(c, leaf.getColumnsFetched().getOrdering(c));
+                }
+
+        leaf.addColumnsFetched(new ColumnOrdering(columns, orderings));
 
         sqlPlan.remove(fetch);
         sqlPlan.setChild(fetchParent, leaf);

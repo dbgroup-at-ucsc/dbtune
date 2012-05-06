@@ -20,11 +20,11 @@ import java.util.regex.Pattern;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.Predicate;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
@@ -34,6 +34,9 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Sets.newHashSet;
 
+import static edu.ucsc.dbtune.metadata.ColumnOrdering.ASC;
+import static edu.ucsc.dbtune.metadata.ColumnOrdering.DESC;
+
 import static edu.ucsc.dbtune.optimizer.plan.Operator.DELETE;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INSERT;
@@ -42,6 +45,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.TEMPORARY_TABLE_SCAN;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.UPDATE;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
+import static edu.ucsc.dbtune.util.MetadataUtils.findEquivalentOrCreateNew;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedSchemas;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
@@ -271,7 +275,7 @@ public class DB2Optimizer extends AbstractOptimizer
      * @throws SQLException
      *      if one of the column names can't be bound to the corresponding column
      */
-    static InterestingOrder extractColumnsUsedByOperator(
+    static ColumnOrdering extractColumnsUsedByOperator(
             String colNamesInExplainStream, DatabaseObject dbo, Catalog catalog)
         throws SQLException
     {
@@ -284,8 +288,8 @@ public class DB2Optimizer extends AbstractOptimizer
         List<Column> columns = new ArrayList<Column>();
         String[] colNamesAndAscending = colNamesInExplainStream.split("\\+");
         String colName;
-        Map<Column, Boolean>  ascending = new HashMap<Column, Boolean>();
-        boolean asc;
+        Map<Column, Integer>  ascending = new HashMap<Column, Integer>();
+        int asc;
         
         if (dbo instanceof Index)
             table = ((Index) dbo).getTable();
@@ -300,17 +304,17 @@ public class DB2Optimizer extends AbstractOptimizer
             String colNameAndAscending = tblAndColNameAndAscending.split("Q*\\.")[1];
             if (!colNameAndAscending.contains("(")) {
                 colName = colNameAndAscending;
-                asc = true;
+                asc = ASC;
             }
             else {
                 colName = colNameAndAscending.split("\\(")[0];
                 
                 if (colNameAndAscending.split("\\(")[1].contains("A"))
-                    asc = true;
+                    asc = ASC;
                 if (colNameAndAscending.split("\\(")[1].contains("D"))
-                    asc = false;
+                    asc = DESC;
                 else {
-                    asc = false;
+                    asc = DESC;
                     //System.out.println("Unknown order for " + colName);
                 }
             }
@@ -328,7 +332,7 @@ public class DB2Optimizer extends AbstractOptimizer
         if (columns.size() == 0)
             return null;
         
-        return new InterestingOrder(columns, ascending);
+        return new ColumnOrdering(columns, ascending);
     }
 
     /**
@@ -886,7 +890,7 @@ public class DB2Optimizer extends AbstractOptimizer
         String columnNames = rs.getString("column_names");
         long cardinality = rs.getLong("cardinality");
         DatabaseObject dbo;
-        InterestingOrder columnsFetched;
+        ColumnOrdering columnsFetched;
 
         Operator op = new Operator(getOperatorName(name.trim()), accomulatedCost, cardinality);
 
@@ -1108,6 +1112,7 @@ public class DB2Optimizer extends AbstractOptimizer
                 plan.setChild(parent, child);
             }
             catch (IllegalArgumentException ex) {
+                ex.getMessage();
                 //throw new SQLException(
                     //"Duplicate operator found; is statement querying the same table more than " +
                     //"once? The DBTune API doesn't handle this case yet", ex);
@@ -1177,7 +1182,11 @@ public class DB2Optimizer extends AbstractOptimizer
             else
                 clustered = false;
 
-            index = new Index(columns, ascending, primary, unique, clustered);
+            index = findEquivalentOrCreateNew(new ColumnOrdering(columns, ascending));
+
+            index.setClustered(clustered);
+            index.setPrimary(primary);
+            index.setUnique(unique);
 
             if (rs.getString("reverse_scans").trim().equals("Y"))
                 index.setScanOption(Index.REVERSIBLE);

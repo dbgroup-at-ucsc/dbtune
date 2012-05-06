@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 
 /**
@@ -93,7 +94,7 @@ public class Operator
     protected List<Predicate> predicates;
 
     /** columns fetched by the operator. */
-    protected InterestingOrder columnsFetched;
+    protected ColumnOrdering columnsFetched;
 
     /**
      * creates an empty operator ({@code name="empty"}. This can be used to represent empty plans.
@@ -125,7 +126,7 @@ public class Operator
             long cardinality,
             List<DatabaseObject> objects,
             List<Predicate> predicates,
-            InterestingOrder columnsFetched)
+            ColumnOrdering columnsFetched)
     {
         this.name = new String(name);
         this.accumulatedCost = accumulatedCost;
@@ -193,7 +194,7 @@ public class Operator
      * @param columnsFetched
      *     the columns fetched by this operator
      */
-    public void addColumnsFetched(InterestingOrder columnsFetched)
+    public void addColumnsFetched(ColumnOrdering columnsFetched)
     {
         this.columnsFetched = columnsFetched;
     }
@@ -204,7 +205,7 @@ public class Operator
      * @return
      *      columns that are processed by this operator
      */
-    public InterestingOrder getColumnsFetched()
+    public ColumnOrdering getColumnsFetched()
     {
         return columnsFetched;
     }

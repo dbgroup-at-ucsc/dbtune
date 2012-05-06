@@ -53,6 +53,27 @@ public class ColumnOrdering
     }
 
     /**
+     * Creates an ordering out of an index.
+     *
+     * @param index
+     *      an index
+     * @throws SQLException
+     *      if not all columns correspond to the same table
+     */
+    public ColumnOrdering(Index index) throws SQLException
+    {
+        Map<Column, Integer> orderings = new HashMap<Column, Integer>();
+
+        for (Column c : index.columns())
+            if (index.isAscending(c))
+                orderings.put(c, ASC);
+            else
+                orderings.put(c, DESC);
+        
+        init(index.columns(), orderings);
+    }
+
+    /**
      * Creates a column ordering with given column and order.
      *
      * @param column
@@ -99,7 +120,7 @@ public class ColumnOrdering
      * @throws SQLException
      *      if the schema of the table is null or can't be retrieved
      */
-    public ColumnOrdering(List<Column> columns, List<Integer> ordering) throws SQLException
+    public ColumnOrdering(List<Column> columns, List<Boolean> ordering) throws SQLException
     {
         if (columns.size() != ordering.size())
             throw new SQLException(
@@ -108,9 +129,26 @@ public class ColumnOrdering
         HashMap<Column, Integer> orderingMap = new HashMap<Column, Integer>();
 
         for (int i = 0; i < columns.size(); i++)
-            orderingMap.put(columns.get(i), ordering.get(i));
+            if (ordering.get(i))
+                orderingMap.put(columns.get(i), ASC);
+            else
+                orderingMap.put(columns.get(i), DESC);
 
         init(columns, orderingMap);
+    }
+    
+    /**
+     * Copy constructor.
+     *
+     * @param other
+     *      other object being copied
+     * @throws SQLException
+     *      if the schema of the table is null or can't be retrieved
+     */
+    public ColumnOrdering(ColumnOrdering other)
+        throws SQLException
+    {
+        init(other.columns, other.ordering);
     }
 
     /**
@@ -148,6 +186,31 @@ public class ColumnOrdering
                 throw new SQLException("No ordering value for column " + c + " in given map");
             else if (!isValid(this.ordering.get(c)))
                 throw new SQLException(this.ordering.get(c) + " value for " + c + " invalid");
+    }
+
+    /**
+     * Returns the table that the columns correspond to.
+     *
+     * @return
+     *      table
+     */
+    public Table getTable()
+    {
+        if (getColumns().size() == 0)
+            throw new RuntimeException("Empty ordering");
+
+        return getColumns().get(0).getTable();
+    }
+
+    /**
+     * Returns the size, determined by the number of columns in the ordering.
+     *
+     * @return
+     *      size of the ordering
+     */
+    public int size()
+    {
+        return this.columns.size();
     }
 
     /**
@@ -228,6 +291,51 @@ public class ColumnOrdering
     }
 
     /**
+     * @param index
+     *      index
+     * @return
+     *      {@code true} if order of {@code index} is equivalent; {@code false} otherwise
+     */
+    public boolean isSameOrdering(Index index)
+    {
+        if (index.size() != columns.size())
+            return false;
+
+        if (!columns.equals(index.columns()))
+            return false;
+
+        for (Column c : index.columns())
+            if (index.isAscending(c) && getOrdering(c) != ASC)
+                return false;
+            else if (!index.isAscending(c) && getOrdering(c) != DESC)
+                return false;
+
+        return true;
+    }
+
+    /**
+     * Whether the given index covers this one. An index a is covered by another b if a's columns 
+     * are a prefix of b's and with the same {@link #isAscending ascending} value.
+     *
+     * @param index
+     *     index that may (or not) cover this one.
+     * @return
+     *     {@code true} if this index is covered by the given one; {@code false} otherwise
+     */
+    public boolean isCoveredBy(Index index)
+    {
+        ColumnOrdering co;
+
+        try {
+            co = new ColumnOrdering(index);
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        return isCoveredBy(co);
+    }
+
+    /**
      * Whether the given index covers this one. An index a is covered by another b if a's columns 
      * are a prefix of b's and with the same {@link #isAscending ascending} value.
      *
@@ -247,6 +355,29 @@ public class ColumnOrdering
                 return false;
 
         return true;
+    }
+
+    /**
+     * Whether the given index covers this one without taking into account the order. An index a is 
+     * covered by another b if a's columns are contained in b's and they're in the same {@link 
+     * #isAscending ascending} order.
+     *
+     * @param index
+     *     index that may (or not) cover this one.
+     * @return
+     *     {@code true} if this index is covered by the given one; {@code false} otherwise
+     */
+    public boolean isCoveredByIgnoreOrder(Index index)
+    {
+        ColumnOrdering co;
+
+        try {
+            co = new ColumnOrdering(index);
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        return isCoveredByIgnoreOrder(co);
     }
 
     /**
@@ -282,6 +413,25 @@ public class ColumnOrdering
     public static boolean covers(int o1, int o2)
     {
         if (o1 == o2 || o1 == ANY || o2 == ANY)
+            return true;
+
+        return false;
+    }
+
+    /**
+     * @param o1
+     *      first ordering
+     * @param o2
+     *      second ordering
+     * @return
+     *      {@code true} if order {@code o1} covers {@code o2}; {@code false} otherwise
+     */
+    public static boolean covers(int o1, boolean o2)
+    {
+        if (o1 == ASC && o2)
+            return true;
+
+        if ((o1 == DESC || o1 == ANY) && !o2)
             return true;
 
         return false;

@@ -5,9 +5,8 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.junit.BeforeClass;
@@ -17,16 +16,14 @@ import static com.google.common.collect.Iterables.get;
 
 import static edu.ucsc.dbtune.DBTuneInstances.configureCatalogWithoutIndexes;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
-import static edu.ucsc.dbtune.metadata.Index.ASC;
-import static edu.ucsc.dbtune.metadata.Index.DESC;
-import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesPerTable;
+import static edu.ucsc.dbtune.util.MetadataUtils.getOrderingsPerTable;
 
 import static org.hamcrest.Matchers.is;
 
 import static org.junit.Assert.assertThat;
 
 /**
- * Unit test for DerbyInterestingOrdersExtractor.
+ * Unit test for DerbyColumnOrderingsExtractor.
  *
  * @author Ivo Jimenez
  * @author Quoc Trung Tran
@@ -53,12 +50,15 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testOrderBy() throws Exception
     {
-        Map<Table, Set<Index>> ordersPerTable;
+        Map<Table, Set<ColumnOrdering>> ordersPerTable;
         SQLStatement sql;
-        InterestingOrder io;
+        ColumnOrdering io;
 
         Table t = catalog.<Table>findByName("schema_0.table_0");
-        io = new InterestingOrder(catalog.<Column>findByName("schema_0.table_0.column_0"), ASC);
+        io =
+            new ColumnOrdering(
+                    catalog.<Column>findByName("schema_0.table_0.column_0"),
+                    ColumnOrdering.ASC);
 
         sql = new SQLStatement(
                 "SELECT " +
@@ -70,7 +70,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  ORDER BY " +
                 "     column_0, column_1 DESC, column_2 ASC");
 
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(1));
 
@@ -89,7 +89,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  ORDER BY " +
                 "     column_0 DESC");
 
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(1));
 
@@ -98,7 +98,8 @@ public class DerbyInterestingOrdersExtractorTest
         assertThat(get(ordersPerTable.get(t), 0).size(), is(1));
         assertThat(ordersPerTable.get(t).contains(io), is(false));
 
-        io = new InterestingOrder(catalog.<Column>findByName("schema_0.table_0.column_0"), DESC);
+        io = new ColumnOrdering(catalog.<Column>findByName("schema_0.table_0.column_0"), 
+                ColumnOrdering.DESC);
 
         assertThat(ordersPerTable.get(t).contains(io), is(true));
     }
@@ -110,12 +111,12 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testGroupBy() throws Exception
     {
-        Map<Table, Set<Index>> ordersPerTable;
+        Map<Table, Set<ColumnOrdering>> ordersPerTable;
         SQLStatement sql;
 
         Table t = catalog.<Table>findByName("schema_0.table_0");
         Column c = catalog.<Column>findByName("schema_0.table_0.column_0");
-        InterestingOrder io = new InterestingOrder(c, ASC);
+        ColumnOrdering io = new ColumnOrdering(c, ColumnOrdering.ASC);
 
         sql = new SQLStatement(
                 "SELECT " +
@@ -127,7 +128,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  GROUP BY " +
                 "     column_0");
 
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(1));
 
@@ -163,14 +164,14 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testOrderByGroupBy() throws Exception
     {
-        Map<Table, Set<Index>> ordersPerTable;
+        Map<Table, Set<ColumnOrdering>> ordersPerTable;
         SQLStatement sql;
 
         Table t = catalog.<Table>findByName("schema_0.table_0");
         Column c0 = catalog.<Column>findByName("schema_0.table_0.column_0");
         Column c1 = catalog.<Column>findByName("schema_0.table_0.column_1");
-        InterestingOrder io0 = new InterestingOrder(c0, ASC);
-        InterestingOrder io1 = new InterestingOrder(c1, ASC);
+        ColumnOrdering io0 = new ColumnOrdering(c0, ColumnOrdering.ASC);
+        ColumnOrdering io1 = new ColumnOrdering(c1, ColumnOrdering.ASC);
         
         sql = new SQLStatement(
                 "SELECT " +
@@ -184,7 +185,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  ORDER BY " +
                 "     column_0, column_1");
 
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(1));
 
@@ -201,7 +202,7 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testJoinPredicates() throws Exception
     {
-        Map<Table, Set<Index>> ordersPerTable;
+        Map<Table, Set<ColumnOrdering>> ordersPerTable;
         SQLStatement sql;
 
         Table t0 = catalog.<Table>findByName("schema_0.table_0");
@@ -210,9 +211,9 @@ public class DerbyInterestingOrdersExtractorTest
         Column c0 = catalog.<Column>findByName("schema_0.table_0.column_0");
         Column c1 = catalog.<Column>findByName("schema_0.table_1.column_1");
         Column c2 = catalog.<Column>findByName("schema_0.table_2.column_2");
-        InterestingOrder io0 = new InterestingOrder(c0, ASC);
-        InterestingOrder io1 = new InterestingOrder(c1, ASC);
-        InterestingOrder io2 = new InterestingOrder(c2, ASC);
+        ColumnOrdering io0 = new ColumnOrdering(c0, ColumnOrdering.ASC);
+        ColumnOrdering io1 = new ColumnOrdering(c1, ColumnOrdering.ASC);
+        ColumnOrdering io2 = new ColumnOrdering(c2, ColumnOrdering.ASC);
         
         sql = new SQLStatement(
                 "SELECT " +
@@ -223,7 +224,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "      table_0.column_0 = 5 " +
                 "  AND table_0.column_0 = table_1.column_1 ");
         
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(2));
         
@@ -243,7 +244,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  WHERE " +
                 "     table_0.column_0 = 5 ");
         
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(2));
 
@@ -268,7 +269,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  WHERE " +
                 "     table_0.column_0 = 5 ");
         
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(3));
 
@@ -296,7 +297,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  WHERE " +
                 "     table_0.column_0 = 5 ");
         
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(3));
 
@@ -318,13 +319,13 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testSubQueries() throws Exception
     {
-        Map<Table, Set<Index>> ordersPerTable;
+        Map<Table, Set<ColumnOrdering>> ordersPerTable;
         SQLStatement sql;
 
         Table t0 = catalog.<Table>findByName("schema_0.table_0");
         Table t1 = catalog.<Table>findByName("schema_0.table_1");
         Column c0 = catalog.<Column>findByName("schema_0.table_0.column_0");
-        InterestingOrder io0 = new InterestingOrder(c0, ASC);
+        ColumnOrdering io0 = new ColumnOrdering(c0, ColumnOrdering.ASC);
         
         sql = new SQLStatement(
                 "  SELECT " +
@@ -349,7 +350,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "      column_0 ");
         
         assertThat(extractor.extract(sql).size(), is(1));
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(1));
         assertThat(ordersPerTable.keySet().contains(t0), is(true));
@@ -381,7 +382,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  ORDER BY " +
                 "      column_0 ");
 
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(1));
         assertThat(ordersPerTable.keySet().contains(t0), is(true));
@@ -399,15 +400,15 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testCorrelated() throws Exception
     {
-        Map<Table, Set<Index>> ordersPerTable;
+        Map<Table, Set<ColumnOrdering>> ordersPerTable;
         SQLStatement sql;
 
         Table t0 = catalog.<Table>findByName("schema_0.table_0");
         Table t1 = catalog.<Table>findByName("schema_0.table_1");
         Column c0 = catalog.<Column>findByName("schema_0.table_0.column_1");
         Column c1 = catalog.<Column>findByName("schema_0.table_1.column_2");
-        InterestingOrder io0 = new InterestingOrder(c0, ASC);
-        InterestingOrder io1 = new InterestingOrder(c1, ASC);
+        ColumnOrdering io0 = new ColumnOrdering(c0, ColumnOrdering.ASC);
+        ColumnOrdering io1 = new ColumnOrdering(c1, ColumnOrdering.ASC);
         
         sql = new SQLStatement(
                 "  SELECT " +
@@ -431,7 +432,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "      column_1 " +
                 "  ORDER BY " +
                 "      column_1 ");
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(2));
         assertThat(ordersPerTable.keySet().contains(t0), is(true));
@@ -467,7 +468,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "  ORDER BY " +
                 "      column_1 ");
 
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(2));
         assertThat(ordersPerTable.keySet().contains(t0), is(true));
@@ -488,12 +489,12 @@ public class DerbyInterestingOrdersExtractorTest
     @Test
     public void testSelectionPredicatesOnColumnsOfTheSameTable() throws Exception
     {
-        Map<Table, Set<Index>> ordersPerTable;
+        Map<Table, Set<ColumnOrdering>> ordersPerTable;
         SQLStatement sql;
 
         Table t1 = catalog.<Table>findByName("schema_0.table_1");
         Column c1 = catalog.<Column>findByName("schema_0.table_1.column_0");
-        InterestingOrder io1 = new InterestingOrder(c1, ASC);
+        ColumnOrdering io1 = new ColumnOrdering(c1, ColumnOrdering.ASC);
         
         sql = new SQLStatement(
                 "SELECT " +
@@ -504,7 +505,7 @@ public class DerbyInterestingOrdersExtractorTest
                 "    column_2 < column_3 " +
                 "ORDER BY " +
                 "    column_0");
-        ordersPerTable = getIndexesPerTable(extractor.extract(sql));
+        ordersPerTable = getOrderingsPerTable(extractor.extract(sql));
 
         assertThat(ordersPerTable.size(), is(1));
         assertThat(ordersPerTable.keySet().contains(t1), is(true));

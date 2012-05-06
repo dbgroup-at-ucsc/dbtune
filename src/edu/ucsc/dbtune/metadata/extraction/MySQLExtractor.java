@@ -4,8 +4,10 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -78,7 +80,8 @@ public class MySQLExtractor extends GenericJDBCExtractor
     @Override
     protected void extractIndexes(Catalog catalog, Connection connection) throws SQLException
     {
-        Map<Integer, Column> indexToColumns;
+        Map<Integer, Column> ordinalToColumns;
+        Map<Column, Boolean> ascendingValues;
 
         DatabaseMetaData meta;
         ResultSet        rs;
@@ -99,7 +102,8 @@ public class MySQLExtractor extends GenericJDBCExtractor
 
                 table.setInternalID(idCounter++);
 
-                indexToColumns   = new HashMap<Integer, Column>();
+                ordinalToColumns = new TreeMap<Integer, Column>();
+                ascendingValues = new HashMap<Column, Boolean>();
                 currentIndexName = "";
                 index            = null;
 
@@ -113,34 +117,41 @@ public class MySQLExtractor extends GenericJDBCExtractor
                         nextIndexName = table + "_pkey";
 
                     if (!currentIndexName.equals(nextIndexName)) {
+                        
+                        if (!ordinalToColumns.isEmpty()) {
 
-                        if (index != null)
-                            for (int i = 0; i < indexToColumns.size(); i++)
-                                index.add(indexToColumns.get(i + 1));
+                            type = rs.getShort("type");
 
-                        type = rs.getShort("type");
+                            if (type == DatabaseMetaData.tableIndexClustered)
+                                isClustered = true;
+                            else
+                                isClustered = false;
 
-                        if (type == DatabaseMetaData.tableIndexClustered)
-                            isClustered = true;
-                        else
-                            isClustered = false;
+                            isUnique         = !rs.getBoolean("non_unique");
+                            currentIndexName = rs.getString("index_name");
 
-                        isUnique         = !rs.getBoolean("non_unique");
-                        currentIndexName = rs.getString("index_name");
+                            if (currentIndexName.equals("PRIMARY")) {
+                                currentIndexName = table + "_pkey";
+                                isPrimary        = true;
+                            } else {
+                                isPrimary = false;
+                            }
 
-                        if (currentIndexName.equals("PRIMARY")) {
-                            currentIndexName = table + "_pkey";
-                            isPrimary        = true;
-                        } else {
-                            isPrimary = false;
+                            index =
+                                new Index(
+                                        currentIndexName,
+                                        new ArrayList<Column>(ordinalToColumns.values()),
+                                        ascendingValues,
+                                        isPrimary,
+                                        isClustered,
+                                        isUnique);
+
+                            index.setMaterialized(true);
+                            index.setInternalID(idCounter++);
+
+                            ordinalToColumns.clear();
+                            ascendingValues.clear();
                         }
-
-                        index = new Index(sch, currentIndexName, isPrimary, isClustered, isUnique);
-
-                        indexToColumns = new HashMap<Integer, Column>();
-
-                        index.setMaterialized(true);
-                        index.setInternalID(idCounter++);
                     }
 
                     columnName = rs.getString("column_name");
@@ -150,13 +161,42 @@ public class MySQLExtractor extends GenericJDBCExtractor
                         throw new SQLException(
                                 "Column " + columnName + " not in " + table.getName());
 
-                    indexToColumns.put(rs.getInt("ordinal_position"), column);
+                    ordinalToColumns.put(rs.getInt("ordinal_position"), column);
+                    ascendingValues.put(
+                            column, rs.getString("asc_or_desc").equals("A") ? true : false);
                 }
 
                 // add the columns of the last index
-                if (index != null)
-                    for (int i = 0; i < indexToColumns.size(); i++)
-                        index.add(indexToColumns.get(i + 1));
+                if (index != null) {
+                    type = rs.getShort("type");
+
+                    if (type == DatabaseMetaData.tableIndexClustered)
+                        isClustered = true;
+                    else
+                        isClustered = false;
+
+                    isUnique         = !rs.getBoolean("non_unique");
+                    currentIndexName = rs.getString("index_name");
+
+                    if (currentIndexName.equals("PRIMARY")) {
+                        currentIndexName = table + "_pkey";
+                        isPrimary        = true;
+                    } else {
+                        isPrimary = false;
+                    }
+
+                    index =
+                        new Index(
+                                currentIndexName,
+                                new ArrayList<Column>(ordinalToColumns.values()),
+                                ascendingValues,
+                                isPrimary,
+                                isClustered,
+                                isUnique);
+
+                    index.setMaterialized(true);
+                    index.setInternalID(idCounter++);
+                }
 
                 rs.close();
 
