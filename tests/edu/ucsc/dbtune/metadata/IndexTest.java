@@ -53,18 +53,18 @@ public class IndexTest
     {
         Index index;
 
-        assertThat(Index.IN_MEMORY_ID.get(), is(1));
+        assertThat(Index.IN_MEMORY_ID.get(), is(0));
 
         index = new Index(schema, "testi", PRIMARY, CLUSTERED, UNIQUE);
 
         assertThat(index.getContainer(),is((DatabaseObject)schema));
-        assertThat(index.getId(),is(1));
+        assertThat(index.getId(),is(0));
 
         index = new Index("other", columns, PRIMARY, CLUSTERED, UNIQUE);
 
         assertThat(index.getContainer(), is((DatabaseObject)schema));
         assertThat(index.size(), is(table.size()));
-        assertThat(index.getId(),is(2));
+        assertThat(index.getId(),is(1));
     }
 
     @Test
@@ -92,9 +92,9 @@ public class IndexTest
         assertThat(index2, is(not(index1)));
         assertThat(index1, is(not(index3)));
         assertThat(index2, is(not(index3)));
-        assertThat(index1.getId(), is(3));
-        assertThat(index2.getId(), is(4));
-        assertThat(index3.getId(), is(5));
+        assertThat(index1.getId(), is(2));
+        assertThat(index2.getId(), is(3));
+        assertThat(index3.getId(), is(4));
     }
 
     @Test

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Permutations;
@@ -45,10 +44,10 @@ public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerato
      * {@inheritDoc}
      */
     @Override
-    public Set<ByContentIndex> generateByContent(SQLStatement sql)
+    public Set<Index> generate(SQLStatement sql)
         throws SQLException
     {
-        Set<ByContentIndex>  indexes = new HashSet<ByContentIndex>();
+        Set<Index>  indexes = new HashSet<Index>();
         List<Column>         idxCols;
         Permutations<Column> per;
         Map<Column, Boolean> ascendingIndex;
@@ -74,12 +73,9 @@ public class PowerSetOptimalCandidateGenerator extends AbstractCandidateGenerato
                     for (Column col : idxCols)
                         ascendingIndex.put(col, index.isAscending(col));
                     
-                    Index idx = new Index(idxCols, ascendingIndex);
-                    indexes.add(new ByContentIndex(idx));
-                    
+                    indexes.add(new Index(idxCols, ascendingIndex));
                 }
-            }  
-            
+            }
         }
 
         return indexes;

@@ -1,9 +1,12 @@
 package edu.ucsc.dbtune.advisor.candidategeneration;
 
+import java.util.Iterator;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.Test;
@@ -31,8 +34,14 @@ public class OneColumnCandidateGeneratorTest
     {
         CandidateGenerator cg = mock(CandidateGenerator.class);
         Workload wl = mock(Workload.class);
+        SQLStatement sql = mock(SQLStatement.class);
 
-        when(cg.generate(wl)).thenReturn(
+        @SuppressWarnings("unchecked")
+        Iterator<SQLStatement> it = (Iterator<SQLStatement>) mock(Iterator.class);
+
+        when(it.next()).thenReturn(sql);
+        when(wl.iterator()).thenReturn(it);
+        when(cg.generate(sql)).thenReturn(
                 Sets.newHashSet(Iterables.filter(configureCatalog().getAll(), Index.class)));
 
         OneColumnCandidateGenerator oneColG = new OneColumnCandidateGenerator(cg);

@@ -1,10 +1,8 @@
 package edu.ucsc.dbtune.advisor.candidategeneration;
 
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Set;
 
-import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -39,13 +37,8 @@ public class OptimizerCandidateGenerator extends AbstractCandidateGenerator
      * {@inheritDoc}
      */
     @Override
-    public Set<ByContentIndex> generateByContent(SQLStatement statement) throws SQLException
+    public Set<Index> generate(SQLStatement statement) throws SQLException
     {
-        Set<ByContentIndex> indexes = new HashSet<ByContentIndex>();
-
-        for (Index idx : optimizer.recommendIndexes(statement))
-            indexes.add(new ByContentIndex(idx));
-
-        return indexes;
+        return optimizer.recommendIndexes(statement);
     }
 }

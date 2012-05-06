@@ -4,11 +4,9 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
-import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 /**
  * Generate the set of candidate indexes that contain only one column; The candidates considered to 
@@ -36,28 +34,13 @@ public class OneColumnCandidateGenerator extends AbstractCandidateGenerator
      * {@inheritDoc}
      */
     @Override
-    public final Set<ByContentIndex> generateByContent(Workload workload) throws SQLException
+    public Set<Index> generate(SQLStatement sql) throws SQLException
     {
-        Set<ByContentIndex> oneColumnIndexes = new HashSet<ByContentIndex>();
-
-        for (Index index : delegate.generate(workload))
-            for (Column col : index.columns())
-                oneColumnIndexes.add(new ByContentIndex(col, index.isAscending(col)));
-
-        return oneColumnIndexes;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Set<ByContentIndex> generateByContent(SQLStatement sql) throws SQLException
-    {
-        Set<ByContentIndex> oneColumnIndexes = new HashSet<ByContentIndex>();
+        Set<Index> oneColumnIndexes = new HashSet<Index>();
 
         for (Index index : delegate.generate(sql))
             for (Column col : index.columns())
-                oneColumnIndexes.add(new ByContentIndex(col, index.isAscending(col)));
+                oneColumnIndexes.add(new Index(col, index.isAscending(col)));
 
         return oneColumnIndexes;
     }

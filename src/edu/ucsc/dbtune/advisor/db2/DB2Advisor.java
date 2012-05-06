@@ -10,7 +10,6 @@ import java.util.Set;
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
-import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.util.Environment;
@@ -113,10 +112,10 @@ public class DB2Advisor extends Advisor
         cstmt.registerOutParameter(5, Types.BLOB);
         cstmt.execute();
 
-        Set<ByContentIndex> unique = new HashSet<ByContentIndex>();
+        Set<Index> unique = new HashSet<Index>();
 
         for (Index i : DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog()))
-            unique.add(new ByContentIndex(i));
+            unique.add(new Index(i));
 
         //double space = 0;
         //for (Index i : unique)

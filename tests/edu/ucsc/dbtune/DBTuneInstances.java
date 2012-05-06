@@ -293,9 +293,19 @@ public final class DBTuneInstances
      */    
     public static Catalog configureCatalog()
     {
-        return configureCatalog(2, 3, 4);
+        return configureCatalog(2, 3, 4, true);
     }
-    
+
+    /**
+     * Creates a catalog with 2 schemas, 3 tables per schema and 4 columns and 4 indexes per table.
+     *
+     * @return
+     *      a configured catalog
+     */    
+    public static Catalog configureCatalogWithoutIndexes()
+    {
+        return configureCatalog(2, 3, 4, false);
+    }
 
     /**
      * Create a catalog with the specified characteristics of Schema information.
@@ -304,14 +314,17 @@ public final class DBTuneInstances
      *      Number of schema
      * @param numTables
      *      Number of relations in each schema
-     * @param numIndexes
-     *      Number of indexes (equivalent to number of columns) in each relation per schema
+     * @param numColumns
+     *      Number of columns in each table
+     * @param buildIndexes
+     *      whether to build indexes
      * @return
      *      Catalog instance
      * 
      * @throws SQLException
      */
-    public static Catalog configureCatalog(int numSchema, int numTables, int numIndexes)
+    public static Catalog configureCatalog(
+            int numSchema, int numTables, int numColumns, boolean buildIndexes)
     {
         Catalog catalog = new Catalog("catalog_0");
 
@@ -322,9 +335,11 @@ public final class DBTuneInstances
                 for (int k = 0; k < numTables; k++) {
                     Table table = new Table(schema, "table_" + k);
 
-                    for (int l = 0; l < numIndexes; l++)
+                    for (int l = 0; l < numColumns; l++)
                         new Column(table, "column_" + l, l + 1);
 
+                    if (!buildIndexes)
+                        continue;
                     for (Set<Column> cols : Sets.powerSet(new HashSet<Column>(table.columns()))) {
                         if (cols.size() == 0)
                             continue;

@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
@@ -157,46 +156,6 @@ public final class MetadataUtils
     }
 
     /**
-     * Makes a set of {@link ByContentIndex} to {@link Index}.
-     *
-     * @param indexes
-     *      set of indexes where each will be copied to a ByContentIndex instance
-     * @return
-     *      the index with the given id; {@code null} if not found
-     */
-    public static Set<Index> toPlain(Set<ByContentIndex> indexes)
-    {
-        Set<Index> plainSet = new HashSet<Index>();
-
-        for (Index i : indexes)
-            plainSet.add(i);
-
-        return plainSet;
-    }
-
-    /**
-     * Makes a set of {@link Index} to {@link ByContentIndex}.
-     *
-     * @param indexes
-     *      set of indexes where each will be copied to a ByContentIndex instance
-     * @return
-     *      the index with the given id; {@code null} if not found
-     * @throws SQLException
-     *      if the index can't be removed
-     */
-    public static Set<ByContentIndex> toByContent(Set<Index> indexes) throws SQLException
-    {
-        Set<ByContentIndex> byContentSet = new HashSet<ByContentIndex>();
-
-        for (Index i : indexes) {
-            i.getSchema().remove(i);
-            byContentSet.add(new ByContentIndex(i));
-        }
-
-        return byContentSet;
-    }
-
-    /**
      * Converts a bitSet to a set of indexes.
      *
      * @param bs
@@ -235,15 +194,12 @@ public final class MetadataUtils
      * @throws SQLException
      *      if the index can't be removed
      */
-    public static int getNumberOfDistinctIndexesByContent(Set<Index> set1, Set<Index> set2)
+    public static int getNumberOfDistinctIndexes(Set<Index> set1, Set<Index> set2)
         throws SQLException
     {
-        Set<ByContentIndex> byContentSet1 = toByContent(set1);
-        Set<ByContentIndex> byContentSet2 = toByContent(set2);
-
         return
-            difference(byContentSet1, byContentSet2).size() +
-            difference(byContentSet2, byContentSet1).size();
+            difference(set1, set2).size() +
+            difference(set2, set1).size();
     }
 
     /**

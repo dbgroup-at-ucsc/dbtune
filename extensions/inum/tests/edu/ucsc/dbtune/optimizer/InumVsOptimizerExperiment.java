@@ -28,7 +28,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_AND;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.INDEX_OR;
 import static edu.ucsc.dbtune.optimizer.plan.Operator.NESTED_LOOP_JOIN;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
-import static edu.ucsc.dbtune.util.MetadataUtils.getNumberOfDistinctIndexesByContent;
+import static edu.ucsc.dbtune.util.MetadataUtils.getNumberOfDistinctIndexes;
 import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
@@ -240,7 +240,7 @@ public final class InumVsOptimizerExperiment
                             "=K" + indexForEntry + "/L" + (stoppedAt + 1) + "," + // < L(last+1) is L from below
                             explainedByInum.getUsedConfiguration().size() + "," +
                             explainedByOptimizer.getUsedConfiguration().size() + "," +
-                            getNumberOfDistinctIndexesByContent(
+                            getNumberOfDistinctIndexes(
                                 explainedByInum.getUsedConfiguration(),
                                 explainedByOptimizer.getUsedConfiguration()) + "," +
                             ((explainedByOptimizer.getPlan().contains(INDEX_AND) || 

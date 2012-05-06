@@ -98,29 +98,6 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
     }
 
     /**
-     * Convenience method that casts the object returned by {@link #createObject}.
-     *
-     * @param pathToObject
-     *      fully qualified name of the new database object.
-     * @return
-     *      object corresponding to the given fully qualified name; {@code null} if not found.
-     * @throws java.lang.ClassCastException
-     *      if the {@link #findByQualifiedName} method returns an object whose type doesn't 
-     *      correspond to the type given as parameter of the generic expression.
-     * @see #findByQualifiedName
-     * @param <T>
-     *      the object that is expected to be retrieved, i.e. the object type corresponding to the 
-     *      given fully qualified name
-     * @throws SQLException
-     *      when {@link #createObject} throws an exception
-     * @see #createObject
-     */
-    public final <T> T create(String pathToObject) throws SQLException
-    {
-        return Objects.<T>as(createObject(pathToObject));
-    }
-
-    /**
      * Finds the schema whose name matches the given argument. Convenience method that accomplishes 
      * what {@link #find} does but without requiring the user to cast. In other words, the following 
      * is true {@code findSchema("name") == (Schema)find("name")}.

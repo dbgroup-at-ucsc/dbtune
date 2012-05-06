@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import static com.google.common.collect.Iterables.get;
 
-import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
+import static edu.ucsc.dbtune.DBTuneInstances.configureCatalogWithoutIndexes;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 import static edu.ucsc.dbtune.metadata.Index.ASC;
 import static edu.ucsc.dbtune.metadata.Index.DESC;
@@ -42,7 +42,7 @@ public class DerbyInterestingOrdersExtractorTest
     @BeforeClass
     public static void beforeClassSetUp()
     {
-        catalog = configureCatalog();
+        catalog = configureCatalogWithoutIndexes();
         extractor = new DerbyInterestingOrdersExtractor(catalog);
     }
 

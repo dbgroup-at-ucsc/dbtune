@@ -788,8 +788,49 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
      * {@inheritDoc}
      */
     @Override
+    public int hashCode()
+    {
+        // contrary to the super's hashCode (which hashes on the fully qualified name of the dbo), 
+        // we assume that if two indexes are named the same, then they should have the same content
+        // thus, we hash only on the content of the object
+        int result = 0;
+
+        result = 37 * result + size();
+        result = 37 * result + containees.hashCode();
+        result = 37 * result + ascendingColumn.hashCode();
+        result = 37 * result + type;
+        result = 37 * result + (unique ? 0 : 1);
+        result = 37 * result + (primary ? 0 : 1);
+        result = 37 * result + (clustered ? 0 : 1);
+        result = 37 * result + (materialized ? 0 : 1);
+        result = 37 * result + scanOption;
+
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if (equalsContent(other))
+            return true;
+
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean equalsContent(Object other)
     {
+        if (super.equals(other))
+            // we assume that if two indexes have the same name, then they should be equal in 
+            // content
+            return true;
+
         if (!(other instanceof Index))
             return false;
 
@@ -849,13 +890,17 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     @Override
     public String toString()
     {
-        String str = "[";
+        StringBuilder str = new StringBuilder();
+        
+        str.append(getName() + "[");
 
         for (Column col : this)
-            str += "+" + col + (isAscending(col) ? "(A)" : "(D)");
+            str.append(col.getName()).append(isAscending(col) ? "(A)" : "(D)").append("+");
 
-        str += "]";
+        str.delete(str.length() - 1, str.length());
 
-        return str;
+        str.append("]");
+
+        return str.toString();
     }
 }

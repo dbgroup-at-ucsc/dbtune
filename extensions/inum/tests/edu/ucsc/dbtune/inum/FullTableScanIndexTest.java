@@ -8,7 +8,7 @@ import edu.ucsc.dbtune.metadata.Table;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static edu.ucsc.dbtune.DBTuneInstances.configureCatalog;
+import static edu.ucsc.dbtune.DBTuneInstances.configureCatalogWithoutIndexes;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 
 import static org.hamcrest.Matchers.is;
@@ -30,7 +30,7 @@ public class FullTableScanIndexTest
     @BeforeClass
     public static void beforeClassSetUp()
     {
-        catalog = configureCatalog();
+        catalog = configureCatalogWithoutIndexes();
     }
 
     /**

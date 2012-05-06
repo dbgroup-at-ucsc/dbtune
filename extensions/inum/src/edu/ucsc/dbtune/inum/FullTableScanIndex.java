@@ -80,4 +80,30 @@ public final class FullTableScanIndex extends InumInterestingOrder
         
         return false;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode()
+    {
+        return table.hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object other)
+    {
+        if (other == this)
+            return true;
+
+        if (!(other instanceof FullTableScanIndex))
+            return false;
+
+        FullTableScanIndex fts = (FullTableScanIndex) other;
+
+        return table.equals(fts.table);
+    }
 }
