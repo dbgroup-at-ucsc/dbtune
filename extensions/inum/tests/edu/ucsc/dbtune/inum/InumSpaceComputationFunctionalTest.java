@@ -118,7 +118,8 @@ public class InumSpaceComputationFunctionalTest
             for (SQLStatement sql : wl) {
                 i++;
 
-                if (r.nextInt(100) > 5)
+                if (r.nextInt(100) > 20)
+                    // run 20% of queries, to speedup the testing
                     continue;
 
                 List<Set<InumPlan>> spaces = new ArrayList<Set<InumPlan>>();

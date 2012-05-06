@@ -101,7 +101,8 @@ public class MatchingStrategyFunctionalTest
 
                 queryNumber++;
 
-                if (r.nextInt(100) > 5)
+                if (r.nextInt(100) > 20)
+                    // run 20% of queries, to speedup the testing
                     continue;
 
                 Set<InumPlan> inumSpace = new InumPlanSetWithCache();

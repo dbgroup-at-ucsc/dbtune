@@ -1,17 +1,13 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.inum.MatchingStrategy;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.workload.SQLStatement;
-
-import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 /**
  * An INUM-based prepared statement. This object has an INUM space associated to it (a set of {@link 
@@ -77,8 +73,6 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
     public ExplainedSQLStatement explain(Set<Index> configuration) throws SQLException
     {
         MatchingStrategy.Result result = matchingStrategy.match(inumSpace, configuration);
-
-        Map<Index, Double> indexUpdateCosts = new HashMap<Index, Double>();
 
         return new ExplainedSQLStatement(
             sql,

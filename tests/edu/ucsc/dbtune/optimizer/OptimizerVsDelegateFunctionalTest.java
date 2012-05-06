@@ -17,7 +17,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
@@ -43,7 +42,6 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     private static Optimizer delegate;
     private static CandidateGenerator candGen;
     private static PreparedSQLStatement pSql;
-    //private static Random r;
     private int i;
 
     /**
@@ -56,9 +54,8 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
         env = Environment.getInstance();
         db = newDatabaseSystem(env);
         optimizer = db.getOptimizer();
-        delegate = getBaseOptimizer(optimizer);
+        delegate = optimizer.getDelegate();
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
-        //r = new Random(System.currentTimeMillis());
         
         loadWorkloads(db.getConnection());
     }
@@ -86,9 +83,6 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
         System.out.println("wlname, stmt, optimizer cost, delegate cost");
 
         for (Workload wl : workloads(env.getWorkloadFolders())) {
-
-            if (!wl.getName().endsWith("tpcds-inum"))
-                continue;
 
             final Set<Index> allIndexes = candGen.generate(wl);
 
