@@ -2,36 +2,32 @@ package edu.ucsc.dbtune.advisor.interactions;
 
 import java.sql.SQLException;
 
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
-import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
-
 import edu.ucsc.dbtune.ibg.IBGCoveringNodeFinder;
-import edu.ucsc.dbtune.ibg.IBGNodeQueue;
 import edu.ucsc.dbtune.ibg.IndexBenefitGraph;
-import edu.ucsc.dbtune.ibg.IndexBenefitGraphConstructor;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.BitArraySet;
 
 /**
  * This class implements the qINTERACT algorithm described in Schnaitter et. al. for computing the 
  * degree of interaction for all the pairs {@latex.inline $a,b \\in S$}.
  *
  * @author Karl Schnaitter
+ * @author Ivo Jimenez
  * @see <a href="http://portal.acm.org/citation.cfm?id=1687766">
  *         Index interactions in physical design tuning: modeling, analysis, and applications
  *      </a>
  */
-public class IBGAnalyzer
+public final class IBGAnalyzer
 {
-    // the IBG we are currently exploring
-    protected final IndexBenefitGraphConstructor ibgCons;
-
     // queue of nodes to explore
-    private final IBGNodeQueue nodeQueue;
+    private final Deque<IndexBenefitGraph.Node> nodeQueue;
 
     // queue of nodes to revisit
-    private final IBGNodeQueue revisitQueue;
+    private final Deque<IndexBenefitGraph.Node> revisitQueue;
 
     // the set of all used indexes seen so far in the IBG
     // this is different from the bank, because that may have
@@ -41,67 +37,30 @@ public class IBGAnalyzer
     // graph traversal objects
     private IBGCoveringNodeFinder coveringNodeFinder = new IBGCoveringNodeFinder();
 
-    // copy of the root bit set for convenience
-    private final Set<Index> rootBitSet;
-
     // keeps track of visited nodes
     private final Set<IndexBenefitGraph.Node> visitedNodes;
 
+    // the node of the IBG we are currently exploring
     private final IndexBenefitGraph.Node rootNode;
 
-    // All the following correspond to a bunch of structures that we keep around to
-    // avoid excessive garbage collection. These structures are only used in the
-    // analyzeNode() method.
-    private Set<Index> candidatesBitSet = new BitArraySet<Index>();
-    private Set<Index> usedBitSet = new BitArraySet<Index>();
-    private Set<Index> bitsetYaSimple = new BitArraySet<Index>();
-    private Set<Index> bitsetYa = new BitArraySet<Index>();
-    private Set<Index> bitsetYbMinus = new BitArraySet<Index>();
-    private Set<Index> bitsetYbPlus = new BitArraySet<Index>();
-    private Set<Index> bitsetYab = new BitArraySet<Index>();
-
     /**
      * construct an {@code IBGAnalyzer}.
      *
-     * @param ibgCons
-     *      a given {@link IndexBenefitGraphConstructor} object.
-     */
-    private IBGAnalyzer(IndexBenefitGraphConstructor ibgCons)
-    {
-        // initialize fields
-        this.ibgCons = ibgCons;
-        this.nodeQueue = new IBGNodeQueue();
-        this.revisitQueue = new IBGNodeQueue();
-        allUsedIndexes = new BitArraySet<Index>();
-        rootBitSet = new BitArraySet<Index>(ibgCons.rootNode().getConfiguration());
-        visitedNodes = new BitArraySet<IndexBenefitGraph.Node>();
-
-        // seed the queue with the root node
-        nodeQueue.addNode(ibgCons.rootNode());
-
-        rootNode = ibgCons.rootNode();
-    }
-
-    /**
-     * construct an {@code IBGAnalyzer}.
-     *
-     * @param ibgCons
-     *      a given {@link IndexBenefitGraphConstructor} object.
+     * @param ibg
+     *      ibg to be analyzed
      */
     private IBGAnalyzer(IndexBenefitGraph ibg)
     {
-        // initialize fields
-        ibgCons = null;
-        nodeQueue = new IBGNodeQueue();
-        revisitQueue = new IBGNodeQueue();
-        allUsedIndexes = new BitArraySet<Index>();
-        rootBitSet = new BitArraySet<Index>(ibg.rootNode().getConfiguration());
-        visitedNodes = new BitArraySet<IndexBenefitGraph.Node>();
+        // initialize fields 
+        nodeQueue = new LinkedList<IndexBenefitGraph.Node>();
+        revisitQueue = new LinkedList<IndexBenefitGraph.Node>();
+        allUsedIndexes = new HashSet<Index>();
+        visitedNodes = new HashSet<IndexBenefitGraph.Node>();
+        
+        rootNode = ibg.rootNode();
 
         // seed the queue with the root node
-        nodeQueue.addNode(ibg.rootNode());
-
-        rootNode = ibg.rootNode();
+        nodeQueue.add(rootNode);
     }
 
     /**
@@ -113,36 +72,36 @@ public class IBGAnalyzer
      *      a flag that indicates if {@link IndexBenefitGraphConstructor}
      *      should wait ({@code true}) for a node in the graph to expand
      *      before doing something.
-     * @return either {@link StepStatus#BLOCKED}, {@link StepStatus#DONE}, or
+     * @return
+     *      either {@link StepStatus#BLOCKED}, {@link StepStatus#DONE}, or
      *      {@link StepStatus#SUCCESS}.
+     * @throws SQLException
+     *      if an error occurs
      */
-    public final StepStatus analysisStep(InteractionBank bank, boolean wait) throws SQLException
+    public StepStatus analysisStep(InteractionBank bank, boolean wait) throws SQLException
     {
         // we might need to go through several nodes to find one that we haven't visited yet
         while (true) {
             IndexBenefitGraph.Node node;
 
-            if (nodeQueue.hasNext()) {
+            if (!nodeQueue.isEmpty()) {
                 if (nodeQueue.peek().isExpanded()) {
-                    node = nodeQueue.next();
+                    node = nodeQueue.pop();
                 }
                 else if (wait) {
-                    node = nodeQueue.next();
+                    node = nodeQueue.pop();
 
-                    if (ibgCons == null)
-                        throw new SQLException("IBGConstructor not defined");
-                    else
-                        ibgCons.waitUntilExpanded(node);
+                    throw new SQLException("IBGConstructor not defined");
                 }
-                else if (revisitQueue.hasNext()) {
-                    node = revisitQueue.next();
+                else if (!revisitQueue.isEmpty()) {
+                    node = revisitQueue.pop();
                 }
                 else {
                     return StepStatus.BLOCKED;
                 }
             }
-            else if (revisitQueue.hasNext()) {
-                node = revisitQueue.next();
+            else if (!revisitQueue.isEmpty()) {
+                node = revisitQueue.pop();
             }
             else {
                 return StepStatus.DONE;
@@ -151,15 +110,15 @@ public class IBGAnalyzer
             if (visitedNodes.contains(node))
                 continue;
 
-            if (analyzeNode(rootNode, node, bank)) {
+            if (analyzeNode(node, bank)) {
                 visitedNodes.add(node);
-                nodeQueue.addChildren(node.firstChild());
+                nodeQueue.addAll(node.getChildren());
             }
             else {
-                revisitQueue.addNode(node);
+                revisitQueue.add(node);
             }
 
-            if (revisitQueue.hasNext() || nodeQueue.hasNext())
+            if (!revisitQueue.isEmpty() || !nodeQueue.isEmpty())
                 return StepStatus.SUCCESS;
         }
     }
@@ -175,28 +134,32 @@ public class IBGAnalyzer
      *      whether or not the analyses completed. When the analysis doesn't complete it is due to 
      *      the IBG not being completely expanded.
      */
-    private boolean analyzeNode(
-            IndexBenefitGraph.Node root, IndexBenefitGraph.Node node, InteractionBank bank)
+    private boolean analyzeNode(IndexBenefitGraph.Node node, InteractionBank bank)
     {
+        Set<Index> candidates = new HashSet<Index>();
+        Set<Index> used = new HashSet<Index>();
+        Set<Index> bitsetYaSimple = new HashSet<Index>();
+        Set<Index> bitsetYa = new HashSet<Index>();
+        Set<Index> bitsetYbMinus = new HashSet<Index>();
+        Set<Index> bitsetYbPlus = new HashSet<Index>();
+        Set<Index> bitsetYab = new HashSet<Index>();
         Set<Index> bitsetY = node.getConfiguration();
 
         // get the used set
-        usedBitSet.clear();
-        node.addUsedIndexes(usedBitSet);
+        used.addAll(node.getUsedIndexes());
 
         // store the used set
-        allUsedIndexes.addAll(usedBitSet);
+        allUsedIndexes.addAll(used);
 
-        // set up candidates
-        candidatesBitSet.clear();
-        candidatesBitSet.addAll(rootBitSet);
-        candidatesBitSet.removeAll(usedBitSet);
-        candidatesBitSet.retainAll(allUsedIndexes);
+        // set up candidates 
+        candidates.addAll(rootNode.getConfiguration());
+        candidates.removeAll(used);
+        candidates.retainAll(allUsedIndexes);
 
         // set false on first failure
         boolean retval = true;
 
-        for (Index a : candidatesBitSet) {
+        for (Index a : candidates) {
             IndexBenefitGraph.Node y;
             double costY;
 
@@ -205,19 +168,19 @@ public class IBGAnalyzer
             costY = y.cost();
 
             // fetch YaSimple
-            bitsetYaSimple.clear();
             bitsetYaSimple.addAll(bitsetY);
             bitsetYaSimple.add(a);
 
-            IndexBenefitGraph.Node yaSimple =
-                coveringNodeFinder.findFast(root, bitsetYaSimple, null);
+            IndexBenefitGraph.Node yaSimple = coveringNodeFinder.find(rootNode, bitsetYaSimple);
 
             if (yaSimple == null)
                 retval = false;
             else
                 bank.assignBenefit(a, costY - yaSimple.cost());
 
-            for (Index b : candidatesBitSet) {
+            for (Index b : candidates) {
+                if (a.equals(b))
+                    continue;
                 IndexBenefitGraph.Node ya;
                 IndexBenefitGraph.Node yab;
                 IndexBenefitGraph.Node ybPlus;
@@ -225,46 +188,50 @@ public class IBGAnalyzer
                 double costYa;
                 double costYab;
 
+                // if (bank.interactionExists(a,b))
+                //     // XXX: try to see how strong the interaction can get?? This might not affect
+                //     // performance a lot
+                //     continue;
+
                 // fetch Ya and Yab
-                bitsetYa.clear();
                 bitsetYa.addAll(bitsetY);
                 bitsetYa.add(a);
                 bitsetYa.remove(b);
 
-                bitsetYab.clear();
                 bitsetYab.addAll(bitsetY);
                 bitsetYab.add(a);
                 bitsetYab.add(b);
 
-                yab = coveringNodeFinder.findFast(root, bitsetYab, yaSimple);
-                ya = coveringNodeFinder.findFast(root, bitsetYa, yab);
+                ya = coveringNodeFinder.find(rootNode, bitsetYa);
+                yab = coveringNodeFinder.find(rootNode, bitsetYab);
 
                 if (ya == null) {
                     retval = false;
                     continue;
                 }
+
                 if (yab == null) {
                     retval = false;
                     continue;
                 }
+
                 costYa = ya.cost();
                 costYab = yab.cost();
 
                 // fetch YbMinus and YbPlus
                 bitsetYbMinus.clear();
-                y.addUsedIndexes(bitsetYbMinus);
-                ya.addUsedIndexes(bitsetYbMinus);
-                yab.addUsedIndexes(bitsetYbMinus);
+                bitsetYbMinus.addAll(y.getUsedIndexes());
+                bitsetYbMinus.addAll(ya.getUsedIndexes());
+                bitsetYbMinus.addAll(yab.getUsedIndexes());
                 bitsetYbMinus.remove(a);
                 bitsetYbMinus.add(b);
 
-                bitsetYbPlus.clear();
                 bitsetYbPlus.addAll(bitsetY);
                 bitsetYbPlus.remove(a);
                 bitsetYbPlus.add(b);
 
-                ybPlus = coveringNodeFinder.findFast(root, bitsetYbPlus, yab);
-                ybMinus = coveringNodeFinder.findFast(root, bitsetYbMinus, ybPlus);
+                ybMinus = coveringNodeFinder.find(rootNode, bitsetYbMinus);
+                ybPlus = coveringNodeFinder.find(rootNode, bitsetYbPlus);
 
                 // try to set lower bound based on Y, Ya, YbPlus, and Yab
                 if (ybPlus != null)
@@ -275,8 +242,8 @@ public class IBGAnalyzer
 
                 // try to set lower bound based on Y, Ya, YbMinus, and Yab
                 if (ybMinus != null)
-                    bank.assignInteraction(
-                            a, b, interactionLevel(costY, costYa, ybMinus.cost(), costYab));
+                    bank.assignInteraction(a, b, interactionLevel(costY, costYa, ybMinus.cost(), 
+                                costYab));
                 else
                     retval = false;
             }

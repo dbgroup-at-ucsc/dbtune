@@ -21,6 +21,7 @@ public class InteractionBank
     private double[] bestBenefit;
     private double[][] lowerBounds;
     private List<Index> candidates;
+    private int minId;
     
     /**
      * Creates a bank that will manage interaction information for the given candidate set.
@@ -30,18 +31,17 @@ public class InteractionBank
      */
     public InteractionBank(Set<Index> candidateSet)
     {
-        int maxId = 0;
+        candidates = new ArrayList<Index>(candidateSet);
+        bestBenefit = new double[candidateSet.size()];
+        lowerBounds = new double[candidateSet.size()][];
+        for (int i = 0; i < candidateSet.size(); i++)
+            lowerBounds[i] = new double[i];
+
+        minId = Integer.MAX_VALUE;
 
         for (Index i : candidateSet)
-            if (i.getId() > maxId)
-                maxId = i.getId() + 1;
-
-        candidates = new ArrayList<Index>(candidateSet);
-        bestBenefit = new double[maxId];
-        lowerBounds = new double[maxId][];
-
-        for (int i = 0; i < maxId; i++)
-            lowerBounds[i] = new double[i + 1];
+            if (i.getId() < minId)
+                minId = i.getId();
     }
     
     /**
@@ -58,11 +58,14 @@ public class InteractionBank
      */
     final void assignInteraction(Index i1, Index i2, double newValue)
     {
-        assert newValue >= 0;
-        assert !i1.equals(i2);
+        if (newValue < 0)
+            throw new RuntimeException("Interaction value should be greater or equal to 0");
 
-        int id1 = i1.getId();
-        int id2 = i2.getId();
+        if (i1.equals(i2))
+            throw new RuntimeException("Should assign interaction to distinct indexes");
+
+        int id1 = i1.getId() - minId;
+        int id2 = i2.getId() - minId;
 
         // doi is a symmetric relation, thus we use the upper part of the matrix only. We accomplish 
         // this by ordering the id's of the given indexes in descending order, i.e. first we use the 
@@ -72,7 +75,7 @@ public class InteractionBank
             id1 = id2;
             id2 = t;
         }
-        
+
         lowerBounds[id1][id2] = Math.max(newValue, lowerBounds[id1][id2]);
     }
 
@@ -91,9 +94,9 @@ public class InteractionBank
         assert !i1.equals(i2);
 
         if (i1.getId() < i2.getId())
-            return lowerBounds[i2.getId()][i1.getId()];
+            return lowerBounds[i2.getId() - minId][i1.getId() - minId];
         else
-            return lowerBounds[i1.getId()][i2.getId()];
+            return lowerBounds[i1.getId() - minId][i2.getId() - minId];
     }
 
     /**
@@ -106,7 +109,7 @@ public class InteractionBank
      */
     void assignBenefit(Index i, double newValue)
     {
-        bestBenefit[i.getId()] = Math.max(newValue, bestBenefit[i.getId()]);
+        bestBenefit[i.getId() - minId] = Math.max(newValue, bestBenefit[i.getId() - minId]);
     }
     
     /**
@@ -120,7 +123,7 @@ public class InteractionBank
      */
     public final double bestBenefit(Index i)
     {
-        return bestBenefit[i.getId()];
+        return bestBenefit[i.getId() - minId];
     }
     
     /**
@@ -154,5 +157,31 @@ public class InteractionBank
         }
 
         return partitioning;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        StringBuffer result = new StringBuffer();
+        String separator = ",";
+
+        result.append("Bounds:\n");
+        for (int i = 0; i < lowerBounds.length; ++i) {
+            result.append("[");
+            for (int j = 0; j < lowerBounds[i].length; ++j)
+                result.append(lowerBounds[i][j]).append(separator);
+            result.delete(result.length() - 1, result.length()).append("]\n");
+        }
+
+        result.append("Benefits:\n");
+        result.append("[");
+        for (int i = 0; i < bestBenefit.length; ++i)
+            result.append(bestBenefit[i]).append(separator);
+        result.delete(result.length() - 1, result.length()).append("]");
+
+        return result.toString();
     }
 }
