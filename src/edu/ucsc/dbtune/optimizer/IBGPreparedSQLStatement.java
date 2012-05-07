@@ -124,10 +124,11 @@ public class IBGPreparedSQLStatement extends DefaultPreparedSQLStatement
             // time to build the IBG
             int oldOptimizationCount = optimizer.getWhatIfCount();
 
-            ExplainedSQLStatement eStmt = optimizer.explain(sql);
+            ExplainedSQLStatement eStmt = optimizer.getDelegate().explain(sql);
             optimizationCount = optimizer.getWhatIfCount() - oldOptimizationCount;
 
-            this.ibg = construct(optimizer, sql, eStmt.getSelectCost(), configuration);
+            this.ibg =
+                construct(optimizer.getDelegate(), sql, eStmt.getSelectCost(), configuration);
             this.updatedTable = eStmt.getUpdatedTable();
             this.baseTableUpdateCost = eStmt.getBaseTableUpdateCost();
             this.universe = new HashSet<Index>(configuration);

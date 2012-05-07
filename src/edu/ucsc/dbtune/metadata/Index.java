@@ -17,7 +17,8 @@ import edu.ucsc.dbtune.util.Objects;
  *
  * @author Ivo Jimenez
  */
-public class Index extends DatabaseObject implements Iterable<Column>, IncrementallyIdentifiable
+public class Index extends DatabaseObject implements Iterable<Column>, IncrementallyIdentifiable, 
+       Comparable<Index>
 {
     // CHECKSTYLE:OFF
     public static final int     UNKNOWN        = 0;
@@ -892,17 +893,27 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     @Override
     public String toString()
     {
-        StringBuilder str = new StringBuilder();
+        return "" + getId();
+        //StringBuilder str = new StringBuilder();
         
-        str.append(getName() + "[");
+        //str.append(getName() + "[");
 
-        for (Column col : this)
-            str.append(col.getName()).append(isAscending(col) ? "(A)" : "(D)").append("+");
+        //for (Column col : this)
+            //str.append(col.getName()).append(isAscending(col) ? "(A)" : "(D)").append("+");
 
-        str.delete(str.length() - 1, str.length());
+        //str.delete(str.length() - 1, str.length());
 
-        str.append("]");
+        //str.append("]");
 
-        return str.toString();
+        //return str.toString();
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo(Index i)
+    {
+        return (new Integer(getId())).compareTo(i.getId());
     }
 }

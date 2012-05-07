@@ -2,9 +2,9 @@ package edu.ucsc.dbtune.ibg;
 
 import java.sql.SQLException;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.TreeSet;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
@@ -83,18 +83,18 @@ public final class IndexBenefitGraphConstructor
         if (queue.isEmpty())
             return false;
 
-        newNode = queue.remove();
+        newNode = queue.poll();
 
         // get cost and used set (stored into used)
         coveringNode = coveringNodeFinder.find(rootNode, newNode.getConfiguration());
         if (coveringNode != null) {
-            totalCost = coveringNode.cost();
-            used = new HashSet<Index>();
+            used = new TreeSet<Index>();
             used.addAll(coveringNode.getUsedIndexes());
+            totalCost = coveringNode.cost();
         } else {
             stmt = optimizer.explain(sql, newNode.getConfiguration());
-            totalCost = stmt.getSelectCost();
             used = stmt.getUsedConfiguration();
+            totalCost = stmt.getSelectCost();
         }
 
         // create the child list
@@ -102,8 +102,7 @@ public final class IndexBenefitGraphConstructor
         // We make sure to keep the child list in the same order as the nodeQueue, so that
         // analysis and construction can move in lock step. This is done by keeping both
         // in order of construction.
-        Set<Index> children = new HashSet<Index>();
-        children.addAll(newNode.getConfiguration());
+        Set<Index> children = new TreeSet<Index>(newNode.getConfiguration());
 
         for (Index u : used) {
 
@@ -113,7 +112,7 @@ public final class IndexBenefitGraphConstructor
             IndexBenefitGraph.Node childNode = find(queue, children);
 
             if (childNode == null) {
-                childNode = new IndexBenefitGraph.Node(new HashSet<Index>(children), nodeCount++);
+                childNode = new IndexBenefitGraph.Node(new TreeSet<Index>(children), nodeCount++);
                 queue.add(childNode);
             }
 
@@ -174,7 +173,7 @@ public final class IndexBenefitGraphConstructor
     {
         this.sql = sql;
         this.optimizer = delegate;
-        this.configuration = new HashSet<Index>(conf);
+        this.configuration = new TreeSet<Index>(conf);
         this.nodeCount = 0;
         this.queue = new LinkedList<IndexBenefitGraph.Node>();
         this.rootNode = new IndexBenefitGraph.Node(conf, nodeCount++);

@@ -1,9 +1,9 @@
 package edu.ucsc.dbtune.ibg;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Identifiable;
@@ -128,7 +128,7 @@ public class IndexBenefitGraph
      *
      * @author Karl Schnaitter
      */
-    public static class Node implements Identifiable
+    public static class Node implements Identifiable, Comparable<Node>
     {
         /** Configuration that this node is about. */
         private final Set<Index> config;
@@ -155,11 +155,11 @@ public class IndexBenefitGraph
          */
         public Node(Set<Index> config0, int id0)
         {
-            config = new HashSet<Index>(config0);
+            config = new TreeSet<Index>(config0);
             id = id0;
             cost = -1.0;
             edges = new ArrayList<Edge>();
-            used = new HashSet<Index>();
+            used = new TreeSet<Index>();
         }
 
         /**
@@ -170,7 +170,7 @@ public class IndexBenefitGraph
          */
         public final Set<Index> getConfiguration()
         {
-            return new HashSet<Index>(config);
+            return new TreeSet<Index>(config);
         }
 
         /**
@@ -183,6 +183,15 @@ public class IndexBenefitGraph
         public final int getId()
         {
             return id;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int compareTo(Node i)
+        {
+            return (new Integer(getId())).compareTo(i.getId());
         }
 
         /**
@@ -220,7 +229,7 @@ public class IndexBenefitGraph
         public final Set<Index> getUsedIndexes()
         {
             assert isExpanded();
-            return new HashSet<Index>(used);
+            return new TreeSet<Index>(used);
         }
 
         /**
@@ -292,6 +301,15 @@ public class IndexBenefitGraph
             {
                 return this.usedIndex;
             }
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public String toString()
+            {
+                return usedIndex + "=>" + node.id;
+            }
         }
 
         /**
@@ -355,8 +373,13 @@ public class IndexBenefitGraph
     public String toString()
     {
         StringBuilder str = new StringBuilder();
-        
-        str.append(print(rootNode));
+
+        TreeSet<Node> allNodes = new TreeSet<Node>();
+
+        getAllNodes(rootNode, allNodes);
+
+        for (Node n : allNodes)
+            str.append(n + "\n");
 
         return str.toString();
     }
@@ -366,19 +389,16 @@ public class IndexBenefitGraph
      *
      * @param node
      *      node to be printed
-     * @return
-     *      string
+     * @param visited
+     *      list of visited nodes
      */
-    private String print(IndexBenefitGraph.Node node)
+    private void getAllNodes(IndexBenefitGraph.Node node, Set<Node> visited)
     {
-        StringBuilder str = new StringBuilder();
+        if (!visited.contains(node))
+            visited.add(node);
 
-        str.append(node + "\n");
-
-        //for (IndexBenefitGraph.Node.Child ch = node.firstChild.next; ch != null; ch = ch.next)
-            //str.append(print(ch.getNode()));
-
-        return str.toString();
+        for (IndexBenefitGraph.Node ch : node.getChildren())
+            getAllNodes(ch, visited);
     }
 
     /**
