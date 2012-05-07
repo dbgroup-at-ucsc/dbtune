@@ -86,22 +86,22 @@ public final class IBGAnalyzer
 
             if (!nodeQueue.isEmpty()) {
                 if (nodeQueue.peek().isExpanded()) {
-                    node = nodeQueue.pop();
+                    node = nodeQueue.remove();
                 }
                 else if (wait) {
-                    node = nodeQueue.pop();
+                    node = nodeQueue.remove();
 
                     throw new SQLException("IBGConstructor not defined");
                 }
                 else if (!revisitQueue.isEmpty()) {
-                    node = revisitQueue.pop();
+                    node = revisitQueue.remove();
                 }
                 else {
                     return StepStatus.BLOCKED;
                 }
             }
             else if (!revisitQueue.isEmpty()) {
-                node = revisitQueue.pop();
+                node = revisitQueue.remove();
             }
             else {
                 return StepStatus.DONE;
@@ -143,7 +143,9 @@ public final class IBGAnalyzer
         Set<Index> bitsetYbMinus = new HashSet<Index>();
         Set<Index> bitsetYbPlus = new HashSet<Index>();
         Set<Index> bitsetYab = new HashSet<Index>();
-        Set<Index> bitsetY = node.getConfiguration();
+        Set<Index> bitsetY = new HashSet<Index>();
+        
+        bitsetY.addAll(node.getConfiguration());
 
         // get the used set
         used.addAll(node.getUsedIndexes());
@@ -198,17 +200,17 @@ public final class IBGAnalyzer
                 bitsetYa.add(a);
                 bitsetYa.remove(b);
 
-                bitsetYab.addAll(bitsetY);
-                bitsetYab.add(a);
-                bitsetYab.add(b);
-
                 ya = coveringNodeFinder.find(rootNode, bitsetYa);
-                yab = coveringNodeFinder.find(rootNode, bitsetYab);
-
                 if (ya == null) {
                     retval = false;
                     continue;
                 }
+
+                bitsetYab.addAll(bitsetY);
+                bitsetYab.add(a);
+                bitsetYab.add(b);
+
+                yab = coveringNodeFinder.find(rootNode, bitsetYab);
 
                 if (yab == null) {
                     retval = false;
@@ -230,7 +232,6 @@ public final class IBGAnalyzer
                 bitsetYbPlus.remove(a);
                 bitsetYbPlus.add(b);
 
-                ybMinus = coveringNodeFinder.find(rootNode, bitsetYbMinus);
                 ybPlus = coveringNodeFinder.find(rootNode, bitsetYbPlus);
 
                 // try to set lower bound based on Y, Ya, YbPlus, and Yab
@@ -240,10 +241,12 @@ public final class IBGAnalyzer
                 else
                     retval = false;
 
+                ybMinus = coveringNodeFinder.find(rootNode, bitsetYbMinus);
+
                 // try to set lower bound based on Y, Ya, YbMinus, and Yab
                 if (ybMinus != null)
-                    bank.assignInteraction(a, b, interactionLevel(costY, costYa, ybMinus.cost(), 
-                                costYab));
+                    bank.assignInteraction(
+                            a, b, interactionLevel(costY, costYa, ybMinus.cost(), costYab));
                 else
                     retval = false;
             }

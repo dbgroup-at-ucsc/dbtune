@@ -83,7 +83,7 @@ public final class IndexBenefitGraphConstructor
         if (queue.isEmpty())
             return false;
 
-        newNode = queue.poll();
+        newNode = queue.remove();
 
         // get cost and used set (stored into used)
         coveringNode = coveringNodeFinder.find(rootNode, newNode.getConfiguration());
@@ -102,21 +102,21 @@ public final class IndexBenefitGraphConstructor
         // We make sure to keep the child list in the same order as the nodeQueue, so that
         // analysis and construction can move in lock step. This is done by keeping both
         // in order of construction.
-        Set<Index> children = new TreeSet<Index>(newNode.getConfiguration());
+        Set<Index> childConf = new TreeSet<Index>(newNode.getConfiguration());
 
         for (Index u : used) {
 
-            if (!children.remove(u))
+            if (!childConf.remove(u))
                 throw new RuntimeException("Couldn't remove index " + u + " from children set"); 
 
-            IndexBenefitGraph.Node childNode = find(queue, children);
+            IndexBenefitGraph.Node childNode = find(queue, childConf);
 
             if (childNode == null) {
-                childNode = new IndexBenefitGraph.Node(new TreeSet<Index>(children), nodeCount++);
+                childNode = new IndexBenefitGraph.Node(new TreeSet<Index>(childConf), nodeCount++);
                 queue.add(childNode);
             }
 
-            if (!children.add(u))
+            if (!childConf.add(u))
                 throw new RuntimeException("Couldn't add index " + u + " to children set"); 
 
             newNode.addChild(childNode, u);

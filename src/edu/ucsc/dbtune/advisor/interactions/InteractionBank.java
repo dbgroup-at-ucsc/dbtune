@@ -76,6 +76,10 @@ public class InteractionBank
             id2 = t;
         }
 
+        //if (newValue > lowerBounds[id1][id2])
+            //System.out.println(
+                //"Assigning interaction for " + id1 + " and " + id2 + ": " + newValue);
+
         lowerBounds[id1][id2] = Math.max(newValue, lowerBounds[id1][id2]);
     }
 
