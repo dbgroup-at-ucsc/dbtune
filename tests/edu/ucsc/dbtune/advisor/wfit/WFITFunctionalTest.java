@@ -18,7 +18,6 @@ import org.junit.Test;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
@@ -116,7 +115,9 @@ public class WFITFunctionalTest
 
         WFIT wfit = new WFIT((IBGOptimizer) db.getOptimizer(), candidateSet);
 
-        wl = workload(env.getWorkloadsFoldername() + "/../../workloads/db2/kaizen-demo/");
+        wl = 
+            new Workload(
+                env.getWorkloadsFoldername() + "/../../workloads/db2/kaizen-demo/scenario-1.sql");
 
         wfit.process(wl);
 
