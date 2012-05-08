@@ -20,64 +20,72 @@ username=dbtune\n\
 password=dbtuneadmin\n"
 
 OPT_CONFIG="optimizer=dbms"
-IBG_CONFIG="optimizer=inum"
-INUM_CONFIG="optimizer=ibg"
+IBG_CONFIG="optimizer=ibg"
+INUM_CONFIG="optimizer=inum"
 IBG_ON_INUM_CONFIG="optimizer=inum,ibg"
-INUM_ON_IBG_CONFIG="optimizer=ibg,inum"
 
 export DBTUNECONFIG=`pwd`/config/dbtune-test.cfg
 
+echo "testing began at: " `date`
+
+###############
+# UNIT
+###############
 ant -lib lib clean
 ant -lib lib compile.test.all
+echo "executing all unit tests"
 ant -lib lib unit.all
 
-echo "started at: " `date`
-
+###############
 # DB2
+###############
+echo "executing $DB2_CONFIG and $OPT_CONFIG"
+
 cat bin/base.cfg > $DBTUNECONFIG
 echo -e $DB2_CONFIG >> $DBTUNECONFIG
 echo -e $OPT_CONFIG >> $DBTUNECONFIG
 ant -lib lib functional.all
 
-ANTRETURNCODE=$?
- 
-if [ $ANTRETURNCODE -ne 0 ];then
+if [ $? -ne 0 ];then
     echo "BUILD ERROR"
     exit 1;
 fi
 
-cat bin/base.cfg > $DBTUNECONFIG
-echo -e $DB2_CONFIG >> $DBTUNECONFIG
-echo -e $IBG_CONFIG >> $DBTUNECONFIG
-ant -lib lib functional.all
-
-ANTRETURNCODE=$?
- 
-if [ $ANTRETURNCODE -ne 0 ];then
-    echo "BUILD ERROR"
-    exit 1;
-fi
+###############
+echo "executing $DB2_CONFIG and $INUM_CONFIG"
 
 cat bin/base.cfg > $DBTUNECONFIG
 echo -e $DB2_CONFIG >> $DBTUNECONFIG
 echo -e $INUM_CONFIG >> $DBTUNECONFIG
 ant -lib lib functional.all
 
-ANTRETURNCODE=$?
-
-if [ $ANTRETURNCODE -ne 0 ];then
+if [ $? -ne 0 ];then
     echo "BUILD ERROR"
     exit 1;
 fi
+
+############### 
+echo "executing $DB2_CONFIG and $IBG_CONFIG"
+
+cat bin/base.cfg > $DBTUNECONFIG
+echo -e $DB2_CONFIG >> $DBTUNECONFIG
+echo -e $IBG_CONFIG >> $DBTUNECONFIG
+ant -lib lib functional.all
+
+if [ $? -ne 0 ];then
+    echo "BUILD ERROR"
+    exit 1;
+fi
+
+###############
+echo "executing $DB2_CONFIG and $IBG_ON_INUM_CONFIG"
 
 cat bin/base.cfg > $DBTUNECONFIG
 echo -e $DB2_CONFIG >> $DBTUNECONFIG
 echo -e $IBG_ON_INUM_CONFIG >> $DBTUNECONFIG
 ant -lib lib functional.all
 
-ANTRETURNCODE=$?
-
-if [ $ANTRETURNCODE -ne 0 ];then
+if [ $? -ne 0 ];then
     echo "BUILD ERROR"
     exit 1;
 fi

@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -8,6 +9,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.util.MathUtils;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
@@ -284,6 +286,16 @@ public class ExplainedSQLStatement
     }
 
     /**
+     * Gets the indexUpdateCosts for this instance.
+     *
+     * @return The indexUpdateCosts.
+     */
+    public Map<Index, Double> getIndexUpdateCosts()
+    {
+        return new HashMap<Index, Double>(this.indexUpdateCosts);
+    }
+
+    /**
      * Returns the configuration that the optimizer considered when it optimized the statement. Note 
      * that this is different from {@link #getUsedConfiguration} and {@link 
      * #getUpdatedConfiguration}.
@@ -375,9 +387,6 @@ public class ExplainedSQLStatement
      */
     public boolean equalsIgnorePlan(Object obj)
     {
-        if (this == obj)
-            return true;
-    
         if (!(obj instanceof ExplainedSQLStatement))
             return false;
     
@@ -386,10 +395,19 @@ public class ExplainedSQLStatement
         if (updatedTable != null && !updatedTable.equals(o.updatedTable))
             return false;
 
+        if (getIndexUpdateCosts().size() != o.getIndexUpdateCosts().size())
+            return false;
+
+        for (Map.Entry<Index, Double> e : indexUpdateCosts.entrySet())
+            if (o.indexUpdateCosts.get(e.getKey()) != null &&
+                    MathUtils.equals(o.indexUpdateCosts.get(e.getKey()), e.getValue()))
+                continue;
+            else
+                return false;
+
         if (statement.equals(o.statement) &&
-                selectCost == o.selectCost &&
-                baseTableUpdateCost == o.baseTableUpdateCost &&
-                indexUpdateCosts.equals(o.indexUpdateCosts) &&
+                MathUtils.equals(selectCost, o.selectCost) &&
+                MathUtils.equals(baseTableUpdateCost, o.baseTableUpdateCost) &&
                 configuration.equals(o.configuration) &&
                 usedConfiguration.equals(o.usedConfiguration))
             return true;

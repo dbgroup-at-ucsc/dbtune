@@ -6,6 +6,8 @@ import java.util.List;
 import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 
+import edu.ucsc.dbtune.util.MathUtils;
+
 /**
  * Represents an operator of a SQL statement plan.
  *
@@ -431,7 +433,7 @@ public class Operator
         Operator op = (Operator) o;
 
         if (!name.equals(op.name) ||
-                Double.compare(accumulatedCost, op.accumulatedCost) != 0 ||
+                !MathUtils.equals(accumulatedCost, op.accumulatedCost) ||
                 cardinality != op.cardinality ||
                 !predicates.containsAll(op.predicates) ||
                 !objects.containsAll(op.objects))

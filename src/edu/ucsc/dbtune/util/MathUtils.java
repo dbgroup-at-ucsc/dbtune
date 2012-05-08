@@ -14,10 +14,28 @@ import static com.google.common.collect.Iterables.get;
  */
 public final class MathUtils
 {
+    private static final double EPSILON = 0.001;
+
     /**
      */
     private MathUtils()
     {
+    }
+
+    /**
+     * Returns true if two doubles are considered equal.  Tests if the absolute
+     * difference between two doubles has a difference less then {@link #EPSILON}.
+     *
+     * @param a
+     *      double to compare.
+     * @param b
+     *      double to compare.
+     * @return
+     *      {@code true} if two doubles are considered equal.
+     */
+    public static boolean equals(double a, double b)
+    {
+        return a == b ? true : Math.abs(a - b) < EPSILON;
     }
     
     /**

@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.optimizer;
 
 import java.util.Comparator;
-//import java.util.Random;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -17,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
 
@@ -55,7 +55,8 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
         db = newDatabaseSystem(env);
         optimizer = db.getOptimizer();
         delegate = optimizer.getDelegate();
-        candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
+        candGen =
+            CandidateGenerator.Factory.newCandidateGenerator(env, getBaseOptimizer(optimizer));
         
         loadWorkloads(db.getConnection());
     }
@@ -78,7 +79,7 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     @Test
     public void testPreparedSQLStatement() throws Exception
     {
-        if (optimizer == delegate) return;
+        if (delegate == null || optimizer == delegate) return;
 
         System.out.println("wlname, stmt, optimizer cost, delegate cost");
 
@@ -91,8 +92,9 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
             for (SQLStatement sql : wl) {
                 i++;
 
-                if (optimizer instanceof MySQLOptimizer && 
+                if (getBaseOptimizer(optimizer) instanceof MySQLOptimizer && 
                         sql.getSQLCategory().isSame(SQLCategory.NOT_SELECT))
+                    // issue #106
                     continue;
 
                 System.out.print(wl.getName() + "," + i + ",");
@@ -102,11 +104,20 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
                 ExplainedSQLStatement explainedByOptimizer = pSql.explain(allIndexes);
                 ExplainedSQLStatement explainedByDelegate = delegate.explain(sql, allIndexes);
 
-                // over-estimations by a delegate are allowed, while under-estimations are 
-                // considered a failure
-                assertThat(
-                        compare(explainedByOptimizer, explainedByDelegate),
-                        is(greaterThanOrEqualTo(0)));
+                if (Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(optimizer))
+                    // for INUM, over-estimations are allowed; under-estimations will cause failure
+                    assertThat(
+                            getErrorString(explainedByOptimizer, explainedByDelegate),
+                            compare(explainedByOptimizer, explainedByDelegate),
+                            is(greaterThanOrEqualTo(0)));
+                else if (optimizer instanceof IBGOptimizer)
+                    // IBG should be exactly the same
+                    assertThat(
+                            getErrorString(explainedByOptimizer, explainedByDelegate),
+                            explainedByOptimizer.equalsIgnorePlan(explainedByDelegate), is(true));
+                else
+                    throw new RuntimeException(
+                            "Unknown optimizer class: " + optimizer.getClass().getName());
 
                 System.out.print(
                         explainedByOptimizer.getSelectCost() + "," +
@@ -131,20 +142,42 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
         if (ratio > 1.10)
             return 1;
 
-        System.out.println(
-                "### Error\n" +
-                "Statement " + i + "\n" +
-                "Optimizer total cost: " + e1.getTotalCost() + "\n" +
-                "Delegate total cost: " + e2.getTotalCost() + "\n" +
-                "Optimizer base table update cost: " + e1.getBaseTableUpdateCost() + "\n" +
-                "Delegate base table update cost: " + e2.getBaseTableUpdateCost() + "\n" +
-                "Optimizer select cost: " + e1.getSelectCost() + "\n" +
-                "Delegate select cost: " + e2.getSelectCost() + "\n" +
-                "Optimizer base table update cost: " + e1.getBaseTableUpdateCost() + "\n" +
-                "Delegate base table update cost: " + e2.getBaseTableUpdateCost() + "\n" +
-                "Optimizer:\n" + e1.getPlan() +
-                "\n\nvs\n\nDelegate:\n" + e2.getPlan());
-
         return -1;
+    }
+
+    /**
+     * Returns an error string.
+     *
+     * @param e1
+     *      explained statement
+     * @param e2
+     *      explained statement
+     * @return
+     *      error string
+     */
+    public String getErrorString(ExplainedSQLStatement e1, ExplainedSQLStatement e2)
+    {
+        return "### Error\n" +
+            "Statement " + i + "\n" +
+            "Optimizer Statement text: " + e1.getStatement() + "\n" +
+            "Delegate Statement text:  " + e2.getStatement() + "\n" +
+            "Optimizer total cost: " + e1.getTotalCost() + "\n" +
+            "Delegate total cost:  " + e2.getTotalCost() + "\n" +
+            "Optimizer base table update cost: " + e1.getBaseTableUpdateCost() + "\n" +
+            "Delegate base table update cost:  " + e2.getBaseTableUpdateCost() + "\n" +
+            "Optimizer select cost: " + e1.getSelectCost() + "\n" +
+            "Delegate select cost:  " + e2.getSelectCost() + "\n" +
+            "Optimizer index update costs: " + e1.getIndexUpdateCosts() + "\n" +
+            "Delegate index update costs:  " + e2.getIndexUpdateCosts() + "\n" +
+            "Optimizer updated table: " + e1.getUpdatedTable() + "\n" +
+            "Delegate updated table:  " + e2.getUpdatedTable() + "\n" +
+            "Optimizer conf: " + e1.getConfiguration() + "\n" +
+            "Delegate conf:  " + e2.getConfiguration() + "\n" +
+            "Optimizer used conf: " + e1.getUsedConfiguration() + "\n" +
+            "Delegate used conf:  " + e2.getUsedConfiguration() + "\n" +
+            "Optimizer updated conf: " + e1.getUpdatedConfiguration() + "\n" +
+            "Delegate updated conf:  " + e2.getUpdatedConfiguration() + "\n" +
+            "Optimizer:\n" + e1.getPlan() +
+            "\n\nvs\n\nDelegate:\n" + e2.getPlan();
     }
 }

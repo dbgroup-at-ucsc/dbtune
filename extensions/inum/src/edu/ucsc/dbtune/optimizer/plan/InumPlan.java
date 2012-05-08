@@ -22,6 +22,7 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.InumUtils;
+import edu.ucsc.dbtune.util.MathUtils;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.optimizer.plan.Operator.FETCH;
@@ -402,7 +403,7 @@ public class InumPlan extends SQLStatementPlan
     
         InumPlan o = (InumPlan) obj;
 
-        return Double.compare(internalPlanCost, o.internalPlanCost) == 0;
+        return MathUtils.equals(internalPlanCost, o.internalPlanCost);
     }
 
     /**
