@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.bip;
 
+import java.io.File;
 import java.util.List;
 import java.util.Set;
 
@@ -37,12 +38,19 @@ public class DivBasicFunctionalTest extends DivTestSetting
             return;
         
         // 2. Generate candidate indexes
-        workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
+        workload = workload(en.getWorkloadsFoldername());
         candidates = readCandidateIndexes(); 
         nReplicas = 3;
         loadfactor = 2;
         B = Math.pow(2, 28); 
-                    
+     
+        
+        // 3. delete QueryPlanDesc (if necessary)
+        File file = new File(folder + "/query-plan-desc.bin");
+        if (file.exists())
+            file.delete();
+        
+        
         // basic case
         testDiv();
     }
@@ -88,8 +96,10 @@ public class DivBasicFunctionalTest extends DivTestSetting
             DivConfiguration divConf = (DivConfiguration) output;
             List<Double> costInum;
             List<Double> costCplex;
-            double delta;
-            double tolerance = 1;
+            double ratio;
+            double tolerance = 1.1;
+            
+            System.out.println(" configuration: " + divConf);
             
             for (int r = 0; r < nReplicas; r++) {
                 conf = divConf.indexesAtReplica(r);
@@ -98,11 +108,17 @@ public class DivBasicFunctionalTest extends DivTestSetting
                 
                 for (int q = 0; q < costCplex.size(); q++) {
                     
-                    if (costCplex.get(q) > 0) {
-                        delta = Math.abs(costCplex.get(q) - costInum.get(q));
+                    // avoid very small value
+                    // due to the approximation of CPLEX
+                    if (costCplex.get(q) > 0.1) {
+                        ratio = (double) Math.abs(costCplex.get(q) / costInum.get(q));
+
+                        if (ratio < 1)
+                            ratio = (double) 1 / ratio;
+                        
                         System.out.println(" cost cplex: " + costCplex.get(q)
-                                    + " verus. cost INUM: " + costInum.get(q));
-                        assertThat(delta <= tolerance, is(true));
+                                + " verus. cost INUM: " + costInum.get(q));
+                        assertThat(ratio <= tolerance, is(true));
                     }
                     
                 }

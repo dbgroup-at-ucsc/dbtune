@@ -32,6 +32,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
     private static Workload wlQueries;
     private static Workload wlUpdates;
     
+    
     @Test
     public void main() throws Exception
     {
@@ -39,7 +40,11 @@ public class DivBIPFunctionalTest extends DivTestSetting
         testDivergent();
         
         // 2. Uniform design
-        testUniform();
+        // 3. Call divergent design
+        for (double B1 : listBudgets) {
+            B = B1;
+            testUniform();
+        }
     }
     
     protected static void testDivergent() throws Exception
@@ -125,19 +130,20 @@ public class DivBIPFunctionalTest extends DivTestSetting
             updateCost = div.getUpdateCostFromCplex();
             queryCost = div.getObjValue() - updateCost;
             
-            updateCost += div.getTotalBaseTableUpdateCost();
+            // NOT sum-up base table access cost for now
+            //updateCost += div.getTotalBaseTableUpdateCost();
             // add the update-base-table-constant costs
-            totalCostBIP = div.getObjValue() + div.getTotalBaseTableUpdateCost();
+            totalCostBIP = div.getObjValue(); // + div.getTotalBaseTableUpdateCost();
             
             System.out.println("CPLEX result: " 
-                    + " TOTAL cost: " + totalCostBIP + "\n"
+                    + " TOTAL cost:  " + totalCostBIP + "\n"
                     + " QUERY cost:  " + queryCost   + "\n"
                     + " UPDATE cost: " + updateCost  + "\n"
                     + " ----- Update cost details: "  + "\n"
                     + "          + query shell & update indexes: " 
                                         + div.getUpdateCostFromCplex() + "\n"
-                    + "          + update base table:             "
-                                        + div.getTotalBaseTableUpdateCost() + "\n"
+                    //+ "          + update base table:             "
+                    //                    + div.getTotalBaseTableUpdateCost() + "\n"
                     + " ----- CPLEX info: \n"
                     + "          + obj value: " + div.getObjValue() + "\n"
                     + "          + gap from the optimal: " + div.getObjectiveGap() + "\n");
@@ -184,8 +190,9 @@ public class DivBIPFunctionalTest extends DivTestSetting
         updateCost = div.getUpdateCostFromCplex();
         // query-only cost
         queryCost  = div.getObjValue() - updateCost;
-        // add the constant update-base table cost
-        updateCost += div.getTotalBaseTableUpdateCost();
+        // NOT consider adding the constant update-base table cost
+        // for the time-being
+        // updateCost += div.getTotalBaseTableUpdateCost();
         
         // UNIF for the case with more than one replica
         for (int i = 0; i < listNumberReplicas.size(); i++){
@@ -201,8 +208,9 @@ public class DivBIPFunctionalTest extends DivTestSetting
                                 + " ---- Detailed UPDATE cost (ONE Replica): \n" 
                                 + "         - query shell & update indexes: " +
                                              div.getUpdateCostFromCplex() + "\n"
-                                + "         - base table                  : " 
-                                +         div.getTotalBaseTableUpdateCost() + "\n");
+                                //+ "         - base table                  : " 
+                                //+         div.getTotalBaseTableUpdateCost() + "\n"
+                                 );
             
             System.out.println("----------------------------------------");
         }

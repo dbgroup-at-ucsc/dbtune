@@ -39,7 +39,8 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
             for (double factor : en.getListImbalanceFactors()) {
                 
                 System.out.println("\n\n\n IMBALANCE FACTOR: " + factor + 
-                                    " space: "+ B + "------------\n \n \n" );
+                                    " s" +
+                                    "pace: "+ B + "------------\n \n \n" );
                 
                 DivConstraint iReplica = new DivConstraint(typeConstraint, factor);
                 constraints = new ArrayList<DivConstraint>();
@@ -81,9 +82,9 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
             double updateCost = div.getUpdateCostFromCplex();
             double queryCost = div.getObjValue() - updateCost;
             
-            updateCost += div.getTotalBaseTableUpdateCost();
+            //updateCost += div.getTotalBaseTableUpdateCost();
             // add the update-base-table-constant costs
-            double totalCostBIP = div.getObjValue() + div.getTotalBaseTableUpdateCost();
+            double totalCostBIP = div.getObjValue(); //+ div.getTotalBaseTableUpdateCost();
             
             System.out.println(" ------------- \n"
                     + " Number of replicas: " + nReplicas + " load factor: " + loadfactor + "\n" 
@@ -93,8 +94,8 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
                     + " ----- Update cost details: "  + "\n"
                     + "          + query shell & update indexes: " 
                                         + div.getUpdateCostFromCplex() + "\n"
-                    + "          + update base table:             "
-                                        + div.getTotalBaseTableUpdateCost() + "\n"
+                    //+ "          + update base table:             "
+                     //                   + div.getTotalBaseTableUpdateCost() + "\n"
                     + " ----- CPLEX info: \n"
                     + "          + obj value: " + div.getObjValue() + "\n"
                     + "          + gap from the optimal: " + div.getObjectiveGap() + "\n");

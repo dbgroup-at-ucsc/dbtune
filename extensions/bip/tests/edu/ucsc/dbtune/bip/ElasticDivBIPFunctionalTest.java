@@ -38,7 +38,7 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
     public void testShrinkReplicaDivergentDesign() throws Exception
     {   
         LogListener logger = LogListener.getInstance();
-        
+        /*
         //double updateCost;
         //double queryCost;
         double totalCostBIP;
@@ -94,7 +94,7 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
                                + " new deploy cost: " + deployCost + "\n"
                                + " TOTAL cost: " + totalCostBIP);
         }
-       
+       */
     }
     
     private static void computeUpperBoundDeployCost() throws Exception
