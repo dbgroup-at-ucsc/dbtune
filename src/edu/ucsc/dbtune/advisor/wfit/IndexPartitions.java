@@ -1,9 +1,11 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -133,8 +135,8 @@ public class IndexPartitions {
         
         private int[] indexIds;
         
-        private Set<Index> set = new HashSet<Index>();
-        private java.util.TreeMap<Integer,Index> map = new java.util.TreeMap<Integer,Index>();
+        private Set<Index> set = new TreeSet<Index>();
+        private Map<Integer,Index> map = new TreeMap<Integer,Index>();
         
         Subset(Index index) {
             map.put(index.getId()-minId, index);

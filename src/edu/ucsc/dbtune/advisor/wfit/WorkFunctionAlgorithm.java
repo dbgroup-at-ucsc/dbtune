@@ -1,8 +1,8 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeSet;
 
 import edu.ucsc.dbtune.advisor.wfit.IndexPartitions.Subset;
 import edu.ucsc.dbtune.metadata.Index;
@@ -102,7 +102,7 @@ public class WorkFunctionAlgorithm {
     }
 
     public Set<Index> getRecommendation() {
-        Set<Index> rec = new HashSet<Index>();
+        Set<Index> rec = new TreeSet<Index>();
 
         for (SubMachine subm : submachines)
             for (Index index : subm.subset)
@@ -163,8 +163,9 @@ public class WorkFunctionAlgorithm {
                 i = 0;
                 for (Index index : newSubmachine.subset) {
                     int mask = (1 << (i++));
-                    if (0 != (stateNum & mask) && !oldHotSet.get(index.getId()-minId))
+                    if (0 != (stateNum & mask) && !oldHotSet.get(index.getId()-minId)) {
                         value += index.getCreationCost();
+                    }
                 }
                 
                 for (int oldSubsetNum = 0; oldSubsetNum < oldSubsetCount; oldSubsetNum++) {
@@ -218,8 +219,9 @@ public class WorkFunctionAlgorithm {
         double transition = 0;
         for (Index index : candidateSet) {
             int id = index.getId()-minId;
-            if (y.get(id) && !x.get(id))
+            if (y.get(id) && !x.get(id)) {
                 transition += index.getCreationCost();
+            }
         }
         return transition;
     }
@@ -230,8 +232,9 @@ public class WorkFunctionAlgorithm {
         for (Index index : subset) {
             int mask = 1 << (i++);
             
-            if (mask == (y & mask) - (x & mask))
+            if (mask == (y & mask) - (x & mask)) {
                 transition += index.getCreationCost();
+            }
         }
         return transition;
     }

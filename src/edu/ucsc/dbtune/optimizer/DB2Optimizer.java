@@ -1225,9 +1225,13 @@ public class DB2Optimizer extends AbstractOptimizer
     {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("SELECT *");
-        sb.append("  FROM ").append(index.getTable().getFullyQualifiedName());
-        sb.append("  ORDER BY ");
+        sb.append("SELECT ");
+        for (Column c : index.columns())
+            sb.append(c.getName()).append(", ");
+
+        sb.delete(sb.length() - 2, sb.length() - 1);
+        sb.append("   FROM ").append(index.getTable().getFullyQualifiedName());
+        sb.append("   ORDER BY ");
 
         for (Column c : index.columns())
             sb.append(c.getName()).append(index.isAscending(c) ? " ASC, " : " DESC, ");

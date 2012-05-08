@@ -6,7 +6,7 @@ import edu.ucsc.dbtune.metadata.Index;
 
 //CHECKSTYLE:OFF
 public class DynamicIndexSet implements Iterable<Index> {
-    private java.util.Set<Index> set = new java.util.HashSet<Index>();
+    private java.util.Set<Index> set = new java.util.TreeSet<Index>();
     private BitSet bs = new BitSet();
     private int minId;
 
