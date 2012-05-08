@@ -12,10 +12,13 @@ extensions/*/.cache
 manifest.mf
 nbproject/
 nbbuild.xml
-*.properties
+juni*
 resources/*/*/*/*.txt
 resources/*/*/*/*.lp
 resources/*/*/*.lp
+resources/*/*/*/candidatePool*
+resources/*/*/*/profiledQueries*
+resources/*/*/*/logfile_*
 *.sw*
 .bin
 .checkstyle
