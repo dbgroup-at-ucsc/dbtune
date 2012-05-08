@@ -137,11 +137,15 @@ public class WFIT extends Advisor
 
         newState.addAll(selector.getRecommendation());
         
-        stats.addNewEntry(
+        WFITRecommendationStatistics.Entry e =
+            (WFITRecommendationStatistics.Entry)
+            stats.addNewEntry(
                 eStatement.getTotalCost(),
                 eStatement.getConfiguration(),
                 selector.getRecommendation(),
                 transitionCost(this.previousState, newState));
+
+        e.setCandidatePartitioning(selector.getStablePartitioning(pool));
 
         this.previousState = newState;
     }

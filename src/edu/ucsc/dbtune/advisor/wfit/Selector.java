@@ -64,6 +64,24 @@ public class Selector {
         return qinfos.get(queryId).cost(conf);
     }
     
+    /**
+     * Returns the current candidate set partitioning.
+     *
+     * @param pool
+     *      pool of all the candidate indexes referenced in any step
+     * @return
+     *      a set of sets of indexes
+     */
+    public Set<Set<Index>> getStablePartitioning(Set<Index> pool)
+    {
+        Set<Set<Index>> partitioning = new HashSet<Set<Index>>();
+
+        for (BitSet bs : hotPartitions.bitSetArray())
+            partitioning.add(new HashSet<Index>(toSet(bs, pool)));
+
+        return partitioning;
+    }
+    
     /*
      * Called by main thread to get a recommendation
      */
