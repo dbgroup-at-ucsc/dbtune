@@ -1,12 +1,13 @@
 package edu.ucsc.dbtune.util;
 
 import java.sql.SQLException;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -27,25 +28,6 @@ public final class MetadataUtils
      */
     private MetadataUtils()
     {
-    }
-
-    /**
-     * Returns the minimum id.
-     *
-     * @param indexes
-     *      a collection of indexes
-     * @return
-     *      the minimum id
-     */
-    public static int getMinimumId(Collection<Index> indexes)
-    {
-        int minId = Integer.MAX_VALUE;
-
-        for (Index i : indexes)
-            if (i.getId() < minId)
-                minId = i.getId();
-
-        return minId;
     }
 
     /**
@@ -252,34 +234,6 @@ public final class MetadataUtils
     }
 
     /**
-     * Converts a bitSet to a set of indexes.
-     *
-     * @param bs
-     *      bitset containing ids of indexes being looked for
-     * @param indexes
-     *      set of indexes where one with the given id is being looked for
-     * @return
-     *      the index with the given id; {@code null} if not found
-     */
-    public static Set<Index> toSet(BitSet bs, Set<Index> indexes)
-    {
-        Set<Index> indexSet = new HashSet<Index>();
-
-        int minId = getMinimumId(indexes);
-
-        for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
-            Index index = find(indexes, i + minId);
-
-            if (index == null)
-                throw new RuntimeException("Can't find index with id " + (i + minId));
-
-            indexSet.add(index);
-        }
-
-        return indexSet;
-    }
-
-    /**
      * Returns the set of indexes that are not shared by the sets. The comparison is done using 
      * {@link Index#equalsContent}.
      *
@@ -405,5 +359,28 @@ public final class MetadataUtils
         create.append("\n");
 
         return create.toString();
+    }
+
+    /**
+     * Obtains the transition cost for a pair of recommendations. The transition cost is defined in 
+     * terms of the underlying DBMS' optimizer and it's just the sum of the {@link 
+     * Index#getCreationCost creation cost} for all the indexes that are in {@code y} and not in 
+     * {@code x}, i.e. for those indexes the set-difference.
+     * <p>
+     * Cost of dropping an index is assumed to be zero.
+     *
+     * @param x
+     *      previous recommendation
+     * @param y
+     *      next recommendation
+     */
+    public static double transitionCost(Set<Index> x, Set<Index> y)
+    {
+        double transition = 0;
+
+        for (Index index : Sets.difference(y, x))
+            transition += index.getCreationCost();
+
+        return transition;
     }
 }

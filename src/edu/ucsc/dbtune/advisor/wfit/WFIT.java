@@ -1,36 +1,38 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.advisor.interactions.DegreeOfInteractionFinder;
 import edu.ucsc.dbtune.advisor.interactions.IBGDoiFinder;
 import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
+
 import edu.ucsc.dbtune.metadata.Index;
+
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
-import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-import static edu.ucsc.dbtune.util.MetadataUtils.getMinimumId;
-//import static edu.ucsc.dbtune.util.MetadataUtils.toSet;
-//import static edu.ucsc.dbtune.advisor.wfit.WorkFunctionAlgorithm.transitionCost;
+import static edu.ucsc.dbtune.util.MetadataUtils.transitionCost;
 
 /**
  * @author Ivo Jimenez
  */
 public class WFIT extends Advisor
 {
-    private IBGOptimizer ibgOptimizer;
+    private Optimizer optimizer;
     private Selector selector;
     private Set<Index> pool;
     private DegreeOfInteractionFinder doiFinder;
     private RecommendationStatistics stats;
-    //private BitSet previousState;
+    private Set<Index> previousState;
     private boolean isCandidateSetFixed;
 
     /**
@@ -43,8 +45,7 @@ public class WFIT extends Advisor
     {
         this(optimizer, new HashSet<Index>());
 
-        isCandidateSetFixed = false;
-        selector = new Selector(Index.IN_MEMORY_ID.get());
+        this.isCandidateSetFixed = false;
     }
 
     /**
@@ -57,19 +58,37 @@ public class WFIT extends Advisor
      */
     public WFIT(Optimizer optimizer, Set<Index> initialSet)
     {
-        if (!(optimizer instanceof IBGOptimizer))
-            throw new RuntimeException(
-                    "Expecting IBGOptimizer; found: " + optimizer.getClass().getName());
+        this(optimizer, initialSet, new IBGDoiFinder());
+    }
 
-        ibgOptimizer = (IBGOptimizer) optimizer;
+    /**
+     * Creates a WFIT advisor.
+     *
+     * @param optimizer
+     *      used to execute what-if calls
+     * @param initialSet
+     *      initial candidate set
+     * @param doiFinder
+     *      interaction finder
+     */
+    public WFIT(
+            Optimizer optimizer, Set<Index> initialSet, DegreeOfInteractionFinder doiFinder)
+    {
+        this.optimizer = optimizer;
+        this.doiFinder = doiFinder;
 
-        int minId = getMinimumId(initialSet);
-        selector = new Selector(initialSet, minId);
-        doiFinder = new IBGDoiFinder();
-        pool = new HashSet<Index>(initialSet);
-        //stats = new WFITRecommendationStatistics("WFIT");
-        //previousState = new BitSet();
-        isCandidateSetFixed = true;
+        int minId;
+
+        if (initialSet.isEmpty())
+            minId = Index.IN_MEMORY_ID.get();
+        else
+            minId = getMinimumId(initialSet);
+
+        this.selector = new Selector(initialSet, minId);
+        this.pool = new TreeSet<Index>(initialSet);
+        this.stats = new WFITRecommendationStatistics("WFIT");
+        this.previousState = new HashSet<Index>();
+        this.isCandidateSetFixed = true;
     }
 
     /**
@@ -85,14 +104,11 @@ public class WFIT extends Advisor
     public void process(SQLStatement sql) throws SQLException
     {
         if (!isCandidateSetFixed)
-            if (pool.addAll(ibgOptimizer.recommendIndexes(sql)))
-                System.out.println("added new: " + pool);
+            pool.addAll(optimizer.recommendIndexes(sql));
 
-        PreparedSQLStatement  pStmt = ibgOptimizer.prepareExplain(sql);
+        PreparedSQLStatement  pStmt = optimizer.prepareExplain(sql);
         ExplainedSQLStatement eStmt = pStmt.explain(pool);
         InteractionBank       bank  = doiFinder.degreeOfInteraction(pStmt, pool);
-
-        System.out.println("bank:\n" + bank);
 
         selector.analyzeQuery(
                 new ProfiledQuery(
@@ -114,22 +130,20 @@ public class WFIT extends Advisor
      */
     private void addRecommendationStatisticsEntry(ExplainedSQLStatement eStatement)
     {
-        BitSet newState = new BitSet();
+        if (this.previousState == null)
+            throw new RuntimeException("Previous state hasn't been initialized");
 
-        for (Index idx : selector.getRecommendation())
-            newState.set(idx.getId());
+        Set<Index> newState = new HashSet<Index>();
+
+        newState.addAll(selector.getRecommendation());
         
-        //WFITRecommendationStatistics.Entry e =
-            //(WFITRecommendationStatistics.Entry)
-            //stats.addNewEntry(
-                //eStatement.getTotalCost(),
-                //eStatement.getConfiguration(),
-                //selector.getRecommendation(),
-                //transitionCost(getSnapshot(pool), previousState, newState));
+        stats.addNewEntry(
+                eStatement.getTotalCost(),
+                eStatement.getConfiguration(),
+                selector.getRecommendation(),
+                transitionCost(this.previousState, newState));
 
-        //e.setCandidatePartitioning(getStablePartitioning(selector.getStablePartitioning()));
-
-        //previousState = newState;
+        this.previousState = newState;
     }
 
     /**
@@ -155,56 +169,64 @@ public class WFIT extends Advisor
      *
      * @return
      *      recommendation statistics for {@code OPT}
+     * @throws SQLException
+     *      if the candidate set wasn't specified from the beginning
      */
     public RecommendationStatistics getOptimalRecommendationStatistics()
+        throws SQLException
     {
-        /*
-        RecommendationStatistics optStats = new WFITRecommendationStatistics("OPT");
-        BitSet[] optimalSchedule = selector.getOptimalScheduleRecommendation();
+        if (!isCandidateSetFixed)
+            throw new SQLException("Can't produce OPT without specifying an initial candidate set");
+            
+        RecommendationStatistics optStats = new RecommendationStatistics("OPT");
 
-        BitSet prevState = new BitSet();
+        Set<Index> prevState = new HashSet<Index>();
+        Set<Index> newState = new HashSet<Index>();
 
         int i = 0;
 
-        for (BitSet bs : optimalSchedule) {
+        for (Set<Index> optRecommendation : selector.getOptimalScheduleRecommendation(pool)) {
 
-            BitSet newState = new BitSet();
+            newState = optRecommendation;
 
-            newState.set(bs);
-
-            WFITRecommendationStatistics.Entry e =
-                (WFITRecommendationStatistics.Entry)
-                optStats.addNewEntry(
-                    selector.getCost(i, bs),
+            optStats.addNewEntry(
+                    selector.getCost(i, newState),
                     pool,
-                    convert(optimalSchedule[i], pool),
-                    transitionCost(getSnapshot(pool), prevState, newState));
-
-            e.setCandidatePartitioning(getStablePartitioning(selector.getStablePartitioning()));
+                    newState,
+                    transitionCost(prevState, newState));
 
             prevState = newState;
         }
 
         return optStats;
-        */
-        return null;
     }
 
     /**
-     * Converts a bit array into a set partition of indexes.
+     * Gets the pool for this instance.
      *
-     * @param bitSets
-     *      an array of bit set objects
-     * @return
-     *      a set of sets of indexes
-    private Set<Set<Index>> getStablePartitioning(BitSet[] bitSets)
-    {
-        Set<Set<Index>> partitioning = new HashSet<Set<Index>>();
-
-        for (BitSet bs : bitSets)
-            partitioning.add(new HashSet<Index>(toSet(bs, pool)));
-
-        return partitioning;
-    }
+     * @return The pool.
      */
+    public Set<Index> getPool()
+    {
+        return this.pool;
+    }
+
+    /**
+     * Returns the minimum id.
+     *
+     * @param indexes
+     *      a collection of indexes
+     * @return
+     *      the minimum id
+     */
+    public static int getMinimumId(Collection<Index> indexes)
+    {
+        int minId = Integer.MAX_VALUE;
+
+        for (Index i : indexes)
+            if (i.getId() < minId)
+                minId = i.getId();
+
+        return minId;
+    }
 }

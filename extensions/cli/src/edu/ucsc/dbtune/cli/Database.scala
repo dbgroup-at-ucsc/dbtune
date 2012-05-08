@@ -12,7 +12,9 @@ import java.util.Properties
 import java.util.Set
 
 import edu.ucsc.dbtune.DatabaseSystem._
+import edu.ucsc.dbtune.util.Environment.getInstance
 import edu.ucsc.dbtune.util.EnvironmentProperties.IBG
+import edu.ucsc.dbtune.util.EnvironmentProperties.INUM
 import edu.ucsc.dbtune.util.EnvironmentProperties.JDBC_URL
 import edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME
 import edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER
@@ -92,13 +94,14 @@ object Database
     */
   def connect(url:String, usr:String, pwd:String) : Database = {
 
-    var properties = new Properties()
+    var env = Environment.getInstance
 
-    properties.setProperty(USERNAME,  usr)
-    properties.setProperty(PASSWORD,  pwd)
-    properties.setProperty(JDBC_URL,  url)
-    properties.setProperty(OPTIMIZER, IBG)
+    env.setProperty(USERNAME,  usr)
+    env.setProperty(PASSWORD,  pwd)
+    env.setProperty(JDBC_URL,  url)
+    //env.setProperty(OPTIMIZER, INUM + "," + IBG)
+    env.setProperty(OPTIMIZER, IBG)
 
-    new Database(newDatabaseSystem(properties))
+    new Database(newDatabaseSystem(env))
   }
 }

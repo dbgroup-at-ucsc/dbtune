@@ -1,9 +1,7 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.io.Serializable;
-
 import java.sql.SQLException;
-
 import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
@@ -11,7 +9,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 
-import static edu.ucsc.dbtune.util.MetadataUtils.toSet;
+import static edu.ucsc.dbtune.advisor.wfit.Selector.toSet;
 
 //CHECKSTYLE:OFF
 public class ProfiledQuery implements Serializable {
@@ -42,9 +40,13 @@ public class ProfiledQuery implements Serializable {
     }
     
     public double cost(BitSet config) {
+        return cost(toSet(config, candidateSet));
+    }
+    
+    public double cost(Set<Index> config) {
         double total;
         try {
-            total = pStmt.explain(toSet(config, candidateSet)).getTotalCost();
+            total = pStmt.explain(config).getTotalCost();
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }

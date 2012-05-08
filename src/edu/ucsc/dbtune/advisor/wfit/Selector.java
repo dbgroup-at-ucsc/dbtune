@@ -1,11 +1,13 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.MetadataUtils;
 
 //CHECKSTYLE:OFF
 public class Selector {
@@ -23,16 +25,7 @@ public class Selector {
     
     public Selector(int minId)
     {
-        idxStats = new IndexStatistics(minId);
-        matSet = new DynamicIndexSet(minId);
-        userHotSet = new DynamicIndexSet(minId);
-        qinfos = new ArrayList<ProfiledQuery>();
-        queryCount = 0;
-        this.minId = minId;
-
-        hotSet = new StaticIndexSet();
-        hotPartitions = new IndexPartitions(hotSet, minId);
-        wfa = new WorkFunctionAlgorithm(minId);
+        this(new HashSet<Index>(), minId);
     }
 
     public Selector(Set<Index> initialSet, int minId)
@@ -66,20 +59,9 @@ public class Selector {
         return new AnalyzedQuery(qinfo, hotPartitions.bitSetArray());
     }
 
-    public double getCost(int queryId, BitSet bs)
+    public double getCost(int queryId, Set<Index> conf)
     {
-        return qinfos.get(queryId).cost(bs);
-    }
-    
-    /**
-     * Returns an array of bit sets, where each corresponds to a candidate set partition.
-     *
-     * @return
-     *      array of bit set objects
-     */
-    public BitSet[] getStablePartitioning()
-    {
-        return hotPartitions.bitSetArray();
+        return qinfos.get(queryId).cost(conf);
     }
     
     /*
@@ -87,14 +69,6 @@ public class Selector {
      */
     public Set<Index> getRecommendation() {
         return wfa.getRecommendation();
-    }
-    
-    /*
-     * Called by main thread to get a recommendation
-     */
-    public BitSet[] getOptimalScheduleRecommendation() {
-        return wfa.getTrace().optimalSchedule(
-                hotPartitions, queryCount, qinfos.toArray(new ProfiledQuery[0]));
     }
     
     public void positiveVote(Index index, Set<Index> candSet) {
@@ -130,15 +104,10 @@ public class Selector {
         }
     }
 
-    public double currentCost(ProfiledQuery qinfo) {
-        return qinfo.cost(matSet.bitSet());
-    }
-
     public double drop(Index index) {
         matSet.remove(index);
         return 0; // XXX: assuming no cost to drop
     }
-
 
     public double create(Index index) {
         if (!matSet.contains(index)) {
@@ -182,6 +151,56 @@ public class Selector {
             hotPartitions = newHotPartitions;
             wfa.repartition(hotPartitions);
         }
+    }
+
+    /**
+     * Converts a bitSet to a set of indexes.
+     *
+     * @param bs
+     *      bitset containing ids of indexes being looked for
+     * @param indexes
+     *      set of indexes where one with the given id is being looked for
+     * @return
+     *      the index with the given id; {@code null} if not found
+     */
+    public static Set<Index> toSet(BitSet bs, Set<Index> indexes)
+    {
+        Set<Index> indexSet = new HashSet<Index>();
+
+        int minId = WFIT.getMinimumId(indexes);
+
+        for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
+            Index index = MetadataUtils.find(indexes, i + minId);
+
+            if (index == null)
+                throw new RuntimeException("Can't find index with id " + (i + minId));
+
+            indexSet.add(index);
+        }
+
+        return indexSet;
+    }
+    
+    /**
+     * Returns the recommendation corresponding to {@code OPT}.
+     *
+     * @param pool
+     *      pool of all the candidate indexes referenced in any step
+     * @return
+     *      a list containing a recommendation in each element. Each element in the list corresponds 
+     *      to a query, in the order they've been passed to the {@code Selector}
+     */
+    public List<Set<Index>> getOptimalScheduleRecommendation(Set<Index> pool)
+    {
+        BitSet[] optimalSchedule =
+            wfa.getTrace().optimalSchedule(
+                hotPartitions, queryCount, qinfos.toArray(new ProfiledQuery[0]));
+        List<Set<Index>> optimalRecs = new ArrayList<Set<Index>>();
+
+        for (BitSet bs : optimalSchedule)
+            optimalRecs.add(toSet(bs, pool));
+
+        return optimalRecs;
     }
 }
 //CHECKSTYLE:ON
