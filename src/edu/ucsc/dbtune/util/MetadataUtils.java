@@ -278,6 +278,70 @@ public final class MetadataUtils
     }
 
     /**
+     * Checks two configurations to see if they're equivalent, with respect to the covering of each 
+     * other. In this definition, a configuration {@code a} is equivalent to another one {@code b} 
+     * if an index in {@code a} is covered or covers at least one index in {@code b}.
+     *
+     * @param a
+     *      set of indexes
+     * @param b
+     *      set of indexes
+     * @return
+     *      {@code true} if {@code a} covers {@code b}
+     */
+    public static boolean equalsBasedOnCovering(Set<Index> a, Set<Index> b)
+    {
+        for (Index iA : a) {
+
+            boolean isCoveredOrCovers = false;
+
+            for (Index iB : b) {
+                if (iB.isCoveredBy(iA) || iA.isCoveredBy(iB)) {
+                    isCoveredOrCovers = true;
+                    break;
+                }
+            }
+
+            if (!isCoveredOrCovers)
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks to configurations to see if one covers the other. A configuration {@code a} covers 
+     * another one {@code b} if all the indexes of a are covering indexes of the indexes in {@code 
+     * b}.
+     *
+     * @param a
+     *      set of indexes
+     * @param b
+     *      set of indexes
+     * @return
+     *      {@code true} if {@code a} covers {@code b}
+     */
+    public static boolean covers(Set<Index> a, Set<Index> b)
+    {
+        for (Index iA : a) {
+
+            boolean isCovered = false;
+
+            for (Index iB : b) {
+                if (iB.isCoveredBy(iA)) {
+                    isCovered = true;
+                    break;
+                }
+            }
+
+            if (!isCovered)
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Finds an index by name in a set of indexes. This looks only at the name of the of the index 
      * and not to the whole fully qualified one.
      *

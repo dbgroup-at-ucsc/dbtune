@@ -9,6 +9,7 @@ extensions/*/build/
 extensions/bip/bin/
 extensions/inum/bin/
 extensions/*/.cache
+lib/*-sources.jar
 manifest.mf
 nbproject/
 nbbuild.xml

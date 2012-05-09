@@ -443,7 +443,8 @@ public class ExplainedSQLStatement
     {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("\nSelect cost: " + getSelectCost() + "\n");
+        sb.append("\nTotal cost: " + getTotalCost() + "\n");
+        sb.append("Select cost: " + getSelectCost() + "\n");
 
         if (statement.getSQLCategory().isSame(NOT_SELECT)) {
             sb.append("Base update cost: " + getBaseTableUpdateCost() + "\n");

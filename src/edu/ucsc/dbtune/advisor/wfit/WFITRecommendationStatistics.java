@@ -1,6 +1,6 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
@@ -29,11 +29,10 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
     @Override
     public Entry addNewEntry(
             double totalCost,
-            Collection<Index> candidateSet,
-            Collection<Index> recommendation,
-            double transitionCost)
+            Set<Index> candidateSet,
+            Set<Index> recommendation)
     {
-        super.addNewEntry(totalCost, candidateSet, recommendation, transitionCost);
+        super.addNewEntry(totalCost, candidateSet, recommendation);
 
         RecommendationStatistics.Entry e = super.entries.remove(entries.size() - 1);
 
@@ -65,6 +64,7 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
             this.transitionCost = e.getTransitionCost();
             this.totalCost = e.getTotalCost();
             this.totalWork = e.getTotalWork();
+            this.candidatePartitioning = new HashSet<Set<Index>>();
         }
 
         /**

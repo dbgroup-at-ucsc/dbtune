@@ -28,6 +28,7 @@ public class WorkFunctionAlgorithm {
 
     public WorkFunctionAlgorithm(IndexPartitions parts, boolean keepHistory0, int minId)
     {
+        dump("BEFORE INITIAL");
         repartition(parts);
 
         if (keepHistory0) {
@@ -35,7 +36,7 @@ public class WorkFunctionAlgorithm {
             keepHistory = keepHistory0;
         }
         
-        dump("INITIAL");
+        dump("AFTER INITIAL");
         this.minId = minId;
     }
     
@@ -59,6 +60,7 @@ public class WorkFunctionAlgorithm {
     }
     
     public void newTask(ProfiledQuery qinfo) {
+        dump("BEFORE NEW TASK");
         tempBitSet.clear(); // just to be safe
         
         for (int subsetNum = 0; subsetNum < submachines.length; subsetNum++) {
@@ -90,10 +92,11 @@ public class WorkFunctionAlgorithm {
             trace.addValues(wf, nullCost);
         }
         
-        dump("NEW TASK");
+        dump("AFTER NEW TASK");
     }
 
     public void vote(Index index, boolean isPositive) throws NoSuchElementException {
+        dump("BEFORE VOTE");
         boolean voted = false;
 
         for (SubMachine subm : submachines)
@@ -105,7 +108,8 @@ public class WorkFunctionAlgorithm {
         if (!voted)
             throw new NoSuchElementException("Index " + index + " not on any WFA partition");
 
-        dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + (index.getId()-minId));
+        dump("AFTER VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + 
+                (index.getId()-minId));
     }
 
     public Set<Index> getRecommendation() {
@@ -119,6 +123,7 @@ public class WorkFunctionAlgorithm {
     }
 
     public void repartition(IndexPartitions newPartitions) {
+        dump("BEFORE REPARTITION");
         int newSubsetCount = newPartitions.subsetCount();
         int oldSubsetCount = submachines.length;
         SubMachine[] submachines2 = new SubMachine[newSubsetCount];
@@ -199,7 +204,7 @@ public class WorkFunctionAlgorithm {
         
         submachines = submachines2; // start using new subsets
         wf.reallocate(wf2); // copy wf2 into wf (also changes the implicit partitioning within wf)
-        dump("REPARTITION");
+        dump("AFTER REPARTITION");
     }
 
     static void setStateBits(int[] ids, int stateNum, BitSet bitSet) {
@@ -287,29 +292,29 @@ public class WorkFunctionAlgorithm {
         }
         
         public void dump(TotalWorkValues wf) {
-            System.out.print("Index IDs : [ ");
-            for (int id : indexIds) System.out.print(id + " ");
-            System.out.print("]   ");
+            //System.out.print("Index IDs : [ ");
+            //for (int id : indexIds) System.out.print(id + " ");
+            //System.out.print("]   ");
 
-            System.out.print("REC : [ ");
-            for (int id : indexIds) if (currentBitSet.get(id)) System.out.print(id + " ");
-            System.out.println("]");
+            //System.out.print("REC : [ ");
+            //for (int id : indexIds) if (currentBitSet.get(id)) System.out.print(id + " ");
+            //System.out.println("]");
             
-          //System.out.println("Current workfunction values ...");
-          //for (int s = 0; s < numStates; s++) {
-              //System.out.print("   [ ");
-              //for (int i = 0; i < indexIds.length; i++) {
-                  //String id = "" + indexIds[i];
-                  //if (((s >> i) & 1) == 1)
-                      //System.out.print(id);
-                  //else 
-                      //for (int k = 0; k < id.length(); k++) System.out.print(" ");
-                  //System.out.print(" ");
-              //}
-              //System.out.println("] = " + wf.get(subsetNum, s));
-          //}
+            //System.out.println("Current workfunction values ...");
+            //for (int s = 0; s < numStates; s++) {
+                //System.out.print("   [ ");
+                //for (int i = 0; i < indexIds.length; i++) {
+                    //String id = "" + indexIds[i];
+                    //if (((s >> i) & 1) == 1)
+                        //System.out.print(id);
+                    //else 
+                        //for (int k = 0; k < id.length(); k++) System.out.print(" ");
+                    //System.out.print(" ");
+                //}
+                //System.out.println("] = " + wf.get(subsetNum, s));
+            //}
         }
-        
+
         // process a positive or negative vote for the index
         // do the necessary bookkeeping in the input workfunction, and update the current state
         public void vote(TotalWorkValues wf, Index index, boolean isPositive) {

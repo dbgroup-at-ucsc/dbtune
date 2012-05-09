@@ -103,19 +103,10 @@ public class WFIT extends Advisor
         ExplainedSQLStatement eStmt = pStmt.explain(pool);
         InteractionBank       bank  = doiFinder.degreeOfInteraction(pStmt, pool);
 
-        wfitDriver.analyzeQuery(
-                new ProfiledQuery(
-                    sql.getSQL(),
-                    pStmt,
-                    eStmt,
-                    pool,
-                    bank,
-                    0));
+        wfitDriver.analyzeQuery(new ProfiledQuery(sql.getSQL(), pStmt, eStmt, pool, bank, 0));
 
         stats.addNewEntry(
-                pStmt.explain(getRecommendation()).getTotalCost(),
-                eStmt.getConfiguration(),
-                wfitDriver.getRecommendation());
+                pStmt.explain(getRecommendation()).getTotalCost(), pool, getRecommendation());
     }
 
     /**

@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.optimizer;
 
-import java.util.Comparator;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -16,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.util.MetadataUtils.equalsBasedOnCovering;
 import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.util.TestUtils.loadWorkloads;
 import static edu.ucsc.dbtune.util.TestUtils.workloads;
@@ -34,7 +34,7 @@ import static org.junit.Assert.assertThat;
  *
  * @author Ivo Jimenez
  */
-public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQLStatement>
+public class OptimizerVsDelegateFunctionalTest
 {
     private static DatabaseSystem db;
     private static Environment env;
@@ -105,16 +105,14 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
                 ExplainedSQLStatement explainedByDelegate = delegate.explain(sql, allIndexes);
 
                 if (Class.forName("edu.ucsc.dbtune.optimizer.InumOptimizer").isInstance(optimizer))
-                    // for INUM, over-estimations are allowed; under-estimations will cause failure
                     assertThat(
                             getErrorString(explainedByOptimizer, explainedByDelegate),
-                            compare(explainedByOptimizer, explainedByDelegate),
+                            compareINUM(explainedByOptimizer, explainedByDelegate),
                             is(greaterThanOrEqualTo(0)));
                 else if (optimizer instanceof IBGOptimizer)
-                    // IBG should be exactly the same
                     assertThat(
                             getErrorString(explainedByOptimizer, explainedByDelegate),
-                            explainedByOptimizer.equalsIgnorePlan(explainedByDelegate), is(true));
+                            compareIBG(explainedByOptimizer, explainedByDelegate), is(true));
                 else
                     throw new RuntimeException(
                             "Unknown optimizer class: " + optimizer.getClass().getName());
@@ -127,22 +125,59 @@ public class OptimizerVsDelegateFunctionalTest implements Comparator<ExplainedSQ
     }
 
     /**
-     * {@inheritDoc}
+     * two plans for INUM are equal if the total cost ratio (query shell cost + base table update 
+     * cost) is withing a range of 10% below the base optimizer cost.
+     *
+     * @param explainedByINUM
+     *      explained by INUM
+     * @param explainedByOptimizer
+     *      explained by optimizer
+     * @return
+     *      {@code 0} if inum cost is less than 10% above the optimizer cost; {@code 1} if its 10% 
+     *      more higher than the optimizer cost; {@code -1} if INUM's cost is less than the 
+     *      optimizer's.
      */
-    @Override
-    public int compare(ExplainedSQLStatement e1, ExplainedSQLStatement e2)
+    public int compareINUM(
+            ExplainedSQLStatement explainedByINUM, ExplainedSQLStatement explainedByOptimizer)
     {
         double ratio =
-            (e1.selectCost + e1.baseTableUpdateCost) /
-            (e2.selectCost + e2.baseTableUpdateCost);
+            (explainedByINUM.selectCost + explainedByINUM.baseTableUpdateCost) /
+            (explainedByOptimizer.selectCost + explainedByOptimizer.baseTableUpdateCost);
 
-        if (e1.statement.equals(e2.statement) && ratio > 0.90 && ratio < 1.10)
+        if (explainedByINUM.statement.equals(explainedByOptimizer.statement) &&
+                ratio > 0.99 && ratio < 1.10)
             return 0;
 
         if (ratio > 1.10)
             return 1;
 
         return -1;
+    }
+
+    /**
+     * two plans for IBG are equal if they have exactly the same members except by the plan and the 
+     * used configuration. The configuration has to be covered among them (take a look at {@link 
+     * #equalsBasedOnCovering})
+     *
+     * @param explainedByIBG
+     *      explained by ibg
+     * @param explainedByOptimizer
+     *      explained by optimizer
+     * @return
+     *      {@code true} if the only difference is in the used configuration. {@code false}
+     */
+    public boolean compareIBG(ExplainedSQLStatement explainedByIBG, ExplainedSQLStatement 
+            explainedByOptimizer)
+    {
+        if (explainedByIBG.equalsIgnorePlan(explainedByOptimizer))
+            return true;
+
+        if (!equalsBasedOnCovering(
+                    explainedByIBG.getUsedConfiguration(), 
+                    explainedByOptimizer.getUsedConfiguration()))
+            return false;
+
+        return true;
     }
 
     /**

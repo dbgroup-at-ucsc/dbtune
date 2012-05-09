@@ -4,7 +4,7 @@
 #
 # it must be run from the dbtune root folder
 
-DB2_CONFIG="jdbc.url=jdbc:db2://aigaion.cse.ucsc.edu:50000/test\n\
+DB2_CONFIG="jdbc.url=jdbc:db2://192.168.56.101:50000/test\n\
 workloads.dir=resources/test-workloads/db2/\n\
 username=db2inst1\n\
 password=db2inst1admin\n"
@@ -51,7 +51,7 @@ if [ $? -ne 0 ];then
     exit 1;
 fi
 
-###############
+################
 echo "executing $DB2_CONFIG and $INUM_CONFIG"
 
 cat bin/base.cfg > $DBTUNECONFIG
