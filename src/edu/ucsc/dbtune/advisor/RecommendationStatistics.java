@@ -2,11 +2,15 @@ package edu.ucsc.dbtune.advisor;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics.Entry;
 import edu.ucsc.dbtune.metadata.Index;
+
+import static edu.ucsc.dbtune.util.MetadataUtils.transitionCost;
 
 /**
  * Holds information about the advising process.
@@ -18,6 +22,7 @@ public class RecommendationStatistics implements Iterable<Entry>
     protected List<Entry> entries = new ArrayList<Entry>();
     private double totalWorkSum;
     private String algorithmName;
+    private Set<Index> previousRecommendation;
 
     /**
      * @param algorithmName
@@ -26,6 +31,7 @@ public class RecommendationStatistics implements Iterable<Entry>
     public RecommendationStatistics(String algorithmName)
     {
         this.algorithmName = algorithmName;
+        this.previousRecommendation = new HashSet<Index>();
     }
 
     /**
@@ -37,18 +43,17 @@ public class RecommendationStatistics implements Iterable<Entry>
      *      indexes that were in the context of the recommender
      * @param recommendation
      *      indexes that were recommended
-     * @param transitionCost
-     *      transitionCost that the entry corresponds to
      * @return
      *      the entry that has been just created
      */
     public Entry addNewEntry(
             double totalCost,
-            Collection<Index> candidateSet,
-            Collection<Index> recommendation,
-            double transitionCost)
+            Set<Index> candidateSet,
+            Set<Index> recommendation)
     {
         Entry e = new Entry();
+
+        double transitionCost = transitionCost(previousRecommendation, recommendation);
 
         totalWorkSum += totalCost + transitionCost;
 
@@ -59,6 +64,8 @@ public class RecommendationStatistics implements Iterable<Entry>
         e.totalWork = totalWorkSum;
 
         entries.add(e);
+
+        previousRecommendation = recommendation;
         
         return e;
     }
@@ -96,6 +103,16 @@ public class RecommendationStatistics implements Iterable<Entry>
     public Iterator<Entry> iterator()
     {
         return entries.iterator();
+    }
+
+    /**
+     * Gets the totalWorkSum for this instance.
+     *
+     * @return The totalWorkSum.
+     */
+    public double getTotalWorkSum()
+    {
+        return this.totalWorkSum;
     }
 
     /**

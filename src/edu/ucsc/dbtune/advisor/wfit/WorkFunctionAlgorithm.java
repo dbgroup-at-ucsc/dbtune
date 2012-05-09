@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -92,11 +93,17 @@ public class WorkFunctionAlgorithm {
         dump("NEW TASK");
     }
 
-    public void vote(Index index, boolean isPositive) {
-        //Debug.assertion(!keepHistory, "tracing WFA is not supported with user feedback");
-        for (SubMachine subm : submachines) 
-            if (subm.subset.contains(index))
+    public void vote(Index index, boolean isPositive) throws NoSuchElementException {
+        boolean voted = false;
+
+        for (SubMachine subm : submachines)
+            if (subm.subset.contains(index)) {
                 subm.vote(wf, index, isPositive);
+                voted = true;
+            }
+
+        if (!voted)
+            throw new NoSuchElementException("Index " + index + " not on any WFA partition");
 
         dump("VOTE " + (isPositive ? "POSITIVE " : "NEGATIVE ") + "for " + (index.getId()-minId));
     }
@@ -112,7 +119,6 @@ public class WorkFunctionAlgorithm {
     }
 
     public void repartition(IndexPartitions newPartitions) {
-        //Debug.assertion(!keepHistory, "tracing WFA is not supported with repartitioning");
         int newSubsetCount = newPartitions.subsetCount();
         int oldSubsetCount = submachines.length;
         SubMachine[] submachines2 = new SubMachine[newSubsetCount];

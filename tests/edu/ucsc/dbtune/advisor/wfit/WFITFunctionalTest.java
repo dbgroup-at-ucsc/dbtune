@@ -190,4 +190,212 @@ public class WFITFunctionalTest
         assertThat(Iterables.get(wfit.getStablePartitioning(), 0).size(), is(1));
         assertThat(Iterables.get(wfit.getStablePartitioning(), 1).size(), is(1));
     }
+
+    /**
+     * @throws Exception
+     *      if fails
+     */
+    @Test
+    public void testVoting() throws Exception
+    {
+        if (!(db.getOptimizer() instanceof IBGOptimizer))
+            return;
+
+        WFIT wfit;
+
+
+
+        // test GOOD negative vote
+        db.getCatalog().dropIndexes();
+
+        wfit = new WFIT(db);
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        assertThat(wfit.getStablePartitioning().size(), is(1));
+
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+1 WHERE a BETWEEN        0 AND  500000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(false));
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+2 WHERE a BETWEEN  500000 AND  900000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(false));
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+3 WHERE a BETWEEN  9000000 AND 11000000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(false));
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+4 WHERE a BETWEEN 11000000 AND 15000000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(true));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        double totalWorkNoVoting = wfit.getRecommendationStatistics().getTotalWorkSum();
+
+        db.getCatalog().dropIndexes();
+
+        wfit = new WFIT(db);
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        assertThat(wfit.getStablePartitioning().size(), is(1));
+
+        wfit.voteDown(0);
+
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+1 WHERE a BETWEEN        0 AND  500000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(true));
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+2 WHERE a BETWEEN  500000 AND  900000"));
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+3 WHERE a BETWEEN  9000000 AND 11000000"));
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+4 WHERE a BETWEEN 11000000 AND 15000000"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        double totalWorkVoting = wfit.getRecommendationStatistics().getTotalWorkSum();
+
+        assertThat(totalWorkNoVoting, greaterThan(totalWorkVoting));
+
+        
+
+        // test GOOD positive vote
+        db.getCatalog().dropIndexes();
+
+        wfit = new WFIT(db);
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        assertThat(wfit.getStablePartitioning().size(), is(1));
+
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+1 WHERE a BETWEEN        0 AND  500000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(false));
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+2 WHERE a BETWEEN  500000 AND  900000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(false));
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+3 WHERE a BETWEEN  9000000 AND 11000000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(false));
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+4 WHERE a BETWEEN 11000000 AND 15000000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(true));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        totalWorkNoVoting = wfit.getRecommendationStatistics().getTotalWorkSum();
+
+        db.getCatalog().dropIndexes();
+
+        wfit = new WFIT(db);
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        assertThat(wfit.getStablePartitioning().size(), is(1));
+
+        wfit.voteUp(0);
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+1 WHERE a BETWEEN        0 AND  500000"));
+        wfit.voteUp(0);
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+2 WHERE a BETWEEN  500000 AND  900000"));
+        wfit.voteUp(0);
+        wfit.process(
+                new SQLStatement(
+                    "UPDATE one_table.tbl set a = a+3 WHERE a BETWEEN  9000000 AND 11000000"));
+        wfit.voteUp(0);
+        //wfit.process(
+                //new SQLStatement(
+                    //"UPDATE one_table.tbl set a = a+4 WHERE a BETWEEN 11000000 AND 15000000"));
+        assertThat(wfit.getRecommendation().isEmpty(), is(false));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        totalWorkVoting = wfit.getRecommendationStatistics().getTotalWorkSum();
+
+        assertThat(totalWorkNoVoting, greaterThan(totalWorkVoting));
+
+
+
+        // test recovery (BAD negative vote)
+        db.getCatalog().dropIndexes();
+
+        wfit = new WFIT(db);
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        assertThat(wfit.getRecommendation().size(), is(1));
+
+        wfit.voteDown(0);
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        assertThat(wfit.getRecommendation().isEmpty(), is(true));
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        assertThat(wfit.getRecommendation().size(), is(1));
+    }
 }

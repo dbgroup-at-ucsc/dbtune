@@ -9,7 +9,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 
-import static edu.ucsc.dbtune.advisor.wfit.Selector.toSet;
+import static edu.ucsc.dbtune.advisor.wfit.SATuningDBTuneTranslator.toSet;
 
 //CHECKSTYLE:OFF
 public class ProfiledQuery implements Serializable {

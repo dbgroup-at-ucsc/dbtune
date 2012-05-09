@@ -895,7 +895,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     {
         StringBuilder str = new StringBuilder();
         
-        str.append("[");
+        str.append(getId() + ":[");
 
         for (Column col : this)
             str.append(col.getName()).append(isAscending(col) ? "(A)" : "(D)").append("+");

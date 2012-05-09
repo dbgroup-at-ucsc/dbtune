@@ -9,26 +9,45 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.MetadataUtils;
 
-//CHECKSTYLE:OFF
-public class Selector {
+/**
+ * Transforms data structures in the format the the SATuning API expects them, i.e. mainly BitSet- 
+ * and array-based ones.
+ *
+ * @author Ivo Jimenez
+ */
+public class SATuningDBTuneTranslator
+{
     private final IndexStatistics idxStats;
     private final WorkFunctionAlgorithm wfa;
     private final DynamicIndexSet matSet;
     private StaticIndexSet hotSet;
     private final DynamicIndexSet userHotSet;
     private IndexPartitions hotPartitions;
-    private int maxHotSetSize = Environment.getInstance().getMaxNumIndexes(); // hotSet size
+    // hotSet size
+    private int maxHotSetSize = Environment.getInstance().getMaxNumIndexes();
     private int maxNumStates = Environment.getInstance().getMaxNumStates();
     private List<ProfiledQuery> qinfos;
     private int queryCount;
     private int minId;
     
-    public Selector(int minId)
+    /**
+     * @param minId
+     *      minimum id among the all the possible indexes that will be sent "down" to WFA and its 
+     *      dependencies.
+     */
+    public SATuningDBTuneTranslator(int minId)
     {
         this(new HashSet<Index>(), minId);
     }
 
-    public Selector(Set<Index> initialSet, int minId)
+    /**
+     * @param minId
+     *      minimum id among the all the possible indexes that will be sent "down" to WFA and its 
+     *      dependencies.
+     * @param initialSet
+     *      the initial candidate set to be used 
+     */
+    public SATuningDBTuneTranslator(Set<Index> initialSet, int minId)
     {
         idxStats = new IndexStatistics(minId);
         matSet = new DynamicIndexSet(minId);
@@ -42,10 +61,15 @@ public class Selector {
         wfa = new WorkFunctionAlgorithm(hotPartitions, true, minId);
     }
 
-    /*
-     * Perform the per-query tasks that are done after profiling
+    /**
+     * Perform the per-query tasks that are done after profiling. *
+     * @param qinfo
+     *      a profiled query
+     * @return
+     *      the WFA analysis, contained in the given analyzed query
      */
-    public AnalyzedQuery analyzeQuery(ProfiledQuery qinfo) {
+    public AnalyzedQuery analyzeQuery(ProfiledQuery qinfo)
+    {
         // add the query to the statistics repository
         idxStats.addQuery(qinfo, matSet);
 
@@ -59,6 +83,20 @@ public class Selector {
         return new AnalyzedQuery(qinfo, hotPartitions.bitSetArray());
     }
 
+    /**
+     * Returns the cost for a query using the given configuration. Looks at the list of {@link 
+     * ProfiledQuery profiled} queries and uses the one corresponding to the given query id.
+     *
+     * @param queryId
+     *      id of the query to explain
+     * @param conf
+     *      configuration used to explain the corresponding statement.
+     * @return
+     *      cost of the query
+     * @throws IndexOutOfBoundsException
+     *      if {@code queryId} is negative or greater than the total number of statements seen so 
+     *      far.
+     */
     public double getCost(int queryId, Set<Index> conf)
     {
         return qinfos.get(queryId).cost(conf);
@@ -77,73 +115,50 @@ public class Selector {
         Set<Set<Index>> partitioning = new HashSet<Set<Index>>();
 
         for (BitSet bs : hotPartitions.bitSetArray())
-            partitioning.add(new HashSet<Index>(toSet(bs, pool)));
+            partitioning.add(new HashSet<Index>(toSet(bs, pool, minId)));
 
         return partitioning;
     }
     
-    /*
-     * Called by main thread to get a recommendation
+    /**
+     * @return
+     *      recommendation for the last seen statement
      */
-    public Set<Index> getRecommendation() {
+    public Set<Index> getRecommendation()
+    {
         return wfa.getRecommendation();
     }
-    
-    public void positiveVote(Index index, Set<Index> candSet) {
-        // get it in the hot set
-        if (!userHotSet.contains(index)) {
-            userHotSet.add(index);
-            
-            // ensure that userHotSet is a subset of HotSet
-            if (!hotSet.contains(index)) {
-                reorganizeCandidates(candSet);
-            }
-        }
-        
-        // Now the index is being monitored by WFA
-        // Just need to bias the statistics in its favor
-        wfa.vote(index, true);
-    }
-    
-    public void negativeVote(Index index) {     
-        // Check if the index is hot before doing anything.
-        //
-        // If the index is not being tracked by WFA, we have nothing to do.
-        // Note that this check skips indexes that are not in 
-        // the overall candidate pool.
-        if (hotSet.contains(index)) {
-            // ensure that the index is no longer forced in the hot set
-            userHotSet.remove(index);
-            
-            // don't remove from the hot set necessarily
-            
-            // bias the statistics against the index
-            wfa.vote(index, false);
-        }
-    }
 
-    public double drop(Index index) {
-        matSet.remove(index);
-        return 0; // XXX: assuming no cost to drop
-    }
-
-    public double create(Index index) {
-        if (!matSet.contains(index)) {
-            matSet.add(index);
-            return index.getCreationCost();
-        }
-        return 0;
-    }
-
+    /**
+     * @return
+     *      the number of queries seen so far
+     */
     public int getQueryCount()
     {
         return queryCount;
     }
     
-    /* 
-     * common code between positiveVote and processQuery 
+    /**
+     * votes an index up.
+     *
+     * @param isPositive
+     *      whether the vote is positive or not
+     * @param index
+     *      an index being voted
      */
-    private void reorganizeCandidates(Set<Index> candSet) {
+    public void vote(Index index, boolean isPositive)
+    {
+        wfa.vote(index, isPositive);
+    }
+    
+    /**
+     * reorganizes the internal candidate set based on a new incoming set.
+     *
+     * @param candSet
+     *      new set of indexes
+     */
+    private void reorganizeCandidates(Set<Index> candSet)
+    {
         // determine the hot set
         DynamicIndexSet reqIndexes = new DynamicIndexSet(minId);
         for (Index index : userHotSet) reqIndexes.add(index);
@@ -178,25 +193,34 @@ public class Selector {
      *      bitset containing ids of indexes being looked for
      * @param indexes
      *      set of indexes where one with the given id is being looked for
+     * @param minimumId
+     *      minimum id to consider when indexing arrays
+     * @return
+     *      the index with the given id; {@code null} if not found
+     */
+    public static Set<Index> toSet(BitSet bs, Set<Index> indexes, int minimumId)
+    {
+        Set<Index> indexSet = new HashSet<Index>();
+
+        for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1))
+            indexSet.add(MetadataUtils.findOrThrow(indexes, i + minimumId));
+
+        return indexSet;
+    }
+
+    /**
+     * Converts a bitSet to a set of indexes.
+     *
+     * @param bs
+     *      bitset containing ids of indexes being looked for
+     * @param indexes
+     *      set of indexes where one with the given id is being looked for
      * @return
      *      the index with the given id; {@code null} if not found
      */
     public static Set<Index> toSet(BitSet bs, Set<Index> indexes)
     {
-        Set<Index> indexSet = new HashSet<Index>();
-
-        int minId = WFIT.getMinimumId(indexes);
-
-        for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
-            Index index = MetadataUtils.find(indexes, i + minId);
-
-            if (index == null)
-                throw new RuntimeException("Can't find index with id " + (i + minId));
-
-            indexSet.add(index);
-        }
-
-        return indexSet;
+        return toSet(bs, indexes, WFIT.getMinimumId(indexes));
     }
     
     /**
@@ -221,4 +245,3 @@ public class Selector {
         return optimalRecs;
     }
 }
-//CHECKSTYLE:ON

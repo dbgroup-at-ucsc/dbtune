@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
+import edu.ucsc.dbtune.DatabaseSystem;
+
 import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.advisor.interactions.DegreeOfInteractionFinder;
@@ -15,35 +17,33 @@ import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
 import edu.ucsc.dbtune.metadata.Index;
 
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
-import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 
 import edu.ucsc.dbtune.workload.SQLStatement;
 
-import static edu.ucsc.dbtune.util.MetadataUtils.transitionCost;
+import static edu.ucsc.dbtune.util.MetadataUtils.findOrThrow;
 
 /**
  * @author Ivo Jimenez
  */
 public class WFIT extends Advisor
 {
-    private Optimizer optimizer;
-    private Selector selector;
+    private DatabaseSystem db;
+    private SATuningDBTuneTranslator wfitDriver;
     private Set<Index> pool;
     private DegreeOfInteractionFinder doiFinder;
     private RecommendationStatistics stats;
-    private Set<Index> previousState;
     private boolean isCandidateSetFixed;
 
     /**
      * Creates a WFIT advisor.
      *
-     * @param optimizer
-     *      used to execute what-if calls
+     * @param db
+     *      the dbms where wfit will run on
      */
-    public WFIT(Optimizer optimizer)
+    public WFIT(DatabaseSystem db)
     {
-        this(optimizer, new HashSet<Index>());
+        this(db, new HashSet<Index>());
 
         this.isCandidateSetFixed = false;
     }
@@ -51,43 +51,36 @@ public class WFIT extends Advisor
     /**
      * Creates a WFIT advisor.
      *
-     * @param optimizer
-     *      used to execute what-if calls
+     * @param db
+     *      the dbms where wfit will run on
      * @param initialSet
      *      initial candidate set
      */
-    public WFIT(Optimizer optimizer, Set<Index> initialSet)
+    public WFIT(DatabaseSystem db, Set<Index> initialSet)
     {
-        this(optimizer, initialSet, new IBGDoiFinder());
+        this(db, initialSet, new IBGDoiFinder());
     }
 
     /**
      * Creates a WFIT advisor.
      *
-     * @param optimizer
-     *      used to execute what-if calls
+     * @param db
+     *      the dbms where wfit will run on
      * @param initialSet
      *      initial candidate set
      * @param doiFinder
      *      interaction finder
      */
     public WFIT(
-            Optimizer optimizer, Set<Index> initialSet, DegreeOfInteractionFinder doiFinder)
+            DatabaseSystem db, Set<Index> initialSet, DegreeOfInteractionFinder doiFinder)
     {
-        this.optimizer = optimizer;
+        this.db = db;
         this.doiFinder = doiFinder;
 
-        int minId;
-
-        if (initialSet.isEmpty())
-            minId = Index.IN_MEMORY_ID.get();
-        else
-            minId = getMinimumId(initialSet);
-
-        this.selector = new Selector(initialSet, minId);
+        this.wfitDriver =
+            new SATuningDBTuneTranslator(initialSet, getMinimumId(db.getCatalog().indexes()));
         this.pool = new TreeSet<Index>(initialSet);
         this.stats = new WFITRecommendationStatistics("WFIT");
-        this.previousState = new HashSet<Index>();
         this.isCandidateSetFixed = true;
     }
 
@@ -96,21 +89,21 @@ public class WFIT extends Advisor
      * recommendation.
      * 
      * @param sql
-     *            sql statement
+     *      sql statement
      * @throws SQLException
-     *             if the given statement can't be processed
+     *      if the given statement can't be processed
      */
     @Override
     public void process(SQLStatement sql) throws SQLException
     {
         if (!isCandidateSetFixed)
-            pool.addAll(optimizer.recommendIndexes(sql));
+            pool.addAll(db.getOptimizer().recommendIndexes(sql));
 
-        PreparedSQLStatement  pStmt = optimizer.prepareExplain(sql);
+        PreparedSQLStatement  pStmt = db.getOptimizer().prepareExplain(sql);
         ExplainedSQLStatement eStmt = pStmt.explain(pool);
         InteractionBank       bank  = doiFinder.degreeOfInteraction(pStmt, pool);
 
-        selector.analyzeQuery(
+        wfitDriver.analyzeQuery(
                 new ProfiledQuery(
                     sql.getSQL(),
                     pStmt,
@@ -119,35 +112,10 @@ public class WFIT extends Advisor
                     bank,
                     0));
 
-        addRecommendationStatisticsEntry(eStmt);
-    }
-
-    /**
-     * Adds a new entry to the running {@link RecommendationStatistics} objects.
-     *
-     * @param eStatement
-     *      statement that has just been added to WFIT
-     */
-    private void addRecommendationStatisticsEntry(ExplainedSQLStatement eStatement)
-    {
-        if (this.previousState == null)
-            throw new RuntimeException("Previous state hasn't been initialized");
-
-        Set<Index> newState = new HashSet<Index>();
-
-        newState.addAll(selector.getRecommendation());
-        
-        WFITRecommendationStatistics.Entry e =
-            (WFITRecommendationStatistics.Entry)
-            stats.addNewEntry(
-                eStatement.getTotalCost(),
-                eStatement.getConfiguration(),
-                selector.getRecommendation(),
-                transitionCost(this.previousState, newState));
-
-        e.setCandidatePartitioning(selector.getStablePartitioning(pool));
-
-        this.previousState = newState;
+        stats.addNewEntry(
+                pStmt.explain(getRecommendation()).getTotalCost(),
+                eStmt.getConfiguration(),
+                wfitDriver.getRecommendation());
     }
 
     /**
@@ -156,7 +124,7 @@ public class WFIT extends Advisor
     @Override
     public Set<Index> getRecommendation() throws SQLException
     {
-        return selector.getRecommendation();
+        return wfitDriver.getRecommendation();
     }
 
     /**
@@ -166,6 +134,17 @@ public class WFIT extends Advisor
     public RecommendationStatistics getRecommendationStatistics()
     {
         return stats;
+    }
+
+    /**
+     * Returns the stable partitioning of the current candidate set.
+     *
+     * @return
+     *      set of sets of indexes, where each set corresponds to a partition
+     */
+    public Set<Set<Index>> getStablePartitioning()
+    {
+        return wfitDriver.getStablePartitioning(pool);
     }
 
     /**
@@ -184,23 +163,10 @@ public class WFIT extends Advisor
             
         RecommendationStatistics optStats = new RecommendationStatistics("OPT");
 
-        Set<Index> prevState = new HashSet<Index>();
-        Set<Index> newState = new HashSet<Index>();
-
         int i = 0;
 
-        for (Set<Index> optRecommendation : selector.getOptimalScheduleRecommendation(pool)) {
-
-            newState = optRecommendation;
-
-            optStats.addNewEntry(
-                    selector.getCost(i, newState),
-                    pool,
-                    newState,
-                    transitionCost(prevState, newState));
-
-            prevState = newState;
-        }
+        for (Set<Index> optRecommendation : wfitDriver.getOptimalScheduleRecommendation(pool))
+            optStats.addNewEntry(wfitDriver.getCost(i, optRecommendation), pool, optRecommendation);
 
         return optStats;
     }
@@ -216,15 +182,64 @@ public class WFIT extends Advisor
     }
 
     /**
+     * Gives a positive vote for the given index.
+     *
+     * @param id
+     *      id of index being voted
+     */
+    public void voteUp(int id)
+    {
+        voteUp(findOrThrow(pool, id));
+    }
+
+    /**
+     * Gives a positive vote for the given index.
+     *
+     * @param index
+     *      index being voted
+     */
+    public void voteUp(Index index)
+    {
+        wfitDriver.vote(index, true);
+    }
+
+    /**
+     * Gives a negative vote for the given index.
+     *
+     * @param id
+     *      id of index being voted
+     * @throws SQLException
+     *      if the index can't be voted
+     */
+    public void voteDown(int id) throws SQLException
+    {
+        voteDown(findOrThrow(pool, id));
+    }
+
+    /**
+     * Gives a negative vote for the given index.
+     *
+     * @param index
+     *      index being voted
+     */
+    public void voteDown(Index index)
+    {
+        wfitDriver.vote(index, false);
+    }
+
+    /**
      * Returns the minimum id.
      *
      * @param indexes
      *      a collection of indexes
      * @return
-     *      the minimum id
+     *      the minimum id. Zero if the collection is empty
      */
     public static int getMinimumId(Collection<Index> indexes)
     {
+        if (indexes.isEmpty())
+            return 0;
+
         int minId = Integer.MAX_VALUE;
 
         for (Index i : indexes)

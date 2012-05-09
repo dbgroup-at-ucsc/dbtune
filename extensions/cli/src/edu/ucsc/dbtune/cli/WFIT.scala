@@ -6,7 +6,7 @@ import scala.actors.Actor._
 import edu.ucsc.dbtune.DatabaseSystem
 import edu.ucsc.dbtune.workload.Workload
 
-class WFIT(db: Database) extends edu.ucsc.dbtune.advisor.wfit.WFIT(db.DBMS.getOptimizer) {
+class WFIT(db: Database) extends edu.ucsc.dbtune.advisor.wfit.WFIT(db.DBMS) {
 
   def process(workloadFile: String) = {
     val wfitActor = new WFITActor(this, workloadFile)
