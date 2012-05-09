@@ -462,4 +462,40 @@ public class ColumnOrdering
 
         return false;
     }
+
+    /**
+     * creates an ordering from the given arguments. The arguments should be a sequence of pairs 
+     * (column, asc).
+     *
+     * @param orderingSpec
+     *      the specification for how the content of the ordering should be displayed.
+     * @return
+     *      the new column ordering
+     */
+    public static ColumnOrdering newOrdering(Object... orderingSpec)
+    {
+        if (orderingSpec.length % 2 != 0)
+            throw new IllegalArgumentException("Expecting a sequence of pairs (column, int)");
+
+        List<Column> columns = new ArrayList<Column>();
+        Map<Column, Integer> orderings = new HashMap<Column, Integer>();
+
+        for (int i = 0; i < orderingSpec.length / 2; i += 2) {
+            if (!(orderingSpec[i] instanceof Column))
+                throw new IllegalArgumentException("First element of each pair should be a column");
+
+            if (!(orderingSpec[i + 1] instanceof Integer))
+                throw new IllegalArgumentException(
+                        "Second element of each pair should be an ordering");
+            columns.add((Column) orderingSpec[i]);
+            orderings.put((Column) orderingSpec[i], (Integer) orderingSpec[i + 1]);
+        }
+
+        try {
+            return new ColumnOrdering(columns, orderings);
+        } catch (SQLException ex) {
+            throw new IllegalArgumentException(ex);
+        }
+
+    }
 }

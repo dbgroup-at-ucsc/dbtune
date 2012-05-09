@@ -47,6 +47,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.UPDATE;
 import static edu.ucsc.dbtune.util.MetadataUtils.find;
 import static edu.ucsc.dbtune.util.MetadataUtils.findEquivalentOrCreateNew;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
+import static edu.ucsc.dbtune.util.MetadataUtils.getMaterializationStatement;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedSchemas;
 import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 
@@ -1223,22 +1224,7 @@ public class DB2Optimizer extends AbstractOptimizer
     private static double getCreationCost(Optimizer optimizer, Set<Index> indexes, Index index)
         throws SQLException
     {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("SELECT ");
-        for (Column c : index.columns())
-            sb.append(c.getName()).append(", ");
-
-        sb.delete(sb.length() - 2, sb.length() - 1);
-        sb.append("   FROM ").append(index.getTable().getFullyQualifiedName());
-        sb.append("   ORDER BY ");
-
-        for (Column c : index.columns())
-            sb.append(c.getName()).append(index.isAscending(c) ? " ASC, " : " DESC, ");
-
-        sb.delete(sb.length() - 2, sb.length() - 1);
-
-        return optimizer.explain(sb.toString(), indexes).getSelectCost();
+        return optimizer.explain(getMaterializationStatement(index), indexes).getSelectCost();
     }
 
     /**

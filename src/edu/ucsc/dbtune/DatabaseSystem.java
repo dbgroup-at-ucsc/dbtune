@@ -5,8 +5,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.Set;
+
+import com.google.common.collect.Iterables;
 
 import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.ColumnOrdering;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.extraction.DB2Extractor;
 import edu.ucsc.dbtune.metadata.extraction.MetadataExtractor;
 import edu.ucsc.dbtune.metadata.extraction.MySQLExtractor;
@@ -25,6 +30,8 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.IBG;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.MYSQL;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
+
+import static edu.ucsc.dbtune.util.MetadataUtils.getMaterializationStatement;
 
 /**
  * Represents a DBMS system. The class `DatabaseSystem` represents a DBMS and it's the main entry 
@@ -108,6 +115,27 @@ public class DatabaseSystem
     public Connection getConnection()
     {
         return connection;
+    }
+
+    /**
+     * Creates and populates all the relevant data for an index.
+     *
+     * @param ordering
+     *      the ordering on which the new index creation should be based in
+     * @return
+     *      the newly created index
+     * @throws SQLException
+     *      if the underlaying optimizer didn't return an index
+     */
+    public Index newIndex(ColumnOrdering ordering) throws SQLException
+    {
+        Set<Index> idxs = optimizer.recommendIndexes(getMaterializationStatement(ordering));
+
+        if (idxs.size() != 1)
+            throw new RuntimeException(
+                    "We expect the optimizer to recommend only one index for " + ordering);
+
+        return Iterables.get(idxs, 0);
     }
 
     /**

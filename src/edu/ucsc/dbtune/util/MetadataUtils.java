@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
@@ -16,7 +17,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 
-import static com.google.common.collect.Sets.difference;
+import static edu.ucsc.dbtune.metadata.ColumnOrdering.ASC;
 
 /**
  * @author Ivo Jimenez
@@ -168,6 +169,28 @@ public final class MetadataUtils
     }
 
     /**
+     * Finds an index by id in a set of indexes and throws an exception if it's not found.
+     *
+     * @param indexes
+     *      set of indexes where one with the given id is being looked for
+     * @param id
+     *      id of the index being looked for
+     * @return
+     *      the index with the given id; {@code null} if not found
+     * @throws NoSuchElementException
+     *      if it's not found
+     */
+    public static Index findOrThrow(Set<? extends Index> indexes, int id)
+        throws NoSuchElementException
+    {
+        for (Index i : indexes)
+            if (i.getId() == id)
+                return i;
+
+        throw new NoSuchElementException("Can't find index with ID " + id);
+    }
+
+    /**
      * Finds an index by id in a set of indexes.
      *
      * @param indexes
@@ -250,8 +273,8 @@ public final class MetadataUtils
         throws SQLException
     {
         return
-            difference(set1, set2).size() +
-            difference(set2, set1).size();
+            Sets.difference(set1, set2).size() +
+            Sets.difference(set2, set1).size();
     }
 
     /**
@@ -328,6 +351,55 @@ public final class MetadataUtils
     }
 
     /**
+     * Generates the SQL statement that simulates the creation of an index. That is, this is the way 
+     * the DBMS would scan the data, expressed as a SQL query.
+     *
+     * @param ordering
+     *      the ordering for which the statement is being generated
+     * @return
+     *      the SQL statement that corresponds to the work that the DBMS needs to do in order to 
+     *      create an index
+     */
+    public static String getMaterializationStatement(ColumnOrdering ordering)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("SELECT ");
+        for (Column c : ordering.getColumns())
+            sb.append(c.getName()).append(", ");
+
+        sb.delete(sb.length() - 2, sb.length() - 1);
+        sb.append("   FROM ").append(ordering.getTable().getFullyQualifiedName());
+        sb.append("   ORDER BY ");
+
+        for (Column c : ordering.getColumns())
+            sb.append(c.getName()).append(ordering.getOrdering(c) == ASC ? " ASC, " : " DESC, ");
+
+        sb.delete(sb.length() - 2, sb.length() - 1);
+
+        return sb.toString();
+    }
+
+    /**
+     * Generates the SQL statement that simulates the creation of an index. That is, this is the way 
+     * the DBMS would scan the data, expressed as a SQL query.
+     *
+     * @param index
+     *      the index for which the statement is being generated
+     * @return
+     *      the SQL statement that corresponds to the work that the DBMS needs to do in order to 
+     *      create an index
+     */
+    public static String getMaterializationStatement(Index index)
+    {
+        try {
+            return getMaterializationStatement(new ColumnOrdering(index));
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
      * Generates the SQL create statement (standard) for the given index.
      *
      * @param index
@@ -373,6 +445,8 @@ public final class MetadataUtils
      *      previous recommendation
      * @param y
      *      next recommendation
+     * @return
+     *      the cost of transitioning from x to y
      */
     public static double transitionCost(Set<Index> x, Set<Index> y)
     {
