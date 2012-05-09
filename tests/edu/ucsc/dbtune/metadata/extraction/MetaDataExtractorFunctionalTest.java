@@ -442,7 +442,7 @@ public class MetaDataExtractorFunctionalTest
                 assertThat("for table " + tbl.getFullyQualifiedName(), rs.getInt(1), is(not(0)));
                 rs.close();
             }
-            assertThat(sch.indexes().size(), is(0));
+            assertThat("Schema " + sch + " has an index", sch.indexes().size(), is(0));
         }
 
         stmt.close();
