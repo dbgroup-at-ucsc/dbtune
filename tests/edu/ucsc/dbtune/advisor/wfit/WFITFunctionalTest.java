@@ -8,7 +8,6 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.MySQLOptimizer;
@@ -63,16 +62,13 @@ public class WFITFunctionalTest
                     env, getBaseOptimizer(db.getOptimizer()));
         loadWorkloads(db.getConnection());
 
-        for (Schema sch : db.getCatalog().schemas())
-            System.out.println("# of indexes for " + sch + ": " + sch.indexes().size());
-
         if (db.getOptimizer() instanceof IBGOptimizer &&
-                !(db.getOptimizer().getDelegate() instanceof DB2Optimizer) &&
-                !(db.getOptimizer().getDelegate() instanceof MySQLOptimizer) &&
-                !(db.getOptimizer().getDelegate() instanceof PGOptimizer))
-            isOptimizerOK = false;
-        else
+                (db.getOptimizer().getDelegate() instanceof DB2Optimizer ||
+                 db.getOptimizer().getDelegate() instanceof MySQLOptimizer ||
+                 db.getOptimizer().getDelegate() instanceof PGOptimizer))
             isOptimizerOK = true;
+        else
+            isOptimizerOK = false;
     }
 
     /**

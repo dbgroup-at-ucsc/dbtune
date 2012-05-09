@@ -19,7 +19,7 @@ workloads.dir=resources/test-workloads/postgres/\n\
 username=dbtune\n\
 password=dbtuneadmin\n"
 
-OPT_CONFIG="optimizer=dbms"
+DBMS_CONFIG="optimizer=dbms"
 IBG_CONFIG="optimizer=ibg"
 INUM_CONFIG="optimizer=inum"
 IBG_ON_INUM_CONFIG="optimizer=inum,ibg"
@@ -39,11 +39,11 @@ ant -lib lib unit.all
 ###############
 # DB2
 ###############
-echo "executing $DB2_CONFIG and $OPT_CONFIG"
+echo "executing $DB2_CONFIG and $DBMS_CONFIG"
 
 cat bin/base.cfg > $DBTUNECONFIG
 echo -e $DB2_CONFIG >> $DBTUNECONFIG
-echo -e $OPT_CONFIG >> $DBTUNECONFIG
+echo -e $DBMS_CONFIG >> $DBTUNECONFIG
 ant -lib lib functional.all
 
 if [ $? -ne 0 ];then
