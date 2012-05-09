@@ -2,8 +2,10 @@ package edu.ucsc.dbtune.metadata;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import edu.ucsc.dbtune.util.Objects;
 
@@ -144,6 +146,43 @@ public class Catalog extends DatabaseObject implements Iterable<Schema>
             return (Index) dbo;
             
         return null;
+    }
+
+    /**
+     * removes every index on every schema contained in the catalog. <b>important:</b> this DOESN'T 
+     * drop an index from an underlaying DBMS, since these objects reside in memory (as Index) 
+     * objects. In order to do so, refer to the {@link DatabaseSystem#dropIndex} method.
+     *
+     * @throws SQLException
+     *      if {@link Index#isMaterialized} is true for any index in the catalog.
+     */
+    public void dropIndexes() throws SQLException
+    {
+        for (Schema sch : schemas())
+            for (Index idx : sch.indexes())
+                if (idx.isMaterialized())
+                    throw new SQLException(
+                        "Can't drop materialized indexes; see DatabaseSystem#dropIndex");
+                else
+                    sch.remove(idx);
+
+        Index.IN_MEMORY_ID.getAndSet(0);
+    }
+
+    /**
+     * returns set of indexes defined across the whole database.
+     *
+     * @return
+     *      all the indexes contained in the catalog
+     */
+    public Set<Index> indexes()
+    {
+        Set<Index> allIndexes = new HashSet<Index>();
+
+        for (Schema sch : schemas())
+            allIndexes.addAll(sch.indexes());
+
+        return allIndexes;
     }
 
     /**

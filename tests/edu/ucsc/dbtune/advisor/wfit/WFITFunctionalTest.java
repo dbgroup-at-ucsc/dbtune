@@ -2,10 +2,13 @@ package edu.ucsc.dbtune.advisor.wfit;
 
 import java.util.Set;
 
+import com.google.common.collect.Iterables;
+
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -56,6 +59,9 @@ public class WFITFunctionalTest
             CandidateGenerator.Factory.newCandidateGenerator(
                     env, getBaseOptimizer(db.getOptimizer()));
         loadWorkloads(db.getConnection());
+
+        for (Schema sch : db.getCatalog().schemas())
+            System.out.println("# of indexes for " + sch + ": " + sch.indexes().size());
     }
 
     /**
@@ -81,7 +87,9 @@ public class WFITFunctionalTest
         if (!(db.getOptimizer() instanceof IBGOptimizer))
             return;
 
-        WFIT wfit = new WFIT((IBGOptimizer) db.getOptimizer());
+        db.getCatalog().dropIndexes();
+
+        WFIT wfit = new WFIT(db);
 
         wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
 
@@ -106,6 +114,8 @@ public class WFITFunctionalTest
         if (!(db.getOptimizer() instanceof IBGOptimizer))
             return;
 
+        db.getCatalog().dropIndexes();
+
         Workload wl =
             new Workload(
                 env.getWorkloadsFoldername() + 
@@ -113,7 +123,7 @@ public class WFITFunctionalTest
 
         Set<Index> candidateSet = candGen.generate(wl);
 
-        WFIT wfit = new WFIT((IBGOptimizer) db.getOptimizer(), candidateSet);
+        WFIT wfit = new WFIT(db, candidateSet);
 
         wl = 
             new Workload(
@@ -137,5 +147,47 @@ public class WFITFunctionalTest
 
         System.out.println("WFIT\n" + wfit.getRecommendationStatistics());
         System.out.println("OPT\n" + wfit.getOptimalRecommendationStatistics());
+    }
+
+    /**
+     * @throws Exception
+     *      if fails
+     */
+    @Test
+    public void testCandidateSetPartitioning() throws Exception
+    {
+        if (!(db.getOptimizer() instanceof IBGOptimizer))
+            return;
+
+        db.getCatalog().dropIndexes();
+
+        WFIT wfit = new WFIT(db);
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE b = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE b = 2"));
+
+        assertThat(wfit.getStablePartitioning().size(), is(1));
+
+        wfit.process(new SQLStatement("SELECT b FROM one_table.tbl WHERE b = 2"));
+        wfit.process(new SQLStatement("SELECT b FROM one_table.tbl WHERE b = 2"));
+
+        assertThat(wfit.getStablePartitioning().size(), is(1));
+        assertThat(Iterables.get(wfit.getStablePartitioning(), 0).size(), is(2));
+
+        db.getCatalog().dropIndexes();
+
+        wfit = new WFIT(db);
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 2"));
+
+        assertThat(wfit.getStablePartitioning().size(), is(1));
+
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE b = 2"));
+        wfit.process(new SQLStatement("SELECT a FROM one_table.tbl WHERE b = 2"));
+
+        assertThat(wfit.getStablePartitioning().size(), is(2));
+        assertThat(Iterables.get(wfit.getStablePartitioning(), 0).size(), is(1));
+        assertThat(Iterables.get(wfit.getStablePartitioning(), 1).size(), is(1));
     }
 }
