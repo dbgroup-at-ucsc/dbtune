@@ -35,13 +35,7 @@ public class DATFunctionalTest2 {
             dat.setLogListenter(logger);
             dat.setWorkload(new Workload("", new StringReader("")));
             DATOutput output = (DATOutput) dat.solve();
-            for (int i = 0; i < output.indexUsed.length; i++) {
-                System.out.print("Window " + i + ":");
-                for (SeqInumIndex index : output.indexUsed[i]) {
-                    System.out.print(" " + index.name);
-                }
-                System.out.println();
-            }
+            output.print();
             Rt.p("cost: " + dat.getObjValue());
             System.exit(0);
         }

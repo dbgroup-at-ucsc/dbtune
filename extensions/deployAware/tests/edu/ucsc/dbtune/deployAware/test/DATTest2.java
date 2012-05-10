@@ -167,10 +167,10 @@ public class DATTest2 {
         for (int i = 0; i < cost.indices.size(); i++) {
             Rt.np("%,.0f", cost.indices.get(i).createCost);
         }
-        double[] windowConstraints = new double[10];
+        double[] windowConstraints = new double[3];
         for (int i = 0; i < windowConstraints.length; i++)
-            windowConstraints[i] = 1000000;
-        DAT dat = new DAT(cost, windowConstraints, 1, 1);
+            windowConstraints[i] = 2000000;
+        DAT dat = new DAT(cost, windowConstraints, 1, 0);
         // dat.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
         dat.setLogListenter(logger);
@@ -178,7 +178,7 @@ public class DATTest2 {
         // DATOutput output = (DATOutput) dat.solve();
         System.out.print("alpha, beta\t");
         for (int i = 0; i < windowConstraints.length; i++) {
-            System.out.print("window "+i + "\t");
+            System.out.print("window " + i + "\t");
         }
         System.out.println("TransCost");
         System.out.print("constraint\t");
@@ -186,24 +186,43 @@ public class DATTest2 {
             System.out.print(windowConstraints[i] + "\t");
         }
         System.out.println("");
-        DATOutput baseline = (DATOutput) dat.baseline();
-        System.out.print("cophy\t");
+//        DATOutput baseline = (DATOutput) dat.baseline();
+//        System.out.print("cophy modified\t");
+//        for (int i = 0; i < windowConstraints.length; i++) {
+//            System.out.print(baseline.ws[i].cost + "\t");
+//        }
+//        System.out.println(baseline.totalCost);
+//        DATOutput baseline = (DATOutput) dat.baseline2("optimal");
+//        System.out.print("optimal MKP\t");
+//        for (int i = 0; i < windowConstraints.length; i++) {
+//            System.out.print(baseline.ws[i].cost + "\t");
+//        }
+//        System.out.println(baseline.totalCost);
+        DATOutput baseline2 = (DATOutput) dat.baseline2("greedy");
+        System.out.print("greedy MKP\t");
         for (int i = 0; i < windowConstraints.length; i++) {
-            System.out.print(baseline.ws[i].cost + "\t");
+            System.out.print(baseline2.ws[i].cost + "\t");
         }
-        System.out.println(baseline.totalCost);
-        double alpha=1;
-        for (double belta = Math.pow(2,-7); belta <= Math.pow(2, 7); belta *= 2) {
-            dat = new DAT(cost, windowConstraints, alpha, belta);
+        System.out.println(baseline2.totalCost);
+        double alpha = 1;
+        for (double beta = Math.pow(2, -7); beta <= Math.pow(2, 7); beta *= 2) {
+            dat = new DAT(cost, windowConstraints, alpha, beta);
             // dat.setOptimizer(optimizer);
             dat.setLogListenter(logger);
             dat.setWorkload(new Workload("", new StringReader("")));
             DATOutput output = (DATOutput) dat.solve();
-            System.out.print(alpha+", "+ belta + "\t");
+            System.out.print(alpha + ", " + beta + "\t");
             for (int i = 0; i < windowConstraints.length; i++) {
                 System.out.print(output.ws[i].cost + "\t");
             }
-            System.out.println(output.totalCost);
+            System.out.print(output.totalCost);
+//            System.out.print("\t"
+//                    + (baseline.totalCost + beta
+//                            * baseline.ws[baseline.ws.length - 1].cost));
+            System.out.print("\t"
+                    + (baseline2.totalCost + beta
+                            * baseline2.ws[baseline2.ws.length - 1].cost));
+            System.out.println();
         }
 
         double datCost = dat.getObjValue();
@@ -227,15 +246,23 @@ public class DATTest2 {
 
     public static void main(String[] args) throws Exception {
         testSet = "tpch-small";
-        querySize = 10;
+        querySize = 100;
         indexSize = 200;
-//        testSet = "tpch-500-counts";
-//
-//        querySize = 100;
-//        indexSize = 200;
-//
+        testSet = "tpch-500-counts";
+//        testSet = "online-benchmark";
+//        testSet = "nref";
+        //
+        // querySize = 100;
+        // indexSize = 200;
+        //
+        // querySize = 50;
+        // indexSize = 50;
+//        querySize = 10;
+//        indexSize = 10;
+//        querySize = 5;
+//        indexSize = 15;
 //        querySize = 50;
-//        indexSize = 50;
+//        indexSize = 100;
 
         testBIP();
     }

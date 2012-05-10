@@ -12,6 +12,8 @@ public class SeqInumIndex implements Serializable {
     public Index index;
     public double createCost, dropCost;
     public double storageCost;
+    
+    public double indexBenefit;
 
     public SeqInumIndex(int id) {
         this.id = id;
