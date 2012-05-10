@@ -47,7 +47,6 @@ public class TotalWorkPlotter implements Plotter
             c.addSeries(xyseries);
         }
 
-
         appFrame =
             VizUtils.createXYChart("DBTune", c, "Performance", "Queries", "Total Work");
     }

@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.viz;
 
 import org.jfree.data.xy.XYDataset;
+
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
 

@@ -1,13 +1,23 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
+import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
+
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
+
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.MetadataUtils;
+
+import static edu.ucsc.dbtune.util.MetadataUtils.getDisplayList;
 
 /**
  * Transforms data structures in the format the the SATuning API expects them, i.e. mainly BitSet- 
@@ -17,48 +27,87 @@ import edu.ucsc.dbtune.util.MetadataUtils;
  */
 public class SATuningDBTuneTranslator
 {
-    private final IndexStatistics idxStats;
-    private final WorkFunctionAlgorithm wfa;
-    private final DynamicIndexSet matSet;
+    private IndexStatistics idxStats;
+    private WorkFunctionAlgorithm wfa;
+    private DynamicIndexSet matSet;
     private StaticIndexSet hotSet;
-    private final DynamicIndexSet userHotSet;
+    private DynamicIndexSet userHotSet;
     private IndexPartitions hotPartitions;
+
     // hotSet size
     private int maxHotSetSize = Environment.getInstance().getMaxNumIndexes();
     private int maxNumStates = Environment.getInstance().getMaxNumStates();
     private List<ProfiledQuery> qinfos;
     private int queryCount;
-    private int minId;
+    private int idOffset;
     
     /**
-     * @param minId
-     *      minimum id among the all the possible indexes that will be sent "down" to WFA and its 
-     *      dependencies.
-     */
-    public SATuningDBTuneTranslator(int minId)
-    {
-        this(new HashSet<Index>(), minId);
-    }
-
-    /**
-     * @param minId
-     *      minimum id among the all the possible indexes that will be sent "down" to WFA and its 
-     *      dependencies.
+     * @param cat
+     *      when no initial set is used, the catalog must be provided
      * @param initialSet
      *      the initial candidate set to be used 
      */
-    public SATuningDBTuneTranslator(Set<Index> initialSet, int minId)
+    public SATuningDBTuneTranslator(Catalog cat, Set<Index> initialSet)
     {
-        idxStats = new IndexStatistics(minId);
-        matSet = new DynamicIndexSet(minId);
-        userHotSet = new DynamicIndexSet(minId);
+        if (initialSet.isEmpty())
+            init(cat.indexes(), true);
+        else
+            init(initialSet, false);
+    }
+
+    /**
+     * @param initialSet
+     *      the initial candidate set to be used
+     * @param fromCatalog
+     *      whether the initialSet was provided by the caller or was obtained from the catalog
+     */
+    private void init(Set<Index> initialSet, boolean fromCatalog)
+    {
+        idxStats = new IndexStatistics(idOffset);
+        matSet = new DynamicIndexSet(idOffset);
+        userHotSet = new DynamicIndexSet(idOffset);
         qinfos = new ArrayList<ProfiledQuery>();
         queryCount = 0;
-        this.minId = minId;
 
-        hotSet = new StaticIndexSet(initialSet.toArray(new Index[0]));
-        hotPartitions = new IndexPartitions(hotSet, minId);
-        wfa = new WorkFunctionAlgorithm(hotPartitions, true, minId);
+        if (!isInitialSetValid(initialSet))
+            throw new RuntimeException(
+                "Initial set should contain indexes with consecutive IDs, the given has " + 
+                getDisplayList(new TreeSet<Index>(initialSet), "   "));
+
+        if (fromCatalog) {
+            idOffset = getMaximumId(initialSet) + 1;
+            hotSet = new StaticIndexSet();
+        } else {
+            hotSet = new StaticIndexSet(initialSet.toArray(new Index[0]));
+            idOffset = getMinimumId(initialSet);
+        }
+
+        hotPartitions = new IndexPartitions(hotSet, idOffset);
+        wfa = new WorkFunctionAlgorithm(hotPartitions, true, idOffset);
+    }
+
+    /**
+     * Perform the per-query tasks that are done after profiling.
+     *
+     * @param sql
+     *      string of statement
+     * @param pStmt
+     *      prepared statement
+     * @param eStmt
+     *      explained statement
+     * @param candidateSet
+     *      candidate set
+     * @param bank
+     *      interaction bank
+     */
+    public void analyzeQuery(
+            String sql,
+            PreparedSQLStatement pStmt,
+            ExplainedSQLStatement eStmt,
+            Set<Index> candidateSet,
+            InteractionBank bank)
+    {
+        analyzeQuery(new ProfiledQuery(sql, pStmt, eStmt, candidateSet, bank, idOffset));
     }
 
     /**
@@ -115,7 +164,7 @@ public class SATuningDBTuneTranslator
         Set<Set<Index>> partitioning = new HashSet<Set<Index>>();
 
         for (BitSet bs : hotPartitions.bitSetArray())
-            partitioning.add(new HashSet<Index>(toSet(bs, pool, minId)));
+            partitioning.add(new HashSet<Index>(toSet(bs, pool, idOffset)));
 
         return partitioning;
     }
@@ -160,7 +209,7 @@ public class SATuningDBTuneTranslator
     private void reorganizeCandidates(Set<Index> candSet)
     {
         // determine the hot set
-        DynamicIndexSet reqIndexes = new DynamicIndexSet(minId);
+        DynamicIndexSet reqIndexes = new DynamicIndexSet(idOffset);
         for (Index index : userHotSet) reqIndexes.add(index);
         for (Index index : matSet) reqIndexes.add(index);
         StaticIndexSet newHotSet = 
@@ -169,7 +218,7 @@ public class SATuningDBTuneTranslator
         // determine new partitioning
         // store into local variable, since we might reject it
         IndexPartitions newHotPartitions = InteractionSelector.choosePartitions(newHotSet, 
-                hotPartitions, idxStats, maxNumStates, minId);
+                hotPartitions, idxStats, maxNumStates, idOffset);
         
         // commit hot set
         hotSet = newHotSet;
@@ -193,34 +242,19 @@ public class SATuningDBTuneTranslator
      *      bitset containing ids of indexes being looked for
      * @param indexes
      *      set of indexes where one with the given id is being looked for
-     * @param minimumId
-     *      minimum id to consider when indexing arrays
+     * @param idOffset
+     *      offset to subtract when mapping index IDs to {@link Index} objects
      * @return
      *      the index with the given id; {@code null} if not found
      */
-    public static Set<Index> toSet(BitSet bs, Set<Index> indexes, int minimumId)
+    public static Set<Index> toSet(BitSet bs, Set<Index> indexes, int idOffset)
     {
         Set<Index> indexSet = new HashSet<Index>();
 
         for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1))
-            indexSet.add(MetadataUtils.findOrThrow(indexes, i + minimumId));
+            indexSet.add(MetadataUtils.findOrThrow(indexes, i + idOffset));
 
         return indexSet;
-    }
-
-    /**
-     * Converts a bitSet to a set of indexes.
-     *
-     * @param bs
-     *      bitset containing ids of indexes being looked for
-     * @param indexes
-     *      set of indexes where one with the given id is being looked for
-     * @return
-     *      the index with the given id; {@code null} if not found
-     */
-    public static Set<Index> toSet(BitSet bs, Set<Index> indexes)
-    {
-        return toSet(bs, indexes, WFIT.getMinimumId(indexes));
     }
     
     /**
@@ -240,8 +274,81 @@ public class SATuningDBTuneTranslator
         List<Set<Index>> optimalRecs = new ArrayList<Set<Index>>();
 
         for (BitSet bs : optimalSchedule)
-            optimalRecs.add(toSet(bs, pool));
+            optimalRecs.add(toSet(bs, pool, idOffset));
 
         return optimalRecs;
+    }
+
+    /**
+     * Returns the minimum id.
+     *
+     * @param indexes
+     *      a collection of indexes
+     * @return
+     *      the minimum id. Zero if the collection is empty
+     */
+    public static int getMinimumId(Collection<Index> indexes)
+    {
+        if (indexes.isEmpty())
+            return 0;
+
+        int minId = Integer.MAX_VALUE;
+
+        for (Index i : indexes)
+            if (i.getId() < minId)
+                minId = i.getId();
+
+        return minId;
+    }
+
+    /**
+     * Returns the minimum id.
+     *
+     * @param indexes
+     *      a collection of indexes
+     * @return
+     *      the minimum id. Zero if the collection is empty
+     */
+    public static int getMaximumId(Collection<Index> indexes)
+    {
+        if (indexes.isEmpty())
+            return 0;
+
+        int maxId = Integer.MIN_VALUE;
+
+        for (Index i : indexes)
+            if (i.getId() > maxId)
+                maxId = i.getId();
+
+        return maxId;
+    }
+
+    /**
+     * Checks if the initial set contains consecutive IDs.
+     *
+     * @param initialSet
+     *      the set to be checked
+     * @return
+     *      {@code true} if there are no "gaps" in the IDs of the given set; {@code false} 
+     *      otherwise.
+     */
+    private static boolean isInitialSetValid(Set<Index> initialSet)
+    {
+        if (initialSet.isEmpty())
+            return true;
+
+        Set<Index> set = new TreeSet<Index>(initialSet);
+
+        int previousId = -1;
+
+        for (Index idx : set)
+            if (previousId == -1)
+                previousId = idx.getId();
+            else if (idx.getId() != previousId + 1)
+                return false;
+            else
+                previousId++;
+
+        return true;
     }
 }

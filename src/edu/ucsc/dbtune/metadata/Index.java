@@ -40,7 +40,7 @@ public class Index extends DatabaseObject implements Iterable<Column>, Increment
     public static final boolean DESC           = false;
 
     /** used to uniquely identify each instance of the class. */
-    public static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
+    static AtomicInteger IN_MEMORY_ID = new AtomicInteger(0);
     // CHECKSTYLE:ON
 
     protected List<Boolean> ascendingColumn;

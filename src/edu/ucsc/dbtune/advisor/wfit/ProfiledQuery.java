@@ -22,6 +22,7 @@ public class ProfiledQuery implements Serializable {
     public PreparedSQLStatement pStmt;
     public InteractionBank bank;
     public int whatifCount; // value from DBConnection after profiling
+    public int idOffset;
     
     public ProfiledQuery(
             String sql0,
@@ -29,18 +30,18 @@ public class ProfiledQuery implements Serializable {
             ExplainedSQLStatement explainInfo0,
             Set<Index> candidateSet0,
             InteractionBank bank0,
-            int whatifCount0)
+            int idOffset0)
     {
         sql = sql0;
         explainInfo = explainInfo0;
         pStmt = pStmt0;
         candidateSet = candidateSet0;
         bank = bank0;
-        whatifCount = whatifCount0;
+        idOffset = idOffset0;
     }
     
     public double cost(BitSet config) {
-        return cost(toSet(config, candidateSet));
+        return cost(toSet(config, candidateSet, idOffset));
     }
     
     public double cost(Set<Index> config) {

@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import edu.ucsc.dbtune.metadata.Column;
-import edu.ucsc.dbtune.metadata.Index;
-
 /**
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
@@ -275,54 +272,6 @@ public final class Strings
         for (String each : searchStrs) { result |= contains(str, each); }
 
         return result;
-    }
-
-    /**
-     * Returns a string containing the name of an index based on the contents of the index.
-     *
-     * @param index list of indexes
-     * @return a string containing the PG-dependent string representation of the given list, as the
-     *         EXPLAIN INDEXES statement expects it
-     */
-    public static String getName(Index index)
-    {
-        StringBuilder str = new StringBuilder();
-        boolean first = true;
-
-        for (Column col : index) {
-            if (first) { first = false; } else { str.append("_"); }
-
-            str.append(col.getName());
-        }
-        str.append("_index");
-        return str.toString();
-    }
-
-    /**
-     * Returns a string containing the create statement of the given index.
-     *
-     * @param index
-     *      index for which a SQL create statement is created
-     * @return
-     *      string containing the create statement
-     */
-    public static String getCreateStatement(Index index)
-    {
-        StringBuilder sql = new StringBuilder();
-
-        sql.append("CREATE INDEX " + index.getFullyQualifiedName());
-        sql.append(" ON " + index.getTable().getFullyQualifiedName() + " (");
-
-        for (Column col : index)
-            sql.append(col.getName()).
-                append(index.isAscending(col) ? " ASC" : " DESC").
-                append(",");
-
-        sql.delete(sql.length() - 1, sql.length());
-
-        sql.append(")");
-
-        return sql.toString();
     }
 
     /**

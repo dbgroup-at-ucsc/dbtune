@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import com.google.common.collect.Iterables;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -86,7 +87,7 @@ public final class MetadataUtils
      * @return
      *      the set of tables corresponding to one or more indexes in the set
      */
-    public static Map<Table, Set<Index>> getIndexesPerTable(Collection<? extends Index> indexes)
+    public static Map<Table, Set<Index>> getIndexesPerTable(Collection<Index> indexes)
     {
         Map<Table, Set<Index>> indexesPerTable = new HashMap<Table, Set<Index>>();
         Set<Index> indexesForTable;
@@ -117,7 +118,7 @@ public final class MetadataUtils
      *      the set of indexes, where each references one table in {@code tables}
      */
     public static Set<Index> getIndexesReferencingTables(
-            Collection<? extends Index> indexes, Collection<Table> tables)
+            Collection<Index> indexes, Collection<Table> tables)
     {
         Set<Index> indexesReferencingTables = new HashSet<Index>();
 
@@ -139,7 +140,7 @@ public final class MetadataUtils
      *      the set of indexes that reference {@code table}
      */
     public static Set<Index> getIndexesReferencingTable(
-            Collection<? extends Index> indexes, Table table)
+            Collection<Index> indexes, Table table)
     {
         Set<Index> indexesReferencingTable = new HashSet<Index>();
 
@@ -158,7 +159,7 @@ public final class MetadataUtils
      * @return
      *      the set of tables corresponding to one or more indexes in the set
      */
-    public static Set<Table> getReferencedTables(Collection<? extends Index> indexes)
+    public static Set<Table> getReferencedTables(Collection<Index> indexes)
     {
         Set<Table> tables = new HashSet<Table>();
 
@@ -180,14 +181,15 @@ public final class MetadataUtils
      * @throws NoSuchElementException
      *      if it's not found
      */
-    public static Index findOrThrow(Set<? extends Index> indexes, int id)
+    public static Index findOrThrow(Set<Index> indexes, int id)
         throws NoSuchElementException
     {
         for (Index i : indexes)
             if (i.getId() == id)
                 return i;
 
-        throw new NoSuchElementException("Can't find index with ID " + id);
+        throw new NoSuchElementException(
+                "Can't find index with ID " + id + " in " + getDisplayList(indexes, "   "));
     }
 
     /**
@@ -200,7 +202,7 @@ public final class MetadataUtils
      * @return
      *      the index with the given id; {@code null} if not found
      */
-    public static Index find(Set<? extends Index> indexes, int id)
+    public static Index find(Set<Index> indexes, int id)
     {
         for (Index i : indexes)
             if (i.getId() == id)
@@ -477,16 +479,7 @@ public final class MetadataUtils
 
         create.append("CREATE INDEX ").append(index.getFullyQualifiedName());
         create.append(" ON ").append(index.getTable().getFullyQualifiedName()).append("(");
-
-        for (Column col : index)
-            create
-                .append("")
-                .append(col.getName())
-                .append(index.isAscending(col) ? " ASC" : " DESC")
-                .append(", ");
-
-        create.delete(create.length() - 2, create.length() - 0);
-
+        create.append(getColumnListString(index));
         create.append(")");
 
         if (index.getScanOption() == Index.REVERSIBLE)
@@ -520,5 +513,82 @@ public final class MetadataUtils
             transition += index.getCreationCost();
 
         return transition;
+    }
+
+    /**
+     * Returns a string of the form {@code column1 ASC, column2 DESC, ...} for the given index.
+     *
+     * @param indexes
+     *      set to display
+     * @param offset
+     *      to use on each entry of the list
+     * @return
+     *      the string
+     */
+    public static String getDisplayList(Set<Index> indexes, String offset)
+    {
+        if (indexes.isEmpty())
+            return "";
+
+        StringBuilder indexList = new StringBuilder();
+
+
+        for (Index index : indexes) {
+            indexList
+                .append("\n").append(offset)
+                .append(index.getId()).append(":")
+                .append("INDEX ").append(index.getName())
+                .append(Iterables.get(indexes, 0).getTable())
+                .append(" (")
+                .append(getColumnListString(index));
+            indexList.delete(indexList.length() - 2, indexList.length() - 0);
+            indexList.append(")");
+        }
+
+        return indexList.toString();
+    }
+
+    /**
+     * Returns a string of the form {@code column1 ASC, column2 DESC, ...} for the given index.
+     *
+     * @param index
+     *      an index
+     * @return
+     *      the string
+     */
+    public static String getColumnListString(Index index)
+    {
+        StringBuilder columnsString = new StringBuilder();
+
+        for (Column col : index)
+            columnsString
+                .append(col.getName())
+                .append(index.isAscending(col) ? " ASC" : " DESC")
+                .append(", ");
+
+        columnsString.delete(columnsString.length() - 2, columnsString.length() - 0);
+
+        return columnsString.toString();
+    }
+
+    /**
+     * Returns a string containing the name of an index based on the contents of the index.
+     *
+     * @param index list of indexes
+     * @return a string containing the PG-dependent string representation of the given list, as the
+     *         EXPLAIN INDEXES statement expects it
+     */
+    public static String getName(Index index)
+    {
+        StringBuilder str = new StringBuilder();
+        boolean first = true;
+
+        for (Column col : index) {
+            if (first) { first = false; } else { str.append("_"); }
+
+            str.append(col.getName());
+        }
+        str.append("_index");
+        return str.toString();
     }
 }

@@ -1,8 +1,6 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -43,7 +41,7 @@ public class WFIT extends Advisor
      */
     public WFIT(DatabaseSystem db)
     {
-        this(db, new HashSet<Index>());
+        this(db, new TreeSet<Index>());
 
         this.isCandidateSetFixed = false;
     }
@@ -77,8 +75,7 @@ public class WFIT extends Advisor
         this.db = db;
         this.doiFinder = doiFinder;
 
-        this.wfitDriver =
-            new SATuningDBTuneTranslator(initialSet, getMinimumId(db.getCatalog().indexes()));
+        this.wfitDriver = new SATuningDBTuneTranslator(db.getCatalog(), initialSet);
         this.pool = new TreeSet<Index>(initialSet);
         this.stats = new WFITRecommendationStatistics("WFIT");
         this.isCandidateSetFixed = true;
@@ -103,10 +100,11 @@ public class WFIT extends Advisor
         ExplainedSQLStatement eStmt = pStmt.explain(pool);
         InteractionBank       bank  = doiFinder.degreeOfInteraction(pStmt, pool);
 
-        wfitDriver.analyzeQuery(new ProfiledQuery(sql.getSQL(), pStmt, eStmt, pool, bank, 0));
+        wfitDriver.analyzeQuery(sql.getSQL(), pStmt, eStmt, pool, bank);
 
-        stats.addNewEntry(
-                pStmt.explain(getRecommendation()).getTotalCost(), pool, getRecommendation());
+        Set<Index> recommendation = getRecommendation();
+
+        stats.addNewEntry(pStmt.explain(recommendation).getTotalCost(), pool, recommendation);
     }
 
     /**
@@ -216,27 +214,5 @@ public class WFIT extends Advisor
     public void voteDown(Index index)
     {
         wfitDriver.vote(index, false);
-    }
-
-    /**
-     * Returns the minimum id.
-     *
-     * @param indexes
-     *      a collection of indexes
-     * @return
-     *      the minimum id. Zero if the collection is empty
-     */
-    public static int getMinimumId(Collection<Index> indexes)
-    {
-        if (indexes.isEmpty())
-            return 0;
-
-        int minId = Integer.MAX_VALUE;
-
-        for (Index i : indexes)
-            if (i.getId() < minId)
-                minId = i.getId();
-
-        return minId;
     }
 }
