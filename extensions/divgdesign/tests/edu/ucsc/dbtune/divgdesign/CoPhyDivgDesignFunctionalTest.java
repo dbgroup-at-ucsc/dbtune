@@ -14,7 +14,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import com.google.caliper.internal.guava.collect.Lists;
+import com.google.common.collect.Lists;
 
 import edu.ucsc.dbtune.divgdesign.CoPhyDivgDesign;
 

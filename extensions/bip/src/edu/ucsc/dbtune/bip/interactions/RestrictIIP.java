@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.caliper.internal.guava.collect.Sets;
+import com.google.common.collect.Sets;
 import edu.ucsc.dbtune.bip.core.BIPVariable;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.CPlexBuffer;

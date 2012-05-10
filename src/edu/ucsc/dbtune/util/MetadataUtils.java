@@ -87,7 +87,7 @@ public final class MetadataUtils
      * @return
      *      the set of tables corresponding to one or more indexes in the set
      */
-    public static Map<Table, Set<Index>> getIndexesPerTable(Collection<Index> indexes)
+    public static Map<Table, Set<Index>> getIndexesPerTable(Collection<? extends Index> indexes)
     {
         Map<Table, Set<Index>> indexesPerTable = new HashMap<Table, Set<Index>>();
         Set<Index> indexesForTable;
@@ -118,7 +118,7 @@ public final class MetadataUtils
      *      the set of indexes, where each references one table in {@code tables}
      */
     public static Set<Index> getIndexesReferencingTables(
-            Collection<Index> indexes, Collection<Table> tables)
+            Collection<? extends Index> indexes, Collection<Table> tables)
     {
         Set<Index> indexesReferencingTables = new HashSet<Index>();
 
