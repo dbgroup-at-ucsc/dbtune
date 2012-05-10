@@ -17,15 +17,15 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYDataset;
-import org.jfree.ui.ApplicationFrame;
 
 /**
  * @author Ivo Jimenez
  */
-public class XYChart extends ApplicationFrame
+public class XYChart extends JFrame
 {
     /** stuff. */
     public static final long serialVersionUID = 0;
+    private JFreeChart chart;
 
     /**
      * @param windowTitle
@@ -50,7 +50,8 @@ public class XYChart extends ApplicationFrame
         JPanel jpanel = createPanel(xyDataSet, chartTitle, xLabel, yLabel);
         jpanel.setPreferredSize(new Dimension(500, 270));
         setContentPane(jpanel);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        chart = ((ChartPanel) jpanel).getChart();
     }
 
     /**
@@ -77,6 +78,17 @@ public class XYChart extends ApplicationFrame
         ChartPanel chartpanel = new ChartPanel(jfreechart);
         chartpanel.setMouseWheelEnabled(true);
         return chartpanel;
+    }
+
+    /**
+     * Creates a chart panel containing the given dataset.
+     *
+     * @param xyDataSet
+     *      dataset to be included in the panel
+     */
+    public void updateDataSet(XYDataset xyDataSet)
+    {
+        chart.getXYPlot().setDataset(xyDataSet);
     }
 
     /**

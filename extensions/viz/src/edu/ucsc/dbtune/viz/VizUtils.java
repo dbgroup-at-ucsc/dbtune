@@ -1,8 +1,9 @@
 package edu.ucsc.dbtune.viz;
 
+import javax.swing.JFrame;
+
 import org.jfree.data.xy.XYDataset;
 
-import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
 
 /**
@@ -33,7 +34,7 @@ public final class VizUtils
      * @return
      *      the application frame containing the chart
      */
-    public static ApplicationFrame createXYChart(
+    public static XYChart createXYChart(
             String windowTitle,
             XYDataset xyDataSet,
             String chartTitle,
@@ -41,8 +42,9 @@ public final class VizUtils
             String yLabel)
     {
         XYChart chart = new XYChart(windowTitle, xyDataSet, chartTitle, xLabel, yLabel);
-        chart.pack();
         RefineryUtilities.centerFrameOnScreen(chart);
+        chart.pack();
+        chart.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         chart.setVisible(true);
         return chart;
     }

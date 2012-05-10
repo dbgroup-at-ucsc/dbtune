@@ -116,6 +116,16 @@ public class RecommendationStatistics implements Iterable<Entry>
     }
 
     /**
+     * Sets the algorithmName for this instance.
+     *
+     * @param algorithmName The algorithmName.
+     */
+    public void setAlgorithmName(String algorithmName)
+    {
+        this.algorithmName = algorithmName;
+    }
+
+    /**
      * Gets the algorithmName for this instance.
      *
      * @return The algorithmName.

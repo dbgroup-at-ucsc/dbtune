@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
@@ -29,7 +28,6 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
-
 
 /**
  * Test the usage of CoPhy in DivgDesign

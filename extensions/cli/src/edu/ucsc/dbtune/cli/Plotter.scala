@@ -25,7 +25,13 @@ object Plotter
     twPlotter.plot(stats)
   }
 
-  /** Plots partition table
+  /** Plots total work
+    */
+  def plotTotalWork(stats:RecommendationStatistics*) = {
+    twPlotter.plot(stats.toList : _*)
+  }
+
+  /** Displays the partition table
     */
   def showPartitionTable(partition:Set[Set[Index]]) = {
     partitionTable.setPartition(partition)

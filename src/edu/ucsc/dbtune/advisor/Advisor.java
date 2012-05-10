@@ -37,6 +37,19 @@ public abstract class Advisor
      * @throws SQLException
      *      if the given statement can't be processed
      */
+    public void process(String sql) throws SQLException
+    {
+        process(new SQLStatement(sql));
+    }
+
+    /**
+     * Adds an element to the set of statements that are considered for recommendation.
+     *
+     * @param sql
+     *      sql statement
+     * @throws SQLException
+     *      if the given statement can't be processed
+     */
     public abstract void process(SQLStatement sql) throws SQLException;
 
     /**

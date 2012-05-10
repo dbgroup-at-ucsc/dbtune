@@ -22,4 +22,10 @@ public interface Plotter
      *      statistics about a recommendation phase
      */
     void plot(RecommendationStatistics recommendationStats);
+
+    /**
+     * @param recommendationStats
+     *      statistics about a recommendation phase
+     */
+    void plot(RecommendationStatistics... recommendationStats);
 }

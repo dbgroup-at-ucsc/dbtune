@@ -7,7 +7,6 @@ import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.ApplicationFrame;
 
 /**
  * Interface for plotters.
@@ -16,7 +15,16 @@ import org.jfree.ui.ApplicationFrame;
  */
 public class TotalWorkPlotter implements Plotter
 {
-    private ApplicationFrame appFrame;
+    private XYChart appFrame;
+
+    /**
+     * Creates a total work plotter.
+     */
+    public TotalWorkPlotter()
+    {
+        XYSeriesCollection c = new XYSeriesCollection();
+        appFrame = VizUtils.createXYChart("DBTune", c, "Performance", "Queries", "Total Work");
+    }
     
     /**
      * {@inheritDoc}
@@ -35,7 +43,7 @@ public class TotalWorkPlotter implements Plotter
      * {@inheritDoc}
      */
     @Override
-    public void plot(List<RecommendationStatistics> recommendationStats)
+    public void plot(RecommendationStatistics... recommendationStats)
     {
         XYSeriesCollection c = new XYSeriesCollection();
 
@@ -47,17 +55,26 @@ public class TotalWorkPlotter implements Plotter
             c.addSeries(xyseries);
         }
 
-        appFrame =
-            VizUtils.createXYChart("DBTune", c, "Performance", "Queries", "Total Work");
+        appFrame.updateDataSet(c);
+        appFrame.setVisible(true);
     }
 
     /**
-     * Gets the appFrame for this instance.
-     *
-     * @return The appFrame.
+     * {@inheritDoc}
      */
-    public ApplicationFrame getAppFrame()
+    @Override
+    public void plot(List<RecommendationStatistics> recommendationStats)
     {
-        return this.appFrame;
+        XYSeriesCollection c = new XYSeriesCollection();
+
+        for (RecommendationStatistics rs : recommendationStats) {
+            XYSeries xyseries = new XYSeries(rs.getAlgorithmName());
+            int i = 1;
+            for (RecommendationStatistics.Entry e : rs)
+                xyseries.add(i++, e.getTotalWork());
+            c.addSeries(xyseries);
+        }
+        appFrame.updateDataSet(c);
+        appFrame.setVisible(true);
     }
 }

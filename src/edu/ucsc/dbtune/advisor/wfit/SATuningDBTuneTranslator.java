@@ -75,7 +75,11 @@ public class SATuningDBTuneTranslator
                 getDisplayList(new TreeSet<Index>(initialSet), "   "));
 
         if (fromCatalog) {
-            idOffset = getMaximumId(initialSet) + 1;
+            if (initialSet.isEmpty())
+                idOffset = 0;
+            else
+                idOffset = getMaximumId(initialSet) + 1;
+
             hotSet = new StaticIndexSet();
         } else {
             hotSet = new StaticIndexSet(initialSet.toArray(new Index[0]));
