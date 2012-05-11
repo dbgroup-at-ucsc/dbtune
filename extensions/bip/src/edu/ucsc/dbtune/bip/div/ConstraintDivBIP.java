@@ -97,8 +97,10 @@ public class ConstraintDivBIP extends DivBIP
                     setConstantReplicaImbalanceConstraint(c.getFactor());
                     imbalanceReplicaConstraints(c.getFactor());
                 }
-                else if (c.getType().equals(NODE_FAILURE))
+                else if (c.getType().equals(NODE_FAILURE)) {
+                    setConstantReplicaImbalanceConstraint(c.getFactor());
                     nodeFailures(c.getFactor());
+                }
                 else if (c.getType().equals(IMBALANCE_QUERY)) {
                     setConstantQueryImbalanceConstraint();
                     imbalanceQueryConstraints(c.getFactor());                    
@@ -618,11 +620,10 @@ public class ConstraintDivBIP extends DivBIP
      *      The imbalance factor.
      *      
      * @throws IloException
-     */
+     */    
     protected void nodeFailureConstraint(int failR, double beta) throws IloException
     {
         IloLinearNumExpr expr;
-        List<IloLinearNumExpr> exprs = new ArrayList<IloLinearNumExpr>();
         
         for (int r = 0; r < nReplicas; r++)
             if (r != failR) {
@@ -634,12 +635,28 @@ public class ConstraintDivBIP extends DivBIP
                     if (desc.getSQLCategory().isSame(SELECT))
                         expr.add(increadLoadQuery(r, desc.getStatementID(), desc, failR));
                 }
-                exprs.add(expr);
+                
+                // increase(r) + load(r) <= beta * load(r)
+                nodeFailureConstraintReplica(r, expr, beta);
             }
-        
-        for (int r1 = 0; r1 < exprs.size() - 1; r1++)
-            for (int r2 = r1 + 1; r2 < exprs.size(); r2++)
-                imbalanceConstraint(exprs.get(r1), exprs.get(r2), beta);
+    }
+    
+    
+    /**
+     * The constraint is in the form: {@code increaseExpr + load(r) <= beta * load(r) }
+     * @param r
+     * @param expr
+     */
+    protected void nodeFailureConstraintReplica(int r, IloLinearNumExpr exprIncreaseLoad, double beta) 
+                throws IloException
+    {   
+        IloLinearNumExpr expr;
+                
+        expr = cplex.linearNumExpr();
+        expr.add(exprIncreaseLoad);
+        expr.add(modifyCoef(super.replicaCost(r), 1 - beta));
+        cplex.addLe(expr, constantRHSImbalanceConstraint, "node_failure_" + numConstraints);
+        numConstraints++;
     }
     
     /**

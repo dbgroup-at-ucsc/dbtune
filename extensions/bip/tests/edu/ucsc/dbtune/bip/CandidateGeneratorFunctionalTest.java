@@ -8,6 +8,7 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -81,6 +82,20 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
                 fileName = folder  + "/candidate-powerset.txt";
             
             break;
+        }
+        
+        File file = new File(fileName);
+        if (!file.exists()){
+            // Generate candidate indexes
+            for (String generatorOption : en.getCandidateGenerator()) {
+                
+                if (generatorOption.equals(OPTIMIZER))
+                    generateAndWriteToFileOptimizerCandidates();
+                else if (generatorOption.equals(POWERSET))
+                    generateAndWriteToFilePowersetCandidates();
+                
+                break;
+            }
         }
         
         return readIndexes(fileName);

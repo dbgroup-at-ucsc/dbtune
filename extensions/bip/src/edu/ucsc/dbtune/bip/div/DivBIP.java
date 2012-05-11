@@ -107,6 +107,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                     Index index = mapVarSToIndex.get(var.getName());
                     if (!(index instanceof FullTableScanIndex))
                         conf.addIndexReplica(var.getReplica(), index);
+       
                 }
             }
         }     
@@ -627,13 +628,23 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *  todo
      * @param queries
      * @param increasLoads
+     * @throws Exception  
      */
-    private double computeMaxIncreaseLoadRatio(int rFail, List<List<Double>> queries)
+    private double computeMaxIncreaseLoadRatio(int rFail, List<List<Double>> queries) throws Exception
     {
         List<Double> increaseLoad = new ArrayList<Double>();
+        List<Double> replicaCost = new ArrayList<Double>();
         
-        for (int r = 0; r < nReplicas; r++)
+        for (int r = 0; r < nReplicas; r++) {
             increaseLoad.add(0.0);
+            
+            if (r == rFail)
+                replicaCost.add(0.0);
+            else
+                // remember to take into account the base table update cost
+                replicaCost.add(computeVal(replicaCost(r)) + 
+                                getTotalBaseTableUpdateCost() / nReplicas);
+        }
         
         double cost;
         int q = 0;
@@ -652,7 +663,8 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                     
                     // avoid small value
                     if (queries.get(q).get(r) > 0.1) {
-                        cost = increaseLoad.get(r) + queries.get(q).get(r);
+                        cost = increaseLoad.get(r) + queries.get(q).get(r) 
+                                                        / (loadfactor * (loadfactor - 1));
                         increaseLoad.set(r, cost);
                     }    
                 }
@@ -661,12 +673,24 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             q++;
         }
         
-        List<Double> costs = new ArrayList<Double>();
-        for (double d : increaseLoad)
-            if (d > 0.0)
-                costs.add(d);
         
-        return maxRatioInList(costs);
+        // compute the ratio
+        double ratio;
+        double maxRatio = -1;
+        
+        for (int r = 0; r < nReplicas; r++) {
+            
+            if (r == rFail)
+                continue;
+            
+            ratio = increaseLoad.get(r) + replicaCost.get(r);
+            ratio /= replicaCost.get(r);
+            
+            maxRatio = (maxRatio > ratio) ? maxRatio : ratio;
+        }
+            
+        
+        return maxRatio;
     }
     
     /**
