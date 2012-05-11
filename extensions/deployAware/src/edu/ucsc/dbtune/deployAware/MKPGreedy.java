@@ -17,6 +17,16 @@ public class MKPGreedy {
 				return 0;
 			}
 		};
+		static Comparator<Item> comparator2 = new Comparator<Item>() {
+		    @Override
+		    public int compare(Item o1, Item o2) {
+		        if (o1.profit > o2.profit)
+		            return -1;
+		        if (o1.profit < o2.profit)
+		            return 1;
+		        return 0;
+		    }
+		};
 		int index;
 		double weight;
 		double profit;
@@ -34,8 +44,8 @@ public class MKPGreedy {
 	double cannotFitWeight=0;
 
 	public MKPGreedy(double[] bins, double[] binWeights, double[] items,
-			double[] profits) {
-		this.bins = bins;
+			double[] profits,boolean useRatio) {
+		this.bins = Arrays.copyOf(bins,bins.length);;
 		this.binWeights = binWeights;
 		this.items = items;
 		this.profits = profits;
@@ -49,12 +59,12 @@ public class MKPGreedy {
 			is[i].profit = profits[i];
 			is[i].pw = is[i].profit / is[i].weight;
 		}
-		Arrays.sort(is, Item.comparator);
+		Arrays.sort(is, useRatio?Item.comparator:Item.comparator2);
 		for (Item item : is) {
-			for (int i = 0; i < bins.length; i++) {
-				if (item.weight <= bins[i]) {
+			for (int i = 0; i <this. bins.length; i++) {
+				if (item.weight <= this.bins[i]) {
 					belongs[item.index] = i;
-					bins[i] -= item.weight;
+					this.bins[i] -= item.weight;
 					break;
 				}
 			}
@@ -75,7 +85,7 @@ public class MKPGreedy {
 		double[] items = { 10, 20, 30, 70, 90 };
 		double[] profits = { 10, 20, 30, 70, 90 };
 		double[] binWeights = { 3, 2, 1 };
-		MKPGreedy greedy = new MKPGreedy(bins, binWeights, items, profits);
+		MKPGreedy greedy = new MKPGreedy(bins, binWeights, items, profits,false);
 		Rt.p(greedy.profit);
 		for (int i : greedy.belongs) {
 			System.out.print(i + " ");

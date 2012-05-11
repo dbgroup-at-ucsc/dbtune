@@ -186,26 +186,28 @@ public class DATTest2 {
             System.out.print(windowConstraints[i] + "\t");
         }
         System.out.println("");
-//        DATOutput baseline = (DATOutput) dat.baseline();
-//        System.out.print("cophy modified\t");
-//        for (int i = 0; i < windowConstraints.length; i++) {
-//            System.out.print(baseline.ws[i].cost + "\t");
-//        }
-//        System.out.println(baseline.totalCost);
-//        DATOutput baseline = (DATOutput) dat.baseline2("optimal");
-//        System.out.print("optimal MKP\t");
-//        for (int i = 0; i < windowConstraints.length; i++) {
-//            System.out.print(baseline.ws[i].cost + "\t");
-//        }
-//        System.out.println(baseline.totalCost);
-        DATOutput baseline2 = (DATOutput) dat.baseline2("greedy");
+        // DATOutput baseline = (DATOutput) dat.baseline();
+        // System.out.print("cophy modified\t");
+        // for (int i = 0; i < windowConstraints.length; i++) {
+        // System.out.print(baseline.ws[i].cost + "\t");
+        // }
+        // System.out.println(baseline.totalCost);
+        DATOutput baseline = null;
+        DATOutput baseline2 = null;
+        baseline = (DATOutput) dat.baseline2("greedyRatio");
+        System.out.print("greedyRatio MKP\t");
+        for (int i = 0; i < windowConstraints.length; i++) {
+            System.out.print(baseline.ws[i].cost + "\t");
+        }
+        System.out.println(baseline.totalCost);
+        baseline2 = (DATOutput) dat.baseline2("greedy");
         System.out.print("greedy MKP\t");
         for (int i = 0; i < windowConstraints.length; i++) {
             System.out.print(baseline2.ws[i].cost + "\t");
         }
         System.out.println(baseline2.totalCost);
         double alpha = 1;
-        for (double beta = Math.pow(2, -7); beta <= Math.pow(2, 7); beta *= 2) {
+        for (double beta = Math.pow(2, 0); beta <= Math.pow(2, 16); beta *= 2) {
             dat = new DAT(cost, windowConstraints, alpha, beta);
             // dat.setOptimizer(optimizer);
             dat.setLogListenter(logger);
@@ -216,12 +218,14 @@ public class DATTest2 {
                 System.out.print(output.ws[i].cost + "\t");
             }
             System.out.print(output.totalCost);
-//            System.out.print("\t"
-//                    + (baseline.totalCost + beta
-//                            * baseline.ws[baseline.ws.length - 1].cost));
-            System.out.print("\t"
-                    + (baseline2.totalCost + beta
-                            * baseline2.ws[baseline2.ws.length - 1].cost));
+            if (baseline != null)
+                System.out.print("\t"
+                        + (baseline.totalCost + beta
+                                * baseline.ws[baseline.ws.length - 1].cost));
+            if (baseline2 != null)
+                System.out.print("\t"
+                        + (baseline2.totalCost + beta
+                                * baseline2.ws[baseline2.ws.length - 1].cost));
             System.out.println();
         }
 
@@ -249,20 +253,20 @@ public class DATTest2 {
         querySize = 100;
         indexSize = 200;
         testSet = "tpch-500-counts";
-//        testSet = "online-benchmark";
-//        testSet = "nref";
+        // testSet = "online-benchmark";
+        // testSet = "nref";
         //
         // querySize = 100;
         // indexSize = 200;
         //
         // querySize = 50;
         // indexSize = 50;
-//        querySize = 10;
-//        indexSize = 10;
-//        querySize = 5;
-//        indexSize = 15;
-//        querySize = 50;
-//        indexSize = 100;
+        // querySize = 10;
+        // indexSize = 10;
+        // querySize = 5;
+        // indexSize = 15;
+        // querySize = 50;
+        // indexSize = 100;
 
         testBIP();
     }
