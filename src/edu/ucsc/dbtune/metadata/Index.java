@@ -45,7 +45,8 @@ public class Index extends DatabaseObject implements
     public static final boolean DESC           = false;
 
     /** used to uniquely identify each instance of the class. */
-    public static AtomicInteger IN_MEMORY_ID = new AtomicInteger(1);
+    public static int START_INDEX_ID = 1;
+    public static AtomicInteger IN_MEMORY_ID = new AtomicInteger(START_INDEX_ID);
     // CHECKSTYLE:ON
 
     protected List<Boolean> ascendingColumn;

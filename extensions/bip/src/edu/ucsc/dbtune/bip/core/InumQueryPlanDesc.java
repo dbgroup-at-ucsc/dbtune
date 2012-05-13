@@ -172,7 +172,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         }
         
         templatePlans = preparedStmt.getTemplatePlans();
-        
+                
         // 2. Number of slots and indexes in each slot
         // 3. Template plan cost
         // only for SELECT and UPDATE statements
@@ -331,7 +331,6 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
 	                            */
 	            }
 	            
-	            
 	            indexUpdateCosts.put(index, cost);
 	        }
 	        
@@ -384,6 +383,19 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
 	    
 	    return fts;
 	}
+	
+	
+	@Override
+    public Set<Index> getIndexes()
+    {
+	    Set<Index> candidates = new HashSet<Index>();
+	    
+        for (int i = 0; i < n; i++) 
+            candidates.addAll(indexSlot.get(i));
+        
+        return candidates;
+    }
+    
 	
     @Override
 	public int getNumberOfTemplatePlans()
@@ -454,10 +466,10 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
     
     @Override
     public double getUpdateCost(Index index)
-    {
+    {   
         if (!stmt.getSQLCategory().isSame(NOT_SELECT) || indexUpdateCosts.get(index) == null)
             return 0.0;
-
+     
         return indexUpdateCosts.get(index);
     }
 
@@ -471,6 +483,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         sb.append("Number of slots: " + n + "\n");
         sb.append("Internal plan costs: " + beta + "\n");
         sb.append("Index access costs: " + accessCostPerPlan + "\n");
+        sb.append("Index update costs: " + indexUpdateCosts + "\n");
         
         return sb.toString();
     }
