@@ -71,7 +71,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
 	/** The array of internal plan costs */
     private List<Double> beta;
     
-	private Map<Index, Double> indexUpdateCosts;
+	private Map<Integer, Double> indexUpdateCosts;
 	
     /** List of index access cost in each plan */
 	private List<Map<Integer, Double>> accessCostPerPlan;
@@ -305,7 +305,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
 	private void getUpdateCostsFromInum(InumPreparedSQLStatement preparedStmt, Set<Index> candidates) 
 	             throws SQLException
 	{
-	    indexUpdateCosts = new HashMap<Index, Double>();
+	    indexUpdateCosts = new HashMap<Integer, Double>();
 	    ExplainedSQLStatement inumExplain = preparedStmt.explain(candidates);
 	    
 	    double cost;
@@ -331,13 +331,13 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
 	                            */
 	            }
 	            
-	            indexUpdateCosts.put(index, cost);
+	            indexUpdateCosts.put(index.getId(), cost);
 	        }
 	        
 	    } else {
 	        for (int i = 0; i < n; i++)
 	            for (Index index : indexSlot.get(i)) 
-	                indexUpdateCosts.put(index, inumExplain.getUpdateCost(index));
+	                indexUpdateCosts.put(index.getId(), inumExplain.getUpdateCost(index));
 	    }
 	    
 	    baseTableUpdateCost = inumExplain.getBaseTableUpdateCost();
@@ -470,7 +470,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         if (!stmt.getSQLCategory().isSame(NOT_SELECT) || indexUpdateCosts.get(index) == null)
             return 0.0;
      
-        return indexUpdateCosts.get(index);
+        return indexUpdateCosts.get(index.getId());
     }
 
     @Override
