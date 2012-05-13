@@ -58,8 +58,12 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
         // compute the  upper bound cost
         computeUpperBoundDeployCost();
                 
-        double factors[] = {Math.pow(2, -1), Math.pow(2, -4), Math.pow(2, -8), 
+        double factors[] = {Math.pow(2, -1), Math.pow(2, -2), Math.pow(2, -3), Math.pow(2, -4), 
+                            Math.pow(2, -5), Math.pow(2, -6), Math.pow(2, -7),
+                            Math.pow(2, -12),
                             Math.pow(2, -16), 0};
+        //double factors[] = {Math.pow(2, -12)};
+        
         double deployCost; 
         DivConfiguration dest = new DivConfiguration(0, 0);
         
@@ -83,15 +87,22 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
 
             // process after
             DivConfiguration after = (DivConfiguration) elastic.solve();
-            dest.copyAndRemoveEmptyConfiguration(after);
+                   
+            if (isExportToFile)
+                elastic.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
             
-            // output the result
-            deployCost = computeDeploymentCost(sourceConf, dest);
+            
             
             // add the update-base-table-constant costs
             // this handling is tricky
             // since we actually deploy only {@nDeploys}
             totalCostBIP = elastic.getObjValue();
+            
+            dest.copyAndRemoveEmptyConfiguration(after);
+            
+            // output the result
+            deployCost = computeDeploymentCost(sourceConf, after);
+            
             
             System.out.println("\n\n\n------------ upperbound cost: " + (factor * upperCost) + "\n"
                                + " new deploy cost: " + deployCost + "\n"

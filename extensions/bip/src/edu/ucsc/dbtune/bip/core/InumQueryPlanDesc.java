@@ -467,7 +467,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
     @Override
     public double getUpdateCost(Index index)
     {   
-        if (!stmt.getSQLCategory().isSame(NOT_SELECT) || indexUpdateCosts.get(index) == null)
+        if (!stmt.getSQLCategory().isSame(NOT_SELECT) || indexUpdateCosts.get(index.getId()) == null)
             return 0.0;
      
         return indexUpdateCosts.get(index.getId());

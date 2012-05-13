@@ -151,6 +151,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
                     + " NUMBER of distinct indexes: " + divConf.countDistinctIndexes()+ "\n"
                     + " NUMBER OF queries:          " + 
                             div.computeNumberQueriesSpecializeForReplica()
+                    //+ " Configuration: " + divConf
                     );
             
             if (isShowRecommendation)
@@ -174,7 +175,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
     /**
      * Call UNIF
      */
-    private static void testUniform() throws Exception
+    public static void testUniform() throws Exception
     {
         nReplicas = 1;
         loadfactor = 1;
@@ -215,7 +216,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
                                              div.getUpdateCostFromCplex() + "\n"
                                 //+ "         - base table                  : " 
                                 //+         div.getTotalBaseTableUpdateCost() + "\n"
-                                 );
+                                );
             
             System.out.println("----------------------------------------");
         }
