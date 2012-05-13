@@ -72,7 +72,7 @@ public class DivTestSetting
     protected static long totalIndexSize;
     protected static boolean isGetAverage;
     protected static boolean isPostprocess; 
-    
+    protected static boolean isAllImbalanceConstraint;
     
     /**
      * Retrieve the environment parameters set in {@code dbtune.cfg} file
@@ -92,7 +92,10 @@ public class DivTestSetting
             return;
         
         folder = en.getWorkloadsFoldername();
+        
+        // get workload and candidate
         workload = workload(folder);
+        
         
         isLoadEnvironmentParameter = true;
         isPostprocess = false;
@@ -133,8 +136,9 @@ public class DivTestSetting
         isExportToFile = false;
         isTestCost = false;
         isShowRecommendation = false;        
-        isGetAverage = true;
+        isGetAverage = false;
         isDB2Cost = false;
+        isAllImbalanceConstraint = false;
         
         div = new DivBIP();
         

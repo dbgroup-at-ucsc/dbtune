@@ -13,8 +13,9 @@ import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Environment;
 
-import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeDeploymentCost;
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeDeploymentCost;
+
 
 
 public class ElasticDivBIPFunctionalTest extends DivTestSetting 
@@ -38,30 +39,33 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
     public void testShrinkReplicaDivergentDesign() throws Exception
     {   
         LogListener logger = LogListener.getInstance();
-        /*
+        
         //double updateCost;
         //double queryCost;
         double totalCostBIP;
         
         // 1. Set common parameters
         getEnvironmentParameters();
+        
+        // 2. set parameters
         setParameters();
+     
+        candidates = readCandidateIndexes();
         
         if (!(io instanceof InumOptimizer))
             return;
-
-        // 2. Generate candidate indexes
-        candidates = readCandidateIndexes();
-
+        
         // compute the  upper bound cost
         computeUpperBoundDeployCost();
-        
-        double factors[] = {Math.pow(2, -1), Math.pow(2, -2), Math.pow(2, -4)};
+                
+        double factors[] = {Math.pow(2, -1), Math.pow(2, -4), Math.pow(2, -8), 
+                            Math.pow(2, -16), 0};
         double deployCost; 
         DivConfiguration dest = new DivConfiguration(0, 0);
         
         nReplicas = 4;
-        nDeploys = 2;
+        nDeploys = 3;
+        loadfactor = 2;
         
         for (double factor : factors) { 
         
@@ -87,29 +91,28 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
             // add the update-base-table-constant costs
             // this handling is tricky
             // since we actually deploy only {@nDeploys}
-            totalCostBIP = elastic.getObjValue() + 
-                        (nDeploys * elastic.getTotalBaseTableUpdateCost() / nReplicas);
+            totalCostBIP = elastic.getObjValue();
             
-            System.out.println(" upperbound cost: " + (factor * upperCost) + "\n"
+            System.out.println("\n\n\n------------ upperbound cost: " + (factor * upperCost) + "\n"
                                + " new deploy cost: " + deployCost + "\n"
-                               + " TOTAL cost: " + totalCostBIP);
+                               + " TOTAL cost: " + totalCostBIP +  "\n"
+                               );
+                               //+ " NEW configuration: " + dest);
         }
-       */
+      
     }
     
     private static void computeUpperBoundDeployCost() throws Exception
     {           
-        // get the configuration
-        
-        
+        // get the configuration        
         nReplicas = 4;
         loadfactor = 2;        
         DivBIPFunctionalTest.testDiv();        
         sourceConf = new DivConfiguration(divConf);
         
         // run with two replicas
-        nReplicas = 2;
-        loadfactor = 1;        
+        nReplicas = 3;
+        loadfactor = 2;        
         DivBIPFunctionalTest.testDiv();        
         destinationConf = new DivConfiguration(divConf);
         

@@ -13,12 +13,15 @@ import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 
 import edu.ucsc.dbtune.bip.util.LogListener;
+
+
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
-import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
+
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
+import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
 /**
  * Test the functionality of Divergent Design using BIP.
@@ -32,10 +35,21 @@ public class DivBIPFunctionalTest extends DivTestSetting
     private static Workload wlQueries;
     private static Workload wlUpdates;
     
-    
     @Test
     public void main() throws Exception
     {
+        // 1. Read common parameter
+        getEnvironmentParameters();
+        
+        // 2. set parameter for DivBIP()
+        setParameters();
+        
+        if (!(io instanceof InumOptimizer))
+            return;
+  
+        candidates = readCandidateIndexes();
+        
+                
         // 1. test divergent
         testDivergent();
         
@@ -48,20 +62,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
     }
     
     protected static void testDivergent() throws Exception
-    {
-        // 1. Read common parameter
-        getEnvironmentParameters();
-        candidates = readCandidateIndexes();
-        
-        // 2. set parameter for DivBIP()
-        setParameters();
-        
-        if (!(io instanceof InumOptimizer))
-            return;
-        
-        // split workload 
-        splitSelectUpdateInWorkload();
-                
+    {           
         // 3. Call divergent design
         for (double B1 : listBudgets) {
             
@@ -104,7 +105,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
         div = new DivBIP();
         
         Optimizer io = db.getOptimizer();
-                
+         
         LogListener logger = LogListener.getInstance();
         div.setCandidateIndexes(candidates);
         div.setWorkload(workload); 
@@ -135,7 +136,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
             // add the update-base-table-constant costs
             totalCostBIP = div.getObjValue(); // + div.getTotalBaseTableUpdateCost();
             
-            System.out.println("CPLEX result: " 
+            System.out.println("CPLEX result: number of replicas: " + nReplicas + "\n" 
                     + " TOTAL cost:  " + totalCostBIP + "\n"
                     + " QUERY cost:  " + queryCost   + "\n"
                     + " UPDATE cost: " + updateCost  + "\n"
@@ -146,7 +147,11 @@ public class DivBIPFunctionalTest extends DivTestSetting
                     //                    + div.getTotalBaseTableUpdateCost() + "\n"
                     + " ----- CPLEX info: \n"
                     + "          + obj value: " + div.getObjValue() + "\n"
-                    + "          + gap from the optimal: " + div.getObjectiveGap() + "\n");
+                    + "          + gap from the optimal: " + div.getObjectiveGap() + "\n"
+                    + " NUMBER of distinct indexes: " + divConf.countDistinctIndexes()+ "\n"
+                    + " NUMBER OF queries:          " + 
+                            div.computeNumberQueriesSpecializeForReplica()
+                    );
             
             if (isShowRecommendation)
                 System.out.println("----Output: " + output);
@@ -291,6 +296,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
     /**
      * Classify workload according to query or update statements
      */
+    /*
     private static void splitSelectUpdateInWorkload()
     {
         // call DB2 to compute cost
@@ -307,7 +313,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
         wlUpdates = new Workload(updateSQLs);
         
     }
-    
+    */
     /**
      * Run the instance of the problem five times and get the average 
      * of imbalance query, replica, and node failure
