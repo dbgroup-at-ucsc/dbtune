@@ -91,6 +91,24 @@ public class ConstraintDivBIP extends DivBIP
                 topMBestCostExplicit();                
             }
             
+            // this variable is turned on when 
+            // the constraints contain IMBALANCE_QUERY or NODE_FAILURE
+            boolean isSumYConstraint = false;
+            
+            for (DivConstraint c : constraints)
+                if (c.getType().equals(IMBALANCE_QUERY) 
+                      || c.getType().equals(NODE_FAILURE) ) {
+                    isSumYConstraint = true;
+                    break;
+                }
+            
+            if (isSumYConstraint)
+                sumYConstraint();
+            //
+            // 
+            System.out.println(" is sm y: " + isSumYConstraint
+                      + " number of constriants; " + constraints.size()
+                       + constraints);
             // 7. additional constraints
             for (DivConstraint c : constraints) {
                 if (c.getType().equals(IMBALANCE_REPLICA)) {
@@ -112,6 +130,20 @@ public class ConstraintDivBIP extends DivBIP
         }
     }
     
+    /**
+     * Sum Y constraint in general
+     */
+    protected void sumYConstraint() throws IloException
+    {
+        System.out.println(" SUM Y CONSTRAINT ");
+        // sum_y = sum of y^j_{qk} over all template plans
+        for (int r = 0; r < nReplicas; r++)
+            for (QueryPlanDesc desc : queryPlanDescs) {
+                // only consider for SELECT statement
+                if (desc.getSQLCategory().isSame(SELECT))
+                    sumYConstraint(r, desc.getStatementID(), desc);
+            }
+    }
     
     /**
      * Construct the total cost formulas containing query statements only.
@@ -416,14 +448,6 @@ public class ConstraintDivBIP extends DivBIP
      */
     protected void imbalanceQueryConstraints(double beta) throws IloException
     {   
-        // sum_y = sum of y^j_{qk} over all template plans
-        for (int r = 0; r < nReplicas; r++)
-            for (QueryPlanDesc desc : queryPlanDescs) {
-                // only consider for SELECT statement
-                if (desc.getSQLCategory().isSame(SELECT))
-                    sumYConstraint(r, desc.getStatementID(), desc);
-            }
-        
         // query imbalance constraint
         for (QueryPlanDesc desc : queryPlanDescs)
             for (int r1 = 0; r1 < nReplicas; r1++)
@@ -591,6 +615,8 @@ public class ConstraintDivBIP extends DivBIP
         return (id * 1000 + failID);
     }
     
+    
+    
     /**
      * Impose the imbalance constraints when any one of the replicas fail.
      * 
@@ -600,14 +626,9 @@ public class ConstraintDivBIP extends DivBIP
      * @throws IloException
      */
     protected void nodeFailures(double beta) throws IloException
-    {
-        for (int r = 0; r < nReplicas; r++)
-            for (QueryPlanDesc desc : queryPlanDescs)
-                sumYConstraint(r, desc.getStatementID(), desc);
-        
+    {   
         for (int failR = 0; failR < nReplicas; failR++)
             nodeFailureConstraint(failR, beta);
-        
     }
     
     

@@ -20,6 +20,13 @@ public class DivConstraint
     {
         return factor;
     }
+
+    @Override
+    public String toString() {
+        return "DivConstraint [factor=" + factor + ", type=" + type + "]";
+    }
+    
+    
 }
 
 

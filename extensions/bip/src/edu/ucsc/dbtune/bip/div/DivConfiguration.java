@@ -33,6 +33,22 @@ public class DivConfiguration extends IndexTuningOutput
     }
     
     /**
+     * Count the different indexes that are recommended at different replicas
+     * 
+     * @return
+     *      The number of distinct indexes
+     */
+    public int countDistinctIndexes()
+    {
+       Set<Index> indexes = new HashSet<Index>();
+       
+       for (int i = 0; i < nReplicas; i++)
+           indexes.addAll(indexesAtReplica(i));
+       
+       return indexes.size();
+    }
+    
+    /**
      * Copy constructor 
      * 
      * @param divConf
