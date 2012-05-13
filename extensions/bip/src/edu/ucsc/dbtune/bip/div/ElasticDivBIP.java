@@ -81,19 +81,22 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             // 3. Atomic constraints
             atomicConstraints();
             
-            // 4. Number of replicas constraint
+            // 4. Use index constraint
+            usedIndexConstraints();
+            
+            // 5. Number of replicas constraint
             numReplicaConstraint();
        
-            // 5. Index deploy
+            // 6. Index deploy
             indexDeployReplica();
             
-            // 6. Deployment cost
+            // 7. Deployment cost
             deployCostConstraints();
             
-            // 7. Top-m best cost 
+            // 8. Top-m best cost 
             topMBestCostConstraints();    
         
-            // 8. space constraints
+            // 9. space constraints
             spaceConstraints();
         }
         catch (IloException e) {
@@ -250,7 +253,5 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         }
         
         cplex.addLe(exprDeploy, upperDeployCost);  
-    }   
-    
-    
+    }
 }
