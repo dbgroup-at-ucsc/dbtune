@@ -166,7 +166,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         for (int r = 0; r < nReplicas; r++)
             for (QueryPlanDesc desc : queryPlanDescs)
                 constructVariables(r, desc.getStatementID(), desc);
-        
+                 
         // for TYPE_S
         for (int r = 0; r < nReplicas; r++) 
             for (Index index : candidateIndexes) {
@@ -237,9 +237,10 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         // update component of NOT_SELECT statement
         for (QueryPlanDesc desc : queryPlanDescs) 
-            if (desc.getSQLCategory().isSame(NOT_SELECT)) 
+            if (desc.getSQLCategory().isSame(NOT_SELECT)) { 
                 expr.add(modifyCoef(indexUpdateCost(r, desc.getStatementID(), desc),
                         desc.getStatementWeight()));
+            }
         
         return expr;
     }
@@ -296,6 +297,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 expr.addTerm(cplexVar.get(idS), cost);
             }
         }
+         
         
         return expr;
     }
@@ -765,6 +767,37 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         return maxRatio;
     }
+    
+    /**
+     * Compute number of queries specialize at each replica
+     *  
+     * @return
+     *  todo
+     * @throws Exception
+     */
+    public List<Integer> computeNumberQueriesSpecializeForReplica() throws Exception
+    {
+        List<Integer> counts = new ArrayList<Integer>();
+        List<Double> costs;
+        
+        int count;
+        
+        for (int r = 0; r < nReplicas; r++) {
+            costs = getQueryCostReplicaByCplex(r);
+            count = 0;
+            for (int q = 0; q < queryPlanDescs.size(); q++) {
+                if (queryPlanDescs.get(q).getSQLCategory().isSame(SELECT)) {
+                    if (costs.get(q) > 0.1)
+                        count++;
+                }
+            }
+            
+            counts.add(count);
+        }
+        
+        return counts;
+    }
+    
     
     /**
      * Calculate the query costs at replica {@code r}.
