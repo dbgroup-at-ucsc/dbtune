@@ -526,8 +526,13 @@ public class Environment
      */
     public List<String> getListImbalanceConstraints()
     {
-        return Arrays.asList(
-                getOrThrowIfNullOrEmpty(configuration, IMBALANCE_CONSTRAINT).split(",")); 
+        List<String> constraints = new ArrayList<String>();
+        
+        for (String s : Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, IMBALANCE_CONSTRAINT).split(",")))
+                constraints.add(s.trim());
+               
+        return constraints;
     }
     
     /**
