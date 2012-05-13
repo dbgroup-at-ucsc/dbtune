@@ -158,7 +158,7 @@ public class UtilConstraintBuilder
         
         while (iter.hasNext()) {
             var = iter.nextNumVar();
-            coef = iter.getValue();            
+            coef = iter.getValue(); 
             
             if (coef > 0.0 && cplex.getValue(var) > 0)
                 cost += coef * cplex.getValue(var);
@@ -289,7 +289,8 @@ public class UtilConstraintBuilder
         
         double minCost = 9999999999.0;
         
-        System.out.println(" source conf: " + sourceConf.getNumberReplicas()
+        System.out.println("L292 (Utils constraint builder), " +
+        		            " source conf: " + sourceConf.getNumberReplicas()
                             + " desc. conf: " + destinationConf.getNumberReplicas());
         
         // find all permuation of a set [0,1,... sourceConf.size() - 1]
@@ -393,21 +394,24 @@ public class UtilConstraintBuilder
         //   + Index is materialized      : cost = createCost(index)
         // 
         double transferCost = 0.0;        
-        Set<Index>  materializedIndexes;
+        Set<Integer> retain = new HashSet<Integer>();
         
-        // contains only index in {@dest} and NOT in {@source}
-        materializedIndexes = new HashSet<Index>(destination);
-        materializedIndexes.removeAll(source);
+        for (Index index : destination)
+            retain.add(index.getId());
         
-        for (Index index : materializedIndexes) 
-            transferCost += index.getCreationCost();
-        /*
+        for (Index index : source)
+            retain.remove(index.getId());
+        
+        for (Index index : destination) 
+            if (retain.contains(index.getId()))
+                transferCost += index.getCreationCost();
+        
+        /*    
         System.out.println( " source " + source.size()
                          + " dest: " + destination.size()
-                         + " mat: " + materializedIndexes.size()
+                         + " mat: " + retain.size()
                          + " cost: " + transferCost );
-        */
-         
+         */
         return transferCost;
     }
     
