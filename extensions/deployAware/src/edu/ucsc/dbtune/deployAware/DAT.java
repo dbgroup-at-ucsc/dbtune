@@ -497,6 +497,8 @@ public class DAT extends AbstractBIPSolver {
      *            optimal, greedy
      * @return
      */
+    public static double baseline2WindowConstraint;
+
     public IndexTuningOutput baseline2(String method) {
         DATOutput output = new DATOutput(windowConstraints.length);
         super.numConstraints = 0;
@@ -505,6 +507,7 @@ public class DAT extends AbstractBIPSolver {
             double total = 0;
             for (double d : windowConstraints)
                 total += d;
+            double total0=total;
             boolean[][] indexPresents = new boolean[windowConstraints.length][totalIndices];
             double costWithoutIndex = costWithIndex(new boolean[totalIndices]);
             while (true) {
@@ -528,10 +531,10 @@ public class DAT extends AbstractBIPSolver {
                     items[j] = usedIndex.get(j).createCost;
                     totalWeight += items[j];
                     profits[j] = usedIndex.get(j).indexBenefit;
-                    Rt.np(usedIndex.get(j).id + "\t" + items[j] + "\t"
-                            + profits[j]);
+                    // Rt.np(usedIndex.get(j).id + "\t" + items[j] + "\t"
+                    // + profits[j]);
                 }
-                Rt.np(totalWeight + "/" + total);
+                // Rt.np(totalWeight + "/" + total);
                 double[] binWeights = new double[windowConstraints.length];
                 for (int j = 0; j < binWeights.length; j++)
                     binWeights[j] = binWeights.length - j;
@@ -541,7 +544,7 @@ public class DAT extends AbstractBIPSolver {
                     MKPOptimum m = new MKPOptimum(bins, binWeights, items,
                             profits);
                     if (m.cannotFitIn > 0) {
-                        Rt.p("can't fit: " + m.cannotFitIn+" "+total);
+                        Rt.p("can't fit: " + m.cannotFitIn + " " + total);
                         total *= 0.9;
                         continue;
                     }
@@ -551,7 +554,7 @@ public class DAT extends AbstractBIPSolver {
                             profits, method.equals("greedyRatio"));
                     if (m.cannotFitIn > 0) {
                         Rt.p("can't fit: " + m.cannotFitIn + " "
-                                + m.cannotFitWeight+" "+total);
+                                + m.cannotFitWeight + " " + total);
                         total *= 0.9;
                         continue;
                     }
@@ -566,17 +569,18 @@ public class DAT extends AbstractBIPSolver {
                 }
                 break;
             }
-            for (int wid = 0; wid < indexPresents.length; wid++) {
-                System.out.print("window " + wid + "\t");
-                for (int j = 0; j < totalIndices; j++) {
-                    if (indexPresents[wid][j]) {
-                        System.out.format("%d(%,.0f|%,.0f)", j,
-                                costModel.indices.get(j).createCost,
-                                costModel.indices.get(j).indexBenefit);
-                    }
-                }
-                System.out.println();
-            }
+            // for (int wid = 0; wid < indexPresents.length; wid++) {
+            // System.out.print("window " + wid + "\t");
+            // for (int j = 0; j < totalIndices; j++) {
+            // if (indexPresents[wid][j]) {
+            // System.out.format("%d(%,.0f|%,.0f)", j,
+            // costModel.indices.get(j).createCost,
+            // costModel.indices.get(j).indexBenefit);
+            // }
+            // }
+            // System.out.println();
+            // }
+            baseline2WindowConstraint = total/total0*100;
             for (int wid = 1; wid < indexPresents.length; wid++) {
                 for (int j = 0; j < totalIndices; j++) {
                     if (indexPresents[wid - 1][j]) {

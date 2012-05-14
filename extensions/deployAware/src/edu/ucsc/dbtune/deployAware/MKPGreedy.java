@@ -83,7 +83,7 @@ public class MKPGreedy {
 	public static void main(String[] args) {
 		double[] bins = { 100, 100, 100 };
 		double[] items = { 10, 20, 30, 70, 90 };
-		double[] profits = { 10, 20, 30, 70, 90 };
+		double[] profits = { 10, 20, 30, 70, 900 };
 		double[] binWeights = { 3, 2, 1 };
 		MKPGreedy greedy = new MKPGreedy(bins, binWeights, items, profits,false);
 		Rt.p(greedy.profit);

@@ -163,10 +163,10 @@ public class DATTest2 {
 
         SeqInumCost cost = loadCost();
         Rt.p("%d x %d", cost.queries.size(), cost.indices.size());
-        Rt.np("Create index cost");
-        for (int i = 0; i < cost.indices.size(); i++) {
-            Rt.np("%,.0f", cost.indices.get(i).createCost);
-        }
+//        Rt.np("Create index cost");
+//        for (int i = 0; i < cost.indices.size(); i++) {
+//            Rt.np("%,.0f", cost.indices.get(i).createCost);
+//        }
         double[] windowConstraints = new double[3];
         for (int i = 0; i < windowConstraints.length; i++)
             windowConstraints[i] = 2000000;
@@ -199,13 +199,13 @@ public class DATTest2 {
         for (int i = 0; i < windowConstraints.length; i++) {
             System.out.print(baseline.ws[i].cost + "\t");
         }
-        System.out.println(baseline.totalCost);
+        System.out.println(baseline.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
         baseline2 = (DATOutput) dat.baseline2("greedy");
         System.out.print("greedy MKP\t");
         for (int i = 0; i < windowConstraints.length; i++) {
             System.out.print(baseline2.ws[i].cost + "\t");
         }
-        System.out.println(baseline2.totalCost);
+        System.out.println(baseline2.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
         double alpha = 1;
         for (double beta = Math.pow(2, 0); beta <= Math.pow(2, 16); beta *= 2) {
             dat = new DAT(cost, windowConstraints, alpha, beta);
