@@ -507,7 +507,7 @@ public class DAT extends AbstractBIPSolver {
             double total = 0;
             for (double d : windowConstraints)
                 total += d;
-            double total0=total;
+            double total0 = total;
             boolean[][] indexPresents = new boolean[windowConstraints.length][totalIndices];
             double costWithoutIndex = costWithIndex(new boolean[totalIndices]);
             while (true) {
@@ -559,6 +559,19 @@ public class DAT extends AbstractBIPSolver {
                         continue;
                     }
                     belongs = m.belongs;
+                } else if (method.startsWith("bip")) {
+                    double[] binWeights2 = new double[windowConstraints.length];
+                    for (int j = 0; j < binWeights2.length; j++)
+                        binWeights2[j] = (binWeights2.length - j) * alpha
+                                + beta;
+                    MKPBip m = new MKPBip(bins, binWeights2, items, profits);
+                    if (m.cannotFitIn > 0) {
+//                        Rt.p("can't fit: " + m.cannotFitIn + " "
+//                                + m.cannotFitWeight + " " + total);
+                        total *= 0.9;
+                        continue;
+                    }
+                    belongs = m.belongs;
                 } else {
                     throw new Error(method);
                 }
@@ -580,7 +593,7 @@ public class DAT extends AbstractBIPSolver {
             // }
             // System.out.println();
             // }
-            baseline2WindowConstraint = total/total0*100;
+            baseline2WindowConstraint = total / total0 * 100;
             for (int wid = 1; wid < indexPresents.length; wid++) {
                 for (int j = 0; j < totalIndices; j++) {
                     if (indexPresents[wid - 1][j]) {

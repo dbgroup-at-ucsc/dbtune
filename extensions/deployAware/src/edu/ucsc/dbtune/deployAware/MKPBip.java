@@ -24,7 +24,7 @@ public class MKPBip {
     IloNumVar[][] vars;
 
     public MKPBip(double[] bins, double[] binWeights, double[] items,
-            double[] profits, boolean useRatio) throws IloException {
+            double[] profits) throws IloException {
         this.bins = Arrays.copyOf(bins, bins.length);
         this.binWeights = binWeights;
         this.items = items;

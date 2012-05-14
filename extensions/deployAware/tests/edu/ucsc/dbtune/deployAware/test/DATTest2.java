@@ -169,7 +169,7 @@ public class DATTest2 {
 //        }
         double[] windowConstraints = new double[3];
         for (int i = 0; i < windowConstraints.length; i++)
-            windowConstraints[i] = 2000000;
+            windowConstraints[i] = 20000000;
         DAT dat = new DAT(cost, windowConstraints, 1, 0);
         // dat.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
@@ -194,18 +194,25 @@ public class DATTest2 {
         // System.out.println(baseline.totalCost);
         DATOutput baseline = null;
         DATOutput baseline2 = null;
-        baseline = (DATOutput) dat.baseline2("greedyRatio");
-        System.out.print("greedyRatio MKP\t");
-        for (int i = 0; i < windowConstraints.length; i++) {
-            System.out.print(baseline.ws[i].cost + "\t");
-        }
-        System.out.println(baseline.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
-        baseline2 = (DATOutput) dat.baseline2("greedy");
-        System.out.print("greedy MKP\t");
-        for (int i = 0; i < windowConstraints.length; i++) {
-            System.out.print(baseline2.ws[i].cost + "\t");
-        }
-        System.out.println(baseline2.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
+        DATOutput baseline3 = null;
+//        baseline = (DATOutput) dat.baseline2("greedyRatio");
+//        System.out.print("greedyRatio MKP\t");
+//        for (int i = 0; i < windowConstraints.length; i++) {
+//            System.out.print(baseline.ws[i].cost + "\t");
+//        }
+//        System.out.println(baseline.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
+//        baseline2 = (DATOutput) dat.baseline2("greedy");
+//        System.out.print("greedy MKP\t");
+//        for (int i = 0; i < windowConstraints.length; i++) {
+//            System.out.print(baseline2.ws[i].cost + "\t");
+//        }
+//        System.out.println(baseline2.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
+//        baseline3 = (DATOutput) dat.baseline2("bip");
+//        System.out.print("PTAS MKP\t");
+//        for (int i = 0; i < windowConstraints.length; i++) {
+//            System.out.print(baseline3.ws[i].cost + "\t");
+//        }
+//        System.out.println(baseline3.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
         double alpha = 1;
         for (double beta = Math.pow(2, 0); beta <= Math.pow(2, 16); beta *= 2) {
             dat = new DAT(cost, windowConstraints, alpha, beta);
@@ -218,15 +225,23 @@ public class DATTest2 {
                 System.out.print(output.ws[i].cost + "\t");
             }
             System.out.print(output.totalCost);
-            if (baseline != null)
-                System.out.print("\t"
-                        + (baseline.totalCost + beta
-                                * baseline.ws[baseline.ws.length - 1].cost));
-            if (baseline2 != null)
-                System.out.print("\t"
-                        + (baseline2.totalCost + beta
-                                * baseline2.ws[baseline2.ws.length - 1].cost));
+//            if (baseline != null)
+//                System.out.print("\t"
+//                        + (baseline.totalCost + beta
+//                                * baseline.ws[baseline.ws.length - 1].cost));
+//            if (baseline2 != null)
+//                System.out.print("\t"
+//                        + (baseline2.totalCost + beta
+//                                * baseline2.ws[baseline2.ws.length - 1].cost));
             System.out.println();
+            dat = new DAT(cost, windowConstraints, alpha, beta);
+            baseline3 = (DATOutput) dat.baseline2("bip");
+            System.out.print("PTAS MKP\t");
+            for (int i = 0; i < windowConstraints.length; i++) {
+                System.out.print(baseline3.ws[i].cost + "\t");
+            }
+            System.out.print(baseline3.totalCost);
+            System.out.println("\t"+ DAT.baseline2WindowConstraint+"%");
         }
 
         double datCost = dat.getObjValue();
