@@ -52,6 +52,7 @@ public class PasswordPrompt {
 	}
 	private static class PasswordRunnable implements Runnable {
 		String password;
+		@Override
 		public void run() {
 			CustomDialog d = new CustomDialog(null);
 			d.pack();
@@ -121,7 +122,8 @@ class CustomDialog extends JDialog
 
         //Ensure the text field always gets the first focus.
         addComponentListener(new ComponentAdapter() {
-            public void componentShown(ComponentEvent ce) {
+            @Override
+			public void componentShown(ComponentEvent ce) {
                 textField.requestFocusInWindow();
             }
         });
@@ -134,12 +136,14 @@ class CustomDialog extends JDialog
     }
 
     /** This method handles events for the text field. */
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
         optionPane.setValue(btnString1);
     }
 
     /** This method reacts to state changes in the option pane. */
-    public void propertyChange(PropertyChangeEvent e) {
+    @Override
+	public void propertyChange(PropertyChangeEvent e) {
         String prop = e.getPropertyName();
 
         if (isVisible()

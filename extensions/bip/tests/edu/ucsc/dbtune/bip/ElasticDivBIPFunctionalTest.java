@@ -1,26 +1,12 @@
 package edu.ucsc.dbtune.bip;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
-
-import java.util.Set;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
-import edu.ucsc.dbtune.bip.div.DivBIP;
-import edu.ucsc.dbtune.bip.div.DivConfiguration;
-import edu.ucsc.dbtune.bip.div.ElasticDivBIP;
-import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
-import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.Workload;
 
 public class ElasticDivBIPFunctionalTest 
 {

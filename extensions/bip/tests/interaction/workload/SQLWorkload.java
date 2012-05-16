@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.ListIterator;
 
 public class SQLWorkload implements Iterable<SQLTransaction> {
-	private static final long serialVersionUID = 1L;
 
 	private List<SQLTransaction> list;
 
@@ -69,8 +68,6 @@ public class SQLWorkload implements Iterable<SQLTransaction> {
 			iter.next();
 //			if ((xact.id == 2 && xact.id != 8 && xact.id != 20))
 //			if (xact.id != 5)
-			if (false)
-				iter.remove();
 		}
 	}
 
@@ -78,6 +75,7 @@ public class SQLWorkload implements Iterable<SQLTransaction> {
 		return list.size();
 	}
 
+	@Override
 	public Iterator<SQLTransaction> iterator() {
 		return list.iterator();
 	}

@@ -56,6 +56,7 @@ public class DB2IndexSet implements Iterable<DB2Index>, Serializable {
 		}
 	}
 	
+	@Override
 	public java.util.Iterator<DB2Index> iterator() {
 		return list.iterator();
 	}
@@ -68,6 +69,7 @@ public class DB2IndexSet implements Iterable<DB2Index>, Serializable {
 		return set.size();
 	}
 	
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(size() + " indexes\n");
@@ -87,6 +89,7 @@ public class DB2IndexSet implements Iterable<DB2Index>, Serializable {
 		array = list.<DB2Index>toArray(array);
 		try {
 			Arrays.sort(array, new Comparator<DB2Index>() {
+				@Override
 				public int compare(DB2Index o1, DB2Index o2) {
 					try {
 						return o1.schema.creationText("a").compareTo(o2.schema.creationText("a"));

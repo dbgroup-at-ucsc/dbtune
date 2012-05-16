@@ -43,13 +43,10 @@ public class BasicLog implements Serializable {
 	public AnalysisLog getAnalysisLog(double threshold) {
 		int indexCount = bank.indexCount;
 		listInteraction = new ArrayList<InteractionPair>();
-		//double pairCount = (indexCount*(indexCount-1)) / 2.0; // n choose 2
-		double sumRelativeError = 0;
 		double trueTotalInteraction = 0;
 		for (int a = 0; a < indexCount; a++)
 			for (int b = 0; b < a; b++) 
 				if (bank.interactionLevel(a, b) > 0) {
-					++sumRelativeError;
 					trueTotalInteraction += bank.interactionLevel(a,b);
 				}
 		UnionFind uf = new UnionFind(indexCount);
@@ -65,7 +62,6 @@ public class BasicLog implements Serializable {
 			assert(0 <= newRE && newRE <= 1.0);
 			assert(0 <= oldRE && oldRE <= 1.0);
 			assert(oldRE >= newRE);
-			sumRelativeError -= oldRE - newRE;
 			totalInteractionSoFar += e.doiNew - e.doiOld;
 			
 			if (e.doiOld < threshold && e.doiNew >= threshold) {

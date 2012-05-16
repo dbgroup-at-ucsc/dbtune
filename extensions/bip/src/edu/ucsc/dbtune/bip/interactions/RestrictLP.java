@@ -151,7 +151,8 @@ public class RestrictLP extends RestrictIIP
      *         {@code - cost(Ac \cup \{ c \}) - cost(Ad \cup \{ d \} ) <= 0 }
      *      
      */
-    protected void indexInteractionConstraint1()
+    @Override
+	protected void indexInteractionConstraint1()
     {    
         ArrayList<String> listcd = new ArrayList<String>();
         double coef, realCoef;

@@ -188,6 +188,7 @@ public class DB2Index implements Serializable, Identifiable {
 		colNames.add(str.substring(nameStart, str.length()));
 	}
 	
+	@Override
 	public String toString() {
 		return creationText;
 	}
@@ -276,12 +277,14 @@ public class DB2Index implements Serializable, Identifiable {
 		sbuf.append(')');
 	}
 
+	@Override
 	public boolean equals(Object o1) {
 		if (!(o1 instanceof DB2Index))
 			return false;
 		return ((DB2Index) o1).schema.equals(schema);
 	}
 	
+	@Override
 	public int hashCode() {
 		return schema.hashCode();
 	}
@@ -313,7 +316,8 @@ public class DB2Index implements Serializable, Identifiable {
         return new DB2Index(schema, id, indexName, indexOwner, tableOwner, indexExists, systemRequired);
     }
     
-    public int getId()
+    @Override
+	public int getId()
     {
         return internalID;
     }

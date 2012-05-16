@@ -20,6 +20,7 @@ public class RRAnalysisThread implements Runnable {
 		logger = logger0;
 	}
 	
+	@Override
 	public void run() {
 		while (pendingCount > 0) {
 			int blockedCount = pass(false);

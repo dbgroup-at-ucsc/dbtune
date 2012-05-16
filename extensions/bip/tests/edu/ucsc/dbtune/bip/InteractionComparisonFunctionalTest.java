@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.bip;
 
-import interaction.AnalysisMain;
-import interaction.CandidateGenerationDBTune;
 import interaction.Configuration;
 import interaction.cand.Generation;
 import interaction.ibg.AnalysisMode;
@@ -40,8 +38,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-import static edu.ucsc.dbtune.util.TestUtils.workload;
 import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 
 /**
@@ -52,12 +48,16 @@ import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 public class InteractionComparisonFunctionalTest
 {  
     private static DatabaseSystem db;
-    private static Environment    en;    
+    @SuppressWarnings("unused")
+	private static Environment    en;    
     private static Workload       workload;
     private static String         folder;
-    private static String         dbName;
-    private static String         tableOwner;
-    private static String         subFolder;
+    @SuppressWarnings("unused")
+	private static String         dbName;
+    @SuppressWarnings("unused")
+	private static String         tableOwner;
+    @SuppressWarnings("unused")
+	private static String         subFolder;
     
     private static Set<Index> oneColumnCandidates;  
     private static Set<Index> optimalCandidates;
@@ -155,7 +155,8 @@ public class InteractionComparisonFunctionalTest
      * @throws Exception
      *      if fails
      */    
-    private static InteractionOutput analyze(Generation.Strategy strategy, double delta) 
+    @SuppressWarnings("unused")
+	private static InteractionOutput analyze(Generation.Strategy strategy, double delta) 
                                             throws Exception
     {         
         Set<Index>        candidates;
@@ -184,7 +185,7 @@ public class InteractionComparisonFunctionalTest
         
         bip.setCandidateIndexes(candidates);
         bip.setWorkload(workload);
-        bip.setOptimizer((InumOptimizer) io);
+        bip.setOptimizer(io);
         bip.setLogListenter(logger);
         bip.setConventionalOptimizer(io.getDelegate());
         bip.setApproximiationStrategy(true);
@@ -198,8 +199,9 @@ public class InteractionComparisonFunctionalTest
     }
     
     
-    private static Set<IndexInteraction> readIBGInteraction(Generation.Strategy s, double t,
-            Set<Index> indexes) throws Exception
+    @SuppressWarnings("unused")
+	private static Set<IndexInteraction> readIBGInteraction(final Generation.Strategy s, final double t,
+            final Set<Index> indexes) throws Exception
     {   
         Map<Integer, Index> mapIDIndex = new HashMap<Integer, Index>();
         Set<IndexInteraction> result   = new HashSet<IndexInteraction>();
@@ -239,7 +241,8 @@ public class InteractionComparisonFunctionalTest
      *  
      * @throws SQLException 
      */
-    private static void generateCandidateIndexes() throws Exception
+    @SuppressWarnings("unused")
+	private static void generateCandidateIndexes() throws Exception
     {   
         CandidateGenerator candGen;
         

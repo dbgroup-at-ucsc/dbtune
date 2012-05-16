@@ -256,12 +256,16 @@ class MD5 {
 		abstract int f(int x, int y, int z);
 	}
 	private Fcore F1 = new Fcore() {
+		@Override
 		int f(int x, int y, int z) { return (z ^ (x & (y ^ z))); }};
 	private Fcore F2 = new Fcore() {
+		@Override
 		int f(int x, int y, int z) { return (y ^ (z & (x ^ y))); }};
 	private Fcore F3 = new Fcore() {
+		@Override
 		int f(int x, int y, int z) { return (x ^ y ^ z); }};
 	private Fcore F4 = new Fcore() {
+		@Override
 		int f(int x, int y, int z) { return (y ^ (x | ~z)); }};
 
 	private int MD5STEP(Fcore f, int w, int x, int y, int z, int data, int s) {

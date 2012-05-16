@@ -124,8 +124,7 @@ public class CPlexImplementer implements CPlexSolver
      */ 
     protected IloLPMatrix getMatrix(IloCplex cplex) throws IloException 
     {
-        @SuppressWarnings("unchecked")
-        Iterator iter = cplex.getModel().iterator();
+        Iterator<?> iter = cplex.getModel().iterator();
         
         while (iter.hasNext()) {
             Object o = iter.next();

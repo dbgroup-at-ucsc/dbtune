@@ -7,7 +7,6 @@ import interaction.db.*;
 import interaction.ibg.*;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static interaction.ibg.AnalysisMode.SERIAL;
-import interaction.ibg.log.AnalysisLog;
 import interaction.ibg.log.BasicLog;
 import interaction.ibg.log.InteractionLogger;
 import interaction.ibg.log.BasicLog.InteractionPair;

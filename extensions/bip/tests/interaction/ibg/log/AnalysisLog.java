@@ -18,6 +18,7 @@ public class AnalysisLog implements Iterable<AnalysisLog.Entry> {
 		list.add(entry);
 	}
 	
+	@Override
 	public Iterator<Entry> iterator() {
 		return list.iterator();
 	}

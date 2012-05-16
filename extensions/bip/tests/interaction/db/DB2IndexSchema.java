@@ -152,10 +152,12 @@ public class DB2IndexSchema implements Serializable {
 		return m_signature;
 	}
 	
+	@Override
 	public int hashCode() {
 		return HashFunction.hashCode(signature());
 	}
 	
+	@Override
 	public boolean equals(Object o1) {
 		if (!(o1 instanceof DB2IndexSchema))
 			return false;

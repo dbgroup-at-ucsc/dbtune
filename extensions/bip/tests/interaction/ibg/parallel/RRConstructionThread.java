@@ -12,6 +12,7 @@ public class RRConstructionThread implements Runnable {
 		pending = new MinQueue<IndexBenefitGraph>(ibgs0);
 	}
 
+	@Override
 	public void run() {
 		while (pending.size() > 0) {
 			long timeSoFar, startTime, endTime;
