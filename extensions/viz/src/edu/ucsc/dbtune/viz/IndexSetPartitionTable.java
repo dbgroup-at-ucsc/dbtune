@@ -2,12 +2,15 @@ package edu.ucsc.dbtune.viz;
 
 import java.awt.Color;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
+import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -18,10 +21,10 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getColumnListString;
  *
  * @author Ivo Jimenez
  */
-public class IndexSetPartitionTable extends JFrame
+public class IndexSetPartitionTable extends AbstractVisualizer
 {
-    private static final long serialVersionUID = 0L;
     private String[] columnNames;
+    private JFrame frame;
 
     /**
      */
@@ -34,29 +37,42 @@ public class IndexSetPartitionTable extends JFrame
         columnNames[2] = "TABLE";
         columnNames[3] = "COLUMNS";
 
-        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        frame = new JFrame();
 
-        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
-        setTitle("DBTune");
-        setSize(300, 200);
-        setBackground(Color.gray);
+        frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
+
+        frame.setTitle("DBTune");
+        frame.setSize(300, 200);
+        frame.setBackground(Color.gray);
+
+        stats = new ArrayList<RecommendationStatistics>();
     }
 
     /**
-     * @param indexPartition
-     *      the partition to display in the table
      */
-    public void setPartition(Set<Set<Index>> indexPartition)
+    @Override
+    public void refresh()
     {
-        getContentPane().removeAll();
+        frame.getContentPane().removeAll();
 
-        for (Set<Index> partition : indexPartition)
-            getContentPane().add(new JScrollPane(newTable(partition)));
+        if (stats.size() < 1)
+            return;
 
-        this.repaint();
-        this.pack();
-        this.setVisible(true);
+        if (stats.size() > 1)
+            throw new RuntimeException(
+                "Can only display partition for one instance of an algorithm");
+
+        Set<Set<Index>> partitions = stats.get(0).getLastEntry().getCandidatePartitioning();
+
+        for (Set<Index> partition : partitions)
+            frame.getContentPane().add(new JScrollPane(newTable(partition)));
+
+        frame.repaint();
+        frame.pack();
+        frame.setSize(300, 200);
+        frame.setVisible(true);
     }
 
     /**

@@ -13,7 +13,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * 
  * @author Ivo Jimenez
  */
-public class TotalWorkPlotter implements Plotter
+public class TotalWorkPlotter extends AbstractVisualizer
 {
     private XYChart appFrame;
 
@@ -24,25 +24,22 @@ public class TotalWorkPlotter implements Plotter
     {
         XYSeriesCollection c = new XYSeriesCollection();
         appFrame = VizUtils.createXYChart("DBTune", c, "Performance", "Queries", "Total Work");
+        stats = new ArrayList<RecommendationStatistics>();
     }
-    
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public void plot(RecommendationStatistics recommendationStats)
+    public void refresh()
     {
-        List<RecommendationStatistics> rsList = new ArrayList<RecommendationStatistics>();
-
-        rsList.add(recommendationStats);
-
-        plot(rsList);
+        plot(stats);
     }
 
     /**
-     * {@inheritDoc}
+     * @param recommendationStats
+     *      list of statistics about recommendation phases
      */
-    @Override
     public void plot(RecommendationStatistics... recommendationStats)
     {
         XYSeriesCollection c = new XYSeriesCollection();
@@ -60,21 +57,11 @@ public class TotalWorkPlotter implements Plotter
     }
 
     /**
-     * {@inheritDoc}
+     * @param recommendationStats
+     *      list of statistics about recommendation phases
      */
-    @Override
     public void plot(List<RecommendationStatistics> recommendationStats)
     {
-        XYSeriesCollection c = new XYSeriesCollection();
-
-        for (RecommendationStatistics rs : recommendationStats) {
-            XYSeries xyseries = new XYSeries(rs.getAlgorithmName());
-            int i = 1;
-            for (RecommendationStatistics.Entry e : rs)
-                xyseries.add(i++, e.getTotalWork());
-            c.addSeries(xyseries);
-        }
-        appFrame.updateDataSet(c);
-        appFrame.setVisible(true);
+        plot(recommendationStats.toArray(new RecommendationStatistics[0]));
     }
 }

@@ -43,13 +43,16 @@ public class RecommendationStatistics implements Iterable<Entry>
      *      indexes that were in the context of the recommender
      * @param recommendation
      *      indexes that were recommended
+     * @param candidateSetPartitioning
+     *      partitioning of the candidate set
      * @return
      *      the entry that has been just created
      */
     public Entry addNewEntry(
             double totalCost,
             Set<Index> candidateSet,
-            Set<Index> recommendation)
+            Set<Index> recommendation,
+            Set<Set<Index>> candidateSetPartitioning)
     {
         Entry e = new Entry();
 
@@ -62,12 +65,23 @@ public class RecommendationStatistics implements Iterable<Entry>
         e.recommendation = recommendation;
         e.transitionCost = transitionCost;
         e.totalWork = totalWorkSum;
+        e.candidatePartitioning = candidateSetPartitioning;
 
         entries.add(e);
 
         previousRecommendation = recommendation;
         
         return e;
+    }
+
+    /**
+     * Removes all the entries.
+     */
+    public void clear()
+    {
+        entries.clear();
+        previousRecommendation = new HashSet<Index>();
+        totalWorkSum = 0.0;
     }
 
     /**
@@ -136,6 +150,20 @@ public class RecommendationStatistics implements Iterable<Entry>
     }
 
     /**
+     * Returns the last entry.
+     *
+     * @return
+     *      the last entry; {@code null} if the list is empty
+     */
+    public RecommendationStatistics.Entry getLastEntry()
+    {
+        if (entries.isEmpty())
+            return null;
+
+        return entries.get(entries.size() - 1);
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -157,6 +185,7 @@ public class RecommendationStatistics implements Iterable<Entry>
     {
         protected Collection<Index> candidateSet;
         protected Collection<Index> recommendation;
+        protected Set<Set<Index>> candidatePartitioning;
         protected double benefit;
         protected double transitionCost;
         protected double totalWork;
@@ -233,6 +262,26 @@ public class RecommendationStatistics implements Iterable<Entry>
         }
 
         /**
+         * Gets the candidatePartitioning for this instance.
+         *
+         * @return The candidatePartitioning.
+         */
+        public Set<Set<Index>> getCandidatePartitioning()
+        {
+            return this.candidatePartitioning;
+        }
+
+        /**
+         * Sets the candidatePartitioning for this instance.
+         *
+         * @param candidatePartitioning The candidatePartitioning.
+         */
+        public void setCandidatePartitioning(Set<Set<Index>> candidatePartitioning)
+        {
+            this.candidatePartitioning = candidatePartitioning;
+        }
+
+        /**
          * {@inheritDoc}
          */
         @Override
@@ -245,6 +294,12 @@ public class RecommendationStatistics implements Iterable<Entry>
             sb.append("   ").append("totalWork: ").append(totalWork).append("\n");
             sb.append("   ").append("candidates:\n      ").append(candidateSet).append("\n");
             sb.append("   ").append("recommendation:\n      ").append(recommendation).append("\n");
+            sb.append("   ").append("partitions:\n");
+
+            int i = 1;
+
+            for (Set<Index> partition : candidatePartitioning)
+                sb.append("      ").append(i++).append(": ").append(partition).append("\n");
 
             return sb.toString();
         }

@@ -20,6 +20,7 @@ resources/*/*/*.lp
 resources/*/*/*/candidatePool*
 resources/*/*/*/profiledQueries*
 resources/*/*/*/logfile_*
+workloads
 *.sw*
 .bin
 .checkstyle

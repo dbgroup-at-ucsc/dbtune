@@ -31,6 +31,7 @@ public class WFIT extends Advisor
     private Set<Index> pool;
     private DegreeOfInteractionFinder doiFinder;
     private RecommendationStatistics stats;
+    private RecommendationStatistics optStats;
     private boolean isCandidateSetFixed;
 
     /**
@@ -77,8 +78,13 @@ public class WFIT extends Advisor
 
         this.wfitDriver = new SATuningDBTuneTranslator(db.getCatalog(), initialSet);
         this.pool = new TreeSet<Index>(initialSet);
-        this.stats = new WFITRecommendationStatistics("WFIT");
-        this.isCandidateSetFixed = true;
+        this.stats = new RecommendationStatistics("WFIT");
+        this.optStats = new RecommendationStatistics("OPT");
+
+        if (initialSet.isEmpty())
+            this.isCandidateSetFixed = false;
+        else
+            this.isCandidateSetFixed = true;
     }
 
     /**
@@ -104,7 +110,14 @@ public class WFIT extends Advisor
 
         Set<Index> recommendation = getRecommendation();
 
-        stats.addNewEntry(pStmt.explain(recommendation).getTotalCost(), pool, recommendation);
+        stats.addNewEntry(
+            pStmt.explain(recommendation).getTotalCost(),
+            pool,
+            recommendation,
+            getStablePartitioning());
+
+        if (isCandidateSetFixed)
+            getOptimalRecommendationStatistics();
     }
 
     /**
@@ -150,12 +163,14 @@ public class WFIT extends Advisor
         if (!isCandidateSetFixed)
             throw new SQLException("Can't produce OPT without specifying an initial candidate set");
             
-        RecommendationStatistics optStats = new RecommendationStatistics("OPT");
+        optStats.clear();
 
         int i = 0;
 
         for (Set<Index> optRecommendation : wfitDriver.getOptimalScheduleRecommendation(pool))
-            optStats.addNewEntry(wfitDriver.getCost(i, optRecommendation), pool, optRecommendation);
+            optStats.addNewEntry(
+                    wfitDriver.getCost(
+                        i, optRecommendation), pool, optRecommendation, new TreeSet<Set<Index>>());
 
         return optStats;
     }

@@ -20,7 +20,7 @@ import edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME
 import edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER
 import edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD
 
-/** This class provides a hub for most of the operations that a user can execute through the CLI 
+/** The CLI interface to a DBMS.
   */
 class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
   val DBMS = dbms
