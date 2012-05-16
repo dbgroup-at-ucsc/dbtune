@@ -540,6 +540,28 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         }
     }
     
+    /**
+     * This function sets up the constraint for the set-up cost
+     * not to exceed some upper bound value 
+     */
+    protected IloLinearNumExpr deploymentConstraint() throws IloException
+    {
+        IloLinearNumExpr expr; 
+        int idS;       
+        
+        expr = cplex.linearNumExpr();
+        
+        for (int r = 0; r < nReplicas; r++)
+            for (Index index : candidateIndexes)
+                if (!(index instanceof FullTableScanIndex)) {
+                    idS = poolVariables.get(VAR_S, r, 0, 0 , index.getId()).getId();                
+                    expr.addTerm(index.getCreationCost(), cplexVar.get(idS));
+                }            
+                 
+        return expr;
+    }
+    
+    
     
     /**
      * Retrieve the update cost, computed by INUM including the cost for the query shell
@@ -837,5 +859,23 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         }
         
         return queries;
+    }
+    
+    /**
+     * Compute the deployment cost
+     * 
+     * @return
+     *      The cost
+     * @throws Exception
+     */
+    public double getDeploymentCost() throws Exception
+    {
+        IloLinearNumExpr  expr;
+        
+        expr = deploymentConstraint();
+        
+        
+        
+        return computeVal(expr);
     }
 }
