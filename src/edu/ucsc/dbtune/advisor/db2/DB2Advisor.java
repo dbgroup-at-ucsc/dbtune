@@ -12,7 +12,6 @@ import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
-import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -26,22 +25,26 @@ import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 public class DB2Advisor extends Advisor
 {
     private DatabaseSystem dbms;
+    private int spaceBudget;
 
     /**
      * constructor.
      * 
      * @param dbms
      *      system connected representing a DB2 instance
+     * @param spaceBudget
+     *      amount of space on disk allowed to build indexes
      * @throws SQLException
      *      if the underlaying DBMS is not a DB2 instance
      */
-    public DB2Advisor(DatabaseSystem dbms)
+    public DB2Advisor(DatabaseSystem dbms, int spaceBudget)
         throws SQLException
     {
         if (!(getBaseOptimizer(dbms.getOptimizer()) instanceof DB2Optimizer))
             throw new SQLException("Expecting DB2Optimizer");
 
         this.dbms = dbms;
+        this.spaceBudget = spaceBudget;
     }
 
     /**
@@ -83,8 +86,6 @@ public class DB2Advisor extends Advisor
     @Override
     public Set<Index> getRecommendation() throws SQLException
     {
-        int budget = Environment.getInstance().getSpaceBudget();
-
         CallableStatement cstmt =
             dbms.getConnection().prepareCall(
                 "CALL SYSPROC.DESIGN_ADVISOR(" +
@@ -95,7 +96,7 @@ public class DB2Advisor extends Advisor
                 "            <key>CMD_OPTIONS</key>" +
                 "            <string>" +
                 "               -workload  dbtuneworkload " +
-                "               -disklimit " + budget +
+                "               -disklimit " + spaceBudget +
                 "               -type      I " +
                 "               -compress  OFF " +
                 //"               -qualifier tpcds " +

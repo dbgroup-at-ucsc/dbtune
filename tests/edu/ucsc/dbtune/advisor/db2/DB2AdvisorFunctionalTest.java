@@ -88,7 +88,7 @@ public class DB2AdvisorFunctionalTest
         if (!(getBaseOptimizer(db.getOptimizer()) instanceof DB2Optimizer))
             return;
 
-        DB2Advisor db2advis = new DB2Advisor(db);
+        DB2Advisor db2advis = new DB2Advisor(db, env.getSpaceBudget());
 
         db2advis.process(workload(env.getWorkloadsFoldername() + "/tpch-inum"));
         assertThat(db2advis.getRecommendation().isEmpty(), is(false));

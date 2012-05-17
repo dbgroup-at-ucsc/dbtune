@@ -2,19 +2,16 @@ package edu.ucsc.dbtune.advisor.wfit;
 
 import edu.ucsc.dbtune.advisor.wfit.IndexPartitions.Subset;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.Environment;
 
 //CHECKSTYLE:OFF
 public class InteractionSelector {
-    private static final int PARTITION_ITERATIONS = 
-        Environment.getInstance().getNumPartitionIterations();
     
     /*
      * Note that when this is called, hotSet and hotPartitions are out of sync!
      */
     public static IndexPartitions choosePartitions(
             StaticIndexSet newHotSet, IndexPartitions oldPartitions,
-            DoiFunction doiFunc, int maxNumStates, int minId) 
+            DoiFunction doiFunc, int maxNumStates, int numPartitionIterations, int minId)
     {
         java.util.Random rand = new java.util.Random();
         IndexPartitions bestPartitions;
@@ -42,7 +39,7 @@ public class InteractionSelector {
         }
         bestCost = partitionCost(bestPartitions, doiFunc);
         
-        for (int attempts = 0; attempts < PARTITION_ITERATIONS; attempts++) {
+        for (int attempts = 0; attempts < numPartitionIterations; attempts++) {
             IndexPartitions currentPartitions = new IndexPartitions(newHotSet, minId);
             while (true) {
                 double currentSubsetCount = currentPartitions.subsetCount();

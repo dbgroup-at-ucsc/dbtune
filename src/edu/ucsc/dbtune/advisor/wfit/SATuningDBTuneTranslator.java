@@ -14,7 +14,6 @@ import edu.ucsc.dbtune.metadata.Index;
 
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
-import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.MetadataUtils;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.getDisplayList;
@@ -35,8 +34,10 @@ public class SATuningDBTuneTranslator
     private IndexPartitions hotPartitions;
 
     // hotSet size
-    private int maxHotSetSize = Environment.getInstance().getMaxNumIndexes();
-    private int maxNumStates = Environment.getInstance().getMaxNumStates();
+    private int maxHotSetSize;
+    private int maxNumStates;
+    private int indexStatisticsWindowSize;
+    private int numberOfPartitionIterations;
     private List<ProfiledQuery> qinfos;
     private int queryCount;
     private int idOffset;
@@ -45,10 +46,30 @@ public class SATuningDBTuneTranslator
      * @param cat
      *      when no initial set is used, the catalog must be provided
      * @param initialSet
-     *      the initial candidate set to be used 
+     *      the initial candidate set to be used
+     * @param maxHotSetSize
+     *      maximum number of candidates to keep in the hotSet
+     * @param maxNumberOfStates
+     *      maximum number of states per partition
+     * @param indexStatisticsWindowSize
+     *      size of the sliding window of interaction-related measurements
+     * @param numberOfPartitionIterations
+     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
+     *      set partition
      */
-    public SATuningDBTuneTranslator(Catalog cat, Set<Index> initialSet)
+    public SATuningDBTuneTranslator(
+            Catalog cat,
+            Set<Index> initialSet,
+            int maxHotSetSize,
+            int maxNumberOfStates,
+            int indexStatisticsWindowSize,
+            int numberOfPartitionIterations)
     {
+        this.maxHotSetSize = maxHotSetSize;
+        this.maxNumStates = maxNumberOfStates;
+        this.indexStatisticsWindowSize = indexStatisticsWindowSize;
+        this.numberOfPartitionIterations = numberOfPartitionIterations;
+
         if (initialSet.isEmpty())
             init(cat.indexes(), true);
         else
@@ -63,7 +84,7 @@ public class SATuningDBTuneTranslator
      */
     private void init(Set<Index> initialSet, boolean fromCatalog)
     {
-        idxStats = new IndexStatistics(idOffset);
+        idxStats = new IndexStatistics(indexStatisticsWindowSize, idOffset);
         matSet = new DynamicIndexSet(idOffset);
         userHotSet = new DynamicIndexSet(idOffset);
         qinfos = new ArrayList<ProfiledQuery>();
@@ -87,7 +108,7 @@ public class SATuningDBTuneTranslator
         }
 
         hotPartitions = new IndexPartitions(hotSet, idOffset);
-        wfa = new WorkFunctionAlgorithm(hotPartitions, true, idOffset);
+        wfa = new WorkFunctionAlgorithm(hotPartitions, true, maxNumStates, maxHotSetSize, idOffset);
     }
 
     /**
@@ -221,8 +242,10 @@ public class SATuningDBTuneTranslator
         
         // determine new partitioning
         // store into local variable, since we might reject it
-        IndexPartitions newHotPartitions = InteractionSelector.choosePartitions(newHotSet, 
-                hotPartitions, idxStats, maxNumStates, idOffset);
+        IndexPartitions newHotPartitions =
+            InteractionSelector.choosePartitions(
+                    newHotSet, hotPartitions, idxStats, maxNumStates, numberOfPartitionIterations, 
+                    idOffset);
         
         // commit hot set
         hotSet = newHotSet;

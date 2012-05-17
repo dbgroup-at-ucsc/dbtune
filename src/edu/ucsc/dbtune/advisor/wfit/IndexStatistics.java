@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.Environment;
 
 //CHECKSTYLE:OFF
 public class IndexStatistics implements BenefitFunction, DoiFunction {
@@ -13,9 +12,11 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
     Map<IndexPair,Window> doiWindows = new HashMap<IndexPair,Window>();
     IndexPair tempPair = new IndexPair(null, null); // for lookups
     private int minId;
+    private int windowSize;
     
-    public IndexStatistics(int minId) {
+    public IndexStatistics(int windowSize, int minId) {
         this.minId = minId;
+        this.windowSize = windowSize;
     }
 
     public void addQuery(ProfiledQuery qinfo, DynamicIndexSet matSet) {
@@ -27,7 +28,7 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
                 // add measurement, creating new window if necessary
                 Window benwin = benefitWindows.get(index);
                 if (benwin == null) {
-                    benwin = new Window();
+                    benwin = new Window(windowSize);
                     benefitWindows.put(index, benwin);
                 }
                 benwin.put(bestBenefit, currentTimeStamp);
@@ -50,7 +51,7 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
                     
                     Window doiwin = doiWindows.get(tempPair);
                     if (doiwin == null) {
-                        doiwin = new Window();
+                        doiwin = new Window(windowSize);
                         doiWindows.put(new IndexPair(a,b), doiwin);
                     }
                     doiwin.put(doi, currentTimeStamp);
@@ -102,13 +103,16 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
      * 
      */
     private class Window {
-        private final int size = Environment.getInstance().getIndexStatisticsWindow();
-        double[] measurements = new double[size];
-        double[] timestamps = new double[size];
+        private final int size;
+        double[] measurements;
+        double[] timestamps;
         int lastPos = -1;
         int numMeasurements = 0;
         
-        Window() {
+        public Window(int windowSize) {
+            this.size = windowSize;
+            this.measurements = new double[this.size];
+            this.timestamps = new double[this.size];
         }
         
         void put(double meas, double time) {

@@ -47,6 +47,10 @@ public class WFITFunctionalTest
     private static Environment env;
     private static CandidateGenerator candGen;
     private static boolean isOptimizerOK;
+    private static int maxCandidateCnt;
+    private static int windowSize;
+    private static int stateCnt;
+    private static int partIters;
 
     /**
      * @throws Exception
@@ -69,6 +73,11 @@ public class WFITFunctionalTest
             isOptimizerOK = true;
         else
             isOptimizerOK = false;
+
+        maxCandidateCnt = env.getMaxNumIndexes();
+        windowSize = env.getIndexStatisticsWindow();
+        stateCnt = env.getMaxNumStates();
+        partIters = env.getNumPartitionIterations();
     }
 
     /**
@@ -96,7 +105,7 @@ public class WFITFunctionalTest
 
         db.getCatalog().dropIndexes();
 
-        WFIT wfit = new WFIT(db);
+        WFIT wfit = new WFIT(db, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
 
@@ -130,7 +139,7 @@ public class WFITFunctionalTest
 
         Set<Index> candidateSet = candGen.generate(wl);
 
-        WFIT wfit = new WFIT(db, candidateSet);
+        WFIT wfit = new WFIT(db, candidateSet, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wl = 
             new Workload(
@@ -159,7 +168,7 @@ public class WFITFunctionalTest
 
         db.getCatalog().dropIndexes();
 
-        WFIT wfit = new WFIT(db);
+        WFIT wfit = new WFIT(db, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col2 = 2"));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col2 = 2"));
@@ -174,7 +183,7 @@ public class WFITFunctionalTest
 
         db.getCatalog().dropIndexes();
 
-        wfit = new WFIT(db);
+        wfit = new WFIT(db, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
@@ -204,7 +213,7 @@ public class WFITFunctionalTest
         // test GOOD negative vote
         db.getCatalog().dropIndexes();
 
-        wfit = new WFIT(db);
+        wfit = new WFIT(db, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
@@ -218,23 +227,23 @@ public class WFITFunctionalTest
         assertThat(wfit.getRecommendation().size(), is(4));
 
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+1 WHERE col1 BETWEEN        0 AND  500000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+1 WHERE col1 BETWEEN        0 AND  500000"));
         assertThat(wfit.getRecommendation().size(), is(4));
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+2 WHERE col1 BETWEEN  500000 AND  900000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+2 WHERE col1 BETWEEN  500000 AND  900000"));
         assertThat(wfit.getRecommendation().size(), is(4));
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+3 WHERE col1 BETWEEN  9000000 AND 11000000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+3 WHERE col1 BETWEEN  9000000 AND 11000000"));
         assertThat(wfit.getRecommendation().size(), is(1));
 
         double totalWorkNoVoting = wfit.getRecommendationStatistics().getTotalWorkSum();
 
         db.getCatalog().dropIndexes();
 
-        wfit = new WFIT(db);
+        wfit = new WFIT(db, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
@@ -273,7 +282,7 @@ public class WFITFunctionalTest
         // test GOOD positive vote
         db.getCatalog().dropIndexes();
 
-        wfit = new WFIT(db);
+        wfit = new WFIT(db, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
@@ -287,17 +296,16 @@ public class WFITFunctionalTest
         assertThat(wfit.getRecommendation().size(), is(4));
 
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+1 WHERE col1 BETWEEN        0 AND  500000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+1 WHERE col1 BETWEEN        0 AND  500000"));
         assertThat(wfit.getRecommendation().size(), is(4));
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+2 WHERE col1 BETWEEN  500000 AND  900000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+2 WHERE col1 BETWEEN  500000 AND  900000"));
         assertThat(wfit.getRecommendation().size(), is(4));
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+3 WHERE col1 BETWEEN  9000000 AND 
-                    11000000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+3 WHERE col1 BETWEEN  9000000 AND 11000000"));
         assertThat(wfit.getRecommendation().size(), is(1));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
         wfit.process(new SQLStatement("SELECT col2 FROM one_table.tbl WHERE col2 = 2"));
@@ -314,7 +322,7 @@ public class WFITFunctionalTest
 
         db.getCatalog().dropIndexes();
 
-        wfit = new WFIT(db);
+        wfit = new WFIT(db, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
@@ -328,20 +336,19 @@ public class WFITFunctionalTest
         assertThat(wfit.getRecommendation().size(), is(4));
 
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+1 WHERE col1 BETWEEN        0 AND  500000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+1 WHERE col1 BETWEEN        0 AND  500000"));
         assertThat(wfit.getRecommendation().size(), is(4));
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+2 WHERE col1 BETWEEN  500000 AND  900000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+2 WHERE col1 BETWEEN  500000 AND  900000"));
         assertThat(wfit.getRecommendation().size(), is(4));
         wfit.voteUp(1);
         wfit.voteUp(2);
         wfit.voteUp(3);
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+3 WHERE col1 BETWEEN  9000000 AND 
-                    11000000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+3 WHERE col1 BETWEEN  9000000 AND 11000000"));
         assertThat(wfit.getRecommendation().size(), is(4));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
@@ -368,7 +375,7 @@ public class WFITFunctionalTest
         // test recovery (BAD negative vote)
         db.getCatalog().dropIndexes();
 
-        wfit = new WFIT(db);
+        wfit = new WFIT(db, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
@@ -389,7 +396,7 @@ public class WFITFunctionalTest
         // test recovery (BAD positive vote)
         db.getCatalog().dropIndexes();
 
-        wfit = new WFIT(db);
+        wfit = new WFIT(db, maxCandidateCnt, stateCnt, windowSize, partIters);
 
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
         wfit.process(new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 2"));
@@ -399,18 +406,17 @@ public class WFITFunctionalTest
         assertThat(wfit.getRecommendation().size(), is(2));
 
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+1 WHERE col1 BETWEEN        0 AND  500000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+1 WHERE col1 BETWEEN        0 AND  500000"));
         assertThat(wfit.getRecommendation().size(), is(2));
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+2 WHERE col1 BETWEEN  500000 AND  900000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+2 WHERE col1 BETWEEN  500000 AND  900000"));
         assertThat(wfit.getRecommendation().size(), is(2));
         wfit.voteUp(0);
         wfit.process(
-                new SQLStatement(
-                    "UPDATE one_table.tbl set col1 = col1+3 WHERE col1 BETWEEN  9000000 AND 
-                    11000000"));
+            new SQLStatement(
+                "UPDATE one_table.tbl set col1 = col1+3 WHERE col1 BETWEEN  9000000 AND 11000000"));
         assertThat(wfit.getRecommendation().size(), is(1));
     }
 }

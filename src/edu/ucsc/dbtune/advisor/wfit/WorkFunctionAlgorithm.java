@@ -7,11 +7,10 @@ import java.util.TreeSet;
 
 import edu.ucsc.dbtune.advisor.wfit.IndexPartitions.Subset;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.util.Environment;
 
 //CHECKSTYLE:OFF
 public class WorkFunctionAlgorithm {
-    TotalWorkValues wf = new TotalWorkValues();
+    TotalWorkValues wf;
     SubMachine[] submachines = new SubMachine[0];
     
     // for tracking history
@@ -22,11 +21,16 @@ public class WorkFunctionAlgorithm {
     //
     // temporary workspace
     //
-    private TotalWorkValues wf2 = new TotalWorkValues();
-    private CostVector tempCostVector = new CostVector();
+    private TotalWorkValues wf2;
+    private CostVector tempCostVector;
     private BitSet tempBitSet = new BitSet();
 
-    public WorkFunctionAlgorithm(IndexPartitions parts, boolean keepHistory0, int minId)
+    public WorkFunctionAlgorithm(
+            IndexPartitions parts,
+            boolean keepHistory0,
+            int maxNumStates,
+            int maxNumIndexes,
+            int minId)
     {
         dump("BEFORE INITIAL");
         repartition(parts);
@@ -38,10 +42,18 @@ public class WorkFunctionAlgorithm {
         
         dump("AFTER INITIAL");
         this.minId = minId;
+        this.wf = new TotalWorkValues(maxNumStates, maxNumIndexes);
+        this.tempCostVector = new CostVector(maxNumStates);
+        this.wf2 = new TotalWorkValues(maxNumStates, maxNumIndexes);
     }
     
-    public WorkFunctionAlgorithm(IndexPartitions parts, int minId) {
-        this(parts, false, minId);
+    public WorkFunctionAlgorithm(
+            IndexPartitions parts,
+            int maxNumStates,
+            int maxNumIndexes,
+            int minId)
+    {
+        this(parts, false, maxNumStates, maxNumIndexes, minId);
     }
 
     public WorkFunctionAlgorithm(int minId) {
@@ -430,10 +442,10 @@ public class WorkFunctionAlgorithm {
         int[] predecessor;
         int[] subsetStart; 
 
-        TotalWorkValues() {
-            values = new double[Environment.getInstance().getMaxNumStates()];
-            subsetStart = new int[Environment.getInstance().getMaxNumIndexes()];
-            predecessor = new int[Environment.getInstance().getMaxNumStates()];
+        TotalWorkValues(int maxNumStates, int maxNumIndexes) {
+            values = new double[maxNumStates];
+            subsetStart = new int[maxNumIndexes];
+            predecessor = new int[maxNumStates];
         }
 
         TotalWorkValues(TotalWorkValues wf2) {
@@ -503,8 +515,8 @@ public class WorkFunctionAlgorithm {
         private double[] vector;
         private int cap;
         
-        CostVector() {
-            cap = Environment.getInstance().getMaxNumStates();
+        CostVector(int maxNumStates) {
+            cap = maxNumStates;
             vector = new double[cap];
         }
         

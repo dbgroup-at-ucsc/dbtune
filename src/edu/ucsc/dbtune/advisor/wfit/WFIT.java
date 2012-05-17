@@ -35,33 +35,65 @@ public class WFIT extends Advisor
     private boolean isCandidateSetFixed;
 
     /**
-     * Creates a WFIT advisor.
+     * Creates a WFIT advisor, with an empty initial candidate set.
      *
      * @param db
      *      the dbms where wfit will run on
+     * @param maxHotSetSize
+     *      maximum number of candidates to keep in the hot set
+     * @param indexStatisticsWindowSize
+     *      size of the sliding window of interaction-related measurements
+     * @param maxNumberOfStates
+     *      maximum number of states per partition
+     * @param numberOfPartitionIterations
+     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
+     *      set partition
      */
-    public WFIT(DatabaseSystem db)
+    public WFIT(
+        DatabaseSystem db,
+        int maxHotSetSize,
+        int maxNumberOfStates,
+        int indexStatisticsWindowSize,
+        int numberOfPartitionIterations)
     {
-        this(db, new TreeSet<Index>());
+        this(db, new TreeSet<Index>(), maxHotSetSize, indexStatisticsWindowSize, maxNumberOfStates, 
+                numberOfPartitionIterations);
 
         this.isCandidateSetFixed = false;
     }
 
     /**
-     * Creates a WFIT advisor.
+     * Creates a WFIT advisor, with the given candidate set as the initial candidate set.
      *
      * @param db
      *      the dbms where wfit will run on
      * @param initialSet
      *      initial candidate set
+     * @param maxHotSetSize
+     *      maximum number of candidates to keep in the hot set
+     * @param indexStatisticsWindowSize
+     *      size of the sliding window of interaction-related measurements
+     * @param maxNumberOfStates
+     *      maximum number of states per partition
+     * @param numberOfPartitionIterations
+     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
+     *      set partition
      */
-    public WFIT(DatabaseSystem db, Set<Index> initialSet)
+    public WFIT(
+            DatabaseSystem db,
+            Set<Index> initialSet,
+            int maxHotSetSize,
+            int maxNumberOfStates,
+            int indexStatisticsWindowSize,
+            int numberOfPartitionIterations)
     {
-        this(db, initialSet, new IBGDoiFinder());
+        this(db, initialSet, new IBGDoiFinder(), maxHotSetSize, indexStatisticsWindowSize, 
+                maxNumberOfStates, numberOfPartitionIterations);
     }
 
     /**
-     * Creates a WFIT advisor.
+     * Creates a WFIT advisor with the given initial candidate set, DoI finder and components 
+     * parameters.
      *
      * @param db
      *      the dbms where wfit will run on
@@ -69,14 +101,37 @@ public class WFIT extends Advisor
      *      initial candidate set
      * @param doiFinder
      *      interaction finder
+     * @param maxHotSetSize
+     *      maximum number of candidates to keep in the hot set
+     * @param indexStatisticsWindowSize
+     *      size of the sliding window of interaction-related measurements
+     * @param maxNumberOfStates
+     *      maximum number of states per partition
+     * @param numberOfPartitionIterations
+     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
+     *      set partition
      */
-    public WFIT(
-            DatabaseSystem db, Set<Index> initialSet, DegreeOfInteractionFinder doiFinder)
+    WFIT(
+            DatabaseSystem db,
+            Set<Index> initialSet,
+            DegreeOfInteractionFinder doiFinder,
+            int maxHotSetSize,
+            int maxNumberOfStates,
+            int indexStatisticsWindowSize,
+            int numberOfPartitionIterations)
     {
         this.db = db;
         this.doiFinder = doiFinder;
 
-        this.wfitDriver = new SATuningDBTuneTranslator(db.getCatalog(), initialSet);
+        this.wfitDriver =
+            new SATuningDBTuneTranslator(
+                    db.getCatalog(),
+                    initialSet,
+                    maxHotSetSize,
+                    maxNumberOfStates,
+                    indexStatisticsWindowSize,
+                    numberOfPartitionIterations);
+
         this.pool = new TreeSet<Index>(initialSet);
         this.stats = new RecommendationStatistics("WFIT");
         this.optStats = new RecommendationStatistics("OPT");
