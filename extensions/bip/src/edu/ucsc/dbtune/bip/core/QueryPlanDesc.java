@@ -186,6 +186,12 @@ public interface QueryPlanDesc
      * @return
      */
     public Set<FullTableScanIndex> getFullTableScanIndexes();
+    
+    /**
+     * Retrieve all indexes stored in this plan description
+     * @return
+     */
+    public Set<Index> getIndexes();
 
     /**
      * Set the SQL statement that this object corresponds to 

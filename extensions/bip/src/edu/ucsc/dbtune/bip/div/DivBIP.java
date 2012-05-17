@@ -166,7 +166,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         for (int r = 0; r < nReplicas; r++)
             for (QueryPlanDesc desc : queryPlanDescs)
                 constructVariables(r, desc.getStatementID(), desc);
-        
+                 
         // for TYPE_S
         for (int r = 0; r < nReplicas; r++) 
             for (Index index : candidateIndexes) {
@@ -237,9 +237,10 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         // update component of NOT_SELECT statement
         for (QueryPlanDesc desc : queryPlanDescs) 
-            if (desc.getSQLCategory().isSame(NOT_SELECT)) 
+            if (desc.getSQLCategory().isSame(NOT_SELECT)) { 
                 expr.add(modifyCoef(indexUpdateCost(r, desc.getStatementID(), desc),
                         desc.getStatementWeight()));
+            }
         
         return expr;
     }
@@ -296,6 +297,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 expr.addTerm(cplexVar.get(idS), cost);
             }
         }
+         
         
         return expr;
     }
@@ -538,6 +540,28 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         }
     }
     
+    /**
+     * This function sets up the constraint for the set-up cost
+     * not to exceed some upper bound value 
+     */
+    protected IloLinearNumExpr deploymentConstraint() throws IloException
+    {
+        IloLinearNumExpr expr; 
+        int idS;       
+        
+        expr = cplex.linearNumExpr();
+        
+        for (int r = 0; r < nReplicas; r++)
+            for (Index index : candidateIndexes)
+                if (!(index instanceof FullTableScanIndex)) {
+                    idS = poolVariables.get(VAR_S, r, 0, 0 , index.getId()).getId();                
+                    expr.addTerm(index.getCreationCost(), cplexVar.get(idS));
+                }            
+                 
+        return expr;
+    }
+    
+    
     
     /**
      * Retrieve the update cost, computed by INUM including the cost for the query shell
@@ -767,6 +791,37 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     }
     
     /**
+     * Compute number of queries specialize at each replica
+     *  
+     * @return
+     *  todo
+     * @throws Exception
+     */
+    public List<Integer> computeNumberQueriesSpecializeForReplica() throws Exception
+    {
+        List<Integer> counts = new ArrayList<Integer>();
+        List<Double> costs;
+        
+        int count;
+        
+        for (int r = 0; r < nReplicas; r++) {
+            costs = getQueryCostReplicaByCplex(r);
+            count = 0;
+            for (int q = 0; q < queryPlanDescs.size(); q++) {
+                if (queryPlanDescs.get(q).getSQLCategory().isSame(SELECT)) {
+                    if (costs.get(q) > 0.1)
+                        count++;
+                }
+            }
+            
+            counts.add(count);
+        }
+        
+        return counts;
+    }
+    
+    
+    /**
      * Calculate the query costs at replica {@code r}.
      * 
      * @return
@@ -804,5 +859,23 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         }
         
         return queries;
+    }
+    
+    /**
+     * Compute the deployment cost
+     * 
+     * @return
+     *      The cost
+     * @throws Exception
+     */
+    public double getDeploymentCost() throws Exception
+    {
+        IloLinearNumExpr  expr;
+        
+        expr = deploymentConstraint();
+        
+        
+        
+        return computeVal(expr);
     }
 }

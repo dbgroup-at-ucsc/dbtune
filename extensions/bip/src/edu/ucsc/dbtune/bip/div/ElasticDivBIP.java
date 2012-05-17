@@ -19,6 +19,8 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_MOD;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeVal;
+
 public class ElasticDivBIP extends DivBIP implements ElasticDivergent
 {  
     private int     nDeploys;
@@ -29,7 +31,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
      * Map index to the set of replicas that this index is deployed at the initial
      * setting. 
      **/
-    private Map<Index, Set<Integer>> initialIndexReplica;
+    private Map<Integer, Set<Integer>> initialIndexReplica;
     
     
     @Override
@@ -44,18 +46,19 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         nReplicas  = div.getNumberReplicas();
         loadfactor = div.getLoadFactor();
         
-        initialIndexReplica = new HashMap<Index, Set<Integer>>();
+        initialIndexReplica = new HashMap<Integer, Set<Integer>>();
         
         for (int r = 0; r < div.getNumberReplicas(); r++) 
             for (Index index : div.indexesAtReplica(r)) {
                 
-                Set<Integer> replicaIDs = initialIndexReplica.get(index);
+                Set<Integer> replicaIDs = initialIndexReplica.get(index.getId());
                 if (replicaIDs == null)
                     replicaIDs = new HashSet<Integer>();
                 
                 replicaIDs.add(r);
-                initialIndexReplica.put(index, replicaIDs);                
+                initialIndexReplica.put(index.getId(), replicaIDs);
             }
+        
     }
 
     @Override
@@ -81,20 +84,23 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             // 3. Atomic constraints
             atomicConstraints();
             
-            // 4. Number of replicas constraint
+            // 4. Use index constraint
+            usedIndexConstraints();
+            
+            // 5. Number of replicas constraint
             numReplicaConstraint();
        
-            // 5. Index deploy
+            // 6. Index deploy
             indexDeployReplica();
             
-            // 6. Deployment cost
-            deployCostConstraints();
-            
-            // 7. Top-m best cost 
+            // 8. Top-m best cost 
             topMBestCostConstraints();    
         
-            // 8. space constraints
+            // 9. space constraints
             spaceConstraints();
+            
+            // 7. Deployment cost
+            deployCostConstraints();
         }
         catch (IloException e) {
             e.printStackTrace();
@@ -185,7 +191,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
     /**
      * 
      * The number of replicas to build is constraint by the given value:
-     *     \sum_{r \in [1, Nreplicas} deploy_r <= Ndeploy
+     *     \sum_{r \in [1, Nreplicas} deploy_r = Ndeploy
      * @throws IloException 
      * 
      */
@@ -199,7 +205,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             expr.addTerm(1, cplexVar.get(idD));
         }
         
-        cplex.addLe(expr, nDeploys);
+        cplex.addEq(expr, nDeploys, "number_of_deploy");
         numConstraints++;
     }
     
@@ -212,7 +218,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
      * @throws IloException 
      */
     protected void deployCostConstraints() throws IloException
-    {   
+    {
         IloLinearNumExpr expr;
         IloLinearNumExpr exprDeploy = cplex.linearNumExpr();
         
@@ -227,7 +233,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             if (index instanceof FullTableScanIndex)
                 continue;
             
-            initialReplicas = initialIndexReplica.get(index);
+            initialReplicas = initialIndexReplica.get(index.getId());
             if (initialReplicas == null)
                 initialReplicas = new HashSet<Integer>();
             
@@ -249,8 +255,41 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             }
         }
         
-        cplex.addLe(exprDeploy, upperDeployCost);  
-    }   
+        cplex.addLe(exprDeploy, upperDeployCost, "deploy_constraint");  
+    }
     
+    /**
+     * todo.
+     * @return
+     * @throws IloExpression
+     */
+    protected IloLinearNumExpr deriveDeploymentExpr() throws IloException
+    {   
+        IloLinearNumExpr exprDeploy = cplex.linearNumExpr();
+        int idDiv;
+        
+        for (Index index : candidateIndexes) {
+            
+            if (index instanceof FullTableScanIndex)
+                continue;
+            
+            for (int r = 0; r < nReplicas; r++) {
+                idDiv = poolVariables.get(VAR_DIV, r, 0, 0, index.getId()).getId();
+                exprDeploy.addTerm(index.getCreationCost(), cplexVar.get(idDiv));
+            }
+        }
+        
+        System.out.println(" deploy formula: " + exprDeploy);
+        return  exprDeploy;
+    }
     
+    /**
+     * Compute the deployment cost
+     * @return
+     * @throws Exception
+     */
+    public double computeDeploymentCost() throws Exception
+    {
+        return computeVal(deriveDeploymentExpr());
+    }
 }

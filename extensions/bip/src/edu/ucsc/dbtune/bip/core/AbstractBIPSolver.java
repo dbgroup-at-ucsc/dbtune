@@ -204,8 +204,6 @@ public abstract class AbstractBIPSolver implements BIPSolver
         else {
         
             for (int i = 0; i < workload.size(); i++) {
-                
-                System.out.println("stmt: " + workload.get(i));
                 // Set the corresponding SQL statement
                 QueryPlanDesc desc = InumQueryPlanDesc.getQueryPlanDescInstance(workload.get(i));
                 // Populate the INUM space 
@@ -215,9 +213,20 @@ public abstract class AbstractBIPSolver implements BIPSolver
             
             serializeQueryPlanDesc();
         }
-        
+
+        /*
+        // reset the candidate indexes that are used by QueryPlanDescs
         for (QueryPlanDesc desc : queryPlanDescs)
             candidateIndexes.addAll(desc.getFullTableScanIndexes());
+        */
+       
+        // reset candidate indexes to contain all the indexes stored in the 
+        // QueryPlanDesc
+        
+        candidateIndexes.clear();
+        for (QueryPlanDesc desc : queryPlanDescs)
+            candidateIndexes.addAll(desc.getIndexes());
+        
     }
     
     /**
@@ -232,10 +241,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
         try {
             write = new ObjectOutputStream(new FileOutputStream(fileQueryPlanDesc));
             write.writeObject(queryPlanDescs);
+            write.close();
         } catch(IOException e) {
             throw new SQLException(e);
         }
-           
     }
         
     /**
@@ -255,7 +264,8 @@ public abstract class AbstractBIPSolver implements BIPSolver
             // reassign the statement with the corresponding weight
             for (int i = 0; i < queryPlanDescs.size(); i++)
                 queryPlanDescs.get(i).setStatement(workload.get(i));
-            
+        
+            in.close();
         } catch(IOException e) {
             throw new SQLException(e);
         } catch (ClassNotFoundException e) {

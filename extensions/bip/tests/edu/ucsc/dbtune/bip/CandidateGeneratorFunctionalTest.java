@@ -7,30 +7,39 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.POWERSET;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
-import java.io.BufferedReader;
+
+
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+
 import java.io.IOException;
-import java.io.PrintWriter;
+
+
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
+
+
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+
+
 import java.util.Set;
 
 
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
-import edu.ucsc.dbtune.metadata.Column;
+
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
-
-import org.junit.Test;
 
 /**
  * This class generates candidate indexes and write into the corresponding file
@@ -40,30 +49,10 @@ import org.junit.Test;
  *
  */
 public class CandidateGeneratorFunctionalTest extends DivTestSetting 
-{    
+{  
     /**
-     * Generate candidate indexes
-     */
-    @Test
-    public void testCandidateGeneration() throws Exception
-    {
-        // set the common parameter like env, database, etc. 
-        getEnvironmentParameters();
-     
-        // Generate candidate indexes
-        for (String generatorOption : en.getCandidateGenerator()) {
-            
-            if (generatorOption.equals(OPTIMIZER))
-                generateAndWriteToFileOptimizerCandidates();
-            else if (generatorOption.equals(POWERSET))
-                generateAndWriteToFilePowersetCandidates();
-            
-            break;
-        }        
-    }        
-    
-    /**
-     * Read index from the corresponding file
+     * Read index from the corresponding file or create and store into the file 
+     * (if the candidates have not been generated before)
      *  
      * @return
      *      A set of candidate indexes
@@ -77,25 +66,20 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         for (String generatorOption : en.getCandidateGenerator()) {
             
             if (generatorOption.equals(OPTIMIZER)) 
-                fileName = folder  + "/candidate-optimizer.txt";
+                fileName = folder  + "/candidate-optimizer.bin";
             else if (generatorOption.equals(POWERSET))
-                fileName = folder  + "/candidate-powerset.txt";
+                fileName = folder  + "/candidate-powerset.bin";
             
             break;
         }
         
         File file = new File(fileName);
-        if (!file.exists()){
+        
+        if (!file.exists()) {
+            
             // Generate candidate indexes
-            for (String generatorOption : en.getCandidateGenerator()) {
-                
-                if (generatorOption.equals(OPTIMIZER))
-                    generateAndWriteToFileOptimizerCandidates();
-                else if (generatorOption.equals(POWERSET))
-                    generateAndWriteToFilePowersetCandidates();
-                
-                break;
-            }
+            generateAndWriteToFileOptimizerCandidates(fileName);
+            return candidates;
         }
         
         return readIndexes(fileName);
@@ -105,8 +89,8 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
     /**
      * Generate candidate indexes recommended by the optimizer
      */
-    protected static void generateAndWriteToFileOptimizerCandidates() throws Exception
-    {
+    protected static void generateAndWriteToFileOptimizerCandidates(String fileName) throws Exception
+    {   
         CandidateGenerator candGen =
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         
@@ -116,7 +100,6 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         for (SQLStatement sql : workload)
             if (sql.getSQLCategory().isSame(SELECT))
                 sqls.add(sql);
-     
         
         Workload wlCandidate = new Workload(sqls);
         candidates = candGen.generate(wlCandidate);
@@ -132,14 +115,14 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
                             + "Total size: " + totalIndexSize);
         
         // write to text file
-        writeIndexesToFile(candidates, folder  + "/candidate-optimizer.txt");
+        writeIndexesToFile(candidates, fileName);
     }
     
     
     /**
      * Generate powerset candidate indexes
      */
-    protected static void generateAndWriteToFilePowersetCandidates() throws Exception
+    protected static void generateAndWriteToFilePowersetCandidates(String fileName) throws Exception
     {
         CandidateGenerator candGen = 
                         new PowerSetOptimalCandidateGenerator(db.getOptimizer(),
@@ -152,7 +135,7 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         for (SQLStatement sql : workload)
             if (sql.getSQLCategory().isSame(SELECT))
                 sqls.add(sql);
-        
+     
         Workload wlCandidate = new Workload(sqls);
         candidates = candGen.generate(wlCandidate);
     
@@ -167,7 +150,7 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
                             + "Total size: " + totalIndexSize);
         
         // write to text file
-        writeIndexesToFile(candidates, folder  + "/candidate-powerset.txt");
+        writeIndexesToFile(candidates, fileName);
     }
     
     
@@ -185,6 +168,7 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
      * @throws IOException
      *             when there is an error in creating files.
      */
+    /*
     protected static void writeIndexesToFile(Set<Index> indexes, String name) 
                         throws IOException
     {
@@ -203,11 +187,30 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
                 
             //sb.delete(sb.length() - 1, sb.length() );
             sb.append(idx.getBytes());
+            sb.append("|").append(idx.getCreationCost());
             out.println(sb.toString());
+            
         }
         
         out.close();
     }
+    */
+    
+    protected static void writeIndexesToFile(Set<Index> indexes, String name) 
+                          throws Exception
+    {
+        ObjectOutputStream write;
+        
+        try {
+            write = new ObjectOutputStream(new FileOutputStream(name));
+            write.writeObject(indexes);
+        } catch(IOException e) {
+            throw new SQLException(e);
+        }
+        
+        write.close();
+    }
+    
     
     /**
      * Read indexes stored from a file
@@ -215,8 +218,11 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
      * @return
      * @throws Exception
      */
+    /*
     protected static Set<Index> readIndexes(String fileName) throws Exception
     {
+        /// reset candidate ID?
+        Index.IN_MEMORY_ID = new AtomicInteger(START_INDEX_ID);
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
         String line = null;      
         
@@ -236,7 +242,7 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
             cols = new ArrayList<Column>();
             ascending = new HashMap<Column, Boolean>();
             
-            for (int i = 0; i < token.length - 1; i+= 2) {
+            for (int i = 0; i < token.length - 2; i+= 2) {
                 col = db.getCatalog().<Column>findByName(token[i]);
                 cols.add(col);
                 
@@ -248,10 +254,37 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
             }
             
             Index index = new Index(cols, ascending);
-            index.setBytes(Long.parseLong(token[token.length - 1]));
+            index.setBytes(Long.parseLong(token[token.length - 2]));
+            index.setCreationCost(Double.parseDouble(token[token.length - 1]));
             candidates.add(index);
+            //System.out.println("INdex " + index.getId() + " name: " + index.getFullyQualifiedName());
+             
         }
         
+        System.out.println(" Number of candidates: " + candidates.size());
         return candidates;
     }
+    */
+    
+    @SuppressWarnings("unchecked")
+    private static Set<Index> readIndexes(String fileName) throws Exception
+    {
+        ObjectInputStream in;
+        Set<Index> candidates = new HashSet<Index>();
+        
+        try {
+            in = new ObjectInputStream(new FileInputStream(fileName));
+            candidates = (Set<Index>) in.readObject();
+            
+        } catch(IOException e) {
+            throw new SQLException(e);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(e);
+        }
+        
+        in.close();
+        return candidates;
+       
+    }
+    
 }

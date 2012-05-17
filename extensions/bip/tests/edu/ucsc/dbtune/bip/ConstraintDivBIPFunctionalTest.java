@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.bip;
 
+import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +13,6 @@ import edu.ucsc.dbtune.bip.div.DivConstraint;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 
-import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 
 public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
 {
@@ -27,10 +28,39 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
         if (!(io instanceof InumOptimizer))
             return;
 
-        // 2. Generate candidate indexes
-        candidates = readCandidateIndexes();    
+        candidates = readCandidateIndexes();
+        
+        
+        // 2. Set constraints    
         List<DivConstraint> constraints;
         
+        // all constraint
+        if (isAllImbalanceConstraint) {
+            
+            constraints = new ArrayList<DivConstraint>();
+            
+            // separate imbalance constraint
+            for (String typeConstraint : en.getListImbalanceConstraints()){                
+                
+                for (double factor : en.getListImbalanceFactors()) {
+                    
+                    System.out.println("\n\n\n IMBALANCE FACTOR: " + factor +                                        
+                                        "space: "+ B + "------------\n \n \n" );
+                    
+                    DivConstraint iReplica = new DivConstraint(typeConstraint, factor);                    
+                    constraints.add(iReplica);                
+                    break;
+                }
+            }
+            
+            System.out.println(" set of constraints " + constraints);
+            constraintDiv = new ConstraintDivBIP(constraints, false);                
+            runConstraintBIP(constraintDiv);
+            
+            return;
+        }
+        
+        // separate imbalance constraint
         for (String typeConstraint : en.getListImbalanceConstraints()){
             
             System.out.println("\n\n\n----------------" + typeConstraint

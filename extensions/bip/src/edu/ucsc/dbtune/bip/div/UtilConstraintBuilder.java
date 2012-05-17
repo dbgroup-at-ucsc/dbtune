@@ -1,13 +1,13 @@
 package edu.ucsc.dbtune.bip.div;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Permutations;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
@@ -158,7 +158,7 @@ public class UtilConstraintBuilder
         
         while (iter.hasNext()) {
             var = iter.nextNumVar();
-            coef = iter.getValue();            
+            coef = iter.getValue(); 
             
             if (coef > 0.0 && cplex.getValue(var) > 0)
                 cost += coef * cplex.getValue(var);
@@ -212,6 +212,7 @@ public class UtilConstraintBuilder
      * @return
      *      Deployment cost
      */
+    /*
     public static double computeDeploymentCost(DivConfiguration sourceConf, 
                                                DivConfiguration destinationConf)
          
@@ -221,7 +222,7 @@ public class UtilConstraintBuilder
         deploymentCost = 0.0;
         
         //System.out.println(" Source: \n" + sourceConf.briefDescription() + "\n"
-          //                  + " Destination: \n" + destinationConf.briefDescription());
+          //                + " Destination: \n" + destinationConf.briefDescription());
         // The algorithm works as follows
         // For each configuration {@code target} of {@code destinationConf} 
         //     + Find the most ``match'' {@code source} in {@code sourceConf}
@@ -233,7 +234,7 @@ public class UtilConstraintBuilder
         // Our current assumption: destinationConfg.size() < sourceConf.size()
         // i.e., shrinking replicas
         // TODO: handle expanding replicas
-        
+        /*
         List<Integer> listHasMatchedID;
         List<Integer> listTargetIDDecreaseNumberIndexes;
         List<SortableObject> lso;
@@ -275,7 +276,50 @@ public class UtilConstraintBuilder
         }
                     
         return deploymentCost;
+        
     }
+    */
+    public static double computeDeploymentCost(DivConfiguration sourceConf, 
+            DivConfiguration destinationConf)
+
+    {
+        double deploymentCost;
+        deploymentCost = 0.0;
+        int sourceID;
+        
+        double minCost = 9999999999.0;
+        
+        System.out.println("L292 (Utils constraint builder), " +
+        		            " source conf: " + sourceConf.getNumberReplicas()
+                            + " desc. conf: " + destinationConf.getNumberReplicas());
+        
+        // find all permuation of a set [0,1,... sourceConf.size() - 1]
+        Permutations<Integer> per;
+        List<Integer> sourceIDs = new ArrayList<Integer>();
+        List<Integer> ids;
+       
+        for (int i = 0; i < sourceConf.getNumberReplicas(); i++)
+            sourceIDs.add(i);
+        
+        per = new Permutations<Integer>(sourceIDs, destinationConf.getNumberReplicas());
+        
+        while (per.hasNext()) {
+       
+            ids = per.next();
+            for (int i = 0; i < ids.size(); i++) {
+                sourceID = ids.get(i);
+                deploymentCost += computeTransferCost(sourceConf.indexesAtReplica(sourceID)
+                                    , destinationConf.indexesAtReplica(i));           
+            }
+            
+            if (minCost > deploymentCost)
+                minCost = deploymentCost;
+            
+        }
+    
+        return minCost;
+    }
+        
     
     /**
      * Find the matching ID for the given {@code targetID} replica.
@@ -294,6 +338,7 @@ public class UtilConstraintBuilder
      *      The matching replica ID of source, 
      *      or -1, if we cannot find.
      */
+    /*
     private static int findMatchReplica(int targetID, List<Integer> listHasMatchedID, 
                                  DivConfiguration sourceConf, 
                                  DivConfiguration destinationConf)
@@ -326,7 +371,7 @@ public class UtilConstraintBuilder
         
         return idMaxMatching;
     }
-    
+    */
     
     /**
      * Compute the transfer cost from the {@code source} configuration to {@code destination}
@@ -349,15 +394,24 @@ public class UtilConstraintBuilder
         //   + Index is materialized      : cost = createCost(index)
         // 
         double transferCost = 0.0;        
-        Set<Index>  materializedIndexes;
+        Set<Integer> retain = new HashSet<Integer>();
         
-        // contains only index in {@dest} and NOT in {@source}
-        materializedIndexes = new HashSet<Index>(destination);
-        materializedIndexes.removeAll(source);
+        for (Index index : destination)
+            retain.add(index.getId());
         
-        for (Index index : materializedIndexes)
-            transferCost += index.getCreationCost();
+        for (Index index : source)
+            retain.remove(index.getId());
         
+        for (Index index : destination) 
+            if (retain.contains(index.getId()))
+                transferCost += index.getCreationCost();
+        
+        /*    
+        System.out.println( " source " + source.size()
+                         + " dest: " + destination.size()
+                         + " mat: " + retain.size()
+                         + " cost: " + transferCost );
+         */
         return transferCost;
     }
     

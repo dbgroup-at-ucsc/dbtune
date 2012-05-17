@@ -18,6 +18,8 @@ import static org.junit.Assert.assertThat;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
+
 /**
  * This test aims for the correctness of DivBIP; i.e., the cost computed by CPLEX
  * corresponds to the optimal cost by INUM
@@ -49,7 +51,6 @@ public class DivBasicFunctionalTest extends DivTestSetting
         File file = new File(folder + "/query-plan-desc.bin");
         if (file.exists())
             file.delete();
-        
         
         // basic case
         testDiv();
@@ -89,7 +90,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
                     + " base table update cost: " + div.getTotalBaseTableUpdateCost());
             
             // add the update-base-table-constant costs
-            totalCostBIP = div.getObjValue() + div.getTotalBaseTableUpdateCost();            
+            totalCostBIP = div.getObjValue() ; // +div.getTotalBaseTableUpdateCost();            
             System.out.println(" TOTAL COST(INUM): " + totalCostBIP);
             
             Set<Index> conf;
@@ -107,6 +108,10 @@ public class DivBasicFunctionalTest extends DivTestSetting
                 costCplex = div.getQueryCostReplicaByCplex(r);
                 
                 for (int q = 0; q < costCplex.size(); q++) {
+                    
+                    // ONLY CHECK THE COST FOR SELECT- statement
+                    if (workload.get(q).getSQLCategory().isSame(NOT_SELECT))
+                        continue;
                     
                     // avoid very small value
                     // due to the approximation of CPLEX
