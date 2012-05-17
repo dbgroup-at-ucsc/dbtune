@@ -464,6 +464,55 @@ public class ColumnOrdering
     }
 
     /**
+     * creates an ordering from a string. The format of the string is {@code table (column 
+     * [asc|desc], ...)}.
+     *
+     * @param catalog
+     *      to retrieve metadata information
+     * @param orderingSpec
+     *      the specification for how the content of the ordering should be displayed.
+     * @return
+     *      the new column ordering
+     * @throws SQLException
+     *      if some of the specified columns can't be found
+     */
+    public static ColumnOrdering newOrdering(Catalog catalog, String orderingSpec)
+        throws SQLException
+    {
+        if (!orderingSpec.contains("(") && !orderingSpec.contains(")"))
+            throw new SQLException(
+                "Not in the correct format, expecting \"table (col [asc|desc], ...)\"");
+
+        String tblName = orderingSpec.substring(0, orderingSpec.indexOf("(")).trim();
+
+        Table tbl = catalog.<Table>findByName(tblName);
+
+        if (tbl == null)
+            throw new SQLException("Can't find table " + tblName + " in catalog");
+
+        List<Object> orderingSpecObj = new ArrayList<Object>();
+
+        String colsSpec =
+            orderingSpec.substring(orderingSpec.indexOf("("), orderingSpec.indexOf(")"));
+
+        for (String colSpec : colsSpec.split(",")) {
+
+            String colName = colSpec.split(" ")[0];
+
+            orderingSpecObj.add(catalog.<Column>findByName(tblName + "." + colName));
+
+            if (colSpec.split(" ").length == 2)
+                orderingSpecObj.add(
+                    (colSpec.split(" ")[1].equals("ASC") ||
+                     colSpec.split(" ")[1].equals("ASCENDING")) ? ASC : DESC);
+            else
+                orderingSpecObj.add(ASC);
+        }
+
+        return newOrdering(orderingSpecObj.toArray(new Object[0]));
+    }
+
+    /**
      * creates an ordering from the given arguments. The arguments should be a sequence of pairs 
      * (column, asc).
      *
@@ -496,6 +545,5 @@ public class ColumnOrdering
         } catch (SQLException ex) {
             throw new IllegalArgumentException(ex);
         }
-
     }
 }

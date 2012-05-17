@@ -1,2 +1,2 @@
-SELECT a FROM one_table.tbl WHERE a = 2;
-UPDATE one_table.tbl set a = 3 where a < 0;
+SELECT col1 FROM one_table.tbl WHERE col1 = 2;
+UPDATE one_table.tbl set col1 = 3 where col1 < 0;

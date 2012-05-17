@@ -2,10 +2,12 @@ package edu.ucsc.dbtune.cli
 
 import edu.ucsc.dbtune.DatabaseSystem
 import edu.ucsc.dbtune.metadata.Catalog
+import edu.ucsc.dbtune.metadata.ColumnOrdering
 import edu.ucsc.dbtune.metadata.Index
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement
 import edu.ucsc.dbtune.optimizer.Optimizer
 import edu.ucsc.dbtune.util.Environment
+import edu.ucsc.dbtune.util.MetadataUtils
 
 import java.util.HashSet
 import java.util.Properties
@@ -77,11 +79,32 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
     dbms.getOptimizer
   }
   
+  /** creates an index.
+    *
+    * @param orderingSpec
+    *   specification of columns and their ordering
+    * @return
+    *   new index
+    */
+  def newIndex(orderingSpec: String) : Index = {
+    DBMS.newIndex(ColumnOrdering.newOrdering(dbms.getCatalog, orderingSpec))
+  }
+  
+  /** creates a set of indexes by reading their definition from a file.
+    *
+    * @param file
+    *   absolute or relative path to a file containing the definition of a set of indexes to load
+    * @return
+    *   a set of indexes that are read from a file
+    */
+  def loadIndexes(fileName: String) : Set[Index] = {
+    MetadataUtils.loadIndexes(DBMS, fileName)
+  }
 }
 
 object Database
 {  
-  /** Creates to  Database containing the metadata information about a DB.
+  /** connects to a database.
     *
     * @param url
     *   JDBC url

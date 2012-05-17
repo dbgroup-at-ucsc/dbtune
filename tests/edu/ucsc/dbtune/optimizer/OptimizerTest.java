@@ -159,7 +159,7 @@ public class OptimizerTest
     }
 
     /**
-     * Checks that a "regular" explain operation is done correctly. A "regular" cost estimation is 
+     * Checks that col1 "regular" explain operation is done correctly. col1 "regular" cost estimation is 
      * an optimization call without hypothetical structures (or one empty hypothetical 
      * configuration).
      *
@@ -176,7 +176,7 @@ public class OptimizerTest
         double cost1;
         double cost2;
 
-        sql   = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        sql   = new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 5");
         sqlp  = opt.explain(sql);
         cost1 = sqlp.getSelectCost();
 
@@ -213,7 +213,7 @@ public class OptimizerTest
         // XXX: issue #106 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer))
         {
-        sql  = new SQLStatement("UPDATE one_table.tbl SET a = 3 WHERE a = 5");
+        sql  = new SQLStatement("UPDATE one_table.tbl SET col1 = 3 WHERE col1 = 5");
         sqlp = opt.explain(sql);
 
         assertThat(sqlp, notNullValue());
@@ -301,7 +301,7 @@ public class OptimizerTest
         assertThat(sqlp.getUpdatedConfiguration().isEmpty(), is(true));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE col1 = 5");
         sqlp = opt.explain(sql);
 
         assertThat(sqlp, notNullValue());
@@ -368,10 +368,10 @@ public class OptimizerTest
         double cost1;
         double cost2;
 
-        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        sql = new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 5");
         cost1 = opt.explain(sql).getSelectCost();
-        idxa = new Index(cat.<Column>findByName("one_table.tbl.a"), DESCENDING);
-        idxb = new Index(cat.<Column>findByName("one_table.tbl.b"), DESCENDING);
+        idxa = new Index(cat.<Column>findByName("one_table.tbl.col1"), DESCENDING);
+        idxb = new Index(cat.<Column>findByName("one_table.tbl.col2"), DESCENDING);
         conf = new HashSet<Index>();
 
         conf.add(idxb);
@@ -397,7 +397,7 @@ public class OptimizerTest
         // XXX: issue #106 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer))
         {
-        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
+        sql  = new SQLStatement("UPDATE one_table.tbl set col1 = 3 where col1 = 5");
         sqlp = opt.explain(sql, conf);
 
         assertThat(sqlp, notNullValue());
@@ -463,7 +463,7 @@ public class OptimizerTest
         assertThat(sqlp.getUpdatedConfiguration(), is(conf));
         assertThat(sqlp.getOptimizationCount(), is(1));
 
-        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE col1 = 5");
         sqlp = opt.explain(sql, conf);
 
         assertThat(sqlp, notNullValue());
@@ -516,7 +516,7 @@ public class OptimizerTest
         SQLStatement sql;
         Set<Index> rec;
         
-        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        sql = new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 5");
         rec = opt.recommendIndexes(sql);
 
         assertThat(rec.isEmpty(), is(false));
@@ -532,7 +532,7 @@ public class OptimizerTest
         // XXX: issue #106 is causing this to fail for these {
         if (!(opt instanceof MySQLOptimizer))
         {
-        sql = new SQLStatement("UPDATE one_table.tbl SET a = -1 WHERE a = 5");
+        sql = new SQLStatement("UPDATE one_table.tbl SET col1 = -1 WHERE col1 = 5");
         rec = opt.recommendIndexes(sql);
 
         assertThat(rec.isEmpty(), is(false));
@@ -552,7 +552,7 @@ public class OptimizerTest
      */
     protected static void checkIsWellBehaved(Optimizer opt) throws Exception
     {
-        // this can't be done unless there's a way of getting the set of alternative plans that the 
+        // this can't be done unless there's col1 way of getting the set of alternative plans that the 
         // optimizer is using internally after each EXPLAIN. This isn't necessary and it's left here 
         // just to keep it on the record.
     }
@@ -578,8 +578,8 @@ public class OptimizerTest
         double cost1;
         double cost2;
 
-        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
-        col  = cat.<Column>findByName("one_table.tbl.a");
+        sql  = new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 5");
+        col  = cat.<Column>findByName("one_table.tbl.col1");
         idx  = new Index(col, DESCENDING);
         conf = new HashSet<Index>();
 
@@ -618,9 +618,9 @@ public class OptimizerTest
         Index idxA;
         Index idxB;
 
-        sql  = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
-        colA = cat.<Column>findByName("one_table.tbl.a");
-        colB = cat.<Column>findByName("one_table.tbl.b");
+        sql  = new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 5");
+        colA = cat.<Column>findByName("one_table.tbl.col1");
+        colB = cat.<Column>findByName("one_table.tbl.col2");
         idxA = new Index(colA, DESCENDING);
         idxB = new Index(colB, DESCENDING);
         conf = new HashSet<Index>();
@@ -665,7 +665,7 @@ public class OptimizerTest
         Index idxb;
 
         // regular explain
-        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        sql = new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 5");
         stmt = opt.prepareExplain(sql);
 
         assertThat(stmt, is(notNullValue()));
@@ -678,12 +678,12 @@ public class OptimizerTest
         assertThat(exp2, is(exp1));
 
         // what-if call
-        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        sql = new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 5");
         stmt = opt.prepareExplain(sql);
 
         assertThat(stmt, is(notNullValue()));
 
-        idxa = new Index(cat.<Column>findByName("one_table.tbl.a"), DESCENDING);
+        idxa = new Index(cat.<Column>findByName("one_table.tbl.col1"), DESCENDING);
         conf = new HashSet<Index>();
 
         conf.add(idxa);
@@ -695,12 +695,12 @@ public class OptimizerTest
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp1));
 
-        col  = cat.<Column>findByName("one_table.tbl.b");
+        col  = cat.<Column>findByName("one_table.tbl.col2");
         idxb = new Index(col, DESCENDING);
 
         conf.add(idxb);
 
-        sql = new SQLStatement("SELECT a FROM one_table.tbl WHERE a = 5");
+        sql = new SQLStatement("SELECT col1 FROM one_table.tbl WHERE col1 = 5");
         stmt = opt.prepareExplain(sql);
 
         assertThat(stmt, is(notNullValue()));
@@ -727,7 +727,7 @@ public class OptimizerTest
             // XXX: issue #106 is causing this to fail for these
             return;
 
-        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
+        sql  = new SQLStatement("UPDATE one_table.tbl set col1 = 3 where col1 = 5");
         stmt = opt.prepareExplain(sql);
 
         assertThat(stmt, is(notNullValue()));
@@ -753,7 +753,7 @@ public class OptimizerTest
         assertThat(
             "not equal:\n" + exp1 + "\nVS VS VS\n" + exp2, exp2.equalsIgnorePlan(exp1), is(true));
 
-        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE col1 = 5");
         stmt = opt.prepareExplain(sql);
 
         assertThat(stmt, is(notNullValue()));
@@ -766,7 +766,7 @@ public class OptimizerTest
         assertThat(
             "not equal:\n" + exp1 + "\nVS VS VS\n" + exp2, exp2.equalsIgnorePlan(exp1), is(true));
 
-        sql  = new SQLStatement("UPDATE one_table.tbl set a = 3 where a = 5");
+        sql  = new SQLStatement("UPDATE one_table.tbl set col1 = 3 where col1 = 5");
         stmt = opt.prepareExplain(sql);
 
         assertThat(stmt, is(notNullValue()));
@@ -778,7 +778,7 @@ public class OptimizerTest
         assertThat(exp2, is(notNullValue()));
         assertThat(exp2, is(exp1));
 
-        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE a = 5");
+        sql  = new SQLStatement("DELETE FROM one_table.tbl WHERE col1 = 5");
         stmt = opt.prepareExplain(sql);
 
         assertThat(stmt, is(notNullValue()));
@@ -827,8 +827,8 @@ public class OptimizerTest
         Set<Index> conf;
         Index idxa;
 
-        sql = new SQLStatement("SELECT * FROM ONE_TABLE.TBL WHERE a > -1000000");
-        idxa = new Index(cat.<Column>findByName("one_table.tbl.a"), DESCENDING);
+        sql = new SQLStatement("SELECT * FROM ONE_TABLE.TBL WHERE col1 > -1000000");
+        idxa = new Index(cat.<Column>findByName("one_table.tbl.col1"), DESCENDING);
         conf = new HashSet<Index>();
 
         conf.add(idxa);

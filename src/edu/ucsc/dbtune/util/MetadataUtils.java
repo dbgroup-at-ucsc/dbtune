@@ -1,5 +1,9 @@
 package edu.ucsc.dbtune.util;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -8,8 +12,10 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+
+import edu.ucsc.dbtune.DatabaseSystem;
 
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
@@ -590,5 +596,42 @@ public final class MetadataUtils
         }
         str.append("_index");
         return str.toString();
+    }
+
+    /**
+     * creates a set of indexes by reading their definition from a file. The definition of each 
+     * index is assumed to be on one line (i.e. no multi-line definition) and in the format expected 
+     * by {@link ColumnOrdering#newIndex(Catalog, String)}.
+     *
+     * @param db
+     *      to retrieve metadata information
+     * @param file
+     *   absolute or relative path to a file containing the definition of a set of indexes to load
+     * @return
+     *   a set of indexes that are read from a file
+     * @throws SQLException
+     *      if an error occurs while instantiating new indexes
+     * @throws IOException
+     *      if an error occurs while reading indexes
+     */
+    public static Set<Index> loadIndexes(DatabaseSystem db, String file)
+        throws SQLException, IOException
+    {
+        BufferedReader f = new BufferedReader(new FileReader(file));
+
+        Set<Index> indexes = new HashSet<Index>();
+        String line;
+
+        while ((line = f.readLine()) != null) {
+
+            line = line.trim();
+
+            if (line.startsWith("--"))
+                continue;
+
+            indexes.add(db.newIndex(ColumnOrdering.newOrdering(db.getCatalog(), line)));
+        }
+
+        return indexes;
     }
 }

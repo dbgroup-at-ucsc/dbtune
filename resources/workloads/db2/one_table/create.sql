@@ -21,10 +21,10 @@ CALL db2perf_quiet_drop('SCHEMA one_table RESTRICT');
 CREATE SCHEMA one_table;
 
 CREATE TABLE one_table.tbl (
-    a INTEGER,
-    b INTEGER,
-    c INTEGER,
-    d INTEGER
+    col1 INTEGER,
+    col2 INTEGER,
+    col3 INTEGER,
+    col4 INTEGER
 );
 
 INSERT INTO one_table.tbl VALUES (9455421,-708239832,-633094023,-568754067);

@@ -12,6 +12,7 @@ import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.util.MathUtils;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
+import static edu.ucsc.dbtune.util.MetadataUtils.getDisplayList;
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 /**
@@ -454,15 +455,16 @@ public class ExplainedSQLStatement
                 sb.append("   " + i + ": " + getUpdateCost(i) + "\n");
         }
 
-        sb.append("\nAll:\n");
+        if (getConfiguration().size() > 0) {
 
-        if (getConfiguration().size() > 0)
-            sb.append(getConfiguration());
+            sb.append("\nIndexes in scope:\n");
 
-        sb.append("\nUsed:\n");
+            sb.append(getDisplayList(getConfiguration(), "   "));
 
-        if (getUsedConfiguration().size() > 0)
-            sb.append(getUsedConfiguration());
+            sb.append("\nUsed indexes:\n");
+
+            sb.append(getDisplayList(getUsedConfiguration(), "   "));
+        }
 
         sb.append("\nPlan:\n" + getPlan());
 

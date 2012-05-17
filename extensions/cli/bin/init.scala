@@ -7,5 +7,6 @@ import edu.ucsc.dbtune.cli.Database._
 import edu.ucsc.dbtune.cli.Plotter._
 import edu.ucsc.dbtune.metadata.Index
 import edu.ucsc.dbtune.metadata.Index._
+import com.google.common.collect.Sets._
 
 def quit = {System.exit(0)}
