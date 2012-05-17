@@ -162,7 +162,9 @@ public class DATTest2 {
         RTimerN timer = new RTimerN();
 
         SeqInumCost cost = loadCost();
-        Rt.p("%d x %d", cost.queries.size(), cost.indices.size());
+        cost.storageConstraint=1000000000;
+        Rt.p("%d x %d\tspace=%,.0f", cost.queries.size(), cost.indices.size(),
+                cost.storageConstraint);
         Rt.np("index\tcreate cost\tstorage cost");
         for (int i = 0; i < cost.indices.size(); i++) {
             Rt.np("%d\t%,.0f\t%,.0f", i, cost.indices.get(i).createCost,
@@ -171,8 +173,7 @@ public class DATTest2 {
         double[] windowConstraints = new double[3];
         for (int i = 0; i < windowConstraints.length; i++)
             windowConstraints[i] = 50000000;
-        double space = 1000000000;
-        DAT dat = new DAT(cost, windowConstraints, space, 1, 0);
+        DAT dat = new DAT(cost, windowConstraints,  1, 0);
         // dat.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
         dat.setLogListenter(logger);
@@ -220,7 +221,7 @@ public class DATTest2 {
         // DAT.baseline2WindowConstraint+"%");
         double alpha = 1;
         for (double beta = Math.pow(2, 0); beta <= Math.pow(2, 16); beta *= 2) {
-            dat = new DAT(cost, windowConstraints, space, alpha, beta);
+            dat = new DAT(cost, windowConstraints, alpha, beta);
             // dat.setOptimizer(optimizer);
             dat.setLogListenter(logger);
             dat.setWorkload(new Workload("", new StringReader("")));
@@ -240,7 +241,7 @@ public class DATTest2 {
             // + (baseline2.totalCost + beta
             // * baseline2.ws[baseline2.ws.length - 1].cost));
             System.out.println();
-            dat = new DAT(cost, windowConstraints, space, alpha, beta);
+            dat = new DAT(cost, windowConstraints, alpha, beta);
             baseline3 = (DATOutput) dat.baseline2("bip");
             System.out.print("PTAS MKP\t");
             for (int i = 0; i < windowConstraints.length; i++) {
@@ -286,8 +287,8 @@ public class DATTest2 {
         // indexSize = 50;
         // querySize = 10;
         // indexSize = 10;
-        querySize = 5;
-        indexSize = 15;
+//        querySize = 5;
+//        indexSize = 15;
         // querySize = 50;
         // indexSize = 100;
 

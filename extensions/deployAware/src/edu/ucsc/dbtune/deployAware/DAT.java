@@ -311,11 +311,11 @@ public class DAT extends AbstractBIPSolver {
     Logger log = Logger.getLogger(DAT.class.getName());
 
     public DAT(SeqInumCost cost, double[] windowConstraints,
-            double spaceConstraint, double alpha, double beta)
+            double alpha, double beta)
             throws IloException {
         this.costModel = cost;
         this.windowConstraints = windowConstraints;
-        this.spaceConstraint = spaceConstraint;
+        this.spaceConstraint = cost.storageConstraint;
         this.alpha = alpha;
         this.beta = beta;
         this.totalQueires = cost.queries.size();
@@ -622,12 +622,14 @@ public class DAT extends AbstractBIPSolver {
             // System.out.println();
             // }
             baseline2WindowConstraint = total / total0 * 100;
-            for (int wid = 1; wid < indexPresents.length; wid++) {
+            for (int wid = 0; wid < indexPresents.length; wid++) {
                 output.ws[wid].create = 0;
                 for (int j = 0; j < totalIndices; j++) {
                     if (indexPresents[wid][j])
                         output.ws[wid].create++;
                 }
+                if (wid<1)
+                    continue;
                 for (int j = 0; j < totalIndices; j++) {
                     if (indexPresents[wid - 1][j]) {
                         indexPresents[wid][j] = true;
