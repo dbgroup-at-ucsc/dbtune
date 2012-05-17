@@ -230,6 +230,22 @@ public class DAT extends AbstractBIPSolver {
             return cost;
         }
 
+        public int getCreated() throws IloException {
+            int n = 0;
+            for (int i = 0; i < totalIndices; i++)
+                if (getValue(this.create[i]) == 1)
+                    n++;
+            return n;
+        }
+
+        public int getDropped() throws IloException {
+            int n = 0;
+            for (int i = 0; i < totalIndices; i++)
+                if (getValue(this.drop[i]) == 1)
+                    n++;
+            return n;
+        }
+
         public void addConstriant() throws IloException {
             for (Query query : queries)
                 query.addConstriant();
@@ -253,7 +269,7 @@ public class DAT extends AbstractBIPSolver {
             cplex.addLe(expr, this.costConstraint);
             if (showFormulas)
                 Rt.p(expr.toString() + "<=" + this.costConstraint);
-            
+
             expr = cplex.linearNumExpr();
             for (int i = 0; i < totalIndices; i++) {
                 expr.addTerm(costModel.indices.get(i).storageCost,
@@ -295,8 +311,8 @@ public class DAT extends AbstractBIPSolver {
     Logger log = Logger.getLogger(DAT.class.getName());
 
     public DAT(SeqInumCost cost, double[] windowConstraints,
-            double spaceConstraint, double alpha,
-            double beta) throws IloException {
+            double spaceConstraint, double alpha, double beta)
+            throws IloException {
         this.costModel = cost;
         this.windowConstraints = windowConstraints;
         this.spaceConstraint = spaceConstraint;
@@ -578,8 +594,8 @@ public class DAT extends AbstractBIPSolver {
                                 + beta;
                     MKPBip m = new MKPBip(bins, binWeights2, items, profits);
                     if (m.cannotFitIn > 0) {
-//                        Rt.p("can't fit: " + m.cannotFitIn + " "
-//                                + m.cannotFitWeight + " " + total);
+                        // Rt.p("can't fit: " + m.cannotFitIn + " "
+                        // + m.cannotFitWeight + " " + total);
                         total *= 0.9;
                         continue;
                     }
@@ -607,6 +623,11 @@ public class DAT extends AbstractBIPSolver {
             // }
             baseline2WindowConstraint = total / total0 * 100;
             for (int wid = 1; wid < indexPresents.length; wid++) {
+                output.ws[wid].create = 0;
+                for (int j = 0; j < totalIndices; j++) {
+                    if (indexPresents[wid][j])
+                        output.ws[wid].create++;
+                }
                 for (int j = 0; j < totalIndices; j++) {
                     if (indexPresents[wid - 1][j]) {
                         indexPresents[wid][j] = true;
@@ -674,7 +695,8 @@ public class DAT extends AbstractBIPSolver {
                 if (!cplex.solve())
                     throw new Error();
                 costs[i] = cplex.getObjValue();
-                totalCost += costs[i];
+                if (i < windowConstraints.length - 1)
+                    totalCost += costs[i];
                 windows[i].getValues();
                 // for (int j = 0; j < totalIndices; j++) {
                 // indexPresent[j] = windows[i].indexPresent[j];
@@ -682,6 +704,9 @@ public class DAT extends AbstractBIPSolver {
                 output.ws[i].indexUsed = Arrays.copyOf(windows[i].indexPresent,
                         totalIndices);
                 output.ws[i].cost = windows[i].getCost();
+                double c2 = costWithIndex(output.ws[i].indexUsed);
+                if (Math.abs(output.ws[i].cost - c2) > 1)
+                    throw new Error();
                 if (!windows[i].lastWindow
                         && Math.abs(output.ws[i].cost * alpha
                                 - cplex.getObjValue()) > 1)
@@ -710,9 +735,15 @@ public class DAT extends AbstractBIPSolver {
                 output.ws[i].indexUsed = Arrays.copyOf(windows[i].indexPresent,
                         totalIndices);
                 output.ws[i].cost = windows[i].getCost();
-                totalCost += alpha * output.ws[i].cost;
+                output.ws[i].create = windows[i].getCreated();
+                output.ws[i].drop = windows[i].getDropped();
+                double c2 = costWithIndex(output.ws[i].indexUsed);
+                if (Math.abs(output.ws[i].cost - c2) > 1)
+                    throw new Error();
                 if (i == output.ws.length - 1)
                     totalCost += beta * output.ws[i].cost;
+                else
+                    totalCost += alpha * output.ws[i].cost;
                 // int total = 0;
                 // for (boolean b : output.ws[i].indexUsed)
                 // total++;

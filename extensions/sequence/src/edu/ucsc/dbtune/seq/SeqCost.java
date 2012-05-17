@@ -172,22 +172,13 @@ public class SeqCost {
             if (first)
                 first = false;
             else
-                sql.append(",");
+                sql.append("+");
             sql.append("length("+col.getName()+")");
         }
         sql.append(") from " + a.getSchema().getName() + "."
-                + a.getTable().getName() + " order by");
-        first = true;
-        for (Column col : a) {
-            if (first)
-                first = false;
-            else
-                sql.append(",");
-            sql.append(" " + col.getName()
-                    + (a.isAscending(col) ? " asc" : " desc"));
-        }
+                + a.getTable().getName());
         RTimerN timer = new RTimerN();
-        // Rt.p(sql);
+         Rt.p(sql);
         st.execute(sql.toString());
         totalCreateIndexNanoTime += timer.get();
         ResultSet rs=st.getResultSet();
