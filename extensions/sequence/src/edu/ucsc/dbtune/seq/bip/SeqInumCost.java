@@ -2,10 +2,12 @@ package edu.ucsc.dbtune.seq.bip;
 
 import java.io.Serializable;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.Vector;
 
+import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.bip.core.InumQueryPlanDesc;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
@@ -110,8 +112,9 @@ public class SeqInumCost implements Serializable {
         return q;
     }
 
-    public static SeqInumCost fromInum(InumOptimizer optimizer,
-            Workload workload, Set<Index> indexes) throws SQLException {
+    public static SeqInumCost fromInum(DatabaseSystem db,
+            InumOptimizer optimizer, Workload workload, Set<Index> indexes)
+            throws SQLException {
         SeqInumCost cost = new SeqInumCost();
         cost.optimizer = optimizer;
         cost.inumIndices = indexes;
@@ -125,7 +128,10 @@ public class SeqInumCost implements Serializable {
             cost.indices.add(q);
             q.createCost = SeqCost.getCreateIndexCost(optimizer, q.index);
             q.dropCost = 0;
-            q.storageCost = 0; // TODO add storage cost
+            Statement st = db.getConnection().createStatement();
+            q.storageCost = SeqCost.getIndexSize(st, q.index); // TODO add
+                                                               // storage cost
+            st.close();
         }
         if (workload != null) {
             for (int i = 0; i < workload.size(); i++) {

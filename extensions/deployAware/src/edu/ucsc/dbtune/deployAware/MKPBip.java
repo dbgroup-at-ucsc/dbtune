@@ -90,7 +90,7 @@ public class MKPBip {
         double[] items = { 10, 20, 30, 70, 90 };
         double[] profits = { 10, 20, 30, 70, 900 };
         double[] binWeights = { 3, 2, 1 };
-        MKPBip greedy = new MKPBip(bins, binWeights, items, profits, false);
+        MKPBip greedy = new MKPBip(bins, binWeights, items, profits);
         Rt.p(greedy.profit);
         for (int i : greedy.belongs) {
             System.out.print(i + " ");

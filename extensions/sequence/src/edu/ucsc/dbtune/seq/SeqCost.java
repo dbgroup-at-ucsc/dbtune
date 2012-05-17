@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.seq;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -161,6 +163,39 @@ public class SeqCost {
         return sqlPlan.getRootOperator().getAccumulatedCost();
     }
 
+    public static long getIndexSize(Statement st, Index a)
+            throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("select sum(");
+        boolean first = true;
+        for (Column col : a) {
+            if (first)
+                first = false;
+            else
+                sql.append(",");
+            sql.append("length("+col.getName()+")");
+        }
+        sql.append(") from " + a.getSchema().getName() + "."
+                + a.getTable().getName() + " order by");
+        first = true;
+        for (Column col : a) {
+            if (first)
+                first = false;
+            else
+                sql.append(",");
+            sql.append(" " + col.getName()
+                    + (a.isAscending(col) ? " asc" : " desc"));
+        }
+        RTimerN timer = new RTimerN();
+        // Rt.p(sql);
+        st.execute(sql.toString());
+        totalCreateIndexNanoTime += timer.get();
+        ResultSet rs=st.getResultSet();
+        if (rs.next())
+            return rs.getLong(1);
+       throw new Error();
+    }
+
     public static double populateTime = 0;
     public static long totalWhatIfNanoTime = 0;
     public static long totalCreateIndexNanoTime = 0;
@@ -179,7 +214,9 @@ public class SeqCost {
             index.index = a;
             index.createCost = getCreateIndexCost(optimizer, a);
             index.dropCost = 0;
-            index.storageCost = 0;
+            Statement st=db.getConnection().createStatement();
+            index.storageCost =  getIndexSize(st, a);
+            st.close();
             if (costModel.indices.put(index.name, index) != null)
                 throw new Error("duplicate index");
             costModel.indicesV.add(index);
@@ -196,7 +233,7 @@ public class SeqCost {
             if (optimizer instanceof edu.ucsc.dbtune.optimizer.InumOptimizer) {
                 q.inum = (InumPreparedSQLStatement) optimizer
                         .prepareExplain(q.sql);
-                populateTime+=timer.getSecondElapse();
+                populateTime += timer.getSecondElapse();
                 Rt.p("GREEDY INUM populate time: " + timer.getSecondElapse());
                 totalWhatIfNanoTime += timer.get();
                 timer.reset();
@@ -315,7 +352,8 @@ public class SeqCost {
                 RTimerN timer = new RTimerN();
                 if (q.inum != null) {
                     cost = q.inum.explain(allIndexes).getTotalCost();
-//                    Rt.p("GREEDY INUM plugin time: " + timer.getSecondElapse());
+                    // Rt.p("GREEDY INUM plugin time: " +
+                    // timer.getSecondElapse());
                 } else {
                     ExplainedSQLStatement explain = optimizer.explain(q.sql,
                             allIndexes);

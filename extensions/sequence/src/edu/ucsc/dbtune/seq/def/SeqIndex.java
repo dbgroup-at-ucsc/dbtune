@@ -8,7 +8,7 @@ public class SeqIndex {
     public String name;
     public Index index;
     public double createCost, dropCost;
-    public int storageCost;
+    public long storageCost;
 
     // used for split
     public boolean markUsed = false;

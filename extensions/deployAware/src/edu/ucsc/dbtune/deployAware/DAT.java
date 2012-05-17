@@ -253,6 +253,15 @@ public class DAT extends AbstractBIPSolver {
             cplex.addLe(expr, this.costConstraint);
             if (showFormulas)
                 Rt.p(expr.toString() + "<=" + this.costConstraint);
+            
+            expr = cplex.linearNumExpr();
+            for (int i = 0; i < totalIndices; i++) {
+                expr.addTerm(costModel.indices.get(i).storageCost,
+                        this.present[i]);
+            }
+            cplex.addLe(expr, DAT.this.spaceConstraint);
+            if (showFormulas)
+                Rt.p(expr.toString() + "<=" + spaceConstraint);
 
             // index can't be created and droped at the same step
             for (int i = 0; i < totalIndices; i++) {
@@ -277,6 +286,7 @@ public class DAT extends AbstractBIPSolver {
     SeqInumCost costModel;
     IloNumVar[] iloVar = new IloNumVar[0];
     double[] windowConstraints;
+    double spaceConstraint;
     Window[] windows;
     double alpha;
     double beta;
@@ -284,10 +294,12 @@ public class DAT extends AbstractBIPSolver {
     int totalIndices;
     Logger log = Logger.getLogger(DAT.class.getName());
 
-    public DAT(SeqInumCost cost, double[] windowConstraints, double alpha,
+    public DAT(SeqInumCost cost, double[] windowConstraints,
+            double spaceConstraint, double alpha,
             double beta) throws IloException {
         this.costModel = cost;
         this.windowConstraints = windowConstraints;
+        this.spaceConstraint = spaceConstraint;
         this.alpha = alpha;
         this.beta = beta;
         this.totalQueires = cost.queries.size();

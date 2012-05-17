@@ -139,7 +139,7 @@ public class DATTest2 {
             InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
             DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
 
-            cost = SeqInumCost.fromInum(optimizer, workload, indexes);
+            cost = SeqInumCost.fromInum(db, optimizer, workload, indexes);
             for (int i = 0; i < cost.queries.size(); i++) {
                 cost.queries.get(i).sql = null;
             }
@@ -163,14 +163,15 @@ public class DATTest2 {
 
         SeqInumCost cost = loadCost();
         Rt.p("%d x %d", cost.queries.size(), cost.indices.size());
-//        Rt.np("Create index cost");
-//        for (int i = 0; i < cost.indices.size(); i++) {
-//            Rt.np("%,.0f", cost.indices.get(i).createCost);
-//        }
+         Rt.np("index\tcreate cost\tstorage cost");
+         for (int i = 0; i < cost.indices.size(); i++) {
+         Rt.np("%d\t%,.0f\t%,.0f",i, cost.indices.get(i).createCost,cost.indices.get(i).storageCost);
+         }
         double[] windowConstraints = new double[3];
         for (int i = 0; i < windowConstraints.length; i++)
-            windowConstraints[i] = 20000000;
-        DAT dat = new DAT(cost, windowConstraints, 1, 0);
+            windowConstraints[i] = 50000000;
+        double space = 1000000000;
+        DAT dat = new DAT(cost, windowConstraints, space, 1, 0);
         // dat.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
         dat.setLogListenter(logger);
@@ -195,27 +196,30 @@ public class DATTest2 {
         DATOutput baseline = null;
         DATOutput baseline2 = null;
         DATOutput baseline3 = null;
-//        baseline = (DATOutput) dat.baseline2("greedyRatio");
-//        System.out.print("greedyRatio MKP\t");
-//        for (int i = 0; i < windowConstraints.length; i++) {
-//            System.out.print(baseline.ws[i].cost + "\t");
-//        }
-//        System.out.println(baseline.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
-//        baseline2 = (DATOutput) dat.baseline2("greedy");
-//        System.out.print("greedy MKP\t");
-//        for (int i = 0; i < windowConstraints.length; i++) {
-//            System.out.print(baseline2.ws[i].cost + "\t");
-//        }
-//        System.out.println(baseline2.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
-//        baseline3 = (DATOutput) dat.baseline2("bip");
-//        System.out.print("PTAS MKP\t");
-//        for (int i = 0; i < windowConstraints.length; i++) {
-//            System.out.print(baseline3.ws[i].cost + "\t");
-//        }
-//        System.out.println(baseline3.totalCost+"\t"+ DAT.baseline2WindowConstraint+"%");
+        // baseline = (DATOutput) dat.baseline2("greedyRatio");
+        // System.out.print("greedyRatio MKP\t");
+        // for (int i = 0; i < windowConstraints.length; i++) {
+        // System.out.print(baseline.ws[i].cost + "\t");
+        // }
+        // System.out.println(baseline.totalCost+"\t"+
+        // DAT.baseline2WindowConstraint+"%");
+        // baseline2 = (DATOutput) dat.baseline2("greedy");
+        // System.out.print("greedy MKP\t");
+        // for (int i = 0; i < windowConstraints.length; i++) {
+        // System.out.print(baseline2.ws[i].cost + "\t");
+        // }
+        // System.out.println(baseline2.totalCost+"\t"+
+        // DAT.baseline2WindowConstraint+"%");
+        // baseline3 = (DATOutput) dat.baseline2("bip");
+        // System.out.print("PTAS MKP\t");
+        // for (int i = 0; i < windowConstraints.length; i++) {
+        // System.out.print(baseline3.ws[i].cost + "\t");
+        // }
+        // System.out.println(baseline3.totalCost+"\t"+
+        // DAT.baseline2WindowConstraint+"%");
         double alpha = 1;
         for (double beta = Math.pow(2, 0); beta <= Math.pow(2, 16); beta *= 2) {
-            dat = new DAT(cost, windowConstraints, alpha, beta);
+            dat = new DAT(cost, windowConstraints, space, alpha, beta);
             // dat.setOptimizer(optimizer);
             dat.setLogListenter(logger);
             dat.setWorkload(new Workload("", new StringReader("")));
@@ -225,23 +229,23 @@ public class DATTest2 {
                 System.out.print(output.ws[i].cost + "\t");
             }
             System.out.print(output.totalCost);
-//            if (baseline != null)
-//                System.out.print("\t"
-//                        + (baseline.totalCost + beta
-//                                * baseline.ws[baseline.ws.length - 1].cost));
-//            if (baseline2 != null)
-//                System.out.print("\t"
-//                        + (baseline2.totalCost + beta
-//                                * baseline2.ws[baseline2.ws.length - 1].cost));
+            // if (baseline != null)
+            // System.out.print("\t"
+            // + (baseline.totalCost + beta
+            // * baseline.ws[baseline.ws.length - 1].cost));
+            // if (baseline2 != null)
+            // System.out.print("\t"
+            // + (baseline2.totalCost + beta
+            // * baseline2.ws[baseline2.ws.length - 1].cost));
             System.out.println();
-            dat = new DAT(cost, windowConstraints, alpha, beta);
+            dat = new DAT(cost, windowConstraints, space, alpha, beta);
             baseline3 = (DATOutput) dat.baseline2("bip");
             System.out.print("PTAS MKP\t");
             for (int i = 0; i < windowConstraints.length; i++) {
                 System.out.print(baseline3.ws[i].cost + "\t");
             }
             System.out.print(baseline3.totalCost);
-            System.out.println("\t"+ DAT.baseline2WindowConstraint+"%");
+            System.out.println("\t" + DAT.baseline2WindowConstraint + "%");
         }
 
         double datCost = dat.getObjValue();
