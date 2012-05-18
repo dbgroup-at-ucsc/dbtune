@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -192,6 +193,19 @@ public class SATuningDBTuneTranslator
             partitioning.add(new HashSet<Index>(toSet(bs, pool, idOffset)));
 
         return partitioning;
+    }
+    
+    /**
+     * Returns the current set of work function values.
+     *
+     * @param pool
+     *      pool of all the candidate indexes referenced in any step
+     * @return
+     *      a map of set of indexes to double values (representing the work function values)
+     */
+    public Map<Set<Index>, Double> getWorkFunctionScores(Set<Index> pool)
+    {
+        return wfa.getWorkFunctionScores(pool);
     }
     
     /**

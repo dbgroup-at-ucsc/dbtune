@@ -30,8 +30,8 @@ public class WFIT extends Advisor
     private SATuningDBTuneTranslator wfitDriver;
     private Set<Index> pool;
     private DegreeOfInteractionFinder doiFinder;
-    private RecommendationStatistics stats;
-    private RecommendationStatistics optStats;
+    private WFITRecommendationStatistics stats;
+    private WFITRecommendationStatistics optStats;
     private boolean isCandidateSetFixed;
 
     /**
@@ -133,8 +133,8 @@ public class WFIT extends Advisor
                     numberOfPartitionIterations);
 
         this.pool = new TreeSet<Index>(initialSet);
-        this.stats = new RecommendationStatistics("WFIT");
-        this.optStats = new RecommendationStatistics("OPT");
+        this.stats = new WFITRecommendationStatistics("WFIT");
+        this.optStats = new WFITRecommendationStatistics("OPT");
 
         if (initialSet.isEmpty())
             this.isCandidateSetFixed = false;
@@ -169,7 +169,8 @@ public class WFIT extends Advisor
             pStmt.explain(recommendation).getTotalCost(),
             pool,
             recommendation,
-            getStablePartitioning());
+            getStablePartitioning(),
+            wfitDriver.getWorkFunctionScores(pool));
 
         if (isCandidateSetFixed)
             getOptimalRecommendationStatistics();
@@ -224,8 +225,10 @@ public class WFIT extends Advisor
 
         for (Set<Index> optRecommendation : wfitDriver.getOptimalScheduleRecommendation(pool))
             optStats.addNewEntry(
-                    wfitDriver.getCost(
-                        i, optRecommendation), pool, optRecommendation, new TreeSet<Set<Index>>());
+                wfitDriver.getCost(i, optRecommendation),
+                pool,
+                optRecommendation,
+                new TreeSet<Set<Index>>());
 
         return optStats;
     }

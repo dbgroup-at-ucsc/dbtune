@@ -22,7 +22,7 @@ import edu.ucsc.dbtune.workload.SQLStatement
 import edu.ucsc.dbtune.workload.Workload
 
 /**
- * The CLI interface to WFIT. The extension is the registry of the WFIT advisor to the given stream.
+ * The CLI interface to WFIT. Registers WFIT advisor to the given stream.
  *
  * @param db
  *    the database on which WFIT will be executed
@@ -30,6 +30,7 @@ import edu.ucsc.dbtune.workload.Workload
  *    workload that WFIT will be listening to
  * @param initialSet
  *    an (optional) initial candidate set
+ * @author Ivo Jimenez
  */
 class WFIT(
     db: Database,

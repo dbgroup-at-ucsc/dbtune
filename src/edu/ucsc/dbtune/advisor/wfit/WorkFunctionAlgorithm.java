@@ -1,12 +1,16 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeSet;
 
 import edu.ucsc.dbtune.advisor.wfit.IndexPartitions.Subset;
 import edu.ucsc.dbtune.metadata.Index;
+
+import static edu.ucsc.dbtune.util.MetadataUtils.find;
 
 //CHECKSTYLE:OFF
 public class WorkFunctionAlgorithm {
@@ -219,6 +223,25 @@ public class WorkFunctionAlgorithm {
         dump("AFTER REPARTITION");
     }
 
+    public Map<Set<Index>, Double> getWorkFunctionScores(Set<Index> pool)
+    {
+        Map<Set<Index>, Double> wfValues = new HashMap<Set<Index>, Double>();
+
+        for (SubMachine subm : submachines) {
+
+            for (int s = 0; s < subm.numStates; s++) {
+                Set<Index> subset = new TreeSet<Index>();
+
+                for (int i = 0; i < subm.indexIds.length; i++)
+                    subset.add(find(pool, subm.indexIds[i]));
+
+                wfValues.put(subset, wf.get(subm.subsetNum, s));
+            }
+        }
+
+        return wfValues;
+    }
+    
     static void setStateBits(int[] ids, int stateNum, BitSet bitSet) {
         for (int i = 0; i < ids.length; i++)
             bitSet.set(ids[i], 0 != (stateNum & (1 << i)));

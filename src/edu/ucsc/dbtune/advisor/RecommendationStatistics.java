@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -60,6 +59,7 @@ public class RecommendationStatistics implements Iterable<Entry>
 
         totalWorkSum += totalCost + transitionCost;
 
+        e.previousRecommendation = previousRecommendation;
         e.totalCost = totalCost;
         e.candidateSet = candidateSet;
         e.recommendation = recommendation;
@@ -183,8 +183,9 @@ public class RecommendationStatistics implements Iterable<Entry>
      */
     public static class Entry
     {
-        protected Collection<Index> candidateSet;
-        protected Collection<Index> recommendation;
+        protected Set<Index> candidateSet;
+        protected Set<Index> recommendation;
+        protected Set<Index> previousRecommendation;
         protected Set<Set<Index>> candidatePartitioning;
         protected double benefit;
         protected double transitionCost;
@@ -196,7 +197,7 @@ public class RecommendationStatistics implements Iterable<Entry>
          *
          * @return The candidateSet.
          */
-        public Collection<Index> getCandidateSet()
+        public Set<Index> getCandidateSet()
         {
             return this.candidateSet;
         }
@@ -206,7 +207,7 @@ public class RecommendationStatistics implements Iterable<Entry>
          *
          * @return The indexes.
          */
-        public Collection<Index> getRecommendation()
+        public Set<Index> getRecommendation()
         {
             return this.recommendation;
         }
@@ -259,6 +260,16 @@ public class RecommendationStatistics implements Iterable<Entry>
         public double getTotalCost()
         {
             return this.totalCost;
+        }
+
+        /**
+         * Gets the previousRecommendation for this instance.
+         *
+         * @return The previousRecommendation.
+         */
+        public Set<Index> getPreviousRecommendation()
+        {
+            return this.previousRecommendation;
         }
 
         /**

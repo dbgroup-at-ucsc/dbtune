@@ -226,6 +226,15 @@ public class IndexPartitions {
         private final int minIndexIds() {
             return minIndexIds;
         }
+
+        /**
+         * Gets the set for this instance.
+         *
+         * @return The set.
+         */
+        public Set<Index> getSet() {
+            return this.set;
+        }
     }
     
     private class SubsetList {
