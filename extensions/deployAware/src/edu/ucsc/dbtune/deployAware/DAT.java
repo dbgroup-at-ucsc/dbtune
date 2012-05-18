@@ -2,31 +2,25 @@ package edu.ucsc.dbtune.deployAware;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloNumVarType;
 import ilog.concert.IloObjective;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Logger;
 
-import edu.ucsc.dbtune.seq.bip.SebBIPOutput;
-import edu.ucsc.dbtune.seq.bip.SeqInumCost;
-import edu.ucsc.dbtune.seq.bip.def.*;
-import edu.ucsc.dbtune.seq.utils.RTimerN;
-import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
+import edu.ucsc.dbtune.seq.bip.SeqInumCost;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumSlot;
+import edu.ucsc.dbtune.seq.utils.Rt;
 
 /**
  * @author Rui Wang
@@ -310,9 +304,8 @@ public class DAT extends AbstractBIPSolver {
     int totalIndices;
     Logger log = Logger.getLogger(DAT.class.getName());
 
-    public DAT(SeqInumCost cost, double[] windowConstraints,
-            double alpha, double beta)
-            throws IloException {
+    public DAT(SeqInumCost cost, double[] windowConstraints, double alpha,
+            double beta) throws IloException {
         this.costModel = cost;
         this.windowConstraints = windowConstraints;
         this.spaceConstraint = cost.storageConstraint;
@@ -445,6 +438,18 @@ public class DAT extends AbstractBIPSolver {
         return output;
     }
 
+    public static void invokeCplex() throws IloException {
+        IloCplex cplex = new IloCplex();
+        cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
+        cplex.setOut(null);
+        cplex.setWarning(null);
+        IloNumVar var=cplex.intVar(0, 1);
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        expr.addTerm(1, var);
+        IloObjective obj = cplex.minimize(expr);
+        cplex.add(obj);
+        cplex.solve();
+    }
     private boolean[] cophy(double total) throws IloException {
         IloCplex old = cplex;
         cplex = new IloCplex();
@@ -527,6 +532,25 @@ public class DAT extends AbstractBIPSolver {
      */
     public static double baseline2WindowConstraint;
 
+    public void getIndexBenefit() throws IloException {
+        boolean[] bs = new boolean[totalIndices];
+        Rt.p("get index benefit 1");
+        double costWithoutIndex = costWithIndex(bs);
+        for (SeqInumIndex index : costModel.indices) {
+            Rt.p(index.id);
+            index.indexBenefit = costWithoutIndex - costWithIndex(index.id);
+        }
+//        Rt.p("get index benefit 2");
+//        Arrays.fill(bs, true);
+//        double costWithAllIndex = costWithIndex(bs);
+//        for (SeqInumIndex index : costModel.indices) {
+//            Rt.p(index.id);
+//            Arrays.fill(bs, true);
+//            bs[index.id]=false;
+//            index.indexBenefit2 = costWithAllIndex - costWithIndex(bs);
+//        }
+    }
+
     public IndexTuningOutput baseline2(String method) {
         DATOutput output = new DATOutput(windowConstraints.length);
         super.numConstraints = 0;
@@ -537,7 +561,7 @@ public class DAT extends AbstractBIPSolver {
                 total += d;
             double total0 = total;
             boolean[][] indexPresents = new boolean[windowConstraints.length][totalIndices];
-            double costWithoutIndex = costWithIndex(new boolean[totalIndices]);
+//            double costWithoutIndex = costWithIndex(new boolean[totalIndices]);
             while (true) {
                 boolean[] indexPresent = cophy(total);
                 // Rt.p(this.costWithIndex(indexPresent));
@@ -546,8 +570,8 @@ public class DAT extends AbstractBIPSolver {
                     if (indexPresent[i]) {
                         if (costModel.indices.get(i).id != i)
                             throw new Error();
-                        costModel.indices.get(i).indexBenefit = costWithoutIndex
-                                - costWithIndex(i);
+//                        costModel.indices.get(i).indexBenefit = costWithoutIndex
+//                                - costWithIndex(i);
                         usedIndex.add(costModel.indices.get(i));
                     }
                 }
@@ -581,8 +605,8 @@ public class DAT extends AbstractBIPSolver {
                     MKPGreedy m = new MKPGreedy(bins, binWeights, items,
                             profits, method.equals("greedyRatio"));
                     if (m.cannotFitIn > 0) {
-                        Rt.p("can't fit: " + m.cannotFitIn + " "
-                                + m.cannotFitWeight + " " + total);
+//                        Rt.p("can't fit: " + m.cannotFitIn + " "
+//                                + m.cannotFitWeight + " " + total);
                         total *= 0.9;
                         continue;
                     }
@@ -628,7 +652,7 @@ public class DAT extends AbstractBIPSolver {
                     if (indexPresents[wid][j])
                         output.ws[wid].create++;
                 }
-                if (wid<1)
+                if (wid < 1)
                     continue;
                 for (int j = 0; j < totalIndices; j++) {
                     if (indexPresents[wid - 1][j]) {
@@ -740,8 +764,8 @@ public class DAT extends AbstractBIPSolver {
                 output.ws[i].create = windows[i].getCreated();
                 output.ws[i].drop = windows[i].getDropped();
                 double c2 = costWithIndex(output.ws[i].indexUsed);
-                if (Math.abs(output.ws[i].cost - c2) > 1)
-                    throw new Error();
+                if (Math.abs(output.ws[i].cost - c2) / c2 > 0.1)
+                    throw new Error(output.ws[i].cost + " " + c2);
                 if (i == output.ws.length - 1)
                     totalCost += beta * output.ws[i].cost;
                 else

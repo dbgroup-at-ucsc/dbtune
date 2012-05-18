@@ -13,7 +13,8 @@ public class SeqInumIndex implements Serializable {
     public double createCost, dropCost;
     public double storageCost;
     
-    public double indexBenefit;
+    public double indexBenefit; //with this index - with no index
+    public double indexBenefit2; //with all index - without this index
 
     public SeqInumIndex(int id) {
         this.id = id;
@@ -25,6 +26,8 @@ public class SeqInumIndex implements Serializable {
         rx.createChild("createCost",createCost);
         rx.createChild("dropCost",dropCost);
         rx.createChild("storageCost",storageCost);
+        rx.createChild("indexBenefit",indexBenefit);
+        rx.createChild("indexBenefit2",indexBenefit2);
     }
     
     public SeqInumIndex(Rx rx) {
@@ -33,6 +36,8 @@ public class SeqInumIndex implements Serializable {
         createCost=rx.getChildDoubleContent("createCost");
         dropCost=rx.getChildDoubleContent("dropCost");
         storageCost=rx.getChildDoubleContent("storageCost");
+        indexBenefit=rx.getChildDoubleContent("indexBenefit");
+        indexBenefit2=rx.getChildDoubleContent("indexBenefit2");
     }
 
     @Override
