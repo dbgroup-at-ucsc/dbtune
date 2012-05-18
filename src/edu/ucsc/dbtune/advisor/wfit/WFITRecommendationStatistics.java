@@ -33,10 +33,15 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
      *      the cost of exeucting the statement
      * @param candidateSet
      *      indexes that were in the context of the recommender
+     * @param partitioning
+     *      partitioning of the candidate set
+     * @param usefulness
+     *      the usefulness of each index in the candidate set, with respect to the next query in the 
+     *      workload stream
      * @param recommendation
      *      indexes that were recommended
-     * @param candidateSetPartitioning
-     *      partitioning of the candidate set
+     * @param benefits
+     *      the benefits for each index in the recommendation
      * @param workFunctionScores
      *      scores the correspond to the work function values
      * @return
@@ -45,13 +50,16 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
     public Entry addNewEntry(
             double totalCost,
             Set<Index> candidateSet,
+            Set<Set<Index>> partitioning,
+            Map<Index, Boolean> usefulness,
             Set<Index> recommendation,
-            Set<Set<Index>> candidateSetPartitioning,
+            Map<Index, Double> benefits,
             Map<Set<Index>, Double> workFunctionScores)
     {
-        Entry e = addNewEntry(totalCost, candidateSet, recommendation, candidateSetPartitioning);
+        Entry e = addNewEntry(totalCost, candidateSet, partitioning, recommendation, benefits);
 
         e.workFunctionScores = workFunctionScores;
+        e.usefulness = usefulness;
 
         return e;
     }
@@ -63,10 +71,11 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
     public Entry addNewEntry(
             double totalCost,
             Set<Index> candidateSet,
+            Set<Set<Index>> partitioning,
             Set<Index> recommendation,
-            Set<Set<Index>> candidateSetPartitioning)
+            Map<Index, Double> benefits)
     {
-        super.addNewEntry(totalCost, candidateSet, recommendation, candidateSetPartitioning);
+        super.addNewEntry(totalCost, candidateSet, partitioning, recommendation, benefits);
 
         RecommendationStatistics.Entry e = super.entries.remove(entries.size() - 1);
 
@@ -83,6 +92,7 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
     public static class Entry extends RecommendationStatistics.Entry
     {
         private Map<Set<Index>, Double> workFunctionScores;
+        private Map<Index, Boolean> usefulness;
         
         /**
          * copy constructor.
@@ -109,6 +119,16 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
         public Map<Set<Index>, Double> getWorkFunctionScores()
         {
             return this.workFunctionScores;
+        }
+
+        /**
+         * Gets the usefulness for this instance.
+         *
+         * @return The usefulness.
+         */
+        public Map<Index, Boolean> getUsefulness()
+        {
+            return this.usefulness;
         }
 
         /**

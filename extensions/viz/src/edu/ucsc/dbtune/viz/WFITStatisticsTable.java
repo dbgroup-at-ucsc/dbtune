@@ -33,7 +33,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
      */
     public WFITStatisticsTable()
     {
-        columnNames = new String[4];
+        columnNames = new String[5];
 
         columnNames[0] = "PARTITION";
         columnNames[1] = "STATE";
@@ -142,7 +142,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
             double wfScore,
             Set<Index> previousRecommendation)
     {
-        String[] row = new String[4];
+        String[] row = new String[5];
 
         row[0] = partitionNumber + "";
         row[1] = stateNumber + "";

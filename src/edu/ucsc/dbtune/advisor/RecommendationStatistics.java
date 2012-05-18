@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics.Entry;
@@ -40,18 +41,21 @@ public class RecommendationStatistics implements Iterable<Entry>
      *      the cost of exeucting the statement
      * @param candidateSet
      *      indexes that were in the context of the recommender
+     * @param partitioning
+     *      partitioning of the candidate set
      * @param recommendation
      *      indexes that were recommended
-     * @param candidateSetPartitioning
-     *      partitioning of the candidate set
+     * @param benefits
+     *      the benefits for each index in the recommendation
      * @return
      *      the entry that has been just created
      */
     public Entry addNewEntry(
             double totalCost,
             Set<Index> candidateSet,
+            Set<Set<Index>> partitioning,
             Set<Index> recommendation,
-            Set<Set<Index>> candidateSetPartitioning)
+            Map<Index, Double> benefits)
     {
         Entry e = new Entry();
 
@@ -65,7 +69,8 @@ public class RecommendationStatistics implements Iterable<Entry>
         e.recommendation = recommendation;
         e.transitionCost = transitionCost;
         e.totalWork = totalWorkSum;
-        e.candidatePartitioning = candidateSetPartitioning;
+        e.candidatePartitioning = partitioning;
+        e.benefits = benefits;
 
         entries.add(e);
 
@@ -187,6 +192,7 @@ public class RecommendationStatistics implements Iterable<Entry>
         protected Set<Index> recommendation;
         protected Set<Index> previousRecommendation;
         protected Set<Set<Index>> candidatePartitioning;
+        protected Map<Index, Double> benefits;
         protected double benefit;
         protected double transitionCost;
         protected double totalWork;
@@ -220,6 +226,16 @@ public class RecommendationStatistics implements Iterable<Entry>
         public double getCost()
         {
             return this.totalCost;
+        }
+
+        /**
+         * Gets the benefits of the indexes in the recommended set.
+         *
+         * @return The benefits.
+         */
+        public Map<Index, Double> getBenefits()
+        {
+            return this.benefits;
         }
 
         /**

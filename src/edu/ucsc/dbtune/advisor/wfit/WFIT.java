@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -20,6 +22,7 @@ import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.findOrThrow;
+import static edu.ucsc.dbtune.util.OptimizerUtils.getBenefits;
 
 /**
  * @author Ivo Jimenez
@@ -165,15 +168,17 @@ public class WFIT extends Advisor
 
         Set<Index> recommendation = getRecommendation();
 
+        if (isCandidateSetFixed)
+            getOptimalRecommendationStatistics();
+
         stats.addNewEntry(
             pStmt.explain(recommendation).getTotalCost(),
             pool,
-            recommendation,
             getStablePartitioning(),
+            getUsefulnessMap(),
+            recommendation,
+            getBenefits(pStmt, recommendation),
             wfitDriver.getWorkFunctionScores(pool));
-
-        if (isCandidateSetFixed)
-            getOptimalRecommendationStatistics();
     }
 
     /**
@@ -192,6 +197,31 @@ public class WFIT extends Advisor
     public RecommendationStatistics getRecommendationStatistics()
     {
         return stats;
+    }
+
+    /**
+     * Returns the usefulness map. This map rates the usefulness of each index in the candidate set 
+     * by comparing it against the indexes in the next step of the OPT schedule. An index is useful 
+     * if gets recommended in OPT and is not useful if it gets dropped.
+     *
+     * @return
+     *      the usefulness map, which might be empty if {@link #isCandidateSetFixed} is {@code 
+     *      false}
+     */
+    public Map<Index, Boolean> getUsefulnessMap()
+    {
+        if (!isCandidateSetFixed)
+            return new HashMap<Index, Boolean>();
+
+        Map<Index, Boolean> usefulness = new HashMap<Index, Boolean>();
+
+        for (Index idx : pool)
+            if (optStats.getLastEntry().getRecommendation().contains(idx))
+                usefulness.put(idx, true);
+            else
+                usefulness.put(idx, false);
+
+        return usefulness;
     }
 
     /**
@@ -227,8 +257,9 @@ public class WFIT extends Advisor
             optStats.addNewEntry(
                 wfitDriver.getCost(i, optRecommendation),
                 pool,
+                new TreeSet<Set<Index>>(),
                 optRecommendation,
-                new TreeSet<Set<Index>>());
+                new HashMap<Index, Double>());
 
         return optStats;
     }

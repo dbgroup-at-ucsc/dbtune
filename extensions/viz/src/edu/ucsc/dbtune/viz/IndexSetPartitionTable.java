@@ -30,24 +30,20 @@ public class IndexSetPartitionTable extends AbstractVisualizer
      */
     public IndexSetPartitionTable()
     {
-        columnNames = new String[4];
-
-        columnNames[0] = "ID";
-        columnNames[1] = "NAME";
-        columnNames[2] = "TABLE";
-        columnNames[3] = "COLUMNS";
-
+        stats = new ArrayList<RecommendationStatistics>();
         frame = new JFrame();
+        columnNames = new String[5];
+
+        columnNames[0] = "NAME";
+        columnNames[1] = "TABLE";
+        columnNames[2] = "COLUMNS";
+        columnNames[3] = "BENEFIT";
+        columnNames[4] = "OPTIMAL RECOMMENDED";
 
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
-
         frame.setTitle("DBTune");
-        frame.setSize(300, 200);
         frame.setBackground(Color.gray);
-
-        stats = new ArrayList<RecommendationStatistics>();
     }
 
     /**
@@ -64,14 +60,15 @@ public class IndexSetPartitionTable extends AbstractVisualizer
             throw new RuntimeException(
                 "Can only display partition for one instance of an algorithm");
 
-        Set<Set<Index>> partitions = stats.get(0).getLastEntry().getCandidatePartitioning();
+        RecommendationStatistics.Entry e = stats.get(0).getLastEntry();
+        Set<Set<Index>> partitions = e.getCandidatePartitioning();
 
         for (Set<Index> partition : partitions)
-            frame.getContentPane().add(new JScrollPane(newTable(partition)));
+            frame.getContentPane().add(new JScrollPane(newTable(e, partition)));
 
         frame.repaint();
         frame.pack();
-        frame.setSize(300, 200);
+        frame.setSize(600, 400);
         frame.setVisible(true);
     }
 
@@ -80,17 +77,19 @@ public class IndexSetPartitionTable extends AbstractVisualizer
      *
      * @param indexes
      *      set to be displayed in the table
+     * @param e
+     *      entry
      * @return
      *      the table
      */
-    private JTable newTable(Set<Index> indexes)
+    private JTable newTable(RecommendationStatistics.Entry e, Set<Index> indexes)
     {
         String[][] dataValues = new String[indexes.size()][4];
 
         int i = 0;
 
         for (Index index : indexes)
-            dataValues[i++] = newRow(index);
+            dataValues[i++] = newRow(e, index);
             
         return new JTable(dataValues, columnNames);
     }
@@ -98,17 +97,20 @@ public class IndexSetPartitionTable extends AbstractVisualizer
     /**
      * @param index
      *      index for which a new row is created
+     * @param e
+     *      entry
      * @return
      *      an array of strings, where each corresponds to an attribute of the index
      */
-    private String[] newRow(Index index)
+    protected String[] newRow(RecommendationStatistics.Entry e, Index index)
     {
-        String[] row = new String[4];
+        String[] row = new String[5];
 
-        row[0] = index.getId() + "";
-        row[1] = index.getName();
-        row[2] = index.getTable() + "";
-        row[3] = getColumnListString(index);
+        row[0] = index.getName();
+        row[1] = index.getTable() + "";
+        row[2] = getColumnListString(index);
+        row[3] = e.getBenefits().get(index) + "";
+        row[4] = e.getRecommendation().contains(index) ? "Y" : "N";
 
         return row;
     }
