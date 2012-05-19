@@ -48,7 +48,6 @@ public class DivBIPFunctionalTest extends DivTestSetting
             return;
   
         candidates = readCandidateIndexes();
-        
                 
         // 1. test divergent
         testDivergent();
@@ -273,9 +272,10 @@ public class DivBIPFunctionalTest extends DivTestSetting
         
         System.out.println("Configuration to COMPUTE DB2: "
                                 + divConf.briefDescription());
+        splitSelectUpdateInWorkload();
+        
         for (int r = 0; r < nReplicas; r++)
-            updateCostDB2 += computeWorkloadCostDB2(wlUpdates, divConf.
-                                    indexesAtReplica(r));
+            updateCostDB2 += computeWorkloadCostDB2(wlUpdates, divConf.indexesAtReplica(r));
         
         // update cost (tricky)
         for (SQLStatement sql : wlQueries) {
@@ -297,7 +297,6 @@ public class DivBIPFunctionalTest extends DivTestSetting
     /**
      * Classify workload according to query or update statements
      */
-    /*
     private static void splitSelectUpdateInWorkload()
     {
         // call DB2 to compute cost
@@ -314,7 +313,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
         wlUpdates = new Workload(updateSQLs);
         
     }
-    */
+    
     /**
      * Run the instance of the problem five times and get the average 
      * of imbalance query, replica, and node failure
@@ -353,6 +352,6 @@ public class DivBIPFunctionalTest extends DivTestSetting
         System.out.println("================== Number of replicas: " +  nReplicas
                 + " AVG NODE failure: "
                 + (double) avgNodeFailure / numRuns);
-    }   
+    }
 
 }
