@@ -763,11 +763,13 @@ public class Index extends DatabaseObject implements
             return false;
 
         for (int i = 0; i < size(); i++) {
-            if (containees.get(i) != other.containees.get(i))
+            
+            if (!(containees.get(i).equals(other.containees.get(i))))
                 return false;
 
-            if (ascendingColumn.get(i) != other.ascendingColumn.get(i))
+            if (!(ascendingColumn.get(i).equals(other.ascendingColumn.get(i))))
                 return false;
+            
         }
 
         return true;
