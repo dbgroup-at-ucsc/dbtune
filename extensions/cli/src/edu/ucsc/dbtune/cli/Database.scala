@@ -102,12 +102,6 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
   def loadIndexes(fileName: String) : Set[Index] = {
     MetadataUtils.loadIndexes(DBMS, fileName)
   }
-  
-  /** drops all indexes
-    */
-  def clear() = {
-    DBMS.getCatalog.dropIndexes
-  }
 }
 
 object Database
@@ -132,6 +126,8 @@ object Database
     env.setProperty(JDBC_URL,  url)
     //env.setProperty(OPTIMIZER, INUM + "," + IBG)
     env.setProperty(OPTIMIZER, IBG)
+
+    System.out.println("Extracting metadata...")
 
     new Database(newDatabaseSystem(env))
   }
