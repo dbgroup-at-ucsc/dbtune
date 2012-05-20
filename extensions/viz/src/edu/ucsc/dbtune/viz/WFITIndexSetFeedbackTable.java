@@ -2,8 +2,6 @@ package edu.ucsc.dbtune.viz;
 
 import java.awt.Color;
 
-import java.util.ArrayList;
-
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 
@@ -27,16 +25,18 @@ public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
      */
     public WFITIndexSetFeedbackTable()
     {
-        stats = new ArrayList<RecommendationStatistics>();
-        frame = new JFrame();
-        columnNames = new String[6];
+        columnNames = new String[8];
 
         columnNames[0] = "NAME";
         columnNames[1] = "TABLE";
         columnNames[2] = "COLUMNS";
-        columnNames[3] = "BENEFIT";
-        columnNames[4] = "RECOMMENDED";
-        columnNames[5] = "OPTIMAL";
+        columnNames[3] = "SIZE";
+        columnNames[4] = "COST";
+        columnNames[5] = "BENEFIT";
+        columnNames[6] = "RECOMMENDED";
+        columnNames[7] = "OPTIMAL";
+
+        frame = new JFrame();
 
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
@@ -55,14 +55,16 @@ public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
 
         WFITRecommendationStatistics.Entry wfEntry = (WFITRecommendationStatistics.Entry) e;
 
-        String[] row = new String[6];
+        String[] row = new String[8];
 
         row[0] = index.getName();
         row[1] = index.getTable() + "";
         row[2] = getColumnListString(index);
-        row[3] = wfEntry.getBenefits().get(index) + "";
-        row[4] = wfEntry.getRecommendation().contains(index) ? "Y" : "N";
-        row[5] = wfEntry.getUsefulness().get(index) ? "Y" : "N";
+        row[3] = index.getBytes() / (1024 * 1024) + "";
+        row[4] = index.getCreationCost() + "";
+        row[5] = wfEntry.getBenefits().get(index) + "";
+        row[6] = wfEntry.getRecommendation().contains(index) ? "Y" : "N";
+        row[7] = wfEntry.getUsefulness().get(index) ? "Y" : "N";
 
         return row;
     }

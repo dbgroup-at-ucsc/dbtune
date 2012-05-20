@@ -24,6 +24,7 @@ public class TotalWorkPlotter extends AbstractVisualizer
     {
         XYSeriesCollection c = new XYSeriesCollection();
         appFrame = VizUtils.createXYChart("DBTune", c, "Performance", "Queries", "Total Work");
+        frame = appFrame;
         stats = new ArrayList<RecommendationStatistics>();
     }
 
@@ -31,16 +32,7 @@ public class TotalWorkPlotter extends AbstractVisualizer
      * {@inheritDoc}
      */
     @Override
-    public void show()
-    {
-        appFrame.setVisible(true);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void refresh()
+    public void updateContent()
     {
         plot(stats);
     }

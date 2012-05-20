@@ -38,43 +38,43 @@ class WorkloadStream(fileName: String) {
    * @param advisor
    *    new advisor to be added to the registry
    */
-  def register(advisor: Advisor) = { advisors += advisor }
+  def register(advisor: Advisor) = advisors += advisor
 
   /** Registers the given visualizer.
    *
    * @param visualizer
    *    new visualizer to be added to the registry
    */
-  def register(visualizer: Visualizer) = { visualizers += visualizer; visualizer.refresh }
+  def register(visualizer: Visualizer) = visualizers += visualizer
 
   /** Executes the next statement in the stream
    */
-  def next = { workloadActor ! Next(advisors, visualizers, 1) }
+  def next = workloadActor ! Next(advisors, visualizers, 1)
 
   /** Executes a given number of statements.
    *
    * @param steps
    *    number of statements to be fetched from the stream and executed
    */
-  def next(steps: Integer) = { workloadActor ! Next(advisors, visualizers, steps) }
+  def next(steps: Integer) = workloadActor ! Next(advisors, visualizers, steps)
 
   /** Executes the whole workload, i.e. until there are no more statements in the stream.
    */
-  def play = { workloadActor ! Play(advisors, visualizers) }
+  def play = workloadActor ! Play(advisors, visualizers)
 
   /** Checks if the given advisor is a member of the internal registry.
    *
    * @param advisor
    *    advisor being checked for membership in the registry
    */
-  def isRegistered(advisor: Advisor) = { advisors.contains(advisor) }
+  def isRegistered(advisor: Advisor) = advisors.contains(advisor)
 
   /** Checks if the given visualizer is a member of the internal registry.
    *
    * @param visualizer
    *    visualizer being checked for membership in the registry
    */
-  def isRegistered(viz: Visualizer) = { visualizers.contains(viz) }
+  def isRegistered(viz: Visualizer) = visualizers.contains(viz)
 }
 
 /** An actor to concurrently handle the processing and passing of statements contained in a 

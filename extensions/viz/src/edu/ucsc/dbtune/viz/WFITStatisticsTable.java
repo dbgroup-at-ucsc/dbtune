@@ -2,7 +2,6 @@ package edu.ucsc.dbtune.viz;
 
 import java.awt.Color;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,7 +26,6 @@ import static edu.ucsc.dbtune.util.MetadataUtils.transitionCost;
 public class WFITStatisticsTable extends AbstractVisualizer
 {
     private String[] columnNames;
-    private JFrame frame;
 
     /**
      */
@@ -51,24 +49,13 @@ public class WFITStatisticsTable extends AbstractVisualizer
         frame.setBackground(Color.gray);
         frame.setSize(600, 400);
         frame.pack();
-
-        stats = new ArrayList<RecommendationStatistics>();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void show()
-    {
-        frame.setVisible(true);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void refresh()
+    public void updateContent()
     {
         frame.getContentPane().removeAll();
 
@@ -83,6 +70,9 @@ public class WFITStatisticsTable extends AbstractVisualizer
             throw new RuntimeException(
                     "Expecting WFIT-specific recommendation statistics");
 
+        if (stats.get(0).size() == 0)
+            return;
+
         RecommendationStatistics.Entry e = stats.get(0).getLastEntry();
         Set<Set<Index>> partitions = e.getCandidatePartitioning();
         Set<Index> previousState = e.getPreviousRecommendation();
@@ -94,8 +84,6 @@ public class WFITStatisticsTable extends AbstractVisualizer
             frame.getContentPane().add(
                     new JScrollPane(
                         newTable(partitionNumber++, partition, wfScores, previousState)));
-
-        frame.repaint();
     }
 
     /**

@@ -2,7 +2,6 @@ package edu.ucsc.dbtune.viz;
 
 import java.awt.Color;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 import javax.swing.BoxLayout;
@@ -24,22 +23,23 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getColumnListString;
 public class IndexSetPartitionTable extends AbstractVisualizer
 {
     protected String[] columnNames;
-    protected JFrame frame;
 
     /**
      * constructor.
      */
     public IndexSetPartitionTable()
     {
-        stats = new ArrayList<RecommendationStatistics>();
-        frame = new JFrame();
-        columnNames = new String[5];
+        columnNames = new String[7];
 
         columnNames[0] = "NAME";
         columnNames[1] = "TABLE";
         columnNames[2] = "COLUMNS";
-        columnNames[3] = "BENEFIT";
-        columnNames[4] = "RECOMMENDED";
+        columnNames[3] = "SIZE";
+        columnNames[4] = "COST";
+        columnNames[5] = "BENEFIT";
+        columnNames[6] = "RECOMMENDED";
+
+        frame = new JFrame();
 
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
@@ -53,16 +53,7 @@ public class IndexSetPartitionTable extends AbstractVisualizer
      * {@inheritDoc}
      */
     @Override
-    public void show()
-    {
-        frame.setVisible(true);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void refresh()
+    public void updateContent()
     {
         frame.getContentPane().removeAll();
 
@@ -73,13 +64,14 @@ public class IndexSetPartitionTable extends AbstractVisualizer
             throw new RuntimeException(
                 "Can only display partition for one instance of an algorithm");
 
+        if (stats.get(0).size() == 0)
+            return;
+
         RecommendationStatistics.Entry e = stats.get(0).getLastEntry();
         Set<Set<Index>> partitions = e.getCandidatePartitioning();
 
         for (Set<Index> partition : partitions)
             frame.getContentPane().add(new JScrollPane(newTable(e, partition)));
-
-        frame.repaint();
     }
 
     /**
@@ -114,13 +106,15 @@ public class IndexSetPartitionTable extends AbstractVisualizer
      */
     protected String[] newRow(RecommendationStatistics.Entry e, Index index)
     {
-        String[] row = new String[5];
+        String[] row = new String[7];
 
         row[0] = index.getName();
         row[1] = index.getTable() + "";
         row[2] = getColumnListString(index);
-        row[3] = e.getBenefits().get(index) == null ? "0.0" : (e.getBenefits().get(index) + "");
-        row[4] = e.getRecommendation().contains(index) ? "Y" : "N";
+        row[3] = index.getBytes() / (1024 * 1024) + "";
+        row[4] = index.getCreationCost() + "";
+        row[5] = e.getBenefits().get(index) == null ? "0.0" : (e.getBenefits().get(index) + "");
+        row[6] = e.getRecommendation().contains(index) ? "Y" : "N";
 
         return row;
     }
