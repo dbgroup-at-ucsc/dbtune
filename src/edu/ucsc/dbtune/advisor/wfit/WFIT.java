@@ -42,20 +42,20 @@ public class WFIT extends Advisor
      *
      * @param db
      *      the dbms where wfit will run on
+     * @param maxNumberOfStates
+     *      maximum number of states per partition
      * @param maxHotSetSize
      *      maximum number of candidates to keep in the hot set
      * @param indexStatisticsWindowSize
      *      size of the sliding window of interaction-related measurements
-     * @param maxNumberOfStates
-     *      maximum number of states per partition
      * @param numberOfPartitionIterations
      *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
      *      set partition
      */
     public WFIT(
         DatabaseSystem db,
-        int maxHotSetSize,
         int maxNumberOfStates,
+        int maxHotSetSize,
         int indexStatisticsWindowSize,
         int numberOfPartitionIterations)
     {
@@ -72,12 +72,12 @@ public class WFIT extends Advisor
      *      the dbms where wfit will run on
      * @param initialSet
      *      initial candidate set
+     * @param maxNumberOfStates
+     *      maximum number of states per partition
      * @param maxHotSetSize
      *      maximum number of candidates to keep in the hot set
      * @param indexStatisticsWindowSize
      *      size of the sliding window of interaction-related measurements
-     * @param maxNumberOfStates
-     *      maximum number of states per partition
      * @param numberOfPartitionIterations
      *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
      *      set partition
@@ -85,13 +85,13 @@ public class WFIT extends Advisor
     public WFIT(
             DatabaseSystem db,
             Set<Index> initialSet,
-            int maxHotSetSize,
             int maxNumberOfStates,
+            int maxHotSetSize,
             int indexStatisticsWindowSize,
             int numberOfPartitionIterations)
     {
-        this(db, initialSet, new IBGDoiFinder(), maxHotSetSize, indexStatisticsWindowSize, 
-                maxNumberOfStates, numberOfPartitionIterations);
+        this(db, initialSet, new IBGDoiFinder(), maxNumberOfStates, maxHotSetSize, 
+                indexStatisticsWindowSize, numberOfPartitionIterations);
     }
 
     /**
@@ -104,12 +104,12 @@ public class WFIT extends Advisor
      *      initial candidate set
      * @param doiFinder
      *      interaction finder
+     * @param maxNumberOfStates
+     *      maximum number of states per partition
      * @param maxHotSetSize
      *      maximum number of candidates to keep in the hot set
      * @param indexStatisticsWindowSize
      *      size of the sliding window of interaction-related measurements
-     * @param maxNumberOfStates
-     *      maximum number of states per partition
      * @param numberOfPartitionIterations
      *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
      *      set partition
@@ -118,8 +118,8 @@ public class WFIT extends Advisor
             DatabaseSystem db,
             Set<Index> initialSet,
             DegreeOfInteractionFinder doiFinder,
-            int maxHotSetSize,
             int maxNumberOfStates,
+            int maxHotSetSize,
             int indexStatisticsWindowSize,
             int numberOfPartitionIterations)
     {
@@ -130,14 +130,16 @@ public class WFIT extends Advisor
             new SATuningDBTuneTranslator(
                     db.getCatalog(),
                     initialSet,
-                    maxHotSetSize,
                     maxNumberOfStates,
+                    maxHotSetSize,
                     indexStatisticsWindowSize,
                     numberOfPartitionIterations);
 
         this.pool = new TreeSet<Index>(initialSet);
-        this.stats = new WFITRecommendationStatistics("WFIT");
+        this.stats = new WFITRecommendationStatistics("WFIT" + maxNumberOfStates);
         this.optStats = new WFITRecommendationStatistics("OPT");
+
+        System.out.println("creating WFIT" + maxNumberOfStates);
 
         if (initialSet.isEmpty())
             this.isCandidateSetFixed = false;

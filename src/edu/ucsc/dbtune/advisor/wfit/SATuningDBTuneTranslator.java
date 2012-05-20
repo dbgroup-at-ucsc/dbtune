@@ -48,10 +48,10 @@ public class SATuningDBTuneTranslator
      *      when no initial set is used, the catalog must be provided
      * @param initialSet
      *      the initial candidate set to be used
-     * @param maxHotSetSize
-     *      maximum number of candidates to keep in the hotSet
      * @param maxNumberOfStates
      *      maximum number of states per partition
+     * @param maxHotSetSize
+     *      maximum number of candidates to keep in the hotSet
      * @param indexStatisticsWindowSize
      *      size of the sliding window of interaction-related measurements
      * @param numberOfPartitionIterations
@@ -61,8 +61,8 @@ public class SATuningDBTuneTranslator
     public SATuningDBTuneTranslator(
             Catalog cat,
             Set<Index> initialSet,
-            int maxHotSetSize,
             int maxNumberOfStates,
+            int maxHotSetSize,
             int indexStatisticsWindowSize,
             int numberOfPartitionIterations)
     {
