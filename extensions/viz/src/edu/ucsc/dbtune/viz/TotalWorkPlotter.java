@@ -31,6 +31,15 @@ public class TotalWorkPlotter extends AbstractVisualizer
      * {@inheritDoc}
      */
     @Override
+    public void show()
+    {
+        appFrame.setVisible(true);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void refresh()
     {
         plot(stats);
@@ -53,7 +62,6 @@ public class TotalWorkPlotter extends AbstractVisualizer
         }
 
         appFrame.updateDataSet(c);
-        appFrame.setVisible(true);
     }
 
     /**

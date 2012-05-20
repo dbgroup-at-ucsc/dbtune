@@ -14,10 +14,17 @@ import edu.ucsc.dbtune.viz.WFITIndexSetFeedbackTable
  */
 object Plotter
 {
-  val twPlotter = new TotalWorkPlotter
-  val partitionTable = new IndexSetPartitionTable
-  val wfitTable = new WFITStatisticsTable
-  val feedbackTable = new WFITIndexSetFeedbackTable
+  var twPlotter = new TotalWorkPlotter
+  var partitionTable = new IndexSetPartitionTable
+  var wfitTable = new WFITStatisticsTable
+  var feedbackTable = new WFITIndexSetFeedbackTable
+
+  def clear = {
+    twPlotter = new TotalWorkPlotter
+    partitionTable = new IndexSetPartitionTable
+    wfitTable = new WFITStatisticsTable
+    feedbackTable = new WFITIndexSetFeedbackTable
+  }
 
   /** Plots the total work for the given workload and list of statistics. If the plot hadn't been 
    * registered in the workload, it does so.
@@ -32,7 +39,7 @@ object Plotter
       twPlotter.setStatistics(stats.toList : _*)
       wl.register(twPlotter)
     }
-    twPlotter.refresh
+    twPlotter.show
   }
 
   /** Displays wfit-specific table. If the table hadn't been registered in the workload, it does so.
@@ -47,7 +54,7 @@ object Plotter
       wfitTable.setStatistics(stats.toList : _*)
       wl.register(wfitTable)
     }
-    wfitTable.refresh
+    wfitTable.show
   }
 
   /** Displays the partitioning of the candidate set that a given algorithm (through its 
@@ -64,7 +71,7 @@ object Plotter
       partitionTable.setStatistics(stats.toList : _*)
       wl.register(partitionTable)
     }
-    partitionTable.refresh
+    partitionTable.show
   }
 
   /** Displays the feedback table. If the table hadn't been registered in the workload, it does so.
@@ -79,6 +86,6 @@ object Plotter
       feedbackTable.setStatistics(stats.toList : _*)
       wl.register(feedbackTable)
     }
-    feedbackTable.refresh
+    feedbackTable.show
   }
 }

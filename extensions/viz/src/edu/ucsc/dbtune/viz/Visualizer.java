@@ -8,4 +8,8 @@ public interface Visualizer
     /**
      */
     void refresh();
+
+    /**
+     */
+    void show();
 }

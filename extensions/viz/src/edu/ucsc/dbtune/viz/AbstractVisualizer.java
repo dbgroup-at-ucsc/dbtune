@@ -23,6 +23,8 @@ public abstract class AbstractVisualizer implements Visualizer
 
         for (RecommendationStatistics stat : stats)
             this.stats.add(stat);
+
+        refresh();
     }
 
     /**

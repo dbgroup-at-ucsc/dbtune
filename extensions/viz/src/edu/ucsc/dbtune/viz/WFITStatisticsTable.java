@@ -49,8 +49,19 @@ public class WFITStatisticsTable extends AbstractVisualizer
 
         frame.setTitle("DBTune");
         frame.setBackground(Color.gray);
+        frame.setSize(600, 400);
+        frame.pack();
 
         stats = new ArrayList<RecommendationStatistics>();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void show()
+    {
+        frame.setVisible(true);
     }
 
     /**
@@ -85,9 +96,6 @@ public class WFITStatisticsTable extends AbstractVisualizer
                         newTable(partitionNumber++, partition, wfScores, previousState)));
 
         frame.repaint();
-        frame.pack();
-        frame.setSize(600, 400);
-        frame.setVisible(true);
     }
 
     /**
@@ -110,13 +118,13 @@ public class WFITStatisticsTable extends AbstractVisualizer
             Map<Set<Index>, Double> wf,
             Set<Index> previousState)
     {
-        String[][] dataValues = new String[indexes.size()][4];
+        String[][] dataValues = new String[Sets.powerSet(indexes).size()][];
 
         int state = 0;
 
         for (Set<Index> subset : Sets.powerSet(indexes))
             dataValues[state++] =
-                newRow(partitionNumber, state + 1, subset, wf.get(subset), previousState);
+                newRow(partitionNumber, state, subset, wf.get(subset), previousState);
             
         return new JTable(dataValues, columnNames);
     }

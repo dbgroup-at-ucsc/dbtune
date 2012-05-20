@@ -36,12 +36,15 @@ class WFIT(
     db: Database,
     wl: WorkloadStream,
     initialSet: Set[Index] = new HashSet[Index],
-    idxCnt: Integer = Environment.getInstance.getMaxNumIndexes(),
-    stateCnt: Integer = Environment.getInstance.getMaxNumStates(),
-    histSize: Integer = Environment.getInstance.getIndexStatisticsWindow(),
-    partitionIters: Integer = Environment.getInstance.getNumPartitionIterations())
+    idxCnt: Integer = getInstance.getMaxNumIndexes,
+    stateCnt: Integer = getInstance.getMaxNumStates,
+    histSize: Integer = getInstance.getIndexStatisticsWindow,
+    partitionIters: Integer = getInstance.getNumPartitionIterations)
   extends edu.ucsc.dbtune.advisor.wfit.WFIT(
       db.DBMS, initialSet, idxCnt, stateCnt, histSize, partitionIters)
 {
+  val workload = wl
   wl.register(this)
+  def this(db: Database, workload: WorkloadStream, idxCnt: Integer) =
+    this(db, workload, new HashSet[Index], idxCnt)
 }

@@ -23,10 +23,11 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getColumnListString;
  */
 public class IndexSetPartitionTable extends AbstractVisualizer
 {
-    private String[] columnNames;
-    private JFrame frame;
+    protected String[] columnNames;
+    protected JFrame frame;
 
     /**
+     * constructor.
      */
     public IndexSetPartitionTable()
     {
@@ -38,15 +39,27 @@ public class IndexSetPartitionTable extends AbstractVisualizer
         columnNames[1] = "TABLE";
         columnNames[2] = "COLUMNS";
         columnNames[3] = "BENEFIT";
-        columnNames[4] = "OPTIMAL RECOMMENDED";
+        columnNames[4] = "RECOMMENDED";
 
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
         frame.setTitle("DBTune");
         frame.setBackground(Color.gray);
+        frame.pack();
+        frame.setSize(600, 400);
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void show()
+    {
+        frame.setVisible(true);
+    }
+
+    /**
+     * {@inheritDoc}
      */
     @Override
     public void refresh()
@@ -67,9 +80,6 @@ public class IndexSetPartitionTable extends AbstractVisualizer
             frame.getContentPane().add(new JScrollPane(newTable(e, partition)));
 
         frame.repaint();
-        frame.pack();
-        frame.setSize(600, 400);
-        frame.setVisible(true);
     }
 
     /**
@@ -84,7 +94,7 @@ public class IndexSetPartitionTable extends AbstractVisualizer
      */
     private JTable newTable(RecommendationStatistics.Entry e, Set<Index> indexes)
     {
-        String[][] dataValues = new String[indexes.size()][4];
+        String[][] dataValues = new String[indexes.size()][];
 
         int i = 0;
 
@@ -109,7 +119,7 @@ public class IndexSetPartitionTable extends AbstractVisualizer
         row[0] = index.getName();
         row[1] = index.getTable() + "";
         row[2] = getColumnListString(index);
-        row[3] = e.getBenefits().get(index) + "";
+        row[3] = e.getBenefits().get(index) == null ? "0.0" : (e.getBenefits().get(index) + "");
         row[4] = e.getRecommendation().contains(index) ? "Y" : "N";
 
         return row;

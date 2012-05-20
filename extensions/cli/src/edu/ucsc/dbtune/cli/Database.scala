@@ -102,6 +102,12 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
   def loadIndexes(fileName: String) : Set[Index] = {
     MetadataUtils.loadIndexes(DBMS, fileName)
   }
+  
+  /** drops all indexes
+    */
+  def clear() = {
+    DBMS.getCatalog.dropIndexes
+  }
 }
 
 object Database

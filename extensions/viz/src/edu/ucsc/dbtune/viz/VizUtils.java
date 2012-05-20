@@ -45,7 +45,6 @@ public final class VizUtils
         RefineryUtilities.centerFrameOnScreen(chart);
         chart.pack();
         chart.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        chart.setVisible(true);
         return chart;
     }
 }

@@ -36,6 +36,11 @@ public class WorkFunctionAlgorithm {
             int maxNumIndexes,
             int minId)
     {
+        this.minId = minId;
+        this.wf = new TotalWorkValues(maxNumStates, maxNumIndexes);
+        this.tempCostVector = new CostVector(maxNumStates);
+        this.wf2 = new TotalWorkValues(maxNumStates, maxNumIndexes);
+
         dump("BEFORE INITIAL");
         repartition(parts);
 
@@ -45,10 +50,6 @@ public class WorkFunctionAlgorithm {
         }
         
         dump("AFTER INITIAL");
-        this.minId = minId;
-        this.wf = new TotalWorkValues(maxNumStates, maxNumIndexes);
-        this.tempCostVector = new CostVector(maxNumStates);
-        this.wf2 = new TotalWorkValues(maxNumStates, maxNumIndexes);
     }
     
     public WorkFunctionAlgorithm(
@@ -233,7 +234,8 @@ public class WorkFunctionAlgorithm {
                 Set<Index> subset = new TreeSet<Index>();
 
                 for (int i = 0; i < subm.indexIds.length; i++)
-                    subset.add(find(pool, subm.indexIds[i]));
+                    if (((s >> i) & 1) == 1)
+                        subset.add(find(pool, subm.indexIds[i]));
 
                 wfValues.put(subset, wf.get(subm.subsetNum, s));
             }

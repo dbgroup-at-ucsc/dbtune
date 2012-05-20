@@ -22,10 +22,8 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getColumnListString;
  */
 public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
 {
-    private String[] columnNames;
-    private JFrame frame;
-
     /**
+     * constructor.
      */
     public WFITIndexSetFeedbackTable()
     {
@@ -37,8 +35,8 @@ public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
         columnNames[1] = "TABLE";
         columnNames[2] = "COLUMNS";
         columnNames[3] = "BENEFIT";
-        columnNames[4] = "OPTIMAL RECOMMENDED";
-        columnNames[5] = "USEFUL";
+        columnNames[4] = "RECOMMENDED";
+        columnNames[5] = "OPTIMAL";
 
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));

@@ -104,7 +104,9 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
         {
             this.benefit = e.getBenefit();
             this.candidateSet = e.getCandidateSet();
+            this.previousRecommendation = e.getPreviousRecommendation();
             this.recommendation = e.getRecommendation();
+            this.benefits = e.getBenefits();
             this.transitionCost = e.getTransitionCost();
             this.totalCost = e.getTotalCost();
             this.totalWork = e.getTotalWork();
