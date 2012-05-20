@@ -315,8 +315,8 @@ public class DB2Optimizer extends AbstractOptimizer
                 if (colNameAndAscending.split("\\(")[1].contains("D"))
                     asc = DESC;
                 else {
-                    asc = DESC;
-                    //System.out.println("Unknown order for " + colName);
+                    // unknown order, assume ASC
+                    asc = ASC;
                 }
             }
             

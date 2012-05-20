@@ -67,13 +67,13 @@ public class WorkFunctionAlgorithm {
     }
     
     public void dump(String msg) {
-        System.out.println(msg);
-        for (int i = 0; i < submachines.length; i++) {
-            System.out.println("SUBMACHINE " + i);
-            submachines[i].dump(wf);
-            System.out.println();
-        }
-        System.out.println("----");
+        //System.out.println(msg);
+        //for (int i = 0; i < submachines.length; i++) {
+         //   System.out.println("SUBMACHINE " + i);
+            //submachines[i].dump(wf);
+          //  System.out.println();
+        //}
+        //System.out.println("----");
     }
     
     public void newTask(ProfiledQuery qinfo) {
@@ -328,6 +328,7 @@ public class WorkFunctionAlgorithm {
             return -1;
         }
         
+        /*
         public void dump(TotalWorkValues wf) {
             //System.out.print("Index IDs : [ ");
             //for (int id : indexIds) System.out.print(id + " ");
@@ -351,6 +352,7 @@ public class WorkFunctionAlgorithm {
                 //System.out.println("] = " + wf.get(subsetNum, s));
             //}
         }
+        */
 
         // process a positive or negative vote for the index
         // do the necessary bookkeeping in the input workfunction, and update the current state

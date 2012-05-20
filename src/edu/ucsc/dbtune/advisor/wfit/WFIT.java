@@ -139,8 +139,6 @@ public class WFIT extends Advisor
         this.stats = new WFITRecommendationStatistics("WFIT" + maxNumberOfStates);
         this.optStats = new WFITRecommendationStatistics("OPT");
 
-        System.out.println("creating WFIT" + maxNumberOfStates);
-
         if (initialSet.isEmpty())
             this.isCandidateSetFixed = false;
         else
