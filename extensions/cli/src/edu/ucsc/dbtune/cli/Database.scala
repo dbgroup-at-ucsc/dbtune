@@ -9,6 +9,8 @@ import edu.ucsc.dbtune.optimizer.Optimizer
 import edu.ucsc.dbtune.util.Environment
 import edu.ucsc.dbtune.util.MetadataUtils
 
+import com.google.common.collect.Sets
+
 import java.util.HashSet
 import java.util.Properties
 import java.util.Set
@@ -86,8 +88,8 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
     * @return
     *   new index
     */
-  def newIndex(orderingSpec: String) : Index = {
-    DBMS.newIndex(ColumnOrdering.newOrdering(dbms.getCatalog, orderingSpec))
+  def newIndex(orderingSpec: String) : Set[Index] = {
+    Sets.newHashSet(DBMS.newIndex(ColumnOrdering.newOrdering(dbms.getCatalog, orderingSpec)))
   }
   
   /** creates a set of indexes by reading their definition from a file.

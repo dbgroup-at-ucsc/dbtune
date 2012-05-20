@@ -493,18 +493,23 @@ public class ColumnOrdering
         List<Object> orderingSpecObj = new ArrayList<Object>();
 
         String colsSpec =
-            orderingSpec.substring(orderingSpec.indexOf("("), orderingSpec.indexOf(")"));
+            orderingSpec.substring(orderingSpec.indexOf("(") + 1, orderingSpec.indexOf(")"));
 
         for (String colSpec : colsSpec.split(",")) {
 
-            String colName = colSpec.split(" ")[0];
+            String[] colSpecElements = colSpec.trim().split(" ");
 
-            orderingSpecObj.add(catalog.<Column>findByName(tblName + "." + colName));
+            Column col = catalog.<Column>findByName(tblName + "." + colSpecElements[0]);
 
-            if (colSpec.split(" ").length == 2)
+            if (col == null)
+                throw new SQLException("Can't find column " + colSpecElements[0] + " in catalog");
+
+            orderingSpecObj.add(col);
+
+            if (colSpecElements.length == 2)
                 orderingSpecObj.add(
-                    (colSpec.split(" ")[1].equals("ASC") ||
-                     colSpec.split(" ")[1].equals("ASCENDING")) ? ASC : DESC);
+                    (colSpecElements[1].equals("ASC") ||
+                     colSpecElements[1].equals("ASCENDING")) ? ASC : DESC);
             else
                 orderingSpecObj.add(ASC);
         }
@@ -523,6 +528,9 @@ public class ColumnOrdering
      */
     public static ColumnOrdering newOrdering(Object... orderingSpec)
     {
+        if (orderingSpec.length == 0)
+            throw new IllegalArgumentException("Empty column ordering spec");
+            
         if (orderingSpec.length % 2 != 0)
             throw new IllegalArgumentException("Expecting a sequence of pairs (column, int)");
 
@@ -545,5 +553,25 @@ public class ColumnOrdering
         } catch (SQLException ex) {
             throw new IllegalArgumentException(ex);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        StringBuilder str = new StringBuilder();
+
+        str.append("[");
+
+        for (Column col : getColumns())
+            str.append(col.getName()).append(getOrdering(col) == ASC ? "(A)" : "(D)").append(", ");
+
+        str.delete(str.length() - 2, str.length());
+
+        str.append("]");
+
+        return str.toString();
     }
 }
