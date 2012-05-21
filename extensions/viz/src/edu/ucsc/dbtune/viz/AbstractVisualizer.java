@@ -39,6 +39,15 @@ public abstract class AbstractVisualizer implements Visualizer
     {
         setStatistics(stats.toArray(new RecommendationStatistics[0]));
     }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final void hide()
+    {
+        frame.dispose();
+        frame.setVisible(false);
+    }
 
     /**
      * {@inheritDoc}

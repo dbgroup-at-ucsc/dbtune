@@ -21,6 +21,10 @@ object Plotter
   var feedbackTable = new WFITIndexSetFeedbackTable
 
   def resetUI = {
+    twPlotter.hide
+    partitionTable.hide
+    wfitTable.hide
+    feedbackTable.hide
     twPlotter = new TotalWorkPlotter
     partitionTable = new IndexSetPartitionTable
     wfitTable = new WFITStatisticsTable

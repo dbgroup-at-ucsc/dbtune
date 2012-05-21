@@ -12,4 +12,8 @@ public interface Visualizer
     /**
      */
     void show();
+
+    /**
+     */
+    void hide();
 }
