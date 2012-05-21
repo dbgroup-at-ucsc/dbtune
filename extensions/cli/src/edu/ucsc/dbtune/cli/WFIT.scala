@@ -36,8 +36,8 @@ class WFIT(
     db: Database,
     wl: WorkloadStream,
     initialSet: Set[Index] = new HashSet[Index],
-    stateCnt: Integer = getInstance.getMaxNumStates,
     idxCnt: Integer = getInstance.getMaxNumIndexes,
+    stateCnt: Integer = getInstance.getMaxNumStates,
     histSize: Integer = getInstance.getIndexStatisticsWindow,
     partitionIters: Integer = getInstance.getNumPartitionIterations)
   extends edu.ucsc.dbtune.advisor.wfit.WFIT(
@@ -47,20 +47,19 @@ class WFIT(
   wl.register(this)
 
   def this(db: Database, workload: WorkloadStream) = {
-    this(db, workload, new HashSet[Index], getInstance.getMaxNumStates)
-
-    if (stateCnt == getInstance.getMaxNumStates)
-      this.getRecommendationStatistics.setAlgorithmName("WFIT")
-  }
-
-  def this(db: Database, workload: WorkloadStream, initialSet: Set[Index]) = {
-    this(db, workload, initialSet, getInstance.getMaxNumStates)
+    this(db, workload, new HashSet[Index], getInstance.getMaxNumIndexes)
 
     this.getRecommendationStatistics.setAlgorithmName("WFIT")
   }
 
-  def this(db: Database, workload: WorkloadStream, stateCnt: Integer) =
-    this(db, workload, new HashSet[Index], stateCnt)
+  def this(db: Database, workload: WorkloadStream, initialSet: Set[Index]) = {
+    this(db, workload, initialSet, getInstance.getMaxNumIndexes)
+
+    this.getRecommendationStatistics.setAlgorithmName("WFIT")
+  }
+
+  def this(db: Database, workload: WorkloadStream, idxCnt: Integer) =
+    this(db, workload, new HashSet[Index], idxCnt)
 
   def this(db: Database, workload: WorkloadStream, name: String) = {
     this(db, workload)
@@ -68,7 +67,7 @@ class WFIT(
     this.getRecommendationStatistics.setAlgorithmName(name)
   }
 
-  def voteUp(id: Integer) = { super.voteUp(id); wl.notify }
+  override def voteUp(id: Integer) = { super.voteUp(id); wl.visualizers.foreach(_.refresh) }
 
-  def voteDown(id: Integer) = { super.voteDown(id); wl.notify }
+  override def voteDown(id: Integer) = { super.voteDown(id); wl.visualizers.foreach(_.refresh) }
 }

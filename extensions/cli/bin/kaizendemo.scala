@@ -39,16 +39,22 @@ resetUI
 
 // scenario 3
 
-var workload = new WorkloadStream("workloads/kaizen-demo/scenario-1.sql")
+var workload = new WorkloadStream("workloads/kaizen-demo/scenario-3-a.sql")
 var wfit = new WFIT(db, workload)
 var wfitGood = new WFIT(db, workload, "GOOD")
 plotTotalWork(workload, wfit.getRecommendationStatistics, wfitGood.getRecommendationStatistics)
 showIndexTable(workload, wfitGood.getRecommendationStatistics)
-workload.next
-workload.next
+workload.next(4)
 wfitGood.voteDown(1)
+workload.next(4)
+db.dropIndexes
+resetUI
+
+var workload = new WorkloadStream("workloads/kaizen-demo/scenario-3-b.sql")
+
+workload.next(2)
+wfitGood.voteDown(1)
+workload.next(2)
 workload.next
-workload.next
-workload.next(3)
 db.dropIndexes
 resetUI

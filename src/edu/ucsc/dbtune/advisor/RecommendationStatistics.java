@@ -309,6 +309,20 @@ public class RecommendationStatistics implements Iterable<Entry>
         }
 
         /**
+         * updates the entry based on the given recommendation.
+         *
+         * @param recommendation
+         *      recommendation that should be taken into account
+         */
+        public void update(Set<Index> recommendation)
+        {
+            this.recommendation = recommendation;
+            //this.totalWork = this.totalWork - this.transitionCost;
+            //this.transitionCost = transitionCost(this.previousRecommendation, recommendation);
+            //this.totalWork += this.transitionCost;
+        }
+
+        /**
          * {@inheritDoc}
          */
         @Override

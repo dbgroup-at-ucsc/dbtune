@@ -42,6 +42,7 @@ public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
         frame.setTitle("DBTune");
         frame.setBackground(Color.gray);
+        frame.setSize(600, 400);
     }
 
     /**
@@ -64,7 +65,9 @@ public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
         row[4] = index.getCreationCost() + "";
         row[5] = wfEntry.getBenefits().get(index) + "";
         row[6] = wfEntry.getRecommendation().contains(index) ? "Y" : "N";
-        row[7] = wfEntry.getUsefulness().get(index) ? "Y" : "N";
+        row[7] =
+            wfEntry.getUsefulness().get(index) != null &&
+            wfEntry.getUsefulness().get(index) ? "Y" : "N";
 
         return row;
     }

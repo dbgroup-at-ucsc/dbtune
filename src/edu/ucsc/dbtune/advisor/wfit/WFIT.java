@@ -279,8 +279,11 @@ public class WFIT extends Advisor
      *
      * @param id
      *      id of index being voted
+     * @throws SQLException
+     *      if the index can't be voted
      */
-    public void voteUp(int id)
+    public void voteUp(Integer id)
+        throws SQLException
     {
         voteUp(findOrThrow(pool, id));
     }
@@ -290,10 +293,15 @@ public class WFIT extends Advisor
      *
      * @param index
      *      index being voted
+     * @throws SQLException
+     *      if the index can't be voted
      */
     public void voteUp(Index index)
+        throws SQLException
     {
         wfitDriver.vote(index, true);
+
+        updateLastEntry();
     }
 
     /**
@@ -304,7 +312,7 @@ public class WFIT extends Advisor
      * @throws SQLException
      *      if the index can't be voted
      */
-    public void voteDown(int id) throws SQLException
+    public void voteDown(Integer id) throws SQLException
     {
         voteDown(findOrThrow(pool, id));
     }
@@ -314,9 +322,29 @@ public class WFIT extends Advisor
      *
      * @param index
      *      index being voted
+     * @throws SQLException
+     *      if the index can't be voted
      */
     public void voteDown(Index index)
+        throws SQLException
     {
         wfitDriver.vote(index, false);
+
+        updateLastEntry();
+    }
+
+    /**
+     * updates the last entry in the statistics.
+     *
+     * @throws SQLException
+     *      if the last entry can't be updated
+     */
+    private void updateLastEntry()
+        throws SQLException
+    {
+        if (stats.size() == 0)
+            return;
+
+        stats.getLastEntry().update(getRecommendation());
     }
 }

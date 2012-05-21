@@ -62,10 +62,6 @@ class WorkloadStream(fileName: String) {
    */
   def play = workloadActor ! Play(advisors, visualizers)
 
-  /** Executes the whole workload, i.e. until there are no more statements in the stream.
-   */
-  def nofity = workloadActor ! Notify(visualizers)
-
   /** Checks if the given advisor is a member of the internal registry.
    *
    * @param advisor
@@ -95,7 +91,6 @@ class WorkloadStreamActor(iterator: Iterator[SQLStatement]) extends Actor {
       react {
         case Next(advisors, visualizers, steps) => next(advisors, visualizers, steps)
         case Play(advisors, visualizers) => play(advisors, visualizers)
-        case Notify(visualizers) => notify(visualizers)
         case Stop => exit
       }
     }
@@ -141,4 +136,3 @@ class WorkloadStreamActor(iterator: Iterator[SQLStatement]) extends Actor {
 case class Stop()
 case class Next(advisors: Set[Advisor], visualizers: Set[Visualizer], steps: Integer)
 case class Play(advisors: Set[Advisor], visualizers: Set[Visualizer])
-case class Notify(visualizers: Set[Visualizer])
