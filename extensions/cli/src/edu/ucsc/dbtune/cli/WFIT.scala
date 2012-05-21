@@ -67,4 +67,8 @@ class WFIT(
 
     this.getRecommendationStatistics.setAlgorithmName(name)
   }
+
+  def voteUp(id: Integer) = { super.voteUp(id); wl.notify }
+
+  def voteDown(id: Integer) = { super.voteDown(id); wl.notify }
 }
