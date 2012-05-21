@@ -60,6 +60,7 @@ public class RecommendationStatistics implements Iterable<Entry>
         Entry e = new Entry();
 
         double transitionCost = transitionCost(previousRecommendation, recommendation);
+        double undoCost = transitionCost(recommendation, previousRecommendation);
 
         totalWorkSum += totalCost + transitionCost;
 
@@ -69,6 +70,7 @@ public class RecommendationStatistics implements Iterable<Entry>
         e.recommendation = recommendation;
         e.transitionCost = transitionCost;
         e.totalWork = totalWorkSum;
+        e.undoCost = undoCost;
         e.candidatePartitioning = partitioning;
         e.benefits = benefits;
 
@@ -194,6 +196,7 @@ public class RecommendationStatistics implements Iterable<Entry>
         protected Set<Set<Index>> candidatePartitioning;
         protected Map<Index, Double> benefits;
         protected double benefit;
+        protected double undoCost;
         protected double transitionCost;
         protected double totalWork;
         protected double totalCost;
@@ -246,6 +249,16 @@ public class RecommendationStatistics implements Iterable<Entry>
         public double getBenefit()
         {
             return this.benefit;
+        }
+
+        /**
+         * Gets the undoCost for this instance.
+         *
+         * @return The undoCost.
+         */
+        public double getUndoCost()
+        {
+            return this.undoCost;
         }
 
         /**

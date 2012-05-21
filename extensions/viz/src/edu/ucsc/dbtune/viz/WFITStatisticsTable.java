@@ -31,13 +31,14 @@ public class WFITStatisticsTable extends AbstractVisualizer
      */
     public WFITStatisticsTable()
     {
-        columnNames = new String[5];
+        columnNames = new String[6];
 
         columnNames[0] = "PARTITION";
         columnNames[1] = "STATE";
         columnNames[2] = "INDEXES";
-        columnNames[3] = "SCORE";
-        columnNames[4] = "TRANSITION COST";
+        columnNames[3] = "WORK-FUNCTION VALUE";
+        columnNames[4] = "UNDO COST";
+        columnNames[5] = "SCORE";
 
         frame = new JFrame();
 
@@ -91,7 +92,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
      *
      * @param partitionNumber
      *      the partition being displayed
-     * @param indexes
+     * @param partition
      *      set of indexes inside the partition
      * @param wf
      *      work function scores
@@ -102,17 +103,18 @@ public class WFITStatisticsTable extends AbstractVisualizer
      */
     private JTable newTable(
             int partitionNumber,
-            Set<Index> indexes,
+            Set<Index> partition,
             Map<Set<Index>, Double> wf,
             Set<Index> previousState)
     {
-        String[][] dataValues = new String[Sets.powerSet(indexes).size()][];
+        String[][] dataValues = new String[Sets.powerSet(partition).size()][];
 
         int state = 0;
 
-        for (Set<Index> subset : Sets.powerSet(indexes))
+        for (Set<Index> subset : Sets.powerSet(partition))
             dataValues[state++] =
-                newRow(partitionNumber, state, subset, wf.get(subset), previousState);
+                newRow(partitionNumber, state, subset, wf.get(subset),
+                        Sets.intersection(previousState, partition));
             
         return new JTable(dataValues, columnNames);
     }
@@ -124,7 +126,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
      *      the partition being displayed
      * @param subset
      *      subset that the row corresponds to
-     * @param wfScore
+     * @param wfValue
      *      score of the subset
      * @param previousRecommendation
      *      previous state
@@ -135,22 +137,19 @@ public class WFITStatisticsTable extends AbstractVisualizer
             int partitionNumber,
             int stateNumber,
             Set<Index> subset,
-            double wfScore,
+            double wfValue,
             Set<Index> previousRecommendation)
     {
-        String[] row = new String[5];
+        String[] row = new String[6];
 
+        double undoCost = transitionCost(subset, previousRecommendation);
+        
         row[0] = partitionNumber + "";
         row[1] = stateNumber + "";
         row[2] = subset + "";
-        row[3] = wfScore + "";
-        row[4] = transitionCost(previousRecommendation, subset) + "";
-
-        columnNames[0] = "PARTITION";
-        columnNames[1] = "STATE";
-        columnNames[2] = "INDEXES";
-        columnNames[3] = "SCORE";
-        columnNames[4] = "TRANSITION COST";
+        row[3] = wfValue + "";
+        row[4] = undoCost + "";
+        row[5] = (wfValue - undoCost) + "";
 
         return row;
     }
