@@ -11,13 +11,31 @@ public class SQLStatement
     /** category of statement. */
     private SQLCategory category;
 
+    /** workload this statement corresponds to. */
+    private Workload workload;
+
     /** literal contents of the statement. */
     private String sql;
     
-    /** The frequency of the statement in the workload */
+    /** The frequency of the statement in the workload. */
     private double fq;
     
-    
+    /** The position of the statement in the workload. */
+    private int position;
+
+    /**
+     * @param workload
+     *      workload this statement corresponds to.
+     * @param sql
+     *      a sql statement.
+     * @param position
+     *      position of the statement in the workload
+     */
+    SQLStatement(Workload workload, String sql, int position)
+    {
+        this(workload, sql, SQLCategory.from(sql), position);
+    }
+
     /**
      * Constructs a {@code SQLStatement}. The constructor tries to infer the category of the 
      * statement using the {@link SQLCategory#from} method.
@@ -28,21 +46,27 @@ public class SQLStatement
      */
     public SQLStatement(String sql)
     {
-        this(sql, SQLCategory.from(sql));
+        this(null, sql, SQLCategory.from(sql), 0);
     }
 
     /**
      * Constructs a {@code SQLStatement} given its category and the literal contents.
      *
+     * @param workload
+     *      workload this statement corresponds to.
      * @param category
      *      the corresponding {@link SQLCategory} representing the category of statement.
      * @param sql
      *      a sql statement.
+     * @param position
+     *      position of the statement in the workload
      */
-    public SQLStatement(String sql, SQLCategory category)
+    public SQLStatement(Workload workload, String sql, SQLCategory category, int position)
     {
+        this.workload = workload;
         this.category = category;
         this.sql      = sql;
+        this.position = position;
         
         // the default weight of the statement is 1.0
         fq = 1.0;
@@ -73,7 +97,7 @@ public class SQLStatement
 
     
     /**
-     * Retrieves the weight of the statement
+     * Retrieves the weight of the statement.
      * 
      * @return
      *      The weight of this statement
@@ -84,7 +108,7 @@ public class SQLStatement
     }
     
     /**
-     * Set the weight for the statement
+     * Set the weight for the statement.
      * 
      * @param fq
      *      The weight
@@ -130,5 +154,25 @@ public class SQLStatement
     {
         return "[ category=" + category +
                " text=\"" + sql + "\"]";
+    }
+
+    /**
+     * Gets the workload for this instance.
+     *
+     * @return The workload.
+     */
+    public Workload getWorkload()
+    {
+        return this.workload;
+    }
+
+    /**
+     * Gets the position for this instance.
+     *
+     * @return The position.
+     */
+    public int getPosition()
+    {
+        return this.position;
     }
 }

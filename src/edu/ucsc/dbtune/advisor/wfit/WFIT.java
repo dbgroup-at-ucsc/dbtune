@@ -172,6 +172,7 @@ public class WFIT extends Advisor
             getOptimalRecommendationStatistics();
 
         stats.addNewEntry(
+            sql,
             pStmt.explain(recommendation).getTotalCost(),
             pool,
             getStablePartitioning(),
@@ -255,6 +256,7 @@ public class WFIT extends Advisor
 
         for (Set<Index> optRecommendation : wfitDriver.getOptimalScheduleRecommendation(pool))
             optStats.addNewEntry(
+                null,
                 wfitDriver.getCost(i, optRecommendation),
                 pool,
                 new TreeSet<Set<Index>>(),

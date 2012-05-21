@@ -9,6 +9,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics.Entry;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.transitionCost;
 
@@ -37,6 +38,8 @@ public class RecommendationStatistics implements Iterable<Entry>
     /**
      * Adds a new entry to the statistics.
      *
+     * @param sql
+     *      statement for which this entry corresponds to
      * @param totalCost
      *      the cost of exeucting the statement
      * @param candidateSet
@@ -51,6 +54,7 @@ public class RecommendationStatistics implements Iterable<Entry>
      *      the entry that has been just created
      */
     public Entry addNewEntry(
+            SQLStatement sql,
             double totalCost,
             Set<Index> candidateSet,
             Set<Set<Index>> partitioning,
@@ -64,6 +68,7 @@ public class RecommendationStatistics implements Iterable<Entry>
 
         totalWorkSum += totalCost + transitionCost;
 
+        e.sql = sql;
         e.previousRecommendation = previousRecommendation;
         e.totalCost = totalCost;
         e.candidateSet = candidateSet;
@@ -190,6 +195,7 @@ public class RecommendationStatistics implements Iterable<Entry>
      */
     public static class Entry
     {
+        protected SQLStatement sql;
         protected Set<Index> candidateSet;
         protected Set<Index> recommendation;
         protected Set<Index> previousRecommendation;
@@ -200,6 +206,16 @@ public class RecommendationStatistics implements Iterable<Entry>
         protected double transitionCost;
         protected double totalWork;
         protected double totalCost;
+
+        /**
+         * Gets the sql for this instance.
+         *
+         * @return The sql.
+         */
+        public SQLStatement getSql()
+        {
+            return this.sql;
+        }
 
         /**
          * Gets the candidateSet for this instance.

@@ -7,6 +7,8 @@ import javax.swing.JFrame;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 
+import edu.ucsc.dbtune.workload.Workload;
+
 /**
  * @author Ivo Jimenez
  */
@@ -47,6 +49,14 @@ public abstract class AbstractVisualizer implements Visualizer
     {
         frame.dispose();
         frame.setVisible(false);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setWorkload(Workload w)
+    {
     }
 
     /**

@@ -9,6 +9,8 @@ import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 
 import edu.ucsc.dbtune.metadata.Index;
 
+import edu.ucsc.dbtune.workload.SQLStatement;
+
 /**
  * Holds information about the WFIT advising process. Essentially, extends the set of recommendation 
  * statistics by including information about the stable candidate partitioning.
@@ -29,6 +31,8 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
     /**
      * Adds a wfit-specific entry.
      *
+     * @param sql
+     *      statement for which this entry corresponds to
      * @param totalCost
      *      the cost of exeucting the statement
      * @param candidateSet
@@ -48,6 +52,7 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
      *      the entry that has been just created
      */
     public Entry addNewEntry(
+            SQLStatement sql,
             double totalCost,
             Set<Index> candidateSet,
             Set<Set<Index>> partitioning,
@@ -56,7 +61,7 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
             Map<Index, Double> benefits,
             Map<Set<Index>, Double> workFunctionScores)
     {
-        Entry e = addNewEntry(totalCost, candidateSet, partitioning, recommendation, benefits);
+        Entry e = addNewEntry(sql, totalCost, candidateSet, partitioning, recommendation, benefits);
 
         e.workFunctionScores = workFunctionScores;
         e.usefulness = usefulness;
@@ -69,13 +74,14 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
      */
     @Override
     public Entry addNewEntry(
+            SQLStatement sql,
             double totalCost,
             Set<Index> candidateSet,
             Set<Set<Index>> partitioning,
             Set<Index> recommendation,
             Map<Index, Double> benefits)
     {
-        super.addNewEntry(totalCost, candidateSet, partitioning, recommendation, benefits);
+        super.addNewEntry(sql, totalCost, candidateSet, partitioning, recommendation, benefits);
 
         RecommendationStatistics.Entry e = super.entries.remove(entries.size() - 1);
 
@@ -102,6 +108,7 @@ public class WFITRecommendationStatistics extends RecommendationStatistics
          */
         public Entry(RecommendationStatistics.Entry e)
         {
+            this.sql = e.getSql();
             this.benefit = e.getBenefit();
             this.candidateSet = e.getCandidateSet();
             this.previousRecommendation = e.getPreviousRecommendation();

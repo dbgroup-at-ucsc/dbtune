@@ -2,9 +2,8 @@ var db = connect("jdbc:db2://192.168.56.101:50000/test", "db2inst1", "db2inst1ad
 
 // scenario 1
 
-var workload = new WorkloadStream("workloads/kaizen-demo/scenario-1.sql")
-var initialSet = db.recommend("SELECT col1 FROM one_table.tbl WHERE col1 = 2"); 
-initialSet.addAll(db.recommend("SELECT col1 FROM one_table.tbl WHERE col2 = 2"))
+var workload = new WorkloadStream("workloads/kaizen-demo/scenario-1.sql");
+var initialSet = db.recommend("SELECT col1 FROM one_table.tbl WHERE col1 = 2"); initialSet.addAll(db.recommend("SELECT col1 FROM one_table.tbl WHERE col2 = 2"))
 var wfit = new WFIT(db, workload, initialSet)
 plotTotalWork(workload, wfit.getOptimalRecommendationStatistics, wfit.getRecommendationStatistics)
 showWFITTable(workload, wfit.getRecommendationStatistics)
@@ -24,10 +23,10 @@ resetUI
 // we could begin with the simple 3-index scenario
 //var workload = new WorkloadStream("workloads/kaizen-demo/scenario-2.sql")
 var workload = new WorkloadStream("workloads/tpch-10-counts/workload.sql")
-var wfit2 = new WFIT(db, workload, 2)
-var wfit10 = new WFIT(db, workload, 10)
-plotTotalWork(workload, wfit2.getRecommendationStatistics, wfit10.getRecommendationStatistics)
-showIndexTable(workload, wfit2.getRecommendationStatistics)
+var wfit1 = new WFIT(db, workload, 1)
+var wfit100 = new WFIT(db, workload, 100)
+plotTotalWork(workload, wfit1.getRecommendationStatistics, wfit100.getRecommendationStatistics)
+showIndexTable(workload, wfit1.getRecommendationStatistics)
 workload.next
 workload.next
 workload.next

@@ -29,15 +29,15 @@ public class IndexSetPartitionTable extends AbstractVisualizer
      */
     public IndexSetPartitionTable()
     {
-        columnNames = new String[7];
+        columnNames = new String[6];
 
         columnNames[0] = "NAME";
         columnNames[1] = "TABLE";
         columnNames[2] = "COLUMNS";
-        columnNames[3] = "SIZE";
-        columnNames[4] = "COST";
-        columnNames[5] = "BENEFIT";
-        columnNames[6] = "RECOMMENDED";
+        //columnNames[3] = "SIZE";
+        columnNames[3] = "COST";
+        columnNames[4] = "BENEFIT";
+        columnNames[5] = "RECOMMENDED";
 
         frame = new JFrame();
 
@@ -106,15 +106,15 @@ public class IndexSetPartitionTable extends AbstractVisualizer
      */
     protected String[] newRow(RecommendationStatistics.Entry e, Index index)
     {
-        String[] row = new String[7];
+        String[] row = new String[6];
 
         row[0] = index.getName();
         row[1] = index.getTable() + "";
         row[2] = getColumnListString(index);
-        row[3] = index.getBytes() / (1024 * 1024) + "";
-        row[4] = index.getCreationCost() + "";
-        row[5] = e.getBenefits().get(index) == null ? "0.0" : (e.getBenefits().get(index) + "");
-        row[6] = e.getRecommendation().contains(index) ? "Y" : "N";
+        //row[3] = index.getBytes() / (1024 * 1024) + "";
+        row[3] = index.getCreationCost() + "";
+        row[4] = e.getBenefits().get(index) == null ? "0.0" : (e.getBenefits().get(index) + "");
+        row[5] = e.getRecommendation().contains(index) ? "Y" : "N";
 
         return row;
     }

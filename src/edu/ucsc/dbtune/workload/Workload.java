@@ -65,6 +65,7 @@ public class Workload implements Iterable<SQLStatement>
         BufferedReader reader;
         StringBuilder sb;
         String line;
+        int stmtNumber = 1;
 
         sqls = new ArrayList<SQLStatement>();
         reader = new BufferedReader(workloadStream);
@@ -83,7 +84,7 @@ public class Workload implements Iterable<SQLStatement>
                 final String sql = sb.toString();
 
                 if (!sql.isEmpty())
-                    sqls.add(new SQLStatement(sb.toString()));
+                    sqls.add(new SQLStatement(this, sb.toString(), stmtNumber++));
 
                 sb = new StringBuilder();
             } else {

@@ -27,7 +27,8 @@ import edu.ucsc.dbtune.workload.Workload
  *    an (optional) initial candidate set
  */
 class WorkloadStream(fileName: String) {
-  val workloadActor = new WorkloadStreamActor((new Workload(fileName)).iterator)
+  val workload = new Workload(fileName)
+  val workloadActor = new WorkloadStreamActor(workload.iterator)
   var advisors = Set[Advisor]()
   var visualizers = Set[Visualizer]()
 
@@ -45,7 +46,9 @@ class WorkloadStream(fileName: String) {
    * @param visualizer
    *    new visualizer to be added to the registry
    */
-  def register(visualizer: Visualizer) = visualizers += visualizer
+  def register(visualizer: Visualizer) = {
+    visualizers += visualizer; visualizer.setWorkload(workload)
+  }
 
   /** Executes the next statement in the stream
    */
@@ -75,6 +78,13 @@ class WorkloadStream(fileName: String) {
    *    visualizer being checked for membership in the registry
    */
   def isRegistered(viz: Visualizer) = visualizers.contains(viz)
+
+  /** Checks if the given visualizer is a member of the internal registry.
+   *
+   * @param visualizer
+   *    visualizer being checked for membership in the registry
+   */
+  def currentStatement() : SQLStatement = workloadActor.currentStmt
 }
 
 /** An actor to concurrently handle the processing and passing of statements contained in a 
@@ -84,7 +94,7 @@ class WorkloadStream(fileName: String) {
  *    a statement iterator
  */
 class WorkloadStreamActor(iterator: Iterator[SQLStatement]) extends Actor {
-  var isPlaying = false
+  var currentStmt = new SQLStatement("select from empty")
 
   def act = {
     loop {
@@ -100,17 +110,14 @@ class WorkloadStreamActor(iterator: Iterator[SQLStatement]) extends Actor {
    * communicating each statement to every advisor and visualizer contained in the given sets
    */
   def play(advisors: Set[Advisor], visualizers: Set[Visualizer]) = {
-    if (!isPlaying) {
-      isPlaying = true
-      while (iterator.hasNext()) {
-        val sql = iterator.next
-        advisors.foreach(_.process(sql))
-        visualizers.foreach(_.refresh)
-      }
-
-      this ! Stop
-      isPlaying = false
+    while (iterator.hasNext()) {
+      currentStmt = iterator.next
+      advisors.foreach(_.process(currentStmt))
+      visualizers.foreach(_.refresh)
     }
+
+    currentStmt = null
+    this ! Stop
   }
 
   /** Executes a specific number of statements from the workload, i.e. until there are no more 
@@ -121,10 +128,11 @@ class WorkloadStreamActor(iterator: Iterator[SQLStatement]) extends Actor {
   def next(advisors: Set[Advisor], visualizers: Set[Visualizer], steps: Integer) = {
     for (i <- 1 to steps) {
       if (iterator.hasNext()) {
-        val sql = iterator.next
-        advisors.foreach(_.process(sql))
+        currentStmt = iterator.next
+        advisors.foreach(_.process(currentStmt))
         visualizers.foreach(_.refresh)
       } else {
+        currentStmt = null
         this ! Stop
       }
     }

@@ -149,7 +149,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
         row[2] = subset + "";
         row[3] = wfValue + "";
         row[4] = undoCost + "";
-        row[5] = (wfValue - undoCost) + "";
+        row[5] = (wfValue + undoCost) + "";
 
         return row;
     }

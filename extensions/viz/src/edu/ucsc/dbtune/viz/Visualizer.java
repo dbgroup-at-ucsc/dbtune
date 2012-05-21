@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.viz;
 
+import edu.ucsc.dbtune.workload.Workload;
+
 /**
  * @author Ivo Jimenez
  */
@@ -16,4 +18,10 @@ public interface Visualizer
     /**
      */
     void hide();
+
+    /**
+     * @param w
+     *      the workload this visualizer is watching
+     */
+    void setWorkload(Workload w);
 }
