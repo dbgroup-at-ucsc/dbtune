@@ -39,7 +39,7 @@ public class WorkloadTable extends AbstractVisualizer
 
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
 
-        frame.setTitle("DBTune");
+        frame.setTitle("   Workload");
         frame.setBackground(Color.gray);
         frame.setSize(600, 400);
         frame.pack();

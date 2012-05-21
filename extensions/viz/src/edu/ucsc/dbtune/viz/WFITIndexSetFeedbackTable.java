@@ -31,7 +31,7 @@ public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
         columnNames[1] = "TABLE";
         columnNames[2] = "COLUMNS";
         //columnNames[3] = "SIZE";
-        columnNames[3] = "COST";
+        columnNames[3] = "CREATION COST";
         columnNames[4] = "BENEFIT";
         columnNames[5] = "RECOMMENDED";
         columnNames[6] = "OPTIMAL";
@@ -40,7 +40,7 @@ public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
 
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
-        frame.setTitle("DBTune");
+        frame.setTitle("   Feedback");
         frame.setBackground(Color.gray);
         frame.setSize(600, 400);
     }

@@ -23,7 +23,7 @@ public class TotalWorkPlotter extends AbstractVisualizer
     public TotalWorkPlotter()
     {
         XYSeriesCollection c = new XYSeriesCollection();
-        appFrame = VizUtils.createXYChart("DBTune", c, "Performance", "Queries", "Total Work");
+        appFrame = VizUtils.createXYChart("Performance", c, "", "Queries", "Total Work");
         frame = appFrame;
         stats = new ArrayList<RecommendationStatistics>();
     }

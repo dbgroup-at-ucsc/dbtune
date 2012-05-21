@@ -35,7 +35,7 @@ public class IndexSetPartitionTable extends AbstractVisualizer
         columnNames[1] = "TABLE";
         columnNames[2] = "COLUMNS";
         //columnNames[3] = "SIZE";
-        columnNames[3] = "COST";
+        columnNames[3] = "CREATION COST";
         columnNames[4] = "BENEFIT";
         columnNames[5] = "RECOMMENDED";
 
@@ -43,7 +43,7 @@ public class IndexSetPartitionTable extends AbstractVisualizer
 
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
-        frame.setTitle("DBTune");
+        frame.setTitle("   Indexes");
         frame.setBackground(Color.gray);
         frame.pack();
         frame.setSize(600, 400);
