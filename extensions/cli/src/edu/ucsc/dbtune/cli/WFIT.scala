@@ -36,8 +36,8 @@ class WFIT(
     db: Database,
     wl: WorkloadStream,
     initialSet: Set[Index] = new HashSet[Index],
-    idxCnt: Integer = getInstance.getMaxNumIndexes,
     stateCnt: Integer = getInstance.getMaxNumStates,
+    idxCnt: Integer = getInstance.getMaxNumIndexes,
     histSize: Integer = getInstance.getIndexStatisticsWindow,
     partitionIters: Integer = getInstance.getNumPartitionIterations)
   extends edu.ucsc.dbtune.advisor.wfit.WFIT(
@@ -47,19 +47,22 @@ class WFIT(
   wl.register(this)
 
   def this(db: Database, workload: WorkloadStream) = {
-    this(db, workload, new HashSet[Index], getInstance.getMaxNumIndexes)
+    this(db, workload, new HashSet[Index], getInstance.getMaxNumStates)
 
     this.getRecommendationStatistics.setAlgorithmName("WFIT")
   }
 
   def this(db: Database, workload: WorkloadStream, initialSet: Set[Index]) = {
-    this(db, workload, initialSet, getInstance.getMaxNumIndexes)
+    this(db, workload, initialSet, getInstance.getMaxNumStates)
 
     this.getRecommendationStatistics.setAlgorithmName("WFIT")
   }
 
-  def this(db: Database, workload: WorkloadStream, idxCnt: Integer) =
-    this(db, workload, new HashSet[Index], idxCnt)
+  def this(db: Database, workload: WorkloadStream, stateCnt: Integer) = {
+    this(db, workload, new HashSet[Index], stateCnt)
+
+    this.getRecommendationStatistics.setAlgorithmName("WFIT" + stateCnt)
+  }
 
   def this(db: Database, workload: WorkloadStream, name: String) = {
     this(db, workload)
