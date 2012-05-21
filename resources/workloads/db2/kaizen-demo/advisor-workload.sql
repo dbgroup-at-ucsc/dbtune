@@ -1,2 +1,2 @@
-SELECT a FROM one_table.tbl WHERE a = 2;
-SELECT a FROM one_table.tbl WHERE b = 2;
+SELECT col1 FROM one_table.tbl WHERE col1 = 2;
+SELECT col1 FROM one_table.tbl WHERE col2 = 2;
