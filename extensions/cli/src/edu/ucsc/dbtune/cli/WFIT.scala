@@ -61,4 +61,10 @@ class WFIT(
 
   def this(db: Database, workload: WorkloadStream, stateCnt: Integer) =
     this(db, workload, new HashSet[Index], stateCnt)
+
+  def this(db: Database, workload: WorkloadStream, name: String) = {
+    this(db, workload)
+
+    this.getRecommendationStatistics.setAlgorithmName(name)
+  }
 }
