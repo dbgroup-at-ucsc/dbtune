@@ -76,6 +76,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
 
         RecommendationStatistics.Entry e = stats.get(0).getLastEntry();
         Set<Set<Index>> partitions = e.getCandidatePartitioning();
+        Set<Index> currentState = e.getRecommendation();
         Set<Index> previousState = e.getPreviousRecommendation();
         Map<Set<Index>, Double> wfScores =
             ((WFITRecommendationStatistics.Entry) e).getWorkFunctionScores();
@@ -83,8 +84,9 @@ public class WFITStatisticsTable extends AbstractVisualizer
         int partitionNumber = 1;
         for (Set<Index> partition : partitions)
             frame.getContentPane().add(
-                    new JScrollPane(
-                        newTable(partitionNumber++, partition, wfScores, previousState)));
+                new JScrollPane(
+                    newTable(
+                        partitionNumber++, partition, wfScores, currentState, previousState)));
     }
 
     /**
@@ -96,6 +98,8 @@ public class WFITStatisticsTable extends AbstractVisualizer
      *      set of indexes inside the partition
      * @param wf
      *      work function scores
+     * @param currentState
+     *      current state
      * @param previousState
      *      previous state
      * @return
@@ -105,6 +109,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
             int partitionNumber,
             Set<Index> partition,
             Map<Set<Index>, Double> wf,
+            Set<Index> currentState,
             Set<Index> previousState)
     {
         String[][] dataValues = new String[Sets.powerSet(partition).size()][];
@@ -114,6 +119,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
         for (Set<Index> subset : Sets.powerSet(partition))
             dataValues[state++] =
                 newRow(partitionNumber, state, subset, wf.get(subset),
+                        Sets.intersection(currentState, partition),
                         Sets.intersection(previousState, partition));
             
         return new JTable(dataValues, columnNames);
@@ -128,8 +134,10 @@ public class WFITStatisticsTable extends AbstractVisualizer
      *      subset that the row corresponds to
      * @param wfValue
      *      score of the subset
-     * @param previousRecommendation
-     *      previous state
+     * @param currentRecommendationForPartition
+     *      the current recommendation for the partition
+     * @param previousRecommendationForPartition
+     *      the previous recommendation for the corresponding partition
      * @return
      *      an array of strings, where each corresponds to an attribute of the index
      */
@@ -138,13 +146,20 @@ public class WFITStatisticsTable extends AbstractVisualizer
             int stateNumber,
             Set<Index> subset,
             double wfValue,
-            Set<Index> previousRecommendation)
+            Set<Index> currentRecommendationForPartition,
+            Set<Index> previousRecommendationForPartition)
     {
         String[] row = new String[6];
 
-        double undoCost = transitionCost(subset, previousRecommendation);
+        double undoCost = transitionCost(subset, previousRecommendationForPartition);
         
-        row[0] = partitionNumber + "";
+        if (currentRecommendationForPartition.equals(subset))
+            row[0] = ">> ";
+        else
+            row[0] = "";
+
+        row[0] += partitionNumber + "";
+        
         row[1] = stateNumber + "";
         row[2] = subset + "";
         row[3] = wfValue + "";
