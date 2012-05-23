@@ -129,7 +129,7 @@ public class BipTest2 {
         DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
         // timer.finish("loading");
         timer.reset();
-        SeqInumCost cost = SeqInumCost.fromInum(optimizer, workload, indexes);
+        SeqInumCost cost = SeqInumCost.fromInum(db,optimizer, workload, indexes);
         if (false) {
             for (int i = 0; i < cost.queries.size(); i++) {
                 Rt.p("Q" + i + ": ");

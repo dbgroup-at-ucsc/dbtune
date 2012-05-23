@@ -75,6 +75,7 @@ public class SeqInumCost implements Serializable {
         populateTime += desc.populateTime / 1000000000.0;
         // Rt.p("BIP INUM populate time: " + timer.getSecondElapse());
         q.plans = new SeqInumPlan[desc.getNumberOfTemplatePlans()];
+        q.baseTableUpdateCost = desc.getBaseTableUpdateCost();
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
             SeqInumPlan plan = new SeqInumPlan(q, k);
             plan.internalCost = desc.getInternalPlanCost(k);
@@ -95,6 +96,7 @@ public class SeqInumCost implements Serializable {
                             throw new SQLException("Can't map index "
                                     + index.toString());
                         c.cost = desc.getAccessCost(k, index);
+                        c.updateCost = desc.getUpdateCost(index);
                         // Rt.p(index);
                         slot.costs.add(c);
                         // Rt
@@ -130,7 +132,7 @@ public class SeqInumCost implements Serializable {
             q.dropCost = 0;
             Statement st = db.getConnection().createStatement();
             q.storageCost = SeqCost.getIndexSize(st, q.index); // TODO add
-                                                               // storage cost
+            // storage cost
             st.close();
         }
         if (workload != null) {

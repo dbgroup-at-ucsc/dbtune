@@ -17,8 +17,8 @@ public class SeqInumPlan implements Serializable {
     }
     
     public void save(Rx rx) {
-        rx.createChild("id",id);
-        rx.createChild("internalCost",internalCost);
+        rx.setAttribute("id",id);
+        rx.setAttribute("internalCost",internalCost);
         for (SeqInumSlot slot : slots) {
             slot.save(rx.createChild("slot"));
         }
@@ -26,8 +26,8 @@ public class SeqInumPlan implements Serializable {
     
     public SeqInumPlan(SeqInumCost cost,SeqInumQuery query,Rx rx) {
         this.query = query;
-        id=rx.getChildIntContent("id");
-        internalCost=rx.getChildDoubleContent("internalCost");
+        id=rx.getIntAttribute("id");
+        internalCost=rx.getDoubleAttribute("internalCost");
         Rx[] rs=rx.findChilds("slot");
         slots=new SeqInumSlot[rs.length];
         for (int i=0;i<rs.length;i++) {

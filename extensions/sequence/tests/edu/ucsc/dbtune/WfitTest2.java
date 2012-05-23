@@ -43,7 +43,7 @@ public class WfitTest2 {
         InumOptimizer optimizer = (InumOptimizer) BipTest2.db.getOptimizer();
         DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
         timer.reset();
-        SeqInumCost cost = SeqInumCost.fromInum(optimizer, null, indexes);
+        SeqInumCost cost = SeqInumCost.fromInum(BipTest2.db,optimizer, null, indexes);
         Rt.p("%d x %d", workload.size(), cost.indices.size());
         Wfit wfit = new Wfit(cost);
         wfit.setOptimizer(optimizer);

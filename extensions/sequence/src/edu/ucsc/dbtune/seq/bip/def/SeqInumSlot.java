@@ -20,7 +20,7 @@ public class SeqInumSlot implements Serializable {
     }
 
     public void save(Rx rx) {
-        rx.createChild("fullTableScanCost", fullTableScanCost);
+        rx.setAttribute("fullTableScanCost", fullTableScanCost);
         for (SeqInumSlotIndexCost cost : costs) {
             cost.save(rx.createChild("index"));
         }
@@ -28,7 +28,7 @@ public class SeqInumSlot implements Serializable {
 
     public SeqInumSlot(SeqInumCost cost,SeqInumPlan plan, Rx rx) {
         this.plan = plan;
-        fullTableScanCost = rx.getChildDoubleContent("fullTableScanCost");
+        fullTableScanCost = rx.getDoubleAttribute("fullTableScanCost");
         for (Rx r : rx.findChilds("index")) {
             costs.add(new SeqInumSlotIndexCost(cost,r));
         }

@@ -14,6 +14,7 @@ public class SeqInumQuery implements Serializable {
     public SQLStatement sql;
     public SeqInumPlan[] plans;
     public SeqInumIndex[] relevantIndices;
+    public double baseTableUpdateCost;
 
     // the following variables are only for debugging purposes
     // and should be removed when the system works correctly
@@ -25,16 +26,17 @@ public class SeqInumQuery implements Serializable {
     }
 
     public void save(Rx rx) {
-        rx.createChild("id", id);
-        rx.createChild("name", name);
+        rx.setAttribute("id", id);
+        rx.setAttribute("name", name);
+        rx.setAttribute("baseTableUpdateCost", baseTableUpdateCost);
         for (SeqInumPlan plan : plans) {
             plan.save(rx.createChild("plan"));
         }
     }
 
     public SeqInumQuery(SeqInumCost cost,Rx rx) {
-        id = rx.getChildIntContent("id");
-        name = rx.getChildText("name");
+        id = rx.getIntAttribute("id");
+        name = rx.getAttribute("name");
         Rx[] rs=rx.findChilds("plan");
         plans=new SeqInumPlan[rs.length];
         for (int i=0;i<rs.length;i++) {
