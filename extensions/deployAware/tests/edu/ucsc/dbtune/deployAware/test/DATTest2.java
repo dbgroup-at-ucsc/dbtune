@@ -355,7 +355,7 @@ public class DATTest2 {
         testSet = "tpch-small";
         querySize = 100;
         indexSize = 200;
-        testSet = "tpch-500-counts";
+//        testSet = "tpch-500-counts";
          testSet = "online-benchmark-100";
         // testSet = "nref";
         //

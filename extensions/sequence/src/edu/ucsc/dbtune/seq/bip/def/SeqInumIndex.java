@@ -21,8 +21,8 @@ public class SeqInumIndex implements Serializable {
     }
     
     public void save(Rx rx) {
-        rx.createChild("id",id);
-        rx.createChild("name",name);
+        rx.setAttribute("id",id);
+        rx.setAttribute("name",name);
         rx.createChild("createCost",createCost);
         rx.createChild("dropCost",dropCost);
         rx.createChild("storageCost",storageCost);
@@ -31,8 +31,8 @@ public class SeqInumIndex implements Serializable {
     }
     
     public SeqInumIndex(Rx rx) {
-        id=rx.getChildIntContent("id");
-        name=rx.getChildText("name");
+        id=rx.getIntAttribute("id");
+        name=rx.getAttribute("name");
         createCost=rx.getChildDoubleContent("createCost");
         dropCost=rx.getChildDoubleContent("dropCost");
         storageCost=rx.getChildDoubleContent("storageCost");

@@ -131,7 +131,7 @@ public class SeqInumCost implements Serializable {
             q.createCost = SeqCost.getCreateIndexCost(optimizer, q.index);
             q.dropCost = 0;
             Statement st = db.getConnection().createStatement();
-            q.storageCost = SeqCost.getIndexSize(st, q.index); // TODO add
+            q.storageCost = q.index.getBytes();//SeqCost.getIndexSize(st, q.index); // TODO add
             // storage cost
             st.close();
         }
