@@ -9,6 +9,7 @@ import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
 
 
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -25,8 +26,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 
+
 import java.util.HashSet;
 import java.util.List;
+
 
 
 import java.util.Set;
@@ -35,6 +38,7 @@ import java.util.Set;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
+
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -78,7 +82,7 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         if (!file.exists()) {
             
             // Generate candidate indexes
-            generateAndWriteToFileOptimizerCandidates(fileName);
+            generateAndWriteToFileOptimizerCandidates(fileName);           
             return candidates;
         }
         
@@ -195,34 +199,35 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         out.close();
     }
     */
-    
+   
     protected static void writeIndexesToFile(Set<Index> indexes, String name) 
                           throws Exception
     {
         ObjectOutputStream write;
         
         try {
-            write = new ObjectOutputStream(new FileOutputStream(name));
+            FileOutputStream fileOut = new FileOutputStream(name);
+            write = new ObjectOutputStream(fileOut);
             write.writeObject(indexes);
+            write.close();
+            fileOut.close();
         } catch(IOException e) {
             throw new SQLException(e);
         }
-        
-        write.close();
     }
-    
+   
     
     /**
      * Read indexes stored from a file
      * @param fileName
      * @return
      * @throws Exception
-     */
+     */    
     /*
     protected static Set<Index> readIndexes(String fileName) throws Exception
     {
         /// reset candidate ID?
-        Index.IN_MEMORY_ID = new AtomicInteger(START_INDEX_ID);
+        Index.IN_MEMORY_ID = new AtomicInteger(Index.START_INDEX_ID);
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
         String line = null;      
         
@@ -273,18 +278,19 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         Set<Index> candidates = new HashSet<Index>();
         
         try {
-            in = new ObjectInputStream(new FileInputStream(fileName));
+            FileInputStream fileIn = new FileInputStream(fileName);
+            in = new ObjectInputStream(fileIn);
             candidates = (Set<Index>) in.readObject();
             
+            in.close();
+            fileIn.close();            
         } catch(IOException e) {
             throw new SQLException(e);
         } catch (ClassNotFoundException e) {
             throw new SQLException(e);
         }
         
-        in.close();
-        return candidates;
-       
+        return candidates;       
     }
     
 }

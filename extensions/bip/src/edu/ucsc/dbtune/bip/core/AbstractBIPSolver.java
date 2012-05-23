@@ -191,6 +191,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected void populatePlanDescriptionForStatements() throws SQLException
     {   
         File file;
+        boolean isReadFromFile;
         
         queryPlanDescs = new ArrayList<QueryPlanDesc>();        
         fileQueryPlanDesc = environment.getWorkloadsFoldername() + 
@@ -198,11 +199,13 @@ public abstract class AbstractBIPSolver implements BIPSolver
        
         file = new File(fileQueryPlanDesc);
         
-        if (file.exists())  
+        if (file.exists()) {  
             // read from the bin file
             readQueryPlanDescsFromFile();
+            isReadFromFile = true;
+        }
         else {
-        
+            isReadFromFile = false;
             for (int i = 0; i < workload.size(); i++) {
                 // Set the corresponding SQL statement
                 QueryPlanDesc desc = InumQueryPlanDesc.getQueryPlanDescInstance(workload.get(i));
@@ -213,20 +216,18 @@ public abstract class AbstractBIPSolver implements BIPSolver
             
             serializeQueryPlanDesc();
         }
-
-        /*
-        // reset the candidate indexes that are used by QueryPlanDescs
-        for (QueryPlanDesc desc : queryPlanDescs)
-            candidateIndexes.addAll(desc.getFullTableScanIndexes());
-        */
-       
-        // reset candidate indexes to contain all the indexes stored in the 
-        // QueryPlanDesc
         
-        candidateIndexes.clear();
-        for (QueryPlanDesc desc : queryPlanDescs)
-            candidateIndexes.addAll(desc.getIndexes());
-        
+        if (isReadFromFile) {
+            // reset the set of candidate indexes
+            // in order to compatible with indexes serialized in QueryPlanDesc
+            candidateIndexes.clear();
+            for (QueryPlanDesc desc : queryPlanDescs)
+                candidateIndexes.addAll(desc.getIndexes());
+        } else {
+            // otherwise, only need to add FTS
+            for (QueryPlanDesc desc : queryPlanDescs)
+                candidateIndexes.addAll(desc.getFullTableScanIndexes());
+        }
     }
     
     /**
@@ -239,9 +240,11 @@ public abstract class AbstractBIPSolver implements BIPSolver
         ObjectOutputStream write;
         
         try {
-            write = new ObjectOutputStream(new FileOutputStream(fileQueryPlanDesc));
+            FileOutputStream fileOut = new FileOutputStream(fileQueryPlanDesc);
+            write = new ObjectOutputStream(fileOut);
             write.writeObject(queryPlanDescs);
             write.close();
+            fileOut.close();
         } catch(IOException e) {
             throw new SQLException(e);
         }
@@ -258,7 +261,8 @@ public abstract class AbstractBIPSolver implements BIPSolver
         ObjectInputStream in;
             
         try {
-            in = new ObjectInputStream(new FileInputStream(fileQueryPlanDesc));
+            FileInputStream fileIn = new FileInputStream(fileQueryPlanDesc);
+            in = new ObjectInputStream(fileIn);
             queryPlanDescs = (List<QueryPlanDesc>) in.readObject();
             
             // reassign the statement with the corresponding weight
@@ -266,6 +270,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
                 queryPlanDescs.get(i).setStatement(workload.get(i));
         
             in.close();
+            fileIn.close();
         } catch(IOException e) {
             throw new SQLException(e);
         } catch (ClassNotFoundException e) {

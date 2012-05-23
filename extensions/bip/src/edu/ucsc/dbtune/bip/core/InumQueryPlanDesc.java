@@ -319,21 +319,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
 	            stmt.getSQLCategory().isSame(DELETE)) {
 	        
 	        for (Index index : candidates) {
-	            
 	            cost = inumExplain.getUpdateCost(index);
-	            
-	            if (cost > 0) {
-	                
-	                cost *= INDEX_UPDATE_COST_FACTOR;
-	                /*
-	                System.out.println(" Stmt type: " + stmt.getSQLCategory()
-	                            + " total cost: " + inumExplain.getTotalCost()
-	                            + " select cost: " + inumExplain.getSelectCost()
-	                            + " base table cost: " + inumExplain.getBaseTableUpdateCost()
-	                            + " index update cost: " + cost);
-	                            */
-	            }
-	            
 	            indexUpdateCosts.put(index.getId(), cost);
 	        }
 	        
@@ -438,6 +424,11 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
     @Override
 	public double getAccessCost(int k, Index index)
 	{
+        // if the index has not been seen in this slot
+        // return INFINITY
+        if (!accessCostPerPlan.get(k).containsKey(index.getId()))
+            return BIP_MAX_VALUE;
+        
 		return accessCostPerPlan.get(k).get(index.getId());
 	}
 	
@@ -470,7 +461,8 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
     @Override
     public double getUpdateCost(Index index)
     {   
-        if (!stmt.getSQLCategory().isSame(NOT_SELECT) || indexUpdateCosts.get(index.getId()) == null)
+        if (!stmt.getSQLCategory().isSame(NOT_SELECT) 
+                || indexUpdateCosts.get(index.getId()) == null)
             return 0.0;
      
         return indexUpdateCosts.get(index.getId());
@@ -489,5 +481,217 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         sb.append("Index update costs: " + indexUpdateCosts + "\n");
         
         return sb.toString();
+    }
+    
+
+    @Override
+    public boolean equals(Object obj) 
+    {   
+        double tolerance;
+        InumQueryPlanDesc other;
+        
+        other = (InumQueryPlanDesc) obj;
+        tolerance = 1.05;
+                
+        if (Kq != other.Kq) {
+            System.out.println(" QueryPlanDesc NOT COMPABTILE because of: Number of template plans");
+            return false;
+        }
+        
+        // number of relations
+        if (this.n != other.n) {
+            System.out.println(" QueryPlanDesc NOT COMPABTILE because of: " +
+            		"Number of slots");
+            return false;
+        }
+        
+        if (!checkInternalPlan(other, tolerance))
+            return false;
+        
+        if (!checkIndexAccessCost(other, tolerance))
+            return false;
+        
+        if (!checkIndexUpdateCost(other, tolerance))
+            return false;
+        
+        
+        return true;
+    }
+    
+    
+    /**
+     * todo
+     * @param other
+     * @param tolerance
+     * @return
+     */
+    private boolean checkInternalPlan(InumQueryPlanDesc other, double tolerance)
+    {
+        boolean matched;
+        
+        if (beta == null) {
+            if (other.beta != null)
+                return false;
+        } else {
+            if (beta.size() != other.beta.size()) {
+                System.out.println(" QueryPlanDesc NOT COMPABTILE because of: Number of internal plan costs");
+                return false;
+            }
+        
+            // internal plan cost
+            for (int i = 0; i < beta.size(); i++) {
+                matched =false;
+                for (int j = 0; j < other.beta.size(); j++) {
+            
+                    matched = matchedDouble(beta.get(i), other.beta.get(j), tolerance);
+                    if (matched)
+                        break;
+                }
+                
+                if (!matched) {
+                    System.out.println(" QueryPlanDesc NOT COMPABTILE because of: " +
+                            "INTERNAL PLAN COST");
+                    return false;
+                }
+            }
+            
+        }
+        
+        return true;
+    }
+    
+    /**
+     * todo
+     * @return
+     */
+    private boolean checkIndexAccessCost(InumQueryPlanDesc other, double tolerance)
+    {
+        boolean matched;
+        
+        Set<Index> sourceIndexes;
+        Set<Index> destIndexes;
+        
+        // index access cost
+        sourceIndexes = getIndexes();
+        destIndexes = other.getIndexes();
+        
+        if (sourceIndexes.size() != destIndexes.size()) {
+            System.out.println(" QueryPlanDesc NOT COMPABTILE because of: " +
+                    "Number of candidate indexes");
+            return false;
+        }
+        
+        // check the index access cost
+        if (accessCostPerPlan == null){
+            if (other.accessCostPerPlan != null)
+                return false;
+        } else {
+            for (int kSource = 0; kSource < Kq; kSource++) {
+                matched = false;
+                for (Index index : sourceIndexes) {
+                    
+                    // iterate over all plans
+                    for (int kDest = 0; kDest < Kq; kDest++) {
+                        
+                        matched = matchedDouble(getAccessCost(kSource, index),
+                                                other.getAccessCost(kDest, index),
+                                                tolerance);
+                        if (matched)
+                            break; 
+                        
+                    }
+                    if (!matched) {
+                        System.out.println("FIRST, QueryPlanDesc NOT COMPABTILE because of: " +
+                                "INDEX ACCESS COST"
+                                + " Index: " + index + " " + index.getId()
+                                + " cost: " + getAccessCost(kSource, index));
+                        return false;
+                    }
+                }   
+            }
+             
+            // dest
+            for (int kDest = 0; kDest < Kq; kDest++) {
+                matched = false;
+                for (Index index : destIndexes) {
+                    for (int kSource = 0; kSource < Kq; kSource++) {
+                        matched = matchedDouble(getAccessCost(kSource, index),
+                                                other.getAccessCost(kDest, index), tolerance);
+                        if (matched)
+                            break;
+                    }
+                        
+                    if (!matched) {
+                        System.out.println("SECOND, QueryPlanDesc NOT COMPABTILE because of: " +
+                        "INDEX ACCESS COST"
+                                + " Index: " + index + " " + index.getId()
+                                + " cost: " + getAccessCost(kDest, index));
+                
+                        return false;
+                    }
+                }   
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * todo
+     * @param other
+     * @param tolerance
+     * @return
+     */
+    private boolean checkIndexUpdateCost(InumQueryPlanDesc other, double tolerance)
+    {
+        Set<Index> sourceIndexes;
+        Set<Index> destIndexes;
+        
+        // index access cost
+        sourceIndexes = getIndexes();
+        destIndexes = other.getIndexes();
+        // index update cost semantic
+        if (indexUpdateCosts == null) {
+            if (other.indexUpdateCosts != null)
+                return false;
+        } else {
+            // index update cost
+            for (Index index : sourceIndexes)
+                if (!matchedDouble(getUpdateCost(index), other.getUpdateCost(index), tolerance)) {
+                    System.out.println(" QueryPlanDesc NOT COMPABTILE because of: " +
+                    "INDEX UPDATE COST");
+                    return false;
+                }
+                
+            
+            // index update cost
+            for (Index index : destIndexes)
+                if (!matchedDouble(getUpdateCost(index), other.getUpdateCost(index), tolerance)) {
+                    System.out.println(" QueryPlanDesc NOT COMPABTILE because of: " +
+                    "INDEX UPDATE COST");
+                    return false;
+                }
+        }
+    
+        return true;
+    }
+    /**
+     * todo
+     * @param first
+     * @param second
+     * @param tolerance
+     * @return
+     */
+    private boolean matchedDouble(double first, double second, double tolerance)
+    {
+        if (first == 0.0 && second == 0.0)
+            return true;
+        
+        double ratio = first / second;
+        
+        if (ratio < 1.0)
+            ratio = 1.0 / ratio;
+        
+        return (ratio <= tolerance) ? true : false;
     }
 }

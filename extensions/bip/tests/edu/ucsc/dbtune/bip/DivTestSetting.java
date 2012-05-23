@@ -174,7 +174,7 @@ public class DivTestSetting
         double cost;
         
         db2Cost = 0.0;
-
+        
         for (SQLStatement sql : workload) {
             cost = io.getDelegate().explain(sql, conf).getTotalCost();
             db2Cost += cost * sql.getStatementWeight();
@@ -221,12 +221,36 @@ public class DivTestSetting
         double inumCost;
         List<Double> costs = new ArrayList<Double>();
         
+        int q = 0;
+        
         for (SQLStatement sql : workload)  {
             
             inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
             inumCost = inumPrepared.explain(conf).getTotalCost();
             costs.add(inumCost);
             
+            q++;
+        }
+        
+        return costs;
+    }
+    
+    /**
+     * Compute the query execution cost for statements in the given workload
+     * 
+     * @param conf
+     *      A configuration
+     *      
+     * @throws Exception
+     */
+    protected static List<Double> computeQueryCostsDB2(Set<Index> conf) throws Exception
+    {           
+        double db2Cost;
+        List<Double> costs = new ArrayList<Double>();
+        
+        for (SQLStatement sql : workload)  {
+            db2Cost = io.getDelegate().explain(sql, conf).getTotalCost();
+            costs.add(db2Cost);
         }
         
         return costs;
