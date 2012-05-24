@@ -1,0 +1,9 @@
+var db = connect("jdbc:db2://192.168.56.101:50000/test", "db2inst1", "db2inst1admin")
+
+// scenario 1
+workload.next
+workload.next
+workload.next
+workload.next
+workload.play
+db.dropIndexes; resetUI

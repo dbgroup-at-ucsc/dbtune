@@ -69,9 +69,9 @@ public class WorkFunctionAlgorithm {
     public void dump(String msg) {
         //System.out.println(msg);
         //for (int i = 0; i < submachines.length; i++) {
-         //   System.out.println("SUBMACHINE " + i);
+            //System.out.println("SUBMACHINE " + i);
             //submachines[i].dump(wf);
-          //  System.out.println();
+            //System.out.println();
         //}
         //System.out.println("----");
     }
@@ -328,8 +328,7 @@ public class WorkFunctionAlgorithm {
             return -1;
         }
         
-        /*
-        public void dump(TotalWorkValues wf) {
+        //public void dump(TotalWorkValues wf) {
             //System.out.print("Index IDs : [ ");
             //for (int id : indexIds) System.out.print(id + " ");
             //System.out.print("]   ");
@@ -351,8 +350,7 @@ public class WorkFunctionAlgorithm {
                 //}
                 //System.out.println("] = " + wf.get(subsetNum, s));
             //}
-        }
-        */
+        //}
 
         // process a positive or negative vote for the index
         // do the necessary bookkeeping in the input workfunction, and update the current state
@@ -390,6 +388,7 @@ public class WorkFunctionAlgorithm {
                     // we require wf + trans >= minScore
                     // equivalently, wf >= minScore - trans
                     double minWorkFunction = minScore - transitionCost(subset, stateNum, currentState);
+
                     if (wf.get(subsetNum, stateNum) < minWorkFunction) {
                         wf.set(subsetNum, stateNum, minWorkFunction, wf.predecessor(subsetNum, stateNum));
                     }

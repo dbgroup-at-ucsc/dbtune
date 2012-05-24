@@ -26,6 +26,7 @@ public class TotalWorkPlotter extends AbstractVisualizer
         appFrame = VizUtils.createXYChart("Performance", c, "", "Queries", "Total Work");
         frame = appFrame;
         stats = new ArrayList<RecommendationStatistics>();
+        frame.setLocation(513, 375);
     }
 
     /**

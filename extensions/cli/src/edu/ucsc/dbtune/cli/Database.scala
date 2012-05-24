@@ -100,7 +100,10 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
     *   a set of indexes that are read from a file
     */
   def loadIndexes(fileName: String) : Set[Index] = {
-    MetadataUtils.loadIndexes(DBMS, fileName)
+    //MetadataUtils.loadIndexes(DBMS, fileName)
+    var stuff = recommend("SELECT col1 FROM one_table.tbl WHERE col1 = 2")
+    stuff.addAll(recommend("SELECT col2 FROM one_table.tbl WHERE col1 = 2"))
+    stuff
   }
 }
 
@@ -131,4 +134,5 @@ object Database
 
     new Database(newDatabaseSystem(env))
   }
+
 }

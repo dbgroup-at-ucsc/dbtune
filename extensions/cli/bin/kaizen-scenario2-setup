@@ -1,0 +1,7 @@
+db.dropIndexes; resetUI
+var workload = new WorkloadStream("workloads/tpch-10-counts/workload.sql")
+var wfit1 = new WFIT(db, workload, 1)
+var wfit100 = new WFIT(db, workload, 100)
+showWorkloadTable(workload, wfit1.getRecommendationStatistics)
+showIndexTable(workload, wfit1.getRecommendationStatistics)
+plotTotalWork(workload, wfit1.getRecommendationStatistics, wfit100.getRecommendationStatistics)

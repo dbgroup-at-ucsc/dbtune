@@ -1,0 +1,7 @@
+db.dropIndexes ; resetUI
+var workload = new WorkloadStream("workloads/kaizen-demo/scenario-1.sql");
+var initialSet = db.loadIndexes("workloads/kaizen-demo/scenario-1-indexes")
+var wfit = new WFIT(db, workload, initialSet)
+showWorkloadTable(workload, wfit.getRecommendationStatistics)
+showIndexTable(workload, wfit.getRecommendationStatistics)
+plotTotalWork(workload, wfit.getOptimalRecommendationStatistics, wfit.getRecommendationStatistics)

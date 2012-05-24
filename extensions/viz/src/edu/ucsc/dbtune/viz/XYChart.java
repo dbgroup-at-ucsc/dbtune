@@ -48,7 +48,7 @@ public class XYChart extends JFrame
     {
         super(windowTitle);
         JPanel jpanel = createPanel(xyDataSet, chartTitle, xLabel, yLabel);
-        jpanel.setPreferredSize(new Dimension(500, 270));
+        jpanel.setPreferredSize(new Dimension(511, 350));
         setContentPane(jpanel);
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         chart = ((ChartPanel) jpanel).getChart();
@@ -149,10 +149,10 @@ public class XYChart extends JFrame
         xyrenderer.setSeriesFillPaint(2, Color.decode("#FFAB19"));
         xyrenderer.setSeriesFillPaint(3, Color.decode("#C11515"));
         xyrenderer.setUseFillPaint(true);
-        xyrenderer.setSeriesStroke(0, new BasicStroke(15f));
-        xyrenderer.setSeriesStroke(1, new BasicStroke(15f));
-        xyrenderer.setSeriesStroke(2, new BasicStroke(15f));
-        xyrenderer.setSeriesStroke(3, new BasicStroke(15f));
+        xyrenderer.setSeriesStroke(0, new BasicStroke(4f));
+        xyrenderer.setSeriesStroke(1, new BasicStroke(4f));
+        xyrenderer.setSeriesStroke(2, new BasicStroke(4f));
+        xyrenderer.setSeriesStroke(3, new BasicStroke(4f));
 
         return jfreechart;
     }

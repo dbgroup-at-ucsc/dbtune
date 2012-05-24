@@ -36,7 +36,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
         columnNames[0] = "PARTITION";
         columnNames[1] = "STATE";
         columnNames[2] = "INDEXES";
-        columnNames[3] = "WORK-FUNCTION VALUE";
+        columnNames[3] = "OPTIMAL PATH COST";
         columnNames[4] = "UNDO COST";
         columnNames[5] = "SCORE";
 
@@ -48,7 +48,8 @@ public class WFITStatisticsTable extends AbstractVisualizer
 
         frame.setTitle("   WFIT Internal Statistics");
         frame.setBackground(Color.gray);
-        frame.setSize(600, 400);
+        frame.setSize(511, 372);
+        frame.setLocation(0, 375);
         frame.pack();
     }
 

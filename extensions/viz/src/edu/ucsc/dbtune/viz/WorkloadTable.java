@@ -28,10 +28,10 @@ public class WorkloadTable extends AbstractVisualizer
      */
     public WorkloadTable()
     {
-        columnNames = new String[2];
+        columnNames = new String[1];
 
-        columnNames[0] = "ID";
-        columnNames[1] = "SQL";
+        columnNames[0] = "SQL";
+        //columnNames[1] = "SQL";
 
         frame = new JFrame();
 
@@ -41,7 +41,8 @@ public class WorkloadTable extends AbstractVisualizer
 
         frame.setTitle("   Workload");
         frame.setBackground(Color.gray);
-        frame.setSize(600, 400);
+        frame.setSize(512, 372);
+        frame.setLocation(512, 24);
         frame.pack();
     }
 
@@ -80,7 +81,9 @@ public class WorkloadTable extends AbstractVisualizer
         dataValues[e.getSql().getPosition() - 1][0] = ">> " + sqlText;
 
         frame.getContentPane().removeAll();
-        frame.getContentPane().add(new JScrollPane(new JTable(dataValues, columnNames)));
+        JTable table = new JTable(dataValues, columnNames);
+        table.getColumnModel().getColumn(0).setPreferredWidth(30);
+        frame.getContentPane().add(new JScrollPane(table));
     }
 
     /**
@@ -94,7 +97,10 @@ public class WorkloadTable extends AbstractVisualizer
         for (SQLStatement sql : wl)
             dataValues[sql.getPosition() - 1] = newRow(sql);
 
-        frame.getContentPane().add(new JScrollPane(new JTable(dataValues, columnNames)));
+        JTable table = new JTable(dataValues, columnNames);
+        table.getColumnModel().getColumn(0).setPreferredWidth(30);
+
+        frame.getContentPane().add(new JScrollPane(table));
     }
 
     /**
@@ -105,10 +111,10 @@ public class WorkloadTable extends AbstractVisualizer
      */
     private String[] newRow(SQLStatement sql)
     {
-        String[] row = new String[2];
+        String[] row = new String[1];
 
-        row[0] = sql.getPosition() + "";
-        row[1] = sql.getSQL();
+        //row[0] = sql.getPosition() + "";
+        row[0] = sql.getSQL();
 
         return row;
     }

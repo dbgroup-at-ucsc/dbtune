@@ -1,0 +1,8 @@
+workload.next
+workload.next
+workload.next
+workload.next
+workload.play
+showIndexTable(workload, wfit100.getRecommendationStatistics)
+db.dropIndexes; resetUI
+

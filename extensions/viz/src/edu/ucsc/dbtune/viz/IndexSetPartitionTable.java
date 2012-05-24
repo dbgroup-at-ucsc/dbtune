@@ -46,7 +46,8 @@ public class IndexSetPartitionTable extends AbstractVisualizer
         frame.setTitle("   Indexes");
         frame.setBackground(Color.gray);
         frame.pack();
-        frame.setSize(600, 400);
+        frame.setSize(511, 375);
+        frame.setLocation(0, 375);
     }
 
     /**
