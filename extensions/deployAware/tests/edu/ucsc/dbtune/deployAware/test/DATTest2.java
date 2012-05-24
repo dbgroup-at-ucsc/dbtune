@@ -173,8 +173,8 @@ public class DATTest2 {
         SeqInumCost cost = loadCost();
         double[] windowConstraints = new double[3];
         for (int i = 0; i < windowConstraints.length; i++)
-            windowConstraints[i] = 2000000;
-        cost.storageConstraint = 500 * 1024 * 1024.0;
+            windowConstraints[i] = 25600000;
+        cost.storageConstraint = 32000 * 1024.0 * 1024.0;
 
         DAT dat = new DAT(cost, windowConstraints, 1, 0);
         // dat.setOptimizer(optimizer);
@@ -193,12 +193,13 @@ public class DATTest2 {
 
         Rt.np("%d x %d\tspace=%,.0fMB", cost.queries.size(), cost.indices
                 .size(), cost.storageConstraint / 1024 / 1024);
-        // Rt.np("index\tcreate cost\tstorage cost\tbenefit(with-none)");
-        // for (int i = 0; i < cost.indices.size(); i++) {
-        // SeqInumIndex index = cost.indices.get(i);
-        // Rt.np("%d\t%,.0f\t%,.0f\t%,.0f", i, index.createCost,
-        // index.storageCost, index.indexBenefit);
-        // }
+        Rt
+                .np("index\tcreate cost\tstorage cost\tbenefit(with-none)\tbenefit(all-without)");
+        for (int i = 0; i < cost.indices.size(); i++) {
+            SeqInumIndex index = cost.indices.get(i);
+            Rt.np("%d\t%,.0f\t%,.0f\t%,.0f\t%,.0f", i, index.createCost,
+                    index.storageCost, index.indexBenefit, index.indexBenefit2);
+        }
         // DATOutput output = (DATOutput) dat.solve();
         System.out.print("alpha, beta\t");
         for (int i = 0; i < windowConstraints.length; i++) {
@@ -246,7 +247,8 @@ public class DATTest2 {
             // dat.setOptimizer(optimizer);
             dat.setLogListenter(logger);
             dat.setWorkload(new Workload("", new StringReader("")));
-            DATOutput output = (DATOutput) dat.solve();
+            dat.buildBIP();
+            DATOutput output = (DATOutput) dat.getOutput();
             System.out.print(alpha + ", " + beta + "\t");
             for (int i = 0; i < windowConstraints.length; i++) {
                 System.out.format("%.0f\tc " + output.ws[i].create + ", d "
@@ -308,14 +310,21 @@ public class DATTest2 {
 
         SeqInumCost cost = loadCost();
 
-        double spStart = 500 * 1024 * 1024.0;
-        double spEnd = 100000 * 1024 * 1024.0;
+        Rt.np("queries=%d\tindices=%d", cost.queries.size(), cost.indices
+                .size());
+
+        double spStart = 500 * 1024.0 * 1024.0;
+        double spEnd = 5000000 * 1024.0 * 1024.0;
+        double winStart = 100000;
+        double winEnd = 500000000;
+//        winStart = 51200000;
+//         spStart=512000* 1024.0 * 1024.0;
         System.out.format("win\\space\t");
         for (double spaceConstraint = spStart; spaceConstraint < spEnd; spaceConstraint *= 2) {
-            System.out.format("%,.0fMB\t\t", spaceConstraint / 1024 / 1024);
+            System.out.format("%,.0fMB\t", spaceConstraint / 1024 / 1024);
         }
         System.out.println();
-        for (double winConstraint = 500000; winConstraint < 50000000; winConstraint *= 2) {
+        for (double winConstraint = winStart; winConstraint < winEnd; winConstraint *= 2) {
             System.out.format("%,.0f\t", winConstraint);
             for (double spaceConstraint = spStart; spaceConstraint < spEnd; spaceConstraint *= 2) {
                 double[] windowConstraints = new double[3];
@@ -336,11 +345,12 @@ public class DATTest2 {
                 dat = new DAT(cost, windowConstraints, alpha, beta);
                 dat.setLogListenter(logger);
                 dat.setWorkload(new Workload("", new StringReader("")));
-                DATOutput output = (DATOutput) dat.solve();
+                dat.buildBIP();
+                DATOutput output = (DATOutput) dat.getOutput();
                 double btotal = (baseline.totalCost + beta
                         * baseline.ws[baseline.ws.length - 1].cost);
                 double result = output.totalCost / btotal * 100;
-                System.out.format("%.0f%%\tfit " + fit + "%%\t", result);
+                System.out.format("%.0f%%\t", result);
             }
             System.out.println();
         }
@@ -355,8 +365,10 @@ public class DATTest2 {
         testSet = "tpch-small";
         querySize = 100;
         indexSize = 200;
-//        testSet = "tpch-500-counts";
-         testSet = "online-benchmark-100";
+         testSet = "tpch-500-counts";
+//        testSet = "online-benchmark-100";
+//        testSet = "tpcds-inum";
+//        testSet = "tpch-updates";
         // testSet = "nref";
         //
         // querySize = 100;
@@ -371,7 +383,7 @@ public class DATTest2 {
         // querySize = 50;
         // indexSize = 100;
 
-         testBIP();
-//        testDATBatch();
+//         testBIP();
+        testDATBatch();
     }
 }

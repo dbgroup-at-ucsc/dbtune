@@ -9,6 +9,7 @@ import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Vector;
 import java.util.logging.Logger;
@@ -325,9 +326,10 @@ public class DAT extends AbstractBIPSolver {
     IloLinearNumExpr objExpr;
 
     @Override
-    protected final void buildBIP() {
+    public final void buildBIP() {
         super.numConstraints = 0;
         try {
+            candidateIndexes=new HashSet();
             cplex = new IloCplex();
             cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
             cplex.setOut(null);
@@ -370,6 +372,8 @@ public class DAT extends AbstractBIPSolver {
             cplexVar = new Vector<IloNumVar>();
             for (IloNumVar var : iloVar)
                 cplexVar.add(var);
+            if (!cplex.solve())
+                throw new Error();
         } catch (IloException e) {
             e.printStackTrace();
         }
@@ -564,7 +568,7 @@ public class DAT extends AbstractBIPSolver {
             Rt.p(index.id);
             Arrays.fill(bs, true);
             bs[index.id] = false;
-            index.indexBenefit2 = costWithAllIndex - costWithIndex(bs);
+            index.indexBenefit2 = costWithIndex(bs)-costWithAllIndex;
         }
     }
 
@@ -770,7 +774,7 @@ public class DAT extends AbstractBIPSolver {
     }
 
     @Override
-    protected IndexTuningOutput getOutput() {
+    public IndexTuningOutput getOutput() {
         DATOutput output = new DATOutput(windows.length);
         try {
             for (Window w : windows)
