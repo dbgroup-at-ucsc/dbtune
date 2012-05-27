@@ -69,7 +69,7 @@ public class DivTestSetting
     protected static boolean isTestCost;
     protected static boolean isShowRecommendation;
     protected static boolean isDB2Cost;
-    protected static long totalIndexSize;
+    protected static double totalIndexSize;
     protected static boolean isGetAverage;
     protected static boolean isPostprocess; 
     protected static boolean isAllImbalanceConstraint;
@@ -517,6 +517,29 @@ public class DivTestSetting
         for (String sql : sqls)
             out.println(sql);
                
+        out.close();
+    }
+    
+    
+    
+    /**
+     * Write the experimental results to file
+     * 
+     * @param fileName
+     *  todo
+     * @param entries
+     * @throws Exception
+     */
+    protected static void writeDivInfoToFile(String fileName, List<DivTestEntry> entries) 
+                        throws Exception
+    {
+        PrintWriter   out;
+        
+        out = new PrintWriter(new FileWriter(fileName), false);
+
+        for (DivTestEntry entry : entries)
+            out.print(entry.toString());
+
         out.close();
     }
 }
