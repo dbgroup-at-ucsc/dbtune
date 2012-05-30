@@ -281,6 +281,15 @@ public class DAT extends AbstractBIPSolver {
             if (showFormulas)
                 Rt.p(expr.toString() + "<=" + spaceConstraint);
 
+            if (DAT.this.maxIndexCreatedPerWindow > 0) {
+                expr = cplex.linearNumExpr();
+                for (int i = 0; i < totalIndices; i++) {
+                    expr.addTerm(1, this.create[i]);
+                }
+                cplex.addLe(expr, DAT.this.maxIndexCreatedPerWindow);
+                if (showFormulas)
+                    Rt.p(expr.toString() + "<=" + maxIndexCreatedPerWindow);
+            }
             // index can't be created and droped at the same step
             for (int i = 0; i < totalIndices; i++) {
                 expr = cplex.linearNumExpr();
@@ -310,6 +319,7 @@ public class DAT extends AbstractBIPSolver {
     double beta;
     int totalQueires;
     int totalIndices;
+    int maxIndexCreatedPerWindow = 0;
     Logger log = Logger.getLogger(DAT.class.getName());
 
     public DAT(SeqInumCost cost, double[] windowConstraints, double alpha,
@@ -329,7 +339,7 @@ public class DAT extends AbstractBIPSolver {
     public final void buildBIP() {
         super.numConstraints = 0;
         try {
-            candidateIndexes=new HashSet();
+            candidateIndexes = new HashSet();
             cplex = new IloCplex();
             cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
             cplex.setOut(null);
@@ -568,7 +578,7 @@ public class DAT extends AbstractBIPSolver {
             Rt.p(index.id);
             Arrays.fill(bs, true);
             bs[index.id] = false;
-            index.indexBenefit2 = costWithIndex(bs)-costWithAllIndex;
+            index.indexBenefit2 = costWithIndex(bs) - costWithAllIndex;
         }
     }
 
@@ -746,7 +756,7 @@ public class DAT extends AbstractBIPSolver {
                 windows[i].getValues();
                 costs[i] = windows[i].getCost();// cplex.getObjValue();
                 if (i < windowConstraints.length - 1)
-                    totalCost += costs[i]* alpha;
+                    totalCost += costs[i] * alpha;
                 // for (int j = 0; j < totalIndices; j++) {
                 // indexPresent[j] = windows[i].indexPresent[j];
                 // }
@@ -756,10 +766,10 @@ public class DAT extends AbstractBIPSolver {
                 double c2 = costWithIndex(output.ws[i].indexUsed);
                 if (Math.abs(output.ws[i].cost - c2) > 1)
                     throw new Error();
-//                if (!windows[i].lastWindow
-//                        && Math.abs(output.ws[i].cost * alpha
-//                                - cplex.getObjValue()) > 1)
-//                    throw new Error();
+                // if (!windows[i].lastWindow
+                // && Math.abs(output.ws[i].cost * alpha
+                // - cplex.getObjValue()) > 1)
+                // throw new Error();
             }
 
             output.totalCost = totalCost;

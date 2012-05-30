@@ -317,7 +317,7 @@ public class DATTest2 {
         double spEnd = 5000000 * 1024.0 * 1024.0;
         double winStart = 100000;
         double winEnd = 500000000;
-//        winStart = 51200000;
+        winStart = 12800000;
 //         spStart=512000* 1024.0 * 1024.0;
         System.out.format("win\\space\t");
         for (double spaceConstraint = spStart; spaceConstraint < spEnd; spaceConstraint *= 2) {
@@ -367,7 +367,7 @@ public class DATTest2 {
         indexSize = 200;
          testSet = "tpch-500-counts";
 //        testSet = "online-benchmark-100";
-//        testSet = "tpcds-inum";
+        testSet = "tpcds-inum";
 //        testSet = "tpch-updates";
         // testSet = "nref";
         //
