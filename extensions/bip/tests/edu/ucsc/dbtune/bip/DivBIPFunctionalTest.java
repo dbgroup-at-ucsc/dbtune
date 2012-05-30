@@ -23,6 +23,8 @@ import edu.ucsc.dbtune.workload.Workload;
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
+import edu.ucsc.dbtune.metadata.Index;
+
 /**
  * Test the functionality of Divergent Design using BIP.
  * 
@@ -34,6 +36,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
 {   
     private static Workload wlQueries;
     private static Workload wlUpdates;
+    private static List<DivTestEntry> entries;
     
     @Test
     public void main() throws Exception
@@ -48,25 +51,48 @@ public class DivBIPFunctionalTest extends DivTestSetting
             return;
   
         candidates = readCandidateIndexes();
+        
+        for (Index index : candidates)
+            System.out.println(" INdex " + index
+                                + " id: " + index.getId()
+                                + " size: " + (double) index.getBytes() / Math.pow(10, 6) + " (MB)"
+                                + " creation cost: "  + index.getCreationCost());
+        
                 
         // 1. test divergent
         testDivergent();
+        // write to file
+        String name = en.getWorkloadsFoldername() + "/divg.txt";
+        writeDivInfoToFile(name, entries);
         
         // 2. Uniform design
         // 3. Call divergent design
+        entries.clear();
         for (double B1 : listBudgets) {
             B = B1;
             testUniform();
         }
+        // write to file
+        name = en.getWorkloadsFoldername() + "/uniform.txt";
+        writeDivInfoToFile(name, entries);
+        
     }
     
     protected static void testDivergent() throws Exception
     {           
+        entries = new ArrayList<DivTestEntry>();
+        String type;
+        DivTestEntry entry;
+        List<Double> objs = new ArrayList<Double>();
+        
         // 3. Call divergent design
         for (double B1 : listBudgets) {
             
             B = B1;            
             System.out.println(" Space:  " + B + "============\n");
+            
+            type = "budget_" + B + "_" + listNumberReplicas;
+            objs = new ArrayList<Double>();
             
             for (int i = 0; i < listNumberReplicas.size(); i++) {           
                 
@@ -77,12 +103,14 @@ public class DivBIPFunctionalTest extends DivTestSetting
                 System.out.println(" DIV-BIP, # replicas = " + nReplicas
                                     + ", load factor = " + loadfactor
                                     + ", space = " + B);
-
+                
+                
                 if (isGetAverage) 
                     getAverageImbalanceFactor();
                 else {
                     
                     testDiv();
+                    objs.add(div.getObjValue());
                 
                     // DB2 Cost
                     if (isDB2Cost)
@@ -91,7 +119,12 @@ public class DivBIPFunctionalTest extends DivTestSetting
                 
                 System.out.println("----------------------------------------");
             }
+            
+            entry = new DivTestEntry(type, objs);
+            entries.add(entry);
         }
+        
+        
     }
     
     
@@ -199,6 +232,9 @@ public class DivBIPFunctionalTest extends DivTestSetting
         // for the time-being
         // updateCost += div.getTotalBaseTableUpdateCost();
         
+        String type = "budget_" + B + "_" + listNumberReplicas;
+        List<Double> objs = new ArrayList<Double>();
+        
         // UNIF for the case with more than one replica
         for (int i = 0; i < listNumberReplicas.size(); i++){
             
@@ -218,7 +254,12 @@ public class DivBIPFunctionalTest extends DivTestSetting
                                 );
             
             System.out.println("----------------------------------------");
+            
+            objs.add(totalCostUniform);
         }
+        
+        DivTestEntry entry = new DivTestEntry(type, objs);
+        entries.add(entry);
         
         if (!isDB2Cost)
             return;

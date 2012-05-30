@@ -77,10 +77,10 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
             break;
         }
         
+        System.out.println(" file name: " + fileName);
         File file = new File(fileName);
         
         if (!file.exists()) {
-            
             // Generate candidate indexes
             generateAndWriteToFileOptimizerCandidates(fileName);           
             return candidates;
@@ -95,6 +95,7 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
      */
     protected static void generateAndWriteToFileOptimizerCandidates(String fileName) throws Exception
     {   
+        System.out.println(" Generate candidate indexes and write to file: " + fileName);
         CandidateGenerator candGen =
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         
@@ -109,14 +110,28 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         candidates = candGen.generate(wlCandidate);
         
         // Calculate the total size (for solely information)
-        totalIndexSize = 0;
-        for (Index index : candidates) 
-            totalIndexSize += index.getBytes();
+        totalIndexSize = 0.0;
+        Set<Index> temp = new HashSet<Index>();
+        
+        for (Index index : candidates) { 
+            
+            if (index.getBytes() < 0.0) {
+                System.out.println("EXCEPTION INdex " + index
+                        + " id: " + index.getId()
+                        + " size: " + (double) index.getBytes() / Math.pow(10, 6) + " (MB)"
+                        + " creation cost: "  + index.getCreationCost());
+            } else  {
+                temp.add(index);            
+                totalIndexSize += (double) index.getBytes() / Math.pow(10, 6);
+            }
+        }
+        candidates = temp;
         
         System.out.println(" OPTIMAL, number of statements to generate candidate: " 
                             + wlCandidate.size() + "\n"
                             + "Number of candidate: " + candidates.size() + "\n" 
-                            + "Total size: " + totalIndexSize);
+                            + "Total size: " 
+                            + totalIndexSize  + " MB");
         
         // write to text file
         writeIndexesToFile(candidates, fileName);
@@ -151,7 +166,7 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         
         System.out.println("POWERSET, Number of statements: " + workload.size() + "\n"
                             + "Number of candidate: " + candidates.size() + "\n" 
-                            + "Total size: " + totalIndexSize);
+                            + "Total size: " + (double) totalIndexSize / Math.pow(10, 6) + " MB");
         
         // write to text file
         writeIndexesToFile(candidates, fileName);

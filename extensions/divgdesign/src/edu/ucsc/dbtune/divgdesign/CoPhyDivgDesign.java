@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.divgdesign;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +18,7 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -26,7 +28,6 @@ import static edu.ucsc.dbtune.bip.util.LogListener.EVENT_POPULATING_INUM;
 import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
-import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.INDEX_UPDATE_COST_FACTOR;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.maxRatioInList;
 
 public class CoPhyDivgDesign extends DivgDesign 
@@ -39,6 +40,8 @@ public class CoPhyDivgDesign extends DivgDesign
     private Map<SQLStatement, Set<Index>> recommendedIndexStmt;
     private double timeInum;
     private double timeAnalysis;
+    
+    protected Environment environment = Environment.getInstance();
     
     public CoPhyDivgDesign(DatabaseSystem db, InumOptimizer  io, LogListener logger,
                            Map<SQLStatement, Set<Index>> recommendedIndexStmt)
@@ -103,6 +106,8 @@ public class CoPhyDivgDesign extends DivgDesign
             throws Exception 
     {
         Set<Index> candidates = new HashSet<Index>();
+        String fileQueryPlanDesc;
+        File file;
         
         // check if we already generate candidate for this statement before
         for (SQLStatement sql : sqls)
@@ -115,6 +120,12 @@ public class CoPhyDivgDesign extends DivgDesign
         cophy.setOptimizer(io);
         cophy.setSpaceBudget(B);
         cophy.setLogListenter(logger);
+        
+        // remove the file of QueryPlanDesc
+        fileQueryPlanDesc = environment.getWorkloadsFoldername() + "/query-plan-desc.bin";
+        file = new File(fileQueryPlanDesc);
+        if (file.exists())
+            file.delete();
         
         return cophy.solve().getRecommendation();
     }
@@ -138,8 +149,8 @@ public class CoPhyDivgDesign extends DivgDesign
         // and compute the cost
         List<QueryCostAtPartition> costs = new ArrayList<QueryCostAtPartition>();
         double cost;
-        double baseTableCost;
-        double indexUpdateCost;
+        //double baseTableCost;
+        //double indexUpdateCost;
         
         for (int i = 0; i < n; i++) {
             
@@ -151,28 +162,20 @@ public class CoPhyDivgDesign extends DivgDesign
                     sql.getSQLCategory().isSame(DELETE)) {
                 // cost of base table & update cost
                 cost -= explain.getSelectCost();
+                /*
                 baseTableCost = explain.getBaseTableUpdateCost();
                 indexUpdateCost = cost - baseTableCost;
                 indexUpdateCost *= INDEX_UPDATE_COST_FACTOR;
                 
-                cost = baseTableCost + indexUpdateCost;                
+                cost = baseTableCost + indexUpdateCost;
+                */                
             }
             
-            cost *= sql.getStatementWeight();
+            // not consider base table cost for now            
+            if (sql.getSQLCategory().isSame(NOT_SELECT))
+                cost -= explain.getBaseTableUpdateCost();
             
-            /*
-            if (sql.getSQLCategory().isSame(DELETE) ||
-                    sql.getSQLCategory().isSame(INSERT) ) {
-                System.out.println(sql.getSQLCategory() + "\n"
-                                    + " replica = " + i + " cost = " + cost + "\n"
-                                    + " base table cost: " + explain.getBaseTableUpdateCost()
-                                    + "\n"
-                                    + " configuration: " + indexesAtReplica.get(i).size()
-                                    + "\n"
-                                    + explain.getPlan());
-            }
-            */
-            
+            cost *= sql.getStatementWeight();            
             costs.add(new QueryCostAtPartition(i, cost));
         }
             
