@@ -116,7 +116,7 @@ public class ConstraintDivBIP extends DivBIP
                     imbalanceReplicaConstraints(c.getFactor());
                 }
                 else if (c.getType().equals(NODE_FAILURE)) {
-                    setConstantReplicaImbalanceConstraint(c.getFactor());
+                    setConstantFailureImbalanceConstraint(c.getFactor());
                     nodeFailures(c.getFactor());
                 }
                 else if (c.getType().equals(IMBALANCE_QUERY)) {
@@ -202,6 +202,23 @@ public class ConstraintDivBIP extends DivBIP
      *  
      */
     protected void setConstantReplicaImbalanceConstraint(double beta)
+    {   
+        constantRHSImbalanceConstraint = (beta - 1) *  getTotalBaseTableUpdateCost() / nReplicas;
+        System.out.println(" constant in REPLICA imbalance constraint: " 
+                            + UtilConstraintBuilder.constantRHSImbalanceConstraint);
+            
+    }
+    
+    /**
+     * Each imbalance constraint is in the form: {replica_i <= \beta \times replica_j + constant
+     * where the constant is determined as {@code \beta - 1} \times cost_update_base_table_one_relica,
+     * since in the formula of the cost, we do not take into account this component.
+     * 
+     * @param beta
+     *      The imbalance replica factor
+     *  
+     */
+    protected void setConstantFailureImbalanceConstraint(double beta)
     {   
         constantRHSImbalanceConstraint = (beta - 1) *  getTotalBaseTableUpdateCost() / nReplicas;
         System.out.println(" constant in REPLICA imbalance constraint: " 
@@ -657,14 +674,14 @@ public class ConstraintDivBIP extends DivBIP
                         expr.add(increadLoadQuery(r, desc.getStatementID(), desc, failR));
                 }
                 
-                // increase(r) + load(r) <= beta * load(r)
+                // increase(r) <= beta * load(r)
                 nodeFailureConstraintReplica(r, expr, beta);
             }
     }
     
     
     /**
-     * The constraint is in the form: {@code increaseExpr + load(r) <= beta * load(r) }
+     * The constraint is in the form: {@code increaseExpr <= beta * load(r) }
      * @param r
      * @param expr
      */
@@ -675,7 +692,7 @@ public class ConstraintDivBIP extends DivBIP
                 
         expr = cplex.linearNumExpr();
         expr.add(exprIncreaseLoad);
-        expr.add(modifyCoef(super.replicaCost(r), 1 - beta));
+        expr.add(modifyCoef(super.replicaCost(r), -beta));
         cplex.addLe(expr, constantRHSImbalanceConstraint, "node_failure_" + numConstraints);
         numConstraints++;
     }

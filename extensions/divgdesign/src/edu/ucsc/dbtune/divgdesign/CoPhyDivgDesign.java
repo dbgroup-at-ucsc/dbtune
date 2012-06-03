@@ -98,6 +98,18 @@ public class CoPhyDivgDesign extends DivgDesign
         // record the INUM time and analysis time
         timeInum = logger.getRunningTime(EVENT_POPULATING_INUM);
         timeAnalysis = runningTime - timeInum;
+        
+        // remove the file of QueryPlanDesc
+        String fileQueryPlanDesc = environment.getWorkloadsFoldername() + "/query-plan-desc.bin";
+        File file = new File(fileQueryPlanDesc);
+        if (file.exists())
+            file.delete();
+        
+        // remove the file of candidate indexes
+        String fileIndexes = environment.getWorkloadsFoldername() + "/candiate-optimizer.bin";
+        file = new File(fileIndexes);
+        if (file.exists())
+            file.delete();
     }
     
        
@@ -183,6 +195,42 @@ public class CoPhyDivgDesign extends DivgDesign
     }
     
     /**
+     * Compute the cost for the given stmt
+     * @param sql
+     * @return
+     */
+    private double stmtCost(SQLStatement sql, Set<Index> conf) throws Exception
+    {
+        InumPreparedSQLStatement inumStmt;
+        ExplainedSQLStatement explain;
+        double cost;
+        
+        // retrieve from the cache first
+        inumStmt = preparedStmts.get(sql);
+        if (inumStmt == null) {
+            inumStmt  = (InumPreparedSQLStatement) io.prepareExplain(sql);
+            preparedStmts.put(sql, inumStmt);
+        }
+        
+        explain = inumStmt.explain(conf);
+        cost = explain.getTotalCost();
+        
+        // temporary take get select cost out of the cost
+        if (sql.getSQLCategory().isSame(INSERT) || 
+                sql.getSQLCategory().isSame(DELETE)) {
+            // cost of base table & update cost
+            cost -= explain.getSelectCost();
+        }
+        
+        
+        // not consider base table cost for now            
+        if (sql.getSQLCategory().isSame(NOT_SELECT))
+            cost -= explain.getBaseTableUpdateCost(); 
+        
+        return cost;       
+    }
+    
+    /**
      * Compute the maximum imbalance query
      * 
      * @return
@@ -216,7 +264,22 @@ public class CoPhyDivgDesign extends DivgDesign
         return maxRatio;
     }
     
-    public double getImbalanceReplica() throws SQLException
+    /**
+     * todo
+     * @return
+     * @throws SQLException
+     */
+    public double getImbalanceReplica() throws Exception
+    {
+        List<Double> replicas = replicaCost();        
+        return maxRatioInList(replicas);
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    private List<Double> replicaCost() throws Exception
     {
         List<Double> replicas = new ArrayList<Double>();
         for (int i = 0; i < n; i++)
@@ -231,7 +294,6 @@ public class CoPhyDivgDesign extends DivgDesign
         
             sql   = workload.get(j);
             costs = statementCosts(sql);
-            
             
             // update statement
             if (sql.getSQLCategory().isSame(NOT_SELECT))
@@ -251,8 +313,54 @@ public class CoPhyDivgDesign extends DivgDesign
             }
         }
         
+        return replicas;
+    }
+    
+    /**
+     * todo
+     * @return
+     */
+    public double getFailureImbalance() throws Exception
+    {
+        List<Double> replicas = replicaCost();
         
-        return maxRatioInList(replicas);
+        Set<Integer> commonQueryId;
+        SQLStatement sql;
+        double deltaCost;
+        double maxRatio = -1, ratio;
+        
+        for (int r = 0; r < n; r++) 
+            // assume  replica r fails
+            for (int i = 0; i < n; i++) {
+        
+                if (i == r)
+                    continue;
+                
+                deltaCost = 0.0;
+                
+                // get queries in Q[i] \intersect Q[r]
+                commonQueryId = new HashSet<Integer>(stmtIDInPartitions.get(r));
+                commonQueryId.retainAll(stmtIDInPartitions.get(i));
+                
+                // compute cost
+                for (int j : commonQueryId) {
+                    sql = workload.get(j);
+                    
+                    if (sql.getSQLCategory().isSame(NOT_SELECT))
+                        continue;
+                    
+                    deltaCost += (double) stmtCost(sql, indexesAtReplica.get(i))/ (m * (m - 1));
+                }
+                
+                ratio = (double) deltaCost / replicas.get(i);
+                if (ratio > maxRatio)
+                    maxRatio = ratio;
+                
+            }
+        
+        return maxRatio;
+        
+       
     }
 
 }

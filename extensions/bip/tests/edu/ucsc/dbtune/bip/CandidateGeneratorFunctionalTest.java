@@ -120,6 +120,7 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
                         + " id: " + index.getId()
                         + " size: " + (double) index.getBytes() / Math.pow(10, 6) + " (MB)"
                         + " creation cost: "  + index.getCreationCost());
+                throw new RuntimeException("Error with INDEX SIZE LESS THAN 0");
             } else  {
                 temp.add(index);            
                 totalIndexSize += (double) index.getBytes() / Math.pow(10, 6);
