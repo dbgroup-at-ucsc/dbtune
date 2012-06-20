@@ -707,9 +707,9 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             if (r == rFail)
                 continue;
             
-            ratio = increaseLoad.get(r) + replicaCost.get(r);
-            ratio /= replicaCost.get(r);
-            
+            //ratio = increaseLoad.get(r) + replicaCost.get(r);
+            //ratio /= replicaCost.get(r);
+            ratio = (double) increaseLoad.get(r) / replicaCost.get(r); 
             maxRatio = (maxRatio > ratio) ? maxRatio : ratio;
         }
             

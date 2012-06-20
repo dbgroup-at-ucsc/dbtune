@@ -114,7 +114,7 @@ public class DivTestSetting
     {  
         fUpdate = 1;
         fQuery = 1;
-        sf = 1500;
+        sf = 15000;
         
         for (SQLStatement sql : workload)
             if (sql.getSQLCategory().isSame(INSERT)) {
@@ -136,7 +136,7 @@ public class DivTestSetting
         isExportToFile = false;
         isTestCost = false;
         isShowRecommendation = false;        
-        isGetAverage = false;
+        isGetAverage = true;
         isDB2Cost = false;
         isAllImbalanceConstraint = false;
         

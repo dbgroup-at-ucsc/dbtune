@@ -145,9 +145,11 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         // run at most {@code maxIters} times
         int minPosition = -1;
         double minCost = -1;
+        double avgReplicaImbalance = 0.0;
+        double avgQueryImbalance = 0.0;
+        double avgFailureImbalance = 0.0;
         
         for (int iter = 0; iter < maxIters; iter++) {
-            
             
             logger = LogListener.getInstance();
             divg = new CoPhyDivgDesign(db, (InumOptimizer) io, logger, recommendedIndexStmt);
@@ -159,7 +161,15 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
                 minPosition = iter;
                 minCost = divg.getTotalCost();
             } 
+            
+            avgReplicaImbalance += divg.getImbalanceReplica();
+            avgQueryImbalance += divg.getImbalanceQuery();
+            avgFailureImbalance += divg.getFailureImbalance();
         }
+        
+        avgReplicaImbalance /= maxIters;
+        avgQueryImbalance /= maxIters;
+        avgFailureImbalance /= maxIters;
         
         // get the best among these runs
         double timeAnalysis = 0.0;
@@ -184,6 +194,9 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
                             + " The objective value: " + divg.getTotalCost() + "\n"
                             + "      QUERY cost:    " + divg.getQueryCost()  + "\n"
                             + "      UPDATE cost:   " + divg.getUpdateCost() + "\n"
-                            );
+                            + " REPLICA IMBALANCE: " + avgReplicaImbalance + "\n"
+                            + " QUERY IMBALANCE: " + avgQueryImbalance + "\n"
+                            + " FAILURE IMBALANCE: " + avgFailureImbalance + "\n"
+                             );
     }
 }
