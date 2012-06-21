@@ -137,6 +137,7 @@ public class DATTest2 {
             en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
             en.setProperty("username", "db2inst1");
             en.setProperty("password", "db2inst1admin");
+            en.setProperty("workloads.dir", "resources/workloads/db2");
             Rt.p(en.getProperty("jdbc.url"));
             db = newDatabaseSystem(en);
 

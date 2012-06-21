@@ -41,7 +41,9 @@ public class GnuPlot {
     }
 
     public void addLine() {
-        vs.add(current);
+        Vector<Double> v = new Vector<Double>();
+        v.addAll(current);
+        vs.add(v);
         current.removeAllElements();
     }
 
@@ -64,7 +66,7 @@ public class GnuPlot {
                 ps.println();
         }
         ps.close();
-        ps = new PrintStream(dataFile);
+        ps = new PrintStream(pltFile);
         ps.println("reset");
         ps.println("set terminal postscript eps enhanced monochrome 26");
         ps.println("set output \"" + name + ".eps\"");
@@ -83,7 +85,7 @@ public class GnuPlot {
                     ps.print(",");
                 ps.print("\"" + xtics[i] + "\" " + xticsValues[i]);
             }
-            ps.println();
+            ps.println(")");
         }
         // ps.println("#set ytics 10");
         ps.println("set size 1, 0.8");
@@ -92,11 +94,15 @@ public class GnuPlot {
         ps.println("set key spacing 1.2");
         ps.println("");
         for (int i = 0; i < plotNames.length; i++) {
-            ps.print("plot \"" + name + ".data\" using " + (i * 2 + 1) + ":"
+            if (i==0)
+                ps.print("plot ");
+            else
+                ps.print("     ");
+            ps.print("\"" + name + ".data\" using " + (i * 2 + 1) + ":"
                     + (i * 2 + 2) + " title \"" + plotNames[i]
-                    + "\" with linespoints lw 4 pt " + (i * 2 + 2) + " ps 2, ");
+                    + "\" with linespoints lw 4 pt " + (i * 2 + 2) + " ps 2");
             if (i < plotNames.length - 1)
-                ps.print("\\");
+                ps.print(", \\");
             ps.println();
 
         }

@@ -565,17 +565,17 @@ public class DAT extends AbstractBIPSolver {
 
     public void getIndexBenefit() throws IloException {
         boolean[] bs = new boolean[totalIndices];
-        Rt.p("get index benefit 1");
+//        Rt.p("get index benefit 1");
         double costWithoutIndex = costWithIndex(bs);
         for (SeqInumIndex index : costModel.indices) {
-            Rt.p(index.id);
+//            Rt.p(index.id);
             index.indexBenefit = costWithoutIndex - costWithIndex(index.id);
         }
-        Rt.p("get index benefit 2");
+//        Rt.p("get index benefit 2");
         Arrays.fill(bs, true);
         double costWithAllIndex = costWithIndex(bs);
         for (SeqInumIndex index : costModel.indices) {
-            Rt.p(index.id);
+//            Rt.p(index.id);
             Arrays.fill(bs, true);
             bs[index.id] = false;
             index.indexBenefit2 = costWithIndex(bs) - costWithAllIndex;

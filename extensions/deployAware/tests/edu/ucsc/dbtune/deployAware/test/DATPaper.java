@@ -119,7 +119,7 @@ public class DATPaper {
         int l_def = 6;
         double _1mada_def = 2;
         int[] m_set = { 2, 3, 4, 5 };
-        double[] spaceFactor_set = { 0.25, 0.5, 1, Double.POSITIVE_INFINITY };
+        double[] spaceFactor_set = { 0.25, 0.5, 1, 1000000 };
         String[] spaceFactor_names = { "0.25x", "0.5x", "1.0x", "INF" };
         int[] l_set = { 4, 6, 8 };
         double[] _1mada_set = { 1, 2, 4, 16 };
