@@ -74,7 +74,7 @@ public class CreateIndexTest2 {
     public static void main(String[] args) throws Exception {
         Environment en = Environment.getInstance();
         DatabaseSystem db = newDatabaseSystem(en);
-        DATTest2.testSet = "tpch-500-counts";
+        DATTest2.workloadName = "tpch-500-counts";
         DATTest2.querySize = 100;
         DATTest2.indexSize = 200;
 

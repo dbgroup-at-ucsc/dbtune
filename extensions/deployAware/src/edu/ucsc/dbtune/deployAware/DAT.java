@@ -319,7 +319,7 @@ public class DAT extends AbstractBIPSolver {
     double beta;
     int totalQueires;
     int totalIndices;
-    int maxIndexCreatedPerWindow = 0;
+    public int maxIndexCreatedPerWindow = 0;
     Logger log = Logger.getLogger(DAT.class.getName());
 
     public DAT(SeqInumCost cost, double[] windowConstraints, double alpha,
@@ -757,6 +757,8 @@ public class DAT extends AbstractBIPSolver {
                 costs[i] = windows[i].getCost();// cplex.getObjValue();
                 if (i < windowConstraints.length - 1)
                     totalCost += costs[i] * alpha;
+                else
+                    totalCost += costs[i] * beta;
                 // for (int j = 0; j < totalIndices; j++) {
                 // indexPresent[j] = windows[i].indexPresent[j];
                 // }

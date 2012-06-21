@@ -59,7 +59,8 @@ public class DATTest2 {
     public static Environment en;
     public static int querySize = 20;
     public static int indexSize = 10;
-    public static String testSet = "tpch-500-counts";
+    public static String dbName = "test";
+    public static String workloadName = "tpch-500-counts";
 
     public static Workload getWorkload(Environment en) throws IOException,
             SQLException {
@@ -67,7 +68,7 @@ public class DATTest2 {
         file = "/tpch-small/workload.sql";
         file = "/tpcds-small/workload.sql";
         file = "/tpch-500-counts/workload.sql";
-        file = "/" + testSet + "/workload.sql";
+        file = "/" + workloadName + "/workload.sql";
         Workload workload = new Workload("", new FileReader(en
                 .getWorkloadsFoldername()
                 + file));
@@ -78,9 +79,11 @@ public class DATTest2 {
             for (int i = 0; i < workload.size(); i++) {
                 sb.append(workload.get(i).getSQL() + ";\r\n");
                 count++;
-                if (count >= querySize)
+                if (querySize != 0 && count >= querySize)
                     break all;
             }
+            if (querySize == 0)
+                break;
         }
         return new Workload("", new StringReader(sb.toString()));
     }
@@ -104,7 +107,7 @@ public class DATTest2 {
         // .getOptimizer())), 3);
         // Set<Index> indexes = candGen.generate(workload);
         int size = indexSize;
-        if (indexes.size() >= size) {
+        if (size > 0 && indexes.size() >= size) {
             Rt.np("Reduce index size from " + indexes.size() + " to " + size);
             Set<Index> temp = new HashSet<Index>();
             int count = 0;
@@ -120,10 +123,10 @@ public class DATTest2 {
     }
 
     public static SeqInumCost loadCost() throws Exception {
-        File dir = new File("/home/wangrui/workspace/cache", testSet);
-        dir.mkdir();
-        File file = new File(dir, "tpch100_" + querySize + "_" + indexSize
-                + ".xml");
+        File dir = new File("/home/wangrui/workspace/cache/" + dbName + "/"
+                + workloadName);
+        dir.mkdirs();
+        File file = new File(dir, querySize + "_" + indexSize + ".xml");
         SeqInumCost cost = null;
         if (file.exists()) {
             Rt.p("loading from cache " + file.getAbsolutePath());
@@ -131,6 +134,10 @@ public class DATTest2 {
             cost = SeqInumCost.loadFromXml(rx);
         } else {
             en = Environment.getInstance();
+            en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
+            en.setProperty("username", "db2inst1");
+            en.setProperty("password", "db2inst1admin");
+            Rt.p(en.getProperty("jdbc.url"));
             db = newDatabaseSystem(en);
 
             Workload workload = DATTest2.getWorkload(en);
@@ -170,11 +177,11 @@ public class DATTest2 {
         SeqInumCost.plugInTime = 0;
         RTimerN timer = new RTimerN();
 
-        SeqInumCost cost = loadCost();
+        SeqInumCost cost = DATTest2.loadCost();
         double[] windowConstraints = new double[3];
         for (int i = 0; i < windowConstraints.length; i++)
-            windowConstraints[i] = 25600000;
-        cost.storageConstraint = 32000 * 1024.0 * 1024.0;
+            windowConstraints[i] = 3200000;
+        cost.storageConstraint = 16000 * 1024.0 * 1024.0;
 
         DAT dat = new DAT(cost, windowConstraints, 1, 0);
         // dat.setOptimizer(optimizer);
@@ -191,8 +198,9 @@ public class DATTest2 {
         // String xml = root.getXml();
         // Rt.write(file, xml);
 
-        Rt.np("%d x %d\tspace=%,.0fMB", cost.queries.size(), cost.indices
-                .size(), cost.storageConstraint / 1024 / 1024);
+        Rt.np("queryCount=%d \t indexCount=%d\tspace=%,.0fMB", cost.queries
+                .size(), cost.indices.size(),
+                cost.storageConstraint / 1024 / 1024);
         Rt
                 .np("index\tcreate cost\tstorage cost\tbenefit(with-none)\tbenefit(all-without)");
         for (int i = 0; i < cost.indices.size(); i++) {
@@ -206,7 +214,7 @@ public class DATTest2 {
             System.out.print("window " + i + "\tcreate/drop\t");
         }
         System.out.println("TransCost");
-        System.out.print("constraint\t");
+        System.out.print("windowSize\t");
         for (int i = 0; i < windowConstraints.length; i++) {
             System.out.format("%,.0f\t\t", windowConstraints[i]);
         }
@@ -256,8 +264,7 @@ public class DATTest2 {
             }
             System.out.format("%.0f", output.totalCost);
             if (baseline != null) {
-                double btotal = (baseline.totalCost + beta
-                        * baseline.ws[baseline.ws.length - 1].cost);
+                double btotal = baseline.totalCost;
                 System.out.format("\t%.0f", btotal);
                 System.out.format("\t/base %.0f%%", output.totalCost / btotal
                         * 100);
@@ -276,8 +283,7 @@ public class DATTest2 {
                 if (baseline3.ws[i].drop != 0)
                     throw new Error();
             }
-            double optTotal = (baseline3.totalCost + beta
-                    * baseline3.ws[baseline3.ws.length - 1].cost);
+            double optTotal = baseline3.totalCost;
             System.out.format("%.0f", optTotal);
             System.out.print("\tfit " + DAT.baseline2WindowConstraint + "%");
             System.out.format("\t/opt %.0f%%\n", output.totalCost / optTotal
@@ -317,8 +323,8 @@ public class DATTest2 {
         double spEnd = 5000000 * 1024.0 * 1024.0;
         double winStart = 100000;
         double winEnd = 500000000;
-        winStart = 12800000;
-//         spStart=512000* 1024.0 * 1024.0;
+        winStart = 3200000;
+        // spStart=512000* 1024.0 * 1024.0;
         System.out.format("win\\space\t");
         for (double spaceConstraint = spStart; spaceConstraint < spEnd; spaceConstraint *= 2) {
             System.out.format("%,.0fMB\t", spaceConstraint / 1024 / 1024);
@@ -362,13 +368,17 @@ public class DATTest2 {
     public static StringBuilder sb = new StringBuilder();
 
     public static void main(String[] args) throws Exception {
-        testSet = "tpch-small";
+        dbName = "tpch10g";
+        workloadName = "tpch-small";
         querySize = 100;
         indexSize = 200;
-         testSet = "tpch-500-counts";
-//        testSet = "online-benchmark-100";
-        testSet = "tpcds-inum";
-//        testSet = "tpch-updates";
+        workloadName = "tpch-500-counts";
+        // testSet = "online-benchmark-100";
+        // testSet = "tpcds-inum";
+        // testSet = "tpcds-debug";
+        // testSet = "tpch-inserts";
+        // testSet = "tpch-deletes";
+        // testSet = "tpch-updates";
         // testSet = "nref";
         //
         // querySize = 100;
@@ -383,7 +393,7 @@ public class DATTest2 {
         // querySize = 50;
         // indexSize = 100;
 
-//         testBIP();
-        testDATBatch();
+        testBIP();
+        // testDATBatch();
     }
 }
