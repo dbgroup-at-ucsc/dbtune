@@ -1831,8 +1831,8 @@ public class Rt {
 		}.start();
 	}
 
-	public static String runAndShowCommand(String[] cmd) throws IOException {
-		Process process = Runtime.getRuntime().exec(cmd);
+	public static String runAndShowCommand(String[] cmd,File dir) throws IOException {
+		Process process = Runtime.getRuntime().exec(cmd,null,dir);
 		StringBuilder sb = new StringBuilder();
 		showInputStream(process.getInputStream(), sb);
 		showInputStream(process.getErrorStream(), sb);
@@ -1844,8 +1844,8 @@ public class Rt {
 		return sb.toString();
 	}
 
-	public static String runAndShowCommand(String cmd) throws IOException {
-		Process process = Runtime.getRuntime().exec(cmd);
+	public static String runAndShowCommand(String cmd,File dir) throws IOException {
+		Process process = Runtime.getRuntime().exec(cmd,null,dir);
 		StringBuilder sb = new StringBuilder();
 		showInputStream(process.getInputStream(), sb);
 		showInputStream(process.getErrorStream(), sb);

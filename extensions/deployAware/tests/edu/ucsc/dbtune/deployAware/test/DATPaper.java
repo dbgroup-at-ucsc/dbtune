@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.deployAware.test;
 
+import java.io.File;
 import java.io.StringReader;
 
 import edu.ucsc.dbtune.bip.util.LogListener;
@@ -15,11 +16,13 @@ public class DATPaper {
     double[] windowConstraints;
     double alpha, beta;
     int maxIndexCreatedPerWindow = 0;
+    double dat;
+    double greedyRatio;
+    double mkp;
 
-    public DATPaper(int m, long spaceBudge, int l, double alpha)
-            throws Exception {
+    public DATPaper(GnuPlot plot, double plotX, int m, long spaceBudge, int l,
+            double alpha) throws Exception {
         cost = DATTest2.loadCost();
-
         long totalCost = 0;
         for (int i = 0; i < cost.indices.size(); i++) {
             SeqInumIndex index = cost.indices.get(i);
@@ -35,6 +38,14 @@ public class DATPaper {
             windowConstraints[i] = windowSize;
         cost.storageConstraint = spaceBudge;
         maxIndexCreatedPerWindow = l;
+        dat = dat();
+        greedyRatio = baseline();
+        mkp = mkp();
+        plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
+        plot.add(plotX, dat);
+        plot.add(plotX, greedyRatio);
+        plot.add(plotX, mkp);
+        plot.addLine();
         if (DATTest2.db != null)
             DATTest2.db.getConnection().close();
     }
@@ -95,6 +106,7 @@ public class DATPaper {
     public static void main(String[] args) throws Exception {
         DATTest2.querySize = 0;
         DATTest2.indexSize = 0;
+        File outputDir = new File("/home/wangrui/dbtune");
         long gigbytes = 1024L * 1024L * 1024L;
         TestSet[] sets = {
                 new TestSet("tpch10g", "tpch-inum", 10 * gigbytes),
@@ -116,20 +128,36 @@ public class DATPaper {
             DATTest2.dbName = set.dbName;
             DATTest2.workloadName = set.workloadName;
             long spaceBudge = (long) (set.size * spaceFactor_def);
+            GnuPlot plot = new GnuPlot(outputDir, set.dbName + "_"
+                    + set.workloadName + "_m", "m", "cost");
             for (int m : m_set) {
-                new DATPaper(m, spaceBudge, l_def, getAlpha(_1mada_def));
+                new DATPaper(plot, m, m, spaceBudge, l_def,
+                        getAlpha(_1mada_def));
             }
+            plot.finish();
+            plot = new GnuPlot(outputDir, set.dbName + "_" + set.workloadName
+                    + "_space", "space", "cost");
+            plot.setXtics(spaceFactor_names, spaceFactor_set);
             for (double spaceFactor : spaceFactor_set) {
                 long space = (long) (set.size * spaceFactor);
-                new DATPaper(m_def, space, l_def, getAlpha(_1mada_def));
+                new DATPaper(plot, spaceFactor, m_def, space, l_def,
+                        getAlpha(_1mada_def));
             }
+            plot.finish();
+            plot = new GnuPlot(outputDir, set.dbName + "_" + set.workloadName
+                    + "_l", "l", "cost");
             for (int l : l_set) {
-                new DATPaper(m_def, spaceBudge, l, getAlpha(_1mada_def));
+                new DATPaper(plot, l, m_def, spaceBudge, l,
+                        getAlpha(_1mada_def));
             }
+            plot.finish();
+            plot = new GnuPlot(outputDir, set.dbName + "_" + set.workloadName
+                    + "_1mada", "(1-a)/a", "cost");
             for (double _1mada : _1mada_set) {
                 double alpha = getAlpha(_1mada);
-                new DATPaper(m_def, spaceBudge, l_def, alpha);
+                new DATPaper(plot, _1mada, m_def, spaceBudge, l_def, alpha);
             }
+            plot.finish();
         }
     }
 }
