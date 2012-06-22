@@ -90,7 +90,7 @@ public class GnuPlot {
         // ps.println("#set ytics 10");
         ps.println("set size 1, 0.8");
         ps.println("set boxwidth 0.3");
-        ps.println("set key at 3.9, 8.45");
+//        ps.println("set key at 3.9, 8.45");
         ps.println("set key spacing 1.2");
         ps.println("");
         for (int i = 0; i < plotNames.length; i++) {

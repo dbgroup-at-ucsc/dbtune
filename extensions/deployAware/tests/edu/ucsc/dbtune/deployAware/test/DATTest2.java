@@ -179,12 +179,22 @@ public class DATTest2 {
         RTimerN timer = new RTimerN();
 
         SeqInumCost cost = DATTest2.loadCost();
+        
+        long totalCost = 0;
+        for (int i = 0; i < cost.indices.size(); i++) {
+            SeqInumIndex index = cost.indices.get(i);
+            totalCost += index.createCost;
+        }
+        int l=6;
+        int windowSize = 5 * l * (int) (totalCost / cost.indices.size());
+        
         double[] windowConstraints = new double[3];
         for (int i = 0; i < windowConstraints.length; i++)
-            windowConstraints[i] = 3200000;
-        cost.storageConstraint = 16000 * 1024.0 * 1024.0;
+            windowConstraints[i] = windowSize;
+        cost.storageConstraint = 5*1024 * 1024.0 * 1024.0;
 
         DAT dat = new DAT(cost, windowConstraints, 1, 0);
+        dat.maxIndexCreatedPerWindow=l;
         // dat.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
         dat.setLogListenter(logger);
@@ -235,7 +245,7 @@ public class DATTest2 {
         }
         System.out.format(
                 "%.0f\tfit " + DAT.baseline2WindowConstraint + "%%\n",
-                baseline.totalCost);
+                baseline.totalCost + baseline.last());
         // baseline2 = (DATOutput) dat.baseline2("greedy");
         // System.out.print("greedy MKP\t");
         // for (int i = 0; i < windowConstraints.length; i++) {
@@ -252,7 +262,10 @@ public class DATTest2 {
         // DAT.baseline2WindowConstraint+"%");
         double alpha = 1;
         for (double beta = Math.pow(2, 0); beta <= Math.pow(2, 5); beta *= 2) {
+            alpha=1.0/3;
+            beta=2.0/3;
             dat = new DAT(cost, windowConstraints, alpha, beta);
+            dat.maxIndexCreatedPerWindow=l;
             // dat.setOptimizer(optimizer);
             dat.setLogListenter(logger);
             dat.setWorkload(new Workload("", new StringReader("")));
@@ -265,7 +278,7 @@ public class DATTest2 {
             }
             System.out.format("%.0f", output.totalCost);
             if (baseline != null) {
-                double btotal = baseline.totalCost;
+                double btotal = alpha*baseline.totalCost+ baseline.last()*beta;
                 System.out.format("\t%.0f", btotal);
                 System.out.format("\t/base %.0f%%", output.totalCost / btotal
                         * 100);
@@ -276,6 +289,7 @@ public class DATTest2 {
             // * baseline2.ws[baseline2.ws.length - 1].cost));
             System.out.println();
             dat = new DAT(cost, windowConstraints, alpha, beta);
+            dat.maxIndexCreatedPerWindow=l;
             baseline3 = (DATOutput) dat.baseline2("bip");
             System.out.print("PTAS MKP\t");
             for (int i = 0; i < windowConstraints.length; i++) {
@@ -289,6 +303,7 @@ public class DATTest2 {
             System.out.print("\tfit " + DAT.baseline2WindowConstraint + "%");
             System.out.format("\t/opt %.0f%%\n", output.totalCost / optTotal
                     * 100);
+            break;
         }
 
         // double datCost = dat.getObjValue();
@@ -370,10 +385,10 @@ public class DATTest2 {
 
     public static void main(String[] args) throws Exception {
         dbName = "tpch10g";
-        workloadName = "tpch-small";
-        querySize = 100;
-        indexSize = 200;
-        workloadName = "tpch-500-counts";
+        workloadName = "tpch-inum";
+        querySize = 0;
+        indexSize = 0;
+        // workloadName = "tpch-500-counts";
         // testSet = "online-benchmark-100";
         // testSet = "tpcds-inum";
         // testSet = "tpcds-debug";

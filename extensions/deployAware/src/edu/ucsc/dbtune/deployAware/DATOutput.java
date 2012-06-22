@@ -14,6 +14,9 @@ public class DATOutput extends IndexTuningOutput {
 
     public W[] ws;
     public double totalCost;
+    public double last() {
+        return ws[ws.length-1].cost;
+    }
 
     public DATOutput(int size) {
         ws = new W[size];

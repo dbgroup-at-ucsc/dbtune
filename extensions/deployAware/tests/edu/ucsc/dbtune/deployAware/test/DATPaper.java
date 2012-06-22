@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.deployAware.test;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.io.StringReader;
 
 import edu.ucsc.dbtune.bip.util.LogListener;
@@ -85,11 +86,13 @@ public class DATPaper {
     }
 
     static class TestSet {
+        String name;
         String dbName;
         String workloadName;
         long size;
 
-        public TestSet(String dbName, String workloadName, long size) {
+        public TestSet(String name,String dbName, String workloadName, long size) {
+            this.name=name;
             this.dbName = dbName;
             this.workloadName = workloadName;
             this.size = size;
@@ -107,13 +110,22 @@ public class DATPaper {
         DATTest2.querySize = 0;
         DATTest2.indexSize = 0;
         File outputDir = new File("/home/wangrui/dbtune");
+        PrintStream ps=new PrintStream(new File(outputDir,"experiment.tex"));
+        ps.println("\\documentclass[10pt]{article}\n" + 
+        		"\n" + 
+        		"\\usepackage{graphicx}   % need for figures\n" + 
+        		"\n" + 
+        		"\\begin{document}\n" + 
+        		"" + 
+        		"");
         long gigbytes = 1024L * 1024L * 1024L;
         TestSet[] sets = {
-                new TestSet("tpch10g", "tpch-inum", 10 * gigbytes),
-                new TestSet("tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
-                new TestSet("test", "online-benchmark-100", 10 * gigbytes),
-                new TestSet("test", "online-benchmark-update-100",
-                        10 * gigbytes), };
+                new TestSet("12 TPC-H queries","tpch10g", "tpch-inum", 10 * gigbytes),
+                new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2","tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
+                new TestSet("100 OTAB [5] queries","test", "online-benchmark-100", 10 * gigbytes),
+                new TestSet("100 OTAB [5] queries and 10 updates","test", "online-benchmark-update-100",
+                        10 * gigbytes),
+                        };
         int m_def = 3;
         double spaceFactor_def = 0.5;
         int l_def = 6;
@@ -128,15 +140,29 @@ public class DATPaper {
             DATTest2.dbName = set.dbName;
             DATTest2.workloadName = set.workloadName;
             long spaceBudge = (long) (set.size * spaceFactor_def);
-            GnuPlot plot = new GnuPlot(outputDir, set.dbName + "_"
-                    + set.workloadName + "_m", "m", "cost");
+            GnuPlot plot = new GnuPlot(outputDir, set.dbName + "X"
+                    + set.workloadName + "Xm", "m", "cost");
+            ps.println("\\begin{figure}\n" + 
+            		"\\centering\n" + 
+            		"\\includegraphics[scale=1]{"+plot.name+"}\n" + 
+            		"\\caption{"+set.name+" m}\n" + 
+            		"\\label{"+plot.name+"}\n" + 
+            		"\\end{figure}\n" + 
+            		"");
             for (int m : m_set) {
                 new DATPaper(plot, m, m, spaceBudge, l_def,
                         getAlpha(_1mada_def));
             }
             plot.finish();
-            plot = new GnuPlot(outputDir, set.dbName + "_" + set.workloadName
-                    + "_space", "space", "cost");
+            plot = new GnuPlot(outputDir, set.dbName + "X" + set.workloadName
+                    + "Xspace", "space", "cost");
+            ps.println("\\begin{figure}\n" + 
+                    "\\centering\n" + 
+                    "\\includegraphics[scale=1]{"+plot.name+"}\n" + 
+                    "\\caption{"+set.name+" space}\n" + 
+                    "\\label{"+plot.name+"}\n" + 
+                    "\\end{figure}\n" + 
+                    "");
             plot.setXtics(spaceFactor_names, spaceFactor_set);
             for (double spaceFactor : spaceFactor_set) {
                 long space = (long) (set.size * spaceFactor);
@@ -144,20 +170,36 @@ public class DATPaper {
                         getAlpha(_1mada_def));
             }
             plot.finish();
-            plot = new GnuPlot(outputDir, set.dbName + "_" + set.workloadName
-                    + "_l", "l", "cost");
+            plot = new GnuPlot(outputDir, set.dbName + "X" + set.workloadName
+                    + "Xl", "l", "cost");
+            ps.println("\\begin{figure}\n" + 
+                    "\\centering\n" + 
+                    "\\includegraphics[scale=1]{"+plot.name+"}\n" + 
+                    "\\caption{"+set.name+" l}\n" + 
+                    "\\label{"+plot.name+"}\n" + 
+                    "\\end{figure}\n" + 
+                    "");
             for (int l : l_set) {
                 new DATPaper(plot, l, m_def, spaceBudge, l,
                         getAlpha(_1mada_def));
             }
             plot.finish();
-            plot = new GnuPlot(outputDir, set.dbName + "_" + set.workloadName
-                    + "_1mada", "(1-a)/a", "cost");
+            plot = new GnuPlot(outputDir, set.dbName + "X" + set.workloadName
+                    + "X1mada", "(1-a)/a", "cost");
+            ps.println("\\begin{figure}\n" + 
+                    "\\centering\n" + 
+                    "\\includegraphics[scale=1]{"+plot.name+"}\n" + 
+                    "\\caption{"+set.name+" alpha}\n" + 
+                    "\\label{"+plot.name+"}\n" + 
+                    "\\end{figure}\n" + 
+                    "");
             for (double _1mada : _1mada_set) {
                 double alpha = getAlpha(_1mada);
                 new DATPaper(plot, _1mada, m_def, spaceBudge, l_def, alpha);
             }
             plot.finish();
         }
+        ps.println("\\end{document}\n");
+        ps.close();
     }
 }

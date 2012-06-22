@@ -24,7 +24,7 @@ public class MKPBip {
     IloNumVar[][] vars;
 
     public MKPBip(double[] bins, double[] binWeights, double[] items,
-            double[] profits) throws IloException {
+            double[] profits, int maxItemsPerBin) throws IloException {
         this.bins = Arrays.copyOf(bins, bins.length);
         this.binWeights = binWeights;
         this.items = items;
@@ -52,6 +52,13 @@ public class MKPBip {
                 expr.addTerm(this.items[j], vars[i][j]);
             }
             cplex.addLe(expr, this.bins[i]);
+            if (maxItemsPerBin > 0) {
+                expr = cplex.linearNumExpr();
+                for (int j = 0; j < items.length; j++) {
+                    expr.addTerm(1, vars[i][j]);
+                }
+                cplex.addLe(expr, maxItemsPerBin);
+            }
         }
         IloLinearNumExpr expr = cplex.linearNumExpr();
         for (int i = 0; i < bins.length; i++) {
@@ -67,15 +74,15 @@ public class MKPBip {
         for (int i = 0; i < bins.length; i++) {
             for (int j = 0; j < items.length; j++) {
                 double d = cplex.getValue(vars[i][j]);
-                if (Math.abs(d-1) < 0.1) {
+                if (Math.abs(d - 1) < 0.1) {
                     if (belongs[j] >= 0)
                         throw new Error();
                     belongs[j] = i;
                 }
             }
         }
-        profit=0;
-        for (int i=0;i<items.length;i++) {
+        profit = 0;
+        for (int i = 0; i < items.length; i++) {
             if (belongs[i] >= 0)
                 profit += profits[i] * binWeights[belongs[i]];
             else {
@@ -90,7 +97,7 @@ public class MKPBip {
         double[] items = { 10, 20, 30, 70, 90 };
         double[] profits = { 10, 20, 30, 70, 900 };
         double[] binWeights = { 3, 2, 1 };
-        MKPBip greedy = new MKPBip(bins, binWeights, items, profits);
+        MKPBip greedy = new MKPBip(bins, binWeights, items, profits,0);
         Rt.p(greedy.profit);
         for (int i : greedy.belongs) {
             System.out.print(i + " ");

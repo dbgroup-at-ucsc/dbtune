@@ -166,13 +166,15 @@ public class DAT extends AbstractBIPSolver {
         public void addConstriant() throws IloException {
             for (InumPlan plan : plans)
                 plan.addConstriant();
-            // One and only one plan can be used
-            IloLinearNumExpr expr = cplex.linearNumExpr();
-            for (InumPlan plan : plans)
-                expr.addTerm(1, plan.active);
-            cplex.addEq(expr, 1);
-            if (showFormulas)
-                Rt.p(expr.toString() + "==1");
+            if (plans.length > 0) {
+                // One and only one plan can be used
+                IloLinearNumExpr expr = cplex.linearNumExpr();
+                for (InumPlan plan : plans)
+                    expr.addTerm(1, plan.active);
+                cplex.addEq(expr, 1);
+                if (showFormulas)
+                    Rt.p(expr.toString() + "==1");
+            }
         }
     }
 
@@ -475,45 +477,51 @@ public class DAT extends AbstractBIPSolver {
         cplex.solve();
     }
 
-    private boolean[] cophy(double total) throws IloException {
+    private boolean[] cophy(double total, int maxIndices) throws IloException {
         IloCplex old = cplex;
-        cplex = new IloCplex();
-        cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
-        cplex.setOut(null);
-        cplex.setWarning(null);
-        Window window = new Window(0, true, total);
-        IloLinearNumExpr expr = cplex.linearNumExpr();
-        window.addObjective(expr);
-        IloObjective obj = cplex.minimize(expr);
-        cplex.add(obj);
-        if (showFormulas)
-            Rt.p("Obj: " + expr.toString());
-        window.addConstriant();
-        double max = 0;
-        for (double d : windowConstraints) {
-            if (d > max)
-                max = d;
-        }
-        for (int k = 0; k < totalIndices; k++) {
-            if (costModel.indices.get(k).createCost >= max)
-                cplex.addEq(window.create[k], 0);
-            expr = cplex.linearNumExpr();
-            expr.addTerm(1, window.create[k]);
-            expr.addTerm(-1, window.drop[k]);
-            // }
+        int maxIndex = this.maxIndexCreatedPerWindow;
+        try {
+            this.maxIndexCreatedPerWindow = maxIndices;
+            cplex = new IloCplex();
+            cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
+            cplex.setOut(null);
+            cplex.setWarning(null);
+            Window window = new Window(0, true, total);
+            IloLinearNumExpr expr = cplex.linearNumExpr();
+            window.addObjective(expr);
+            IloObjective obj = cplex.minimize(expr);
+            cplex.add(obj);
             if (showFormulas)
-                Rt.p(expr.toString() + "=" + window.present[k]);
-            cplex.addEq(expr, window.present[k]);
+                Rt.p("Obj: " + expr.toString());
+            window.addConstriant();
+            double max = 0;
+            for (double d : windowConstraints) {
+                if (d > max)
+                    max = d;
+            }
+            for (int k = 0; k < totalIndices; k++) {
+                if (costModel.indices.get(k).createCost >= max)
+                    cplex.addEq(window.create[k], 0);
+                expr = cplex.linearNumExpr();
+                expr.addTerm(1, window.create[k]);
+                expr.addTerm(-1, window.drop[k]);
+                // }
+                if (showFormulas)
+                    Rt.p(expr.toString() + "=" + window.present[k]);
+                cplex.addEq(expr, window.present[k]);
+            }
+            if (!cplex.solve())
+                throw new Error();
+            window.getValues();
+            boolean[] indexPresent = new boolean[totalIndices];
+            for (int j = 0; j < totalIndices; j++) {
+                indexPresent[j] = window.indexPresent[j];
+            }
+            return indexPresent;
+        } finally {
+            cplex = old;
+            this.maxIndexCreatedPerWindow = maxIndex;
         }
-        if (!cplex.solve())
-            throw new Error();
-        window.getValues();
-        boolean[] indexPresent = new boolean[totalIndices];
-        for (int j = 0; j < totalIndices; j++) {
-            indexPresent[j] = window.indexPresent[j];
-        }
-        cplex = old;
-        return indexPresent;
     }
 
     private double costWithIndex(int i) throws IloException {
@@ -528,6 +536,7 @@ public class DAT extends AbstractBIPSolver {
         double spaceConstraint = this.spaceConstraint;
         this.spaceConstraint = Double.MAX_VALUE;
         try {
+            // showFormulas=true;
             cplex = new IloCplex();
             cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
             cplex.setOut(null);
@@ -565,17 +574,17 @@ public class DAT extends AbstractBIPSolver {
 
     public void getIndexBenefit() throws IloException {
         boolean[] bs = new boolean[totalIndices];
-//        Rt.p("get index benefit 1");
+        // Rt.p("get index benefit 1");
         double costWithoutIndex = costWithIndex(bs);
         for (SeqInumIndex index : costModel.indices) {
-//            Rt.p(index.id);
+            // Rt.p(index.id);
             index.indexBenefit = costWithoutIndex - costWithIndex(index.id);
         }
-//        Rt.p("get index benefit 2");
+        // Rt.p("get index benefit 2");
         Arrays.fill(bs, true);
         double costWithAllIndex = costWithIndex(bs);
         for (SeqInumIndex index : costModel.indices) {
-//            Rt.p(index.id);
+            // Rt.p(index.id);
             Arrays.fill(bs, true);
             bs[index.id] = false;
             index.indexBenefit2 = costWithIndex(bs) - costWithAllIndex;
@@ -595,7 +604,9 @@ public class DAT extends AbstractBIPSolver {
             // double costWithoutIndex = costWithIndex(new
             // boolean[totalIndices]);
             while (true) {
-                boolean[] indexPresent = cophy(total);
+                boolean[] indexPresent = cophy(total,
+                        this.maxIndexCreatedPerWindow
+                                * windowConstraints.length);
                 // Rt.p(this.costWithIndex(indexPresent));
                 Vector<SeqInumIndex> usedIndex = new Vector<SeqInumIndex>();
                 for (int i = 0; i < indexPresent.length; i++) {
@@ -636,7 +647,8 @@ public class DAT extends AbstractBIPSolver {
                     belongs = m.maxBelongs;
                 } else if (method.startsWith("greedy")) {
                     MKPGreedy m = new MKPGreedy(bins, binWeights, items,
-                            profits, method.equals("greedyRatio"));
+                            profits, method.equals("greedyRatio"),
+                            this.maxIndexCreatedPerWindow);
                     if (m.cannotFitIn > 0) {
                         // Rt.p("can't fit: " + m.cannotFitIn + " "
                         // + m.cannotFitWeight + " " + total);
@@ -649,7 +661,8 @@ public class DAT extends AbstractBIPSolver {
                     for (int j = 0; j < binWeights2.length; j++)
                         binWeights2[j] = (binWeights2.length - j) * alpha
                                 + beta;
-                    MKPBip m = new MKPBip(bins, binWeights2, items, profits);
+                    MKPBip m = new MKPBip(bins, binWeights2, items, profits,
+                            this.maxIndexCreatedPerWindow);
                     if (m.cannotFitIn > 0) {
                         // Rt.p("can't fit: " + m.cannotFitIn + " "
                         // + m.cannotFitWeight + " " + total);
