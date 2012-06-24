@@ -339,6 +339,12 @@ public class DAT extends AbstractBIPSolver {
 
     @Override
     public final void buildBIP() {
+        Rt.p("alpha=" + alpha);
+        Rt.p("beta=" + beta);
+        Rt.p("m=" + windowConstraints.length);
+        Rt.p("space=" + spaceConstraint);
+        Rt.p("window=" + windowConstraints[0]);
+        Rt.p("l=" + this.maxIndexCreatedPerWindow);
         super.numConstraints = 0;
         try {
             candidateIndexes = new HashSet();
@@ -659,8 +665,9 @@ public class DAT extends AbstractBIPSolver {
                 } else if (method.startsWith("bip")) {
                     double[] binWeights2 = new double[windowConstraints.length];
                     for (int j = 0; j < binWeights2.length; j++)
-                        binWeights2[j] = (binWeights2.length - j) * alpha
-                                + beta;
+                        binWeights2[j] = (binWeights2.length - j);
+//                        * alpha
+//                                + beta;
                     MKPBip m = new MKPBip(bins, binWeights2, items, profits,
                             this.maxIndexCreatedPerWindow);
                     if (m.cannotFitIn > 0) {

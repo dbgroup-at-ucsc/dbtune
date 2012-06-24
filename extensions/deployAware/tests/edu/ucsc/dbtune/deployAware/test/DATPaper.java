@@ -70,6 +70,7 @@ public class DATPaper {
         // System.out.format("%.0f\tc " + output.ws[i].create + ", d "
         // + output.ws[i].drop + "\t", output.ws[i].cost);
         // }
+        Rt.p(output.totalCost);
         return output.totalCost;
     }
 
@@ -91,8 +92,9 @@ public class DATPaper {
         String workloadName;
         long size;
 
-        public TestSet(String name,String dbName, String workloadName, long size) {
-            this.name=name;
+        public TestSet(String name, String dbName, String workloadName,
+                long size) {
+            this.name = name;
             this.dbName = dbName;
             this.workloadName = workloadName;
             this.size = size;
@@ -109,23 +111,25 @@ public class DATPaper {
     public static void main(String[] args) throws Exception {
         DATTest2.querySize = 0;
         DATTest2.indexSize = 0;
+        boolean exp = true; // rerun experiment
+        exp = false;
         File outputDir = new File("/home/wangrui/dbtune");
-        PrintStream ps=new PrintStream(new File(outputDir,"experiment.tex"));
-        ps.println("\\documentclass[10pt]{article}\n" + 
-        		"\n" + 
-        		"\\usepackage{graphicx}   % need for figures\n" + 
-        		"\n" + 
-        		"\\begin{document}\n" + 
-        		"" + 
-        		"");
+        File latexFile = new File(outputDir, "experiment.tex");
+
+        PrintStream ps = new PrintStream(latexFile);
+        ps.println("\\documentclass[10pt]{article}\n" + "\n"
+                + "\\usepackage{graphicx}   % need for figures\n" + "\n"
+                + "\\begin{document}\n" + "" + "");
         long gigbytes = 1024L * 1024L * 1024L;
         TestSet[] sets = {
-                new TestSet("12 TPC-H queries","tpch10g", "tpch-inum", 10 * gigbytes),
-                new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2","tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
-                new TestSet("100 OTAB [5] queries","test", "online-benchmark-100", 10 * gigbytes),
-                new TestSet("100 OTAB [5] queries and 10 updates","test", "online-benchmark-update-100",
+                new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
                         10 * gigbytes),
-                        };
+                new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
+                        "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
+                new TestSet("100 OTAB [5] queries", "test",
+                        "online-benchmark-100", 10 * gigbytes),
+                new TestSet("100 OTAB [5] queries and 10 updates", "test",
+                        "online-benchmark-update-100", 10 * gigbytes), };
         int m_def = 3;
         double spaceFactor_def = 0.5;
         int l_def = 6;
@@ -133,73 +137,80 @@ public class DATPaper {
         int[] m_set = { 2, 3, 4, 5 };
         double[] spaceFactor_set = { 0.25, 0.5, 1, 1000000 };
         String[] spaceFactor_names = { "0.25x", "0.5x", "1.0x", "INF" };
-        int[] l_set = { 4, 6, 8 };
-        double[] _1mada_set = { 1, 2, 4, 16 };
+        int[] l_set = { 4, 6, 8, 50 };
+        int[] _1mada_set = { 1, 2, 4, 16 };
         for (TestSet set : sets) {
             Rt.p(set.dbName + " " + set.workloadName);
             DATTest2.dbName = set.dbName;
             DATTest2.workloadName = set.workloadName;
             long spaceBudge = (long) (set.size * spaceFactor_def);
+            GnuPlot.uniform=true;
             GnuPlot plot = new GnuPlot(outputDir, set.dbName + "X"
                     + set.workloadName + "Xm", "m", "cost");
-            ps.println("\\begin{figure}\n" + 
-            		"\\centering\n" + 
-            		"\\includegraphics[scale=1]{"+plot.name+"}\n" + 
-            		"\\caption{"+set.name+" m}\n" + 
-            		"\\label{"+plot.name+"}\n" + 
-            		"\\end{figure}\n" + 
-            		"");
-            for (int m : m_set) {
-                new DATPaper(plot, m, m, spaceBudge, l_def,
-                        getAlpha(_1mada_def));
+            plot.setXtics(m_set);
+            plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
+            ps.println("\\begin{figure}\n" + "\\centering\n"
+                    + "\\includegraphics[scale=1]{" + plot.name + ".eps}\n"
+                    + "\\caption{" + set.name + " m}\n" + "\\label{"
+                    + plot.name + "}\n" + "\\end{figure}\n" + "");
+            if (exp) {
+                for (int m : m_set) {
+                    new DATPaper(plot, m, m, spaceBudge, l_def,
+                            getAlpha(_1mada_def));
+                }
             }
             plot.finish();
             plot = new GnuPlot(outputDir, set.dbName + "X" + set.workloadName
                     + "Xspace", "space", "cost");
-            ps.println("\\begin{figure}\n" + 
-                    "\\centering\n" + 
-                    "\\includegraphics[scale=1]{"+plot.name+"}\n" + 
-                    "\\caption{"+set.name+" space}\n" + 
-                    "\\label{"+plot.name+"}\n" + 
-                    "\\end{figure}\n" + 
-                    "");
+            plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
+            ps.println("\\begin{figure}\n" + "\\centering\n"
+                    + "\\includegraphics[scale=1]{" + plot.name + ".eps}\n"
+                    + "\\caption{" + set.name + " space}\n" + "\\label{"
+                    + plot.name + "}\n" + "\\end{figure}\n" + "");
             plot.setXtics(spaceFactor_names, spaceFactor_set);
-            for (double spaceFactor : spaceFactor_set) {
-                long space = (long) (set.size * spaceFactor);
-                new DATPaper(plot, spaceFactor, m_def, space, l_def,
-                        getAlpha(_1mada_def));
+            if (exp) {
+                for (double spaceFactor : spaceFactor_set) {
+                    long space = (long) (set.size * spaceFactor);
+                    new DATPaper(plot, spaceFactor, m_def, space, l_def,
+                            getAlpha(_1mada_def));
+                }
             }
             plot.finish();
             plot = new GnuPlot(outputDir, set.dbName + "X" + set.workloadName
                     + "Xl", "l", "cost");
-            ps.println("\\begin{figure}\n" + 
-                    "\\centering\n" + 
-                    "\\includegraphics[scale=1]{"+plot.name+"}\n" + 
-                    "\\caption{"+set.name+" l}\n" + 
-                    "\\label{"+plot.name+"}\n" + 
-                    "\\end{figure}\n" + 
-                    "");
-            for (int l : l_set) {
-                new DATPaper(plot, l, m_def, spaceBudge, l,
-                        getAlpha(_1mada_def));
+            plot.setXtics(l_set);
+            plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
+            ps.println("\\begin{figure}\n" + "\\centering\n"
+                    + "\\includegraphics[scale=1]{" + plot.name + ".eps}\n"
+                    + "\\caption{" + set.name + " l}\n" + "\\label{"
+                    + plot.name + "}\n" + "\\end{figure}\n" + "");
+            if (exp) {
+                for (int l : l_set) {
+                    new DATPaper(plot, l, m_def, spaceBudge, l,
+                            getAlpha(_1mada_def));
+                }
             }
             plot.finish();
             plot = new GnuPlot(outputDir, set.dbName + "X" + set.workloadName
                     + "X1mada", "(1-a)/a", "cost");
-            ps.println("\\begin{figure}\n" + 
-                    "\\centering\n" + 
-                    "\\includegraphics[scale=1]{"+plot.name+"}\n" + 
-                    "\\caption{"+set.name+" alpha}\n" + 
-                    "\\label{"+plot.name+"}\n" + 
-                    "\\end{figure}\n" + 
-                    "");
-            for (double _1mada : _1mada_set) {
-                double alpha = getAlpha(_1mada);
-                new DATPaper(plot, _1mada, m_def, spaceBudge, l_def, alpha);
+            plot.setXtics(_1mada_set);
+            plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
+            ps.println("\\begin{figure}\n" + "\\centering\n"
+                    + "\\includegraphics[scale=1]{" + plot.name + ".eps}\n"
+                    + "\\caption{" + set.name + " alpha}\n" + "\\label{"
+                    + plot.name + "}\n" + "\\end{figure}\n" + "");
+            if (exp) {
+                for (double _1mada : _1mada_set) {
+                    double alpha = getAlpha(_1mada);
+                    new DATPaper(plot, _1mada, m_def, spaceBudge, l_def, alpha);
+                }
             }
             plot.finish();
         }
         ps.println("\\end{document}\n");
         ps.close();
+        Rt.runAndShowCommand(
+                "/data/texlive/2011/bin/i386-linux/xelatex -interaction=nonstopmode "
+                        + latexFile.getName(), outputDir);
     }
 }

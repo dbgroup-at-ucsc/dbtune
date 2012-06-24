@@ -187,8 +187,9 @@ public class DATTest2 {
         }
         int l=6;
         int windowSize = 5 * l * (int) (totalCost / cost.indices.size());
+        windowSize=1200;
         
-        double[] windowConstraints = new double[3];
+        double[] windowConstraints = new double[2];
         for (int i = 0; i < windowConstraints.length; i++)
             windowConstraints[i] = windowSize;
         cost.storageConstraint = 5*1024 * 1024.0 * 1024.0;
