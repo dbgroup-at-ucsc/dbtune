@@ -325,7 +325,7 @@ public class DAT extends AbstractBIPSolver {
     Logger log = Logger.getLogger(DAT.class.getName());
 
     public DAT(SeqInumCost cost, double[] windowConstraints, double alpha,
-            double beta) throws IloException {
+            double beta, int maxIndexCreatedPerWindow) throws IloException {
         this.costModel = cost;
         this.windowConstraints = windowConstraints;
         this.spaceConstraint = cost.storageConstraint;
@@ -333,6 +333,7 @@ public class DAT extends AbstractBIPSolver {
         this.beta = beta;
         this.totalQueires = cost.queries.size();
         this.totalIndices = cost.indices.size();
+        this.maxIndexCreatedPerWindow = maxIndexCreatedPerWindow;
     }
 
     IloLinearNumExpr objExpr;
@@ -666,8 +667,8 @@ public class DAT extends AbstractBIPSolver {
                     double[] binWeights2 = new double[windowConstraints.length];
                     for (int j = 0; j < binWeights2.length; j++)
                         binWeights2[j] = (binWeights2.length - j);
-//                        * alpha
-//                                + beta;
+                    // * alpha
+                    // + beta;
                     MKPBip m = new MKPBip(bins, binWeights2, items, profits,
                             this.maxIndexCreatedPerWindow);
                     if (m.cannotFitIn > 0) {

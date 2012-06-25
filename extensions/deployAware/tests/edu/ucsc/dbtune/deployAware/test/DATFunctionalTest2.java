@@ -30,7 +30,7 @@ public class DATFunctionalTest2 {
             SeqInumCost cost = SeqInumCost.fromFile(Rt.readResourceAsString(
                     DATFunctionalTest2.class, "inum.txt"));
             double[] windowConstraints = new double[] { 1000, 1000, 1000, 1000, };
-            DAT dat = new DAT(cost, windowConstraints, 1, 1);
+            DAT dat = new DAT(cost, windowConstraints, 1, 1, 0);
             LogListener logger = LogListener.getInstance();
             dat.setLogListenter(logger);
             dat.setWorkload(new Workload("", new StringReader("")));

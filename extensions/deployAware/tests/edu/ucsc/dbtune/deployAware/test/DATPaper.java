@@ -52,11 +52,10 @@ public class DATPaper {
     }
 
     DAT getDat() throws Exception {
-        DAT dat = new DAT(cost, windowConstraints, alpha, beta);
+        DAT dat = new DAT(cost, windowConstraints, alpha, beta,maxIndexCreatedPerWindow);
         LogListener logger = LogListener.getInstance();
         dat.setLogListenter(logger);
         dat.setWorkload(new Workload("", new StringReader("")));
-        dat.maxIndexCreatedPerWindow = maxIndexCreatedPerWindow;
         return dat;
     }
 
@@ -86,7 +85,7 @@ public class DATPaper {
         return baseline3.totalCost;
     }
 
-    static class TestSet {
+    public static class TestSet {
         String name;
         String dbName;
         String workloadName;
@@ -101,7 +100,7 @@ public class DATPaper {
         }
     }
 
-    static double getAlpha(double _1mada) {
+    public static double getAlpha(double _1mada) {
         double alpha = 1 / (_1mada + 1);
         if (Math.abs((1 - alpha) / alpha - _1mada) > 1E-5)
             throw new Error();
@@ -113,7 +112,7 @@ public class DATPaper {
         DATTest2.indexSize = 0;
         boolean exp = true; // rerun experiment
         exp = false;
-        File outputDir = new File("/home/wangrui/dbtune");
+        File outputDir = new File("/home/wangrui/dbtune/paper");
         File latexFile = new File(outputDir, "experiment.tex");
 
         PrintStream ps = new PrintStream(latexFile);

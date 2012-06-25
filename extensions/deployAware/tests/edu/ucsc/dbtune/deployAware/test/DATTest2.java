@@ -155,7 +155,7 @@ public class DATTest2 {
                 cost.indices.get(i).index = null;
             }
 
-            DAT dat = new DAT(cost, new double[3], 1, 0);
+            DAT dat = new DAT(cost, new double[3], 1, 0, 0);
             // dat.setOptimizer(optimizer);
             LogListener logger = LogListener.getInstance();
             dat.setLogListenter(logger);
@@ -179,23 +179,23 @@ public class DATTest2 {
         RTimerN timer = new RTimerN();
 
         SeqInumCost cost = DATTest2.loadCost();
-        
+
         long totalCost = 0;
         for (int i = 0; i < cost.indices.size(); i++) {
             SeqInumIndex index = cost.indices.get(i);
             totalCost += index.createCost;
         }
-        int l=6;
+        int l = 6;
         int windowSize = 5 * l * (int) (totalCost / cost.indices.size());
-        windowSize=1200;
-        
+        windowSize = 1200;
+
         double[] windowConstraints = new double[2];
         for (int i = 0; i < windowConstraints.length; i++)
             windowConstraints[i] = windowSize;
-        cost.storageConstraint = 5*1024 * 1024.0 * 1024.0;
+        cost.storageConstraint = 5 * 1024 * 1024.0 * 1024.0;
 
-        DAT dat = new DAT(cost, windowConstraints, 1, 0);
-        dat.maxIndexCreatedPerWindow=l;
+        DAT dat = new DAT(cost, windowConstraints, 1, 0, 0);
+        dat.maxIndexCreatedPerWindow = l;
         // dat.setOptimizer(optimizer);
         LogListener logger = LogListener.getInstance();
         dat.setLogListenter(logger);
@@ -263,10 +263,10 @@ public class DATTest2 {
         // DAT.baseline2WindowConstraint+"%");
         double alpha = 1;
         for (double beta = Math.pow(2, 0); beta <= Math.pow(2, 5); beta *= 2) {
-            alpha=1.0/3;
-            beta=2.0/3;
-            dat = new DAT(cost, windowConstraints, alpha, beta);
-            dat.maxIndexCreatedPerWindow=l;
+            alpha = 1.0 / 3;
+            beta = 2.0 / 3;
+            dat = new DAT(cost, windowConstraints, alpha, beta, 0);
+            dat.maxIndexCreatedPerWindow = l;
             // dat.setOptimizer(optimizer);
             dat.setLogListenter(logger);
             dat.setWorkload(new Workload("", new StringReader("")));
@@ -279,7 +279,8 @@ public class DATTest2 {
             }
             System.out.format("%.0f", output.totalCost);
             if (baseline != null) {
-                double btotal = alpha*baseline.totalCost+ baseline.last()*beta;
+                double btotal = alpha * baseline.totalCost + baseline.last()
+                        * beta;
                 System.out.format("\t%.0f", btotal);
                 System.out.format("\t/base %.0f%%", output.totalCost / btotal
                         * 100);
@@ -289,8 +290,8 @@ public class DATTest2 {
             // + (baseline2.totalCost + beta
             // * baseline2.ws[baseline2.ws.length - 1].cost));
             System.out.println();
-            dat = new DAT(cost, windowConstraints, alpha, beta);
-            dat.maxIndexCreatedPerWindow=l;
+            dat = new DAT(cost, windowConstraints, alpha, beta, 0);
+            dat.maxIndexCreatedPerWindow = l;
             baseline3 = (DATOutput) dat.baseline2("bip");
             System.out.print("PTAS MKP\t");
             for (int i = 0; i < windowConstraints.length; i++) {
@@ -355,7 +356,7 @@ public class DATTest2 {
                     windowConstraints[i] = winConstraint;
                 cost.storageConstraint = spaceConstraint;
 
-                DAT dat = new DAT(cost, windowConstraints, 1, 0);
+                DAT dat = new DAT(cost, windowConstraints, 1, 0, 0);
                 LogListener logger = LogListener.getInstance();
                 dat.setLogListenter(logger);
                 dat.setWorkload(new Workload("", new StringReader("")));
@@ -365,7 +366,7 @@ public class DATTest2 {
                 double fit = DAT.baseline2WindowConstraint;
                 double alpha = 1;
                 double beta = 1;
-                dat = new DAT(cost, windowConstraints, alpha, beta);
+                dat = new DAT(cost, windowConstraints, alpha, beta, 0);
                 dat.setLogListenter(logger);
                 dat.setWorkload(new Workload("", new StringReader("")));
                 dat.buildBIP();
@@ -384,7 +385,55 @@ public class DATTest2 {
 
     public static StringBuilder sb = new StringBuilder();
 
+    static void batch(String[] args) throws Exception {
+        int pos = 0;
+        querySize = 0;
+        indexSize = 0;
+        dbName = args[pos++];
+        workloadName = args[pos++];
+        double alpha = Double.parseDouble(args[pos++]);
+        double beta = Double.parseDouble(args[pos++]);
+        int m = Integer.parseInt(args[pos++]);
+        int l = Integer.parseInt(args[pos++]);
+        long space = Long.parseLong(args[pos++]);
+        int windowSize = Integer.parseInt(args[pos++]);
+        File outputFile = new File(args[pos++]);
+
+        SeqInumCost cost = loadCost();
+
+        Rt.np("alpha=%.2f\tbeta=%.2f", alpha, beta);
+        Rt.np("m=%d\tl=%d", m, l);
+        Rt.np("space=%d\twindow=%d", space, windowSize);
+        Rt.np("outputFile=" + outputFile.getAbsolutePath());
+        Rt.np("queries=%d\tindices=%d", cost.queries.size(), cost.indices
+                .size());
+
+        double[] windowConstraints = new double[m];
+        for (int i = 0; i < windowConstraints.length; i++)
+            windowConstraints[i] = windowSize;
+        cost.storageConstraint = space;
+
+        LogListener logger = LogListener.getInstance();
+        DAT dat = new DAT(cost, windowConstraints, alpha, beta, l);
+        dat.setLogListenter(logger);
+        dat.setWorkload(new Workload("", new StringReader("")));
+        dat.buildBIP();
+        DATOutput output = (DATOutput) dat.getOutput();
+        
+        dat = new DAT(cost, windowConstraints, alpha, beta, l);
+        dat.setLogListenter(logger);
+        dat.setWorkload(new Workload("", new StringReader("")));
+        DATOutput baseline3 = (DATOutput) dat.baseline2("bip");
+        double result = output.totalCost / baseline3.totalCost * 100;
+        Rt.write(outputFile, "" + (int) result);
+        if (db != null)
+            db.getConnection().close();
+        System.exit(0);
+    }
+
     public static void main(String[] args) throws Exception {
+        if (args.length > 5)
+            batch(args);
         dbName = "tpch10g";
         workloadName = "tpch-inum";
         querySize = 0;
@@ -409,7 +458,6 @@ public class DATTest2 {
         // indexSize = 15;
         // querySize = 50;
         // indexSize = 100;
-
         testBIP();
         // testDATBatch();
     }
