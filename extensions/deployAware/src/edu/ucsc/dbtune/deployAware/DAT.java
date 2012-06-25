@@ -340,12 +340,12 @@ public class DAT extends AbstractBIPSolver {
 
     @Override
     public final void buildBIP() {
-        Rt.p("alpha=" + alpha);
-        Rt.p("beta=" + beta);
-        Rt.p("m=" + windowConstraints.length);
-        Rt.p("space=" + spaceConstraint);
-        Rt.p("window=" + windowConstraints[0]);
-        Rt.p("l=" + this.maxIndexCreatedPerWindow);
+//        Rt.p("alpha=" + alpha);
+//        Rt.p("beta=" + beta);
+//        Rt.p("m=" + windowConstraints.length);
+//        Rt.p("space=" + spaceConstraint);
+//        Rt.p("window=" + windowConstraints[0]);
+//        Rt.p("l=" + this.maxIndexCreatedPerWindow);
         super.numConstraints = 0;
         try {
             candidateIndexes = new HashSet();

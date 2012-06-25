@@ -42,41 +42,57 @@ public class BatchTest {
         File outputFile = new File("/home/wangrui/dbtune/batch.txt");
         PrintStream ps = new PrintStream(outputFile);
         TestSet[] sets = {
-                new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
-                        10 * gigbytes),
-                new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
-                        "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
-                new TestSet("100 OTAB [5] queries", "test",
-                        "online-benchmark-100", 10 * gigbytes),
-                new TestSet("100 OTAB [5] queries and 10 updates", "test",
-                        "online-benchmark-update-100", 10 * gigbytes), };
-        int[] _1mada_set = { 1, 2, 4, 16 };
-        int[] m_set = { 2, 3, 4, 5, 6 };
-        int[] l_set = { 5, 10, 20, 50, 100 };
+        // new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
+        // 10 * gigbytes),
+//        new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
+//                "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
+//         new TestSet("100 OTAB [5] queries", "test", "online-benchmark-100",
+//         10 * gigbytes),
+         new TestSet("100 OTAB [5] queries and 10 updates", "test",
+         "online-benchmark-update-100", 10 * gigbytes),
+        };
+        int[] _1mada_set = { 1,
+        // 2, 4, 16
+        };
+        int[] m_set = { 3,
+        // 2, 4, 5, 6
+        };
+        int[] l_set = { 100, 5, 10, 20, 50, };
         double[] spaceFactor_set = { 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50,
                 100, 1000 };
-        double[] winFactor_set = { 10, 100, 1000, 10000, 100000, 1000000 };
-        for (TestSet set : sets) {
-            Rt.p(set.dbName + " " + set.workloadName);
-            DATTest2.dbName = set.dbName;
-            DATTest2.workloadName = set.workloadName;
-            SeqInumCost cost = DATTest2.loadCost();
-            long totalCost = 0;
-            for (int i = 0; i < cost.indices.size(); i++) {
-                SeqInumIndex index = cost.indices.get(i);
-                totalCost += index.createCost;
-            }
-            Rt.p("avgCost=" + totalCost / cost.indices.size());
-            for (int _1mada : _1mada_set) {
-                double alpha = DATPaper.getAlpha(_1mada);
-                double beta = 1 - alpha;
-                for (int m : m_set) {
-                    for (int l : l_set) {
+        double[] winFactor_set = { 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3,
+                1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 5, 10, 100,
+        // 1000, 2000, 5000, 10000, 20000, 50000,
+        // 100000
+        };
+        winFactor_set = new double[30];
+        double start = 0.1;
+        for (int i = 0; i < winFactor_set.length; i++) {
+            // winFactor_set[i]=0.5+i*0.1;
+            winFactor_set[i] = start;
+            start *= 1.5;
+        }
+        for (int _1mada : _1mada_set) {
+            double alpha = DATPaper.getAlpha(_1mada);
+            double beta = 1 - alpha;
+            for (int m : m_set) {
+                for (int l : l_set) {
+                    for (TestSet set : sets) {
+                        Rt.p(set.dbName + " " + set.workloadName);
+                        DATTest2.dbName = set.dbName;
+                        DATTest2.workloadName = set.workloadName;
+                        SeqInumCost cost = DATTest2.loadCost();
+                        long totalCost = 0;
+                        for (int i = 0; i < cost.indices.size(); i++) {
+                            SeqInumIndex index = cost.indices.get(i);
+                            totalCost += index.createCost;
+                        }
+                        long avgCost = totalCost / cost.indices.size();
+                        Rt.p("avgCost=" + totalCost / cost.indices.size());
                         ps.println(set.dbName + " " + set.workloadName);
                         ps.println("alpha=" + alpha + "\tbeta=" + beta);
                         ps.println("(1-a)/a=" + _1mada + "\tm=" + m + "\tl="
-                                + l + "\twinFactor=" + l
-                                * (totalCost / cost.indices.size()));
+                                + l + "\twinFactor=" + avgCost);
                         ps.format("winF\\spaceF\t");
                         for (double spaceFactor : spaceFactor_set) {
                             ps.format("%.2f\t", spaceFactor);
@@ -86,8 +102,7 @@ public class BatchTest {
                             ps.format("%.2f\t", winFactor);
                             for (double spaceFactor : spaceFactor_set) {
                                 long space = (long) (set.size * spaceFactor);
-                                int windowSize = (int) (winFactor * l * (totalCost / cost.indices
-                                        .size()));
+                                int windowSize = (int) (winFactor * avgCost);
 
                                 StringBuilder sb = new StringBuilder();
                                 sb.append(cmd);

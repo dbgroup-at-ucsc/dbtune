@@ -341,14 +341,17 @@ public class DATTest2 {
         double spEnd = 5000000 * 1024.0 * 1024.0;
         double winStart = 100000;
         double winEnd = 500000000;
-        winStart = 3200000;
+        winStart = 25600000;
+        winEnd = 51200000;
+        spStart = 16000000000L;
+        spEnd = 512000000000L;
         // spStart=512000* 1024.0 * 1024.0;
         System.out.format("win\\space\t");
         for (double spaceConstraint = spStart; spaceConstraint < spEnd; spaceConstraint *= 2) {
             System.out.format("%,.0fMB\t", spaceConstraint / 1024 / 1024);
         }
         System.out.println();
-        for (double winConstraint = winStart; winConstraint < winEnd; winConstraint *= 2) {
+        for (double winConstraint = winStart; winConstraint <= winEnd; winConstraint *= 2) {
             System.out.format("%,.0f\t", winConstraint);
             for (double spaceConstraint = spStart; spaceConstraint < spEnd; spaceConstraint *= 2) {
                 double[] windowConstraints = new double[3];
@@ -356,23 +359,22 @@ public class DATTest2 {
                     windowConstraints[i] = winConstraint;
                 cost.storageConstraint = spaceConstraint;
 
-                DAT dat = new DAT(cost, windowConstraints, 1, 0, 0);
+                DAT dat = new DAT(cost, windowConstraints, 1, 1, 0);
                 LogListener logger = LogListener.getInstance();
                 dat.setLogListenter(logger);
                 dat.setWorkload(new Workload("", new StringReader("")));
 
                 DATOutput baseline = null;
-                baseline = (DATOutput) dat.baseline2("greedyRatio");
+                baseline = (DATOutput) dat.baseline2("bip");
                 double fit = DAT.baseline2WindowConstraint;
                 double alpha = 1;
                 double beta = 1;
-                dat = new DAT(cost, windowConstraints, alpha, beta, 0);
+                dat = new DAT(cost, windowConstraints, alpha, beta, 100);
                 dat.setLogListenter(logger);
                 dat.setWorkload(new Workload("", new StringReader("")));
                 dat.buildBIP();
                 DATOutput output = (DATOutput) dat.getOutput();
-                double btotal = (baseline.totalCost + beta
-                        * baseline.ws[baseline.ws.length - 1].cost);
+                double btotal = baseline.totalCost;
                 double result = output.totalCost / btotal * 100;
                 System.out.format("%.0f%%\t", result);
             }
@@ -419,11 +421,13 @@ public class DATTest2 {
         dat.setWorkload(new Workload("", new StringReader("")));
         dat.buildBIP();
         DATOutput output = (DATOutput) dat.getOutput();
-        
+
         dat = new DAT(cost, windowConstraints, alpha, beta, l);
         dat.setLogListenter(logger);
         dat.setWorkload(new Workload("", new StringReader("")));
-        DATOutput baseline3 = (DATOutput) dat.baseline2("bip");
+        String method = "bip";
+        method = "greedyRatio";
+        DATOutput baseline3 = (DATOutput) dat.baseline2(method);
         double result = output.totalCost / baseline3.totalCost * 100;
         Rt.write(outputFile, "" + (int) result);
         if (db != null)
@@ -439,7 +443,9 @@ public class DATTest2 {
         querySize = 0;
         indexSize = 0;
         // workloadName = "tpch-500-counts";
-        // testSet = "online-benchmark-100";
+        dbName = "test";
+//        workloadName = "online-benchmark-100";
+        workloadName = "online-benchmark-100";
         // testSet = "tpcds-inum";
         // testSet = "tpcds-debug";
         // testSet = "tpch-inserts";
@@ -458,7 +464,7 @@ public class DATTest2 {
         // indexSize = 15;
         // querySize = 50;
         // indexSize = 100;
-        testBIP();
-        // testDATBatch();
+        // testBIP();
+        testDATBatch();
     }
 }
