@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.seq.utils.Rx;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 public class CreateIndexTest2 {
@@ -71,7 +72,7 @@ public class CreateIndexTest2 {
         return sql.toString();
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void testIndex() throws Exception {
         Environment en = Environment.getInstance();
         DatabaseSystem db = newDatabaseSystem(en);
         DATTest2.workloadName = "tpch-500-counts";
@@ -106,7 +107,37 @@ public class CreateIndexTest2 {
             Rt.np(cost + "\t" + createTime + "\t" + dropTime + "\t"
                     + index.toString() + "\t" + costSQL + "\t" + create + "\t"
                     + drop);
-            if (System.in.available()>0)
+            if (System.in.available() > 0)
+                break;
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        DATTest2.dbName = "test";
+        DATTest2.workloadName = "OST";
+        DATTest2.querySize = 0;
+        DATTest2.indexSize = 0;
+        Environment en = Environment.getInstance();
+        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + DATTest2.dbName);
+        en.setProperty("username", "db2inst1");
+        en.setProperty("password", "db2inst1admin");
+        en.setProperty("workloads.dir", "resources/workloads/db2");
+        DatabaseSystem db = newDatabaseSystem(en);
+
+        Workload workload = DATTest2.getWorkload(en);
+        InumOptimizer inumoptimizer = (InumOptimizer) db.getOptimizer();
+        DB2Optimizer db2optimizer = (DB2Optimizer) inumoptimizer.getDelegate();
+
+        for (int i = 0; i < workload.size(); i++) {
+            SQLStatement sql = workload.get(i);
+            double cost = db2optimizer.explain(sql).getTotalCost();
+            Statement st = db.getConnection().createStatement();
+            RTimerN timer = new RTimerN();
+            st.execute(sql.getSQL());
+            double time = timer.getSecondElapse();
+            st.close();
+            Rt.np(cost + "\t" + time+"\t"+(cost/time));
+            if (System.in.available() > 0)
                 break;
         }
     }

@@ -23,13 +23,17 @@ public class DATPaper {
 
     public DATPaper(GnuPlot plot, double plotX, int m, long spaceBudge, int l,
             double alpha) throws Exception {
+        // m=3;
+        // spaceBudge=20*1024L*1024L*1024L;
+        // l=10;
+        // alpha=0.5;
         cost = DATTest2.loadCost();
         long totalCost = 0;
         for (int i = 0; i < cost.indices.size(); i++) {
             SeqInumIndex index = cost.indices.get(i);
             totalCost += index.createCost;
         }
-        int windowSize = 5 * l * (int) (totalCost / cost.indices.size());
+        int windowSize = 13 * (int) (totalCost / cost.indices.size());
         windowConstraints = new double[m];
         if (alpha < 0 || alpha > 1)
             throw new Error();
@@ -39,9 +43,62 @@ public class DATPaper {
             windowConstraints[i] = windowSize;
         cost.storageConstraint = spaceBudge;
         maxIndexCreatedPerWindow = l;
-        dat = dat();
-        greedyRatio = baseline();
-        mkp = mkp();
+        if (true) {
+            File tmpFile = new File("/home/wangrui/dbtune/tmp.txt");
+            String cmd = "/usr/lib/jvm/java-6-openjdk/bin/java"
+                    + " -Djava.library.path=lib"
+                    + " -Dfile.encoding=UTF-8"
+                    + " -classpath"
+                    + " /home/wangrui/workspace/dbtune/bin"
+                    + ":/home/wangrui/workspace/dbtune/lib/caliper-0.0.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/ant-contrib-1.0b3.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/cglib-nodep-2.2.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/db2jcc4-9.7.5.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/guava-11.0.1.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/jackson-core-1.8.1.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/jackson-mapper-1.8.1.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/jarjar-snapshot.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/javassist-3.14.0-GA.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/junit-4.9.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/LaTeXlet-1.1.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/mockito-all-1.8.5.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/mysql-5.1.17.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/objenesis-1.2.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/postgresql-9.0-801.jdbc4.jar"
+                    + ":/home/wangrui/workspace/dbtune/lib/powermock-mockito-1.4.9-full.jar"
+                    + ":/home/wangrui/workspace/dbtune/extensions/inum/lib/derby-10.8.2.2.jar"
+                    + ":/home/wangrui/workspace/dbtune/extensions/bip/lib/cplex-12.2.jar"
+                    + " edu.ucsc.dbtune.deployAware.test.DATTest2";
+            StringBuilder sb = new StringBuilder();
+            sb.append(cmd);
+            sb.append(" " + DATTest2.dbName);
+            sb.append(" " + DATTest2.workloadName);
+            sb.append(" " + alpha);
+            sb.append(" " + beta);
+            sb.append(" " + m);
+            sb.append(" " + l);
+            sb.append(" " + spaceBudge);
+            sb.append(" " + windowSize);
+            sb.append(" " + tmpFile.getAbsolutePath());
+            tmpFile.delete();
+            Rt.p(sb.toString());
+            Rt
+                    .runAndShowCommand(
+                            sb.toString(),
+                            new String[] {
+                                    "ILOG_LICENSE_FILE=/data/cplex/access.ilm",
+                                    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/db2inst1/sqllib/bin:/home/db2inst1/sqllib/adm:/home/db2inst1/sqllib/misc", },
+                            new File("."));
+            String[] ss = Rt.readFile(tmpFile).split("\n");
+            dat = Double.parseDouble(ss[0]);
+            mkp = Double.parseDouble(ss[1]);
+            greedyRatio = Double.parseDouble(ss[2]);
+
+        } else {
+            dat = dat();
+            greedyRatio = baseline();
+            mkp = mkp();
+        }
         plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
         plot.add(plotX, dat);
         plot.add(plotX, greedyRatio);
@@ -52,7 +109,8 @@ public class DATPaper {
     }
 
     DAT getDat() throws Exception {
-        DAT dat = new DAT(cost, windowConstraints, alpha, beta,maxIndexCreatedPerWindow);
+        DAT dat = new DAT(cost, windowConstraints, alpha, beta,
+                maxIndexCreatedPerWindow);
         LogListener logger = LogListener.getInstance();
         dat.setLogListenter(logger);
         dat.setWorkload(new Workload("", new StringReader("")));
@@ -69,7 +127,7 @@ public class DATPaper {
         // System.out.format("%.0f\tc " + output.ws[i].create + ", d "
         // + output.ws[i].drop + "\t", output.ws[i].cost);
         // }
-        Rt.p(output.totalCost);
+        Rt.p("dat=" + output.totalCost);
         return output.totalCost;
     }
 
@@ -82,6 +140,7 @@ public class DATPaper {
     double mkp() throws Exception {
         DAT dat = getDat();
         DATOutput baseline3 = (DATOutput) dat.baseline2("bip");
+        Rt.p("mkp=" + baseline3.totalCost);
         return baseline3.totalCost;
     }
 
@@ -111,7 +170,7 @@ public class DATPaper {
         DATTest2.querySize = 0;
         DATTest2.indexSize = 0;
         boolean exp = true; // rerun experiment
-        exp = false;
+        // exp = false;
         File outputDir = new File("/home/wangrui/dbtune/paper");
         File latexFile = new File(outputDir, "experiment.tex");
 
@@ -121,21 +180,27 @@ public class DATPaper {
                 + "\\begin{document}\n" + "" + "");
         long gigbytes = 1024L * 1024L * 1024L;
         TestSet[] sets = {
-                new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
-                        10 * gigbytes),
-                new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
-                        "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
-                new TestSet("100 OTAB [5] queries", "test",
-                        "online-benchmark-100", 10 * gigbytes),
-                new TestSet("100 OTAB [5] queries and 10 updates", "test",
-                        "online-benchmark-update-100", 10 * gigbytes), };
+        // new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
+        // 10 * gigbytes),
+        // new
+        // TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
+        // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
+        new TestSet("50 OST queries", "test", "OST", 10 * gigbytes),
+        // new TestSet("100 OTAB [5] queries", "test",
+        // "online-benchmark-100", 10 * gigbytes),
+        // new TestSet("100 OTAB [5] queries and 10 updates", "test",
+        // "online-benchmark-update-100", 10 * gigbytes),
+        };
         int m_def = 3;
         double spaceFactor_def = 0.5;
+        spaceFactor_def = 2;
         int l_def = 6;
+        l_def = 10;
         double _1mada_def = 2;
+        _1mada_def = 1;
         int[] m_set = { 2, 3, 4, 5 };
-        double[] spaceFactor_set = { 0.25, 0.5, 1, 1000000 };
-        String[] spaceFactor_names = { "0.25x", "0.5x", "1.0x", "INF" };
+        double[] spaceFactor_set = { 0.25, 0.5, 1, 2, 1000000 };
+        String[] spaceFactor_names = { "0.25x", "0.5x", "1x", "2x", "INF" };
         int[] l_set = { 4, 6, 8, 50 };
         int[] _1mada_set = { 1, 2, 4, 16 };
         for (TestSet set : sets) {
@@ -143,11 +208,11 @@ public class DATPaper {
             DATTest2.dbName = set.dbName;
             DATTest2.workloadName = set.workloadName;
             long spaceBudge = (long) (set.size * spaceFactor_def);
-            GnuPlot.uniform=true;
+            GnuPlot.uniform = true;
             GnuPlot plot = new GnuPlot(outputDir, set.dbName + "X"
                     + set.workloadName + "Xm", "m", "cost");
             plot.setXtics(m_set);
-            plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
+            plot.setPlotNames(new String[] { "DAT", "greedy", "MKP" });
             ps.println("\\begin{figure}\n" + "\\centering\n"
                     + "\\includegraphics[scale=1]{" + plot.name + ".eps}\n"
                     + "\\caption{" + set.name + " m}\n" + "\\label{"
@@ -161,7 +226,7 @@ public class DATPaper {
             plot.finish();
             plot = new GnuPlot(outputDir, set.dbName + "X" + set.workloadName
                     + "Xspace", "space", "cost");
-            plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
+            plot.setPlotNames(new String[] { "DAT", "greedy", "MKP" });
             ps.println("\\begin{figure}\n" + "\\centering\n"
                     + "\\includegraphics[scale=1]{" + plot.name + ".eps}\n"
                     + "\\caption{" + set.name + " space}\n" + "\\label{"
@@ -178,7 +243,7 @@ public class DATPaper {
             plot = new GnuPlot(outputDir, set.dbName + "X" + set.workloadName
                     + "Xl", "l", "cost");
             plot.setXtics(l_set);
-            plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
+            plot.setPlotNames(new String[] { "DAT", "greedy", "MKP" });
             ps.println("\\begin{figure}\n" + "\\centering\n"
                     + "\\includegraphics[scale=1]{" + plot.name + ".eps}\n"
                     + "\\caption{" + set.name + " l}\n" + "\\label{"
@@ -193,7 +258,7 @@ public class DATPaper {
             plot = new GnuPlot(outputDir, set.dbName + "X" + set.workloadName
                     + "X1mada", "(1-a)/a", "cost");
             plot.setXtics(_1mada_set);
-            plot.setPlotNames(new String[] { "DAT", "baseline", "MKP" });
+            plot.setPlotNames(new String[] { "DAT", "greedy", "MKP" });
             ps.println("\\begin{figure}\n" + "\\centering\n"
                     + "\\includegraphics[scale=1]{" + plot.name + ".eps}\n"
                     + "\\caption{" + set.name + " alpha}\n" + "\\label{"

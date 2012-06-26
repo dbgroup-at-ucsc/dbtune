@@ -12,5 +12,5 @@
 </mapAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="edu.ucsc.dbtune.deployAware.test.DATPaper"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="dbtune"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.library.path=lib"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.library.path=lib -Xmx1200m"/>
 </launchConfiguration>

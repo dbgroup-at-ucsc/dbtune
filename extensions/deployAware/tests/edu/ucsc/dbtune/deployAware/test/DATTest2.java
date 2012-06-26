@@ -129,7 +129,7 @@ public class DATTest2 {
         File file = new File(dir, querySize + "_" + indexSize + ".xml");
         SeqInumCost cost = null;
         if (file.exists()) {
-            Rt.p("loading from cache " + file.getAbsolutePath());
+            // Rt.p("loading from cache " + file.getAbsolutePath());
             Rx rx = Rx.findRoot(Rt.readFile(file));
             cost = SeqInumCost.loadFromXml(rx);
         } else {
@@ -398,14 +398,14 @@ public class DATTest2 {
         int m = Integer.parseInt(args[pos++]);
         int l = Integer.parseInt(args[pos++]);
         long space = Long.parseLong(args[pos++]);
-        int windowSize = Integer.parseInt(args[pos++]);
+        double windowSize = Double.parseDouble(args[pos++]);
         File outputFile = new File(args[pos++]);
 
         SeqInumCost cost = loadCost();
 
         Rt.np("alpha=%.2f\tbeta=%.2f", alpha, beta);
         Rt.np("m=%d\tl=%d", m, l);
-        Rt.np("space=%d\twindow=%d", space, windowSize);
+        Rt.np("space=%d\twindow=%.2f", space, windowSize);
         Rt.np("outputFile=" + outputFile.getAbsolutePath());
         Rt.np("queries=%d\tindices=%d", cost.queries.size(), cost.indices
                 .size());
@@ -425,11 +425,22 @@ public class DATTest2 {
         dat = new DAT(cost, windowConstraints, alpha, beta, l);
         dat.setLogListenter(logger);
         dat.setWorkload(new Workload("", new StringReader("")));
-        String method = "bip";
-        method = "greedyRatio";
-        DATOutput baseline3 = (DATOutput) dat.baseline2(method);
-        double result = output.totalCost / baseline3.totalCost * 100;
-        Rt.write(outputFile, "" + (int) result);
+        // String method = "bip";
+        // method = "greedyRatio";
+        DATOutput greedyRatio = (DATOutput) dat.baseline2("greedyRatio");
+
+        dat = new DAT(cost, windowConstraints, alpha, beta, l);
+        dat.setLogListenter(logger);
+        dat.setWorkload(new Workload("", new StringReader("")));
+        // String method = "bip";
+        // method = "greedyRatio";
+        DATOutput bip = (DATOutput) dat.baseline2("bip");
+        Rt.p(output.totalCost);
+        Rt.p(bip.totalCost);
+        double result = output.totalCost / bip.totalCost * 100;
+        Rt.p(result + "%");
+        Rt.write(outputFile, output.totalCost + "\n" + bip.totalCost + "\n"
+                + greedyRatio.totalCost);
         if (db != null)
             db.getConnection().close();
         System.exit(0);
@@ -438,13 +449,24 @@ public class DATTest2 {
     public static void main(String[] args) throws Exception {
         if (args.length > 5)
             batch(args);
+        StringBuilder sb = new StringBuilder();
+        sb.append("test");
+        sb.append(" online-benchmark-100");
+        sb.append(" 0.5");
+        sb.append(" 0.5");
+        sb.append(" 3");
+        sb.append(" 10");
+        sb.append(" " + 10 * 1024L * 1024L * 1024L);
+        sb.append(" " + 12.97 * 1183159);
+        sb.append(" /home/wangrui/dbtune/tmp.txt");
+        batch(sb.toString().split(" "));
         dbName = "tpch10g";
         workloadName = "tpch-inum";
         querySize = 0;
         indexSize = 0;
         // workloadName = "tpch-500-counts";
         dbName = "test";
-//        workloadName = "online-benchmark-100";
+        // workloadName = "online-benchmark-100";
         workloadName = "online-benchmark-100";
         // testSet = "tpcds-inum";
         // testSet = "tpcds-debug";

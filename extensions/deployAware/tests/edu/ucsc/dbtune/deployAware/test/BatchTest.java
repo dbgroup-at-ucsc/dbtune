@@ -42,24 +42,39 @@ public class BatchTest {
         File outputFile = new File("/home/wangrui/dbtune/batch.txt");
         PrintStream ps = new PrintStream(outputFile);
         TestSet[] sets = {
-        // new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
-        // 10 * gigbytes),
-//        new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
-//                "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
-//         new TestSet("100 OTAB [5] queries", "test", "online-benchmark-100",
-//         10 * gigbytes),
-         new TestSet("100 OTAB [5] queries and 10 updates", "test",
-         "online-benchmark-update-100", 10 * gigbytes),
-        };
+                new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
+                        10 * gigbytes),
+                new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
+                        "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
+                new TestSet("100 OTAB [5] queries", "test",
+                        "online-benchmark-100", 10 * gigbytes),
+                new TestSet("100 OTAB [5] queries and 10 updates", "test",
+                        "online-benchmark-update-100", 10 * gigbytes), };
+        for (TestSet set : sets) {
+            Rt.np(set.dbName + " " + set.workloadName);
+            DATTest2.dbName = set.dbName;
+            DATTest2.workloadName = set.workloadName;
+            SeqInumCost cost = DATTest2.loadCost();
+            Rt
+                    .np("index\tcreate cost\tstorage cost\tbenefit(with-none)\tbenefit(all-without)");
+            for (int i = 0; i < cost.indices.size(); i++) {
+                SeqInumIndex index = cost.indices.get(i);
+                Rt.np("%d\t%,.0f\t%,.0f\t%,.0f\t%,.0f", i, index.createCost,
+                        index.storageCost, index.indexBenefit,
+                        index.indexBenefit2);
+            }
+        }
+        System.exit(0);
         int[] _1mada_set = { 1,
         // 2, 4, 16
         };
         int[] m_set = { 3,
         // 2, 4, 5, 6
         };
-        int[] l_set = { 100, 5, 10, 20, 50, };
-        double[] spaceFactor_set = { 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50,
-                100, 1000 };
+        int[] l_set = { 10 };// 100, 5, 10, 20, 50, };
+        double[] spaceFactor_set = { 2, 5, 10 };// 0.05, 0.1, 0.25, 0.5, 1, 2,
+        // 5, 10, 20, 50,
+        // 100, 1000 };
         double[] winFactor_set = { 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3,
                 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 5, 10, 100,
         // 1000, 2000, 5000, 10000, 20000, 50000,
@@ -124,8 +139,12 @@ public class BatchTest {
                                                         "ILOG_LICENSE_FILE=/data/cplex/access.ilm",
                                                         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/db2inst1/sqllib/bin:/home/db2inst1/sqllib/adm:/home/db2inst1/sqllib/misc", },
                                                 new File("."));
-                                int percent = Integer.parseInt(Rt
-                                        .readFile(tmpFile));
+                                String[] ss = Rt.readFile(tmpFile).split("\n");
+                                double dat = Double.parseDouble(ss[0]);
+                                double bip = Double.parseDouble(ss[1]);
+                                double greedy = Double.parseDouble(ss[2]);
+                                double result = dat / bip * 100;
+                                int percent = (int) result;
                                 ps.format("%d%%\t", percent);
                                 ps.flush();
                             }

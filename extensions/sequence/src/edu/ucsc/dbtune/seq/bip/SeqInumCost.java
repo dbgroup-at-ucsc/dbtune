@@ -69,6 +69,7 @@ public class SeqInumCost implements Serializable {
         RTimerN timer = new RTimerN();
         InumQueryPlanDesc desc = (InumQueryPlanDesc) InumQueryPlanDesc
                 .getQueryPlanDescInstance(statement);
+//        Rt.p(statement.getSQL());
         // Populate the INUM space
         desc.generateQueryPlanDesc(optimizer, inumIndices);
         plugInTime += desc.pluginTime / 1000000000.0;
