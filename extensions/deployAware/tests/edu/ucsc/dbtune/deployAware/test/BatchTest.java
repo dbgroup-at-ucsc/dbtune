@@ -42,14 +42,17 @@ public class BatchTest {
         File outputFile = new File("/home/wangrui/dbtune/batch.txt");
         PrintStream ps = new PrintStream(outputFile);
         TestSet[] sets = {
-                new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
-                        10 * gigbytes),
-                new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
-                        "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
-                new TestSet("100 OTAB [5] queries", "test",
-                        "online-benchmark-100", 10 * gigbytes),
-                new TestSet("100 OTAB [5] queries and 10 updates", "test",
-                        "online-benchmark-update-100", 10 * gigbytes), };
+                new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
+//                new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
+//                        10 * gigbytes),
+//                new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
+//                        "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
+//                new TestSet("100 OTAB [5] queries", "test",
+//                        "online-benchmark-100", 10 * gigbytes),
+//                new TestSet("100 OTAB [5] queries and 10 updates", "test",
+//                        "online-benchmark-update-100", 10 * gigbytes), 
+                        };
+        
         for (TestSet set : sets) {
             Rt.np(set.dbName + " " + set.workloadName);
             DATTest2.dbName = set.dbName;
@@ -64,7 +67,7 @@ public class BatchTest {
                         index.indexBenefit2);
             }
         }
-        System.exit(0);
+//        System.exit(0);
         int[] _1mada_set = { 1,
         // 2, 4, 16
         };

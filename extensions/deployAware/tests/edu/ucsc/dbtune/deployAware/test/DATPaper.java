@@ -33,7 +33,8 @@ public class DATPaper {
             SeqInumIndex index = cost.indices.get(i);
             totalCost += index.createCost;
         }
-        int windowSize = 13 * (int) (totalCost / cost.indices.size());
+        int windowSize = 3600 * 3000;// 13 * (int) (totalCost /
+                                     // cost.indices.size());
         windowConstraints = new double[m];
         if (alpha < 0 || alpha > 1)
             throw new Error();
@@ -180,17 +181,16 @@ public class DATPaper {
                 + "\\begin{document}\n" + "" + "");
         long gigbytes = 1024L * 1024L * 1024L;
         TestSet[] sets = {
-        // new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
-        // 10 * gigbytes),
-        // new
-        // TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
-        // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
-        new TestSet("50 OST queries", "test", "OST", 10 * gigbytes),
-        // new TestSet("100 OTAB [5] queries", "test",
-        // "online-benchmark-100", 10 * gigbytes),
-        // new TestSet("100 OTAB [5] queries and 10 updates", "test",
-        // "online-benchmark-update-100", 10 * gigbytes),
-        };
+                // new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
+                // 10 * gigbytes),
+                // new
+                // TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
+                // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
+                new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
+                new TestSet("100 OTAB [5] queries", "test",
+                        "online-benchmark-100", 10 * gigbytes),
+                new TestSet("100 OTAB [5] queries and 10 updates", "test",
+                        "online-benchmark-update-100", 10 * gigbytes), };
         int m_def = 3;
         double spaceFactor_def = 0.5;
         spaceFactor_def = 2;
