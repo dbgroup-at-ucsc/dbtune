@@ -28,6 +28,7 @@ public class SeqInumQuery implements Serializable {
     public void save(Rx rx) {
         rx.setAttribute("id", id);
         rx.setAttribute("name", name);
+        rx.createChild("sql", sql.getSQL());
         rx.setAttribute("baseTableUpdateCost", baseTableUpdateCost);
         for (SeqInumPlan plan : plans) {
             plan.save(rx.createChild("plan"));

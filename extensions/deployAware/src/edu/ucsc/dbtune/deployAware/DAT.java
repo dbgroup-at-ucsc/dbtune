@@ -68,6 +68,7 @@ public class DAT extends AbstractBIPSolver {
             double cost = 0;
             for (int i = 0; i < s.costs.size(); i++) {
                 SeqInumSlotIndexCost c = s.costs.get(i);
+                // Rt.p((c.cost + c.updateCost) + " " + getValue(useIndex[i]));
                 cost += (c.cost + c.updateCost) * getValue(useIndex[i]);
             }
             cost += s.fullTableScanCost * getValue(useIndex[s.costs.size()]);
@@ -122,7 +123,9 @@ public class DAT extends AbstractBIPSolver {
             double cost = 0;
             cost += p.internalCost * getValue(active);
             for (Slot slot : slots) {
-                cost += slot.getCost();
+                double scost = slot.getCost();
+                // Rt.p(query.q.id + " " + scost);
+                cost += scost;
             }
             return cost;
         }
@@ -147,19 +150,23 @@ public class DAT extends AbstractBIPSolver {
             }
         }
 
-        public void addObjective(IloLinearNumExpr expr) throws IloException {
+        public void addObjective(IloLinearNumExpr expr, boolean noCoeff)
+                throws IloException {
             double coefficient = alpha;
             if (window.lastWindow)
-                coefficient += beta;
+                coefficient = beta;
             for (InumPlan plan : plans)
-                plan.addObjective(coefficient, expr);
+                plan.addObjective(noCoeff ? 1 : coefficient, expr);
         }
 
         public double getCost() throws IloException {
             double cost = 0;
             cost += q.baseTableUpdateCost;
-            for (InumPlan plan : plans)
-                cost += plan.getCost();
+            for (InumPlan plan : plans) {
+                double pcost = plan.getCost();
+                // Rt.p(this.q.id + " " + plan.p.id + " " + pcost);
+                cost += pcost;
+            }
             return cost;
         }
 
@@ -215,9 +222,10 @@ public class DAT extends AbstractBIPSolver {
             addVars(present);
         }
 
-        public void addObjective(IloLinearNumExpr expr) throws IloException {
+        public void addObjective(IloLinearNumExpr expr, boolean noCoeff)
+                throws IloException {
             for (Query query : queries)
-                query.addObjective(expr);
+                query.addObjective(expr, noCoeff);
             for (int i = 0; i < totalIndices; i++) {
                 // expr.addTerm(costModel.indices.get(i).createCost, create[i]);
                 // expr.addTerm(costModel.indices.get(i).dropCost, drop[i]);
@@ -229,8 +237,11 @@ public class DAT extends AbstractBIPSolver {
 
         public double getCost() throws IloException {
             double cost = 0;
-            for (Query query : queries)
-                cost += query.getCost();
+            for (Query query : queries) {
+                double qcost = query.getCost();
+                // Rt.p(query.q.id + " " + qcost);
+                cost += qcost;
+            }
             return cost;
         }
 
@@ -322,6 +333,7 @@ public class DAT extends AbstractBIPSolver {
     int totalQueires;
     int totalIndices;
     public int maxIndexCreatedPerWindow = 0;
+    public double intermediateConstraint = 0;
     Logger log = Logger.getLogger(DAT.class.getName());
 
     public DAT(SeqInumCost cost, double[] windowConstraints, double alpha,
@@ -362,7 +374,7 @@ public class DAT extends AbstractBIPSolver {
 
             IloLinearNumExpr expr = cplex.linearNumExpr();
             for (int i = 0; i < windows.length; i++) {
-                this.windows[i].addObjective(expr);
+                this.windows[i].addObjective(expr, false);
             }
             objExpr = expr;
             IloObjective obj = cplex.minimize(expr);
@@ -370,6 +382,15 @@ public class DAT extends AbstractBIPSolver {
             if (showFormulas)
                 Rt.p("Obj: " + expr.toString());
 
+            if (intermediateConstraint > 0.1) {
+                expr = cplex.linearNumExpr();
+                for (int i = 0; i < windows.length - 1; i++) {
+                    this.windows[i].addObjective(expr, true);
+                }
+                cplex.addLe(expr, intermediateConstraint);
+                if (showFormulas)
+                    Rt.p(expr.toString() + "<=" + intermediateConstraint);
+            }
             for (int i = 0; i < windows.length; i++) {
                 this.windows[i].addConstriant();
                 for (int k = 0; k < totalIndices; k++) {
@@ -392,84 +413,84 @@ public class DAT extends AbstractBIPSolver {
             for (IloNumVar var : iloVar)
                 cplexVar.add(var);
             if (!cplex.solve())
-                throw new Error();
+                throw new Error("Can't solve bip");
         } catch (IloException e) {
             e.printStackTrace();
         }
     }
 
-    public IndexTuningOutput baseline() {
-        DATOutput output = new DATOutput(windowConstraints.length);
-
-        super.numConstraints = 0;
-        double totalCost = 0;
-        try {
-            windows = new Window[windowConstraints.length];
-            double[] costs = new double[windowConstraints.length];
-            boolean[] indexPresent = new boolean[totalIndices];
-            Arrays.fill(indexPresent, false);
-            for (int i = 0; i < windowConstraints.length; i++) {
-                cplex = new IloCplex();
-                cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
-                cplex.setOut(null);
-                cplex.setWarning(null);
-                windows[i] = new Window(i, i == windowConstraints.length - 1,
-                        windowConstraints[i]);
-                IloLinearNumExpr expr = cplex.linearNumExpr();
-                this.windows[i].addObjective(expr);
-                IloObjective obj = cplex.minimize(expr);
-                cplex.add(obj);
-                if (showFormulas)
-                    Rt.p("Obj: " + expr.toString());
-                this.windows[i].addConstriant();
-                for (int k = 0; k < totalIndices; k++) {
-                    if (indexPresent[k]) {
-                        if (showFormulas)
-                            Rt.p(this.windows[i].present[k] + "=1");
-                        cplex.addEq(this.windows[i].present[k], 1);
-                        cplex.addEq(this.windows[i].create[k], 0);
-                        cplex.addEq(this.windows[i].drop[k], 0);
-                    } else {
-                        expr = cplex.linearNumExpr();
-                        expr.addTerm(1, this.windows[i].create[k]);
-                        expr.addTerm(-1, this.windows[i].drop[k]);
-                        // }
-                        if (showFormulas)
-                            Rt.p(expr.toString() + "="
-                                    + this.windows[i].present[k]);
-                        cplex.addEq(expr, this.windows[i].present[k]);
-                    }
-                }
-                if (!cplex.solve())
-                    throw new Error();
-                windows[i].getValues();
-                costs[i] = windows[i].getCost();// cplex.getObjValue();
-                if (i == windowConstraints.length - 1)
-                    totalCost += costs[i] * (alpha + beta);
-                else
-                    totalCost += costs[i] * (alpha);
-                for (int j = 0; j < totalIndices; j++) {
-                    indexPresent[j] = windows[i].indexPresent[j];
-                }
-                output.ws[i].indexUsed = Arrays.copyOf(windows[i].indexPresent,
-                        totalIndices);
-                output.ws[i].cost = windows[i].getCost();
-                // if (!windows[i].lastWindow
-                // && Math.abs(output.ws[i].cost * alpha
-                // - cplex.getObjValue()) > 1)
-                // throw new Error();
-            }
-
-            output.totalCost = totalCost;
-
-            cplexVar = new Vector<IloNumVar>();
-            for (IloNumVar var : iloVar)
-                cplexVar.add(var);
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
-        return output;
-    }
+    // public IndexTuningOutput baseline() {
+    // DATOutput output = new DATOutput(windowConstraints.length);
+    //
+    // super.numConstraints = 0;
+    // double totalCost = 0;
+    // try {
+    // windows = new Window[windowConstraints.length];
+    // double[] costs = new double[windowConstraints.length];
+    // boolean[] indexPresent = new boolean[totalIndices];
+    // Arrays.fill(indexPresent, false);
+    // for (int i = 0; i < windowConstraints.length; i++) {
+    // cplex = new IloCplex();
+    // cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
+    // cplex.setOut(null);
+    // cplex.setWarning(null);
+    // windows[i] = new Window(i, i == windowConstraints.length - 1,
+    // windowConstraints[i]);
+    // IloLinearNumExpr expr = cplex.linearNumExpr();
+    // this.windows[i].addObjective(expr);
+    // IloObjective obj = cplex.minimize(expr);
+    // cplex.add(obj);
+    // if (showFormulas)
+    // Rt.p("Obj: " + expr.toString());
+    // this.windows[i].addConstriant();
+    // for (int k = 0; k < totalIndices; k++) {
+    // if (indexPresent[k]) {
+    // if (showFormulas)
+    // Rt.p(this.windows[i].present[k] + "=1");
+    // cplex.addEq(this.windows[i].present[k], 1);
+    // cplex.addEq(this.windows[i].create[k], 0);
+    // cplex.addEq(this.windows[i].drop[k], 0);
+    // } else {
+    // expr = cplex.linearNumExpr();
+    // expr.addTerm(1, this.windows[i].create[k]);
+    // expr.addTerm(-1, this.windows[i].drop[k]);
+    // // }
+    // if (showFormulas)
+    // Rt.p(expr.toString() + "="
+    // + this.windows[i].present[k]);
+    // cplex.addEq(expr, this.windows[i].present[k]);
+    // }
+    // }
+    // if (!cplex.solve())
+    // throw new Error();
+    // windows[i].getValues();
+    // costs[i] = windows[i].getCost();// cplex.getObjValue();
+    // if (i == windowConstraints.length - 1)
+    // totalCost += costs[i] * (alpha + beta);
+    // else
+    // totalCost += costs[i] * (alpha);
+    // for (int j = 0; j < totalIndices; j++) {
+    // indexPresent[j] = windows[i].indexPresent[j];
+    // }
+    // output.ws[i].indexUsed = Arrays.copyOf(windows[i].indexPresent,
+    // totalIndices);
+    // output.ws[i].cost = windows[i].getCost();
+    // // if (!windows[i].lastWindow
+    // // && Math.abs(output.ws[i].cost * alpha
+    // // - cplex.getObjValue()) > 1)
+    // // throw new Error();
+    // }
+    //
+    // output.totalCost = totalCost;
+    //
+    // cplexVar = new Vector<IloNumVar>();
+    // for (IloNumVar var : iloVar)
+    // cplexVar.add(var);
+    // } catch (IloException e) {
+    // e.printStackTrace();
+    // }
+    // return output;
+    // }
 
     public static void invokeCplex() throws IloException {
         IloCplex cplex = new IloCplex();
@@ -495,7 +516,7 @@ public class DAT extends AbstractBIPSolver {
             cplex.setWarning(null);
             Window window = new Window(0, true, total);
             IloLinearNumExpr expr = cplex.linearNumExpr();
-            window.addObjective(expr);
+            window.addObjective(expr, true);
             IloObjective obj = cplex.minimize(expr);
             cplex.add(obj);
             if (showFormulas)
@@ -550,7 +571,7 @@ public class DAT extends AbstractBIPSolver {
             cplex.setWarning(null);
             Window window = new Window(0, true, Double.MAX_VALUE);
             IloLinearNumExpr expr = cplex.linearNumExpr();
-            window.addObjective(expr);
+            window.addObjective(expr, false);
             IloObjective obj = cplex.minimize(expr);
             cplex.add(obj);
             if (showFormulas)
@@ -565,6 +586,7 @@ public class DAT extends AbstractBIPSolver {
                 throw new Error();
             window.getValues();
             double cost = window.getCost();
+//            Rt.p(Rt.booleanToString(window.indexPresent));
             return cost;
         } finally {
             cplex = old;
@@ -760,7 +782,7 @@ public class DAT extends AbstractBIPSolver {
                 windows[i] = new Window(i, i == windowConstraints.length - 1,
                         windowConstraints[i]);
                 IloLinearNumExpr expr = cplex.linearNumExpr();
-                this.windows[i].addObjective(expr);
+                this.windows[i].addObjective(expr, false);
                 IloObjective obj = cplex.minimize(expr);
                 cplex.add(obj);
                 if (showFormulas)
@@ -819,6 +841,7 @@ public class DAT extends AbstractBIPSolver {
                 output.ws[i].cost = windows[i].getCost();
                 output.ws[i].create = windows[i].getCreated();
                 output.ws[i].drop = windows[i].getDropped();
+//                Rt.p(Rt.booleanToString(output.ws[i].indexUsed));
                 double c2 = costWithIndex(output.ws[i].indexUsed);
                 if (Math.abs(output.ws[i].cost - c2) / c2 > 0.1)
                     throw new Error(output.ws[i].cost + " " + c2);

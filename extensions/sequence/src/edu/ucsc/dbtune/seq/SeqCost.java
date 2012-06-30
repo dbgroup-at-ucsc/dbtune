@@ -13,10 +13,13 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.def.*;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
@@ -132,8 +135,8 @@ public class SeqCost {
 
     Optimizer optimizer;
 
-    public static double getCreateIndexCost(Optimizer optimizer, Index a)
-            throws SQLException {
+    public static double getCreateIndexCost(Optimizer optimizer, Index a,
+            SeqInumIndex q) throws SQLException {
         StringBuilder sql = new StringBuilder();
         sql.append("select ");
         boolean first = true;
@@ -156,15 +159,20 @@ public class SeqCost {
                     + (a.isAscending(col) ? " asc" : " desc"));
         }
         RTimerN timer = new RTimerN();
+        if (q != null)
+            q.createCostSQL = sql.toString();
         // Rt.p(sql);
         SQLStatementPlan sqlPlan = optimizer.explain(sql.toString()).getPlan();
         totalCreateIndexNanoTime += timer.get();
+        if (q != null && optimizer instanceof InumOptimizer) {
+            DB2Optimizer o2 = (DB2Optimizer) optimizer.getDelegate();
+            q.createCostDB2 = o2.explain(sql.toString()).getTotalCost();
+        }
         // Rt.p("%,d",totalCreateIndexNanoTime);
         return sqlPlan.getRootOperator().getAccumulatedCost();
     }
 
-    public static long getIndexSize(Statement st, Index a)
-            throws SQLException {
+    public static long getIndexSize(Statement st, Index a) throws SQLException {
         StringBuilder sql = new StringBuilder();
         sql.append("select sum(");
         boolean first = true;
@@ -173,18 +181,18 @@ public class SeqCost {
                 first = false;
             else
                 sql.append("+");
-            sql.append("length("+col.getName()+")");
+            sql.append("length(" + col.getName() + ")");
         }
         sql.append(") from " + a.getSchema().getName() + "."
                 + a.getTable().getName());
         RTimerN timer = new RTimerN();
-         Rt.p(sql);
+        Rt.p(sql);
         st.execute(sql.toString());
         totalCreateIndexNanoTime += timer.get();
-        ResultSet rs=st.getResultSet();
+        ResultSet rs = st.getResultSet();
         if (rs.next())
             return rs.getLong(1);
-       throw new Error();
+        throw new Error();
     }
 
     public static double populateTime = 0;
@@ -203,10 +211,10 @@ public class SeqCost {
             SeqIndex index = new SeqIndex();
             index.name = "I" + indexId;
             index.index = a;
-            index.createCost = getCreateIndexCost(optimizer, a);
+            index.createCost = getCreateIndexCost(optimizer, a, null);
             index.dropCost = 0;
-            Statement st=db.getConnection().createStatement();
-            index.storageCost =  getIndexSize(st, a);
+            Statement st = db.getConnection().createStatement();
+            index.storageCost = getIndexSize(st, a);
             st.close();
             if (costModel.indices.put(index.name, index) != null)
                 throw new Error("duplicate index");

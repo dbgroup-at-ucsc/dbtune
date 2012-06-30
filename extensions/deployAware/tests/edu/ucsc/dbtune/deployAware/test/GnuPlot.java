@@ -9,7 +9,7 @@ import java.util.Vector;
 import edu.ucsc.dbtune.seq.utils.Rt;
 
 public class GnuPlot {
-    public static boolean uniform=false;
+    public static boolean uniform = false;
     File dir;
     String name;
     String xName;
@@ -104,6 +104,8 @@ public class GnuPlot {
         }
         int power = (int) Math.floor(Math.log10(minY));
         double factor = Math.pow(10, power);
+        if (factor < 0.000001)
+            factor = 1;
         PrintStream ps = new PrintStream(dataFile);
         for (int i = 0; i < lines.length; i++) {
             String[] ss = lines[i].split("\t");
@@ -115,9 +117,9 @@ public class GnuPlot {
                 // for (int j = 0; j < current.size(); j++) {
                 if (j > 0)
                     ps.print("\t");
-                ps.format("%.5f",uniform?i:x);
+                ps.format("%.5f", uniform ? i : x);
                 ps.print("\t");
-                ps.format("%.5f",y / factor);
+                ps.format("%.5f", y / factor);
             }
             if (i < lines.length - 1)
                 ps.println();
@@ -143,7 +145,8 @@ public class GnuPlot {
             for (int i = 0; i < xtics.length; i++) {
                 if (i > 0)
                     ps.print(",");
-                ps.print("\"" + xtics[i] + "\" " + (uniform?i:xticsValues[i]));
+                ps.print("\"" + xtics[i] + "\" "
+                        + (uniform ? i : xticsValues[i]));
             }
             ps.println(")");
         } else {
@@ -154,7 +157,7 @@ public class GnuPlot {
                 String s = Double.toString(xticsValues[i]);
                 if (Math.abs(xticsValues[i] - (int) xticsValues[i]) < 1E-10)
                     s = String.format("%.0f", xticsValues[i]);
-                ps.print("\"" + s + "\" " + xticsValues[i]);
+                ps.print("\"" + s + "\" " + (uniform ? i : xticsValues[i]));
             }
             ps.println(")");
         }

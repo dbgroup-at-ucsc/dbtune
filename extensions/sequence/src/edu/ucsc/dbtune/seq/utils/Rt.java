@@ -2072,4 +2072,11 @@ public class Rt {
         return vector.toArray(new String[vector.size()]);
     }
 
+    public static String booleanToString(boolean[] bs) {
+        StringBuilder sb=new StringBuilder();
+        for (boolean b : bs) {
+            sb.append(b?"1":"0");
+        }
+        return sb.toString();
+    }
 }

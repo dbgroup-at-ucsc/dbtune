@@ -2,12 +2,15 @@ package edu.ucsc.dbtune.deployAware.test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -149,10 +152,10 @@ public class DATTest2 {
 
             cost = SeqInumCost.fromInum(db, optimizer, workload, indexes);
             for (int i = 0; i < cost.queries.size(); i++) {
-                cost.queries.get(i).sql = null;
+                // cost.queries.get(i).sql = null;
             }
             for (int i = 0; i < cost.indices.size(); i++) {
-                cost.indices.get(i).index = null;
+                // cost.indices.get(i).index = null;
             }
 
             DAT dat = new DAT(cost, new double[3], 1, 0, 0);
@@ -391,21 +394,24 @@ public class DATTest2 {
         int pos = 0;
         querySize = 0;
         indexSize = 0;
-        dbName = args[pos++];
-        workloadName = args[pos++];
-        double alpha = Double.parseDouble(args[pos++]);
-        double beta = Double.parseDouble(args[pos++]);
-        int m = Integer.parseInt(args[pos++]);
-        int l = Integer.parseInt(args[pos++]);
-        long space = Long.parseLong(args[pos++]);
-        double windowSize = Double.parseDouble(args[pos++]);
+        Rx input = Rx.findRoot(Rt.readFile(new File(args[pos++])));
+        dbName = input.getChildText("dbName");
+        workloadName = input.getChildText("workloadName");
+        double alpha = input.getChildDoubleContent("alpha");
+        double beta = input.getChildDoubleContent("beta");
+        int m = input.getChildIntContent("m");
+        int l = input.getChildIntContent("l");
+        double space = input.getChildDoubleContent("spaceBudge");
+        double windowSize = input.getChildDoubleContent("windowSize");
+        double intermediateConstraint = input
+                .getChildDoubleContent("intermediateConstraint");
         File outputFile = new File(args[pos++]);
 
         SeqInumCost cost = loadCost();
 
         Rt.np("alpha=%.2f\tbeta=%.2f", alpha, beta);
         Rt.np("m=%d\tl=%d", m, l);
-        Rt.np("space=%d\twindow=%.2f", space, windowSize);
+        Rt.np("space=%.2f\twindow=%.2f", space, windowSize);
         Rt.np("outputFile=" + outputFile.getAbsolutePath());
         Rt.np("queries=%d\tindices=%d", cost.queries.size(), cost.indices
                 .size());
@@ -415,19 +421,51 @@ public class DATTest2 {
             windowConstraints[i] = windowSize;
         cost.storageConstraint = space;
 
+        Rx root = new Rx("DAT");
+        RTimer timer = new RTimer();
         LogListener logger = LogListener.getInstance();
         DAT dat = new DAT(cost, windowConstraints, alpha, beta, l);
         dat.setLogListenter(logger);
         dat.setWorkload(new Workload("", new StringReader("")));
-        dat.buildBIP();
-        DATOutput output = (DATOutput) dat.getOutput();
+        dat.intermediateConstraint = intermediateConstraint;
+        double datCost = 0;
+        try {
+            dat.buildBIP();
+            DATOutput output = (DATOutput) dat.getOutput();
+            double d = 0;
+            for (int i = 0; i < windowConstraints.length - 1; i++) {
+                d += output.ws[i].cost;
+            }
+            datCost = output.totalCost;
+            root.createChild("dat", output.totalCost);
+            root.createChild("datIntermediate", d);
+        } catch (Error e) {
+            if ("Can't solve bip".equals(e.getMessage())) {
+                root.createChild("dat", 0);
+                root.createChild("datIntermediate", 0);
+            } else {
+                e.printStackTrace();
+            }
+        }
+        // PrintStream ps=new PrintStream(new FileOutputStream(new
+        // File("/home/wangrui/dbtune/createDrop.txt"),true));
+        // for (int i = 0; i < windowConstraints.length; i++) {
+        // ps.format("%.0f\tc " + output.ws[i].create + ", d "
+        // + output.ws[i].drop + "\t", output.ws[i].cost);
+        // }
+        // ps.println();
+        // ps.close();
+        long time1 = timer.get();
 
         dat = new DAT(cost, windowConstraints, alpha, beta, l);
         dat.setLogListenter(logger);
         dat.setWorkload(new Workload("", new StringReader("")));
+
         // String method = "bip";
         // method = "greedyRatio";
         DATOutput greedyRatio = (DATOutput) dat.baseline2("greedyRatio");
+
+        timer.reset();
 
         dat = new DAT(cost, windowConstraints, alpha, beta, l);
         dat.setLogListenter(logger);
@@ -435,19 +473,26 @@ public class DATTest2 {
         // String method = "bip";
         // method = "greedyRatio";
         DATOutput bip = (DATOutput) dat.baseline2("bip");
-        Rt.p(output.totalCost);
+
+        long time2 = timer.get();
+        Rt.p("TIME " + time1 + " " + time2 + " " + (double) time2 / time1);
+
+        Rt.p(datCost);
         Rt.p(bip.totalCost);
-        double result = output.totalCost / bip.totalCost * 100;
+        double result = datCost / bip.totalCost * 100;
         Rt.p(result + "%");
-        Rt.write(outputFile, output.totalCost + "\n" + bip.totalCost + "\n"
-                + greedyRatio.totalCost);
+
+        root.createChild("bip", bip.totalCost);
+        root.createChild("greedyRatio", greedyRatio.totalCost);
+        Rt.write(outputFile, root.getXml());
+
         if (db != null)
             db.getConnection().close();
         System.exit(0);
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length > 5)
+        if (args.length == 2)
             batch(args);
         StringBuilder sb = new StringBuilder();
         sb.append("test");
