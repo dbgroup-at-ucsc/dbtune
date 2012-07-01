@@ -1,21 +1,52 @@
 package edu.ucsc.dbtune.deployAware.test;
 
 import java.io.File;
+import java.io.IOException;
+
+import javax.xml.transform.TransformerException;
 
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.seq.utils.Rx;
 
 public class DATSeparateProcess {
+    String dbName;
+    String workloadName;
+    double alpha;
+    double beta;
+    int m;
+    int l;
+    double spaceBudge;
+    double windowSize;
+    double intermediateConstraint;
+    public boolean generatePerfReport = false;
+    public boolean runDAT = true;
+    public boolean runGreedy = true;
+    public boolean runMKP = true;
+    public int dupWorkloadNTimes=1;
+
     double dat;
     double datIntermediate;
     double bip;
     double greedy;
 
-    public DATSeparateProcess(String dbName,String workloadName,double alpha, double beta, int m, int l,
-            double spaceBudge, double windowSize, double intermediateConstraint)
-            throws Exception {
+    public DATSeparateProcess(String dbName, String workloadName, double alpha,
+            double beta, int m, int l, double spaceBudge, double windowSize,
+            double intermediateConstraint) {
+        this.dbName = dbName;
+        this.workloadName = workloadName;
+        this.alpha = alpha;
+        this.beta = beta;
+        this.m = m;
+        this.l = m;
+        this.spaceBudge = spaceBudge;
+        this.windowSize = windowSize;
+        this.intermediateConstraint = intermediateConstraint;
+    }
+
+    public void run() throws Exception {
         File tmpInputFile = new File("/home/wangrui/dbtune/tmpInput.txt");
         File tmpFile = new File("/home/wangrui/dbtune/tmp.txt");
+        File tmpPerfFile = new File("/home/wangrui/dbtune/tmpPerf.txt");
         String cmd = "/usr/lib/jvm/java-6-openjdk/bin/java"
                 + " -Djava.library.path=lib"
                 + " -Dfile.encoding=UTF-8"
@@ -50,6 +81,12 @@ public class DATSeparateProcess {
         rx.createChild("spaceBudge", spaceBudge);
         rx.createChild("windowSize", windowSize);
         rx.createChild("intermediateConstraint", intermediateConstraint);
+        if (generatePerfReport)
+            rx.createChild("perfReportFile", tmpPerfFile.getAbsolutePath());
+        rx.createChild("runDAT", runDAT);
+        rx.createChild("runGreedy", runGreedy);
+        rx.createChild("runMKP", runMKP);
+        rx.createChild("dupWorkloadNTimes", dupWorkloadNTimes);
         Rt.write(tmpInputFile, rx.getXml());
         StringBuilder sb = new StringBuilder();
         sb.append(cmd);

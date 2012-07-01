@@ -101,6 +101,7 @@ public class BatchTest {
                                 DATSeparateProcess dsp = new DATSeparateProcess(
                                         set.dbName, set.workloadName, alpha,
                                         beta, m, l, space, windowSize, 0);
+                                dsp.run();
                                 double dat = dsp.dat;
                                 double mkp = dsp.bip;
                                 double greedyRatio = dsp.greedy;

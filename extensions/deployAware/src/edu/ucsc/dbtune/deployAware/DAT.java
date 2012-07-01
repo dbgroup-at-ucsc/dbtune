@@ -22,6 +22,7 @@ import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlot;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlotIndexCost;
+import edu.ucsc.dbtune.seq.utils.PerfTest;
 import edu.ucsc.dbtune.seq.utils.Rt;
 
 /**
@@ -32,12 +33,12 @@ public class DAT {
     public DATWindow[] windows;
 
     public DATOutput runDAT(DATParameter param) throws IloException {
-        Rt.p("alpha=" + param.alpha);
-        Rt.p("beta=" + param.beta);
-        Rt.p("m=" + param.windowConstraints.length);
-        Rt.p("space=" + param.spaceConstraint);
-        Rt.p("window=" + param.windowConstraints[0]);
-        Rt.p("l=" + param.maxIndexCreatedPerWindow);
+//        Rt.p("alpha=" + param.alpha);
+//        Rt.p("beta=" + param.beta);
+//        Rt.p("m=" + param.windowConstraints.length);
+//        Rt.p("space=" + param.spaceConstraint);
+//        Rt.p("window=" + param.windowConstraints[0]);
+//        Rt.p("l=" + param.maxIndexCreatedPerWindow);
         CPlexWrapper cplex = new CPlexWrapper();
         windows = new DATWindow[param.windowConstraints.length];
         for (int i = 0; i < param.windowConstraints.length; i++) {
@@ -81,8 +82,10 @@ public class DAT {
             }
         }
 
+        PerfTest.startTimer();
         if (!cplex.solve())
             throw new Error("Can't solve bip");
+        PerfTest.addTimer("dat");
 
         DATOutput output = new DATOutput(windows.length);
         try {
@@ -96,8 +99,10 @@ public class DAT {
                 output.ws[i].create = windows[i].getCreated(cplex);
                 output.ws[i].drop = windows[i].getDropped(cplex);
                 // Rt.p(Rt.booleanToString(output.ws[i].indexUsed));
+                PerfTest.startTimer();
                 double c2 = DATWindow.costWithIndex(param.costModel,
                         output.ws[i].indexUsed);
+                PerfTest.addTimer("dat verify");
                 if (Math.abs(output.ws[i].cost - c2) / c2 > 0.1)
                     throw new Error(output.ws[i].cost + " " + c2);
                 if (i == output.ws.length - 1)

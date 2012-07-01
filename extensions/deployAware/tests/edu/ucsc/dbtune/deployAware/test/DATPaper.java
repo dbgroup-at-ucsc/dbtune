@@ -11,6 +11,7 @@ import edu.ucsc.dbtune.deployAware.DATOutput;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.utils.RTimer;
+import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.seq.utils.Rx;
 import edu.ucsc.dbtune.workload.Workload;
@@ -50,6 +51,7 @@ public class DATPaper {
         DATSeparateProcess dsp = new DATSeparateProcess(DATTest2.dbName,
                 DATTest2.workloadName, alpha, beta, m, l, spaceBudge,
                 windowSize, 0);
+        dsp.run();
         dat = dsp.dat;
         mkp = dsp.bip;
         greedyRatio = dsp.greedy;
@@ -99,8 +101,8 @@ public class DATPaper {
         DATTest2.indexSize = 0;
         boolean exp = true; // rerun experiment
         boolean exp5 = true; // rerun experiment
-//        exp = false;
-//        exp5 = false;
+        exp = false;
+        exp5 = false;
         File outputDir = new File("/home/wangrui/dbtune/paper");
         File latexFile2 = new File(outputDir, "skyline.tex");
 
@@ -115,8 +117,7 @@ public class DATPaper {
                 new TestSet("100 OTAB  queries", "test",
                         "online-benchmark-100", 10 * gigbytes),
                 new TestSet("100 OTAB queries and 10 updates", "test",
-                        "online-benchmark-update-100", 10 * gigbytes), 
-                        };
+                        "online-benchmark-update-100", 10 * gigbytes), };
         int windowSize = 3600 * 3000;// 13 * (int) (totalCost /
         int m_def = 3;
         double spaceFactor_def = 0.5;
@@ -249,11 +250,13 @@ public class DATPaper {
                 DATSeparateProcess dsp = new DATSeparateProcess(
                         DATTest2.dbName, DATTest2.workloadName, alpha, beta,
                         m_def, l_def, spaceBudge, windowSize, 0);
+                dsp.run();
                 double p0int = dsp.datIntermediate;
                 for (double tau : tau_set) {
                     dsp = new DATSeparateProcess(DATTest2.dbName,
                             DATTest2.workloadName, alpha, beta, m_def, l_def,
                             spaceBudge, windowSize, p0int * tau);
+                    dsp.run();
                     plot.add(tau, dsp.dat);
                     plot.addLine();
                 }
@@ -263,6 +266,43 @@ public class DATPaper {
         // ps.println("\\end{multicols}");
         ps.println("\\end{document}\n");
         ps.close();
+
+        // detailed performance test
+        if (false) {
+            TestSet perfTest = sets[3];
+            DATSeparateProcess dsp = new DATSeparateProcess(perfTest.dbName,
+                    perfTest.workloadName, 0.5, 0.5, m_def, l_def,
+                    Double.MAX_VALUE, windowSize, 0);
+            dsp.generatePerfReport = true;
+            dsp.run();
+        }
+
+        // scalability test
+        if (true) {
+            TestSet perfTest = sets[3];
+            DATTest2.dbName = perfTest.dbName;
+            DATTest2.workloadName = perfTest.workloadName;
+            SeqInumCost cost = DATTest2.loadCost();
+
+            PrintStream ps2 = new PrintStream(
+                    "/home/wangrui/dbtune/scalability.txt");
+            int start=21;
+            for (int i = start; i <= start+20; i++) {
+                DATSeparateProcess dsp = new DATSeparateProcess(
+                        perfTest.dbName, perfTest.workloadName, 0.5, 0.5,
+                        m_def, l_def, Double.MAX_VALUE, windowSize, 0);
+                dsp.runGreedy = false;
+                dsp.runMKP = false;
+                dsp.dupWorkloadNTimes = i;
+                // dsp.generatePerfReport = true;
+                RTimerN timer = new RTimerN();
+                dsp.run();
+                ps2.format(cost.queries.size() * i + "\t%.3fs\n", timer
+                        .getSecondElapse());
+            }
+            ps2.close();
+        }
+
         for (TestSet set : sets) {
             File latexFile = new File(outputDir, "_" + set.workloadName
                     + ".tex");

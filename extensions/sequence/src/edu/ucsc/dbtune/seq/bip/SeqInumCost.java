@@ -15,6 +15,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.bip.def.*;
+import edu.ucsc.dbtune.seq.utils.PerfTest;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.seq.utils.Rx;
@@ -31,6 +32,20 @@ public class SeqInumCost implements Serializable {
     Set<Index> inumIndices;
     Hashtable<Index, SeqInumIndex> indexToInumIndex = new Hashtable<Index, SeqInumIndex>();
 
+    public SeqInumCost dup(int times) {
+        SeqInumCost cost=new SeqInumCost();
+        cost.queryHash=this.queryHash;
+        cost.indexHash=this.indexHash;
+        cost.indices=this.indices;
+        cost.storageConstraint=this.storageConstraint;
+        cost.optimizer=this.optimizer;
+        cost.inumIndices=this.inumIndices;
+        cost.indexToInumIndex=this.indexToInumIndex;
+        for (int i=0;i< times;i++) {
+            cost.queries.addAll(this.queries);
+        }
+        return cost;
+    }
     public int indexCount() {
         return indices.size();
     }
@@ -70,11 +85,14 @@ public class SeqInumCost implements Serializable {
         queries.add(q);
 
         RTimerN timer = new RTimerN();
+        PerfTest.startTimer();
         InumQueryPlanDesc desc = (InumQueryPlanDesc) InumQueryPlanDesc
                 .getQueryPlanDescInstance(statement);
 //        Rt.p(statement.getSQL());
         // Populate the INUM space
         desc.generateQueryPlanDesc(optimizer, inumIndices);
+        PerfTest.addTimer("inum");
+        PerfTest.startTimer();
         plugInTime += desc.pluginTime / 1000000000.0;
         populateTime += desc.populateTime / 1000000000.0;
         // Rt.p("BIP INUM populate time: " + timer.getSecondElapse());
@@ -115,6 +133,7 @@ public class SeqInumCost implements Serializable {
             }
             q.plans[k] = plan;
         }
+        PerfTest.addTimer("inumRest");
         return q;
     }
 
@@ -132,7 +151,9 @@ public class SeqInumCost implements Serializable {
             cost.indexToInumIndex.put(indexs[i], q);
             cost.indexHash.put(q.name, q);
             cost.indices.add(q);
+            PerfTest.startTimer();
             q.createCost = SeqCost.getCreateIndexCost(optimizer, q.index,q);
+            PerfTest.addTimer("calculate create index cost");
             q.dropCost = 0;
 //            Statement st = db.getConnection().createStatement();
             q.storageCost = q.index.getBytes();//SeqCost.getIndexSize(st, q.index); // TODO add

@@ -44,6 +44,7 @@ import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlot;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlotIndexCost;
+import edu.ucsc.dbtune.seq.utils.PerfTest;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.seq.utils.Rt;
@@ -163,7 +164,9 @@ public class DATTest2 {
 
             // DAT dat = new DAT(cost, new double[3], 1, 0, 0);
             // dat.setOptimizer(optimizer);
+            PerfTest.startTimer();
             DATBaselines.getIndexBenefit(cost);
+            PerfTest.addTimer("calculate index benefit");
 
             Rx root = new Rx("workload");
             cost.save(root);
@@ -389,13 +392,22 @@ public class DATTest2 {
         double windowSize = input.getChildDoubleContent("windowSize");
         double intermediateConstraint = input
                 .getChildDoubleContent("intermediateConstraint");
+        String perfReportFile = input.getChildText("perfReportFile");
+        boolean runDAT = input.getChildBooleanContent("runDAT", true);
+        boolean runGreedy = input.getChildBooleanContent("runGreedy", true);
+        boolean runMKP = input.getChildBooleanContent("runMKP", true);
+        int dupWorkloadNTimes = input.getChildIntContent("dupWorkloadNTimes");
         File outputFile = new File(args[pos++]);
 
         SeqInumCost cost = loadCost();
+        if (dupWorkloadNTimes > 1)
+            cost = cost.dup(dupWorkloadNTimes);
 
+        Rt.np("queryCount=%d\tindexCount", cost.queries.size(), cost.indices
+                .size());
         Rt.np("alpha=%.2f\tbeta=%.2f", alpha, beta);
         Rt.np("m=%d\tl=%d", m, l);
-        Rt.np("space=%.2f\twindow=%.2f", space, windowSize);
+        Rt.np("window=%.2f\tspace=%.2f", windowSize, space);
         Rt.np("outputFile=" + outputFile.getAbsolutePath());
         Rt.np("queries=%d\tindices=%d", cost.queries.size(), cost.indices
                 .size());
@@ -407,26 +419,27 @@ public class DATTest2 {
 
         Rx root = new Rx("DAT");
         RTimer timer = new RTimer();
-        LogListener logger = LogListener.getInstance();
         DATParameter params = new DATParameter(cost, windowConstraints, alpha,
                 beta, l);
         params.intermediateConstraint = intermediateConstraint;
         double datCost = 0;
-        try {
-            DATOutput output = new DAT().runDAT(params);
-            double d = 0;
-            for (int i = 0; i < windowConstraints.length - 1; i++) {
-                d += output.ws[i].cost;
-            }
-            datCost = output.totalCost;
-            root.createChild("dat", output.totalCost);
-            root.createChild("datIntermediate", d);
-        } catch (Error e) {
-            if ("Can't solve bip".equals(e.getMessage())) {
-                root.createChild("dat", 0);
-                root.createChild("datIntermediate", 0);
-            } else {
-                e.printStackTrace();
+        if (runDAT) {
+            try {
+                DATOutput output = new DAT().runDAT(params);
+                double d = 0;
+                for (int i = 0; i < windowConstraints.length - 1; i++) {
+                    d += output.ws[i].cost;
+                }
+                datCost = output.totalCost;
+                root.createChild("dat", output.totalCost);
+                root.createChild("datIntermediate", d);
+            } catch (Error e) {
+                if ("Can't solve bip".equals(e.getMessage())) {
+                    root.createChild("dat", 0);
+                    root.createChild("datIntermediate", 0);
+                } else {
+                    e.printStackTrace();
+                }
             }
         }
         // PrintStream ps=new PrintStream(new FileOutputStream(new
@@ -439,28 +452,30 @@ public class DATTest2 {
         // ps.close();
         long time1 = timer.get();
 
-        // String method = "bip";
-        // method = "greedyRatio";
-        DATOutput greedyRatio = (DATOutput) DATBaselines.baseline2(params,
-                "greedyRatio");
-
+        if (runGreedy) {
+            DATOutput greedyRatio = (DATOutput) DATBaselines.baseline2(params,
+                    "greedyRatio");
+            root.createChild("greedyRatio", greedyRatio.totalCost);
+        }
         timer.reset();
 
-        // String method = "bip";
-        // method = "greedyRatio";
-        DATOutput bip = (DATOutput) DATBaselines.baseline2(params, "bip");
-
+        double bipCost = 0;
+        if (runMKP) {
+            DATOutput bip = (DATOutput) DATBaselines.baseline2(params, "bip");
+            bipCost = bip.totalCost;
+            root.createChild("bip", bipCost);
+        }
         long time2 = timer.get();
         Rt.p("TIME " + time1 + " " + time2 + " " + (double) time2 / time1);
 
         Rt.p(datCost);
-        Rt.p(bip.totalCost);
-        double result = datCost / bip.totalCost * 100;
+        Rt.p(bipCost);
+        double result = datCost / bipCost * 100;
         Rt.p(result + "%");
 
-        root.createChild("bip", bip.totalCost);
-        root.createChild("greedyRatio", greedyRatio.totalCost);
         Rt.write(outputFile, root.getXml());
+        if (perfReportFile != null)
+            PerfTest.report(new File(perfReportFile));
 
         if (db != null)
             db.getConnection().close();
@@ -472,15 +487,16 @@ public class DATTest2 {
             batch(args);
         StringBuilder sb = new StringBuilder();
         sb.append("test");
-        sb.append(" online-benchmark-100");
+        sb.append(" tpch-inum");
         sb.append(" 0.5");
         sb.append(" 0.5");
         sb.append(" 3");
         sb.append(" 10");
         sb.append(" " + 10 * 1024L * 1024L * 1024L);
-        sb.append(" " + 12.97 * 1183159);
+        sb.append(" " + 3600 * 3000);
         sb.append(" /home/wangrui/dbtune/tmp.txt");
         batch(sb.toString().split(" "));
+
         dbName = "tpch10g";
         workloadName = "tpch-inum";
         querySize = 0;
