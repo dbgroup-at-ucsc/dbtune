@@ -1806,9 +1806,9 @@ public class Rt {
         }.start();
     }
 
-    public static void showInputStream(final InputStream is,
+    public static Thread showInputStream(final InputStream is,
             final StringBuilder sb) {
-        new Thread() {
+        Thread ts=new Thread() {
             @Override
             public void run() {
                 byte[] bs = new byte[1024];
@@ -1827,7 +1827,9 @@ public class Rt {
                     e.printStackTrace();
                 }
             }
-        }.start();
+        };
+        ts.start();
+        return ts;
     }
 
     public static String runAndShowCommand(String[] cmd, File dir)

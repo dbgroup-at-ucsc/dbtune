@@ -267,6 +267,19 @@ public class DATPaper {
         ps.println("\\end{document}\n");
         ps.close();
 
+        String latex="/usr/local/texlive/2011/bin/i386-linux/xelatex";
+        latex="pdflatex";
+        for (TestSet set : sets) {
+            File latexFile = new File(outputDir, "_" + set.workloadName
+                    + ".tex");
+            Rt.runAndShowCommand(
+                    latex+" -interaction=nonstopmode "
+                            + latexFile.getName(), outputDir);
+        }
+        Rt.runAndShowCommand(
+        		latex+" -interaction=nonstopmode "
+                        + latexFile2.getName(), outputDir);
+
         // detailed performance test
         if (false) {
             TestSet perfTest = sets[3];
@@ -279,15 +292,17 @@ public class DATPaper {
 
         // scalability test
         if (true) {
-            TestSet perfTest = sets[3];
+            TestSet perfTest = sets[0];
             DATTest2.dbName = perfTest.dbName;
             DATTest2.workloadName = perfTest.workloadName;
             SeqInumCost cost = DATTest2.loadCost();
 
             PrintStream ps2 = new PrintStream(
                     "/home/wangrui/dbtune/scalability.txt");
-            int start=21;
-            for (int i = start; i <= start+20; i++) {
+            int start = 9;
+            int step = 9;
+            int end = start + 100 * step;
+            for (int i = start; i <= end; i += step) {
                 DATSeparateProcess dsp = new DATSeparateProcess(
                         perfTest.dbName, perfTest.workloadName, 0.5, 0.5,
                         m_def, l_def, Double.MAX_VALUE, windowSize, 0);
@@ -299,19 +314,10 @@ public class DATPaper {
                 dsp.run();
                 ps2.format(cost.queries.size() * i + "\t%.3fs\n", timer
                         .getSecondElapse());
+                ps2.flush();
             }
             ps2.close();
         }
 
-        for (TestSet set : sets) {
-            File latexFile = new File(outputDir, "_" + set.workloadName
-                    + ".tex");
-            Rt.runAndShowCommand(
-                    "/data/texlive/2011/bin/i386-linux/xelatex -interaction=nonstopmode "
-                            + latexFile.getName(), outputDir);
-        }
-        Rt.runAndShowCommand(
-                "/data/texlive/2011/bin/i386-linux/xelatex -interaction=nonstopmode "
-                        + latexFile2.getName(), outputDir);
     }
 }

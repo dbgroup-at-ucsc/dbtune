@@ -22,7 +22,7 @@ public class DATSeparateProcess {
     public boolean runDAT = true;
     public boolean runGreedy = true;
     public boolean runMKP = true;
-    public int dupWorkloadNTimes=1;
+    public int dupWorkloadNTimes = 1;
 
     double dat;
     double datIntermediate;
@@ -37,7 +37,7 @@ public class DATSeparateProcess {
         this.alpha = alpha;
         this.beta = beta;
         this.m = m;
-        this.l = m;
+        this.l = l;
         this.spaceBudge = spaceBudge;
         this.windowSize = windowSize;
         this.intermediateConstraint = intermediateConstraint;
@@ -94,13 +94,20 @@ public class DATSeparateProcess {
         sb.append(" " + tmpFile.getAbsolutePath());
         tmpFile.delete();
         Rt.p(sb.toString());
-        Rt
-                .runAndShowCommand(
-                        sb.toString(),
-                        new String[] {
-                                "ILOG_LICENSE_FILE=/data/cplex/access.ilm",
-                                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/db2inst1/sqllib/bin:/home/db2inst1/sqllib/adm:/home/db2inst1/sqllib/misc", },
-                        new File("."));
+
+        String[] envp = new String[] {
+                "ILOG_LICENSE_FILE=/data/cplex/access.ilm",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/db2inst1/sqllib/bin:/home/db2inst1/sqllib/adm:/home/db2inst1/sqllib/misc", };
+        Process process = Runtime.getRuntime().exec(sb.toString(), envp,
+                new File("."));
+        sb = new StringBuilder();
+        Rt.showInputStream(process.getInputStream(), sb);
+        Rt.showInputStream(process.getErrorStream(), sb);
+        try {
+            process.waitFor();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         Rx root = Rx.findRoot(Rt.readFile(tmpFile));
         dat = root.getChildDoubleContent("dat");
         datIntermediate = root.getChildDoubleContent("datIntermediate");
