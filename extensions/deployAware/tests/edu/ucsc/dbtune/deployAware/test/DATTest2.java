@@ -26,8 +26,11 @@ import edu.ucsc.dbtune.bip.sim.Schedule;
 import edu.ucsc.dbtune.bip.sim.ScheduleOnOptimizer;
 import edu.ucsc.dbtune.bip.sim.SimModel;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.deployAware.CPlexWrapper;
 import edu.ucsc.dbtune.deployAware.DAT;
+import edu.ucsc.dbtune.deployAware.DATBaselines;
 import edu.ucsc.dbtune.deployAware.DATOutput;
+import edu.ucsc.dbtune.deployAware.DATParameter;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
@@ -158,12 +161,9 @@ public class DATTest2 {
                 // cost.indices.get(i).index = null;
             }
 
-            DAT dat = new DAT(cost, new double[3], 1, 0, 0);
+            // DAT dat = new DAT(cost, new double[3], 1, 0, 0);
             // dat.setOptimizer(optimizer);
-            LogListener logger = LogListener.getInstance();
-            dat.setLogListenter(logger);
-            dat.setWorkload(new Workload("", new StringReader("")));
-            dat.getIndexBenefit();
+            DATBaselines.getIndexBenefit(cost);
 
             Rx root = new Rx("workload");
             cost.save(root);
@@ -174,7 +174,7 @@ public class DATTest2 {
     }
 
     public static void testBIP() throws Exception {
-        DAT.invokeCplex();
+        CPlexWrapper.invokeCplex();
         SeqCost.totalWhatIfNanoTime = 0;
         SeqCost.totalCreateIndexNanoTime = 0;
         SeqInumCost.populateTime = 0;
@@ -197,12 +197,9 @@ public class DATTest2 {
             windowConstraints[i] = windowSize;
         cost.storageConstraint = 5 * 1024 * 1024.0 * 1024.0;
 
-        DAT dat = new DAT(cost, windowConstraints, 1, 0, 0);
-        dat.maxIndexCreatedPerWindow = l;
+        DATParameter params = new DATParameter(cost, windowConstraints, 1, 0, 0);
+        params.maxIndexCreatedPerWindow = l;
         // dat.setOptimizer(optimizer);
-        LogListener logger = LogListener.getInstance();
-        dat.setLogListenter(logger);
-        dat.setWorkload(new Workload("", new StringReader("")));
         // dat.getIndexBenefit();
 
         // File dir = new File("/home/wangrui/workspace/cache", testSet);
@@ -242,14 +239,13 @@ public class DATTest2 {
         // System.out.println(baseline.totalCost);
         DATOutput baseline = null;
         DATOutput baseline3 = null;
-        baseline = (DATOutput) dat.baseline2("greedyRatio");
+        baseline = (DATOutput) DATBaselines.baseline2(params, "greedyRatio");
         System.out.print("greedyRatio MKP\t");
         for (int i = 0; i < windowConstraints.length; i++) {
             System.out.format("%.0f\t\t", baseline.ws[i].cost);
         }
-        System.out.format(
-                "%.0f\tfit " + DAT.baseline2WindowConstraint + "%%\n",
-                baseline.totalCost + baseline.last());
+        System.out.format("%.0f\tfit " + DATBaselines.baseline2WindowConstraint
+                + "%%\n", baseline.totalCost + baseline.last());
         // baseline2 = (DATOutput) dat.baseline2("greedy");
         // System.out.print("greedy MKP\t");
         // for (int i = 0; i < windowConstraints.length; i++) {
@@ -268,13 +264,7 @@ public class DATTest2 {
         for (double beta = Math.pow(2, 0); beta <= Math.pow(2, 5); beta *= 2) {
             alpha = 1.0 / 3;
             beta = 2.0 / 3;
-            dat = new DAT(cost, windowConstraints, alpha, beta, 0);
-            dat.maxIndexCreatedPerWindow = l;
-            // dat.setOptimizer(optimizer);
-            dat.setLogListenter(logger);
-            dat.setWorkload(new Workload("", new StringReader("")));
-            dat.buildBIP();
-            DATOutput output = (DATOutput) dat.getOutput();
+            DATOutput output = new DAT().runDAT(params);
             System.out.print(alpha + ", " + beta + "\t");
             for (int i = 0; i < windowConstraints.length; i++) {
                 System.out.format("%.0f\tc " + output.ws[i].create + ", d "
@@ -293,9 +283,7 @@ public class DATTest2 {
             // + (baseline2.totalCost + beta
             // * baseline2.ws[baseline2.ws.length - 1].cost));
             System.out.println();
-            dat = new DAT(cost, windowConstraints, alpha, beta, 0);
-            dat.maxIndexCreatedPerWindow = l;
-            baseline3 = (DATOutput) dat.baseline2("bip");
+            baseline3 = (DATOutput) DATBaselines.baseline2(params, "bip");
             System.out.print("PTAS MKP\t");
             for (int i = 0; i < windowConstraints.length; i++) {
                 System.out.format("%.0f\tc " + baseline3.ws[i].create + "\t",
@@ -305,7 +293,8 @@ public class DATTest2 {
             }
             double optTotal = baseline3.totalCost;
             System.out.format("%.0f", optTotal);
-            System.out.print("\tfit " + DAT.baseline2WindowConstraint + "%");
+            System.out.print("\tfit " + DATBaselines.baseline2WindowConstraint
+                    + "%");
             System.out.format("\t/opt %.0f%%\n", output.totalCost / optTotal
                     * 100);
             break;
@@ -329,7 +318,7 @@ public class DATTest2 {
     }
 
     public static void testDATBatch() throws Exception {
-        DAT.invokeCplex();
+        CPlexWrapper.invokeCplex();
         SeqCost.totalWhatIfNanoTime = 0;
         SeqCost.totalCreateIndexNanoTime = 0;
         SeqInumCost.populateTime = 0;
@@ -362,21 +351,16 @@ public class DATTest2 {
                     windowConstraints[i] = winConstraint;
                 cost.storageConstraint = spaceConstraint;
 
-                DAT dat = new DAT(cost, windowConstraints, 1, 1, 0);
-                LogListener logger = LogListener.getInstance();
-                dat.setLogListenter(logger);
-                dat.setWorkload(new Workload("", new StringReader("")));
-
+                DATParameter params = new DATParameter(cost, windowConstraints,
+                        1, 1, 0);
                 DATOutput baseline = null;
-                baseline = (DATOutput) dat.baseline2("bip");
-                double fit = DAT.baseline2WindowConstraint;
+                baseline = (DATOutput) DATBaselines.baseline2(params, "bip");
+                double fit = DATBaselines.baseline2WindowConstraint;
                 double alpha = 1;
                 double beta = 1;
-                dat = new DAT(cost, windowConstraints, alpha, beta, 100);
-                dat.setLogListenter(logger);
-                dat.setWorkload(new Workload("", new StringReader("")));
-                dat.buildBIP();
-                DATOutput output = (DATOutput) dat.getOutput();
+                params = new DATParameter(cost, windowConstraints, alpha, beta,
+                        0);
+                DATOutput output = new DAT().runDAT(params);
                 double btotal = baseline.totalCost;
                 double result = output.totalCost / btotal * 100;
                 System.out.format("%.0f%%\t", result);
@@ -424,14 +408,12 @@ public class DATTest2 {
         Rx root = new Rx("DAT");
         RTimer timer = new RTimer();
         LogListener logger = LogListener.getInstance();
-        DAT dat = new DAT(cost, windowConstraints, alpha, beta, l);
-        dat.setLogListenter(logger);
-        dat.setWorkload(new Workload("", new StringReader("")));
-        dat.intermediateConstraint = intermediateConstraint;
+        DATParameter params = new DATParameter(cost, windowConstraints, alpha,
+                beta, l);
+        params.intermediateConstraint = intermediateConstraint;
         double datCost = 0;
         try {
-            dat.buildBIP();
-            DATOutput output = (DATOutput) dat.getOutput();
+            DATOutput output = new DAT().runDAT(params);
             double d = 0;
             for (int i = 0; i < windowConstraints.length - 1; i++) {
                 d += output.ws[i].cost;
@@ -457,22 +439,16 @@ public class DATTest2 {
         // ps.close();
         long time1 = timer.get();
 
-        dat = new DAT(cost, windowConstraints, alpha, beta, l);
-        dat.setLogListenter(logger);
-        dat.setWorkload(new Workload("", new StringReader("")));
-
         // String method = "bip";
         // method = "greedyRatio";
-        DATOutput greedyRatio = (DATOutput) dat.baseline2("greedyRatio");
+        DATOutput greedyRatio = (DATOutput) DATBaselines.baseline2(params,
+                "greedyRatio");
 
         timer.reset();
 
-        dat = new DAT(cost, windowConstraints, alpha, beta, l);
-        dat.setLogListenter(logger);
-        dat.setWorkload(new Workload("", new StringReader("")));
         // String method = "bip";
         // method = "greedyRatio";
-        DATOutput bip = (DATOutput) dat.baseline2("bip");
+        DATOutput bip = (DATOutput) DATBaselines.baseline2(params, "bip");
 
         long time2 = timer.get();
         Rt.p("TIME " + time1 + " " + time2 + " " + (double) time2 / time1);

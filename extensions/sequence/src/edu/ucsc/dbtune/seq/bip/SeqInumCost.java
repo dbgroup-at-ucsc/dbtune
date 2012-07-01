@@ -31,6 +31,9 @@ public class SeqInumCost implements Serializable {
     Set<Index> inumIndices;
     Hashtable<Index, SeqInumIndex> indexToInumIndex = new Hashtable<Index, SeqInumIndex>();
 
+    public int indexCount() {
+        return indices.size();
+    }
     public void save(Rx rx) {
         for (SeqInumQuery query : queries) {
             query.save(rx.createChild("query"));

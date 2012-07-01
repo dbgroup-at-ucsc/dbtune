@@ -72,42 +72,6 @@ public class DATPaper {
             DATTest2.db.getConnection().close();
     }
 
-    DAT getDat() throws Exception {
-        DAT dat = new DAT(cost, windowConstraints, alpha, beta,
-                maxIndexCreatedPerWindow);
-        LogListener logger = LogListener.getInstance();
-        dat.setLogListenter(logger);
-        dat.setWorkload(new Workload("", new StringReader("")));
-        return dat;
-    }
-
-    double dat() throws Exception {
-        // dat.setOptimizer(optimizer);
-        DAT dat = getDat();
-        dat.buildBIP();
-        DATOutput output = (DATOutput) dat.getOutput();
-        // System.out.print(alpha + ", " + beta + "\t");
-        // for (int i = 0; i < windowConstraints.length; i++) {
-        // System.out.format("%.0f\tc " + output.ws[i].create + ", d "
-        // + output.ws[i].drop + "\t", output.ws[i].cost);
-        // }
-        Rt.p("dat=" + output.totalCost);
-        return output.totalCost;
-    }
-
-    double baseline() throws Exception {
-        DAT dat = getDat();
-        DATOutput baseline = (DATOutput) dat.baseline2("greedyRatio");
-        return baseline.totalCost;
-    }
-
-    double mkp() throws Exception {
-        DAT dat = getDat();
-        DATOutput baseline3 = (DATOutput) dat.baseline2("bip");
-        Rt.p("mkp=" + baseline3.totalCost);
-        return baseline3.totalCost;
-    }
-
     public static class TestSet {
         String name;
         String dbName;
@@ -135,8 +99,8 @@ public class DATPaper {
         DATTest2.indexSize = 0;
         boolean exp = true; // rerun experiment
         boolean exp5 = true; // rerun experiment
-        exp = false;
-        exp5 = false;
+//        exp = false;
+//        exp5 = false;
         File outputDir = new File("/home/wangrui/dbtune/paper");
         File latexFile2 = new File(outputDir, "skyline.tex");
 

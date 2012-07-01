@@ -5,6 +5,7 @@ import java.io.StringReader;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.deployAware.DAT;
 import edu.ucsc.dbtune.deployAware.DATOutput;
+import edu.ucsc.dbtune.deployAware.DATParameter;
 import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.SeqGreedySeq;
 import edu.ucsc.dbtune.seq.SeqMerge;
@@ -30,13 +31,9 @@ public class DATFunctionalTest2 {
             SeqInumCost cost = SeqInumCost.fromFile(Rt.readResourceAsString(
                     DATFunctionalTest2.class, "inum.txt"));
             double[] windowConstraints = new double[] { 1000, 1000, 1000, 1000, };
-            DAT dat = new DAT(cost, windowConstraints, 1, 1, 0);
-            LogListener logger = LogListener.getInstance();
-            dat.setLogListenter(logger);
-            dat.setWorkload(new Workload("", new StringReader("")));
-            DATOutput output = (DATOutput) dat.solve();
+            DATParameter p = new DATParameter(cost, windowConstraints, 1, 1, 0);
+            DATOutput output = new DAT().runDAT(p);
             output.print();
-            Rt.p("cost: " + dat.getObjValue());
             System.exit(0);
         }
 

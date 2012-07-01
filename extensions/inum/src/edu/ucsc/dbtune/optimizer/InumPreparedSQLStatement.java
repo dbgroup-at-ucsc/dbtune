@@ -15,7 +15,7 @@ import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 /**
  * An INUM-based prepared statement. This object has an INUM space associated to it (a set of {@link 
- * edu.ucsc.dbtune.inum.InumPlan} objects) that gets populated the first time that the {@link 
+ * edu.ucsc.dbtune.inum.DATInumPlan} objects) that gets populated the first time that the {@link 
  * #explain} method is invoked (by calling the {@link InumOptimizer#computeInumSpace}).
  * <p>
  * After the INUM space has been populated, a {@link MatchingStrategy} is used to determine the 
