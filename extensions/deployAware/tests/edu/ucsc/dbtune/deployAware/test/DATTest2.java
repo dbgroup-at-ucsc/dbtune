@@ -486,14 +486,7 @@ public class DATTest2 {
         if (args.length == 2)
             batch(args);
         StringBuilder sb = new StringBuilder();
-        sb.append("test");
-        sb.append(" tpch-inum");
-        sb.append(" 0.5");
-        sb.append(" 0.5");
-        sb.append(" 3");
-        sb.append(" 10");
-        sb.append(" " + 10 * 1024L * 1024L * 1024L);
-        sb.append(" " + 3600 * 3000);
+        sb.append("/home/wangrui/dbtune/tmpInput.txt");
         sb.append(" /home/wangrui/dbtune/tmp.txt");
         batch(sb.toString().split(" "));
 
@@ -523,7 +516,7 @@ public class DATTest2 {
         // indexSize = 15;
         // querySize = 50;
         // indexSize = 100;
-        // testBIP();
+//         testBIP();
         testDATBatch();
     }
 }

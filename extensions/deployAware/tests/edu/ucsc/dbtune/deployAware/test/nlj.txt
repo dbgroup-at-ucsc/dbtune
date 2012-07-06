@@ -1,0 +1,1301 @@
+<root>
+<q><query>
+select
+n_name,
+sum(l_extendedprice * (1 - l_discount)) as revenue
+from
+tpch.customer,
+tpch.orders,
+tpch.lineitem,
+tpch.supplier,
+tpch.nation,
+tpch.region
+where
+c_custkey = o_custkey
+and l_orderkey = o_orderkey
+and l_suppkey = s_suppkey
+and c_nationkey = s_nationkey
+and s_nationkey = n_nationkey
+and n_regionkey = r_regionkey
+and r_name = 'AMERICA'
+and o_orderdate >= '1993-01-01'
+and o_orderdate &lt; '1994-01-01'
+group by
+n_name
+order by
+revenue desc</query>
+<index>[+TPCH.NATION.N_REGIONKEY(A)]</index>
+<plan>   RETURN(cost=124091.6328125 rows=0 object=NONE fetch=NONE)
+    └── TABLE.SCAN(cost=124091.6328125 rows=0 object=NONE fetch=NONE)
+        └── SORT(cost=124091.6328125 rows=0 object=NONE fetch=NONE)
+            └── GRPBY(cost=124091.6171875 rows=0 object=NONE fetch=NONE)
+                └── TABLE.SCAN(cost=124091.6171875 rows=0 object=NONE fetch=NONE)
+                    └── SORT(cost=124091.6171875 rows=0 object=NONE fetch=NONE)
+                        └── GRPBY(cost=124091.6015625 rows=0 object=NONE fetch=NONE)
+                            └── HASH.JOIN(cost=124088.1171875 rows=0 object=NONE fetch=NONE)
+                                ├── HASH.JOIN(cost=123770.8671875 rows=0 object=NONE fetch=NONE)
+                                │   ├── TABLE.SCAN(cost=98419.4296875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_ORDERKEY(A)])
+                                │   └── HASH.JOIN(cost=24900.701171875 rows=0 object=NONE fetch=NONE)
+                                │       ├── TABLE.SCAN(cost=21686.982421875 rows=1500000 object=TPCH.ORDERS fetch=[+TPCH.ORDERS.O_ORDERDATE(A)+TPCH.ORDERS.O_ORDERKEY(A)+TPCH.ORDERS.O_CUSTKEY(A)])
+                                │       └── TABLE.SCAN(cost=3179.49462890625 rows=150000 object=TPCH.CUSTOMER fetch=[+TPCH.CUSTOMER.C_NATIONKEY(A)+TPCH.CUSTOMER.C_CUSTKEY(A)])
+                                └── HASH.JOIN(cost=226.23155212402344 rows=0 object=NONE fetch=NONE)
+                                    ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+                                    └── NESTED.LOOP.JOIN(cost=27.281879425048828 rows=0 object=NONE fetch=NONE)
+                                        ├── TABLE.SCAN(cost=13.639674186706543 rows=5 object=TPCH.REGION fetch=[+TPCH.REGION.R_NAME(A)+TPCH.REGION.R_REGIONKEY(A)])
+                                        └── FETCH(cost=13.642204284667969 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+                                            └── INDEX.SCAN(cost=6.830011367797852 rows=25 object=[+TPCH.NATION.N_REGIONKEY(A)] fetch=[+TPCH.NATION.N_REGIONKEY(D)])
+</plan></q>
+<q><query>
+select
+nation,
+o_year,
+sum(amount) as sum_profit
+from
+(
+select
+n_name as nation,
+year(o_orderdate) as o_year,
+l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
+from
+tpch.part,
+tpch.supplier,
+tpch.lineitem,
+tpch.partsupp,
+tpch.orders,
+tpch.nation
+where
+s_suppkey = l_suppkey
+and ps_suppkey = l_suppkey
+and ps_partkey = l_partkey
+and p_partkey = l_partkey
+and o_orderkey = l_orderkey
+and s_nationkey = n_nationkey
+and p_name like '%thistle%'
+) as profit
+group by
+nation,
+o_year
+order by
+nation,
+o_year desc</query>
+<index>[+TPCH.ORDERS.O_ORDERKEY(A)]</index>
+<plan>   RETURN(cost=120097.5625 rows=0 object=NONE fetch=NONE)
+    └── GRPBY(cost=120097.546875 rows=0 object=NONE fetch=NONE)
+        └── TABLE.SCAN(cost=120097.5390625 rows=0 object=NONE fetch=NONE)
+            └── SORT(cost=120097.53125 rows=0 object=NONE fetch=NONE)
+                └── HASH.JOIN(cost=120097.4375 rows=0 object=NONE fetch=NONE)
+                    ├── TABLE.SCAN(cost=13.652227401733398 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+                    └── HASH.JOIN(cost=120083.7734375 rows=0 object=NONE fetch=NONE)
+                        ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+                        └── NESTED.LOOP.JOIN(cost=119884.84375 rows=0 object=NONE fetch=NONE)
+                            ├── TABLE.SCAN(cost=117679.453125 rows=0 object=NONE fetch=NONE)
+                            │   └── SORT(cost=117679.4453125 rows=0 object=NONE fetch=NONE)
+                            │       └── HASH.JOIN(cost=117679.375 rows=0 object=NONE fetch=NONE)
+                            │           ├── TABLE.SCAN(cost=98419.4296875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_SUPPKEY(A)])
+                            │           └── HASH.JOIN(cost=18654.26171875 rows=0 object=NONE fetch=NONE)
+                            │               ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPLYCOST(A)+TPCH.PARTSUPP.PS_PARTKEY(A)+TPCH.PARTSUPP.PS_SUPPKEY(A)])
+                            │               └── TABLE.SCAN(cost=3602.336181640625 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_NAME(A)+TPCH.PART.P_PARTKEY(A)])
+                            └── FETCH(cost=20.107406616210938 rows=1500000 object=TPCH.ORDERS fetch=[+TPCH.ORDERS.O_ORDERDATE(A)])
+                                └── INDEX.SCAN(cost=13.63896656036377 rows=1500000 object=[+TPCH.ORDERS.O_ORDERKEY(A)] fetch=[+TPCH.ORDERS.O_ORDERKEY(D)])
+</plan></q>
+<q><query>
+select
+l_shipmode,
+sum(case
+when o_orderpriority = '1-URGENT'
+or o_orderpriority = '2-HIGH'
+then 1
+else 0
+end) as high_line_count,
+sum(case
+when o_orderpriority &lt;> '1-URGENT'
+and o_orderpriority &lt;> '2-HIGH'
+then 1
+else 0
+end) as low_line_count
+from
+tpch.orders,
+tpch.lineitem
+where
+o_orderkey = l_orderkey
+and l_shipmode in ('FOB', 'REG AIR')
+and l_commitdate &lt; l_receiptdate
+and l_shipdate &lt; l_commitdate
+and l_receiptdate >= '1993-01-01'
+and l_receiptdate &lt; '1994-01-01'
+group by
+l_shipmode
+order by
+l_shipmode</query>
+<index>[+TPCH.LINEITEM.L_SHIPMODE(A)]</index>
+<plan>   RETURN(cost=107495.78125 rows=0 object=NONE fetch=NONE)
+    └── GRPBY(cost=107495.78125 rows=0 object=NONE fetch=NONE)
+        └── TABLE.SCAN(cost=107495.78125 rows=0 object=NONE fetch=NONE)
+            └── SORT(cost=107495.78125 rows=0 object=NONE fetch=NONE)
+                └── HASH.JOIN(cost=107492.796875 rows=0 object=NONE fetch=NONE)
+                    ├── TABLE.SCAN(cost=21143.255859375 rows=1500000 object=TPCH.ORDERS fetch=[+TPCH.ORDERS.O_ORDERPRIORITY(A)+TPCH.ORDERS.O_ORDERKEY(A)])
+                    └── NESTED.LOOP.JOIN(cost=86246.015625 rows=0 object=NONE fetch=NONE)
+                        ├── TABLE.SCAN(cost=0.0027877993416041136 rows=0 object=NONE fetch=NONE)
+                        │   └── SORT(cost=0.001994013087823987 rows=0 object=NONE fetch=NONE)
+                        │       └── TEMPORARY.TABLE.SCAN(cost=5.8452602388570085E-5 rows=2 object=NONE fetch=NONE)
+                        └── FETCH(cost=35063.25390625 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_ORDERKEY(A)])
+                            └── INDEX.SCAN(cost=4625.017578125 rows=6001215 object=[+TPCH.LINEITEM.L_SHIPMODE(A)] fetch=[+TPCH.LINEITEM.L_SHIPMODE(D)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<index>[+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+<plan>   RETURN(cost=4589.79638671875 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=4589.79638671875 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=4589.79638671875 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=3708.66455078125 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=3708.663818359375 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=3708.662841796875 rows=0 object=NONE fetch=NONE)
+            │           ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            │           │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+            │           │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+            │           │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+            │           └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+            │               ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │               └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+            │                   └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+            └── FILTER(cost=881.1318969726562 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=881.1311645507812 rows=0 object=NONE fetch=NONE)
+                    └── FETCH(cost=881.1310424804688 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+                        └── INDEX.SCAN(cost=14.041593551635742 rows=6001215 object=[+TPCH.LINEITEM.L_SUPPKEY(A)] fetch=[+TPCH.LINEITEM.L_SUPPKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<index>[+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+<plan>   RETURN(cost=4737.02099609375 rows=0 object=NONE fetch=NONE)
+    └── TABLE.SCAN(cost=4737.02099609375 rows=0 object=NONE fetch=NONE)
+        └── SORT(cost=4737.0205078125 rows=0 object=NONE fetch=NONE)
+            └── NESTED.LOOP.JOIN(cost=4737.01953125 rows=0 object=NONE fetch=NONE)
+                ├── HASH.JOIN(cost=3855.8876953125 rows=0 object=NONE fetch=NONE)
+                │   ├── HASH.JOIN(cost=3842.230712890625 rows=0 object=NONE fetch=NONE)
+                │   │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+                │   │   └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+                │   │       ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+                │   │       └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+                │   │           └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+                │   └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+                └── FILTER(cost=881.1318969726562 rows=0 object=NONE fetch=NONE)
+                    └── GRPBY(cost=881.1311645507812 rows=0 object=NONE fetch=NONE)
+                        └── FETCH(cost=881.1310424804688 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+                            └── INDEX.SCAN(cost=14.041593551635742 rows=6001215 object=[+TPCH.LINEITEM.L_SUPPKEY(A)] fetch=[+TPCH.LINEITEM.L_SUPPKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+<plan>   RETURN(cost=19772.763671875 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=19772.763671875 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=19772.763671875 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18891.630859375 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18891.630859375 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18891.62890625 rows=0 object=NONE fetch=NONE)
+            │           ├── HASH.JOIN(cost=18877.97265625 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │   └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │           │       ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │           │       └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │           └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            └── FILTER(cost=881.1318969726562 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=881.1311645507812 rows=0 object=NONE fetch=NONE)
+                    └── FETCH(cost=881.1310424804688 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+                        └── INDEX.SCAN(cost=14.041593551635742 rows=6001215 object=[+TPCH.LINEITEM.L_SUPPKEY(A)] fetch=[+TPCH.LINEITEM.L_SUPPKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<plan>   RETURN(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=3855.889404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=3855.888671875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=3855.8876953125 rows=0 object=NONE fetch=NONE)
+            │           ├── HASH.JOIN(cost=3842.230712890625 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │   └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+            │           │       ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │           │       └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+            │           │           └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+            │           └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<index>[+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+<plan>   RETURN(cost=19625.537109375 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=19625.537109375 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=19625.537109375 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18744.40234375 rows=0 object=NONE fetch=NONE)
+            │           ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            │           │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+            │           │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+            │           │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+            │           └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │               ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │               └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            └── FILTER(cost=881.1318969726562 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=881.1311645507812 rows=0 object=NONE fetch=NONE)
+                    └── FETCH(cost=881.1310424804688 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+                        └── INDEX.SCAN(cost=14.041593551635742 rows=6001215 object=[+TPCH.LINEITEM.L_SUPPKEY(A)] fetch=[+TPCH.LINEITEM.L_SUPPKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+<plan>   RETURN(cost=19772.763671875 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=19772.763671875 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=19772.763671875 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18891.630859375 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18891.630859375 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18891.62890625 rows=0 object=NONE fetch=NONE)
+            │           ├── HASH.JOIN(cost=18877.97265625 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │   └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │           │       ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │           │       └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │           └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            └── FILTER(cost=881.1318969726562 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=881.1311645507812 rows=0 object=NONE fetch=NONE)
+                    └── FETCH(cost=881.1310424804688 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+                        └── INDEX.SCAN(cost=14.041593551635742 rows=6001215 object=[+TPCH.LINEITEM.L_SUPPKEY(A)] fetch=[+TPCH.LINEITEM.L_SUPPKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<plan>   RETURN(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18744.40234375 rows=0 object=NONE fetch=NONE)
+            │           ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            │           │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+            │           │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+            │           │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+            │           └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │               ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │               └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<plan>   RETURN(cost=105898.46875 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=105898.46875 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=105898.46875 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=3708.66455078125 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=3708.663818359375 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=3708.662841796875 rows=0 object=NONE fetch=NONE)
+            │           ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            │           │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+            │           │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+            │           │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+            │           └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+            │               ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │               └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+            │                   └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<plan>   RETURN(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=3855.889404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=3855.888671875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=3855.8876953125 rows=0 object=NONE fetch=NONE)
+            │           ├── HASH.JOIN(cost=3842.230712890625 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │   └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+            │           │       ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │           │       └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+            │           │           └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+            │           └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<plan>   RETURN(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18744.40234375 rows=0 object=NONE fetch=NONE)
+            │           ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            │           │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+            │           │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+            │           │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+            │           └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │               ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │               └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<plan>   RETURN(cost=3765.737548828125 rows=0 object=NONE fetch=NONE)
+    └── TABLE.SCAN(cost=3765.737548828125 rows=0 object=NONE fetch=NONE)
+        └── SORT(cost=3765.737060546875 rows=0 object=NONE fetch=NONE)
+            └── NESTED.LOOP.JOIN(cost=3765.736083984375 rows=0 object=NONE fetch=NONE)
+                ├── HASH.JOIN(cost=3708.662841796875 rows=0 object=NONE fetch=NONE)
+                │   ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+                │   │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+                │   │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+                │   │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+                │   │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+                │   │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+                │   └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+                │       ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+                │       └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+                │           └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+                └── FILTER(cost=57.0731315612793 rows=0 object=NONE fetch=NONE)
+                    └── GRPBY(cost=57.07243728637695 rows=0 object=NONE fetch=NONE)
+                        └── FETCH(cost=57.07233810424805 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)])
+                            └── INDEX.SCAN(cost=13.658610343933105 rows=6001215 object=[+TPCH.LINEITEM.L_PARTKEY(A)] fetch=[+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<plan>   RETURN(cost=105898.46875 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=105898.46875 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=105898.46875 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=3708.66455078125 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=3708.663818359375 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=3708.662841796875 rows=0 object=NONE fetch=NONE)
+            │           ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            │           │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+            │           │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+            │           │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+            │           └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+            │               ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │               └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+            │                   └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<plan>   RETURN(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=3855.889404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=3855.888671875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=3855.8876953125 rows=0 object=NONE fetch=NONE)
+            │           ├── HASH.JOIN(cost=3842.230712890625 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │   └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+            │           │       ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │           │       └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+            │           │           └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+            │           └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<plan>   RETURN(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18744.40234375 rows=0 object=NONE fetch=NONE)
+            │           ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            │           │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+            │           │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+            │           │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+            │           └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │               ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │               └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<plan>   RETURN(cost=3912.96240234375 rows=0 object=NONE fetch=NONE)
+    └── TABLE.SCAN(cost=3912.96240234375 rows=0 object=NONE fetch=NONE)
+        └── SORT(cost=3912.9619140625 rows=0 object=NONE fetch=NONE)
+            └── NESTED.LOOP.JOIN(cost=3912.9609375 rows=0 object=NONE fetch=NONE)
+                ├── HASH.JOIN(cost=3855.8876953125 rows=0 object=NONE fetch=NONE)
+                │   ├── HASH.JOIN(cost=3842.230712890625 rows=0 object=NONE fetch=NONE)
+                │   │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+                │   │   └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+                │   │       ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+                │   │       └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+                │   │           └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+                │   └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+                └── FILTER(cost=57.0731315612793 rows=0 object=NONE fetch=NONE)
+                    └── GRPBY(cost=57.07243728637695 rows=0 object=NONE fetch=NONE)
+                        └── FETCH(cost=57.07233810424805 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)])
+                            └── INDEX.SCAN(cost=13.658610343933105 rows=6001215 object=[+TPCH.LINEITEM.L_PARTKEY(A)] fetch=[+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+<plan>   RETURN(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=106045.6953125 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=3855.889404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=3855.888671875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=3855.8876953125 rows=0 object=NONE fetch=NONE)
+            │           ├── HASH.JOIN(cost=3842.230712890625 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │   └── NESTED.LOOP.JOIN(cost=3643.326416015625 rows=0 object=NONE fetch=NONE)
+            │           │       ├── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │           │       └── FETCH(cost=13.693254470825195 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)])
+            │           │           └── INDEX.SCAN(cost=6.881415367126465 rows=800000 object=[+TPCH.PARTSUPP.PS_PARTKEY(A)] fetch=[+TPCH.PARTSUPP.PS_PARTKEY(D)])
+            │           └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+<plan>   RETURN(cost=18948.703125 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=18948.703125 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=18948.703125 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18891.630859375 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18891.630859375 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18891.62890625 rows=0 object=NONE fetch=NONE)
+            │           ├── HASH.JOIN(cost=18877.97265625 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │   └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │           │       ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │           │       └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │           └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            └── FILTER(cost=57.0731315612793 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=57.07243728637695 rows=0 object=NONE fetch=NONE)
+                    └── FETCH(cost=57.07233810424805 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)])
+                        └── INDEX.SCAN(cost=13.658610343933105 rows=6001215 object=[+TPCH.LINEITEM.L_PARTKEY(A)] fetch=[+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<plan>   RETURN(cost=18801.4765625 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=18801.4765625 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=18801.4765625 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18744.40234375 rows=0 object=NONE fetch=NONE)
+            │           ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            │           │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+            │           │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+            │           │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+            │           └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │               ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │               └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            └── FILTER(cost=57.0731315612793 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=57.07243728637695 rows=0 object=NONE fetch=NONE)
+                    └── FETCH(cost=57.07233810424805 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)])
+                        └── INDEX.SCAN(cost=13.658610343933105 rows=6001215 object=[+TPCH.LINEITEM.L_PARTKEY(A)] fetch=[+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.SUPPLIER.S_NATIONKEY(A)]</index>
+<plan>   RETURN(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=120934.2109375 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18744.404296875 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18744.40234375 rows=0 object=NONE fetch=NONE)
+            │           ├── NESTED.LOOP.JOIN(cost=65.30848693847656 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            │           │   └── FETCH(cost=51.65192413330078 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │       └── RID.SCAN(cost=7.237529277801514 rows=0 object=NONE fetch=NONE)
+            │           │           └── SORT(cost=7.237027645111084 rows=0 object=NONE fetch=NONE)
+            │           │               └── INDEX.SCAN(cost=7.095823287963867 rows=10000 object=[+TPCH.SUPPLIER.S_NATIONKEY(A)] fetch=[+TPCH.SUPPLIER.S_NATIONKEY(D)])
+            │           └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │               ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │               └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            └── FILTER(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=102189.8046875 rows=0 object=NONE fetch=NONE)
+                    └── TABLE.SCAN(cost=102189.8046875 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+<q><query>
+select
+s_name,
+s_address
+from
+tpch.supplier,
+tpch.nation
+where
+s_suppkey in (
+select
+ps_suppkey
+from
+tpch.partsupp
+where
+ps_partkey in (
+select
+p_partkey
+from
+tpch.part
+where
+p_name like 'ivory%'
+)
+and ps_availqty > (
+select
+0.5 * sum(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = ps_partkey
+and l_suppkey = ps_suppkey
+and l_shipdate >= '1996-01-01'
+and l_shipdate &lt; '1997-01-01'
+)
+)
+and s_nationkey = n_nationkey
+and n_name = 'KENYA'
+order by
+s_name</query>
+<index>[+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+<plan>   RETURN(cost=18948.703125 rows=0 object=NONE fetch=NONE)
+    └── UNIQUE(cost=18948.703125 rows=0 object=NONE fetch=NONE)
+        └── NESTED.LOOP.JOIN(cost=18948.703125 rows=0 object=NONE fetch=NONE)
+            ├── TABLE.SCAN(cost=18891.630859375 rows=0 object=NONE fetch=NONE)
+            │   └── SORT(cost=18891.630859375 rows=0 object=NONE fetch=NONE)
+            │       └── HASH.JOIN(cost=18891.62890625 rows=0 object=NONE fetch=NONE)
+            │           ├── HASH.JOIN(cost=18877.97265625 rows=0 object=NONE fetch=NONE)
+            │           │   ├── TABLE.SCAN(cost=198.22567749023438 rows=10000 object=TPCH.SUPPLIER fetch=[+TPCH.SUPPLIER.S_ADDRESS(A)+TPCH.SUPPLIER.S_NAME(A)+TPCH.SUPPLIER.S_NATIONKEY(A)+TPCH.SUPPLIER.S_SUPPKEY(A)])
+            │           │   └── HASH.JOIN(cost=18679.06640625 rows=0 object=NONE fetch=NONE)
+            │           │       ├── TABLE.SCAN(cost=14995.2080078125 rows=800000 object=TPCH.PARTSUPP fetch=[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)])
+            │           │       └── TABLE.SCAN(cost=3629.614501953125 rows=200000 object=TPCH.PART fetch=[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_NAME(A)])
+            │           └── TABLE.SCAN(cost=13.656562805175781 rows=25 object=TPCH.NATION fetch=[+TPCH.NATION.N_NAME(A)+TPCH.NATION.N_NATIONKEY(A)])
+            └── FILTER(cost=57.0731315612793 rows=0 object=NONE fetch=NONE)
+                └── GRPBY(cost=57.07243728637695 rows=0 object=NONE fetch=NONE)
+                    └── FETCH(cost=57.07233810424805 rows=6001215 object=TPCH.LINEITEM fetch=[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)])
+                        └── INDEX.SCAN(cost=13.658610343933105 rows=6001215 object=[+TPCH.LINEITEM.L_PARTKEY(A)] fetch=[+TPCH.LINEITEM.L_PARTKEY(A)])
+</plan></q>
+</root>
