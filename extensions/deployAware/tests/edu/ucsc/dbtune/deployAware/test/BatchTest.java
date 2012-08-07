@@ -50,7 +50,7 @@ public class BatchTest {
         // 2, 4, 5, 6
         };
         int[] l_set = { 10 };// 100, 5, 10, 20, 50, };
-        double[] spaceFactor_set = { 2, 5, 10, 20, 50 };// 0.05, 0.1, 0.25, 0.5,
+        double[] spaceFactor_set = { 2, 5, 10, 20, 50,100,200 };// 0.05, 0.1, 0.25, 0.5,
         // 1, 2,
         // 5, 10, 20, 50,
         // 100, 1000 };
@@ -101,11 +101,12 @@ public class BatchTest {
                                 DATSeparateProcess dsp = new DATSeparateProcess(
                                         set.dbName, set.workloadName, alpha,
                                         beta, m, l, space, windowSize, 0);
+                                dsp.runMKP=false;
                                 dsp.run();
                                 double dat = dsp.dat;
-                                double mkp = dsp.bip;
+//                                double mkp = dsp.bip;
                                 double greedyRatio = dsp.greedy;
-                                double result = dat / mkp * 100;
+                                double result = dat / greedyRatio * 100;
                                 int percent = (int) result;
                                 ps.format("%d%%\t", percent);
                                 ps.flush();
