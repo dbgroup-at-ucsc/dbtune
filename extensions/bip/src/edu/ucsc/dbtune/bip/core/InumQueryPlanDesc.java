@@ -70,6 +70,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
 	
 	/** The array of internal plan costs */
     private List<Double> beta;
+    public List<InumPlan> plans;
     
 	private Map<Integer, Double> indexUpdateCosts;
 	
@@ -260,6 +261,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         Index  index;
         
         beta = new ArrayList<Double>();
+        plans = new ArrayList<InumPlan>();
         accessCostPerPlan = new ArrayList<Map<Integer, Double>>();
         
         Kq = 0;
@@ -268,6 +270,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         for (InumPlan plan : templatePlans) {
             
             beta.add(plan.getInternalCost());
+            plans.add(plan);
             Map<Integer, Double> mapIndexAccessCost = new HashMap<Integer, Double>();
             
             for (int i = 0; i < n; i++) {

@@ -75,12 +75,10 @@ public class CreateIndexTest2 {
     public static void testIndex() throws Exception {
         Environment en = Environment.getInstance();
         DatabaseSystem db = newDatabaseSystem(en);
-        DATTest2.workloadName = "tpch-500-counts";
-        DATTest2.querySize = 100;
-        DATTest2.indexSize = 200;
+        WorkloadLoader loader=new WorkloadLoader("test","tpch-500-counts","recommend");
 
-        Workload workload = DATTest2.getWorkload(en);
-        Set<Index> indexes = DATTest2.getIndexes(workload, db);
+        Workload workload = loader.getWorkload(en);
+        Set<Index> indexes = loader.getIndexes(workload, db);
 
         InumOptimizer inumoptimizer = (InumOptimizer) db.getOptimizer();
         DB2Optimizer db2optimizer = (DB2Optimizer) inumoptimizer.getDelegate();
@@ -113,18 +111,15 @@ public class CreateIndexTest2 {
     }
 
     public static void main(String[] args) throws Exception {
-        DATTest2.dbName = "test";
-        DATTest2.workloadName = "OST";
-        DATTest2.querySize = 0;
-        DATTest2.indexSize = 0;
+        WorkloadLoader loader=new WorkloadLoader("test","OST","recommend");
         Environment en = Environment.getInstance();
-        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + DATTest2.dbName);
+        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + loader.dbName);
         en.setProperty("username", "db2inst1");
         en.setProperty("password", "db2inst1admin");
         en.setProperty("workloads.dir", "resources/workloads/db2");
         DatabaseSystem db = newDatabaseSystem(en);
 
-        Workload workload = DATTest2.getWorkload(en);
+        Workload workload = loader.getWorkload(en);
         InumOptimizer inumoptimizer = (InumOptimizer) db.getOptimizer();
         DB2Optimizer db2optimizer = (DB2Optimizer) inumoptimizer.getDelegate();
 

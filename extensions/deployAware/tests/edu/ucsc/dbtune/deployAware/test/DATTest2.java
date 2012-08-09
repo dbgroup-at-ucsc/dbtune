@@ -62,121 +62,7 @@ import static edu.ucsc.dbtune.util.TestUtils.workload;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 
 public class DATTest2 {
-    public static DatabaseSystem db;
-    public static Environment en;
-    public static int querySize = 20;
-    public static int indexSize = 10;
-    public static String dbName = "test";
-    public static String workloadName = "tpch-500-counts";
-
-    public static Workload getWorkload(Environment en) throws IOException,
-            SQLException {
-        String file = "/tpch/workload_bip_seq.sql";
-        file = "/tpch-small/workload.sql";
-        file = "/tpcds-small/workload.sql";
-        file = "/tpch-500-counts/workload.sql";
-        file = "/" + workloadName + "/workload.sql";
-        Workload workload = new Workload("", new FileReader(en
-                .getWorkloadsFoldername()
-                + file));
-        Rt.np("workload size: " + workload.size());
-        StringBuilder sb = new StringBuilder();
-        int count = 0;
-        all: while (true) {
-            for (int i = 0; i < workload.size(); i++) {
-                sb.append(workload.get(i).getSQL() + ";\r\n");
-                count++;
-                if (querySize != 0 && count >= querySize)
-                    break all;
-            }
-            if (querySize == 0)
-                break;
-        }
-        return new Workload("", new StringReader(sb.toString()));
-    }
-
-    public static Set<Index> getIndexes(Workload workload, DatabaseSystem db)
-            throws Exception {
-        // Rt.runAndShowCommand("db2 connect to test");
-        // HashSet<Index> set=new HashSet<Index>();
-        // for (int i = 0; i <= 9; i++) {
-        // Rt.runAndShowCommand("db2 set current query optimization = "+i);
-        CandidateGenerator candGen = new OptimizerCandidateGenerator(
-                getBaseOptimizer(db.getOptimizer()));
-        Set<Index> indexes = candGen.generate(workload);
-        // set.addAll(indexes);
-        // Rt.p(indexes.size());
-        // }
-        // System.exit(0);
-
-        // CandidateGenerator candGen = new PowerSetOptimalCandidateGenerator(
-        // new OptimizerCandidateGenerator(getBaseOptimizer(db
-        // .getOptimizer())), 3);
-        // Set<Index> indexes = candGen.generate(workload);
-        int size = indexSize;
-        if (size > 0 && indexes.size() >= size) {
-            Rt.np("Reduce index size from " + indexes.size() + " to " + size);
-            Set<Index> temp = new HashSet<Index>();
-            int count = 0;
-            for (Index index : indexes) {
-                temp.add(index);
-                count++;
-                if (count >= size)
-                    break;
-            }
-            indexes = temp;
-        }
-        return indexes;
-    }
-
-    public static SeqInumCost loadCost() throws Exception {
-        File dir = new File("/home/wangrui/workspace/cache/" + dbName + "/"
-                + workloadName);
-        dir.mkdirs();
-        File file = new File(dir, querySize + "_" + indexSize + ".xml");
-        SeqInumCost cost = null;
-        if (file.exists()) {
-            // Rt.p("loading from cache " + file.getAbsolutePath());
-            Rx rx = Rx.findRoot(Rt.readFile(file));
-            cost = SeqInumCost.loadFromXml(rx);
-        } else {
-            en = Environment.getInstance();
-            en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
-            en.setProperty("username", "db2inst1");
-            en.setProperty("password", "db2inst1admin");
-            en.setProperty("workloads.dir", "resources/workloads/db2");
-            Rt.p(en.getProperty("jdbc.url"));
-            db = newDatabaseSystem(en);
-
-            Workload workload = DATTest2.getWorkload(en);
-            Set<Index> indexes = DATTest2.getIndexes(workload, db);
-
-            InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
-            DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
-
-            cost = SeqInumCost.fromInum(db, optimizer, workload, indexes);
-            for (int i = 0; i < cost.queries.size(); i++) {
-                // cost.queries.get(i).sql = null;
-            }
-            for (int i = 0; i < cost.indices.size(); i++) {
-                // cost.indices.get(i).index = null;
-            }
-
-            // DAT dat = new DAT(cost, new double[3], 1, 0, 0);
-            // dat.setOptimizer(optimizer);
-            PerfTest.startTimer();
-            DATBaselines.getIndexBenefit(cost);
-            PerfTest.addTimer("calculate index benefit");
-
-            Rx root = new Rx("workload");
-            cost.save(root);
-            String xml = root.getXml();
-            Rt.write(file, xml);
-        }
-        return cost;
-    }
-
-    public static void testBIP() throws Exception {
+    public static void testBIP(WorkloadLoader loader) throws Exception {
         CPlexWrapper.invokeCplex();
         SeqCost.totalWhatIfNanoTime = 0;
         SeqCost.totalCreateIndexNanoTime = 0;
@@ -184,7 +70,7 @@ public class DATTest2 {
         SeqInumCost.plugInTime = 0;
         RTimerN timer = new RTimerN();
 
-        SeqInumCost cost = DATTest2.loadCost();
+        SeqInumCost cost = loader.loadCost();
 
         long totalCost = 0;
         for (int i = 0; i < cost.indices.size(); i++) {
@@ -242,7 +128,7 @@ public class DATTest2 {
         // System.out.println(baseline.totalCost);
         DATOutput baseline = null;
         DATOutput baseline3 = null;
-        baseline = (DATOutput) DATBaselines.baseline2(params, "greedyRatio");
+        baseline = (DATOutput) DATBaselines.baseline2(params, "greedyRatio",null);
         System.out.print("greedyRatio MKP\t");
         for (int i = 0; i < windowConstraints.length; i++) {
             System.out.format("%.0f\t\t", baseline.ws[i].cost);
@@ -286,7 +172,7 @@ public class DATTest2 {
             // + (baseline2.totalCost + beta
             // * baseline2.ws[baseline2.ws.length - 1].cost));
             System.out.println();
-            baseline3 = (DATOutput) DATBaselines.baseline2(params, "bip");
+            baseline3 = (DATOutput) DATBaselines.baseline2(params, "bip",null);
             System.out.print("PTAS MKP\t");
             for (int i = 0; i < windowConstraints.length; i++) {
                 System.out.format("%.0f\tc " + baseline3.ws[i].create + "\t",
@@ -309,9 +195,7 @@ public class DATTest2 {
         // Rt.p("time: %.3f", timer.getSecondElapse());
         // output.print();
         // baseline.print();
-        if (db != null)
-            db.getConnection().close();
-
+        loader.close();
         // Rx rx = new Rx("data");
         // rx.createChild("queryCount", cost.queries.size());
         // rx.createChild("indexCount", cost.indices.size());
@@ -320,14 +204,14 @@ public class DATTest2 {
 
     }
 
-    public static void testDATBatch() throws Exception {
+    public static void testDATBatch(WorkloadLoader loader) throws Exception {
         CPlexWrapper.invokeCplex();
         SeqCost.totalWhatIfNanoTime = 0;
         SeqCost.totalCreateIndexNanoTime = 0;
         SeqInumCost.populateTime = 0;
         SeqInumCost.plugInTime = 0;
 
-        SeqInumCost cost = loadCost();
+        SeqInumCost cost = loader.loadCost();
 
         Rt.np("queries=%d\tindices=%d", cost.queries.size(), cost.indices
                 .size());
@@ -357,7 +241,7 @@ public class DATTest2 {
                 DATParameter params = new DATParameter(cost, windowConstraints,
                         1, 1, 0);
                 DATOutput baseline = null;
-                baseline = (DATOutput) DATBaselines.baseline2(params, "bip");
+                baseline = (DATOutput) DATBaselines.baseline2(params, "bip",null);
                 double fit = DATBaselines.baseline2WindowConstraint;
                 double alpha = 1;
                 double beta = 1;
@@ -370,20 +254,19 @@ public class DATTest2 {
             }
             System.out.println();
         }
-        if (db != null)
-            db.getConnection().close();
-
+        loader.close();
     }
 
     public static StringBuilder sb = new StringBuilder();
 
     static void batch(String[] args) throws Exception {
         int pos = 0;
-        querySize = 0;
-        indexSize = 0;
         Rx input = Rx.findRoot(Rt.readFile(new File(args[pos++])));
-        dbName = input.getChildText("dbName");
-        workloadName = input.getChildText("workloadName");
+        String dbName = input.getChildText("dbName");
+        String workloadName = input.getChildText("workloadName");
+        String generateIndexMethod = input.getChildText("generateIndexMethod");
+        WorkloadLoader loader = new WorkloadLoader(dbName, workloadName,
+                generateIndexMethod);
         double alpha = input.getChildDoubleContent("alpha");
         double beta = input.getChildDoubleContent("beta");
         int m = input.getChildIntContent("m");
@@ -393,13 +276,14 @@ public class DATTest2 {
         double intermediateConstraint = input
                 .getChildDoubleContent("intermediateConstraint");
         String perfReportFile = input.getChildText("perfReportFile");
+        String debugFile = input.getChildText("debugFile");
         boolean runDAT = input.getChildBooleanContent("runDAT", true);
         boolean runGreedy = input.getChildBooleanContent("runGreedy", true);
         boolean runMKP = input.getChildBooleanContent("runMKP", true);
         int dupWorkloadNTimes = input.getChildIntContent("dupWorkloadNTimes");
         File outputFile = new File(args[pos++]);
 
-        SeqInumCost cost = loadCost();
+        SeqInumCost cost = loader.loadCost();
         if (dupWorkloadNTimes > 1)
             cost = cost.dup(dupWorkloadNTimes);
 
@@ -423,9 +307,33 @@ public class DATTest2 {
                 beta, l);
         params.intermediateConstraint = intermediateConstraint;
         double datCost = 0;
+        Rx debug=null;
+        if (debugFile!=null) {
+            debug=new Rx("workload");
+            Rx dataset=debug.createChild("dataset");
+            dataset.createChild("database", dbName);
+            dataset.createChild("workloadName", workloadName);
+            dataset.createChild("generateIndexMethod", generateIndexMethod);
+            dataset.createChild("alpha", alpha);
+            dataset.createChild("beta", beta);
+            dataset.createChild("m", m);
+            dataset.createChild("l", l);
+            dataset.createChild("space", space);
+            dataset.createChild("windowSize", windowSize);
+            dataset.createChild("intermediateConstraint", intermediateConstraint);
+            debug.setAttribute("costWithoutIndex", params.costModel.costWithoutIndex);
+            Rx q=debug.createChild("query");
+            Rx i=debug.createChild("index");
+            for (SeqInumIndex index : params.costModel.indices)
+                index.save(i.createChild("index"));
+            for (SeqInumQuery query : params.costModel.queries)
+                query.save(q.createChild("query"));
+        }
         if (runDAT) {
             try {
-                DATOutput output = new DAT().runDAT(params);
+                DAT dat=new DAT();
+                dat.debug=debug;
+                DATOutput output =dat .runDAT(params);
                 double d = 0;
                 for (int i = 0; i < windowConstraints.length - 1; i++) {
                     d += output.ws[i].cost;
@@ -454,14 +362,14 @@ public class DATTest2 {
 
         if (runGreedy) {
             DATOutput greedyRatio = (DATOutput) DATBaselines.baseline2(params,
-                    "greedyRatio");
+                    "greedyRatio",debug);
             root.createChild("greedyRatio", greedyRatio.totalCost);
         }
         timer.reset();
 
         double bipCost = 0;
         if (runMKP) {
-            DATOutput bip = (DATOutput) DATBaselines.baseline2(params, "bip");
+            DATOutput bip = (DATOutput) DATBaselines.baseline2(params, "bip",debug);
             bipCost = bip.totalCost;
             root.createChild("bip", bipCost);
         }
@@ -476,9 +384,10 @@ public class DATTest2 {
         Rt.write(outputFile, root.getXml());
         if (perfReportFile != null)
             PerfTest.report(new File(perfReportFile));
-
-        if (db != null)
-            db.getConnection().close();
+        if (debugFile!=null) {
+            Rt.write(new File(debugFile), debug.getXml().getBytes());
+        }
+        loader.close();
         System.exit(0);
     }
 
@@ -490,33 +399,13 @@ public class DATTest2 {
         sb.append(" /home/wangrui/dbtune/tmp.txt");
         batch(sb.toString().split(" "));
 
-        dbName = "tpch10g";
-        workloadName = "tpch-inum";
-        querySize = 0;
-        indexSize = 0;
-        // workloadName = "tpch-500-counts";
+        String dbName = "tpch10g";
+        String workloadName = "tpch-inum";
         dbName = "test";
-        // workloadName = "online-benchmark-100";
         workloadName = "online-benchmark-100";
-        // testSet = "tpcds-inum";
-        // testSet = "tpcds-debug";
-        // testSet = "tpch-inserts";
-        // testSet = "tpch-deletes";
-        // testSet = "tpch-updates";
-        // testSet = "nref";
-        //
-        // querySize = 100;
-        // indexSize = 200;
-        //
-        // querySize = 50;
-        // indexSize = 50;
-        // querySize = 10;
-        // indexSize = 10;
-        // querySize = 5;
-        // indexSize = 15;
-        // querySize = 50;
-        // indexSize = 100;
-//         testBIP();
-        testDATBatch();
+        String generateIndexMethod="recommend";
+        WorkloadLoader loader = new WorkloadLoader(dbName, workloadName,
+                generateIndexMethod);
+        testDATBatch(loader);
     }
 }

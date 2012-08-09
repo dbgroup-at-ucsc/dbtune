@@ -38,6 +38,7 @@ public class SeqInumQuery implements Serializable {
     public SeqInumQuery(SeqInumCost cost,Rx rx) {
         id = rx.getIntAttribute("id");
         name = rx.getAttribute("name");
+        sql=new SQLStatement(rx.getChildText("sql"));
         Rx[] rs=rx.findChilds("plan");
         plans=new SeqInumPlan[rs.length];
         for (int i=0;i<rs.length;i++) {

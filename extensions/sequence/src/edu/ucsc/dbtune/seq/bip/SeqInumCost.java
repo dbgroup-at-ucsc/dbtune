@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.seq.bip;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -28,28 +30,41 @@ public class SeqInumCost implements Serializable {
     public Vector<SeqInumIndex> indices = new Vector<SeqInumIndex>();
     public Vector<SeqInumQuery> queries = new Vector<SeqInumQuery>();
     public double storageConstraint = Double.MAX_VALUE;
-    InumOptimizer optimizer;
-    Set<Index> inumIndices;
-    Hashtable<Index, SeqInumIndex> indexToInumIndex = new Hashtable<Index, SeqInumIndex>();
+    public InumOptimizer optimizer;
+    public Set<Index> inumIndices;
+    public Hashtable<Index, SeqInumIndex> indexToInumIndex = new Hashtable<Index, SeqInumIndex>();
+    public boolean complete = true; // whether all queries have been added.
+    public double costWithoutIndex; 
 
     public SeqInumCost dup(int times) {
-        SeqInumCost cost=new SeqInumCost();
-        cost.queryHash=this.queryHash;
-        cost.indexHash=this.indexHash;
-        cost.indices=this.indices;
-        cost.storageConstraint=this.storageConstraint;
-        cost.optimizer=this.optimizer;
-        cost.inumIndices=this.inumIndices;
-        cost.indexToInumIndex=this.indexToInumIndex;
-        for (int i=0;i< times;i++) {
+        SeqInumCost cost = new SeqInumCost();
+        cost.queryHash = this.queryHash;
+        cost.indexHash = this.indexHash;
+        cost.indices = this.indices;
+        cost.storageConstraint = this.storageConstraint;
+        cost.optimizer = this.optimizer;
+        cost.inumIndices = this.inumIndices;
+        cost.indexToInumIndex = this.indexToInumIndex;
+        for (int i = 0; i < times; i++) {
             cost.queries.addAll(this.queries);
         }
         return cost;
     }
+
     public int indexCount() {
         return indices.size();
     }
+
+    public void save(File file) throws Exception {
+        Rx root = new Rx("workload");
+        save(root);
+        String xml = root.getXml();
+        Rt.write(file, xml);
+    }
+
     public void save(Rx rx) {
+        rx.setAttribute("complete", complete);
+        rx.setAttribute("costWithoutIndex", costWithoutIndex);
         for (SeqInumQuery query : queries) {
             query.save(rx.createChild("query"));
         }
@@ -58,11 +73,13 @@ public class SeqInumCost implements Serializable {
         }
     }
 
-    public static SeqInumCost loadFromXml(Rx rx) {
+    public static SeqInumCost loadFromXml(Rx rx,DatabaseSystem db) throws SQLException {
         SeqInumCost cost = new SeqInumCost();
         int queryId = 0;
+        cost.complete = !"false".equals(rx.getAttribute("complete"));
+        cost.costWithoutIndex=rx.getDoubleAttribute("costWithoutIndex");
         for (Rx r : rx.findChilds("index")) {
-            SeqInumIndex index = new SeqInumIndex(r);
+            SeqInumIndex index = new SeqInumIndex(r,db);
             if (cost.indexHash.put(index.name, index) != null)
                 throw new Error("duplicate index");
             cost.indices.add(index);
@@ -88,7 +105,8 @@ public class SeqInumCost implements Serializable {
         PerfTest.startTimer();
         InumQueryPlanDesc desc = (InumQueryPlanDesc) InumQueryPlanDesc
                 .getQueryPlanDescInstance(statement);
-//        Rt.p(statement.getSQL());
+        // Rt.p(id);
+        // Rt.p(statement.getSQL());
         // Populate the INUM space
         desc.generateQueryPlanDesc(optimizer, inumIndices);
         PerfTest.addTimer("inum");
@@ -100,10 +118,11 @@ public class SeqInumCost implements Serializable {
         q.baseTableUpdateCost = desc.getBaseTableUpdateCost();
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
             SeqInumPlan plan = new SeqInumPlan(q, k);
+            plan.plan=desc.plans.get(k).toString();
             plan.internalCost = desc.getInternalPlanCost(k);
             plan.slots = new SeqInumSlot[desc.getNumberOfSlots()];
             for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                SeqInumSlot slot = new SeqInumSlot(plan);
+                SeqInumSlot slot = new SeqInumSlot(plan,i);
                 slot.fullTableScanCost = Double.MAX_VALUE;
                 for (Index index : desc.getIndexesAtSlot(i)) {
                     timer = new RTimerN();
@@ -151,14 +170,20 @@ public class SeqInumCost implements Serializable {
             cost.indexToInumIndex.put(indexs[i], q);
             cost.indexHash.put(q.name, q);
             cost.indices.add(q);
-            PerfTest.startTimer();
-            q.createCost = SeqCost.getCreateIndexCost(optimizer, q.index,q);
-            PerfTest.addTimer("calculate create index cost");
+            if (q.index.getCreationCost() > 0.01)
+                q.createCost = q.index.getCreationCost();
+            else {
+                PerfTest.startTimer();
+                q.createCost = SeqCost
+                        .getCreateIndexCost(optimizer, q.index, q);
+                PerfTest.addTimer("calculate create index cost");
+            }
             q.dropCost = 0;
-//            Statement st = db.getConnection().createStatement();
-            q.storageCost = q.index.getBytes();//SeqCost.getIndexSize(st, q.index); // TODO add
+            // Statement st = db.getConnection().createStatement();
+            q.storageCost = q.index.getBytes();// SeqCost.getIndexSize(st,
+            // q.index); // TODO add
             // storage cost
-//            st.close();
+            // st.close();
         }
         if (workload != null) {
             for (int i = 0; i < workload.size(); i++) {
@@ -247,7 +272,7 @@ public class SeqInumCost implements Serializable {
                 int slotId = Integer.parseInt(ss[2]);
                 if (plan.slots[slotId] != null)
                     throw new Error("slot exist");
-                SeqInumSlot slot = new SeqInumSlot(plan);
+                SeqInumSlot slot = new SeqInumSlot(plan,slotId);
                 slot.fullTableScanCost = Double.parseDouble(ss[3]);
                 for (int i = 4; i < ss.length; i++) {
                     SeqInumSlotIndexCost queryCost = new SeqInumSlotIndexCost();

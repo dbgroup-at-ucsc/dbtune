@@ -12,8 +12,9 @@ import edu.ucsc.dbtune.seq.utils.Rx;
 
 public class BatchTest {
     public static void main(String[] args) throws Exception {
-        DATTest2.querySize = 0;
-        DATTest2.indexSize = 0;
+        String generateIndexMethod = "recommend";
+        generateIndexMethod = "powerset 2";
+
         long gigbytes = 1024L * 1024L * 1024L;
         File outputFile = new File("/home/wangrui/dbtune/batch.txt");
         PrintStream ps = new PrintStream(outputFile);
@@ -30,9 +31,9 @@ public class BatchTest {
 
         for (TestSet set : sets) {
             Rt.np(set.dbName + " " + set.workloadName);
-            DATTest2.dbName = set.dbName;
-            DATTest2.workloadName = set.workloadName;
-            SeqInumCost cost = DATTest2.loadCost();
+            WorkloadLoader loader = new WorkloadLoader(set.dbName,
+                    set.workloadName, generateIndexMethod);
+            SeqInumCost cost = loader.loadCost();
             Rt
                     .np("index\tcreate cost\tstorage cost\tbenefit(with-none)\tbenefit(all-without)");
             for (int i = 0; i < cost.indices.size(); i++) {
@@ -49,8 +50,9 @@ public class BatchTest {
         int[] m_set = { 3,
         // 2, 4, 5, 6
         };
-        int[] l_set = { 10 };// 100, 5, 10, 20, 50, };
-        double[] spaceFactor_set = { 2, 5, 10, 20, 50,100,200 };// 0.05, 0.1, 0.25, 0.5,
+        int[] l_set = { 20 };// 100, 5, 10, 20, 50, };
+        double[] spaceFactor_set = { 2, 5, 10, 20, 50, 100, 200 };// 0.05, 0.1,
+                                                                  // 0.25, 0.5,
         // 1, 2,
         // 5, 10, 20, 50,
         // 100, 1000 };
@@ -73,9 +75,9 @@ public class BatchTest {
                 for (int l : l_set) {
                     for (TestSet set : sets) {
                         Rt.p(set.dbName + " " + set.workloadName);
-                        DATTest2.dbName = set.dbName;
-                        DATTest2.workloadName = set.workloadName;
-                        SeqInumCost cost = DATTest2.loadCost();
+                        WorkloadLoader loader = new WorkloadLoader(set.dbName,
+                                set.workloadName, generateIndexMethod);
+                        SeqInumCost cost = loader.loadCost();
                         long totalCost = 0;
                         for (int i = 0; i < cost.indices.size(); i++) {
                             SeqInumIndex index = cost.indices.get(i);
@@ -99,12 +101,13 @@ public class BatchTest {
                                 int windowSize = (int) (winFactor * avgCost);
 
                                 DATSeparateProcess dsp = new DATSeparateProcess(
-                                        set.dbName, set.workloadName, alpha,
-                                        beta, m, l, space, windowSize, 0);
-                                dsp.runMKP=false;
+                                        set.dbName, set.workloadName,
+                                        generateIndexMethod, alpha, beta, m, l,
+                                        space, windowSize, 0);
+                                dsp.runMKP = false;
                                 dsp.run();
                                 double dat = dsp.dat;
-//                                double mkp = dsp.bip;
+                                // double mkp = dsp.bip;
                                 double greedyRatio = dsp.greedy;
                                 double result = dat / greedyRatio * 100;
                                 int percent = (int) result;

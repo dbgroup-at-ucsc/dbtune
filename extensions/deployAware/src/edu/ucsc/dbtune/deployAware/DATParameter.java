@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 
 public class DATParameter {
-    SeqInumCost costModel;
+    public SeqInumCost costModel;
     double[] windowConstraints;
     double spaceConstraint;
     double alpha;

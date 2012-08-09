@@ -8,6 +8,7 @@ import edu.ucsc.dbtune.seq.utils.Rx;
 
 public class SeqInumSlot implements Serializable {
     public SeqInumPlan plan;
+    public int id;
     public double fullTableScanCost;
     public Vector<SeqInumSlotIndexCost> costs = new Vector<SeqInumSlotIndexCost>();
 
@@ -15,8 +16,9 @@ public class SeqInumSlot implements Serializable {
     // and should be removed when the system works correctly
     public SeqInumSlotIndexCost selectedIndex;
 
-    public SeqInumSlot(SeqInumPlan plan) {
+    public SeqInumSlot(SeqInumPlan plan,int id) {
         this.plan = plan;
+        this.id=id;
     }
 
     public void save(Rx rx) {
@@ -26,8 +28,9 @@ public class SeqInumSlot implements Serializable {
         }
     }
 
-    public SeqInumSlot(SeqInumCost cost,SeqInumPlan plan, Rx rx) {
+    public SeqInumSlot(SeqInumCost cost,SeqInumPlan plan, Rx rx,int id) {
         this.plan = plan;
+        this.id=id;
         fullTableScanCost = rx.getDoubleAttribute("fullTableScanCost");
         for (Rx r : rx.findChilds("index")) {
             costs.add(new SeqInumSlotIndexCost(cost,r));

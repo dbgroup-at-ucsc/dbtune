@@ -12,6 +12,7 @@ import edu.ucsc.dbtune.seq.utils.Rx;
 public class DATSeparateProcess {
 	String dbName;
 	String workloadName;
+	String generateIndexMethod;
 	double alpha;
 	double beta;
 	int m;
@@ -24,6 +25,7 @@ public class DATSeparateProcess {
 	public boolean runGreedy = true;
 	public boolean runMKP = true;
 	public int dupWorkloadNTimes = 1;
+	File debugFile;
 
 	double dat;
 	double datIntermediate;
@@ -34,11 +36,12 @@ public class DATSeparateProcess {
 	Object sync = new Object();
 	long memoryUsed = 0; // in KB
 
-	public DATSeparateProcess(String dbName, String workloadName, double alpha,
+	public DATSeparateProcess(String dbName, String workloadName,String generateIndexMethod, double alpha,
 			double beta, int m, int l, double spaceBudge, double windowSize,
 			double intermediateConstraint) {
 		this.dbName = dbName;
 		this.workloadName = workloadName;
+		this.generateIndexMethod=generateIndexMethod;
 		this.alpha = alpha;
 		this.beta = beta;
 		this.m = m;
@@ -121,6 +124,7 @@ public class DATSeparateProcess {
 		Rx rx = new Rx("dat");
 		rx.createChild("dbName", dbName);
 		rx.createChild("workloadName", workloadName);
+		rx.createChild("generateIndexMethod", generateIndexMethod);
 		rx.createChild("alpha", alpha);
 		rx.createChild("beta", beta);
 		rx.createChild("m", m);
@@ -130,6 +134,8 @@ public class DATSeparateProcess {
 		rx.createChild("intermediateConstraint", intermediateConstraint);
 		if (generatePerfReport)
 			rx.createChild("perfReportFile", tmpPerfFile.getAbsolutePath());
+		if (debugFile!=null)
+		    rx.createChild("debugFile", debugFile.getAbsolutePath());
 		rx.createChild("runDAT", runDAT);
 		rx.createChild("runGreedy", runGreedy);
 		rx.createChild("runMKP", runMKP);

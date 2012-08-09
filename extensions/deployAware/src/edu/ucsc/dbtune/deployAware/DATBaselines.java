@@ -11,6 +11,7 @@ import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.seq.utils.Rx;
 
 public class DATBaselines {
     public static boolean[] cophy(DATParameter param, double total,
@@ -72,7 +73,9 @@ public class DATBaselines {
         }
     }
 
-    public static DATOutput baseline2(DATParameter param, String method) {
+    public static DATOutput baseline2(DATParameter param, String method,Rx debug) {
+        if (method.equals("bip"))
+            method="mkp";
         int totalIndices = param.costModel.indexCount();
         DATOutput output = new DATOutput(param.windowConstraints.length);
         double totalCost = 0;
@@ -141,7 +144,7 @@ public class DATBaselines {
                         continue;
                     }
                     belongs = m.belongs;
-                } else if (method.startsWith("bip")) {
+                } else if (method.startsWith("bip")||method.startsWith("mkp")) {
                     double[] binWeights2 = new double[param.windowConstraints.length];
                     for (int j = 0; j < binWeights2.length; j++)
                         binWeights2[j] = (binWeights2.length - j);
@@ -230,6 +233,9 @@ public class DATBaselines {
             // }
             DATWindow[] windows = new DATWindow[param.windowConstraints.length];
             double[] costs = new double[param.windowConstraints.length];
+            Rx root=null;
+            if (debug != null)
+                root = debug.createChild(method);
             for (int i = 0; i < param.windowConstraints.length; i++) {
                 CPlexWrapper cplex = new CPlexWrapper();
                 windows[i] = new DATWindow(param.costModel, cplex, i,
@@ -271,9 +277,17 @@ public class DATBaselines {
                 // && Math.abs(output.ws[i].cost * alpha
                 // - cplex.getObjValue()) > 1)
                 // throw new Error();
+                if (root != null) {
+                    Rx window = root.createChild("window");
+                    DAT.saveDebugInfo(window, param, cplex, windows[i]);
+                }
+               
             }
 
             output.totalCost = totalCost;
+            if (root != null) {
+                root.setAttribute("cost", output.totalCost);
+            }
         } catch (IloException e) {
             e.printStackTrace();
         }
