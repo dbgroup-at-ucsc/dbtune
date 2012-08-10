@@ -35,14 +35,14 @@ public class SeqInumQuery implements Serializable {
         }
     }
 
-    public SeqInumQuery(SeqInumCost cost,Rx rx) {
+    public SeqInumQuery(Hashtable<String, SeqInumIndex> indexHash,Rx rx) {
         id = rx.getIntAttribute("id");
         name = rx.getAttribute("name");
         sql=new SQLStatement(rx.getChildText("sql"));
         Rx[] rs=rx.findChilds("plan");
         plans=new SeqInumPlan[rs.length];
         for (int i=0;i<rs.length;i++) {
-            plans[i]=new SeqInumPlan(cost,this,rs[i]);
+            plans[i]=new SeqInumPlan(indexHash,this,rs[i]);
         }
     }
 

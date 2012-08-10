@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.seq.bip.def;
 
 import java.io.Serializable;
+import java.util.Hashtable;
 
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.utils.Rx;
@@ -26,7 +27,7 @@ public class SeqInumPlan implements Serializable {
         }
     }
     
-    public SeqInumPlan(SeqInumCost cost,SeqInumQuery query,Rx rx) {
+    public SeqInumPlan(Hashtable<String, SeqInumIndex> indexHash,SeqInumQuery query,Rx rx) {
         this.query = query;
         id=rx.getIntAttribute("id");
         internalCost=rx.getDoubleAttribute("internalCost");
@@ -34,7 +35,7 @@ public class SeqInumPlan implements Serializable {
         Rx[] rs=rx.findChilds("slot");
         slots=new SeqInumSlot[rs.length];
         for (int i=0;i<rs.length;i++) {
-            slots[i]=new SeqInumSlot(cost,this,rs[i],i);
+            slots[i]=new SeqInumSlot(indexHash,this,rs[i],i);
         }
     }
 }

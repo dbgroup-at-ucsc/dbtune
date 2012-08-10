@@ -18,7 +18,7 @@ public class SeqInumIndex implements Serializable {
     public int id;
     public String name;
     public Index index;
-    private Rx indexRx; //if index is not loaded
+    private Rx indexRx; // if index is not loaded
     public double createCost, dropCost;
     public double createCostDB2;
     public String createCostSQL;
@@ -44,22 +44,23 @@ public class SeqInumIndex implements Serializable {
         rx.createChild("indexBenefit2", indexBenefit2);
         if (index != null) {
             Rx rx2 = rx.createChild("index");
-//            rx2.createChild("name", index.getFullyQualifiedName());
-//            rx2.createChild("table", index.getTable().getFullyQualifiedName());
+            // rx2.createChild("name", index.getFullyQualifiedName());
+            // rx2.createChild("table",
+            // index.getTable().getFullyQualifiedName());
             for (Column col : index) {
                 rx2.createChild("column", col
                         + (index.isAscending(col) ? "(A)" : "(D)"));
             }
-        } else if (indexRx!=null) {
+        } else if (indexRx != null) {
             Rx rx2 = rx.createChild("index");
-            Rx[] columns=indexRx.findChilds("column");
-            for (int i=0;i< columns.length;i++) {
+            Rx[] columns = indexRx.findChilds("column");
+            for (int i = 0; i < columns.length; i++) {
                 rx2.createChild("column", columns[i].getText());
             }
         }
     }
 
-    public SeqInumIndex(Rx rx,DatabaseSystem db) throws SQLException {
+    public SeqInumIndex(Rx rx, DatabaseSystem db) throws SQLException {
         id = rx.getIntAttribute("id");
         name = rx.getAttribute("name");
         createCost = rx.getChildDoubleContent("createCost");
@@ -69,34 +70,42 @@ public class SeqInumIndex implements Serializable {
         storageCost = rx.getChildDoubleContent("storageCost");
         indexBenefit = rx.getChildDoubleContent("indexBenefit");
         indexBenefit2 = rx.getChildDoubleContent("indexBenefit2");
-        Rx rx2=rx.findChild("index");
-        if (rx2!=null&&db!=null) {
-//            String name=rx2.getChildText("name");
-//            String tableName=rx2.getChildText("table");
-//            String[] st=tableName.ssplit("\\.");
-//            Schema schema=(Schema)db.getCatalog().find(st[0]);
-//            Table table= schema.findTable(st[1]);
-            Rx[] columns=rx2.findChilds("column");
-            Vector<Column> v=new Vector<Column>();
-            HashMap<Column,Boolean> map=new HashMap<Column, Boolean>();
-            for (int i=0;i< columns.length;i++) {
-              String s=  columns[i].getText();
-              String cname=s.substring(0,s.indexOf('('));
-              Column c=(Column)db.getCatalog().findByQualifiedName(cname);
-              if (c==null)
-                  throw new Error(cname);
-              v.add(c);
-              map.put(c,"(A)".equals(s.substring(s.indexOf('('))));
+        Rx rx2 = rx.findChild("index");
+        if (rx2 != null && db != null) {
+            // String name=rx2.getChildText("name");
+            // String tableName=rx2.getChildText("table");
+            // String[] st=tableName.ssplit("\\.");
+            // Schema schema=(Schema)db.getCatalog().find(st[0]);
+            // Table table= schema.findTable(st[1]);
+            Rx[] columns = rx2.findChilds("column");
+            Vector<Column> v = new Vector<Column>();
+            HashMap<Column, Boolean> map = new HashMap<Column, Boolean>();
+            for (int i = 0; i < columns.length; i++) {
+                String s = columns[i].getText();
+                String cname = s.substring(0, s.indexOf('('));
+                Column c = (Column) db.getCatalog().findByQualifiedName(cname);
+                if (c == null)
+                    throw new Error(cname);
+                v.add(c);
+                map.put(c, "(A)".equals(s.substring(s.indexOf('('))));
             }
-            index=new Index(v,map);
+            index = new Index(v, map);
         } else {
-            indexRx=rx2;
+            indexRx = rx2;
         }
-        
+
     }
 
     @Override
     public String toString() {
-        return "[" + name + ",create=" + createCost + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("[" + id + ",create=" + createCost);
+        if (indexRx != null) {
+            for (Rx a : indexRx.findChilds("column")) {
+                sb.append("," + a.getText());
+            }
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }

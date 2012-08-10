@@ -120,7 +120,7 @@ public class DAT {
             }
             output.totalCost = totalCost;
             if (debug != null) {
-                Rx root = debug.createChild("mkp");
+                Rx root = debug.createChild("dat");
                 root.setAttribute("cost", output.totalCost);
                 for (int windowId = 0; windowId < windows.length; windowId++) {
                     Rx window = root.createChild("window");

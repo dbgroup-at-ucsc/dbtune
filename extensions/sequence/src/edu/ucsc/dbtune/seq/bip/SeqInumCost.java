@@ -86,7 +86,7 @@ public class SeqInumCost implements Serializable {
         }
         cost.queries = new Vector<SeqInumQuery>();
         for (Rx r : rx.findChilds("query")) {
-            SeqInumQuery q = new SeqInumQuery(cost, r);
+            SeqInumQuery q = new SeqInumQuery(cost.indexHash, r);
             cost.queryHash.put(q.name, q);
             cost.queries.add(q);
         }
