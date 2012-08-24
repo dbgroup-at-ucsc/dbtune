@@ -35,6 +35,7 @@ public class SeqInumCost implements Serializable {
     public Hashtable<Index, SeqInumIndex> indexToInumIndex = new Hashtable<Index, SeqInumIndex>();
     public boolean complete = true; // whether all queries have been added.
     public double costWithoutIndex; 
+    public double costWithAllIndex; 
 
     public SeqInumCost dup(int times) {
         SeqInumCost cost = new SeqInumCost();
@@ -65,6 +66,7 @@ public class SeqInumCost implements Serializable {
     public void save(Rx rx) {
         rx.setAttribute("complete", complete);
         rx.setAttribute("costWithoutIndex", costWithoutIndex);
+        rx.setAttribute("costWithAllIndex", costWithAllIndex);
         for (SeqInumQuery query : queries) {
             query.save(rx.createChild("query"));
         }
@@ -78,6 +80,7 @@ public class SeqInumCost implements Serializable {
         int queryId = 0;
         cost.complete = !"false".equals(rx.getAttribute("complete"));
         cost.costWithoutIndex=rx.getDoubleAttribute("costWithoutIndex");
+        cost.costWithAllIndex=rx.getDoubleAttribute("costWithAllIndex");
         for (Rx r : rx.findChilds("index")) {
             SeqInumIndex index = new SeqInumIndex(r,db);
             if (cost.indexHash.put(index.name, index) != null)

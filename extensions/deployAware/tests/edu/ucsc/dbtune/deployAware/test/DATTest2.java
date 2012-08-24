@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringReader;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Properties;
@@ -128,7 +129,8 @@ public class DATTest2 {
         // System.out.println(baseline.totalCost);
         DATOutput baseline = null;
         DATOutput baseline3 = null;
-        baseline = (DATOutput) DATBaselines.baseline2(params, "greedyRatio",null);
+        baseline = (DATOutput) DATBaselines.baseline2(params, "greedyRatio",
+                null);
         System.out.print("greedyRatio MKP\t");
         for (int i = 0; i < windowConstraints.length; i++) {
             System.out.format("%.0f\t\t", baseline.ws[i].cost);
@@ -172,7 +174,7 @@ public class DATTest2 {
             // + (baseline2.totalCost + beta
             // * baseline2.ws[baseline2.ws.length - 1].cost));
             System.out.println();
-            baseline3 = (DATOutput) DATBaselines.baseline2(params, "bip",null);
+            baseline3 = (DATOutput) DATBaselines.baseline2(params, "bip", null);
             System.out.print("PTAS MKP\t");
             for (int i = 0; i < windowConstraints.length; i++) {
                 System.out.format("%.0f\tc " + baseline3.ws[i].create + "\t",
@@ -241,7 +243,8 @@ public class DATTest2 {
                 DATParameter params = new DATParameter(cost, windowConstraints,
                         1, 1, 0);
                 DATOutput baseline = null;
-                baseline = (DATOutput) DATBaselines.baseline2(params, "bip",null);
+                baseline = (DATOutput) DATBaselines.baseline2(params, "bip",
+                        null);
                 double fit = DATBaselines.baseline2WindowConstraint;
                 double alpha = 1;
                 double beta = 1;
@@ -306,11 +309,27 @@ public class DATTest2 {
         DATParameter params = new DATParameter(cost, windowConstraints, alpha,
                 beta, l);
         params.intermediateConstraint = intermediateConstraint;
+        if (Math.abs(windowSize) < 0.01) {
+            double total = 0;
+            boolean[] indexPresent = DATBaselines.cophy(params,
+                    Double.MAX_VALUE, Double.MAX_VALUE, m*l);
+            for (int i = 0; i < indexPresent.length; i++) {
+                if (indexPresent[i]) {
+                    Rt.p(params.costModel.indices.get(i));
+                    total += params.costModel.indices.get(i).createCost;
+                }
+            }
+            windowSize = total / m;
+            Arrays.fill(params.windowConstraints, windowSize);
+            Rt.p("total=%,.0f m=%d",total,m);
+            Rt.p("maxIndexCreatedPerWindow=%d",params.maxIndexCreatedPerWindow);
+            Rt.p("windowSize=%,.0f", windowSize);
+        }
         double datCost = 0;
-        Rx debug=null;
-        if (debugFile!=null) {
-            debug=new Rx("workload");
-            Rx dataset=debug.createChild("dataset");
+        Rx debug = null;
+        if (debugFile != null) {
+            debug = new Rx("workload");
+            Rx dataset = debug.createChild("dataset");
             dataset.createChild("database", dbName);
             dataset.createChild("workloadName", workloadName);
             dataset.createChild("generateIndexMethod", generateIndexMethod);
@@ -320,10 +339,14 @@ public class DATTest2 {
             dataset.createChild("l", l);
             dataset.createChild("space", space);
             dataset.createChild("windowSize", windowSize);
-            dataset.createChild("intermediateConstraint", intermediateConstraint);
-            debug.setAttribute("costWithoutIndex", params.costModel.costWithoutIndex);
-            Rx q=debug.createChild("query");
-            Rx i=debug.createChild("index");
+            dataset.createChild("intermediateConstraint",
+                    intermediateConstraint);
+            debug.setAttribute("costWithoutIndex",
+                    params.costModel.costWithoutIndex);
+            debug.setAttribute("costWithAllIndex",
+                    params.costModel.costWithAllIndex);
+            Rx q = debug.createChild("query");
+            Rx i = debug.createChild("index");
             for (SeqInumIndex index : params.costModel.indices)
                 index.save(i.createChild("index"));
             for (SeqInumQuery query : params.costModel.queries)
@@ -331,9 +354,9 @@ public class DATTest2 {
         }
         if (runDAT) {
             try {
-                DAT dat=new DAT();
-                dat.debug=debug;
-                DATOutput output =dat .runDAT(params);
+                DAT dat = new DAT();
+                dat.debug = debug;
+                DATOutput output = dat.runDAT(params);
                 double d = 0;
                 for (int i = 0; i < windowConstraints.length - 1; i++) {
                     d += output.ws[i].cost;
@@ -341,6 +364,14 @@ public class DATTest2 {
                 datCost = output.totalCost;
                 root.createChild("dat", output.totalCost);
                 root.createChild("datIntermediate", d);
+                Rx windows = root.createChild("datWindows");
+                for (int i = 0; i < windowConstraints.length; i++) {
+                    Rx window = windows.createChild("window");
+                    window.setAttribute("id", i);
+                    window.setAttribute("cost", output.ws[i].cost);
+                    window.setAttribute("create", output.ws[i].create);
+                    window.setAttribute("drop", output.ws[i].drop);
+                }
             } catch (Error e) {
                 if ("Can't solve bip".equals(e.getMessage())) {
                     root.createChild("dat", 0);
@@ -362,16 +393,33 @@ public class DATTest2 {
 
         if (runGreedy) {
             DATOutput greedyRatio = (DATOutput) DATBaselines.baseline2(params,
-                    "greedyRatio",debug);
+                    "greedyRatio", debug);
             root.createChild("greedyRatio", greedyRatio.totalCost);
+            Rx windows = root.createChild("greedyWindows");
+            for (int i = 0; i < windowConstraints.length; i++) {
+                Rx window = windows.createChild("window");
+                window.setAttribute("id", i);
+                window.setAttribute("cost", greedyRatio.ws[i].cost);
+                window.setAttribute("create", greedyRatio.ws[i].create);
+                window.setAttribute("drop", greedyRatio.ws[i].drop);
+            }
         }
         timer.reset();
 
         double bipCost = 0;
         if (runMKP) {
-            DATOutput bip = (DATOutput) DATBaselines.baseline2(params, "bip",debug);
+            DATOutput bip = (DATOutput) DATBaselines.baseline2(params, "bip",
+                    debug);
             bipCost = bip.totalCost;
             root.createChild("bip", bipCost);
+            Rx windows = root.createChild("mkpWindows");
+            for (int i = 0; i < windowConstraints.length; i++) {
+                Rx window = windows.createChild("window");
+                window.setAttribute("id", i);
+                window.setAttribute("cost", bip.ws[i].cost);
+                window.setAttribute("create", bip.ws[i].create);
+                window.setAttribute("drop", bip.ws[i].drop);
+            }
         }
         long time2 = timer.get();
         Rt.p("TIME " + time1 + " " + time2 + " " + (double) time2 / time1);
@@ -384,7 +432,8 @@ public class DATTest2 {
         Rt.write(outputFile, root.getXml());
         if (perfReportFile != null)
             PerfTest.report(new File(perfReportFile));
-        if (debugFile!=null) {
+        if (debugFile != null) {
+            new File(debugFile).getParentFile().mkdirs();
             Rt.write(new File(debugFile), debug.getXml().getBytes());
         }
         loader.close();
@@ -403,7 +452,7 @@ public class DATTest2 {
         String workloadName = "tpch-inum";
         dbName = "test";
         workloadName = "online-benchmark-100";
-        String generateIndexMethod="recommend";
+        String generateIndexMethod = "recommend";
         WorkloadLoader loader = new WorkloadLoader(dbName, workloadName,
                 generateIndexMethod);
         testDATBatch(loader);

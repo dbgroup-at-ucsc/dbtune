@@ -8,12 +8,12 @@ import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 
 public class DATParameter {
     public SeqInumCost costModel;
-    double[] windowConstraints;
-    double spaceConstraint;
-    double alpha;
-    double beta;
-    int totalQueires;
-    int totalIndices;
+    public double[] windowConstraints;
+    public double spaceConstraint;
+    public double alpha;
+    public double beta;
+    public int totalQueires;
+    public int totalIndices;
     public int maxIndexCreatedPerWindow = 0;
     public double intermediateConstraint = 0;
     Logger log = Logger.getLogger(DAT.class.getName());

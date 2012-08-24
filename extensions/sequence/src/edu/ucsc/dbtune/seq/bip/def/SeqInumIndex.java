@@ -60,6 +60,29 @@ public class SeqInumIndex implements Serializable {
         }
     }
 
+    public String getColumnNames() {
+        StringBuilder sb = new StringBuilder();
+        if (index != null) {
+            for (Column col : index) {
+                if (sb.length() == 0)
+                    sb.append(col.getTable().getName());
+                sb.append("," + col.getName());
+            }
+        } else if (indexRx != null) {
+            Rx[] columns = indexRx.findChilds("column");
+            for (int i = 0; i < columns.length; i++) {
+                String s = columns[i].getText();
+                int t = s.lastIndexOf('.');
+                String table = s.substring(0, t);
+                String name = s.substring(t + 1);
+                if (sb.length() == 0)
+                    sb.append(table);
+                sb.append("," + name);
+            }
+        }
+        return sb.toString();
+    }
+
     public SeqInumIndex(Rx rx, DatabaseSystem db) throws SQLException {
         id = rx.getIntAttribute("id");
         name = rx.getAttribute("name");
@@ -99,7 +122,8 @@ public class SeqInumIndex implements Serializable {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("[" + id + ",create=" + createCost);
+        sb.append(String.format("[%d\tcreate=%,.0f", id, createCost));
+        sb.append(String.format("\tbenefit=%,.0f ", this.indexBenefit));
         if (indexRx != null) {
             for (Rx a : indexRx.findChilds("column")) {
                 sb.append("," + a.getText());

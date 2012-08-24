@@ -20,7 +20,7 @@ public class BatchTest {
         PrintStream ps = new PrintStream(outputFile);
         TestSet[] sets = {
         // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
-        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum", 10 * gigbytes),
+        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum", 10 * gigbytes,"tpch"),
         // new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
         // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
         // new TestSet("100 OTAB [5] queries", "test",

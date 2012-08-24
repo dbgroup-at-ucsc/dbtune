@@ -16,7 +16,7 @@ public class GnuPlot2 {
     File dataFile;
     File orgDataFile;
     File pltFile;
-    Vector<Vector<Double>> vs = new Vector<Vector<Double>>();
+    public Vector<Vector<Double>> vs = new Vector<Vector<Double>>();
     Vector<Double> current = new Vector<Double>();
     String[] plotNames;
     String[] xtics;
@@ -188,9 +188,16 @@ public class GnuPlot2 {
         // ps.println("set key at 3.9, 8.45");
         // ps.println("set key spacing 1.2");
         ps.println("");
-        ps.print("plot \"" + name + ".data\" "
-                + "using 2:xtic(1) fs solid 0.2 ti col,"
-                + "'' u 3  fs solid 0.6 ti col");
+        ps.print("plot \"" + name + ".data\" ");
+        for (int i = 0; i < plotNames.length; i++) {
+            if (i == 0) {
+                ps.print("using 2:xtic(1) fs solid 0.2 ti col");
+            } else {
+                ps
+                        .format(",'' u %d fs solid %.1f ti col", i + 2,
+                                0.4 + i * 0.2);
+            }
+        }
         ps.close();
         Rt.runAndShowCommand("gnuplot " + name + ".plt", dir);
     }
