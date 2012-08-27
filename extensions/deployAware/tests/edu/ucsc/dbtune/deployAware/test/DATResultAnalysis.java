@@ -22,8 +22,8 @@ import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlot;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlotIndexCost;
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.util.Environment;
 
 public class DATResultAnalysis {

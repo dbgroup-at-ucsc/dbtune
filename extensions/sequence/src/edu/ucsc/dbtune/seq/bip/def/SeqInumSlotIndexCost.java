@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Hashtable;
 
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rx;
 
 public class SeqInumSlotIndexCost implements Serializable {
     public SeqInumIndex index;

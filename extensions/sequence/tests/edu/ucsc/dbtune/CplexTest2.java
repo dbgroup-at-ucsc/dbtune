@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune;
 
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 import ilog.concert.*;
 import ilog.cplex.*;
 

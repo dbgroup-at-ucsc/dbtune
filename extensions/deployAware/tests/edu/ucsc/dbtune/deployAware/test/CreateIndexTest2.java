@@ -16,8 +16,8 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
@@ -75,7 +75,7 @@ public class CreateIndexTest2 {
     public static void testIndex() throws Exception {
         Environment en = Environment.getInstance();
         DatabaseSystem db = newDatabaseSystem(en);
-        WorkloadLoader loader=new WorkloadLoader("test","tpch-500-counts","recommend");
+        WorkloadLoader loader=new WorkloadLoader("test","tpch-500-counts","workload.sql","recommend");
 
         Workload workload = loader.getWorkload(en);
         Set<Index> indexes = loader.getIndexes(workload, db);
@@ -111,7 +111,7 @@ public class CreateIndexTest2 {
     }
 
     public static void main(String[] args) throws Exception {
-        WorkloadLoader loader=new WorkloadLoader("test","OST","recommend");
+        WorkloadLoader loader=new WorkloadLoader("test","OST","workload.sql","recommend");
         Environment en = Environment.getInstance();
         en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + loader.dbName);
         en.setProperty("username", "db2inst1");

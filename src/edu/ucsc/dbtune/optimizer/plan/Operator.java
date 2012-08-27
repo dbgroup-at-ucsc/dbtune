@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.ucsc.dbtune.metadata.DatabaseObject;
+import edu.ucsc.dbtune.util.Rx;
+import edu.ucsc.dbtune.util.Tree.Entry;
 
 /**
  * Represents an operator of a SQL statement plan.
@@ -78,29 +80,137 @@ public class Operator
     public static final String TEMPORARY_TABLE_SCAN = "TEMPORARY.TABLE.SCAN";
 
     /** Name of operator. */
-    protected String name;
+    public String name;
+    
+    /** OUTER or INNER join. */
+    public String joinInput;
+    
+    /**  */
+    public int rows=-1;
+    
+    /**  */
+    public int rowWidth=-1;
+    
+    /** Alias in explain table, for example: Q1 Q2 Q3 */
+    public String aliasInExplainTables;
+    
+    /** Alias of a removed sub node, for example: Q1 Q2 Q3 */
+    public String aliasInExplainTables2;
 
+    /** If a fetch node is removed and merged with this node,
+     * then this is the QID of the fetch node for example: Q1 Q2 Q3 */
+    public String fetchAliasInExplainTables;
+    
     /** Accumulated cost of the plan up to this operator. */
-    protected double accumulatedCost;
+    public double accumulatedCost;
+    
+    /** Cost of table scan or index scan. */
+    public double scanCost;
+    
+    /** The following variable are used for debugging purpose*/
+    public int id;
+    public double ioCost;
+    public double cpuCost;
+    public double first_row_cost;
+    public double re_total_cost;
+    public double re_io_cost;
+    public double re_cpu_cost;
+    public double buffers;
+    public double internalCost;
+    
+    /** columns returned by database */
+    public String rawColumnNames;
+    
+    /** predicate returned by database */
+    public List<String> rawPredicateList;
+    
+    /** filter factor of the predicates */
+    public List<Double> filterFactorList;
+   
+    /**
+     * If this operator is inside the right child tree of
+     * a Nest Loop Join operator, the coefficient should be
+     * row count of that NLJ operator. If this operator is
+     * inside the right child tree of multiple NLJ operators,
+     * The coefficient should be the product of row count of
+     * each NLJ operator.
+     */
+    public double coefficient=1;
 
     /** Number of tuples that the operator produces. */
-    protected long cardinality;
+    public double cardinality;
+    
+    /** Same as cardinality. Tuned for NLJ */
+    public double cardinalityNLJ;
 
     /** When the operator is applied to base objects. */
-    protected List<DatabaseObject> objects;
+    public List<DatabaseObject> objects;
     
     /** The predicates associated with the operator. */
-    protected List<Predicate> predicates;
+    public List<Predicate> predicates;
 
     /** columns fetched by the operator. */
-    protected InterestingOrder columnsFetched;
+    public InterestingOrder columnsFetched;
 
+    /** which slot this operator was instantiated */
+    public TableAccessSlot slot;
     /**
      * creates an empty operator ({@code name="empty"}. This can be used to represent empty plans.
      */
     public Operator()
     {
         this("empty", 0.0, 0);
+    }
+    
+    /**
+     * save everything to a xml node
+     * @param rx
+     */
+    public void save(Rx rx, Entry<Operator> self) {
+        rx.setAttribute("name", name);
+        rx.setAttribute("id", id);
+        Rx params=rx.createChild("parameters");
+        params.setAttribute("accumulatedCost", accumulatedCost);
+        params.setAttribute("cardinality", cardinality);
+        params.setAttribute("internalCost", internalCost);
+        params.setAttribute("coefficient", coefficient);
+        Rx extra=rx.createChild("extraParameters");
+        extra.setAttribute("ioCost", ioCost);
+        extra.setAttribute("cpuCost", cpuCost);
+        extra.setAttribute("first_row_cost", first_row_cost);
+        extra.setAttribute("re_total_cost", re_total_cost);
+        extra.setAttribute("re_io_cost", re_io_cost);
+        extra.setAttribute("re_cpu_cost", re_cpu_cost);
+        extra.setAttribute("buffers", buffers);
+        if (objects.size() > 0) {
+            Rx dbo = rx.createChild("databaseObjects");
+            for (DatabaseObject object : objects) {
+                dbo.createChild("object", object.toString());
+            }
+        }
+        if (predicates.size() > 0) {
+            Rx pre = rx.createChild("predicates");
+            for (Predicate predicate : predicates) {
+                predicate.save(pre.createChild("predicate"));
+            }
+        }
+        if (rawPredicateList.size() > 0) {
+            Rx pre = rx.createChild("rawPredicates");
+            for (String predicate : rawPredicateList) {
+                pre.createChild("predicate",predicate);
+            }
+        }
+        if (columnsFetched != null)
+            rx.createChild("interestingOrder", columnsFetched.toString());
+        if (rawColumnNames != null)
+            rx.createChild("rawColumnNames", rawColumnNames);
+        if (slot != null)
+            rx.createChild("slot", slot.toString());
+        if (self != null) {
+            for (Entry<Operator> child : self.getChildren()) {
+                child.getElement().save(rx.createChild("operator"), child);
+            }
+        }
     }
 
     /**
@@ -122,7 +232,7 @@ public class Operator
     public Operator(
             String name,
             double accumulatedCost,
-            long cardinality,
+            double cardinality,
             List<DatabaseObject> objects,
             List<Predicate> predicates,
             InterestingOrder columnsFetched)
@@ -130,6 +240,7 @@ public class Operator
         this.name = new String(name);
         this.accumulatedCost = accumulatedCost;
         this.cardinality = cardinality;
+        this.cardinalityNLJ = cardinality;
         this.objects = new ArrayList<DatabaseObject>(objects);
         this.predicates = new ArrayList<Predicate>(predicates);
         this.columnsFetched = columnsFetched;
@@ -145,11 +256,12 @@ public class Operator
      * @param cardinality
      *     number of rows produced by the operator
      */
-    public Operator(String name, double accumulatedCost, long cardinality)
+    public Operator(String name, double accumulatedCost, double cardinality)
     {
         this.name            = name;
         this.accumulatedCost = accumulatedCost;
         this.cardinality     = cardinality;
+        this.cardinalityNLJ     = cardinality;
         this.objects         = new ArrayList<DatabaseObject>();
         this.predicates      = new ArrayList<Predicate>();
     }
@@ -163,6 +275,22 @@ public class Operator
     Operator(Operator o)
     {
         this(o.name, o.accumulatedCost, o.cardinality, o.objects, o.predicates, o.columnsFetched);
+        this.id=o.id;
+        this.ioCost=o.ioCost;
+        this.cpuCost=o.cpuCost;;
+        this.first_row_cost=o.first_row_cost;
+        this.re_total_cost=o.re_total_cost;
+        this.re_io_cost=o.re_io_cost;
+        this.re_cpu_cost=o.re_cpu_cost;
+        this.buffers=o.buffers;
+        this.internalCost=o.internalCost;
+        this.rawColumnNames=o.rawColumnNames;
+        this.rawPredicateList=o.rawPredicateList;
+        this.aliasInExplainTables=o.aliasInExplainTables;
+        this.aliasInExplainTables2=o.aliasInExplainTables2;
+        this.fetchAliasInExplainTables=o.fetchAliasInExplainTables;
+        this.coefficient=o.coefficient;
+        this.cardinalityNLJ=o.cardinalityNLJ;
     }
 
     /**
@@ -173,7 +301,8 @@ public class Operator
      */
     public Operator duplicate()
     {
-        return new Operator(this);
+    	Operator operator= new Operator(this);
+    	return operator;
     }
 
     /**
@@ -289,7 +418,7 @@ public class Operator
      * @return
      *     cardinality of the operator
      */
-    public long getCardinality()
+    public double getCardinality()
     {
         return cardinality;
     }
@@ -374,14 +503,52 @@ public class Operator
         StringBuilder str = new StringBuilder();
 
         str.append(name)
-            .append("(cost=")
-            .append(accumulatedCost)
-            .append(" rows=")
-            .append(cardinality)
-            .append(" object=")
+            .append("(")
+            .append(this.aliasInExplainTables==null?"":this.aliasInExplainTables+" ")
+            .append("id=")
+            .append(id);
+        if ( joinInput!=null)
+            str.append(" ").append(joinInput);
+        str.append(" cost=")
+            .append(String.format("%.2f", accumulatedCost));
+        if (rows>=0)
+            str.append(" rows=")
+            .append(String.format("%d", rows));
+        if (rowWidth>=0)
+            str.append(" rowWidth=")
+            .append(String.format("%d", rowWidth));
+        str.append(" card=")
+            .append(String.format("%.2f", cardinality));
+        if (Math.abs(cardinality-cardinalityNLJ)>0.1)
+            str.append(String.format("/%.2f", cardinalityNLJ));
+        str.append(" coeff=")
+            .append(String.format("%.1f", coefficient));
+        str.append(" object=")
             .append(objects.isEmpty() ? "NONE" : objects.get(0))
+//            .append(" predicate=")
+//            .append(this.predicates == null ? "NONE" : predicates)
+            .append(" rawColumns=")
+            .append(this.predicates == null ? "NONE" : rawColumnNames)
+            .append(" rawPredicate=")
+            .append(this.predicates == null ? "NONE" : rawPredicateList)
             .append(" fetch=")
             .append(columnsFetched == null ? "NONE" : columnsFetched)
+//            .append(" io=")
+//            .append(ioCost)
+//            .append(" cpu=")
+//            .append(cpuCost)
+            .append(" internal=")
+            .append(String.format("%.2f", internalCost))
+//            .append(" fr=")
+//            .append(first_row_cost)
+//            .append(" rcost=")
+//            .append(re_total_cost)
+//            .append(" rio=")
+//            .append(re_io_cost)
+//            .append(" rcpu=")
+//            .append(re_cpu_cost)
+//            .append(" buffers=")
+//            .append(buffers)
             .append(")");
 
         return str.toString();
@@ -393,11 +560,15 @@ public class Operator
     @Override
     public int hashCode()
     {
+        //id is unique for each operator
+        if (true)
+            return id;
         int code = 1;
 
         code = 37 * code + name.hashCode();
         code = 37 * code + (int) Double.doubleToLongBits(accumulatedCost);
-        code = 37 * code + (int) (cardinality ^ (cardinality >>> 32));
+        long c=(long)cardinality;
+        code = 37 * code + (int) (c ^ (c >>> 32));
 
         int listCode = 0;
         for (DatabaseObject dbo : objects)
@@ -428,6 +599,10 @@ public class Operator
             return false;
 
         Operator op = (Operator) o;
+        
+      //id is unique for each operator
+        if (true)
+        	return op.id==this.id;
 
         if (!name.equals(op.name) ||
                 Double.compare(accumulatedCost, op.accumulatedCost) != 0 ||

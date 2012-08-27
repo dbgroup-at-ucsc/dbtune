@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.deployAware;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 
 public class DATQuery {
     DATWindow window;

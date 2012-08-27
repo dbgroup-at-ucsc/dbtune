@@ -11,7 +11,7 @@ import java.util.Hashtable;
 
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 
 public class DATWindow {
     int id;

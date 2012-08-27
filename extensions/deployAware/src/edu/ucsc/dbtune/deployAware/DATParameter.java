@@ -18,8 +18,12 @@ public class DATParameter {
     public double intermediateConstraint = 0;
     Logger log = Logger.getLogger(DAT.class.getName());
 
-    public DATParameter(SeqInumCost cost, double[] windowConstraints, double alpha,
-            double beta, int maxIndexCreatedPerWindow) throws IloException {
+    public DATParameter() {
+    }
+
+    public DATParameter(SeqInumCost cost, double[] windowConstraints,
+            double alpha, double beta, int maxIndexCreatedPerWindow)
+            throws IloException {
         this.costModel = cost;
         this.windowConstraints = windowConstraints;
         this.spaceConstraint = cost.storageConstraint;

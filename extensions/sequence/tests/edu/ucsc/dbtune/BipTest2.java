@@ -38,8 +38,8 @@ import edu.ucsc.dbtune.seq.bip.def.SeqInumSlot;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlotIndexCost;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 

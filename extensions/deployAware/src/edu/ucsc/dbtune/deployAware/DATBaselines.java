@@ -10,8 +10,8 @@ import java.util.Vector;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 
 public class DATBaselines {
     public static boolean[] cophy(DATParameter param, double total,
@@ -52,7 +52,8 @@ public class DATBaselines {
      */
     public static double baseline2WindowConstraint;
 
-    public static void getIndexBenefit(SeqInumCost costModel) throws IloException {
+    public static void getIndexBenefit(SeqInumCost costModel)
+            throws IloException {
         boolean[] bs = new boolean[costModel.indexCount()];
         // Rt.p("get index benefit 1");
         double costWithoutIndex = DATWindow.costWithIndex(costModel, bs);
@@ -73,9 +74,37 @@ public class DATBaselines {
         }
     }
 
-    public static DATOutput baseline2(DATParameter param, String method,Rx debug) {
+    public static double[] getQueryCost(SeqInumCost costModel, boolean[] present)
+            throws IloException {
+        CPlexWrapper cplex = new CPlexWrapper();
+        DATWindow window = new DATWindow(costModel, cplex, 0, true,
+                Double.MAX_VALUE);
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        window.addObjective(expr, 1);
+        IloObjective obj = cplex.minimize(expr);
+        cplex.add(obj);
+        if (DAT.showFormulas)
+            Rt.p("Obj: " + expr.toString());
+        window.addConstriant(cplex, Double.MAX_VALUE, Integer.MAX_VALUE);
+        for (int k = 0; k < costModel.indexCount(); k++) {
+            cplex.addEq(window.present[k], present[k] ? 1 : 0);
+            cplex.addEq(window.create[k], 0);
+            cplex.addEq(window.drop[k], 0);
+        }
+        if (!cplex.solve())
+            throw new Error();
+        window.getValues(cplex);
+        double[] ds = new double[costModel.queries.size()];
+        for (int j = 0; j < ds.length; j++) {
+            ds[j] = window.queries[j].getCost(cplex);
+        }
+        return ds;
+    }
+
+    public static DATOutput baseline2(DATParameter param, String method,
+            Rx debug) {
         if (method.equals("bip"))
-            method="mkp";
+            method = "mkp";
         int totalIndices = param.costModel.indexCount();
         DATOutput output = new DATOutput(param.windowConstraints.length);
         double totalCost = 0;
@@ -144,7 +173,7 @@ public class DATBaselines {
                         continue;
                     }
                     belongs = m.belongs;
-                } else if (method.startsWith("bip")||method.startsWith("mkp")) {
+                } else if (method.startsWith("bip") || method.startsWith("mkp")) {
                     double[] binWeights2 = new double[param.windowConstraints.length];
                     for (int j = 0; j < binWeights2.length; j++)
                         binWeights2[j] = (binWeights2.length - j);
@@ -233,7 +262,7 @@ public class DATBaselines {
             // }
             DATWindow[] windows = new DATWindow[param.windowConstraints.length];
             double[] costs = new double[param.windowConstraints.length];
-            Rx root=null;
+            Rx root = null;
             if (debug != null)
                 root = debug.createChild(method);
             for (int i = 0; i < param.windowConstraints.length; i++) {
@@ -281,7 +310,7 @@ public class DATBaselines {
                     Rx window = root.createChild("window");
                     DAT.saveDebugInfo(window, param, cplex, windows[i]);
                 }
-               
+
             }
 
             output.totalCost = totalCost;

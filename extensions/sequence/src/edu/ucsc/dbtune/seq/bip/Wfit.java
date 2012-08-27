@@ -21,7 +21,7 @@ import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlot;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlotIndexCost;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class Wfit extends AbstractBIPSolver {

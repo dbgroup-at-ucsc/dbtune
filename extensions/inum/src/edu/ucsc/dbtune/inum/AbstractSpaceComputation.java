@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -21,6 +23,7 @@ import static edu.ucsc.dbtune.optimizer.plan.Operator.NLJ;
 import static edu.ucsc.dbtune.util.InumUtils.extractInterestingOrders;
 import static edu.ucsc.dbtune.util.InumUtils.getCoveringAtomicConfiguration;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesReferencingTable;
+import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 
 /**
@@ -32,6 +35,18 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
 {
     private static Set<Index> empty = new HashSet<Index>();
 
+
+    public static Set<InumInterestingOrder> overrideInumSpacePopulateIndexSet;
+    
+    public static void setInumSpacePopulateIndexSet(Set<Index> indexes)
+            throws SQLException {
+        overrideInumSpacePopulateIndexSet = new HashSet<InumInterestingOrder>();
+        for (Index index : indexes) {
+            InumInterestingOrder order = new InumInterestingOrder(index
+                    .columns(), index.getAscending());
+            overrideInumSpacePopulateIndexSet.add(order);
+        }
+    }
     /**
      * Computes the INUM space by extracting interesting orders using the {@link 
      * DerbyInterestingOrdersExtractor}. The configuration associated to each table is completed 
@@ -67,9 +82,15 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
             // no need to explore more
             return;
 
+        Set<? extends Index> indexes;
+        if (overrideInumSpacePopulateIndexSet!=null)
+            indexes=overrideInumSpacePopulateIndexSet;
+        else
+            indexes=extractInterestingOrders(statement, catalog);
+        
         // obtain plans for all the extracted interesting orders
         computeWithCompleteConfiguration(
-                space, extractInterestingOrders(statement, catalog), statement, delegate);
+                space, indexes, statement, delegate);
 
         // NLJ heuristic referred in the INUM paper
         Set<Index> covering = getCoveringAtomicConfiguration(templateForEmpty);

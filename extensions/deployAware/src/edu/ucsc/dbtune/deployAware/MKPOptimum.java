@@ -2,7 +2,7 @@ package edu.ucsc.dbtune.deployAware;
 
 import java.util.Arrays;
 
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 
 public class MKPOptimum {
 	double maxProfit = 0;

@@ -3,8 +3,8 @@ package edu.ucsc.dbtune;
 import java.io.File;
 import java.io.IOException;
 
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 
 public class BipVsGreedyTest2 {
     String cmdline = "/usr/lib/jvm/java-6-openjdk/bin/java"

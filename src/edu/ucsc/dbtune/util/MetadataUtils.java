@@ -59,7 +59,6 @@ public final class MetadataUtils
         Set<Index> indexesForTable;
 
         for (Index i : indexes) {
-
             indexesForTable = indexesPerTable.get(i.getTable());
 
             if (indexesForTable == null) {

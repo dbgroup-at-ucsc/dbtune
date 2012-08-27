@@ -7,6 +7,8 @@ import java.util.NoSuchElementException;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.util.Tree;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -17,8 +19,14 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public class SQLStatementPlan extends Tree<Operator>
 {
+    /** id used for debugging */
+    public String id;
+    
     /** the statement this plan corresponds to. */
     private SQLStatement sql;
+    
+    /** only for debugging purpose, to be removed*/
+    public SQLStatementPlan templatePlan; 
 
     /**
      * Creates a SQL statement plan with one (given root) node.
@@ -31,6 +39,15 @@ public class SQLStatementPlan extends Tree<Operator>
         this(null, root);
     }
 
+    /**
+     * save everything to a xml node
+     * @param rx
+     */
+    public void save(Rx rx) {
+//        rx.createChild("sql", sql.getSQL());
+        this.root.getElement().save(rx.createChild("operator"), this.root);
+    }
+    
     /**
      * Creates a SQL statement plan with one (given root) node.
      *
@@ -56,6 +73,7 @@ public class SQLStatementPlan extends Tree<Operator>
     public SQLStatementPlan(SQLStatementPlan other)
     {
         this(other.sql, other.getRootOperator().duplicate());
+        this.id = other.id+"/copied";
 
         duplicateRecursively(root, other.root);
     }
@@ -156,8 +174,9 @@ public class SQLStatementPlan extends Tree<Operator>
     {
         List<DatabaseObject> objects = new ArrayList<DatabaseObject>();
 
-        for (Operator op : toList())
+        for (Operator op : toList()) {
             objects.addAll(op.getDatabaseObjects());
+        }
 
         return objects;
     }
@@ -440,5 +459,10 @@ public class SQLStatementPlan extends Tree<Operator>
             return true;
 
         return false;
+    }
+    
+     @Override
+    public String toString() {
+        return "Plan "+id+"\r\n"+super.toString();
     }
 }

@@ -8,7 +8,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import edu.ucsc.dbtune.seq.def.*;
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 
 public class SeqMerge {
 	public SeqQuery[] queries;

@@ -1,23 +1,35 @@
 package edu.ucsc.dbtune.deployAware.test;
 
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Vector;
 
+import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.deployAware.DAT;
+import edu.ucsc.dbtune.deployAware.DATBaselines;
 import edu.ucsc.dbtune.deployAware.DATOutput;
+import edu.ucsc.dbtune.deployAware.DATParameter;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.workload.Workload;
 
 public class DATPaper {
@@ -95,15 +107,22 @@ public class DATPaper {
         String shortName;
         String dbName;
         String workloadName;
+        String fileName;
         long size;
         Vector<String> plotNames = new Vector<String>();
         Vector<String> figureNames = new Vector<String>();
 
         public TestSet(String name, String dbName, String workloadName,
                 long size, String shortName) {
+            this(name, dbName, workloadName, "workload.sql", size, shortName);
+        }
+
+        public TestSet(String name, String dbName, String workloadName,
+                String fileName, long size, String shortName) {
             this.name = name;
             this.dbName = dbName;
             this.workloadName = workloadName;
+            this.fileName = fileName;
             this.size = size;
             this.shortName = shortName;
         }
@@ -133,30 +152,39 @@ public class DATPaper {
         // ps.println("\\begin{multicols}{2}\n");
         long gigbytes = 1024L * 1024L * 1024L;
         TestSet[] sets = {
-                // new TestSet("TPCDS", "test", "tpcds-inum",
+        // new TestSet("TPCDS", "test", "tpcds-inum",
                 // gigbytes),
-//                new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
-//                        10 * gigbytes, "TPC-H"),
-//                new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
-//                        "tpch10g", "tpch-benchmark-mix", 10 * gigbytes,
-//                        "TPC-H update"),
-                 new TestSet("25 TPCDS queries",
-                 "test", "tpcds-inum", 10 * gigbytes,"TPCDS25"),
-                // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
-//                new TestSet("100 OTAB  queries", "test",
-//                        "online-benchmark-100", 10 * gigbytes, "OTAB"),
-//                new TestSet("100 OTAB queries and 10 updates", "test",
-//                        "online-benchmark-update-100", 10 * gigbytes,
-//                        "OTAB update"),
-                        };
+                new TestSet("22 TPC-H queries", "tpch10g", "tpch",
+                        "complete.sql", 10 * gigbytes, "TPC-H"),
+                // new
+                // TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
+                // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes,
+                // "TPC-H update"),
+                new TestSet("25 TPCDS queries", "test", "tpcds-inum",
+                        10 * gigbytes, "TPCDS25"),
+        // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
+        // new TestSet("100 OTAB  queries", "test",
+        // "online-benchmark-100", 10 * gigbytes, "OTAB"),
+        // new TestSet("100 OTAB queries and 10 updates", "test",
+        // "online-benchmark-update-100", 10 * gigbytes,
+        // "OTAB update"),
+        };
         if (false) {
             for (TestSet set : sets) {
                 Rt.p(set.dbName + " " + set.workloadName);
                 PrintStream ps = new PrintStream("/home/wangrui/dbtune/index/"
                         + set.dbName + "_" + set.workloadName + ".txt");
                 WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                        set.workloadName, generateIndexMethod);
+                        set.workloadName, set.fileName, generateIndexMethod);
                 SeqInumCost cost = loader.loadCost();
+                DATParameter param=new DATParameter();
+                param.spaceConstraint=Double.MAX_VALUE;
+                param.costModel=cost;
+                while (cost.queries.size()>6)
+                    cost.queries.remove(cost.queries.size()-1);
+//                DAT.showFormulas=true;
+                DATBaselines.cophy(param, Double.MAX_VALUE, Double.MAX_VALUE, 5);
+                System.exit(0);
                 Vector<SeqInumIndex> indices = new Vector<SeqInumIndex>();
                 indices.addAll(cost.indices);
                 Collections.sort(indices, new Comparator<SeqInumIndex>() {
@@ -165,16 +193,68 @@ public class DATPaper {
                         return -(int) (o1.indexBenefit - o2.indexBenefit);
                     }
                 });
-                ps.format("fts_cost: %,.2f\n",cost.costWithoutIndex);
-                Rt.np("fts_cost: %,.2f\n",cost.costWithoutIndex);
-                Rt.np("optimal_cost: %,.2f\n",cost.costWithAllIndex);
-                for (int i = 0; i < indices.size(); i++) {
-                    SeqInumIndex index = indices.get(i);
-                    ps.format("%.2f\t%.2f\t%s\n", index.createCost / 1000000,
-                            index.indexBenefit / 1000000, index
-                                    .getColumnNames());
-                    Rt.np(cost.indices.get(i));
+                ps.format("fts_cost: %,.2f\n", cost.costWithoutIndex);
+                boolean[] bs = new boolean[cost.indexCount()];
+                Arrays.fill(bs, true);
+                double[] ds = DATBaselines.getQueryCost(cost, bs);
+                double[] fts = DATBaselines.getQueryCost(cost, new boolean[cost
+                        .indexCount()]);
+
+                Environment en = Environment.getInstance();
+                String dbName = set.dbName;
+                en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/"
+                        + dbName);
+                en.setProperty("username", "db2inst1");
+                en.setProperty("password", "db2inst1admin");
+                en.setProperty("workloads.dir", "resources/workloads/db2");
+                DatabaseSystem db = newDatabaseSystem(en);
+                InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
+                DB2Optimizer db2optimizer = (DB2Optimizer) optimizer
+                        .getDelegate();
+                HashSet<Index> indexes = new HashSet<Index>();
+                for (SeqInumIndex index : cost.indices) {
+                    indexes.add(index.loadIndex(db));
                 }
+                Rt.np(set.dbName + " " + set.workloadName);
+                Rt.p("queries: " + cost.queries.size());
+                Rt.p("indexes: " + indexes.size());
+                double db2indexAll = 0;
+                double db2ftsAll = 0;
+                double inumIndexAll = 0;
+                double inumFtsAll = 0;
+                for (int i = 0; i < ds.length; i++) {
+                    ExplainedSQLStatement db2plan = db2optimizer.explain(
+                            cost.queries.get(i).sql, indexes);
+                    double db2index = db2plan.getTotalCost();
+
+                    db2plan = db2optimizer.explain(cost.queries.get(i).sql);
+                    double db2fts = db2plan.getTotalCost();
+                    db2indexAll += db2index;
+                    db2ftsAll += db2fts;
+                    inumIndexAll += ds[i];
+                    inumFtsAll += fts[i];
+
+                    Rt
+                            .np(
+                                    "query=%d\tDB2(FTS)=%,.0f\tBIP(FTS)=%,.0f"
+                                            + "\tDB2(Index)=%,.0f\tBIP(Index)=%,.0f\tBIP/DB2=%.2f",
+                                    i, db2fts, fts[i], db2index, ds[i], ds[i]
+                                            / db2index);
+                }
+                Rt.np("DB2(FTS)=%,.0f", db2ftsAll);
+                Rt.np("INUM(FTS)=%,.0f", inumFtsAll);
+                Rt.np("DB2(Index)=%,.0f", db2indexAll);
+                Rt.np("INUM(Index)=%,.0f", inumIndexAll);
+                Rt.np("fts_cost: %,.2f\n", cost.costWithoutIndex);
+                Rt.np("optimal_cost: %,.2f\n", cost.costWithAllIndex);
+
+                // for (int i = 0; i < indices.size(); i++) {
+                // SeqInumIndex index = indices.get(i);
+                // ps.format("%.2f\t%.2f\t%s\n", index.createCost / 1000000,
+                // index.indexBenefit / 1000000, index
+                // .getColumnNames());
+                // Rt.np(cost.indices.get(i));
+                // }
                 ps.close();
             }
             System.exit(0);
@@ -183,7 +263,7 @@ public class DATPaper {
             for (String method : new String[] { "recommend", "powerset 2" }) {
                 for (TestSet set : sets) {
                     WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                            set.workloadName, method);
+                            set.workloadName, set.fileName, method);
                     loader.getIndexes();
                 }
             }
@@ -196,7 +276,7 @@ public class DATPaper {
         int l_def = 6;
         l_def = 4;
         // l_def=20;
-        // l_def = 1000;
+//         l_def = 1000;
         double _1mada_def = 2;
         _1mada_def = 1;
         int[] m_set = { 2, 3, 4, 5, 10 };
@@ -219,7 +299,7 @@ public class DATPaper {
             // int windowSize = 3600 * 3000;// 13 * (int) (totalCost /
             Rt.p(set.dbName + " " + set.workloadName);
             WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                    set.workloadName, generateIndexMethod);
+                    set.workloadName, set.fileName, generateIndexMethod);
             set.plotNames.clear();
             set.figureNames.clear();
 
@@ -442,7 +522,8 @@ public class DATPaper {
             // 0 3
             TestSet perfTest = sets[3];
             WorkloadLoader loader = new WorkloadLoader(perfTest.dbName,
-                    perfTest.workloadName, generateIndexMethod);
+                    perfTest.workloadName, perfTest.fileName,
+                    generateIndexMethod);
             SeqInumCost cost = loader.loadCost();
 
             PrintStream ps2 = new PrintStream(

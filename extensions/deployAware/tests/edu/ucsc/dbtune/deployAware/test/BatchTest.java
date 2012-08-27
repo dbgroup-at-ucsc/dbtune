@@ -7,8 +7,8 @@ import java.io.PrintStream;
 import edu.ucsc.dbtune.deployAware.test.DATPaper.TestSet;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 
 public class BatchTest {
     public static void main(String[] args) throws Exception {
@@ -20,7 +20,7 @@ public class BatchTest {
         PrintStream ps = new PrintStream(outputFile);
         TestSet[] sets = {
         // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
-        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum", 10 * gigbytes,"tpch"),
+        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum","workload.sql", 10 * gigbytes,"tpch"),
         // new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
         // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
         // new TestSet("100 OTAB [5] queries", "test",
@@ -32,7 +32,7 @@ public class BatchTest {
         for (TestSet set : sets) {
             Rt.np(set.dbName + " " + set.workloadName);
             WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                    set.workloadName, generateIndexMethod);
+                    set.workloadName,set.fileName, generateIndexMethod);
             SeqInumCost cost = loader.loadCost();
             Rt
                     .np("index\tcreate cost\tstorage cost\tbenefit(with-none)\tbenefit(all-without)");
@@ -76,7 +76,7 @@ public class BatchTest {
                     for (TestSet set : sets) {
                         Rt.p(set.dbName + " " + set.workloadName);
                         WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                                set.workloadName, generateIndexMethod);
+                                set.workloadName,set.fileName, generateIndexMethod);
                         SeqInumCost cost = loader.loadCost();
                         long totalCost = 0;
                         for (int i = 0; i < cost.indices.size(); i++) {

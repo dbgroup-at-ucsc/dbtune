@@ -39,7 +39,7 @@ public class InumPlanWithCache extends InumPlan
     public Operator instantiate(TableAccessSlot slot, Index index)
         throws SQLException
     {
-        SQLStatement sql = buildQueryForUnseenIndex(slot);
+        SQLStatement sql = buildQueryForUnseenIndex(slot, this);
         String key = index + sql.getSQL();
 
         Operator cachedOperator = slotCache.get(key);
@@ -50,6 +50,9 @@ public class InumPlanWithCache extends InumPlan
 
             slotCache.put(key, cachedOperator);
         }
+        
+        cachedOperator.cardinalityNLJ = slot.cardinalityNLJ;
+        cachedOperator.coefficient=slot.coefficient;
 
         return cachedOperator;
     }

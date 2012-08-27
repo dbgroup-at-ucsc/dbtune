@@ -1,14 +1,20 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.transform.TransformerException;
+
 import edu.ucsc.dbtune.inum.MatchingStrategy;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
@@ -57,6 +63,35 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
         inumSpace = optimizer.computeInumSpace(sql);
     }
 
+    /**
+     * save everything to a xml file
+     * @param rx
+     * @throws TransformerException 
+     * @throws IOException 
+     */
+    public void save(File file) throws IOException, TransformerException {
+        Rx root = new Rx("inumSpace");
+        save(root);
+        Rt.write(file, root.getXml());
+    }
+     /**
+     * save everything to a xml node
+     * @param rx
+     */
+    public void save(Rx rx) {
+        rx.createChild("numOfPlans", inumSpace.size());
+//        rx.createChild("whatIfCount", IBGSpaceComputation.whatIfCount);
+        rx.createChild("matchingStrategy", matchingStrategy.toString());
+        rx.createChild("sql", sql.getSQL());
+//        Rx indexes=rx.createChild("indexes");
+//        for (Index index : IBGSpaceComputation.indexes) {
+//            indexes.createChild("index",index.toString());
+//        }
+        for (InumPlan plan : inumSpace) {
+            plan.save(rx.createChild("plan"));
+        }
+    }
+    
     /**
      * Uses the {@link MatchingStrategy} to determine the optimal plan for the given {@code 
      * configuration}. If the INUM space hasn't been populated, it invokes {@link 

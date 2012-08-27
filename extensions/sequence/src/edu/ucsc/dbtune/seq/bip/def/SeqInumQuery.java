@@ -5,7 +5,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class SeqInumQuery implements Serializable {

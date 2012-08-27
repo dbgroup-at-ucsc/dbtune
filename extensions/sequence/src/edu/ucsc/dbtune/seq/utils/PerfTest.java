@@ -7,6 +7,8 @@ import java.io.PrintStream;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import edu.ucsc.dbtune.util.Rt;
+
 public class PerfTest {
     static RTimerN timer = new RTimerN();
     static Hashtable<String, Vector<Long>> hash = new Hashtable<String, Vector<Long>>();

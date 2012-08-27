@@ -19,7 +19,7 @@ import edu.ucsc.dbtune.seq.def.SeqConfiguration;
 import edu.ucsc.dbtune.seq.def.SeqIndex;
 import edu.ucsc.dbtune.seq.def.SeqSplitGroup;
 import edu.ucsc.dbtune.seq.def.SeqStep;
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.Workload;
 
 public class DATFunctionalTest2 {

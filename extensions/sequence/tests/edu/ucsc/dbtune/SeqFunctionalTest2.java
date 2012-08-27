@@ -19,7 +19,7 @@ import edu.ucsc.dbtune.seq.def.SeqQuery;
 import edu.ucsc.dbtune.seq.def.SeqSplitGroup;
 import edu.ucsc.dbtune.seq.def.SeqStep;
 import edu.ucsc.dbtune.seq.def.SeqStepConf;
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 

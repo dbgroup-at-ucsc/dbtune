@@ -2,6 +2,8 @@ package edu.ucsc.dbtune.optimizer.plan;
 
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Rx;
+import edu.ucsc.dbtune.util.Tree.Entry;
 
 /**
  * Represents a predicate.
@@ -31,6 +33,19 @@ public class Predicate
             throw new RuntimeException("text can't be null");
 
         predicateText = text;
+    }
+    
+    /**
+     * save everything to a xml node
+     * @param rx
+     */
+    public void save(Rx rx) {
+        if (columnA!=null)
+            rx.createChild("columnA",columnA.toString());
+        if (columnB!=null)
+            rx.createChild("columnB",columnB.toString());
+        if (predicateText!=null)
+            rx.createChild("predicateText",predicateText.toString());
     }
     
     /**
@@ -160,5 +175,10 @@ public class Predicate
             code = 37 * code + predicateText.hashCode();
 
         return code;
+    }
+    
+     @Override
+    public String toString() {
+        return predicateText;
     }
 }

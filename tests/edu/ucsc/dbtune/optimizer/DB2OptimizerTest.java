@@ -108,7 +108,7 @@ public class DB2OptimizerTest
         op = DB2Optimizer.parseNode(cat, rs, new ArrayList<String>(), new HashSet<Index>());
 
         assertThat(op.getName(), is("RETURN"));
-        assertThat(op.getCardinality(), is(10L));
+        assertThat(op.getCardinality(), is(10.0));
         assertThat(op.getAccumulatedCost(), is(2000.0));
         assertThat(op.getDatabaseObjects().isEmpty(), is(true));
 
@@ -117,7 +117,7 @@ public class DB2OptimizerTest
         op = DB2Optimizer.parseNode(cat, rs, new ArrayList<String>(), new HashSet<Index>());
 
         assertThat(op.getName(), is(Operator.TABLE_SCAN));
-        assertThat(op.getCardinality(), is(10L));
+        assertThat(op.getCardinality(), is(10.0));
         assertThat(op.getAccumulatedCost(), is(2000.0));
         assertThat(op.getDatabaseObjects().isEmpty(), is(false));
         assertThat(op.getDatabaseObjects().size(), is(1));
@@ -151,7 +151,7 @@ public class DB2OptimizerTest
         op = DB2Optimizer.parseNode(cat, rs, new ArrayList<String>(), new HashSet<Index>());
 
         assertThat(op.getName(), is(Operator.INDEX_SCAN));
-        assertThat(op.getCardinality(), is(100L));
+        assertThat(op.getCardinality(), is(100.0));
         assertThat(op.getAccumulatedCost(), is(700.0));
         assertThat(op.getDatabaseObjects().isEmpty(), is(false));
         assertThat(op.getDatabaseObjects().size(), is(1));

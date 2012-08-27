@@ -9,7 +9,7 @@ import ilog.cplex.IloCplex;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 
 public class MKPBip {
     double[] bins;

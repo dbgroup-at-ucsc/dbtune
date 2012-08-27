@@ -6,8 +6,8 @@ import java.io.InputStream;
 
 import javax.xml.transform.TransformerException;
 
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 
 public class DATSeparateProcess {
     String dbName;

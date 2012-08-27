@@ -11,8 +11,8 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 
 public class SeqInumIndex implements Serializable {
     public int id;
@@ -94,29 +94,36 @@ public class SeqInumIndex implements Serializable {
         indexBenefit = rx.getChildDoubleContent("indexBenefit");
         indexBenefit2 = rx.getChildDoubleContent("indexBenefit2");
         Rx rx2 = rx.findChild("index");
+        indexRx = rx2;
         if (rx2 != null && db != null) {
             // String name=rx2.getChildText("name");
             // String tableName=rx2.getChildText("table");
             // String[] st=tableName.ssplit("\\.");
             // Schema schema=(Schema)db.getCatalog().find(st[0]);
             // Table table= schema.findTable(st[1]);
-            Rx[] columns = rx2.findChilds("column");
-            Vector<Column> v = new Vector<Column>();
-            HashMap<Column, Boolean> map = new HashMap<Column, Boolean>();
-            for (int i = 0; i < columns.length; i++) {
-                String s = columns[i].getText();
-                String cname = s.substring(0, s.indexOf('('));
-                Column c = (Column) db.getCatalog().findByQualifiedName(cname);
-                if (c == null)
-                    throw new Error(cname);
-                v.add(c);
-                map.put(c, "(A)".equals(s.substring(s.indexOf('('))));
-            }
-            index = new Index(v, map);
+            loadIndex(db);
         } else {
             indexRx = rx2;
         }
+    }
 
+    public Index loadIndex(DatabaseSystem db) throws SQLException {
+        if (index != null)
+            return index;
+        Rx[] columns = indexRx.findChilds("column");
+        Vector<Column> v = new Vector<Column>();
+        HashMap<Column, Boolean> map = new HashMap<Column, Boolean>();
+        for (int i = 0; i < columns.length; i++) {
+            String s = columns[i].getText();
+            String cname = s.substring(0, s.indexOf('('));
+            Column c = (Column) db.getCatalog().findByQualifiedName(cname);
+            if (c == null)
+                throw new Error(cname);
+            v.add(c);
+            map.put(c, "(A)".equals(s.substring(s.indexOf('('))));
+        }
+        index = new Index(v, map);
+        return index;
     }
 
     @Override

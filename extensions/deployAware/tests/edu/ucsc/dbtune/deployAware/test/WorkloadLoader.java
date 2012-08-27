@@ -27,8 +27,8 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.utils.PerfTest;
-import edu.ucsc.dbtune.seq.utils.Rt;
-import edu.ucsc.dbtune.seq.utils.Rx;
+import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -39,12 +39,14 @@ public class WorkloadLoader {
     public int indexSize = 0;
     public String dbName = "test";
     public String workloadName = "tpch-500-counts";
+    public String fileName = "tpch-500-counts";
     public String generateIndexMethod = "recommend";
 
-    public WorkloadLoader(String dbName, String workloadName,
+    public WorkloadLoader(String dbName, String workloadName, String fileName,
             String generateIndexMethod) {
         this.dbName = dbName;
         this.workloadName = workloadName;
+        this.fileName = fileName;
         this.generateIndexMethod = generateIndexMethod;
     }
 
@@ -64,11 +66,7 @@ public class WorkloadLoader {
 
     public Workload getWorkload(Environment en) throws IOException,
             SQLException {
-        String file = "/tpch/workload_bip_seq.sql";
-        file = "/tpch-small/workload.sql";
-        file = "/tpcds-small/workload.sql";
-        file = "/tpch-500-counts/workload.sql";
-        file = "/" + workloadName + "/workload.sql";
+        String file = "/" + workloadName + "/" + fileName;
         Workload workload = new Workload("", new FileReader(en
                 .getWorkloadsFoldername()
                 + file));
@@ -264,6 +262,9 @@ public class WorkloadLoader {
             double costWithAllIndex = DATWindow.costWithIndex(cost, bs);
             cost.costWithAllIndex = costWithAllIndex;
         }
+//        while (cost.queries.size()>6)
+//            cost.queries.remove(cost.queries.size()-1);
+
         return cost;
     }
 
