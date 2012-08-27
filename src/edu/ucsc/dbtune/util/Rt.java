@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.seq.utils;
+package edu.ucsc.dbtune.util;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -70,19 +70,15 @@ import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.xml.transform.TransformerException;
 
+import edu.ucsc.dbtune.seq.utils.RTimer;
+
 
 /**
+ * Variable short name functions used for debug
  * @author Rui Wang
  */
 public class Rt {
 	public static String charSet;
-
-	public static void init() {
-		if ("amd64".equals(System.getProperty("os.arch")))
-			Rt.addJavaLibraryPath("lib/java3d/amd64");
-		else
-			Rt.addJavaLibraryPath("lib/java3d/i386");
-	}
 
 	public static boolean showDate = true;
 
@@ -1306,78 +1302,6 @@ public class Rt {
 		stream.close();
 	}
 
-	public static void setUIFont(javax.swing.plaf.FontUIResource f) {
-		// not working
-		//
-		// sets the default font for all Swing components.
-		// ex.
-		// setUIFont (new javax.swing.plaf.FontUIResource
-		// ("Serif",Font.ITALIC,12));
-		//
-		java.util.Enumeration keys = UIManager.getDefaults().keys();
-		while (keys.hasMoreElements()) {
-			Object key = keys.nextElement();
-			Object value = UIManager.get(key);
-			if (value instanceof javax.swing.plaf.FontUIResource) {
-				UIManager.put(key, f);
-			}
-		}
-	}
-
-	public static void setLookAndFeel() {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void initUIFont() {
-		Rt.setUIFont(new javax.swing.plaf.FontUIResource(
-				"AR PL ShanHeiSun Uni", 0, 16));
-	}
-
-	public static void initUI() {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		// javax.swing.plaf.FontUIResource f = new
-		// javax.swing.plaf.FontUIResource(
-		// "AR PL ShanHeiSun Uni", 0, 16);
-		// java.util.Enumeration keys = UIManager.getDefaults().keys();
-		// while (keys.hasMoreElements()) {
-		// Object key = keys.nextElement();
-		// Object value = UIManager.get(key);
-		// if (value instanceof javax.swing.plaf.FontUIResource) {
-		// UIManager.put(key, f);
-		// }
-		// }
-		//
-		// Rt.p(UIManager.get("Label.font"));
-		// Rt.p(UIManager.getDefaults().get("Label.font"));
-		// Rt.p(UIManager.getLookAndFeel().getDefaults().get("Label.font"));
-	}
-
-	public static void listChineseFont() {
-		Vector<String> chinesefonts = new Vector<String>();
-		Font[] allfonts = GraphicsEnvironment.getLocalGraphicsEnvironment()
-				.getAllFonts();
-		int fontcount = 0;
-		String chinesesample = "\u4e00";
-		for (int j = 0; j < allfonts.length; j++) {
-			if (allfonts[j].canDisplayUpTo(chinesesample) == -1) {
-				chinesefonts.add(allfonts[j].getFontName());
-			}
-			fontcount++;
-		}
-		System.out.println(fontcount);
-		for (String string : chinesefonts) {
-			System.out.println(string);
-		}
-	}
-
 	public static String bytesToHexString(byte[] bs) {
 		if (bs == null)
 			return null;
@@ -1437,39 +1361,6 @@ public class Rt {
 			bs[i] = (byte) Integer.parseInt(st.nextToken());
 		}
 		return bs;
-	}
-
-	public static String showPasswordDialog(String message) {
-		final JDialog frame = new JDialog((Frame) null, "Input password");
-		JLabel label = new JLabel(message);
-		final JPasswordField field = new JPasswordField();
-		field.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					frame.setVisible(false);
-				} else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-					field.setText("");
-					frame.setVisible(false);
-				}
-			}
-		});
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				field.setText("");
-			}
-		});
-		frame.add(label, BorderLayout.NORTH);
-		frame.add(field, BorderLayout.CENTER);
-		frame.setModal(true);
-		frame.setSize(300, 100);
-		frame.setLocation(300, 200);
-		frame.setVisible(true);
-		char[] cs = field.getPassword();
-		if (cs.length == 0)
-			return null;
-		return new String(cs);
 	}
 
 	public static String[] sortHashSet(HashSet<String> hashSet) {
@@ -1567,26 +1458,6 @@ public class Rt {
 				return false;
 		}
 		return true;
-	}
-
-	public static String getSystemInfo(String execName, String arg,
-			int minThreads) throws Exception {
-		String cmd = "ps --cols 4000 -C " + execName + " -o nlwp,rss,args";
-		Process process = Runtime.getRuntime().exec(cmd);
-		byte[] bs = Rt.read(process.getInputStream());
-		StringBuilder sb = new StringBuilder();
-		String[] lines = new String(bs).split("\n");
-		for (int i = 1; i < lines.length; i++) {
-			String s = lines[i].trim();
-			String[] ss = s.split("[ |\t]+", 3);
-			int thread = Integer.parseInt(ss[0]);
-			int memory = Integer.parseInt(ss[1]);
-			String args = ss[2];
-			if (args.indexOf(arg) >= 0 && thread > minThreads)
-				sb.append(String.format("thread=%,d\nmemory=%,d\n", thread,
-						memory * 1024));
-		}
-		return sb.toString();
 	}
 
 	private static MessageDigest md5;
@@ -2023,15 +1894,6 @@ public class Rt {
 		if (t > 0)
 			name = name.substring(0, t);
 		return name;
-	}
-
-	public static boolean atHome() {
-		try {
-			return "wr".equals(InetAddress.getLocalHost().getHostName());
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			return false;
-		}
 	}
 
 	public static Properties readProperties(File file) throws IOException {

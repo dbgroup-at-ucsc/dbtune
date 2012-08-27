@@ -10,7 +10,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.seq.def.*;
-import edu.ucsc.dbtune.seq.utils.Rt;
+import edu.ucsc.dbtune.util.Rt;
 
 public class SeqCost {
 	public Hashtable<String, SeqQuery> queries = new Hashtable<String, SeqQuery>();

@@ -16,6 +16,16 @@ import edu.ucsc.dbtune.metadata.Table;
 public class TableAccessSlot extends Operator
 {
     private Index index;
+    
+    /**
+     * Next slot id in the same table
+     */
+    public int nextSlotId = -1;
+    
+    /**
+     * The SQL used to calculate plug in cost
+     */
+    public String costSQL;
 
     /**
      * Analyzes the database objects referenced in the given operator and creates a slot 
@@ -39,8 +49,8 @@ public class TableAccessSlot extends Operator
         if (leaf.getDatabaseObjects().size() != 1)
             throw new SQLException("Leaf should contain one object");
 
-        if (leaf.getColumnsFetched() == null || leaf.getColumnsFetched().size() == 0)
-            throw new SQLException("No columns fetched for leaf");
+//        if (leaf.getColumnsFetched() == null || leaf.getColumnsFetched().size() == 0)
+//            throw new SQLException("No columns fetched for leaf "+leaf);
         
         DatabaseObject object = leaf.getDatabaseObjects().get(0);
         
@@ -68,6 +78,7 @@ public class TableAccessSlot extends Operator
         super(other);
 
         this.index = other.index;
+        this.nextSlotId = other.nextSlotId;
     }
 
     /**
@@ -158,5 +169,10 @@ public class TableAccessSlot extends Operator
             return true;
 
         return false;
+    }
+    
+    @Override
+    public String toString() {
+        return nextSlotId + " " + super.toString();
     }
 }

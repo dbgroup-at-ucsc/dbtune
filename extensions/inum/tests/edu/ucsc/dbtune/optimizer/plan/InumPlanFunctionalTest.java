@@ -103,8 +103,10 @@ public class InumPlanFunctionalTest
                 if (sql.getSQLCategory().isSame(NOT_SELECT)) {
                     assertThat(inumPlan.getSlots().size(), is(1));
                 } else {
-                    for (Operator l : eStmt.getPlan().leafs())
-                        costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(eStmt.getPlan(), l);
+                    Set<Operator> leafs = eStmt.getPlan().leafs();
+                    for (Operator l : leafs)
+                        costLeafs += InumPlan.extractCostOfLeafAndRemoveFetch(
+                                eStmt.getPlan(), l, leafs);
 
                     assertThat(inumPlan.getSlots().size(), is(eStmt.getPlan().getTables().size()));
                     assertThat(

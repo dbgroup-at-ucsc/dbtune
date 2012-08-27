@@ -8,6 +8,7 @@ import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,7 +211,25 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     protected void parse(SQLStatement stmt) throws SQLException
     {
         try {
-            CON.prepareStatement(stmt.getSQL());
+            String sql=stmt.getSQL();
+            /**
+             * DerbyInterestingOrdersExtractor can't handle functions properly.
+             * The following code replace the substring function with the
+             * column being used.
+             */
+            while (true) {
+                int t = sql.indexOf("substring");
+                if (t < 0)
+                    break;
+                int e = sql.indexOf(')', t);
+                String s = sql.substring(t, e + 1);
+                s = s.substring(s.indexOf('(') + 1);
+                s = s.substring(0, s.indexOf(','));
+                sql = sql.substring(0, t) + s + sql.substring(e + 1);
+                
+            }
+            
+            CON.prepareStatement(sql);
         } catch (SQLException se) {
             String sqlState = se.getSQLState();
 
@@ -297,7 +316,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      */
     public SQLStatementParseTree process(ResultSetNode subquery) throws StandardException
     {
-        return (new DerbyInterestingOrdersExtractor(catalog)).parse((SelectNode) subquery);
+        return (new DerbyInterestingOrdersExtractor(catalog)).parse((SelectNode) subquery,parseTree.viewToTable);
     }
 
     /**
@@ -305,14 +324,20 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
      *
      * @param subquery
      *      a result set node
+     * @param parentAliasTable
+     *      the sub query may use table alias in the original query.
      * @return
      *      the parsed query
      * @throws StandardException
      *      if {@link #parse(SelectNode)} throws an error
      */
-    public SQLStatementParseTree parse(SelectNode subquery) throws StandardException
+    public SQLStatementParseTree parse(SelectNode subquery,Hashtable<String,String> parentAliasTable) throws StandardException
     {
         reset();
+        
+        //Add all table alias to sub query
+        if (parentAliasTable != null)
+            parseTree.viewToTable.putAll(parentAliasTable);
 
         if (subquery.getFromList() != null) {
             subquery.getFromList().accept(this);
@@ -349,7 +374,10 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     private void process(FromBaseTable baseTable) throws StandardException
     {
         // views aren't replaced yet, so they'll be treated as base tables
-        parseTree.addFromListTableName(baseTable.getTableName().toString());
+        // Update: Add table and alias - Rui
+        parseTree.addFromListTableName(
+                baseTable.getTableName().toString(),
+                baseTable.getOrigTableName().toString());
     }
     private void process(FromSubquery fromSubquery) throws StandardException
     {
@@ -459,6 +487,10 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
     {
         private List<SQLStatementParseTree> subqueries;
         private List<String> tableNamesInFrom;
+        /**
+         * Map from alias to table
+         */
+        Hashtable<String,String> viewToTable;
         private List<String> columnNamesInSelect;
         private List<String> columnNamesInGroupBy;
         private Map<String, Boolean> columnNamesInOrderBy;
@@ -470,6 +502,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
         {
             subqueries = new ArrayList<SQLStatementParseTree>();
             tableNamesInFrom = new ArrayList<String>();
+            viewToTable=new Hashtable<String, String>();
             columnNamesInSelect = new ArrayList<String>();
             columnNamesInOrderBy = new LinkedHashMap<String, Boolean>();
             columnNamesInGroupBy = new ArrayList<String>();
@@ -490,6 +523,7 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
                 subqueries.add(pt);
 
             tableNamesInFrom = new ArrayList<String>(other.tableNamesInFrom);
+            viewToTable=new Hashtable<String, String>(other.viewToTable);
             columnNamesInSelect = new ArrayList<String>();
             columnNamesInOrderBy = new LinkedHashMap<String, Boolean>(other.columnNamesInOrderBy);
             columnNamesInGroupBy = new ArrayList<String>(other.columnNamesInGroupBy);
@@ -573,9 +607,11 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
          * @param tableName
          *      name of the table
          */
-        public void addFromListTableName(String tableName)
+        public void addFromListTableName(String tableName,String orgTableName)
         {
             tableNamesInFrom.add(tableName);
+            // tableName is the alias, orgTableName is the actual table name
+            viewToTable.put(tableName, orgTableName);
         }
 
         /**
@@ -804,6 +840,19 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
 
             allTables.addAll(tables);
             allTables.addAll(tablesFromUpper);
+            
+            /**
+             * The following code change a column with table alias to an actual table.
+             * For example, ... FROM A as B ..., B.C will be changed to A.C
+             */
+            int t= columnName.indexOf('.');
+            if (t>=0) {
+                String tableName= columnName.substring(0,t);
+                String name= columnName.substring(t+1);
+                String orgTableName=viewToTable.get(tableName);
+                if ( orgTableName!=null)
+                    columnName= orgTableName+"."+name;
+            }
 
             // first with fully qualified name
             if (columnName.split("\\.").length == 3) {
@@ -892,6 +941,8 @@ public class DerbyInterestingOrdersExtractor implements InterestingOrdersExtract
             List<Table> tables = new ArrayList<Table>();
 
             for (String tableName : tableNames) {
+                //covert from alias to actual table name
+                tableName= viewToTable.get(tableName);
                 Table table = catalog.<Table>findByName(tableName);
 
                 if (table == null)

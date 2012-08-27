@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+
 /**
  * Implementation of a tree.
  *
@@ -18,7 +19,7 @@ import java.util.Set;
 public class Tree<T>
 {
     protected Entry<T> root;
-    protected Map<T, Entry<T>> elements;
+    public Map<T, Entry<T>> elements;
 
     /**
      * Builds a tree with the given argument as root.
@@ -107,6 +108,25 @@ public class Tree<T>
 
         return leafs;
     }
+    
+    /**
+     * returns all nodes of the tree.
+     *
+     * @return
+     *     elements at the leafs
+     */
+    public Set<T> nodes()
+    {
+        // if this needs to be implemented more efficiently, we can keep a list of all the leafs and 
+        // maintain it as elements are removed/inserted from/into the tree
+        
+        Set<T> nodes = new HashSet<T>();
+        
+        for (Entry<T> e : elements.values())
+            nodes.add(e.element);
+        
+        return nodes;
+    }
 
     /**
      * returns the children of an element.
@@ -132,6 +152,27 @@ public class Tree<T>
             children.add(e.getElement());
 
         return children;
+    }
+    
+    /**
+     * returns internal list of children of an element.
+     *
+     * @param value
+     *      value for which the children are being retrieved
+     * @return
+     *      a list containing the children elements of the given value. Empty if the given element 
+     *      is a leaf of the tree.
+     * @throws NoSuchElementException
+     *      if {@code value} isn't a member of the tree
+     */
+    public List<Entry<T>> getChildrenForSwap(T value) throws NoSuchElementException
+    {
+        Entry<T> entry = find(value, root);
+        
+        if (entry == null)
+            throw new NoSuchElementException(value + " is not a member of the tree");
+        
+        return entry.children;
     }
 
     /**
@@ -199,7 +240,19 @@ public class Tree<T>
      * @throws NoSuchElementException
      *      if parentValue isn't a member of the tree
      */
-    public Entry<T> setChild(T parentValue, T childValue)
+    public Entry<T> setChild(T parentValue, T childValue) {
+         return setChild(parentValue, childValue, -1);
+    }
+    
+    /**
+     * 
+     * @param parentValue
+     * @param childValue
+     * @param index - When plug in an index to NLJ operator,
+     *  it's important to keep the original order of the slots.
+     * @return
+     */
+    public Entry<T> setChild(T parentValue, T childValue,int index)
     {
         Entry<T> parentEntry;
         Entry<T> childEntry;
@@ -214,7 +267,11 @@ public class Tree<T>
 
         childEntry = new Entry<T>(parentEntry, childValue);
 
-        parentEntry.children.add(childEntry);
+        if ( index>=0) {
+            parentEntry.children.add(index,childEntry);
+        } else {
+            parentEntry.children.add(childEntry);
+        }
 
         elements.put(childValue, childEntry);
 
@@ -229,9 +286,14 @@ public class Tree<T>
      * @throws NoSuchElementException
      *      if {@code value} isn't a member of the tree
      */
-    public void remove(T value)
+    public int remove(T value)
     {
-        remove(elements.get(value));
+        Entry<T> entry=elements.get(value);
+        if (entry==null) {
+            Rt.p(value);
+            Rt.p(this);
+        }
+        return remove(entry);
     }
 
     /**
@@ -242,10 +304,12 @@ public class Tree<T>
      * @throws NoSuchElementException
      *      if entry is null
      */
-    private void remove(Entry<T> entry)
+    private int remove(Entry<T> entry)
     {
         if (entry == null)
             throw new NoSuchElementException("Entry not in tree");
+
+        int index=entry.parent==null?-1:entry.parent.children.indexOf(entry);
 
         List<Entry<T>> subtreeEntries = new ArrayList<Entry<T>>();
 
@@ -261,6 +325,7 @@ public class Tree<T>
             e.parent = null;
             elements.remove(e.element);
         }
+        return index;
     }
 
     /**

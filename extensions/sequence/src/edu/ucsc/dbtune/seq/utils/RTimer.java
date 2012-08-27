@@ -2,6 +2,8 @@ package edu.ucsc.dbtune.seq.utils;
 
 import java.util.Date;
 
+import edu.ucsc.dbtune.util.Rt;
+
 /**
  * @author Rui Wang
  */

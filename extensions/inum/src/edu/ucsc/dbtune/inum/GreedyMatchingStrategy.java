@@ -1,15 +1,20 @@
 package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
+import edu.ucsc.dbtune.util.Rt;
 
+import static com.google.common.collect.Iterables.get;
 import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesPerTable;
 
 /**
@@ -29,7 +34,7 @@ public class GreedyMatchingStrategy extends AbstractMatchingStrategy
         if (inumSpace.size() == 0)
             throw new SQLException("No template plan in the INUM space");
         
-        Set<Index> bestConf = null;
+        Vector<Index> bestConf = null;
         InumPlan bestTemplate = null;
         SQLStatementPlan instantiatedPlan = null;
         Index  bestIndexForSlot = null;
@@ -44,22 +49,25 @@ public class GreedyMatchingStrategy extends AbstractMatchingStrategy
         // instantiation is the winner.
 
         for (InumPlan template : inumSpace) {
+//            Rt.p(template);
+//            Rt.p(template.orgPlan);
+            Vector<Index> bestAtomicConfiguration = new Vector<Index>();
 
-            Set<Index> bestAtomicConfiguration = new HashSet<Index>();
+            Collection<TableAccessSlot> slots=template.getSlots();
+            for (TableAccessSlot slot : slots) {
 
-            for (Table table : template.getTables()) {
+                Set<Index> indexesForTable = indexesPerTable.get(slot.getTable());
 
-                Set<Index> indexesForTable = indexesPerTable.get(table);
-
-                if (indexesForTable == null)
-                    throw new SQLException("No indexes for " + table);
+                if (indexesForTable == null) {
+                    throw new SQLException("No indexes for " + slot);
+                }
 
                 bestIndexForSlot = null;
                 bestCostForIndex = Double.POSITIVE_INFINITY;
 
                 for (Index i : indexesForTable) {
 
-                    double costForIndex = template.plug(i);
+                    double costForIndex = template.plug(slot,i);
 
                     if (costForIndex < bestCostForIndex) {
                         bestCostForIndex = costForIndex;
@@ -67,23 +75,26 @@ public class GreedyMatchingStrategy extends AbstractMatchingStrategy
                     }
                 }
 
-                if (bestIndexForSlot == null)
+                if (bestIndexForSlot == null) {
                     // didn't find a matching index for this template
                     // need to check the next template
                     break;
+                }
 
                 bestAtomicConfiguration.add(bestIndexForSlot);
             }
 
-            if (bestAtomicConfiguration.size() != template.getTables().size())
+            if (bestAtomicConfiguration.size() != slots.size()) {
                 // not all indexes where compatible, check the next template
                 continue;
+            }
 
             SQLStatementPlan plan = template.instantiate(bestAtomicConfiguration);
 
             if (plan == null)
                 throw new SQLException("Can't instantiate best configuration; check compatibility");
 
+//            Rt.p(plan);
             if (plan.getRootOperator().getAccumulatedCost() < bestCost) {
                 bestCost = plan.getRootOperator().getAccumulatedCost();
                 bestConf = bestAtomicConfiguration;
@@ -95,6 +106,7 @@ public class GreedyMatchingStrategy extends AbstractMatchingStrategy
         if (bestTemplate == null)
             throw new SQLException("Can't find match for configuration " + configuration);
 
+        instantiatedPlan.templatePlan= bestTemplate;
         return new Result(instantiatedPlan, bestTemplate, new HashSet<Index>(bestConf), bestCost);
     }
 }

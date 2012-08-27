@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.seq.utils;
+package edu.ucsc.dbtune.util;
 
 import java.io.IOException;
 import java.io.StringWriter;
