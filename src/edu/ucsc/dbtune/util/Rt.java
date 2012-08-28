@@ -1,18 +1,5 @@
 package edu.ucsc.dbtune.util;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -69,8 +56,6 @@ import javax.swing.LookAndFeel;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.xml.transform.TransformerException;
-
-import edu.ucsc.dbtune.seq.utils.RTimer;
 
 
 /**
@@ -193,10 +178,6 @@ public class Rt {
 		System.out.println(getInfoWithDate() + ": " + format);
 	}
 
-	public static void p(byte[] bs) {
-		System.out.println(getInfo() + ": " + bytesToHexString(bs));
-	}
-
 	public static String getBits(byte[] bs) {
 		StringBuilder sb = new StringBuilder();
 		for (byte b : bs) {
@@ -227,10 +208,6 @@ public class Rt {
 
 	public static void pBits(byte[] bs) {
 		System.out.println(getInfo() + ": " + getBits(bs));
-	}
-
-	public static void p(byte[] bs, int len) {
-		System.out.println(getInfo() + ": " + bytesToHexString(bs, len));
 	}
 
 	public static void pstr(byte[] bs) {
@@ -523,7 +500,6 @@ public class Rt {
 				inputStream);
 		Vector<String> lines = new Vector<String>();
 		java.io.ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		RTimer timer = new RTimer();
 		while (true) {
 			int t = stream.read();
 			if (t < 0)
@@ -534,7 +510,6 @@ public class Rt {
 				if (bs.length > 0 && bs[bs.length - 1] == '\r')
 					len--;
 				lines.add(createString(bs, 0, len, charSet));
-				timer.next();
 				if (lines.size() >= max) {
 					return lines.toArray(new String[lines.size()]);
 				}
@@ -795,19 +770,6 @@ public class Rt {
 	}
 
 	public static void write(File file, byte[] bs) throws IOException {
-		FileOutputStream fileOutputStream = new FileOutputStream(file);
-		fileOutputStream.write(bs);
-		fileOutputStream.close();
-	}
-
-	public static void writeIfChanged(File file, byte[] bs) throws IOException {
-		if (file.exists()) {
-			byte[] bs2 = readFileByte(file);
-			if (bytesEquals(bs, bs2)) {
-				Rt.np(file.getName() + " not changed");
-				return;
-			}
-		}
 		FileOutputStream fileOutputStream = new FileOutputStream(file);
 		fileOutputStream.write(bs);
 		fileOutputStream.close();
@@ -1269,99 +1231,6 @@ public class Rt {
 		// throw new Error();
 	}
 
-	public static void scrollJScrollPaneToTop(final javax.swing.JScrollPane pane) {
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				pane.getViewport().setViewPosition(new Point(0, 0));
-			}
-		});
-	}
-
-	private static void addFileToZip(
-			java.util.zip.ZipOutputStream outputStream, File dir, String name)
-			throws IOException {
-		if (dir.isDirectory()) {
-			for (File file : dir.listFiles()) {
-				addFileToZip(outputStream, file, name.length() > 0 ? name + "/"
-						+ file.getName() : file.getName());
-			}
-		} else {
-			java.util.zip.ZipEntry entry = new ZipEntry(name);
-			outputStream.putNextEntry(entry);
-			outputStream.write(Rt.readFileByte(dir));
-			outputStream.closeEntry();
-		}
-	}
-
-	public static void createZip(File dir, File file) throws IOException {
-		if (!dir.exists())
-			throw new IOException(dir.getAbsolutePath());
-		java.util.zip.ZipOutputStream stream = new ZipOutputStream(
-				new FileOutputStream(file));
-		addFileToZip(stream, dir, "");
-		stream.close();
-	}
-
-	public static String bytesToHexString(byte[] bs) {
-		if (bs == null)
-			return null;
-		return bytesToHexString(bs, bs.length);
-	}
-
-	public static String bytesToHexString(byte[] bs, int len) {
-		return bytesToHexString(bs, 0, len);
-	}
-
-	public static String bytesToHexString(byte[] bs, int offset, int len) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < len; i++) {
-			sb.append(String.format("%02X", bs[offset + i] & 0xFF));
-		}
-		return sb.toString();
-	}
-
-	public static String bytesToHexStringSpace(byte[] bs, int offset, int len) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < len; i++) {
-			sb.append(String.format("%02X ", bs[offset + i] & 0xFF));
-		}
-		return sb.toString();
-	}
-
-	public static byte[] hexStringToBytes(String s) {
-		StringBuilder sb = new StringBuilder(s.length());
-		for (int i = 0; i < s.length(); i++) {
-			char c = s.charAt(i);
-			if (c != ' ')
-				sb.append(c);
-		}
-		if (sb.length() % 2 != 0)
-			Rt.error("s.length()==" + sb.length());
-		byte[] bs = new byte[sb.length() / 2];
-		for (int i = 0; i < bs.length; i++) {
-			bs[i] = (byte) Integer.parseInt(sb.substring(i + i, i + i + 2), 16);
-		}
-		return bs;
-	}
-
-	public static String bytesToIntString(byte[] bs) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < bs.length; i++) {
-			if (i > 0)
-				sb.append(".");
-			sb.append(bs[i] & 0xFF);
-		}
-		return sb.toString();
-	}
-
-	public static byte[] intStringToBytes(String ip) {
-		StringTokenizer st = new StringTokenizer(ip, ".");
-		byte[] bs = new byte[st.countTokens()];
-		for (int i = 0; i < bs.length; i++) {
-			bs[i] = (byte) Integer.parseInt(st.nextToken());
-		}
-		return bs;
-	}
 
 	public static String[] sortHashSet(HashSet<String> hashSet) {
 		String[] ss = new String[hashSet.size()];
@@ -1460,180 +1329,6 @@ public class Rt {
 		return true;
 	}
 
-	private static MessageDigest md5;
-
-	public static byte[] md5(byte[] bs) {
-		if (md5 == null) {
-			try {
-				md5 = MessageDigest.getInstance("MD5");
-			} catch (NoSuchAlgorithmException e) {
-				e.printStackTrace();
-				return null;
-			}
-		}
-		synchronized (md5) {
-			md5.reset();
-			return md5.digest(bs);
-		}
-	}
-
-	public static String md5(String s) {
-		if (md5 == null) {
-			try {
-				md5 = MessageDigest.getInstance("MD5");
-			} catch (NoSuchAlgorithmException e) {
-				e.printStackTrace();
-				return null;
-			}
-		}
-		synchronized (md5) {
-			md5.reset();
-			return bytesToHexString(md5.digest(s.getBytes()));
-		}
-	}
-
-	public static String[] split(String str, char delim) {
-		int len = str.length();
-		java.util.Vector<String> vector = new Vector<String>();
-		int start = 0;
-		for (int i = 0; i < len; i++) {
-			char c = str.charAt(i);
-			if (c == delim) {
-				vector.add(str.substring(start, i));
-				start = i + 1;
-			}
-		}
-		vector.add(str.substring(start));
-		return vector.toArray(new String[vector.size()]);
-	}
-
-	public static int compareBytes(byte[] bs1, byte[] bs2) {
-		int len = Math.min(bs1.length, bs2.length);
-		for (int i = 0; i < len; i++) {
-			if (bs1[i] > bs2[i])
-				return 1;
-			if (bs1[i] < bs2[i])
-				return -1;
-		}
-		if (bs1.length > len)
-			return 1;
-		if (bs2.length > len)
-			return -1;
-		return 0;
-	}
-
-	public static boolean strEquals(String s1, String s2) {
-		if ((s1 == null) != (s2 == null))
-			return false;
-		if (s1 == null)
-			return true;
-		return s1.equals(s2);
-	}
-
-	public static boolean bytesEquals(byte[] bs1, byte[] bs2) {
-		if (bs1.length != bs2.length)
-			return false;
-		return bytesEquals(bs1, bs2, bs1.length);
-	}
-
-	public static int indexOf(byte[] bs, byte b, int fromIndex) {
-		int count = bs.length;
-		if (fromIndex < 0) {
-			fromIndex = 0;
-		} else if (fromIndex >= count) {
-			return -1;
-		}
-
-		for (int i = fromIndex; i < count; i++) {
-			if (bs[i] == b) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	public static int lastIndexOf(byte[] bs, byte b, int fromIndex) {
-		int count = bs.length;
-		int i = (fromIndex >= count) ? count - 1 : fromIndex;
-
-		for (; i >= 0; i--) {
-			if (bs[i] == b) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	public static byte[] sub(byte[] bs, int start) {
-		return sub(bs, start, bs.length);
-	}
-
-	public static byte[] sub(byte[] bs, int start, int end) {
-		byte[] b = new byte[end - start];
-		System.arraycopy(bs, start, b, 0, end - start);
-		return b;
-	}
-
-	public static int indexOf(byte[] text, byte[] keyword, int fromIndex) {
-		int sourceCount = text.length;
-		int targetCount = keyword.length;
-		if (fromIndex >= sourceCount)
-			return (targetCount == 0 ? sourceCount : -1);
-		if (fromIndex < 0)
-			fromIndex = 0;
-		if (targetCount == 0)
-			return fromIndex;
-
-		byte first = keyword[0];
-		int max = sourceCount - targetCount;
-
-		for (int i = fromIndex; i <= max; i++) {
-			/* Look for first character. */
-			if (text[i] != first) {
-				while (++i <= max && text[i] != first)
-					;
-			}
-
-			/* Found first character, now look at the rest of v2 */
-			if (i <= max) {
-				int j = i + 1;
-				int end = j + targetCount - 1;
-				for (int k = 0 + 1; j < end && text[j] == keyword[k]; j++, k++)
-					;
-
-				if (j == end) {
-					/* Found whole string. */
-					return i;
-				}
-			}
-		}
-		return -1;
-	}
-
-	public static int bytesCompare(byte[] bs1, byte[] bs2) {
-		int len1 = bs1.length;
-		int len2 = bs2.length;
-		int n = Math.min(len1, len2);
-
-		int k = 0;
-		while (k < n) {
-			int c1 = bs1[k] & 0xFF;
-			int c2 = bs2[k] & 0xFF;
-			if (c1 != c2) {
-				return c1 - c2;
-			}
-			k++;
-		}
-		return len1 - len2;
-	}
-
-	public static boolean bytesEquals(byte[] bs1, byte[] bs2, int len) {
-		for (int i = 0; i < len; i++) {
-			if (bs1[i] != bs2[i])
-				return false;
-		}
-		return true;
-	}
 
 	public static String runShScript(String script) throws IOException {
 		File tmpDir = new File("/tmp/cache");

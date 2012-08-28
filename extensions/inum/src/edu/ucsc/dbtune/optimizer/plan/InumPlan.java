@@ -371,7 +371,7 @@ public class InumPlan extends SQLStatementPlan
         Operator o = instantiate2(slot,index);
         if (o== INCOMPATIBLE)
             return Double.POSITIVE_INFINITY;
-        return o.getAccumulatedCost();
+        return o.getAccumulatedCost()*o.coefficient;
     }
     
     /**
