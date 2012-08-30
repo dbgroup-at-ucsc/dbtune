@@ -415,7 +415,7 @@ public class InumTest2 {
         en.setProperty("username", "db2inst1");
         en.setProperty("password", "db2inst1admin");
         en.setProperty("workloads.dir", "resources/workloads/db2");
-        DatabaseSystem test = newDatabaseSystem(en);
+//        DatabaseSystem test = newDatabaseSystem(en);
         dbName = "tpch10g";
         en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
         DatabaseSystem tpch10g = newDatabaseSystem(en);
@@ -424,15 +424,18 @@ public class InumTest2 {
                 "resources/workloads/db2/tpch/complete.sql"));
         String tpcds = Rt.readFile(new File(
                 "resources/workloads/db2/tpcds-inum/workload.sql"));
+        String a = Rt.readFile(new File(
+        "resources/workloads/db2/tpch-benchmark-mix/workload.sql"));
         // query = Rt.readFile(new File(
         // "resources/workloads/db2/tpch-inum/workload.sql"));
-//        sqlTest(tpch10g, tpch, 3);
+//        sqlTest(tpch10g, a, 12);
         // compareSubset(tpch10g, tpch, "tpch10g");
         // compareSubset(test, tpcds, "tpcds");
         // compareSubset(test, tpch);
-        compareWorkload(tpch10g, tpch, "tpch");
-        compareWorkload(test, tpcds, "tpcds");
-        test.getConnection().close();
+//        compareWorkload(tpch10g, tpch, "tpch");
+//        compareWorkload(test, tpcds, "tpcds");
+        compareWorkload(tpch10g, a, "update");
+//        test.getConnection().close();
         tpch10g.getConnection().close();
     }
 

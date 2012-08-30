@@ -218,6 +218,8 @@ public class ExplainTables {
             String columnNames = rs.getString("COLUMN_NAMES");
             String dboSchema = rs.getString("object_schema");
             String dboName = rs.getString("object_name");
+            if (target_id<0)
+                continue;
             Operator src = source_id < 0 ? null : hash.get(source_id);
             Operator dest = hash.get(target_id);
             if (src == null) {
