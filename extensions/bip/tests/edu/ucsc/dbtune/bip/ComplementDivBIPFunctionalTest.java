@@ -21,6 +21,7 @@ public class ComplementDivBIPFunctionalTest extends DivTestSetting
     @Test
     public void main() throws Exception
     {
+        /*
         // 1. Read common parameter
         getEnvironmentParameters();
         
@@ -43,7 +44,7 @@ public class ComplementDivBIPFunctionalTest extends DivTestSetting
             
             B = B1;            
             System.out.println(" Space:  " + B + "============\n");
-            DivBIPFunctionalTest.testUniform();
+            DivBIPFunctionalTest.testUniformOneSpaceBudget(B);
         
             Set<Index> conf = new HashSet<Index>();
             
@@ -58,11 +59,12 @@ public class ComplementDivBIPFunctionalTest extends DivTestSetting
         for (int i = 0; i < listBudgets.size(); i++) 
             showDifference(i, distinctIndexesDiv.get(i), distinctIndexesUnif.get(i));
         
-        
+        */
     }
     
     private static void testDivergent() throws Exception
     {
+        /*
         distinctIndexesDiv = new ArrayList<Set<Index>>();
         
         // 3. Call divergent design
@@ -94,6 +96,7 @@ public class ComplementDivBIPFunctionalTest extends DivTestSetting
     
             }
         }
+        */
     }
   
     

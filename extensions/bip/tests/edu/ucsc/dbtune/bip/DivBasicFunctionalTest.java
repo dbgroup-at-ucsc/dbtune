@@ -49,8 +49,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
         file = new File(folder + "/candidate-optimizer.bin");
         if (file.exists())
             file.delete();
-        
-        
+                
         candidates = readCandidateIndexes();
         System.out.println(" space budget: " + B
                         + " number of candidate indexes: " + candidates.size());
@@ -135,7 +134,6 @@ public class DivBasicFunctionalTest extends DivTestSetting
                 costDB2 = computeQueryCostsDB2(conf);
                 costCplex = div.getQueryCostReplicaByCplex(r);
                 
-                
                 for (int q = 0; q < costCplex.size(); q++) {
                     
                     // ONLY CHECK THE COST FOR SELECT- statement
@@ -144,7 +142,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
                     
                     // avoid very small value
                     // due to the approximation of CPLEX
-                    if (costCplex.get(q) > 0.1 && costInum.get(q) > 0.0) {
+                    if (costCplex.get(q) > 0.1 && costInum.get(q) > 0.1) {
                         ratio = (double) Math.abs(costCplex.get(q) / costInum.get(q));
 
                         if (ratio < 1)
@@ -159,9 +157,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
                         
                         assertThat(ratio <= tolerance, is(true));
                     }
-                }
-                
-               
+                }               
             }
             
         } else 

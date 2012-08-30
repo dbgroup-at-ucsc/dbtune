@@ -26,8 +26,8 @@ import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGener
 
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
-import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
-import edu.ucsc.dbtune.bip.interactions.InteractionOutput;
+//import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
+//import edu.ucsc.dbtune.bip.interactions.InteractionOutput;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
@@ -154,7 +154,7 @@ public class InteractionComparisonFunctionalTest
     /**
      * @throws Exception
      *      if fails
-     */    
+     *    
     private static InteractionOutput analyze(Generation.Strategy strategy, double delta) 
                                             throws Exception
     {         
@@ -233,6 +233,8 @@ public class InteractionComparisonFunctionalTest
         
         return result;
     }   
+    */
+    
     /**
      * This function generates candidate indexes of different types, write into a text file
      * for Karl's code to read in.

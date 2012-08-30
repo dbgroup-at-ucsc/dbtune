@@ -33,6 +33,12 @@ import edu.ucsc.dbtune.workload.Workload;
  
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
+import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
+
+import static edu.ucsc.dbtune.util.EnvironmentProperties.QUERY_IMBALANCE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_IMBALANCE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.FAILURE_IMBALANCE;
+
 
 /**
  * The common setting parameters for DIVBIP test
@@ -53,6 +59,9 @@ public class DivTestSetting
     protected static double B;    
     
     protected static List<Double> listBudgets;
+    protected static List<Double> nodeImbalances;
+    protected static List<Double> queryImbalances;
+    protected static List<Double> failureImbalances;
     protected static List<Integer> listNumberReplicas;
     
     protected static DivBIP div;
@@ -65,26 +74,26 @@ public class DivTestSetting
     protected static String folder;
     
     // for Debugging purpose only
-    protected static boolean isExportToFile;
-    protected static boolean isTestCost;
-    protected static boolean isShowRecommendation;
-    protected static boolean isDB2Cost;
     protected static double totalIndexSize;
-    protected static boolean isGetAverage;
-    protected static boolean isPostprocess; 
-    protected static boolean isAllImbalanceConstraint;
+    protected static boolean isExportToFile = false;
+    protected static boolean isTestCost = false;
+    protected static boolean isShowRecommendation = false;
+    protected static boolean isDB2Cost = false;
+    protected static boolean isGetAverage = false;
+    protected static boolean isPostprocess = false; 
+    protected static boolean isAllImbalanceConstraint = false;
     
     /**
      * Retrieve the environment parameters set in {@code dbtune.cfg} file
      * 
      * @throws Exception
      */
-    protected static void getEnvironmentParameters() throws Exception
+    public static void getEnvironmentParameters() throws Exception
     {
         if (isLoadEnvironmentParameter)
             return;
         
-        en = Environment.getInstance();
+        en = Environment.getInstance();        
         db = newDatabaseSystem(en);        
         io = db.getOptimizer();
         
@@ -93,15 +102,15 @@ public class DivTestSetting
         
         folder = en.getWorkloadsFoldername();
         
-        // get workload and candidate
+        // get workload and candidates
         workload = workload(folder);
-        
+        candidates = readCandidateIndexes();
+        System.out.println(" # statements in the workload: " + workload.size()
+                + " # candidates in the workload: " + candidates.size()
+                + " workload folder: " + folder);
         
         isLoadEnvironmentParameter = true;
         isPostprocess = false;
-        
-        System.out.println(" Number of statement in the workload: " + workload.size()
-                        + " workload folder: " + folder);
     }
     
     
@@ -110,7 +119,7 @@ public class DivTestSetting
      * 
      * @throws Exception
      */
-    protected static void setParameters() throws Exception
+    public static void setParameters() throws Exception
     {  
         fUpdate = 1;
         fQuery = 1;
@@ -136,7 +145,7 @@ public class DivTestSetting
         isExportToFile = false;
         isTestCost = false;
         isShowRecommendation = false;        
-        isGetAverage = true;
+        isGetAverage = false;
         isDB2Cost = false;
         isAllImbalanceConstraint = false;
         
@@ -151,13 +160,20 @@ public class DivTestSetting
         // number of replicas
         listNumberReplicas = new ArrayList<Integer>(en.getListNumberOfReplicas());
         
-        
-        // default value of B, nreplica, and loadfactor
+        // default values of B, nreplica, and loadfactor
         B = listBudgets.get(0);
         nReplicas = listNumberReplicas.get(0);
         loadfactor = (int) Math.ceil( (double) nReplicas / 2);
+        
+        // imbalance factors
+        for (String typeConstraint : en.getListImbalanceConstraints())                
+            if (typeConstraint.equals(NODE_IMBALANCE))
+                nodeImbalances = en.getListImbalanceFactors();
+            else if (typeConstraint.equals(QUERY_IMBALANCE))
+                queryImbalances = en.getListImbalanceFactors();
+            else if (typeConstraint.equals(FAILURE_IMBALANCE))
+                failureImbalances = en.getListImbalanceFactors();
     }
-    
     
     /**
      * Compute the query execution cost for statements in the given workload
@@ -174,7 +190,8 @@ public class DivTestSetting
         double cost;
         
         db2Cost = 0.0;
-        
+        System.out.println(" # indexes: " + conf.size()
+                        + " # workload: " + workload.size());
         for (SQLStatement sql : workload) {
             cost = io.getDelegate().explain(sql, conf).getTotalCost();
             db2Cost += cost * sql.getStatementWeight();

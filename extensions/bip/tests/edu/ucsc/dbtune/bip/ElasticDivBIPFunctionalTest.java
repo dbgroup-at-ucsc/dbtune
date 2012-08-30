@@ -118,13 +118,13 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
         // get the configuration        
         nReplicas = 4;
         loadfactor = 2;        
-        DivBIPFunctionalTest.testDiv();        
+        DivBIPFunctionalTest.testDiv(nReplicas, B);        
         sourceConf = new DivConfiguration(divConf);
         
         // run with two replicas
         nReplicas = 3;
         loadfactor = 2;        
-        DivBIPFunctionalTest.testDiv();        
+        DivBIPFunctionalTest.testDiv(nReplicas, B);        
         destinationConf = new DivConfiguration(divConf);
         
         upperCost = computeDeploymentCost(sourceConf, destinationConf);

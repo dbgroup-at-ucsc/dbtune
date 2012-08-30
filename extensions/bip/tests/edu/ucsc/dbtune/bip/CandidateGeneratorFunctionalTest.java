@@ -62,7 +62,8 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
      *      A set of candidate indexes
      * @throws Exception
      */
-    public static Set<Index> readCandidateIndexes() throws Exception
+    public static Set<Index> readCandidateIndexes() 
+            throws Exception
     {        
         // test candidate generation
         String fileName = "";
@@ -78,8 +79,7 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         }
         
         System.out.println(" file name: " + fileName);
-        File file = new File(fileName);
-        
+        File file = new File(fileName);        
         if (!file.exists()) {
             // Generate candidate indexes
             generateAndWriteToFileOptimizerCandidates(fileName);           

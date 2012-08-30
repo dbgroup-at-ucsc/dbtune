@@ -39,6 +39,7 @@ public class DeploymentDivBIPFunctionalTest extends DivTestSetting
     @Test
     public void testDeployConstraint() throws Exception
     {   
+        /*
         // 1. Set common parameters
         getEnvironmentParameters();
         
@@ -55,7 +56,7 @@ public class DeploymentDivBIPFunctionalTest extends DivTestSetting
         B = listBudgets.get(0);
         
         // compute the  upper bound cost
-        DivBIPFunctionalTest.testUniform();        
+        DivBIPFunctionalTest.testUniformOneSpaceBudget(B);        
         double basicUnifDeployCost = div.getDeploymentCost();
         unifTotalCost = div.getObjValue();
         System.out.println("L55, UNIF deployment cost: " + div.getDeploymentCost());
@@ -93,6 +94,7 @@ public class DeploymentDivBIPFunctionalTest extends DivTestSetting
         
         // write to file
         writeDeploymentInfoToFile(entries);
+        */
     }
     
     protected static void writeDeploymentInfoToFile(List<DeploymentEntry> entries) 

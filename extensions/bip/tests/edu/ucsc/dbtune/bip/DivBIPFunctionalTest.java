@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.bip;
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -8,12 +7,9 @@ import org.junit.Test;
 
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
-
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
-
 import edu.ucsc.dbtune.bip.util.LogListener;
-
 
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -22,8 +18,8 @@ import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
-
 import edu.ucsc.dbtune.metadata.Index;
+
 
 /**
  * Test the functionality of Divergent Design using BIP.
@@ -36,7 +32,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
 {   
     private static Workload wlQueries;
     private static Workload wlUpdates;
-    private static List<DivTestEntry> entries;
+    
     
     @Test
     public void main() throws Exception
@@ -49,92 +45,40 @@ public class DivBIPFunctionalTest extends DivTestSetting
         
         if (!(io instanceof InumOptimizer))
             return;
-  
-        candidates = readCandidateIndexes();
         
+        candidates = readCandidateIndexes();        
         for (Index index : candidates)
-            System.out.println(" INdex " + index
+            System.out.println(" Index " + index
                                 + " id: " + index.getId()
                                 + " size: " + (double) index.getBytes() / Math.pow(10, 6) + " (MB)"
                                 + " creation cost: "  + index.getCreationCost());
         
                 
         // 1. test divergent
-        testDivergent();
-        // write to file
-        String name = en.getWorkloadsFoldername() + "/divg.txt";
-        writeDivInfoToFile(name, entries);
+        for (double B1 : listBudgets) 
+            for (int n : listNumberReplicas)
+                testDiv(n, B1);
         
         // 2. Uniform design
         // 3. Call divergent design
-        entries.clear();
-        for (double B1 : listBudgets) {
-            B = B1;
-            testUniform();
-        }
-        // write to file
-        name = en.getWorkloadsFoldername() + "/uniform.txt";
-        writeDivInfoToFile(name, entries);
-        
+        for (double B1 : listBudgets) 
+            for (int n : listNumberReplicas)
+                testUniform(n, B1);
     }
     
-    protected static void testDivergent() throws Exception
-    {           
-        entries = new ArrayList<DivTestEntry>();
-        String type;
-        DivTestEntry entry;
-        List<Double> objs = new ArrayList<Double>();
-        
-        // 3. Call divergent design
-        for (double B1 : listBudgets) {
-            
-            B = B1;            
-            System.out.println(" Space:  " + B + "============\n");
-            
-            type = "budget_" + B + "_" + listNumberReplicas;
-            objs = new ArrayList<Double>();
-            
-            for (int i = 0; i < listNumberReplicas.size(); i++) {           
-                
-                nReplicas = listNumberReplicas.get(i);
-                loadfactor = (int) Math.ceil( (double) nReplicas / 2);
-                    
-                System.out.println("----------------------------------------");
-                System.out.println(" DIV-BIP, # replicas = " + nReplicas
-                                    + ", load factor = " + loadfactor
-                                    + ", space = " + B);
-                
-                
-                if (isGetAverage) 
-                    getAverageImbalanceFactor();
-                else {
-                    
-                    testDiv();
-                    objs.add(div.getObjValue());
-                
-                    // DB2 Cost
-                    if (isDB2Cost)
-                        compareWithDB2Cost();
-                }
-                
-                System.out.println("----------------------------------------");
-            }
-            
-            entry = new DivTestEntry(type, objs);
-            entries.add(entry);
-        }
-        
-        
-    }
     
     
     /**
      * Run the BIP with the parameters set by other functions
      * @throws Exception
      */
-    public static void testDiv() throws Exception
+    public static double testDiv(int _n, double _B) throws Exception
     {
         div = new DivBIP();
+        // Derive corresponding parameters
+        nReplicas = _n;
+        B = _B;
+        loadfactor = (int) Math.ceil( (double) nReplicas / 2);
         
         Optimizer io = db.getOptimizer();
          
@@ -186,29 +130,30 @@ public class DivBIPFunctionalTest extends DivTestSetting
                     //+ " Configuration: " + divConf
                     );
             
-            if (isShowRecommendation)
-                System.out.println("----Output: " + output);
-           
-                        
+            //if (isShowRecommendation)
+              //  System.out.println("----Output: " + output);
+                                   
             System.out.println(" TOTAL COST(INUM): " + totalCostBIP);
             
             // show imbalance query & replica
-            System.out.println(" IMBALANCE REPLICA: " + div.getMaxImbalanceReplica());
-            System.out.println(" IMBALANCE QUERY: " + div.getMaxImbalanceQuery());   
-            System.out.println(" NODE FAILURE: " + div.getMaxNodeFailure());
+            System.out.println(" IMBALANCE REPLICA: " + div.getNodeImbalance());
+            System.out.println(" IMBALANCE QUERY: " + div.getQueryImbalance());   
+            System.out.println(" NODE FAILURE: " + div.getFailureImbalance());
             
-        } else 
+            return totalCostBIP;
+            
+        } else {
             System.out.println(" NO SOLUTION ");
-        
+            return -1;
+        }
     }
-    
-        
     
     /**
      * Call UNIF
      */
-    public static void testUniform() throws Exception
-    {
+    public static double testUniform (int n, double B1) throws Exception
+    {   
+        B = B1;
         nReplicas = 1;
         loadfactor = 1;
         
@@ -217,7 +162,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
                             + ", load factor = " + loadfactor
                             + ", space = " + B);
         
-        testDiv();
+        testDiv(1, B);
         
         // get the query cost & update cost
         double queryCost;
@@ -231,38 +176,26 @@ public class DivBIPFunctionalTest extends DivTestSetting
         // NOT consider adding the constant update-base table cost
         // for the time-being
         // updateCost += div.getTotalBaseTableUpdateCost();
-        
-        String type = "budget_" + B + "_" + listNumberReplicas;
-        List<Double> objs = new ArrayList<Double>();
-        
+         
         // UNIF for the case with more than one replica
-        for (int i = 0; i < listNumberReplicas.size(); i++){
+        System.out.println("----------------------------------------");
+        nReplicas = n;
+        totalCostUniform = queryCost + updateCost * nReplicas;            
+        System.out.println(" DIV-UNIF, # replicas: " + nReplicas + "\n"
+                + " TOTAL COST: " + totalCostUniform + "\n"
+                + " QUERY cost: " + queryCost + "\n"
+                + " UPDATE cost: " + (updateCost * nReplicas) + "\n"
+                + " ---- Detailed UPDATE cost (ONE Replica): \n" 
+                + "         - query shell & update indexes: " +
+                div.getUpdateCostFromCplex() + "\n"
+                //+ "         - base table                  : " 
+                //+         div.getTotalBaseTableUpdateCost() + "\n"
+        );
             
-            System.out.println("----------------------------------------");
-            nReplicas = listNumberReplicas.get(i);
-            
-            totalCostUniform = queryCost + updateCost * nReplicas;            
-            System.out.println(" DIV-UNIF, # replicas: " + nReplicas + "\n"
-                                + " TOTAL COST: " + totalCostUniform + "\n"
-                                + " QUERY cost: " + queryCost + "\n"
-                                + " UPDATE cost: " + (updateCost * nReplicas) + "\n"
-                                + " ---- Detailed UPDATE cost (ONE Replica): \n" 
-                                + "         - query shell & update indexes: " +
-                                             div.getUpdateCostFromCplex() + "\n"
-                                //+ "         - base table                  : " 
-                                //+         div.getTotalBaseTableUpdateCost() + "\n"
-                                );
-            
-            System.out.println("----------------------------------------");
-            
-            objs.add(totalCostUniform);
-        }
-        
-        DivTestEntry entry = new DivTestEntry(type, objs);
-        entries.add(entry);
+        System.out.println("----------------------------------------");
         
         if (!isDB2Cost)
-            return;
+            return totalCostUniform;
         
         // call DB2 to compute cost
         List<SQLStatement> querySQLs = new ArrayList<SQLStatement>();
@@ -281,23 +214,18 @@ public class DivBIPFunctionalTest extends DivTestSetting
         queryCost = computeWorkloadCostDB2(wlQueries, divConf.indexesAtReplica(0));
         updateCost = computeWorkloadCostDB2(wlUpdates, divConf.indexesAtReplica(0));
         
-        // UNIF for the case with more than one replica
-        for (int i = 0; i < listNumberReplicas.size(); i++) { 
-            
-            nReplicas = listNumberReplicas.get(i);
-            System.out.println(" DB2 COST----------------------------------------");
-            totalCostUniform = queryCost + updateCost * nReplicas;            
-            System.out.println(" DIV-UNIF, # replicas: " + nReplicas + "\n"
-                                + " TOTAL COST: " + totalCostUniform + "\n"
-                                + " UPDATE COST: " + updateCost + "\n"
-                                + " QUERY cost: " + queryCost + "\n"
-                                );
-            
-            System.out.println("----------------------------------------");
-        }
+        nReplicas = n;
+        System.out.println(" DB2 COST----------------------------------------");
+        totalCostUniform = queryCost + updateCost * nReplicas;            
+        System.out.println(" DIV-UNIF, # replicas: " + nReplicas + "\n"
+                + " TOTAL COST: " + totalCostUniform + "\n"
+                + " UPDATE COST: " + updateCost + "\n"
+                + " QUERY cost: " + queryCost + "\n"
+        );
         
+        System.out.println("----------------------------------------");
+        return totalCostUniform;
     }
-    
     
     /**
      * This function compares the results of CPLEX with the cost computed by DB2
@@ -376,10 +304,10 @@ public class DivBIPFunctionalTest extends DivTestSetting
         numRuns = 5;
         
         for (int iterImbalance = 0; iterImbalance < numRuns; iterImbalance++) {
-            testDiv();
-            avgImbalanceQuery += div.getMaxImbalanceQuery();
-            avgImbalanceReplica += div.getMaxImbalanceReplica();
-            avgNodeFailure += div.getMaxNodeFailure();
+            testDiv(nReplicas, B);
+            avgImbalanceQuery += div.getQueryImbalance();
+            avgImbalanceReplica += div.getNodeImbalance();
+            avgNodeFailure += div.getFailureImbalance();
         }
         
         
