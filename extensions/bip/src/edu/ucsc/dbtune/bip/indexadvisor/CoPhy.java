@@ -19,6 +19,8 @@ public class CoPhy implements BIPSolver, ConstraintIndexAdvisor
     private double     B;
     private LogListener logger;
     private double      objVal;
+    
+    protected boolean communicateInumOnTheFly = false;
         
     @Override
     public void setCandidateIndexes(Set<Index> candidateIndexes) 
@@ -42,6 +44,12 @@ public class CoPhy implements BIPSolver, ConstraintIndexAdvisor
     public void setSpaceBudget(double B)
     {
         this.B = B;
+    }
+    
+    @Override
+    public void setCommunicatingInumOnTheFly(boolean isOnTheFly)
+    {   
+        this.communicateInumOnTheFly = isOnTheFly;
     }
     
     /**
@@ -79,6 +87,7 @@ public class CoPhy implements BIPSolver, ConstraintIndexAdvisor
         div.setLoadBalanceFactor(1);
         div.setSpaceBudget(B);
         div.setLogListenter(logger);
+        div.setCommunicatingInumOnTheFly(communicateInumOnTheFly);
         
         DivConfiguration output = (DivConfiguration) div.solve();
         Set<Index> recommended = null;
