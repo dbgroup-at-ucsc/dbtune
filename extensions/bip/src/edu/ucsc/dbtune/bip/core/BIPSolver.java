@@ -46,6 +46,13 @@ public interface BIPSolver
     void setOptimizer(Optimizer optimizer) throws Exception;
     
     /**
+     * Allow the optimization to communicate with INUM 
+     * through serialized object or not 
+     * 
+     * @param isOnTheFly
+     */
+    void setCommunicatingInumOnTheFly(boolean isOnTheFly);
+    /**
      * 
      * The method communicates with INUM to populate INUM's space, builds a Binary Integer Program,
      * asks CPLEX to solve the formulated BIP, and finally derives the output from the result of 

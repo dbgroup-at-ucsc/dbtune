@@ -6,7 +6,6 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -52,15 +51,18 @@ public interface QueryPlanDesc
     int getNumberOfTemplatePlans();
     
     /**
-     * Retrieve the number of slots that this statement has
+     * Retrieve the number of slots that the given plan has
+     * 
+     * @param planId 
+     *      Plan ID
      *     
      */
-    int getNumberOfSlots();
+    int getNumberOfSlots(int planId);
     
     /**
-     * Retrieve the internal plan cost of the {@code k}^{th} template plan
+     * Retrieve the internal plan cost of the {@code planId} template plan
      * 
-     * @param k
+     * @param planId
      *      The plan ID that we need to retrieve the internal plan cost
      *
      * @return  
@@ -69,16 +71,17 @@ public interface QueryPlanDesc
      * {\bf Note}: The result of this function is the value of the constant {\it \beta_{qk}}
      * in the paper.      
      */
-    double getInternalPlanCost(int k);
+    double getInternalPlanCost(int planId);
 
     /**
      * Retrieve the index access cost of the given index in a particular plan
      * 
-     * @param k
+     * @param planId
      *      The ID of the plan
+     * @param slotId 
+     *      The ID of the slot
      * @param index    
      *      The index to retrieve the access cost
-     * 
      * @return 
      *      The index access cost.
      *      
@@ -86,7 +89,7 @@ public interface QueryPlanDesc
      * in the paper. From the given {@code index}, we can infer the slot (i) that the index is 
      * placed.     
      */
-    double getAccessCost(int k, Index index);
+    double getAccessCost(int planId, int slotId, Index index);
     
     /**
      * Retrieve the base table update cost (which is a constant)
@@ -108,50 +111,35 @@ public interface QueryPlanDesc
     
     
     /**
-     * Retrieve the list of tables that are referenced by the statement
-     * 
-     * @return
-     *      The list of refenced tables. 
-     */
-    List<Table> getTables();
-    
-    /**
      * Retrieve the list of indexes (including FTS indexes) that are stored in 
-     * the given slot {@code i}.
+     * the given slot {@code slotId} of the plan {@code planId}.
      * 
-     * @param i
+     * @param planId 
+     *      The plan on which we retrieve the set of indexes       
+     * @param slotId
      *      The slot on which we retrieve the set of indexes
+     * 
      * @return
-     *      The list of indexes at slot i.       
+     *      The list of indexes at slot slotId.       
      */
-    List<Index> getIndexesAtSlot(int i);
+    List<Index> getIndexesAtSlot(int planId, int slotId);
 
     /**
      * Retrieve the list of indexes (excluding FTS indexes) that are stored in 
-     * the given slot {@code i}.
+     * the given slot {@code slotId} of the plan {@code planId}.
      * 
-     * @param i
+     * @param planId 
+     *      Plan Id
+     * @param slotId
      *      The slot on which we retrieve the list of indexes
+     * 
      * @return 
-     *      The list of indexes at slot i.    
+     *      The list of indexes at slot slotId.    
      */
-    List<Index> getIndexesWithoutFTSAtSlot(int i);
+    List<Index> getIndexesWithoutFTSAtSlot(int planId, int slotId);
     
-    /**
-     * 
-     * Retrieve the set of indexes that are compatible with at least one slot in one template plan
-     * of the given statement. Note that this method does not take the Full Table Scan Index into 
-     * account.
-     * 
-     * @param i
-     *      The slot ID
-     *      
-     * @return  
-     *      The set of indexes that are compatible with at least one slot in one template plan
-     *      of the query.
-     */
-    Set<Index> getActiveIndexesAtSlot(int i);
-    
+    Index getFTSAtSlot(int planId, int slotId);
+        
     /**
      * Retrieve the SQL type of the statement (e.g., SELECT, UPDATE statement)
      * 
