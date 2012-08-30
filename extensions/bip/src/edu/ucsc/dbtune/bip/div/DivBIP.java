@@ -65,6 +65,8 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         this.B = B;
     }
     
+    
+    
     /**
      * Retrieve the (constant) base table update cost
      * 
@@ -107,10 +109,10 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                     Index index = mapVarSToIndex.get(var.getName());
                     if (!(index instanceof FullTableScanIndex))
                         conf.addIndexReplica(var.getReplica(), index);
-       
                 }
             }
         }     
+        
         
         return conf;
     }
@@ -170,7 +172,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         // for TYPE_S
         for (int r = 0; r < nReplicas; r++) 
             for (Index index : candidateIndexes) {
-                var = poolVariables.createAndStore(VAR_S, r, 0, 0, index.getId());
+                var = poolVariables.createAndStore(VAR_S, r, 0, 0, 0, index.getId());
                 mapVarSToIndex.put(var.getName(), index);
             }
         
@@ -190,12 +192,12 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     protected void constructVariables(int r, int q, QueryPlanDesc desc)
     {
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            poolVariables.createAndStore(VAR_Y, r, q, k, 0);
+            poolVariables.createAndStore(VAR_Y, r, q, k, 0, 0);
             
-        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)  
-                for (Index index : desc.getIndexesAtSlot(i)) 
-                    poolVariables.createAndStore(VAR_X, r, q, k, index.getId());
+        for (int planId = 0; planId < desc.getNumberOfTemplatePlans(); planId++)
+            for (int slotId = 0; slotId < desc.getNumberOfSlots(planId); slotId++)  
+                for (Index index : desc.getIndexesAtSlot(planId, slotId)) 
+                    poolVariables.createAndStore(VAR_X, r, q, planId, slotId, index.getId());
     }
     
     
@@ -293,7 +295,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             cost = desc.getUpdateCost(index);
             
             if (cost > 0.0) {
-                idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();
                 expr.addTerm(cplexVar.get(idS), cost);
             }
         }
@@ -322,19 +324,23 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
               throws IloException
     {
         int id;
+        double cost;
         IloLinearNumExpr expr = cplex.linearNumExpr();
         
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
-            id = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            id = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
             expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(id));                    
         }                
                     
         // Index access cost                            
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)
-                for (Index index : desc.getIndexesAtSlot(i)) {
-                    id = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
-                    expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(id));
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
+                    id = poolVariables.get(VAR_X, r, q, k, i, index.getId()).getId();
+                    cost = desc.getAccessCost(k, i, index);
+                    
+                    if (!Double.isInfinite(cost))
+                        expr.addTerm(cost, cplexVar.get(id));
                 }    
         
         return expr;
@@ -377,7 +383,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         // \sum_{k \in [1, Kq]}y^{r}_{qk} <= 1
         expr = cplex.linearNumExpr();
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-            idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            idY = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
             expr.addTerm(1, cplexVar.get(idY));
         }
         
@@ -408,15 +414,15 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
             
-            idY = poolVariables.get(DivVariablePool.VAR_Y, r, q, k, 0).getId();
+            idY = poolVariables.get(DivVariablePool.VAR_Y, r, q, k, 0, 0).getId();
             
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) {            
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++) {            
             
                 expr = cplex.linearNumExpr();
                 expr.addTerm(-1, cplexVar.get(idY));
                 
-                for (Index index : desc.getIndexesAtSlot(i)) { 
-                    idX = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();                            
+                for (Index index : desc.getIndexesAtSlot(k, i)) { 
+                    idX = poolVariables.get(VAR_X, r, q, k, i, index.getId()).getId();                            
                     expr.addTerm(1, cplexVar.get(idX));
                 }
                 
@@ -461,11 +467,11 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         // used index
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)   
-                for (Index index : desc.getIndexesAtSlot(i)) {
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)   
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
                     
-                    idX = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
-                    idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                    idX = poolVariables.get(VAR_X, r, q, k, i, index.getId()).getId();
+                    idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();
                     
                     expr = cplex.linearNumExpr();
                     expr.addTerm(1, cplexVar.get(idX));
@@ -501,7 +507,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             
             for (int r = 0; r < nReplicas; r++)
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+                    idY = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
                     expr.addTerm(1, cplexVar.get(idY));
                 }
             
@@ -530,7 +536,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             for (Index index : candidateIndexes) {  
                 // not consider FTS index
                 if (!(index instanceof FullTableScanIndex)) {
-                    idS = poolVariables.get(VAR_S, r, 0, 0 , index.getId()).getId();                
+                    idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();                
                     expr.addTerm(index.getBytes(), cplexVar.get(idS));
                 }
             }
@@ -554,7 +560,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         for (int r = 0; r < nReplicas; r++)
             for (Index index : candidateIndexes)
                 if (!(index instanceof FullTableScanIndex)) {
-                    idS = poolVariables.get(VAR_S, r, 0, 0 , index.getId()).getId();                
+                    idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();                
                     expr.addTerm(index.getCreationCost(), cplexVar.get(idS));
                 }            
                  
@@ -607,7 +613,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      
      * @throws Exception
      */
-    public double getMaxNodeFailure() throws Exception
+    public double getFailureImbalance() throws Exception
     {
         List<Double> queryReplica;
         List<List<Double>> queries;
@@ -724,7 +730,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      The imbalance factor
      * @throws Exception
      */
-    public double getMaxImbalanceReplica() throws Exception
+    public double getNodeImbalance() throws Exception
     {
         List<Double> replicas = new ArrayList<Double>();
         
@@ -739,7 +745,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 replicas.add(cost);
             
         }
-       
+        
         return maxRatioInList(replicas);
     }
     
@@ -750,7 +756,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      The imbalance factor
      * @throws Exception
      */
-    public double getMaxImbalanceQuery() throws Exception
+    public double getQueryImbalance() throws Exception
     {
         List<Double> queries;
         double maxRatio = -1;
@@ -780,10 +786,11 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 System.out.println("WATCH-OUT list: " + queries + " ratio: " + ratio);
             }
             
-            if (queries.size() != loadfactor)
+            if (queries.size() != loadfactor) {
+                System.out.println("L793, value: " + queries);
                 throw new RuntimeException("We expect to obtain exactly"
                           + loadfactor + " value of cost(q,r) that are greater than 0");
-            
+            }
             maxRatio = (maxRatio > ratio) ? maxRatio : ratio;
         }
         

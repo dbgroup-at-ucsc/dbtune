@@ -5,6 +5,8 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_U;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_XO;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_YO;
 
+import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.BIP_MAX_VALUE;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,7 +16,7 @@ import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
-import edu.ucsc.dbtune.bip.interactions.SortableIndexAcessCost;
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 
 /**
@@ -78,16 +80,16 @@ public class QueryCostOptimalBuilder
         IloLinearNumExpr expr = cplex.linearNumExpr();
         
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
-            id = poolVariables.get(VAR_YO, r, q, k, 0).getId();
+            id = poolVariables.get(VAR_YO, r, q, k, 0, 0).getId();
             expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(id));                    
         }                
                     
         // Index access cost                            
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)
-                for (Index index : desc.getIndexesAtSlot(i)) {
-                    id = poolVariables.get(VAR_XO, r, q, k, index.getId()).getId();
-                    expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(id));
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
+                    id = poolVariables.get(VAR_XO, r, q, k, i, index.getId()).getId();
+                    expr.addTerm(desc.getAccessCost(k, i, index), cplexVar.get(id));
                 }    
         
         return expr;
@@ -129,9 +131,11 @@ public class QueryCostOptimalBuilder
     protected void localOptimal(int r, int q, QueryPlanDesc desc, IloLinearNumExpr exprQuery)
                    throws IloException
     {   
-        IloLinearNumExpr expr;        
+        IloLinearNumExpr expr;
+        IloLinearNumExpr exprAtomic;
         int idU;
-        double approxCoef;        
+        double approxCoef;
+        boolean isFTSInSlot;
         
         if (isApproximation)
             approxCoef = 1.1;
@@ -144,29 +148,39 @@ public class QueryCostOptimalBuilder
             expr = cplex.linearNumExpr();
             expr.add(exprQuery);    
                         
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) 
-                for (Index index : desc.getIndexesAtSlot(i)) {
-                    idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
-                    expr.addTerm(-approxCoef * desc.getAccessCost(t, index), cplexVar.get(idU));
+            for (int i = 0; i < desc.getNumberOfSlots(t); i++) {
+                
+                isFTSInSlot = false;
+                for (Index index : desc.getIndexesAtSlot(t, i)) {
+                    idU = poolVariables.get(VAR_U, r, q, t, i, index.getId()).getId();
+                    expr.addTerm(-approxCoef * desc.getAccessCost(t, i, index), cplexVar.get(idU));
+                    
+                    if (index instanceof FullTableScanIndex)
+                        isFTSInSlot = true;
                 }
+                
+                // atomic
+                exprAtomic = cplex.linearNumExpr();
+                for (Index index : desc.getIndexesAtSlot(t, i)) {
+                    idU = poolVariables.get(VAR_U, r, q, t, i, index.getId()).getId();
+                    exprAtomic.addTerm(1, cplexVar.get(idU));           
+                }
+                
+                // add an infinity for the FTS-U variable
+                if (!isFTSInSlot) {
+                    Index fts = desc.getFTSAtSlot(t, i);
+                    idU = poolVariables.get(VAR_U, r, q, t, i, fts.getId()).getId();
+                    expr.addTerm(-approxCoef * BIP_MAX_VALUE, cplexVar.get(idU));
+                    exprAtomic.addTerm(1, cplexVar.get(idU));   
+                }
+                
+                cplex.addEq(exprAtomic, 1, "atomic_U" + numConstraints);
+                numConstraints++;
+            }
             
             cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
             numConstraints++;
         }
-        
-        // atomic constraint
-        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                expr = cplex.linearNumExpr();
-                for (Index index : desc.getIndexesAtSlot(i)) {
-                    idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
-                    expr.addTerm(1, cplexVar.get(idU));           
-                }
-                
-                cplex.addEq(expr, 1, "atomic_U" + numConstraints);
-                numConstraints++;
-            }
-        
     }
      
     /**
@@ -186,11 +200,11 @@ public class QueryCostOptimalBuilder
         int idS;
             
         for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+            for (int i = 0; i < desc.getNumberOfSlots(t); i++) {
                 // not constraint FTS variables
-                for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
-                    idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
-                    idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                for (Index index : desc.getIndexesWithoutFTSAtSlot(t, i)) {
+                    idU = poolVariables.get(VAR_U, r, q, t, i, index.getId()).getId();
+                    idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();
                     expr = cplex.linearNumExpr();
                     expr.addTerm(1, cplexVar.get(idU));
                     expr.addTerm(-1, cplexVar.get(idS));            
@@ -212,7 +226,7 @@ public class QueryCostOptimalBuilder
     protected void selectingIndexAtEachSlot(int r, int q, QueryPlanDesc desc) throws IloException
     {   
         for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) 
+            for (int i = 0; i < desc.getNumberOfSlots(t); i++) 
                 selectingIndexAtEachSlot(r, q, t, i, desc);
     }
     
@@ -231,28 +245,39 @@ public class QueryCostOptimalBuilder
         int idU;
         int idS;        
         int idFTS, numIndex;
-     
+        Index fts;
+        List<Integer> varIDs;
+        
         // Sort index access cost
         List<SortableIndexAcessCost> listSortedIndex  = new ArrayList<SortableIndexAcessCost>();
                 
-        for (Index index : desc.getIndexesAtSlot(i)) {
+        for (Index index : desc.getIndexesAtSlot(t, i)) {
             SortableIndexAcessCost sac = new SortableIndexAcessCost 
-                                            (desc.getAccessCost(t, index), index);
+                                            (desc.getAccessCost(t, i, index), index);
             listSortedIndex.add(sac);                       
         }                   
             
-        numIndex = desc.getIndexesAtSlot(i).size();
-        idFTS = desc.getIndexesAtSlot(i).get(numIndex - 1).getId();
-            
+        numIndex = desc.getIndexesAtSlot(t, i).size();
+        if (numIndex == 0) {
+            throw new RuntimeException("Slot at #query = " + q + " #plan Id =  " + t
+                        + " # slot = " + i + " does not have any indexes"
+                        + " that can fit");
+        }
+                
+        fts = desc.getIndexesAtSlot(t, i).get(numIndex - 1);
+        if (fts instanceof FullTableScanIndex)
+            idFTS = fts.getId();
+        else
+            idFTS = -1;
+                    
         // sort in the increasing order of the index access cost
         Collections.sort(listSortedIndex);
-                               
-        List<Integer> varIDs = new ArrayList<Integer>();
+        varIDs = new ArrayList<Integer>();
         
         for (SortableIndexAcessCost sac : listSortedIndex) {  
             
             Index index = sac.getIndex();
-            idU = poolVariables.get(VAR_U, r, q, t, index.getId()).getId();
+            idU = poolVariables.get(VAR_U, r, q, t, i, index.getId()).getId();
             varIDs.add(idU);
                     
             if (index.getId() == idFTS) {
@@ -268,7 +293,7 @@ public class QueryCostOptimalBuilder
                 for (int varID : varIDs)
                     exprInternal.addTerm(1, cplexVar.get(varID));
                     
-                idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();
                 exprInternal.addTerm(-1, cplexVar.get(idS));
                 cplex.addGe(exprInternal, 0, "select_index_" + numConstraints); 
                 numConstraints++;
@@ -300,7 +325,7 @@ public class QueryCostOptimalBuilder
         // \sum_{k \in [1, Kq]}y^{r}_{qk} = 1
         expr = cplex.linearNumExpr();
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-            idY = poolVariables.get(VAR_YO, r, q, k, 0).getId();
+            idY = poolVariables.get(VAR_YO, r, q, k, 0, 0).getId();
             expr.addTerm(1, cplexVar.get(idY));
         }
         
@@ -334,15 +359,15 @@ public class QueryCostOptimalBuilder
         // \sum_{a \in S_i} x(r, q, k, i, a) = y(r, q, k)
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
             
-            idY = poolVariables.get(DivVariablePool.VAR_YO, r, q, k, 0).getId();
+            idY = poolVariables.get(DivVariablePool.VAR_YO, r, q, k, 0, 0).getId();
             
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) {            
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++) {            
             
                 expr = cplex.linearNumExpr();
                 expr.addTerm(-1, cplexVar.get(idY));
                 
-                for (Index index : desc.getIndexesAtSlot(i)) { 
-                    idX = poolVariables.get(VAR_XO, r, q, k, index.getId()).getId();                            
+                for (Index index : desc.getIndexesAtSlot(k, i)) { 
+                    idX = poolVariables.get(VAR_XO, r, q, k, i, index.getId()).getId();                            
                     expr.addTerm(1, cplexVar.get(idX));
                 }
                 
@@ -354,11 +379,11 @@ public class QueryCostOptimalBuilder
         
         // used index
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)   
-                for (Index index : desc.getIndexesAtSlot(i)) {
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)   
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
                     
-                    idX = poolVariables.get(VAR_XO, r, q, k, index.getId()).getId();
-                    idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                    idX = poolVariables.get(VAR_XO, r, q, k, i, index.getId()).getId();
+                    idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();
                     
                     expr = cplex.linearNumExpr();
                     expr.addTerm(1, cplexVar.get(idX));

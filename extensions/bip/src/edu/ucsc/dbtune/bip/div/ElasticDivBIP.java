@@ -117,13 +117,13 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         super.constructVariables();
          
         for (int r = 0; r < nDeployVars; r++) 
-            poolVariables.createAndStore(VAR_DEPLOY, r, 0, 0, 0);
+            poolVariables.createAndStore(VAR_DEPLOY, r, 0, 0, 0, 0);
         
         // for div_a and mod_a
         for (Index index : candidateIndexes)            
             for (int r = 0; r < nReplicas; r++) {                
-                poolVariables.createAndStore(VAR_DIV, r, 0, 0, index.getId());                 
-                poolVariables.createAndStore(VAR_MOD, r, 0, 0, index.getId());
+                poolVariables.createAndStore(VAR_DIV, r, 0, 0, 0, index.getId());                 
+                poolVariables.createAndStore(VAR_MOD, r, 0, 0, 0, index.getId());
             }
     }
     
@@ -151,11 +151,11 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         
         // \sum_{k \in [1, Kq]}y^{r}_{qk} <= deploy_r
         expr = cplex.linearNumExpr();
-        idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
+        idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0, 0).getId();
         expr.addTerm(-1, cplexVar.get(idD));
         
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-            idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            idY = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
             expr.addTerm(1, cplexVar.get(idY));
         }
         
@@ -175,9 +175,9 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         int idS;
         
         for (int r = 0; r < nReplicas; r++) {
-            idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
+            idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0, 0).getId();
             for (Index index : candidateIndexes) {
-                idS = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();
                 
                 expr = cplex.linearNumExpr();
                 expr.addTerm(1, cplexVar.get(idS));
@@ -201,7 +201,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         int idD;
         
         for (int r = 0; r < nDeployVars; r++){
-            idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0).getId();
+            idD = poolVariables.get(VAR_DEPLOY, r, 0, 0, 0, 0).getId();
             expr.addTerm(1, cplexVar.get(idD));
         }
         
@@ -239,9 +239,9 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             
             for (int r = 0; r < nReplicas; r++) {
                 
-                idDiv = poolVariables.get(VAR_DIV, r, 0, 0, index.getId()).getId();
-                idMod = poolVariables.get(VAR_MOD, r, 0, 0, index.getId()).getId();
-                idS   = poolVariables.get(VAR_S, r, 0, 0, index.getId()).getId();
+                idDiv = poolVariables.get(VAR_DIV, r, 0, 0, 0, index.getId()).getId();
+                idMod = poolVariables.get(VAR_MOD, r, 0, 0, 0, index.getId()).getId();
+                idS   = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();
                 
                 rhs = (initialReplicas.contains(r)) ? 0 : 1;
                 expr = cplex.linearNumExpr();   
@@ -274,7 +274,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
                 continue;
             
             for (int r = 0; r < nReplicas; r++) {
-                idDiv = poolVariables.get(VAR_DIV, r, 0, 0, index.getId()).getId();
+                idDiv = poolVariables.get(VAR_DIV, r, 0, 0, 0, index.getId()).getId();
                 exprDeploy.addTerm(index.getCreationCost(), cplexVar.get(idDiv));
             }
         }

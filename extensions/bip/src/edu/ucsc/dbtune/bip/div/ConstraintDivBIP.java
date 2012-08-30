@@ -37,9 +37,9 @@ import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Sets;
 
-import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_QUERY;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_REPLICA;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_FAILURE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.QUERY_IMBALANCE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_IMBALANCE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.FAILURE_IMBALANCE;
 
 public class ConstraintDivBIP extends DivBIP
 {   
@@ -96,8 +96,8 @@ public class ConstraintDivBIP extends DivBIP
             boolean isSumYConstraint = false;
             
             for (DivConstraint c : constraints)
-                if (c.getType().equals(IMBALANCE_QUERY) 
-                      || c.getType().equals(NODE_FAILURE) ) {
+                if (c.getType().equals(QUERY_IMBALANCE) 
+                      || c.getType().equals(FAILURE_IMBALANCE) ) {
                     isSumYConstraint = true;
                     break;
                 }
@@ -111,15 +111,15 @@ public class ConstraintDivBIP extends DivBIP
                        + constraints);
             // 7. additional constraints
             for (DivConstraint c : constraints) {
-                if (c.getType().equals(IMBALANCE_REPLICA)) {
+                if (c.getType().equals(NODE_IMBALANCE)) {
                     setConstantReplicaImbalanceConstraint(c.getFactor());
                     imbalanceReplicaConstraints(c.getFactor());
                 }
-                else if (c.getType().equals(NODE_FAILURE)) {
+                else if (c.getType().equals(FAILURE_IMBALANCE)) {
                     setConstantFailureImbalanceConstraint(c.getFactor());
                     nodeFailures(c.getFactor());
                 }
-                else if (c.getType().equals(IMBALANCE_QUERY)) {
+                else if (c.getType().equals(QUERY_IMBALANCE)) {
                     setConstantQueryImbalanceConstraint();
                     imbalanceQueryConstraints(c.getFactor());                    
                 }
@@ -287,22 +287,26 @@ public class ConstraintDivBIP extends DivBIP
     {       
         // YO: y for local optimal
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            poolVariables.createAndStore(VAR_YO, r, q, k, 0);
+            poolVariables.createAndStore(VAR_YO, r, q, k, 0, 0);
             
         // XO: x for local optimal
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)  
-                for (Index index : desc.getIndexesAtSlot(i)) 
-                    poolVariables.createAndStore(VAR_XO, r, q, k, index.getId());
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)  
+                for (Index index : desc.getIndexesAtSlot(k, i)) 
+                    poolVariables.createAndStore(VAR_XO, r, q, k, i, index.getId());
         
         // U variables for the local optimal
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)  
-                for (Index index : desc.getIndexesAtSlot(i)) 
-                    poolVariables.createAndStore(VAR_U, r, q, k, index.getId());
-        
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++) { 
+                for (Index index : desc.getIndexesAtSlot(k, i))  
+                    poolVariables.createAndStore(VAR_U, r, q, k, i, index.getId());
+                
+                // We need a variable for FTS of type VAR_U
+                Index fts = desc.getFTSAtSlot(k, i);
+                poolVariables.createAndStore(VAR_U, r, q, k, i, fts.getId());
+            }
         // variable sum_y(r, q) = \sum_{k = 1}^{K_q} y^r_{qk}
-        poolVariables.createAndStore(VAR_SUM_Y, r, q, 0, 0);    
+        poolVariables.createAndStore(VAR_SUM_Y, r, q, 0, 0, 0);    
     }
     
     /**
@@ -321,15 +325,15 @@ public class ConstraintDivBIP extends DivBIP
             for (int r2 = 0; r2 < nReplicas; r2++)
                 if (r2 != r)
                     poolVariables.createAndStore(VAR_COMBINE_Y, combineReplicaID(r, r2), 
-                                                 q, k, 0);
+                                                 q, k, 0, 0);
             
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)  
-                for (Index index : desc.getIndexesAtSlot(i)) 
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)  
+                for (Index index : desc.getIndexesAtSlot(k, i)) 
                     for (int r2 = 0; r2 < nReplicas; r2++)
                         if (r2 != r)
                             poolVariables.createAndStore(VAR_COMBINE_X, combineReplicaID(r, r2),
-                                                         q, k, index.getId());
+                                                         q, k, i, index.getId());
     }
     
     /**
@@ -492,13 +496,13 @@ public class ConstraintDivBIP extends DivBIP
         int idY;
         int idSumY;
         
-        idSumY = poolVariables.get(VAR_SUM_Y, r, q, 0, 0).getId();
+        idSumY = poolVariables.get(VAR_SUM_Y, r, q, 0, 0, 0).getId();
         IloLinearNumExpr expr = cplex.linearNumExpr();
         expr.addTerm(-1, cplexVar.get(idSumY));
         
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
             
-            idY = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            idY = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
             expr.addTerm(1, cplexVar.get(idY));
         }
         
@@ -548,22 +552,22 @@ public class ConstraintDivBIP extends DivBIP
         int idSumY;
         
         // Y2 (r1) 
-        idSumY = poolVariables.get(VAR_SUM_Y, r2, q, 0, 0).getId();
+        idSumY = poolVariables.get(VAR_SUM_Y, r2, q, 0, 0, 0).getId();
         
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r1, r2), q, k, 0).getId();
-            idY       = poolVariables.get(VAR_Y, r1, q, k, 0).getId();
+            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r1, r2), q, k, 0, 0).getId();
+            idY       = poolVariables.get(VAR_Y, r1, q, k, 0, 0).getId();
             UtilConstraintBuilder.constraintCombineVariable(idCombine, idSumY, idY);
         }
         
         // Index access cost                            
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)
-                for (Index index : desc.getIndexesAtSlot(i)) {
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
                     
                     idCombine = poolVariables.get(VAR_COMBINE_X, combineReplicaID(r1, r2), 
-                                           q, k, index.getId()).getId();
-                    idX       = poolVariables.get(VAR_X, r1, q, k, index.getId()).getId();
+                                           q, k, i, index.getId()).getId();
+                    idX       = poolVariables.get(VAR_X, r1, q, k, i, index.getId()).getId();
                     UtilConstraintBuilder.constraintCombineVariable(idCombine, idSumY, idX);
                 }
     }
@@ -595,17 +599,17 @@ public class ConstraintDivBIP extends DivBIP
         IloLinearNumExpr expr = cplex.linearNumExpr();
         
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
-            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r1, r2), q, k, 0).getId();
+            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r1, r2), q, k, 0, 0).getId();
             expr.addTerm(desc.getInternalPlanCost(k), cplexVar.get(idCombine));                    
         }                
                     
         // Index access cost                            
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)
-                for (Index index : desc.getIndexesAtSlot(i)) {
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
                     idCombine = poolVariables.get(VAR_COMBINE_X, combineReplicaID(r1, r2), 
-                                           q, k, index.getId()).getId();
-                    expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(idCombine));
+                                           q, k, i, index.getId()).getId();
+                    expr.addTerm(desc.getAccessCost(k, i, index), cplexVar.get(idCombine));
                 }   
         
         // add -beta time of expr2 
@@ -727,24 +731,24 @@ public class ConstraintDivBIP extends DivBIP
         // 
         // SUM_Y(q, failR) > 0
         
-        idSumY = poolVariables.get(VAR_SUM_Y, failR, q, 0, 0).getId();
+        idSumY = poolVariables.get(VAR_SUM_Y, failR, q, 0, 0, 0).getId();
         
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
             
-            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r, failR), q, k, 0).getId();
-            idY       = poolVariables.get(VAR_Y, r, q, k, 0).getId();
+            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r, failR), q, k, 0, 0).getId();
+            idY       = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
             UtilConstraintBuilder.constraintCombineVariable(idCombine, idSumY, idY);
         
         }
         
         // Index access cost                            
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)
-                for (Index index : desc.getIndexesAtSlot(i)) {
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
                     
                     idCombine = poolVariables.get(VAR_COMBINE_X, combineReplicaID(r, failR), 
-                                           q, k, index.getId()).getId();
-                    idX       = poolVariables.get(VAR_X, r, q, k, index.getId()).getId();
+                                           q, k, i, index.getId()).getId();
+                    idX       = poolVariables.get(VAR_X, r, q, k, i, index.getId()).getId();
                     UtilConstraintBuilder.constraintCombineVariable(idCombine, idSumY, idX);
                     
                 }
@@ -754,17 +758,17 @@ public class ConstraintDivBIP extends DivBIP
         // the increase cost
         IloLinearNumExpr expr = cplex.linearNumExpr();
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
-            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r, failR), q, k, 0).getId();
+            idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r, failR), q, k, 0, 0).getId();
             expr.addTerm(factor * desc.getInternalPlanCost(k), cplexVar.get(idCombine));                    
         }                
                     
         // Index access cost                            
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(); i++)
-                for (Index index : desc.getIndexesAtSlot(i)) {
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++)
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
                     idCombine = poolVariables.get(VAR_COMBINE_X, combineReplicaID(r, failR), 
-                                           q, k, index.getId()).getId();
-                    expr.addTerm(factor * desc.getAccessCost(k, index), cplexVar.get(idCombine));
+                                           q, k, i, index.getId()).getId();
+                    expr.addTerm(factor * desc.getAccessCost(k, i, index), cplexVar.get(idCombine));
                 }    
         
         return expr;
