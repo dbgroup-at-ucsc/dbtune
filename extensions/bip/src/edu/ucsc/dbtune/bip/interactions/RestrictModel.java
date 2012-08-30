@@ -6,15 +6,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 
 
 import edu.ucsc.dbtune.bip.core.BIPVariable;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
+import edu.ucsc.dbtune.bip.div.SortableIndexAcessCost;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
@@ -23,6 +25,7 @@ import ilog.concert.IloNumVarType;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
+import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.BIP_MAX_VALUE;
 import static edu.ucsc.dbtune.bip.interactions.IIPVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.interactions.IIPVariablePool.VAR_Y;
 import static edu.ucsc.dbtune.bip.interactions.IIPVariablePool.VAR_S;
@@ -42,11 +45,9 @@ public class RestrictModel
     protected IIPVariablePool    poolVariables;    
     protected Map<String, Index> mapVarSIndex;   
     protected QueryPlanDesc      desc;
-    protected Set<Index>         candidateIndexes;
+    protected List<Index>        candidates;
     
-    protected double delta;     
-    protected int    iC;
-    protected int    iD; 
+    protected double delta;  
     protected Index  indexC;
     protected Index  indexD;
     protected int    numConstraints;
@@ -87,17 +88,15 @@ public class RestrictModel
                          final QueryPlanDesc desc, 
                          final LogListener logger, 
                          final double delta, final Index indexc, final Index indexd, 
-                         final Set<Index> candidateIndexes,
-                         final int ic, final int id, final boolean isApproximation)
+                         final List<Index> candidateIndexes,
+                         final boolean isApproximation)
     {
         this.delta            = delta;
-        this.iC               = ic;
-        this.iD               = id;
         this.indexC           = indexc;
         this.indexD           = indexd;
         this.desc             = desc;
         this.logger           = logger;
-        this.candidateIndexes = candidateIndexes;
+        this.candidates = candidateIndexes;
         this.cplexVar         = null;
         this.cplex            = cplex;
         this.isApproximation  = isApproximation;
@@ -129,18 +128,27 @@ public class RestrictModel
         constructBinaryVariables();
         
         // Construct the formula of Ctheta
-        buildQueryExecutionCost();
+        mapThetaVarCoef = new HashMap<Integer, Map<Integer,Double>>(); 
+        
+        for (int theta : listTheta)
+            buildQueryExecutionCost(theta);
+        
         
         // 2.1. Atomic constraints 
-        atomicConstraintForINUM();
-        atomicConstraintAtheta();
+        for (int theta : listTheta)
+            atomicConstraintForINUM(theta);
+        
         interactionPrecondition();        
         
         // 2,2. Optimal constraints
-        localOptimal();
-        atomicConstraintLocalOptimal();
-        presentVariableLocalOptimal();
-        selectingIndexAtEachSlot();
+        for (int theta : listTheta)
+            localOptimal(theta);
+        
+        for (int theta : listTheta)
+            atomicConstraintLocalOptimal(theta);
+        
+        for (int theta : listTheta)
+            selectingIndexAtEachSlot(theta);
         
         logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);
         
@@ -158,7 +166,7 @@ public class RestrictModel
         //
         boolean isInteracting = false;
         
-        if (iC != iD) {           
+        if (indexC.getTable() != indexD.getTable()) {
             indexInteractionConstraint1();
             isInteracting = cplex.solve();            
         }
@@ -172,9 +180,6 @@ public class RestrictModel
         
         
         logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
-        
-        //if (isInteracting) 
-          //  doiBIP = computeDoi();
         
         return isInteracting;
     }
@@ -246,30 +251,39 @@ public class RestrictModel
         int q         = desc.getStatementID();
         
         for (int theta : listTheta) {
-            
             // var y
             for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-                poolVariables.createAndStore(theta, VAR_Y, q, k, 0);
+                poolVariables.createAndStore(theta, VAR_Y, q, k, 0, 0);
            
             // var x
             for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-                for (int i = 0; i < desc.getNumberOfSlots(); i++)
-                    for (Index index : desc.getIndexesAtSlot(i))                        
-                        poolVariables.createAndStore(theta, VAR_X, q, k, index.getId());   
+                for (int i = 0; i < desc.getNumberOfSlots(k); i++)
+                    for (Index index : desc.getIndexesAtSlot(k, i))                        
+                        poolVariables.createAndStore(theta, VAR_X, q, k, i, index.getId());   
             
             // var s
-            for (Index index : candidateIndexes) {                
-                BIPVariable var = poolVariables.createAndStore (theta, VAR_S, q, 0, index.getId());
+            for (Index index : candidates) {                
+                BIPVariable var = poolVariables.createAndStore (theta, VAR_S, q, 0, 0, index.getId());
                 mapVarSIndex.put(var.getName(), index);
             }
             
             // var u
             for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) 
-                for (int i = 0; i < desc.getNumberOfSlots(); i++) 
-                    for (Index index : desc.getIndexesAtSlot(i)) 
-                        poolVariables.createAndStore(theta, VAR_U, q, t, index.getId());
-                
+                for (int i = 0; i < desc.getNumberOfSlots(t); i++) {
+                    boolean hasFTS = false;
+                    for (Index index : desc.getIndexesAtSlot(i, i)) { 
+                        poolVariables.createAndStore(theta, VAR_U, q, t, i, index.getId());
+                        if (index instanceof FullTableScanIndex)
+                            hasFTS = true;
+                    }
+                    // We need a variable for FTS of type VAR_U
+                    if (!hasFTS) {
+                        Index fts = desc.getFTSAtSlot(t, i);
+                        poolVariables.createAndStore(theta, VAR_U, q, t, i, fts.getId());
+                    }
+                }
         }
+        
         
         createCplexVariable();
     }
@@ -326,7 +340,7 @@ public class RestrictModel
      * @throws IloException 
      * 
      */
-    protected void atomicConstraintForINUM() throws IloException
+    protected void atomicConstraintForINUM(int theta) throws IloException
     {
         IloLinearNumExpr expr;
         int id;
@@ -334,162 +348,52 @@ public class RestrictModel
         int idS;
         
         int q = desc.getStatementID();
-        
-        for (int theta : listTheta) {
+        expr = cplex.linearNumExpr();
+        // (3a) \sum_{k \in [1, Kq]}y^{theta}_k = 1
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            idY = poolVariables.get(theta, VAR_Y, q, k, 0, 0).getId();
+            expr.addTerm(1, cplexVar.get(idY));
+        }
             
-            expr = cplex.linearNumExpr();
+        cplex.addEq(expr, 1, "atomic_" + numConstraints);
+        numConstraints++;
             
-            // (3a) \sum_{k \in [1, Kq]}y^{theta}_k = 1
-            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                idY = poolVariables.get(theta, VAR_Y, q, k, 0).getId();
-                expr.addTerm(1, cplexVar.get(idY));
+        // (3b) \sum_{a \in S+_i \cup I_{\emptyset}} x(theta, k, i, a) = y(theta, k)
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            idY = poolVariables.get(theta, VAR_Y, q, k, 0, 0).getId();
+                
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++) {
+                expr = cplex.linearNumExpr();
+                expr.addTerm(-1, cplexVar.get(idY));
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
+                    id = poolVariables.get(theta, VAR_X, q, k, i, index.getId()).getId();
+                    expr.addTerm(1, cplexVar.get(id));                        
+                }
+                    
+                cplex.addEq(expr, 0, "atomic_" + numConstraints);                    
+                numConstraints++;
             }
-            
-            cplex.addEq(expr, 1, "atomic_" + numConstraints);
-            numConstraints++;
-            
-            // (3b) \sum_{a \in S+_i \cup I_{\emptyset}} x(theta, k, i, a) = y(theta, k)
-            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {               
+        }       
                 
-                idY = poolVariables.get(theta, VAR_Y, q, k, 0).getId();
-                
-                for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+            
+        //  x(index) - s(index) <= 0
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++) {
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
+                    
+                    id  = poolVariables.get(theta, VAR_X, q, k, i, index.getId()).getId();                        
+                    idS = poolVariables.get(theta, VAR_S, q, 0, 0, index.getId()).getId();
                     
                     expr = cplex.linearNumExpr();
-                    expr.addTerm(-1, cplexVar.get(idY));
-                    
-                    for (Index index : desc.getIndexesAtSlot(i)) {
-                        
-                        id = poolVariables.get(theta, VAR_X, q, k, index.getId()).getId();
-                        expr.addTerm(1, cplexVar.get(id));                        
-                    }
-                    
-                    cplex.addEq(expr, 0, "atomic_" + numConstraints);                    
+                    expr.addTerm(1, cplexVar.get(id));
+                    expr.addTerm(-1, cplexVar.get(idS)); 
+                    cplex.addLe(expr, 0, "atomic_" + numConstraints);
                     numConstraints++;
                 }
-            }       
-            
-            
-            // x(index) - s(index) <= 0
-            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                
-                for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                    
-                    for (Index index : desc.getIndexesAtSlot(i)) {
-                        
-                        id  = poolVariables.get(theta, VAR_X, q, k, index.getId()).getId();                        
-                        idS = poolVariables.get(theta, VAR_S, q, 0, index.getId()).getId();
-                        
-                        expr = cplex.linearNumExpr();
-                        expr.addTerm(1, cplexVar.get(id));
-                        expr.addTerm(-1, cplexVar.get(idS)); 
-                        cplex.addLe(expr, 0, "atomic_" + numConstraints);
-                        numConstraints++;
-                    }
-                }
-            }    
-        }    
+            }
+        }  
     }
     
-    /**
-     * The set of constraints that enforces {@code Atheta} to be atomic in the
-     * {@code RestrictIIP} problem.
-     * 
-     * That is {@code Atheta} has at most one index of a particular relation. 
-     * @throws IloException 
-     */
-    protected void atomicConstraintAtheta() throws IloException
-    {
-        IloLinearNumExpr expr;        
-        int idS;
-        
-        int q = desc.getStatementID();
-        boolean hasTerm;
-        
-        for (int theta : listTheta) {
-            
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                
-                if ( (theta == IND_C && i == iC) 
-                     || (theta == IND_D && i == iD)
-                     || (theta == IND_CD && i == iC)
-                     || (theta == IND_CD && i == iD)                     
-                     )
-                // special case to handle later
-                    continue;
-                
-                
-                // - not consiDer full table scan
-                // - it could be possible s^{theta}_{a} = 1 and s^{theta}_{full table scan} = 1
-                // - in this case full table scan is used instead of a for the optimal cost
-                expr = cplex.linearNumExpr();
-                hasTerm = false; 
-                for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
-                    idS = poolVariables.get(theta, VAR_S, q, 0, index.getId()).getId();
-                    expr.addTerm(1, cplexVar.get(idS));
-                    hasTerm = true;
-                }
-                
-                if (hasTerm) {
-                    cplex.addLe(expr, 1, "Atheta_" + numConstraints);                
-                    numConstraints++;
-                }
-            }
-        }
-        
-        
-        // for case of Ac and Acd
-        for (int theta : listTheta) {
-            
-            if (theta == IND_EMPTY || theta == IND_D)
-                continue; 
-            
-            // not consider full table scan
-            // and exclude {@code indexC}
-            expr = cplex.linearNumExpr();
-            hasTerm = false;
-            for (Index index : desc.getIndexesWithoutFTSAtSlot(iC)) {
-                
-                if (!index.equals(indexC)) {
-                    idS = poolVariables.get(theta, VAR_S, q, 0, index.getId()).getId();
-                    expr.addTerm(1, cplexVar.get(idS));
-                    hasTerm = true;
-                }
-                
-            }
-            // since we  do not consiDer FTS, the list can be empty
-            if (hasTerm) {
-                cplex.addLe(expr, 1, "Atheta" + numConstraints);
-                numConstraints++;
-            }
-        }
-        
-        // for case of Ad and Acd
-        for (int theta : listTheta) {
-            
-            if (theta == IND_EMPTY || theta == IND_C)
-                continue;
-            
-            expr = cplex.linearNumExpr();
-            hasTerm = false;
-            
-            // not consider full table scan 
-            for (Index index : desc.getIndexesWithoutFTSAtSlot(iD)){
-                
-                if (!index.equals(indexD)) {
-                    idS = poolVariables.get(theta, VAR_S, q, 0, index.getId()).getId();
-                    expr.addTerm(1, cplexVar.get(idS));
-                    hasTerm = true;
-                }
-            }
-            
-            // since we  do not consiDer FTS, the list can be empty
-            if (hasTerm) {
-                cplex.addLe(expr, 1, "Atheta_" + numConstraints);
-                numConstraints++;
-            }
-        }
-    }
     
     /**
      * This set of constraints ensures the investing pairs of indexes 
@@ -501,33 +405,65 @@ public class RestrictModel
     protected void interactionPrecondition() throws IloException
     {   
         IloLinearNumExpr expr;        
-        int idS;
-        
+        int idS;        
         int q = desc.getStatementID();
         
         expr = cplex.linearNumExpr();
-        idS = poolVariables.get(IND_EMPTY, VAR_S, q, 0, indexC.getId()).getId();
+        idS = poolVariables.get(IND_EMPTY, VAR_S, q, 0, 0, indexC.getId()).getId();
         expr.addTerm(1, cplexVar.get(idS));
-        cplex.addEq(expr, 0, "Empty_" + numConstraints); // For s^{empty}_c = 0     
+        cplex.addEq(expr, 0, "Empty_" + numConstraints); 
+        // For s^{empty}_c = 0     
         numConstraints++;
         
         expr = cplex.linearNumExpr();
-        idS = poolVariables.get(IND_D, VAR_S, q, 0, indexC.getId()).getId();
+        idS = poolVariables.get(IND_EMPTY, VAR_S, q, 0, 0, indexD.getId()).getId();
         expr.addTerm(1, cplexVar.get(idS));
-        cplex.addEq(expr, 0, "sdc_" + numConstraints); // For s^{d}_c = 0     
+        cplex.addEq(expr, 0, "Empty_" + numConstraints); 
+        // For s^{empty}_d = 0     
         numConstraints++;
-        
         
         expr = cplex.linearNumExpr();
-        idS = poolVariables.get(IND_EMPTY, VAR_S, q, 0, indexD.getId()).getId();
+        idS = poolVariables.get(IND_D, VAR_S, q, 0, 0, indexC.getId()).getId();
         expr.addTerm(1, cplexVar.get(idS));
-        cplex.addEq(expr, 0, "Empty_" + numConstraints); // For s^{empty}_d = 0     
+        cplex.addEq(expr, 0, "sdc_" + numConstraints); 
+        // For s^{d}_c = 0     
         numConstraints++;
+        
+        expr = cplex.linearNumExpr();
+        idS = poolVariables.get(IND_D, VAR_S, q, 0, 0, indexD.getId()).getId();
+        expr.addTerm(1, cplexVar.get(idS));
+        cplex.addEq(expr, 1, "sdc_" + numConstraints); 
+        // For s^{d}_d = 1     
+        numConstraints++;
+             
 
         expr = cplex.linearNumExpr();
-        idS = poolVariables.get(IND_C, VAR_S, q, 0, indexD.getId()).getId();
+        idS = poolVariables.get(IND_C, VAR_S, q, 0, 0, indexC.getId()).getId();
         expr.addTerm(1, cplexVar.get(idS));
-        cplex.addEq(expr, 0, "scd_" + numConstraints); // For s^{c}_d = 0     
+        cplex.addEq(expr, 1, "scd_" + numConstraints); 
+        // For s^{c}_c = 1     
+        numConstraints++;
+        
+        expr = cplex.linearNumExpr();
+        idS = poolVariables.get(IND_C, VAR_S, q, 0, 0, indexD.getId()).getId();
+        expr.addTerm(1, cplexVar.get(idS));
+        cplex.addEq(expr, 0, "scd_" + numConstraints); 
+        // For s^{c}_d = 0     
+        numConstraints++;
+        
+        
+        expr = cplex.linearNumExpr();
+        idS = poolVariables.get(IND_CD, VAR_S, q, 0, 0, indexD.getId()).getId();
+        expr.addTerm(1, cplexVar.get(idS));
+        cplex.addEq(expr, 1, "sdc_" + numConstraints); 
+        // For s^{cd}_d = 1     
+        numConstraints++;
+        
+        expr = cplex.linearNumExpr();
+        idS = poolVariables.get(IND_CD, VAR_S, q, 0, 0, indexC.getId()).getId();
+        expr.addTerm(1, cplexVar.get(idS));
+        cplex.addEq(expr, 1, "sdc_" + numConstraints); 
+        // For s^{cd}_c = 1     
         numConstraints++;
     }
     
@@ -541,34 +477,28 @@ public class RestrictModel
      * @throws IloException 
      *
      */
-    protected void buildQueryExecutionCost() throws IloException
+    protected void buildQueryExecutionCost(int theta) throws IloException
     {   
-        int    q;
-        int    idY, idX;       
+        int q;
+        int idY, idX;      
         
-        q = desc.getStatementID();
-        
-        mapThetaVarCoef = new HashMap<Integer, Map<Integer,Double>>();
-        
-        for (int theta : listTheta) {
-             
-            Map<Integer, Double> coefs = new HashMap<Integer, Double>();
+        q = desc.getStatementID();        
+        Map<Integer, Double> coefs = new HashMap<Integer, Double>();
             
-            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
         
-                idY = poolVariables.get(theta, VAR_Y, q, k, 0).getId();
-                coefs.put(idY, desc.getInternalPlanCost(k));
+            idY = poolVariables.get(theta, VAR_Y, q, k, 0, 0).getId();
+            coefs.put(idY, desc.getInternalPlanCost(k));
                 
-                // index access cost
-                for (int i = 0; i < desc.getNumberOfSlots(); i++) 
-                    for (Index index : desc.getIndexesAtSlot(i)) {
-                        idX = poolVariables.get(theta, VAR_X, q, k, index.getId()).getId();                        
-                        coefs.put(idX, desc.getAccessCost(k, index));
-                    }
-            }
-            
-            mapThetaVarCoef.put(theta, coefs);
+            // index access cost
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++) 
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
+                    idX = poolVariables.get(theta, VAR_X, q, k, i, index.getId()).getId();                        
+                    coefs.put(idX, desc.getAccessCost(k, i, index));
+                }
         }
+            
+        mapThetaVarCoef.put(theta, coefs);
     }
     
     
@@ -594,7 +524,7 @@ public class RestrictModel
      * @throws IloException 
      * 
      */
-    protected void localOptimal() throws IloException
+    protected void localOptimal(int theta) throws IloException
     {   
         IloLinearNumExpr expr;        
         int idU;
@@ -607,22 +537,29 @@ public class RestrictModel
         else 
             approxCoef = 1.0;
         
-        // construct C^opt_t
-        for (int theta : listTheta) {
+        boolean isFTSInSlot;// construct C^opt_t
+       
+        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) {
+            expr = cplex.linearNumExpr();
+                
+            for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(theta).entrySet())
+                expr.addTerm(coefs.getValue(), cplexVar.get(coefs.getKey()));
             
-            for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) {
+            for (int i = 0; i < desc.getNumberOfSlots(t); i++) { 
+                isFTSInSlot = false;
+                for (Index index : desc.getIndexesAtSlot(t, i)) {
+                    idU = poolVariables.get(theta, VAR_U, q, t, i, index.getId()).getId();
+                    expr.addTerm(-approxCoef * desc.getAccessCost(t, i, index), cplexVar.get(idU));
+                    
+                    if (index instanceof FullTableScanIndex)
+                        isFTSInSlot = true;
+                }
                 
-                expr = cplex.linearNumExpr();
-                
-                for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(theta).entrySet())
-                    expr.addTerm(coefs.getValue(), cplexVar.get(coefs.getKey()));
-                
-                
-                for (int i = 0; i < desc.getNumberOfSlots(); i++) 
-                    for (Index index : desc.getIndexesAtSlot(i)) {
-                        idU = poolVariables.get(theta, VAR_U, q, t, index.getId()).getId();
-                        expr.addTerm(-approxCoef * desc.getAccessCost(t, index), cplexVar.get(idU));
-                    }
+                if (isFTSInSlot) {
+                    Index fts = desc.getFTSAtSlot(t, i);
+                    idU = poolVariables.get(theta, VAR_U, q, t, i, fts.getId()).getId();
+                    expr.addTerm(-approxCoef * BIP_MAX_VALUE, cplexVar.get(idU));
+                }
                 
                 cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
                 numConstraints++;
@@ -634,100 +571,46 @@ public class RestrictModel
      * The set of atomic constraints on variable of type {@code VAR_U}
      * @throws IloException 
      */
-    protected void atomicConstraintLocalOptimal() throws IloException
-    {
-        IloLinearNumExpr expr;
-        int idU;
+    protected void atomicConstraintLocalOptimal(int theta) throws IloException
+    {   
+        IloLinearNumExpr expr, exprPresent;
+        int idU, idS;
         int q = desc.getStatementID();
+        boolean isFTSInSlot;
         
-        for (int theta : listTheta) {
-            
-            for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) {
-                
-                for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) {
+            for (int i = 0; i < desc.getNumberOfSlots(t); i++) {
+                expr = cplex.linearNumExpr();
+                isFTSInSlot = false;
+                for (Index index : desc.getIndexesAtSlot(t, i)) {
+                    idU = poolVariables.get(theta, VAR_U, q, t, i, index.getId()).getId();
+                    idS = poolVariables.get(theta, VAR_S, q, 0, 0, index.getId()).getId();
+                    expr.addTerm(1, cplexVar.get(idU));
                     
-                    expr = cplex.linearNumExpr();
-                    
-                    for (Index index : desc.getIndexesAtSlot(i)) {
-                        
-                        idU = poolVariables.get(theta, VAR_U, q, t, index.getId()).getId();
-                        expr.addTerm(1, cplexVar.get(idU));
-                                                                      
-                    }
-                    
-                    cplex.addEq(expr, 1, "atomic_U" + numConstraints);
+                    exprPresent = cplex.linearNumExpr();
+                    exprPresent.addTerm(1, cplexVar.get(idU));
+                    exprPresent.addTerm(-1, cplexVar.get(idS));            
+                    cplex.addLe(exprPresent, 0, "U_present_" + numConstraints);
                     numConstraints++;
+                    
+                    if (index instanceof FullTableScanIndex)
+                        isFTSInSlot = true;
+                }   
+                    
+                // add an infinity for the FTS-U variable
+                if (!isFTSInSlot) {
+                    Index fts = desc.getFTSAtSlot(t, i);
+                    idU = poolVariables.get(theta, VAR_U, q, t, i, fts.getId()).getId();                    
+                    expr.addTerm(1, cplexVar.get(idU));   
                 }
+                    
+                cplex.addEq(expr, 1, "atomic_U" + numConstraints);
+                numConstraints++;
             }
         }
     }
     
-    /**
-     * Constraint on the present of {@code VAR_U} variables.
-     * 
-     * For example, a variable corresponding to some index {@code a} must be {@code 0}
-     * if {@code a} has not been appeared in any of {@code Atheta}
-     * @throws IloException 
-     * 
-     */
-    protected void presentVariableLocalOptimal() throws IloException
-    {   
-        IloLinearNumExpr expr;
-        int idU;
-        int idS;
-        
-        int q = desc.getStatementID();
-        
-        for (int theta : listTheta) {
-            
-            for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) { 
-                
-                for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                    
-                    // no need to constraint FTS
-                    // since u_{FTS} <= 1
-                    for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
-                        idU = poolVariables.get(theta, VAR_U, q, t, index.getId()).getId();
-                        
-                        expr = cplex.linearNumExpr();
-                        
-                        if ( (theta == IND_C && index.equals(indexC))  
-                            || (theta == IND_D &&  index.equals(indexD))
-                            || (theta == IND_CD && index.equals(indexC))  
-                            || (theta == IND_CD &&  index.equals(indexD))        
-                            )
-                        {
-                            // u^{theta}_{c,d} <= 1 (it is implies by binary variable constraint)
-                        } 
-                        else if ( (theta == IND_EMPTY && index.equals(indexC)) 
-                                || (theta == IND_EMPTY && index.equals(indexD))                        
-                                || (theta == IND_C && index.equals(indexD))
-                                || (theta == IND_D && index.equals(indexC))
-                        )
-                        {    
-                            expr.addTerm(1, cplexVar.get(idU));
-                            cplex.addEq(expr, 0, "U_empty_" + numConstraints); // var_u = 0                            
-                            numConstraints++;
-                            
-                        }                        
-                        else {                           
-                            // Constraint (6b): u^{theta}_{tia} <= sum_{theta}_{a}                             
-                            int ga = index.getId();
-                            expr.addTerm(1, cplexVar.get(idU));
-                            
-                            for (int innerTheta : listTheta) {
-                                idS = poolVariables.get(innerTheta, VAR_S, q, 0, ga).getId();
-                                expr.addTerm(-1, cplexVar.get(idS));
-                            }
-                                
-                            cplex.addLe(expr, 0, "U_sum_" + numConstraints);
-                            numConstraints++;
-                        } 
-                    }                   
-                }         
-            }
-        }
-    }
+    
     
     /**
      * 
@@ -736,104 +619,85 @@ public class RestrictModel
      * @throws IloException 
      * 
      */
-    protected void selectingIndexAtEachSlot() throws IloException
-    {  
+    protected void selectingIndexAtEachSlot(int theta) throws IloException
+    {   
+        int q = desc.getStatementID();
+        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++)
+            for (int i = 0; i < desc.getNumberOfSlots(t); i++) 
+                selectingIndexAtEachSlot(theta, q, t, i, desc);
+        
+    }
+    
+    
+    /**
+     * todo
+     * @param r
+     * @param q
+     * @param t
+     * @param i
+     * @param desc
+     * @throws IloException
+     */
+    protected void selectingIndexAtEachSlot(int theta, int q, int t, int i, QueryPlanDesc desc) 
+                   throws IloException
+    {
         int idU;
         int idS;        
         int idFTS, numIndex;
-        int q = desc.getStatementID();
+        Index fts;
+        List<Integer> varIDs;
         
-        for (int theta : listTheta) {    
-            
-            for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) {
+        // Sort index access cost
+        List<SortableIndexAcessCost> listSortedIndex  = new ArrayList<SortableIndexAcessCost>();
                 
-                for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                    
-                    // Sort index access cost
-                    List<SortableIndexAcessCost> listSortedIndex  = 
-                                new ArrayList<SortableIndexAcessCost>();
-                    
-                    for (Index index : desc.getIndexesAtSlot(i)) {
-                        SortableIndexAcessCost sac = new SortableIndexAcessCost
-                                                (desc.getAccessCost(t, index), index);
-                        listSortedIndex.add(sac);                       
-                    }                   
-                    
-                    numIndex = desc.getIndexesAtSlot(i).size();
-                    idFTS = desc.getIndexesAtSlot(i).get(numIndex - 1).getId();
-                    
-                    // sort in the increasing order of the index access cost
-                    Collections.sort(listSortedIndex);
-                                       
-                    List<Integer> varIDs = new ArrayList<Integer>();
-                    
-                    for (SortableIndexAcessCost sac : listSortedIndex){  
-                        
-                        Index index = sac.getIndex();
-                        idU = poolVariables.get(theta, VAR_U, q, t, index.getId()).getId();
-                        varIDs.add(idU);
-                        
-                        if (index.equals(indexC)) {
-                            // --- \sum >= 1 (for the case of theta = IND_C || IND_D
-                            // because this sum is also <= 1 (due to atomic constraint)
-                            // therefore, we optimizer to write \sum = 1
-                            
-                            if (theta == IND_C || theta == IND_CD){
-                                IloLinearNumExpr exprInternal = cplex.linearNumExpr();
-                                
-                                for (int varID : varIDs)
-                                    exprInternal.addTerm(1, cplexVar.get(varID));
-                                
-                                cplex.addEq(exprInternal, 1, "optimal_C_" + numConstraints); 
-                                numConstraints++;
-                                break; // the remaining variables will be assigned value 0
-                            }
-                        }
-                        else if (index.equals(indexD)){
-                        
-                            if (theta == IND_D || theta == IND_CD) {
-                                
-                                IloLinearNumExpr exprInternal = cplex.linearNumExpr();
-                                for (int varID : varIDs)
-                                    exprInternal.addTerm(1, cplexVar.get(varID));
-                                
-                                cplex.addEq(exprInternal, 1, "optimal_D_" + numConstraints); 
-                                numConstraints++;
-                                break; // the remaining variables will be assigned value 0
-                            }
-                        }
-                        else {
-                            
-                            if (index.getId() == idFTS) {
-                                IloLinearNumExpr exprInternal = cplex.linearNumExpr();
-                                for (int varID : varIDs)
-                                    exprInternal.addTerm(1, cplexVar.get(varID));
-                            
-                                cplex.addEq(exprInternal, 1, "FTS_" + numConstraints);
-                                numConstraints++;
-                                
-                                break; // the remaining variables will be assigned value 0 
-                            } else {
-                            
-                                for (int thetainternal : listTheta) {
-                                    
-                                    // exprInternal >= 0                                    
-                                    IloLinearNumExpr exprInternal = cplex.linearNumExpr();
-                                    for (int varID : varIDs)
-                                        exprInternal.addTerm(1, cplexVar.get(varID));
-                                    
-                                    idS = poolVariables.get(thetainternal, VAR_S, q, 0, index.getId())
-                                                        .getId();
-                                    exprInternal.addTerm(-1, cplexVar.get(idS));
-                                    cplex.addGe(exprInternal, 0, "select_index_" + numConstraints); 
-                                    numConstraints++;
-                                }   
-                            }   
-                        }                                           
-                    }   
-                }
-            }
+        for (Index index : desc.getIndexesAtSlot(t, i)) {
+            SortableIndexAcessCost sac = new SortableIndexAcessCost 
+                                            (desc.getAccessCost(t, i, index), index);
+            listSortedIndex.add(sac);                       
+        }                   
+            
+        numIndex = desc.getIndexesAtSlot(t, i).size();
+        if (numIndex == 0) {
+            throw new RuntimeException("Slot at #query = " + q + " #plan Id =  " + t
+                        + " # slot = " + i + " does not have any indexes"
+                        + " that can fit");
         }
+                
+        fts = desc.getIndexesAtSlot(t, i).get(numIndex - 1);
+        if (fts instanceof FullTableScanIndex)
+            idFTS = fts.getId();
+        else
+            idFTS = -1;
+                    
+        // sort in the increasing order of the index access cost
+        Collections.sort(listSortedIndex);
+        varIDs = new ArrayList<Integer>();
+        
+        for (SortableIndexAcessCost sac : listSortedIndex) {  
+            
+            Index index = sac.getIndex();
+            idU = poolVariables.get(VAR_U, theta, q, t, i, index.getId()).getId();
+            varIDs.add(idU);
+                    
+            if (index.getId() == idFTS) {
+                IloLinearNumExpr exprInternal = cplex.linearNumExpr();
+                for (int varID : varIDs)
+                    exprInternal.addTerm(1, cplexVar.get(varID));
+                
+                cplex.addEq(exprInternal, 1, "FTS_" + numConstraints);
+                numConstraints++;
+                break; // the remaining variables will be assigned value 0 
+            } else {                                    
+                IloLinearNumExpr exprInternal = cplex.linearNumExpr();
+                for (int varID : varIDs)
+                    exprInternal.addTerm(1, cplexVar.get(varID));
+                    
+                idS = poolVariables.get(VAR_S, theta, 0, 0, 0, index.getId()).getId();
+                exprInternal.addTerm(-1, cplexVar.get(idS));
+                cplex.addGe(exprInternal, 0, "select_index_" + numConstraints); 
+                numConstraints++;
+            }   
+        }   
     }
     
     /**
@@ -934,26 +798,25 @@ public class RestrictModel
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_EMPTY).entrySet())
             Cempty += (coefs.getValue() * val[coefs.getKey()]);
                
-        System.out.println(" cemtpy: " + Cempty);
+        Rt.p(" cemtpy: " + Cempty);
         
         // for Ac
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_C).entrySet())
             Cc += (coefs.getValue() * val[coefs.getKey()]);
         
-        System.out.println(" cc: " + Cc);
+        Rt.p(" cc: " + Cc);
         
         // Ad
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_D).entrySet())            
             Cd += (coefs.getValue() * val[coefs.getKey()]);
         
-        
-        System.out.println(" cd: " + Cd);
+        Rt.p(" cd: " + Cd);
         
         // Acd
         for (Entry<Integer, Double> coefs : mapThetaVarCoef.get(IND_CD).entrySet())
             Ccd += (coefs.getValue() * val[coefs.getKey()]);
         
-        System.out.println(" ccd: " + Ccd);
+        Rt.p(" ccd: " + Ccd);
     
         double doi = Math.abs(Cempty + Ccd - Cc - Cd) / Ccd;
 

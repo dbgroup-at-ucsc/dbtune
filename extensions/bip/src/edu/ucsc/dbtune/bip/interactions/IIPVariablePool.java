@@ -56,7 +56,8 @@ public class IIPVariablePool extends AbstractBIPVariablePool
      * @return
      *      The variable name
      */
-    public BIPVariable createAndStore(int theta, int typeVariable, int q, int k, int a)
+    public BIPVariable createAndStore(int theta, int typeVariable, 
+                                     int q, int k, int i, int a)
     {
         StringBuilder varName = new StringBuilder();
         varName.append(strHeaderVariable[typeVariable]);
@@ -69,6 +70,9 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         if (typeVariable == VAR_Y || typeVariable == VAR_X || typeVariable == VAR_U)
             nameComponent.add(Integer.toString(k));
         
+        if (typeVariable == VAR_X || typeVariable == VAR_U)
+            nameComponent.add(Integer.toString(i));
+        
         if (typeVariable == VAR_X || typeVariable == VAR_U || typeVariable == VAR_S) 
             nameComponent.add(Integer.toString(a));
         
@@ -78,9 +82,8 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         BIPVariable var = new BIPVariable(varName.toString(), typeVariable);
         add(var); 
         
-        // Create a mapping  
-        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, q, k, a);
-        mapHighDimensionVar.put(iai, var);
+        // Create a mappings
+        mapHighDimensionVar.put(new IIPVariableIndicator(theta, typeVariable, q, k, i, a), var);
         
         return var;
     }
@@ -99,10 +102,8 @@ public class IIPVariablePool extends AbstractBIPVariablePool
      * @return
      *      BIP Variable
      */
-    public BIPVariable get(int theta, int typeVariable, int q, int k, int a)
+    public BIPVariable get(int theta, int typeVariable, int q, int k, int i, int a)
     {
-        // Create a mapping from 
-        IIPVariableIndicator iai = new IIPVariableIndicator(theta, typeVariable, q, k, a);
-        return mapHighDimensionVar.get(iai);
+        return mapHighDimensionVar.get(new IIPVariableIndicator(theta, typeVariable, q, k, i, a));
     }
 }

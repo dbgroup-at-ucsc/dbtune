@@ -3,7 +3,7 @@ package edu.ucsc.dbtune.bip.interactions;
 
 public class IIPVariableIndicator 
 {
-    private int theta, typeVariable, q, k, a;
+    private int theta, typeVariable, q, k, i, a;
     private int fHashCode;
     
     /**
@@ -19,12 +19,13 @@ public class IIPVariableIndicator
      * @param _a
      *      The index ID
      */
-    public IIPVariableIndicator(int _theta, int _typeVariable, int _q, int _k, int _a)
+    public IIPVariableIndicator(int _theta, int _typeVariable, int _q, int _k, int _i, int _a)
     {
         this.theta = _theta;
         this.typeVariable = _typeVariable;
         this.q = _q;
         this.k = _k;
+        this.i = _i;
         this.a = _a;
         fHashCode = 0;
     }
@@ -42,6 +43,7 @@ public class IIPVariableIndicator
              (this.typeVariable != var.typeVariable) ||
              (this.q != var.q) ||
              (this.k != var.k) ||
+             (this.i != var.i) ||
              (this.a != var.a) ) {
             return false;
         }
@@ -59,6 +61,7 @@ public class IIPVariableIndicator
             result = 37 * result + this.typeVariable;
             result = 37 * result + this.q;
             result = 37 * result + this.k;
+            result = 37 * result + this.i;
             result = 37 * result + this.a;
             fHashCode = result;
         }

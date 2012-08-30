@@ -40,7 +40,7 @@ public class InteractionOnOptimizer implements BIPOutputOnOptimizer
                 throws SQLException 
     {
         Set<Index> Aempty, Ac, Ad, Acd;
-        
+        /*
         // derive four configuration
         Aempty = new HashSet<Index>(mapThetaIndexSet.get(RestrictIIP.IND_EMPTY));
         Ac = new HashSet<Index>(mapThetaIndexSet.get(RestrictIIP.IND_C));
@@ -64,6 +64,7 @@ public class InteractionOnOptimizer implements BIPOutputOnOptimizer
         }
         
         doiOptimizer = Math.abs(costAcd + costAempty - costAc - costAd) / costAcd;
+        */
     }
     
     /**
