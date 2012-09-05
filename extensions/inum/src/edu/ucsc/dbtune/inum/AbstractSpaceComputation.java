@@ -3,17 +3,23 @@ package edu.ucsc.dbtune.inum;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
+import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Iterables.get;
@@ -85,8 +91,31 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
         Set<? extends Index> indexes;
         if (overrideInumSpacePopulateIndexSet!=null)
             indexes=overrideInumSpacePopulateIndexSet;
-        else
-            indexes=extractInterestingOrders(statement, catalog);
+        else {
+            try {
+                indexes=extractInterestingOrders(statement, catalog);
+            } catch (java.sql.SQLSyntaxErrorException e) {
+                Rt.error(e.getMessage());
+                Set<Index> indexes2=new HashSet<Index>();
+                ExplainedSQLStatement db2plan = delegate.explain(statement);
+                for (Operator op : db2plan.getPlan().nodes()) {
+                    InterestingOrder order=op.getColumnsFetched();
+                    if (order==null)
+                        continue;
+                    List<DatabaseObject> columns=order.getAll();
+                    List<Boolean> ascendings=order.getAscending();
+                    for (int i=0;i<ascendings.size();i++) {
+                        Object o=columns.get(i+1);
+                        if (!(o instanceof Column))
+                            continue;
+                        Column c=(Column)o;
+                        boolean b= ascendings.get(i);
+                        indexes2.add(new InumInterestingOrder(c,b));
+                    }
+                }
+                indexes=indexes2;
+            }
+        }
         
         // obtain plans for all the extracted interesting orders
         computeWithCompleteConfiguration(
