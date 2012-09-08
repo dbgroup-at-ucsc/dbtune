@@ -82,7 +82,7 @@ public class InteractionBIP extends AbstractBIPSolver
         
         // 2. Iterate over the list of query plan descs that have been derived
         interactionOutput = new InteractionOutput();
-        int i = 0;
+        int counter = 0;
         SQLStatement sql;
         
         try {
@@ -92,7 +92,9 @@ public class InteractionBIP extends AbstractBIPSolver
             // allow the solution differed 5% from the actual optimal value
             cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
             // not output the log of CPLEX
-            cplex.setOut(null);
+            // not output the log of CPLEX
+            if (!environment.getIsShowCPlexOutput())
+                cplex.setOut(null);
             // not output the warning
             cplex.setWarning(null);
         }
@@ -101,9 +103,10 @@ public class InteractionBIP extends AbstractBIPSolver
         }
         
         for (QueryPlanDesc desc : queryPlanDescs) {
-            sql = workload.get(i);
+            sql = workload.get(counter);
             findInteractions(sql, desc);
-            i++;
+            counter++;
+            
         }
         
         Rt.p("L95, number of CPLEX calls: " + numCplexCall);
@@ -127,20 +130,20 @@ public class InteractionBIP extends AbstractBIPSolver
      *      The query plan description of the statement
      * @throws IloException 
      */
-    protected void findInteractions(SQLStatement sql, QueryPlanDesc desc) throws IloException 
+    protected void findInteractions(SQLStatement sql, QueryPlanDesc desc) throws Exception 
     {   
         // Derive list of indexes that might interact
         List<Index> candidates = new ArrayList<Index>();
         
         for (Index index : desc.getIndexes()) {
             if (!(index instanceof FullTableScanIndex))
-            candidates.add(index);
+                candidates.add(index);
         }
         
         Index indexc, indexd;        
         IndexInteraction pair;
         
-        List<RestrictModel> listIIP = new ArrayList<RestrictModel>();
+        boolean hasInteract;
         
         for (int pos_c = 0; pos_c < candidates.size(); pos_c++) {            
             for (int pos_d = pos_c + 1; pos_d < candidates.size(); pos_d++) {
@@ -148,49 +151,40 @@ public class InteractionBIP extends AbstractBIPSolver
                 indexc = candidates.get(pos_c);
                 indexd = candidates.get(pos_d);
                 
-                if (cacheInteractingPairs.containsKey(new IndexInteraction(indexc, indexd))
-                   || cacheInteractingPairs.containsKey(new IndexInteraction(indexd, indexc)) 
-                   ) 
-                   continue;                
-                else 
-                    listIIP.add(new RestrictModel(cplex, desc, logger, delta, indexc, indexd, 
-                                              candidates, isApproximation));
+                hasInteract = cacheInteractingPairs.containsKey(new IndexInteraction(indexc, indexd))
+                        || cacheInteractingPairs.containsKey(new IndexInteraction(indexd, indexc)); 
+               
+                if (!hasInteract) {
+                    RestrictModel restrict = new RestrictModel(cplex, desc, logger, delta, indexc, indexd, 
+                            desc.getIndexes(), isApproximation);
+                    
+                    if (restrict.solve(sql, optimizer)) {
+                        // cache pairs of interaction
+                        indexc = restrict.getFirstIndex();
+                        indexd = restrict.getSecondIndex();
+                        
+                        // store the first index has ID less than ID of the second index
+                        if (indexc.getId() < indexd.getId())                    
+                            pair = new IndexInteraction(indexc, indexd);
+                        else 
+                            pair = new IndexInteraction(indexd, indexc);
+                        
+                        cacheInteractingPairs.put(pair, 1);
+                        
+                        // store in the output
+                        pair.setDoiBIP(restrict.getDoiBIP());
+                        pair.setDoiOptimizer(restrict.getDoiOptimizer());
+                        interactionOutput.add(pair);
+                    } 
+                    
+                    numCplexCall++;
+                } 
             }
         }
         
-        // Build the BIP to check the interaction
-        for (RestrictModel restrict : listIIP) {
-            
-            if (restrict.solve(sql, optimizer)) {
-                // cache pairs of interaction
-                indexc = restrict.getFirstIndex();
-                indexd = restrict.getSecondIndex();
-                
-                // store the first index has ID less than ID of the second index
-                if (indexc.getId() < indexd.getId())                    
-                    pair = new IndexInteraction(indexc, indexd);
-                else 
-                    pair = new IndexInteraction(indexd, indexc);
-                
-                cacheInteractingPairs.put(pair, 1);
-                
-                // store in the output
-                pair.setDoiBIP(restrict.getDoiBIP());
-                pair.setDoiOptimizer(restrict.getDoiOptimizer());
-                interactionOutput.add(pair);
-            } 
-            
-            restrict.clear();
-            numCplexCall++;
-            
-            if (numCplexCall % 100 == 0)
-                Rt.p(" PROCESSING statement: " + desc.getStatementID()
-                                    + " number of CPLEX calls: " + numCplexCall
-                                    + " number of interactions: " + interactionOutput.size());
-        }
-        
-        numCplexCall += listIIP.size();
-           
+        Rt.p(" PROCESSING statement: " + desc.getStatementID()
+                + " number of CPLEX calls: " + numCplexCall
+                + " number of interactions: " + interactionOutput.size());
     }
     
     

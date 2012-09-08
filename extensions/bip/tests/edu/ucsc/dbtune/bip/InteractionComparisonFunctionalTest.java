@@ -28,12 +28,15 @@ import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.advisor.interactions.IndexInteraction;
 //import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
 //import edu.ucsc.dbtune.bip.interactions.InteractionOutput;
+import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
+import edu.ucsc.dbtune.bip.interactions.InteractionOutput;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.BeforeClass;
@@ -71,36 +74,11 @@ public class InteractionComparisonFunctionalTest
                                 //Generation.Strategy.POWER_SET
                                   );
     public static double[] deltas = new double[] {
-                                    //0.01, 
-                                    0.1, 
+                                    0.01, 
+                                    //0.1, 
                                     //1.0
                                     };
     
-    /**
-     * Setup for the test.
-     */
-    @BeforeClass
-    public static void beforeClassSetUp() throws Exception
-    {
-        /*
-        en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-        subFolder = "tpcds-small";
-        workload = workload(en.getWorkloadsFoldername() + subFolder);
-        folder = en.getWorkloadsFoldername() + subFolder;
-        dbName = "TEST";
-        tableOwner = "TPCDS";
-     */
-        /*
-        en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-        subFolder = "tpch-10-counts";
-        workload = workload(en.getWorkloadsFoldername() + subFolder);
-        folder = en.getWorkloadsFoldername() + subFolder;
-        dbName = "TEST";
-        tableOwner = "TPCH";
-    */
-    }
     
     /**     
      * 
@@ -109,23 +87,33 @@ public class InteractionComparisonFunctionalTest
      */
     @Test
     public void testInteraction() throws Exception
-    {
-        /*
+    {   
+        en = Environment.getInstance();
+        db = newDatabaseSystem(en);
+        workload = workload(en.getWorkloadsFoldername());
+        folder = en.getWorkloadsFoldername();
+        dbName = "TPCH10GB";
+        tableOwner = "TPCH";
+        
+        Rt.p(" test interaction");
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
+        
         // 1. generate candidate indexes
         generateCandidateIndexes();
         
+        /*
         // 2. Ask Karl's to read from text file and write into his binary object
         for (Generation.Strategy s : strategies)  
             CandidateGenerationDBTune.readIndexesFromDBTune(s, dbName, tableOwner, subFolder);
-        
+        */
+        /*
         // 3. Call Analysis from Karl
         AnalysisMain.setWorkload(workload);
         AnalysisMain.runStepsINUM(tableOwner);
         */
         
-        /*
+        
         InteractionOutput result;
         Set<IndexInteraction> ibg;
         
@@ -133,7 +121,7 @@ public class InteractionComparisonFunctionalTest
             for (double delta : deltas) {
                 result = analyze(s, delta);
                 
-                
+                /*
                 if (s.equals(Generation.Strategy.UNION_OPTIMAL))
                     ibg = readIBGInteraction(s, delta, optimalCandidates);
                 else if (s.equals(Generation.Strategy.POWER_SET))
@@ -143,21 +131,22 @@ public class InteractionComparisonFunctionalTest
                 else
                     ibg = null;
                 
-                System.out.println("-- Threshold: --- " + delta
+                Rt.p("-- Threshold: --- " + delta
                                     + " : " + " f-measure: " + 
                                     result.f_measure(ibg));
-                                    
+                */                    
             }
-            */
+            
     }
     
     /**
      * @throws Exception
      *      if fails
-     *    
+     */    
     private static InteractionOutput analyze(Generation.Strategy strategy, double delta) 
                                             throws Exception
-    {         
+    {     
+        Rt.p("Start to analyze");
         Set<Index>        candidates;
         InteractionOutput output;
         
@@ -172,7 +161,7 @@ public class InteractionComparisonFunctionalTest
         else 
             candidates = new HashSet<Index>(optimalCandidates);
         
-        System.out.println("InteractionComparison, Number of indexes: " + candidates.size() + 
+        Rt.p("InteractionComparison, Number of indexes: " + candidates.size() + 
                            "Number of statements: " + workload.size());
         
         io = db.getOptimizer();
@@ -187,17 +176,18 @@ public class InteractionComparisonFunctionalTest
         bip.setOptimizer((InumOptimizer) io);
         bip.setLogListenter(logger);
         bip.setConventionalOptimizer(io.getDelegate());
-        bip.setApproximiationStrategy(true);
+        bip.setApproximiationStrategy(false);
         
         output = (InteractionOutput) bip.solve();
-        System.out.println("Number of interactions: " + output.size());
-        //System.out.println(output);
-        System.out.println(logger.toString());        
+        Rt.p("Number of interactions: " + output.size()
+              + "\n interactions: " + output);
+        //Rt.p(output);
+        Rt.p(logger.toString());        
         
         return output;
     }
     
-    
+    /*
     private static Set<IndexInteraction> readIBGInteraction(Generation.Strategy s, double t,
             Set<Index> indexes) throws Exception
     {   
@@ -222,7 +212,7 @@ public class InteractionComparisonFunctionalTest
             id2 = Integer.parseInt(token[1]);
             
             if (!mapIDIndex.containsKey(id1) || !mapIDIndex.containsKey(id2))
-                System.out.println("Runtime error. The inputs to the problems are not identical"
+                Rt.p("Runtime error. The inputs to the problems are not identical"
                                      + " id: " + id1 + " vs. " + id2);
             
             // Add interaction
@@ -251,7 +241,7 @@ public class InteractionComparisonFunctionalTest
                 new OneColumnCandidateGenerator(
                         new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())));
             oneColumnCandidates = candGen.generate(workload);
-            System.out.println("InteractionComparison, One column candidates: " + 
+            Rt.p("InteractionComparison, One column candidates: " + 
                             oneColumnCandidates.size());
             
             try {
@@ -267,7 +257,7 @@ public class InteractionComparisonFunctionalTest
                 new PowerSetOptimalCandidateGenerator(db.getOptimizer(),
                         new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())), 3);
             powerSetCandidates = candGen.generate(workload);
-            System.out.println("InteractionComparison, Power set candidates: " 
+            Rt.p("InteractionComparison, Power set candidates: " 
                                 + powerSetCandidates.size());
             
             if (powerSetCandidates.size() > MAX_NUM_INDEX) {
@@ -287,12 +277,12 @@ public class InteractionComparisonFunctionalTest
             candGen = 
                 new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
             optimalCandidates = candGen.generate(workload);
-            System.out.println("InteractionComparison, Optimal candidates: " 
+            Rt.p("InteractionComparison, Optimal candidates: " 
                                 + optimalCandidates.size());
             
             try {
                 writeIndexesToFile(optimalCandidates, folder  + "/candidate-optimal.txt");            
-                System.out.println(" write to file: " + (folder + "/candidate-optimal.txt"));
+                Rt.p(" write to file: " + (folder + "/candidate-optimal.txt"));
             } catch (Exception e) {
                 throw e;
             }

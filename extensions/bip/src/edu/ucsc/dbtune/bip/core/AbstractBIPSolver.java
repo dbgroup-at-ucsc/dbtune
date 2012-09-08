@@ -14,6 +14,7 @@ import java.io.ObjectOutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -70,7 +71,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     @Override
     public void setCandidateIndexes(Set<Index> candidateIndexes) 
     {
-        this.candidateIndexes = candidateIndexes;
+        this.candidateIndexes = new HashSet<Index>(candidateIndexes);
     }
     
     @Override
@@ -270,6 +271,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
             for (QueryPlanDesc desc : queryPlanDescs)
                 candidateIndexes.addAll(desc.getFullTableScanIndexes());
         }
+        
     }
     
     /**

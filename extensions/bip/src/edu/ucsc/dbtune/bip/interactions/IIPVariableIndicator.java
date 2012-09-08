@@ -38,7 +38,6 @@ public class IIPVariableIndicator
             return false;
 
         IIPVariableIndicator var = (IIPVariableIndicator) obj;
-        
         if ( (this.theta != var.theta) ||
              (this.typeVariable != var.typeVariable) ||
              (this.q != var.q) ||
@@ -71,9 +70,17 @@ public class IIPVariableIndicator
 
 
     @Override
-    public String toString() {
-        return "IIPVariableIndex [a=" + a + ", fHashCode=" + fHashCode + ", q=" + q
-                 + ", k=" + k + ", theta=" + theta + ", typeVariable="
-                 + typeVariable + "]";
+    public String toString() 
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(" theta=" + theta)
+         .append(" typeVar = "+typeVariable)
+         .append(" q=" + q)
+         .append(" k=" + k)
+         .append(" i=" + i)
+         .append(" a=" +a)
+         .append(" hashcode="+fHashCode+"\n");
+        
+        return sb.toString();
     }    
 }

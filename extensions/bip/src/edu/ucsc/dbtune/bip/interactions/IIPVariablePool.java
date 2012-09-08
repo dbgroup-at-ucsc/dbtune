@@ -33,7 +33,15 @@ public class IIPVariablePool extends AbstractBIPVariablePool
     public void clear()
     {
         mapHighDimensionVar.clear();
+        super.listVar.clear();
+        super.mapNameVar.clear();
         BIPVariable.IN_MEMORY_ID = new AtomicInteger(0);
+    }
+    
+    @Override
+    public String toString()
+    {
+        return mapHighDimensionVar.toString();
     }
     
     /**
@@ -83,7 +91,8 @@ public class IIPVariablePool extends AbstractBIPVariablePool
         add(var); 
         
         // Create a mappings
-        mapHighDimensionVar.put(new IIPVariableIndicator(theta, typeVariable, q, k, i, a), var);
+        mapHighDimensionVar.put(new IIPVariableIndicator(theta, typeVariable, q, k, i, a)
+                                , var);
         
         return var;
     }
