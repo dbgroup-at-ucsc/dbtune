@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.bip.div;
 
+import java.util.List;
+
 public interface ElasticDivergent 
 {
     /**
@@ -26,5 +28,5 @@ public interface ElasticDivergent
      * @param cost
      *      The maximum of deployment cost.
      */
-    void setUpperDeployCost(double cost);
+    void setUpperDeployCost(List<Double> costs);
 }
