@@ -34,7 +34,9 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Sets;
 
 import static edu.ucsc.dbtune.util.EnvironmentProperties.QUERY_IMBALANCE;
@@ -53,6 +55,7 @@ public class ConstraintDivBIP extends DivBIP
         this.isApproximation  = isApproximation;
         this.constraints = constraints;
     }
+    
     
     @Override
     protected void buildBIP() 
@@ -91,6 +94,10 @@ public class ConstraintDivBIP extends DivBIP
                 topMBestCostExplicit();                
             }
             
+            // TOTAL cost constraint
+            if (super.isUpperTotalCost)
+                super.totalCostConstraint(super.upperTotalCost);
+            
             // this variable is turned on when 
             // the constraints contain IMBALANCE_QUERY or NODE_FAILURE
             boolean isSumYConstraint = false;
@@ -106,7 +113,7 @@ public class ConstraintDivBIP extends DivBIP
                 sumYConstraint();
             //
             // 
-            System.out.println(" is sm y: " + isSumYConstraint
+            Rt.p(" is sum y: " + isSumYConstraint
                       + " number of constriants; " + constraints.size()
                        + constraints);
             // 7. additional constraints
@@ -135,7 +142,7 @@ public class ConstraintDivBIP extends DivBIP
      */
     protected void sumYConstraint() throws IloException
     {
-        System.out.println(" SUM Y CONSTRAINT ");
+        Rt.p(" SUM Y CONSTRAINT ");
         // sum_y = sum of y^j_{qk} over all template plans
         for (int r = 0; r < nReplicas; r++)
             for (QueryPlanDesc desc : queryPlanDescs) {
@@ -187,7 +194,7 @@ public class ConstraintDivBIP extends DivBIP
         }
         
         constantRHSImbalanceConstraint = min;
-        System.out.println(" constant in QUERY imbalance constraint: " 
+        Rt.p(" constant in QUERY imbalance constraint: " 
                             + UtilConstraintBuilder.constantRHSImbalanceConstraint);
             
     }
@@ -204,7 +211,7 @@ public class ConstraintDivBIP extends DivBIP
     protected void setConstantReplicaImbalanceConstraint(double beta)
     {   
         constantRHSImbalanceConstraint = (beta - 1) *  getTotalBaseTableUpdateCost() / nReplicas;
-        System.out.println(" constant in REPLICA imbalance constraint: " 
+        Rt.p(" constant in REPLICA imbalance constraint: " 
                             + UtilConstraintBuilder.constantRHSImbalanceConstraint);
             
     }
@@ -221,7 +228,7 @@ public class ConstraintDivBIP extends DivBIP
     protected void setConstantFailureImbalanceConstraint(double beta)
     {   
         constantRHSImbalanceConstraint = (beta - 1) *  getTotalBaseTableUpdateCost() / nReplicas;
-        System.out.println(" constant in REPLICA imbalance constraint: " 
+        Rt.p(" constant in REPLICA imbalance constraint: " 
                             + UtilConstraintBuilder.constantRHSImbalanceConstraint);
             
     }
@@ -294,16 +301,23 @@ public class ConstraintDivBIP extends DivBIP
             for (int i = 0; i < desc.getNumberOfSlots(k); i++)  
                 for (Index index : desc.getIndexesAtSlot(k, i)) 
                     poolVariables.createAndStore(VAR_XO, r, q, k, i, index.getId());
-        
+        boolean isFTS;
         // U variables for the local optimal
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(k); i++) { 
-                for (Index index : desc.getIndexesAtSlot(k, i))  
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++) {
+                isFTS = false;
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
+                    if (index instanceof FullTableScanIndex)
+                        isFTS = true;
                     poolVariables.createAndStore(VAR_U, r, q, k, i, index.getId());
+                }
                 
                 // We need a variable for FTS of type VAR_U
-                Index fts = desc.getFTSAtSlot(k, i);
-                poolVariables.createAndStore(VAR_U, r, q, k, i, fts.getId());
+                // if FTS has not appeared in this slot
+                if (!isFTS){
+                    Index fts = desc.getFTSAtSlot(k, i);
+                    poolVariables.createAndStore(VAR_U, r, q, k, i, fts.getId());
+                }
             }
         // variable sum_y(r, q) = \sum_{k = 1}^{K_q} y^r_{qk}
         poolVariables.createAndStore(VAR_SUM_Y, r, q, 0, 0, 0);    
@@ -343,7 +357,6 @@ public class ConstraintDivBIP extends DivBIP
      */
     protected void topMBestCostExplicit() throws IloException
     {   
-        
         List<IloLinearNumExpr> exprOptimals;
         List<IloLinearNumExpr> exprQueries;
 
@@ -501,7 +514,6 @@ public class ConstraintDivBIP extends DivBIP
         expr.addTerm(-1, cplexVar.get(idSumY));
         
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-            
             idY = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
             expr.addTerm(1, cplexVar.get(idY));
         }
@@ -665,22 +677,31 @@ public class ConstraintDivBIP extends DivBIP
      */    
     protected void nodeFailureConstraint(int failR, double beta) throws IloException
     {
-        IloLinearNumExpr expr;
+        IloLinearNumExpr exprNewLoad;
+        
+        List<IloLinearNumExpr> listNewLoads = new ArrayList<IloLinearNumExpr>();
         
         for (int r = 0; r < nReplicas; r++)
             if (r != failR) {
                 
-                expr = cplex.linearNumExpr();
+                exprNewLoad = cplex.linearNumExpr();
                 
                 // only consider query statements to the increased load
                 for (QueryPlanDesc desc : queryPlanDescs) {
                     if (desc.getSQLCategory().isSame(SELECT))
-                        expr.add(increadLoadQuery(r, desc.getStatementID(), desc, failR));
+                        exprNewLoad.add(increadLoadQuery(r, desc.getStatementID(), desc, failR));
                 }
                 
-                // increase(r) <= beta * load(r)
-                nodeFailureConstraintReplica(r, expr, beta);
+                // add existing load
+                exprNewLoad.add(super.replicaCost(r));
+                listNewLoads.add(exprNewLoad);
             }
+        
+        // similar to node imbalance constraints
+        // for each pair of replicas, impose the imbalance factor constraint 
+        for (int r1 = 0; r1 < listNewLoads.size() - 1; r1++)
+            for (int r2 = r1 + 1; r2 < listNewLoads.size(); r2++) 
+                imbalanceConstraint(listNewLoads.get(r1), listNewLoads.get(r2), beta);
     }
     
     
