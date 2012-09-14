@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.bip;
 
-
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
@@ -14,21 +13,20 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import org.junit.Test;
 
-import edu.ucsc.dbtune.bip.DivTestEntry.DivParameter;
+import edu.ucsc.dbtune.bip.div.DivBIP;
+import edu.ucsc.dbtune.bip.div.DivConfiguration;
+import edu.ucsc.dbtune.bip.util.LatexGenerator;
+import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.bip.util.LatexGenerator.Plot;
 import edu.ucsc.dbtune.divgdesign.CoPhyDivgDesignFunctionalTest;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.GnuPlotLine;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
-
-import edu.ucsc.dbtune.bip.div.DivBIP;
-import edu.ucsc.dbtune.bip.util.LatexGenerator;
-import edu.ucsc.dbtune.bip.util.LatexGenerator.Plot;
-
-
+import edu.ucsc.dbtune.workload.Workload;
 
 /**
  * Run experiments presented in the DIV-paper
@@ -37,23 +35,19 @@ import edu.ucsc.dbtune.bip.util.LatexGenerator.Plot;
  *
  */
 public class DIVPaper extends DivTestSetting
-{
-    static class Point
-    {
-        double xaxis;
-        double yaxis;
-        
-        public Point(double x, double y)
-        {
-            xaxis = x;
-            yaxis = y;
-        }
-    }
-    
+{   
     static File outputDir;
     static File figsDir;
     static File latexFile;
     static List<Plot> plots;
+    static String plotName;
+    static String xname;
+    static String yname;
+    
+    
+    static DivConfiguration initialConf;
+    static int nDeploys;
+    
     /**
      *
      * Generate paper results
@@ -61,40 +55,141 @@ public class DIVPaper extends DivTestSetting
     @Test
     public void main() throws Exception
     {   
-        String dbNames[] = {"tpch10gb"};
-        String workloadNames[] = {"tpch"};
+        String dbNames[] = {"test"}; 
+        String workloadNames[] = {"online-benchmark-100"};
         
         outputDir = new File("/tmp/div/");        
+        if (!outputDir.exists())
+            outputDir.mkdir();
         figsDir = new File(outputDir, "figs");
+        if (!figsDir.exists())
+            figsDir.mkdir();
+        
         latexFile = new File(outputDir, "div.tex");
         plots = new ArrayList<Plot>();
         
-        for (int i = 0; i < dbNames.length; i++)
-            experiment(dbNames[i], workloadNames[i]);
+        // experiment for DIV equivalent to BIP
+        //for (int i = 0; i < dbNames.length; i++) 
+          //  experimentDivEquiBip(dbNames[i], workloadNames[i]);
+        
+        for (int i = 0; i < dbNames.length; i++) 
+            experimentElasticity(dbNames[i], workloadNames[i]);
         
         LatexGenerator.generateLatex(latexFile, outputDir, plots);
     }
     
-    
-    public static void experiment(String dbName, String workloadName)
+    public static void experimentElasticity(String dbName, String workloadName)
             throws Exception
     {
+        // get database instances, candidate indexes
+        getEnvironmentParameters(dbName, workloadName);
+        
+        // get parameters
+        setParameters();
+        
+        // 1. Create initial configuration
+        nReplicas = 3;
+        B = 10 * Math.pow(2, 30);
+        getInitialConfiguration();
+        
+        // 2. Get the total deployment cost
+        double reConfigurationCost = 0.0;
+        DivBIPFunctionalTest.testDiv(nReplicas, B, false);
+        reConfigurationCost = divConf.transitionCost(initialConf, false);
+        Rt.p("Reconfiguration costs: " + reConfigurationCost);
+        
+        List<Double> costs = new ArrayList<Double>();
+        int startExpo = -4;
+        int endExpo = 0;
+        int numX;
+        numX = endExpo - startExpo + 1;
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        for (int i = startExpo; i <= endExpo; i++) {
+            costs.add(reConfigurationCost * Math.pow(2,  i));
+            xtics[i + numX - 1] = i + numX;
+            xaxis[i + numX - 1] = Double.toString(Math.pow(2,  i)) + "x";
+        }
+        
+        String[] competitors = {"n = 2", "n = 3", "n = 4"};
+        List< List<Double> > totalCostCompetitors = new ArrayList<List<Double>>();
+        double totalTime = 0.0;
+        for (nDeploys = 2; nDeploys <= 4; nDeploys++) {
+            LogListener logger = LogListener.getInstance();
+            totalCostCompetitors.add(ElasticDivBIPFunctionalTest.testElasticity
+                                 (initialConf, costs, nDeploys, logger));
+            totalTime += logger.getTotalRunningTime();
+        }
+        
+        for (int i = 0; i < numX; i++){
+            for (int j = 0; j < competitors.length; j++){
+                points.add(new Point(xtics[i], totalCostCompetitors.get(j).get(i)));
+            }
+        }
+        
+        plotName = dbName + "_" + workloadName + "elastic";
+        xname = "Reconfiguration cost, each unit is " 
+                    + Double.toString(reConfigurationCost);
+        yname = "Total cost";
+     
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        totalTime /= 1000;
+        
+        plots.add(new Plot("figs/" + plotName, 
+                " Database = " + dbName + ", workload = " + workloadName +
+                " Elasticity, initial configuration includes the first 20 queries"
+                + ". The running time to generate this graph = "
+                + totalTime + " secs ", 0.5));
+    }
+    
+    protected static void getInitialConfiguration() throws Exception
+    {
+        // an alternative
+        //initialConf = new DivConfiguration(3, 2);
+        
+        List<SQLStatement> sqls = new ArrayList<SQLStatement>();
+        List<SQLStatement> sqlInitials = new ArrayList<SQLStatement>();
+        for (int i = 0; i < workload.size(); i++){
+            sqls.add(workload.get(i));
+            if (i < workload.size() / 5)
+                sqlInitials.add(workload.get(i));
+        }
+        
+        Workload wlStore = new Workload(sqls);
+        workload = new Workload(sqlInitials);
+        Rt.p("Initial configuration: " + workload.size());
+        DivBIPFunctionalTest.testDiv(nReplicas, B, true);
+        initialConf = divConf;
+        
+        // reset workload
+        workload = wlStore;
+        
+    }
+    
+    public static void experimentDivEquiBip(String dbName, String workloadName)
+            throws Exception
+    {
+        // get database instances, candidate indexes
         getEnvironmentParameters(dbName, workloadName);
         
         // get parameters
         setParameters();
                 
-        String plotName;
-        String xname;
-        String yname;
+        // regenerate candidate indexes for DIVGDESIGN
+        CoPhyDivgDesignFunctionalTest.forceGeneratingCandidates();
         
-        String[] competitors = {"DIV-BIP", "UNIF"}; //, "DIVGDESIGN"};
+        String[] competitors = {"DIV-BIP", "UNIF"};
         int numX;
         int nReplica;
         double ratio;
                 
         // 1. Varying number of replicas
+        Rt.p(" ---- VARYING number of replicas");
+        int counter = 0;
         for (double B : listBudgets) {
+            counter++;
             
             numX = listNumberReplicas.size();
             double[] xtics = new double[numX];
@@ -106,13 +201,14 @@ public class DIVPaper extends DivTestSetting
                 xtics[i] = i;
                 xaxis[i] = Integer.toString(nReplica);
                 // call testDiv
-                points.add(new Point(xtics[i], DivBIPFunctionalTest.testDiv(nReplica, B)));
+                points.add(new Point(xtics[i], DivBIPFunctionalTest.testDiv(nReplica, B, false)));
                 points.add(new Point(xtics[i], DivBIPFunctionalTest.testUniform(nReplica, B)));
                 //points.add(new Point(xtics[i], CoPhyDivgDesignFunctionalTest.testDivgDesign(nReplica, B)));
+                
             }
             
             ratio = (double) B / Math.pow(2, 30) / 10;
-            plotName = "space_" + Double.toString(ratio) + "x";
+            plotName = dbName + "_" + workloadName + "_space_" + Double.toString(ratio) + "x";
             xname = "# replicas";
             yname = "TotalCost";
          
@@ -122,12 +218,13 @@ public class DIVPaper extends DivTestSetting
             plots.add(new Plot("figs/" + plotName, 
                     " Database = " + dbName + " workload = " + workloadName +
                     " Varying \\# replicas, B = " + Double.toString(ratio) + "x", 0.5));
+            
         }
         
         double B;
-        // 2. Varying space budget
-        for (int n : listNumberReplicas) {
-            
+        // 2. Varying space budget        
+        Rt.p(" ---- VARYING space budgets");
+        for (int n : listNumberReplicas) {            
             nReplica = n;
             numX = listBudgets.size();
             double[] xtics = new double[numX];
@@ -140,13 +237,12 @@ public class DIVPaper extends DivTestSetting
                 ratio = (double) B / Math.pow(2, 30) / 10;
                 xaxis[i] = Double.toString(ratio) + "x";
                 // call testDiv
-                points.add(new Point(xtics[i], DivBIPFunctionalTest.testDiv(nReplica, B)));
+                points.add(new Point(xtics[i], DivBIPFunctionalTest.testDiv(nReplica, B, false)));
                 points.add(new Point(xtics[i], DivBIPFunctionalTest.testUniform(nReplica, B)));
                 //points.add(new Point(xtics[i], CoPhyDivgDesignFunctionalTest.testDivgDesign(nReplica, B)));
             }
             
-            
-            plotName = "nreplica_" + nReplica;
+            plotName = dbName + "_" + workloadName + "_nreplica_" + nReplica;
             xname = "Space budget";
             yname = "TotalCost";
          
@@ -157,8 +253,56 @@ public class DIVPaper extends DivTestSetting
                     " Database = " + dbName + " workload = " + workloadName +
                     " Varying space budget, n = " + nReplica, 0.5));
         }
+        
     }
     
+    /**
+     * The experiments to study imbalance constraints
+     * @throws Exception 
+     *
+    public static void exptImbalance(String dbName, String workloadName,
+                                     String imbalanceType, double[] factors) throws Exception
+    {
+        String plotName;
+        String xname;
+        String yname;
+        double cost, costUnif = 0.0, ratio;
+        double factor;
+        String[] competitors = {"DIV-BIP", "UNIF"};
+        int numX;
+        
+        numX = factors.length;
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        List<DivConstraint> constraints = new ArrayList<DivConstraint>();
+        
+        // TODO: derive costUnif
+        for (int i = 0; i < numX; i++) {
+            factor = factors[i];
+            xtics[i] = i;
+            xaxis[i] = Double.toString(factor);
+
+            constraints = new ArrayList<DivConstraint>();
+            constraints.add(new DivConstraint(imbalanceType, factor));
+            cost = ConstraintDivBIPFunctionalTest.runConstraintBIP
+                    (new ConstraintDivBIP(constraints, false));
+            points.add(new Point(xtics[i], cost));
+            points.add(new Point(xtics[i], costUnif));
+        }
+        ratio = (double) B / Math.pow(2, 30) / 10;
+        plotName = dbName + "_" + workloadName + "_space_" + Double.toString(ratio) + "x";
+        xname = "# replicas";
+        yname = "TotalCost";
+     
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        
+        plots.add(new Plot("figs/" + plotName, 
+                " Database = " + dbName + " workload = " + workloadName +
+                imbalanceType + " , B = " + Double.toString(ratio) + "x", 0.5));
+    }
+    */
     
     /**
      * Retrieve the environment parameters set in {@code dbtune.cfg} file
@@ -186,7 +330,7 @@ public class DIVPaper extends DivTestSetting
         // get workload and candidates
         workload = workload(folder);
         candidates = readCandidateIndexes();
-        System.out.println(" # statements in the workload: " + workload.size()
+        Rt.p("DIVpaper: # statements in the workload: " + workload.size()
                 + " # candidates in the workload: " + candidates.size()
                 + " workload folder: " + folder);
     }
@@ -220,9 +364,9 @@ public class DIVPaper extends DivTestSetting
                 sql.setStatementWeight(fUpdate);
         
         // debugging purpose
-        isExportToFile = false;
+        isExportToFile = true;
         isTestCost = false;
-        isShowRecommendation = false;        
+        isShowRecommendation = true;        
         isGetAverage = false;
         isDB2Cost = false;
         isAllImbalanceConstraint = false;
@@ -302,32 +446,18 @@ public class DIVPaper extends DivTestSetting
         }
         plot.addLine();
         plot.finish();
-
     }
-
-    /**
-     * Find a DIV result that contains the given DIV parameter
-     * (e.g., find a result that have space budget and number of replicas
-     * equal to these of the given parameter)
-     * 
-     * @param entries
-     *  todo
-     * @param par
-     *  todo
-     * @return
-     *  todo
-     */
-    public static List<DivTestEntry> findMatchingDivResult(List<DivTestEntry> entries, DivParameter par)
+    
+    static class Point
     {
-        List<DivTestEntry> result = new ArrayList<DivTestEntry>();
+        double xaxis;
+        double yaxis;
         
-        for (DivTestEntry entry : entries) {
-            if (entry.containParameter(par))
-                result.add(entry);
+        public Point(double x, double y)
+        {
+            xaxis = x;
+            yaxis = y;
         }
-        
-     
-        return result;
     }
-
+    
 }

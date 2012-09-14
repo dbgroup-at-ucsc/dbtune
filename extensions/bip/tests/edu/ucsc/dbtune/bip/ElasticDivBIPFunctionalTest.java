@@ -2,6 +2,8 @@ package edu.ucsc.dbtune.bip;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 
+import java.util.List;
+
 
 
 import org.junit.BeforeClass;
@@ -11,7 +13,9 @@ import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.div.ElasticDivBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.Rt;
 
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeDeploymentCost;
@@ -56,7 +60,7 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
             return;
         
         // compute the  upper bound cost
-        computeUpperBoundDeployCost();
+        //computeUpperBoundDeployCost();
                 
         double factors[] = {Math.pow(2, -1), Math.pow(2, -2), Math.pow(2, -3), Math.pow(2, -4), 
                             Math.pow(2, -5), Math.pow(2, -6), Math.pow(2, -7),
@@ -72,7 +76,6 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
         loadfactor = 2;
         
         for (double factor : factors) { 
-        
             // Call elastic
             ElasticDivBIP elastic = new ElasticDivBIP();
             elastic.setCandidateIndexes(candidates);
@@ -81,7 +84,7 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
             elastic.setSpaceBudget(B);
             elastic.setLogListenter(logger);
             
-            elastic.setUpperDeployCost(upperCost * factor);
+            //elastic.setUpperDeployCost(upperCost * factor);
             elastic.setInitialConfiguration(sourceConf);
             elastic.setNumberDeployReplicas(nDeploys);
 
@@ -110,24 +113,34 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
                                );
                                //+ " NEW configuration: " + dest);
         }
-      
     }
     
-    private static void computeUpperBoundDeployCost() throws Exception
-    {           
-        // get the configuration        
-        nReplicas = 4;
-        loadfactor = 2;        
-        DivBIPFunctionalTest.testDiv(nReplicas, B);        
-        sourceConf = new DivConfiguration(divConf);
+    
+    
+    /**
+     * Test the elasticity aspect
+     * 
+     */
+    public static List<Double> testElasticity(DivConfiguration initial, 
+                                        List<Double> costs,
+                                        int nDeploys, LogListener logger)
+            throws Exception
+    {   
+        Optimizer io = db.getOptimizer();
         
-        // run with two replicas
-        nReplicas = 3;
-        loadfactor = 2;        
-        DivBIPFunctionalTest.testDiv(nReplicas, B);        
-        destinationConf = new DivConfiguration(divConf);
+        ElasticDivBIP elastic = new ElasticDivBIP();
+        elastic.setCandidateIndexes(candidates);
+        elastic.setWorkload(workload); 
+        elastic.setOptimizer((InumOptimizer) io);
+        elastic.setSpaceBudget(B);
+        elastic.setLogListenter(logger);
         
-        upperCost = computeDeploymentCost(sourceConf, destinationConf);
-        System.out.println(" UPPER deployment cost: " + upperCost);
+        elastic.setInitialConfiguration(initial);
+        elastic.setNumberDeployReplicas(nDeploys);
+        elastic.setUpperDeployCost(costs);
+        
+        elastic.solve();
+        Rt.p("Running time: " + logger);
+        return elastic.getTotalCosts();
     }
 }
