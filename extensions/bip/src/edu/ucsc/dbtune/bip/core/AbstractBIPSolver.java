@@ -4,6 +4,7 @@ import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.DoubleParam;
+import ilog.cplex.IloCplex.IntParam;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,6 +25,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.Workload;
 
 
@@ -55,10 +57,14 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected LogListener   logger;
     protected double        objVal;
     protected double        gapObj;
-    protected boolean       communicateInumOnTheFly = false;
+    
     // the default value indicating that
     // we can utilize serialized InumQueryPlanDesc 
     // objects if necessary
+    protected boolean communicateInumOnTheFly = false;
+    // default value: find optimal solution
+    protected boolean isCheckFeasible = false;
+    
     
     protected String fileQueryPlanDesc;
     
@@ -109,7 +115,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         cplex = new IloCplex();
         
         // allow the solution differed 5% from the actual optimal value
-        cplex.setParam(IloCplex.DoubleParam.EpGap, environment.getMaxCplexEpGap());
+        cplex.setParam(DoubleParam.EpGap, environment.getMaxCplexEpGap());
         // the running time
         cplex.setParam(DoubleParam.TiLim, environment.getMaxCplexRunningTime());
         // not output the log of CPLEX
@@ -117,6 +123,9 @@ public abstract class AbstractBIPSolver implements BIPSolver
             cplex.setOut(null);
         // not output the warning
         cplex.setWarning(null);
+        Rt.p(" is check feasible: " + isCheckFeasible);
+        if (isCheckFeasible) 
+            cplex.setParam(IntParam.IntSolLim, 1);
       
         //cplex.setParam(DoubleParam.EpLin, 1e-1);
         
