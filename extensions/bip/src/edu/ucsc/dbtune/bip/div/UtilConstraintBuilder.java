@@ -8,6 +8,7 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Permutations;
+import edu.ucsc.dbtune.util.Rt;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
@@ -162,6 +163,47 @@ public class UtilConstraintBuilder
             
             if (coef > 0.0 && cplex.getValue(var) > 0)
                 cost += coef * cplex.getValue(var);
+            
+        }
+        
+        // issue #281: some variables are assigned value small value (e.g., 3.5976098620712736E-12)
+        // workaround: cast very small value to 0
+        if (cost < 1.0)
+            cost = 0.0;
+        
+        return cost;
+    }
+    
+    /**
+     * Compute the value of the given expression
+     * @param expr
+     *      the given expression
+     *      
+     * @return
+     *      The value
+     *      
+     * @throws Exception 
+     */
+    public static double showComputeVal(IloLinearNumExpr expr) throws Exception
+    {
+        IloLinearNumExprIterator iter;
+        
+        IloNumVar var;
+        double coef;
+        double cost;
+        
+        cost = 0.0;        
+        iter = expr.linearIterator();
+        
+        while (iter.hasNext()) {
+            var = iter.nextNumVar();
+            coef = iter.getValue(); 
+            
+            if (coef > 0.0 && cplex.getValue(var) > 0) {
+                cost += coef * cplex.getValue(var);
+                Rt.p(" coef: " + coef + " var: " + var.getName()
+                     + " value from CPLEX: " + cplex.getValue(var));
+            }
             
         }
         
