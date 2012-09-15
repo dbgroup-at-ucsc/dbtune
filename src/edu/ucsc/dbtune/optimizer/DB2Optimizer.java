@@ -1200,7 +1200,7 @@ public class DB2Optimizer extends AbstractOptimizer {
             Operator node, double coeff) {
         node.coefficient = coeff;
         List<Operator> children = plan.getChildren(node);
-        if (children.size() == 0)
+        if (children.size() == 0 && node.getDatabaseObjects().size()>0)
             return;
         if (node.getName().equals(Operator.NLJ)) {
             if (children.size() != 2)
