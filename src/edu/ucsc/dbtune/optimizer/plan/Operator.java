@@ -1,9 +1,12 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import edu.ucsc.dbtune.metadata.DatabaseObject;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.util.Tree.Entry;
 
@@ -358,6 +361,33 @@ public class Operator
     public List<DatabaseObject> getDatabaseObjects()
     {
         return new ArrayList<DatabaseObject>(objects);
+    }
+    
+    /**
+     * Get table associated with this operator
+     * @return Table which associated with this operator
+     * @throws SQLException
+     */
+    public Table getTable() throws SQLException {
+        if (Operator.TEMPORARY_TABLE_SCAN.equals(getName()))
+            return null;
+        if (this instanceof TableAccessSlot) {
+            TableAccessSlot op = (TableAccessSlot) this;
+            return op.getTable();
+        } else {
+            List<DatabaseObject> objects = this.getDatabaseObjects();
+            if (objects.size() == 0)
+                return null;
+            if (objects.size() != 1)
+                throw new SQLException("Leaf should contain one object");
+            DatabaseObject object = objects.get(0);
+            if (object instanceof Table)
+                return (Table) object;
+            else if (object instanceof Index)
+                return ((Index) object).getTable();
+            else
+                throw new Error();
+        }
     }
 
     /**
