@@ -13,6 +13,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -51,6 +52,9 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
      * Give each index an unique id
      */
     private Hashtable<Index,Integer> indexToId;
+    
+    private RTimer timer;
+    public static int maxTime=0;
 
     /**
      * TODO: complete.
@@ -74,8 +78,10 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
         if (whatIfCount > maxAllowedWhatIfCount)
             return;
 
-//        Rt.p("index=" + indexes.size() + " space=" + inumSpace.size()
-//                + " whatif=" + whatIfCount + " " + path);
+        if (maxTime > 0 && timer.get() > maxTime)
+            throw new SQLException("IBG timeout");
+        timer.next("index=" + indexes.size() + " space=" + inumSpace.size()
+                + " whatif=" + whatIfCount + " " + path);
         BitSet bitset=new BitSet();
         for (Index index : indexes) {
             int id= indexToId.get(index);
@@ -174,6 +180,8 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
         int id=0;
         for (Index index : indexes)
             indexToId.put(index, id++);
+        timer=new RTimer();
+        timer.interval=10000;
         ibg(statement, delegate, new HashSet<Index>(indexes), space, "");
         if (whatIfCount > maxAllowedWhatIfCount) {
             // use powerset instead
