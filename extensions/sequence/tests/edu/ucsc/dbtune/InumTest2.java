@@ -265,11 +265,8 @@ public class InumTest2 {
                 ExplainedSQLStatement db2plan = db2optimizer.explain(workload
                         .get(i), indexes);
                 double db2index = db2plan.getTotalCost();
-                db2indexAll += db2index;
-
                 db2plan = db2optimizer.explain(workload.get(i));
                 double db2fts = db2plan.getTotalCost();
-                db2ftsAll += db2fts;
 
                 // Rt.p("start inum");
                 InumPreparedSQLStatement space;
@@ -288,6 +285,8 @@ public class InumTest2 {
                                         + "\tDB2(Index)=%,.0f\tINUM(Index)=%,.0f\tINUM/DB2=%.2f",
                                 i, db2fts, inumFts, db2index, inumIndex,
                                 inumIndex / db2index);
+                db2indexAll += db2index;
+                db2ftsAll += db2fts;
                 inumIndexAll += inumIndex;
                 inumFtsAll += inumFts;
             } catch (Exception e) {
@@ -511,7 +510,7 @@ public class InumTest2 {
                 "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
         // query = Rt.readFile(new File(
         // "resources/workloads/db2/tpch-inum/workload.sql"));
-        // sqlTest(test, tpch, 17);
+//        sqlTest(test, tpcds, 65);
         // sqlTest(
         // test,
         // "SELECT 3, COUNT(*)  FROM tpch.lineitem WHERE  tpch.lineitem.l_tax BETWEEN 0.01596699754645524 AND 0.029823160830179565 AND tpch.lineitem.l_extendedprice BETWEEN 19178.598547906164 AND 19756.721297981876 AND tpch.lineitem.l_receiptdate BETWEEN 'Thu Mar 24 14:48:29 PST 1994' AND 'Mon Jan 30 14:48:29 PST 1995';",
@@ -532,11 +531,11 @@ public class InumTest2 {
         InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
         DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
         Set<Index> indexes = new HashSet<Index>();
-        // String[] names = Rt.readResourceAsLines(InumTest2.class,
-        // "index.txt");
-        // for (String name : names) {
-        // indexes.add(createIndex(db, name));
-        // }
+        Rt.error("load index");
+        String[] names = Rt.readResourceAsLines(InumTest2.class, "index.txt");
+        for (String name : names) {
+            indexes.add(createIndex(db, name));
+        }
         // ExplainTables.showWarnings = true;
 
         Workload workload = new Workload("", new StringReader(query));
@@ -545,28 +544,29 @@ public class InumTest2 {
         Rt.np("SQL:");
         Rt.p(sql);
 
-        Set<InumInterestingOrder> orders = InumUtils.extractInterestingOrders(
-                workload.get(queryId), db.getCatalog());
-        Set<InumInterestingOrder> orders2 = AbstractSpaceComputation
-                .extractInterestingOrderFromDB(workload.get(queryId),
-                        db2optimizer, true);
-        for (InumInterestingOrder o : orders) {
-            if (!orders2.contains(o))
-                Rt.np("MISSING " + o);
-        }
-        for (InumInterestingOrder o : orders2) {
-            if (!orders.contains(o))
-                Rt.np("INCORRECT " + o);
-        }
-        System.exit(0);
+        // Set<InumInterestingOrder> orders =
+        // InumUtils.extractInterestingOrders(
+        // workload.get(queryId), db.getCatalog());
+        // Set<InumInterestingOrder> orders2 = AbstractSpaceComputation
+        // .extractInterestingOrderFromDB(workload.get(queryId),
+        // db2optimizer, true);
+        // for (InumInterestingOrder o : orders) {
+        // if (!orders2.contains(o))
+        // Rt.np("MISSING " + o);
+        // }
+        // for (InumInterestingOrder o : orders2) {
+        // if (!orders.contains(o))
+        // Rt.np("INCORRECT " + o);
+        // }
+        // System.exit(0);
 
-        CandidateGenerator candGen = new OptimizerCandidateGenerator(
-                getBaseOptimizer(db.getOptimizer()));
-        indexes = candGen.generate(workload);
-        Rt.np("Generated Indexes:");
-        for (Index index : indexes) {
-            Rt.np(index);
-        }
+        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
+        // getBaseOptimizer(db.getOptimizer()));
+        // indexes = candGen.generate(workload);
+        // Rt.np("Generated Indexes:");
+        // for (Index index : indexes) {
+        // Rt.np(index);
+        // }
 
         // ExplainTables.dump=true;
         ExplainedSQLStatement db2plan = db2optimizer.explain(sql, indexes);

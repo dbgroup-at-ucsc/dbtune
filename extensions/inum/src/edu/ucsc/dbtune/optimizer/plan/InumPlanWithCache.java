@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.optimizer.plan;
 import java.sql.SQLException;
 import java.util.Map;
 
+import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -51,9 +52,18 @@ public class InumPlanWithCache extends InumPlan
             slotCache.put(key, cachedOperator);
         }
         
-        cachedOperator.cardinalityNLJ = slot.cardinalityNLJ;
-        cachedOperator.coefficient=slot.coefficient;
-
-        return cachedOperator;
+        Operator op;
+        if ( cachedOperator!=INCOMPATIBLE) {
+            // The same operator may be used twice in a plan. 
+            // So we need to create a separate object.
+            op=new Operator(cachedOperator);
+            op.cardinalityNLJ = slot.cardinalityNLJ;
+            op.coefficient=slot.coefficient;
+            for (DatabaseObject o : cachedOperator.getDatabaseObjects())
+                op.add(o);
+        } else {
+            op= cachedOperator;
+        }
+        return op;
     }
 }
