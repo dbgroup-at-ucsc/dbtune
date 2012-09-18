@@ -48,5 +48,5 @@ public abstract class Advisor
      * @throws SQLException
      *      if the given statement can't be processed
      */
-    public abstract Set<Index> getRecommendation() throws SQLException;
+    public abstract Set<Index> getRecommendation(int budget) throws SQLException;
 }

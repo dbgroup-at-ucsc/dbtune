@@ -12,7 +12,7 @@ import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
-import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -50,20 +50,20 @@ public class DB2Advisor extends Advisor
     public void process(Workload workload) throws SQLException
     {
         Statement stmt = dbms.getConnection().createStatement();
-
+        
         stmt.execute("DELETE FROM systools.advise_index");
         stmt.execute("DELETE FROM systools.advise_workload");
 
         int i = 0;
 
-        for (SQLStatement sql : workload)
+        for (SQLStatement sql : workload) 
             stmt.execute(
                     "INSERT INTO systools.advise_workload VALUES(" +
                     "   'dbtuneworkload'," +
                     "    " + i++ + ", " +
                     "   '" + sql.getSQL().replace("'", "''") + "'," +
                     "   '',1,0,0,0,0,'')");
-
+        
         stmt.close();
     }
 
@@ -80,10 +80,8 @@ public class DB2Advisor extends Advisor
      * {@inheritDoc}
      */
     @Override
-    public Set<Index> getRecommendation() throws SQLException
-    {
-        int budget = Environment.getInstance().getSpaceBudget();
-
+    public Set<Index> getRecommendation(int budget) throws SQLException
+    {   
         CallableStatement cstmt =
             dbms.getConnection().prepareCall(
                 "CALL SYSPROC.DESIGN_ADVISOR(" +
@@ -110,19 +108,19 @@ public class DB2Advisor extends Advisor
         cstmt.registerOutParameter(4, Types.BLOB);
         cstmt.registerOutParameter(5, Types.BLOB);
         cstmt.execute();
-
+        
         Set<ByContentIndex> unique = new HashSet<ByContentIndex>();
 
         for (Index i : DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog()))
             unique.add(new ByContentIndex(i));
 
-        //double space = 0;
-        //for (Index i : unique)
-            //space += i.getBytes();
+        double space = 0;
+        for (Index i : unique)
+            space += i.getBytes();
 
-        //System.out.println("Count:  " + unique.size());
-        //System.out.println("Budget: " + budget);
-        //System.out.println("Actual: " + space / 1000000);
+        System.out.println("Count:  " + unique.size());
+        System.out.println("Budget: " + budget);
+        System.out.println("Actual: " + space / 1000000);
 
         return new HashSet<Index>(unique);
     }
