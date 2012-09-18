@@ -160,10 +160,10 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
         totalCosts = new ArrayList<Double>();
         List<IloLinearNumExpr> exprs = new ArrayList<IloLinearNumExpr>();
         List<IloRange> ranges = new ArrayList<IloRange>();
-        IloLinearNumExpr exprDeploy = cplex.linearNumExpr();
+        //IloLinearNumExpr exprDeploy = cplex.linearNumExpr();
         for (int r = 0; r < nReplicas; r++)
-            exprDeploy.add(reConfigurationExpr(r));
-        exprs.add(exprDeploy);
+            exprs.add(reConfigurationExpr(r));
+        //exprs.add(exprDeploy);
         
         boolean isFirst = true;
         for (double cost : upperDeployCosts) {
