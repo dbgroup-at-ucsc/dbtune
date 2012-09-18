@@ -67,37 +67,5 @@ public class QueryPlanDescFunctionalTest
         
         // Number of template plans
         assert(templatePlans.size() == desc.getNumberOfTemplatePlans());
-        int k = -1;
-        double cost;
-        
-        /*
-        for (InumPlan plan : templatePlans) {
-            
-            // find the one that is corresponding 
-            boolean exist = false;
-            for (k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-                if (desc.getInternalPlanCost(k) == plan.getInternalCost()) {
-                    exist = true;
-                    break;
-                }
-            
-            assertThat(exist, is(true));
-            assertThat(plan.getTables().size(), is(desc.getNumberOfSlots(null)));
-            
-            for (int i = 0; i < desc.getNumberOfSlots(null); i++)
-                for (Index index : desc.getIndexesAtSlot(null, i)) {
-                    
-                    cost = plan.plug(index);                    
-
-                    if (cost == Double.POSITIVE_INFINITY)
-                        cost = InumQueryPlanDesc.BIP_MAX_VALUE;
-
-                    assertThat(cost, is(desc.getAccessCost(k, null, index)));
-                }
-            
-            System.out.println("Plan \n" + plan + "\n");
-        }    
-        System.out.println(desc);
-        */
     }
 }

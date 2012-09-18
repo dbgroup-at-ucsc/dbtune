@@ -20,13 +20,10 @@ import edu.ucsc.dbtune.util.Rt;
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeDeploymentCost;
 
-
-
 public class ElasticDivBIPFunctionalTest extends DivTestSetting 
 {   
     private static double upperCost;
     private static DivConfiguration sourceConf;
-    private static DivConfiguration destinationConf;
     private static int nDeploys;
     
     /**
@@ -66,7 +63,6 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
                             Math.pow(2, -5), Math.pow(2, -6), Math.pow(2, -7),
                             Math.pow(2, -12),
                             Math.pow(2, -16), 0};
-        //double factors[] = {Math.pow(2, -12)};
         
         double deployCost; 
         DivConfiguration dest = new DivConfiguration(0, 0);

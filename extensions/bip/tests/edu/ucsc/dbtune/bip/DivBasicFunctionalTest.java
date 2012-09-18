@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.bip;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,9 +14,9 @@ import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.util.Rt;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
@@ -29,6 +30,8 @@ import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
  */
 public class DivBasicFunctionalTest extends DivTestSetting 
 {
+    public static int numMismatch = 0;
+    
     @Test
     public void testBasicDiv() throws Exception
     {   
@@ -51,7 +54,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
             file.delete();
                 
         candidates = readCandidateIndexes();
-        System.out.println(" space budget: " + B
+        Rt.p(" space budget: " + B
                         + " number of candidate indexes: " + candidates.size());
         
         // reset the counter in Index class
@@ -70,7 +73,8 @@ public class DivBasicFunctionalTest extends DivTestSetting
         // basic case
         testDiv();
         
-        // compare with DB2 cost
+        Rt.p(" Number of mismatches between INUM cost and CPLEX costs: "
+                + numMismatch);
     }
     
     /**
@@ -81,6 +85,39 @@ public class DivBasicFunctionalTest extends DivTestSetting
      */
     private static void testDiv() throws Exception
     {
+        List<Double> inumOpt= computeQueryCostsInum(workload, candidates);
+        List<Double> db2Opt= computeQueryCostsDB2(workload, candidates);
+        double inumTotal = 0.0, db2Total = 0.0;
+        
+        Rt.p("---TPCH10GB, 22 queries, OPTIMAL indexes");
+        for (int i=0; i < inumOpt.size(); i++) {
+            Rt.p(" INUM = " + inumOpt.get(i)
+                    + " DB2 = " + db2Opt.get(i)
+                    + " INUM / DB2 = " + inumOpt.get(i)/ db2Opt.get(i));
+            inumTotal += inumOpt.get(i);
+            db2Total += db2Opt.get(i);
+        }
+        Rt.p("INUM (OPTIMAL indexes): " + inumTotal
+                + " DB2 (OPTIMAL indexes): " + db2Total
+                + " INUM / DB2 = " + (inumTotal / db2Total));
+        
+        List<Double> inumFTS= computeQueryCostsInum(workload, new HashSet<Index>());
+        List<Double> db2FTS= computeQueryCostsDB2(workload, new HashSet<Index>());
+        double inumFTSTotal = 0.0, db2FTSTotal = 0.0;
+        
+        Rt.p("TPCH10GB, 22 queries, FULL TABLE SCAN indexes");
+        for (int i=0; i < inumFTS.size(); i++) {
+            Rt.p(" INUM = " + inumFTS.get(i)
+                    + " DB2 = " + db2FTS.get(i)
+                    + " INUM / DB2 = " + inumFTS.get(i)/ db2FTS.get(i));
+            inumFTSTotal += inumFTS.get(i);
+            db2FTSTotal += db2FTS.get(i);
+        }
+        Rt.p("INUM (FTS indexes): " + inumFTSTotal
+                + " DB2 (FTS indexes): " + db2FTSTotal
+                + " INUM / DB2 = " + (inumFTSTotal / db2FTSTotal));
+        System.exit(1);
+        
         div = new DivBIP();
         
         LogListener logger = LogListener.getInstance();
@@ -93,7 +130,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
         div.setLogListenter(logger);
         
         IndexTuningOutput output = div.solve();
-        System.out.println(logger.toString());
+        Rt.p(logger.toString());
         
         if (isExportToFile)
             div.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
@@ -101,14 +138,14 @@ public class DivBasicFunctionalTest extends DivTestSetting
         double totalCostBIP;
         
         if (output != null) {
-            System.out.println("CPLEX result: " 
+            Rt.p("CPLEX result: " 
                     + " obj value: " + div.getObjValue() + "\n"
                     + " different from optimal value: " + div.getObjectiveGap() + "\n"
                     + " base table update cost: " + div.getTotalBaseTableUpdateCost());
             
             // add the update-base-table-constant costs
             totalCostBIP = div.getObjValue() ; // +div.getTotalBaseTableUpdateCost();            
-            System.out.println(" TOTAL COST(INUM): " + totalCostBIP);
+            Rt.p(" TOTAL COST(INUM): " + totalCostBIP);
             
             Set<Index> conf;
             DivConfiguration divConf = (DivConfiguration) output;
@@ -118,20 +155,18 @@ public class DivBasicFunctionalTest extends DivTestSetting
             double ratio;
             double tolerance = 1.1;
             
-            //System.out.println(" configuration: " + divConf);
-            
+            //Rt.p(" configuration: " + divConf);     
             for (int r = 0; r < nReplicas; r++) {
                 
                 conf = divConf.indexesAtReplica(r);
                 
-                System.out.println(" replica: " + r );
+                Rt.p(" replica: " + r + " # indexes: " + conf.size());
                 for (Index index : conf)
-                    System.out.println(index.getId() + "   " + index);
-                System.out.println("-----------");
+                    Rt.p(index.getId() + "   " + index);
+                Rt.p("-----------");
                 
-                
-                costInum = computeQueryCostsInum(conf);
-                costDB2 = computeQueryCostsDB2(conf);
+                costInum = computeQueryCostsInum(workload, conf);
+                costDB2 = computeQueryCostsDB2(workload, conf);
                 costCplex = div.getQueryCostReplicaByCplex(r);
                 
                 for (int q = 0; q < costCplex.size(); q++) {
@@ -142,25 +177,35 @@ public class DivBasicFunctionalTest extends DivTestSetting
                     
                     // avoid very small value
                     // due to the approximation of CPLEX
-                    if (costCplex.get(q) > 0.1 && costInum.get(q) > 0.1) {
+                    if (costCplex.get(q) > 0.0 && costInum.get(q) > 0.0) {
                         ratio = (double) Math.abs(costCplex.get(q) / costInum.get(q));
 
                         if (ratio < 1)
                             ratio = (double) 1 / ratio;
                         
-                        System.out.println("query: " + q + " cost cplex: " + costCplex.get(q)
+                        Rt.p("query: " + q + " cost cplex: " + costCplex.get(q)
                                 + " verus. cost INUM: " + costInum.get(q)
                                 + " versus. cost DB2: " + costDB2.get(q)
                                 + " RATIO DB2 / INUM: " 
                                 + (costDB2.get(q) / costInum.get(q))
                                 );
                         
-                        assertThat(ratio <= tolerance, is(true));
+                        if (ratio > tolerance) {
+                            Rt.p(" ratio of CPLEX / INUM: " + ratio
+                                    + " query = " + q
+                                    + " tolerance = " + tolerance);
+                            div.showStepComputeQuery(r, q);
+                            showComputeQueryCostsInum(q, conf);
+                            
+                            numMismatch++;
+                        }
+                       
                     }
-                }               
+                }    
+                
             }
-            
+
         } else 
-            System.out.println(" NO SOLUTION ");
+            Rt.p(" NO SOLUTION ");
     }
 }

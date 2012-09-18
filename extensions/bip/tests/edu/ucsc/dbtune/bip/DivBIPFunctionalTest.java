@@ -19,11 +19,10 @@ import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
-import edu.ucsc.dbtune.metadata.Index;
 
 
 /**
- * Test the functionality of Divergent Design using BIP.
+ * Test the functionality of DIV-BIP
  * 
  * @author Quoc Trung Tran
  *
@@ -31,10 +30,6 @@ import edu.ucsc.dbtune.metadata.Index;
  */
 public class DivBIPFunctionalTest extends DivTestSetting
 {   
-    private static Workload wlQueries;
-    private static Workload wlUpdates;
-    
-    
     @Test
     public void main() throws Exception
     {
@@ -49,12 +44,14 @@ public class DivBIPFunctionalTest extends DivTestSetting
         
         candidates = readCandidateIndexes();        
                 
-        // 1. test divergent
+        // 3. Test the benefit of indexes
+        //compareDB2InumQueryCosts(workload, candidates);
+        
+        // 3. test divergent
         for (double B1 : listBudgets) 
             for (int n : listNumberReplicas)
                 testDiv(n, B1, false);
     }
-    
     
     
     /**
@@ -109,23 +106,15 @@ public class DivBIPFunctionalTest extends DivTestSetting
                     + " ----- Update cost details: "  + "\n"
                     + "          + query shell & update indexes: " 
                                         + div.getUpdateCostFromCplex() + "\n"
-                    //+ "          + update base table:             "
-                    //                    + div.getTotalBaseTableUpdateCost() + "\n"
                     + " ----- CPLEX info: \n"
                     + "          + obj value: " + div.getObjValue() + "\n"
                     + "          + gap from the optimal: " + div.getObjectiveGap() + "\n"
                     + " NUMBER of distinct indexes: " + divConf.countDistinctIndexes()+ "\n"
                     + " NUMBER OF queries:          " + 
                             div.computeNumberQueriesSpecializeForReplica()
-                    //+ " Configuration: " + divConf
                     );
             
-            //if (isShowRecommendation)
-              //  Rt.p("----Output: " + output);
-                                   
             Rt.p(" TOTAL COST(INUM): " + totalCostBIP);
-            
-            // show imbalance query & replica
             Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
             Rt.p(" PREDICTABILITY IMBALANCE: " + div.getQueryImbalance());   
             Rt.p(" FAILURE IMBALANCE: " + div.getFailureImbalance());
@@ -139,9 +128,75 @@ public class DivBIPFunctionalTest extends DivTestSetting
     }
     
     /**
+     * Run the BIP with the parameters set by other functions
+     * @throws Exception
+     */
+    public static double testDivSimplify(int _n, double _B, boolean isOnTheFly) throws Exception
+    {
+        div = new DivBIP();
+        
+        // Derive corresponding parameters
+        nReplicas = _n;
+        B = _B;
+        loadfactor = (int) Math.ceil( (double) nReplicas / 2);
+        
+        Optimizer io = db.getOptimizer();
+         
+        LogListener logger = LogListener.getInstance();
+        div.setCandidateIndexes(candidates);
+        div.setWorkload(workload); 
+        div.setOptimizer((InumOptimizer) io);
+        div.setNumberReplicas(nReplicas);
+        div.setLoadBalanceFactor(loadfactor);
+        div.setSpaceBudget(B);
+        div.setLogListenter(logger);
+        div.setCommunicatingInumOnTheFly(isOnTheFly);
+        
+        IndexTuningOutput output = div.solve();
+        Rt.p(logger.toString());
+        
+        if (isExportToFile)
+            div.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
+        
+        if (output != null) {
+            divConf = (DivConfiguration) output;  
+            return getDB2CostDivConf();
+        }
+        else {
+            Rt.p(" NO SOLUTION ");
+            return -1;
+        }
+    }
+    
+    
+    /**
      * Call UNIF
      */
-    public static double testUniform (int n, double B1) throws Exception
+    public static List<Double> testUniformSimplify(List<Integer> listNReplicas, double B1) 
+            throws Exception
+    {   
+        B = B1;
+        nReplicas = 1;
+        loadfactor = 1;
+        
+        
+        double queryCost = testDivSimplify(1, B, false);
+        Rt.p("----------------------------------------");
+        Rt.p(" DIV-UNIF-BIP, # replicas = " + nReplicas
+                            + ", load factor = " + loadfactor
+                            + ", space = " + B
+                            + " COST = " + queryCost);
+        List<Double> totalCost = new ArrayList<Double>();
+        for (int i = 0; i < listNReplicas.size(); i++)
+            totalCost.add(queryCost);
+        
+        return totalCost;
+    }
+    
+    /**
+     * Call UNIF
+     */
+    public static double testUniform(int n, double B1) throws Exception
     {   
         B = B1;
         nReplicas = 1;
@@ -164,9 +219,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
         // query-only cost
         queryCost  = div.getObjValue() - updateCost;
         // NOT consider adding the constant update-base table cost
-        // for the time-being
-        // updateCost += div.getTotalBaseTableUpdateCost();
-         
+        // for the time-being 
         // UNIF for the case with more than one replica
         Rt.p("----------------------------------------");
         nReplicas = n;
@@ -178,9 +231,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
                 + " ---- Detailed UPDATE cost (ONE Replica): \n" 
                 + "         - query shell & update indexes: " +
                 div.getUpdateCostFromCplex() + "\n"
-                //+ "         - base table                  : " 
-                //+         div.getTotalBaseTableUpdateCost() + "\n"
-        );
+            );
                
         if (!isDB2Cost)
             return totalCostUniform;
@@ -215,27 +266,18 @@ public class DivBIPFunctionalTest extends DivTestSetting
         return totalCostUniform;
     }
     
+    
     /**
-     * This function compares the results of CPLEX with the cost computed by DB2
+     * Compute TotalCost() of a divergent configuration 
+     * in terms of DB2 units
      * 
      */
-    protected static void compareWithDB2Cost() throws Exception
+    protected static double getDB2CostDivConf() throws Exception
     {   
-        double queryCostDB2;
-        double updateCostDB2;
+        double queryCostDB2 = 0.0;
         
-        queryCostDB2 = 0.0;
-        updateCostDB2 = 0.0;
         
-        Rt.p("Configuration to COMPUTE DB2: "
-                                + divConf.briefDescription());
-        splitSelectUpdateInWorkload();
-        
-        for (int r = 0; r < nReplicas; r++)
-            updateCostDB2 += computeWorkloadCostDB2(wlUpdates, divConf.indexesAtReplica(r));
-        
-        // update cost (tricky)
-        for (SQLStatement sql : wlQueries) {
+        for (SQLStatement sql : workload) {
             List<Double> costs = computeQueryCostsDB2(sql, divConf);
             Collections.sort(costs);
             
@@ -244,36 +286,15 @@ public class DivBIPFunctionalTest extends DivTestSetting
         }
         
         Rt.p("------------ DB2 -------------\n"
-                           + " TOTAL cost: " + (queryCostDB2 + updateCostDB2) + "\n"
                            + " QUERY cost: " + queryCostDB2 + "\n"
-                           + " UPDATE cost: " + updateCostDB2 + "\n"
                            );
-
+        
+        return (queryCostDB2);
     }
     
     /**
-     * Classify workload according to query or update statements
-     */
-    private static void splitSelectUpdateInWorkload()
-    {
-        // call DB2 to compute cost
-        List<SQLStatement> querySQLs = new ArrayList<SQLStatement>();
-        List<SQLStatement> updateSQLs = new ArrayList<SQLStatement>();
-        
-        for (SQLStatement sql : workload)
-            if (sql.getSQLCategory().isSame(SELECT))
-                querySQLs.add(sql);
-            else 
-                updateSQLs.add(sql);
-        
-        wlQueries = new Workload(querySQLs);
-        wlUpdates = new Workload(updateSQLs);
-        
-    }
-    
-    /**
-     * Run the instance of the problem five times and get the average 
-     * of imbalance query, replica, and node failure
+     * Run the instance of the problem five times and 
+     * get the average imbalance factors
      * 
      * @throws Exception
      */
@@ -311,4 +332,5 @@ public class DivBIPFunctionalTest extends DivTestSetting
                 + (double) avgNodeFailure / numRuns);
     }
 
+    
 }

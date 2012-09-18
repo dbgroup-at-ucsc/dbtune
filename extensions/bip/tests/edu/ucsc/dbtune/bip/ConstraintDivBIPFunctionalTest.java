@@ -12,6 +12,7 @@ import edu.ucsc.dbtune.bip.div.ConstraintDivBIP;
 import edu.ucsc.dbtune.bip.div.DivConstraint;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.util.Rt;
 
 
 public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
@@ -29,53 +30,54 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
             return;
 
         candidates = readCandidateIndexes();
-        
-        
-        // 2. Set constraints    
         List<DivConstraint> constraints;
+        double upperTotalCost;
         
+        // get the total cost of the normal setting
+        upperTotalCost = DivBIPFunctionalTest.testDiv(nReplicas, B, false);
+        upperTotalCost *= 1.2;
+        
+        
+        // 2. Set constraints
+        /*
         // all constraint
         if (isAllImbalanceConstraint) {
-            
             constraints = new ArrayList<DivConstraint>();
-            
             // separate imbalance constraint
-            for (String typeConstraint : en.getListImbalanceConstraints()){                
-                
+            for (String typeConstraint : en.getListImbalanceConstraints()){
                 for (double factor : en.getListImbalanceFactors()) {
-                    
-                    System.out.println("\n\n\n IMBALANCE FACTOR: " + factor +                                        
+                    Rt.p("\n\n\n IMBALANCE FACTOR: " + factor +                                        
                                         "space: "+ B + "------------\n \n \n" );
-                    
                     DivConstraint iReplica = new DivConstraint(typeConstraint, factor);                    
                     constraints.add(iReplica);                
                     break;
                 }
             }
             
-            System.out.println(" set of constraints " + constraints);
-            constraintDiv = new ConstraintDivBIP(constraints, false);                
+            Rt.p(" set of constraints " + constraints);
+            constraintDiv = new ConstraintDivBIP(constraints, false);
             runConstraintBIP(constraintDiv);
             
             return;
-        }
+        }        
+        */
         
         // separate imbalance constraint
         for (String typeConstraint : en.getListImbalanceConstraints()){
-            
-            System.out.println("\n\n\n----------------" + typeConstraint
+            Rt.p("\n\n\n----------------" + typeConstraint
                         + " ---\n \n");
-            
             for (double factor : en.getListImbalanceFactors()) {
-                
-                System.out.println("\n\n\n IMBALANCE FACTOR: " + factor + 
+                Rt.p("\n\n\n IMBALANCE FACTOR: " + factor + 
                                     " s" +
                                     "pace: "+ B + "------------\n \n \n" );
-                
                 DivConstraint iReplica = new DivConstraint(typeConstraint, factor);
                 constraints = new ArrayList<DivConstraint>();
                 constraints.add(iReplica);                
-                constraintDiv = new ConstraintDivBIP(constraints, false);                
+                constraintDiv = new ConstraintDivBIP(constraints, true);
+                Rt.p("Check feasible solution only");
+                constraintDiv.checkFeasibleSolutionOnly();
+                Rt.p("set upper cost");
+                constraintDiv.setUpperTotalCost(upperTotalCost);
                 runConstraintBIP(constraintDiv);
             }
         }
@@ -87,8 +89,9 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
      * 
      * @throws Exception
      */
-    private static void runConstraintBIP(ConstraintDivBIP div) throws Exception
-    {           
+    public static double runConstraintBIP(ConstraintDivBIP div) throws Exception
+    {        
+        double totalCostBIP = -1.0;
         io = db.getOptimizer();
 
         LogListener logger = LogListener.getInstance();
@@ -105,8 +108,7 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
         if (isExportToFile)
             div.exportCplexToFile(en.getWorkloadsFoldername() + "test.lp");
         
-        
-        System.out.println(logger.toString());
+        Rt.p(logger.toString());
         if (output != null) {
             
             double updateCost = div.getUpdateCostFromCplex();
@@ -114,9 +116,9 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
             
             //updateCost += div.getTotalBaseTableUpdateCost();
             // add the update-base-table-constant costs
-            double totalCostBIP = div.getObjValue(); //+ div.getTotalBaseTableUpdateCost();
+            totalCostBIP = div.getObjValue(); //+ div.getTotalBaseTableUpdateCost();
             
-            System.out.println(" ------------- \n"
+            Rt.p(" ------------- \n"
                     + " Number of replicas: " + nReplicas + " load factor: " + loadfactor + "\n" 
                     + " TOTAL cost: " + totalCostBIP + "\n"
                     + " QUERY cost:  " + queryCost   + "\n"
@@ -132,13 +134,15 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
                     
 
             // show imbalance query & replica
-            System.out.println(" NODE IMBALANCE: " + div.getNodeImbalance());
-            System.out.println(" QUERY IMBALANCE: " + div.getQueryImbalance());
-            System.out.println(" FAILURE IMBALANCE: " + div.getFailureImbalance());
+            Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
+            Rt.p(" QUERY IMBALANCE: " + div.getQueryImbalance());
+            Rt.p(" FAILURE IMBALANCE: " + div.getFailureImbalance());
             
             if (isShowRecommendation)
-                System.out.println(" solution: " + output);
+                Rt.p(" solution: " + output);
         } else 
-            System.out.println(" NO SOLUTION ");
+            Rt.p(" NO SOLUTION ");
+        
+        return totalCostBIP;
     }
 }
