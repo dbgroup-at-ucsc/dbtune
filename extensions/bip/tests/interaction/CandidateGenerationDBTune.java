@@ -14,19 +14,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.Rt;
 
 public class CandidateGenerationDBTune 
 {    
     private static Environment    en;
     
     public static void readIndexesFromDBTune(Generation.Strategy strategy, String dbName,
-                                             String tableOwner, String subfolder)
+                                             String tableOwner)
                 throws Exception
     {
         en = Environment.getInstance();
         //String folder = en.getWorkloadsFoldername() + "/tpcds-small";
-        String folder = en.getWorkloadsFoldername() + subfolder;
-        System.out.println("L29, subfolder: " + folder);
+        String folder = en.getWorkloadsFoldername();
+        Rt.p("L29, subfolder: " + folder);
         String fileName;
         
         if (strategy.equals(Generation.Strategy.OPTIMAL_1C))
@@ -68,7 +69,7 @@ public class CandidateGenerationDBTune
                                     colNames, descending, id));
         }
         
-        System.out.println("L78, candidate set: " + candidateSet.size());
+        Rt.p("L78, candidate set: " + candidateSet.size());
         File optimalCandidateFile = Configuration.candidateFile(strategy);     
         writeCandidates(optimalCandidateFile, candidateSet);
     }
