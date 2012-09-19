@@ -335,7 +335,8 @@ public class DB2Optimizer extends AbstractOptimizer {
                     + "." + colName);
 
             if (col == null)
-                throw new RuntimeException("Cannot bind " + colName
+                throw new RuntimeException("Cannot bind " + table.getFullyQualifiedName()
+                        + "." + colName
                         + " to a column object");
 
             columns.add(col);
@@ -1252,12 +1253,16 @@ public class DB2Optimizer extends AbstractOptimizer {
      *            connection used to communicate with the DBMS
      * @param catalog
      *            used to retrieve metadata information
+     * @param indexBytes
+     *            the mapping between index's name in ADVISE_INDEX table
+     *            to its size     
      * @return the cost of the plan
      * @throws SQLException
      *             if something goes wrong while talking to the DBMS
      */
     public static Set<Index> readAdviseIndexTable(Connection connection,
-            Catalog catalog) throws SQLException {
+            Catalog catalog, Map<String, Long> indexBytes) throws SQLException 
+    {
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM systools.advise_index");
         Set<Index> recommended = new HashSet<Index>();
@@ -1305,7 +1310,86 @@ public class DB2Optimizer extends AbstractOptimizer {
                 index.setScanOption(Index.REVERSIBLE);
             else
                 index.setScanOption(Index.NON_REVERSIBLE);
+            
+            String nameInAdviseTable = rs.getString("NAME");
+            if (!indexBytes.containsKey(nameInAdviseTable))
+                throw new RuntimeException(" No size information for index: " + nameInAdviseTable);
 
+            index.setBytes((long) indexBytes.get(nameInAdviseTable));            
+            index.setName(index.getName());
+            recommended.add(index);
+        }
+
+        rs.close();
+        stmt.close();
+
+        return recommended;
+    }
+    
+    /**
+     * Reads the content of the {@code ADVISE_INDEX}, after a {@code RECOMMEND
+     * INDEXES} operation has been done. Creates one index per each record in
+     * the table.
+     * 
+     * @param connection
+     *            connection used to communicate with the DBMS
+     * @param catalog
+     *            used to retrieve metadata information
+     * @return the cost of the plan
+     * @throws SQLException
+     *             if something goes wrong while talking to the DBMS
+     */
+    public static Set<Index> readAdviseIndexTable(Connection connection,
+            Catalog catalog) throws SQLException 
+    {
+        Statement stmt = connection.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT * FROM systools.advise_index");
+        Set<Index> recommended = new HashSet<Index>();
+        List<Column> columns;
+        List<Boolean> ascending;
+        Schema schema;
+        Table table;
+        Index index;
+        boolean unique = false;
+        boolean clustered = false;
+        boolean primary = false;
+        int pageSize = -1;
+
+        while (rs.next()) {
+            if (pageSize == -1)
+                pageSize = getPageSizeForTableSpaceReferencedInAdviseIndexTable(connection);
+
+            schema = catalog.findSchema(rs.getString("tbcreator").trim());
+            table = schema.findTable(rs.getString("tbname").trim());
+            columns = new ArrayList<Column>();
+            ascending = new ArrayList<Boolean>();
+
+            parseColumnNames(table, rs.getString("colnames"), columns,
+                    ascending);
+
+            if (rs.getString("uniquerule").trim().equals("U"))
+                unique = true;
+            else if (rs.getString("uniquerule").trim().equals("D"))
+                unique = false;
+            else {
+                unique = true;
+                primary = true;
+            }
+
+            if (rs.getString("indextype").trim().equals("REG"))
+                primary = false;
+            else if (rs.getString("indextype").trim().equals("CLUS"))
+                clustered = true;
+            else
+                clustered = false;
+
+            index = new Index(columns, ascending, primary, unique, clustered);
+
+            if (rs.getString("reverse_scans").trim().equals("Y"))
+                index.setScanOption(Index.REVERSIBLE);
+            else
+                index.setScanOption(Index.NON_REVERSIBLE);
+            
             index.setBytes((long) rs.getInt("nleaf") * (long) pageSize);
             // XXX: a more sophisticated way of calculating size:
             // http://ibm.co/xsH4QC
