@@ -98,8 +98,9 @@ public class DivTestSetting
         
         // get workload and candidates
         workload = workload(folder);
-        candidates = readCandidateIndexes();
         db2Advis = new DB2Advisor(db);
+        candidates = readCandidateIndexes(db2Advis);
+        
         Rt.p(" DivTestSetting: # statements in the workload: " + workload.size()
                 + " # candidates in the workload: " + candidates.size()
                 + " workload folder: " + folder);

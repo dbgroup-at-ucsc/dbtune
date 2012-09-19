@@ -3,7 +3,6 @@ package edu.ucsc.dbtune.bip;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.ucsc.dbtune.bip.DIVPaper.Point;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.LatexGenerator.Plot;
 import edu.ucsc.dbtune.util.Rt;

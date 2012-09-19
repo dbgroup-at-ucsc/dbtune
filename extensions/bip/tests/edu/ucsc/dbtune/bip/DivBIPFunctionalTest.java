@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.Test;
 
 
+import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
@@ -42,7 +43,9 @@ public class DivBIPFunctionalTest extends DivTestSetting
         if (!(io instanceof InumOptimizer))
             return;
         
-        candidates = readCandidateIndexes();        
+        db2Advis = new DB2Advisor(db);
+        candidates = readCandidateIndexes(db2Advis);
+                
                 
         // 3. Test the benefit of indexes
         //compareDB2InumQueryCosts(workload, candidates);

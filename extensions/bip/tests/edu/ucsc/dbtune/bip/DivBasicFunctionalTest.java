@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
+import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
@@ -52,10 +53,6 @@ public class DivBasicFunctionalTest extends DivTestSetting
         file = new File(folder + "/candidate-optimizer.bin");
         if (file.exists())
             file.delete();
-                
-        candidates = readCandidateIndexes();
-        Rt.p(" space budget: " + B
-                        + " number of candidate indexes: " + candidates.size());
         
         // reset the counter in Index class
         int maxID = -1;

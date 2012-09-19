@@ -1,14 +1,8 @@
 package edu.ucsc.dbtune.bip;
 
 
-import static edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.POWERSET;
-
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
-
-
-
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,11 +30,14 @@ import java.util.Set;
 
 
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.DB2AdvisorCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
+import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -62,27 +59,17 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
      *      A set of candidate indexes
      * @throws Exception
      */
-    public static Set<Index> readCandidateIndexes() 
+    public static Set<Index> readCandidateIndexes(DB2Advisor db2Advis) 
             throws Exception
     {        
         // test candidate generation
         String fileName = "";
-        
-        for (String generatorOption : en.getCandidateGenerator()) {
-            
-            if (generatorOption.equals(OPTIMIZER)) 
-                fileName = folder  + "/candidate-optimizer.bin";
-            else if (generatorOption.equals(POWERSET))
-                fileName = folder  + "/candidate-powerset.bin";
-            
-            break;
-        }
-        
-        System.out.println(" file name: " + fileName);
+        fileName = folder  + "/candidates.bin";
+        Rt.p(" file name containing indexes: " + fileName);
         File file = new File(fileName);        
         if (!file.exists()) {
             // Generate candidate indexes
-            generateAndWriteToFileOptimizerCandidates(fileName);           
+            generateAndWriteToFileDB2AdvisorCandidates(fileName, db2Advis);           
             return candidates;
         }
         
@@ -93,11 +80,12 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
     /**
      * Generate candidate indexes recommended by the optimizer
      */
-    protected static void generateAndWriteToFileOptimizerCandidates(String fileName) throws Exception
+    protected static void generateAndWriteToFileDB2AdvisorCandidates(String fileName, DB2Advisor db2Advis) 
+                    throws Exception
     {   
-        System.out.println(" Generate candidate indexes and write to file: " + fileName);
-        CandidateGenerator candGen =
-            new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
+        Rt.p(" Generate candidate indexes and write to file: " + fileName);
+        DB2AdvisorCandidateGenerator candGen = new 
+                DB2AdvisorCandidateGenerator(db2Advis);
         
         // temporary get only SELECT statements
         List<SQLStatement> sqls = new ArrayList<SQLStatement>();
@@ -110,29 +98,18 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         candidates = candGen.generate(wlCandidate);
         
         // Calculate the total size (for solely information)
-        totalIndexSize = 0.0;
-        Set<Index> temp = new HashSet<Index>();
-        
-        for (Index index : candidates) { 
-            
-            if (index.getBytes() < 0.0) {
-                System.out.println("EXCEPTION INdex " + index
-                        + " id: " + index.getId()
-                        + " size: " + (double) index.getBytes() / Math.pow(10, 6) + " (MB)"
-                        + " creation cost: "  + index.getCreationCost());
-                throw new RuntimeException("Error with INDEX SIZE LESS THAN 0");
-            } else  {
-                temp.add(index);            
-                totalIndexSize += (double) index.getBytes() / Math.pow(10, 6);
-            }
+        long totalSize = 0;
+        for (Index i : candidates) {
+            totalSize += i.getBytes();
+            Rt.p(" Index i = " + i + " size = " + (i.getBytes() / Math.pow(2, 20)));
         }
-        candidates = temp;
+        totalSize = (long) (totalSize / Math.pow(2, 20));
         
-        System.out.println(" OPTIMAL, number of statements to generate candidate: " 
+        Rt.p(" Using DB2Advis, number of statements to generate candidate: " 
                             + wlCandidate.size() + "\n"
                             + "Number of candidate: " + candidates.size() + "\n" 
                             + "Total size: " 
-                            + totalIndexSize  + " MB");
+                            + totalSize  + " MB");
         
         // write to text file
         writeIndexesToFile(candidates, fileName);

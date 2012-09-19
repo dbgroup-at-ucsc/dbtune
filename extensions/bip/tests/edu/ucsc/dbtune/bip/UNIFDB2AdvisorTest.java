@@ -25,6 +25,13 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         // the UNIF cost
         for (int i = 0; i < dbNames.length; i++) 
             testUNIFDB2(dbNames[i], wlNames[i]);
+        
+        // store in the serialize file
+        serializeDivResult(entries, unifFile);
+        
+        // test the result
+        entries = readDivResult(unifFile);
+        Rt.p(" result " + entries);
     }
     
 
@@ -46,24 +53,19 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         // 2. set parameter for DivBIP()
         setParameters();        
         List<Double> totalCosts;
+        long budget;
         for (double B1 : listBudgets) { 
             totalCosts = testUniformDB2Advis(listNumberReplicas, B1);
             Rt.p(" space budget = " + B1 + " " + totalCosts);
             
             for (int i = 0; i < listNumberReplicas.size(); i++){
+                budget = convertBudgetToMB(B1);
                 DivPaperEntry entry = new DivPaperEntry
-                (dbName, workloadName, listNumberReplicas.get(i), (long) B1);
+                (dbName, workloadName, listNumberReplicas.get(i), budget);
                 
                 entries.put(entry, totalCosts.get(i));
             }
         }
-        
-        // store in the serialize file
-        serializeDivResult(entries, unifFile);
-        
-        // test the result
-        entries = readDivResult(unifFile);
-        Rt.p(" result " + entries);
     }
     
     /**

@@ -4,10 +4,9 @@ import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 
 import java.util.List;
 
-
-
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.div.ElasticDivBIP;
@@ -50,8 +49,6 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
         
         // 2. set parameters
         setParameters();
-     
-        candidates = readCandidateIndexes();
         
         if (!(io instanceof InumOptimizer))
             return;

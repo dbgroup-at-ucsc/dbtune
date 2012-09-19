@@ -23,6 +23,13 @@ public class DIVBIPEquivalentTest extends DIVPaper
         // experiment for DIV equivalent to BIP
         for (int i = 0; i < dbNames.length; i++) 
             runExpts(dbNames[i], wlNames[i]);
+        
+        // store in the serialize file
+        serializeDivResult(entries, divFile);
+        
+        // test the result
+        entries = readDivResult(divFile);
+        Rt.p(" result " + entries);
     }
     
     /**
@@ -44,22 +51,15 @@ public class DIVBIPEquivalentTest extends DIVPaper
         setParameters();
         
         double costBip;
-        
+        long budget;
         for (double B : listBudgets) 
             for (int n : listNumberReplicas) {
                 costBip = DivBIPFunctionalTest.testDivSimplify(n, B, false);
+                budget = convertBudgetToMB(B);
                 DivPaperEntry entry = new DivPaperEntry
-                        (dbName, wlName, n, (long) B);
+                        (dbName, wlName, n, budget);
                 
                 entries.put(entry, costBip);
             }
-        
-        
-        // store in the serialize file
-        serializeDivResult(entries, divFile);
-        
-        // test the result
-        entries = readDivResult(divFile);
-        Rt.p(" result " + entries);
     }
 }

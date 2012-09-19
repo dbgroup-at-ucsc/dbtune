@@ -43,30 +43,34 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public class DIVPaper extends DivTestSetting
 {   
-    static File outputDir;
-    static File figsDir;
-    static File rawDataDir;
-    static File latexFile;
-    static List<Plot> plots;
-    static String plotName;
-    static String xname;
-    static String yname;
+    protected static File outputDir;
+    protected static File figsDir;
+    protected static File rawDataDir;
+    protected static File latexFile;
+    protected static List<Plot> plots;
+    protected static String plotName;
+    protected static String xname;
+    protected static String yname;
     
-    static DivConfiguration initialConf;
-    static int nDeploys;
+    protected static DivConfiguration initialConf;
+    protected static int nDeploys;
     
-    static String dbNames[] = {"test"}; 
-    static String wlNames[] = {"tpcds"};
+    protected static String dbNames[] = {"test", "test"}; 
+    protected static String wlNames[] = {"tpcds", "online-benchmark-100"};
     
-    static Map<DivPaperEntry, Double> entries;
+    protected static Map<DivPaperEntry, Double> entries;
     
-    static final String DIV_DB2_FILE = "div_db2.bin";
-    static final String UNIF_DB2_FILE = "unif_db2.bin";
-    static final String DESIGN_DB2_FILE = "design_db2.bin";
+    protected static final String DIV_DB2_FILE = "div_db2.bin";
+    protected static final String UNIF_DB2_FILE = "unif_db2.bin";
+    protected static final String DESIGN_DB2_FILE = "design_db2.bin";
     
-    static File unifFile;
-    static File divFile;
-    static File designFile;
+    protected static File unifFile;
+    protected static File divFile;
+    protected static File designFile;
+    
+    protected static Map<DivPaperEntry, Double> mapUnif;
+    protected static Map<DivPaperEntry, Double> mapDiv;
+    protected static Map<DivPaperEntry, Double> mapDesign;
     
     /**
      *
@@ -113,8 +117,7 @@ public class DIVPaper extends DivTestSetting
      */
     public static void drawGraphDIVEquivBIP(String dbName, String wlName) throws Exception
     {
-        Map<DivPaperEntry, Double> mapUnif;
-        Map<DivPaperEntry, Double> mapDiv;
+        
         DivPaperEntry entry;
         
         // 1. Read the result from UNIF file
@@ -125,13 +128,24 @@ public class DIVPaper extends DivTestSetting
         divFile = new File(rawDataDir, DIV_DB2_FILE);
         mapDiv = readDivResult(divFile);
         
+        // 2. Read the result from DIV file
+        designFile = new File(rawDataDir, DESIGN_DB2_FILE);
+        mapDesign = readDivResult(designFile);
+        
+        String[] competitors;
+        boolean drawRatio = false;
         // 3. draw graphs
-        String[] competitors = {"1 - DIV-BIP/UNIF"};
+        if (drawRatio)
+            competitors = new String[] {"1 - DIV-BIP/UNIF", " 1 - DIVGDESIGN/UNIF"};
+        else 
+            competitors = new String[] {"DIV-BIP", "DIVGDESIGN", "UNIF"};
         int numX;
-        double ratio, ratioDiv, costDiv, costUnif;
+        double ratio; 
+        long budget;
         
         // varying number of replicas
         for (double B : listBudgets) {
+            budget = convertBudgetToMB (B);
             int n;
             numX = listNumberReplicas.size();
             double[] xtics = new double[numX];
@@ -142,17 +156,11 @@ public class DIVPaper extends DivTestSetting
                 n = listNumberReplicas.get(i);
                 xtics[i] = i;
                 xaxis[i] = Integer.toString(n);
-                entry = new DivPaperEntry(dbName, wlName, n, (long) B);
-                
-                costDiv = mapDiv.get(entry);
-                costUnif = mapUnif.get(entry);
-                ratioDiv = 1 - (double) costDiv / costUnif;
-                ratioDiv = ratioDiv * 100;
-                if (ratioDiv < 0.0)
-                    ratioDiv = 0.0;     
-                points.add(new Point(xtics[i], ratioDiv));
-                
-                Rt.p(entry + " ratio = " + ratioDiv);
+                entry = new DivPaperEntry(dbName, wlName, n, budget);
+                if (drawRatio)
+                    addPointRatioDIVEquivBIP(xtics[i], entry, points);
+                else 
+                    addPointDIVEquivBIP(xtics[i], entry, points);
             }
             
             ratio = (double) B / Math.pow(2, 30) / 10;
@@ -178,19 +186,15 @@ public class DIVPaper extends DivTestSetting
             
             for (int i = 0; i < numX; i++) {
                 B = listBudgets.get(i);
+                budget = convertBudgetToMB (B);
                 xtics[i] = i;
                 ratio = (double) B / Math.pow(2, 30) / 10;
                 xaxis[i] = Double.toString(ratio) + "x";
-                entry = new DivPaperEntry(dbName, wlName, n, (long) B);
-                
-                costDiv = mapDiv.get(entry);
-                costUnif = mapUnif.get(entry);
-                ratioDiv = 1 - (double) costDiv / costUnif;
-                ratioDiv = ratioDiv * 100;
-                if (ratioDiv < 0.0)
-                    ratioDiv = 0.0;
-                
-                points.add(new Point(xtics[i], ratioDiv));
+                entry = new DivPaperEntry(dbName, wlName, n, budget);
+                if (drawRatio)
+                    addPointRatioDIVEquivBIP(xtics[i], entry, points);
+                else 
+                    addPointDIVEquivBIP(xtics[i], entry, points);
             }
             
             
@@ -207,6 +211,67 @@ public class DIVPaper extends DivTestSetting
         }
         
     }
+    
+    
+    /**
+     * Add corresponding points into the list of points, which are 
+     * displayed in GnuPlot
+     * @param entry
+     * @param points
+     */
+    protected static void addPointRatioDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
+    {
+        double costDiv, costUnif, costDesign;
+        double ratioDesign, ratioDiv;
+        
+        costDiv = mapDiv.get(entry);
+        costUnif = mapUnif.get(entry);
+        costDesign = mapDesign.get(entry);
+        
+        Rt.p(" entry: " + entry);
+        Rt.p(" cost UNIF = " + (costUnif / Math.pow(10, 6)));
+        Rt.p(" cost DIV = " + (costDiv / Math.pow(10, 6)));
+        Rt.p(" cost DESIGN = " + (costDesign / Math.pow(10, 6)));
+        
+        ratioDiv = 1 - (double) costDiv / costUnif;
+        ratioDesign = 1 - (double) costDesign / costUnif;
+        ratioDiv = ratioDiv * 100;
+        ratioDesign = ratioDesign * 100;
+        if (ratioDiv < 0.0) {
+            Rt.p(" watch out, entry = " + entry
+                    + ", ratio DIV = " + ratioDiv);
+            ratioDiv = 0.05;  
+        }
+        
+        if (ratioDesign < 0.0){
+            Rt.p("watch out, entry = " + entry 
+                    + ", ratioDesign = " + ratioDesign);
+            ratioDesign = 0.05;
+        }
+        points.add(new Point(xcoordinate, ratioDiv));
+        points.add(new Point(xcoordinate, ratioDesign));
+    }
+    
+    /**
+     * Add corresponding points into the list of points, which are 
+     * displayed in GnuPlot
+     * @param entry
+     * @param points
+     */
+    protected static void addPointDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
+    {
+        double costDiv, costUnif, costDesign;
+         
+        costDiv = mapDiv.get(entry);
+        costUnif = mapUnif.get(entry);
+        costDesign = mapDesign.get(entry);
+        
+        
+        points.add(new Point(xcoordinate, costDiv));
+        points.add(new Point(xcoordinate, costDesign));
+        points.add(new Point(xcoordinate, costUnif));
+    }
+    
     
     /**
      * Retrieve the environment parameters set in {@code dbtune.cfg} file
@@ -233,8 +298,8 @@ public class DIVPaper extends DivTestSetting
         
         // get workload and candidates
         workload = workload(folder);
-        candidates = readCandidateIndexes();
         db2Advis = new DB2Advisor(db);
+        candidates = readCandidateIndexes(db2Advis);
         
         fUpdate = 1;
         fQuery = 1;
@@ -418,6 +483,17 @@ public class DIVPaper extends DivTestSetting
     }
     
     /**
+     * Convert budget into MB units
+     * @param B
+     * @return
+     */
+    protected static long convertBudgetToMB(double B)
+    {
+        return (long) B;
+        //return (long) (B / Math.pow(2, 20));
+    }
+    
+    /**
      * This class stores the total cost of 
      * each method (UNIF, DIVBIP, DIVGDESIN)
      * on a particular instance of the divergent 
@@ -427,7 +503,7 @@ public class DIVPaper extends DivTestSetting
      * @author Quoc Trung Tran
      *
      */
-    static class DivPaperEntry implements Serializable
+    public static class DivPaperEntry implements Serializable
     {
         private static final long serialVersionUID = 1L;
         private String dbName;
@@ -467,7 +543,7 @@ public class DIVPaper extends DivTestSetting
             sb.append("db = " + dbName + "\n")
               .append("wl = " + wlName + "\n")
               .append("number of replicas = " + n + "\n")
-              .append("space budget = " + B + "\n");
+              .append("space budget = " + (B / Math.pow(2, 20)) + "\n");
             
             return sb.toString();
         }

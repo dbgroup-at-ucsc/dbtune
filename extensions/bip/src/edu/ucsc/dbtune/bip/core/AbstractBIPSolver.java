@@ -25,7 +25,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.Workload;
 
 
@@ -123,7 +122,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
             cplex.setOut(null);
         // not output the warning
         cplex.setWarning(null);
-        Rt.p(" is check feasible: " + isCheckFeasible);
+        
         if (isCheckFeasible) 
             cplex.setParam(IntParam.IntSolLim, 1);
       

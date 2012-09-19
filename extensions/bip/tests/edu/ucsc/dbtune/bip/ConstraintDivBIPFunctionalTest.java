@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.ConstraintDivBIP;
 import edu.ucsc.dbtune.bip.div.DivConstraint;
@@ -28,8 +29,7 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
         
         if (!(io instanceof InumOptimizer))
             return;
-
-        candidates = readCandidateIndexes();
+       
         List<DivConstraint> constraints;
         double upperTotalCost;
         
