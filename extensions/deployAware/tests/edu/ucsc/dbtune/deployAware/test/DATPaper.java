@@ -73,8 +73,8 @@ public class DATPaper {
         maxIndexCreatedPerWindow = l;
         // if (true) {
         dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,
-                loader.generateIndexMethod, alpha, beta, m, l, spaceBudge,
-                windowSize, 0);
+                loader.fileName, loader.generateIndexMethod, alpha, beta, m, l,
+                spaceBudge, windowSize, 0);
         dsp.debugFile = debugFile;
         dsp.runMKP = plotNames.length == 3;
         dsp.run();
@@ -152,16 +152,18 @@ public class DATPaper {
         // ps.println("\\begin{multicols}{2}\n");
         long gigbytes = 1024L * 1024L * 1024L;
         TestSet[] sets = {
-        // new TestSet("TPCDS", "test", "tpcds-inum",
+                // new TestSet("TPCDS", "test", "tpcds-inum",
                 // gigbytes),
                 new TestSet("22 TPC-H queries", "tpch10g", "tpch",
                         "complete.sql", 10 * gigbytes, "TPC-H"),
-                // new
-                // TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
-                // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes,
-                // "TPC-H update"),
-                new TestSet("25 TPCDS queries", "test", "tpcds-inum",
-                        10 * gigbytes, "TPCDS25"),
+                new TestSet("45 TPCDS queries", "test", "tpcds", "inum.sql",
+                        10 * gigbytes, "TPCDS45"),
+        // new
+        // TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
+        // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes,
+        // "TPC-H update"),
+        // new TestSet("25 TPCDS queries", "test", "tpcds-inum",
+        // 10 * gigbytes, "TPCDS25"),
         // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
         // new TestSet("100 OTAB  queries", "test",
         // "online-benchmark-100", 10 * gigbytes, "OTAB"),
@@ -177,13 +179,14 @@ public class DATPaper {
                 WorkloadLoader loader = new WorkloadLoader(set.dbName,
                         set.workloadName, set.fileName, generateIndexMethod);
                 SeqInumCost cost = loader.loadCost();
-                DATParameter param=new DATParameter();
-                param.spaceConstraint=Double.MAX_VALUE;
-                param.costModel=cost;
-                while (cost.queries.size()>6)
-                    cost.queries.remove(cost.queries.size()-1);
-//                DAT.showFormulas=true;
-                DATBaselines.cophy(param, Double.MAX_VALUE, Double.MAX_VALUE, 5);
+                DATParameter param = new DATParameter();
+                param.spaceConstraint = Double.MAX_VALUE;
+                param.costModel = cost;
+                while (cost.queries.size() > 6)
+                    cost.queries.remove(cost.queries.size() - 1);
+                // DAT.showFormulas=true;
+                DATBaselines
+                        .cophy(param, Double.MAX_VALUE, Double.MAX_VALUE, 5);
                 System.exit(0);
                 Vector<SeqInumIndex> indices = new Vector<SeqInumIndex>();
                 indices.addAll(cost.indices);
@@ -276,7 +279,7 @@ public class DATPaper {
         int l_def = 6;
         l_def = 4;
         // l_def=20;
-//         l_def = 1000;
+        // l_def = 1000;
         double _1mada_def = 2;
         _1mada_def = 1;
         int[] m_set = { 2, 3, 4, 5, 10 };
@@ -483,15 +486,16 @@ public class DATPaper {
                     double alpha = 0.000001;
                     double beta = 1 - alpha;
                     DATSeparateProcess dsp = new DATSeparateProcess(set.dbName,
-                            set.workloadName, generateIndexMethod, alpha, beta,
-                            m_def, l_def, spaceBudge, windowSize, 0);
+                            set.workloadName, set.fileName,
+                            generateIndexMethod, alpha, beta, m_def, l_def,
+                            spaceBudge, windowSize, 0);
                     dsp.run();
                     double p0int = dsp.datIntermediate;
                     for (double tau : tau_set) {
                         dsp = new DATSeparateProcess(set.dbName,
-                                set.workloadName, generateIndexMethod, alpha,
-                                beta, m_def, l_def, spaceBudge, windowSize,
-                                p0int * tau);
+                                set.workloadName, set.fileName,
+                                generateIndexMethod, alpha, beta, m_def, l_def,
+                                spaceBudge, windowSize, p0int * tau);
                         dsp.run();
                         plot.add(tau, dsp.dat);
                         plot.addLine();
@@ -511,8 +515,9 @@ public class DATPaper {
         if (false) {
             TestSet perfTest = sets[3];
             DATSeparateProcess dsp = new DATSeparateProcess(perfTest.dbName,
-                    perfTest.workloadName, generateIndexMethod, 0.5, 0.5,
-                    m_def, l_def, Double.MAX_VALUE, windowSize, 0);
+                    perfTest.workloadName, perfTest.fileName,
+                    generateIndexMethod, 0.5, 0.5, m_def, l_def,
+                    Double.MAX_VALUE, windowSize, 0);
             dsp.generatePerfReport = true;
             dsp.run();
         }
@@ -534,8 +539,8 @@ public class DATPaper {
             for (int i = start; i <= end; i += step) {
                 DATSeparateProcess dsp = new DATSeparateProcess(
                         perfTest.dbName, perfTest.workloadName,
-                        generateIndexMethod, 0.5, 0.5, m_def, l_def,
-                        Double.MAX_VALUE, windowSize, 0);
+                        perfTest.fileName, generateIndexMethod, 0.5, 0.5,
+                        m_def, l_def, Double.MAX_VALUE, windowSize, 0);
                 dsp.runGreedy = false;
                 dsp.runMKP = false;
                 dsp.dupWorkloadNTimes = i;

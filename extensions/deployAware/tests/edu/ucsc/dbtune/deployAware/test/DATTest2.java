@@ -267,9 +267,10 @@ public class DATTest2 {
         Rx input = Rx.findRoot(Rt.readFile(new File(args[pos++])));
         String dbName = input.getChildText("dbName");
         String workloadName = input.getChildText("workloadName");
+        String fileName = input.getChildText("fileName");
         String generateIndexMethod = input.getChildText("generateIndexMethod");
-        WorkloadLoader loader = new WorkloadLoader(dbName, workloadName,"workload.sql",
-                generateIndexMethod);
+        WorkloadLoader loader = new WorkloadLoader(dbName, workloadName,
+                fileName, generateIndexMethod);
         double alpha = input.getChildDoubleContent("alpha");
         double beta = input.getChildDoubleContent("beta");
         int m = input.getChildIntContent("m");
@@ -312,17 +313,19 @@ public class DATTest2 {
         if (Math.abs(windowSize) < 0.01) {
             double total = 0;
             boolean[] indexPresent = DATBaselines.cophy(params,
-                    Double.MAX_VALUE, Double.MAX_VALUE, m*l);
+                    Double.MAX_VALUE, Double.MAX_VALUE, m * l);
             for (int i = 0; i < indexPresent.length; i++) {
                 if (indexPresent[i]) {
                     Rt.p(params.costModel.indices.get(i));
                     total += params.costModel.indices.get(i).createCost;
                 }
             }
-            windowSize = total / m;
+            windowSize = total / m/2;
             Arrays.fill(params.windowConstraints, windowSize);
-            Rt.p("total=%,.0f m=%d",total,m);
-            Rt.p("maxIndexCreatedPerWindow=%d",params.maxIndexCreatedPerWindow);
+            Rt.p("total=%,.0f m=%d", total, m);
+            Rt
+                    .p("maxIndexCreatedPerWindow=%d",
+                            params.maxIndexCreatedPerWindow);
             Rt.p("windowSize=%,.0f", windowSize);
         }
         double datCost = 0;
@@ -453,8 +456,8 @@ public class DATTest2 {
         dbName = "test";
         workloadName = "online-benchmark-100";
         String generateIndexMethod = "recommend";
-        WorkloadLoader loader = new WorkloadLoader(dbName, workloadName,"workload.sql",
-                generateIndexMethod);
+        WorkloadLoader loader = new WorkloadLoader(dbName, workloadName,
+                "workload.sql", generateIndexMethod);
         testDATBatch(loader);
     }
 }

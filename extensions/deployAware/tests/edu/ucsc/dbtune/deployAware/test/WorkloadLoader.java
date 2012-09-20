@@ -184,7 +184,7 @@ public class WorkloadLoader {
         File dir = new File("/home/wangrui/workspace/cache/"
                 + generateIndexMethod + "/" + dbName + "/" + workloadName);
         dir.mkdirs();
-        File file = new File(dir, querySize + "_" + indexSize + ".xml");
+        File file = new File(dir, fileName+"_"+querySize + "_" + indexSize + ".xml");
         SeqInumCost cost = null;
         Workload workload = getWorkload();
         if (file.exists()) {
@@ -255,12 +255,14 @@ public class WorkloadLoader {
             double costWithoutIndex = DATWindow.costWithIndex(cost,
                     new boolean[cost.indexCount()]);
             cost.costWithoutIndex = costWithoutIndex;
+            cost.save(file);
         }
         if (cost.costWithAllIndex < 0.1) {
             boolean[] bs = new boolean[cost.indexCount()];
             Arrays.fill(bs, true);
             double costWithAllIndex = DATWindow.costWithIndex(cost, bs);
             cost.costWithAllIndex = costWithAllIndex;
+            cost.save(file);
         }
 //        while (cost.queries.size()>6)
 //            cost.queries.remove(cost.queries.size()-1);

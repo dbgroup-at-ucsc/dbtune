@@ -20,7 +20,8 @@ public class BatchTest {
         PrintStream ps = new PrintStream(outputFile);
         TestSet[] sets = {
         // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
-        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum","workload.sql", 10 * gigbytes,"tpch"),
+        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum", "workload.sql",
+                10 * gigbytes, "tpch"),
         // new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
         // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
         // new TestSet("100 OTAB [5] queries", "test",
@@ -32,7 +33,7 @@ public class BatchTest {
         for (TestSet set : sets) {
             Rt.np(set.dbName + " " + set.workloadName);
             WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                    set.workloadName,set.fileName, generateIndexMethod);
+                    set.workloadName, set.fileName, generateIndexMethod);
             SeqInumCost cost = loader.loadCost();
             Rt
                     .np("index\tcreate cost\tstorage cost\tbenefit(with-none)\tbenefit(all-without)");
@@ -52,7 +53,7 @@ public class BatchTest {
         };
         int[] l_set = { 20 };// 100, 5, 10, 20, 50, };
         double[] spaceFactor_set = { 2, 5, 10, 20, 50, 100, 200 };// 0.05, 0.1,
-                                                                  // 0.25, 0.5,
+        // 0.25, 0.5,
         // 1, 2,
         // 5, 10, 20, 50,
         // 100, 1000 };
@@ -76,7 +77,8 @@ public class BatchTest {
                     for (TestSet set : sets) {
                         Rt.p(set.dbName + " " + set.workloadName);
                         WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                                set.workloadName,set.fileName, generateIndexMethod);
+                                set.workloadName, set.fileName,
+                                generateIndexMethod);
                         SeqInumCost cost = loader.loadCost();
                         long totalCost = 0;
                         for (int i = 0; i < cost.indices.size(); i++) {
@@ -102,8 +104,8 @@ public class BatchTest {
 
                                 DATSeparateProcess dsp = new DATSeparateProcess(
                                         set.dbName, set.workloadName,
-                                        generateIndexMethod, alpha, beta, m, l,
-                                        space, windowSize, 0);
+                                        set.fileName, generateIndexMethod,
+                                        alpha, beta, m, l, space, windowSize, 0);
                                 dsp.runMKP = false;
                                 dsp.run();
                                 double dat = dsp.dat;

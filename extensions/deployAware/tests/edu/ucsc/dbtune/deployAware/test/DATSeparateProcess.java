@@ -12,6 +12,7 @@ import edu.ucsc.dbtune.util.Rx;
 public class DATSeparateProcess {
     String dbName;
     String workloadName;
+    String fileName;
     String generateIndexMethod;
     double alpha;
     double beta;
@@ -41,11 +42,12 @@ public class DATSeparateProcess {
     long memoryUsed = 0; // in KB
 
     public DATSeparateProcess(String dbName, String workloadName,
-            String generateIndexMethod, double alpha, double beta, int m,
-            int l, double spaceBudge, double windowSize,
+            String fileName, String generateIndexMethod, double alpha,
+            double beta, int m, int l, double spaceBudge, double windowSize,
             double intermediateConstraint) {
         this.dbName = dbName;
         this.workloadName = workloadName;
+        this.fileName = fileName;
         this.generateIndexMethod = generateIndexMethod;
         this.alpha = alpha;
         this.beta = beta;
@@ -129,6 +131,7 @@ public class DATSeparateProcess {
         Rx rx = new Rx("dat");
         rx.createChild("dbName", dbName);
         rx.createChild("workloadName", workloadName);
+        rx.createChild("fileName", fileName);
         rx.createChild("generateIndexMethod", generateIndexMethod);
         rx.createChild("alpha", alpha);
         rx.createChild("beta", beta);

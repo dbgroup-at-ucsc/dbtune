@@ -133,18 +133,19 @@ public class SeqInumCost implements Serializable {
         // Rt.p("BIP INUM populate time: " + timer.getSecondElapse());
         q.plans = new SeqInumPlan[desc.getNumberOfTemplatePlans()];
         q.baseTableUpdateCost = desc.getBaseTableUpdateCost();
-        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-            SeqInumPlan plan = new SeqInumPlan(q, k);
-            plan.plan=desc.plans.get(k).toString();
-            plan.internalCost = desc.getInternalPlanCost(k);
-            plan.slots = new SeqInumSlot[desc.getNumberOfSlots()];
-            for (int i = 0; i < desc.getNumberOfSlots(); i++) {
-                SeqInumSlot slot = new SeqInumSlot(plan,i);
+        for (int planId = 0; planId < desc.getNumberOfTemplatePlans(); planId++) {
+            SeqInumPlan plan = new SeqInumPlan(q, planId);
+            plan.plan = "";
+            plan.internalCost = desc.getInternalPlanCost(planId);
+            plan.slots = new SeqInumSlot[desc.getNumberOfSlots(planId)];
+            for (int slotId = 0; slotId < desc.getNumberOfSlots(planId); slotId++) {
+                SeqInumSlot slot = new SeqInumSlot(plan, slotId);
                 slot.fullTableScanCost = Double.MAX_VALUE;
-                for (Index index : desc.getIndexesAtSlot(i)) {
+                for (Index index : desc.getIndexesAtSlot(planId, slotId)) {
                     timer = new RTimerN();
                     if (index instanceof FullTableScanIndex) {
-                        slot.fullTableScanCost = desc.getAccessCost(k, index);
+                        slot.fullTableScanCost = desc.getAccessCost(planId,
+                                slotId, index);
                         // Rt.p(index);
                         plugInFCount++;
                     } else {
@@ -153,7 +154,7 @@ public class SeqInumCost implements Serializable {
                         if (c.index == null)
                             throw new SQLException("Can't map index "
                                     + index.toString());
-                        c.cost = desc.getAccessCost(k, index);
+                        c.cost = desc.getAccessCost(planId, slotId, index);
                         c.updateCost = desc.getUpdateCost(index);
                         // Rt.p(index);
                         slot.costs.add(c);
@@ -165,14 +166,14 @@ public class SeqInumCost implements Serializable {
                     plugInCount++;
                     // Rt.p("%f %f",timer.getSecondElapse(),plugInTime);
                 }
-                plan.slots[i] = slot;
+                plan.slots[slotId] = slot;
             }
-            q.plans[k] = plan;
+            q.plans[planId] = plan;
         }
         PerfTest.addTimer("inumRest");
         return q;
     }
-    
+
     public SeqInumQuery addQuery2(SQLStatement statement) throws SQLException {
         int id = queries.size();
         SeqInumQuery q = new SeqInumQuery(id);
@@ -210,9 +211,9 @@ public class SeqInumCost implements Serializable {
         for (int k = 0; k < plans.length; k++) {
             SeqInumPlan plan = new SeqInumPlan(q, k);
             InumPlan iplan = plans[k];
-            
-            Set<Index> indexes = getIndexesReferencingTables(inumIndices,
-                    iplan.getTables());
+
+            Set<Index> indexes = getIndexesReferencingTables(inumIndices, iplan
+                    .getTables());
             for (Table table : iplan.getTables())
                 indexes.add(FullTableScanIndex
                         .getFullTableScanIndexInstance(table));

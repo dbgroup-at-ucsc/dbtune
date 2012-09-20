@@ -13,11 +13,14 @@ public class DATSlot {
     SeqInumSlot s;
     SeqInumIndex[] indexes;
     IloNumVar[] useIndex;
+    boolean hasFTS = true;
 
     public DATSlot(CPlexWrapper cplex, DATInumPlan plan, SeqInumSlot s)
             throws IloException {
         this.plan = plan;
         this.s = s;
+        if (s.fullTableScanCost > 1E100)
+            hasFTS = false;
         useIndex = new IloNumVar[s.costs.size() + 1];
         indexes = new SeqInumIndex[s.costs.size()];
         for (int i = 0; i < useIndex.length; i++) {
@@ -37,12 +40,11 @@ public class DATSlot {
             throws IloException {
         for (int i = 0; i < s.costs.size(); i++) {
             SeqInumSlotIndexCost c = s.costs.get(i);
-            expr
-                    .addTerm((c.cost + c.updateCost) * coefficient,
-                            useIndex[i]);
+            expr.addTerm((c.cost + c.updateCost) * coefficient, useIndex[i]);
         }
-        expr.addTerm(s.fullTableScanCost * coefficient, useIndex[s.costs
-                .size()]);
+        if (hasFTS)
+            expr.addTerm(s.fullTableScanCost * coefficient, useIndex[s.costs
+                    .size()]);
     }
 
     public double getCost(CPlexWrapper cplex) throws IloException {
@@ -52,8 +54,7 @@ public class DATSlot {
             // Rt.p((c.cost + c.updateCost) + " " + getValue(useIndex[i]));
             cost += (c.cost + c.updateCost) * cplex.getValue(useIndex[i]);
         }
-        cost += s.fullTableScanCost
-                * cplex.getValue(useIndex[s.costs.size()]);
+        cost += s.fullTableScanCost * cplex.getValue(useIndex[s.costs.size()]);
         return cost;
     }
 
@@ -64,11 +65,15 @@ public class DATSlot {
         cplex.addEq(expr, plan.active);
         if (DAT.showFormulas)
             Rt.p(expr.toString() + "==" + plan.active);
+        if (!hasFTS) {
+            cplex.addEq(useIndex[indexes.length], 0);
+            if (DAT.showFormulas)
+                Rt.p(useIndex[indexes.length] + "==0");
+        }
         for (int i = 0; i < indexes.length; i++) {
             expr = cplex.linearNumExpr();
             expr.addTerm(1, useIndex[i]);
-            expr.addTerm(-1, plan.query.window.index2present
-                    .get(indexes[i]));
+            expr.addTerm(-1, plan.query.window.index2present.get(indexes[i]));
             cplex.addLe(expr, 0);
             if (DAT.showFormulas)
                 Rt.p(expr.toString() + "<=0");

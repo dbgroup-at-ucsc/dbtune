@@ -12,6 +12,7 @@ public class SeqInumPlan implements Serializable {
     public int id;
     public double internalCost;
     public SeqInumSlot[] slots;
+    public boolean valid=true;
 
     public SeqInumPlan(SeqInumQuery query,int id) {
         this.query = query;
@@ -36,6 +37,8 @@ public class SeqInumPlan implements Serializable {
         slots=new SeqInumSlot[rs.length];
         for (int i=0;i<rs.length;i++) {
             slots[i]=new SeqInumSlot(indexHash,this,rs[i],i);
+            if (!slots[i].valid)
+                valid=false;
         }
     }
 }
