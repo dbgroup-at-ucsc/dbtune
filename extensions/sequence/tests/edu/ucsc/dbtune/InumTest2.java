@@ -238,27 +238,30 @@ public class InumTest2 {
         double inumIndexAll = 0;
         double inumFtsAll = 0;
         Workload workload = new Workload("", new StringReader(query));
+
+        // Rt.error("load index");
+        // Set<Index> indexes = new HashSet<Index>();
+        // String[] names = Rt.readResourceAsLines(InumTest2.class,
+        // "index.txt");
+        // for (String name2 : names) {
+        // indexes.add(createIndex(db, name2));
+        // }
+
         // workload = new Workload("", new
         // StringReader(workload.get(2).getSQL()+";"));
-        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
-        // getBaseOptimizer(db.getOptimizer()));
-        // Set<Index> indexes = candGen.generate(workload);
+        CandidateGenerator candGen = new OptimizerCandidateGenerator(
+                getBaseOptimizer(db.getOptimizer()));
+        Set<Index> indexes = candGen.generate(workload);
         // for (Index index : indexes) {
         // Rt.np(index);
         // }
-        Rt.error("load index");
-        Set<Index> indexes = new HashSet<Index>();
-        String[] names = Rt.readResourceAsLines(InumTest2.class, "index.txt");
-        for (String name2 : names) {
-            indexes.add(createIndex(db, name2));
-        }
 
         // AbstractSpaceComputation.setInumSpacePopulateIndexSet(indexes);
 
         Rt.p(name);
         Rt.p("queries: " + workload.size());
         Rt.p("indexes: " + indexes.size());
-        IBGSpaceComputation.maxTime = 10000;
+        IBGSpaceComputation.maxTime = 15000;
         for (int i = 0; i < workload.size(); i++) {
             // Rt.p("start db2");
             try {
@@ -281,16 +284,22 @@ public class InumTest2 {
 
                 Rt
                         .np(
-                                "query=%d\tDB2(FTS)=%,.0f\tINUM(FTS)=%,.0f"
+                                "-- query=%d\tDB2(FTS)=%,.0f\tINUM(FTS)=%,.0f"
                                         + "\tDB2(Index)=%,.0f\tINUM(Index)=%,.0f\tINUM/DB2=%.2f",
                                 i, db2fts, inumFts, db2index, inumIndex,
                                 inumIndex / db2index);
+                if (0.9 <= inumIndex / db2index && inumIndex / db2index <= 1.2) {
+                    // Rt.np(workload.get(i).getSQL() + ";");
+                } else {
+                    // Rt.np("-- "+workload.get(i).getSQL() + ";");
+                }
                 db2indexAll += db2index;
                 db2ftsAll += db2fts;
                 inumIndexAll += inumIndex;
                 inumFtsAll += inumFts;
             } catch (Exception e) {
-                Rt.np("query=%d %s", i, e.getMessage());
+                Rt.np("-- query=%d %s", i, e.getMessage());
+                Rt.np("-- " + workload.get(i).getSQL() + ";");
             }
             // Rt.np("query=%d\tDB2(FTS)=%,.0f" + "\tDB2(Index)=%,.0f", i,
             // db2fts,
@@ -498,7 +507,7 @@ public class InumTest2 {
         DatabaseSystem test = newDatabaseSystem(en);
         dbName = "tpch10g";
         en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
-        // DatabaseSystem tpch10g = newDatabaseSystem(en);
+        DatabaseSystem tpch10g = newDatabaseSystem(en);
 
         String tpch = Rt.readFile(new File(
                 "resources/workloads/db2/tpch/complete.sql"));
@@ -506,11 +515,13 @@ public class InumTest2 {
                 "resources/workloads/db2/tpcds-inum/workload.sql"));
         String tpcds = Rt.readFile(new File(
                 "resources/workloads/db2/tpcds/db2.sql"));
+        String tpcdsinum = Rt.readFile(new File(
+                "resources/workloads/db2/tpcds/inum.sql"));
         String update = Rt.readFile(new File(
                 "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
         // query = Rt.readFile(new File(
         // "resources/workloads/db2/tpch-inum/workload.sql"));
-//        sqlTest(test, tpcds, 65);
+        sqlTest(test, tpcds, 8);
         // sqlTest(
         // test,
         // "SELECT 3, COUNT(*)  FROM tpch.lineitem WHERE  tpch.lineitem.l_tax BETWEEN 0.01596699754645524 AND 0.029823160830179565 AND tpch.lineitem.l_extendedprice BETWEEN 19178.598547906164 AND 19756.721297981876 AND tpch.lineitem.l_receiptdate BETWEEN 'Thu Mar 24 14:48:29 PST 1994' AND 'Mon Jan 30 14:48:29 PST 1995';",
@@ -521,10 +532,11 @@ public class InumTest2 {
         // compareSubset(test, update,"update");
         // compareWorkload(test, tpch, "tpch");
         // compareInterestingOrders(test, tpch);
-        compareWorkload(test, tpcds, "tpcds");
+        // compareWorkload(tpch10g, tpch, "tpch10g");
+        compareWorkload(test, tpcdsinum, "tpcds");
         // compareWorkload(test, update, "update");
         test.getConnection().close();
-        // tpch10g.getConnection().close();
+        tpch10g.getConnection().close();
     }
 
     void sqlTest(DatabaseSystem db, String query, int queryId) throws Exception {

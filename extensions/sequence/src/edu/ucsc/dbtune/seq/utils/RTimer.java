@@ -279,11 +279,11 @@ public class RTimer {
 	}
 
 	public double getMilliSecondElapse() {
-		return (double) (System.currentTimeMillis() - start);
+		return (double) (System.currentTimeMillis() - start0);
 	}
 
 	public long get() {
-		return System.currentTimeMillis() - start;
+		return System.currentTimeMillis() - start0;
 	}
 
 	public static void main(String[] args) throws Exception {

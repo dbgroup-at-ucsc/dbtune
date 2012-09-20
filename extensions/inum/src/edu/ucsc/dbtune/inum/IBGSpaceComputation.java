@@ -78,7 +78,8 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
         if (whatIfCount > maxAllowedWhatIfCount)
             return;
 
-        if (maxTime > 0 && timer.get() > maxTime)
+        long timePassed=timer.get();
+        if (maxTime > 0 && timePassed > maxTime)
             throw new SQLException("IBG timeout");
         timer.next("index=" + indexes.size() + " space=" + inumSpace.size()
                 + " whatif=" + whatIfCount + " " + path);
@@ -178,8 +179,10 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
         tested=new HashSet<BitSet>();
         indexToId=new Hashtable<Index, Integer>();
         int id=0;
-        for (Index index : indexes)
+        for (Index index : indexes) {
+//            Rt.p(index);
             indexToId.put(index, id++);
+        }
         timer=new RTimer();
         timer.interval=10000;
         ibg(statement, delegate, new HashSet<Index>(indexes), space, "");

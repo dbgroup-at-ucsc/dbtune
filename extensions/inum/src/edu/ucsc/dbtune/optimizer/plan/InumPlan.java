@@ -679,7 +679,7 @@ public class InumPlan extends SQLStatementPlan
             Rt.p("need " + neededColumns.size());
             Rt.p(neededColumns);
             cost=plan.getRootOperator().getAccumulatedCost();
-            throw new Error();
+//            throw new Error();
         }
         
 /**
